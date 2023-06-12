@@ -1525,6 +1525,388 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            case "disableCommunityInviteCode":
+                agent
+                    .communityClient(payload.communityId)
+                    .disableInviteCode()
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "editChannelMessage":
+                agent
+                    .communityClient(payload.communityId)
+                    .editMessage(payload.channelId, payload.message, payload.threadRootMessageIndex)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "channelEvents":
+                agent
+                    .communityClient(payload.communityId)
+                    .events(
+                        payload.channelId,
+                        payload.startIndex,
+                        payload.ascending,
+                        payload.threadRootMessageIndex,
+                        payload.latestClientEventIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "channelEventsByIndex":
+                agent
+                    .communityClient(payload.communityId)
+                    .eventsByIndex(
+                        payload.channelId,
+                        payload.eventIndexes,
+                        payload.threadRootMessageIndex,
+                        payload.latestClientEventIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "channelEventsWindow":
+                agent
+                    .communityClient(payload.communityId)
+                    .eventsWindow(
+                        payload.channelId,
+                        payload.messageIndex,
+                        payload.threadRootMessageIndex,
+                        payload.latestClientEventIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "communityInviteCode":
+                agent
+                    .communityClient(payload.communityId)
+                    .inviteCode()
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "joinChannel":
+                agent
+                    .communityClient(payload.communityId)
+                    .joinChannel(payload.channelId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "leaveChannel":
+                agent
+                    .communityClient(payload.communityId)
+                    .leaveChannel(payload.channelId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "makeChannelPrivate":
+                agent
+                    .communityClient(payload.communityId)
+                    .makeChannelPrivate(payload.channelId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "makeCommunityPrivate":
+                agent
+                    .communityClient(payload.communityId)
+                    .makePrivate()
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "channelMessagesByMessageIndex":
+                agent
+                    .communityClient(payload.communityId)
+                    .messagesByMessageIndex(
+                        payload.channelId,
+                        payload.messageIndexes,
+                        payload.latestClientEventIndex,
+                        payload.threadRootMessageIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "pinChannelMessage":
+                agent
+                    .communityClient(payload.communityId)
+                    .pinMessage(payload.channelId, payload.messageIndex)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "removeCommunityMember":
+                agent
+                    .communityClient(payload.communityId)
+                    .removeMember(payload.userId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "removeChannelMember":
+                agent
+                    .communityClient(payload.communityId)
+                    .removeMemberFromChannel(payload.channelId, payload.userId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "removeChannelReaction":
+                agent
+                    .communityClient(payload.communityId)
+                    .removeReaction(
+                        payload.channelId,
+                        payload.messageId,
+                        payload.reaction,
+                        payload.threadRootMessageIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "resetCommunityInviteCode":
+                agent
+                    .communityClient(payload.communityId)
+                    .resetInviteCode()
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "communityRules":
+                agent
+                    .communityClient(payload.communityId)
+                    .rules(payload.inviteCode)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "searchChannel":
+                agent
+                    .communityClient(payload.communityId)
+                    .searchChannel(
+                        payload.channelId,
+                        payload.maxResults,
+                        payload.users,
+                        payload.searchTerm
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "selectedChannelInitial":
+                agent
+                    .communityClient(payload.communityId)
+                    .selectedChannelInitial(payload.channelId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "selectedChannelUpdates":
+                agent
+                    .communityClient(payload.communityId)
+                    .selectedChannelUpdates(payload.channelId, payload.updatesSince)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "sendChannelMessage":
+                agent
+                    .communityClient(payload.communityId)
+                    .sendMessage(
+                        payload.channelId,
+                        payload.senderName,
+                        payload.mentioned,
+                        payload.event,
+                        payload.threadRootMessageIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "toggleMuteChannelNotifications":
+                agent
+                    .communityClient(payload.communityId)
+                    .toggleMuteChannelNotifications(payload.channelId, payload.mute)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "toggleMuteCommunityNotifications":
+                agent
+                    .communityClient(payload.communityId)
+                    .toggleMuteNotifications(payload.mute)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "unblockCommunityUser":
+                agent
+                    .communityClient(payload.communityId)
+                    .unblockUser(payload.userId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "undeleteChannelMessages":
+                agent
+                    .communityClient(payload.communityId)
+                    .undeleteMessages(
+                        payload.channelId,
+                        payload.messageIds,
+                        payload.threadRootMessageIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "updateChannel":
+                agent
+                    .communityClient(payload.communityId)
+                    .updateChannel(
+                        payload.channelId,
+                        payload.name,
+                        payload.description,
+                        payload.rules,
+                        payload.permissions,
+                        payload.avatar,
+                        payload.banner,
+                        payload.gate
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "updateCommunity":
+                agent
+                    .communityClient(payload.communityId)
+                    .updateCommunity(
+                        payload.name,
+                        payload.description,
+                        payload.rules,
+                        payload.permissions,
+                        payload.avatar,
+                        payload.banner,
+                        payload.gate
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
         }

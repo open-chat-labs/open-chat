@@ -223,5 +223,3 @@ export type ReferralStats = {
     diamondMembers: number;
     totalRewardsE8s: bigint;
 };
-
-export type UserSuspended = { kind: "user_suspended" };
