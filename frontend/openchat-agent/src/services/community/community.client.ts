@@ -85,6 +85,7 @@ import type {
     MemberRole,
     Message,
     PinChannelMessageResponse,
+    RemoveCommunityMemberResponse,
     User,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
@@ -434,7 +435,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    removeMember(userId: string): Promise<unknown> {
+    removeMember(userId: string): Promise<RemoveCommunityMemberResponse> {
         return this.handleResponse(
             this.service.remove_member({
                 user_id: Principal.fromText(userId),

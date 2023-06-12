@@ -117,6 +117,7 @@ import type {
     MakeChannelPrivateResponse,
     MakeCommunityPrivateResponse,
     PinChannelMessageResponse,
+    RemoveCommunityMemberResponse,
 } from "./community";
 
 /**
@@ -253,6 +254,7 @@ export type WorkerRequest =
     | MakeCommunityPrivate
     | ChannelMessagesByMessageIndex
     | PinChannelMessage
+    | RemoveCommunityMember
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -938,6 +940,7 @@ export type WorkerResponse =
     | Response<MakeChannelPrivateResponse>
     | Response<MakeCommunityPrivateResponse>
     | Response<PinChannelMessageResponse>
+    | Response<RemoveCommunityMemberResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1183,6 +1186,12 @@ type PinChannelMessage = {
     communityId: string;
     channelId: string;
     messageIndex: number;
+};
+
+type RemoveCommunityMember = {
+    kind: "removeCommunityMember";
+    communityId: string;
+    userId: string;
 };
 
 type ChangeCommunityRole = {
@@ -1442,4 +1451,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? EventsResponse<Message>
     : T extends PinChannelMessage
     ? PinChannelMessageResponse
+    : T extends RemoveCommunityMember
+    ? RemoveCommunityMemberResponse
     : never;
