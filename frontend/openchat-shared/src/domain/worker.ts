@@ -112,6 +112,7 @@ import type {
     DeleteChannelResponse,
     DisableCommunityInviteCodeResponse,
     EditChannelMessageResponse,
+    EnableCommunityInviteCodeResponse,
     JoinChannelResponse,
     LeaveChannelResponse,
     MakeChannelPrivateResponse,
@@ -259,6 +260,7 @@ export type WorkerRequest =
     | RemoveCommunityMember
     | RemoveChannelMember
     | RemoveChannelReaction
+    | ResetCommunityInviteCode
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -947,6 +949,7 @@ export type WorkerResponse =
     | Response<RemoveCommunityMemberResponse>
     | Response<RemoveChannelMemberResponse>
     | Response<RemoveChannelReactionResponse>
+    | Response<EnableCommunityInviteCodeResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1216,6 +1219,11 @@ type RemoveChannelReaction = {
     threadRootMessageIndex: number | undefined;
 };
 
+type ResetCommunityInviteCode = {
+    kind: "resetCommunityInviteCode";
+    communityId: string;
+};
+
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
     communityId: string;
@@ -1479,4 +1487,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? RemoveChannelMemberResponse
     : T extends RemoveChannelReaction
     ? RemoveChannelReactionResponse
+    : T extends ResetCommunityInviteCode
+    ? EnableCommunityInviteCodeResponse
     : never;

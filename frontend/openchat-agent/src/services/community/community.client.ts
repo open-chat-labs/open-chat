@@ -476,7 +476,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    resetInviteCode(): Promise<unknown> {
+    resetInviteCode(): Promise<EnableCommunityInviteCodeResponse> {
         return this.handleResponse(this.service.reset_invite_code({}), enableInviteCodeResponse);
     }
 
