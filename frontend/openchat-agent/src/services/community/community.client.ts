@@ -89,18 +89,14 @@ import { getEventsResponse } from "../group/mappers";
 export class CommunityClient extends CandidService {
     private service: CommunityService;
 
-    private constructor(identity: Identity, private config: AgentConfig) {
+    private constructor(communityId: string, identity: Identity, private config: AgentConfig) {
         super(identity);
 
-        this.service = this.createServiceClient<CommunityService>(
-            idlFactory,
-            config.notificationsCanister,
-            config
-        );
+        this.service = this.createServiceClient<CommunityService>(idlFactory, communityId, config);
     }
 
-    static create(identity: Identity, config: AgentConfig): CommunityClient {
-        return new CommunityClient(identity, config);
+    static create(communityId: string, identity: Identity, config: AgentConfig): CommunityClient {
+        return new CommunityClient(communityId, identity, config);
     }
 
     addMembersToChannel(
