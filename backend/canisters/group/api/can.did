@@ -225,7 +225,7 @@ type UpdateGroupV2Args =
         name: opt text;
         description: opt text;
         rules: opt AccessRules;
-        avatar: AvatarUpdate;
+        avatar: DocumentUpdate;
         permissions: opt OptionalGroupPermissions;
         events_ttl: EventsTimeToLiveUpdate;
         gate: AccessGateUpdate;

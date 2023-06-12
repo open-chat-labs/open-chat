@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use group_prize_bot::set_avatar::*;
 use ic_cdk_macros::update;
 use types::{CanisterId, Timestamped};
-use utils::avatar_validation::validate_avatar;
+use utils::document_validation::validate_avatar;
 
 #[update(guard = "caller_is_admin")]
 #[trace]

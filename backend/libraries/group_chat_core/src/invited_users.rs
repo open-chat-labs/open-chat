@@ -1,4 +1,4 @@
-use candid::{Deserialize, Principal};
+use candid::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
 use types::{EventIndex, MessageIndex, TimestampMillis, UserId};
@@ -19,24 +19,6 @@ pub struct UserInvitation {
 }
 
 impl InvitedUsers {
-    pub fn rebuild_users_map(&mut self) -> Vec<(Principal, UserId)> {
-        let users = self
-            .users
-            .iter()
-            .map(|(user_id, invitation)| ((*user_id).into(), invitation.invited))
-            .filter(|(principal, user_id)| {
-                let p2: Principal = (*user_id).into();
-                *principal != p2
-            })
-            .collect();
-        self.users = self
-            .users
-            .values()
-            .map(|invitation| (invitation.invited, invitation.clone()))
-            .collect();
-        users
-    }
-
     pub fn add(&mut self, invitation: UserInvitation) {
         self.last_updated = invitation.timestamp;
         self.users.entry(invitation.invited).or_insert(invitation);
