@@ -123,6 +123,7 @@ import type {
     RemoveChannelMemberResponse,
     RemoveChannelReactionResponse,
     RemoveCommunityMemberResponse,
+    SearchChannelResponse,
 } from "./community";
 
 /**
@@ -264,6 +265,7 @@ export type WorkerRequest =
     | RemoveChannelReaction
     | ResetCommunityInviteCode
     | CommunityRules
+    | SearchChannel
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -954,6 +956,7 @@ export type WorkerResponse =
     | Response<RemoveChannelReactionResponse>
     | Response<EnableCommunityInviteCodeResponse>
     | Response<CommunityRulesResponse>
+    | Response<SearchChannelResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1234,6 +1237,15 @@ type CommunityRules = {
     inviteCode: string | undefined;
 };
 
+type SearchChannel = {
+    kind: "searchChannel";
+    communityId: string;
+    channelId: string;
+    maxResults: number;
+    users: string[];
+    searchTerm: string;
+};
+
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
     communityId: string;
@@ -1501,4 +1513,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? EnableCommunityInviteCodeResponse
     : T extends CommunityRules
     ? CommunityRulesResponse
+    : T extends SearchChannel
+    ? SearchChannelResponse
     : never;

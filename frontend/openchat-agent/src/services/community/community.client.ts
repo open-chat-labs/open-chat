@@ -89,6 +89,7 @@ import type {
     RemoveChannelMemberResponse,
     RemoveChannelReactionResponse,
     RemoveCommunityMemberResponse,
+    SearchChannelResponse,
     User,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
@@ -496,7 +497,7 @@ export class CommunityClient extends CandidService {
         maxResults: number,
         users: string[],
         searchTerm: string
-    ): Promise<unknown> {
+    ): Promise<SearchChannelResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.search_channel({
