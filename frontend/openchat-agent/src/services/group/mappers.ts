@@ -311,14 +311,14 @@ export function apiOptionalGroupPermissions(
     };
 }
 
-function member(candid: ApiParticipant): Member {
+export function member(candid: ApiParticipant): Member {
     return {
         role: memberRole(candid.role),
         userId: candid.user_id.toString(),
     };
 }
 
-function groupRules(candid: ApiGroupRules): AccessRules {
+export function groupRules(candid: ApiGroupRules): AccessRules {
     return {
         text: candid.text,
         enabled: candid.enabled,

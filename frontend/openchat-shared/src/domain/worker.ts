@@ -104,7 +104,6 @@ import type {
     BlockCommunityUserResponse,
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
-    Community,
     CommunityInviteCodeResponse,
     CommunityRulesResponse,
     CreateChannelResponse,
@@ -124,6 +123,9 @@ import type {
     RemoveChannelReactionResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
+    SelectedChannelInitialResponse,
+    SelectedChannelUpdatesResponse,
+    SendChannelMessageResponse,
 } from "./community";
 
 /**
@@ -266,6 +268,9 @@ export type WorkerRequest =
     | ResetCommunityInviteCode
     | CommunityRules
     | SearchChannel
+    | SelectedChannelInitial
+    | SelectedChannelUpdates
+    | SendChannelMessage
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -957,6 +962,9 @@ export type WorkerResponse =
     | Response<EnableCommunityInviteCodeResponse>
     | Response<CommunityRulesResponse>
     | Response<SearchChannelResponse>
+    | Response<SelectedChannelInitialResponse>
+    | Response<SelectedChannelUpdatesResponse>
+    | Response<SendChannelMessageResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1246,6 +1254,29 @@ type SearchChannel = {
     searchTerm: string;
 };
 
+type SelectedChannelInitial = {
+    kind: "selectedChannelInitial";
+    communityId: string;
+    channelId: string;
+};
+
+type SelectedChannelUpdates = {
+    kind: "selectedChannelUpdates";
+    communityId: string;
+    channelId: string;
+    updatesSince: bigint;
+};
+
+type SendChannelMessage = {
+    kind: "sendChannelMessage";
+    communityId: string;
+    channelId: string;
+    senderName: string;
+    mentioned: User[];
+    event: EventWrapper<Message>;
+    threadRootMessageIndex?: number;
+};
+
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
     communityId: string;
@@ -1515,4 +1546,10 @@ export type WorkerResult<T> = T extends PinMessage
     ? CommunityRulesResponse
     : T extends SearchChannel
     ? SearchChannelResponse
+    : T extends SelectedChannelInitial
+    ? SelectedChannelInitialResponse
+    : T extends SelectedChannelUpdates
+    ? SelectedChannelUpdatesResponse
+    : T extends SendChannelMessage
+    ? SendChannelMessageResponse
     : never;

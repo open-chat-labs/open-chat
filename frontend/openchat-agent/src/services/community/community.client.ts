@@ -90,6 +90,11 @@ import type {
     RemoveChannelReactionResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
+    SelectedChannelInitialResponse,
+    SelectedChannelUpdatesResponse,
+    SendChannelMessageResponse,
+    ToggleMuteChannelNotificationsResponse,
+    ToggleMuteCommunityNotificationsResponse,
     User,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
@@ -510,7 +515,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    selectedChannelInitial(channelId: string): Promise<unknown> {
+    selectedChannelInitial(channelId: string): Promise<SelectedChannelInitialResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.selected_channel_initial({
@@ -520,7 +525,10 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    selectedChannelUpdates(channelId: string, updatesSince: bigint): Promise<unknown> {
+    selectedChannelUpdates(
+        channelId: string,
+        updatesSince: bigint
+    ): Promise<SelectedChannelUpdatesResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.selected_channel_updates({
@@ -537,7 +545,7 @@ export class CommunityClient extends CandidService {
         mentioned: User[],
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
-    ): Promise<unknown> {
+    ): Promise<SendChannelMessageResponse> {
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(event.event.content, [channelId])
@@ -578,7 +586,10 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    toggleMuteChannelNotifications(channelId: string, mute: boolean): Promise<unknown> {
+    toggleMuteChannelNotifications(
+        channelId: string,
+        mute: boolean
+    ): Promise<ToggleMuteChannelNotificationsResponse> {
         return this.handleResponse(
             this.service.toggle_mute_channel_notifications({
                 channel_id: BigInt(channelId),
@@ -588,7 +599,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    toggleMuteNotifications(mute: boolean): Promise<unknown> {
+    toggleMuteNotifications(mute: boolean): Promise<ToggleMuteCommunityNotificationsResponse> {
         return this.handleResponse(
             this.service.toggle_mute_notifications({
                 mute,

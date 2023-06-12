@@ -1771,6 +1771,49 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     )
                     .catch(sendError(correlationId));
                 break;
+
+            case "selectedChannelInitial":
+                agent
+                    .communityClient(payload.communityId)
+                    .selectedChannelInitial(payload.channelId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "selectedChannelUpdates":
+                agent
+                    .communityClient(payload.communityId)
+                    .selectedChannelUpdates(payload.channelId, payload.updatesSince)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "sendChannelMessage":
+                agent
+                    .communityClient(payload.communityId)
+                    .sendMessage(
+                        payload.channelId,
+                        payload.senderName,
+                        payload.mentioned,
+                        payload.event,
+                        payload.threadRootMessageIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
         }

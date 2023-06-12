@@ -32,6 +32,12 @@ import {
     RemoveChannelReactionResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
+    SelectedChannelInitialResponse,
+    SelectedChannelUpdates,
+    SelectedChannelUpdatesResponse,
+    SendChannelMessageResponse,
+    ToggleMuteChannelNotificationsResponse,
+    ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
     UndeleteChannelMessagesResponse,
     UnsupportedValueError,
@@ -104,8 +110,9 @@ import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 import { identity, optional } from "../../utils/mapping";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
-import { messageWrapper } from "../group/mappers";
+import { groupRules, member, messageWrapper } from "../group/mappers";
 import { ReplicaNotUpToDateError } from "../error";
+import { keccak224 } from "js-sha3";
 
 export function addMembersToChannelResponse(
     candid: ApiAddMembersToChannelResponse
@@ -818,19 +825,68 @@ export function messageMatch(candid: ApiMessageMatch): ChannelMessageMatch {
 }
 
 export function selectedChannelInitialResponse(
-    _candid: ApiSelectedChannelInitialResponse
-): unknown {
-    return {};
+    candid: ApiSelectedChannelInitialResponse
+): SelectedChannelInitialResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            members: candid.Success.members.map(member),
+            invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
+            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
+            timestamp: candid.Success.timestamp,
+            pinnedMessages: new Set(candid.Success.pinned_messages),
+            latestEventIndex: candid.Success.latest_event_index,
+            rules: groupRules(candid.Success.rules),
+        };
+    } else {
+        console.warn("SelectedChannelInitial failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function selectedChannelUpdatesResponse(
-    _candid: ApiSelectedChannelUpdatesResponse
-): unknown {
-    return {};
+    candid: ApiSelectedChannelUpdatesResponse
+): SelectedChannelUpdatesResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            membersAddedOrUpdated: candid.Success.members_added_or_updated.map(member),
+            membersRemoved: new Set(candid.Success.members_removed.map((u) => u.toString())),
+            blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
+            blockedUsersRemoved: new Set(
+                candid.Success.blocked_users_removed.map((u) => u.toString())
+            ),
+            pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
+            pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
+            latestEventIndex: candid.Success.latest_event_index,
+            rules: optional(candid.Success.rules, groupRules),
+            invitedUsers: optional(
+                candid.Success.invited_users,
+                (invited_users) => new Set(invited_users.map((u) => u.toString()))
+            ),
+            timestamp: candid.Success.timestamp,
+        };
+    } else if ("SuccessNoUpdates" in candid) {
+        return CommonResponses.successNoUpdates;
+    } else {
+        console.warn("SelectedChannelUpdates failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
-export function sendMessageResponse(_candid: ApiSendMessageResponse): unknown {
-    return {};
+export function sendMessageResponse(candid: ApiSendMessageResponse): SendChannelMessageResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            timestamp: candid.Success.timestamp,
+            eventIndex: candid.Success.event_index,
+            expiresAt: optional(candid.Success.expires_at, identity),
+            messageIndex: candid.Success.message_index,
+        };
+    } else {
+        console.warn("SendChannelMessage failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function summaryResponse(_candid: ApiSummaryResponse): unknown {
@@ -842,15 +898,25 @@ export function summaryUpdatesResponse(_candid: ApiSummaryUpdatesResponse): unkn
 }
 
 export function toggleMuteChannelNotificationsResponse(
-    _candid: ApiToggleMuteChannelNotificationsResponse
-): unknown {
-    return {};
+    candid: ApiToggleMuteChannelNotificationsResponse
+): ToggleMuteChannelNotificationsResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    } else {
+        console.warn("ToggleMuteChannelNotifications failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function toggleMuteNotificationsResponse(
-    _candid: ApiToggleMuteNotificationsResponse
-): unknown {
-    return {};
+    candid: ApiToggleMuteNotificationsResponse
+): ToggleMuteCommunityNotificationsResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    } else {
+        console.warn("ToggleMuteCommunityNotifications failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockCommunityUserResponse {

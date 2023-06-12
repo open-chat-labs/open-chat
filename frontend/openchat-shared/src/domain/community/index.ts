@@ -92,6 +92,7 @@ export type UserNotInChannel = { kind: "user_not_in_channel" };
 export type ChannelNotFound = { kind: "channel_not_found" };
 export type UserLimitReached = { kind: "user_limit_reached" };
 export type Success = { kind: "success" };
+export type SuccessNoUpdates = { kind: "success_no_updates" };
 export type UserNotInCommunity = { kind: "user_not_in_community" };
 export type CommunityFrozen = { kind: "community_frozen" };
 export type CommunityNotPublic = { kind: "community_not_public" };
@@ -309,6 +310,19 @@ export type ChannelMessageMatch = {
     messageIndex: number;
 };
 
+export type SelectedChannelUpdates = {
+    blockedUsersRemoved: Set<string>;
+    pinnedMessagesRemoved: Set<number>;
+    invitedUsers?: Set<string>;
+    membersAddedOrUpdated: Member[];
+    pinnedMessagesAdded: Set<number>;
+    membersRemoved: Set<string>;
+    timestamp: bigint;
+    latestEventIndex: number;
+    rules?: AccessRules;
+    blockedUsersAdded: Set<string>;
+};
+
 export type SearchChannelResponse = Failure | (Success & { matches: ChannelMessageMatch[] });
 
 export type UnblockCommunityUserResponse = Failure | Success;
@@ -319,12 +333,43 @@ export type UpdateChannelResponse = Failure | Success;
 
 export type UpdateCommunityResponse = Failure | Success;
 
+export type SelectedChannelInitialResponse =
+    | Failure
+    | (Success & {
+          members: Member[];
+          invitedUsers: Set<string>;
+          blockedUsers: Set<string>;
+          timestamp: bigint;
+          pinnedMessages: Set<number>;
+          latestEventIndex: number;
+          rules: AccessRules;
+      });
+
+export type SelectedChannelUpdatesResponse =
+    | Failure
+    | (Success & SelectedChannelUpdates)
+    | SuccessNoUpdates;
+
+export type SendChannelMessageResponse =
+    | Failure
+    | (Success & {
+          timestamp: bigint;
+          eventIndex: number;
+          expiresAt?: bigint;
+          messageIndex: number;
+      });
+
+export type ToggleMuteChannelNotificationsResponse = Failure | Success;
+
+export type ToggleMuteCommunityNotificationsResponse = Failure | Success;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
     userLimitReached: { kind: "user_limit_reached" } as UserLimitReached,
     notAuthorized: { kind: "not_authorized" } as NotAuthorised,
     success: { kind: "success" } as Success,
+    successNoUpdates: { kind: "success_no_updates" } as SuccessNoUpdates,
     userNotInCommunity: { kind: "user_not_in_community" } as UserNotInCommunity,
     userSuspended: { kind: "user_suspended" } as UserSuspended,
     communityFrozen: { kind: "community_frozen" } as CommunityFrozen,
