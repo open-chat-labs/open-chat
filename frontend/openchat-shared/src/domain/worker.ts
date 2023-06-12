@@ -104,6 +104,8 @@ import type {
     BlockCommunityUserResponse,
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
+    Community,
+    CommunityInviteCodeResponse,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
@@ -240,6 +242,7 @@ export type WorkerRequest =
     | ChannelEvents
     | ChannelEventsByIndex
     | ChannelEventsWindow
+    | CommunityInviteCode
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -919,6 +922,7 @@ export type WorkerResponse =
     | Response<DeleteChannelMessageResponse>
     | Response<DisableCommunityInviteCode>
     | Response<EditChannelMessageResponse>
+    | Response<CommunityInviteCodeResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1120,6 +1124,11 @@ type ChannelEventsWindow = {
     messageIndex: number;
     threadRootMessageIndex: number | undefined;
     latestClientEventIndex: number | undefined;
+};
+
+type CommunityInviteCode = {
+    kind: "communityInviteCode";
+    communityId: string;
 };
 
 type ChangeCommunityRole = {
@@ -1365,4 +1374,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? EventsResponse<GroupChatEvent>
     : T extends ChannelEventsWindow
     ? EventsResponse<GroupChatEvent>
+    : T extends CommunityInviteCode
+    ? CommunityInviteCodeResponse
     : never;

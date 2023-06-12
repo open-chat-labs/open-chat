@@ -64,6 +64,7 @@ import type {
     CandidateChannel,
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
+    CommunityInviteCodeResponse,
     CommunityPermissions,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
@@ -354,7 +355,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    inviteCode(): Promise<unknown> {
+    inviteCode(): Promise<CommunityInviteCodeResponse> {
         return this.handleResponse(this.service.invite_code({}), inviteCodeResponse);
     }
 
