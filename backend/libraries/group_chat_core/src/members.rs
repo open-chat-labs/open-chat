@@ -1,11 +1,12 @@
 use crate::mentions::Mentions;
+use crate::roles::GroupRoleInternal;
 use chat_events::ChatEvents;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{
-    is_default, is_empty_btreemap, is_empty_hashset, EventIndex, GroupMember, GroupPermissions, GroupRole, Mention,
-    MessageIndex, TimestampMillis, Timestamped, UserId, MAX_RETURNED_MENTIONS,
+    is_default, is_empty_btreemap, is_empty_hashset, EventIndex, GroupMember, GroupPermissions, Mention, MessageIndex,
+    TimestampMillis, Timestamped, UserId, MAX_RETURNED_MENTIONS,
 };
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
@@ -25,7 +26,7 @@ impl GroupMembers {
         let member = GroupMemberInternal {
             user_id: creator_user_id,
             date_added: now,
-            role: GroupRole::Owner,
+            role: GroupRoleInternal::Owner,
             min_visible_event_index: EventIndex::default(),
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: Timestamped::new(false, now),
@@ -62,7 +63,7 @@ impl GroupMembers {
                     let member = GroupMemberInternal {
                         user_id,
                         date_added: now,
-                        role: GroupRole::Participant,
+                        role: GroupRoleInternal::Member,
                         min_visible_event_index,
                         min_visible_message_index,
                         notifications_muted: Timestamped::new(notifications_muted, now),
@@ -82,9 +83,9 @@ impl GroupMembers {
     pub fn remove(&mut self, user_id: UserId) -> Option<GroupMemberInternal> {
         if let Some(member) = self.members.remove(&user_id) {
             match member.role {
-                GroupRole::Owner => self.owner_count -= 1,
-                GroupRole::Admin => self.admin_count -= 1,
-                GroupRole::Moderator => self.moderator_count -= 1,
+                GroupRoleInternal::Owner => self.owner_count -= 1,
+                GroupRoleInternal::Admin => self.admin_count -= 1,
+                GroupRoleInternal::Moderator => self.moderator_count -= 1,
                 _ => (),
             }
 
@@ -100,9 +101,9 @@ impl GroupMembers {
         if let Vacant(e) = self.members.entry(user_id) {
             e.insert(member);
             match role {
-                GroupRole::Owner => self.owner_count += 1,
-                GroupRole::Admin => self.admin_count += 1,
-                GroupRole::Moderator => self.moderator_count += 1,
+                GroupRoleInternal::Owner => self.owner_count += 1,
+                GroupRoleInternal::Admin => self.admin_count += 1,
+                GroupRoleInternal::Moderator => self.moderator_count += 1,
                 _ => (),
             }
         }
@@ -179,7 +180,7 @@ impl GroupMembers {
         &mut self,
         caller_id: UserId,
         user_id: UserId,
-        new_role: GroupRole,
+        new_role: GroupRoleInternal,
         permissions: &GroupPermissions,
         is_caller_platform_moderator: bool,
         is_user_platform_moderator: bool,
@@ -224,18 +225,18 @@ impl GroupMembers {
         }
 
         match member.role {
-            GroupRole::Owner => owner_count -= 1,
-            GroupRole::Admin => admin_count -= 1,
-            GroupRole::Moderator => moderator_count -= 1,
+            GroupRoleInternal::Owner => owner_count -= 1,
+            GroupRoleInternal::Admin => admin_count -= 1,
+            GroupRoleInternal::Moderator => moderator_count -= 1,
             _ => (),
         }
 
         member.role = new_role;
 
         match member.role {
-            GroupRole::Owner => owner_count += 1,
-            GroupRole::Admin => admin_count += 1,
-            GroupRole::Moderator => moderator_count += 1,
+            GroupRoleInternal::Owner => owner_count += 1,
+            GroupRoleInternal::Admin => admin_count += 1,
+            GroupRoleInternal::Moderator => moderator_count += 1,
             _ => (),
         }
 
@@ -284,7 +285,7 @@ pub enum ChangeRoleResult {
 }
 
 pub struct ChangeRoleSuccess {
-    pub prev_role: GroupRole,
+    pub prev_role: GroupRoleInternal,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -294,7 +295,7 @@ pub struct GroupMemberInternal {
     #[serde(rename = "d", alias = "date_added")]
     pub date_added: TimestampMillis,
     #[serde(rename = "r", alias = "role", default, skip_serializing_if = "is_default")]
-    pub role: GroupRole,
+    pub role: GroupRoleInternal,
     #[serde(rename = "n", alias = "notifications_muted")]
     pub notifications_muted: Timestamped<bool>,
     #[serde(rename = "m", alias = "mentions_v2", default, skip_serializing_if = "mentions_are_empty")]
@@ -360,7 +361,7 @@ impl From<GroupMemberInternal> for GroupMember {
         GroupMember {
             user_id: p.user_id,
             date_added: p.date_added,
-            role: p.role,
+            role: p.role.into(),
         }
     }
 }
@@ -370,7 +371,7 @@ impl From<&GroupMemberInternal> for GroupMember {
         GroupMember {
             user_id: p.user_id,
             date_added: p.date_added,
-            role: p.role,
+            role: p.role.into(),
         }
     }
 }
@@ -381,17 +382,18 @@ fn mentions_are_empty(value: &Mentions) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::roles::GroupRoleInternal;
     use crate::{GroupMemberInternal, Mentions};
     use candid::Principal;
     use std::collections::{BTreeMap, HashSet};
-    use types::{GroupRole, MentionInternal, Timestamped};
+    use types::{MentionInternal, Timestamped};
 
     #[test]
     fn serialize_with_max_defaults() {
         let member = GroupMemberInternal {
             user_id: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
             date_added: 1,
-            role: GroupRole::Participant,
+            role: GroupRoleInternal::Member,
             notifications_muted: Timestamped::new(true, 1),
             mentions_v2: Mentions::default(),
             threads: HashSet::new(),
@@ -425,7 +427,7 @@ mod tests {
         let member = GroupMemberInternal {
             user_id: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
             date_added: 1,
-            role: GroupRole::Owner,
+            role: GroupRoleInternal::Owner,
             notifications_muted: Timestamped::new(true, 1),
             mentions_v2: mentions,
             threads: HashSet::from([1.into()]),
@@ -439,8 +441,8 @@ mod tests {
         let member_bytes_len = member_bytes.len();
 
         // Before optimisation: 278
-        // After optimisation: 137
-        assert_eq!(member_bytes_len, 137);
+        // After optimisation: 133
+        assert_eq!(member_bytes_len, 133);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }

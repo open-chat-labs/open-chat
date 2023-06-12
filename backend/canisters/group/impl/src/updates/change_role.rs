@@ -3,7 +3,7 @@ use crate::updates::change_role::Response::*;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use group_canister::change_role::*;
-use group_chat_core::ChangeRoleResult;
+use group_chat_core::{ChangeRoleResult, GroupRoleInternal};
 use ic_cdk_macros::update;
 use types::{CanisterId, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
@@ -27,7 +27,7 @@ async fn change_role(args: Args) -> Response {
     // Or lookup whether the user is a platform moderator to prevent them being demoted from owner
     let mut is_caller_platform_moderator = false;
     let mut is_user_platform_moderator = false;
-    let lookup_caller = !is_caller_owner && args.new_role.is_owner() && caller_id == args.user_id;
+    let lookup_caller = !is_caller_owner && GroupRoleInternal::from(args.new_role).is_owner() && caller_id == args.user_id;
     let lookup_target = is_caller_owner && is_user_owner && caller_id != args.user_id;
 
     if lookup_caller || lookup_target {
