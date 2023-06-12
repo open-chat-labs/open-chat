@@ -80,6 +80,7 @@ import type {
     GroupPermissions,
     JoinChannelResponse,
     LeaveChannelResponse,
+    MakeChannelPrivateResponse,
     MemberRole,
     Message,
     User,
@@ -383,7 +384,7 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(this.service.local_user_index({}), localUserIndexResponse);
     }
 
-    makeChannelPrivate(channelId: string): Promise<unknown> {
+    makeChannelPrivate(channelId: string): Promise<MakeChannelPrivateResponse> {
         return this.handleResponse(
             this.service.make_channel_private({
                 channel_id: BigInt(channelId),

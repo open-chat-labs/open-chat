@@ -114,6 +114,7 @@ import type {
     EditChannelMessageResponse,
     JoinChannelResponse,
     LeaveChannelResponse,
+    MakeChannelPrivateResponse,
 } from "./community";
 
 /**
@@ -246,6 +247,7 @@ export type WorkerRequest =
     | CommunityInviteCode
     | JoinChannel
     | LeaveChannel
+    | MakeChannelPrivate
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -928,6 +930,7 @@ export type WorkerResponse =
     | Response<CommunityInviteCodeResponse>
     | Response<JoinChannelResponse>
     | Response<LeaveChannelResponse>
+    | Response<MakeChannelPrivateResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1144,6 +1147,12 @@ type JoinChannel = {
 
 type LeaveChannel = {
     kind: "leaveChannel";
+    communityId: string;
+    channelId: string;
+};
+
+type MakeChannelPrivate = {
+    kind: "makeChannelPrivate";
     communityId: string;
     channelId: string;
 };
@@ -1397,4 +1406,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? JoinChannelResponse
     : T extends LeaveChannel
     ? LeaveChannelResponse
+    : T extends MakeChannelPrivate
+    ? MakeChannelPrivateResponse
     : never;
