@@ -33,7 +33,6 @@ import {
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
     SelectedChannelInitialResponse,
-    SelectedChannelUpdates,
     SelectedChannelUpdatesResponse,
     SendChannelMessageResponse,
     ToggleMuteChannelNotificationsResponse,
@@ -112,7 +111,6 @@ import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
 import { groupRules, member, messageWrapper } from "../group/mappers";
 import { ReplicaNotUpToDateError } from "../error";
-import { keccak224 } from "js-sha3";
 
 export function addMembersToChannelResponse(
     candid: ApiAddMembersToChannelResponse

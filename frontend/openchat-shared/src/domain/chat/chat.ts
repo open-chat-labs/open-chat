@@ -1,12 +1,12 @@
 import type { BlobReference, DataContent } from "../data/data";
-import type { PartialUserSummary, UserSummary, UserSuspended } from "../user/user";
+import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
 import type { AccessGate, AccessControlled, AccessRules } from "../access";
 import type { GroupPermissionRole, MemberRole, Permissioned } from "../permission";
 import type { HasIdentity } from "../identity";
 import type { HasLevel } from "../structure";
-import type { NotAuthorised } from "../auth";
+import type { NotAuthorised, SuccessNoUpdates, UserSuspended } from "../response";
 
 export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
 export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
@@ -818,10 +818,6 @@ export type UpdatesSuccessResponse = {
     avatarId: OptionUpdate<bigint>;
     blockedUsers: string[] | undefined;
     pinnedChats: string[] | undefined;
-};
-
-export type SuccessNoUpdates = {
-    kind: "success_no_updates";
 };
 
 export type UserCanisterGroupChatSummary = {
