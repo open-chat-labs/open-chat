@@ -144,6 +144,7 @@ import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
 import { waitAll } from "../utils/promise";
 import { MessageContextMap } from "../utils/messageContext";
+import { CommunityClient } from "./community/community.client";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -154,6 +155,7 @@ export class OpenChatAgent extends EventTarget {
     private _marketMakerClient: MarketMakerClient;
     private _ledgerClients: Record<Cryptocurrency, LedgerClient>;
     private _groupClients: Record<string, GroupClient>;
+    private _communityClients: Record<string, CommunityClient>;
     private _groupInvite: GroupInvite | undefined;
     private db: Database;
     private _logger: Logger;
@@ -174,6 +176,7 @@ export class OpenChatAgent extends EventTarget {
             chat: LedgerClient.create(identity, config, this.config.ledgerCanisterCHAT),
         };
         this._groupClients = {};
+        this._communityClients = {};
     }
 
     private get principal(): Principal {
@@ -203,7 +206,18 @@ export class OpenChatAgent extends EventTarget {
         return this;
     }
 
-    private getGroupClient(chatId: string): GroupClient {
+    communityClient(communityId: string): CommunityClient {
+        if (!this._communityClients[communityId]) {
+            this._communityClients[communityId] = CommunityClient.create(
+                communityId,
+                this.identity,
+                this.config
+            );
+        }
+        return this._communityClients[communityId];
+    }
+
+    getGroupClient(chatId: string): GroupClient {
         if (!this._groupClients[chatId]) {
             const inviteCode = this.getProvidedInviteCode(chatId);
             this._groupClients[chatId] = GroupClient.create(

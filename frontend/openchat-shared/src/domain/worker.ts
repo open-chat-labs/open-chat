@@ -57,6 +57,7 @@ import type {
     RemoveHotGroupExclusionResponse,
     SetGroupUpgradeConcurrencyResponse,
     DeclineInvitationResponse,
+    CandidateChannel,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -97,6 +98,18 @@ import type { Cryptocurrency, Tokens } from "./crypto";
 import type { GroupInvite } from "./inviteCodes";
 import type { MemberRole } from "./permission";
 import type { AccessGate, AccessRules } from "./access";
+import type {
+    AddMembersToChannelResponse,
+    AddReactionResponse,
+    BlockCommunityUserResponse,
+    ChangeChannelRoleResponse,
+    ChangeCommunityRoleResponse,
+    CreateChannelResponse,
+    DeclineChannelInvitationResponse,
+    DeleteChannelMessageResponse,
+    DeleteChannelMessagesResponse,
+    DeleteChannelResponse,
+} from "./community";
 
 /**
  * Worker request types
@@ -186,6 +199,7 @@ export type WorkerRequest =
     | ResetInviteCode
     | DisableInviteCode
     | CreateGroupChat
+    | CreateChannel
     | SetCachedMessageFromNotification
     | FreezeGroup
     | UnfreezeGroup
@@ -209,7 +223,16 @@ export type WorkerRequest =
     | CancelMessageReminder
     | ReferralLeaderboard
     | ReportMessage
-    | DeclineInvitation;
+    | DeclineInvitation
+    | AddMembersToChannel
+    | AddCommunityReaction
+    | BlockCommunityUser
+    | ChangeChannelRole
+    | DeclineChannelInvitation
+    | DeleteChannel
+    | DeleteChannelMessages
+    | DeleteChannelMessage
+    | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
     args?: ReferralLeaderboardRange;
@@ -226,6 +249,12 @@ type SetCachedMessageFromNotification = {
 type CreateGroupChat = {
     candidate: CandidateGroupChat;
     kind: "createGroupChat";
+};
+
+type CreateChannel = {
+    candidate: CandidateChannel;
+    communityId: string;
+    kind: "createChannel";
 };
 
 type DisableInviteCode = {
@@ -870,7 +899,17 @@ export type WorkerResponse =
     | Response<UpdateMarketMakerConfigResponse>
     | Response<SetMessageReminderResponse>
     | Response<ReferralLeaderboardResponse>
-    | Response<ReportMessageResponse>;
+    | Response<ReportMessageResponse>
+    | Response<AddReactionResponse>
+    | Response<BlockCommunityUserResponse>
+    | Response<ChangeChannelRoleResponse>
+    | Response<ChangeCommunityRoleResponse>
+    | Response<CreateChannelResponse>
+    | Response<DeclineChannelInvitationResponse>
+    | Response<DeleteChannelResponse>
+    | Response<DeleteChannelMessagesResponse>
+    | Response<DeleteChannelMessageResponse>
+    | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -963,6 +1002,75 @@ type ReportMessage = {
 type DeclineInvitation = {
     chatId: string;
     kind: "declineInvitation";
+};
+
+type AddMembersToChannel = {
+    kind: "addMembersToChannel";
+    communityId: string;
+    channelId: string;
+    userIds: string[];
+    username: string;
+};
+
+type AddCommunityReaction = {
+    kind: "addCommunityReaction";
+    communityId: string;
+    channelId: string;
+    username: string;
+    messageId: bigint;
+    reaction: string;
+    threadRootMessageIndex: number | undefined;
+};
+
+type BlockCommunityUser = {
+    kind: "blockCommunityUser";
+    communityId: string;
+    userId: string;
+};
+
+type ChangeChannelRole = {
+    kind: "changeChannelRole";
+    communityId: string;
+    channelId: string;
+    userId: string;
+    newRole: MemberRole;
+};
+
+type DeclineChannelInvitation = {
+    kind: "declineChannelInvitation";
+    communityId: string;
+    channelId: string;
+};
+
+type DeleteChannel = {
+    kind: "deleteChannel";
+    communityId: string;
+    channelId: string;
+};
+
+type DeleteChannelMessages = {
+    kind: "deleteChannelMessages";
+    communityId: string;
+    channelId: string;
+    messageIds: bigint[];
+    threadRootMessageIndex: number | undefined;
+    asPlatformModerator: boolean | undefined;
+};
+
+type DeleteChannelMessage = {
+    kind: "deleteChannelMessage";
+    communityId: string;
+    channelId: string;
+    messageId: bigint;
+    sender: string;
+    threadRootMessageIndex: number | undefined;
+};
+
+type ChangeCommunityRole = {
+    kind: "changeCommunityRole";
+    communityId: string;
+    userId: string;
+    newRole: MemberRole;
 };
 
 export type WorkerResult<T> = T extends PinMessage
@@ -1171,4 +1279,24 @@ export type WorkerResult<T> = T extends PinMessage
     ? ReportMessageResponse
     : T extends DeclineInvitation
     ? DeclineInvitationResponse
+    : T extends AddMembersToChannel
+    ? AddMembersToChannelResponse
+    : T extends AddCommunityReaction
+    ? AddReactionResponse
+    : T extends BlockCommunityUser
+    ? BlockCommunityUserResponse
+    : T extends ChangeChannelRole
+    ? ChangeChannelRoleResponse
+    : T extends ChangeCommunityRole
+    ? ChangeCommunityRoleResponse
+    : T extends CreateChannel
+    ? CreateChannelResponse
+    : T extends DeclineChannelInvitation
+    ? DeclineChannelInvitationResponse
+    : T extends DeleteChannel
+    ? DeleteChannelResponse
+    : T extends DeleteChannelMessages
+    ? DeleteChannelMessagesResponse
+    : T extends DeleteChannelMessage
+    ? DeleteChannelMessageResponse
     : never;

@@ -3,6 +3,10 @@ import {
     _SERVICE,
     AddReactionResponse,
     AddMembersToChannelResponse,
+    AddMembersToChannelFailed,
+    AddMembersToChannelPartialSuccess,
+    UserFailedError,
+    UserFailedGateCheck,
     BlockUserResponse,
     ChangeChannelRoleResponse,
     ChangeRoleResponse,
@@ -43,11 +47,17 @@ import {
     UndeleteMessagesResponse,
     UpdateChannelResponse,
     UpdateCommunityResponse,
+    CommunityCanisterChannelSummary,
+    MessageMatch,
 } from "./types";
 export {
     _SERVICE as CommunityService,
     AddReactionResponse as ApiAddReactionResponse,
     AddMembersToChannelResponse as ApiAddMembersToChannelResponse,
+    AddMembersToChannelFailed as ApiAddMembersToChannelFailed,
+    AddMembersToChannelPartialSuccess as ApiAddMembersToChannelPartialSuccess,
+    UserFailedError as ApiUserFailedError,
+    UserFailedGateCheck as ApiUserFailedGateCheck,
     BlockUserResponse as ApiBlockUserResponse,
     ChangeChannelRoleResponse as ApiChangeChannelRoleResponse,
     ChangeRoleResponse as ApiChangeRoleResponse,
@@ -88,6 +98,8 @@ export {
     UndeleteMessagesResponse as ApiUndeleteMessagesResponse,
     UpdateChannelResponse as ApiUpdateChannelResponse,
     UpdateCommunityResponse as ApiUpdateCommunityResponse,
+    CommunityCanisterChannelSummary as ApiCommunityCanisterChannelSummary,
+    MessageMatch as ApiMessageMatch,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
