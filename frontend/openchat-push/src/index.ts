@@ -122,7 +122,7 @@ async function showNotification(notification: Notification, id: string): Promise
         title = notification.senderName;
         body = content.text;
         icon = content.image ?? icon;
-        path = `${notification.sender}/${notification.message.event.messageIndex}`;
+        path = `user/${notification.sender}/${notification.message.event.messageIndex}`;
         tag = notification.sender;
         timestamp = Number(notification.message.timestamp);
         closeExistingNotifications = true;
@@ -137,15 +137,15 @@ async function showNotification(notification: Notification, id: string): Promise
         icon = content.image ?? icon;
         path =
             notification.threadRootMessageIndex !== undefined
-                ? `${notification.chatId}/${notification.threadRootMessageIndex}/${notification.message.event.messageIndex}?open=true`
-                : `${notification.chatId}/${notification.message.event.messageIndex}`;
+                ? `group/${notification.chatId}/${notification.threadRootMessageIndex}/${notification.message.event.messageIndex}?open=true`
+                : `group/${notification.chatId}/${notification.message.event.messageIndex}`;
         tag = notification.threadRootMessageIndex !== undefined ? path : notification.chatId;
         timestamp = Number(notification.message.timestamp);
         closeExistingNotifications = true;
     } else if (notification.kind === "direct_reaction") {
         title = notification.username;
         body = `${notification.username} reacted '${notification.reaction}' to your message`;
-        path = `${notification.them}/${notification.message.event.messageIndex}`;
+        path = `user/${notification.them}/${notification.message.event.messageIndex}`;
         tag = path;
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "group_reaction") {
@@ -153,15 +153,15 @@ async function showNotification(notification: Notification, id: string): Promise
         body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
         path =
             notification.threadRootMessageIndex !== undefined
-                ? `${notification.chatId}/${notification.threadRootMessageIndex}/${notification.message.event.messageIndex}?open=true`
-                : `${notification.chatId}/${notification.message.event.messageIndex}`;
+                ? `group/${notification.chatId}/${notification.threadRootMessageIndex}/${notification.message.event.messageIndex}?open=true`
+                : `group/${notification.chatId}/${notification.message.event.messageIndex}`;
         tag = path;
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "added_to_group_notification") {
         // TODO Multi language support
         title = notification.groupName;
         body = `${notification.addedByUsername} added you to the group "${notification.groupName}"`;
-        path = notification.chatId;
+        path = `group/${notification.chatId}`;
         tag = path;
         timestamp = Number(notification.timestamp);
     } else {
