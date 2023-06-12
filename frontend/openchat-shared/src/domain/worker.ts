@@ -109,6 +109,8 @@ import type {
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
     DeleteChannelResponse,
+    DisableCommunityInviteCodeResponse,
+    EditChannelMessageResponse,
 } from "./community";
 
 /**
@@ -232,6 +234,8 @@ export type WorkerRequest =
     | DeleteChannel
     | DeleteChannelMessages
     | DeleteChannelMessage
+    | DisableCommunityInviteCode
+    | EditChannelMessage
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -909,6 +913,8 @@ export type WorkerResponse =
     | Response<DeleteChannelResponse>
     | Response<DeleteChannelMessagesResponse>
     | Response<DeleteChannelMessageResponse>
+    | Response<DisableCommunityInviteCode>
+    | Response<EditChannelMessageResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1063,6 +1069,19 @@ type DeleteChannelMessage = {
     channelId: string;
     messageId: bigint;
     sender: string;
+    threadRootMessageIndex: number | undefined;
+};
+
+type DisableCommunityInviteCode = {
+    kind: "disableCommunityInviteCode";
+    communityId: string;
+};
+
+type EditChannelMessage = {
+    kind: "editChannelMessage";
+    communityId: string;
+    channelId: string;
+    message: Message;
     threadRootMessageIndex: number | undefined;
 };
 
@@ -1299,4 +1318,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? DeleteChannelMessagesResponse
     : T extends DeleteChannelMessage
     ? DeleteChannelMessageResponse
+    : T extends DisableCommunityInviteCode
+    ? DisableCommunityInviteCodeResponse
+    : T extends EditChannelMessage
+    ? EditChannelMessageResponse
     : never;

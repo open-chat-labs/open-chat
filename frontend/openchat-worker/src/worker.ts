@@ -1525,6 +1525,30 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            case "disableCommunityInviteCode":
+                agent
+                    .communityClient(payload.communityId)
+                    .disableInviteCode()
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "editChannelMessage":
+                agent
+                    .communityClient(payload.communityId)
+                    .editMessage(payload.channelId, payload.message, payload.threadRootMessageIndex)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
         }
