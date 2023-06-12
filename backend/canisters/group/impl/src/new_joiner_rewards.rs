@@ -1,12 +1,12 @@
 use crate::{mutate_state, NewJoinerRewardStatus, RuntimeState};
-use chat_events::PushMessageArgs;
+use chat_events::{MessageContentInternal, PushMessageArgs};
 use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE};
 use ledger_utils::{calculate_transaction_hash, default_ledger_account};
 use tracing::error;
 use types::nns::CryptoAccount;
 use types::{
-    nns, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInternal,
-    MessageId, TimestampMillis, UserId, ICP,
+    nns, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageId, TimestampMillis,
+    UserId, ICP,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 

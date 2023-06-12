@@ -1,7 +1,6 @@
-use crate::{CanisterId, MessageId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis, UserId};
+use crate::{CanisterId, MessageId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum Proposal {
@@ -146,13 +145,6 @@ impl SnsProposal {
         }
         self.last_updated = now;
     }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ProposalContentInternal {
-    pub governance_canister_id: CanisterId,
-    pub proposal: Proposal,
-    pub votes: HashMap<UserId, bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
