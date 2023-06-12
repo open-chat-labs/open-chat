@@ -95,6 +95,8 @@ import type {
     SendChannelMessageResponse,
     ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
+    UnblockCommunityUserResponse,
+    UndeleteChannelMessagesResponse,
     User,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
@@ -608,7 +610,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    unblockUser(userId: string): Promise<unknown> {
+    unblockUser(userId: string): Promise<UnblockCommunityUserResponse> {
         return this.handleResponse(
             this.service.unblock_user({
                 user_id: Principal.fromText(userId),
@@ -621,7 +623,7 @@ export class CommunityClient extends CandidService {
         channelId: string,
         messageIds: bigint[],
         threadRootMessageIndex: number | undefined
-    ): Promise<unknown> {
+    ): Promise<UndeleteChannelMessagesResponse> {
         return this.handleResponse(
             this.service.undelete_messages({
                 channel_id: BigInt(channelId),

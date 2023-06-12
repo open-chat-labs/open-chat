@@ -1838,6 +1838,34 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            case "unblockCommunityUser":
+                agent
+                    .communityClient(payload.communityId)
+                    .unblockUser(payload.userId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "undeleteChannelMessages":
+                agent
+                    .communityClient(payload.communityId)
+                    .undeleteMessages(
+                        payload.channelId,
+                        payload.messageIds,
+                        payload.threadRootMessageIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
         }
