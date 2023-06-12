@@ -1678,6 +1678,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            case "pinChannelMessage":
+                agent
+                    .communityClient(payload.communityId)
+                    .pinMessage(payload.channelId, payload.messageIndex)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
         }

@@ -84,6 +84,7 @@ import type {
     MakeCommunityPrivateResponse,
     MemberRole,
     Message,
+    PinChannelMessageResponse,
     User,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
@@ -423,7 +424,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    pinMessage(channelId: string, messageIndex: number): Promise<unknown> {
+    pinMessage(channelId: string, messageIndex: number): Promise<PinChannelMessageResponse> {
         return this.handleResponse(
             this.service.pin_message({
                 channel_id: BigInt(channelId),
