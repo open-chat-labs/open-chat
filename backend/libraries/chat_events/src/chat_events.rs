@@ -11,10 +11,10 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    ChatId, ChatMetrics, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
-    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Mention, MentionInternal, Message,
-    MessageContentInitial, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVotes, ProposalUpdate, PushEventResult,
-    PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, TimestampMillis, Timestamped, UserId, VoteOperation,
+    ChatId, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails,
+    GroupCreated, GroupFrozen, GroupUnfrozen, Mention, MentionInternal, Message, MessageContentInitial, MessageId,
+    MessageIndex, MessageMatch, Milliseconds, PollVotes, ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet,
+    Reaction, RegisterVoteResult, TimestampMillis, Timestamped, UserId, VoteOperation,
 };
 use types::{Hash, MessageReport, ReportedMessageInternal};
 
@@ -25,8 +25,8 @@ pub struct ChatEvents {
     chat_type: ChatType,
     main: ChatEventsList,
     threads: HashMap<MessageIndex, ChatEventsList>,
-    metrics: ChatMetrics,
-    per_user_metrics: HashMap<UserId, ChatMetrics>,
+    metrics: ChatMetricsInternal,
+    per_user_metrics: HashMap<UserId, ChatMetricsInternal>,
     frozen: bool,
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
@@ -39,7 +39,7 @@ impl ChatEvents {
             chat_type: ChatType::Direct,
             main: ChatEventsList::default(),
             threads: HashMap::new(),
-            metrics: ChatMetrics::default(),
+            metrics: ChatMetricsInternal::default(),
             per_user_metrics: HashMap::new(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
@@ -63,7 +63,7 @@ impl ChatEvents {
             chat_type: ChatType::Group,
             main: ChatEventsList::default(),
             threads: HashMap::new(),
-            metrics: ChatMetrics::default(),
+            metrics: ChatMetricsInternal::default(),
             per_user_metrics: HashMap::new(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
@@ -864,11 +864,11 @@ impl ChatEvents {
         events_reader.hydrate_mention(mention)
     }
 
-    pub fn metrics(&self) -> &ChatMetrics {
+    pub fn metrics(&self) -> &ChatMetricsInternal {
         &self.metrics
     }
 
-    pub fn user_metrics(&self, user_id: &UserId, if_updated_since: Option<TimestampMillis>) -> Option<&ChatMetrics> {
+    pub fn user_metrics(&self, user_id: &UserId, if_updated_since: Option<TimestampMillis>) -> Option<&ChatMetricsInternal> {
         self.per_user_metrics
             .get(user_id)
             .filter(|m| if let Some(since) = if_updated_since { m.last_active > since } else { true })
@@ -1082,9 +1082,9 @@ impl ChatEvents {
     }
 }
 
-fn add_to_metrics<F: FnMut(&mut ChatMetrics)>(
-    metrics: &mut ChatMetrics,
-    per_user_metrics: &mut HashMap<UserId, ChatMetrics>,
+fn add_to_metrics<F: FnMut(&mut ChatMetricsInternal)>(
+    metrics: &mut ChatMetricsInternal,
+    per_user_metrics: &mut HashMap<UserId, ChatMetricsInternal>,
     user_id: UserId,
     mut action: F,
     timestamp: TimestampMillis,

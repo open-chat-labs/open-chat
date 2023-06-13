@@ -48,13 +48,13 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         mentions: updates_from_events.mentions,
         permissions: updates_from_events.permissions,
         updated_events: updates_from_events.updated_events,
-        metrics: Some(state.data.chat.events.metrics().clone()),
+        metrics: Some(state.data.chat.events.metrics().hydrate()),
         my_metrics: state
             .data
             .chat
             .events
             .user_metrics(&member.user_id, Some(args.updates_since))
-            .cloned(),
+            .map(|m| m.hydrate()),
         is_public: updates_from_events.is_public,
         latest_threads: state.data.chat.events.latest_threads(
             member.min_visible_event_index(),
