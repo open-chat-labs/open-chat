@@ -5,7 +5,6 @@ use crate::{
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::cmp::max;
 use std::collections::HashSet;
 
 pub const MAX_THREADS_IN_SUMMARY: usize = 20;
@@ -265,7 +264,6 @@ pub struct ChatMetrics {
     pub file_messages: u64,
     pub polls: u64,
     pub poll_votes: u64,
-    pub cycles_messages: u64,
     pub icp_messages: u64,
     pub sns1_messages: u64,
     pub ckbtc_messages: u64,
@@ -282,32 +280,6 @@ pub struct ChatMetrics {
     pub message_reminders: u64,
     pub custom_type_messages: u64,
     pub last_active: TimestampMillis,
-}
-
-impl ChatMetrics {
-    pub fn merge(&mut self, other: &ChatMetrics) {
-        self.text_messages += other.text_messages;
-        self.image_messages += other.image_messages;
-        self.video_messages += other.video_messages;
-        self.audio_messages += other.audio_messages;
-        self.file_messages += other.file_messages;
-        self.polls += other.polls;
-        self.poll_votes += other.poll_votes;
-        self.cycles_messages += other.cycles_messages;
-        self.icp_messages += other.icp_messages;
-        self.sns1_messages += other.sns1_messages;
-        self.ckbtc_messages += other.ckbtc_messages;
-        self.chat_messages += other.chat_messages;
-        self.deleted_messages += other.deleted_messages;
-        self.giphy_messages += other.giphy_messages;
-        self.prize_messages += other.prize_messages;
-        self.prize_winner_messages += other.prize_winner_messages;
-        self.replies += other.replies;
-        self.edits += other.edits;
-        self.reactions += other.reactions;
-        self.proposals += other.proposals;
-        self.last_active = max(self.last_active, other.last_active);
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

@@ -119,7 +119,6 @@ describe("merging metrics", () => {
         const metrics = {
             ...emptyChatMetrics(),
             audioMessages: 10,
-            cyclesMessages: 20,
             edits: 30,
             icpMessages: 40,
         };
@@ -129,13 +128,11 @@ describe("merging metrics", () => {
         const metrics = {
             ...emptyChatMetrics(),
             audioMessages: 10,
-            cyclesMessages: 20,
             edits: 30,
             icpMessages: 40,
         };
         expect(mergeChatMetrics(metrics, metrics)).toMatchObject({
             audioMessages: 20,
-            cyclesMessages: 40,
             edits: 60,
             icpMessages: 80,
         });

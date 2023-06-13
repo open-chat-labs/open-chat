@@ -1,14 +1,14 @@
 use crate::model::direct_chat::DirectChat;
-use chat_events::PushMessageArgs;
+use chat_events::{ChatMetricsInternal, PushMessageArgs};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, ChatMetrics, EventWrapper, Message, MessageIndex, TimestampMillis, UserId};
+use types::{ChatId, EventWrapper, Message, MessageIndex, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
-    metrics: ChatMetrics,
+    metrics: ChatMetricsInternal,
 }
 
 impl DirectChats {
@@ -67,7 +67,7 @@ impl DirectChats {
     }
 
     pub fn aggregate_metrics(&mut self) {
-        let mut metrics = ChatMetrics::default();
+        let mut metrics = ChatMetricsInternal::default();
 
         for chat in self.direct_chats.values() {
             metrics.merge(chat.events.metrics());
@@ -76,7 +76,7 @@ impl DirectChats {
         self.metrics = metrics;
     }
 
-    pub fn metrics(&self) -> &ChatMetrics {
+    pub fn metrics(&self) -> &ChatMetricsInternal {
         &self.metrics
     }
 

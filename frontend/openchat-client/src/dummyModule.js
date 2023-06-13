@@ -10,7 +10,6 @@ export function process() {
 export function emptyChatMetrics() {
     return {
         audioMessages: 0,
-        cyclesMessages: 0,
         edits: 0,
         icpMessages: 0,
         giphyMessages: 0,

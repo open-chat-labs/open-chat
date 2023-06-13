@@ -486,7 +486,6 @@ function buildIdenticonUrl(userId: string): string {
 export function emptyChatMetrics(): ChatMetrics {
     return {
         audioMessages: 0,
-        cyclesMessages: 0,
         edits: 0,
         icpMessages: 0,
         sns1Messages: 0,

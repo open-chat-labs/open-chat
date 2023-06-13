@@ -17,7 +17,8 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
 use types::{
-    CanisterId, ChatId, Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped, UserId, Version,
+    CanisterId, ChatId, ChatMetrics, Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped, UserId,
+    Version,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -90,7 +91,6 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        let chat_metrics = self.data.direct_chats.metrics();
         Metrics {
             memory_used: utils::memory::used(),
             now: self.env.now(),
@@ -101,25 +101,8 @@ impl RuntimeState {
             group_chats: self.data.group_chats.len() as u32,
             groups_created: self.data.group_chats.groups_created(),
             blocked_users: self.data.blocked_users.len() as u32,
-            text_messages: chat_metrics.text_messages,
-            image_messages: chat_metrics.image_messages,
-            video_messages: chat_metrics.video_messages,
-            audio_messages: chat_metrics.audio_messages,
-            file_messages: chat_metrics.file_messages,
-            polls: chat_metrics.polls,
-            poll_votes: chat_metrics.poll_votes,
-            cycles_messages: chat_metrics.cycles_messages,
-            icp_messages: chat_metrics.icp_messages,
-            sns1_messages: chat_metrics.sns1_messages,
-            ckbtc_messages: chat_metrics.ckbtc_messages,
-            chat_messages: chat_metrics.chat_messages,
-            deleted_messages: chat_metrics.deleted_messages,
-            giphy_messages: chat_metrics.giphy_messages,
-            replies: chat_metrics.replies,
-            edits: chat_metrics.edits,
-            reactions: chat_metrics.reactions,
             created: self.data.user_created,
-            last_active: chat_metrics.last_active,
+            direct_chat_metrics: self.data.direct_chats.metrics().hydrate(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -251,25 +234,8 @@ pub struct Metrics {
     pub group_chats: u32,
     pub groups_created: u32,
     pub blocked_users: u32,
-    pub text_messages: u64,
-    pub image_messages: u64,
-    pub video_messages: u64,
-    pub audio_messages: u64,
-    pub file_messages: u64,
-    pub polls: u64,
-    pub poll_votes: u64,
-    pub cycles_messages: u64,
-    pub icp_messages: u64,
-    pub sns1_messages: u64,
-    pub ckbtc_messages: u64,
-    pub chat_messages: u64,
-    pub deleted_messages: u64,
-    pub giphy_messages: u64,
-    pub replies: u64,
-    pub edits: u64,
-    pub reactions: u64,
     pub created: TimestampMillis,
-    pub last_active: TimestampMillis,
+    pub direct_chat_metrics: ChatMetrics,
     pub canister_ids: CanisterIds,
 }
 
