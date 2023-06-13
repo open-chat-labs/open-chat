@@ -1,9 +1,12 @@
 use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use chat_events::ChatEvents;
-use serde::{Deserialize, Serialize};
+use serde::de::{SeqAccess, Visitor};
+use serde::ser::SerializeSeq;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::fmt::Formatter;
 use types::{
     is_default, is_empty_btreemap, is_empty_hashset, EventIndex, GroupMember, GroupPermissions, Mention, MessageIndex,
     TimestampMillis, Timestamped, UserId, MAX_RETURNED_MENTIONS,
@@ -13,6 +16,7 @@ const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupMembers {
+    #[serde(serialize_with = "serialize_members", deserialize_with = "deserialize_members")]
     pub members: HashMap<UserId, GroupMemberInternal>,
     pub blocked: HashSet<UserId>,
     pub moderator_count: u32,
@@ -378,6 +382,41 @@ impl From<&GroupMemberInternal> for GroupMember {
 
 fn mentions_are_empty(value: &Mentions) -> bool {
     value.is_empty()
+}
+
+fn serialize_members<S: Serializer>(value: &HashMap<UserId, GroupMemberInternal>, serializer: S) -> Result<S::Ok, S::Error> {
+    let mut seq = serializer.serialize_seq(Some(value.len()))?;
+    for member in value.values() {
+        seq.serialize_element(member)?;
+    }
+    seq.end()
+}
+
+fn deserialize_members<'de, D: Deserializer<'de>>(deserializer: D) -> Result<HashMap<UserId, GroupMemberInternal>, D::Error> {
+    // TODO switch to new impl after next upgrade
+    HashMap::deserialize(deserializer)
+    // deserializer.deserialize_seq(GroupMembersMapVisitor)
+}
+
+struct GroupMembersMapVisitor;
+
+impl<'de> Visitor<'de> for GroupMembersMapVisitor {
+    type Value = HashMap<UserId, GroupMemberInternal>;
+
+    fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+        formatter.write_str("a sequence")
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
+        let mut map = seq.size_hint().map_or_else(HashMap::new, HashMap::with_capacity);
+        while let Some(next) = seq.next_element::<GroupMemberInternal>()? {
+            map.insert(next.user_id, next);
+        }
+        Ok(map)
+    }
 }
 
 #[cfg(test)]
