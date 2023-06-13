@@ -93,7 +93,7 @@ struct PrepareResult {
 fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     let now = state.env.now();
 
-    if is_public && !state.data.public_groups.reserve_name(name, now) {
+    if is_public && !state.data.public_communities.reserve_name(name, now) {
         return Err(NameTaken);
     }
 
