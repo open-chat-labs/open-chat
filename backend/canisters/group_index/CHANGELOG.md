@@ -7,9 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-Added active_groups and c2c_active_groups endpoints ([#3759](https://github.com/open-ic/open-chat/pull/3759))
-Added search_v2 endpoint ([#3763](https://github.com/open-ic/open-chat/pull/3763))
-Support community banner ([#3765](https://github.com/open-ic/open-chat/pull/3765))
+- Added active_groups and c2c_active_groups endpoints ([#3759](https://github.com/open-ic/open-chat/pull/3759))
+- Added search_v2 endpoint ([#3763](https://github.com/open-ic/open-chat/pull/3763))
+- Support community banner ([#3765](https://github.com/open-ic/open-chat/pull/3765))
+
+### Fixed
+
+- Fix `c2c_create_community` ([#3777](https://github.com/open-ic/open-chat/pull/3777))
 
 ## [[2.0.703](https://github.com/open-ic/open-chat/releases/tag/v2.0.703-group_index)] - 2023-06-01
 
