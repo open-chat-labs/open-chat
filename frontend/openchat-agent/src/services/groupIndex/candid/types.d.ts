@@ -120,6 +120,7 @@ export interface ChatFrozen {
 }
 export type ChatId = CanisterId;
 export interface ChatMetrics {
+<<<<<<< HEAD
     prize_winner_messages: bigint;
     audio_messages: bigint;
     cycles_messages: bigint;
@@ -147,6 +148,31 @@ export interface ChatMetrics {
 }
 export interface ChatUnfrozen {
     unfrozen_by: UserId;
+=======
+  'prize_winner_messages' : bigint,
+  'audio_messages' : bigint,
+  'chat_messages' : bigint,
+  'edits' : bigint,
+  'icp_messages' : bigint,
+  'last_active' : TimestampMillis,
+  'giphy_messages' : bigint,
+  'deleted_messages' : bigint,
+  'file_messages' : bigint,
+  'poll_votes' : bigint,
+  'text_messages' : bigint,
+  'message_reminders' : bigint,
+  'image_messages' : bigint,
+  'replies' : bigint,
+  'video_messages' : bigint,
+  'sns1_messages' : bigint,
+  'polls' : bigint,
+  'proposals' : bigint,
+  'reported_messages' : bigint,
+  'ckbtc_messages' : bigint,
+  'reactions' : bigint,
+  'custom_type_messages' : bigint,
+  'prize_messages' : bigint,
+>>>>>>> master
 }
 export interface CommunityCanisterChannelSummary {
     channel_id: ChannelId;

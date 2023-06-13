@@ -15,7 +15,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    AccessGate, AccessRules, CanisterId, Cryptocurrency, Cycles, Document, EventIndex, FrozenGroupInfo,
+    AccessGate, AccessRules, CanisterId, ChatMetrics, Cryptocurrency, Cycles, Document, EventIndex, FrozenGroupInfo,
     GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis,
     Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
 };
@@ -108,8 +108,12 @@ impl RuntimeState {
             mentions: member.most_recent_mentions(None, &chat.events, now),
             permissions: chat.permissions.clone(),
             notifications_muted: member.notifications_muted.value,
-            metrics: chat.events.metrics().clone(),
-            my_metrics: chat.events.user_metrics(&member.user_id, None).cloned().unwrap_or_default(),
+            metrics: chat.events.metrics().hydrate(),
+            my_metrics: chat
+                .events
+                .user_metrics(&member.user_id, None)
+                .map(|m| m.hydrate())
+                .unwrap_or_default(),
             latest_threads: chat.events.latest_threads(
                 min_visible_event_index,
                 member.threads.iter(),
@@ -156,8 +160,6 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         let group_chat_core = &self.data.chat;
-        let chat_metrics = group_chat_core.events.metrics();
-
         let now = self.env.now();
         let messages_in_last_hour = group_chat_core
             .events
@@ -190,29 +192,11 @@ impl RuntimeState {
             owners: group_chat_core.members.owner_count(),
             blocked: group_chat_core.members.blocked().len() as u32,
             invited: self.data.chat.invited_users.len() as u32,
-            text_messages: chat_metrics.text_messages,
-            image_messages: chat_metrics.image_messages,
-            video_messages: chat_metrics.video_messages,
-            audio_messages: chat_metrics.audio_messages,
-            file_messages: chat_metrics.file_messages,
-            polls: chat_metrics.polls,
-            poll_votes: chat_metrics.poll_votes,
-            cycles_messages: chat_metrics.cycles_messages,
-            icp_messages: chat_metrics.icp_messages,
-            sns1_messages: chat_metrics.sns1_messages,
-            ckbtc_messages: chat_metrics.ckbtc_messages,
-            chat_messages: chat_metrics.chat_messages,
-            deleted_messages: chat_metrics.deleted_messages,
-            giphy_messages: chat_metrics.giphy_messages,
-            replies: chat_metrics.replies,
-            edits: chat_metrics.edits,
-            reactions: chat_metrics.reactions,
-            reported_messages: chat_metrics.reported_messages,
+            chat_metrics: group_chat_core.events.metrics().hydrate(),
             messages_in_last_hour,
             messages_in_last_day,
             events_in_last_hour,
             events_in_last_day,
-            last_active: chat_metrics.last_active,
             new_joiner_rewards: self.data.new_joiner_rewards.as_ref().map(|r| r.metrics()),
             frozen: self.data.is_frozen(),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
@@ -425,29 +409,11 @@ pub struct Metrics {
     pub owners: u32,
     pub blocked: u32,
     pub invited: u32,
-    pub text_messages: u64,
-    pub image_messages: u64,
-    pub video_messages: u64,
-    pub audio_messages: u64,
-    pub file_messages: u64,
-    pub polls: u64,
-    pub poll_votes: u64,
-    pub cycles_messages: u64,
-    pub icp_messages: u64,
-    pub sns1_messages: u64,
-    pub ckbtc_messages: u64,
-    pub chat_messages: u64,
-    pub deleted_messages: u64,
-    pub giphy_messages: u64,
-    pub replies: u64,
-    pub edits: u64,
-    pub reactions: u64,
-    pub reported_messages: u64,
+    pub chat_metrics: ChatMetrics,
     pub messages_in_last_hour: u64,
     pub messages_in_last_day: u64,
     pub events_in_last_hour: u64,
     pub events_in_last_day: u64,
-    pub last_active: TimestampMillis,
     pub new_joiner_rewards: Option<NewJoinerRewardMetrics>,
     pub frozen: bool,
     pub instruction_counts: Vec<InstructionCountEntry>,

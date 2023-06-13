@@ -10,7 +10,7 @@ pub use roles::*;
 
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
-    DeleteUndeleteMessagesArgs, PushMessageArgs, Reader, UndeleteMessageResult,
+    DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, UndeleteMessageResult,
 };
 use search::Query;
 use serde::{Deserialize, Serialize};
@@ -20,9 +20,9 @@ use types::{
     EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
     GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
     GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, Mention, MentionInternal, Message, MessageContent,
-    MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned,
-    MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction,
-    RoleChanged, SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked, UsersInvited,
+    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse,
+    Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged,
+    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked, UsersInvited,
 };
 use utils::document_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -675,14 +675,12 @@ impl GroupChatCore {
                 .as_ref()
                 .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index, now));
 
-            let content = content.new_content_into_internal();
-
             let push_message_args = PushMessageArgs {
                 sender,
                 thread_root_message_index,
                 message_id,
-                content,
-                replies_to: replies_to.map(|r| r.into()),
+                content: content.into(),
+                replies_to: replies_to.as_ref().map(|r| r.into()),
                 forwarded: forwarding,
                 correlation_id: 0,
                 now,

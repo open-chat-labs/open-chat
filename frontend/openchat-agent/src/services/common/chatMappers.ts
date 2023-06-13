@@ -722,7 +722,6 @@ export function permissionRole(candid: ApiPermissionRole): PermissionRole {
 export function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
     return {
         audioMessages: Number(candid.audio_messages),
-        cyclesMessages: Number(candid.cycles_messages),
         edits: Number(candid.edits),
         icpMessages: Number(candid.icp_messages),
         sns1Messages: Number(candid.sns1_messages),

@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Don't send notifications to suspended users ([#3704](https://github.com/open-ic/open-chat/pull/3704))
 - Make (de)serializing events more efficient ([#3756](https://github.com/open-ic/open-chat/pull/3756))
 - Trim deprecated chat events to save space ([#3773](https://github.com/open-ic/open-chat/pull/3773))
+- Further reductions to the size of serialized ChatEvents ([#3775](https://github.com/open-ic/open-chat/pull/3775))
+- Reduce size of `ChatMetrics` when serialized ([#3779](https://github.com/open-ic/open-chat/pull/3779))
 
 ### Removed
 

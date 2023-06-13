@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageIndex, ProposalContent,
-    ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
+    CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageIndex, ProposalContent, TimestampMillis,
+    TotalVotes, UserId, VoteOperation,
 };
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
@@ -48,42 +48,6 @@ pub enum MessageContent {
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
     ReportedMessage(ReportedMessage),
-    Custom(CustomContent),
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum MessageContentInternal {
-    #[serde(rename = "t", alias = "Text")]
-    Text(TextContent),
-    #[serde(rename = "i", alias = "Image")]
-    Image(ImageContent),
-    #[serde(rename = "v", alias = "Video")]
-    Video(VideoContent),
-    #[serde(rename = "a", alias = "Audio")]
-    Audio(AudioContent),
-    #[serde(rename = "f", alias = "File")]
-    File(FileContent),
-    #[serde(rename = "p", alias = "Poll")]
-    Poll(PollContentInternal),
-    #[serde(rename = "c", alias = "Crypto")]
-    Crypto(CryptoContent),
-    #[serde(rename = "d", alias = "Deleted")]
-    Deleted(DeletedBy),
-    #[serde(rename = "g", alias = "Giphy")]
-    Giphy(GiphyContent),
-    #[serde(rename = "gp", alias = "GovernanceProposal")]
-    GovernanceProposal(ProposalContentInternal),
-    #[serde(rename = "pr", alias = "Prize")]
-    Prize(PrizeContentInternal),
-    #[serde(rename = "pw", alias = "PrizeWinner")]
-    PrizeWinner(PrizeWinnerContent),
-    #[serde(rename = "mrc", alias = "MessageReminderCreated")]
-    MessageReminderCreated(MessageReminderCreatedContent),
-    #[serde(rename = "mr", alias = "MessageReminder")]
-    MessageReminder(MessageReminderContent),
-    #[serde(rename = "rm", alias = "ReportedMessage")]
-    ReportedMessage(ReportedMessageInternal),
-    #[serde(rename = "cu", alias = "Custom")]
     Custom(CustomContent),
 }
 
@@ -246,44 +210,6 @@ impl MessageContentInitial {
         }
     }
 
-    // This must only be called on the content of new messages, this is because for polls it will
-    // set the votes to empty
-    pub fn new_content_into_internal(self) -> MessageContentInternal {
-        match self {
-            MessageContentInitial::Text(t) => MessageContentInternal::Text(t),
-            MessageContentInitial::Image(i) => MessageContentInternal::Image(i),
-            MessageContentInitial::Video(v) => MessageContentInternal::Video(v),
-            MessageContentInitial::Audio(a) => MessageContentInternal::Audio(a),
-            MessageContentInitial::File(f) => MessageContentInternal::File(f),
-            MessageContentInitial::Poll(p) => MessageContentInternal::Poll(PollContentInternal {
-                config: p.config,
-                votes: HashMap::new(),
-                ended: false,
-            }),
-            MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(c),
-            MessageContentInitial::Deleted(d) => MessageContentInternal::Deleted(d),
-            MessageContentInitial::Giphy(g) => MessageContentInternal::Giphy(g),
-            MessageContentInitial::GovernanceProposal(p) => {
-                MessageContentInternal::GovernanceProposal(ProposalContentInternal {
-                    governance_canister_id: p.governance_canister_id,
-                    proposal: p.proposal,
-                    votes: HashMap::new(),
-                })
-            }
-            MessageContentInitial::Prize(p) => MessageContentInternal::Prize(PrizeContentInternal {
-                prizes_remaining: p.prizes,
-                winners: HashSet::new(),
-                end_date: p.end_date,
-                caption: p.caption,
-                reservations: HashSet::new(),
-                transaction: p.transfer,
-            }),
-            MessageContentInitial::MessageReminderCreated(r) => MessageContentInternal::MessageReminderCreated(r),
-            MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r),
-            MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c),
-        }
-    }
-
     pub fn text_length(&self) -> usize {
         fn opt_string_len(input: &Option<String>) -> usize {
             input.as_ref().map_or(0, |s| s.len())
@@ -355,108 +281,6 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
             MessageContentInitial::Custom(c) => MessageContent::Custom(c),
         }
-    }
-}
-
-impl MessageContentInternal {
-    pub fn hydrate(&self, my_user_id: Option<UserId>) -> MessageContent {
-        match self {
-            MessageContentInternal::Text(t) => MessageContent::Text(t.clone()),
-            MessageContentInternal::Image(i) => MessageContent::Image(i.clone()),
-            MessageContentInternal::Video(v) => MessageContent::Video(v.clone()),
-            MessageContentInternal::Audio(a) => MessageContent::Audio(a.clone()),
-            MessageContentInternal::File(f) => MessageContent::File(f.clone()),
-            MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
-            MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.clone()),
-            MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
-            MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
-            MessageContentInternal::PrizeWinner(c) => MessageContent::PrizeWinner(c.clone()),
-            MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(ProposalContent {
-                governance_canister_id: p.governance_canister_id,
-                proposal: p.proposal.clone(),
-                my_vote: my_user_id.and_then(|u| p.votes.get(&u)).copied(),
-            }),
-            MessageContentInternal::Prize(p) => MessageContent::Prize(PrizeContent {
-                prizes_remaining: p.prizes_remaining.len() as u32,
-                winners: p.winners.iter().copied().collect(),
-                token: p.transaction.token(),
-                end_date: p.end_date,
-                caption: p.caption.clone(),
-                prizes_pending: p.reservations.len() as u32,
-            }),
-            MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.clone()),
-            MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.clone()),
-            MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(ReportedMessage {
-                reports: r.reports.iter().take(10).cloned().collect(),
-                count: r.reports.len() as u32,
-            }),
-            MessageContentInternal::Custom(c) => MessageContent::Custom(c.clone()),
-        }
-    }
-
-    pub fn text(&self) -> Option<&str> {
-        match self {
-            MessageContentInternal::Text(c) => Some(&c.text),
-            MessageContentInternal::Image(c) => c.caption.as_deref(),
-            MessageContentInternal::Video(c) => c.caption.as_deref(),
-            MessageContentInternal::Audio(c) => c.caption.as_deref(),
-            MessageContentInternal::File(c) => c.caption.as_deref(),
-            MessageContentInternal::Poll(c) => c.config.text.as_deref(),
-            MessageContentInternal::Crypto(c) => c.caption.as_deref(),
-            MessageContentInternal::Giphy(c) => c.caption.as_deref(),
-            MessageContentInternal::GovernanceProposal(c) => Some(c.proposal.title()),
-            MessageContentInternal::Prize(c) => c.caption.as_deref(),
-            MessageContentInternal::MessageReminderCreated(r) => r.notes.as_deref(),
-            MessageContentInternal::MessageReminder(r) => r.notes.as_deref(),
-            MessageContentInternal::PrizeWinner(_)
-            | MessageContentInternal::Deleted(_)
-            | MessageContentInternal::ReportedMessage(_)
-            | MessageContentInternal::Custom(_) => None,
-        }
-    }
-
-    pub fn blob_references(&self) -> Vec<BlobReference> {
-        let mut references = Vec::new();
-
-        match self {
-            MessageContentInternal::Image(i) => {
-                if let Some(br) = i.blob_reference.clone() {
-                    references.push(br);
-                }
-            }
-            MessageContentInternal::Video(v) => {
-                if let Some(br) = v.video_blob_reference.clone() {
-                    references.push(br);
-                }
-                if let Some(br) = v.image_blob_reference.clone() {
-                    references.push(br);
-                }
-            }
-            MessageContentInternal::Audio(a) => {
-                if let Some(br) = a.blob_reference.clone() {
-                    references.push(br)
-                }
-            }
-            MessageContentInternal::File(f) => {
-                if let Some(br) = f.blob_reference.clone() {
-                    references.push(br);
-                }
-            }
-            MessageContentInternal::Text(_)
-            | MessageContentInternal::Poll(_)
-            | MessageContentInternal::Crypto(_)
-            | MessageContentInternal::Deleted(_)
-            | MessageContentInternal::Giphy(_)
-            | MessageContentInternal::GovernanceProposal(_)
-            | MessageContentInternal::Prize(_)
-            | MessageContentInternal::PrizeWinner(_)
-            | MessageContentInternal::MessageReminderCreated(_)
-            | MessageContentInternal::MessageReminder(_)
-            | MessageContentInternal::ReportedMessage(_)
-            | MessageContentInternal::Custom(_) => {}
-        }
-
-        references
     }
 }
 

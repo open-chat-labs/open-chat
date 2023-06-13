@@ -489,10 +489,10 @@ fn try_into_message_event(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{ChatEvents, PushMessageArgs};
+    use crate::{ChatEvents, MessageContentInternal, PushMessageArgs};
     use candid::Principal;
     use std::mem::size_of;
-    use types::{EventsTimeToLiveUpdated, MessageContentInternal, Milliseconds, TextContent};
+    use types::{EventsTimeToLiveUpdated, Milliseconds, TextContent};
 
     #[test]
     fn enum_size() {
