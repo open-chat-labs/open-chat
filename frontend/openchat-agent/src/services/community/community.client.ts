@@ -396,7 +396,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    localUserIndex(): Promise<unknown> {
+    localUserIndex(): Promise<string> {
         return this.handleResponse(this.service.local_user_index({}), localUserIndexResponse);
     }
 

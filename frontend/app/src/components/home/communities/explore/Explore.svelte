@@ -10,6 +10,7 @@
     import Filters from "./Filters.svelte";
     import type { Community, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { toastStore } from "stores/toast";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -32,10 +33,19 @@
         joining.add(ev.detail.id);
         joining = joining;
 
-        await client.joinCommunity(ev.detail);
-
-        joining.delete(ev.detail.id);
-        joining = joining;
+        client
+            .joinCommunity(ev.detail)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    toastStore.showSuccessToast("Joined community successfully");
+                } else {
+                    toastStore.showFailureToast("Failed to join community");
+                }
+            })
+            .finally(() => {
+                joining.delete(ev.detail.id);
+                joining = joining;
+            });
     }
 
     function createCommunity() {

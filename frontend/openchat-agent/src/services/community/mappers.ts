@@ -1002,19 +1002,6 @@ export function apiOptionalCommunityPermissions(
     };
 }
 
-export function apiCommunityPermissionRole(
-    permissionRole: CommunityPermissionRole
-): ApiCommunityPermissionRole {
-    switch (permissionRole) {
-        case "owner":
-            return { Owners: null };
-        case "admins":
-            return { Admins: null };
-        case "members":
-            return { Members: null };
-    }
-}
-
 export function groupChatSummary(candid: ApiCommunityCanisterChannelSummary): GroupChatSummary {
     const latestMessage = optional(candid.latest_message, (ev) => ({
         index: ev.index,

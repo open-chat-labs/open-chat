@@ -140,6 +140,7 @@ import {
     UpdatesSuccessResponse,
     AccessGate,
     SearchScope,
+    JoinCommunityResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1126,6 +1127,16 @@ export class OpenChatAgent extends EventTarget {
         const inviteCode = this.getProvidedInviteCode(chatId);
         const localUserIndex = await this.getGroupClient(chatId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).joinGroup(chatId, inviteCode);
+    }
+
+    async joinCommunity(communityId: string): Promise<JoinCommunityResponse> {
+        // TODO - we need to capture invide code somehow here, but it doesn't really fit at the moment
+        // const inviteCode = this.getProvidedInviteCode(chatId);
+        const localUserIndex = await this.communityClient(communityId).localUserIndex();
+        return this.createLocalUserIndexClient(localUserIndex).joinCommunity(
+            communityId,
+            undefined
+        );
     }
 
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {

@@ -482,21 +482,6 @@ export function createCommunityResponse(
     }
 }
 
-export function apiCommunityPermissions(
-    permissions: CommunityPermissions
-): ApiCommunityPermissions {
-    return {
-        create_public_channel: apiCommunityPermissionRole(permissions.createPublicChannel),
-        block_users: apiCommunityPermissionRole(permissions.blockUsers),
-        change_permissions: apiCommunityPermissionRole(permissions.changePermissions),
-        update_details: apiCommunityPermissionRole(permissions.updateDetails),
-        remove_members: apiCommunityPermissionRole(permissions.removeMembers),
-        invite_users: apiCommunityPermissionRole(permissions.inviteUsers),
-        change_roles: apiCommunityPermissionRole(permissions.changeRoles),
-        create_private_channel: apiCommunityPermissionRole(permissions.createPrivateChannel),
-    };
-}
-
 export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroupResponse {
     if ("Success" in candid) {
         return { kind: "success", canisterId: candid.Success.chat_id.toString() };

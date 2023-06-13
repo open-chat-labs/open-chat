@@ -37,6 +37,9 @@ export type Community = HasIdentity &
     HasLevel &
     Permissioned<CommunityPermissions> & {
         name: string;
+        joined: bigint;
+        latestEventIndex: number;
+        lastUpdated: bigint;
         description: string;
         memberCount: number;
         channelCount: number;
@@ -347,3 +350,8 @@ export type ToggleMuteChannelNotificationsResponse = Failure | Success;
 export type ToggleMuteCommunityNotificationsResponse = Failure | Success;
 
 export type CreateCommunityResponse = Failure | (Success & { id: string }) | { kind: "name_taken" };
+
+export type JoinCommunityResponse =
+    | Failure
+    | GateCheckFailed
+    | (Success & { community: Community });

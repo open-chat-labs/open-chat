@@ -47,6 +47,7 @@ import type {
     ApiCustomMessageContent,
     ApiReportedMessage,
     ApiGroupRole,
+    ApiCommunityPermissions,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -98,10 +99,17 @@ import {
     ReportedMessageContent,
     GroupChatSummary,
     GateCheckFailedReason,
+    Community,
+    CommunityPermissionRole,
+    CommunityPermissions,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type { ApiGroupCanisterGroupChatSummary } from "../group/candid/idl";
-import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
+import type {
+    ApiGateCheckFailedReason,
+    ApiCommunityCanisterCommunitySummary,
+} from "../localUserIndex/candid/idl";
+import type { ApiCommunityPermissionRole } from "../community/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -622,6 +630,55 @@ export function groupPermissions(candid: ApiGroupPermissions): GroupPermissions 
         reactToMessages: permissionRole(candid.react_to_messages),
         replyInThread: permissionRole(candid.reply_in_thread),
     };
+}
+
+export function communityPermissions(candid: ApiCommunityPermissions): CommunityPermissions {
+    return {
+        changePermissions: communityPermissionRole(candid.change_permissions),
+        changeRoles: communityPermissionRole(candid.change_roles),
+        inviteUsers: communityPermissionRole(candid.invite_users),
+        removeMembers: communityPermissionRole(candid.remove_members),
+        blockUsers: communityPermissionRole(candid.block_users),
+        updateDetails: communityPermissionRole(candid.update_details),
+        createPublicChannel: communityPermissionRole(candid.create_public_channel),
+        createPrivateChannel: communityPermissionRole(candid.create_private_channel),
+    };
+}
+
+export function communityPermissionRole(
+    candid: ApiCommunityPermissionRole
+): CommunityPermissionRole {
+    if ("Owner" in candid) return "owner";
+    if ("Admins" in candid) return "admins";
+    return "members";
+}
+
+export function apiCommunityPermissions(
+    permissions: CommunityPermissions
+): ApiCommunityPermissions {
+    return {
+        create_public_channel: apiCommunityPermissionRole(permissions.createPublicChannel),
+        block_users: apiCommunityPermissionRole(permissions.blockUsers),
+        change_permissions: apiCommunityPermissionRole(permissions.changePermissions),
+        update_details: apiCommunityPermissionRole(permissions.updateDetails),
+        remove_members: apiCommunityPermissionRole(permissions.removeMembers),
+        invite_users: apiCommunityPermissionRole(permissions.inviteUsers),
+        change_roles: apiCommunityPermissionRole(permissions.changeRoles),
+        create_private_channel: apiCommunityPermissionRole(permissions.createPrivateChannel),
+    };
+}
+
+export function apiCommunityPermissionRole(
+    permissionRole: CommunityPermissionRole
+): ApiCommunityPermissionRole {
+    switch (permissionRole) {
+        case "owner":
+            return { Owners: null };
+        case "admins":
+            return { Admins: null };
+        case "members":
+            return { Members: null };
+    }
 }
 
 export function apiGroupPermissions(permissions: GroupPermissions): ApiGroupPermissions {
@@ -1150,6 +1207,37 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
         dateReadPinned: undefined,
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
+    };
+}
+
+export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): Community {
+    return {
+        id: candid.community_id.toString(),
+        name: candid.name,
+        description: candid.description,
+        public: candid.is_public,
+        historyVisible: false,
+        joined: candid.joined,
+        latestEventIndex: candid.latest_event_index,
+        lastUpdated: candid.last_updated,
+        avatar: {
+            blobReference: optional(candid.avatar_id, (blobId) => ({
+                blobId,
+                canisterId: candid.community_id.toString(),
+            })),
+        },
+        myRole: "owner", //TODO - this is not coming back
+        banner: {
+            blobReference: optional(candid.banner_id, (blobId) => ({
+                blobId,
+                canisterId: candid.community_id.toString(),
+            })),
+        },
+        memberCount: candid.member_count,
+        frozen: candid.frozen.length > 0,
+        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        level: "community",
+        permissions: groupPermissions(candid.permissions),
     };
 }
 

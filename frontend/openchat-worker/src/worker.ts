@@ -567,6 +567,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            case "joinCommunity":
+                agent
+                    .joinCommunity(payload.communityId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "updateGroup":
                 agent
                     .updateGroup(

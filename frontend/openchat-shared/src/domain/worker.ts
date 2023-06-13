@@ -119,6 +119,7 @@ import type {
     EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
     JoinChannelResponse,
+    JoinCommunityResponse,
     LeaveChannelResponse,
     MakeChannelPrivateResponse,
     MakeCommunityPrivateResponse,
@@ -176,6 +177,7 @@ export type WorkerRequest =
     | RegisterPollVote
     | UpdateGroup
     | JoinGroup
+    | JoinCommunity
     | LeaveGroup
     | DeleteGroup
     | MakeGroupPrivate
@@ -602,6 +604,11 @@ type JoinGroup = {
     kind: "joinGroup";
 };
 
+type JoinCommunity = {
+    communityId: string;
+    kind: "joinCommunity";
+};
+
 type LeaveGroup = {
     chatId: string;
     kind: "leaveGroup";
@@ -990,6 +997,7 @@ export type WorkerResponse =
     | Response<UpdateChannelResponse>
     | Response<UpdateCommunityResponse>
     | Response<CreateCommunityResponse>
+    | Response<JoinCommunityResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1650,4 +1658,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? UpdateCommunityResponse
     : T extends CreateCommunity
     ? CreateCommunityResponse
+    : T extends JoinCommunity
+    ? JoinCommunityResponse
     : never;

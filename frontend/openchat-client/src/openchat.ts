@@ -305,6 +305,7 @@ import {
     Community,
     CreateCommunityResponse,
     SearchScope,
+    JoinCommunityResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -4017,18 +4018,42 @@ export class OpenChat extends OpenChatAgentWorker {
         selectedCommunityId.set(communityId);
     }
 
-    joinCommunity(community: Community): Promise<void> {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                communities.update((c) => {
-                    return {
-                        ...c,
-                        [community.id]: community,
-                    };
-                });
-                resolve();
-            }, 2000);
-        });
+    joinCommunity(community: Community): Promise<JoinCommunityResponse> {
+        // TODO - we will need to do something like all of the stuff that's commented out here
+        return this.sendRequest({ kind: "joinCommunity", communityId: community.id });
+        // .then((resp) => {
+        //     if (resp.kind === "success") {
+        //         localChatSummaryUpdates.markAdded(resp);
+        //         this.loadDetails(resp);
+        //         messagesRead.syncWithServer(resp.chatId, resp.readByMeUpTo, [], undefined);
+        //     } else if (resp.kind === "already_in_group") {
+        //         localChatSummaryUpdates.markAdded({
+        //             ...group,
+        //             myRole: "participant" as MemberRole,
+        //         });
+        //     } else {
+        //         if (resp.kind === "blocked") {
+        //             return "blocked";
+        //         } else if (resp.kind === "gate_check_failed") {
+        //             return "gate_check_failed";
+        //         }
+        //         return "failure";
+        //     }
+        //     return "success";
+        // })
+        // .then((resp) => {
+        //     if (
+        //         resp === "success" &&
+        //         this._liveState.groupPreviews[group.chatId] !== undefined
+        //     ) {
+        //         removeGroupPreview(group.chatId);
+        //     }
+        //     return resp;
+        // })
+        // .catch((err) => {
+        //     this._logger.error("Unable to join group", err);
+        //     return "failure";
+        // });
     }
 
     deleteCommunity(id: string): Promise<void> {
