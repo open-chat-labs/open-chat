@@ -304,7 +304,6 @@ import {
     E8S_PER_TOKEN,
     Community,
     CreateCommunityResponse,
-    SearchScope,
     JoinCommunityResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
@@ -4018,9 +4017,9 @@ export class OpenChat extends OpenChatAgentWorker {
         selectedCommunityId.set(communityId);
     }
 
-    joinCommunity(community: Community): Promise<JoinCommunityResponse> {
+    joinCommunity(communityId: string): Promise<JoinCommunityResponse> {
         // TODO - we will need to do something like all of the stuff that's commented out here
-        return this.sendRequest({ kind: "joinCommunity", communityId: community.id });
+        return this.sendRequest({ kind: "joinCommunity", communityId });
         // .then((resp) => {
         //     if (resp.kind === "success") {
         //         localChatSummaryUpdates.markAdded(resp);

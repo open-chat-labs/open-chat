@@ -31,8 +31,8 @@
 
     $: communities = $allCommunities.filter((c) => $myCommunities[c.id] === undefined);
 
-    async function joinCommunity(ev: CustomEvent<Community>) {
-        joining.add(ev.detail.id);
+    async function joinCommunity(ev: CustomEvent<string>) {
+        joining.add(ev.detail);
         joining = joining;
 
         client
@@ -45,7 +45,7 @@
                 }
             })
             .finally(() => {
-                joining.delete(ev.detail.id);
+                joining.delete(ev.detail);
                 joining = joining;
             });
     }
@@ -58,7 +58,7 @@
         }
     }
 
-    function selectCommunity(community: Community) {
+    function selectCommunity(community: CommunityMatch) {
         page(`/communities/${community.id}`);
     }
 
@@ -70,8 +70,7 @@
             .then((results) => {
                 console.log("SearchResults: ", results);
                 if (results.kind === "success") {
-                    // searchResults = results.communityMatches;
-                    console.log(results.communityMatches);
+                    searchResults = results.communityMatches;
                 }
             })
             .finally(() => {
@@ -131,7 +130,7 @@
         </div>
     </div>
 
-    <div class="communities">
+    <div class="communities" class:loading={searching} class:empty={searchResults.length === 0}>
         {#if searching}
             <div class="loading">
                 <FancyLoader />
@@ -142,11 +141,17 @@
                 <p class="sub-header">try refining your search</p>
             </div>
         {:else}
-            {#each communities as community}
+            {#each searchResults as community}
                 <CommunityCard
+                    id={community.id}
+                    name={community.name}
+                    description={community.description}
+                    avatar={community.avatar}
+                    banner={community.banner}
+                    memberCount={community.memberCount}
+                    channelCount={community.channelCount}
                     on:joinCommunity={joinCommunity}
                     selected={selectedCommunityId === community.id}
-                    {community}
                     joining={joining.has(community.id)}
                     on:click={() => selectCommunity(community)} />
             {/each}
@@ -208,7 +213,11 @@
         grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
         gap: $sp5;
         @include nice-scrollbar();
-        height: 100%;
+
+        &.loading,
+        &.empty {
+            height: 100%;
+        }
     }
 
     $size: 200px;

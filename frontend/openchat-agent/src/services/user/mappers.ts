@@ -43,7 +43,6 @@ import type {
     ApiDeletedDirectMessageResponse,
     ApiSetMessageReminderResponse,
     ApiCreateCommunityResponse,
-    ApiCommunityPermissions,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -88,7 +87,6 @@ import {
     SetMessageReminderResponse,
     CommonResponses,
     CreateCommunityResponse,
-    CommunityPermissions,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -105,7 +103,6 @@ import {
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
 import type { Principal } from "@dfinity/principal";
-import { apiCommunityPermissionRole } from "../community/mappers";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
     const profile = candid.Success;

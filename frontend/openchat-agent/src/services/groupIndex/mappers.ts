@@ -257,5 +257,7 @@ function communityMatch(candid: ApiCommunityMatch): CommunityMatch {
                 canisterId: candid.id.toString(),
             })),
         },
+        memberCount: 1000, //TODO fill in
+        channelCount: 15, //TODO fill in
     };
 }

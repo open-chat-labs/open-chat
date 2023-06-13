@@ -1236,7 +1236,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         frozen: candid.frozen.length > 0,
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "community",
-        permissions: groupPermissions(candid.permissions),
+        permissions: communityPermissions(candid.permissions),
     };
 }
 

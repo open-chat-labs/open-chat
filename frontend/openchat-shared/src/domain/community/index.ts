@@ -42,8 +42,6 @@ export type Community = HasIdentity &
         lastUpdated: bigint;
         description: string;
         memberCount: number;
-        channelCount: number;
-        unreadCount: number;
         avatar: DataContent;
         banner: DataContent;
     };

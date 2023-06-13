@@ -1,9 +1,9 @@
 <script lang="ts">
     import Panel from "../Panel.svelte";
     import ChatList from "./ChatList.svelte";
-    import type { GroupSearchResponse, UserSummary } from "openchat-client";
+    import type { SearchResponse, UserSummary } from "openchat-client";
 
-    export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
+    export let groupSearchResults: Promise<SearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     export let searchTerm: string = "";
     export let searching: boolean = false;

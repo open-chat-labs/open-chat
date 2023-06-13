@@ -178,10 +178,8 @@ export interface ChatEventWrapper {
 export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export interface ChatMetrics {
-<<<<<<< HEAD
   'prize_winner_messages' : bigint,
   'audio_messages' : bigint,
-  'cycles_messages' : bigint,
   'chat_messages' : bigint,
   'edits' : bigint,
   'icp_messages' : bigint,
@@ -203,34 +201,6 @@ export interface ChatMetrics {
   'reactions' : bigint,
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
-=======
-    prize_winner_messages: bigint;
-    audio_messages: bigint;
-    chat_messages: bigint;
-    edits: bigint;
-    icp_messages: bigint;
-    last_active: TimestampMillis;
-    giphy_messages: bigint;
-    deleted_messages: bigint;
-    file_messages: bigint;
-    poll_votes: bigint;
-    text_messages: bigint;
-    message_reminders: bigint;
-    image_messages: bigint;
-    replies: bigint;
-    video_messages: bigint;
-    sns1_messages: bigint;
-    polls: bigint;
-    proposals: bigint;
-    reported_messages: bigint;
-    ckbtc_messages: bigint;
-    reactions: bigint;
-    custom_type_messages: bigint;
-    prize_messages: bigint;
-}
-export interface ChatUnfrozen {
-    unfrozen_by: UserId;
->>>>>>> master
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
 export interface CommunityCanisterChannelSummary {

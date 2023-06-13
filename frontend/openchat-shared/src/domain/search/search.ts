@@ -15,6 +15,8 @@ export interface CommunityMatch {
     description: string;
     avatar: DataContent;
     banner: DataContent;
+    memberCount: number;
+    channelCount: number;
 }
 
 export type MessageMatch = {

@@ -7,7 +7,6 @@ import {
     ChannelMessageMatch,
     CommonResponses,
     CommunityInviteCodeResponse,
-    CommunityPermissionRole,
     CommunityPermissions,
     CommunityRulesResponse,
     CreateChannelResponse,
@@ -86,7 +85,6 @@ import type {
     ApiGroupRole,
     ApiCommunityRole,
     ApiOptionalCommunityPermissions,
-    ApiCommunityPermissionRole,
     ApiAddMembersToChannelFailed,
     ApiAddMembersToChannelPartialSuccess,
     ApiUserFailedGateCheck,
@@ -96,6 +94,7 @@ import type {
 } from "./candid/idl";
 import {
     accessGate,
+    apiCommunityPermissionRole,
     apiGroupSubtype,
     apiOptional,
     chatMetrics,

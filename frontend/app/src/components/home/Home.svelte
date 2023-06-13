@@ -9,7 +9,7 @@
     import RightPanel from "./RightPanel.svelte";
     import EditCommunity from "./communities/edit/Edit.svelte";
     import {
-        GroupSearchResponse,
+        SearchResponse,
         MessageMatch,
         UserSummary,
         ChatSummary,
@@ -123,7 +123,7 @@
     }
 
     let modal = ModalType.None;
-    let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
+    let groupSearchResults: Promise<SearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     let searchTerm: string = "";
     let searching: boolean = false;

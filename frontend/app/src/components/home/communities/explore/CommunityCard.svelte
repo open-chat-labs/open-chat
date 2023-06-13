@@ -1,7 +1,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 
 <script lang="ts">
-    import type { Community, OpenChat } from "openchat-client";
+    import type { DataContent, OpenChat } from "openchat-client";
     import Avatar from "../../../Avatar.svelte";
     import ButtonGroup from "../../../ButtonGroup.svelte";
     import { _ } from "svelte-i18n";
@@ -13,7 +13,14 @@
 
     const dispatch = createEventDispatcher();
 
-    export let community: Community;
+    export let id: string;
+    export let name: string;
+    export let description: string;
+    export let avatar: DataContent;
+    export let banner: DataContent;
+    export let memberCount: number;
+    export let channelCount: number;
+
     export let selected: boolean;
     export let header = false;
     export let joining: boolean;
@@ -21,23 +28,23 @@
     const client = getContext<OpenChat>("client");
 
     function join() {
-        dispatch("joinCommunity", community);
+        dispatch("joinCommunity", id);
     }
 </script>
 
 <div class:selected class:header on:click class="card">
-    <CommunityBanner square={header} {community}>
+    <CommunityBanner square={header} {banner}>
         <div class="avatar">
             <Avatar
-                url={client.communityAvatarUrl(community.avatar)}
+                url={client.communityAvatarUrl(avatar)}
                 userId={undefined}
                 size={AvatarSize.Default} />
         </div>
     </CommunityBanner>
     <div class="content">
-        <div class="name">{community.name}</div>
+        <div class="name">{name}</div>
         <div class="desc" class:fixed={!header}>
-            <Markdown text={community.description} />
+            <Markdown text={description} />
         </div>
         {#if !header}
             <ButtonGroup align={"fill"}>
@@ -47,12 +54,12 @@
             </ButtonGroup>
             <div class="footer">
                 <div class="members">
-                    <span class="number">{community.memberCount.toLocaleString()}</span>
+                    <span class="number">{memberCount.toLocaleString()}</span>
                     <span class="label">{"members"}</span>
                 </div>
 
                 <div on:click class="channels">
-                    <span class="number">{community.channelCount.toLocaleString()}</span>
+                    <span class="number">{channelCount.toLocaleString()}</span>
                     <span class="label">{"channels"}</span>
                 </div>
             </div>
