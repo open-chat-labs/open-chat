@@ -207,6 +207,13 @@ export class UserClient extends CandidService {
                         mime_type: "image/jpg",
                     };
                 }, community.avatar?.blobData),
+                banner: apiOptional((data) => {
+                    return {
+                        id: DataClient.newBlobId(),
+                        data,
+                        mime_type: "image/jpg",
+                    };
+                }, community.banner?.blobData),
                 permissions: [apiCommunityPermissions(community.permissions)],
                 rules: apiGroupRules(rules),
                 gate: apiMaybeAccessGate(community.gate),

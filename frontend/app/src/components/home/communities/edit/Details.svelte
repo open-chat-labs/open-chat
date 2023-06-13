@@ -57,7 +57,7 @@
     </div>
 </section>
 <section>
-    <Legend required label={$_("communities.name")} rules={$_("communities.nameRules")} />
+    <Legend required label={$_("communities.name")} />
     <Input
         autofocus
         disabled={busy}

@@ -90,9 +90,10 @@ import type {
     SetUserUpgradeConcurrencyResponse,
 } from "./user";
 import type {
-    GroupSearchResponse,
+    SearchResponse,
     SearchDirectChatResponse,
     SearchGroupChatResponse,
+    SearchScope,
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
 import type { GroupInvite } from "./inviteCodes";
@@ -147,7 +148,7 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
 
 export type WorkerRequest =
     | DismissRecommendations
-    | SearchGroups
+    | Search
     | GetGroupRules
     | GetRecommendedGroups
     | RegisterProposalVote
@@ -407,10 +408,11 @@ type DismissRecommendations = {
     kind: "dismissRecommendation";
 };
 
-type SearchGroups = {
+type Search = {
     searchTerm: string;
     maxResults: number;
-    kind: "searchGroups";
+    scope: SearchScope;
+    kind: "search";
 };
 
 type GetGroupRules = {
@@ -884,7 +886,7 @@ export type WorkerResponse =
     | Response<Tokens>
     | Response<SearchDirectChatResponse>
     | Response<SearchGroupChatResponse>
-    | Response<GroupSearchResponse>
+    | Response<SearchResponse>
     | Response<AccessRules | undefined>
     | Response<GroupChatSummary[]>
     | Response<RegisterProposalVoteResponse>
@@ -1492,8 +1494,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? GroupChatSummary[]
     : T extends GetGroupRules
     ? AccessRules | undefined
-    : T extends SearchGroups
-    ? GroupSearchResponse
+    : T extends Search
+    ? SearchResponse
     : T extends DismissRecommendations
     ? void
     : T extends GroupInvite

@@ -142,17 +142,7 @@ export function searchDirectChatResponse(
             matches: candid.Success.matches.map((m) => messageMatch(m, chatId)),
         };
     }
-    if ("TermTooShort" in candid) {
-        return {
-            kind: "term_too_short",
-        };
-    }
-    if ("TermTooLong" in candid) {
-        return {
-            kind: "term_too_long",
-        };
-    }
-    if ("InvalidTerm" in candid) {
+    if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
         return {
             kind: "term_invalid",
         };

@@ -65,7 +65,7 @@ import {
     GroupInvite,
     GroupPermissions,
     AccessRules,
-    GroupSearchResponse,
+    SearchResponse,
     IndexRange,
     InviteCodeResponse,
     JoinGroupResponse,
@@ -139,6 +139,7 @@ import {
     DeclineInvitationResponse,
     UpdatesSuccessResponse,
     AccessGate,
+    SearchScope,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -797,12 +798,19 @@ export class OpenChatAgent extends EventTarget {
             .then((users) => users.map((u) => this.rehydrateUserSummary(u)));
     }
 
-    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
-        return this._groupIndexClient.search(searchTerm, maxResults).then((res) => {
+    search(searchTerm: string, maxResults = 10, scope: SearchScope): Promise<SearchResponse> {
+        return this._groupIndexClient.search(searchTerm, maxResults, scope).then((res) => {
             if (res.kind === "success") {
                 return {
                     ...res,
-                    matches: res.matches.map((match) => this.rehydrateDataContent(match, "avatar")),
+                    groupMatches: res.groupMatches.map((match) =>
+                        this.rehydrateDataContent(match, "avatar")
+                    ),
+                    communityMatches: res.communityMatches.map((match) => ({
+                        ...match,
+                        avatar: this.rehydrateDataContent(match.avatar, "avatar"),
+                        banner: this.rehydrateDataContent(match.banner, "avatar"),
+                    })),
                 };
             }
             return res;

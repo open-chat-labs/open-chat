@@ -9,7 +9,7 @@
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import Filters from "./Filters.svelte";
     import type { Community, OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -49,6 +49,12 @@
     function selectCommunity(community: Community) {
         page(`/communities/${community.id}`);
     }
+
+    onMount(() => {
+        client.searchCommunities("Hello").then((results) => {
+            console.log("SearchResults: ", results);
+        });
+    });
 </script>
 
 <div class="explore">
