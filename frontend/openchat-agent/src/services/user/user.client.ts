@@ -77,7 +77,6 @@ import {
     deletedMessageResponse,
     setMessageReminderResponse,
     createCommunityResponse,
-    apiCommunityPermissions,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -92,6 +91,7 @@ import {
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import {
+    apiCommunityPermissions,
     apiGroupPermissions,
     apiMaybeAccessGate,
     apiMessageContent,

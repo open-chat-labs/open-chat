@@ -8,9 +8,10 @@
     import { pathParams } from "../../../../routes";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import Filters from "./Filters.svelte";
-    import type { Community, OpenChat } from "openchat-client";
+    import type { Community, CommunityMatch, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { toastStore } from "stores/toast";
+    import FancyLoader from "../../../icons/FancyLoader.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -19,6 +20,7 @@
     let searching = false;
     let joining: Set<string> = new Set();
     let canCreate = true; //TODO - permissions?
+    let searchResults: CommunityMatch[] = [];
 
     $: allCommunities = client.allCommunities;
     $: myCommunities = client.communities;
@@ -60,11 +62,26 @@
         page(`/communities/${community.id}`);
     }
 
-    onMount(() => {
-        client.searchCommunities("Hello").then((results) => {
-            console.log("SearchResults: ", results);
-        });
-    });
+    function search() {
+        searching = true;
+
+        client
+            .searchCommunities("Hello")
+            .then((results) => {
+                console.log("SearchResults: ", results);
+                if (results.kind === "success") {
+                    // searchResults = results.communityMatches;
+                    console.log(results.communityMatches);
+                }
+            })
+            .finally(() => {
+                setTimeout(() => {
+                    searching = false;
+                }, 3000);
+            });
+    }
+
+    onMount(search);
 </script>
 
 <div class="explore">
@@ -94,9 +111,9 @@
             {#if $mobileWidth}
                 <div class="search">
                     <Search
+                        searching={false}
                         fill
                         bind:searchTerm
-                        bind:searching
                         placeholder={$_("communities.search")} />
                 </div>
             {:else}
@@ -115,14 +132,25 @@
     </div>
 
     <div class="communities">
-        {#each communities as community}
-            <CommunityCard
-                on:joinCommunity={joinCommunity}
-                selected={selectedCommunityId === community.id}
-                {community}
-                joining={joining.has(community.id)}
-                on:click={() => selectCommunity(community)} />
-        {/each}
+        {#if searching}
+            <div class="loading">
+                <FancyLoader />
+            </div>
+        {:else if searchResults.length === 0}
+            <div class="robot">
+                <h4 class="header">No matching communities found</h4>
+                <p class="sub-header">try refining your search</p>
+            </div>
+        {:else}
+            {#each communities as community}
+                <CommunityCard
+                    on:joinCommunity={joinCommunity}
+                    selected={selectedCommunityId === community.id}
+                    {community}
+                    joining={joining.has(community.id)}
+                    on:click={() => selectCommunity(community)} />
+            {/each}
+        {/if}
     </div>
 </div>
 
@@ -180,5 +208,25 @@
         grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
         gap: $sp5;
         @include nice-scrollbar();
+        height: 100%;
+    }
+
+    $size: 200px;
+
+    .loading {
+        width: $size;
+        margin: auto;
+    }
+
+    .robot {
+        .header {
+            @include font(bold, normal, fs-160, 38);
+        }
+        .sub-header {
+            @include font(book, normal, fs-100, 38);
+            color: var(--txt-light);
+        }
+        margin: auto;
+        text-align: center;
     }
 </style>
