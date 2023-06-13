@@ -948,7 +948,6 @@ function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean 
 export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
     return {
         audioMessages: a.audioMessages + b.audioMessages,
-        cyclesMessages: a.cyclesMessages + b.cyclesMessages,
         edits: a.edits + b.edits,
         icpMessages: a.icpMessages + b.icpMessages,
         sns1Messages: a.sns1Messages + b.sns1Messages,
