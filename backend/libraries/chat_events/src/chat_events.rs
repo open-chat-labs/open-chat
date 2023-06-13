@@ -709,7 +709,7 @@ impl ChatEvents {
 
         root_message.last_updated = Some(now);
 
-        let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummaryInternal::default);
+        let summary = root_message.thread_summary.get_or_insert_with(ThreadSummaryInternal::default);
         summary.latest_event_index = latest_event_index;
         summary.latest_event_timestamp = now;
 
