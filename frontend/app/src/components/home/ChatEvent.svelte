@@ -22,6 +22,7 @@
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
     import ChatFrozenEvent from "./ChatFrozenEvent.svelte";
     import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
