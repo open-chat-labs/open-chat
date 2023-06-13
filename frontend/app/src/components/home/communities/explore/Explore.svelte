@@ -35,6 +35,8 @@
         joining.add(ev.detail);
         joining = joining;
 
+        // TODO - rules
+
         client
             .joinCommunity(ev.detail)
             .then((resp) => {
@@ -66,18 +68,14 @@
         searching = true;
 
         client
-            .searchCommunities("Hello")
+            .searchCommunities(searchTerm)
             .then((results) => {
                 console.log("SearchResults: ", results);
                 if (results.kind === "success") {
                     searchResults = results.communityMatches;
                 }
             })
-            .finally(() => {
-                setTimeout(() => {
-                    searching = false;
-                }, 3000);
-            });
+            .finally(() => (searching = false));
     }
 
     onMount(search);
@@ -94,7 +92,8 @@
                     <Search
                         fill
                         bind:searchTerm
-                        bind:searching
+                        searching={false}
+                        on:searchEntered={search}
                         placeholder={$_("communities.search")} />
                 </div>
                 {#if canCreate}
@@ -210,13 +209,30 @@
 
     .communities {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
-        gap: $sp5;
+        grid-template-columns: repeat(4, 1fr);
+        grid-gap: $sp5;
         @include nice-scrollbar();
+
+        @include size-below(xxl) {
+            grid-gap: $sp4;
+        }
+
+        @include size-below(xl) {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        @include size-below(md) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @include size-below(sm) {
+            grid-template-columns: repeat(1, 1fr);
+        }
 
         &.loading,
         &.empty {
             height: 100%;
+            grid-template-columns: repeat(1, 1fr);
         }
     }
 

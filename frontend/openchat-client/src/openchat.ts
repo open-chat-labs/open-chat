@@ -4096,17 +4096,6 @@ export class OpenChat extends OpenChatAgentWorker {
             this._logger.error("Error creating community", err);
             return { kind: "failure" };
         });
-        // TODO - this is just a dummy implementation
-        // allCommunities.update((c) => [...c, candidate]);
-        // communities.update((c) => {
-        //     const keys = Object.keys(c);
-        //     const next = (keys.length + 2).toString();
-        //     return {
-        //         ...c,
-        //         [next]: { ...candidate, id: next },
-        //     };
-        // });
-        // return Promise.resolve();
     }
 
     saveCommunity(candidate: Community): Promise<void> {

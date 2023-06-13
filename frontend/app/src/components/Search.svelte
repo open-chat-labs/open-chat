@@ -20,7 +20,10 @@
         searchTerm = "";
         performSearch();
     }
-    function keydown() {
+    function keydown(ev: KeyboardEvent) {
+        if (ev.key === "Tab") {
+            return;
+        }
         if (timer !== undefined) {
             window.clearTimeout(timer);
         }

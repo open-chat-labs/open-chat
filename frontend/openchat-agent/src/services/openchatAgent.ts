@@ -759,7 +759,7 @@ export class OpenChatAgent extends EventTarget {
 
     private rehydrateDataContent<T extends DataContent>(
         dataContent: T,
-        blobType: "blobs" | "avatar" = "blobs"
+        blobType: "blobs" | "avatar" | "banner" = "blobs"
     ): T {
         const ref = dataContent.blobReference;
         return ref !== undefined
@@ -810,7 +810,7 @@ export class OpenChatAgent extends EventTarget {
                     communityMatches: res.communityMatches.map((match) => ({
                         ...match,
                         avatar: this.rehydrateDataContent(match.avatar, "avatar"),
-                        banner: this.rehydrateDataContent(match.banner, "avatar"),
+                        banner: this.rehydrateDataContent(match.banner, "banner"),
                     })),
                 };
             }
