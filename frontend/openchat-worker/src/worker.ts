@@ -1874,7 +1874,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.rules,
                         payload.permissions,
                         payload.avatar,
-                        payload.banner,
                         payload.gate
                     )
                     .then((response) =>

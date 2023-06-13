@@ -929,24 +929,14 @@ export function searchGroupChatResponse(
             matches: candid.Success.matches.map((m) => messageMatch(m, chatId)),
         };
     }
-    if ("TermTooShort" in candid) {
+    if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
         return {
-            kind: "term_too_short",
-        };
-    }
-    if ("TermTooLong" in candid) {
-        return {
-            kind: "term_too_long",
+            kind: "term_invalid",
         };
     }
     if ("TooManyUsers" in candid) {
         return {
             kind: "too_many_users",
-        };
-    }
-    if ("InvalidTerm" in candid) {
-        return {
-            kind: "term_invalid",
         };
     }
     if ("CallerNotInGroup" in candid) {
