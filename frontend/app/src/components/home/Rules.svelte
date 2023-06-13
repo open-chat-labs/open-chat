@@ -5,15 +5,23 @@
     import Toggle from "../Toggle.svelte";
     import type { AccessRules, Level } from "openchat-client";
     import { interpolateLevel } from "../../utils/i18n";
+    import { afterUpdate } from "svelte";
 
     const MAX_RULES_LENGTH = 1024;
 
     export let rules: AccessRules;
     export let level: Level;
+    export let valid: boolean;
+
+    $: isValid = !rules.enabled || (rules.text.length > 0 && rules.text.length <= MAX_RULES_LENGTH);
 
     function toggleRules() {
         rules.enabled = !rules.enabled;
     }
+
+    afterUpdate(() => {
+        valid = isValid;
+    });
 </script>
 
 <div class="rules" class:disabled={!rules.enabled}>

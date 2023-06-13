@@ -879,6 +879,7 @@
         "invite": "Invite",
         "imageLabel": "Banner/Avatar image",
         "name": "Name",
+        "nameRules": "Community names must be unique",
         "namePlaceholder": "Enter community name",
         "description": "Description",
         "descriptionPlaceholder": "Tell us what your community is all about",
@@ -894,7 +895,12 @@
         "general": "General",
         "mustHaveOneChannel": "You must create at least one default channel",
         "mustHaveUniqueChannels": "You cannot have duplicate default channel names",
-        "noBlankChannels": "All default channels must have a name"
+        "noBlankChannels": "All default channels must have a name",
+        "created": "Your community has been created successfully",
+        "errors": {
+            "name_taken": "Sorry - there is already a community with this name",
+            "failure": "Sorry we were unable to create your community"
+        }
     },
     "unableToSaveUserProfile": "Unable to save user profile"
 }

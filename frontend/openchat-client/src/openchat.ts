@@ -303,6 +303,7 @@ import {
     CommunityPermissions,
     E8S_PER_TOKEN,
     Community,
+    CreateCommunityResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -4052,18 +4053,31 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    createCommunity(candidate: Community): Promise<void> {
-        // TODO - this is just a dummy implementation
-        allCommunities.update((c) => [...c, candidate]);
-        communities.update((c) => {
-            const keys = Object.keys(c);
-            const next = (keys.length + 2).toString();
-            return {
-                ...c,
-                [next]: { ...candidate, id: next },
-            };
+    createCommunity(
+        candidate: Community,
+        rules: AccessRules,
+        defaultChannels: string[]
+    ): Promise<CreateCommunityResponse> {
+        return this.sendRequest({
+            kind: "createCommunity",
+            community: candidate,
+            rules,
+            defaultChannels,
+        }).catch((err) => {
+            this._logger.error("Error creating community", err);
+            return { kind: "failure" };
         });
-        return Promise.resolve();
+        // TODO - this is just a dummy implementation
+        // allCommunities.update((c) => [...c, candidate]);
+        // communities.update((c) => {
+        //     const keys = Object.keys(c);
+        //     const next = (keys.length + 2).toString();
+        //     return {
+        //         ...c,
+        //         [next]: { ...candidate, id: next },
+        //     };
+        // });
+        // return Promise.resolve();
     }
 
     saveCommunity(candidate: Community): Promise<void> {

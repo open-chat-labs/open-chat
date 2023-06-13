@@ -346,4 +346,4 @@ export type ToggleMuteChannelNotificationsResponse = Failure | Success;
 
 export type ToggleMuteCommunityNotificationsResponse = Failure | Success;
 
-export type CreateCommunityResponse = Failure | (Success & { id: string });
+export type CreateCommunityResponse = Failure | (Success & { id: string }) | { kind: "name_taken" };

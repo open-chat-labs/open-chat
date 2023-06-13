@@ -484,6 +484,8 @@ export function createCommunityResponse(
 ): CreateCommunityResponse {
     if ("Success" in candid) {
         return { kind: "success", id: candid.Success.community_id.toString() };
+    } else if ("NameTaken" in candid) {
+        return { kind: "name_taken" };
     } else {
         console.warn("CreateCommunit failed with", candid);
         return CommonResponses.failure;

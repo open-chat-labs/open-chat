@@ -42,6 +42,7 @@
         permissions: { ...candidateGroup.permissions },
         gate: { ...candidateGroup.gate },
     };
+    let rulesValid = true;
     $: steps = getSteps(editing);
     $: editing = candidateGroup.id !== "";
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
@@ -59,10 +60,6 @@
         candidateGroup.rules !== undefined &&
         (candidateGroup.rules.enabled !== originalGroup.rules.enabled ||
             candidateGroup.rules.text !== originalGroup.rules.text);
-    $: rulesInvalid =
-        candidateGroup.rules !== undefined &&
-        candidateGroup.rules.enabled &&
-        candidateGroup.rules.text.length === 0;
     $: nameDirty = editing && candidateGroup.name !== originalGroup.name;
     $: descDirty = editing && candidateGroup.description !== originalGroup.description;
     $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
@@ -164,7 +161,7 @@
 
         const p1 = infoDirty ? doUpdateInfo() : Promise.resolve();
         const p2 = permissionsDirty ? doUpdatePermissions() : Promise.resolve();
-        const p3 = rulesDirty && !rulesInvalid ? doUpdateRules() : Promise.resolve();
+        const p3 = rulesDirty && rulesValid ? doUpdateRules() : Promise.resolve();
         const p4 = makePrivate ? doMakeGroupPrivate() : Promise.resolve();
         const p5 = gateDirty ? doUpdateGate(candidateGroup.gate) : Promise.resolve();
 
@@ -367,7 +364,10 @@
                         bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
-                    <Rules level={candidateGroup.level} bind:rules={candidateGroup.rules} />
+                    <Rules
+                        bind:valid={rulesValid}
+                        level={candidateGroup.level}
+                        bind:rules={candidateGroup.rules} />
                 </div>
                 <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}
@@ -415,7 +415,7 @@
                         tiny={$mobileWidth}
                         on:click={() => updateGroup()}
                         >{interpolateLevel("group.update", candidateGroup.level, true)}</Button>
-                {:else if step < 4}
+                {:else if step < steps.length - 1}
                     <Button
                         disabled={!valid}
                         small={!$mobileWidth}
