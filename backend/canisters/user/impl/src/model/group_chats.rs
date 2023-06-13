@@ -2,12 +2,14 @@ use crate::model::group_chat::GroupChat;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, MessageIndex, TimestampMillis};
+use types::{ChatId, MessageIndex, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupChats {
     groups_created: u32,
     group_chats: HashMap<ChatId, GroupChat>,
+    #[serde(default)]
+    pinned: Timestamped<Vec<ChatId>>,
     removed: Vec<RemovedGroup>,
 }
 
@@ -22,6 +24,23 @@ impl GroupChats {
         self.group_chats.values().filter(move |c| c.last_updated() > since)
     }
 
+    pub fn pinned(&self) -> &Vec<ChatId> {
+        &self.pinned.value
+    }
+
+    pub fn pinned_since(&self, since: TimestampMillis) -> Option<Vec<ChatId>> {
+        self.pinned.if_set_after(since).map(|ids| ids.to_vec())
+    }
+
+    pub fn removed_since(&self, timestamp: TimestampMillis) -> Vec<ChatId> {
+        self.removed
+            .iter()
+            .rev()
+            .take_while(|g| g.timestamp > timestamp)
+            .map(|g| g.chat_id)
+            .collect()
+    }
+
     pub fn get(&self, chat_id: &ChatId) -> Option<&GroupChat> {
         self.group_chats.get(chat_id)
     }
@@ -32,6 +51,8 @@ impl GroupChats {
 
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
         self.group_chats.values().any(|c| c.last_updated() > since)
+            || self.pinned.timestamp > since
+            || self.removed.iter().any(|g| g.timestamp > since)
     }
 
     pub fn create(&mut self, chat_id: ChatId, now: TimestampMillis) -> bool {
@@ -67,15 +88,6 @@ impl GroupChats {
         self.group_chats.values()
     }
 
-    pub fn removed_since(&self, timestamp: TimestampMillis) -> Vec<ChatId> {
-        self.removed
-            .iter()
-            .rev()
-            .take_while(|g| g.timestamp > timestamp)
-            .map(|g| g.chat_id)
-            .collect()
-    }
-
     pub fn groups_created(&self) -> u32 {
         self.groups_created
     }
@@ -86,5 +98,12 @@ impl GroupChats {
 
     pub fn has(&self, chat_id: &ChatId) -> bool {
         self.group_chats.contains_key(chat_id)
+    }
+
+    pub fn unpin(&mut self, chat_id: &ChatId, now: TimestampMillis) {
+        if self.pinned.value.contains(chat_id) {
+            self.pinned.timestamp = now;
+            self.pinned.value.retain(|pinned_chat_id| pinned_chat_id != chat_id);
+        }
     }
 }

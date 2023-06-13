@@ -28,7 +28,7 @@ impl Communities {
     }
 
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
-        self.communities.values().any(|c| c.last_updated() > since)
+        self.communities.values().any(|c| c.last_updated() > since) || self.removed.iter().any(|g| g.timestamp > since)
     }
 
     pub fn create(&mut self, community_id: CommunityId, now: TimestampMillis) -> bool {

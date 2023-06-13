@@ -29,15 +29,13 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         .if_set_after(updates_since)
         .map(|user_ids| user_ids.iter().copied().collect());
 
-    let pinned_chats = state.data.pinned_chats.if_set_after(updates_since).cloned();
-    let chats_removed = state.data.group_chats.removed_since(updates_since);
-
     let has_any_updates = avatar_id.has_update()
         || blocked_users.is_some()
-        || pinned_chats.is_some()
-        || !chats_removed.is_empty()
+        || avatar_id.has_update()
         || state.data.direct_chats.any_updated(updates_since)
-        || state.data.group_chats.any_updated(updates_since);
+        || state.data.group_chats.any_updated(updates_since)
+        || state.data.favourite_chats.any_updated(updates_since)
+        || state.data.communities.any_updated(updates_since);
 
     // Short circuit prior to calling `ic0.time()` so that caching works effectively
     if !has_any_updates {
@@ -58,6 +56,13 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         }
     }
 
+    let direct_chats = DirectChatsUpdates {
+        added: direct_chats_added,
+        updated: direct_chats_updated,
+        pinned: state.data.direct_chats.pinned_since(updates_since),
+    };
+
+    let group_chats_removed = state.data.group_chats.removed_since(updates_since);
     let mut group_chats_added = Vec::new();
     let mut group_chats_updated = Vec::new();
     for group_chat in state.data.group_chats.updated_since(updates_since) {
@@ -68,6 +73,14 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         }
     }
 
+    let group_chats = GroupChatsUpdates {
+        added: group_chats_added,
+        updated: group_chats_updated,
+        removed: group_chats_removed,
+        pinned: state.data.group_chats.pinned_since(updates_since),
+    };
+
+    let communities_removed = state.data.communities.removed_since(updates_since);
     let mut communities_added = Vec::new();
     let mut communities_updated = Vec::new();
     for community in state.data.communities.updated_since(updates_since) {
@@ -78,17 +91,24 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         }
     }
 
+    let communities = CommunitiesUpdates {
+        added: communities_added,
+        updated: communities_updated,
+        removed: communities_removed,
+    };
+
+    let favourite_chats = FavouriteChatsUpdates {
+        chats: state.data.favourite_chats.chats_since(updates_since),
+        pinned: state.data.favourite_chats.pinned_since(updates_since),
+    };
+
     Success(SuccessResult {
         timestamp: now,
-        direct_chats_added,
-        direct_chats_updated,
-        group_chats_added,
-        group_chats_updated,
-        communities_added,
-        communities_updated,
-        chats_removed,
+        direct_chats,
+        group_chats,
+        favourite_chats,
+        communities,
         avatar_id,
         blocked_users,
-        pinned_chats,
     })
 }

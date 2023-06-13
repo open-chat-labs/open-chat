@@ -565,6 +565,32 @@ type UnArchiveChatResponse =
         ChatNotFound;
     };
 
+type AddRemoveFavouriteChatsArgs =
+    record {
+        to_add: vec Chat;
+        to_remove: vec Chat;
+    };
+
+type AddRemoveFavouriteChatsResponse =
+    variant {
+        Success;
+        UserSuspended;
+    };
+
+type ArchiveUnarchiveChatsArgs =
+    record {
+        to_archive: vec Chat;
+        to_unarchive: vec Chat;
+    };
+
+type ArchiveUnarchiveChatsResponse =
+    variant {
+        Success;
+        PartialSuccess: record { chats_not_found: vec Chat; };
+        Failure: record { chats_not_found: vec Chat; };
+        UserSuspended;
+    };
+
 type InitUserPrincipalMigrationArgs =
     record {
         new_principal: principal;
@@ -586,6 +612,130 @@ type MigrateUserPrincipalResponse =
         MigrationAlreadyInProgress;
         PrincipalAlreadyInUse;
         InternalError: text;
+    };
+
+type InitialStateArgs =
+    record {
+        disable_cache: opt bool;
+    };
+
+type InitialStateResponse =
+    variant {
+        Success: record {
+            timestamp: TimestampMillis;
+            direct_chats: DirectChatsInitial;
+            group_chats: GroupChatsInitial;
+            favourite_chats: FavouriteChatsInitial;
+            communities: CommunitiesInitial;
+            avatar_id: opt nat;
+            blocked_users: vec UserId;
+        };
+    };
+
+type DirectChatsInitial =
+    record {
+        summaries: vec DirectChatSummary;
+        pinned: vec ChatId;
+    };
+
+type GroupChatsInitial =
+    record {
+        summaries: vec UserCanisterGroupChatSummary;
+        pinned: vec ChatId;
+        cached: vec GroupChatSummary;
+        cache_timestamp: TimestampMillis;
+    };
+
+type FavouriteChatsInitial =
+    record {
+        chats: vec Chat;
+        pinned: vec Chat;
+    };
+
+type CommunitiesInitial =
+    record {
+        summaries: vec UserCanisterCommunitySummary;
+    };
+
+type UpdatesArgs =
+    record {
+        updates_since: TimestampMillis;
+    };
+
+type UpdatesResponse =
+    variant {
+        Success: record {
+            timestamp: TimestampMillis;
+            direct_chats: DirectChatsUpdates;
+            group_chats: GroupChatsUpdates;
+            favourite_chats: FavouriteChatsUpdates;
+            communities: CommunitiesUpdates;
+            avatar_id: DocumentIdUpdate;
+            blocked_users: opt vec UserId;
+        };
+        SuccessNoUpdates;
+    };
+
+type DirectChatsUpdates =
+    record {
+        added: vec DirectChatSummary;
+        updated: vec DirectChatSummaryUpdates;
+        pinned: opt vec ChatId;
+    };
+
+type GroupChatsUpdates =
+    record {
+        added: vec UserCanisterGroupChatSummary;
+        updated: vec UserCanisterGroupChatSummaryUpdates;
+        removed: vec ChatId;
+        pinned: opt vec ChatId;
+    };
+
+type CommunitiesUpdates = 
+    record {
+        added: vec UserCanisterCommunitySummary;
+        updated: vec UserCanisterCommunitySummaryUpdates;
+        removed: vec CommunityId;
+    };
+
+type FavouriteChatsUpdates = 
+    record {
+        chats: opt vec Chat;
+        pinned: opt vec Chat;
+    };
+
+type UserCanisterGroupChatSummary =
+    record {
+        chat_id: ChatId;
+        read_by_me_up_to: opt MessageIndex;
+        threads_read: vec record { MessageIndex; MessageIndex };
+        archived: bool;
+        date_read_pinned: opt TimestampMillis;
+    };
+
+type UserCanisterGroupChatSummaryUpdates =
+    record {
+        chat_id: ChatId;
+        read_by_me_up_to: opt MessageIndex;
+        threads_read: vec record { MessageIndex; MessageIndex };
+        archived: opt bool;
+        date_read_pinned: opt TimestampMillis;
+    };
+
+type UserCanisterCommunitySummary =
+    record {
+        community_id: CommunityId;
+        channels: vec UserCanisterChannelSummary;
+        archived: bool;
+        pinned: vec ChannelId;
+    };
+
+type UserCanisterCommunitySummaryUpdates =
+    record {
+        community_id: CommunityId;
+        channels: vec UserCanisterChannelSummaryUpdates;
+        archived: opt bool;
+        pinned: opt vec ChannelId;
     };
 
 type InitialStateV2Args =
@@ -639,18 +789,18 @@ type UpdatesV2Response =
         SuccessNoUpdates;
     };
 
-type UserCanisterGroupChatSummary =
+type UserCanisterChannelSummary =
     record {
-        chat_id: ChatId;
+        channel_id: ChannelId;
         read_by_me_up_to: opt MessageIndex;
         threads_read: vec record { MessageIndex; MessageIndex };
         archived: bool;
         date_read_pinned: opt TimestampMillis;
     };
 
-type UserCanisterGroupChatSummaryUpdates =
+type UserCanisterChannelSummaryUpdates =
     record {
-        chat_id: ChatId;
+        channel_id: ChannelId;
         read_by_me_up_to: opt MessageIndex;
         threads_read: vec record { MessageIndex; MessageIndex };
         archived: opt bool;
@@ -830,6 +980,8 @@ service: {
     unpin_chat: (UnpinChatRequest) -> (UnpinChatResponse);
     archive_chat: (ArchiveChatArgs) -> (ArchiveChatResponse);
     unarchive_chat: (UnArchiveChatArgs) -> (UnArchiveChatResponse);
+    add_remove_favourite_chats: (AddRemoveFavouriteChatsArgs) -> (AddRemoveFavouriteChatsResponse);
+    archive_unarchive_chats: (ArchiveUnarchiveChatsArgs) -> (ArchiveUnarchiveChatsResponse);
 
     init_user_principal_migration: (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal: (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
@@ -840,8 +992,10 @@ service: {
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     deleted_message: (DeletedMessageArgs) -> (DeletedMessageResponse) query;
 
+    initial_state: (InitialStateArgs) -> (InitialStateResponse) query;
     initial_state_v2: (InitialStateV2Args) -> (InitialStateV2Response) query;
     updates_v2: (UpdatesV2Args) -> (UpdatesV2Response) query;
+    updates: (UpdatesArgs) -> (UpdatesResponse) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
     bio: (BioArgs) -> (BioResponse) query;
     contacts: (ContactsArgs) -> (ContactsResponse) query;

@@ -11,14 +11,15 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
 use model::contacts::Contacts;
+use model::favourite_chats::FavouriteChats;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
 use types::{
-    CanisterId, ChatId, ChatMetrics, Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped, UserId,
-    Version,
+    CanisterId, Chat, ChatId, ChatMetrics, Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped,
+    UserId, Version,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -121,6 +122,8 @@ struct Data {
     pub group_chats: GroupChats,
     #[serde(default)]
     pub communities: Communities,
+    #[serde(default)]
+    pub favourite_chats: FavouriteChats,
     pub blocked_users: Timestamped<HashSet<UserId>>,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
@@ -136,6 +139,7 @@ struct Data {
     pub storage_limit: u64,
     pub phone_is_verified: bool,
     pub user_created: TimestampMillis,
+    // Remove pinned_chats after the next upgrade
     pub pinned_chats: Timestamped<Vec<ChatId>>,
     pub pending_user_principal_migration: Option<Principal>,
     pub suspended: Timestamped<bool>,
@@ -147,6 +151,15 @@ struct Data {
 }
 
 impl Data {
+    pub fn one_off_convert_pinned_to_favourites(&mut self) {
+        let timestamp = self.pinned_chats.timestamp;
+        for chat_id in self.pinned_chats.value.drain(..) {
+            let chat = if self.direct_chats.get(&chat_id).is_some() { Chat::Direct(chat_id) } else { Chat::Group(chat_id) };
+            self.favourite_chats.add(chat, timestamp);
+            self.favourite_chats.pin(chat, timestamp);
+        }
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         owner: Principal,
@@ -163,6 +176,7 @@ impl Data {
             direct_chats: DirectChats::default(),
             group_chats: GroupChats::default(),
             communities: Communities::default(),
+            favourite_chats: FavouriteChats::default(),
             blocked_users: Timestamped::default(),
             user_index_canister_id,
             local_user_index_canister_id,
@@ -204,18 +218,20 @@ impl Data {
         }
     }
 
+    // TODO: Legacy - delete me once communities enabled
     pub fn pin_chat(&mut self, chat_id: ChatId, now: TimestampMillis) {
-        if !self.pinned_chats.value.contains(&chat_id) {
-            self.pinned_chats.timestamp = now;
-            self.pinned_chats.value.insert(0, chat_id);
-        }
+        let chat = if self.direct_chats.get(&chat_id).is_some() { Chat::Direct(chat_id) } else { Chat::Group(chat_id) };
+
+        self.favourite_chats.pin(chat, now);
+        self.favourite_chats.add(chat, now);
     }
 
-    pub fn unpin_chat(&mut self, chat_id: &ChatId, now: TimestampMillis) {
-        if self.pinned_chats.value.contains(chat_id) {
-            self.pinned_chats.timestamp = now;
-            self.pinned_chats.value.retain(|pinned_chat_id| pinned_chat_id != chat_id);
-        }
+    // TODO: Legacy - delete me once communities enabled
+    pub fn unpin_chat(&mut self, chat_id: ChatId, now: TimestampMillis) {
+        let chat = if self.direct_chats.get(&chat_id).is_some() { Chat::Direct(chat_id) } else { Chat::Group(chat_id) };
+
+        self.favourite_chats.unpin(&chat, now);
+        self.favourite_chats.remove(chat, now);
     }
 
     pub fn is_diamond_member(&self, now: TimestampMillis) -> bool {

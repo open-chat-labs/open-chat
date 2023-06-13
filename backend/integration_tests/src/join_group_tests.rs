@@ -27,7 +27,7 @@ fn join_public_group_succeeds() {
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(initial_state.group_chats.iter().any(|c| c.chat_id == group_id));
+    assert!(initial_state.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
 }
 
 #[test]
@@ -55,7 +55,7 @@ fn join_private_group_with_invitation_succeeds() {
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(initial_state.group_chats.iter().any(|c| c.chat_id == group_id));
+    assert!(initial_state.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
 }
 
 #[test]
@@ -105,7 +105,7 @@ fn join_private_group_using_invite_code_succeeds() {
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(initial_state.group_chats.iter().any(|c| c.chat_id == group_id));
+    assert!(initial_state.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
 }
 
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
