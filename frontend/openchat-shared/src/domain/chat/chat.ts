@@ -1596,7 +1596,6 @@ export type MessageAction = "emoji" | "file" | undefined;
 
 export type ChatMetrics = {
     audioMessages: number;
-    cyclesMessages: number;
     edits: number;
     icpMessages: number;
     sns1Messages: number;

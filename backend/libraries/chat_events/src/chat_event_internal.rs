@@ -1,6 +1,7 @@
 use crate::incr;
 use search::Document;
 use serde::{Deserialize, Serialize};
+use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
@@ -74,7 +75,7 @@ pub enum ChatEventInternal {
     GroupGateUpdated(Box<GroupGateUpdated>),
     #[serde(rename = "ui", alias = "UsersInvited")]
     UsersInvited(Box<UsersInvited>),
-    #[serde(other)]
+    #[serde(rename = "e", alias = "Empty", other)]
     Empty,
 }
 
@@ -192,7 +193,7 @@ impl MessageInternal {
         }
     }
 
-    pub fn add_to_metrics(&self, metrics: &mut ChatMetrics) {
+    pub fn add_to_metrics(&self, metrics: &mut ChatMetricsInternal) {
         if self.replies_to.is_some() {
             incr(&mut metrics.replies);
         }
@@ -607,6 +608,114 @@ impl From<&ReplyContext> for ReplyContextInternal {
         ReplyContextInternal {
             event_list_if_other: value.event_list_if_other,
             event_index: value.event_index,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct ChatMetricsInternal {
+    #[serde(rename = "t", alias = "text_messages", default, skip_serializing_if = "is_default")]
+    pub text_messages: u64,
+    #[serde(rename = "i", alias = "image_messages", default, skip_serializing_if = "is_default")]
+    pub image_messages: u64,
+    #[serde(rename = "v", alias = "video_messages", default, skip_serializing_if = "is_default")]
+    pub video_messages: u64,
+    #[serde(rename = "a", alias = "audio_messages", default, skip_serializing_if = "is_default")]
+    pub audio_messages: u64,
+    #[serde(rename = "f", alias = "file_messages", default, skip_serializing_if = "is_default")]
+    pub file_messages: u64,
+    #[serde(rename = "p", alias = "polls", default, skip_serializing_if = "is_default")]
+    pub polls: u64,
+    #[serde(rename = "pv", alias = "poll_votes", default, skip_serializing_if = "is_default")]
+    pub poll_votes: u64,
+    #[serde(rename = "icp", alias = "icp_messages", default, skip_serializing_if = "is_default")]
+    pub icp_messages: u64,
+    #[serde(rename = "sns1", alias = "sns1_messages", default, skip_serializing_if = "is_default")]
+    pub sns1_messages: u64,
+    #[serde(rename = "ckbtc", alias = "sns1_messages", default, skip_serializing_if = "is_default")]
+    pub ckbtc_messages: u64,
+    #[serde(rename = "chat", alias = "sns1_messages", default, skip_serializing_if = "is_default")]
+    pub chat_messages: u64,
+    #[serde(rename = "d", alias = "deleted_messages", default, skip_serializing_if = "is_default")]
+    pub deleted_messages: u64,
+    #[serde(rename = "g", alias = "giphy_messages", default, skip_serializing_if = "is_default")]
+    pub giphy_messages: u64,
+    #[serde(rename = "pz", alias = "prize_messages", default, skip_serializing_if = "is_default")]
+    pub prize_messages: u64,
+    #[serde(
+        rename = "pzw",
+        alias = "prize_winner_messages",
+        default,
+        skip_serializing_if = "is_default"
+    )]
+    pub prize_winner_messages: u64,
+    #[serde(rename = "rp", alias = "replies", default, skip_serializing_if = "is_default")]
+    pub replies: u64,
+    #[serde(rename = "e", alias = "edits", default, skip_serializing_if = "is_default")]
+    pub edits: u64,
+    #[serde(rename = "rt", alias = "reactions", default, skip_serializing_if = "is_default")]
+    pub reactions: u64,
+    #[serde(rename = "pr", alias = "proposals", default, skip_serializing_if = "is_default")]
+    pub proposals: u64,
+    #[serde(rename = "rpt", alias = "reported_messages", default, skip_serializing_if = "is_default")]
+    pub reported_messages: u64,
+    #[serde(rename = "mr", alias = "message_reminders", default, skip_serializing_if = "is_default")]
+    pub message_reminders: u64,
+    #[serde(rename = "cu", alias = "custom_type_messages", default, skip_serializing_if = "is_default")]
+    pub custom_type_messages: u64,
+    #[serde(rename = "la", alias = "last_active")]
+    pub last_active: TimestampMillis,
+}
+
+impl ChatMetricsInternal {
+    pub fn merge(&mut self, other: &ChatMetricsInternal) {
+        self.text_messages += other.text_messages;
+        self.image_messages += other.image_messages;
+        self.video_messages += other.video_messages;
+        self.audio_messages += other.audio_messages;
+        self.file_messages += other.file_messages;
+        self.polls += other.polls;
+        self.poll_votes += other.poll_votes;
+        self.icp_messages += other.icp_messages;
+        self.sns1_messages += other.sns1_messages;
+        self.ckbtc_messages += other.ckbtc_messages;
+        self.chat_messages += other.chat_messages;
+        self.deleted_messages += other.deleted_messages;
+        self.giphy_messages += other.giphy_messages;
+        self.prize_messages += other.prize_messages;
+        self.prize_winner_messages += other.prize_winner_messages;
+        self.replies += other.replies;
+        self.edits += other.edits;
+        self.reactions += other.reactions;
+        self.proposals += other.proposals;
+        self.last_active = max(self.last_active, other.last_active);
+    }
+
+    pub fn hydrate(&self) -> ChatMetrics {
+        ChatMetrics {
+            text_messages: self.text_messages,
+            image_messages: self.image_messages,
+            video_messages: self.video_messages,
+            audio_messages: self.audio_messages,
+            file_messages: self.file_messages,
+            polls: self.polls,
+            poll_votes: self.poll_votes,
+            icp_messages: self.icp_messages,
+            sns1_messages: self.sns1_messages,
+            ckbtc_messages: self.ckbtc_messages,
+            chat_messages: self.chat_messages,
+            deleted_messages: self.deleted_messages,
+            giphy_messages: self.giphy_messages,
+            prize_messages: self.prize_messages,
+            prize_winner_messages: self.prize_winner_messages,
+            replies: self.replies,
+            edits: self.edits,
+            reactions: self.reactions,
+            proposals: self.proposals,
+            reported_messages: self.reported_messages,
+            message_reminders: self.message_reminders,
+            custom_type_messages: self.custom_type_messages,
+            last_active: self.last_active,
         }
     }
 }

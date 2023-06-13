@@ -117,8 +117,12 @@ impl Channel {
             mentions: member.most_recent_mentions(None, &chat.events, now),
             permissions: chat.permissions.clone(),
             notifications_muted: member.notifications_muted.value,
-            metrics: chat.events.metrics().clone(),
-            my_metrics: chat.events.user_metrics(&member.user_id, None).cloned().unwrap_or_default(),
+            metrics: chat.events.metrics().hydrate(),
+            my_metrics: chat
+                .events
+                .user_metrics(&member.user_id, None)
+                .map(|m| m.hydrate())
+                .unwrap_or_default(),
             latest_threads: chat.events.latest_threads(
                 min_visible_event_index,
                 member.threads.iter(),
@@ -159,8 +163,12 @@ impl Channel {
                 mentions: updates_from_events.mentions,
                 permissions: updates_from_events.permissions,
                 notifications_muted: member.notifications_muted.if_set_after(since).cloned(),
-                metrics: Some(self.chat.events.metrics().clone()),
-                my_metrics: self.chat.events.user_metrics(&member.user_id, Some(since)).cloned(),
+                metrics: Some(self.chat.events.metrics().hydrate()),
+                my_metrics: self
+                    .chat
+                    .events
+                    .user_metrics(&member.user_id, Some(since))
+                    .map(|m| m.hydrate()),
                 latest_threads: self.chat.events.latest_threads(
                     member.min_visible_event_index(),
                     member.threads.iter(),

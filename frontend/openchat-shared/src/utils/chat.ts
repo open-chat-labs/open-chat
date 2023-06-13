@@ -193,7 +193,6 @@ export function compareChats(a: ChatSummary, b: ChatSummary): number {
 export function emptyChatMetrics(): ChatMetrics {
     return {
         audioMessages: 0,
-        cyclesMessages: 0,
         edits: 0,
         icpMessages: 0,
         sns1Messages: 0,

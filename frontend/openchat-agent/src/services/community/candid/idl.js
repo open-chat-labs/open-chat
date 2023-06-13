@@ -841,7 +841,6 @@ export const idlFactory = ({ IDL }) => {
   const ChatMetrics = IDL.Record({
     'prize_winner_messages' : IDL.Nat64,
     'audio_messages' : IDL.Nat64,
-    'cycles_messages' : IDL.Nat64,
     'chat_messages' : IDL.Nat64,
     'edits' : IDL.Nat64,
     'icp_messages' : IDL.Nat64,
