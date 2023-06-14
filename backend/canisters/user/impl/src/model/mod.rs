@@ -4,6 +4,7 @@ pub mod community;
 pub mod contacts;
 pub mod direct_chat;
 pub mod direct_chats;
+pub mod favourite_chats;
 pub mod group_chat;
 pub mod group_chats;
 pub mod hot_group_exclusions;

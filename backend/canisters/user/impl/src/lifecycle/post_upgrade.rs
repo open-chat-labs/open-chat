@@ -12,10 +12,13 @@ use user_canister::post_upgrade::Args;
 fn post_upgrade(args: Args) {
     let env = init_env();
 
-    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, logs, traces);
+
+    // TODO: Remove this after the next upgrade
+    data.one_off_convert_pinned_to_favourites();
 
     init_state(env, data, args.wasm_version);
 

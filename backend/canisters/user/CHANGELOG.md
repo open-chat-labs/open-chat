@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Integrate Communities ([#3657](https://github.com/open-ic/open-chat/pull/3657)), ([#3659](https://github.com/open-ic/open-chat/pull/3659))
 - Added `c2c_mark_group_updated_for_user` ([#3685](https://github.com/open-ic/open-chat/pull/3685))
 - Include communities in `initial_state`, `updates` and `mark_read` ([#3736](https://github.com/open-ic/open-chat/pull/3736))
+- `add_remove_favourite_chats`, `archive_unarchive_chats` ([#3781](https://github.com/open-ic/open-chat/pull/3781))
 
 ### Changed
 
@@ -21,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Trim deprecated chat events to save space ([#3773](https://github.com/open-ic/open-chat/pull/3773))
 - Further reductions to the size of serialized ChatEvents ([#3775](https://github.com/open-ic/open-chat/pull/3775))
 - Reduce size of `ChatMetrics` when serialized ([#3779](https://github.com/open-ic/open-chat/pull/3779))
+- Restructure `initial_state` and `updates` ([#3781](https://github.com/open-ic/open-chat/pull/3781))
 
 ### Removed
 

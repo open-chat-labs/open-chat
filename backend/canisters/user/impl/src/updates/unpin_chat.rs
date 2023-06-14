@@ -9,6 +9,6 @@ use user_canister::pin_chat::*;
 fn unpin_chat(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| state.data.unpin_chat(&args.chat_id, state.env.now()));
+    mutate_state(|state| state.data.unpin_chat(args.chat_id, state.env.now()));
     Response::Success
 }

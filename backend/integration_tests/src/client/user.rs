@@ -30,16 +30,13 @@ generate_update_call!(unblock_user);
 generate_update_call!(undelete_messages);
 
 pub mod happy_path {
-    use std::collections::HashMap;
-
     use crate::rng::random_message_id;
     use crate::User;
     use ic_test_state_machine_client::StateMachine;
     use types::{
-        AccessRules, ChatId, CommunityId, EventIndex, EventsResponse, GroupChatSummary, MessageContentInitial, MessageId,
-        MessageIndex, Reaction, TextContent, ThreadSyncDetails, UserId,
+        AccessRules, ChatId, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId, Reaction, TextContent,
+        UserId,
     };
-    use user_canister::initial_state::SuccessCachedResult;
 
     pub fn send_text_message(
         env: &mut StateMachine,
@@ -156,49 +153,6 @@ pub mod happy_path {
     }
 
     pub fn initial_state(env: &StateMachine, sender: &User) -> user_canister::initial_state::SuccessResult {
-        fn convert_response(result: SuccessCachedResult) -> user_canister::initial_state::SuccessResult {
-            user_canister::initial_state::SuccessResult {
-                timestamp: result.timestamp,
-                direct_chats: result.direct_chats,
-                group_chats: convert_groups(result.cached_group_chat_summaries, result.group_chats_added),
-                communities: result.communities,
-                avatar_id: result.avatar_id,
-                blocked_users: result.blocked_users,
-                pinned_chats: result.pinned_chats,
-            }
-        }
-
-        fn convert_groups(
-            cached: Vec<GroupChatSummary>,
-            added: Vec<user_canister::GroupChatSummary>,
-        ) -> Vec<user_canister::GroupChatSummary> {
-            cached
-                .into_iter()
-                .map(convert_group_chat_summary)
-                .chain(added.into_iter())
-                .collect()
-        }
-
-        fn convert_group_chat_summary(summary: GroupChatSummary) -> user_canister::GroupChatSummary {
-            user_canister::GroupChatSummary {
-                chat_id: summary.chat_id,
-                read_by_me_up_to: summary.read_by_me_up_to,
-                archived: summary.archived,
-                date_read_pinned: summary.date_read_pinned,
-                threads_read: convert_threads_read(summary.latest_threads),
-            }
-        }
-
-        fn convert_threads_read(latest_threads: Vec<ThreadSyncDetails>) -> HashMap<MessageIndex, MessageIndex> {
-            let mut threads_read: HashMap<MessageIndex, MessageIndex> = HashMap::new();
-            for t in latest_threads {
-                if let Some(read_up_to) = t.read_up_to {
-                    threads_read.insert(t.root_message_index, read_up_to);
-                }
-            }
-            threads_read
-        }
-
         let response = super::initial_state(
             env,
             sender.principal,
@@ -206,10 +160,8 @@ pub mod happy_path {
             &user_canister::initial_state::Args { disable_cache: None },
         );
 
-        match response {
-            user_canister::initial_state::Response::Success(result) => result,
-            user_canister::initial_state::Response::SuccessCached(result) => convert_response(result),
-        }
+        let user_canister::initial_state::Response::Success(result) = response;
+        result
     }
 
     pub fn events(
