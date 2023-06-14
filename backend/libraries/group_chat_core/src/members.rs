@@ -425,7 +425,7 @@ mod tests {
     use crate::{GroupMemberInternal, Mentions};
     use candid::Principal;
     use std::collections::{BTreeMap, HashSet};
-    use types::{MentionInternal, Timestamped};
+    use types::Timestamped;
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -455,13 +455,7 @@ mod tests {
     #[test]
     fn serialize_with_no_defaults() {
         let mut mentions = Mentions::default();
-        mentions.add(
-            MentionInternal {
-                thread_root_message_index: Some(1.into()),
-                message_index: 1.into(),
-            },
-            1,
-        );
+        mentions.add(Some(1.into()), 1.into(), 1);
 
         let member = GroupMemberInternal {
             user_id: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
