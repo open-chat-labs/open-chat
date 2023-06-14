@@ -520,6 +520,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private async loadUser() {
         this._cachePrimer = new CachePrimer(this);
+        await this.connectToWorker();
         this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
             failedMessagesStore.initialise(res)
         );
@@ -3287,9 +3288,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
     getMissingUsers(userIds: string[] | Set<string>): Promise<UsersResponse> {
         const userIdsSet = Array.isArray(userIds) ? new Set<string>(userIds) : userIds;
-        return this.sendRequest({
-            kind: "getUsers",
-            users: {
+        return this.getUsers(
+            {
                 userGroups: [
                     {
                         users: this.missingUserIds(this._liveState.userStore, userIdsSet),
@@ -3297,8 +3297,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     },
                 ],
             },
-            allowStale: true,
-        });
+            true
+        );
     }
 
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
