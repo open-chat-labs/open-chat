@@ -12,16 +12,11 @@ pub struct Args {
 pub enum Response {
     Success,
     PartialSuccess(PartialSuccessResult),
-    Failure(FailureResult),
+    Failure,
     UserSuspended,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct PartialSuccessResult {
-    pub chats_not_found: Vec<Chat>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct FailureResult {
     pub chats_not_found: Vec<Chat>,
 }

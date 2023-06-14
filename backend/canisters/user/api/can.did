@@ -587,7 +587,7 @@ type ArchiveUnarchiveChatsResponse =
     variant {
         Success;
         PartialSuccess: record { chats_not_found: vec Chat; };
-        Failure: record { chats_not_found: vec Chat; };
+        Failure;
         UserSuspended;
     };
 

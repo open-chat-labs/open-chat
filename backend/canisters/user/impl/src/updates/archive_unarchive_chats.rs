@@ -12,6 +12,7 @@ fn archive_unarchive_chats(args: Args) -> Response {
 
     mutate_state(|state| {
         let now = state.env.now();
+        let chats_to_update = args.to_archive.len() + args.to_unarchive.len();
         let mut chats_not_found = Vec::new();
 
         for chat in args.to_archive {
@@ -26,7 +27,13 @@ fn archive_unarchive_chats(args: Args) -> Response {
             }
         }
 
-        Success
+        if chats_not_found.is_empty() {
+            Success
+        } else if chats_not_found.len() == chats_to_update {
+            Failure
+        } else {
+            PartialSuccess(PartialSuccessResult { chats_not_found })
+        }
     })
 }
 
