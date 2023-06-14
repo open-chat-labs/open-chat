@@ -143,9 +143,7 @@ pub mod happy_path {
             &community_canister::summary::Args {},
         );
 
-        match response {
-            community_canister::summary::Response::Success(result) => result.summary,
-            response => panic!("'summary' error: {response:?}"),
-        }
+        let community_canister::summary::Response::Success(result) = response;
+        result.summary
     }
 }
