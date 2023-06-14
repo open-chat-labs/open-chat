@@ -28,7 +28,7 @@ fn delete_group_succeeds() {
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(!initial_state.group_chats.iter().any(|c| c.chat_id == group_id));
+    assert!(!initial_state.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
 }
 
 fn init_test_data(env: &mut StateMachine, local_user_index: CanisterId) -> TestData {

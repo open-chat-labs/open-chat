@@ -11,6 +11,8 @@ pub struct Community {
     pub last_read: TimestampMillis,
     pub last_changed_for_my_data: TimestampMillis,
     pub archived: Timestamped<bool>,
+    #[serde(default)]
+    pub pinned: Timestamped<Vec<ChannelId>>,
 }
 
 impl Community {
@@ -22,6 +24,7 @@ impl Community {
             last_read: now,
             last_changed_for_my_data: now,
             archived: Timestamped::default(),
+            pinned: Timestamped::default(),
         }
     }
 
@@ -31,6 +34,8 @@ impl Community {
             self.last_read,
             self.last_changed_for_my_data,
             self.archived.timestamp,
+            self.pinned.timestamp,
+            self.channels.values().map(|c| c.last_updated()).max().unwrap_or_default(),
         ]
         .iter()
         .max()
@@ -69,6 +74,7 @@ impl Community {
                 })
                 .collect(),
             archived: self.archived.value,
+            pinned: self.pinned.value.to_vec(),
         }
     }
 
@@ -78,6 +84,7 @@ impl Community {
             channels: self
                 .channels
                 .values()
+                .filter(|c| c.last_updated() > updates_since)
                 .map(|c| user_canister::ChannelSummaryUpdates {
                     channel_id: c.channel_id,
                     read_by_me_up_to: c.messages_read.read_by_me_up_to_updates(updates_since),
@@ -87,6 +94,14 @@ impl Community {
                 })
                 .collect(),
             archived: self.archived.if_set_after(updates_since).copied(),
+            pinned: self.pinned.if_set_after(updates_since).cloned(),
+        }
+    }
+
+    pub fn unpin(&mut self, channel_id: &ChannelId, now: TimestampMillis) {
+        if self.pinned.value.contains(channel_id) {
+            self.pinned.timestamp = now;
+            self.pinned.value.retain(|pinned_channel_id| pinned_channel_id != channel_id);
         }
     }
 }
@@ -105,5 +120,18 @@ impl Channel {
             messages_read: GroupMessagesRead::default(),
             archived: Timestamped::default(),
         }
+    }
+
+    pub fn last_updated(&self) -> TimestampMillis {
+        [
+            self.messages_read.read_by_me_up_to.timestamp,
+            self.messages_read.threads_read.last_updated().unwrap_or_default(),
+            self.messages_read.date_read_pinned.timestamp,
+            self.archived.timestamp,
+        ]
+        .iter()
+        .max()
+        .copied()
+        .unwrap()
     }
 }

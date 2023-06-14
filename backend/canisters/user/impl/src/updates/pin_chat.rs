@@ -12,7 +12,7 @@ fn pin_chat(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| {
-        if state.data.pinned_chats.len() as u32 >= MAX_PINNED_CHATS {
+        if state.data.favourite_chats.pinned().len() as u32 >= MAX_PINNED_CHATS {
             Response::PinnedLimitReached(MAX_PINNED_CHATS)
         } else {
             state.data.pin_chat(args.chat_id, state.env.now());

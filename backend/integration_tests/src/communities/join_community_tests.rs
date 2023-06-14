@@ -28,7 +28,11 @@ fn join_public_community_succeeds() {
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(initial_state.communities.iter().any(|c| c.community_id == community_id));
+    assert!(initial_state
+        .communities
+        .summaries
+        .iter()
+        .any(|c| c.community_id == community_id));
 }
 
 #[test]
@@ -91,7 +95,11 @@ fn join_private_community_with_invitation_succeeds() {
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(initial_state.communities.iter().any(|c| c.community_id == community_id));
+    assert!(initial_state
+        .communities
+        .summaries
+        .iter()
+        .any(|c| c.community_id == community_id));
 }
 
 #[test]
@@ -136,7 +144,11 @@ fn join_private_community_using_invite_code_succeeds() {
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(initial_state.communities.iter().any(|c| c.community_id == community_id));
+    assert!(initial_state
+        .communities
+        .summaries
+        .iter()
+        .any(|c| c.community_id == community_id));
 }
 
 #[test]
@@ -166,7 +178,7 @@ fn invite_to_community_oc_bot_message_received() {
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(initial_state.direct_chats.iter().any(|dc| {
+    assert!(initial_state.direct_chats.summaries.iter().any(|dc| {
         if let MessageContent::Text(content) = &dc.latest_message.event.content {
             content.text.contains("You have been invited to the community") && content.text.contains(&community_id.to_string())
         } else {

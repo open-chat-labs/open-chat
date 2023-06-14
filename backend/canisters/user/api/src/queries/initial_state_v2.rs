@@ -2,6 +2,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{ChatId, DirectChatSummary, GroupChatSummary, TimestampMillis, UserId, Version};
 
+use crate::map_chats_to_chat_ids;
+
 pub type Args = crate::initial_state::Args;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -26,8 +28,10 @@ pub struct SuccessCachedResult {
     pub timestamp: TimestampMillis,
     pub direct_chats: Vec<DirectChatSummary>,
     pub cache_timestamp: TimestampMillis,
+
     pub cached_group_chat_summaries: Vec<GroupChatSummary>,
     pub group_chats_added: Vec<crate::GroupChatSummary>,
+
     pub avatar_id: Option<u128>,
     pub blocked_users: Vec<UserId>,
     pub pinned_chats: Vec<ChatId>,
@@ -36,27 +40,30 @@ pub struct SuccessCachedResult {
 
 impl From<crate::initial_state::Response> for Response {
     fn from(value: crate::initial_state::Response) -> Self {
-        match value {
-            crate::initial_state::Response::Success(s) => Response::Success(SuccessResult {
+        let crate::initial_state::Response::Success(s) = value;
+
+        if let Some(cached) = s.group_chats.cached {
+            Response::SuccessCached(SuccessCachedResult {
                 timestamp: s.timestamp,
-                direct_chats: s.direct_chats,
-                group_chats: s.group_chats,
+                direct_chats: s.direct_chats.summaries,
+                cache_timestamp: cached.timestamp,
+                cached_group_chat_summaries: cached.summaries,
+                group_chats_added: s.group_chats.summaries,
                 avatar_id: s.avatar_id,
                 blocked_users: s.blocked_users,
-                pinned_chats: s.pinned_chats,
+                pinned_chats: map_chats_to_chat_ids(s.favourite_chats.pinned),
                 user_canister_wasm_version: Version::default(),
-            }),
-            crate::initial_state::Response::SuccessCached(s) => Response::SuccessCached(SuccessCachedResult {
+            })
+        } else {
+            Response::Success(SuccessResult {
                 timestamp: s.timestamp,
-                direct_chats: s.direct_chats,
-                cache_timestamp: s.cache_timestamp,
-                cached_group_chat_summaries: s.cached_group_chat_summaries,
-                group_chats_added: s.group_chats_added,
+                direct_chats: s.direct_chats.summaries,
+                group_chats: s.group_chats.summaries,
                 avatar_id: s.avatar_id,
                 blocked_users: s.blocked_users,
-                pinned_chats: s.pinned_chats,
+                pinned_chats: map_chats_to_chat_ids(s.favourite_chats.pinned),
                 user_canister_wasm_version: Version::default(),
-            }),
+            })
         }
     }
 }

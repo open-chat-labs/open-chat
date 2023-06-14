@@ -9,14 +9,17 @@ fn main() {
     generate_candid_method!(user, events_window, query);
     generate_candid_method!(user, hot_group_exclusions, query);
     generate_candid_method!(user, initial_state_v2, query);
+    generate_candid_method!(user, initial_state, query);
     generate_candid_method!(user, messages_by_message_index, query);
     generate_candid_method!(user, public_profile, query);
     generate_candid_method!(user, search_messages, query);
     generate_candid_method!(user, updates_v2, query);
-
+    generate_candid_method!(user, updates, query);
     generate_candid_method!(user, add_hot_group_exclusions, update);
     generate_candid_method!(user, add_reaction, update);
+    generate_candid_method!(user, add_remove_favourite_chats, update);
     generate_candid_method!(user, archive_chat, update);
+    generate_candid_method!(user, archive_unarchive_chats, update);
     generate_candid_method!(user, block_user, update);
     generate_candid_method!(user, cancel_message_reminder, update);
     generate_candid_method!(user, create_community, update);

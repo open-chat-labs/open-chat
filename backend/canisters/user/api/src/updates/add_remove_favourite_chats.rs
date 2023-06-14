@@ -1,16 +1,15 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::ChatId;
-
-// Deprecated
+use types::Chat;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub chat_id: ChatId,
+    pub to_add: Vec<Chat>,
+    pub to_remove: Vec<Chat>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    ChatNotFound,
+    UserSuspended,
 }
