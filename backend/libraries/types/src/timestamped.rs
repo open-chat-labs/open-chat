@@ -1,5 +1,4 @@
 use crate::TimestampMillis;
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::ops::Deref;
@@ -45,31 +44,5 @@ impl<T> Deref for Timestamped<T> {
 
     fn deref(&self) -> &Self::Target {
         &self.value
-    }
-}
-
-// Taken from macro expansion
-impl<T: CandidType> CandidType for Timestamped<T> {
-    fn _ty() -> ::candid::types::Type {
-        ::candid::types::Type::Record(vec![
-            ::candid::types::Field {
-                id: ::candid::types::Label::Named("value".to_string()),
-                ty: <T as ::candid::types::CandidType>::ty(),
-            },
-            ::candid::types::Field {
-                id: ::candid::types::Label::Named("timestamp".to_string()),
-                ty: <TimestampMillis as ::candid::types::CandidType>::ty(),
-            },
-        ])
-    }
-
-    fn idl_serialize<__S>(&self, __serializer: __S) -> ::std::result::Result<(), __S::Error>
-    where
-        __S: ::candid::types::Serializer,
-    {
-        let mut ser = __serializer.serialize_struct()?;
-        ::candid::types::Compound::serialize_element(&mut ser, &self.value)?;
-        ::candid::types::Compound::serialize_element(&mut ser, &self.timestamp)?;
-        Ok(())
     }
 }
