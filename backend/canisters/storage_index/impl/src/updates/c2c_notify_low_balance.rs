@@ -1,13 +1,14 @@
 use crate::{mutate_state, read_state, RuntimeState, BUCKET_CANISTER_TOP_UP_AMOUNT, MIN_CYCLES_BALANCE};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use types::{CanisterId, CyclesTopUp, NotifyLowBalanceResponse};
+use storage_index_canister::c2c_notify_low_balance::*;
+use types::{CanisterId, CyclesTopUp};
 use utils::canister::deposit_cycles;
 use utils::cycles::can_spend_cycles;
 
 #[update_msgpack]
 #[trace]
-async fn c2c_notify_low_balance() -> NotifyLowBalanceResponse {
+async fn c2c_notify_low_balance(_args: Args) -> Response {
     let prepare_ok = match read_state(prepare) {
         Ok(ok) => ok,
         Err(response) => return response,
@@ -16,9 +17,9 @@ async fn c2c_notify_low_balance() -> NotifyLowBalanceResponse {
 
     if deposit_cycles(prepare_ok.bucket, amount).await.is_ok() {
         mutate_state(|state| commit(prepare_ok.bucket, prepare_ok.top_up, state));
-        NotifyLowBalanceResponse::Success(amount)
+        Response::Success(amount)
     } else {
-        NotifyLowBalanceResponse::FailedToDepositCycles
+        Response::FailedToDepositCycles
     }
 }
 
@@ -27,7 +28,7 @@ struct PrepareResult {
     top_up: CyclesTopUp,
 }
 
-fn prepare(state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
+fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
     let top_up_amount = BUCKET_CANISTER_TOP_UP_AMOUNT;
     let top_up = CyclesTopUp {
@@ -36,7 +37,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceRespon
     };
 
     if !can_spend_cycles(top_up_amount, MIN_CYCLES_BALANCE) {
-        Err(NotifyLowBalanceResponse::NotEnoughCyclesRemaining)
+        Err(Response::NotEnoughCyclesRemaining)
     } else if state.data.buckets.get(&caller).is_some() {
         Ok(PrepareResult { bucket: caller, top_up })
     } else {
