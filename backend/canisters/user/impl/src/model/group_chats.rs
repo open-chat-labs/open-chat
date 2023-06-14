@@ -28,7 +28,7 @@ impl GroupChats {
         &self.pinned.value
     }
 
-    pub fn pinned_since(&self, since: TimestampMillis) -> Option<Vec<ChatId>> {
+    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<Vec<ChatId>> {
         self.pinned.if_set_after(since).map(|ids| ids.to_vec())
     }
 
@@ -52,7 +52,7 @@ impl GroupChats {
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
         self.group_chats.values().any(|c| c.last_updated() > since)
             || self.pinned.timestamp > since
-            || self.removed.iter().any(|g| g.timestamp > since)
+            || self.removed.last().map(|g| g.timestamp > since).unwrap_or_default()
     }
 
     pub fn create(&mut self, chat_id: ChatId, now: TimestampMillis) -> bool {

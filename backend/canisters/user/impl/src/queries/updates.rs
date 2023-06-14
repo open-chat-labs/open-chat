@@ -59,7 +59,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let direct_chats = DirectChatsUpdates {
         added: direct_chats_added,
         updated: direct_chats_updated,
-        pinned: state.data.direct_chats.pinned_since(updates_since),
+        pinned: state.data.direct_chats.pinned_if_updated(updates_since),
     };
 
     let group_chats_removed = state.data.group_chats.removed_since(updates_since);
@@ -77,7 +77,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         added: group_chats_added,
         updated: group_chats_updated,
         removed: group_chats_removed,
-        pinned: state.data.group_chats.pinned_since(updates_since),
+        pinned: state.data.group_chats.pinned_if_updated(updates_since),
     };
 
     let communities_removed = state.data.communities.removed_since(updates_since);

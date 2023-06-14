@@ -90,5 +90,5 @@ fn update_chat(chat: &Chat, archive: bool, now: TimestampMillis, state: &mut Run
         state.data.favourite_chats.unpin(chat, now);
     }
 
-    false
+    success
 }

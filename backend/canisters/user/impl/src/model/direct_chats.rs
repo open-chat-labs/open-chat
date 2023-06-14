@@ -30,7 +30,7 @@ impl DirectChats {
         &self.pinned.value
     }
 
-    pub fn pinned_since(&self, since: TimestampMillis) -> Option<Vec<ChatId>> {
+    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<Vec<ChatId>> {
         self.pinned.if_set_after(since).map(|ids| ids.to_vec())
     }
 
