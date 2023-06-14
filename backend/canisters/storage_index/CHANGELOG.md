@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Another fix for topping up StorageBucket canisters ([#3789](https://github.com/open-ic/open-chat/pull/3789))
+
 ## [[2.0.718](https://github.com/open-ic/open-chat/releases/tag/v2.0.718-storage_index)] - 2023-06-14
 
 ### Fixed
