@@ -19,6 +19,6 @@ fn block_user_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let now = state.env.now();
     state.data.block_user(args.user_id, now);
-    state.data.unpin_chat(&args.user_id.into(), now);
+    state.data.unpin_chat(args.user_id.into(), now);
     Success
 }

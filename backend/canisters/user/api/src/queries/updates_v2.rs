@@ -2,6 +2,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{ChatId, DirectChatSummary, DirectChatSummaryUpdates, OptionUpdate, TimestampMillis, UserId, Version};
 
+use crate::map_chats_to_chat_ids;
+
 pub type Args = crate::updates::Args;
 
 #[allow(clippy::large_enum_variant)]
@@ -38,15 +40,15 @@ impl From<crate::updates::SuccessResult> for SuccessResult {
     fn from(value: crate::updates::SuccessResult) -> Self {
         SuccessResult {
             timestamp: value.timestamp,
-            direct_chats_added: value.direct_chats_added,
-            direct_chats_updated: value.direct_chats_updated,
-            group_chats_added: value.group_chats_added,
-            group_chats_updated: value.group_chats_updated,
-            chats_removed: value.chats_removed,
+            direct_chats_added: value.direct_chats.added,
+            direct_chats_updated: value.direct_chats.updated,
+            group_chats_added: value.group_chats.added,
+            group_chats_updated: value.group_chats.updated,
+            chats_removed: value.group_chats.removed,
             avatar_id: value.avatar_id,
             user_canister_wasm_version: None,
             blocked_users_v2: value.blocked_users,
-            pinned_chats: value.pinned_chats,
+            pinned_chats: value.favourite_chats.pinned.map(map_chats_to_chat_ids),
         }
     }
 }
