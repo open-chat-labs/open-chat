@@ -1,5 +1,7 @@
 import {
+    CommonResponses,
     InviteUsersResponse,
+    JoinCommunityResponse,
     JoinGroupResponse,
     RegisterUserResponse,
     ReportMessageResponse,
@@ -7,12 +9,13 @@ import {
 } from "openchat-shared";
 import type {
     ApiInviteUsersResponse,
+    ApiJoinCommunityResponse,
     ApiJoinGroupResponse,
     ApiRegisterUserResponse,
     ApiReportMessageResponse,
 } from "./candid/idl";
 import { bytesToHexString } from "../../utils/mapping";
-import { gateCheckFailedReason, groupChatSummary } from "../common/chatMappers";
+import { communitySummary, gateCheckFailedReason, groupChatSummary } from "../common/chatMappers";
 
 export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterUserResponse {
     if ("Success" in candid) {
@@ -99,6 +102,19 @@ export function inviteUsersResponse(candid: ApiInviteUsersResponse): InviteUsers
         return "chat_frozen";
     }
     throw new UnsupportedValueError("Unexpected ApiInviteUsersResponse type received", candid);
+}
+
+export function joinCommunityResponse(candid: ApiJoinCommunityResponse): JoinCommunityResponse {
+    if ("Success" in candid) {
+        return { kind: "success", community: communitySummary(candid.Success) };
+    } else if ("AlreadyInCommunity" in candid) {
+        return { kind: "success", community: communitySummary(candid.AlreadyInCommunity) };
+    } else if ("GateCheckFailed" in candid) {
+        return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
+    } else {
+        console.warn("Join community failed with: ", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {

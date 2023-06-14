@@ -1,5 +1,3 @@
-import "core-js/actual/structured-clone";
-
 import type { Identity } from "@dfinity/agent";
 import { AuthClient, IdbStorage } from "@dfinity/auth-client";
 import { OpenChatAgent } from "openchat-agent";
@@ -569,6 +567,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            case "joinCommunity":
+                agent
+                    .joinCommunity(payload.communityId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "updateGroup":
                 agent
                     .updateGroup(
@@ -918,9 +927,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
-            case "searchGroups":
+            case "search":
                 agent
-                    .searchGroups(payload.searchTerm, payload.maxResults)
+                    .search(payload.searchTerm, payload.maxResults, payload.scope)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1876,7 +1885,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.rules,
                         payload.permissions,
                         payload.avatar,
-                        payload.banner,
                         payload.gate
                     )
                     .then((response) =>
@@ -1899,6 +1907,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.banner,
                         payload.gate
                     )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "createCommunity":
+                agent.userClient
+                    .createCommunity(payload.community, payload.rules, payload.defaultChannels)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

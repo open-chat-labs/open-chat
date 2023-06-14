@@ -101,6 +101,8 @@ import {
     CustomMessageContent,
     ReportedMessage,
     MessageReport,
+    CreateCommunityResponse,
+    CommunityPermissions,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -204,6 +206,8 @@ export {
     CustomMessageContent as ApiCustomMessageContent,
     ReportedMessage as ApiReportedMessage,
     MessageReport as ApiMessageReport,
+    CreateCommunityResponse as ApiCreateCommunityResponse,
+    CommunityPermissions as ApiCommunityPermissions,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

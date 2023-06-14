@@ -8,7 +8,7 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Formatter;
 use types::{
-    is_default, is_empty_btreemap, is_empty_hashset, EventIndex, GroupMember, GroupPermissions, Mention, MessageIndex,
+    is_default, is_empty_btreemap, is_empty_hashset, EventIndex, GroupMember, GroupPermissions, HydratedMention, MessageIndex,
     TimestampMillis, Timestamped, UserId, MAX_RETURNED_MENTIONS,
 };
 
@@ -349,12 +349,12 @@ impl GroupMemberInternal {
         since: Option<TimestampMillis>,
         chat_events: &ChatEvents,
         now: TimestampMillis,
-    ) -> Vec<Mention> {
+    ) -> Vec<HydratedMention> {
         let min_visible_event_index = self.min_visible_event_index();
 
         self.mentions_v2
             .iter_most_recent(since)
-            .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, m, now))
+            .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, &m, now))
             .take(MAX_RETURNED_MENTIONS)
             .collect()
     }
@@ -425,7 +425,7 @@ mod tests {
     use crate::{GroupMemberInternal, Mentions};
     use candid::Principal;
     use std::collections::{BTreeMap, HashSet};
-    use types::{MentionInternal, Timestamped};
+    use types::Timestamped;
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -455,13 +455,7 @@ mod tests {
     #[test]
     fn serialize_with_no_defaults() {
         let mut mentions = Mentions::default();
-        mentions.add(
-            MentionInternal {
-                thread_root_message_index: Some(1.into()),
-                message_index: 1.into(),
-            },
-            1,
-        );
+        mentions.add(Some(1.into()), 1.into(), 1);
 
         let member = GroupMemberInternal {
             user_id: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
@@ -480,8 +474,8 @@ mod tests {
         let member_bytes_len = member_bytes.len();
 
         // Before optimisation: 278
-        // After optimisation: 133
-        assert_eq!(member_bytes_len, 133);
+        // After optimisation: 97
+        assert_eq!(member_bytes_len, 97);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }

@@ -62,7 +62,7 @@
         @include font(book, normal, fs-100);
         margin-top: $sp4;
         min-width: 120px;
-        border-radius: $sp4;
+        border-radius: $sp3;
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);

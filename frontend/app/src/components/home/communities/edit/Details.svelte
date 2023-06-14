@@ -15,7 +15,11 @@
     export let valid: boolean;
 
     $: {
-        valid = candidate.name !== "" && candidate.description !== "";
+        valid =
+            candidate.name.length > MIN_LENGTH &&
+            candidate.name.length <= MAX_LENGTH &&
+            candidate.description.length <= MAX_DESC_LENGTH &&
+            candidate.description.length > 0;
     }
 
     function communityAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {

@@ -2,7 +2,7 @@
     import { _ } from "svelte-i18n";
     import CommunityCard from "../explore/CommunityCard.svelte";
     import CommunityDetails from "./CommunityDetails.svelte";
-    import { Community, OpenChat, defaultAccessRules, emptyChatMetrics } from "openchat-client";
+    import { OpenChat, defaultAccessRules, emptyChatMetrics } from "openchat-client";
     import CommunityDetailsHeader from "./CommunityDetailsHeader.svelte";
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { getContext } from "svelte";
@@ -33,7 +33,14 @@
         {canEdit}
         level={"community"} />
     <div class="body">
-        <CommunityCard joining={false} header community={$selectedCommunity} selected={false} />
+        <CommunityCard
+            name={$selectedCommunity.name}
+            description={$selectedCommunity.description}
+            banner={$selectedCommunity.banner}
+            avatar={$selectedCommunity.avatar}
+            memberCount={$selectedCommunity.memberCount}
+            channelCount={0}
+            header />
         <CommunityDetails
             on:deleteCommunity
             {canDelete}

@@ -16,7 +16,6 @@
     let error: string | undefined = undefined;
 
     let nextChannelName: string = "";
-    $: console.log("Channels: ", channels);
 
     $: {
         if (channels.length === 0) {

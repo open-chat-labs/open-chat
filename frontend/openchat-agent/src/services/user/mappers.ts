@@ -42,6 +42,7 @@ import type {
     ApiDirectChatSummaryUpdates,
     ApiDeletedDirectMessageResponse,
     ApiSetMessageReminderResponse,
+    ApiCreateCommunityResponse,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -84,6 +85,8 @@ import {
     DeletedDirectMessageResponse,
     UpdatedEvent,
     SetMessageReminderResponse,
+    CommonResponses,
+    CreateCommunityResponse,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -136,17 +139,7 @@ export function searchDirectChatResponse(
             matches: candid.Success.matches.map((m) => messageMatch(m, chatId)),
         };
     }
-    if ("TermTooShort" in candid) {
-        return {
-            kind: "term_too_short",
-        };
-    }
-    if ("TermTooLong" in candid) {
-        return {
-            kind: "term_too_long",
-        };
-    }
-    if ("InvalidTerm" in candid) {
+    if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
         return {
             kind: "term_invalid",
         };
@@ -471,6 +464,19 @@ export function sendMessageResponse(
         return { kind: "internal_error" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
+}
+
+export function createCommunityResponse(
+    candid: ApiCreateCommunityResponse
+): CreateCommunityResponse {
+    if ("Success" in candid) {
+        return { kind: "success", id: candid.Success.community_id.toString() };
+    } else if ("NameTaken" in candid) {
+        return { kind: "name_taken" };
+    } else {
+        console.warn("CreateCommunit failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroupResponse {

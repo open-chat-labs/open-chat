@@ -7,6 +7,18 @@ export type GroupMatch = DataContent & {
     description: string;
 };
 
+export type SearchScope = "all" | "groups" | "communities";
+
+export interface CommunityMatch {
+    id: string;
+    name: string;
+    description: string;
+    avatar: DataContent;
+    banner: DataContent;
+    memberCount: number;
+    channelCount: number;
+}
+
 export type MessageMatch = {
     chatId: string;
     messageIndex: number;
@@ -15,15 +27,7 @@ export type MessageMatch = {
     score: number;
 };
 
-export type GroupSearchResponse = TermInvalid | TermTooLong | TermTooShort | GroupSearchSuccess;
-
-export type TermTooShort = {
-    kind: "term_too_short";
-};
-
-export type TermTooLong = {
-    kind: "term_too_long";
-};
+export type SearchResponse = TermInvalid | SearchSuccess;
 
 export type TooManyUsers = {
     kind: "too_many_users";
@@ -37,25 +41,19 @@ export type ChatNotFound = {
     kind: "chat_not_found";
 };
 
-export type GroupSearchSuccess = {
+export type SearchSuccess = {
     kind: "success";
-    matches: GroupMatch[];
+    groupMatches: GroupMatch[];
+    communityMatches: CommunityMatch[];
 };
 
 export type SearchGroupChatResponse =
     | SearchMessagesSuccess
-    | TermTooShort
-    | TermTooLong
     | TooManyUsers
     | TermInvalid
     | CallerNotInGroup;
 
-export type SearchDirectChatResponse =
-    | SearchMessagesSuccess
-    | ChatNotFound
-    | TermTooShort
-    | TermTooLong
-    | TermInvalid;
+export type SearchDirectChatResponse = SearchMessagesSuccess | ChatNotFound | TermInvalid;
 
 export type SearchMessagesSuccess = {
     kind: "success";

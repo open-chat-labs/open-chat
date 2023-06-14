@@ -90,9 +90,10 @@ import type {
     SetUserUpgradeConcurrencyResponse,
 } from "./user";
 import type {
-    GroupSearchResponse,
+    SearchResponse,
     SearchDirectChatResponse,
     SearchGroupChatResponse,
+    SearchScope,
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
 import type { GroupInvite } from "./inviteCodes";
@@ -104,10 +105,12 @@ import type {
     BlockCommunityUserResponse,
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
+    Community,
     CommunityInviteCodeResponse,
     CommunityPermissions,
     CommunityRulesResponse,
     CreateChannelResponse,
+    CreateCommunityResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
@@ -116,6 +119,7 @@ import type {
     EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
     JoinChannelResponse,
+    JoinCommunityResponse,
     LeaveChannelResponse,
     MakeChannelPrivateResponse,
     MakeCommunityPrivateResponse,
@@ -145,7 +149,7 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
 
 export type WorkerRequest =
     | DismissRecommendations
-    | SearchGroups
+    | Search
     | GetGroupRules
     | GetRecommendedGroups
     | RegisterProposalVote
@@ -173,6 +177,7 @@ export type WorkerRequest =
     | RegisterPollVote
     | UpdateGroup
     | JoinGroup
+    | JoinCommunity
     | LeaveGroup
     | DeleteGroup
     | MakeGroupPrivate
@@ -284,6 +289,7 @@ export type WorkerRequest =
     | UndeleteChannelMessages
     | UpdateChannel
     | UpdateCommunity
+    | CreateCommunity
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -404,10 +410,11 @@ type DismissRecommendations = {
     kind: "dismissRecommendation";
 };
 
-type SearchGroups = {
+type Search = {
     searchTerm: string;
     maxResults: number;
-    kind: "searchGroups";
+    scope: SearchScope;
+    kind: "search";
 };
 
 type GetGroupRules = {
@@ -595,6 +602,11 @@ type UpdateGroup = {
 type JoinGroup = {
     chatId: string;
     kind: "joinGroup";
+};
+
+type JoinCommunity = {
+    communityId: string;
+    kind: "joinCommunity";
 };
 
 type LeaveGroup = {
@@ -881,7 +893,7 @@ export type WorkerResponse =
     | Response<Tokens>
     | Response<SearchDirectChatResponse>
     | Response<SearchGroupChatResponse>
-    | Response<GroupSearchResponse>
+    | Response<SearchResponse>
     | Response<AccessRules | undefined>
     | Response<GroupChatSummary[]>
     | Response<RegisterProposalVoteResponse>
@@ -984,6 +996,8 @@ export type WorkerResponse =
     | Response<UndeleteChannelMessagesResponse>
     | Response<UpdateChannelResponse>
     | Response<UpdateCommunityResponse>
+    | Response<CreateCommunityResponse>
+    | Response<JoinCommunityResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1348,6 +1362,13 @@ type UpdateCommunity = {
     gate?: AccessGate;
 };
 
+type CreateCommunity = {
+    kind: "createCommunity";
+    community: Community;
+    rules: AccessRules;
+    defaultChannels: string[];
+};
+
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
     communityId: string;
@@ -1481,8 +1502,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? GroupChatSummary[]
     : T extends GetGroupRules
     ? AccessRules | undefined
-    : T extends SearchGroups
-    ? GroupSearchResponse
+    : T extends Search
+    ? SearchResponse
     : T extends DismissRecommendations
     ? void
     : T extends GroupInvite
@@ -1635,4 +1656,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? UpdateChannelResponse
     : T extends UpdateCommunity
     ? UpdateCommunityResponse
+    : T extends CreateCommunity
+    ? CreateCommunityResponse
+    : T extends JoinCommunity
+    ? JoinCommunityResponse
     : never;

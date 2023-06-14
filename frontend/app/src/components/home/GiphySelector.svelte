@@ -8,7 +8,7 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { GIFObject, PagedGIFObject, SearchResponse, GiphyContent } from "openchat-client";
+    import type { GIFObject, PagedGIFObject, GiphySearchResponse, GiphyContent } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 
@@ -125,7 +125,7 @@
                 : `${SEARCH_API_URL}${searchTerm}&offset=${offset}`;
         return fetch(url)
             .then((res) => res.json())
-            .then((res: SearchResponse) => {
+            .then((res: GiphySearchResponse) => {
                 return res.data;
             })
             .then((res) => res.map((gif, i) => addPagingInfo(i, pageNum, gif)))

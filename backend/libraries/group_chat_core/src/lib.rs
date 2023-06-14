@@ -9,7 +9,7 @@ use types::{
     AccessGate, AccessRules, AvatarChanged, ContentValidationError, CryptoTransaction, Document, EventIndex, EventWrapper,
     EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
     GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
-    GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, Mention, MentionInternal, Message, MessageContent,
+    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse,
     Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged,
     SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked, UsersInvited,
@@ -721,13 +721,7 @@ impl GroupChatCore {
             mentions.remove(&sender);
             for user_id in mentions.iter() {
                 if let Some(mentioned) = self.members.get_mut(user_id) {
-                    mentioned.mentions_v2.add(
-                        MentionInternal {
-                            thread_root_message_index,
-                            message_index,
-                        },
-                        now,
-                    );
+                    mentioned.mentions_v2.add(thread_root_message_index, message_index, now);
                 }
             }
 
@@ -1703,7 +1697,7 @@ pub struct SummaryUpdatesFromEvents {
     pub latest_event_index: Option<EventIndex>,
     pub members_changed: bool,
     pub role_changed: bool,
-    pub mentions: Vec<Mention>,
+    pub mentions: Vec<HydratedMention>,
     pub permissions: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>,
     pub is_public: Option<bool>,

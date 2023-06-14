@@ -3,6 +3,7 @@ import { Principal } from "@dfinity/principal";
 import { idlFactory, LocalUserIndexService } from "./candid/idl";
 import type {
     InviteUsersResponse,
+    JoinCommunityResponse,
     JoinGroupResponse,
     RegisterUserResponse,
     ReportMessageResponse,
@@ -10,6 +11,7 @@ import type {
 import { CandidService } from "../candidService";
 import {
     inviteUsersResponse,
+    joinCommunityResponse,
     joinGroupResponse,
     registerUserResponse,
     reportMessageResponse,
@@ -51,6 +53,19 @@ export class LocalUserIndexClient extends CandidService {
                 public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             }),
             registerUserResponse
+        );
+    }
+
+    joinCommunity(
+        communityId: string,
+        inviteCode: string | undefined
+    ): Promise<JoinCommunityResponse> {
+        return this.handleResponse(
+            this.localUserIndexService.join_community({
+                community_id: Principal.fromText(communityId),
+                invite_code: apiOptional(textToCode, inviteCode),
+            }),
+            joinCommunityResponse
         );
     }
 

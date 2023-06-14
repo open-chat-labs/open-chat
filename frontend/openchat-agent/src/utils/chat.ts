@@ -460,7 +460,7 @@ export function buildBlobUrl(
     pattern: string,
     canisterId: string,
     blobId: bigint,
-    blobType: "blobs" | "avatar"
+    blobType: "blobs" | "avatar" | "banner"
 ): string {
     return `${pattern
         .replace("{canisterId}", canisterId)
