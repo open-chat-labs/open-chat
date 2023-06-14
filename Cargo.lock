@@ -6630,6 +6630,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "msgpack",
  "serde",
  "serializer",
  "storage_bucket_canister",
