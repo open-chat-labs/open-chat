@@ -3,7 +3,7 @@ use crate::model::group_chat::GroupChat;
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
 use std::collections::HashMap;
-use types::{GroupCanisterGroupChatSummary, GroupChatSummary, ThreadSyncDetails, TimestampMillis, UserId, Version};
+use types::{GroupCanisterGroupChatSummary, GroupChatSummary, ThreadSyncDetails, UserId, Version};
 use user_canister::initial_state::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
@@ -54,16 +54,20 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
         // groups not found in the cache are included in `group_chats_added`.
         let mut group_chats: HashMap<_, _> = state.data.group_chats.iter().map(|g| (g.chat_id, g)).collect();
 
-        GroupChatsInitial {
-            summaries: group_chats.values().map(|g| g.to_summary()).collect(),
-            pinned: pinned_groups,
-            cached: cached
+        let cached = CachedGroupChatSummaries {
+            summaries: cached
                 .groups
                 .iter()
                 .filter_map(|c| group_chats.remove(&c.chat_id).map(|g| (c, g)))
                 .map(|(c, g)| hydrate_cached_summary(c, g))
                 .collect(),
-            cache_timestamp: cached.timestamp,
+            timestamp: cached.timestamp,
+        };
+
+        GroupChatsInitial {
+            summaries: group_chats.values().map(|g| g.to_summary()).collect(),
+            pinned: pinned_groups,
+            cached: Some(cached),
         }
     } else {
         let chats = state.data.group_chats.iter().map(|g| g.to_summary()).collect();
@@ -71,8 +75,7 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
         GroupChatsInitial {
             summaries: chats,
             pinned: pinned_groups,
-            cached: Vec::default(),
-            cache_timestamp: TimestampMillis::default(),
+            cached: None,
         }
     };
 

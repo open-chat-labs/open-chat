@@ -33,8 +33,13 @@ pub struct DirectChatsInitial {
 pub struct GroupChatsInitial {
     pub summaries: Vec<crate::GroupChatSummary>,
     pub pinned: Vec<ChatId>,
-    pub cached: Vec<GroupChatSummary>,
-    pub cache_timestamp: TimestampMillis,
+    pub cached: Option<CachedGroupChatSummaries>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct CachedGroupChatSummaries {
+    pub summaries: Vec<GroupChatSummary>,
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

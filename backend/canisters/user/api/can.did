@@ -642,8 +642,13 @@ type GroupChatsInitial =
     record {
         summaries: vec UserCanisterGroupChatSummary;
         pinned: vec ChatId;
-        cached: vec GroupChatSummary;
-        cache_timestamp: TimestampMillis;
+        cached: opt CachedGroupChatSummaries;
+    };
+
+type CachedGroupChatSummaries =
+    record {
+        summaries: vec GroupChatSummary;
+        timestamp: TimestampMillis;
     };
 
 type FavouriteChatsInitial =
