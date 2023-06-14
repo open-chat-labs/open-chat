@@ -168,7 +168,6 @@ type SummaryResponse =
         Success: record {
             summary: CommunityCanisterCommunitySummary;
         };
-        UserNotInCommunity;
     };
 
 type SummaryUpdatesArgs =
@@ -182,7 +181,6 @@ type SummaryUpdatesResponse =
             updates: CommunityCanisterCommunitySummaryUpdates;
         };
         SuccessNoUpdates;
-        UserNotInCommunity;
     };
 
 type AddMembersToChannelArgs =

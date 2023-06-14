@@ -14,14 +14,19 @@ pub struct CommunityCanisterCommunitySummary {
     pub avatar_id: Option<u128>,
     pub banner_id: Option<u128>,
     pub is_public: bool,
-    pub joined: TimestampMillis,
     pub member_count: u32,
-    pub role: CommunityRole,
     pub permissions: CommunityPermissions,
     pub frozen: Option<FrozenGroupInfo>,
     pub gate: Option<AccessGate>,
     pub latest_event_index: EventIndex,
     pub channels: Vec<CommunityCanisterChannelSummary>,
+    pub membership: Option<CommunityMembership>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityMembership {
+    pub joined: TimestampMillis,
+    pub role: CommunityRole,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -34,28 +39,17 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub banner_id: OptionUpdate<u128>,
     pub is_public: Option<bool>,
     pub member_count: Option<u32>,
-    pub role: Option<CommunityRole>,
     pub permissions: Option<CommunityPermissions>,
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub gate: OptionUpdate<AccessGate>,
     pub latest_event_index: Option<EventIndex>,
     pub channels_added: Vec<CommunityCanisterChannelSummary>,
     pub channels_updated: Vec<CommunityCanisterChannelSummaryUpdates>,
-    pub channels_removed: Vec<ChannelId>,
+    pub membership: Option<CommunityMembershipUpdates>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct PublicCommunitySummary {
-    pub community_id: CommunityId,
-    pub name: String,
-    pub description: String,
-    pub avatar_id: Option<u128>,
-    pub banner_id: Option<u128>,
-    pub is_public: bool,
-    pub member_count: u32,
-    pub permissions: CommunityPermissions,
-    pub frozen: Option<FrozenGroupInfo>,
-    pub gate: Option<AccessGate>,
-    pub last_updated: TimestampMillis,
-    pub latest_event_index: EventIndex,
+pub struct CommunityMembershipUpdates {
+    pub role: Option<CommunityRole>,
+    pub channels_removed: Vec<ChannelId>,
 }
