@@ -23,6 +23,7 @@ ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
+msgpack = { path = "../../../libraries/msgpack" }
 serde = { workspace = true }
 serializer = { workspace = true }
 storage_bucket_canister = { path = "../../storage_bucket/api" }
