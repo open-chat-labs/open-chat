@@ -38,12 +38,9 @@
             description={$selectedCommunity.description}
             banner={$selectedCommunity.banner}
             avatar={$selectedCommunity.avatar}
-            id={$selectedCommunity.id}
             memberCount={$selectedCommunity.memberCount}
             channelCount={0}
-            joining={false}
-            header
-            selected={false} />
+            header />
         <CommunityDetails
             on:deleteCommunity
             {canDelete}

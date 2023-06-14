@@ -4014,6 +4014,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     // TODO - this will almost certainly need to be more complicated
     setSelectedCommunity(communityId: string): void {
+        // TODO - we may or may not already belong to this community
+        // if we do NOT belong to it, we need to look up the community and then insert it into the store
+        // if we DO belong then we just select it.
+        // selecting it will show the channels etc.
         selectedCommunityId.set(communityId);
     }
 

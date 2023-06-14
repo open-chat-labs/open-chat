@@ -13,7 +13,6 @@
 
     const dispatch = createEventDispatcher();
 
-    export let id: string;
     export let name: string;
     export let description: string;
     export let avatar: DataContent;
@@ -21,18 +20,12 @@
     export let memberCount: number;
     export let channelCount: number;
 
-    export let selected: boolean;
     export let header = false;
-    export let joining: boolean;
 
     const client = getContext<OpenChat>("client");
-
-    function join() {
-        dispatch("joinCommunity", id);
-    }
 </script>
 
-<div class:selected class:header on:click class="card">
+<div class:header on:click class="card">
     <CommunityBanner square={header} {banner}>
         <div class="avatar">
             <Avatar
@@ -47,11 +40,6 @@
             <Markdown text={description} />
         </div>
         {#if !header}
-            <ButtonGroup align={"fill"}>
-                <Button tiny hollow>{$_("communities.preview")}</Button>
-                <Button disabled={joining} loading={joining} on:click={join} tiny
-                    >{$_("communities.join")}</Button>
-            </ButtonGroup>
             <div class="footer">
                 <div class="members">
                     <span class="number">{memberCount.toLocaleString()}</span>
@@ -73,10 +61,6 @@
         background-color: var(--recommended-bg);
         border: 1px solid var(--bd);
         border-radius: $sp3;
-
-        &.selected {
-            border-color: var(--txt);
-        }
 
         .avatar {
             width: toRem(48);

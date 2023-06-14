@@ -248,12 +248,9 @@
         // wait until we have loaded the chats
         if (initialised) {
             if (pathParams.kind === "communities_route") {
-                if (pathParams.communityId !== undefined) {
-                    client.setSelectedCommunity(pathParams.communityId);
-                    rightPanelHistory.set([{ kind: "community_details" }]);
-                } else {
-                    rightPanelHistory.set([]);
-                }
+                rightPanelHistory.set([]);
+            } else if (pathParams.kind === "selected_community_route") {
+                client.setSelectedCommunity(pathParams.communityId);
             } else if (pathParams.kind === "global_chat_selected_route") {
                 // first close any open thread
                 closeThread();

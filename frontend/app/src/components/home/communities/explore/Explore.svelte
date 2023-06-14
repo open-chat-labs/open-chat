@@ -26,11 +26,9 @@
     $: myCommunities = client.communities;
     $: isDiamond = client.isDiamond;
 
-    $: selectedCommunityId =
-        $pathParams.kind === "communities_route" ? $pathParams.communityId : undefined;
-
     $: communities = $allCommunities.filter((c) => $myCommunities[c.id] === undefined);
 
+    // TODO - this is probably not going to be here. We'll probably move it to Home.svelte
     async function joinCommunity(ev: CustomEvent<string>) {
         joining.add(ev.detail);
         joining = joining;
@@ -61,11 +59,16 @@
     }
 
     function selectCommunity(community: CommunityMatch) {
-        page(`/communities/${community.id}`);
+        page(`/community/${community.id}`);
     }
 
     function search() {
         searching = true;
+        if (searchTerm === "") {
+            searchResults = [];
+            searching = false;
+            return;
+        }
 
         client
             .searchCommunities(searchTerm)
@@ -142,16 +145,12 @@
         {:else}
             {#each searchResults as community}
                 <CommunityCard
-                    id={community.id}
                     name={community.name}
                     description={community.description}
                     avatar={community.avatar}
                     banner={community.banner}
                     memberCount={community.memberCount}
                     channelCount={community.channelCount}
-                    on:joinCommunity={joinCommunity}
-                    selected={selectedCommunityId === community.id}
-                    joining={joining.has(community.id)}
                     on:click={() => selectCommunity(community)} />
             {/each}
         {/if}
