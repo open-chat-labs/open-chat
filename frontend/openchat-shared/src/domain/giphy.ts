@@ -1,4 +1,4 @@
-export type SearchResponse = {
+export type GiphySearchResponse = {
     data: GIFObject[];
     pagination: PaginationObject;
     meta: MetaObject;

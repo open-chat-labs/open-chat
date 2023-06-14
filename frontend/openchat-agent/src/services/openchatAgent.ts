@@ -65,7 +65,7 @@ import {
     GroupInvite,
     GroupPermissions,
     AccessRules,
-    GroupSearchResponse,
+    SearchResponse,
     IndexRange,
     InviteCodeResponse,
     JoinGroupResponse,
@@ -139,6 +139,8 @@ import {
     DeclineInvitationResponse,
     UpdatesSuccessResponse,
     AccessGate,
+    SearchScope,
+    JoinCommunityResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -231,7 +233,7 @@ export class OpenChatAgent extends EventTarget {
         return this._groupClients[chatId];
     }
 
-    private get userClient(): UserClient {
+    get userClient(): UserClient {
         if (this._userClient) {
             return this._userClient;
         }
@@ -757,7 +759,7 @@ export class OpenChatAgent extends EventTarget {
 
     private rehydrateDataContent<T extends DataContent>(
         dataContent: T,
-        blobType: "blobs" | "avatar" = "blobs"
+        blobType: "blobs" | "avatar" | "banner" = "blobs"
     ): T {
         const ref = dataContent.blobReference;
         return ref !== undefined
@@ -797,12 +799,19 @@ export class OpenChatAgent extends EventTarget {
             .then((users) => users.map((u) => this.rehydrateUserSummary(u)));
     }
 
-    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
-        return this._groupIndexClient.search(searchTerm, maxResults).then((res) => {
+    search(searchTerm: string, maxResults = 10, scope: SearchScope): Promise<SearchResponse> {
+        return this._groupIndexClient.search(searchTerm, maxResults, scope).then((res) => {
             if (res.kind === "success") {
                 return {
                     ...res,
-                    matches: res.matches.map((match) => this.rehydrateDataContent(match, "avatar")),
+                    groupMatches: res.groupMatches.map((match) =>
+                        this.rehydrateDataContent(match, "avatar")
+                    ),
+                    communityMatches: res.communityMatches.map((match) => ({
+                        ...match,
+                        avatar: this.rehydrateDataContent(match.avatar, "avatar"),
+                        banner: this.rehydrateDataContent(match.banner, "banner"),
+                    })),
                 };
             }
             return res;
@@ -1118,6 +1127,16 @@ export class OpenChatAgent extends EventTarget {
         const inviteCode = this.getProvidedInviteCode(chatId);
         const localUserIndex = await this.getGroupClient(chatId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).joinGroup(chatId, inviteCode);
+    }
+
+    async joinCommunity(communityId: string): Promise<JoinCommunityResponse> {
+        // TODO - we need to capture invide code somehow here, but it doesn't really fit at the moment
+        // const inviteCode = this.getProvidedInviteCode(chatId);
+        const localUserIndex = await this.communityClient(communityId).localUserIndex();
+        return this.createLocalUserIndexClient(localUserIndex).joinCommunity(
+            communityId,
+            undefined
+        );
     }
 
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {

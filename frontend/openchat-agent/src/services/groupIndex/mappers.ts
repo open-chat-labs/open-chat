@@ -4,13 +4,16 @@ import type {
     FilterGroupsResponse,
     FreezeGroupResponse,
     GroupMatch,
-    GroupSearchResponse,
+    SearchResponse,
     RemoveHotGroupExclusionResponse,
     SetGroupUpgradeConcurrencyResponse,
-    UnfreezeGroupResponse
+    UnfreezeGroupResponse,
+    CommunityMatch,
+    SearchScope,
 } from "openchat-shared";
 import type {
     ApiAddHotGroupExclusionResponse,
+    ApiCommunityMatch,
     ApiDeleteFrozenGroupResponse,
     ApiFilterGroupsResponse,
     ApiFreezeGroupResponse,
@@ -18,10 +21,15 @@ import type {
     ApiRecommendedGroupsResponse,
     ApiRemoveHotGroupExclusionResponse,
     ApiSearchResponse,
+    ApiSearchScope,
     ApiSetUpgradeConcurrencyResponse,
     ApiUnfreezeGroupResponse,
 } from "./candid/idl";
-import { DeleteFrozenGroupResponse, GroupChatSummary, UnsupportedValueError } from "openchat-shared";
+import {
+    DeleteFrozenGroupResponse,
+    GroupChatSummary,
+    UnsupportedValueError,
+} from "openchat-shared";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
 
 export function filterGroupsResponse(candid: ApiFilterGroupsResponse): FilterGroupsResponse {
@@ -35,7 +43,7 @@ export function filterGroupsResponse(candid: ApiFilterGroupsResponse): FilterGro
             groupName: d.group_name,
             public: d.public,
         })),
-        upgradesInProgress: candid.Success.upgrades_in_progress.map((c) => c.toString())
+        upgradesInProgress: candid.Success.upgrades_in_progress.map((c) => c.toString()),
     };
 }
 
@@ -48,14 +56,30 @@ export function recommendedGroupsResponse(
     throw new Error(`Unknown GroupIndex.RecommendedGroupsResponse of ${candid}`);
 }
 
-export function groupSearchResponse(candid: ApiSearchResponse): GroupSearchResponse {
+export function searchResponse(candid: ApiSearchResponse): SearchResponse {
+    console.log("Search response: ", candid);
     if ("Success" in candid) {
         return {
             kind: "success",
-            matches: candid.Success.matches.map(groupMatch),
+            groupMatches: candid.Success.group_matches.map(groupMatch),
+            communityMatches: candid.Success.community_matches.map(communityMatch),
         };
     }
+    if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
+        return { kind: "term_invalid" };
+    }
     throw new Error(`Unknown GroupIndex.SearchResponse of ${candid}`);
+}
+
+export function apiSearchScope(scope: SearchScope): ApiSearchScope {
+    switch (scope) {
+        case "all":
+            return { All: null };
+        case "communities":
+            return { Communities: null };
+        case "groups":
+            return { Groups: null };
+    }
 }
 
 export function freezeGroupResponse(candid: ApiFreezeGroupResponse): FreezeGroupResponse {
@@ -111,7 +135,9 @@ export function unfreezeGroupResponse(candid: ApiUnfreezeGroupResponse): Unfreez
     throw new UnsupportedValueError("Unexpected ApiUnfreezeGroupResponse type received", candid);
 }
 
-export function deleteFrozenGroupResponse(candid: ApiDeleteFrozenGroupResponse): DeleteFrozenGroupResponse {
+export function deleteFrozenGroupResponse(
+    candid: ApiDeleteFrozenGroupResponse
+): DeleteFrozenGroupResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -130,10 +156,15 @@ export function deleteFrozenGroupResponse(candid: ApiDeleteFrozenGroupResponse):
     if ("InternalError" in candid) {
         return "internal_error";
     }
-    throw new UnsupportedValueError("Unexpected ApiDeleteFrozenGroupResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiDeleteFrozenGroupResponse type received",
+        candid
+    );
 }
 
-export function addHotGroupExclusionResponse(candid: ApiAddHotGroupExclusionResponse): AddHotGroupExclusionResponse {
+export function addHotGroupExclusionResponse(
+    candid: ApiAddHotGroupExclusionResponse
+): AddHotGroupExclusionResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -149,10 +180,15 @@ export function addHotGroupExclusionResponse(candid: ApiAddHotGroupExclusionResp
     if ("InternalError" in candid) {
         return "internal_error";
     }
-    throw new UnsupportedValueError("Unexpected ApiAddHotGroupExclusionResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiAddHotGroupExclusionResponse type received",
+        candid
+    );
 }
 
-export function removeHotGroupExclusionResponse(candid: ApiRemoveHotGroupExclusionResponse): RemoveHotGroupExclusionResponse {
+export function removeHotGroupExclusionResponse(
+    candid: ApiRemoveHotGroupExclusionResponse
+): RemoveHotGroupExclusionResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -168,10 +204,15 @@ export function removeHotGroupExclusionResponse(candid: ApiRemoveHotGroupExclusi
     if ("InternalError" in candid) {
         return "internal_error";
     }
-    throw new UnsupportedValueError("Unexpected ApiRemoveHotGroupExclusionResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiRemoveHotGroupExclusionResponse type received",
+        candid
+    );
 }
 
-export function setUpgradeConcurrencyResponse(candid: ApiSetUpgradeConcurrencyResponse): SetGroupUpgradeConcurrencyResponse {
+export function setUpgradeConcurrencyResponse(
+    candid: ApiSetUpgradeConcurrencyResponse
+): SetGroupUpgradeConcurrencyResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -181,7 +222,10 @@ export function setUpgradeConcurrencyResponse(candid: ApiSetUpgradeConcurrencyRe
     if ("InternalError" in candid) {
         return "internal_error";
     }
-    throw new UnsupportedValueError("Unexpected ApiSetUpgradeConcurrencyResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiSetUpgradeConcurrencyResponse type received",
+        candid
+    );
 }
 
 function groupMatch(candid: ApiGroupMatch): GroupMatch {
@@ -193,5 +237,27 @@ function groupMatch(candid: ApiGroupMatch): GroupMatch {
             blobId,
             canisterId: candid.chat_id.toString(),
         })),
+    };
+}
+
+function communityMatch(candid: ApiCommunityMatch): CommunityMatch {
+    return {
+        id: candid.id.toString(),
+        name: candid.name,
+        description: candid.description,
+        avatar: {
+            blobReference: optional(candid.avatar_id, (blobId) => ({
+                blobId,
+                canisterId: candid.id.toString(),
+            })),
+        },
+        banner: {
+            blobReference: optional(candid.banner_id, (blobId) => ({
+                blobId,
+                canisterId: candid.id.toString(),
+            })),
+        },
+        memberCount: 1000, //TODO fill in
+        channelCount: 15, //TODO fill in
     };
 }

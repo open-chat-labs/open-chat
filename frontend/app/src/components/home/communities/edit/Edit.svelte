@@ -11,6 +11,7 @@
         AccessRules,
         CandidateMember,
         Community,
+        CreateCommunityResponse,
         DefaultChannel,
         OpenChat,
     } from "openchat-client";
@@ -22,6 +23,8 @@
     import { createCandidateCommunity } from "stores/community";
     import VisibilityControl from "../../VisibilityControl.svelte";
     import ChooseChannels from "./ChooseChannels.svelte";
+    import { toastStore } from "stores/toast";
+    import { interpolateLevel } from "../../../../utils/i18n";
 
     export let original: Community = createCandidateCommunity("");
 
@@ -30,6 +33,7 @@
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
+
     let actualWidth = 0;
     let editing = original.id !== "";
     let step = 0;
@@ -40,7 +44,8 @@
     let channels: DefaultChannel[] = [{ name: $_("communities.general"), createdAt: Date.now() }];
     let channelsValid = true;
     let detailsValid = true;
-    $: steps = getSteps(editing, detailsValid, channelsValid);
+    let rulesValid = true;
+    $: steps = getSteps(editing, detailsValid, channelsValid, rulesValid);
     $: canEditPermissions = true; // TODO - this is a whole can of refactor worms which I don't want to open yet
     $: permissionsDirty = client.havePermissionsChanged(
         original.permissions,
@@ -50,7 +55,6 @@
         editing &&
         (candidateRules.enabled !== originalRules.enabled ||
             candidateRules.text !== originalRules.text);
-    $: rulesInvalid = candidateRules.enabled && candidateRules.text.length === 0;
     $: nameDirty = editing && candidate.name !== original.name;
     $: descDirty = editing && candidate.description !== original.description;
     $: avatarDirty = editing && candidate.avatar?.blobUrl !== original.avatar?.blobUrl;
@@ -61,12 +65,18 @@
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
+    $: valid = detailsValid && channelsValid && rulesValid;
 
-    function getSteps(editing: boolean, detailsValid: boolean, channelsValid: boolean) {
+    function getSteps(
+        editing: boolean,
+        detailsValid: boolean,
+        channelsValid: boolean,
+        rulesValid: boolean
+    ) {
         let steps = [
             { labelKey: "communities.details", valid: detailsValid },
             { labelKey: "communities.visibility", valid: true },
-            { labelKey: "communities.rules", valid: true },
+            { labelKey: "communities.rules", valid: rulesValid },
             { labelKey: "permissions.permissions", valid: true },
         ];
 
@@ -94,10 +104,26 @@
     }
 
     function save() {
+        busy = true;
         if (editing) {
-            client.saveCommunity(candidate);
+            client.saveCommunity(candidate).finally(() => (busy = false));
         } else {
-            client.createCommunity(candidate);
+            client
+                .createCommunity(
+                    candidate,
+                    candidateRules,
+                    channels.map((c) => c.name)
+                )
+                .then((response) => {
+                    if (response.kind === "success") {
+                        toastStore.showSuccessToast("communities.created");
+                        // TODO - do we need to *select* the new community?
+                        dispatch("close");
+                    } else {
+                        toastStore.showFailureToast(`communities.errors.${response.kind}`);
+                    }
+                })
+                .finally(() => (busy = false));
         }
     }
 </script>
@@ -111,13 +137,16 @@
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details" class:visible={step === 0}>
-                    <Details bind:valid={detailsValid} bind:busy {candidate} />
+                    <Details bind:valid={detailsValid} bind:busy bind:candidate />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
                     <VisibilityControl {candidate} {original} {editing} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
-                    <Rules level={candidate.level} bind:rules={candidateRules} />
+                    <Rules
+                        bind:valid={rulesValid}
+                        level={candidate.level}
+                        bind:rules={candidateRules} />
                 </div>
                 <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}
@@ -149,14 +178,37 @@
                 {/if}
             </div>
             <div class="actions">
-                <ButtonGroup>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={save}
-                        >{"(Dummy) Save"}</Button>
+                <Button
+                    disabled={false}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
+                    on:click={() => dispatch("close")}
+                    secondary>{$_("cancel")}</Button>
+
+                {#if editing}
+                    <Button
+                        disabled={!dirty || busy}
+                        loading={busy}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={save}
+                        >{interpolateLevel("group.update", "community", true)}</Button>
+                {:else if step < steps.length - 1}
                     <Button
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step + 1)}>{$_("communities.next")}</Button>
-                </ButtonGroup>
+                        on:click={() => (step = step + 1)}>
+                        {$_("communities.next")}
+                    </Button>
+                {:else}
+                    <Button
+                        disabled={busy || !valid}
+                        loading={busy}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={save}
+                        >{interpolateLevel("group.create", "community", true)}</Button>
+                {/if}
             </div>
         </div>
     </span>

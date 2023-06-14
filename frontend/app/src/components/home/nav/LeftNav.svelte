@@ -122,7 +122,7 @@
         {#each $communities as community, i}
             <LeftNavItem
                 selected={community === $selectedCommunity}
-                unread={community.unreadCount}
+                unread={0}
                 label={community.name}
                 on:click={() => selectCommunity(community)}>
                 <Avatar

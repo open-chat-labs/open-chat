@@ -9,7 +9,7 @@
     import RightPanel from "./RightPanel.svelte";
     import EditCommunity from "./communities/edit/Edit.svelte";
     import {
-        GroupSearchResponse,
+        SearchResponse,
         MessageMatch,
         UserSummary,
         ChatSummary,
@@ -123,7 +123,7 @@
     }
 
     let modal = ModalType.None;
-    let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
+    let groupSearchResults: Promise<SearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     let searchTerm: string = "";
     let searching: boolean = false;
@@ -248,12 +248,9 @@
         // wait until we have loaded the chats
         if (initialised) {
             if (pathParams.kind === "communities_route") {
-                if (pathParams.communityId !== undefined) {
-                    client.setSelectedCommunity(pathParams.communityId);
-                    rightPanelHistory.set([{ kind: "community_details" }]);
-                } else {
-                    rightPanelHistory.set([]);
-                }
+                rightPanelHistory.set([]);
+            } else if (pathParams.kind === "selected_community_route") {
+                client.setSelectedCommunity(pathParams.communityId);
             } else if (pathParams.kind === "global_chat_selected_route") {
                 // first close any open thread
                 closeThread();

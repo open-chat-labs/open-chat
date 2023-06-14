@@ -1102,7 +1102,7 @@ export const idlFactory = ({ IDL }) => {
     'SetToNone' : IDL.Null,
     'SetToSome' : Milliseconds,
   });
-  const AvatarIdUpdate = IDL.Variant({
+  const DocumentIdUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
     'SetToSome' : IDL.Nat,
@@ -1131,7 +1131,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'events_ttl' : EventsTimeToLiveUpdate,
     'last_updated' : TimestampMillis,
-    'avatar_id' : AvatarIdUpdate,
+    'avatar_id' : DocumentIdUpdate,
     'next_message_expiry' : TimestampUpdate,
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : FrozenGroupUpdate,
@@ -1227,15 +1227,15 @@ export const idlFactory = ({ IDL }) => {
     'reply_in_thread' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
   });
-  const Avatar = IDL.Record({
+  const Document = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
     'mime_type' : IDL.Text,
   });
-  const AvatarUpdate = IDL.Variant({
+  const DocumentUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
-    'SetToSome' : Avatar,
+    'SetToSome' : Document,
   });
   const UpdateGroupV2Args = IDL.Record({
     'permissions' : IDL.Opt(OptionalGroupPermissions),
@@ -1245,7 +1245,7 @@ export const idlFactory = ({ IDL }) => {
     'events_ttl' : EventsTimeToLiveUpdate,
     'correlation_id' : IDL.Nat64,
     'rules' : IDL.Opt(AccessRules),
-    'avatar' : AvatarUpdate,
+    'avatar' : DocumentUpdate,
   });
   const FieldTooLongResult = IDL.Record({
     'length_provided' : IDL.Nat32,

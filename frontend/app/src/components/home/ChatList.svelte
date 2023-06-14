@@ -9,7 +9,7 @@
     import type {
         ChatSummary as ChatSummaryType,
         GroupMatch,
-        GroupSearchResponse,
+        SearchResponse,
         UserSummary,
         OpenChat,
     } from "openchat-client";
@@ -30,7 +30,7 @@
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
 
-    export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
+    export let groupSearchResults: Promise<SearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     export let searchTerm: string = "";
     export let searching: boolean = false;
@@ -201,9 +201,9 @@
                 {#if groupSearchResults !== undefined}
                     <div class="search-matches">
                         {#await groupSearchResults then resp}
-                            {#if resp.kind === "success" && resp.matches.length > 0}
+                            {#if resp.kind === "success" && resp.groupMatches.length > 0}
                                 <h3 class="search-subtitle">{$_("publicGroups")}</h3>
-                                {#each resp.matches as group, i (group.chatId)}
+                                {#each resp.groupMatches as group, i (group.chatId)}
                                     <SearchResult
                                         index={i}
                                         avatarUrl={client.groupAvatarUrl(group)}

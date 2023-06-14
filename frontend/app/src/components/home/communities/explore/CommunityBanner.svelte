@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { Community, OpenChat } from "openchat-client";
+    import type { DataContent, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
 
-    export let community: Community;
+    export let banner: DataContent;
     export let square: boolean = false;
 
     const client = getContext<OpenChat>("client");
@@ -11,7 +11,7 @@
 <div
     class:square
     class="banner"
-    style={`background-image: url(${client.communityBannerUrl(community.banner)})`}>
+    style={`background-image: url(${client.communityBannerUrl(banner)})`}>
     <slot />
 </div>
 

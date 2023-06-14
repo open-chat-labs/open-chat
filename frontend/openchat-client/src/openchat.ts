@@ -251,7 +251,7 @@ import {
     type CurrentUserResponse,
     type RemoveMemberResponse,
     type RegisterProposalVoteResponse,
-    type GroupSearchResponse,
+    type SearchResponse,
     type GroupInvite,
     type SearchDirectChatResponse,
     type SearchGroupChatResponse,
@@ -303,6 +303,8 @@ import {
     CommunityPermissions,
     E8S_PER_TOKEN,
     Community,
+    CreateCommunityResponse,
+    JoinCommunityResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3220,8 +3222,12 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "getGroupRules", chatId });
     }
 
-    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
-        return this.sendRequest({ kind: "searchGroups", searchTerm, maxResults });
+    searchGroups(searchTerm: string, maxResults = 10): Promise<SearchResponse> {
+        return this.sendRequest({ kind: "search", searchTerm, maxResults, scope: "groups" });
+    }
+
+    searchCommunities(searchTerm: string, maxResults = 10): Promise<SearchResponse> {
+        return this.sendRequest({ kind: "search", searchTerm, maxResults, scope: "communities" });
     }
 
     dismissRecommendation(chatId: string): Promise<void> {
@@ -4008,21 +4014,49 @@ export class OpenChat extends OpenChatAgentWorker {
 
     // TODO - this will almost certainly need to be more complicated
     setSelectedCommunity(communityId: string): void {
+        // TODO - we may or may not already belong to this community
+        // if we do NOT belong to it, we need to look up the community and then insert it into the store
+        // if we DO belong then we just select it.
+        // selecting it will show the channels etc.
         selectedCommunityId.set(communityId);
     }
 
-    joinCommunity(community: Community): Promise<void> {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                communities.update((c) => {
-                    return {
-                        ...c,
-                        [community.id]: community,
-                    };
-                });
-                resolve();
-            }, 2000);
-        });
+    joinCommunity(communityId: string): Promise<JoinCommunityResponse> {
+        // TODO - we will need to do something like all of the stuff that's commented out here
+        return this.sendRequest({ kind: "joinCommunity", communityId });
+        // .then((resp) => {
+        //     if (resp.kind === "success") {
+        //         localChatSummaryUpdates.markAdded(resp);
+        //         this.loadDetails(resp);
+        //         messagesRead.syncWithServer(resp.chatId, resp.readByMeUpTo, [], undefined);
+        //     } else if (resp.kind === "already_in_group") {
+        //         localChatSummaryUpdates.markAdded({
+        //             ...group,
+        //             myRole: "participant" as MemberRole,
+        //         });
+        //     } else {
+        //         if (resp.kind === "blocked") {
+        //             return "blocked";
+        //         } else if (resp.kind === "gate_check_failed") {
+        //             return "gate_check_failed";
+        //         }
+        //         return "failure";
+        //     }
+        //     return "success";
+        // })
+        // .then((resp) => {
+        //     if (
+        //         resp === "success" &&
+        //         this._liveState.groupPreviews[group.chatId] !== undefined
+        //     ) {
+        //         removeGroupPreview(group.chatId);
+        //     }
+        //     return resp;
+        // })
+        // .catch((err) => {
+        //     this._logger.error("Unable to join group", err);
+        //     return "failure";
+        // });
     }
 
     deleteCommunity(id: string): Promise<void> {
@@ -4052,18 +4086,20 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    createCommunity(candidate: Community): Promise<void> {
-        // TODO - this is just a dummy implementation
-        allCommunities.update((c) => [...c, candidate]);
-        communities.update((c) => {
-            const keys = Object.keys(c);
-            const next = (keys.length + 2).toString();
-            return {
-                ...c,
-                [next]: { ...candidate, id: next },
-            };
+    createCommunity(
+        candidate: Community,
+        rules: AccessRules,
+        defaultChannels: string[]
+    ): Promise<CreateCommunityResponse> {
+        return this.sendRequest({
+            kind: "createCommunity",
+            community: candidate,
+            rules,
+            defaultChannels,
+        }).catch((err) => {
+            this._logger.error("Error creating community", err);
+            return { kind: "failure" };
         });
-        return Promise.resolve();
     }
 
     saveCommunity(candidate: Community): Promise<void> {

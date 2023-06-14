@@ -36,22 +36,16 @@ export interface AudioContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
-export interface Avatar {
-  'id' : bigint,
-  'data' : Uint8Array | number[],
-  'mime_type' : string,
-}
 export interface AvatarChanged {
   'changed_by' : UserId,
   'previous_avatar' : [] | [bigint],
   'new_avatar' : [] | [bigint],
 }
-export type AvatarIdUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : bigint };
-export type AvatarUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : Avatar };
+export interface BannerChanged {
+  'new_banner' : [] | [bigint],
+  'changed_by' : UserId,
+  'previous_banner' : [] | [bigint],
+}
 export interface BlobReference {
   'blob_id' : bigint,
   'canister_id' : CanisterId,
@@ -198,6 +192,7 @@ export interface CommunityCanisterChannelSummary {
   'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'latest_event_index' : EventIndex,
+  'banner_id' : [] | [bigint],
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
@@ -220,7 +215,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
-  'avatar_id' : AvatarIdUpdate,
+  'avatar_id' : DocumentIdUpdate,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
@@ -242,6 +237,7 @@ export interface CommunityCanisterCommunitySummary {
   'avatar_id' : [] | [bigint],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
+  'banner_id' : [] | [bigint],
   'member_count' : number,
 }
 export interface CommunityCanisterCommunitySummaryUpdates {
@@ -255,13 +251,14 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'channels_removed' : Array<ChannelId>,
-  'avatar_id' : AvatarIdUpdate,
+  'avatar_id' : DocumentIdUpdate,
   'channels_added' : Array<CommunityCanisterChannelSummary>,
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
+  'banner_id' : DocumentIdUpdate,
   'member_count' : [] | [number],
 }
-export type CommunityId = Principal;
+export type CommunityId = CanisterId;
 export type CommunityPermissionRole = { 'Owners' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
@@ -387,6 +384,17 @@ export type DisableInviteCodeResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null };
+export interface Document {
+  'id' : bigint,
+  'data' : Uint8Array | number[],
+  'mime_type' : string,
+}
+export type DocumentIdUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : bigint };
+export type DocumentUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : Document };
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
@@ -531,7 +539,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
-  'avatar_id' : AvatarIdUpdate,
+  'avatar_id' : DocumentIdUpdate,
   'next_message_expiry' : TimestampUpdate,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : FrozenGroupUpdate,
@@ -1392,7 +1400,7 @@ export interface UpdateGroupV2Args {
   'events_ttl' : EventsTimeToLiveUpdate,
   'correlation_id' : bigint,
   'rules' : [] | [AccessRules],
-  'avatar' : AvatarUpdate,
+  'avatar' : DocumentUpdate,
 }
 export type UpdateGroupV2Response = { 'NameReserved' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |

@@ -17,10 +17,9 @@ function qs(ctx: PageJS.Context): URLSearchParams {
     return new URLSearchParams(ctx.querystring);
 }
 
-export function communitesRoute(ctx: PageJS.Context): RouteParams {
+export function communitesRoute(_ctx: PageJS.Context): RouteParams {
     return {
         kind: "communities_route",
-        communityId: ctx.params["communityId"],
     };
 }
 
@@ -81,6 +80,40 @@ export function globalGroupChatRoute(ctx: PageJS.Context): RouteParams {
     return chatSelectedRoute(ctx, "group_chat");
 }
 
+export function selectedCommunityRoute(ctx: PageJS.Context): RouteParams {
+    return {
+        kind: "selected_community_route",
+        communityId: ctx.params["communityId"],
+    };
+}
+
+export function selectedChannelRoute(ctx: PageJS.Context): RouteParams {
+    const $qs = qs(ctx);
+    return {
+        kind: "selected_channel_route",
+        communityId: ctx.params["communityId"],
+        channelId: ctx.params["channelId"],
+        messageIndex: ctx.params["messageIndex"] ? Number(ctx.params["messageIndex"]) : undefined,
+        threadMessageIndex: ctx.params["threadMessageIndex"]
+            ? Number(ctx.params["threadMessageIndex"])
+            : undefined,
+        open: $qs.get("open") === "true",
+    };
+}
+
+export function favouritesRoute(ctx: PageJS.Context): RouteParams {
+    const $qs = qs(ctx);
+    return {
+        kind: "favourites_route",
+        chatId: ctx.params["chatId"] || undefined,
+        messageIndex: ctx.params["messageIndex"] ? Number(ctx.params["messageIndex"]) : undefined,
+        threadMessageIndex: ctx.params["threadMessageIndex"]
+            ? Number(ctx.params["threadMessageIndex"])
+            : undefined,
+        open: $qs.get("open") === "true",
+    };
+}
+
 export function chatSelectedRoute(
     ctx: PageJS.Context,
     chatType: ChatType | "unknown" = "unknown"
@@ -132,6 +165,9 @@ export type RouteParams =
     | HomeRoute
     | GlobalChatSelectedRoute
     | CommunitiesRoute
+    | SelectedCommunityRoute
+    | SelectedChannelRoute
+    | FavouritesRoute
     | ShareRoute
     | NotFound
     | HotGroupsRoute;
@@ -159,9 +195,30 @@ export type GlobalChatSelectedRoute = {
     open: boolean;
 };
 
+export type FavouritesRoute = {
+    kind: "favourites_route";
+    chatId?: string;
+    messageIndex?: number;
+    threadMessageIndex?: number;
+    open: boolean;
+};
+
+export type SelectedCommunityRoute = {
+    kind: "selected_community_route";
+    communityId: string;
+};
+
+export type SelectedChannelRoute = {
+    kind: "selected_channel_route";
+    communityId: string;
+    channelId: string;
+    messageIndex?: number;
+    threadMessageIndex?: number;
+    open: boolean;
+};
+
 export type CommunitiesRoute = {
     kind: "communities_route";
-    communityId?: string;
 };
 
 export type ShareRoute = {

@@ -15,6 +15,9 @@
         chatSelectedRoute,
         globalDirectChatRoute,
         globalGroupChatRoute,
+        selectedCommunityRoute,
+        selectedChannelRoute,
+        favouritesRoute,
     } from "../routes";
     import { communitiesEnabled } from "../utils/features";
 
@@ -87,12 +90,7 @@
             () => (route = LandingPage)
         );
         // this is for explore mode
-        page(
-            "/communities/:communityId?",
-            parsePathParams(communitesRoute),
-            track,
-            () => (route = Home)
-        );
+        page("/communities", parsePathParams(communitesRoute), track, () => (route = Home));
         // global direct chats
         page(
             "/user/:chatId/:messageIndex?/:threadMessageIndex?",
@@ -107,27 +105,27 @@
             track,
             () => (route = Home)
         );
-        // // selected community group
-        // page(
-        //     "/community/:communityId/group/:chatId?/:messageIndex?/:threadMessageIndex?",
-        //     parsePathParams,
-        //     track,
-        //     () => (route = Home)
-        // );
-        // // selected community direct chat
-        // page(
-        //     "/community/:communityId/user/:chatId?/:messageIndex?/:threadMessageIndex?",
-        //     parsePathParams,
-        //     track,
-        //     () => (route = Home)
-        // );
-        // // favourite chats
-        // page(
-        //     "/favourites/:chatId?/:messageIndex?/:threadMessageIndex?",
-        //     parsePathParams,
-        //     track,
-        //     () => (route = Home)
-        // );
+        // selected community group
+        page(
+            "/community/:communityId",
+            parsePathParams(selectedCommunityRoute),
+            track,
+            () => (route = Home)
+        );
+        // selected community channel
+        page(
+            "/community/:communityId/channel/:channelId?/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(selectedChannelRoute),
+            track,
+            () => (route = Home)
+        );
+        // favourite chats
+        page(
+            "/favourites/:chatId?/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(favouritesRoute),
+            track,
+            () => (route = Home)
+        );
         page("/share", parsePathParams(shareRoute), track, () => (route = Home));
         page(
             "/hotgroups",

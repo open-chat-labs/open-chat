@@ -9,6 +9,20 @@ export type AccessGateUpdate = { 'NoChange' : null } |
 export interface AccessRules { 'text' : string, 'enabled' : boolean }
 export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
+export interface ActiveGroupsArgs {
+  'community_ids' : Array<CommunityId>,
+  'active_since' : [] | [TimestampMillis],
+  'group_ids' : Array<ChatId>,
+}
+export type ActiveGroupsResponse = {
+    'Success' : {
+      'deleted_communities' : Array<DeletedCommunityInfo>,
+      'deleted_groups' : Array<DeletedGroupInfo>,
+      'active_groups' : Array<ChatId>,
+      'timestamp' : TimestampMillis,
+      'active_communities' : Array<CommunityId>,
+    }
+  };
 export interface AddHotGroupExclusionArgs { 'chat_id' : ChatId }
 export type AddHotGroupExclusionResponse = { 'ChatAlreadyExcluded' : null } |
   { 'ChatNotFound' : null } |
@@ -27,22 +41,16 @@ export interface AudioContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
-export interface Avatar {
-  'id' : bigint,
-  'data' : Uint8Array | number[],
-  'mime_type' : string,
-}
 export interface AvatarChanged {
   'changed_by' : UserId,
   'previous_avatar' : [] | [bigint],
   'new_avatar' : [] | [bigint],
 }
-export type AvatarIdUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : bigint };
-export type AvatarUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : Avatar };
+export interface BannerChanged {
+  'new_banner' : [] | [bigint],
+  'changed_by' : UserId,
+  'previous_banner' : [] | [bigint],
+}
 export interface BlobReference {
   'blob_id' : bigint,
   'canister_id' : CanisterId,
@@ -151,6 +159,7 @@ export interface CommunityCanisterChannelSummary {
   'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'latest_event_index' : EventIndex,
+  'banner_id' : [] | [bigint],
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
@@ -173,7 +182,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
-  'avatar_id' : AvatarIdUpdate,
+  'avatar_id' : DocumentIdUpdate,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
@@ -195,6 +204,7 @@ export interface CommunityCanisterCommunitySummary {
   'avatar_id' : [] | [bigint],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
+  'banner_id' : [] | [bigint],
   'member_count' : number,
 }
 export interface CommunityCanisterCommunitySummaryUpdates {
@@ -208,13 +218,21 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'channels_removed' : Array<ChannelId>,
-  'avatar_id' : AvatarIdUpdate,
+  'avatar_id' : DocumentIdUpdate,
   'channels_added' : Array<CommunityCanisterChannelSummary>,
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
+  'banner_id' : DocumentIdUpdate,
   'member_count' : [] | [number],
 }
-export type CommunityId = Principal;
+export type CommunityId = CanisterId;
+export interface CommunityMatch {
+  'id' : CommunityId,
+  'name' : string,
+  'description' : string,
+  'avatar_id' : [] | [bigint],
+  'banner_id' : [] | [bigint],
+}
 export type CommunityPermissionRole = { 'Owners' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
@@ -263,12 +281,20 @@ export type DeleteFrozenGroupResponse = { 'ChatNotFound' : null } |
   { 'Success' : null } |
   { 'ChatNotFrozen' : null } |
   { 'InternalError' : string };
+export interface DeletedCommunityInfo {
+  'id' : CommunityId,
+  'name' : string,
+  'public' : boolean,
+  'timestamp' : TimestampMillis,
+  'deleted_by' : UserId,
+}
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
 }
 export interface DeletedGroupInfo {
   'id' : ChatId,
+  'name' : string,
   'public' : boolean,
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -323,6 +349,17 @@ export interface DirectReactionAddedNotification {
   'timestamp' : TimestampMillis,
   'reaction' : string,
 }
+export interface Document {
+  'id' : bigint,
+  'data' : Uint8Array | number[],
+  'mime_type' : string,
+}
+export type DocumentIdUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : bigint };
+export type DocumentUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : Document };
 export type EmptyArgs = {};
 export type EventIndex = number;
 export interface EventsSuccessResult {
@@ -455,7 +492,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
-  'avatar_id' : AvatarIdUpdate,
+  'avatar_id' : DocumentIdUpdate,
   'next_message_expiry' : TimestampUpdate,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : FrozenGroupUpdate,
@@ -974,7 +1011,23 @@ export type SearchResponse = { 'TermTooShort' : number } |
   { 'Success' : SearchSuccessResult } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
+export type SearchScope = { 'All' : null } |
+  { 'Communities' : null } |
+  { 'Groups' : null };
 export interface SearchSuccessResult { 'matches' : Array<GroupMatch> }
+export interface SearchV2Args {
+  'max_results' : number,
+  'scope' : SearchScope,
+  'search_term' : string,
+}
+export type SearchV2Response = { 'TermTooShort' : number } |
+  { 'Success' : SearchV2Success } |
+  { 'TermTooLong' : number } |
+  { 'InvalidTerm' : null };
+export interface SearchV2Success {
+  'group_matches' : Array<GroupMatch>,
+  'community_matches' : Array<CommunityMatch>,
+}
 export interface SelectedGroupUpdates {
   'blocked_users_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],
@@ -1149,6 +1202,7 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'active_groups' : ActorMethod<[ActiveGroupsArgs], ActiveGroupsResponse>,
   'add_hot_group_exclusion' : ActorMethod<
     [AddHotGroupExclusionArgs],
     AddHotGroupExclusionResponse
@@ -1168,6 +1222,7 @@ export interface _SERVICE {
     RemoveHotGroupExclusionResponse
   >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
+  'search_v2' : ActorMethod<[SearchV2Args], SearchV2Response>,
   'set_community_upgrade_concurrency' : ActorMethod<
     [SetUpgradeConcurrencyArgs],
     SetUpgradeConcurrencyResponse
