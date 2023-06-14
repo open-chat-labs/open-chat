@@ -44,8 +44,6 @@ export function createCandidateCommunity(id: string): Community {
         name: "",
         description: "",
         memberCount: 0,
-        channelCount: 0,
-        unreadCount: 0,
         avatar: {},
         banner: {},
         gate: { kind: "no_gate" },
@@ -55,5 +53,8 @@ export function createCandidateCommunity(id: string): Community {
         historyVisible: true,
         frozen: false,
         level: "community",
+        joined: BigInt(0),
+        lastUpdated: BigInt(0),
+        latestEventIndex: 0,
     };
 }

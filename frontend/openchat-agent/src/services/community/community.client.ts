@@ -396,7 +396,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    localUserIndex(): Promise<unknown> {
+    localUserIndex(): Promise<string> {
         return this.handleResponse(this.service.local_user_index({}), localUserIndexResponse);
     }
 
@@ -643,7 +643,6 @@ export class CommunityClient extends CandidService {
         rules?: AccessRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
-        _banner?: Uint8Array,
         gate?: AccessGate
     ): Promise<UpdateChannelResponse> {
         return this.handleResponse(
@@ -669,16 +668,6 @@ export class CommunityClient extends CandidService {
                                   data: avatar,
                               },
                           },
-                // banner:
-                //     banner === undefined
-                //         ? { NoChange: null }
-                //         : {
-                //               SetToSome: {
-                //                   id: DataClient.newBlobId(),
-                //                   mime_type: "image/jpg",
-                //                   data: banner,
-                //               },
-                //           },
             }),
             updateChannelResponse
         );
@@ -690,7 +679,7 @@ export class CommunityClient extends CandidService {
         rules?: AccessRules,
         permissions?: Partial<CommunityPermissions>,
         avatar?: Uint8Array,
-        _banner?: Uint8Array,
+        banner?: Uint8Array,
         gate?: AccessGate
     ): Promise<UpdateCommunityResponse> {
         return this.handleResponse(
@@ -715,16 +704,16 @@ export class CommunityClient extends CandidService {
                                   data: avatar,
                               },
                           },
-                // banner:
-                //     banner === undefined
-                //         ? { NoChange: null }
-                //         : {
-                //               SetToSome: {
-                //                   id: DataClient.newBlobId(),
-                //                   mime_type: "image/jpg",
-                //                   data: banner,
-                //               },
-                //           },
+                banner:
+                    banner === undefined
+                        ? { NoChange: null }
+                        : {
+                              SetToSome: {
+                                  id: DataClient.newBlobId(),
+                                  mime_type: "image/jpg",
+                                  data: banner,
+                              },
+                          },
             }),
             updateCommunityResponse
         );

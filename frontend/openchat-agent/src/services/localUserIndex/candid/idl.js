@@ -1,7 +1,7 @@
 export const idlFactory = ({ IDL }) => {
   const ChannelId = IDL.Nat;
-  const CommunityId = IDL.Principal;
   const CanisterId = IDL.Principal;
+  const CommunityId = CanisterId;
   const UserId = CanisterId;
   const InviteUsersToChannelArgs = IDL.Record({
     'channel_id' : ChannelId,
@@ -520,6 +520,7 @@ export const idlFactory = ({ IDL }) => {
     'next_message_expiry' : IDL.Opt(TimestampMillis),
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'latest_event_index' : EventIndex,
+    'banner_id' : IDL.Opt(IDL.Nat),
     'history_visible_to_new_joiners' : IDL.Bool,
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
@@ -547,6 +548,7 @@ export const idlFactory = ({ IDL }) => {
     'avatar_id' : IDL.Opt(IDL.Nat),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
+    'banner_id' : IDL.Opt(IDL.Nat),
     'member_count' : IDL.Nat32,
   });
   const JoinCommunityResponse = IDL.Variant({

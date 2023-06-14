@@ -80,22 +80,23 @@ export const idlFactory = ({ IDL }) => {
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
   });
-  const AccessRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
-  const Avatar = IDL.Record({
+  const Document = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
     'mime_type' : IDL.Text,
   });
+  const AccessRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const CreateCommunityArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : IDL.Opt(CommunityPermissions),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
+    'banner' : IDL.Opt(Document),
     'description' : IDL.Text,
     'history_visible_to_new_joiners' : IDL.Bool,
     'default_channels' : IDL.Vec(IDL.Text),
     'rules' : AccessRules,
-    'avatar' : IDL.Opt(Avatar),
+    'avatar' : IDL.Opt(Document),
   });
   const FieldTooLongResult = IDL.Record({
     'length_provided' : IDL.Nat32,
@@ -105,7 +106,7 @@ export const idlFactory = ({ IDL }) => {
     'length_provided' : IDL.Nat32,
     'min_length' : IDL.Nat32,
   });
-  const CommunityId = IDL.Principal;
+  const CommunityId = CanisterId;
   const CreateCommunitySuccessResult = IDL.Record({
     'community_id' : CommunityId,
   });
@@ -125,6 +126,7 @@ export const idlFactory = ({ IDL }) => {
     'NameTaken' : IDL.Null,
     'InternalError' : IDL.Null,
     'MaxCommunitiesCreated' : IDL.Nat32,
+    'BannerTooBig' : FieldTooLongResult,
   });
   const PermissionRole = IDL.Variant({
     'Moderators' : IDL.Null,
@@ -155,7 +157,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'history_visible_to_new_joiners' : IDL.Bool,
     'rules' : AccessRules,
-    'avatar' : IDL.Opt(Avatar),
+    'avatar' : IDL.Opt(Document),
   });
   const CreateGroupSuccessResult = IDL.Record({ 'chat_id' : ChatId });
   const CreateGroupResponse = IDL.Variant({
@@ -1176,7 +1178,7 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'CryptocurrencyNotSupported' : Cryptocurrency,
   });
-  const SetAvatarArgs = IDL.Record({ 'avatar' : IDL.Opt(Avatar) });
+  const SetAvatarArgs = IDL.Record({ 'avatar' : IDL.Opt(Document) });
   const SetAvatarResponse = IDL.Variant({
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Null,
@@ -1248,7 +1250,7 @@ export const idlFactory = ({ IDL }) => {
   const UnpinChatRequest = IDL.Record({ 'chat_id' : ChatId });
   const UnpinChatResponse = IDL.Variant({ 'Success' : IDL.Null });
   const UpdatesV2Args = IDL.Record({ 'updates_since' : TimestampMillis });
-  const AvatarIdUpdate = IDL.Variant({
+  const DocumentIdUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
     'SetToSome' : IDL.Nat,
@@ -1285,7 +1287,7 @@ export const idlFactory = ({ IDL }) => {
       'direct_chats_added' : IDL.Vec(DirectChatSummary),
       'blocked_users_v2' : IDL.Opt(IDL.Vec(UserId)),
       'group_chats_added' : IDL.Vec(UserCanisterGroupChatSummary),
-      'avatar_id' : AvatarIdUpdate,
+      'avatar_id' : DocumentIdUpdate,
       'chats_removed' : IDL.Vec(ChatId),
       'timestamp' : TimestampMillis,
       'group_chats_updated' : IDL.Vec(UserCanisterGroupChatSummaryUpdates),

@@ -7,10 +7,11 @@ import type {
     FilterGroupsResponse,
     FreezeGroupResponse,
     GroupChatSummary,
-    GroupSearchResponse,
     RemoveHotGroupExclusionResponse,
     SetGroupUpgradeConcurrencyResponse,
     UnfreezeGroupResponse,
+    SearchResponse,
+    SearchScope,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
@@ -19,11 +20,12 @@ import {
     deleteFrozenGroupResponse,
     filterGroupsResponse,
     freezeGroupResponse,
-    groupSearchResponse,
+    searchResponse,
     recommendedGroupsResponse,
     removeHotGroupExclusionResponse,
     setUpgradeConcurrencyResponse,
     unfreezeGroupResponse,
+    apiSearchScope,
 } from "./mappers";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
@@ -69,14 +71,20 @@ export class GroupIndexClient extends CandidService {
         );
     }
 
-    search(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
+    search(
+        searchTerm: string,
+        maxResults = 10,
+        scope: SearchScope = "groups"
+    ): Promise<SearchResponse> {
         const args = {
             search_term: searchTerm,
             max_results: maxResults,
+            scope: apiSearchScope(scope),
         };
+        console.log("search args", args);
         return this.handleQueryResponse(
-            () => this.groupIndexService.search(args),
-            groupSearchResponse,
+            () => this.groupIndexService.search_v2(args),
+            searchResponse,
             args
         );
     }

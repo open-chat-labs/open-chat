@@ -19,9 +19,7 @@ function createDummyCommunity(
     id: string,
     name = `Community name ${id}`,
     url = "../assets/unknownUserAvatar.svg",
-    memberCount = 2000,
-    channelCount = 15,
-    unreadCount = 0
+    memberCount = 2000
 ): Community {
     return {
         name,
@@ -29,8 +27,6 @@ function createDummyCommunity(
         description:
             "This is an awsome community with lots of interesting things to see and do. Blah blah blah, it _even supports markdown_. Not financial advice. HODL.",
         memberCount,
-        channelCount,
-        unreadCount,
         avatar: { blobUrl: url },
         banner: {},
         gate: { kind: "no_gate" },
@@ -40,20 +36,16 @@ function createDummyCommunity(
         historyVisible: true,
         frozen: false,
         level: "community",
+        joined: BigInt(0),
+        lastUpdated: BigInt(0),
+        latestEventIndex: 0,
     };
 }
 
 const testCommunities: Community[] = [
-    createDummyCommunity("1", "OpenChat community", "../assets/evil-robot.svg", 30515, 20, 5),
+    createDummyCommunity("1", "OpenChat community", "../assets/evil-robot.svg", 30515),
     createDummyCommunity("2", "SNS1 fans", "../assets/sns1_medium.png"),
-    createDummyCommunity(
-        "3",
-        "ckBTC Enthusiasts",
-        "../assets/ckbtc_nobackground.png",
-        1286,
-        10,
-        1000
-    ),
+    createDummyCommunity("3", "ckBTC Enthusiasts", "../assets/ckbtc_nobackground.png", 1286),
     createDummyCommunity("4", "8Year Gang"),
     createDummyCommunity("5", "/biz Community"),
     createDummyCommunity("6"),
