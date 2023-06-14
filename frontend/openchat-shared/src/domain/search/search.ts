@@ -28,6 +28,7 @@ export type MessageMatch = {
 };
 
 export type SearchResponse = TermInvalid | SearchSuccess;
+export type GroupSearchResponse = TermInvalid | GroupSearchSuccess;
 
 export type TooManyUsers = {
     kind: "too_many_users";
@@ -39,6 +40,11 @@ export type TermInvalid = {
 
 export type ChatNotFound = {
     kind: "chat_not_found";
+};
+
+export type GroupSearchSuccess = {
+    kind: "success";
+    matches: GroupMatch[];
 };
 
 export type SearchSuccess = {

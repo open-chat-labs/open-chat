@@ -9,7 +9,6 @@
     import RightPanel from "./RightPanel.svelte";
     import EditCommunity from "./communities/edit/Edit.svelte";
     import {
-        SearchResponse,
         MessageMatch,
         UserSummary,
         ChatSummary,
@@ -30,6 +29,7 @@
         ChatType,
         Community,
         Level,
+        GroupSearchResponse,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -123,7 +123,7 @@
     }
 
     let modal = ModalType.None;
-    let groupSearchResults: Promise<SearchResponse> | undefined = undefined;
+    let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     let searchTerm: string = "";
     let searching: boolean = false;

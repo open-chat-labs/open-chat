@@ -305,6 +305,7 @@ import {
     Community,
     CreateCommunityResponse,
     JoinCommunityResponse,
+    GroupSearchResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3223,8 +3224,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "getGroupRules", chatId });
     }
 
-    searchGroups(searchTerm: string, maxResults = 10): Promise<SearchResponse> {
-        return this.sendRequest({ kind: "search", searchTerm, maxResults, scope: "groups" });
+    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
+        return this.sendRequest({ kind: "searchGroups", searchTerm, maxResults });
     }
 
     searchCommunities(searchTerm: string, maxResults = 10): Promise<SearchResponse> {

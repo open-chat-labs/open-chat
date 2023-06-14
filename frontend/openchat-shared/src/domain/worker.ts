@@ -94,6 +94,7 @@ import type {
     SearchDirectChatResponse,
     SearchGroupChatResponse,
     SearchScope,
+    GroupSearchResponse,
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
 import type { GroupInvite } from "./inviteCodes";
@@ -150,6 +151,7 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
 export type WorkerRequest =
     | DismissRecommendations
     | Search
+    | SearchGroups
     | GetGroupRules
     | GetRecommendedGroups
     | RegisterProposalVote
@@ -415,6 +417,12 @@ type Search = {
     maxResults: number;
     scope: SearchScope;
     kind: "search";
+};
+
+type SearchGroups = {
+    searchTerm: string;
+    maxResults: number;
+    kind: "searchGroups";
 };
 
 type GetGroupRules = {
@@ -1660,4 +1668,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? CreateCommunityResponse
     : T extends JoinCommunity
     ? JoinCommunityResponse
+    : T extends SearchGroups
+    ? GroupSearchResponse
     : never;
