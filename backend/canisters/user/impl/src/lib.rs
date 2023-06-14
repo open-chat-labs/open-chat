@@ -230,7 +230,6 @@ impl Data {
     pub fn unpin_chat(&mut self, chat_id: ChatId, now: TimestampMillis) {
         let chat = if self.direct_chats.get(&chat_id).is_some() { Chat::Direct(chat_id) } else { Chat::Group(chat_id) };
 
-        self.favourite_chats.unpin(&chat, now);
         self.favourite_chats.remove(chat, now);
     }
 

@@ -98,8 +98,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     };
 
     let favourite_chats = FavouriteChatsUpdates {
-        chats: state.data.favourite_chats.chats_since(updates_since),
-        pinned: state.data.favourite_chats.pinned_since(updates_since),
+        chats: state.data.favourite_chats.chats_if_updated(updates_since),
+        pinned: state.data.favourite_chats.pinned_if_updated(updates_since),
     };
 
     Success(SuccessResult {

@@ -15,6 +15,7 @@ impl FavouriteChats {
     }
 
     pub fn remove(&mut self, chat: Chat, now: TimestampMillis) -> bool {
+        self.unpin(&chat, now);
         self.chats.timestamp = now;
         self.chats.value.remove(&chat)
     }
@@ -51,11 +52,11 @@ impl FavouriteChats {
         &self.pinned.value
     }
 
-    pub fn chats_since(&self, since: TimestampMillis) -> Option<Vec<Chat>> {
+    pub fn chats_if_updated(&self, since: TimestampMillis) -> Option<Vec<Chat>> {
         self.chats.if_set_after(since).map(|ids| ids.iter().copied().collect())
     }
 
-    pub fn pinned_since(&self, since: TimestampMillis) -> Option<Vec<Chat>> {
+    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<Vec<Chat>> {
         self.pinned.if_set_after(since).map(|ids| ids.to_vec())
     }
 }
