@@ -28,7 +28,7 @@ pub use mentions::*;
 pub use roles::*;
 
 #[derive(Serialize, Deserialize)]
-#[serde(from = "GroupChatPrevious")]
+#[serde(from = "GroupChatCorePrevious")]
 pub struct GroupChatCore {
     pub is_public: bool,
     pub name: String,
@@ -1703,7 +1703,7 @@ pub struct SummaryUpdatesFromEvents {
     pub latest_event_index: Option<EventIndex>,
     pub members_changed: bool,
     pub role_changed: bool,
-    pub mentions: Vec<HydratedMention>,
+    pub mentions: Vec<Mention>,
     pub permissions: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>,
     pub is_public: Option<bool>,
@@ -1719,7 +1719,7 @@ pub struct GroupChatCorePrevious {
     pub description: String,
     pub rules: AccessRules,
     pub subtype: Timestamped<Option<GroupSubtype>>,
-    pub avatar: Option<Avatar>,
+    pub avatar: Option<Document>,
     pub history_visible_to_new_joiners: bool,
     pub members: GroupMembers,
     pub events: ChatEvents,
@@ -1734,8 +1734,12 @@ pub struct GroupChatCorePrevious {
 
 impl From<GroupChatCorePrevious> for GroupChatCore {
     fn from(value: GroupChatCorePrevious) -> Self {
-        let created_by = if let ChatEventInternal::GroupChatCreated(g) =
-            &value.events.main_events_reader(0).get(EventIndex(0).into()).unwrap().event
+        let created_by = if let ChatEventInternal::GroupChatCreated(g) = &value
+            .events
+            .main_events_reader(0)
+            .get(EventIndex::from(0).into())
+            .unwrap()
+            .event
         {
             g.created_by
         } else {
