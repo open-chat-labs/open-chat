@@ -10,6 +10,7 @@ import type {
     UnfreezeGroupResponse,
     CommunityMatch,
     SearchScope,
+    GroupSearchResponse,
 } from "openchat-shared";
 import type {
     ApiAddHotGroupExclusionResponse,
@@ -18,6 +19,7 @@ import type {
     ApiFilterGroupsResponse,
     ApiFreezeGroupResponse,
     ApiGroupMatch,
+    ApiGroupSearchResponse,
     ApiRecommendedGroupsResponse,
     ApiRemoveHotGroupExclusionResponse,
     ApiSearchResponse,
@@ -57,7 +59,6 @@ export function recommendedGroupsResponse(
 }
 
 export function searchResponse(candid: ApiSearchResponse): SearchResponse {
-    console.log("Search response: ", candid);
     if ("Success" in candid) {
         return {
             kind: "success",
@@ -69,6 +70,19 @@ export function searchResponse(candid: ApiSearchResponse): SearchResponse {
         return { kind: "term_invalid" };
     }
     throw new Error(`Unknown GroupIndex.SearchResponse of ${candid}`);
+}
+
+export function searchGroupsResponse(candid: ApiGroupSearchResponse): GroupSearchResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            matches: candid.Success.matches.map(groupMatch),
+        };
+    }
+    if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
+        return { kind: "term_invalid" };
+    }
+    throw new Error(`Unknown GroupIndex.GroupSearchResponse of ${candid}`);
 }
 
 export function apiSearchScope(scope: SearchScope): ApiSearchScope {

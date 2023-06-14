@@ -938,6 +938,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            case "searchGroups":
+                agent
+                    .searchGroups(payload.searchTerm, payload.maxResults)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "dismissRecommendation":
                 agent
                     .dismissRecommendation(payload.chatId)

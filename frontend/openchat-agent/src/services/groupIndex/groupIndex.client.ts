@@ -12,6 +12,7 @@ import type {
     UnfreezeGroupResponse,
     SearchResponse,
     SearchScope,
+    GroupSearchResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
@@ -26,6 +27,7 @@ import {
     setUpgradeConcurrencyResponse,
     unfreezeGroupResponse,
     apiSearchScope,
+    searchGroupsResponse,
 } from "./mappers";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
@@ -71,6 +73,18 @@ export class GroupIndexClient extends CandidService {
         );
     }
 
+    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
+        const args = {
+            search_term: searchTerm,
+            max_results: maxResults,
+        };
+        return this.handleQueryResponse(
+            () => this.groupIndexService.search(args),
+            searchGroupsResponse,
+            args
+        );
+    }
+
     search(
         searchTerm: string,
         maxResults = 10,
@@ -81,7 +95,6 @@ export class GroupIndexClient extends CandidService {
             max_results: maxResults,
             scope: apiSearchScope(scope),
         };
-        console.log("search args", args);
         return this.handleQueryResponse(
             () => this.groupIndexService.search_v2(args),
             searchResponse,

@@ -141,6 +141,7 @@ import {
     AccessGate,
     SearchScope,
     JoinCommunityResponse,
+    GroupSearchResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -812,6 +813,18 @@ export class OpenChatAgent extends EventTarget {
                         avatar: this.rehydrateDataContent(match.avatar, "avatar"),
                         banner: this.rehydrateDataContent(match.banner, "banner"),
                     })),
+                };
+            }
+            return res;
+        });
+    }
+
+    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
+        return this._groupIndexClient.searchGroups(searchTerm, maxResults).then((res) => {
+            if (res.kind === "success") {
+                return {
+                    ...res,
+                    matches: res.matches.map((match) => this.rehydrateDataContent(match, "avatar")),
                 };
             }
             return res;
