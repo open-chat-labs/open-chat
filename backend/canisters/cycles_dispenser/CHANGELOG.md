@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-## [[2.0.719](https://github.com/open-ic/open-chat/releases/tag/v2.0.719-cycles_dispenser)] - 2023-06-TBD
+## [[2.0.719](https://github.com/open-ic/open-chat/releases/tag/v2.0.719-cycles_dispenser)] - 2023-06-14
 
 ### Changed
 
