@@ -1,6 +1,6 @@
 use crate::{
     AccessGate, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember, GroupPermissions, GroupRole,
-    Mention, Message, MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis, UserId, Version,
+    HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis, UserId, Version,
     MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
@@ -51,7 +51,7 @@ pub struct GroupChatSummary {
     pub notifications_muted: bool,
     pub participant_count: u32,
     pub role: GroupRole,
-    pub mentions: Vec<Mention>,
+    pub mentions: Vec<HydratedMention>,
     pub wasm_version: Version,
     pub permissions: GroupPermissions,
     pub metrics: ChatMetrics,
@@ -122,7 +122,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub joined: TimestampMillis,
     pub participant_count: u32,
     pub role: GroupRole,
-    pub mentions: Vec<Mention>,
+    pub mentions: Vec<HydratedMention>,
     pub wasm_version: Version,
     pub permissions: GroupPermissions,
     pub notifications_muted: bool,
@@ -211,7 +211,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub latest_event_index: Option<EventIndex>,
     pub participant_count: Option<u32>,
     pub role: Option<GroupRole>,
-    pub mentions: Vec<Mention>,
+    pub mentions: Vec<HydratedMention>,
     pub wasm_version: Option<Version>,
     pub permissions: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)

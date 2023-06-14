@@ -5,7 +5,7 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap};
 use std::ops::Deref;
 use types::{
-    ChatEvent, EventIndex, EventWrapper, EventWrapperInternal, Mention, MentionInternal, Message, MessageId, MessageIndex,
+    ChatEvent, EventIndex, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message, MessageId, MessageIndex,
     PollEnded, PollVoteRegistered, ProposalUpdated, ProposalsUpdated, ThreadUpdated, TimestampMillis, UpdatedMessage, UserId,
 };
 
@@ -352,14 +352,15 @@ pub trait Reader {
         }
     }
 
-    fn hydrate_mention(&self, mention: &MentionInternal) -> Option<Mention> {
-        self.message_event_internal(mention.message_index.into()).map(|e| Mention {
-            thread_root_message_index: mention.thread_root_message_index,
-            message_id: e.event.message_id,
-            message_index: e.event.message_index,
-            event_index: e.index,
-            mentioned_by: e.event.sender,
-        })
+    fn hydrate_mention(&self, mention: &Mention) -> Option<HydratedMention> {
+        self.message_event_internal(mention.message_index.into())
+            .map(|e| HydratedMention {
+                thread_root_message_index: mention.thread_root_message_index,
+                message_id: e.event.message_id,
+                message_index: e.event.message_index,
+                event_index: e.index,
+                mentioned_by: e.event.sender,
+            })
     }
 
     fn hydrate_updated_message(&self, message: &UpdatedMessageInternal) -> UpdatedMessage {

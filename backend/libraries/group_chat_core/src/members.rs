@@ -8,7 +8,7 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Formatter;
 use types::{
-    is_default, is_empty_btreemap, is_empty_hashset, EventIndex, GroupMember, GroupPermissions, Mention, MessageIndex,
+    is_default, is_empty_btreemap, is_empty_hashset, EventIndex, GroupMember, GroupPermissions, HydratedMention, MessageIndex,
     TimestampMillis, Timestamped, UserId, MAX_RETURNED_MENTIONS,
 };
 
@@ -349,12 +349,12 @@ impl GroupMemberInternal {
         since: Option<TimestampMillis>,
         chat_events: &ChatEvents,
         now: TimestampMillis,
-    ) -> Vec<Mention> {
+    ) -> Vec<HydratedMention> {
         let min_visible_event_index = self.min_visible_event_index();
 
         self.mentions_v2
             .iter_most_recent(since)
-            .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, m, now))
+            .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, &m, now))
             .take(MAX_RETURNED_MENTIONS)
             .collect()
     }

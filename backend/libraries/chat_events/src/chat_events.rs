@@ -12,7 +12,7 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
     ChatId, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails,
-    GroupCreated, GroupFrozen, GroupUnfrozen, Mention, MentionInternal, Message, MessageContentInitial, MessageId,
+    GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message, MessageContentInitial, MessageId,
     MessageIndex, MessageMatch, Milliseconds, PollVotes, ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet,
     Reaction, RegisterVoteResult, TimestampMillis, Timestamped, UserId, VoteOperation,
 };
@@ -857,9 +857,9 @@ impl ChatEvents {
     pub fn hydrate_mention(
         &self,
         min_visible_event_index: EventIndex,
-        mention: &MentionInternal,
+        mention: &Mention,
         now: TimestampMillis,
-    ) -> Option<Mention> {
+    ) -> Option<HydratedMention> {
         let events_reader = self.events_reader(min_visible_event_index, mention.thread_root_message_index, now)?;
         events_reader.hydrate_mention(mention)
     }
