@@ -1,13 +1,3 @@
-mod invited_users;
-mod members;
-mod mentions;
-mod roles;
-
-pub use invited_users::*;
-pub use members::*;
-pub use mentions::*;
-pub use roles::*;
-
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
     DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, UndeleteMessageResult,
@@ -19,7 +9,7 @@ use types::{
     AccessGate, AccessRules, AvatarChanged, ContentValidationError, CryptoTransaction, Document, EventIndex, EventWrapper,
     EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
     GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
-    GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, Mention, MentionInternal, Message, MessageContent,
+    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse,
     Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged,
     SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked, UsersInvited,
@@ -27,7 +17,18 @@ use types::{
 use utils::document_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
+mod invited_users;
+mod members;
+mod mentions;
+mod roles;
+
+pub use invited_users::*;
+pub use members::*;
+pub use mentions::*;
+pub use roles::*;
+
 #[derive(Serialize, Deserialize)]
+#[serde(from = "GroupChatCorePrevious")]
 pub struct GroupChatCore {
     pub is_public: bool,
     pub name: String,
@@ -38,12 +39,12 @@ pub struct GroupChatCore {
     pub history_visible_to_new_joiners: bool,
     pub members: GroupMembers,
     pub events: ChatEvents,
+    pub created_by: UserId,
     pub date_created: TimestampMillis,
     pub pinned_messages: Vec<MessageIndex>,
     pub permissions: GroupPermissions,
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<AccessGate>>,
-    #[serde(default)]
     pub invited_users: InvitedUsers,
 }
 
@@ -76,6 +77,7 @@ impl GroupChatCore {
             history_visible_to_new_joiners,
             members,
             events,
+            created_by,
             date_created: now,
             pinned_messages: Vec::new(),
             permissions,
@@ -719,13 +721,7 @@ impl GroupChatCore {
             mentions.remove(&sender);
             for user_id in mentions.iter() {
                 if let Some(mentioned) = self.members.get_mut(user_id) {
-                    mentioned.mentions_v2.add(
-                        MentionInternal {
-                            thread_root_message_index,
-                            message_index,
-                        },
-                        now,
-                    );
+                    mentioned.mentions_v2.add(thread_root_message_index, message_index, now);
                 }
             }
 
@@ -1701,11 +1697,66 @@ pub struct SummaryUpdatesFromEvents {
     pub latest_event_index: Option<EventIndex>,
     pub members_changed: bool,
     pub role_changed: bool,
-    pub mentions: Vec<Mention>,
+    pub mentions: Vec<HydratedMention>,
     pub permissions: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>,
     pub is_public: Option<bool>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GroupChatCorePrevious {
+    pub is_public: bool,
+    pub name: String,
+    pub description: String,
+    pub rules: AccessRules,
+    pub subtype: Timestamped<Option<GroupSubtype>>,
+    pub avatar: Option<Document>,
+    pub history_visible_to_new_joiners: bool,
+    pub members: GroupMembers,
+    pub events: ChatEvents,
+    pub date_created: TimestampMillis,
+    pub pinned_messages: Vec<MessageIndex>,
+    pub permissions: GroupPermissions,
+    pub date_last_pinned: Option<TimestampMillis>,
+    pub gate: Timestamped<Option<AccessGate>>,
+    #[serde(default)]
+    pub invited_users: InvitedUsers,
+}
+
+impl From<GroupChatCorePrevious> for GroupChatCore {
+    fn from(value: GroupChatCorePrevious) -> Self {
+        let created_by = if let ChatEventInternal::GroupChatCreated(g) = &value
+            .events
+            .main_events_reader(0)
+            .get(EventIndex::from(0).into())
+            .unwrap()
+            .event
+        {
+            g.created_by
+        } else {
+            panic!("Unable to determine who created the group")
+        };
+
+        GroupChatCore {
+            is_public: value.is_public,
+            name: value.name,
+            description: value.description,
+            rules: value.rules,
+            subtype: value.subtype,
+            avatar: value.avatar,
+            history_visible_to_new_joiners: value.history_visible_to_new_joiners,
+            members: value.members,
+            events: value.events,
+            created_by,
+            date_created: value.date_created,
+            pinned_messages: value.pinned_messages,
+            permissions: value.permissions,
+            date_last_pinned: value.date_last_pinned,
+            gate: value.gate,
+            invited_users: value.invited_users,
+        }
+    }
 }

@@ -1,6 +1,6 @@
 use crate::{
     AccessGate, ChannelId, ChatMetrics, EventIndex, EventWrapper, GroupCanisterThreadDetails, GroupPermissions, GroupRole,
-    GroupSubtype, Mention, Message, MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis,
+    GroupSubtype, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,7 @@ pub struct CommunityCanisterChannelSummary {
     pub joined: TimestampMillis,
     pub member_count: u32,
     pub role: GroupRole,
-    pub mentions: Vec<Mention>,
+    pub mentions: Vec<HydratedMention>,
     pub permissions: GroupPermissions,
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
@@ -48,7 +48,7 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub latest_event_index: Option<EventIndex>,
     pub member_count: Option<u32>,
     pub role: Option<GroupRole>,
-    pub mentions: Vec<Mention>,
+    pub mentions: Vec<HydratedMention>,
     pub permissions: Option<GroupPermissions>,
     pub notifications_muted: Option<bool>,
     pub metrics: Option<ChatMetrics>,
