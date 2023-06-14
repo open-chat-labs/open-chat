@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Further reductions to the size of serialized ChatEvents ([#3775](https://github.com/open-ic/open-chat/pull/3775))
 - Reduce size of `GroupMembers` when serialized ([#3778](https://github.com/open-ic/open-chat/pull/3778))
 - Reduce size of `ChatMetrics` when serialized ([#3779](https://github.com/open-ic/open-chat/pull/3779))
+- Add `created_by` to `GroupChatCore` ([#3786](https://github.com/open-ic/open-chat/pull/3786))
 
 ## [[2.0.716](https://github.com/open-ic/open-chat/releases/tag/v2.0.716-group)] - 2023-06-12
 
