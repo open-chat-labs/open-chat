@@ -3,11 +3,13 @@ use chat_events::{ChatMetricsInternal, PushMessageArgs};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, EventWrapper, Message, MessageIndex, TimestampMillis, UserId};
+use types::{ChatId, EventWrapper, Message, MessageIndex, TimestampMillis, Timestamped, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
+    #[serde(default)]
+    pinned: Timestamped<Vec<ChatId>>,
     metrics: ChatMetricsInternal,
 }
 
@@ -22,6 +24,14 @@ impl DirectChats {
 
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &DirectChat> {
         self.direct_chats.values().filter(move |c| c.has_updates_since(since))
+    }
+
+    pub fn pinned(&self) -> &Vec<ChatId> {
+        &self.pinned.value
+    }
+
+    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<Vec<ChatId>> {
+        self.pinned.if_set_after(since).map(|ids| ids.to_vec())
     }
 
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
@@ -82,5 +92,12 @@ impl DirectChats {
 
     pub fn has(&self, chat_id: &ChatId) -> bool {
         self.direct_chats.contains_key(chat_id)
+    }
+
+    pub fn unpin(&mut self, chat_id: &ChatId, now: TimestampMillis) {
+        if self.pinned.value.contains(chat_id) {
+            self.pinned.timestamp = now;
+            self.pinned.value.retain(|pinned_chat_id| pinned_chat_id != chat_id);
+        }
     }
 }

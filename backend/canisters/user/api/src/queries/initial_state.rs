@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, DirectChatSummary, GroupChatSummary, TimestampMillis, UserId};
+use types::{Chat, ChatId, DirectChatSummary, GroupChatSummary, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -10,29 +10,45 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    SuccessCached(SuccessCachedResult),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
-    pub direct_chats: Vec<DirectChatSummary>,
-    pub group_chats: Vec<crate::GroupChatSummary>,
-    pub communities: Vec<crate::CommunitySummary>,
+    pub direct_chats: DirectChatsInitial,
+    pub group_chats: GroupChatsInitial,
+    pub favourite_chats: FavouriteChatsInitial,
+    pub communities: CommunitiesInitial,
     pub avatar_id: Option<u128>,
     pub blocked_users: Vec<UserId>,
-    pub pinned_chats: Vec<ChatId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessCachedResult {
+pub struct DirectChatsInitial {
+    pub summaries: Vec<DirectChatSummary>,
+    pub pinned: Vec<ChatId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct GroupChatsInitial {
+    pub summaries: Vec<crate::GroupChatSummary>,
+    pub pinned: Vec<ChatId>,
+    pub cached: Option<CachedGroupChatSummaries>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct CachedGroupChatSummaries {
+    pub summaries: Vec<GroupChatSummary>,
     pub timestamp: TimestampMillis,
-    pub direct_chats: Vec<DirectChatSummary>,
-    pub cache_timestamp: TimestampMillis,
-    pub cached_group_chat_summaries: Vec<GroupChatSummary>,
-    pub group_chats_added: Vec<crate::GroupChatSummary>,
-    pub communities: Vec<crate::CommunitySummary>,
-    pub avatar_id: Option<u128>,
-    pub blocked_users: Vec<UserId>,
-    pub pinned_chats: Vec<ChatId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct CommunitiesInitial {
+    pub summaries: Vec<crate::CommunitySummary>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct FavouriteChatsInitial {
+    pub chats: Vec<Chat>,
+    pub pinned: Vec<Chat>,
 }

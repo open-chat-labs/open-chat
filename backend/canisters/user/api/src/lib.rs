@@ -2,8 +2,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    ChannelId, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageIndex,
-    PhoneNumber, SuspensionDuration, TimestampMillis, UserId,
+    ChannelId, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, EventIndex, MessageContent,
+    MessageIndex, PhoneNumber, SuspensionDuration, TimestampMillis, UserId,
 };
 
 mod lifecycle;
@@ -47,6 +47,7 @@ pub struct CommunitySummary {
     pub community_id: CommunityId,
     pub channels: Vec<ChannelSummary>,
     pub archived: bool,
+    pub pinned: Vec<ChannelId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -54,6 +55,7 @@ pub struct CommunitySummaryUpdates {
     pub community_id: CommunityId,
     pub channels: Vec<ChannelSummaryUpdates>,
     pub archived: Option<bool>,
+    pub pinned: Option<Vec<ChannelId>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -141,4 +143,15 @@ pub struct DiamondMembershipPaymentReceived {
     pub duration: DiamondMembershipPlanDuration,
     pub recurring: bool,
     pub send_bot_message: bool,
+}
+
+pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {
+    chats
+        .iter()
+        .filter_map(|c| match c {
+            Chat::Direct(c) => Some(*c),
+            Chat::Group(c) => Some(*c),
+            Chat::Channel(_, _) => None,
+        })
+        .collect()
 }

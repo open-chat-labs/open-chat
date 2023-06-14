@@ -25,7 +25,7 @@ fn toggle_archive_chat(chat_id: ChatId, archive: bool) -> Response {
 
         if archive {
             // Unpin the chat if it is pinned
-            state.data.unpin_chat(&chat_id, now);
+            state.data.unpin_chat(chat_id, now);
         }
 
         if let Some(dc) = state.data.direct_chats.get_mut(&chat_id) {
