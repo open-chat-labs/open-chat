@@ -12,12 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Further reductions to the size of serialized ChatEvents ([#3775](https://github.com/open-ic/open-chat/pull/3775))
 - Reduce size of `GroupMembers` when serialized ([#3778](https://github.com/open-ic/open-chat/pull/3778))
 - Reduce size of `ChatMetrics` when serialized ([#3779](https://github.com/open-ic/open-chat/pull/3779))
+- Reduce size of mentions when serialized ([#3784](https://github.com/open-chat-labs/open-chat/pull/3784))
 
 ## [[2.0.716](https://github.com/open-ic/open-chat/releases/tag/v2.0.716-group)] - 2023-06-12
 
 ### Added
 
-- Add `selected_updates_v2` ([#3730](https://github.com/open-ic/open-chat/pull/3730))
+- Add `selected_updates_v2` ([#3732](https://github.com/open-ic/open-chat/pull/3732))
 - Record instruction counts during upgrades ([#3758](https://github.com/open-ic/open-chat/pull/3758))
 
 ### Changed
