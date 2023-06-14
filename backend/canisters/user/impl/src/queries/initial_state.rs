@@ -21,20 +21,31 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
     let my_user_id: UserId = state.env.canister_id().into();
     let avatar_id = state.data.avatar.value.as_ref().map(|a| a.id);
     let blocked_users = state.data.blocked_users.value.iter().copied().collect();
-    let pinned_chats = state.data.pinned_chats.value.clone();
 
-    let direct_chats = state
-        .data
-        .direct_chats
-        .iter()
-        .map(|d| d.to_summary(my_user_id, now))
-        .collect();
+    let direct_chats = DirectChatsInitial {
+        summaries: state
+            .data
+            .direct_chats
+            .iter()
+            .map(|d| d.to_summary(my_user_id, now))
+            .collect(),
+        pinned: state.data.direct_chats.pinned().to_vec(),
+    };
 
-    let communities = state.data.communities.iter().map(|c| c.to_summary()).collect();
+    let communities = CommunitiesInitial {
+        summaries: state.data.communities.iter().map(|c| c.to_summary()).collect(),
+    };
+
+    let favourite_chats = FavouriteChatsInitial {
+        chats: state.data.favourite_chats.chats().iter().copied().collect(),
+        pinned: state.data.favourite_chats.pinned().to_vec(),
+    };
+
+    let pinned_groups = state.data.group_chats.pinned().to_vec();
 
     let disable_cache = args.disable_cache.unwrap_or_default();
 
-    if let Some(cached) = (!disable_cache)
+    let group_chats = if let Some(cached) = (!disable_cache)
         .then_some(state.data.cached_group_summaries.as_ref())
         .flatten()
     {
@@ -43,35 +54,40 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
         // groups not found in the cache are included in `group_chats_added`.
         let mut group_chats: HashMap<_, _> = state.data.group_chats.iter().map(|g| (g.chat_id, g)).collect();
 
-        SuccessCached(SuccessCachedResult {
-            timestamp: now,
-            direct_chats,
-            cache_timestamp: cached.timestamp,
-            cached_group_chat_summaries: cached
+        let cached = CachedGroupChatSummaries {
+            summaries: cached
                 .groups
                 .iter()
                 .filter_map(|c| group_chats.remove(&c.chat_id).map(|g| (c, g)))
                 .map(|(c, g)| hydrate_cached_summary(c, g))
                 .collect(),
-            group_chats_added: group_chats.values().map(|g| g.to_summary()).collect(),
-            communities,
-            avatar_id,
-            blocked_users,
-            pinned_chats,
-        })
-    } else {
-        let group_chats = state.data.group_chats.iter().map(|g| g.to_summary()).collect();
+            timestamp: cached.timestamp,
+        };
 
-        Success(SuccessResult {
-            timestamp: now,
-            direct_chats,
-            group_chats,
-            communities,
-            avatar_id,
-            blocked_users,
-            pinned_chats,
-        })
-    }
+        GroupChatsInitial {
+            summaries: group_chats.values().map(|g| g.to_summary()).collect(),
+            pinned: pinned_groups,
+            cached: Some(cached),
+        }
+    } else {
+        let chats = state.data.group_chats.iter().map(|g| g.to_summary()).collect();
+
+        GroupChatsInitial {
+            summaries: chats,
+            pinned: pinned_groups,
+            cached: None,
+        }
+    };
+
+    Success(SuccessResult {
+        timestamp: now,
+        direct_chats,
+        group_chats,
+        favourite_chats,
+        communities,
+        avatar_id,
+        blocked_users,
+    })
 }
 
 fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: &GroupChat) -> GroupChatSummary {

@@ -33,7 +33,11 @@ fn new_platform_moderators_added_to_moderators_group() {
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(initial_state.group_chats.iter().any(|c| c.chat_id == moderators_group));
+    assert!(initial_state
+        .group_chats
+        .summaries
+        .iter()
+        .any(|c| c.chat_id == moderators_group));
 }
 
 #[test]

@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, DirectChatSummary, DirectChatSummaryUpdates, OptionUpdate, TimestampMillis, UserId};
+use types::{Chat, ChatId, CommunityId, DirectChatSummary, DirectChatSummaryUpdates, OptionUpdate, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -17,14 +17,38 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
-    pub direct_chats_added: Vec<DirectChatSummary>,
-    pub direct_chats_updated: Vec<DirectChatSummaryUpdates>,
-    pub group_chats_added: Vec<crate::GroupChatSummary>,
-    pub group_chats_updated: Vec<crate::GroupChatSummaryUpdates>,
-    pub communities_added: Vec<crate::CommunitySummary>,
-    pub communities_updated: Vec<crate::CommunitySummaryUpdates>,
-    pub chats_removed: Vec<ChatId>,
+    pub direct_chats: DirectChatsUpdates,
+    pub group_chats: GroupChatsUpdates,
+    pub favourite_chats: FavouriteChatsUpdates,
+    pub communities: CommunitiesUpdates,
     pub avatar_id: OptionUpdate<u128>,
     pub blocked_users: Option<Vec<UserId>>,
-    pub pinned_chats: Option<Vec<ChatId>>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct DirectChatsUpdates {
+    pub added: Vec<DirectChatSummary>,
+    pub updated: Vec<DirectChatSummaryUpdates>,
+    pub pinned: Option<Vec<ChatId>>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GroupChatsUpdates {
+    pub added: Vec<crate::GroupChatSummary>,
+    pub updated: Vec<crate::GroupChatSummaryUpdates>,
+    pub removed: Vec<ChatId>,
+    pub pinned: Option<Vec<ChatId>>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunitiesUpdates {
+    pub added: Vec<crate::CommunitySummary>,
+    pub updated: Vec<crate::CommunitySummaryUpdates>,
+    pub removed: Vec<CommunityId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct FavouriteChatsUpdates {
+    pub chats: Option<Vec<Chat>>,
+    pub pinned: Option<Vec<Chat>>,
 }
