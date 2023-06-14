@@ -29,39 +29,46 @@ type PromiseResolver<T> = {
  * This is a wrapper around the OpenChatAgent which brokers communication with the agent inside a web worker
  */
 export class OpenChatAgentWorker extends EventTarget {
-    private _worker: Worker;
+    private _worker!: Worker;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private _pending: Map<string, PromiseResolver<any>> = new Map(); // in-flight requests
     private _unresolved: Map<string, UnresolvedRequest> = new Map(); // requests that never resolved
-    public ready: Promise<boolean>;
+    private _connectedToWorker = false;
 
     constructor(protected config: OpenChatConfig) {
         super();
-        console.debug("WORKER_CLIENT: loading worker with version: ", config.websiteVersion);
-        this._worker = new Worker(`/worker.js?v=${config.websiteVersion}`);
-        this.ready = new Promise((resolve) => {
-            this.sendRequest({
-                kind: "init",
-                icUrl: this.config.icUrl ?? window.location.origin,
-                iiDerivationOrigin: this.config.iiDerivationOrigin,
-                openStorageIndexCanister: this.config.openStorageIndexCanister,
-                groupIndexCanister: this.config.groupIndexCanister,
-                notificationsCanister: this.config.notificationsCanister,
-                onlineCanister: this.config.onlineCanister,
-                userIndexCanister: this.config.userIndexCanister,
-                internetIdentityUrl: this.config.internetIdentityUrl,
-                nfidUrl: this.config.nfidUrl,
-                ledgerCanisterICP: this.config.ledgerCanisterICP,
-                ledgerCanisterSNS1: this.config.ledgerCanisterSNS1,
-                ledgerCanisterBTC: this.config.ledgerCanisterBTC,
-                ledgerCanisterCHAT: this.config.ledgerCanisterCHAT,
-                userGeekApiKey: this.config.userGeekApiKey,
-                enableMultiCrypto: this.config.enableMultiCrypto,
-                blobUrlPattern: this.config.blobUrlPattern,
-                proposalBotCanister: this.config.proposalBotCanister,
-                marketMakerCanister: this.config.marketMakerCanister,
-            }).then(() => {
+    }
+
+    public connectToWorker(): Promise<boolean> {
+        console.debug("WORKER_CLIENT: loading worker with version: ", this.config.websiteVersion);
+        this._worker = new Worker(`/worker.js?v=${this.config.websiteVersion}`);
+        const ready = new Promise<boolean>((resolve) => {
+            this.sendRequest(
+                {
+                    kind: "init",
+                    icUrl: this.config.icUrl ?? window.location.origin,
+                    iiDerivationOrigin: this.config.iiDerivationOrigin,
+                    openStorageIndexCanister: this.config.openStorageIndexCanister,
+                    groupIndexCanister: this.config.groupIndexCanister,
+                    notificationsCanister: this.config.notificationsCanister,
+                    onlineCanister: this.config.onlineCanister,
+                    userIndexCanister: this.config.userIndexCanister,
+                    internetIdentityUrl: this.config.internetIdentityUrl,
+                    nfidUrl: this.config.nfidUrl,
+                    ledgerCanisterICP: this.config.ledgerCanisterICP,
+                    ledgerCanisterSNS1: this.config.ledgerCanisterSNS1,
+                    ledgerCanisterBTC: this.config.ledgerCanisterBTC,
+                    ledgerCanisterCHAT: this.config.ledgerCanisterCHAT,
+                    userGeekApiKey: this.config.userGeekApiKey,
+                    enableMultiCrypto: this.config.enableMultiCrypto,
+                    blobUrlPattern: this.config.blobUrlPattern,
+                    proposalBotCanister: this.config.proposalBotCanister,
+                    marketMakerCanister: this.config.marketMakerCanister,
+                },
+                true
+            ).then(() => {
                 resolve(true);
+                this._connectedToWorker = true;
             });
         });
 
@@ -100,6 +107,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 console.debug("WORKER_CLIENT: unknown message: ", ev);
             }
         };
+        return ready;
     }
 
     private logUnexpected(correlationId: string): void {
@@ -139,8 +147,13 @@ export class OpenChatAgentWorker extends EventTarget {
         this._unresolved.delete(data.correlationId);
     }
 
-    async sendRequest<Req extends WorkerRequest>(req: Req): Promise<WorkerResult<Req>> {
-        await this.ready;
+    async sendRequest<Req extends WorkerRequest>(
+        req: Req,
+        connecting = false
+    ): Promise<WorkerResult<Req>> {
+        if (!connecting && !this._connectedToWorker) {
+            throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
+        }
 
         const correlated = {
             ...req,
