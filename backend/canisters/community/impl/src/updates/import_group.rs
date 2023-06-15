@@ -72,7 +72,8 @@ fn commit(user_id: UserId, group_id: ChatId, total_bytes: u64, state: &mut Runti
         .groups_being_imported
         .add(group_id, channel_id, user_id, total_bytes, now)
     {
-        Success
+        crate::jobs::import_groups::start_job_if_required(state);
+        Success(SuccessResult { channel_id, total_bytes })
     } else {
         GroupAlreadyBeingImported
     }

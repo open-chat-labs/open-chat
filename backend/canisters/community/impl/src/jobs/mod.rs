@@ -1,4 +1,4 @@
-mod import_groups;
+pub mod import_groups;
 
 use crate::RuntimeState;
 

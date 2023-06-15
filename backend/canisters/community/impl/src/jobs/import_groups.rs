@@ -4,7 +4,7 @@ use crate::model::events::CommunityEvent;
 use crate::model::groups_being_imported::NextBatchResult;
 use crate::model::members::AddResult;
 use crate::updates::join_channel::join_channel_unchecked;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{mutate_state, RuntimeState};
 use group_canister::c2c_export_group::{Args, Response};
 use group_chat_core::GroupChatCore;
 use ic_cdk_timers::TimerId;
@@ -91,26 +91,25 @@ fn deserialize_group(group_id: ChatId) {
 
             state.data.channels.add(Channel { id, chat });
 
-            ic_cdk_timers::set_timer(Duration::ZERO, move || ic_cdk::spawn(finalize_members(id, 0)));
+            ic_cdk_timers::set_timer(Duration::ZERO, move || ic_cdk::spawn(process_channel_members(id, 0)));
         }
     });
 }
 
-async fn finalize_members(channel_id: ChannelId, attempt: u32) {
-    let (members_to_add, local_user_index_canister_id, is_public) = read_state(|state| {
-        let to_add: Vec<_> = state
-            .data
-            .channels
-            .get(&channel_id)
-            .map(|c| {
-                c.chat
-                    .members
-                    .iter()
-                    .map(|m| m.user_id)
-                    .filter(|u| state.data.members.get_by_user_id(u).is_none())
-                    .collect()
-            })
-            .unwrap_or_default();
+// For each user already in the community, add the new channel to their set of channels.
+// For users who are not members, lookup their principals, then join them to the community, then add
+// them to the default channels, then add the new channel to their set of channels.
+async fn process_channel_members(channel_id: ChannelId, attempt: u32) {
+    let (members_to_add, local_user_index_canister_id, is_public) = mutate_state(|state| {
+        let channel = state.data.channels.get(&channel_id).unwrap();
+        let mut to_add = Vec::new();
+        for user_id in channel.chat.members.iter().map(|m| m.user_id) {
+            if let Some(member) = state.data.members.get_by_user_id_mut(&user_id) {
+                member.channels.insert(channel_id);
+            } else {
+                to_add.push(user_id);
+            }
+        }
 
         (to_add, state.data.local_user_index_canister_id, state.data.is_public)
     });
@@ -145,6 +144,7 @@ async fn finalize_members(channel_id: ChannelId, attempt: u32) {
                                     join_channel_unchecked(channel, member, notifications_muted, now);
                                 }
                             }
+                            member.channels.insert(channel_id);
                         }
                         AddResult::AlreadyInCommunity => {}
                         AddResult::Blocked => {
@@ -160,13 +160,14 @@ async fn finalize_members(channel_id: ChannelId, attempt: u32) {
                         }
                     }
                 }
-
-                handle_activity_notification(state);
             });
         } else if attempt < 30 {
             ic_cdk_timers::set_timer(Duration::from_secs(30), move || {
-                ic_cdk::spawn(finalize_members(channel_id, attempt + 1))
+                ic_cdk::spawn(process_channel_members(channel_id, attempt + 1))
             });
+            return;
         }
     }
+
+    mutate_state(handle_activity_notification);
 }
