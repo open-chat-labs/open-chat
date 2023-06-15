@@ -102,10 +102,10 @@ aws-sdk-dynamodb = "0.24.0"
 aws-types = "0.54.1"
 base64 = "0.21.0"
 candid = "0.8.4"
-canister_logger = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
-canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
-canister_timer_jobs = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
-canister_tracing_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
+canister_logger = { git = "https://github.com/open-chat-labs/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
+canister_state_macros = { git = "https://github.com/open-chat-labs/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
+canister_timer_jobs = { git = "https://github.com/open-chat-labs/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
+canister_tracing_macros = { git = "https://github.com/open-chat-labs/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 ciborium = { git = "https://github.com/enarx/ciborium", rev = "e719537c99b564c3674a56defe53713c702c6f46" }
 clap = "3.2.23"
 dirs = "4.0.0"
@@ -143,10 +143,10 @@ serde = "1.0.152"
 serde_bytes = "0.11.9"
 serde_cbor = "0.11.2"
 serde_json = "1.0.93"
-serializer = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
+serializer = { git = "https://github.com/open-chat-labs/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 sha2 = "0.10.6"
 sha3 = "0.10.6"
-stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
+stable_memory = { git = "https://github.com/open-chat-labs/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 syn = "1.0.109"
 test-case = "3.0.0"
 time = "0.3.20"
