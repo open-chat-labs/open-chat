@@ -435,6 +435,29 @@ type EnableInviteCodeResponse =
         CommunityFrozen;
     };
 
+type ImportGroupArgs =
+    record {
+        group_id: ChatId;
+    };
+
+type ImportGroupResponse =
+    variant {
+        Success: record {
+            channel_id: ChannelId;
+            total_bytes: nat64;
+        };
+        UserNotInCommunity;
+        UserNotCommunityOwner;
+        UserNotInGroup;
+        UserNotGroupOwner;
+        UserSuspended;
+        GroupNotFound;
+        GroupAlreadyBeingImported;
+        GroupImportingToAnotherCommunity;
+        GroupFrozen;
+        InternalError: text;
+    };
+
 type JoinChannelArgs =
     record {
         channel_id: ChannelId;
@@ -762,6 +785,7 @@ service: {
     disable_invite_code: (EmptyArgs) -> (DisableInviteCodeResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     enable_invite_code: (EmptyArgs) -> (EnableInviteCodeResponse);
+    import_group: (ImportGroupArgs) -> (ImportGroupResponse);
     join_channel: (JoinChannelArgs) -> (JoinChannelResponse);
     leave_channel: (LeaveChannelArgs) -> (LeaveChannelResponse);
     make_channel_private: (MakeChannelPrivateArgs) -> (MakeChannelPrivateResponse);
