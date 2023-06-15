@@ -2,7 +2,6 @@
 
 <script lang="ts">
     import { marked } from "marked";
-    import { logger } from "../../utils/logging";
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { DOMPurifyDefault, DOMPurifyOneLine } from "../../utils/domPurify";
@@ -47,14 +46,14 @@
                 parsed = marked.parse(parsed, options);
             }
         } catch (err: any) {
-            logger.error("Error parsing markdown: ", err);
+            client.logError("Error parsing markdown: ", err);
         }
 
         const domPurify = oneLine ? DOMPurifyOneLine : DOMPurifyDefault;
         try {
             sanitized = domPurify.sanitize(parsed);
         } catch (err: any) {
-            logger.error("Error sanitizing message content: ", err);
+            client.logError("Error sanitizing message content: ", err);
         }
     }
 </script>

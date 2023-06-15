@@ -6,7 +6,6 @@
     import { _ } from "svelte-i18n";
     import HoverIcon from "./HoverIcon.svelte";
     import { rtlStore } from "../stores/rtl";
-    import { logger } from "../utils/logging";
     import { mobileWidth } from "../stores/screenDimensions";
     import { menuStore } from "../stores/menu";
 
@@ -47,7 +46,7 @@
             tick().then(() => (actualWidth = divElement?.clientWidth));
             divElement.addEventListener("click", closeMenus);
         } catch (e: any) {
-            logger.error("Failed to open modal", e);
+            console.error("Failed to open modal", e);
             onClose();
         }
         return () => {

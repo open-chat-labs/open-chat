@@ -430,6 +430,18 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    logError(message?: unknown, ...optionalParams: unknown[]): void {
+        this._logger.error(message, ...optionalParams);
+    }
+
+    logMessage(message?: unknown, ...optionalParams: unknown[]): void {
+        this._logger.log(message, ...optionalParams);
+    }
+
+    logDebug(message?: unknown, ...optionalParams: unknown[]): void {
+        this._logger.debug(message, ...optionalParams);
+    }
+
     login(): void {
         this.identityState.set("logging_in");
         const authProvider = this._liveState.selectedAuthProvider;
