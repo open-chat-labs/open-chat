@@ -1,3 +1,5 @@
+mod channel_summary;
+mod channel_summary_updates;
 mod deleted_message;
 mod events;
 mod events_by_index;
