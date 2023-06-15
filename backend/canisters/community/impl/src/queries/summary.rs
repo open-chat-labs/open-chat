@@ -17,6 +17,11 @@ fn c2c_summary(_: Args) -> Response {
 fn summary_impl(state: &RuntimeState) -> Response {
     let caller = state.env.caller();
     let member = state.data.members.get(caller);
+
+    if member.is_none() && !state.data.is_public {
+        return UserNotInCommunity;
+    }
+
     let now = state.env.now();
     let summary = state.summary(member, now);
     Success(SuccessResult { summary })
