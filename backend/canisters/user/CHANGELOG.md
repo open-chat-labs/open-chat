@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Further reductions to the size of serialized ChatEvents ([#3775](https://github.com/open-ic/open-chat/pull/3775))
 - Reduce size of `ChatMetrics` when serialized ([#3779](https://github.com/open-ic/open-chat/pull/3779))
 - Restructure `initial_state` and `updates` ([#3781](https://github.com/open-ic/open-chat/pull/3781))
+- Deserialize onto old `ChatEventInternal` types then map to new ([#3798](https://github.com/open-ic/open-chat/pull/3798))
 
 ### Removed
 
