@@ -49,6 +49,11 @@ import type {
     ApiCommunitiesInitial,
     ApiUserCanisterCommunitySummary,
     ApiUserCanisterChannelSummary,
+    ApiFavouriteChatsInitial,
+    ApiChat,
+    ApiCommunitiesUpdates,
+    ApiUserCanisterCommunitySummaryUpdates,
+    ApiUserCanisterChannelSummaryUpdates,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -99,6 +104,11 @@ import {
     CommunitiesInitial,
     UserCanisterCommunitySummary,
     UserCanisterChannelSummary,
+    FavouriteChatsInitial,
+    ChatIdentifier,
+    CommunitiesUpdates,
+    UserCanisterCommunitySummaryUpdates,
+    UserCanisterChannelSummaryUpdates,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -746,21 +756,38 @@ function communitiesInitial(candid: ApiCommunitiesInitial): CommunitiesInitial {
     };
 }
 
+function chatIndentifier(candid: ApiChat): ChatIdentifier {
+    if ("Group" in candid) {
+        return { kind: "group", chatId: candid.Group.toString() };
+    }
+    if ("Direct" in candid) {
+        return { kind: "direct", chatId: candid.Direct.toString() };
+    }
+    if ("Channel" in candid) {
+        return {
+            kind: "channel",
+            communtityId: candid.Channel[0].toString(),
+            channelId: candid.Channel[1].toString(),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiChat type received", candid);
+}
+
+function favouriteChatsInitial(candid: ApiFavouriteChatsInitial): FavouriteChatsInitial {
+    return {
+        chats: candid.chats.map(chatIndentifier),
+        pinned: candid.pinned.map(chatIndentifier),
+    };
+}
+
 export function initialStateResponse(candid: ApiInitialStateResponse): InitialStateResponse {
     if ("Success" in candid) {
         const result = candid.Success;
         return {
-            // timestamp: result.timestamp,
-            // directChats: result.direct_chats.map(directChatSummary),
-            // cacheTimestamp: undefined,
-            // cachedGroupChatSummaries: [],
-            // groupChatsAdded: result.group_chats.map(userCanisterGroupSummary),
-            // avatarId: optional(result.avatar_id, identity),
-            // pinnedChats: result.pinned_chats.map((c) => c.toString()),
-
             blockedUsers: result.blocked_users.map((u) => u.toString()),
             communities: communitiesInitial(candid.Success.communities),
             groupChats: groupChatsInitial(candid.Success.group_chats),
+            favouriteChats: favouriteChatsInitial(candid.Success.favourite_chats),
             avatarId: optional(result.avatar_id, identity),
             directChats: directChatsInitial(candid.Success.direct_chats),
             timestamp: result.timestamp,
@@ -769,23 +796,48 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
 }
 
+export function userCanisterChannelSummaryUpdates(
+    candid: ApiUserCanisterChannelSummaryUpdates
+): UserCanisterChannelSummaryUpdates {
+    return {
+        channelId: candid.channel_id.toString(),
+        readByMeUpTo: optional(candid.read_by_me_up_to, identity),
+        dateReadPinned: optional(candid.date_read_pinned, identity),
+        threadsRead: candid.threads_read.map(([idx1, idx2]) => [idx1, idx2]),
+        archived: optional(candid.archived, identity),
+    };
+}
+
+export function userCanisterCommunitySummaryUpdates(
+    candid: ApiUserCanisterCommunitySummaryUpdates
+): UserCanisterCommunitySummaryUpdates {
+    return {
+        communityId: candid.community_id.toString(),
+        channels: candid.channels.map(userCanisterChannelSummaryUpdates),
+        pinned: optional(candid.pinned, (p) => p.map((p) => p.toString())),
+        archived: optional(candid.archived, identity),
+    };
+}
+
+export function communitiesUpdates(candid: ApiCommunitiesUpdates): CommunitiesUpdates {
+    return {
+        added: candid.added.map(userCanisterCommunitySummary),
+        updated: candid.updated.map(userCanisterCommunitySummaryUpdates),
+        removed: candid.removed.map((c) => c.toString()),
+    };
+}
+
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
             timestamp: candid.Success.timestamp,
-            directChatsAdded: candid.Success.direct_chats_added.map(directChatSummary),
-            directChatsUpdated: candid.Success.direct_chats_updated.map(directChatSummaryUpdates),
-            groupChatsAdded: candid.Success.group_chats_added.map(userCanisterGroupSummary),
-            groupChatsUpdated: candid.Success.group_chats_updated.map(
-                userCanisterGroupSummaryUpdates
-            ),
-            chatsRemoved: candid.Success.chats_removed.map((c) => c.toString()),
+            blockedUsers: optional(candid.Success.blocked_users, (b) => b.map((u) => u.toString())),
+            communities: communitiesUpdates(candid.Success.communities),
+            favouriteChats: favouriteChatsUpdates(candid.Success.favourite_chats),
+            groupChats: groupChatsUpdates(candid.Success.group_chats),
             avatarId: optionUpdate(candid.Success.avatar_id, identity),
-            blockedUsers: optional(candid.Success.blocked_users_v2, (b) =>
-                b.map((u) => u.toString())
-            ),
-            pinnedChats: optional(candid.Success.pinned_chats, (p) => p.map((c) => c.toString())),
+            directChats: directChatsUpdates(candid.Success.direct_chats),
         };
     }
 

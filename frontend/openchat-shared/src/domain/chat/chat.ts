@@ -810,6 +810,16 @@ export type DirectChatsInitial = {
     pinned: string[];
 };
 
+export type ChatIdentifier =
+    | { kind: "group"; chatId: string }
+    | { kind: "direct"; chatId: string }
+    | { kind: "channel"; communtityId: string; channelId: string };
+
+export type FavouriteChatsInitial = {
+    chats: ChatIdentifier[];
+    pinned: ChatIdentifier[];
+};
+
 export type UserCanisterChannelSummary = {
     channelId: string;
     readByMeUpTo?: number;
@@ -835,6 +845,7 @@ export type InitialStateResponse = {
     groupChats: GroupChatsInitial;
     avatarId: bigint | undefined;
     directChats: DirectChatsInitial;
+    favouriteChats: FavouriteChatsInitial;
     timestamp: bigint;
 };
 
@@ -843,14 +854,51 @@ export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
 export type UpdatesSuccessResponse = {
     kind: "success";
     timestamp: bigint;
-    directChatsAdded: DirectChatSummary[];
-    directChatsUpdated: DirectChatSummaryUpdates[];
-    groupChatsAdded: UserCanisterGroupChatSummary[];
-    groupChatsUpdated: UserCanisterGroupChatSummaryUpdates[];
-    chatsRemoved: string[];
-    avatarId: OptionUpdate<bigint>;
+    communities: CommunitiesUpdates;
     blockedUsers: string[] | undefined;
-    pinnedChats: string[] | undefined;
+    favouriteChats: FavouriteChatsUpdates;
+    groupChats: GroupChatsUpdates;
+    avatarId: OptionUpdate<bigint>;
+    directChats: DirectChatsUpdates;
+};
+
+export type DirectChatsUpdates = {
+    added: DirectChatSummary[];
+    pinned?: string[];
+    updated: DirectChatSummaryUpdates[];
+};
+
+export type GroupChatsUpdates = {
+    added: UserCanisterGroupChatSummary[];
+    pinned?: string[];
+    updated: UserCanisterGroupChatSummaryUpdates[];
+    removed: string[];
+};
+
+export type FavouriteChatsUpdates = {
+    chats?: ChatIdentifier[];
+    pinned?: ChatIdentifier[];
+};
+
+export type CommunitiesUpdates = {
+    added: UserCanisterCommunitySummary[];
+    updated: UserCanisterCommunitySummaryUpdates[];
+    removed: string[];
+};
+
+export type UserCanisterCommunitySummaryUpdates = {
+    communityId: string;
+    channels: UserCanisterChannelSummaryUpdates[];
+    pinned?: string[];
+    archived?: boolean;
+};
+
+export type UserCanisterChannelSummaryUpdates = {
+    channelId: string;
+    readByMeUpTo?: number;
+    dateReadPinned?: bigint;
+    threadsRead: [number, number][];
+    archived?: boolean;
 };
 
 export type UserCanisterGroupChatSummary = {

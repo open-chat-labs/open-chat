@@ -110,6 +110,13 @@ import {
     CachedGroupChatSummaries,
     UserCanisterCommunitySummary,
     UserCanisterChannelSummary,
+    Chat,
+    CommunitiesUpdates,
+    FavouriteChatsUpdates,
+    GroupChatsUpdates,
+    DirectChatsUpdates,
+    UserCanisterCommunitySummaryUpdates,
+    UserCanisterChannelSummaryUpdates,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -222,6 +229,13 @@ export {
     CachedGroupChatSummaries as ApiCachedGroupChatSummaries,
     UserCanisterCommunitySummary as ApiUserCanisterCommunitySummary,
     UserCanisterChannelSummary as ApiUserCanisterChannelSummary,
+    Chat as ApiChat,
+    CommunitiesUpdates as ApiCommunitiesUpdates,
+    FavouriteChatsUpdates as ApiFavouriteChatsUpdates,
+    GroupChatsUpdates as ApiGroupChatsUpdates,
+    DirectChatsUpdates as ApiDirectChatsUpdates,
+    UserCanisterChannelSummaryUpdates as ApiUserCanisterChannelSummaryUpdates,
+    UserCanisterCommunitySummaryUpdates as ApiUserCanisterCommunitySummaryUpdates,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
