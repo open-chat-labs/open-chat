@@ -693,7 +693,7 @@ export class OpenChatAgent extends EventTarget {
                         },
                     };
                 } else {
-                    this._logger.error(
+                    this._logger.log(
                         "Reply context not found, this should only happen if we failed to load the reply context message",
                         {
                             chatId: defaultChatId,
