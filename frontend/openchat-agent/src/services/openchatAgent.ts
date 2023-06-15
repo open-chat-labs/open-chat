@@ -142,6 +142,8 @@ import {
     SearchScope,
     JoinCommunityResponse,
     GroupSearchResponse,
+    emptyUpdatesSuccessResponse,
+    ChatIdentifier,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -875,6 +877,15 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
+    reducePinnedChats(pinned: ChatIdentifier[]): string[] {
+        return pinned.reduce<string[]>((agg, c) => {
+            if (c.kind === "direct" || c.kind === "group") {
+                agg.push(c.chatId);
+            }
+            return agg;
+        }, []);
+    }
+
     async getUpdates(): Promise<UpdatesResult> {
         const current = await getCachedChats(this.db, this.principal);
         if (current === undefined) {
@@ -892,43 +903,36 @@ export class OpenChatAgent extends EventTarget {
         // to empty. This allows us to have a single path through the rest of this function.
         const updates: UpdatesSuccessResponse =
             userResponse.kind === "success_no_updates"
-                ? {
-                      kind: "success",
-                      timestamp: current.latestUserCanisterUpdates,
-                      directChatsAdded: [],
-                      directChatsUpdated: [],
-                      groupChatsAdded: [],
-                      groupChatsUpdated: [],
-                      chatsRemoved: [],
-                      avatarId: undefined,
-                      blockedUsers: undefined,
-                      pinnedChats: undefined,
-                  }
+                ? emptyUpdatesSuccessResponse(current.latestUserCanisterUpdates)
                 : userResponse;
 
-        const groupChatIds = current.groupChats
+        const addedGroupChatIds = current.groupChats
             .map((g) => g.chatId)
-            .concat(updates.groupChatsAdded.map((g) => g.chatId));
+            .concat(updates.groupChats.added.map((g) => g.chatId));
+
         const groupIndexResponse = await this._groupIndexClient.filterGroups(
-            groupChatIds,
+            addedGroupChatIds,
             current.latestActiveGroupsCheck
         );
 
         const groupsToCheckForUpdates = new Set(
-            groupIndexResponse.activeGroups.concat(updates.groupChatsUpdated.map((g) => g.chatId))
+            groupIndexResponse.activeGroups.concat(updates.groupChats.updated.map((g) => g.chatId))
         );
 
-        const groupPromises = updates.groupChatsAdded.map((g) =>
+        const addedGroupPromises = updates.groupChats.added.map((g) =>
             this.getGroupClient(g.chatId).summary()
         );
-        const groupUpdatePromises = current.groupChats
+
+        const updatedGroupPromises = current.groupChats
             .filter((g) => groupsToCheckForUpdates.has(g.chatId))
             .map((g) => this.getGroupClient(g.chatId).summaryUpdates(g.lastUpdated));
 
-        const groupPromiseResults = await waitAll(groupPromises);
-        const groupUpdatePromiseResults = await waitAll(groupUpdatePromises);
+        const groupPromiseResults = await waitAll(addedGroupPromises);
+
+        const groupUpdatePromiseResults = await waitAll(updatedGroupPromises);
 
         const groups = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
+
         const groupUpdates = groupUpdatePromiseResults.success.filter(
             isSuccessfulGroupSummaryUpdatesResponse
         );
@@ -938,17 +942,17 @@ export class OpenChatAgent extends EventTarget {
         const anyErrors =
             groupPromiseResults.errors.length > 0 || groupUpdatePromiseResults.errors.length > 0;
 
-        const directChats = updates.directChatsAdded.concat(
-            mergeDirectChatUpdates(current.directChats, updates.directChatsUpdated)
+        const directChats = updates.directChats.added.concat(
+            mergeDirectChatUpdates(current.directChats, updates.directChats.updated)
         );
 
         const chatsRemoved = new Set(
-            updates.chatsRemoved.concat(groupIndexResponse.deletedGroups.map((g) => g.id))
+            updates.groupChats.removed.concat(groupIndexResponse.deletedGroups.map((g) => g.id))
         );
 
-        const groupChats = mergeGroupChats(updates.groupChatsAdded, groups)
+        const groupChats = mergeGroupChats(updates.groupChats.added, groups)
             .concat(
-                mergeGroupChatUpdates(current.groupChats, updates.groupChatsUpdated, groupUpdates)
+                mergeGroupChatUpdates(current.groupChats, updates.groupChats.updated, groupUpdates)
             )
             .filter((g) => !chatsRemoved.has(g.chatId));
 
@@ -959,9 +963,9 @@ export class OpenChatAgent extends EventTarget {
             groupChats,
             avatarId: applyOptionUpdate(current.avatarId, updates.avatarId),
             blockedUsers: updates.blockedUsers ?? current.blockedUsers,
-            pinnedChats: updates.pinnedChats ?? current.pinnedChats,
+            pinnedChats: this.reducePinnedChats(updates.favouriteChats.chats ?? []),
         };
-        const updatedEvents = getUpdatedEvents(updates.directChatsUpdated, groupUpdates);
+        const updatedEvents = getUpdatedEvents(updates.directChats.updated, groupUpdates);
 
         return await this.hydrateChatState(state).then((s) => {
             if (!anyErrors) {
@@ -980,8 +984,8 @@ export class OpenChatAgent extends EventTarget {
         let state: ChatStateFull;
         let anyErrors: boolean;
         const userResponse = await this.userClient.getInitialState();
-        if (userResponse.cacheTimestamp === undefined) {
-            const groupPromises = userResponse.groupChatsAdded.map((g) =>
+        if (userResponse.timestamp === undefined) {
+            const groupPromises = userResponse.groupChats.summaries.map((g) =>
                 this.getGroupClient(g.chatId).summary()
             );
 
@@ -991,18 +995,18 @@ export class OpenChatAgent extends EventTarget {
             state = {
                 latestUserCanisterUpdates: userResponse.timestamp,
                 latestActiveGroupsCheck: userResponse.timestamp,
-                directChats: userResponse.directChats,
-                groupChats: mergeGroupChats(userResponse.groupChatsAdded, groupChats),
+                directChats: userResponse.directChats.summaries,
+                groupChats: mergeGroupChats(userResponse.groupChats.summaries, groupChats),
                 avatarId: userResponse.avatarId,
                 blockedUsers: userResponse.blockedUsers,
-                pinnedChats: userResponse.pinnedChats,
+                pinnedChats: this.reducePinnedChats(userResponse.favouriteChats.chats ?? []),
             };
             anyErrors = groupPromiseResults.errors.length > 0;
         } else {
-            const groupPromises = userResponse.groupChatsAdded.map((g) =>
+            const groupPromises = userResponse.groupChats.summaries.map((g) =>
                 this.getGroupClient(g.chatId).summary()
             );
-            const groupUpdatePromises = userResponse.cachedGroupChatSummaries.map((g) =>
+            const groupUpdatePromises = (userResponse.groupChats.cached?.summaries ?? []).map((g) =>
                 this.getGroupClient(g.chatId).summaryUpdates(g.lastUpdated)
             );
 
@@ -1014,18 +1018,22 @@ export class OpenChatAgent extends EventTarget {
                 isSuccessfulGroupSummaryUpdatesResponse
             );
 
-            const groupChats = mergeGroupChats(userResponse.groupChatsAdded, groups).concat(
-                mergeGroupChatUpdates(userResponse.cachedGroupChatSummaries, [], groupUpdates)
+            const groupChats = mergeGroupChats(userResponse.groupChats.summaries, groups).concat(
+                mergeGroupChatUpdates(
+                    userResponse.groupChats.cached?.summaries ?? [],
+                    [],
+                    groupUpdates
+                )
             );
 
             state = {
                 latestUserCanisterUpdates: userResponse.timestamp,
                 latestActiveGroupsCheck: userResponse.timestamp,
-                directChats: userResponse.directChats,
+                directChats: userResponse.directChats.summaries,
                 groupChats,
                 avatarId: userResponse.avatarId,
                 blockedUsers: userResponse.blockedUsers,
-                pinnedChats: userResponse.pinnedChats,
+                pinnedChats: this.reducePinnedChats(userResponse.favouriteChats.chats ?? []),
             };
             anyErrors =
                 groupPromiseResults.errors.length > 0 ||

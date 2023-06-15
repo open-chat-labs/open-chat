@@ -862,6 +862,32 @@ export type UpdatesSuccessResponse = {
     directChats: DirectChatsUpdates;
 };
 
+export function emptyUpdatesSuccessResponse(timestamp: bigint): UpdatesSuccessResponse {
+    return {
+        kind: "success",
+        timestamp,
+        blockedUsers: undefined,
+        favouriteChats: {},
+        avatarId: undefined,
+        communities: {
+            added: [],
+            updated: [],
+            removed: [],
+        },
+        groupChats: {
+            added: [],
+            pinned: undefined,
+            updated: [],
+            removed: [],
+        },
+        directChats: {
+            added: [],
+            pinned: undefined,
+            updated: [],
+        },
+    };
+}
+
 export type DirectChatsUpdates = {
     added: DirectChatSummary[];
     pinned?: string[];

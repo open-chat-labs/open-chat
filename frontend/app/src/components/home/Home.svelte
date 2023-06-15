@@ -66,6 +66,7 @@
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
     import { createCandidateCommunity } from "../../stores/community";
+    import { interpolateLevel } from "../../utils/i18n";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -1029,9 +1030,11 @@
         confirmActionEvent.kind === "delete_community"
             ? confirmActionEvent.doubleCheck
             : undefined}
-        title={confirmActionEvent.kind === "rules" ? $_("group.rules.acceptTitle") : undefined}
-        yesLabel={confirmActionEvent.kind === "rules" ? $_("group.rules.accept") : undefined}
-        noLabel={confirmActionEvent.kind === "rules" ? $_("group.rules.reject") : undefined}
+        title={confirmActionEvent.kind === "rules"
+            ? interpolateLevel("rules.acceptTitle", "group")
+            : undefined}
+        yesLabel={confirmActionEvent.kind === "rules" ? $_("rules.accept") : undefined}
+        noLabel={confirmActionEvent.kind === "rules" ? $_("rules.reject") : undefined}
         message={confirmMessage}
         action={onConfirmAction} />
 {/if}
