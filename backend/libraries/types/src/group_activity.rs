@@ -1,24 +1,28 @@
 use crate::TimestampMillis;
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct PublicCommunityActivity {
     pub timestamp: TimestampMillis,
     pub member_count: u32,
+    pub channel_count: u32,
+    // pub last_hour: Activity,
+    // pub last_day: Activity,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct PublicGroupActivity {
     pub timestamp: TimestampMillis,
-    pub participant_count: u32,
+    #[serde(alias = "participant_count")]
+    pub member_count: u32,
     pub last_hour: Activity,
     pub last_day: Activity,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Activity {
-    pub participant_count_change: i32,
+    #[serde(alias = "participant_count_change")]
+    pub member_count_change: i32,
     pub messages: u32,
     pub message_unique_users: u32,
     pub reactions: u32,

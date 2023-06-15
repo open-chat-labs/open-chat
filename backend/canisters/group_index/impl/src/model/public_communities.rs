@@ -1,13 +1,11 @@
 #![allow(dead_code)]
 use super::private_communities::PrivateCommunityInfo;
 use crate::MARK_ACTIVE_DURATION;
-use candid::CandidType;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
+use types::{AccessGate, CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
-use utils::iterator_extensions::IteratorExtensions;
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "PublicCommunitiesTrimmed")]
@@ -44,6 +42,7 @@ impl PublicCommunities {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn handle_community_created(
         &mut self,
         community_id: CommunityId,
@@ -51,11 +50,12 @@ impl PublicCommunities {
         description: String,
         avatar_id: Option<u128>,
         banner_id: Option<u128>,
+        gate: Option<AccessGate>,
         now: TimestampMillis,
     ) -> bool {
         if self.communities_pending.remove(&name).is_some() {
             self.name_to_id_map.insert(&name, community_id);
-            let community_info = PublicCommunityInfo::new(community_id, name, description, avatar_id, banner_id, now);
+            let community_info = PublicCommunityInfo::new(community_id, name, description, avatar_id, banner_id, gate, now);
             self.communities.insert(community_id, community_info);
             true
         } else {
@@ -67,20 +67,41 @@ impl PublicCommunities {
         self.communities_pending.remove(name);
     }
 
-    pub fn search(&self, search_term: String, max_results: u8) -> Vec<CommunityMatch> {
-        let query = Query::parse(search_term);
+    pub fn search(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> Vec<CommunityMatch> {
+        let start_index = page_index as usize * page_size as usize;
 
-        self.iter()
-            .filter(|g| !g.is_frozen())
-            .map(|g| {
-                let document: Document = g.into();
-                let score = document.calculate_score(&query);
-                (score, g)
-            })
-            .filter(|(score, _)| *score > 0)
-            .max_n_by(max_results as usize, |(score, _)| *score)
-            .map(|(_, g)| g.into())
-            .collect()
+        if let Some(search_term) = search_term {
+            let query = Query::parse(search_term);
+
+            let mut matches: Vec<_> = self
+                .iter()
+                .filter(|c| !c.is_frozen())
+                .map(|c| {
+                    let document: Document = c.into();
+                    let score = document.calculate_score(&query);
+                    (score, c)
+                })
+                .filter(|(score, _)| *score > 0)
+                .collect();
+
+            matches.sort_by_key(|(score, _)| *score);
+            matches
+                .into_iter()
+                .map(|(_, c)| c.into())
+                .skip(start_index)
+                .take(page_size as usize)
+                .collect()
+        } else {
+            let mut matches: Vec<_> = self.iter().filter(|c| !c.is_frozen()).collect();
+
+            matches.sort_by(|c1, c2| c1.name.to_lowercase().cmp(&c2.name.to_lowercase()));
+            matches
+                .into_iter()
+                .map(|c| c.into())
+                .skip(start_index)
+                .take(page_size as usize)
+                .collect()
+        }
     }
 
     pub fn update_community(
@@ -89,6 +110,8 @@ impl PublicCommunities {
         name: String,
         description: String,
         avatar_id: Option<u128>,
+        banner_id: Option<u128>,
+        gate: Option<AccessGate>,
     ) -> UpdateCommunityResult {
         match self.communities.get_mut(community_id) {
             None => UpdateCommunityResult::CommunityNotFound,
@@ -104,17 +127,9 @@ impl PublicCommunities {
                 community.name = name;
                 community.description = description;
                 community.avatar_id = avatar_id;
-                UpdateCommunityResult::Success
-            }
-        }
-    }
-
-    pub fn update_banner(&mut self, community_id: &CommunityId, banner_id: Option<u128>) -> bool {
-        match self.communities.get_mut(community_id) {
-            None => false,
-            Some(mut community) => {
                 community.banner_id = banner_id;
-                true
+                community.gate = gate;
+                UpdateCommunityResult::Success
             }
         }
     }
@@ -133,7 +148,7 @@ impl PublicCommunities {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct PublicCommunityInfo {
     // Fields common to PrivateCommunityInfo
     id: CommunityId,
@@ -147,6 +162,7 @@ pub struct PublicCommunityInfo {
     avatar_id: Option<u128>,
     banner_id: Option<u128>,
     activity: PublicCommunityActivity,
+    gate: Option<AccessGate>,
 }
 
 pub enum UpdateCommunityResult {
@@ -163,6 +179,7 @@ impl PublicCommunityInfo {
         description: String,
         avatar_id: Option<u128>,
         banner_id: Option<u128>,
+        gate: Option<AccessGate>,
         now: TimestampMillis,
     ) -> PublicCommunityInfo {
         PublicCommunityInfo {
@@ -171,6 +188,7 @@ impl PublicCommunityInfo {
             description,
             avatar_id,
             banner_id,
+            gate,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicCommunityActivity::default(),
@@ -212,6 +230,9 @@ impl From<&PublicCommunityInfo> for CommunityMatch {
             description: community.description.clone(),
             avatar_id: community.avatar_id,
             banner_id: community.banner_id,
+            member_count: community.activity.member_count,
+            channel_count: community.activity.channel_count,
+            gate: community.gate.clone(),
         }
     }
 }

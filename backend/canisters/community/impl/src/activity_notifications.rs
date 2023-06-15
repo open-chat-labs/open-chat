@@ -12,6 +12,7 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
         let public_community_activity = state.data.is_public.then(|| PublicCommunityActivity {
             timestamp: now,
             member_count: state.data.members.len(),
+            channel_count: state.data.channels.public_channel_count(),
         });
 
         call_group_index_canister(

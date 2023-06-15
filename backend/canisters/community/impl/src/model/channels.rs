@@ -68,6 +68,10 @@ impl Channels {
             .filter_map(|(id, c)| c.chat.members.remove(user_id).map(|m| (*id, m)))
             .collect()
     }
+
+    pub fn public_channel_count(&self) -> u32 {
+        self.channels.values().filter(|c| c.chat.is_public).count() as u32
+    }
 }
 
 impl Channel {
