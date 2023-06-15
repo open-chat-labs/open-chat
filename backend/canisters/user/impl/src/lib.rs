@@ -156,7 +156,6 @@ impl Data {
         for chat_id in self.pinned_chats.value.drain(..) {
             let chat = if self.direct_chats.get(&chat_id).is_some() { Chat::Direct(chat_id) } else { Chat::Group(chat_id) };
             self.favourite_chats.add(chat, timestamp);
-            self.favourite_chats.pin(chat, timestamp);
         }
     }
 
@@ -222,7 +221,6 @@ impl Data {
     pub fn pin_chat(&mut self, chat_id: ChatId, now: TimestampMillis) {
         let chat = if self.direct_chats.get(&chat_id).is_some() { Chat::Direct(chat_id) } else { Chat::Group(chat_id) };
 
-        self.favourite_chats.pin(chat, now);
         self.favourite_chats.add(chat, now);
     }
 
