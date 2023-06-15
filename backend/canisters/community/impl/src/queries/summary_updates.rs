@@ -26,7 +26,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let member = state.data.members.get(caller);
 
     if member.is_none() && !state.data.is_public {
-        return UserNotInCommunity;
+        return PrivateCommunity;
     }
 
     let (channels_with_updates, channels_removed) = if let Some(m) = member {

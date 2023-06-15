@@ -13,5 +13,5 @@ pub struct Args {
 pub enum Response {
     Success(CommunityCanisterCommunitySummaryUpdates),
     SuccessNoUpdates,
-    UserNotInCommunity,
+    PrivateCommunity,
 }

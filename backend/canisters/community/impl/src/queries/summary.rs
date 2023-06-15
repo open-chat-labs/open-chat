@@ -19,7 +19,7 @@ fn summary_impl(state: &RuntimeState) -> Response {
     let member = state.data.members.get(caller);
 
     if member.is_none() && !state.data.is_public {
-        return UserNotInCommunity;
+        return PrivateCommunity;
     }
 
     let now = state.env.now();

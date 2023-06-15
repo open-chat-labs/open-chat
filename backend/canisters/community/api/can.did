@@ -166,7 +166,7 @@ type SelectedChannelUpdatesResponse =
 type SummaryResponse =
     variant {
         Success: CommunityCanisterCommunitySummary;
-        UserNotInCommunity;
+        PrivateCommunity;
     };
 
 type SummaryUpdatesArgs =
@@ -178,7 +178,7 @@ type SummaryUpdatesResponse =
     variant {
         Success: CommunityCanisterCommunitySummaryUpdates;
         SuccessNoUpdates;
-        UserNotInCommunity;
+        PrivateCommunity;
     };
 
 type AddMembersToChannelArgs =
