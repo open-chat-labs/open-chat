@@ -24,5 +24,5 @@ fn summary_impl(state: &RuntimeState) -> Response {
 
     let now = state.env.now();
     let summary = state.summary(member, now);
-    Success(SuccessResult { summary })
+    Success(summary)
 }

@@ -81,8 +81,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         role: updates_from_events.role_changed.then_some(m.role),
     });
 
-    Success(SuccessResult {
-        updates: CommunityCanisterCommunitySummaryUpdates {
+    Success(CommunityCanisterCommunitySummaryUpdates {
             community_id: state.env.canister_id().into(),
             last_updated: now,
             name: updates_from_events.name,
@@ -98,8 +97,8 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             channels_added,
             channels_updated,
             membership,
-        },
-    })
+        }
+    )
 }
 
 #[derive(Default)]

@@ -11,12 +11,7 @@ pub struct Args {
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(SuccessResult),
+    Success(CommunityCanisterCommunitySummaryUpdates),
     SuccessNoUpdates,
     UserNotInCommunity,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub updates: CommunityCanisterCommunitySummaryUpdates,
 }
