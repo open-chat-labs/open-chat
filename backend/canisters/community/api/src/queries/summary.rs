@@ -8,11 +8,6 @@ pub type Args = Empty;
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(SuccessResult),
-    UserNotInCommunity,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub summary: CommunityCanisterCommunitySummary,
+    Success(CommunityCanisterCommunitySummary),
+    PrivateCommunity,
 }

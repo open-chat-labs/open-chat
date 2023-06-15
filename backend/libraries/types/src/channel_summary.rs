@@ -19,20 +19,25 @@ pub struct CommunityCanisterChannelSummary {
     pub min_visible_message_index: MessageIndex,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
-    pub joined: TimestampMillis,
     pub member_count: u32,
-    pub role: GroupRole,
-    pub mentions: Vec<HydratedMention>,
     pub permissions: GroupPermissions,
-    pub notifications_muted: bool,
     pub metrics: ChatMetrics,
-    pub my_metrics: ChatMetrics,
-    pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
     pub gate: Option<AccessGate>,
+    pub membership: Option<ChannelMembership>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ChannelMembership {
+    pub joined: TimestampMillis,
+    pub role: GroupRole,
+    pub mentions: Vec<HydratedMention>,
+    pub notifications_muted: bool,
+    pub my_metrics: ChatMetrics,
+    pub latest_threads: Vec<GroupCanisterThreadDetails>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -47,14 +52,19 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub member_count: Option<u32>,
-    pub role: Option<GroupRole>,
-    pub mentions: Vec<HydratedMention>,
     pub permissions: Option<GroupPermissions>,
-    pub notifications_muted: Option<bool>,
     pub metrics: Option<ChatMetrics>,
-    pub my_metrics: Option<ChatMetrics>,
-    pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
+    pub membership: Option<ChannelMembershipUpdates>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ChannelMembershipUpdates {
+    pub role: Option<GroupRole>,
+    pub mentions: Vec<HydratedMention>,
+    pub notifications_muted: Option<bool>,
+    pub my_metrics: Option<ChatMetrics>,
+    pub latest_threads: Vec<GroupCanisterThreadDetails>,
 }

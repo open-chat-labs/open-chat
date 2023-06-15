@@ -32,7 +32,7 @@ async fn c2c_join_community(args: Args) -> Response {
             read_state(|state| {
                 if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
                     let now = state.env.now();
-                    Success(Box::new(state.summary(member, now)))
+                    Success(Box::new(state.summary(Some(member), now)))
                 } else {
                     InternalError("User not found in community".to_string())
                 }
@@ -103,11 +103,11 @@ fn c2c_join_community_impl(args: &Args, state: &mut RuntimeState) -> Result<Vec<
 
             handle_activity_notification(state);
 
-            Ok(state.data.channels.default_channels())
+            Ok(state.data.channels.default_channel_ids())
         }
         AddResult::AlreadyInCommunity => {
             let member = state.data.members.get_by_user_id(&args.user_id).unwrap();
-            let summary = state.summary(member, now);
+            let summary = state.summary(Some(member), now);
             Err(AlreadyInCommunity(Box::new(summary)))
         }
         AddResult::Blocked => Err(Blocked),

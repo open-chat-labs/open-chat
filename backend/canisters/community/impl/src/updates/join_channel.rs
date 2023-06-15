@@ -55,7 +55,9 @@ fn is_permitted_to_join(
             }
 
             if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
-                Err(AlreadyInChannel(Box::new(channel.summary(channel_member, state.env.now()))))
+                Err(AlreadyInChannel(Box::new(
+                    channel.summary(Some(channel_member), state.env.now()),
+                )))
             } else {
                 Ok(channel
                     .chat
@@ -111,7 +113,7 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
 
                     member.channels.insert(channel_id);
 
-                    let summary = channel.summary(&channel_member, now);
+                    let summary = channel.summary(Some(&channel_member), now);
 
                     handle_activity_notification(state);
 
