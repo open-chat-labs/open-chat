@@ -3,11 +3,13 @@ import { AuthClient, IdbStorage } from "@dfinity/auth-client";
 import { OpenChatAgent } from "openchat-agent";
 import {
     CorrelatedWorkerRequest,
+    Logger,
     MessagesReadFromServer,
     StorageUpdated,
     UsersLoaded,
     WorkerEvent,
     WorkerResponse,
+    inititaliseLogger,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -15,6 +17,8 @@ import {
 BigInt.prototype.toJSON = function () {
     return this.toString();
 };
+
+let logger: Logger | undefined = undefined;
 
 const auth = AuthClient.create({
     idleOptions: {
@@ -70,7 +74,7 @@ type Uncorrelated = Omit<WorkerResponse, "correlationId" | "kind">;
 
 const sendError = (correlationId: string) => {
     return (error: unknown) => {
-        console.debug("WORKER: sending error: ", error);
+        logger?.error("WORKER: sending error: ", error);
         postMessage({
             kind: "worker_error",
             correlationId,
@@ -80,7 +84,7 @@ const sendError = (correlationId: string) => {
 };
 
 function sendResponse(correlationId: string, msg: Uncorrelated): void {
-    console.debug("WORKER: sending response: ", correlationId);
+    logger?.debug("WORKER: sending response: ", correlationId);
     postMessage({
         kind: "worker_response",
         correlationId,
@@ -95,18 +99,16 @@ function sendEvent(msg: Omit<WorkerEvent, "kind">): void {
     });
 }
 
-// FIXME - not sure what to do with this
 self.addEventListener("error", (err: ErrorEvent) => {
-    console.error("WORKER: unhandled error: ", err);
+    logger?.error("WORKER: unhandled error: ", err);
 });
 
-// FIXME - not sure what to do with this
 self.addEventListener("unhandledrejection", (err: PromiseRejectionEvent) => {
-    console.error("WORKER: unhandled promise rejection: ", err);
+    logger?.error("WORKER: unhandled promise rejection: ", err);
 });
 
 self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) => {
-    console.debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
+    logger?.debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
     const payload = msg.data;
     const kind = payload.kind;
     const correlationId = payload.correlationId;
@@ -115,12 +117,15 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         if (kind === "init") {
             getIdentity().then((id) => {
                 if (id) {
-                    console.debug("WORKER: constructing agent instance");
+                    logger = inititaliseLogger(
+                        payload.rollbarApiKey,
+                        payload.websiteVersion,
+                        payload.env
+                    );
+                    logger?.debug("WORKER: constructing agent instance");
                     agent = new OpenChatAgent(id, {
                         ...payload,
-                        logger: {
-                            error: console.error,
-                        },
+                        logger,
                     });
                     agent.addEventListener("openchat_event", handleAgentEvent);
                     sendResponse(correlationId, {
@@ -131,7 +136,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         }
 
         if (!agent) {
-            console.debug("WORKER: agent does not exist: ", msg.data);
+            logger?.debug("WORKER: agent does not exist: ", msg.data);
             return;
         }
 
@@ -1938,10 +1943,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             default:
-                console.debug("WORKER: unknown message kind received: ", kind);
+                logger?.debug("WORKER: unknown message kind received: ", kind);
         }
     } catch (err) {
-        console.debug("WORKER: unhandled error: ", err);
+        logger?.debug("WORKER: unhandled error: ", err);
         sendError(correlationId)(err);
     }
 });

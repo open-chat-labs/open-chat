@@ -16,7 +16,7 @@
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { OpenChat, SessionExpiryError } from "openchat-client";
-    import type { UpdateMarketMakerConfigArgs } from "openchat-shared";
+    import { UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-shared";
     import {
         isCanisterUrl,
         isLandingPageRoute,
@@ -24,7 +24,6 @@
         redirectLandingPageLinksIfNecessary,
         removeQueryStringParam,
     } from "../utils/urls";
-    import { logger } from "../utils/logging";
     import page from "page";
     import { menuStore } from "../stores/menu";
 
@@ -51,9 +50,14 @@
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             marketMakerCanister: process.env.MARKET_MAKER_CANISTER!,
             i18nFormatter: $_,
-            logger: logger,
+            logger: inititaliseLogger(
+                process.env.ROLLBAR_ACCESS_TOKEN!,
+                process.env.OPENCHAT_WEBSITE_VERSION!,
+                process.env.NODE_ENV!
+            ),
             websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,
             rollbarApiKey: process.env.ROLLBAR_ACCESS_TOKEN!,
+            env: process.env.NODE_ENV!,
         });
     }
 

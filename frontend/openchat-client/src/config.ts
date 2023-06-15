@@ -1,3 +1,4 @@
+import type { Logger } from "openchat-shared";
 import type { MessageFormatter } from "./utils/i18n";
 
 export type OpenChatConfig = {
@@ -21,9 +22,8 @@ export type OpenChatConfig = {
     proposalBotCanister: string;
     marketMakerCanister: string;
     i18nFormatter: MessageFormatter;
-    logger: {
-        error(message?: unknown, ...optionalParams: unknown[]): void;
-    };
+    logger: Logger;
     websiteVersion: string;
     rollbarApiKey: string;
+    env: string;
 };

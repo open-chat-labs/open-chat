@@ -13,7 +13,6 @@
     import Launch from "svelte-material-icons/Launch.svelte";
     import OpenInNew from "svelte-material-icons/OpenInNew.svelte";
     import { toastStore } from "../../../stores/toast";
-    import { logger } from "../../../utils/logging";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { proposalVotes } from "../../../stores/proposalVotes";
@@ -110,7 +109,7 @@
                 }
             })
             .catch((err) => {
-                logger.error("Unable to vote on proposal", err);
+                client.logError("Unable to vote on proposal", err);
                 toastStore.showFailureToast("proposal.voteFailed");
             })
             .finally(() => {

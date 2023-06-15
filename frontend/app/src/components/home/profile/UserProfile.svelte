@@ -35,7 +35,6 @@
     import Toggle from "../../Toggle.svelte";
     import { setLocale, supportedLanguages } from "i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import { logger } from "../../../utils/logging";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ReferUsers from "./ReferUsers.svelte";
     import Expiry from "../upgrade/Expiry.svelte";
@@ -95,7 +94,7 @@
                     })
                     .catch((err) => {
                         toastStore.showFailureToast($_("unableToSaveUserProfile"));
-                        logger.error("Unable to save user bio: ", err);
+                        client.logError("Unable to save user bio: ", err);
                     })
             );
         }
@@ -123,7 +122,7 @@
                     })
                     .catch((err) => {
                         toastStore.showFailureToast($_("unableToSaveUserProfile"));
-                        logger.error("Unable to save username: ", err);
+                        client.logError("Unable to save username: ", err);
                     })
             );
         }

@@ -3,7 +3,6 @@ import { buildCryptoTransferText, buildTransactionUrl } from "openchat-client";
 import { toastStore } from "../stores/toast";
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
-import { logger } from "../utils/logging";
 
 export type Share = {
     title: string | undefined;
@@ -105,7 +104,6 @@ export function shareMessage(
                 if (e.name !== "AbortError") {
                     const errorMessage = "Failed to share message";
                     console.log(`${errorMessage}: ${e}`);
-                    logger.error(errorMessage, e);
                     toastStore.showFailureToast("failedToShareMessage");
                 }
             }),
@@ -122,7 +120,6 @@ export function shareLink(url: string): void {
         if (e.name !== "AbortError") {
             const errorMessage = `Failed to share link ${url}`;
             console.log(`${errorMessage}: ${e}`);
-            logger.error(errorMessage, e);
             toastStore.showFailureToast("failedToShareLink");
         }
     });
@@ -161,7 +158,6 @@ async function buildShareFromMessage(
         if (blobUrl === undefined) {
             const error = "No blob url found";
             console.log(error);
-            logger.error(error);
             return Promise.reject();
         }
 
@@ -184,7 +180,6 @@ async function buildShareFromMessage(
         } catch (e) {
             const errorMessage = "Failed to fetch blob";
             console.log(`${errorMessage}: ${e}`);
-            logger.error(errorMessage, e as Error);
             return Promise.reject();
         }
 

@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { onDestroy } from "svelte";
+    import { getContext, onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
-    import { logger } from "../utils/logging";
-    import { Poller, Version } from "openchat-client";
+    import { OpenChat, Poller, Version } from "openchat-client";
 
     const VERSION_INTERVAL = 60 * 1000;
+    const client = getContext<OpenChat>("client");
 
     let poller = new Poller(checkVersion, VERSION_INTERVAL);
     // @ts-ignore
@@ -42,13 +42,13 @@
         })
             .then((res) => res.json())
             .then((res) => {
-                console.log("Server version: ", res);
+                client.logMessage("Server version: ", res);
                 errorCount = 0;
                 return Version.parse(res.version);
             })
             .catch((err) => {
                 errorCount += 1;
-                logger.error(`Unable to load server version ${errorCount} times`, err);
+                client.logError(`Unable to load server version ${errorCount} times`, err);
                 return clientVersion;
             });
     }

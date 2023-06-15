@@ -5,7 +5,6 @@
     import Input from "../../Input.svelte";
     import { _ } from "svelte-i18n";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
-    import { logger } from "../../../utils/logging";
     import { toastStore } from "../../../stores/toast";
     import { iconSize } from "../../../stores/iconSize";
     import Scanner from "./Scanner.svelte";
@@ -63,13 +62,13 @@
                     });
                 } else {
                     dispatch("error", "cryptoAccount.sendFailed");
-                    logger.error(`Unable to withdraw ${symbol}`, resp);
+                    client.logMessage(`Unable to withdraw ${symbol}`, resp);
                     toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
                 }
             })
             .catch((err) => {
                 dispatch("error", "cryptoAccount.sendFailed");
-                logger.error(`Unable to withdraw ${symbol}`, err);
+                client.logError(`Unable to withdraw ${symbol}`, err);
                 toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
             })
             .finally(() => (sending = false));
