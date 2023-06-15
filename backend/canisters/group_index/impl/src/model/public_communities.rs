@@ -70,38 +70,30 @@ impl PublicCommunities {
     pub fn search(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> Vec<CommunityMatch> {
         let start_index = page_index as usize * page_size as usize;
 
-        if let Some(search_term) = search_term {
-            let query = Query::parse(search_term);
+        let query = search_term.map(Query::parse);
 
-            let mut matches: Vec<_> = self
-                .iter()
-                .filter(|c| !c.is_frozen())
-                .map(|c| {
+        let mut matches: Vec<_> = self
+            .iter()
+            .filter(|c| !c.is_frozen())
+            .map(|c| {
+                let score = if let Some(query) = &query {
                     let document: Document = c.into();
-                    let score = document.calculate_score(&query);
-                    (score, c)
-                })
-                .filter(|(score, _)| *score > 0)
-                .collect();
+                    document.calculate_score(query)
+                } else {
+                    c.activity.member_count
+                };
+                (score, c)
+            })
+            .filter(|(score, _)| *score > 0)
+            .collect();
 
-            matches.sort_by_key(|(score, _)| *score);
-            matches
-                .into_iter()
-                .map(|(_, c)| c.into())
-                .skip(start_index)
-                .take(page_size as usize)
-                .collect()
-        } else {
-            let mut matches: Vec<_> = self.iter().filter(|c| !c.is_frozen()).collect();
-
-            matches.sort_by(|c1, c2| c1.name.to_lowercase().cmp(&c2.name.to_lowercase()));
-            matches
-                .into_iter()
-                .map(|c| c.into())
-                .skip(start_index)
-                .take(page_size as usize)
-                .collect()
-        }
+        matches.sort_by_key(|(score, _)| *score);
+        matches
+            .into_iter()
+            .map(|(_, c)| c.into())
+            .skip(start_index)
+            .take(page_size as usize)
+            .collect()
     }
 
     pub fn update_community(
