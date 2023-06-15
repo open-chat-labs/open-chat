@@ -25,4 +25,5 @@ export type OpenChatConfig = {
         error(message?: unknown, ...optionalParams: unknown[]): void;
     };
     websiteVersion: string;
+    rollbarApiKey: string;
 };

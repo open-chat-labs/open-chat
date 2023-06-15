@@ -53,6 +53,7 @@
             i18nFormatter: $_,
             logger: logger,
             websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,
+            rollbarApiKey: process.env.ROLLBAR_ACCESS_TOKEN!,
         });
     }
 
