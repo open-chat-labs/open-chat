@@ -54,6 +54,9 @@ import type {
     ApiCommunitiesUpdates,
     ApiUserCanisterCommunitySummaryUpdates,
     ApiUserCanisterChannelSummaryUpdates,
+    ApiFavouriteChatsUpdates,
+    ApiGroupChatsUpdates,
+    ApiDirectChatsUpdates,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -109,6 +112,9 @@ import {
     CommunitiesUpdates,
     UserCanisterCommunitySummaryUpdates,
     UserCanisterChannelSummaryUpdates,
+    FavouriteChatsUpdates,
+    GroupChatsUpdates,
+    DirectChatsUpdates,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -824,6 +830,30 @@ export function communitiesUpdates(candid: ApiCommunitiesUpdates): CommunitiesUp
         added: candid.added.map(userCanisterCommunitySummary),
         updated: candid.updated.map(userCanisterCommunitySummaryUpdates),
         removed: candid.removed.map((c) => c.toString()),
+    };
+}
+
+export function favouriteChatsUpdates(candid: ApiFavouriteChatsUpdates): FavouriteChatsUpdates {
+    return {
+        chats: optional(candid.chats, (c) => c.map(chatIndentifier)),
+        pinned: optional(candid.pinned, (c) => c.map(chatIndentifier)),
+    };
+}
+
+export function groupChatsUpdates(candid: ApiGroupChatsUpdates): GroupChatsUpdates {
+    return {
+        added: candid.added.map(userCanisterGroupSummary),
+        pinned: optional(candid.pinned, (p) => p.map((p) => p.toString())),
+        updated: candid.updated.map(userCanisterGroupSummaryUpdates),
+        removed: candid.removed.map((c) => c.toString()),
+    };
+}
+
+export function directChatsUpdates(candid: ApiDirectChatsUpdates): DirectChatsUpdates {
+    return {
+        added: candid.added.map(directChatSummary),
+        pinned: optional(candid.pinned, (p) => p.map((p) => p.toString())),
+        updated: candid.updated.map(directChatSummaryUpdates),
     };
 }
 
