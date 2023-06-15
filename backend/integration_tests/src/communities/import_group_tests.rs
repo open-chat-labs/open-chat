@@ -4,6 +4,7 @@ use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use ic_test_state_machine_client::StateMachine;
+use itertools::Itertools;
 use std::ops::Deref;
 use types::{ChatId, CommunityId};
 
@@ -18,9 +19,11 @@ fn import_group_succeeds() {
 
     let TestData {
         user1,
-        user2: _,
+        user2,
         group_id,
+        group_name,
         community_id,
+        default_channels,
     } = init_test_data(env, canister_ids, *controller);
 
     for i in 1..10 {
@@ -36,16 +39,25 @@ fn import_group_succeeds() {
         &community_canister::import_group::Args { group_id },
     );
 
-    assert!(matches!(
-        import_group_response,
-        community_canister::import_group::Response::Success(_)
-    ));
+    if let community_canister::import_group::Response::Success(_) = import_group_response {
+        tick_many(env, 20);
 
-    tick_many(env, 20);
+        let expected_channel_names: Vec<_> = default_channels.into_iter().chain([group_name]).sorted().collect();
 
-    let community_summary = client::community::happy_path::summary(env, &user1, community_id);
+        let summary1 = client::community::happy_path::summary(env, &user1, community_id);
+        assert_eq!(
+            summary1.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
+            expected_channel_names
+        );
 
-    assert_eq!(community_summary.channels.len(), 2);
+        let summary2 = client::community::happy_path::summary(env, &user2, community_id);
+        assert_eq!(
+            summary2.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
+            expected_channel_names
+        );
+    } else {
+        panic!("'import_group' error: {import_group_response:?}");
+    }
 }
 
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
@@ -58,8 +70,9 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
     let group_id = client::user::happy_path::create_group(env, &user1, &group_name, true, true);
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
 
-    let community_id =
-        client::user::happy_path::create_community(env, &user1, &community_name, true, vec!["abcde".to_string()]);
+    let default_channels: Vec<_> = (1..5).map(|_| random_string()).collect();
+
+    let community_id = client::user::happy_path::create_community(env, &user1, &community_name, true, default_channels.clone());
 
     tick_many(env, 3);
 
@@ -67,7 +80,9 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
         user1,
         user2,
         group_id,
+        group_name,
         community_id,
+        default_channels,
     }
 }
 
@@ -75,5 +90,7 @@ struct TestData {
     user1: User,
     user2: User,
     group_id: ChatId,
+    group_name: String,
     community_id: CommunityId,
+    default_channels: Vec<String>,
 }
