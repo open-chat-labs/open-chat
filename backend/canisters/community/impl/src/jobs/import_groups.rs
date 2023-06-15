@@ -125,7 +125,6 @@ async fn process_channel_members(channel_id: ChannelId, attempt: u32) {
                 let now = state.env.now();
                 let notifications_muted = is_public;
                 let default_channel_ids = state.data.channels.default_channels();
-                let mut members_to_remove = Vec::new();
 
                 for (user_id, principal) in users {
                     match state.data.members.add(user_id, principal, now, notifications_muted) {
@@ -148,14 +147,7 @@ async fn process_channel_members(channel_id: ChannelId, attempt: u32) {
                         }
                         AddResult::AlreadyInCommunity => {}
                         AddResult::Blocked => {
-                            members_to_remove.push(user_id);
-                        }
-                    }
-                }
-
-                if !members_to_remove.is_empty() {
-                    if let Some(channel) = state.data.channels.get_mut(&channel_id) {
-                        for user_id in members_to_remove {
+                            let channel = state.data.channels.get_mut(&channel_id).unwrap();
                             channel.chat.remove_member(OPENCHAT_BOT_USER_ID, user_id, false, now);
                         }
                     }
