@@ -1,9 +1,10 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CommunityCanisterCommunitySummaryUpdates, TimestampMillis};
+use types::{ChannelId, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub channel_id: ChannelId,
     pub updates_since: TimestampMillis,
 }
 
@@ -11,7 +12,10 @@ pub struct Args {
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(CommunityCanisterCommunitySummaryUpdates),
+    SuccessAdded(CommunityCanisterChannelSummary),
+    SuccessUpdated(CommunityCanisterChannelSummaryUpdates),
     SuccessNoUpdates,
     PrivateCommunity,
+    ChannelNotFound,
+    PrivateChannel,
 }

@@ -349,15 +349,20 @@ type CommunityCanisterCommunitySummary =
         avatar_id: opt nat;
         banner_id: opt nat;
         is_public: bool;
-        joined: TimestampMillis;
         member_count: nat32;
-        role: CommunityRole;
         permissions: CommunityPermissions;
         frozen: opt FrozenGroupInfo;
         gate: opt AccessGate;
         last_updated: TimestampMillis;
         latest_event_index: EventIndex;
         channels: vec CommunityCanisterChannelSummary;
+        membership: opt CommunityMembership;
+    };
+
+type CommunityMembership =
+    record {
+        joined: TimestampMillis;
+        role: CommunityRole;
     };
 
 type CommunityCanisterChannelSummary =
@@ -375,20 +380,25 @@ type CommunityCanisterChannelSummary =
         min_visible_message_index: MessageIndex;
         latest_message: opt MessageEventWrapper;
         latest_event_index: EventIndex;
-        joined: TimestampMillis;
         member_count: nat32;
-        role: GroupRole;
-        mentions: vec Mention;
         permissions: GroupPermissions;
-        notifications_muted: bool;
         metrics: ChatMetrics;
-        my_metrics: ChatMetrics;
-        latest_threads: vec GroupCanisterThreadDetails;
         date_last_pinned: opt TimestampMillis;
         events_ttl: opt Milliseconds;
         expired_messages: vec MessageIndexRange;
         next_message_expiry: opt TimestampMillis;
         gate: opt AccessGate;
+        membership: opt ChannelMembership;
+    };
+
+type ChannelMembership = 
+    record {
+        joined: TimestampMillis;
+        role: GroupRole;
+        mentions: vec Mention;
+        notifications_muted: bool;
+        my_metrics: ChatMetrics;
+        latest_threads: vec GroupCanisterThreadDetails;
     };
 
 type CommunityCanisterCommunitySummaryUpdates =
@@ -401,13 +411,18 @@ type CommunityCanisterCommunitySummaryUpdates =
         banner_id: DocumentIdUpdate;
         is_public: opt bool;
         member_count: opt nat32;
-        role: opt CommunityRole;
         permissions: opt CommunityPermissions;
         frozen: FrozenGroupUpdate;
         gate: AccessGateUpdate;
         latest_event_index: opt EventIndex;
         channels_added: vec CommunityCanisterChannelSummary;
         channels_updated: vec CommunityCanisterChannelSummaryUpdates;
+        membership: opt CommunityMembershipUpdates;
+    };
+
+type CommunityMembershipUpdates = 
+    record {
+        role: opt CommunityRole;
         channels_removed: vec ChannelId;
     };
 
@@ -423,16 +438,21 @@ type CommunityCanisterChannelSummaryUpdates =
         latest_message: opt MessageEventWrapper;
         latest_event_index: opt EventIndex;
         member_count: opt nat32;
-        role: opt GroupRole;
-        mentions: vec Mention;
         permissions: opt GroupPermissions;
-        notifications_muted: opt bool;
         metrics: opt ChatMetrics;
-        my_metrics: opt ChatMetrics;
-        latest_threads: vec GroupCanisterThreadDetails;
         date_last_pinned: opt TimestampMillis;
         events_ttl: EventsTimeToLiveUpdate;
         gate: AccessGateUpdate;
+        membership: opt ChannelMembershipUpdates;
+    };
+
+type ChannelMembershipUpdates =
+    record {
+        role: opt GroupRole;
+        mentions: vec Mention;
+        notifications_muted: opt bool;
+        my_metrics: opt ChatMetrics;
+        latest_threads: vec GroupCanisterThreadDetails;
     };
 
 type SelectedGroupUpdates =

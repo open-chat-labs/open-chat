@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reduce size of `ChatMetrics` when serialized ([#3779](https://github.com/open-ic/open-chat/pull/3779))
 - Reduce size of mentions when serialized ([#3784](https://github.com/open-chat-labs/open-chat/pull/3784))
 - Add `created_by` to `GroupChatCore` ([#3786](https://github.com/open-ic/open-chat/pull/3786))
+- Refactor core summaries logic ([#3791](https://github.com/open-ic/open-chat/pull/3791))
 
 ## [[2.0.716](https://github.com/open-ic/open-chat/releases/tag/v2.0.716-group)] - 2023-06-12
 

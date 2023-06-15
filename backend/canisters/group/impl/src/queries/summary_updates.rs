@@ -26,13 +26,13 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     // Short circuit prior to calling `ic0.time()` so that query caching works effectively.
     // This doesn't account for expired events, but they aren't used yet and should probably just be
     // handled by the FE anyway.
-    if !state.data.chat.has_updates_since(member, updates_since) {
+    if !state.data.chat.has_updates_since(Some(member), updates_since) {
         return SuccessNoUpdates;
     }
 
     let now = state.env.now();
     let newly_expired_messages = state.data.chat.events.expired_messages_since(updates_since, now);
-    let updates_from_events = state.data.chat.summary_updates_from_events(updates_since, member, now);
+    let updates_from_events = state.data.chat.summary_updates_from_events(updates_since, Some(member), now);
 
     let updates = GroupCanisterGroupChatSummaryUpdates {
         chat_id: state.env.canister_id().into(),
