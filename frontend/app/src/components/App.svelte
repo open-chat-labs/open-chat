@@ -29,6 +29,12 @@
 
     let viewPortContent = "width=device-width, initial-scale=1";
 
+    const logger = inititaliseLogger(
+        process.env.ROLLBAR_ACCESS_TOKEN!,
+        process.env.OPENCHAT_WEBSITE_VERSION!,
+        process.env.NODE_ENV!
+    );
+
     function createOpenChatClient(): OpenChat {
         return new OpenChat({
             icUrl: process.env.IC_URL,
@@ -50,11 +56,7 @@
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             marketMakerCanister: process.env.MARKET_MAKER_CANISTER!,
             i18nFormatter: $_,
-            logger: inititaliseLogger(
-                process.env.ROLLBAR_ACCESS_TOKEN!,
-                process.env.OPENCHAT_WEBSITE_VERSION!,
-                process.env.NODE_ENV!
-            ),
+            logger,
             websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,
             rollbarApiKey: process.env.ROLLBAR_ACCESS_TOKEN!,
             env: process.env.NODE_ENV!,
@@ -216,7 +218,7 @@
     }
 
     function unhandledError(ev: Event) {
-        console.trace("Unhandled error: ", ev);
+        logger?.error("Unhandled error: ", ev);
         if (ev instanceof PromiseRejectionEvent && ev.reason instanceof SessionExpiryError) {
             client.logout();
             ev.preventDefault();
