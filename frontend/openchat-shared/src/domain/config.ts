@@ -20,4 +20,7 @@ export type AgentConfig = {
     logger: {
         error(message?: unknown, ...optionalParams: unknown[]): void;
     };
+    websiteVersion: string;
+    rollbarApiKey: string;
+    env: string;
 };

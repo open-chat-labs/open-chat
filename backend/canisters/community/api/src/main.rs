@@ -1,6 +1,8 @@
 use candid_gen::generate_candid_method;
 
 fn main() {
+    generate_candid_method!(community, channel_summary, query);
+    generate_candid_method!(community, channel_summary_updates, query);
     generate_candid_method!(community, deleted_message, query);
     generate_candid_method!(community, events, query);
     generate_candid_method!(community, events_by_index, query);

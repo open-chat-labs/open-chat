@@ -12,8 +12,9 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    AccessGate, AccessRules, CanisterId, ChannelId, CommunityCanisterCommunitySummary, CommunityPermissions, Cycles, Document,
-    FrozenGroupInfo, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
+    AccessGate, AccessRules, CanisterId, ChannelId, CommunityCanisterCommunitySummary, CommunityMembership,
+    CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
+    Version,
 };
 use utils::env::Environment;
 
@@ -74,15 +75,37 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, member: &CommunityMemberInternal, now: TimestampMillis) -> CommunityCanisterCommunitySummary {
+    pub fn summary(&self, member: Option<&CommunityMemberInternal>, now: TimestampMillis) -> CommunityCanisterCommunitySummary {
         let data = &self.data;
 
-        let channels: Vec<_> = member
-            .channels
-            .iter()
-            .filter_map(|c| self.data.channels.get(c))
-            .filter_map(|c| c.summary_if_member(&member.user_id, now))
-            .collect();
+        let (channels, membership) = if let Some(m) = member {
+            let membership = CommunityMembership {
+                joined: m.date_added,
+                role: m.role,
+            };
+
+            // Return all the channels that the user is a member of
+            let channels: Vec<_> = m
+                .channels
+                .iter()
+                .filter_map(|c| self.data.channels.get(c))
+                .filter_map(|c| c.summary_if_member(&m.user_id, now))
+                .collect();
+
+            (channels, Some(membership))
+        } else {
+            // Return all public default channels
+            let channels: Vec<_> = self
+                .data
+                .channels
+                .default_channels()
+                .iter()
+                .filter(|c| c.chat.is_public)
+                .map(|c| c.summary(None, now))
+                .collect();
+
+            (channels, None)
+        };
 
         CommunityCanisterCommunitySummary {
             community_id: self.env.canister_id().into(),
@@ -93,13 +116,12 @@ impl RuntimeState {
             banner_id: Document::id(&data.banner),
             is_public: data.is_public,
             latest_event_index: data.events.latest_event_index(),
-            joined: member.date_added,
             member_count: data.members.len(),
-            role: member.role,
             permissions: data.permissions.clone(),
             frozen: data.frozen.value.clone(),
             gate: data.gate.value.clone(),
             channels,
+            membership,
         }
     }
 
@@ -186,7 +208,7 @@ impl Data {
         now: TimestampMillis,
     ) -> Data {
         let channels = Channels::new(created_by_user_id, default_channels, now);
-        let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.default_channels(), now);
+        let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.default_channel_ids(), now);
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
         Data {

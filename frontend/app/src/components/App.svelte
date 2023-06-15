@@ -16,7 +16,7 @@
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { OpenChat, SessionExpiryError } from "openchat-client";
-    import type { UpdateMarketMakerConfigArgs } from "openchat-shared";
+    import { UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-shared";
     import {
         isCanisterUrl,
         isLandingPageRoute,
@@ -24,11 +24,16 @@
         redirectLandingPageLinksIfNecessary,
         removeQueryStringParam,
     } from "../utils/urls";
-    import { logger } from "../utils/logging";
     import page from "page";
     import { menuStore } from "../stores/menu";
 
     let viewPortContent = "width=device-width, initial-scale=1";
+
+    const logger = inititaliseLogger(
+        process.env.ROLLBAR_ACCESS_TOKEN!,
+        process.env.OPENCHAT_WEBSITE_VERSION!,
+        process.env.NODE_ENV!
+    );
 
     function createOpenChatClient(): OpenChat {
         return new OpenChat({
@@ -51,8 +56,10 @@
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             marketMakerCanister: process.env.MARKET_MAKER_CANISTER!,
             i18nFormatter: $_,
-            logger: logger,
+            logger,
             websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,
+            rollbarApiKey: process.env.ROLLBAR_ACCESS_TOKEN!,
+            env: process.env.NODE_ENV!,
         });
     }
 
@@ -211,7 +218,7 @@
     }
 
     function unhandledError(ev: Event) {
-        console.trace("Unhandled error: ", ev);
+        logger?.error("Unhandled error: ", ev);
         if (ev instanceof PromiseRejectionEvent && ev.reason instanceof SessionExpiryError) {
             client.logout();
             ev.preventDefault();

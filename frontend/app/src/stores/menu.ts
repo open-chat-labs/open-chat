@@ -1,5 +1,4 @@
 import { writable, get } from "svelte/store";
-import { logger } from "utils/logging";
 import { navOpen } from "./layout";
 import { mobileWidth } from "./screenDimensions";
 import {
@@ -20,7 +19,7 @@ function close(menu: HTMLElement | undefined): HTMLElement | undefined {
     if (menu !== undefined) {
         if (!menuAnchor) {
             // debug logging - will remove later
-            logger.error("trying to remove menu when menu anchor is null");
+            console.error("trying to remove menu when menu anchor is null");
         } else {
             if (menuAnchor.contains(menu)) {
                 menuAnchor.removeChild(menu);

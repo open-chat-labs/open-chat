@@ -163,12 +163,39 @@ type SelectedChannelUpdatesResponse =
         ChannelNotFound;
     };
 
+type ChannelSummaryArgs =
+    record {
+        channel_id: ChannelId;
+    };
+
+type ChannelSummaryResponse =
+    variant {
+        Success: CommunityCanisterChannelSummary;
+        PrivateCommunity;
+        ChannelNotFound;
+        PrivateChannel;
+    };
+
 type SummaryResponse =
     variant {
-        Success: record {
-            summary: CommunityCanisterCommunitySummary;
-        };
-        UserNotInCommunity;
+        Success: CommunityCanisterCommunitySummary;
+        PrivateCommunity;
+    };
+
+type ChannelSummaryUpdatesArgs =
+    record {
+        channel_id: ChannelId;
+        updates_since: TimestampMillis;
+    };
+
+type ChannelSummaryUpdatesResponse =
+    variant {
+        SuccessAdded: CommunityCanisterChannelSummary;
+        SuccessUpdated: CommunityCanisterChannelSummaryUpdates;
+        SuccessNoUpdates;
+        PrivateCommunity;
+        ChannelNotFound;
+        PrivateChannel;
     };
 
 type SummaryUpdatesArgs =
@@ -178,11 +205,9 @@ type SummaryUpdatesArgs =
 
 type SummaryUpdatesResponse =
     variant {
-        Success: record {
-            updates: CommunityCanisterCommunitySummaryUpdates;
-        };
+        Success: CommunityCanisterCommunitySummaryUpdates;
         SuccessNoUpdates;
-        UserNotInCommunity;
+        PrivateCommunity;
     };
 
 type AddMembersToChannelArgs =
@@ -759,6 +784,8 @@ type UpdateCommunityResponse =
     };
 
 service: {
+    channel_summary: (ChannelSummaryArgs) -> (ChannelSummaryResponse) query;
+    channel_summary_updates: (ChannelSummaryUpdatesArgs) -> (ChannelSummaryUpdatesResponse) query;
     deleted_message: (DeletedMessageArgs) -> (DeletedMessageResponse) query;
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;

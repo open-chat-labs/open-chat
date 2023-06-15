@@ -10,7 +10,6 @@
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import { logger } from "../../../utils/logging";
     import type { OpenChat } from "openchat-client";
     import { rightPanelHistory } from "../../../stores/rightPanel";
 
@@ -50,7 +49,7 @@
             user = await task2;
             profile = await task1;
         } catch (e: any) {
-            logger.error("Failed to load user profile", e);
+            client.logError("Failed to load user profile", e);
             onClose();
         }
     });

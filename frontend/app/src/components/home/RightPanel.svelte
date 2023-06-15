@@ -24,7 +24,6 @@
     import Thread from "./thread/Thread.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
-    import { logger } from "../../utils/logging";
     import { pathParams } from "../../routes";
     import page from "page";
     import { compareRoles } from "openchat-shared";
@@ -118,7 +117,7 @@
                     }
                 })
                 .catch((err) => {
-                    logger.error("InviteUsersFailed", err);
+                    client.logError("InviteUsersFailed", err);
                     toastStore.showFailureToast("group.inviteUsersFailed");
                 });
 
@@ -194,7 +193,7 @@
                 }
             })
             .catch((err) => {
-                logger.error("Unable to remove member", err);
+                client.logError("Unable to remove member", err);
                 toastStore.showFailureToast("removeMemberFailed");
             });
     }

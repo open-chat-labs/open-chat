@@ -1,3 +1,5 @@
+import type { Logger } from "openchat-shared";
+
 export type AgentConfig = {
     icUrl: string;
     iiDerivationOrigin?: string;
@@ -17,7 +19,5 @@ export type AgentConfig = {
     blobUrlPattern: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
-    logger: {
-        error(message?: unknown, ...optionalParams: unknown[]): void;
-    };
+    logger: Logger;
 };

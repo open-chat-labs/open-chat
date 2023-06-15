@@ -6,7 +6,6 @@
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
-    import { logger } from "../../../utils/logging";
     import type { RemoteData } from "../../../utils/remoteData";
     import Loading from "../../Loading.svelte";
     import PinnedMessage from "./PinnedMessage.svelte";
@@ -73,7 +72,7 @@
                     }
                 })
                 .catch((err) => {
-                    logger.error("Unable to load pinned messages: ", err);
+                    client.logError("Unable to load pinned messages: ", err);
                     messages = { kind: "error", error: err.toString() };
                 });
         } else {

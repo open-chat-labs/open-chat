@@ -98,39 +98,53 @@ impl GroupChatCore {
     }
 
     pub fn has_updates_since_by_user_id(&self, user_id: &UserId, since: TimestampMillis) -> bool {
-        match self.members.get(user_id) {
-            Some(m) => self.has_updates_since(m, since),
-            _ => true,
-        }
+        let member = self.members.get(user_id);
+        self.has_updates_since(member, since)
     }
 
-    pub fn has_updates_since(&self, member: &GroupMemberInternal, since: TimestampMillis) -> bool {
-        self.events.has_updates_since(since)
-            || self.invited_users.last_updated() > since
-            || member.date_added > since
-            || member.notifications_muted.timestamp > since
+    pub fn has_updates_since(&self, member: Option<&GroupMemberInternal>, since: TimestampMillis) -> bool {
+        if let Some(m) = member {
+            if m.date_added > since || m.notifications_muted.timestamp > since {
+                return true;
+            }
+        }
+
+        self.events.has_updates_since(since) || self.invited_users.last_updated() > since
     }
 
     pub fn summary_updates_from_events(
         &self,
         since: TimestampMillis,
-        member: &GroupMemberInternal,
+        member: Option<&GroupMemberInternal>,
         now: TimestampMillis,
     ) -> SummaryUpdatesFromEvents {
-        let events_reader = self.events.visible_main_events_reader(member.min_visible_event_index(), now);
+        let min_visible_event_index = if let Some(member) = member {
+            member.min_visible_event_index()
+        } else if self.is_public {
+            EventIndex::default()
+        } else {
+            panic!("Cannot get private summary updates if user is not a member");
+        };
+
+        let user_id = member.map(|m| m.user_id);
+        let events_reader = self.events.visible_main_events_reader(min_visible_event_index, now);
+        let latest_message = events_reader.latest_message_event_if_updated(since, user_id);
+        let mentions = member
+            .map(|m| m.most_recent_mentions(Some(since), &self.events, now))
+            .unwrap_or_default();
 
         let mut updates = SummaryUpdatesFromEvents {
             // We need to handle this separately because the message may have been sent before 'since' but
             // then subsequently updated after 'since', in this scenario the message would not be picked up
             // during the iteration below.
-            latest_message: events_reader.latest_message_event_if_updated(since, Some(member.user_id)),
+            latest_message,
             updated_events: self
                 .events
                 .iter_recently_updated_events()
                 .take_while(|(_, _, ts)| *ts > since)
                 .take(1000)
                 .collect(),
-            mentions: member.most_recent_mentions(Some(since), &self.events, now),
+            mentions,
             ..Default::default()
         };
 
@@ -149,20 +163,22 @@ impl GroupChatCore {
             updates.gate = OptionUpdate::from_update(self.gate.value.clone());
         }
 
-        let new_proposal_votes =
-            member
-                .proposal_votes
-                .iter()
-                .rev()
-                .take_while(|(&t, _)| t > since)
-                .flat_map(|(&t, message_indexes)| {
-                    message_indexes
-                        .iter()
-                        .filter_map(|&m| events_reader.event_index(m.into()))
-                        .map(move |e| (None, e, t))
-                });
+        if let Some(member) = member {
+            let new_proposal_votes =
+                member
+                    .proposal_votes
+                    .iter()
+                    .rev()
+                    .take_while(|(&t, _)| t > since)
+                    .flat_map(|(&t, message_indexes)| {
+                        message_indexes
+                            .iter()
+                            .filter_map(|&m| events_reader.event_index(m.into()))
+                            .map(move |e| (None, e, t))
+                    });
 
-        updates.updated_events.extend(new_proposal_votes);
+            updates.updated_events.extend(new_proposal_votes);
+        }
 
         // Iterate through events starting from most recent
         for event_wrapper in events_reader.iter(None, false).take_while(|e| e.timestamp > since) {
@@ -187,22 +203,22 @@ impl GroupChatCore {
                     }
                 }
                 ChatEventInternal::RoleChanged(r) => {
-                    if r.user_ids.contains(&member.user_id) {
+                    if member.map(|m| r.user_ids.contains(&m.user_id)).unwrap_or_default() {
                         updates.role_changed = true;
                     }
                 }
                 ChatEventInternal::ParticipantAssumesSuperAdmin(p) => {
-                    if p.user_id == member.user_id {
+                    if member.map(|m| m.user_id == p.user_id).unwrap_or_default() {
                         updates.role_changed = true;
                     }
                 }
                 ChatEventInternal::ParticipantDismissedAsSuperAdmin(p) => {
-                    if p.user_id == member.user_id {
+                    if member.map(|m| m.user_id == p.user_id).unwrap_or_default() {
                         updates.role_changed = true;
                     }
                 }
                 ChatEventInternal::ParticipantRelinquishesSuperAdmin(p) => {
-                    if p.user_id == member.user_id {
+                    if member.map(|m| m.user_id == p.user_id).unwrap_or_default() {
                         updates.role_changed = true;
                     }
                 }
@@ -215,7 +231,10 @@ impl GroupChatCore {
                     updates.members_changed = true;
                 }
                 ChatEventInternal::OwnershipTransferred(ownership) => {
-                    if ownership.new_owner == member.user_id || ownership.old_owner == member.user_id {
+                    if member
+                        .map(|m| ownership.new_owner == m.user_id || ownership.old_owner == m.user_id)
+                        .unwrap_or_default()
+                    {
                         updates.role_changed = true;
                     }
                 }
