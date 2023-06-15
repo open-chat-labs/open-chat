@@ -90,11 +90,6 @@ export const idlFactory = ({ IDL }) => {
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
   });
-  const CommunityRole = IDL.Variant({
-    'Member' : IDL.Null,
-    'Admin' : IDL.Null,
-    'Owner' : IDL.Null,
-  });
   const TimestampMillis = IDL.Nat64;
   const PermissionRole = IDL.Variant({
     'Moderators' : IDL.Null,
@@ -170,6 +165,14 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'mentioned_by' : UserId,
     'message_index' : MessageIndex,
+  });
+  const ChannelMembership = IDL.Record({
+    'role' : GroupRole,
+    'notifications_muted' : IDL.Bool,
+    'joined' : TimestampMillis,
+    'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
+    'mentions' : IDL.Vec(Mention),
+    'my_metrics' : ChatMetrics,
   });
   const MessageIndexRange = IDL.Record({
     'end' : MessageIndex,
@@ -510,24 +513,28 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_event_index' : EventIndex,
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
-    'role' : GroupRole,
-    'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
-    'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'next_message_expiry' : IDL.Opt(TimestampMillis),
-    'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
+    'membership' : IDL.Opt(ChannelMembership),
     'latest_event_index' : EventIndex,
     'banner_id' : IDL.Opt(IDL.Nat),
     'history_visible_to_new_joiners' : IDL.Bool,
     'min_visible_message_index' : MessageIndex,
-    'mentions' : IDL.Vec(Mention),
     'member_count' : IDL.Nat32,
     'expired_messages' : IDL.Vec(MessageIndexRange),
-    'my_metrics' : ChatMetrics,
     'latest_message' : IDL.Opt(MessageEventWrapper),
+  });
+  const CommunityRole = IDL.Variant({
+    'Member' : IDL.Null,
+    'Admin' : IDL.Null,
+    'Owner' : IDL.Null,
+  });
+  const CommunityMembership = IDL.Record({
+    'role' : CommunityRole,
+    'joined' : TimestampMillis,
   });
   const FrozenGroupInfo = IDL.Record({
     'timestamp' : TimestampMillis,
@@ -540,12 +547,11 @@ export const idlFactory = ({ IDL }) => {
     'community_id' : CommunityId,
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
-    'role' : CommunityRole,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
     'channels' : IDL.Vec(CommunityCanisterChannelSummary),
-    'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'membership' : IDL.Opt(CommunityMembership),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
     'banner_id' : IDL.Opt(IDL.Nat),

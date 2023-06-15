@@ -172,7 +172,7 @@ export class UserClient extends CandidService {
             disable_cache: apiOptional(identity, false),
         };
         return this.handleQueryResponse(
-            () => this.userService.initial_state_v2(args),
+            () => this.userService.initial_state(args),
             initialStateResponse,
             args
         );
@@ -183,7 +183,7 @@ export class UserClient extends CandidService {
             updates_since: updatesSince,
         };
         return this.handleQueryResponse(
-            () => this.userService.updates_v2(args),
+            () => this.userService.updates(args),
             getUpdatesResponse,
             args
         );

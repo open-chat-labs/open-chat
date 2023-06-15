@@ -794,15 +794,48 @@ export type CurrentChatState = {
     pinnedChats: string[];
 };
 
-export type InitialStateResponse = {
+export type CachedGroupChatSummaries = {
+    summaries: GroupChatSummary[];
     timestamp: bigint;
-    directChats: DirectChatSummary[];
-    cacheTimestamp: bigint | undefined;
-    cachedGroupChatSummaries: GroupChatSummary[];
-    groupChatsAdded: UserCanisterGroupChatSummary[];
-    avatarId: bigint | undefined;
+};
+
+export type GroupChatsInitial = {
+    summaries: UserCanisterGroupChatSummary[];
+    pinned: string[];
+    cached?: CachedGroupChatSummaries;
+};
+
+export type DirectChatsInitial = {
+    summaries: DirectChatSummary[];
+    pinned: string[];
+};
+
+export type UserCanisterChannelSummary = {
+    channelId: string;
+    readByMeUpTo?: number;
+    dateReadPinned?: bigint;
+    threadsRead: [number, number][];
+    archived: boolean;
+};
+
+export type UserCanisterCommunitySummary = {
+    communityId: string;
+    channels: UserCanisterChannelSummary[];
+    pinnedChannels: string[];
+    archived: boolean;
+};
+
+export type CommunitiesInitial = {
+    summaries: UserCanisterCommunitySummary[];
+};
+
+export type InitialStateResponse = {
     blockedUsers: string[];
-    pinnedChats: string[];
+    communities: CommunitiesInitial;
+    groupChats: GroupChatsInitial;
+    avatarId: bigint | undefined;
+    directChats: DirectChatsInitial;
+    timestamp: bigint;
 };
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;

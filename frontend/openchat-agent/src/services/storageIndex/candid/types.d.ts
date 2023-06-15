@@ -75,6 +75,24 @@ export interface CanisterWasm {
   'module' : Uint8Array | number[],
 }
 export type ChannelId = bigint;
+export interface ChannelMembership {
+  'role' : GroupRole,
+  'notifications_muted' : boolean,
+  'joined' : TimestampMillis,
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'mentions' : Array<Mention>,
+  'my_metrics' : ChatMetrics,
+}
+export interface ChannelMembershipUpdates {
+  'role' : [] | [GroupRole],
+  'notifications_muted' : [] | [boolean],
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'mentions' : Array<Mention>,
+  'my_metrics' : [] | [ChatMetrics],
+}
+export type Chat = { 'Group' : ChatId } |
+  { 'Channel' : [CommunityId, ChannelId] } |
+  { 'Direct' : ChatId };
 export type ChatEvent = { 'Empty' : null } |
   { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
@@ -159,23 +177,18 @@ export interface CommunityCanisterChannelSummary {
   'min_visible_event_index' : EventIndex,
   'gate' : [] | [AccessGate],
   'name' : string,
-  'role' : GroupRole,
-  'notifications_muted' : boolean,
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
-  'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'next_message_expiry' : [] | [TimestampMillis],
-  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'membership' : [] | [ChannelMembership],
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
-  'mentions' : Array<Mention>,
   'member_count' : number,
   'expired_messages' : Array<MessageIndexRange>,
-  'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface CommunityCanisterChannelSummaryUpdates {
@@ -187,17 +200,13 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'date_last_pinned' : [] | [TimestampMillis],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
-  'role' : [] | [GroupRole],
-  'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
   'avatar_id' : DocumentIdUpdate,
-  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
-  'mentions' : Array<Mention>,
   'member_count' : [] | [number],
-  'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface CommunityCanisterCommunitySummary {
@@ -206,12 +215,11 @@ export interface CommunityCanisterCommunitySummary {
   'community_id' : CommunityId,
   'gate' : [] | [AccessGate],
   'name' : string,
-  'role' : CommunityRole,
   'description' : string,
   'last_updated' : TimestampMillis,
   'channels' : Array<CommunityCanisterChannelSummary>,
-  'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'membership' : [] | [CommunityMembership],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
@@ -224,18 +232,25 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
-  'role' : [] | [CommunityRole],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
-  'channels_removed' : Array<ChannelId>,
   'avatar_id' : DocumentIdUpdate,
   'channels_added' : Array<CommunityCanisterChannelSummary>,
+  'membership' : [] | [CommunityMembershipUpdates],
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'banner_id' : DocumentIdUpdate,
   'member_count' : [] | [number],
 }
 export type CommunityId = CanisterId;
+export interface CommunityMembership {
+  'role' : CommunityRole,
+  'joined' : TimestampMillis,
+}
+export interface CommunityMembershipUpdates {
+  'role' : [] | [CommunityRole],
+  'channels_removed' : Array<ChannelId>,
+}
 export type CommunityPermissionRole = { 'Owners' : null } |
   { 'Admins' : null } |
   { 'Members' : null };

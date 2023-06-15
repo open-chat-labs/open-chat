@@ -29,6 +29,12 @@ export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'UserSuspended' : null } |
   { 'InvalidReaction' : null } |
   { 'SuccessV2' : PushEventResult };
+export interface AddRemoveFavouriteChatsArgs {
+  'to_add' : Array<Chat>,
+  'to_remove' : Array<Chat>,
+}
+export type AddRemoveFavouriteChatsResponse = { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -39,6 +45,16 @@ export interface AddedToGroupNotification {
 export interface ArchiveChatArgs { 'chat_id' : ChatId }
 export type ArchiveChatResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
+export interface ArchiveUnarchiveChatsArgs {
+  'to_archive' : Array<Chat>,
+  'to_unarchive' : Array<Chat>,
+}
+export type ArchiveUnarchiveChatsResponse = {
+    'PartialSuccess' : { 'chats_not_found' : Array<Chat> }
+  } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'Failure' : null };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -64,6 +80,10 @@ export type BlockIndex = bigint;
 export interface BlockUserArgs { 'user_id' : UserId }
 export type BlockUserResponse = { 'Success' : null } |
   { 'UserSuspended' : null };
+export interface CachedGroupChatSummaries {
+  'summaries' : Array<GroupChatSummary>,
+  'timestamp' : TimestampMillis,
+}
 export interface CancelMessageReminderArgs { 'reminder_id' : bigint }
 export type CancelMessageReminderResponse = { 'Success' : null };
 export type CanisterId = Principal;
@@ -75,12 +95,30 @@ export interface CanisterWasm {
   'module' : Uint8Array | number[],
 }
 export type ChannelId = bigint;
+export interface ChannelMembership {
+  'role' : GroupRole,
+  'notifications_muted' : boolean,
+  'joined' : TimestampMillis,
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'mentions' : Array<Mention>,
+  'my_metrics' : ChatMetrics,
+}
+export interface ChannelMembershipUpdates {
+  'role' : [] | [GroupRole],
+  'notifications_muted' : [] | [boolean],
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'mentions' : Array<Mention>,
+  'my_metrics' : [] | [ChatMetrics],
+}
 export interface ChannelMessagesRead {
   'channel_id' : ChannelId,
   'threads' : Array<ThreadRead>,
   'read_up_to' : [] | [MessageIndex],
   'date_read_pinned' : [] | [TimestampMillis],
 }
+export type Chat = { 'Group' : ChatId } |
+  { 'Channel' : [CommunityId, ChannelId] } |
+  { 'Direct' : ChatId };
 export type ChatEvent = { 'Empty' : null } |
   { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
@@ -161,6 +199,14 @@ export interface ChatMetrics {
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
+export interface CommunitiesInitial {
+  'summaries' : Array<UserCanisterCommunitySummary>,
+}
+export interface CommunitiesUpdates {
+  'added' : Array<UserCanisterCommunitySummary>,
+  'updated' : Array<UserCanisterCommunitySummaryUpdates>,
+  'removed' : Array<CommunityId>,
+}
 export interface CommunityCanisterChannelSummary {
   'channel_id' : ChannelId,
   'is_public' : boolean,
@@ -171,23 +217,18 @@ export interface CommunityCanisterChannelSummary {
   'min_visible_event_index' : EventIndex,
   'gate' : [] | [AccessGate],
   'name' : string,
-  'role' : GroupRole,
-  'notifications_muted' : boolean,
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
-  'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'next_message_expiry' : [] | [TimestampMillis],
-  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'membership' : [] | [ChannelMembership],
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
-  'mentions' : Array<Mention>,
   'member_count' : number,
   'expired_messages' : Array<MessageIndexRange>,
-  'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface CommunityCanisterChannelSummaryUpdates {
@@ -199,17 +240,13 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'date_last_pinned' : [] | [TimestampMillis],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
-  'role' : [] | [GroupRole],
-  'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
   'avatar_id' : DocumentIdUpdate,
-  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
-  'mentions' : Array<Mention>,
   'member_count' : [] | [number],
-  'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface CommunityCanisterCommunitySummary {
@@ -218,12 +255,11 @@ export interface CommunityCanisterCommunitySummary {
   'community_id' : CommunityId,
   'gate' : [] | [AccessGate],
   'name' : string,
-  'role' : CommunityRole,
   'description' : string,
   'last_updated' : TimestampMillis,
   'channels' : Array<CommunityCanisterChannelSummary>,
-  'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'membership' : [] | [CommunityMembership],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
@@ -236,18 +272,25 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
-  'role' : [] | [CommunityRole],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
-  'channels_removed' : Array<ChannelId>,
   'avatar_id' : DocumentIdUpdate,
   'channels_added' : Array<CommunityCanisterChannelSummary>,
+  'membership' : [] | [CommunityMembershipUpdates],
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'banner_id' : DocumentIdUpdate,
   'member_count' : [] | [number],
 }
 export type CommunityId = CanisterId;
+export interface CommunityMembership {
+  'role' : CommunityRole,
+  'joined' : TimestampMillis,
+}
+export interface CommunityMembershipUpdates {
+  'role' : [] | [CommunityRole],
+  'channels_removed' : Array<ChannelId>,
+}
 export interface CommunityMessagesRead {
   'community_id' : CommunityId,
   'channels_read' : Array<ChannelMessagesRead>,
@@ -422,6 +465,15 @@ export interface DirectChatSummaryUpdates {
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
 }
+export interface DirectChatsInitial {
+  'summaries' : Array<DirectChatSummary>,
+  'pinned' : Array<ChatId>,
+}
+export interface DirectChatsUpdates {
+  'added' : Array<DirectChatSummary>,
+  'pinned' : [] | [Array<ChatId>],
+  'updated' : Array<DirectChatSummaryUpdates>,
+}
 export interface DirectMessageNotification {
   'sender' : UserId,
   'message' : MessageEventWrapper,
@@ -500,6 +552,14 @@ export interface EventsWindowArgs {
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
+export interface FavouriteChatsInitial {
+  'chats' : Array<Chat>,
+  'pinned' : Array<Chat>,
+}
+export interface FavouriteChatsUpdates {
+  'chats' : [] | [Array<Chat>],
+  'pinned' : [] | [Array<Chat>],
+}
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -645,6 +705,17 @@ export interface GroupChatSummary {
   'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
 }
+export interface GroupChatsInitial {
+  'summaries' : Array<UserCanisterGroupChatSummary>,
+  'pinned' : Array<ChatId>,
+  'cached' : [] | [CachedGroupChatSummaries],
+}
+export interface GroupChatsUpdates {
+  'added' : Array<UserCanisterGroupChatSummary>,
+  'pinned' : [] | [Array<ChatId>],
+  'updated' : Array<UserCanisterGroupChatSummaryUpdates>,
+  'removed' : Array<ChatId>,
+}
 export interface GroupDescriptionChanged {
   'new_description' : string,
   'previous_description' : string,
@@ -748,6 +819,18 @@ export interface IndexedNotification {
 }
 export interface InitUserPrincipalMigrationArgs { 'new_principal' : Principal }
 export type InitUserPrincipalMigrationResponse = { 'Success' : null };
+export interface InitialStateArgs { 'disable_cache' : [] | [boolean] }
+export type InitialStateResponse = {
+    'Success' : {
+      'communities' : CommunitiesInitial,
+      'blocked_users' : Array<UserId>,
+      'favourite_chats' : FavouriteChatsInitial,
+      'group_chats' : GroupChatsInitial,
+      'avatar_id' : [] | [bigint],
+      'direct_chats' : DirectChatsInitial,
+      'timestamp' : TimestampMillis,
+    }
+  };
 export interface InitialStateV2Args { 'disable_cache' : [] | [boolean] }
 export type InitialStateV2Response = {
     'SuccessCached' : {
@@ -1475,6 +1558,19 @@ export interface UpdatedMessage {
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }
+export interface UpdatesArgs { 'updates_since' : TimestampMillis }
+export type UpdatesResponse = {
+    'Success' : {
+      'communities' : CommunitiesUpdates,
+      'blocked_users' : [] | [Array<UserId>],
+      'favourite_chats' : FavouriteChatsUpdates,
+      'group_chats' : GroupChatsUpdates,
+      'avatar_id' : DocumentIdUpdate,
+      'direct_chats' : DirectChatsUpdates,
+      'timestamp' : TimestampMillis,
+    }
+  } |
+  { 'SuccessNoUpdates' : null };
 export interface UpdatesV2Args { 'updates_since' : TimestampMillis }
 export type UpdatesV2Response = {
     'Success' : {
@@ -1492,6 +1588,32 @@ export type UpdatesV2Response = {
   } |
   { 'SuccessNoUpdates' : null };
 export interface User { 'username' : string, 'user_id' : UserId }
+export interface UserCanisterChannelSummary {
+  'channel_id' : ChannelId,
+  'read_by_me_up_to' : [] | [MessageIndex],
+  'date_read_pinned' : [] | [TimestampMillis],
+  'threads_read' : Array<[MessageIndex, MessageIndex]>,
+  'archived' : boolean,
+}
+export interface UserCanisterChannelSummaryUpdates {
+  'channel_id' : ChannelId,
+  'read_by_me_up_to' : [] | [MessageIndex],
+  'date_read_pinned' : [] | [TimestampMillis],
+  'threads_read' : Array<[MessageIndex, MessageIndex]>,
+  'archived' : [] | [boolean],
+}
+export interface UserCanisterCommunitySummary {
+  'community_id' : CommunityId,
+  'channels' : Array<UserCanisterChannelSummary>,
+  'pinned' : Array<ChannelId>,
+  'archived' : boolean,
+}
+export interface UserCanisterCommunitySummaryUpdates {
+  'community_id' : CommunityId,
+  'channels' : Array<UserCanisterChannelSummaryUpdates>,
+  'pinned' : [] | [Array<ChannelId>],
+  'archived' : [] | [boolean],
+}
 export interface UserCanisterGroupChatSummary {
   'read_by_me_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
@@ -1554,7 +1676,15 @@ export interface _SERVICE {
     AddHotGroupExclusionsResponse
   >,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
+  'add_remove_favourite_chats' : ActorMethod<
+    [AddRemoveFavouriteChatsArgs],
+    AddRemoveFavouriteChatsResponse
+  >,
   'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
+  'archive_unarchive_chats' : ActorMethod<
+    [ArchiveUnarchiveChatsArgs],
+    ArchiveUnarchiveChatsResponse
+  >,
   'bio' : ActorMethod<[BioArgs], BioResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
   'cancel_message_reminder' : ActorMethod<
@@ -1586,6 +1716,7 @@ export interface _SERVICE {
     [InitUserPrincipalMigrationArgs],
     InitUserPrincipalMigrationResponse
   >,
+  'initial_state' : ActorMethod<[InitialStateArgs], InitialStateResponse>,
   'initial_state_v2' : ActorMethod<
     [InitialStateV2Args],
     InitialStateV2Response
@@ -1637,6 +1768,7 @@ export interface _SERVICE {
     UnmuteNotificationsResponse
   >,
   'unpin_chat' : ActorMethod<[UnpinChatRequest], UnpinChatResponse>,
+  'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
   'updates_v2' : ActorMethod<[UpdatesV2Args], UpdatesV2Response>,
   'withdraw_crypto_v2' : ActorMethod<
     [WithdrawCryptoArgs],

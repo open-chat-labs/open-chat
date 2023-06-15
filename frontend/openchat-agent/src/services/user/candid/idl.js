@@ -34,10 +34,35 @@ export const idlFactory = ({ IDL }) => {
     'InvalidReaction' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });
+  const CommunityId = CanisterId;
+  const ChannelId = IDL.Nat;
+  const Chat = IDL.Variant({
+    'Group' : ChatId,
+    'Channel' : IDL.Tuple(CommunityId, ChannelId),
+    'Direct' : ChatId,
+  });
+  const AddRemoveFavouriteChatsArgs = IDL.Record({
+    'to_add' : IDL.Vec(Chat),
+    'to_remove' : IDL.Vec(Chat),
+  });
+  const AddRemoveFavouriteChatsResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+  });
   const ArchiveChatArgs = IDL.Record({ 'chat_id' : ChatId });
   const ArchiveChatResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
+  });
+  const ArchiveUnarchiveChatsArgs = IDL.Record({
+    'to_archive' : IDL.Vec(Chat),
+    'to_unarchive' : IDL.Vec(Chat),
+  });
+  const ArchiveUnarchiveChatsResponse = IDL.Variant({
+    'PartialSuccess' : IDL.Record({ 'chats_not_found' : IDL.Vec(Chat) }),
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'Failure' : IDL.Null,
   });
   const BioArgs = IDL.Record({});
   const BioResponse = IDL.Variant({ 'Success' : IDL.Text });
@@ -106,7 +131,6 @@ export const idlFactory = ({ IDL }) => {
     'length_provided' : IDL.Nat32,
     'min_length' : IDL.Nat32,
   });
-  const CommunityId = CanisterId;
   const CreateCommunitySuccessResult = IDL.Record({
     'community_id' : CommunityId,
   });
@@ -792,13 +816,26 @@ export const idlFactory = ({ IDL }) => {
   const InitUserPrincipalMigrationResponse = IDL.Variant({
     'Success' : IDL.Null,
   });
-  const InitialStateV2Args = IDL.Record({
-    'disable_cache' : IDL.Opt(IDL.Bool),
+  const InitialStateArgs = IDL.Record({ 'disable_cache' : IDL.Opt(IDL.Bool) });
+  const UserCanisterChannelSummary = IDL.Record({
+    'channel_id' : ChannelId,
+    'read_by_me_up_to' : IDL.Opt(MessageIndex),
+    'date_read_pinned' : IDL.Opt(TimestampMillis),
+    'threads_read' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
+    'archived' : IDL.Bool,
   });
-  const Version = IDL.Record({
-    'major' : IDL.Nat32,
-    'minor' : IDL.Nat32,
-    'patch' : IDL.Nat32,
+  const UserCanisterCommunitySummary = IDL.Record({
+    'community_id' : CommunityId,
+    'channels' : IDL.Vec(UserCanisterChannelSummary),
+    'pinned' : IDL.Vec(ChannelId),
+    'archived' : IDL.Bool,
+  });
+  const CommunitiesInitial = IDL.Record({
+    'summaries' : IDL.Vec(UserCanisterCommunitySummary),
+  });
+  const FavouriteChatsInitial = IDL.Record({
+    'chats' : IDL.Vec(Chat),
+    'pinned' : IDL.Vec(Chat),
   });
   const UserCanisterGroupChatSummary = IDL.Record({
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
@@ -832,37 +869,17 @@ export const idlFactory = ({ IDL }) => {
     'custom_type_messages' : IDL.Nat64,
     'prize_messages' : IDL.Nat64,
   });
-  const MessageIndexRange = IDL.Record({
-    'end' : MessageIndex,
-    'start' : MessageIndex,
-  });
-  const MessageEventWrapper = IDL.Record({
-    'event' : Message,
-    'timestamp' : TimestampMillis,
-    'index' : EventIndex,
-    'correlation_id' : IDL.Nat64,
-    'expires_at' : IDL.Opt(TimestampMillis),
-  });
-  const DirectChatSummary = IDL.Record({
-    'read_by_them_up_to' : IDL.Opt(MessageIndex),
-    'date_created' : TimestampMillis,
-    'metrics' : ChatMetrics,
-    'them' : UserId,
-    'notifications_muted' : IDL.Bool,
-    'events_ttl' : IDL.Opt(Milliseconds),
-    'latest_event_index' : EventIndex,
-    'read_by_me_up_to' : IDL.Opt(MessageIndex),
-    'expired_messages' : IDL.Vec(MessageIndexRange),
-    'archived' : IDL.Bool,
-    'my_metrics' : ChatMetrics,
-    'latest_message' : MessageEventWrapper,
-  });
   const GovernanceProposalsSubtype = IDL.Record({
     'is_nns' : IDL.Bool,
     'governance_canister_id' : CanisterId,
   });
   const GroupSubtype = IDL.Variant({
     'GovernanceProposals' : GovernanceProposalsSubtype,
+  });
+  const Version = IDL.Record({
+    'major' : IDL.Nat32,
+    'minor' : IDL.Nat32,
+    'patch' : IDL.Nat32,
   });
   const ThreadSyncDetails = IDL.Record({
     'root_message_index' : MessageIndex,
@@ -882,6 +899,17 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'mentioned_by' : UserId,
     'message_index' : MessageIndex,
+  });
+  const MessageIndexRange = IDL.Record({
+    'end' : MessageIndex,
+    'start' : MessageIndex,
+  });
+  const MessageEventWrapper = IDL.Record({
+    'event' : Message,
+    'timestamp' : TimestampMillis,
+    'index' : EventIndex,
+    'correlation_id' : IDL.Nat64,
+    'expires_at' : IDL.Opt(TimestampMillis),
   });
   const GroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
@@ -915,6 +943,47 @@ export const idlFactory = ({ IDL }) => {
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
     'latest_message' : IDL.Opt(MessageEventWrapper),
+  });
+  const CachedGroupChatSummaries = IDL.Record({
+    'summaries' : IDL.Vec(GroupChatSummary),
+    'timestamp' : TimestampMillis,
+  });
+  const GroupChatsInitial = IDL.Record({
+    'summaries' : IDL.Vec(UserCanisterGroupChatSummary),
+    'pinned' : IDL.Vec(ChatId),
+    'cached' : IDL.Opt(CachedGroupChatSummaries),
+  });
+  const DirectChatSummary = IDL.Record({
+    'read_by_them_up_to' : IDL.Opt(MessageIndex),
+    'date_created' : TimestampMillis,
+    'metrics' : ChatMetrics,
+    'them' : UserId,
+    'notifications_muted' : IDL.Bool,
+    'events_ttl' : IDL.Opt(Milliseconds),
+    'latest_event_index' : EventIndex,
+    'read_by_me_up_to' : IDL.Opt(MessageIndex),
+    'expired_messages' : IDL.Vec(MessageIndexRange),
+    'archived' : IDL.Bool,
+    'my_metrics' : ChatMetrics,
+    'latest_message' : MessageEventWrapper,
+  });
+  const DirectChatsInitial = IDL.Record({
+    'summaries' : IDL.Vec(DirectChatSummary),
+    'pinned' : IDL.Vec(ChatId),
+  });
+  const InitialStateResponse = IDL.Variant({
+    'Success' : IDL.Record({
+      'communities' : CommunitiesInitial,
+      'blocked_users' : IDL.Vec(UserId),
+      'favourite_chats' : FavouriteChatsInitial,
+      'group_chats' : GroupChatsInitial,
+      'avatar_id' : IDL.Opt(IDL.Nat),
+      'direct_chats' : DirectChatsInitial,
+      'timestamp' : TimestampMillis,
+    }),
+  });
+  const InitialStateV2Args = IDL.Record({
+    'disable_cache' : IDL.Opt(IDL.Bool),
   });
   const InitialStateV2Response = IDL.Variant({
     'SuccessCached' : IDL.Record({
@@ -963,7 +1032,6 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'InternalError' : IDL.Text,
   });
-  const ChannelId = IDL.Nat;
   const ThreadRead = IDL.Record({
     'root_message_index' : MessageIndex,
     'read_up_to' : MessageIndex,
@@ -1249,11 +1317,28 @@ export const idlFactory = ({ IDL }) => {
   });
   const UnpinChatRequest = IDL.Record({ 'chat_id' : ChatId });
   const UnpinChatResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const UpdatesV2Args = IDL.Record({ 'updates_since' : TimestampMillis });
-  const DocumentIdUpdate = IDL.Variant({
-    'NoChange' : IDL.Null,
-    'SetToNone' : IDL.Null,
-    'SetToSome' : IDL.Nat,
+  const UpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
+  const UserCanisterChannelSummaryUpdates = IDL.Record({
+    'channel_id' : ChannelId,
+    'read_by_me_up_to' : IDL.Opt(MessageIndex),
+    'date_read_pinned' : IDL.Opt(TimestampMillis),
+    'threads_read' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
+    'archived' : IDL.Opt(IDL.Bool),
+  });
+  const UserCanisterCommunitySummaryUpdates = IDL.Record({
+    'community_id' : CommunityId,
+    'channels' : IDL.Vec(UserCanisterChannelSummaryUpdates),
+    'pinned' : IDL.Opt(IDL.Vec(ChannelId)),
+    'archived' : IDL.Opt(IDL.Bool),
+  });
+  const CommunitiesUpdates = IDL.Record({
+    'added' : IDL.Vec(UserCanisterCommunitySummary),
+    'updated' : IDL.Vec(UserCanisterCommunitySummaryUpdates),
+    'removed' : IDL.Vec(CommunityId),
+  });
+  const FavouriteChatsUpdates = IDL.Record({
+    'chats' : IDL.Opt(IDL.Vec(Chat)),
+    'pinned' : IDL.Opt(IDL.Vec(Chat)),
   });
   const UserCanisterGroupChatSummaryUpdates = IDL.Record({
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
@@ -1261,6 +1346,17 @@ export const idlFactory = ({ IDL }) => {
     'date_read_pinned' : IDL.Opt(TimestampMillis),
     'threads_read' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
     'archived' : IDL.Opt(IDL.Bool),
+  });
+  const GroupChatsUpdates = IDL.Record({
+    'added' : IDL.Vec(UserCanisterGroupChatSummary),
+    'pinned' : IDL.Opt(IDL.Vec(ChatId)),
+    'updated' : IDL.Vec(UserCanisterGroupChatSummaryUpdates),
+    'removed' : IDL.Vec(ChatId),
+  });
+  const DocumentIdUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : IDL.Nat,
   });
   const EventsTimeToLiveUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
@@ -1281,6 +1377,24 @@ export const idlFactory = ({ IDL }) => {
     'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
+  const DirectChatsUpdates = IDL.Record({
+    'added' : IDL.Vec(DirectChatSummary),
+    'pinned' : IDL.Opt(IDL.Vec(ChatId)),
+    'updated' : IDL.Vec(DirectChatSummaryUpdates),
+  });
+  const UpdatesResponse = IDL.Variant({
+    'Success' : IDL.Record({
+      'communities' : CommunitiesUpdates,
+      'blocked_users' : IDL.Opt(IDL.Vec(UserId)),
+      'favourite_chats' : FavouriteChatsUpdates,
+      'group_chats' : GroupChatsUpdates,
+      'avatar_id' : DocumentIdUpdate,
+      'direct_chats' : DirectChatsUpdates,
+      'timestamp' : TimestampMillis,
+    }),
+    'SuccessNoUpdates' : IDL.Null,
+  });
+  const UpdatesV2Args = IDL.Record({ 'updates_since' : TimestampMillis });
   const UpdatesV2Response = IDL.Variant({
     'Success' : IDL.Record({
       'user_canister_wasm_version' : IDL.Opt(Version),
@@ -1311,7 +1425,17 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
+    'add_remove_favourite_chats' : IDL.Func(
+        [AddRemoveFavouriteChatsArgs],
+        [AddRemoveFavouriteChatsResponse],
+        [],
+      ),
     'archive_chat' : IDL.Func([ArchiveChatArgs], [ArchiveChatResponse], []),
+    'archive_unarchive_chats' : IDL.Func(
+        [ArchiveUnarchiveChatsArgs],
+        [ArchiveUnarchiveChatsResponse],
+        [],
+      ),
     'bio' : IDL.Func([BioArgs], [BioResponse], ['query']),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'cancel_message_reminder' : IDL.Func(
@@ -1363,6 +1487,11 @@ export const idlFactory = ({ IDL }) => {
         [InitUserPrincipalMigrationArgs],
         [InitUserPrincipalMigrationResponse],
         [],
+      ),
+    'initial_state' : IDL.Func(
+        [InitialStateArgs],
+        [InitialStateResponse],
+        ['query'],
       ),
     'initial_state_v2' : IDL.Func(
         [InitialStateV2Args],
@@ -1448,6 +1577,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'unpin_chat' : IDL.Func([UnpinChatRequest], [UnpinChatResponse], []),
+    'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
     'updates_v2' : IDL.Func([UpdatesV2Args], [UpdatesV2Response], ['query']),
     'withdraw_crypto_v2' : IDL.Func(
         [WithdrawCryptoArgs],
