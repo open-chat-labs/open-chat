@@ -82,23 +82,22 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     });
 
     Success(CommunityCanisterCommunitySummaryUpdates {
-            community_id: state.env.canister_id().into(),
-            last_updated: now,
-            name: updates_from_events.name,
-            description: updates_from_events.description,
-            avatar_id: updates_from_events.avatar_id,
-            banner_id: updates_from_events.banner_id,
-            is_public: updates_from_events.is_public,
-            member_count: updates_from_events.members_changed.then_some(state.data.members.len()),
-            permissions: updates_from_events.permissions,
-            frozen: updates_from_events.frozen,
-            gate: updates_from_events.gate,
-            latest_event_index: updates_from_events.latest_event_index,
-            channels_added,
-            channels_updated,
-            membership,
-        }
-    )
+        community_id: state.env.canister_id().into(),
+        last_updated: now,
+        name: updates_from_events.name,
+        description: updates_from_events.description,
+        avatar_id: updates_from_events.avatar_id,
+        banner_id: updates_from_events.banner_id,
+        is_public: updates_from_events.is_public,
+        member_count: updates_from_events.members_changed.then_some(state.data.members.len()),
+        permissions: updates_from_events.permissions,
+        frozen: updates_from_events.frozen,
+        gate: updates_from_events.gate,
+        latest_event_index: updates_from_events.latest_event_index,
+        channels_added,
+        channels_updated,
+        membership,
+    })
 }
 
 #[derive(Default)]
