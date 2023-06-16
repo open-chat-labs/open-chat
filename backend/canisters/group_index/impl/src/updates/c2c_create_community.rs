@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community::{Response::*, *};
-use types::{CanisterId, CommunityId, Document, UserId};
+use types::{AccessGate, CanisterId, CommunityId, Document, UserId};
 
 #[update_msgpack]
 #[trace]
@@ -35,7 +35,7 @@ async fn c2c_create_community(args: Args) -> Response {
         banner: args.banner,
         history_visible_to_new_joiners: args.history_visible_to_new_joiners,
         permissions: args.permissions,
-        gate: args.gate,
+        gate: args.gate.clone(),
         default_channels: args.default_channels,
     };
 
@@ -51,6 +51,7 @@ async fn c2c_create_community(args: Args) -> Response {
                     args.description,
                     avatar_id,
                     banner_id,
+                    args.gate,
                     local_group_index_canister,
                     state,
                 )
@@ -114,15 +115,21 @@ fn commit(
     description: String,
     avatar_id: Option<u128>,
     banner_id: Option<u128>,
+    gate: Option<AccessGate>,
     local_group_index_canister: CanisterId,
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
     if is_public {
-        state
-            .data
-            .public_communities
-            .handle_community_created(community_id, name, description, avatar_id, banner_id, now);
+        state.data.public_communities.handle_community_created(
+            community_id,
+            name,
+            description,
+            avatar_id,
+            banner_id,
+            gate,
+            now,
+        );
     } else {
         state
             .data

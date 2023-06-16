@@ -1,4 +1,4 @@
-use crate::{ChatId, CommunityId};
+use crate::{AccessGate, ChatId, CommunityId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -17,4 +17,7 @@ pub struct CommunityMatch {
     pub description: String,
     pub avatar_id: Option<u128>,
     pub banner_id: Option<u128>,
+    pub member_count: u32,
+    pub channel_count: u32,
+    pub gate: Option<AccessGate>,
 }

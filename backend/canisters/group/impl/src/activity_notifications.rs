@@ -28,7 +28,7 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
 
         let mut activity = PublicGroupActivity {
             timestamp: now,
-            participant_count: data.chat.members.len(),
+            member_count: data.chat.members.len(),
             ..Default::default()
         };
 
@@ -36,9 +36,9 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
         let mut reaction_unique_users = HashSet::new();
 
         let mut inc_participant_count = |count, within_last_hour| {
-            activity.last_day.participant_count_change += count;
+            activity.last_day.member_count_change += count;
             if within_last_hour {
-                activity.last_hour.participant_count_change += count;
+                activity.last_hour.member_count_change += count;
             }
         };
 

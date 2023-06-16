@@ -1,19 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CommunityMatch, GroupMatch};
+use types::CommunityMatch;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub scope: Scope,
-    pub search_term: String,
-    pub max_results: u8,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Scope {
-    All,
-    Communities,
-    Groups,
+    pub search_term: Option<String>,
+    pub page_index: u32,
+    pub page_size: u8,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -26,6 +19,5 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub group_matches: Vec<GroupMatch>,
-    pub community_matches: Vec<CommunityMatch>,
+    pub matches: Vec<CommunityMatch>,
 }
