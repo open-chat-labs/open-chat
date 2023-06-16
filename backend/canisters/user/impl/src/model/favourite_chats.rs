@@ -20,15 +20,16 @@ impl FavouriteChats {
         self.chats.value.remove(&chat)
     }
 
-    // pub fn pin(&mut self, chat: Chat, now: TimestampMillis) -> bool {
-    //     if self.chats.value.contains(&chat) {
-    //         self.pinned.timestamp = now;
-    //         self.pinned.value.insert(0, chat);
-    //         true
-    //     } else {
-    //         false
-    //     }
-    // }
+    pub fn pin(&mut self, chat: Chat, now: TimestampMillis) -> bool {
+        if !self.pinned.value.contains(&chat) {
+            self.pinned.timestamp = now;
+            self.pinned.value.insert(0, chat);
+            self.chats.value.insert(chat);
+            true
+        } else {
+            false
+        }
+    }
 
     pub fn unpin(&mut self, chat: &Chat, now: TimestampMillis) -> bool {
         if self.pinned.value.contains(chat) {

@@ -94,6 +94,13 @@ impl DirectChats {
         self.direct_chats.contains_key(chat_id)
     }
 
+    pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {
+        if !self.pinned.value.contains(&chat_id) {
+            self.pinned.timestamp = now;
+            self.pinned.value.insert(0, chat_id);
+        }
+    }
+
     pub fn unpin(&mut self, chat_id: &ChatId, now: TimestampMillis) {
         if self.pinned.value.contains(chat_id) {
             self.pinned.timestamp = now;
