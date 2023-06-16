@@ -746,6 +746,7 @@ impl ChatMetricsInternal {
             file_messages: self.file_messages,
             polls: self.polls,
             poll_votes: self.poll_votes,
+            cycles_messages: 0,
             icp_messages: self.icp_messages,
             sns1_messages: self.sns1_messages,
             ckbtc_messages: self.ckbtc_messages,
