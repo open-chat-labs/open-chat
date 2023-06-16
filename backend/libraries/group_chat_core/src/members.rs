@@ -450,7 +450,7 @@ mod tests {
             date_added: 1,
             role: GroupRoleInternal::Owner,
             notifications_muted: Timestamped::new(true, 1),
-            mentions: mentions,
+            mentions,
             threads: HashSet::from([1.into()]),
             proposal_votes: BTreeMap::from([(1, vec![1.into()])]),
             suspended: Timestamped::new(true, 1),
