@@ -1,8 +1,8 @@
 export const allRoles = ["owner", "admins", "moderators", "members"] as const;
-export const groupRoles = allRoles;
-type GroupRolesType = typeof allRoles;
-export type GroupPermissionRole = GroupRolesType[number];
-export type PermissionRole = GroupPermissionRole;
+export const chatRoles = allRoles;
+type ChatRolesType = typeof allRoles;
+export type ChatPermissionRole = ChatRolesType[number];
+export type PermissionRole = ChatPermissionRole;
 
 export const communityRoles = ["owner", "admins", "members"] as const;
 type CommunityRolesType = typeof communityRoles;
@@ -12,5 +12,30 @@ export type MemberRole = "admin" | "moderator" | "participant" | "owner" | "prev
 
 export type Permissioned<T> = {
     permissions: T;
-    myRole: MemberRole;
+};
+
+export type ChatPermissions = {
+    changePermissions: ChatPermissionRole;
+    changeRoles: ChatPermissionRole;
+    removeMembers: ChatPermissionRole;
+    blockUsers: ChatPermissionRole;
+    deleteMessages: ChatPermissionRole;
+    updateGroup: ChatPermissionRole;
+    pinMessages: ChatPermissionRole;
+    inviteUsers: ChatPermissionRole;
+    createPolls: ChatPermissionRole;
+    sendMessages: ChatPermissionRole;
+    reactToMessages: ChatPermissionRole;
+    replyInThread: ChatPermissionRole;
+};
+
+export type CommunityPermissions = {
+    changePermissions: CommunityPermissionRole;
+    changeRoles: CommunityPermissionRole;
+    inviteUsers: CommunityPermissionRole;
+    removeMembers: CommunityPermissionRole;
+    blockUsers: CommunityPermissionRole;
+    updateDetails: CommunityPermissionRole;
+    createPublicChannel: CommunityPermissionRole;
+    createPrivateChannel: CommunityPermissionRole;
 };

@@ -222,7 +222,7 @@ export class OpenChatAgent extends EventTarget {
         return this._communityClients[communityId];
     }
 
-    getGroupClient(chatId: string): GroupClient {
+    getGroupClient(chatId: ChatIdentifier): GroupClient {
         if (!this._groupClients[chatId]) {
             const inviteCode = this.getProvidedInviteCode(chatId);
             this._groupClients[chatId] = GroupClient.create(
@@ -252,8 +252,8 @@ export class OpenChatAgent extends EventTarget {
     }
 
     editMessage(
-        chatType: "direct_chat" | "group_chat",
-        chatId: string,
+        chatType: ChatSummary["kind"],
+        chatId: ChatIdentifier,
         msg: Message,
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {
@@ -314,7 +314,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private editGroupMessage(
-        chatId: string,
+        chatId: ChatIdentifier,
         message: Message,
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {

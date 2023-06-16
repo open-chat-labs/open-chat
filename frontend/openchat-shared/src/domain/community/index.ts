@@ -6,10 +6,11 @@ import type {
     Member,
     Message,
     MessageContent,
+    ChannelSummary,
 } from "../chat";
 import type { DataContent } from "../data";
 import type { HasIdentity } from "../identity";
-import type { CommunityPermissionRole, Permissioned } from "../permission";
+import type { CommunityPermissionRole, CommunityPermissions, Permissioned } from "../permission";
 import type {
     ChannelNotFound,
     CommunityFrozen,
@@ -32,30 +33,25 @@ import type {
 } from "../response";
 import type { HasLevel } from "../structure";
 
+export type CommunityMembership = {
+    joined: bigint;
+    role: CommunityPermissionRole;
+};
+
 export type Community = HasIdentity &
     AccessControlled &
     HasLevel &
     Permissioned<CommunityPermissions> & {
         name: string;
-        joined: bigint;
         latestEventIndex: number;
         lastUpdated: bigint;
         description: string;
         memberCount: number;
         avatar: DataContent;
         banner: DataContent;
+        membership?: CommunityMembership;
+        channels: ChannelSummary[];
     };
-
-export type CommunityPermissions = {
-    changePermissions: CommunityPermissionRole;
-    changeRoles: CommunityPermissionRole;
-    inviteUsers: CommunityPermissionRole;
-    removeMembers: CommunityPermissionRole;
-    blockUsers: CommunityPermissionRole;
-    updateDetails: CommunityPermissionRole;
-    createPublicChannel: CommunityPermissionRole;
-    createPrivateChannel: CommunityPermissionRole;
-};
 
 // TODO - not sure if this really needs to be a thing yet
 export type DefaultChannel = {

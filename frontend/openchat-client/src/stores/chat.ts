@@ -13,6 +13,7 @@ import {
     compareChats,
     emptyChatMetrics,
     UpdatedEvent,
+    ChatIdentifier,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
@@ -352,7 +353,7 @@ const confirmedEventIndexesLoadedStore = derived([serverEventsStore], ([serverEv
     return ranges;
 });
 
-export function confirmedEventIndexesLoaded(chatId: string): DRange {
+export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
     return get(selectedChatId) === chatId ? get(confirmedEventIndexesLoadedStore) : new DRange();
 }
 
@@ -575,12 +576,12 @@ export function isContiguousInThread(events: EventWrapper<ChatEvent>[]): boolean
     return isContiguousInternal(get(confirmedThreadEventIndexesLoadedStore), events);
 }
 
-export function isContiguous(chatId: string, events: EventWrapper<ChatEvent>[]): boolean {
+export function isContiguous(chatId: ChatIdentifier, events: EventWrapper<ChatEvent>[]): boolean {
     return isContiguousInternal(confirmedEventIndexesLoaded(chatId), events);
 }
 
-export function clearServerEvents(chatId: string): void {
-    chatStateStore.setProp(chatId, "serverEvents", []);
+export function clearServerEvents(id: ChatIdentifier): void {
+    chatStateStore.setProp(id, "serverEvents", []);
 }
 
 /**

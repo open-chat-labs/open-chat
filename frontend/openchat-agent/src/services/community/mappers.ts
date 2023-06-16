@@ -98,6 +98,7 @@ import {
     apiGroupSubtype,
     apiOptional,
     chatMetrics,
+    communityPermissionRole,
     gateCheckFailedReason,
     groupPermissions,
     memberRole,
@@ -1001,7 +1002,9 @@ export function apiOptionalCommunityPermissions(
     };
 }
 
-export function groupChatSummary(candid: ApiCommunityCanisterChannelSummary): GroupChatSummary {
+export function communityChannelSummary(
+    candid: ApiCommunityCanisterChannelSummary
+): GroupChatSummary {
     const latestMessage = optional(candid.latest_message, (ev) => ({
         index: ev.index,
         timestamp: ev.timestamp,
@@ -1042,5 +1045,11 @@ export function groupChatSummary(candid: ApiCommunityCanisterChannelSummary): Gr
         dateReadPinned: undefined,
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
+        membership: optional(candid.membership, (m) => {
+            return {
+                role: communityPermissionRole(m.role),
+                joined: m.joined,
+            };
+        }),
     };
 }

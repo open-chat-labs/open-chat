@@ -1,22 +1,29 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { selectedChatId } from "./chat";
+import { ChatIdentifier, chatIdentifierToString } from "openchat-shared";
 
-function setDataForChat<T>(store: Writable<Record<string, T>>, chatId: string, data: T): void {
+function setDataForChat<T>(
+    store: Writable<Record<string, T>>,
+    chatId: ChatIdentifier,
+    data: T
+): void {
+    const key = chatIdentifierToString(chatId);
     store.update((s) => {
-        s[chatId] = data;
+        s[key] = data;
         return s;
     });
 }
 
 function updateDataForChat<T>(
     store: Writable<Record<string, T>>,
-    chatId: string,
+    chatId: ChatIdentifier,
     fn: (events: T) => T,
     empty: T
 ): void {
     store.update((s) => {
-        s[chatId] = fn(s[chatId] ?? empty);
+        const key = chatIdentifierToString(chatId);
+        s[key] = fn(s[key] ?? empty);
         return s;
     });
 }
@@ -35,13 +42,15 @@ export function createChatSpecificObjectStore<T extends Record<string, unknown>>
     return {
         all,
         subscribe: byChat.subscribe,
-        get: (chatId: string): T => get(all)[chatId] ?? init(),
-        update: (chatId: string, fn: (data: T) => T) => updateDataForChat(all, chatId, fn, init()),
-        set: (chatId: string, data: T) => setDataForChat(all, chatId, data),
-        clear: (chatId: string): void => setDataForChat(all, chatId, init()),
-        getProp: <P extends keyof T>(chatId: string, prop: P) => (get(all)[chatId] ?? init())[prop],
+        get: (chatId: ChatIdentifier): T => get(all)[chatIdentifierToString(chatId)] ?? init(),
+        update: (chatId: ChatIdentifier, fn: (data: T) => T) =>
+            updateDataForChat(all, chatId, fn, init()),
+        set: (chatId: ChatIdentifier, data: T) => setDataForChat(all, chatId, data),
+        clear: (chatId: ChatIdentifier): void => setDataForChat(all, chatId, init()),
+        getProp: <P extends keyof T>(chatId: ChatIdentifier, prop: P) =>
+            (get(all)[chatIdentifierToString(chatId)] ?? init())[prop],
         updateProp: <P extends keyof T>(
-            chatId: string,
+            chatId: ChatIdentifier,
             prop: P,
             updateFn: (data: T[P]) => T[P]
         ) => {
@@ -58,7 +67,7 @@ export function createChatSpecificObjectStore<T extends Record<string, unknown>>
                 init()
             );
         },
-        setProp: <P extends keyof T>(chatId: string, prop: P, value: T[P]) => {
+        setProp: <P extends keyof T>(chatId: ChatIdentifier, prop: P, value: T[P]) => {
             updateDataForChat(
                 all,
                 chatId,

@@ -1,6 +1,6 @@
 import {
     ChatEvent,
-    ChatMetrics,
+    Metrics,
     ChatSummary,
     Cryptocurrency,
     cryptoLookup,
@@ -179,7 +179,18 @@ export function getMinVisibleEventIndex(chat: ChatSummary): number {
 }
 
 export function getDisplayDate(chat: ChatSummary): bigint {
-    const started = chat.kind === "direct_chat" ? chat.dateCreated : chat.joined;
+    let started = BigInt(0);
+    switch (chat.kind) {
+        case "direct_chat":
+            started = chat.dateCreated;
+            break;
+        case "group_chat":
+            started = chat.membership?.joined ?? started;
+            break;
+        case "channel":
+            started = chat.membership?.joined ?? started;
+            break;
+    }
 
     return chat.latestMessage && chat.latestMessage.timestamp > started
         ? chat.latestMessage.timestamp
@@ -190,7 +201,7 @@ export function compareChats(a: ChatSummary, b: ChatSummary): number {
     return Number(getDisplayDate(b) - getDisplayDate(a));
 }
 
-export function emptyChatMetrics(): ChatMetrics {
+export function emptyChatMetrics(): Metrics {
     return {
         audioMessages: 0,
         edits: 0,

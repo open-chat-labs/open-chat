@@ -109,7 +109,7 @@ import type {
     ApiGateCheckFailedReason,
     ApiCommunityCanisterCommunitySummary,
 } from "../localUserIndex/candid/idl";
-import type { ApiCommunityPermissionRole } from "../community/candid/idl";
+import type { ApiCommunityPermissionRole, ApiCommunityRole } from "../community/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -646,7 +646,7 @@ export function communityPermissions(candid: ApiCommunityPermissions): Community
 }
 
 export function communityPermissionRole(
-    candid: ApiCommunityPermissionRole
+    candid: ApiCommunityPermissionRole | ApiCommunityRole
 ): CommunityPermissionRole {
     if ("Owner" in candid) return "owner";
     if ("Admins" in candid) return "admins";
@@ -1216,7 +1216,6 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         description: candid.description,
         public: candid.is_public,
         historyVisible: false,
-        joined: candid.joined,
         latestEventIndex: candid.latest_event_index,
         lastUpdated: candid.last_updated,
         avatar: {
@@ -1225,7 +1224,6 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
                 canisterId: candid.community_id.toString(),
             })),
         },
-        myRole: "owner", //TODO - this is not coming back
         banner: {
             blobReference: optional(candid.banner_id, (blobId) => ({
                 blobId,
@@ -1237,6 +1235,12 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "community",
         permissions: communityPermissions(candid.permissions),
+        membership: optional(candid.membership, (m) => {
+            return {
+                role: communityPermissionRole(m.role),
+                joined: m.joined,
+            };
+        }),
     };
 }
 

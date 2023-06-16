@@ -9,6 +9,7 @@ import {
     ReportMessageResponse,
     JoinCommunityResponse,
     CommunityCanisterCommunitySummary,
+    CommunityMembership,
 } from "./types";
 export {
     _SERVICE as LocalUserIndexService,
@@ -20,6 +21,7 @@ export {
     InviteUsersToGroupResponse as ApiInviteUsersResponse,
     JoinCommunityResponse as ApiJoinCommunityResponse,
     CommunityCanisterCommunitySummary as ApiCommunityCanisterCommunitySummary,
+    CommunityMembership as ApiCommunityMembership,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
