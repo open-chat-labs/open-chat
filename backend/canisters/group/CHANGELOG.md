@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `created_by` to `GroupChatCore` ([#3786](https://github.com/open-chat-labs/open-chat/pull/3786))
 - Refactor core summaries logic ([#3791](https://github.com/open-chat-labs/open-chat/pull/3791))
 - Deserialize onto old `ChatEventInternal` types then map to new ([#3798](https://github.com/open-chat-labs/open-chat/pull/3798))
+- Temporarily reinstate deprecated `cycles_messages` field ([#3801](https://github.com/open-chat-labs/open-chat/pull/3801))
 
 ## [[2.0.716](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.716-group)] - 2023-06-12
 
