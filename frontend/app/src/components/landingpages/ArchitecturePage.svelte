@@ -166,7 +166,7 @@
             <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-5">OpenStorage</HashLinkTarget>
 
             <p>
-                <ExternalLink href="https://github.com/open-ic/open-storage"
+                <ExternalLink href="https://github.com/open-chat-labs/open-storage"
                     >OpenStorage</ExternalLink
                 >is a scalable file storage system built by the OpenChat team which is available to
                 be used by other projects. It consists of an index canister and dynamically created
@@ -454,7 +454,7 @@
         </div>
         <div class="body">
             <p>
-                The <ExternalLink href={"https://github.com/open-ic/open-chat"}
+                The <ExternalLink href={"https://github.com/open-chat-labs/open-chat"}
                     >OpenChat source code</ExternalLink> is built into the WASMs used by each type of
                 OpenChat canister in a repeatable way using docker. Anyone who pulls the OpenChat source
                 code and uses the docker build will produce identical WASM files.
@@ -580,7 +580,7 @@
     </CollapsibleCard>
     <div class="unabridged">
         <ArrowLink
-            url="https://github.com/open-ic/open-chat/blob/master/architecture/doc.md#openchat-architecture"
+            url="https://github.com/open-chat-labs/open-chat/blob/master/architecture/doc.md#openchat-architecture"
             target="_blank"
             color={"#23A2EE"}>
             Unabridged architecture
