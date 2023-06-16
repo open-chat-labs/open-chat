@@ -6,6 +6,18 @@ use utils::time::HOUR_IN_MS;
 use utils::timestamped_map::TimestampedMap;
 
 #[derive(Serialize, Deserialize)]
+struct GroupChatPrevious {
+    chat_id: ChatId,
+    date_joined: TimestampMillis,
+    read_by_me_up_to: Timestamped<Option<MessageIndex>>,
+    last_changed_for_my_data: TimestampMillis,
+    threads_read: TimestampedMap<MessageIndex, MessageIndex>,
+    archived: Timestamped<bool>,
+    date_read_pinned: Timestamped<Option<TimestampMillis>>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(from = "GroupChatPrevious")]
 pub struct GroupChat {
     pub chat_id: ChatId,
     pub date_joined: TimestampMillis,
@@ -124,5 +136,21 @@ impl GroupMessagesRead {
 
     pub fn date_read_pinned_updates(&self, updates_since: TimestampMillis) -> Option<TimestampMillis> {
         self.date_read_pinned.if_set_after(updates_since).copied().flatten()
+    }
+}
+
+impl From<GroupChatPrevious> for GroupChat {
+    fn from(value: GroupChatPrevious) -> Self {
+        GroupChat {
+            chat_id: value.chat_id,
+            date_joined: value.date_joined,
+            messages_read: GroupMessagesRead {
+                read_by_me_up_to: value.read_by_me_up_to,
+                threads_read: value.threads_read,
+                date_read_pinned: value.date_read_pinned,
+            },
+            last_changed_for_my_data: value.last_changed_for_my_data,
+            archived: value.archived,
+        }
     }
 }
