@@ -81,6 +81,7 @@ type ChatMetrics =
         file_messages: nat64;
         polls: nat64;
         poll_votes: nat64;
+        cycles_message: nat64;
         icp_messages: nat64;
         sns1_messages: nat64;
         ckbtc_messages: nat64;
