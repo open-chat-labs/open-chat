@@ -1805,7 +1805,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async handleThreadEventsResponse(
-        chatId: string,
+        chatId: ChatIdentifier,
         threadRootMessageIndex: number,
         resp: EventsResponse<ChatEvent>
     ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
@@ -1860,8 +1860,8 @@ export class OpenChat extends OpenChatAgentWorker {
     formatFileSize = formatFileSize;
 
     havePermissionsChanged(
-        p1: GroupPermissions | CommunityPermissions,
-        p2: GroupPermissions | CommunityPermissions
+        p1: ChatPermissions | CommunityPermissions,
+        p2: ChatPermissions | CommunityPermissions
     ): boolean {
         const args = this.mergeKeepingOnlyChanged(p1, p2);
         return Object.keys(args).length > 0;
@@ -1962,7 +1962,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "chatEvents",
             chatType: serverChat.kind,
-            chatId: serverChat.chatId,
+            chatId: serverChat.id,
             eventIndexRange: indexRangeForChat(serverChat),
             startIndex,
             ascending,
@@ -1976,7 +1976,7 @@ export class OpenChat extends OpenChatAgentWorker {
             return undefined;
         }
 
-        const minLoadedEventIndex = this.earliestLoadedIndex(serverChat.chatId);
+        const minLoadedEventIndex = this.earliestLoadedIndex(serverChat.id);
         if (minLoadedEventIndex === undefined) {
             return [serverChat.latestEventIndex, false];
         }
@@ -1990,7 +1990,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return chat.kind === "group_chat" ? chat.minVisibleEventIndex : 0;
     }
 
-    private earliestLoadedIndex(chatId: string): number | undefined {
+    private earliestLoadedIndex(chatId: ChatIdentifier): number | undefined {
         const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
         return confirmedLoaded.length > 0 ? confirmedLoaded.index(0) : undefined;
     }
@@ -2038,7 +2038,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (newLatestMessage) {
             updateSummaryWithConfirmedMessage(
-                serverChat.chatId,
+                serverChat.id,
                 latestMessage as EventWrapper<Message>
             );
         }
@@ -2077,37 +2077,33 @@ export class OpenChat extends OpenChatAgentWorker {
 
         return (
             serverChat !== undefined &&
-            (this.confirmedUpToEventIndex(serverChat.chatId) ?? -1) < serverChat.latestEventIndex
+            (this.confirmedUpToEventIndex(serverChat.id) ?? -1) < serverChat.latestEventIndex
         );
     }
 
     private async loadDetails(clientChat: ChatSummary): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (clientChat.kind === "group_chat") {
-            if (!chatStateStore.getProp(clientChat.chatId, "detailsLoaded")) {
+            if (!chatStateStore.getProp(clientChat.id, "detailsLoaded")) {
                 const resp = await this.sendRequest({
                     kind: "getGroupDetails",
-                    chatId: clientChat.chatId,
+                    chatId: clientChat.id,
                     latestEventIndex: clientChat.latestEventIndex,
                 });
                 if (resp !== "caller_not_in_group") {
-                    chatStateStore.setProp(clientChat.chatId, "detailsLoaded", true);
+                    chatStateStore.setProp(clientChat.id, "detailsLoaded", true);
                     chatStateStore.setProp(
-                        clientChat.chatId,
+                        clientChat.id,
                         "latestEventIndex",
                         resp.latestEventIndex
                     );
-                    chatStateStore.setProp(clientChat.chatId, "members", resp.members);
-                    chatStateStore.setProp(clientChat.chatId, "blockedUsers", resp.blockedUsers);
-                    chatStateStore.setProp(clientChat.chatId, "invitedUsers", resp.invitedUsers);
-                    chatStateStore.setProp(
-                        clientChat.chatId,
-                        "pinnedMessages",
-                        resp.pinnedMessages
-                    );
-                    chatStateStore.setProp(clientChat.chatId, "rules", resp.rules);
+                    chatStateStore.setProp(clientChat.id, "members", resp.members);
+                    chatStateStore.setProp(clientChat.id, "blockedUsers", resp.blockedUsers);
+                    chatStateStore.setProp(clientChat.id, "invitedUsers", resp.invitedUsers);
+                    chatStateStore.setProp(clientChat.id, "pinnedMessages", resp.pinnedMessages);
+                    chatStateStore.setProp(clientChat.id, "rules", resp.rules);
                 }
-                await this.updateUserStore(clientChat.chatId, []);
+                await this.updateUserStore(clientChat.id, []);
             } else {
                 await this.updateDetails(clientChat);
             }
@@ -2116,27 +2112,27 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private async updateDetails(clientChat: ChatSummary): Promise<void> {
         if (clientChat.kind === "group_chat") {
-            const latestEventIndex = chatStateStore.getProp(clientChat.chatId, "latestEventIndex");
+            const latestEventIndex = chatStateStore.getProp(clientChat.id, "latestEventIndex");
             if (latestEventIndex !== undefined && latestEventIndex < clientChat.latestEventIndex) {
                 const gd = await this.sendRequest({
                     kind: "getGroupDetailsUpdates",
-                    chatId: clientChat.chatId,
+                    chatId: clientChat.id,
                     previous: {
-                        members: chatStateStore.getProp(clientChat.chatId, "members"),
-                        blockedUsers: chatStateStore.getProp(clientChat.chatId, "blockedUsers"),
-                        invitedUsers: chatStateStore.getProp(clientChat.chatId, "invitedUsers"),
-                        pinnedMessages: chatStateStore.getProp(clientChat.chatId, "pinnedMessages"),
+                        members: chatStateStore.getProp(clientChat.id, "members"),
+                        blockedUsers: chatStateStore.getProp(clientChat.id, "blockedUsers"),
+                        invitedUsers: chatStateStore.getProp(clientChat.id, "invitedUsers"),
+                        pinnedMessages: chatStateStore.getProp(clientChat.id, "pinnedMessages"),
                         latestEventIndex,
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        rules: chatStateStore.getProp(clientChat.chatId, "rules")!,
+                        rules: chatStateStore.getProp(clientChat.id, "rules")!,
                     },
                 });
-                chatStateStore.setProp(clientChat.chatId, "members", gd.members);
-                chatStateStore.setProp(clientChat.chatId, "blockedUsers", gd.blockedUsers);
-                chatStateStore.setProp(clientChat.chatId, "invitedUsers", gd.invitedUsers);
-                chatStateStore.setProp(clientChat.chatId, "pinnedMessages", gd.pinnedMessages);
-                chatStateStore.setProp(clientChat.chatId, "rules", gd.rules);
-                await this.updateUserStore(clientChat.chatId, []);
+                chatStateStore.setProp(clientChat.id, "members", gd.members);
+                chatStateStore.setProp(clientChat.id, "blockedUsers", gd.blockedUsers);
+                chatStateStore.setProp(clientChat.id, "invitedUsers", gd.invitedUsers);
+                chatStateStore.setProp(clientChat.id, "pinnedMessages", gd.pinnedMessages);
+                chatStateStore.setProp(clientChat.id, "rules", gd.rules);
+                await this.updateUserStore(clientChat.id, []);
             }
         }
     }
@@ -2166,7 +2162,7 @@ export class OpenChat extends OpenChatAgentWorker {
         serverChat: ChatSummary,
         updatedEvents: UpdatedEvent[]
     ): Promise<void> {
-        const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.chatId);
+        const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
         const confirmedThreadLoaded = this._liveState.confirmedThreadEventIndexesLoaded;
         const selectedThreadRootEvent = this._liveState.selectedThreadRootEvent;
         const selectedThreadRootMessageIndex = selectedThreadRootEvent?.event?.messageIndex;
@@ -2204,7 +2200,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         })
                       : this.sendRequest({
                             kind: "groupChatEventsByEventIndex",
-                            chatId: serverChat.chatId,
+                            chatId: serverChat.id,
                             eventIndexes: currentChatEvents,
                             threadRootMessageIndex: undefined,
                             latestClientEventIndex: serverChat.latestEventIndex,
@@ -2216,14 +2212,14 @@ export class OpenChat extends OpenChatAgentWorker {
                 ? Promise.resolve()
                 : this.sendRequest({
                       kind: "groupChatEventsByEventIndex",
-                      chatId: serverChat.chatId,
+                      chatId: serverChat.id,
                       eventIndexes: currentThreadEvents,
                       threadRootMessageIndex: selectedThreadRootMessageIndex,
                       latestClientEventIndex:
                           selectedThreadRootEvent?.event?.thread?.latestEventIndex,
                   }).then((resp) =>
                       this.handleThreadEventsResponse(
-                          serverChat.chatId,
+                          serverChat.id,
                           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                           selectedThreadRootMessageIndex!,
                           resp
@@ -2249,7 +2245,7 @@ export class OpenChat extends OpenChatAgentWorker {
             return undefined;
         }
 
-        const loadedUpTo = this.confirmedUpToEventIndex(serverChat.chatId);
+        const loadedUpTo = this.confirmedUpToEventIndex(serverChat.id);
 
         if (loadedUpTo === undefined) {
             return [serverChat.latestEventIndex, false];
@@ -2257,7 +2253,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         return loadedUpTo < serverChat.latestEventIndex ? [loadedUpTo + 1, true] : undefined;
     }
-    private confirmedUpToEventIndex(chatId: string): number | undefined {
+    private confirmedUpToEventIndex(chatId: ChatIdentifier): number | undefined {
         const ranges = confirmedEventIndexesLoaded(chatId).subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
@@ -2341,7 +2337,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private removeMessage(
-        chatType: "direct_chat" | "group_chat",
+        chatType: ChatSummary["kind"],
         chatId: string,
         messageId: bigint,
         userId: string,
@@ -2470,8 +2466,7 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
-        const key =
-            threadRootMessageIndex === undefined ? chatId : `${chatId}_${threadRootMessageIndex}`;
+        const key = this.localMessagesKey(chatId, threadRootMessageIndex);
 
         for (const event of newEvents) {
             if (event.event.kind === "message") {
@@ -2508,41 +2503,37 @@ export class OpenChat extends OpenChatAgentWorker {
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined
     ): Promise<void> {
-        const key = this.localMessagesKey(clientChat.chatId, threadRootMessageIndex);
+        const key = this.localMessagesKey(clientChat.id, threadRootMessageIndex);
 
         unconfirmed.add(key, messageEvent);
         failedMessagesStore.delete(key, messageEvent.event.messageId);
 
-        rtcConnectionsManager.sendMessage(
-            [...chatStateStore.getProp(clientChat.chatId, "userIds")],
-            {
-                kind: "remote_user_sent_message",
-                chatType: clientChat.kind,
-                chatId: clientChat.chatId,
-                messageEvent: serialiseMessageForRtc(messageEvent),
-                userId: this.user.userId,
-                threadRootMessageIndex,
-            }
-        );
+        rtcConnectionsManager.sendMessage([...chatStateStore.getProp(clientChat.id, "userIds")], {
+            kind: "remote_user_sent_message",
+            chatType: clientChat.kind,
+            chatId: clientChat.id,
+            messageEvent: serialiseMessageForRtc(messageEvent),
+            userId: this.user.userId,
+            threadRootMessageIndex,
+        });
 
         if (threadRootMessageIndex === undefined) {
             // mark our own messages as read manually since we will not be observing them
             messagesRead.markMessageRead(
-                clientChat.chatId,
+                clientChat.id,
                 messageEvent.event.messageIndex,
                 messageEvent.event.messageId
             );
 
-            currentChatDraftMessage.clear(clientChat.chatId);
+            currentChatDraftMessage.clear(clientChat.id);
         }
 
         return;
     }
 
-    private localMessagesKey(chatId: string, threadRootMessageIndex?: number): string {
-        return threadRootMessageIndex === undefined
-            ? chatId
-            : `${chatId}_${threadRootMessageIndex}`;
+    private localMessagesKey(chatId: ChatIdentifier, threadRootMessageIndex?: number): string {
+        const key = chatIdentifierToString(chatId);
+        return threadRootMessageIndex === undefined ? key : `${key}_${threadRootMessageIndex}`;
     }
 
     deleteFailedMessage(
@@ -2602,7 +2593,7 @@ export class OpenChat extends OpenChatAgentWorker {
         this.sendRequest({
             kind: "sendMessage",
             chatType: chat.kind,
-            chatId: chat.chatId,
+            chatId: chat.id,
             user: this.user,
             mentioned: [],
             event: retryEvent,
@@ -2820,7 +2811,7 @@ export class OpenChat extends OpenChatAgentWorker {
             return this.sendRequest({
                 kind: "editMessage",
                 chatType: chat.kind,
-                chatId: chat.chatId,
+                chatId: chat.id,
                 msg,
                 threadRootMessageIndex,
             })
@@ -2911,7 +2902,7 @@ export class OpenChat extends OpenChatAgentWorker {
         clientChat: ChatSummary,
         messageEvent: EventWrapper<Message>
     ): Promise<void> {
-        const confirmedLoaded = confirmedEventIndexesLoaded(clientChat.chatId);
+        const confirmedLoaded = confirmedEventIndexesLoaded(clientChat.id);
 
         if (indexIsInRanges(messageEvent.index, confirmedLoaded)) {
             // We already have this confirmed message
@@ -2974,7 +2965,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (
             selectedChat !== undefined &&
-            fromChatId === selectedChat.chatId &&
+            fromChatId === selectedChat.id &&
             parsedMsg.threadRootMessageIndex === this._liveState.selectedThreadRootMessageIndex
         ) {
             this.handleWebRtcMessageInternal(
@@ -3280,10 +3271,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (chat === undefined) {
             return Promise.resolve({ kind: "chat_not_found" });
-        } else if (chat.kind === "group_chat") {
+        } else if (chat.kind === "group_chat" || chat.kind === "channel") {
             return this.sendRequest({
                 kind: "searchGroupChat",
-                chatId: chat.chatId,
+                chatId: chat.id,
                 searchTerm,
                 userIds,
                 maxResults,
@@ -3291,7 +3282,7 @@ export class OpenChat extends OpenChatAgentWorker {
         } else {
             return this.sendRequest({
                 kind: "searchDirectChat",
-                userId: chat.chatId,
+                userId: chat.id,
                 searchTerm,
                 maxResults,
             });
@@ -3444,7 +3435,7 @@ export class OpenChat extends OpenChatAgentWorker {
         name?: string,
         description?: string,
         rules?: AccessRules,
-        permissions?: Partial<GroupPermissions>,
+        permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
         gate?: AccessGate
     ): Promise<UpdateGroupResponse> {
@@ -3501,7 +3492,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 kind: "remote_user_read_message",
                 chatType: chat.kind,
                 messageId: messageId,
-                chatId: chat.chatId,
+                chatId: chat.id,
                 userId: this.user.userId,
             };
             this.sendRtcMessage([...this._liveState.currentChatUserIds], rtc);
@@ -3727,12 +3718,18 @@ export class OpenChat extends OpenChatAgentWorker {
                     pinnedChatsStore.set(chatsResponse.state.pinnedChats);
                 }
 
-                myServerChatSummariesStore.set(toRecord(updatedChats, (chat) => chat.chatId));
+                myServerChatSummariesStore.set(
+                    toRecord(updatedChats, (chat) => chatIdentifierToString(chat.id))
+                );
 
                 if (Object.keys(this._liveState.uninitializedDirectChats).length > 0) {
                     for (const chat of updatedChats) {
-                        if (this._liveState.uninitializedDirectChats[chat.chatId] !== undefined) {
-                            removeUninitializedDirectChat(chat.chatId);
+                        if (
+                            this._liveState.uninitializedDirectChats[
+                                chatIdentifierToString(chat.id)
+                            ] !== undefined
+                        ) {
+                            removeUninitializedDirectChat(chat.id);
                         }
                     }
                 }
@@ -3781,9 +3778,12 @@ export class OpenChat extends OpenChatAgentWorker {
                         latestMessage !== undefined &&
                         latestMessage.sender === this.user.userId &&
                         (chat.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
-                        !unconfirmed.contains(chat.chatId, latestMessage.messageId)
+                        !unconfirmed.contains(
+                            chatIdentifierToString(chat.id),
+                            latestMessage.messageId
+                        )
                     ) {
-                        messagesRead.markReadUpTo(chat.chatId, latestMessage.messageIndex);
+                        messagesRead.markReadUpTo(chat.id, latestMessage.messageIndex);
                     }
                 }
 
@@ -3834,24 +3834,27 @@ export class OpenChat extends OpenChatAgentWorker {
     private updateReadUpToStore(chatSummaries: ChatSummary[]): void {
         for (const chat of chatSummaries) {
             if (chat.kind === "group_chat") {
-                const threads: ThreadRead[] = chat.latestThreads.reduce((res, next) => {
-                    if (next.readUpTo !== undefined) {
-                        res.push({
-                            threadRootMessageIndex: next.threadRootMessageIndex,
-                            readUpTo: next.readUpTo,
-                        });
-                    }
-                    return res;
-                }, [] as ThreadRead[]);
+                const threads: ThreadRead[] = (chat.membership?.latestThreads ?? []).reduce(
+                    (res, next) => {
+                        if (next.readUpTo !== undefined) {
+                            res.push({
+                                threadRootMessageIndex: next.threadRootMessageIndex,
+                                readUpTo: next.readUpTo,
+                            });
+                        }
+                        return res;
+                    },
+                    [] as ThreadRead[]
+                );
 
                 messagesRead.syncWithServer(
-                    chat.chatId,
+                    chat.id,
                     chat.readByMeUpTo,
                     threads,
                     chat.dateReadPinned
                 );
             } else {
-                messagesRead.syncWithServer(chat.chatId, chat.readByMeUpTo, [], undefined);
+                messagesRead.syncWithServer(chat.id, chat.readByMeUpTo, [], undefined);
             }
         }
     }

@@ -14,6 +14,8 @@ import {
     emptyChatMetrics,
     UpdatedEvent,
     ChatIdentifier,
+    chatIdentifierToString,
+    chatIndentifiersEqual,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
@@ -113,7 +115,7 @@ export const userMetrics = derived([chatSummariesListStore], ([$chats]) => {
     return $chats.map((c) => c.myMetrics).reduce(mergeChatMetrics, emptyChatMetrics());
 });
 
-export const selectedChatId = writable<string | undefined>(undefined);
+export const selectedChatId = writable<ChatIdentifier | undefined>(undefined);
 export const selectedThreadRootEvent = writable<EventWrapper<Message> | undefined>(undefined);
 export const selectedThreadRootMessageIndex = derived(selectedThreadRootEvent, ($rootEvent) => {
     return $rootEvent !== undefined ? $rootEvent.event.messageIndex : undefined;
@@ -425,27 +427,28 @@ export function setSelectedChat(
         }
     }
 
-    clearSelectedChat(clientChat.chatId);
+    clearSelectedChat(clientChat.id);
 
     // initialise a bunch of stores
-    chatStateStore.clear(clientChat.chatId);
-    chatStateStore.setProp(clientChat.chatId, "focusMessageIndex", messageIndex);
-    chatStateStore.setProp(clientChat.chatId, "focusThreadMessageIndex", threadMessageIndex);
-    chatStateStore.setProp(clientChat.chatId, "expandedDeletedMessages", new Set());
+    chatStateStore.clear(clientChat.id);
+    chatStateStore.setProp(clientChat.id, "focusMessageIndex", messageIndex);
+    chatStateStore.setProp(clientChat.id, "focusThreadMessageIndex", threadMessageIndex);
+    chatStateStore.setProp(clientChat.id, "expandedDeletedMessages", new Set());
     chatStateStore.setProp(
-        clientChat.chatId,
+        clientChat.id,
         "userIds",
-        new Set<string>(clientChat.kind === "direct_chat" ? [clientChat.chatId] : [])
+        new Set<string>(clientChat.kind === "direct_chat" ? [clientChat.id] : [])
     );
     resetFilteredProposalsStore(clientChat);
 }
 
 export function updateSummaryWithConfirmedMessage(
-    chatId: string,
+    chatId: ChatIdentifier,
     message: EventWrapper<Message>
 ): void {
     myServerChatSummariesStore.update((summaries) => {
-        const summary = summaries[chatId];
+        const key = chatIdentifierToString(chatId);
+        const summary = summaries[key];
         if (summary === undefined) return summaries;
 
         const latestEventIndex = Math.max(message.index, summary.latestEventIndex);
@@ -459,7 +462,7 @@ export function updateSummaryWithConfirmedMessage(
 
         return {
             ...summaries,
-            [chatId]: {
+            [key]: {
                 ...summary,
                 latestEventIndex,
                 latestMessage,
@@ -468,7 +471,7 @@ export function updateSummaryWithConfirmedMessage(
     });
 }
 
-export function clearSelectedChat(newSelectedChatId?: string): void {
+export function clearSelectedChat(newSelectedChatId?: ChatIdentifier): void {
     filteredProposalsStore.set(undefined);
     selectedChatId.update((chatId) => {
         if (chatId !== undefined) {
@@ -509,12 +512,12 @@ export function addGroupPreview(chat: GroupChatSummary): void {
     }));
 }
 
-export function removeUninitializedDirectChat(chatId: string): void {
+export function removeUninitializedDirectChat(chatId: ChatIdentifier): void {
     uninitializedDirectChats.update((summaries) => {
         return toRecordFiltered(
             Object.values(summaries),
-            (c) => c.chatId,
-            (c) => c.chatId !== chatId
+            (c) => chatIdentifierToString(c.id),
+            (c) => !chatIndentifiersEqual(c.id, chatId)
         );
     });
 }

@@ -812,6 +812,18 @@ export type DirectChatsInitial = {
 
 export type ChatIdentifier = CommunityChatIdentifier | string;
 
+export function chatIdentifiersEqual(a: ChatIdentifier, b: ChatIdentifier): boolean {
+    if (typeof a === "string") {
+        return typeof b === "string" && a === b;
+    } else {
+        return (
+            typeof b !== "string" &&
+            a.communtityId === b.communtityId &&
+            a.channelId === b.channelId
+        );
+    }
+}
+
 export function chatIdentifierToString(id: ChatIdentifier): string {
     if (typeof id === "string") {
         return id;
