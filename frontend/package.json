@@ -22,7 +22,7 @@
     "openchat-sw"
   ],
   "devDependencies": {
-    "auto-changelog": "open-ic/auto-changelog#master",
+    "auto-changelog": "open-chat-labs/auto-changelog#master",
     "turbo": "^1.5.6"
   }
 }
