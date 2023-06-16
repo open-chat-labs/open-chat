@@ -19,6 +19,7 @@ pub struct DeletedGroupInfoPrevious {
     pub timestamp: TimestampMillis,
     pub deleted_by: UserId,
     pub group_name: String,
+    pub public: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
@@ -38,7 +39,7 @@ impl From<DeletedGroupInfoPrevious> for DeletedGroupInfo {
             deleted_by: value.deleted_by,
             group_name: value.group_name.clone(),
             name: value.group_name,
-            public: false,
+            public: value.public,
         }
     }
 }
