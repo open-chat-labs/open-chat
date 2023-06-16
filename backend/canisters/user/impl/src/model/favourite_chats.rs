@@ -24,6 +24,7 @@ impl FavouriteChats {
         if self.chats.value.contains(&chat) {
             self.pinned.timestamp = now;
             self.pinned.value.insert(0, chat);
+            self.chats.value.insert(chat);
             true
         } else {
             false

@@ -98,6 +98,13 @@ impl Community {
         }
     }
 
+    pub fn pin(&mut self, channel_id: ChannelId, now: TimestampMillis) {
+        if self.pinned.value.contains(&channel_id) {
+            self.pinned.timestamp = now;
+            self.pinned.value.insert(0, channel_id);
+        }
+    }
+
     pub fn unpin(&mut self, channel_id: &ChannelId, now: TimestampMillis) {
         if self.pinned.value.contains(channel_id) {
             self.pinned.timestamp = now;
