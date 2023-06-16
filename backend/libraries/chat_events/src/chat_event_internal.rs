@@ -12,12 +12,14 @@ use types::{
     GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersRemoved, Message, MessageContent,
     MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageReminderContent, MessageReminderCreatedContent,
     MessageUnpinned, OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin,
-    ParticipantRelinquishesSuperAdmin, PermissionsChanged, PollContentInternal, PrizeContent, PrizeContentInternal,
-    PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage, ReportedMessageInternal,
-    RoleChanged, TextContent, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
+    ParticipantRelinquishesSuperAdmin, PermissionsChanged, PollContentInternal, PollVoteRegistered, PrizeContent,
+    PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage,
+    ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersInvited,
+    UsersUnblocked, VideoContent,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "ChatEventInternalPrevious")]
 pub enum ChatEventInternal {
     #[serde(rename = "m", alias = "Message")]
     Message(Box<MessageInternal>),
@@ -75,8 +77,52 @@ pub enum ChatEventInternal {
     GroupGateUpdated(Box<GroupGateUpdated>),
     #[serde(rename = "ui", alias = "UsersInvited")]
     UsersInvited(Box<UsersInvited>),
-    #[serde(rename = "e", alias = "Empty", other)]
+    #[serde(rename = "e", alias = "Empty")]
     Empty,
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum ChatEventInternalPrevious {
+    Empty,
+    #[serde(rename = "m", alias = "Message")]
+    Message(Box<MessageInternal>),
+    MessageEdited(Box<UpdatedMessageInternal>),
+    MessageDeleted(Box<UpdatedMessageInternal>),
+    MessageUndeleted(Box<UpdatedMessageInternal>),
+    MessageReactionAdded(Box<UpdatedMessageInternal>),
+    MessageReactionRemoved(Box<UpdatedMessageInternal>),
+    DirectChatCreated(DirectChatCreated),
+    GroupChatCreated(Box<GroupCreated>),
+    GroupNameChanged(Box<GroupNameChanged>),
+    GroupDescriptionChanged(Box<GroupDescriptionChanged>),
+    GroupRulesChanged(Box<GroupRulesChanged>),
+    AvatarChanged(Box<AvatarChanged>),
+    OwnershipTransferred(Box<OwnershipTransferred>),
+    ParticipantsAdded(Box<MembersAdded>),
+    ParticipantsRemoved(Box<MembersRemoved>),
+    ParticipantJoined(Box<MemberJoined>),
+    ParticipantLeft(Box<MemberLeft>),
+    ParticipantAssumesSuperAdmin(Box<ParticipantAssumesSuperAdmin>),
+    ParticipantDismissedAsSuperAdmin(Box<ParticipantDismissedAsSuperAdmin>),
+    ParticipantRelinquishesSuperAdmin(Box<ParticipantRelinquishesSuperAdmin>),
+    RoleChanged(Box<RoleChanged>),
+    UsersBlocked(Box<UsersBlocked>),
+    UsersUnblocked(Box<UsersUnblocked>),
+    MessagePinned(Box<MessagePinned>),
+    MessageUnpinned(Box<MessageUnpinned>),
+    PollVoteRegistered(Box<PollVoteRegistered>),
+    PollVoteDeleted(Box<UpdatedMessageInternal>),
+    PollEnded(Box<MessageIndex>),
+    PermissionsChanged(Box<PermissionsChanged>),
+    GroupVisibilityChanged(Box<GroupVisibilityChanged>),
+    GroupInviteCodeChanged(Box<GroupInviteCodeChanged>),
+    ThreadUpdated(Box<ThreadUpdatedInternal>),
+    ProposalsUpdated(Box<ProposalsUpdatedInternal>),
+    ChatFrozen(Box<GroupFrozen>),
+    ChatUnfrozen(Box<GroupUnfrozen>),
+    EventsTimeToLiveUpdated(Box<EventsTimeToLiveUpdated>),
+    GroupGateUpdated(Box<GroupGateUpdated>),
+    UsersInvited(Box<UsersInvited>),
 }
 
 impl ChatEventInternal {
@@ -716,6 +762,56 @@ impl ChatMetricsInternal {
             message_reminders: self.message_reminders,
             custom_type_messages: self.custom_type_messages,
             last_active: self.last_active,
+        }
+    }
+}
+
+impl From<ChatEventInternalPrevious> for ChatEventInternal {
+    fn from(value: ChatEventInternalPrevious) -> Self {
+        match value {
+            ChatEventInternalPrevious::Message(x) => ChatEventInternal::Message(x),
+            ChatEventInternalPrevious::DirectChatCreated(x) => ChatEventInternal::DirectChatCreated(x),
+            ChatEventInternalPrevious::GroupChatCreated(x) => ChatEventInternal::GroupChatCreated(x),
+            ChatEventInternalPrevious::GroupNameChanged(x) => ChatEventInternal::GroupNameChanged(x),
+            ChatEventInternalPrevious::GroupDescriptionChanged(x) => ChatEventInternal::GroupDescriptionChanged(x),
+            ChatEventInternalPrevious::GroupRulesChanged(x) => ChatEventInternal::GroupRulesChanged(x),
+            ChatEventInternalPrevious::AvatarChanged(x) => ChatEventInternal::AvatarChanged(x),
+            ChatEventInternalPrevious::OwnershipTransferred(x) => ChatEventInternal::OwnershipTransferred(x),
+            ChatEventInternalPrevious::ParticipantsAdded(x) => ChatEventInternal::ParticipantsAdded(x),
+            ChatEventInternalPrevious::ParticipantsRemoved(x) => ChatEventInternal::ParticipantsRemoved(x),
+            ChatEventInternalPrevious::ParticipantJoined(x) => ChatEventInternal::ParticipantJoined(x),
+            ChatEventInternalPrevious::ParticipantLeft(x) => ChatEventInternal::ParticipantLeft(x),
+            ChatEventInternalPrevious::ParticipantAssumesSuperAdmin(x) => ChatEventInternal::ParticipantAssumesSuperAdmin(x),
+            ChatEventInternalPrevious::ParticipantDismissedAsSuperAdmin(x) => {
+                ChatEventInternal::ParticipantDismissedAsSuperAdmin(x)
+            }
+            ChatEventInternalPrevious::ParticipantRelinquishesSuperAdmin(x) => {
+                ChatEventInternal::ParticipantRelinquishesSuperAdmin(x)
+            }
+            ChatEventInternalPrevious::RoleChanged(x) => ChatEventInternal::RoleChanged(x),
+            ChatEventInternalPrevious::UsersBlocked(x) => ChatEventInternal::UsersBlocked(x),
+            ChatEventInternalPrevious::UsersUnblocked(x) => ChatEventInternal::UsersUnblocked(x),
+            ChatEventInternalPrevious::MessagePinned(x) => ChatEventInternal::MessagePinned(x),
+            ChatEventInternalPrevious::MessageUnpinned(x) => ChatEventInternal::MessageUnpinned(x),
+            ChatEventInternalPrevious::PermissionsChanged(x) => ChatEventInternal::PermissionsChanged(x),
+            ChatEventInternalPrevious::GroupVisibilityChanged(x) => ChatEventInternal::GroupVisibilityChanged(x),
+            ChatEventInternalPrevious::GroupInviteCodeChanged(x) => ChatEventInternal::GroupInviteCodeChanged(x),
+            ChatEventInternalPrevious::ChatFrozen(x) => ChatEventInternal::ChatFrozen(x),
+            ChatEventInternalPrevious::ChatUnfrozen(x) => ChatEventInternal::ChatUnfrozen(x),
+            ChatEventInternalPrevious::EventsTimeToLiveUpdated(x) => ChatEventInternal::EventsTimeToLiveUpdated(x),
+            ChatEventInternalPrevious::GroupGateUpdated(x) => ChatEventInternal::GroupGateUpdated(x),
+            ChatEventInternalPrevious::UsersInvited(x) => ChatEventInternal::UsersInvited(x),
+            ChatEventInternalPrevious::MessageEdited(_)
+            | ChatEventInternalPrevious::MessageDeleted(_)
+            | ChatEventInternalPrevious::MessageUndeleted(_)
+            | ChatEventInternalPrevious::MessageReactionAdded(_)
+            | ChatEventInternalPrevious::MessageReactionRemoved(_)
+            | ChatEventInternalPrevious::PollVoteRegistered(_)
+            | ChatEventInternalPrevious::PollVoteDeleted(_)
+            | ChatEventInternalPrevious::PollEnded(_)
+            | ChatEventInternalPrevious::ThreadUpdated(_)
+            | ChatEventInternalPrevious::ProposalsUpdated(_)
+            | ChatEventInternalPrevious::Empty => ChatEventInternal::Empty,
         }
     }
 }

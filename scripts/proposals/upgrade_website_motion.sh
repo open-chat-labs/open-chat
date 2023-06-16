@@ -10,7 +10,7 @@ VERSION=$1
 SUMMARY_PATH=$2
 
 TITLE="Upgrade website to $VERSION"
-URL="https://github.com/open-ic/open-chat/releases/tag/v${VERSION}-website"
+URL="https://github.com/open-chat-labs/open-chat/releases/tag/v${VERSION}-website"
 
 # Make the proposal
 ./motion.sh "$TITLE" "$URL" "$SUMMARY_PATH"
