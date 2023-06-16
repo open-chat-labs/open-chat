@@ -810,37 +810,43 @@ export type DirectChatsInitial = {
     pinned: string[];
 };
 
-export type ChatIdentifier = CommunityChatIdentifier | string;
+export class ChatIdentifier {
+    private constructor(public value: CommunityChatIdentifier | string) {}
 
-export function chatIdentifiersEqual(a: ChatIdentifier, b: ChatIdentifier): boolean {
-    if (typeof a === "string") {
-        return typeof b === "string" && a === b;
-    } else {
-        return (
-            typeof b !== "string" &&
-            a.communtityId === b.communtityId &&
-            a.channelId === b.channelId
-        );
+    create(value: CommunityChatIdentifier | string): ChatIdentifier {
+        return new ChatIdentifier(value);
     }
-}
 
-export function chatIdentifierToString(id: ChatIdentifier): string {
-    if (typeof id === "string") {
-        return id;
-    } else {
-        return `${id.communtityId}_${id.channelId}`;
+    toString(): string {
+        if (typeof this.value === "string") {
+            return this.value;
+        } else {
+            return `${this.value.communtityId}_${this.value.channelId}`;
+        }
     }
-}
 
-export function chatIdentifierFromString(id: string): ChatIdentifier {
-    const parts = id.split("_");
-    if (parts.length === 1) {
-        return id;
-    } else {
-        return {
-            communtityId: parts[0],
-            channelId: parts[1],
-        };
+    static fromString(id: string): ChatIdentifier {
+        const parts = id.split("_");
+        if (parts.length === 1) {
+            return new ChatIdentifier(parts[0]);
+        } else {
+            return new ChatIdentifier({
+                communtityId: parts[0],
+                channelId: parts[1],
+            });
+        }
+    }
+
+    equals(other: ChatIdentifier): boolean {
+        if (typeof this.value === "string") {
+            return typeof other.value === "string" && this.value === other.value;
+        } else {
+            return (
+                typeof other.value !== "string" &&
+                this.value.communtityId === other.value.communtityId &&
+                this.value.channelId === other.value.channelId
+            );
+        }
     }
 }
 
@@ -1096,8 +1102,8 @@ export type MultiUserChat = GroupChatSummary | ChannelSummary;
 
 export type ChatType = ChatSummary["kind"];
 
-type ChatSummaryCommon<T extends ChatIdentifier> = {
-    id: T;
+type ChatSummaryCommon = {
+    id: ChatIdentifier;
     latestEventIndex: number;
     latestMessage?: EventWrapper<Message>;
     metrics: Metrics;
@@ -1105,7 +1111,7 @@ type ChatSummaryCommon<T extends ChatIdentifier> = {
 
 export type ChannelSummary = DataContent &
     AccessControlled &
-    ChatSummaryCommon<CommunityChatIdentifier> &
+    ChatSummaryCommon &
     HasLevel &
     Permissioned<ChatPermissions> & {
         kind: "channel";
@@ -1121,19 +1127,16 @@ export type ChannelSummary = DataContent &
         membership?: ChatMembership;
     };
 
-export type DirectChatSummary = ChatSummaryCommon<string> & {
+export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
     readByThemUpTo: number | undefined;
     dateCreated: bigint;
-    readByMeUpTo: number | undefined;
-    notificationsMuted: boolean;
-    myMetrics: Metrics;
-    archived: boolean;
+    membership: ChatMembership; // this just makes our lives easier
 };
 
 export type GroupChatSummary = DataContent &
-    ChatSummaryCommon<string> &
+    ChatSummaryCommon &
     AccessControlled &
     HasLevel &
     Permissioned<ChatPermissions> & {

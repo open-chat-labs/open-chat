@@ -1,6 +1,7 @@
 import type {
     AuthProvider,
     ChatEvent,
+    ChatIdentifier,
     ChatSummary,
     DiamondMembershipDetails,
     DirectChatSummary,
@@ -44,6 +45,7 @@ import { pinnedChatsStore } from "./stores/pinnedChats";
 import { blockedUsers } from "./stores/blockedUsers";
 import { diamondMembership, isDiamond } from "./stores/diamond";
 import type DRange from "drange";
+import type { ChatMap } from "./utils/map";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -58,21 +60,21 @@ export class LiveState {
     userStore!: UserLookup;
     remainingStorage!: number;
     currentChatReplyingTo: EnhancedReplyContext | undefined;
-    serverChatSummaries!: Record<string, ChatSummary>;
-    myServerChatSummaries!: Record<string, ChatSummary>;
-    chatSummaries!: Record<string, ChatSummary>;
-    uninitializedDirectChats!: Record<string, DirectChatSummary>;
-    groupPreviews!: Record<string, GroupChatSummary>;
-    selectedChatId: string | undefined;
+    serverChatSummaries!: ChatMap<ChatSummary>;
+    myServerChatSummaries!: ChatMap<ChatSummary>;
+    chatSummaries!: ChatMap<ChatSummary>;
+    uninitializedDirectChats!: ChatMap<DirectChatSummary>;
+    groupPreviews!: ChatMap<GroupChatSummary>;
+    selectedChatId: ChatIdentifier | undefined;
     pinnedChats!: string[];
     chatSummariesList!: ChatSummary[];
-    threadsByChat!: Record<string, ThreadSyncDetails[]>;
+    threadsByChat!: ChatMap<ThreadSyncDetails[]>;
     focusMessageIndex: number | undefined;
     focusThreadMessageIndex: number | undefined;
     threadEvents!: EventWrapper<ChatEvent>[];
     selectedThreadKey: string | undefined;
     selectedThreadRootEvent: EventWrapper<Message> | undefined;
-    threadsFollowedByMe!: Record<string, Set<number>>;
+    threadsFollowedByMe!: ChatMap<Set<number>>;
     currentChatUserIds!: Set<string>;
     selectedThreadRootMessageIndex: number | undefined;
     chatsInitialised!: boolean;

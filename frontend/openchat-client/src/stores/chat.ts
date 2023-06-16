@@ -14,8 +14,6 @@ import {
     emptyChatMetrics,
     UpdatedEvent,
     ChatIdentifier,
-    chatIdentifierToString,
-    chatIndentifiersEqual,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
@@ -37,38 +35,41 @@ import { createDerivedPropStore, createChatSpecificObjectStore } from "./dataByC
 import { localMessageUpdates } from "./localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
-import { toRecordFiltered } from "../utils/list";
 import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
 import type { OpenChat } from "../openchat";
+import { ChatMap } from "../utils/map";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
 // Chats which the current user is a member of
-export const myServerChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
+export const myServerChatSummariesStore: Writable<ChatMap<ChatSummary>> = immutableStore(
+    new ChatMap<ChatSummary>()
+);
 
-export const uninitializedDirectChats: Writable<Record<string, DirectChatSummary>> = immutableStore(
-    {}
+export const uninitializedDirectChats: Writable<ChatMap<DirectChatSummary>> = immutableStore(
+    new ChatMap<DirectChatSummary>()
 );
 
 // Groups which the current user is previewing
-export const groupPreviewsStore: Writable<Record<string, GroupChatSummary>> = immutableStore({});
+export const groupPreviewsStore: Writable<ChatMap<GroupChatSummary>> = immutableStore(
+    new ChatMap<GroupChatSummary>()
+);
 
-export const serverChatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
+export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
     [myServerChatSummariesStore, uninitializedDirectChats, groupPreviewsStore],
     ([summaries, directChats, previews]) => {
-        return Object.entries<ChatSummary>(directChats)
-            .concat(Object.entries(previews))
-            .concat(Object.entries(summaries))
-            .reduce<Record<string, ChatSummary>>((result, [chatId, summary]) => {
-                result[chatId] = summary;
-                return result;
-            }, {});
+        return [...directChats.entries(), ...previews.entries(), ...summaries.entries()].reduce<
+            ChatMap<ChatSummary>
+        >((result, [chatId, summary]) => {
+            result.set(chatId, summary);
+            return result;
+        }, new ChatMap<ChatSummary>());
     }
 );
 
-export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
+export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
     [
         serverChatSummariesStore,
         localChatSummaryUpdates,
@@ -79,21 +80,23 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
     ([summaries, localSummaryUpdates, unconfirmed, currentUser, localUpdates]) => {
         const mergedSummaries = mergeLocalSummaryUpdates(summaries, localSummaryUpdates);
 
-        return Object.entries(mergedSummaries).reduce<Record<string, ChatSummary>>(
-            (result, [chatId, summary]) => {
+        return mergedSummaries
+            .entries()
+            .reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
                 if (currentUser !== undefined) {
-                    result[chatId] = mergeUnconfirmedIntoSummary(
-                        (k) => k,
-                        currentUser.userId,
-                        summary,
-                        unconfirmed,
-                        localUpdates
+                    result.set(
+                        chatId,
+                        mergeUnconfirmedIntoSummary(
+                            (k) => k,
+                            currentUser.userId,
+                            summary,
+                            unconfirmed,
+                            localUpdates
+                        )
                     );
                 }
                 return result;
-            },
-            {}
-        );
+            }, new ChatMap<ChatSummary>());
     }
 );
 
@@ -101,18 +104,25 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
 export const chatSummariesListStore = derived(
     [chatSummariesStore, pinnedChatsStore],
     ([summaries, pinnedChats]) => {
-        const pinned = pinnedChats
-            .filter((id) => summaries[id] !== undefined)
-            .map((id) => summaries[id]);
-        const unpinned = Object.values(summaries)
-            .filter((chat) => !pinnedChats.includes(chat.chatId))
+        const pinned = pinnedChats.reduce<ChatSummary[]>((result, id) => {
+            const summary = summaries.get(ChatIdentifier.fromString(id));
+            if (summary !== undefined) {
+                result.push(summary);
+            }
+            return result;
+        }, []);
+        const unpinned = summaries
+            .values()
+            .filter((chat) => !pinnedChats.includes(chat.id.toString()))
             .sort(compareChats);
         return pinned.concat(unpinned);
     }
 );
 
 export const userMetrics = derived([chatSummariesListStore], ([$chats]) => {
-    return $chats.map((c) => c.myMetrics).reduce(mergeChatMetrics, emptyChatMetrics());
+    return $chats
+        .map((c) => c.membership?.myMetrics ?? emptyChatMetrics())
+        .reduce(mergeChatMetrics, emptyChatMetrics());
 });
 
 export const selectedChatId = writable<ChatIdentifier | undefined>(undefined);
@@ -132,14 +142,14 @@ export const selectedThreadKey = derived(
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
 export const chatUpdatedStore: Writable<
-    { chatId: string; updatedEvents: UpdatedEvent[] } | undefined
+    { chatId: ChatIdentifier; updatedEvents: UpdatedEvent[] } | undefined
 > = writable(undefined);
 
 export const selectedServerChatStore = derived(
     [serverChatSummariesStore, selectedChatId],
     ([$serverChats, $selectedChatId]) => {
         if ($selectedChatId === undefined) return undefined;
-        return $serverChats[$selectedChatId];
+        return $serverChats.get($selectedChatId);
     }
 );
 
@@ -147,7 +157,7 @@ export const selectedChatStore = derived(
     [chatSummariesStore, selectedChatId],
     ([$chatSummaries, $selectedChatId]) => {
         if ($selectedChatId === undefined) return undefined;
-        return $chatSummaries[$selectedChatId];
+        return $chatSummaries.get($selectedChatId);
     }
 );
 
@@ -178,7 +188,7 @@ export function nextEventAndMessageIndexes(): [number, number] {
     }
     return getNextEventAndMessageIndexes(
         chat,
-        unconfirmed.getMessages(chat.chatId).sort(sortByIndex)
+        unconfirmed.getMessages(chat.id.toString()).sort(sortByIndex)
     );
 }
 
@@ -192,25 +202,26 @@ export const isProposalGroup = derived([selectedChatStore], ([$selectedChat]) =>
 
 export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]) => {
     return summaries.reduce((result, chat) => {
-        if (chat.kind === "group_chat" && chat.latestThreads.length > 0) {
-            result[chat.chatId] = chat.latestThreads;
+        if (
+            (chat.kind === "group_chat" || chat.kind === "channel") &&
+            chat.membership &&
+            chat.membership.latestThreads.length > 0
+        ) {
+            result.set(chat.id, chat.membership.latestThreads);
         }
         return result;
-    }, {} as Record<string, ThreadSyncDetails[]>);
+    }, new ChatMap<ThreadSyncDetails[]>());
 });
 
 export const threadsFollowedByMeStore = derived([threadsByChatStore], ([threadsByChat]) => {
-    return Object.entries(threadsByChat).reduce<Record<string, Set<number>>>(
-        (result, [chatId, threads]) => {
-            const set = new Set<number>();
-            for (const thread of threads) {
-                set.add(thread.threadRootMessageIndex);
-            }
-            result[chatId] = set;
-            return result;
-        },
-        {}
-    );
+    return threadsByChat.entries().reduce<ChatMap<Set<number>>>((result, [chatId, threads]) => {
+        const set = new Set<number>();
+        for (const thread of threads) {
+            set.add(thread.threadRootMessageIndex);
+        }
+        result.set(chatId, set);
+        return result;
+    }, new ChatMap<Set<number>>());
 });
 
 export const proposalTopicsStore = derived(
@@ -250,8 +261,9 @@ export const proposalTopicsStore = derived(
     }
 );
 
-function countThreads<T>(things: Record<string, T[]>): number {
-    return Object.values(things)
+function countThreads<T>(things: ChatMap<T[]>): number {
+    return things
+        .values()
         .map((ts) => ts.length)
         .reduce((total, n) => total + n, 0);
 }
@@ -437,7 +449,7 @@ export function setSelectedChat(
     chatStateStore.setProp(
         clientChat.id,
         "userIds",
-        new Set<string>(clientChat.kind === "direct_chat" ? [clientChat.id] : [])
+        new Set<string>(clientChat.kind === "direct_chat" ? [clientChat.id.toString()] : [])
     );
     resetFilteredProposalsStore(clientChat);
 }
@@ -447,8 +459,7 @@ export function updateSummaryWithConfirmedMessage(
     message: EventWrapper<Message>
 ): void {
     myServerChatSummariesStore.update((summaries) => {
-        const key = chatIdentifierToString(chatId);
-        const summary = summaries[key];
+        const summary = summaries.get(chatId);
         if (summary === undefined) return summaries;
 
         const latestEventIndex = Math.max(message.index, summary.latestEventIndex);
@@ -460,14 +471,14 @@ export function updateSummaryWithConfirmedMessage(
 
         const latestMessage = overwriteLatestMessage ? message : summary.latestMessage;
 
-        return {
-            ...summaries,
-            [key]: {
-                ...summary,
-                latestEventIndex,
-                latestMessage,
-            },
-        };
+        const clone = summaries.clone();
+        clone.set(chatId, {
+            ...summary,
+            latestEventIndex,
+            latestMessage,
+        });
+
+        return clone as ChatMap<ChatSummary>;
     });
 }
 
@@ -481,54 +492,49 @@ export function clearSelectedChat(newSelectedChatId?: ChatIdentifier): void {
     });
 }
 
-export function createDirectChat(chatId: string): void {
+export function createDirectChat(chatId: ChatIdentifier): void {
     uninitializedDirectChats.update((chatSummaries) => {
-        return {
-            ...chatSummaries,
-            [chatId]: {
-                kind: "direct_chat",
-                them: chatId,
-                chatId,
-                id: chatId,
-                readByMeUpTo: undefined,
-                readByThemUpTo: undefined,
-                latestMessage: undefined,
-                latestEventIndex: 0,
-                dateCreated: BigInt(Date.now()),
-                notificationsMuted: false,
-                metrics: emptyChatMetrics(),
-                myMetrics: emptyChatMetrics(),
-                archived: false,
-            },
-        };
+        const clone = chatSummaries.clone();
+        clone.set(chatId, {
+            kind: "direct_chat",
+            them: chatId.toString(),
+            id: chatId,
+            readByMeUpTo: undefined,
+            readByThemUpTo: undefined,
+            latestMessage: undefined,
+            latestEventIndex: 0,
+            dateCreated: BigInt(Date.now()),
+            notificationsMuted: false,
+            metrics: emptyChatMetrics(),
+            myMetrics: emptyChatMetrics(),
+            archived: false,
+        });
+        return clone as ChatMap<DirectChatSummary>;
     });
 }
 
 export function addGroupPreview(chat: GroupChatSummary): void {
-    localChatSummaryUpdates.delete(chat.chatId);
-    groupPreviewsStore.update((summaries) => ({
-        ...summaries,
-        [chat.chatId]: chat,
-    }));
+    localChatSummaryUpdates.delete(chat.id);
+    groupPreviewsStore.update((summaries) => {
+        const clone = summaries.clone();
+        clone.set(chat.id, chat);
+        return clone as ChatMap<GroupChatSummary>;
+    });
 }
 
 export function removeUninitializedDirectChat(chatId: ChatIdentifier): void {
     uninitializedDirectChats.update((summaries) => {
-        return toRecordFiltered(
-            Object.values(summaries),
-            (c) => chatIdentifierToString(c.id),
-            (c) => !chatIndentifiersEqual(c.id, chatId)
-        );
+        const clone = summaries.clone();
+        clone.delete(chatId);
+        return clone as ChatMap<DirectChatSummary>;
     });
 }
 
-export function removeGroupPreview(chatId: string): void {
+export function removeGroupPreview(chatId: ChatIdentifier): void {
     groupPreviewsStore.update((summaries) => {
-        return toRecordFiltered(
-            Object.values(summaries),
-            (c) => c.chatId,
-            (c) => c.chatId !== chatId
-        );
+        const clone = summaries.clone();
+        clone.delete(chatId);
+        return clone as ChatMap<GroupChatSummary>;
     });
 }
 
@@ -541,10 +547,11 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $failedMessages,
         $proposalTallies,
     ]) => {
-        const chatId = get(selectedChatId) ?? "";
+        const chatId = get(selectedChatId) ?? ChatIdentifier.fromString("");
+        const failedForChat = $failedMessages[chatId.toString()];
         // for the purpose of merging, unconfirmed and failed can be treated the same
-        const failed = $failedMessages[chatId] ? Object.values($failedMessages[chatId]) : [];
-        const unconfirmed = $unconfirmed[chatId]?.messages ?? [];
+        const failed = failedForChat ? Object.values(failedForChat) : [];
+        const unconfirmed = $unconfirmed[chatId.toString()]?.messages ?? [];
         return mergeEventsAndLocalUpdates(
             $serverEventsForSelectedChat,
             [...unconfirmed, ...failed],
@@ -595,13 +602,13 @@ const draftMessages = createChatSpecificObjectStore<DraftMessage>(() => ({}));
 
 export const currentChatDraftMessage = {
     ...draftMessages,
-    setTextContent: (id: string, textContent: string | undefined): void =>
+    setTextContent: (id: ChatIdentifier, textContent: string | undefined): void =>
         draftMessages.setProp(id, "textContent", textContent),
-    setAttachment: (id: string, attachment: MessageContent | undefined): void =>
+    setAttachment: (id: ChatIdentifier, attachment: MessageContent | undefined): void =>
         draftMessages.setProp(id, "attachment", attachment),
-    setReplyingTo: (id: string, replyingTo: EnhancedReplyContext | undefined): void =>
+    setReplyingTo: (id: ChatIdentifier, replyingTo: EnhancedReplyContext | undefined): void =>
         draftMessages.setProp(id, "replyingTo", replyingTo),
-    setEditing: (id: string, editingEvent: EventWrapper<Message>): void => {
+    setEditing: (id: ChatIdentifier, editingEvent: EventWrapper<Message>): void => {
         const users = get(userStore);
         const updated = {
             editingEvent,

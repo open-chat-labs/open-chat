@@ -38,6 +38,7 @@ import {
     eventIsVisible,
     AccessControlled,
     Permissioned,
+    ChatIdentifier,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -54,6 +55,7 @@ import { formatTokens } from "./cryptoFormatter";
 import { currentChatUserIds } from "../stores/chat";
 import type { TypersByKey } from "../stores/typing";
 import { tallyKey } from "../stores/proposalTallies";
+import type { ChatMap, ISafeMap } from "./map";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -340,33 +342,33 @@ export function mergeUnconfirmedThreadsIntoSummary(
 }
 
 export function mergeLocalSummaryUpdates(
-    server: Record<string, ChatSummary>,
-    localUpdates: Record<string, LocalChatSummaryUpdates>
-): Record<string, ChatSummary> {
+    server: ISafeMap<ChatIdentifier, ChatSummary>,
+    localUpdates: ISafeMap<ChatIdentifier, LocalChatSummaryUpdates>
+): ISafeMap<ChatIdentifier, ChatSummary> {
     if (Object.keys(localUpdates).length === 0) return server;
 
-    const merged = { ...server };
+    const merged = server.clone();
 
-    for (const [chatId, localUpdate] of Object.entries(localUpdates)) {
+    for (const [chatId, localUpdate] of localUpdates.entries()) {
         if (localUpdate.added !== undefined) {
-            const current = merged[chatId];
+            const current = merged.get(chatId);
             if (current === undefined || (current.kind === "group_chat" && isPreviewing(current))) {
-                merged[chatId] = localUpdate.added;
+                merged.set(chatId, localUpdate.added);
             }
         }
         if (localUpdate.updated !== undefined) {
-            const current = merged[chatId];
+            const current = merged.get(chatId);
             const updated = localUpdate.updated;
             if (current !== undefined) {
                 if (updated.kind === undefined) {
-                    merged[chatId] = {
+                    merged.set(chatId, {
                         ...current,
                         notificationsMuted:
                             updated.notificationsMuted ?? current.notificationsMuted,
                         archived: updated.archived ?? current.archived,
-                    };
+                    });
                 } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
-                    merged[chatId] = {
+                    merged.set(chatId, {
                         ...current,
                         name: updated.name ?? current.name,
                         description: updated.description ?? current.description,
@@ -383,19 +385,19 @@ export function mergeLocalSummaryUpdates(
                             ...current.gate,
                             ...updated.gate,
                         },
-                    };
+                    });
                 }
             }
         }
         if (localUpdate.removedAtTimestamp) {
-            const chat = merged[chatId];
+            const chat = merged.get(chatId);
             if (
                 chat !== undefined &&
                 ((chat.kind === "direct_chat" &&
                     chat.dateCreated < localUpdate.removedAtTimestamp) ||
                     (chat.kind === "group_chat" && chat.joined < localUpdate.removedAtTimestamp))
             ) {
-                delete merged[chatId];
+                merged.delete(chatId);
             }
         }
     }
@@ -408,9 +410,9 @@ export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
     unconfirmed: UnconfirmedMessages,
-    localUpdates: Record<string, LocalMessageUpdates>
+    localUpdates: ISafeMap<bigint, LocalMessageUpdates>
 ): ChatSummary {
-    const unconfirmedMessages = unconfirmed[chatSummary.chatId]?.messages;
+    const unconfirmedMessages = unconfirmed[chatSummary.id.toString()]?.messages;
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
@@ -430,7 +432,7 @@ export function mergeUnconfirmedIntoSummary(
         }
     }
     if (latestMessage !== undefined) {
-        const updates = localUpdates[latestMessage.event.messageId.toString()];
+        const updates = localUpdates.get(latestMessage.event.messageId);
         if (updates !== undefined) {
             latestMessage = {
                 ...latestMessage,
@@ -1038,14 +1040,14 @@ export function mergeSendMessageResponse(
 export function markAllRead(chat: ChatSummary): void {
     const latestMessageIndex = chat.latestMessage?.event.messageIndex;
     if (latestMessageIndex !== undefined) {
-        messagesRead.markReadUpTo(chat.chatId, latestMessageIndex);
+        messagesRead.markReadUpTo(chat.id, latestMessageIndex);
     }
 }
 
 export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
-    localUpdates: Record<string, LocalMessageUpdates>,
+    localUpdates: ISafeMap<bigint, LocalMessageUpdates>,
     proposalTallies: Record<string, Tally>
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new Set<number>();
@@ -1054,10 +1056,10 @@ export function mergeEventsAndLocalUpdates(
         eventIndexes.add(e.index);
 
         if (e.event.kind === "message") {
-            const updates = localUpdates[e.event.messageId.toString()];
+            const updates = localUpdates.get(e.event.messageId);
             const replyContextUpdates =
                 e.event.repliesTo?.kind === "rehydrated_reply_context"
-                    ? localUpdates[e.event.repliesTo.messageId.toString()]
+                    ? localUpdates.get(e.event.repliesTo.messageId)
                     : undefined;
 
             const tallyUpdate =

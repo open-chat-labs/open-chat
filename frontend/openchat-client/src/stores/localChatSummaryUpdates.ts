@@ -1,17 +1,31 @@
-import type { ChatSummary, LocalChatSummaryUpdates } from "openchat-shared";
+import type { ChatIdentifier, ChatSummary, LocalChatSummaryUpdates } from "openchat-shared";
 import { LocalUpdatesStore } from "./localUpdatesStore";
+import { ChatMap } from "src/utils/map";
 
-class LocalChatSummaryUpdatesStore extends LocalUpdatesStore<LocalChatSummaryUpdates> {
-    markAdded(summary: ChatSummary): void {
-        this.applyUpdate(summary.chatId, (_) => ({ added: summary, removedAtTimestamp: undefined }));
+class LocalChatSummaryUpdatesStore extends LocalUpdatesStore<
+    ChatIdentifier,
+    LocalChatSummaryUpdates
+> {
+    constructor() {
+        super(new ChatMap<LocalChatSummaryUpdates>());
     }
-    markUpdated(chatId: string, summaryUpdates: LocalChatSummaryUpdates["updated"]): void {
+
+    markAdded(summary: ChatSummary): void {
+        this.applyUpdate(summary.id, (_) => ({
+            added: summary,
+            removedAtTimestamp: undefined,
+        }));
+    }
+    markUpdated(chatId: ChatIdentifier, summaryUpdates: LocalChatSummaryUpdates["updated"]): void {
         this.applyUpdate(chatId, (_) => ({ updated: summaryUpdates }));
     }
-    markRemoved(chatId: string): void {
-        this.applyUpdate(chatId, (_) => ({ added: undefined, removedAtTimestamp: BigInt(Date.now()) }));
+    markRemoved(chatId: ChatIdentifier): void {
+        this.applyUpdate(chatId, (_) => ({
+            added: undefined,
+            removedAtTimestamp: BigInt(Date.now()),
+        }));
     }
-    delete(chatId: string): void {
+    delete(chatId: ChatIdentifier): void {
         this.deleteKey(chatId);
     }
 }

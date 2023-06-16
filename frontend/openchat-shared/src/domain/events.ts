@@ -1,4 +1,4 @@
-import type { ThreadRead } from "./chat";
+import type { ChatIdentifier, ThreadRead } from "./chat";
 import type { StorageStatus } from "./data/data";
 import type { PartialUserSummary } from "./user";
 
@@ -15,12 +15,17 @@ export class UsersLoaded extends CustomEvent<PartialUserSummary[]> {
 }
 
 export class MessagesReadFromServer extends CustomEvent<{
-    chatId: string;
+    chatId: ChatIdentifier;
     readByMeUpTo: number | undefined;
     threadsRead: ThreadRead[];
     dateReadPinned: bigint | undefined;
 }> {
-    constructor(chatId: string, readByMeUpTo: number | undefined, threadsRead: ThreadRead[], dateReadPinned: bigint | undefined) {
+    constructor(
+        chatId: ChatIdentifier,
+        readByMeUpTo: number | undefined,
+        threadsRead: ThreadRead[],
+        dateReadPinned: bigint | undefined
+    ) {
         super("openchat_event", {
             detail: {
                 chatId,
