@@ -4,7 +4,7 @@
  * But that doesn't work with ChatIdentifier
  *  */
 
-import { ChatIdentifier } from "openchat-shared";
+import { ChatIdentifier } from "../domain/chat";
 
 export interface ISafeMap<K, V> {
     clear(): void;
@@ -77,8 +77,8 @@ export class SafeMap<K, V> implements ISafeMap<K, V> {
 export class ChatMap<V> extends SafeMap<ChatIdentifier, V> implements ISafeMap<ChatIdentifier, V> {
     constructor() {
         super(
-            (k: ChatIdentifier) => k.toString(),
-            (k: string) => ChatIdentifier.fromString(k)
+            (k: ChatIdentifier) => JSON.stringify(k),
+            (k: string) => JSON.parse(k) as ChatIdentifier
         );
     }
 }

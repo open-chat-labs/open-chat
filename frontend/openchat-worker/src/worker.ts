@@ -808,12 +808,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "editMessage":
                 agent
-                    .editMessage(
-                        payload.chatType,
-                        payload.chatId,
-                        payload.msg,
-                        payload.threadRootMessageIndex
-                    )
+                    .editMessage(payload.chatId, payload.msg, payload.threadRootMessageIndex)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

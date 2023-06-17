@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Subscriber, Unsubscriber } from "svelte/store";
 import {
-    chatIdentifierToString,
-    type ChatIdentifier,
-    type MarkReadRequest,
-    type MarkReadResponse,
-    type ThreadRead,
-    type ThreadSyncDetails,
+    ChatIdentifier,
+    ChatMap,
+    MarkReadRequest,
+    MarkReadResponse,
+    ThreadRead,
+    ThreadSyncDetails,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { bigIntMax } from "../utils/bigint";
@@ -63,24 +64,24 @@ export class MessagesRead {
     }
 }
 
-type MessagesReadByChat = Record<string, MessagesRead>;
+type MessagesReadByChat = ChatMap<MessagesRead>;
 
 export type MessageReadState = {
     serverState: MessagesReadByChat;
-    waiting: Record<string, Map<bigint, number>>;
+    waiting: ChatMap<Map<bigint, number>>;
     state: MessagesReadByChat;
 };
 
 export class MessageReadTracker {
     private timeout: number | undefined;
-    public serverState: MessagesReadByChat = {};
+    public serverState: MessagesReadByChat = new ChatMap<MessagesRead>();
 
     /**
      * The waiting structure is either keyed on chatId for normal chat messages or
      * of chatId_threadRootMessageIndex for thread messages
      */
-    public waiting: Record<string, Map<bigint, number>> = {}; // The map is messageId -> (unconfirmed) messageIndex
-    public state: MessagesReadByChat = {};
+    public waiting: ChatMap<Map<bigint, number>> = new ChatMap<Map<bigint, number>>(); // The map is messageId -> (unconfirmed) messageIndex
+    public state: MessagesReadByChat = new ChatMap<MessagesRead>();
     private subscribers: Subscriber<MessageReadState>[] = [];
 
     public subscribe(sub: Subscriber<MessageReadState>): Unsubscriber {
@@ -150,11 +151,10 @@ export class MessageReadTracker {
     }
 
     private stateForId(chatId: ChatIdentifier): MessagesRead {
-        const key = chatIdentifierToString(chatId);
-        if (!this.state[key]) {
-            this.state[key] = new MessagesRead();
+        if (!this.state.has(chatId)) {
+            this.state.set(chatId, new MessagesRead());
         }
-        return this.state[key];
+        return this.state.get(chatId)!;
     }
 
     markThreadRead(chatId: ChatIdentifier, threadRootMessageIndex: number, readUpTo: number): void {
@@ -167,16 +167,15 @@ export class MessageReadTracker {
         messageIndex: number,
         messageId: bigint | undefined
     ): void {
-        const key = chatIdentifierToString(chatId);
-        if (!this.state[key]) {
-            this.state[key] = new MessagesRead();
+        if (!this.state.has(chatId)) {
+            this.state.set(chatId, new MessagesRead());
         }
-        if (messageId !== undefined && unconfirmed.contains(key, messageId)) {
+        if (messageId !== undefined && unconfirmed.contains(chatId.toString(), messageId)) {
             // if a message is unconfirmed we will just tuck it away until we are told it has been confirmed
-            if (this.waiting[key] === undefined) {
-                this.waiting[key] = new Map<bigint, number>();
+            if (!this.waiting.has(chatId)) {
+                this.waiting.set(chatId, new Map<bigint, number>());
             }
-            this.waiting[key].set(messageId, messageIndex);
+            this.waiting.get(chatId)?.set(messageId, messageIndex);
             this.publish();
         } else {
             // Mark the chat as read up to the new messageIndex
@@ -206,8 +205,7 @@ export class MessageReadTracker {
     }
 
     removeUnconfirmedMessage(chatId: ChatIdentifier, messageId: bigint): boolean {
-        const key = chatIdentifierToString(chatId);
-        return this.waiting[key] !== undefined && this.waiting[key].delete(messageId);
+        return this.waiting.get(chatId)?.delete(messageId) ?? false;
     }
 
     staleThreadCountForChat(chatId: ChatIdentifier, threads: ThreadSyncDetails[]): number {
@@ -222,9 +220,8 @@ export class MessageReadTracker {
     }
 
     threadReadUpTo(chatId: ChatIdentifier, threadRootMessageIndex: number): number {
-        const key = chatIdentifierToString(chatId);
-        const local = this.state[key]?.threads[threadRootMessageIndex];
-        const server = this.serverState[key]?.threads[threadRootMessageIndex];
+        const local = this.state.get(chatId)?.threads[threadRootMessageIndex];
+        const server = this.serverState.get(chatId)?.threads[threadRootMessageIndex];
         if (server === undefined) {
             return local ?? -1;
         }
@@ -234,8 +231,8 @@ export class MessageReadTracker {
         return Math.max(local, server);
     }
 
-    staleThreadsCount(threads: Record<string, ThreadSyncDetails[]>): number {
-        return Object.entries(threads).reduce((total, [chatId, threads]) => {
+    staleThreadsCount(threads: ChatMap<ThreadSyncDetails[]>): number {
+        return threads.entries().reduce((total, [chatId, threads]) => {
             const forChat = this.staleThreadCountForChat(chatId, threads);
             return forChat > 0 ? total + forChat : total;
         }, 0);
@@ -250,27 +247,24 @@ export class MessageReadTracker {
     }
 
     unreadMessageCount(chatId: ChatIdentifier, latestMessageIndex: number | undefined): number {
-        const key = chatIdentifierToString(chatId);
-
         // previewed chats will not exist in this.serverState
-        if (latestMessageIndex === undefined || this.serverState[key] === undefined) {
+        if (latestMessageIndex === undefined || !this.serverState.has(chatId)) {
             return 0;
         }
 
-        const readUpToServer = this.serverState[key]?.readUpTo;
-        const readUpToLocal = this.state[key]?.readUpTo;
+        const readUpToServer = this.serverState.get(chatId)?.readUpTo;
+        const readUpToLocal = this.state.get(chatId)?.readUpTo;
 
         const readUpToConfirmed = Math.max(readUpToServer ?? -1, readUpToLocal ?? -1);
-        const readUnconfirmedCount = this.waiting[key]?.size ?? 0;
+        const readUnconfirmedCount = this.waiting.get(chatId)?.size ?? 0;
 
         const total = latestMessageIndex - readUpToConfirmed - readUnconfirmedCount;
         return Math.max(total, 0);
     }
 
     unreadPinned(chatId: ChatIdentifier, dateLastPinned: bigint | undefined): boolean {
-        const key = chatIdentifierToString(chatId);
-        const readServer = this.serverState[key]?.dateReadPinned ?? BigInt(0);
-        const readLocal = this.state[key]?.dateReadPinned ?? BigInt(0);
+        const readServer = this.serverState.get(chatId)?.dateReadPinned ?? BigInt(0);
+        const readLocal = this.state.get(chatId)?.dateReadPinned ?? BigInt(0);
         const dateReadPinned = bigIntMax(readServer, readLocal);
         return (dateLastPinned ?? BigInt(0)) > dateReadPinned;
     }
@@ -282,14 +276,13 @@ export class MessageReadTracker {
         if (latestMessageIndex === undefined) {
             return undefined;
         }
-        const key = chatIdentifierToString(chatId);
-        const readUpToServer = this.serverState[key]?.readUpTo;
-        const readUpToLocal = this.state[key]?.readUpTo;
+        const readUpToServer = this.serverState.get(chatId)?.readUpTo;
+        const readUpToLocal = this.state.get(chatId)?.readUpTo;
 
         const readUpToConfirmed = Math.max(readUpToServer ?? -1, readUpToLocal ?? -1);
 
         if (readUpToConfirmed < latestMessageIndex) {
-            const readUnconfirmed = this.waiting[key] ?? new Map();
+            const readUnconfirmed = this.waiting.get(chatId) ?? new Map();
             const unconfirmedMessageIndexes = [...readUnconfirmed.values()];
 
             for (let i = readUpToConfirmed + 1; i <= latestMessageIndex; i++) {
@@ -307,14 +300,13 @@ export class MessageReadTracker {
         threads: ThreadRead[],
         dateReadPinned: bigint | undefined
     ): void {
-        const key = chatIdentifierToString(chatId);
         const serverState = new MessagesRead();
         serverState.readUpTo = readUpTo;
         serverState.setThreads(threads);
         serverState.markReadPinned(dateReadPinned);
-        this.serverState[key] = serverState;
+        this.serverState.set(chatId, serverState);
 
-        const state = this.state[key];
+        const state = this.state.get(chatId);
         if (state) {
             if (
                 readUpTo !== undefined &&
@@ -345,14 +337,13 @@ export class MessageReadTracker {
     }
 
     isRead(chatId: ChatIdentifier, messageIndex: number, messageId: bigint | undefined): boolean {
-        const key = chatIdentifierToString(chatId);
-        if (messageId !== undefined && unconfirmed.contains(key, messageId)) {
-            return this.waiting[key] !== undefined && this.waiting[key].has(messageId);
+        if (messageId !== undefined && unconfirmed.contains(chatId.toString(), messageId)) {
+            return this.waiting.get(chatId)?.has(messageId) ?? false;
         } else {
-            const serverState = this.serverState[key];
+            const serverState = this.serverState.get(chatId);
             if (serverState?.readUpTo !== undefined && serverState.readUpTo >= messageIndex)
                 return true;
-            const localState = this.state[key];
+            const localState = this.state.get(chatId);
             if (localState?.readUpTo !== undefined && localState.readUpTo >= messageIndex)
                 return true;
             return false;

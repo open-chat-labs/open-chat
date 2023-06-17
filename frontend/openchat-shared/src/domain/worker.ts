@@ -483,7 +483,6 @@ type RegisterUser = {
 };
 
 type EditMessage = {
-    chatType: ChatSummary["kind"];
     chatId: ChatIdentifier;
     msg: Message;
     threadRootMessageIndex?: number;
@@ -1029,7 +1028,7 @@ export type WorkerEvent =
 
 export type RelayedMessagesReadFromServer = WorkerEventCommon<{
     subkind: "messages_read_from_server";
-    chatId: string;
+    chatId: ChatIdentifier;
     readByMeUpTo: number | undefined;
     threadsRead: ThreadRead[];
     dateReadPinned: bigint | undefined;
@@ -1048,14 +1047,14 @@ type LoadFailedMessages = {
 };
 
 type DeleteFailedMessage = {
-    chatId: string;
+    chatId: ChatIdentifier;
     messageId: bigint;
     threadRootMessageIndex: number | undefined;
     kind: "deleteFailedMessage";
 };
 
 type ClaimPrize = {
-    chatId: string;
+    chatId: ChatIdentifier;
     messageId: bigint;
     kind: "claimPrize";
 };
@@ -1074,7 +1073,7 @@ type UpdateMarketMakerConfig = UpdateMarketMakerConfigArgs & {
 };
 
 type SetMessageReminder = {
-    chatId: string;
+    chatId: ChatIdentifier;
     eventIndex: number;
     remindAt: number;
     notes?: string;
@@ -1088,7 +1087,7 @@ type CancelMessageReminder = {
 };
 
 type ReportMessage = {
-    chatId: string;
+    chatId: ChatIdentifier;
     eventIndex: number;
     reasonCode: number;
     notes: string | undefined;
@@ -1097,7 +1096,7 @@ type ReportMessage = {
 };
 
 type DeclineInvitation = {
-    chatId: string;
+    chatId: ChatIdentifier;
     kind: "declineInvitation";
 };
 

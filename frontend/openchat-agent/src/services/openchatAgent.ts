@@ -63,7 +63,7 @@ import {
     GroupChatEvent,
     GroupChatSummary,
     GroupInvite,
-    GroupPermissions,
+    ChatPermissions,
     AccessRules,
     SearchResponse,
     IndexRange,
@@ -222,7 +222,7 @@ export class OpenChatAgent extends EventTarget {
         return this._communityClients[communityId];
     }
 
-    getGroupClient(chatId: ChatIdentifier): GroupClient {
+    getGroupClient(chatId: string): GroupClient {
         if (!this._groupClients[chatId]) {
             const inviteCode = this.getProvidedInviteCode(chatId);
             this._groupClients[chatId] = GroupClient.create(
@@ -252,18 +252,22 @@ export class OpenChatAgent extends EventTarget {
     }
 
     editMessage(
-        chatType: ChatSummary["kind"],
         chatId: ChatIdentifier,
         msg: Message,
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {
-        if (chatType === "group_chat") {
-            return this.editGroupMessage(chatId, msg, threadRootMessageIndex);
+        if (chatId.value.kind === "group_chat") {
+            return this.editGroupMessage(chatId.toString(), msg, threadRootMessageIndex);
         }
-        if (chatType === "direct_chat") {
-            return this.editDirectMessage(chatId, msg, threadRootMessageIndex);
+        if (chatId.value.kind === "direct_chat") {
+            return this.editDirectMessage(chatId.toString(), msg, threadRootMessageIndex);
         }
-        throw new UnsupportedValueError("Unexpect chat type", chatType);
+        if (chatId.value.kind === "channel") {
+            // TODO there is a problem here. There is no guarantee that the ChatId contains a CommunityChatIdentifier
+            // TOOD we have zero type safety - does this whole thing just suck?
+            throw new Error("What are we supposed to do here?");
+        }
+        throw new UnsupportedValueError("Unexpect chat type", chatId.value);
     }
 
     sendMessage(
@@ -314,7 +318,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private editGroupMessage(
-        chatId: ChatIdentifier,
+        chatId: string,
         message: Message,
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {
@@ -347,7 +351,7 @@ export class OpenChatAgent extends EventTarget {
         name?: string,
         desc?: string,
         rules?: AccessRules,
-        permissions?: Partial<GroupPermissions>,
+        permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
         gate?: AccessGate
     ): Promise<UpdateGroupResponse> {

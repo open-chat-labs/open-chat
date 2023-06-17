@@ -1,13 +1,13 @@
-import type {
-    LocalMessageUpdates,
-    LocalPollVote,
-    LocalReaction,
-    MessageContent,
-    ThreadSummary,
+import {
+    MessageMap,
+    type LocalMessageUpdates,
+    type LocalPollVote,
+    type LocalReaction,
+    type MessageContent,
+    type ThreadSummary,
 } from "openchat-shared";
 import { mergeThreadSummaries } from "../utils/chat";
 import { LocalUpdatesStore } from "./localUpdatesStore";
-import { MessageMap } from "../utils/map";
 
 class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpdates> {
     markCancelled(messageId: bigint, content: MessageContent): void {

@@ -1,4 +1,4 @@
-import type { ISafeMap } from "../utils/map";
+import type { ISafeMap } from "openchat-shared";
 import { Writable, writable } from "svelte/store";
 
 const PRUNE_LOCAL_UPDATES_INTERVAL: number = 30 * 1000;

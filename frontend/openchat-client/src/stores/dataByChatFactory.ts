@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { selectedChatId } from "./chat";
-import type { ChatIdentifier } from "openchat-shared";
-import { ChatMap } from "../utils/map";
+import { type ChatIdentifier, ChatMap } from "openchat-shared";
 
 function setDataForChat<T>(store: Writable<ChatMap<T>>, chatId: ChatIdentifier, data: T): void {
     store.update((s) => {

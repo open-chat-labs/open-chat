@@ -811,48 +811,58 @@ export type DirectChatsInitial = {
 };
 
 export class ChatIdentifier {
-    private constructor(public value: CommunityChatIdentifier | string) {}
+    private constructor(
+        public value: ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier
+    ) {}
 
-    create(value: CommunityChatIdentifier | string): ChatIdentifier {
+    create(value: ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier): ChatIdentifier {
         return new ChatIdentifier(value);
     }
 
     toString(): string {
-        if (typeof this.value === "string") {
-            return this.value;
-        } else {
-            return `${this.value.communtityId}_${this.value.channelId}`;
+        switch (this.value.kind) {
+            case "channel":
+                return `${this.value.communtityId}_${this.value.id}`;
+            default:
+                return this.value.id;
         }
     }
 
-    static fromString(id: string): ChatIdentifier {
-        const parts = id.split("_");
-        if (parts.length === 1) {
-            return new ChatIdentifier(parts[0]);
-        } else {
-            return new ChatIdentifier({
-                communtityId: parts[0],
-                channelId: parts[1],
-            });
-        }
+    static directFromString(id: string): ChatIdentifier {
+        return new ChatIdentifier({
+            kind: "direct_chat",
+            id,
+        });
+    }
+
+    static groupFromString(id: string): ChatIdentifier {
+        return new ChatIdentifier({
+            kind: "group_chat",
+            id,
+        });
     }
 
     equals(other: ChatIdentifier): boolean {
-        if (typeof this.value === "string") {
-            return typeof other.value === "string" && this.value === other.value;
-        } else {
-            return (
-                typeof other.value !== "string" &&
-                this.value.communtityId === other.value.communtityId &&
-                this.value.channelId === other.value.channelId
-            );
-        }
+        const thisVal = this.toString();
+        const otherVal = other.toString();
+        return thisVal === otherVal;
     }
 }
 
-export type CommunityChatIdentifier = {
+export type DirectChatIdentifier = {
+    kind: "direct_chat";
+    id: string;
+};
+
+export type GroupChatIdentifier = {
+    kind: "group_chat";
+    id: string;
+};
+
+export type ChannelIdentifier = {
+    kind: "channel";
     communtityId: string;
-    channelId: string;
+    id: string;
 };
 
 export type FavouriteChatsInitial = {

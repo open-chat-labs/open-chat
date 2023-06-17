@@ -1,5 +1,5 @@
 import type { User } from "../../domain/user/user";
-import type { EventWrapper, Message } from "../chat/chat";
+import type { ChatIdentifier, EventWrapper, Message } from "../chat/chat";
 
 export type Notification =
     | AddedToGroupNotification
@@ -10,7 +10,7 @@ export type Notification =
 
 export type AddedToGroupNotification = {
     kind: "added_to_group_notification";
-    chatId: string;
+    chatId: ChatIdentifier;
     groupName: string;
     addedBy: string;
     addedByUsername: string;
@@ -31,7 +31,7 @@ export type GroupNotification = {
     threadRootMessageIndex: number | undefined;
     message: EventWrapper<Message>;
     senderName: string;
-    chatId: string;
+    chatId: ChatIdentifier;
     groupName: string;
     mentioned: User[];
 };
@@ -47,7 +47,7 @@ export type DirectReaction = {
 
 export type GroupReaction = {
     kind: "group_reaction";
-    chatId: string;
+    chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
     groupName: string;
     addedBy: string;

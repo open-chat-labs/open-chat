@@ -2,6 +2,7 @@ import type {
     AuthProvider,
     ChatEvent,
     ChatIdentifier,
+    ChatMap,
     ChatSummary,
     DiamondMembershipDetails,
     DirectChatSummary,
@@ -45,7 +46,6 @@ import { pinnedChatsStore } from "./stores/pinnedChats";
 import { blockedUsers } from "./stores/blockedUsers";
 import { diamondMembership, isDiamond } from "./stores/diamond";
 import type DRange from "drange";
-import type { ChatMap } from "./utils/map";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value

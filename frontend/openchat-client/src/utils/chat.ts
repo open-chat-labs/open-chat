@@ -17,7 +17,7 @@ import {
     PermissionRole,
     CryptocurrencyContent,
     AggregateCommonEvents,
-    ChatMetrics,
+    Metrics,
     SendMessageSuccess,
     TransferSuccess,
     ThreadSummary,
@@ -39,6 +39,7 @@ import {
     AccessControlled,
     Permissioned,
     ChatIdentifier,
+    ISafeMap,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -55,7 +56,6 @@ import { formatTokens } from "./cryptoFormatter";
 import { currentChatUserIds } from "../stores/chat";
 import type { TypersByKey } from "../stores/typing";
 import { tallyKey } from "../stores/proposalTallies";
-import type { ChatMap, ISafeMap } from "./map";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -110,7 +110,7 @@ export function getUsersToMakeRtcConnectionsWith(
     events: EventWrapper<ChatEvent>[]
 ): string[] {
     if (chat.kind === "direct_chat") {
-        return [chat.chatId];
+        return [chat.id.toString()];
     }
 
     const activeUsers = getRecentlyActiveUsers(chat, events, MAX_RTC_CONNECTIONS_PER_CHAT);
@@ -653,7 +653,7 @@ export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): Eve
 }
 
 export function groupChatFromCandidate(
-    chatId: string,
+    chatId: ChatIdentifier,
     candidate: CandidateGroupChat
 ): GroupChatSummary {
     return {
@@ -947,7 +947,7 @@ function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean 
     }
 }
 
-export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
+export function mergeChatMetrics(a: Metrics, b: Metrics): Metrics {
     return {
         audioMessages: a.audioMessages + b.audioMessages,
         edits: a.edits + b.edits,
@@ -968,9 +968,9 @@ export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
     };
 }
 
-export function metricsEqual(a: ChatMetrics, b: ChatMetrics): boolean {
+export function metricsEqual(a: Metrics, b: Metrics): boolean {
     return Object.keys(a).reduce<boolean>(
-        (same, k) => same && a[k as keyof ChatMetrics] === b[k as keyof ChatMetrics],
+        (same, k) => same && a[k as keyof Metrics] === b[k as keyof Metrics],
         true
     );
 }
@@ -1347,28 +1347,28 @@ function toSymbol(token: Cryptocurrency): string {
 }
 
 export function stopTyping(
-    { kind, chatId }: ChatSummary,
+    { kind, id }: ChatSummary,
     userId: string,
     threadRootMessageIndex?: number
 ): void {
     rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
         kind: "remote_user_stopped_typing",
         chatType: kind,
-        chatId,
+        chatId: id,
         userId,
         threadRootMessageIndex,
     });
 }
 
 export function startTyping(
-    { kind, chatId }: ChatSummary,
+    { kind, id }: ChatSummary,
     userId: string,
     threadRootMessageIndex?: number
 ): void {
     rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
         kind: "remote_user_typing",
         chatType: kind,
-        chatId,
+        chatId: id,
         userId,
         threadRootMessageIndex,
     });

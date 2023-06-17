@@ -1,9 +1,10 @@
+import { ChatIdentifier, ChatMap } from "openchat-shared";
 import { writable, derived } from "svelte/store";
 
-export type TypersByKey = Record<string, Set<string>>;
+export type TypersByKey = ChatMap<Set<string>>;
 
 type UserTyping = {
-    chatId: string;
+    chatId: ChatIdentifier;
     threadRootMessageIndex?: number;
     timeout: number;
 };
@@ -12,7 +13,7 @@ type UsersTyping = Record<string, UserTyping>;
 export function isTyping(
     usersTyping: UsersTyping,
     userId: string,
-    chatId: string,
+    chatId: ChatIdentifier,
     threadRootMessageIndex?: number
 ): boolean {
     const userTyping = usersTyping[userId];
@@ -29,7 +30,7 @@ const usersTyping = writable<UsersTyping>({});
 
 export const typing = {
     subscribe: usersTyping.subscribe,
-    startTyping: (chatId: string, userId: string, threadRootMessageIndex?: number): void =>
+    startTyping: (chatId: ChatIdentifier, userId: string, threadRootMessageIndex?: number): void =>
         usersTyping.update((users) => {
             // Start a timeout which will mark the user as having stopped typing if no further 'user typing' events are
             // received within MARK_TYPING_STOPPED_INTERVAL_MS.
@@ -56,12 +57,12 @@ export const typing = {
 // a derived store to show users typing by chat
 export const byChat = derived([usersTyping], ([$users]) => {
     return Object.entries($users).reduce((byChat, [userId, { chatId }]) => {
-        if (byChat[chatId] === undefined) {
-            byChat[chatId] = new Set<string>();
+        if (!byChat.has(chatId)) {
+            byChat.set(chatId, new Set<string>());
         }
-        byChat[chatId].add(userId);
+        byChat.get(chatId)?.add(userId);
         return byChat;
-    }, {} as Record<string, Set<string>>);
+    }, new ChatMap<Set<string>>());
 });
 
 // a derived store to show users typing by thread

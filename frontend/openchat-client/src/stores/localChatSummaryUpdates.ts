@@ -1,6 +1,10 @@
-import type { ChatIdentifier, ChatSummary, LocalChatSummaryUpdates } from "openchat-shared";
+import {
+    ChatMap,
+    type ChatIdentifier,
+    type ChatSummary,
+    type LocalChatSummaryUpdates,
+} from "openchat-shared";
 import { LocalUpdatesStore } from "./localUpdatesStore";
-import { ChatMap } from "src/utils/map";
 
 class LocalChatSummaryUpdatesStore extends LocalUpdatesStore<
     ChatIdentifier,

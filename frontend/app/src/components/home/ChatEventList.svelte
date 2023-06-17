@@ -210,7 +210,7 @@
             latestEventIndex: event.index,
             latestEventTimestamp: event.timestamp,
         };
-        client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
+        client.markThreadSummaryUpdated(rootEvent.event.messageId, summary);
         afterSendMessage();
     }
 

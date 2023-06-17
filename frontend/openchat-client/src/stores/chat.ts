@@ -14,6 +14,7 @@ import {
     emptyChatMetrics,
     UpdatedEvent,
     ChatIdentifier,
+    ChatMap,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
@@ -39,7 +40,6 @@ import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
 import type { OpenChat } from "../openchat";
-import { ChatMap } from "../utils/map";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
@@ -547,7 +547,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $failedMessages,
         $proposalTallies,
     ]) => {
-        const chatId = get(selectedChatId) ?? ChatIdentifier.fromString("");
+        const chatId = get(selectedChatId) ?? ChatIdentifier.groupFromString("");
         const failedForChat = $failedMessages[chatId.toString()];
         // for the purpose of merging, unconfirmed and failed can be treated the same
         const failed = failedForChat ? Object.values(failedForChat) : [];
