@@ -272,17 +272,16 @@ export class OpenChatAgent extends EventTarget {
     }
 
     sendMessage(
-        chatType: "direct_chat" | "group_chat",
-        chatId: string,
+        chatId: ChatIdentifier,
         user: CreatedUser,
         mentioned: User[],
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        if (chatType === "group_chat") {
+        if (chatId.kind === "group_chat") {
             if (event.event.content.kind === "crypto_content") {
                 return this.userClient.sendMessageWithTransferToGroup(
-                    chatId,
+                    chatId.id,
                     event.event.content.transfer.recipient,
                     user,
                     event,
@@ -290,17 +289,17 @@ export class OpenChatAgent extends EventTarget {
                 );
             }
             return this.sendGroupMessage(
-                chatId,
+                chatId.id,
                 user.username,
                 mentioned,
                 event,
                 threadRootMessageIndex
             );
         }
-        if (chatType === "direct_chat") {
-            return this.sendDirectMessage(chatId, user, event, threadRootMessageIndex);
+        if (chatId.kind === "direct_chat") {
+            return this.sendDirectMessage(chatId.id, user, event, threadRootMessageIndex);
         }
-        throw new UnsupportedValueError("Unexpect chat type", chatType);
+        throw new Error("TODO - send channel message not implemented");
     }
 
     private sendGroupMessage(
@@ -367,13 +366,19 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    async inviteUsers(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
+    async inviteUsers(
+        chatId: GroupChatIdentifier,
+        userIds: string[]
+    ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
         }
 
-        const localUserIndex = await this.getGroupClient(chatId).localUserIndex();
-        return this.createLocalUserIndexClient(localUserIndex).inviteUsersToGroup(chatId, userIds);
+        const localUserIndex = await this.getGroupClient(chatId.id).localUserIndex();
+        return this.createLocalUserIndexClient(localUserIndex).inviteUsersToGroup(
+            chatId.id,
+            userIds
+        );
     }
 
     directChatEventsWindow(
@@ -1102,8 +1107,12 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setUsername(userId, username);
     }
 
-    changeRole(chatId: string, userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
-        return this.getGroupClient(chatId).changeRole(userId, newRole);
+    changeRole(
+        chatId: GroupChatIdentifier,
+        userId: string,
+        newRole: MemberRole
+    ): Promise<ChangeRoleResponse> {
+        return this.getGroupClient(chatId.id).changeRole(userId, newRole);
     }
 
     deleteGroup(chatId: GroupChatIdentifier): Promise<DeleteGroupResponse> {
@@ -1114,20 +1123,26 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId.id).makeGroupPrivate();
     }
 
-    removeMember(chatId: string, userId: string): Promise<RemoveMemberResponse> {
-        return this.getGroupClient(chatId).removeMember(userId);
+    removeMember(chatId: GroupChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
+        return this.getGroupClient(chatId.id).removeMember(userId);
     }
 
     blockUserFromDirectChat(userId: string): Promise<BlockUserResponse> {
         return this.userClient.blockUser(userId);
     }
 
-    blockUserFromGroupChat(chatId: string, userId: string): Promise<BlockUserResponse> {
-        return this.getGroupClient(chatId).blockUser(userId);
+    blockUserFromGroupChat(
+        chatId: GroupChatIdentifier,
+        userId: string
+    ): Promise<BlockUserResponse> {
+        return this.getGroupClient(chatId.id).blockUser(userId);
     }
 
-    unblockUserFromGroupChat(chatId: string, userId: string): Promise<UnblockUserResponse> {
-        return this.getGroupClient(chatId).unblockUser(userId);
+    unblockUserFromGroupChat(
+        chatId: GroupChatIdentifier,
+        userId: string
+    ): Promise<UnblockUserResponse> {
+        return this.getGroupClient(chatId.id).unblockUser(userId);
     }
 
     unblockUserFromDirectChat(userId: string): Promise<UnblockUserResponse> {
@@ -1409,12 +1424,12 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    pinMessage(chatId: string, messageIndex: number): Promise<PinMessageResponse> {
-        return this.getGroupClient(chatId).pinMessage(messageIndex);
+    pinMessage(chatId: GroupChatIdentifier, messageIndex: number): Promise<PinMessageResponse> {
+        return this.getGroupClient(chatId.id).pinMessage(messageIndex);
     }
 
-    unpinMessage(chatId: string, messageIndex: number): Promise<UnpinMessageResponse> {
-        return this.getGroupClient(chatId).unpinMessage(messageIndex);
+    unpinMessage(chatId: GroupChatIdentifier, messageIndex: number): Promise<UnpinMessageResponse> {
+        return this.getGroupClient(chatId.id).unpinMessage(messageIndex);
     }
 
     registerPollVote(

@@ -445,20 +445,20 @@ type RegisterProposalVote = {
 };
 
 type ChangeRole = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     userId: string;
     newRole: MemberRole;
     kind: "changeRole";
 };
 
 type RemoveMember = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     userId: string;
     kind: "removeMember";
 };
 
 type InviteUsers = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     userIds: string[];
     kind: "inviteUsers";
 };
@@ -501,13 +501,13 @@ type SendMessage = {
 };
 
 export type PinMessage = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     messageIndex: number;
     kind: "pinMessage";
 };
 
 export type UnpinMessage = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     messageIndex: number;
     kind: "unpinMessage";
 };
@@ -525,13 +525,13 @@ type ListNervousSystemFunctions = {
 };
 
 type BlockUserFromGroup = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     userId: string;
     kind: "blockUserFromGroupChat";
 };
 
 type UnblockUserFromGroup = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     userId: string;
     kind: "unblockUserFromGroupChat";
 };

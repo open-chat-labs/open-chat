@@ -787,7 +787,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "sendMessage":
                 agent
                     .sendMessage(
-                        payload.chatType,
                         payload.chatId,
                         payload.user,
                         payload.mentioned,
