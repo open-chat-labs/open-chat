@@ -509,6 +509,7 @@ function reduceJoinedOrLeft(
         if (
             e.event.kind === "member_joined" ||
             e.event.kind === "member_left" ||
+            e.event.kind === "empty" ||
             (e.event.kind === "message" &&
                 messageIsHidden(e.event, myUserId, expandedDeletedMessages))
         ) {
@@ -536,7 +537,7 @@ function reduceJoinedOrLeft(
                 } else {
                     agg.usersLeft.add(e.event.userId);
                 }
-            } else {
+            } else if (e.event.kind === "message") {
                 agg.messagesDeleted.push(e.event.messageIndex);
             }
 
