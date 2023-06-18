@@ -59,6 +59,8 @@ import type {
     CandidateChannel,
     ChatSummary,
     ChatIdentifier,
+    GroupChatIdentifier,
+    DirectChatIdentifier,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -490,7 +492,6 @@ type EditMessage = {
 };
 
 type SendMessage = {
-    chatType: ChatSummary["kind"];
     chatId: ChatIdentifier;
     user: CreatedUser;
     mentioned: User[];
@@ -536,7 +537,7 @@ type UnblockUserFromGroup = {
 };
 
 type AddGroupChatReaction = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     messageId: bigint;
     reaction: string;
     username: string;
@@ -545,7 +546,7 @@ type AddGroupChatReaction = {
 };
 
 type RemoveGroupChatReaction = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     messageId: bigint;
     reaction: string;
     threadRootMessageIndex?: number;
@@ -553,7 +554,7 @@ type RemoveGroupChatReaction = {
 };
 
 type RemoveDirectChatReaction = {
-    otherUserId: string;
+    chatId: DirectChatIdentifier;
     messageId: bigint;
     reaction: string;
     threadRootMessageIndex?: number;
@@ -561,7 +562,7 @@ type RemoveDirectChatReaction = {
 };
 
 type AddDirectChatReaction = {
-    otherUserId: string;
+    chatId: DirectChatIdentifier;
     messageId: bigint;
     reaction: string;
     username: string;
@@ -570,7 +571,6 @@ type AddDirectChatReaction = {
 };
 
 type DeleteMessage = {
-    chatType: ChatSummary["kind"];
     chatId: ChatIdentifier;
     messageId: bigint;
     threadRootMessageIndex?: number;
@@ -579,7 +579,6 @@ type DeleteMessage = {
 };
 
 type UndeleteMessage = {
-    chatType: ChatSummary["kind"];
     chatId: ChatIdentifier;
     messageId: bigint;
     threadRootMessageIndex?: number;
@@ -596,7 +595,7 @@ type RegisterPollVote = {
 };
 
 type UpdateGroup = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     name?: string;
     desc?: string;
     rules?: AccessRules;
@@ -607,7 +606,7 @@ type UpdateGroup = {
 };
 
 type JoinGroup = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "joinGroup";
 };
 
@@ -617,17 +616,17 @@ type JoinCommunity = {
 };
 
 type LeaveGroup = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "leaveGroup";
 };
 
 type DeleteGroup = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "deleteGroup";
 };
 
 type MakeGroupPrivate = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "makeGroupPrivate";
 };
 
@@ -673,7 +672,7 @@ type ToggleMuteNotifications = {
 };
 
 type GetPublicGroupSummary = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "getPublicGroupSummary";
 };
 
@@ -704,7 +703,7 @@ type SearchUsers = {
 
 type DirectChatEventsWindow = {
     eventIndexRange: IndexRange;
-    theirUserId: string;
+    chatId: DirectChatIdentifier;
     messageIndex: number;
     latestClientMainEventIndex: number | undefined;
     kind: "directChatEventsWindow";
@@ -712,7 +711,7 @@ type DirectChatEventsWindow = {
 
 type GroupChatEventsWindow = {
     eventIndexRange: IndexRange;
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     messageIndex: number;
     latestClientMainEventIndex: number | undefined;
     threadRootMessageIndex: number | undefined;
@@ -720,7 +719,7 @@ type GroupChatEventsWindow = {
 };
 
 type DirectChatEventsByEventIndex = {
-    theirUserId: string;
+    chatId: DirectChatIdentifier;
     eventIndexes: number[];
     threadRootMessageIndex: number | undefined;
     latestClientEventIndex: number | undefined;
@@ -728,7 +727,7 @@ type DirectChatEventsByEventIndex = {
 };
 
 type GroupChatEventsByEventIndex = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     eventIndexes: number[];
     threadRootMessageIndex: number | undefined;
     latestClientEventIndex: number | undefined;
@@ -757,13 +756,13 @@ type MarkMessagesRead = {
 };
 
 type GetGroupDetails = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     latestEventIndex: number;
     kind: "getGroupDetails";
 };
 
 type GetGroupDetailUpdates = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     previous: GroupChatDetails;
     kind: "getGroupDetailsUpdates";
 };
@@ -839,7 +838,6 @@ type GetUsers = {
 };
 
 type ChatEvents = {
-    chatType: ChatSummary["kind"];
     chatId: ChatIdentifier;
     eventIndexRange: IndexRange;
     startIndex: number;
@@ -859,7 +857,7 @@ type GetUpdates = {
 };
 
 type GetDeletedGroupMessage = {
-    chatId: ChatIdentifier;
+    chatId: string;
     messageId: bigint;
     threadRootMessageIndex: number | undefined;
     kind: "getDeletedGroupMessage";

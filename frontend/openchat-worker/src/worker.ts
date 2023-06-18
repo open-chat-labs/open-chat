@@ -199,7 +199,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "chatEvents":
                 agent
                     .chatEvents(
-                        payload.chatType,
                         payload.chatId,
                         payload.eventIndexRange,
                         payload.startIndex,
@@ -296,7 +295,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 agent
                     .directChatEventsWindow(
                         payload.eventIndexRange,
-                        payload.theirUserId,
+                        payload.chatId,
                         payload.messageIndex,
                         payload.latestClientMainEventIndex
                     )
@@ -328,7 +327,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "directChatEventsByEventIndex":
                 agent
                     .directChatEventsByEventIndex(
-                        payload.theirUserId,
+                        payload.chatId,
                         payload.eventIndexes,
                         payload.threadRootMessageIndex,
                         payload.latestClientEventIndex
@@ -363,8 +362,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.message,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex,
-                        undefined
+                        payload.latestClientEventIndex
                     )
                     .then((response) =>
                         sendResponse(correlationId, {
@@ -622,7 +620,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "deleteMessage":
                 agent
                     .deleteMessage(
-                        payload.chatType,
                         payload.chatId,
                         payload.messageId,
                         payload.threadRootMessageIndex,
@@ -639,7 +636,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "undeleteMessage":
                 agent
                     .undeleteMessage(
-                        payload.chatType,
                         payload.chatId,
                         payload.messageId,
                         payload.threadRootMessageIndex
@@ -655,7 +651,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "addDirectChatReaction":
                 agent
                     .addDirectChatReaction(
-                        payload.otherUserId,
+                        payload.chatId,
                         payload.messageId,
                         payload.reaction,
                         payload.username,
@@ -672,7 +668,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "removeDirectChatReaction":
                 agent
                     .removeDirectChatReaction(
-                        payload.otherUserId,
+                        payload.chatId,
                         payload.messageId,
                         payload.reaction,
                         payload.threadRootMessageIndex
