@@ -4,7 +4,7 @@
  * But that doesn't work with ChatIdentifier
  *  */
 
-import { ChatIdentifier } from "../domain/chat";
+import type { ChatIdentifier } from "../domain/chat";
 
 export interface ISafeMap<K, V> {
     clear(): void;

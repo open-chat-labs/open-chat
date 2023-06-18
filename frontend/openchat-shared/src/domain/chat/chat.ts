@@ -380,22 +380,16 @@ export interface FileContent extends DataContent {
 export type ReplyContext = RawReplyContext | RehydratedReplyContext;
 
 export type MessageContext = {
-    chatId: string;
+    chatId: ChatIdentifier;
     threadRootMessageIndex?: number;
 };
 
 export function messageContextFromString(ctxStr: string): MessageContext {
-    const [chatId, threadRootMessageIndex] = ctxStr.split("_");
-    return {
-        chatId,
-        threadRootMessageIndex: threadRootMessageIndex ? Number(threadRootMessageIndex) : undefined,
-    };
+    return JSON.parse(ctxStr);
 }
 
 export function messageContextToString(ctx: MessageContext): string {
-    return ctx.threadRootMessageIndex !== undefined
-        ? `${ctx.chatId}_${ctx.threadRootMessageIndex}`
-        : ctx.chatId;
+    return JSON.stringify(ctx);
 }
 
 export type RawReplyContext = {
@@ -810,44 +804,47 @@ export type DirectChatsInitial = {
     pinned: string[];
 };
 
-export class ChatIdentifier {
-    private constructor(
-        public value: ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier
-    ) {}
+export type ChatIdentifier = ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier;
+export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
 
-    create(value: ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier): ChatIdentifier {
-        return new ChatIdentifier(value);
-    }
+// export class ChatIdentifier {
+//     private constructor(
+//         public value: ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier
+//     ) {}
 
-    toString(): string {
-        switch (this.value.kind) {
-            case "channel":
-                return `${this.value.communtityId}_${this.value.id}`;
-            default:
-                return this.value.id;
-        }
-    }
+//     create(value: ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier): ChatIdentifier {
+//         return new ChatIdentifier(value);
+//     }
 
-    static directFromString(id: string): ChatIdentifier {
-        return new ChatIdentifier({
-            kind: "direct_chat",
-            id,
-        });
-    }
+//     toString(): string {
+//         switch (this.value.kind) {
+//             case "channel":
+//                 return `${this.value.communtityId}_${this.value.id}`;
+//             default:
+//                 return this.value.id;
+//         }
+//     }
 
-    static groupFromString(id: string): ChatIdentifier {
-        return new ChatIdentifier({
-            kind: "group_chat",
-            id,
-        });
-    }
+//     static directFromString(id: string): ChatIdentifier {
+//         return new ChatIdentifier({
+//             kind: "direct_chat",
+//             id,
+//         });
+//     }
 
-    equals(other: ChatIdentifier): boolean {
-        const thisVal = this.toString();
-        const otherVal = other.toString();
-        return thisVal === otherVal;
-    }
-}
+//     static groupFromString(id: string): ChatIdentifier {
+//         return new ChatIdentifier({
+//             kind: "group_chat",
+//             id,
+//         });
+//     }
+
+//     equals(other: ChatIdentifier): boolean {
+//         const thisVal = this.toString();
+//         const otherVal = other.toString();
+//         return thisVal === otherVal;
+//     }
+// }
 
 export type DirectChatIdentifier = {
     kind: "direct_chat";
@@ -1754,7 +1751,7 @@ export type ThreadPreviewsSuccess = {
 };
 
 export type ThreadPreview = {
-    chatId: string;
+    chatId: ChatIdentifier;
     latestReplies: EventWrapper<Message>[];
     totalReplies: number;
     rootMessage: EventWrapper<Message>;
