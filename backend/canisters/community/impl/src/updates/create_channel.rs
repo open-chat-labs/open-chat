@@ -1,4 +1,7 @@
-use crate::{activity_notifications::handle_activity_notification, model::channels::Channel, mutate_state, RuntimeState};
+use crate::{
+    activity_notifications::handle_activity_notification, model::channels::Channel, mutate_state, run_regular_jobs,
+    RuntimeState,
+};
 use canister_tracing_macros::trace;
 use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
@@ -10,6 +13,8 @@ use utils::group_validation::{validate_description, validate_name, validate_rule
 #[update]
 #[trace]
 fn create_channel(args: Args) -> Response {
+    run_regular_jobs();
+
     mutate_state(|state| create_channel_impl(args, state))
 }
 

@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::toggle_mute_channel_notifications::{Response::*, *};
 use ic_cdk_macros::update;
@@ -8,6 +8,8 @@ use types::{Empty, Timestamped};
 #[update]
 #[trace]
 fn toggle_mute_channel_notifications(args: Args) -> Response {
+    run_regular_jobs();
+
     mutate_state(|state| toggle_mute_channel_notifications_impl(args, state))
 }
 

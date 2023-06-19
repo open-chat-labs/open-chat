@@ -1,4 +1,4 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{EditMessageArgs, EditMessageResult};
 use community_canister::edit_message::{Response::*, *};
@@ -7,6 +7,8 @@ use ic_cdk_macros::update;
 #[update]
 #[trace]
 fn edit_message(args: Args) -> Response {
+    run_regular_jobs();
+
     mutate_state(|state| edit_message_impl(args, state))
 }
 

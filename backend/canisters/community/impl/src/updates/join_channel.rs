@@ -1,5 +1,6 @@
 use crate::model::channels::Channel;
 use crate::model::members::CommunityMemberInternal;
+use crate::run_regular_jobs;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
@@ -13,6 +14,8 @@ use types::{AccessGate, CanisterId, ChannelId, EventIndex, MemberJoined, Message
 #[update]
 #[trace]
 async fn join_channel(args: Args) -> Response {
+    run_regular_jobs();
+
     let caller = read_state(|state| state.env.caller());
     join_channel_impl(args.channel_id, caller).await
 }

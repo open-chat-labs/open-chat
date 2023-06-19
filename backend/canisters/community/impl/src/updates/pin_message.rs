@@ -1,4 +1,4 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::pin_message::{Response::*, *};
 use group_chat_core::PinUnpinMessageResult;
@@ -17,6 +17,8 @@ fn unpin_message(args: Args) -> Response {
 }
 
 fn pin_message_impl(args: Args, pin: bool, state: &mut RuntimeState) -> Response {
+    run_regular_jobs();
+
     if state.data.is_frozen() {
         return CommunityFrozen;
     }

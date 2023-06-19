@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::HardDeleteMessageContentJob;
-use crate::{mutate_state, read_state, RuntimeState, TimerJob};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::DeleteMessageResult;
@@ -14,6 +14,8 @@ use utils::time::MINUTE_IN_MS;
 #[update]
 #[trace]
 async fn delete_messages(args: Args) -> Response {
+    run_regular_jobs();
+
     let PrepareResult {
         caller,
         user_id,

@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::import_group::{Response::*, *};
 use group_index_canister::c2c_start_importing_group_into_community::Response as C2cResponse;
@@ -9,6 +9,8 @@ use types::{CanisterId, ChannelId, ChatId, UserId};
 #[update]
 #[trace]
 async fn import_group(args: Args) -> Response {
+    run_regular_jobs();
+
     let PrepareResult {
         group_index_canister_id,
         user_id,

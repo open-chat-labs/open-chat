@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::c2c_delete_community::{Response::*, *};
@@ -9,6 +9,8 @@ use types::{CanisterId, CommunityId, UserId};
 #[update_msgpack]
 #[trace]
 async fn c2c_delete_community(_args: Args) -> Response {
+    run_regular_jobs();
+
     let prepare_result = match read_state(prepare) {
         Ok(ok) => ok,
         Err(response) => return response,

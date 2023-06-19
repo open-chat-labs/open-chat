@@ -1,4 +1,4 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::remove_member_from_channel::{Response::*, *};
 use group_chat_core::RemoveMemberResult;
@@ -7,6 +7,8 @@ use ic_cdk_macros::update;
 #[update]
 #[trace]
 fn remove_member_from_channel(args: Args) -> Response {
+    run_regular_jobs();
+
     mutate_state(|state| remove_member_from_channel_impl(args, state))
 }
 
