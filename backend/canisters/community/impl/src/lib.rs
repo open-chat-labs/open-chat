@@ -6,13 +6,14 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use chat_events::ChatMetricsInternal;
 use fire_and_forget_handler::FireAndForgetHandler;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    AccessGate, AccessRules, CanisterId, ChannelId, CommunityCanisterCommunitySummary, CommunityMembership,
+    AccessGate, AccessRules, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
     Version,
 };
@@ -122,6 +123,7 @@ impl RuntimeState {
             gate: data.gate.value.clone(),
             channels,
             membership,
+            metrics: data.aggregate_chat_metrics(),
         }
     }
 
@@ -251,6 +253,16 @@ impl Data {
             || self.members.get(caller).is_some()
             || self.invited_users.get(&caller).is_some()
             || self.is_invite_code_valid(invite_code)
+    }
+
+    pub fn aggregate_chat_metrics(&self) -> ChatMetrics {
+        let mut metrics = ChatMetricsInternal::default();
+
+        for channel in self.channels.iter().filter(|c| c.chat.is_public) {
+            metrics.merge(channel.chat.events.metrics());
+        }
+
+        metrics.hydrate()
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
