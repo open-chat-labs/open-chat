@@ -450,6 +450,8 @@ export function apiToken(token: Cryptocurrency): ApiCryptocurrency {
             return { CKBTC: null };
         case "chat":
             return { CHAT: null };
+        case "kinic":
+            throw new Error("KINIC is not supported yet");
     }
 }
 
