@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.724](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.724-group)] - 2023-06-16
+
 ### Changed
 
 - Add `GroupRoleInternal` for efficient serialization ([#3772](https://github.com/open-chat-labs/open-chat/pull/3772))
