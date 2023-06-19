@@ -116,6 +116,7 @@ import {
     GroupChatsUpdates,
     DirectChatsUpdates,
     DirectChatIdentifier,
+    nullMembership,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -738,7 +739,11 @@ function userCanisterChannelSummary(
     candid: ApiUserCanisterChannelSummary
 ): UserCanisterChannelSummary {
     return {
-        channelId: candid.channel_id.toString(),
+        chatId: {
+            kind: "channel",
+            communityId: "", // TODO - we need to make sure that we pass the community id in here
+            id: candid.channel_id.toString(),
+        },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
         threadsRead: candid.threads_read,
@@ -765,16 +770,16 @@ function communitiesInitial(candid: ApiCommunitiesInitial): CommunitiesInitial {
 
 function chatIndentifier(candid: ApiChat): ChatIdentifier {
     if ("Group" in candid) {
-        return { kind: "group", chatId: candid.Group.toString() };
+        return { kind: "group_chat", id: candid.Group.toString() };
     }
     if ("Direct" in candid) {
-        return { kind: "direct", chatId: candid.Direct.toString() };
+        return { kind: "direct_chat", id: candid.Direct.toString() };
     }
     if ("Channel" in candid) {
         return {
             kind: "channel",
-            communtityId: candid.Channel[0].toString(),
-            channelId: candid.Channel[1].toString(),
+            communityId: candid.Channel[0].toString(),
+            id: candid.Channel[1].toString(),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChat type received", candid);
@@ -885,7 +890,7 @@ function userCanisterGroupSummary(
     summary: ApiUserCanisterGroupChatSummary
 ): UserCanisterGroupChatSummary {
     return {
-        chatId: summary.chat_id.toString(),
+        chatId: { kind: "group_chat", id: summary.chat_id.toString() },
         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
         threadsRead: summary.threads_read.reduce((curr, next) => {
             curr[next[0]] = next[1];
@@ -900,7 +905,7 @@ function userCanisterGroupSummaryUpdates(
     summary: ApiUserCanisterGroupChatSummaryUpdates
 ): UserCanisterGroupChatSummaryUpdates {
     return {
-        chatId: summary.chat_id.toString(),
+        chatId: { kind: "group_chat", id: summary.chat_id.toString() },
         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
         threadsRead: summary.threads_read.reduce((curr, next) => {
             curr[next[0]] = next[1];
@@ -914,7 +919,7 @@ function userCanisterGroupSummaryUpdates(
 function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectChatSummaryUpdates {
     return {
         kind: "direct_chat",
-        chatId: candid.chat_id.toString(),
+        chatId: { kind: "direct_chat", id: candid.chat_id.toString() },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         latestMessage: optional(candid.latest_message, (ev) => ({
@@ -946,7 +951,7 @@ function memberRole(candid: ApiGroupRole): MemberRole {
         return "moderator";
     }
     if ("Participant" in candid) {
-        return "participant";
+        return "member";
     }
     if ("Owner" in candid) {
         return "owner";
@@ -970,20 +975,13 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
         event: message(ev.event),
     }));
     return {
+        chatId: { kind: "group_chat", id: candid.chat_id.toString() },
         kind: "group_chat",
-        chatId: candid.chat_id.toString(),
-        id: candid.chat_id.toString(),
         latestMessage,
-        readByMeUpTo: optional(candid.read_by_me_up_to, (r) =>
-            limitReadByMeUpTo && latestMessage !== undefined
-                ? Math.min(latestMessage.event.messageIndex, r)
-                : r
-        ),
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
         historyVisible: candid.history_visible_to_new_joiners,
-        joined: candid.joined,
         minVisibleEventIndex: candid.min_visible_event_index,
         minVisibleMessageIndex: candid.min_visible_message_index,
         latestEventIndex: candid.latest_event_index,
@@ -992,24 +990,32 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
             blobId,
             canisterId: candid.chat_id.toString(),
         })),
-        notificationsMuted: candid.notifications_muted,
         memberCount: candid.participant_count,
-        myRole: memberRole(candid.role),
-        mentions: candid.mentions
-            .filter((m) => m.thread_root_message_index.length === 0)
-            .map(mention),
         permissions: groupPermissions(candid.permissions),
         metrics: chatMetrics(candid.metrics),
-        myMetrics: chatMetrics(candid.my_metrics),
-        latestThreads: candid.latest_threads.map(threadSyncDetails),
         subtype: optional(candid.subtype, apiGroupSubtype),
-        archived: candid.archived,
         previewed: false,
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
+        membership: {
+            joined: candid.joined,
+            role: memberRole(candid.role),
+            mentions: candid.mentions
+                .filter((m) => m.thread_root_message_index.length === 0)
+                .map(mention),
+            latestThreads: candid.latest_threads.map(threadSyncDetails),
+            myMetrics: chatMetrics(candid.my_metrics),
+            notificationsMuted: candid.notifications_muted,
+            readByMeUpTo: optional(candid.read_by_me_up_to, (r) =>
+                limitReadByMeUpTo && latestMessage !== undefined
+                    ? Math.min(latestMessage.event.messageIndex, r)
+                    : r
+            ),
+            archived: candid.archived,
+        },
     };
 }
 
@@ -1025,23 +1031,25 @@ function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {
 
 function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
     return {
+        chatId: { kind: "direct_chat", id: candid.them.toString() },
         kind: "direct_chat",
-        chatId: candid.them.toString(),
-        id: candid.them.toString(),
         latestMessage: {
             index: candid.latest_message.index,
             timestamp: candid.latest_message.timestamp,
             event: message(candid.latest_message.event),
         },
-        them: candid.them.toString(),
+        them: { kind: "direct_chat", id: candid.them.toString() },
         latestEventIndex: candid.latest_event_index,
-        readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         dateCreated: candid.date_created,
-        notificationsMuted: candid.notifications_muted,
         metrics: chatMetrics(candid.metrics),
-        myMetrics: chatMetrics(candid.my_metrics),
-        archived: candid.archived,
+        membership: {
+            ...nullMembership,
+            myMetrics: chatMetrics(candid.my_metrics),
+            notificationsMuted: candid.notifications_muted,
+            readByMeUpTo: optional(candid.read_by_me_up_to, identity),
+            archived: candid.archived,
+        },
     };
 }
 

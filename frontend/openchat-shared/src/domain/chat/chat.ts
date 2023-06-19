@@ -887,7 +887,7 @@ export type FavouriteChatsInitial = {
 };
 
 export type UserCanisterChannelSummary = {
-    channelId: ChannelIdentifier;
+    chatId: ChannelIdentifier;
     readByMeUpTo?: number;
     dateReadPinned?: bigint;
     threadsRead: [number, number][];
@@ -1142,7 +1142,7 @@ export type ChannelSummary = DataContent &
     HasLevel &
     Permissioned<ChatPermissions> & {
         kind: "channel";
-        id: ChannelIdentifier;
+        chatId: ChannelIdentifier;
         subtype: GroupSubtype;
         name: string;
         description: string;
@@ -1156,7 +1156,7 @@ export type ChannelSummary = DataContent &
 
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
-    id: DirectChatIdentifier;
+    chatId: DirectChatIdentifier;
     them: DirectChatIdentifier;
     readByThemUpTo: number | undefined;
     dateCreated: bigint;
@@ -1168,7 +1168,7 @@ export type GroupChatSummary = DataContent &
     HasLevel &
     Permissioned<ChatPermissions> & {
         kind: "group_chat";
-        id: GroupChatIdentifier;
+        chatId: GroupChatIdentifier;
         name: string;
         description: string;
         minVisibleEventIndex: number;
@@ -1212,7 +1212,7 @@ export type GroupCanisterSummaryUpdatesResponse =
 
 export type GroupCanisterGroupChatSummary = AccessControlled &
     Permissioned<ChatPermissions> & {
-        chatId: string;
+        chatId: GroupChatIdentifier;
         lastUpdated: bigint;
         name: string;
         description: string;
@@ -1223,6 +1223,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         latestMessage: EventWrapper<Message> | undefined;
         latestEventIndex: number;
         joined: bigint;
+        myRole: MemberRole;
         memberCount: number;
         mentions: Mention[];
         notificationsMuted: boolean;
@@ -1239,7 +1240,7 @@ export type UpdatedEvent = {
 };
 
 export type GroupCanisterGroupChatSummaryUpdates = {
-    chatId: string;
+    chatId: GroupChatIdentifier;
     lastUpdated: bigint;
     name: string | undefined;
     description: string | undefined;

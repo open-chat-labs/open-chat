@@ -706,6 +706,6 @@ function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
 
     return {
         ...chat,
-        latestMessage: makeSerialisable(chat.latestMessage, chat.id, true),
+        latestMessage: makeSerialisable(chat.latestMessage, chat.chatId, true),
     };
 }

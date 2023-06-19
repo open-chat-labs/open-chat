@@ -81,6 +81,13 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> implements ISafeMap<C
             (k: string) => JSON.parse(k) as ChatIdentifier
         );
     }
+
+    static fromList<T extends { chatId: ChatIdentifier }>(things: T[]): ChatMap<T> {
+        return things.reduce((map, c) => {
+            map.set(c.chatId, c);
+            return map;
+        }, new ChatMap<T>());
+    }
 }
 
 export class MessageMap<V> extends SafeMap<bigint, V> implements ISafeMap<bigint, V> {
