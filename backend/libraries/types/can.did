@@ -86,6 +86,7 @@ type ChatMetrics =
         sns1_messages: nat64;
         ckbtc_messages: nat64;
         chat_messages: nat64;
+        kinic_messages: nat64;
         deleted_messages: nat64;
         giphy_messages: nat64;
         prize_messages: nat64;
@@ -1048,6 +1049,7 @@ type Cryptocurrency =
         SNS1;
         CKBTC;
         CHAT;
+        KINIC;
     };
 
 type CryptoTransaction =

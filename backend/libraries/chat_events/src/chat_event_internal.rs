@@ -230,6 +230,9 @@ impl MessageInternal {
                 Cryptocurrency::CHAT => {
                     incr(&mut metrics.chat_messages);
                 }
+                Cryptocurrency::KINIC => {
+                    incr(&mut metrics.kinic_messages);
+                }
             },
             MessageContentInternal::Deleted(_) => {}
             MessageContentInternal::Giphy(_) => {
@@ -619,6 +622,8 @@ pub struct ChatMetricsInternal {
     pub ckbtc_messages: u64,
     #[serde(rename = "chat", default, skip_serializing_if = "is_default")]
     pub chat_messages: u64,
+    #[serde(rename = "kinic", default, skip_serializing_if = "is_default")]
+    pub kinic_messages: u64,
     #[serde(rename = "d", default, skip_serializing_if = "is_default")]
     pub deleted_messages: u64,
     #[serde(rename = "g", default, skip_serializing_if = "is_default")]
@@ -658,6 +663,7 @@ impl ChatMetricsInternal {
         self.sns1_messages += other.sns1_messages;
         self.ckbtc_messages += other.ckbtc_messages;
         self.chat_messages += other.chat_messages;
+        self.kinic_messages += other.kinic_messages;
         self.deleted_messages += other.deleted_messages;
         self.giphy_messages += other.giphy_messages;
         self.prize_messages += other.prize_messages;
@@ -683,6 +689,7 @@ impl ChatMetricsInternal {
             sns1_messages: self.sns1_messages,
             ckbtc_messages: self.ckbtc_messages,
             chat_messages: self.chat_messages,
+            kinic_messages: self.kinic_messages,
             deleted_messages: self.deleted_messages,
             giphy_messages: self.giphy_messages,
             prize_messages: self.prize_messages,
