@@ -512,7 +512,8 @@ export type DirectChatEvent =
     | PollVoteRegistered
     | PollEnded
     | DirectChatCreated
-    | ThreadUpdated;
+    | ThreadUpdated
+    | EmptyEvent;
 
 export type GroupChatEvent =
     | Message
