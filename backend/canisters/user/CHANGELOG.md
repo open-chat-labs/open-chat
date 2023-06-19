@@ -7,6 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add support for sending the KINIC token ([#3811](https://github.com/open-chat-labs/open-chat/pull/3811))
+  
+### Fixed
+
+- Fix pinned chat changes not coming through in `initial_state_v2` and `updates_v2` ([#3810](https://github.com/open-chat-labs/open-chat/pull/3810))
+
+## [[2.0.725](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.725-user)] - 2023-06-16
+
+### Added
+
 - Introduce `FireAndForgetHandler` which retries failed c2c calls ([#3639](https://github.com/open-chat-labs/open-chat/pull/3639))
 - Integrate Communities ([#3657](https://github.com/open-chat-labs/open-chat/pull/3657)), ([#3659](https://github.com/open-chat-labs/open-chat/pull/3659))
 - Added `c2c_mark_group_updated_for_user` ([#3685](https://github.com/open-chat-labs/open-chat/pull/3685))

@@ -85,6 +85,9 @@
     .sns1 {
         background-image: url("../assets/sns1_token.png");
     }
+    .kinic {
+        background-image: url("../assets/kinic_token.png");
+    }
 
     .params {
         margin-top: $sp3;

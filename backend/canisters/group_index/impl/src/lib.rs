@@ -53,6 +53,11 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn is_caller_community_canister(&self) -> bool {
+        let caller: CommunityId = self.env.caller().into();
+        self.data.public_communities.get(&caller).is_some() || self.data.private_communities.get(&caller).is_some()
+    }
+
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
 

@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add ability to import a group into a community ([#3792](https://github.com/open-ic/open-chat/pull/3792))
+
+## [[2.0.723](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.723-group_index)] - 2023-06-16
+
+### Added
+
 - Added active_groups and c2c_active_groups endpoints ([#3759](https://github.com/open-chat-labs/open-chat/pull/3759))
 - Added search_v2 endpoint ([#3763](https://github.com/open-chat-labs/open-chat/pull/3763))
 - Support community banner ([#3765](https://github.com/open-chat-labs/open-chat/pull/3765))

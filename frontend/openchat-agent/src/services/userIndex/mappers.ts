@@ -328,6 +328,9 @@ export function apiCryptocurrency(domain: Cryptocurrency): ApiCryptocurrency {
     if (domain === "sns1") {
         return { SNS1: null };
     }
+    if (domain === "kinic") {
+        throw new Error("KINIC is not supported yet");
+    }
     throw new UnsupportedValueError("Unexpected Cryptocurrency type received", domain);
 }
 

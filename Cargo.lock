@@ -1293,6 +1293,8 @@ dependencies = [
  "fire_and_forget_handler",
  "futures",
  "gated_groups",
+ "group_canister",
+ "group_canister_c2c_client",
  "group_chat_core",
  "group_index_canister",
  "group_index_canister_c2c_client",

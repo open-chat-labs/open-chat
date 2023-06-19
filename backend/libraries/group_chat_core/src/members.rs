@@ -34,7 +34,7 @@ impl GroupMembers {
             min_visible_event_index: EventIndex::default(),
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: Timestamped::new(false, now),
-            mentions_v2: Mentions::default(),
+            mentions: Mentions::default(),
             threads: HashSet::new(),
             proposal_votes: BTreeMap::default(),
             suspended: Timestamped::default(),
@@ -71,7 +71,7 @@ impl GroupMembers {
                         min_visible_event_index,
                         min_visible_message_index,
                         notifications_muted: Timestamped::new(notifications_muted, now),
-                        mentions_v2: Mentions::default(),
+                        mentions: Mentions::default(),
                         threads: HashSet::new(),
                         proposal_votes: BTreeMap::default(),
                         suspended: Timestamped::default(),
@@ -294,36 +294,26 @@ pub struct ChangeRoleSuccess {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct GroupMemberInternal {
-    #[serde(rename = "u", alias = "user_id")]
+    #[serde(rename = "u")]
     pub user_id: UserId,
-    #[serde(rename = "d", alias = "date_added")]
+    #[serde(rename = "d")]
     pub date_added: TimestampMillis,
-    #[serde(rename = "r", alias = "role", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "r", default, skip_serializing_if = "is_default")]
     pub role: GroupRoleInternal,
-    #[serde(rename = "n", alias = "notifications_muted")]
+    #[serde(rename = "n")]
     pub notifications_muted: Timestamped<bool>,
-    #[serde(rename = "m", alias = "mentions_v2", default, skip_serializing_if = "mentions_are_empty")]
-    pub mentions_v2: Mentions,
-    #[serde(rename = "t", alias = "threads", default, skip_serializing_if = "is_empty_hashset")]
+    #[serde(rename = "m", default, skip_serializing_if = "mentions_are_empty")]
+    pub mentions: Mentions,
+    #[serde(rename = "t", default, skip_serializing_if = "is_empty_hashset")]
     pub threads: HashSet<MessageIndex>,
-    #[serde(rename = "p", alias = "proposal_votes", default, skip_serializing_if = "is_empty_btreemap")]
+    #[serde(rename = "p", default, skip_serializing_if = "is_empty_btreemap")]
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
-    #[serde(rename = "s", alias = "suspended", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     pub suspended: Timestamped<bool>,
 
-    #[serde(
-        rename = "me",
-        alias = "min_visible_event_index",
-        default,
-        skip_serializing_if = "is_default"
-    )]
+    #[serde(rename = "me", default, skip_serializing_if = "is_default")]
     min_visible_event_index: EventIndex,
-    #[serde(
-        rename = "mm",
-        alias = "min_visible_message_index",
-        default,
-        skip_serializing_if = "is_default"
-    )]
+    #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
     min_visible_message_index: MessageIndex,
 }
 
@@ -352,7 +342,7 @@ impl GroupMemberInternal {
     ) -> Vec<HydratedMention> {
         let min_visible_event_index = self.min_visible_event_index();
 
-        self.mentions_v2
+        self.mentions
             .iter_most_recent(since)
             .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, &m, now))
             .take(MAX_RETURNED_MENTIONS)
@@ -393,9 +383,7 @@ fn serialize_members<S: Serializer>(value: &HashMap<UserId, GroupMemberInternal>
 }
 
 fn deserialize_members<'de, D: Deserializer<'de>>(deserializer: D) -> Result<HashMap<UserId, GroupMemberInternal>, D::Error> {
-    // TODO switch to new impl after next upgrade
-    HashMap::deserialize(deserializer)
-    // deserializer.deserialize_seq(GroupMembersMapVisitor)
+    deserializer.deserialize_seq(GroupMembersMapVisitor)
 }
 
 struct GroupMembersMapVisitor;
@@ -434,7 +422,7 @@ mod tests {
             date_added: 1,
             role: GroupRoleInternal::Member,
             notifications_muted: Timestamped::new(true, 1),
-            mentions_v2: Mentions::default(),
+            mentions: Mentions::default(),
             threads: HashSet::new(),
             proposal_votes: BTreeMap::new(),
             suspended: Timestamped::default(),
@@ -462,7 +450,7 @@ mod tests {
             date_added: 1,
             role: GroupRoleInternal::Owner,
             notifications_muted: Timestamped::new(true, 1),
-            mentions_v2: mentions,
+            mentions,
             threads: HashSet::from([1.into()]),
             proposal_votes: BTreeMap::from([(1, vec![1.into()])]),
             suspended: Timestamped::new(true, 1),
