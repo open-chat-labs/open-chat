@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEvent;
 use crate::updates::unblock_user::Response::*;
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::unblock_user::*;
 use ic_cdk_macros::update;
@@ -10,6 +10,8 @@ use types::UsersUnblocked;
 #[update]
 #[trace]
 fn unblock_user(args: Args) -> Response {
+    run_regular_jobs();
+
     mutate_state(|state| unblock_user_impl(args, state))
 }
 

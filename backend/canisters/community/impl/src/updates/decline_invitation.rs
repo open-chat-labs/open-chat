@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::decline_invitation::{Response::*, *};
 use ic_cdk_macros::update;
@@ -6,6 +6,8 @@ use ic_cdk_macros::update;
 #[update]
 #[trace]
 fn decline_invitation(args: Args) -> Response {
+    run_regular_jobs();
+
     mutate_state(|state| decline_invitation_impl(args, state))
 }
 

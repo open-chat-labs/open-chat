@@ -12,12 +12,14 @@ use model::{events::CommunityEvents, invited_users::InvitedUsers, members::Commu
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::ops::Deref;
 use types::{
     AccessGate, AccessRules, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
     Version,
 };
 use utils::env::Environment;
+use utils::regular_jobs::RegularJobs;
 
 mod activity_notifications;
 mod guards;
@@ -26,6 +28,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod regular_jobs;
 mod timer_job_types;
 mod updates;
 
@@ -38,11 +41,12 @@ canister_state!(RuntimeState);
 struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,
+    pub regular_jobs: RegularJobs<Data>,
 }
 
 impl RuntimeState {
-    pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
-        RuntimeState { env, data }
+    pub fn new(env: Box<dyn Environment>, data: Data, regular_jobs: RegularJobs<Data>) -> RuntimeState {
+        RuntimeState { env, data, regular_jobs }
     }
 
     pub fn is_caller_user_index(&self) -> bool {
@@ -123,7 +127,7 @@ impl RuntimeState {
             gate: data.gate.value.clone(),
             channels,
             membership,
-            metrics: data.aggregate_chat_metrics(),
+            metrics: data.cached_chat_metrics.value.clone(),
         }
     }
 
@@ -183,6 +187,7 @@ struct Data {
     activity_notification_state: ActivityNotificationState,
     groups_being_imported: GroupsBeingImported,
     test_mode: bool,
+    cached_chat_metrics: Timestamped<ChatMetrics>,
 }
 
 impl Data {
@@ -241,6 +246,7 @@ impl Data {
             activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             groups_being_imported: GroupsBeingImported::default(),
             test_mode,
+            cached_chat_metrics: Timestamped::default(),
         }
     }
 
@@ -255,14 +261,14 @@ impl Data {
             || self.is_invite_code_valid(invite_code)
     }
 
-    pub fn aggregate_chat_metrics(&self) -> ChatMetrics {
+    pub fn build_chat_metrics(&mut self, now: TimestampMillis) {
         let mut metrics = ChatMetricsInternal::default();
 
         for channel in self.channels.iter().filter(|c| c.chat.is_public) {
             metrics.merge(channel.chat.events.metrics());
         }
 
-        metrics.hydrate()
+        self.cached_chat_metrics = Timestamped::new(metrics.hydrate(), now);
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
@@ -276,6 +282,10 @@ impl Data {
 
         false
     }
+}
+
+fn run_regular_jobs() {
+    mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
 }
 
 #[derive(Serialize, Debug)]

@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, TimerJob};
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
@@ -15,6 +15,8 @@ use types::{
 #[update_candid_and_msgpack]
 #[trace]
 fn send_message(args: Args) -> Response {
+    run_regular_jobs();
+
     mutate_state(|state| send_message_impl(args, state))
 }
 

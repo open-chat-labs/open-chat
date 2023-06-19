@@ -1,5 +1,6 @@
 use crate::{
-    activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, read_state, RuntimeState,
+    activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, read_state,
+    run_regular_jobs, RuntimeState,
 };
 use canister_tracing_macros::trace;
 use community_canister::make_private::{Response::*, *};
@@ -11,6 +12,8 @@ use types::{CanisterId, CommunityId, GroupVisibilityChanged, UserId};
 #[update]
 #[trace]
 async fn make_private(_args: Args) -> Response {
+    run_regular_jobs();
+
     let PrepareResult {
         group_index_canister_id,
         community_id,

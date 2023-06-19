@@ -1,5 +1,6 @@
 use crate::{
-    activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, read_state, RuntimeState,
+    activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, read_state,
+    run_regular_jobs, RuntimeState,
 };
 use canister_tracing_macros::trace;
 use community_canister::remove_member::{Response::*, *};
@@ -27,6 +28,8 @@ async fn remove_member(args: Args) -> Response {
 }
 
 async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
+    run_regular_jobs();
+
     // Check the caller can remove the user
     let prepare_result = match read_state(|state| prepare(user_id, state)) {
         Ok(ok) => ok,

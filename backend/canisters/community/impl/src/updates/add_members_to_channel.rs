@@ -1,4 +1,4 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::add_members_to_channel::{Response::*, *};
@@ -13,6 +13,8 @@ use types::{
 #[update]
 #[trace]
 async fn add_members_to_channel(args: Args) -> Response {
+    run_regular_jobs();
+
     let prepare_result = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,

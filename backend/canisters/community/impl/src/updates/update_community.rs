@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEvent;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::update_community::{Response::*, *};
 use group_index_canister::c2c_update_community;
@@ -17,6 +17,8 @@ use utils::group_validation::{validate_description, validate_name, validate_rule
 #[update]
 #[trace]
 async fn update_community(mut args: Args) -> Response {
+    run_regular_jobs();
+
     clean_args(&mut args);
 
     let prepare_result = match read_state(|state| prepare(&args, state)) {

@@ -1,4 +1,4 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::make_channel_private::{Response::*, *};
 use group_chat_core::MakePrivateResult;
@@ -7,6 +7,8 @@ use ic_cdk_macros::update;
 #[update]
 #[trace]
 fn make_channel_private(args: Args) -> Response {
+    run_regular_jobs();
+
     mutate_state(|state| make_channel_private_impl(args, state))
 }
 
