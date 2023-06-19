@@ -96,65 +96,65 @@ members = [
 ]
 
 [workspace.dependencies]
-async-trait = "0.1.64"
-aws-config = "0.54.1"
-aws-sdk-dynamodb = "0.24.0"
-aws-types = "0.54.1"
-base64 = "0.21.0"
+async-trait = "0.1.68"
+aws-config = "0.55.3"
+aws-sdk-dynamodb = "0.28.0"
+aws-types = "0.55.3"
+base64 = "0.21.2"
 candid = "0.8.4"
 canister_logger = { git = "https://github.com/open-chat-labs/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 canister_state_macros = { git = "https://github.com/open-chat-labs/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 canister_timer_jobs = { git = "https://github.com/open-chat-labs/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 canister_tracing_macros = { git = "https://github.com/open-chat-labs/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 ciborium = { git = "https://github.com/enarx/ciborium", rev = "e719537c99b564c3674a56defe53713c702c6f46" }
-clap = "3.2.23"
-dirs = "4.0.0"
+clap = "4.3.4"
+dirs = "5.0.1"
 dotenv = "0.15.0"
-futures = "0.3.26"
-getrandom = "0.2.8"
+futures = "0.3.28"
+getrandom = "0.2.10"
 hex = "0.4.3"
-ic-agent = "0.23.0"
-ic-cdk = "0.7.3"
+ic-agent = "0.24.1"
+ic-cdk = "0.8.1"
 ic-cdk-macros = "0.6.10"
-ic-cdk-timers = "0.1.2"
-ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "6d21535b301fee2ad3e8a0e8af2c3f9a3d022111" }
-ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "6d21535b301fee2ad3e8a0e8af2c3f9a3d022111" }
-ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "6d21535b301fee2ad3e8a0e8af2c3f9a3d022111" }
-ic-ledger-types = "0.4.2"
-ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "6d21535b301fee2ad3e8a0e8af2c3f9a3d022111" }
-ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "6d21535b301fee2ad3e8a0e8af2c3f9a3d022111" }
-ic-stable-structures = "0.5.1"
-ic-test-state-machine-client = { git = "https://github.com/dfinity/test-state-machine-client", rev = "1b16d2dbb0be28e3f8059fc76640d08a923dc65c" }
-ic-utils = "0.23.0"
-icrc-ledger-types = { git = "https://github.com/dfinity/ic", rev = "6d21535b301fee2ad3e8a0e8af2c3f9a3d022111" }
+ic-cdk-timers = "0.2.0"
+ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "b314222935b7d06c70036b0b54aa80a33252d79c" }
+ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "b314222935b7d06c70036b0b54aa80a33252d79c" }
+ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "b314222935b7d06c70036b0b54aa80a33252d79c" }
+ic-ledger-types = "0.5.0"
+ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "b314222935b7d06c70036b0b54aa80a33252d79c" }
+ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "b314222935b7d06c70036b0b54aa80a33252d79c" }
+ic-stable-structures = "0.5.4"
+ic-test-state-machine-client = { git = "https://github.com/dfinity/test-state-machine-client", rev = "287fd445c098e9c33462df0c810d79f120ed9431" }
+ic-utils = "0.24.1"
+icrc-ledger-types = { git = "https://github.com/dfinity/ic", rev = "b314222935b7d06c70036b0b54aa80a33252d79c" }
 itertools = "0.10.5"
 lazy_static = "1.4.0"
 num-traits = "0.2.15"
-openssl = "0.10.48"
-proc-macro2 = "1.0.51"
-quote = "1.0.23"
+openssl = "0.10.54"
+proc-macro2 = "1.0.60"
+quote = "1.0.28"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_core = "0.6.4"
 range-set = "0.0.9"
-regex = "1.7.1"
+regex = "1.8.4"
 rmp-serde = "1.1.1"
-serde = "1.0.152"
+serde = "1.0.164"
 serde_bytes = "0.11.9"
 serde_cbor = "0.11.2"
-serde_json = "1.0.93"
+serde_json = "1.0.96"
 serializer = { git = "https://github.com/open-chat-labs/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 sha2 = "0.10.6"
-sha3 = "0.10.6"
+sha3 = "0.10.8"
 stable_memory = { git = "https://github.com/open-chat-labs/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
-syn = "1.0.109"
-test-case = "3.0.0"
-time = "0.3.20"
-tokio = "1.26.0"
+syn = "2.0.18"
+test-case = "3.1.0"
+time = "0.3.22"
+tokio = "1.28.2"
 tracing = "0.1.37"
-tracing-attributes = "0.1.23"
-tracing-subscriber = "0.3.16"
-web-push = { version = "0.9.4", default-features = false, features = ["hyper-client"] }
+tracing-attributes = "0.1.24"
+tracing-subscriber = "0.3.17"
+web-push = { version = "0.9.5", default-features = false, features = ["hyper-client"] }
 x509-parser = "0.15.0"
 
 [profile.release]
@@ -165,4 +165,4 @@ debug = false
 
 [patch.crates-io]
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "24e36cdf4115ae3a2d0747613833b2b4e0871fe4" }
-ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "0816d14cfcc362db995cbc7aec2368a55b462aca" }
+ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "14783e187c17ad3a164fb501219b002b667ee006" }

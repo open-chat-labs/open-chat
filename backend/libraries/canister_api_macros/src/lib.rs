@@ -1,10 +1,11 @@
 use proc_macro::TokenStream;
-use proc_macro2::{Ident, Span};
+use proc_macro2::Span;
 use quote::{format_ident, quote};
 use serde::Deserialize;
 use serde_tokenstream::from_tokenstream;
 use std::fmt::Formatter;
-use syn::{parse_macro_input, AttributeArgs, Block, FnArg, ItemFn, Meta, NestedMeta, Pat, PatIdent, PatType, Signature};
+use syn::punctuated::Punctuated;
+use syn::{parse_macro_input, Block, FnArg, Ident, ItemFn, Pat, PatIdent, PatType, Signature, Token};
 
 enum MethodType {
     Update,
@@ -110,8 +111,12 @@ pub fn proposal(attr: TokenStream, item: TokenStream) -> TokenStream {
 
 #[proc_macro]
 pub fn proposal_validation(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as AttributeArgs);
-    let attribute = get_validation_method_attribute(input);
+    let inputs = parse_macro_input!(input with Punctuated::<Ident, Token![,]>::parse_terminated)
+        .into_iter()
+        .map(|i| i.to_string())
+        .collect();
+
+    let attribute = get_validation_method_attribute(inputs);
 
     let their_service_name = format_ident!("{}", attribute.service_name);
     let their_function_name = format_ident!("{}", attribute.function_name);
@@ -174,18 +179,9 @@ fn get_arg_names(signature: &Signature) -> Vec<Ident> {
         .collect()
 }
 
-fn get_validation_method_attribute(attrs: AttributeArgs) -> ValidationMethodAttribute {
-    let service_name = if let NestedMeta::Meta(Meta::Path(m)) = attrs.get(0).unwrap() {
-        m.get_ident().unwrap().to_string()
-    } else {
-        panic!("Unrecognised 'service_name' value");
-    };
-
-    let function_name = if let NestedMeta::Meta(Meta::Path(m)) = attrs.get(1).unwrap() {
-        m.get_ident().unwrap().to_string()
-    } else {
-        panic!("Unrecognised 'function_name' value");
-    };
+fn get_validation_method_attribute(inputs: Vec<String>) -> ValidationMethodAttribute {
+    let service_name = inputs.get(0).unwrap().to_string();
+    let function_name = inputs.get(1).unwrap().to_string();
 
     ValidationMethodAttribute {
         service_name,

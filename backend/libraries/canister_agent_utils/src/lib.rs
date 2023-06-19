@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use types::{CanisterId, CanisterWasm, Version};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum CanisterName {
     Community,
     CyclesDispenser,
