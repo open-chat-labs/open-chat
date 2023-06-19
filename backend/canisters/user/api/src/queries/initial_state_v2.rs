@@ -51,7 +51,7 @@ impl From<crate::initial_state::Response> for Response {
                 group_chats_added: s.group_chats.summaries,
                 avatar_id: s.avatar_id,
                 blocked_users: s.blocked_users,
-                pinned_chats: map_chats_to_chat_ids(s.favourite_chats.pinned),
+                pinned_chats: map_chats_to_chat_ids(s.favourite_chats.chats),
                 user_canister_wasm_version: Version::default(),
             })
         } else {
@@ -61,7 +61,7 @@ impl From<crate::initial_state::Response> for Response {
                 group_chats: s.group_chats.summaries,
                 avatar_id: s.avatar_id,
                 blocked_users: s.blocked_users,
-                pinned_chats: map_chats_to_chat_ids(s.favourite_chats.pinned),
+                pinned_chats: map_chats_to_chat_ids(s.favourite_chats.chats),
                 user_canister_wasm_version: Version::default(),
             })
         }
