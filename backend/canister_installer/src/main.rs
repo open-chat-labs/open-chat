@@ -32,23 +32,57 @@ async fn main() {
 
 #[derive(Parser)]
 struct Opts {
+    #[arg(short, long)]
     url: String,
-    #[clap(parse(try_from_str))]
+
+    #[arg(short, long)]
     test_mode: bool,
+
+    #[arg(short, long)]
     controller: String,
+
+    #[arg(short, long)]
     user_index: CanisterId,
+
+    #[arg(short, long)]
     group_index: CanisterId,
+
+    #[arg(short, long)]
     notifications_index: CanisterId,
+
+    #[arg(short, long)]
     local_user_index: CanisterId,
+
+    #[arg(short, long)]
     local_group_index: CanisterId,
+
+    #[arg(short, long)]
     notifications: CanisterId,
+
+    #[arg(short, long)]
     online_users: CanisterId,
+
+    #[arg(short, long)]
     proposals_bot: CanisterId,
+
+    #[arg(short, long)]
     storage_index: CanisterId,
+
+    #[arg(short, long)]
     cycles_dispenser: CanisterId,
+
+    #[arg(short, long)]
     market_maker: CanisterId,
+
+    #[arg(short, long)]
     nns_governance: CanisterId,
+
+    #[arg(short, long)]
     nns_internet_identity: CanisterId,
+
+    #[arg(short, long)]
     nns_ledger: CanisterId,
+
+    #[arg(short, long)]
     nns_cmc: CanisterId,
 }

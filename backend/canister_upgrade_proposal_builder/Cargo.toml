@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-clap = { version = "4.0", features = ["derive"] }
+clap = { workspace = true, features = ["derive"] }
 ic-sns-governance = { workspace = true }
 types = { path = "../libraries/types" }
