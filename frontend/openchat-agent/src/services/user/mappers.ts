@@ -115,6 +115,7 @@ import {
     FavouriteChatsUpdates,
     GroupChatsUpdates,
     DirectChatsUpdates,
+    DirectChatIdentifier,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -590,7 +591,7 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
 export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse,
-    chatId: string,
+    chatId: DirectChatIdentifier,
     latestClientEventIndexPreRequest: number | undefined
 ): Promise<EventsResponse<DirectChatEvent>> {
     if ("Success" in candid) {

@@ -1,20 +1,23 @@
 import { MAX_EVENTS, MAX_MESSAGES } from "../constants";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
-import type {
-    ChatEvent,
-    ChatStateFull,
-    ChatSummary,
-    EventsResponse,
-    EventsSuccessResult,
-    EventWrapper,
-    GroupChatDetails,
-    IndexRange,
-    Message,
-    MessageContent,
-    ReplyContext,
-    SendMessageResponse,
-    SendMessageSuccess,
-    UpdatedEvent,
+import {
+    chatIdentifiersEqual,
+    type ChatEvent,
+    type ChatIdentifier,
+    type ChatStateFull,
+    type ChatSummary,
+    type EventsResponse,
+    type EventsSuccessResult,
+    type EventWrapper,
+    type GroupChatDetails,
+    type IndexRange,
+    type Message,
+    type MessageContent,
+    type ReplyContext,
+    type SendMessageResponse,
+    type SendMessageSuccess,
+    type UpdatedEvent,
+    ChatMap,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
@@ -24,7 +27,7 @@ const CACHE_VERSION = 68;
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
 type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
-    chatId: string;
+    chatId: ChatIdentifier;
     messageKey: string | undefined;
 };
 
@@ -71,23 +74,30 @@ function padMessageIndex(i: number): string {
 }
 
 export function createFailedCacheKey(
-    chatId: string,
+    chatId: ChatIdentifier,
     messageId: bigint,
     threadRootMessageIndex?: number
 ): string {
     return threadRootMessageIndex === undefined
-        ? `${chatId}_${messageId}`
-        : `${chatId}_${threadRootMessageIndex}_${messageId}`;
+        ? `${chatIdentiferToString(chatId)}_${messageId}`
+        : `${chatIdentiferToString(chatId)}_${threadRootMessageIndex}_${messageId}`;
+}
+
+function chatIdentiferToString(chatId: ChatIdentifier): string {
+    if (chatId.kind === "channel") {
+        return `${chatId.communityId}_${chatId.id}`;
+    }
+    return chatId.id;
 }
 
 export function createCacheKey(
-    chatId: string,
+    chatId: ChatIdentifier,
     index: number,
     threadRootMessageIndex?: number
 ): string {
     return threadRootMessageIndex === undefined
-        ? `${chatId}_${padMessageIndex(index)}`
-        : `${chatId}_${threadRootMessageIndex}_${padMessageIndex(index)}`;
+        ? `${chatIdentiferToString(chatId)}_${padMessageIndex(index)}`
+        : `${chatIdentiferToString(chatId)}_${threadRootMessageIndex}_${padMessageIndex(index)}`;
 }
 
 export function openCache(principal: Principal): Database {
@@ -143,7 +153,7 @@ export async function setCachedChats(
     db: Database,
     principal: Principal,
     chatState: ChatStateFull,
-    updatedEvents: Record<string, UpdatedEvent[]>
+    updatedEvents: ChatMap<UpdatedEvent[]>
 ): Promise<void> {
     const directChats = chatState.directChats.map(makeChatSummarySerializable);
     const groupChats = chatState.groupChats.map(makeChatSummarySerializable);
@@ -159,7 +169,7 @@ export async function setCachedChats(
     const eventsStore = tx.objectStore("chat_events");
     const threadsStore = tx.objectStore("thread_events");
 
-    const deleteRequests = Object.entries(updatedEvents).flatMap(([chatId, indexes]) => {
+    const deleteRequests = updatedEvents.entries().flatMap(([chatId, indexes]) => {
         return indexes.map((i) => {
             const key = createCacheKey(chatId, i.eventIndex, i.threadRootMessageIndex);
             return i.threadRootMessageIndex === undefined
@@ -177,7 +187,7 @@ export async function setCachedChats(
 export async function getCachedEventsWindow<T extends ChatEvent>(
     db: Database,
     eventIndexRange: IndexRange,
-    chatId: string,
+    chatId: ChatIdentifier,
     messageIndex: number,
     threadRootMessageIndex?: number
 ): Promise<[EventsSuccessResult<T>, Set<number>, boolean]> {
@@ -201,7 +211,7 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
 async function aggregateEventsWindow<T extends ChatEvent>(
     db: Database,
     [min, max]: IndexRange,
-    chatId: string,
+    chatId: ChatIdentifier,
     middleMessageIndex: number,
     threadRootMessageIndex?: number
 ): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
@@ -336,7 +346,7 @@ export function processCachedEvents(
 async function aggregateEvents<T extends ChatEvent>(
     db: Database,
     [min, max]: IndexRange,
-    chatId: string,
+    chatId: ChatIdentifier,
     startIndex: number,
     ascending: boolean,
     threadRootMessageIndex?: number
@@ -363,7 +373,7 @@ async function aggregateEvents<T extends ChatEvent>(
 export async function getCachedMessageByIndex<T extends ChatEvent>(
     db: Database,
     eventIndex: number,
-    chatId: string,
+    chatId: ChatIdentifier,
     threadRootMessageIndex?: number
 ): Promise<EventWrapper<T> | undefined> {
     const key = createCacheKey(chatId, eventIndex, threadRootMessageIndex);
@@ -374,7 +384,7 @@ export async function getCachedMessageByIndex<T extends ChatEvent>(
 export async function getCachedEventsByIndex<T extends ChatEvent>(
     db: Database,
     eventIndexes: number[],
-    chatId: string,
+    chatId: ChatIdentifier,
     threadRootMessageIndex?: number
 ): Promise<[EventsSuccessResult<T>, Set<number>]> {
     const missing = new Set<number>();
@@ -395,7 +405,7 @@ export async function getCachedEventsByIndex<T extends ChatEvent>(
 export async function getCachedEvents<T extends ChatEvent>(
     db: Database,
     eventIndexRange: IndexRange,
-    chatId: string,
+    chatId: ChatIdentifier,
     startIndex: number,
     ascending: boolean,
     threadRootMessageIndex?: number
@@ -436,7 +446,7 @@ export function mergeSuccessResponses<T extends ChatEvent>(
 // we need to strip out the blobData promise from any media content because that cannot be serialised
 function makeSerialisable<T extends ChatEvent>(
     ev: EventWrapper<T>,
-    chatId: string,
+    chatId: ChatIdentifier,
     removeBlobs: boolean,
     threadRootMessageIndex?: number
 ): EnhancedWrapper<T> {
@@ -472,13 +482,14 @@ function removeBlobData(content: MessageContent): MessageContent {
 
 function removeReplyContent(
     repliesTo: ReplyContext | undefined,
-    chatId: string
+    chatId: ChatIdentifier
 ): ReplyContext | undefined {
     if (repliesTo?.kind === "rehydrated_reply_context") {
         return {
             kind: "raw_reply_context",
-            sourceContext:
-                repliesTo.sourceContext.chatId === chatId ? undefined : repliesTo.sourceContext,
+            sourceContext: chatIdentifiersEqual(repliesTo.sourceContext.chatId, chatId)
+                ? undefined
+                : repliesTo.sourceContext,
             eventIndex: repliesTo.eventIndex,
         };
     }
@@ -487,7 +498,7 @@ function removeReplyContent(
 
 export async function removeFailedMessage(
     db: Database,
-    chatId: string,
+    chatId: ChatIdentifier,
     messageId: bigint,
     threadRootMessageIndex?: number
 ): Promise<void> {
@@ -498,7 +509,7 @@ export async function removeFailedMessage(
 
 export async function recordFailedMessage<T extends Message>(
     db: Database,
-    chatId: string,
+    chatId: ChatIdentifier,
     event: EventWrapper<T>,
     threadRootMessageIndex?: number
 ): Promise<void> {
@@ -552,7 +563,7 @@ export async function loadFailedMessages(
 
 export async function setCachedEvents<T extends ChatEvent>(
     db: Database,
-    chatId: string,
+    chatId: ChatIdentifier,
     resp: EventsResponse<T>,
     threadRootMessageIndex?: number
 ): Promise<void> {
@@ -576,7 +587,7 @@ export async function setCachedEvents<T extends ChatEvent>(
 
 export function setCachedMessageFromSendResponse(
     db: Database,
-    chatId: string,
+    chatId: ChatIdentifier,
     sentEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number
 ): ([resp, message]: [SendMessageResponse, Message]) => [SendMessageResponse, Message] {
@@ -596,7 +607,7 @@ export function setCachedMessageFromSendResponse(
 
 export async function setCachedMessageIfNotExists(
     db: Database,
-    chatId: string,
+    chatId: ChatIdentifier,
     messageEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number
 ): Promise<void> {
@@ -660,7 +671,7 @@ export function closeDb(): void {
 // thread root message index, but it might come up later
 export async function loadMessagesByMessageIndex(
     db: Database,
-    chatId: string,
+    chatId: ChatIdentifier,
     messagesIndexes: Set<number>
 ): Promise<{ messageEvents: EventWrapper<Message>[]; missing: Set<number> }> {
     const resolvedDb = await db;
@@ -695,6 +706,6 @@ function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
 
     return {
         ...chat,
-        latestMessage: makeSerialisable(chat.latestMessage, chat.chatId, true),
+        latestMessage: makeSerialisable(chat.latestMessage, chat.id, true),
     };
 }

@@ -102,6 +102,8 @@ import {
     Community,
     CommunityPermissionRole,
     CommunityPermissions,
+    ChatIdentifier,
+    chatIdentifiersEqual,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type { ApiGroupCanisterGroupChatSummary } from "../group/candid/idl";
@@ -764,13 +766,19 @@ export function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
     };
 }
 
-export function apiReplyContextArgs(chatId: string, domain: ReplyContext): ApiReplyContext {
-    if (domain.sourceContext !== undefined && chatId !== domain.sourceContext.chatId) {
+export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext): ApiReplyContext {
+    if (domain.sourceContext?.chatId.kind === "channel") {
+        throw new Error("TODO channel reply contexts not yet supported");
+    }
+    if (
+        domain.sourceContext !== undefined &&
+        !chatIdentifiersEqual(chatId, domain.sourceContext.chatId)
+    ) {
         return {
-            chat_id_if_other: [Principal.fromText(domain.sourceContext.chatId)],
+            chat_id_if_other: [Principal.fromText(domain.sourceContext.chatId.id)],
             event_list_if_other: [
                 [
-                    Principal.fromText(domain.sourceContext.chatId),
+                    Principal.fromText(domain.sourceContext.chatId.id),
                     apiOptional(identity, domain.sourceContext.threadRootMessageIndex),
                 ],
             ],

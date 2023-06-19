@@ -37,9 +37,12 @@ import {
     getContentAsText,
     eventIsVisible,
     AccessControlled,
-    Permissioned,
     ChatIdentifier,
     ISafeMap,
+    GroupChatIdentifier,
+    ChatMembership,
+    nullMembership,
+    HasMembershipRole,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -60,8 +63,8 @@ import { tallyKey } from "../stores/proposalTallies";
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
-export function isPreviewing<T>(thing: Permissioned<T>): boolean {
-    return thing.myRole === "previewer";
+export function isPreviewing(chat: ChatSummary): boolean {
+    return chat.membership === undefined;
 }
 
 export function isFrozen(thing: AccessControlled): boolean {
@@ -206,7 +209,7 @@ export function getMinVisibleMessageIndex(chat: ChatSummary): number {
 }
 
 export function messageIsReadByThem(chat: ChatSummary, messageIndex: number): boolean {
-    if (chat.kind === "group_chat") return true;
+    if (chat.kind !== "direct_chat") return true;
     return chat.readByThemUpTo !== undefined && chat.readByThemUpTo >= messageIndex;
 }
 
@@ -315,29 +318,45 @@ export function mergeUnconfirmedThreadsIntoSummary(
     chat: GroupChatSummary,
     unconfirmed: UnconfirmedMessages
 ): GroupChatSummary {
+    if (chat.membership === undefined) return chat;
     return {
         ...chat,
-        latestThreads: chat.latestThreads.map((t) => {
-            const unconfirmedMsgs =
-                unconfirmed[`${chat.chatId}_${t.threadRootMessageIndex}`]?.messages ?? [];
-            if (unconfirmedMsgs.length > 0) {
-                let msgIdx = t.latestMessageIndex;
-                let evtIdx = t.latestEventIndex;
-                const latestUnconfirmedMessage = unconfirmedMsgs[unconfirmedMsgs.length - 1];
-                if (latestUnconfirmedMessage.event.messageIndex > msgIdx) {
-                    msgIdx = latestUnconfirmedMessage.event.messageIndex;
+        membership: {
+            ...chat.membership,
+            latestThreads: chat.membership.latestThreads.map((t) => {
+                const unconfirmedMsgs =
+                    unconfirmed[`${chat.id.id}_${t.threadRootMessageIndex}`]?.messages ?? [];
+                if (unconfirmedMsgs.length > 0) {
+                    let msgIdx = t.latestMessageIndex;
+                    let evtIdx = t.latestEventIndex;
+                    const latestUnconfirmedMessage = unconfirmedMsgs[unconfirmedMsgs.length - 1];
+                    if (latestUnconfirmedMessage.event.messageIndex > msgIdx) {
+                        msgIdx = latestUnconfirmedMessage.event.messageIndex;
+                    }
+                    if (latestUnconfirmedMessage.index > evtIdx) {
+                        evtIdx = latestUnconfirmedMessage.index;
+                    }
+                    return {
+                        ...t,
+                        latestEventIndex: evtIdx,
+                        latestMessageIndex: msgIdx,
+                    };
                 }
-                if (latestUnconfirmedMessage.index > evtIdx) {
-                    evtIdx = latestUnconfirmedMessage.index;
-                }
-                return {
-                    ...t,
-                    latestEventIndex: evtIdx,
-                    latestMessageIndex: msgIdx,
-                };
-            }
-            return t;
-        }),
+                return t;
+            }),
+        },
+    };
+}
+
+function mergeMembership(
+    current: ChatMembership,
+    updated: Partial<ChatMembership> | undefined
+): ChatMembership {
+    if (updated === undefined) return current;
+
+    return {
+        ...current,
+        ...updated,
     };
 }
 
@@ -363,9 +382,12 @@ export function mergeLocalSummaryUpdates(
                 if (updated.kind === undefined) {
                     merged.set(chatId, {
                         ...current,
-                        notificationsMuted:
-                            updated.notificationsMuted ?? current.notificationsMuted,
-                        archived: updated.archived ?? current.archived,
+                        membership: {
+                            ...current.membership,
+                            notificationsMuted:
+                                updated.notificationsMuted ?? current.membership.notificationsMuted,
+                            archived: updated.archived ?? current.membership.archived,
+                        },
                     });
                 } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
                     merged.set(chatId, {
@@ -373,10 +395,6 @@ export function mergeLocalSummaryUpdates(
                         name: updated.name ?? current.name,
                         description: updated.description ?? current.description,
                         public: updated.public ?? current.public,
-                        myRole: updated.myRole ?? current.myRole,
-                        notificationsMuted:
-                            updated.notificationsMuted ?? current.notificationsMuted,
-                        archived: updated.archived ?? current.archived,
                         permissions: {
                             ...current.permissions,
                             ...updated.permissions,
@@ -384,6 +402,12 @@ export function mergeLocalSummaryUpdates(
                         gate: {
                             ...current.gate,
                             ...updated.gate,
+                        },
+                        membership: {
+                            ...current.membership,
+                            notificationsMuted:
+                                updated.notificationsMuted ?? current.membership.notificationsMuted,
+                            archived: updated.archived ?? current.membership.archived,
                         },
                     });
                 }
@@ -395,7 +419,8 @@ export function mergeLocalSummaryUpdates(
                 chat !== undefined &&
                 ((chat.kind === "direct_chat" &&
                     chat.dateCreated < localUpdate.removedAtTimestamp) ||
-                    (chat.kind === "group_chat" && chat.joined < localUpdate.removedAtTimestamp))
+                    (chat.kind === "group_chat" &&
+                        (chat.membership?.joined ?? BigInt(0)) < localUpdate.removedAtTimestamp))
             ) {
                 merged.delete(chatId);
             }
@@ -412,11 +437,13 @@ export function mergeUnconfirmedIntoSummary(
     unconfirmed: UnconfirmedMessages,
     localUpdates: ISafeMap<bigint, LocalMessageUpdates>
 ): ChatSummary {
+    if (chatSummary.membership === undefined) return chatSummary;
+
     const unconfirmedMessages = unconfirmed[chatSummary.id.toString()]?.messages;
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
-    let mentions = chatSummary.kind === "group_chat" ? chatSummary.mentions : [];
+    let mentions = chatSummary.membership.mentions ?? [];
     if (unconfirmedMessages != undefined && unconfirmedMessages.length > 0) {
         const incomingMentions = mentionsFromMessages(formatter, userId, unconfirmedMessages);
         mentions = mergeMentions(mentions, incomingMentions);
@@ -449,7 +476,11 @@ export function mergeUnconfirmedIntoSummary(
             ...chatSummary,
             latestMessage,
             latestEventIndex,
-            mentions,
+            membership: {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                ...chatSummary.membership!,
+                mentions,
+            },
         };
     } else {
         return {
@@ -653,41 +684,33 @@ export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): Eve
 }
 
 export function groupChatFromCandidate(
-    chatId: ChatIdentifier,
+    chatId: GroupChatIdentifier,
     candidate: CandidateGroupChat
 ): GroupChatSummary {
     return {
         kind: "group_chat",
-        chatId,
         id: chatId,
-        readByMeUpTo: undefined,
         latestEventIndex: 0,
         latestMessage: undefined,
-        notificationsMuted: false,
         name: candidate.name,
         description: candidate.description,
         public: candidate.public,
         historyVisible: candidate.historyVisible,
-        joined: BigInt(Date.now()),
         minVisibleEventIndex: 0,
         minVisibleMessageIndex: 0,
         lastUpdated: BigInt(0),
         memberCount: candidate.members.length + 1, // +1 to include us
-        myRole: "owner",
-        mentions: [],
         ...candidate.avatar,
         permissions: candidate.permissions,
         metrics: emptyChatMetrics(),
-        myMetrics: emptyChatMetrics(),
-        latestThreads: [],
         subtype: undefined,
-        archived: false,
         previewed: false,
         frozen: false,
         dateLastPinned: undefined,
         dateReadPinned: undefined,
         gate: candidate.gate,
         level: "group",
+        membership: nullMembership,
     };
 }
 
@@ -775,8 +798,9 @@ export function removeVoteFromPoll(userId: string, answerIdx: number, votes: Pol
 export function canChangePermissions(chat: ChatSummary): boolean {
     return (
         chat.kind === "group_chat" &&
+        chat.membership !== undefined &&
         !chat.frozen &&
-        isPermitted(chat.myRole, chat.permissions.changePermissions)
+        isPermitted(chat.membership.role, chat.permissions.changePermissions)
     );
 }
 
@@ -785,22 +809,24 @@ export function canChangeRoles(
     currRole: MemberRole,
     newRole: MemberRole
 ): boolean {
-    if (chat.kind !== "group_chat" || currRole === newRole || chat.frozen) {
+    if (chat.kind === "direct_chat" || currRole === newRole || chat.frozen) {
         return false;
     }
 
     switch (newRole) {
         case "owner":
-            return hasOwnerRights(chat.myRole);
+            return hasOwnerRights(chat.membership.role);
         default:
-            return isPermitted(chat.myRole, chat.permissions.changeRoles);
+            return isPermitted(chat.membership.role, chat.permissions.changeRoles);
     }
 }
 
 export function canRemoveMembers(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
+    if (chat.kind !== "direct_chat") {
         return (
-            !chat.public && !chat.frozen && isPermitted(chat.myRole, chat.permissions.removeMembers)
+            !chat.public &&
+            !chat.frozen &&
+            isPermitted(chat.membership.role, chat.permissions.removeMembers)
         );
     } else {
         return false;
@@ -808,40 +834,48 @@ export function canRemoveMembers(chat: ChatSummary): boolean {
 }
 
 export function canBlockUsers(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
-        return chat.public && !chat.frozen && isPermitted(chat.myRole, chat.permissions.blockUsers);
+    if (chat.kind !== "direct_chat") {
+        return (
+            chat.public &&
+            !chat.frozen &&
+            isPermitted(chat.membership.role, chat.permissions.blockUsers)
+        );
     } else {
         return true;
     }
 }
 
 export function canUnblockUsers(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
-        return chat.public && !chat.frozen && isPermitted(chat.myRole, chat.permissions.blockUsers);
+    if (chat.kind !== "direct_chat") {
+        return (
+            chat.public &&
+            !chat.frozen &&
+            isPermitted(chat.membership.role, chat.permissions.blockUsers)
+        );
     } else {
         return true;
     }
 }
 
 export function canDeleteOtherUsersMessages(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
-        return !chat.frozen && isPermitted(chat.myRole, chat.permissions.deleteMessages);
+    if (chat.kind !== "direct_chat") {
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.deleteMessages);
     } else {
         return true;
     }
 }
 
 export function canEditGroupDetails(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat" && !chat.frozen) {
-        return isPermitted(chat.myRole, chat.permissions.updateGroup);
+    if (chat.kind !== "direct_chat" && !chat.frozen) {
+        return isPermitted(chat.membership.role, chat.permissions.updateGroup);
     } else {
         return false;
     }
 }
 
 export function canPinMessages(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat" && !chat.frozen) {
-        return isPermitted(chat.myRole, chat.permissions.pinMessages);
+    if (chat.kind !== "direct_chat" && !chat.frozen) {
+        return isPermitted(chat.membership.role, chat.permissions.pinMessages);
     } else {
         return false;
     }
@@ -849,15 +883,15 @@ export function canPinMessages(chat: ChatSummary): boolean {
 
 export function canInviteUsers(chat: ChatSummary): boolean {
     return (
-        chat.kind === "group_chat" &&
+        chat.kind !== "direct_chat" &&
         !chat.frozen &&
-        (chat.public || isPermitted(chat.myRole, chat.permissions.inviteUsers))
+        (chat.public || isPermitted(chat.membership.role, chat.permissions.inviteUsers))
     );
 }
 
 export function canCreatePolls(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
-        return !chat.frozen && isPermitted(chat.myRole, chat.permissions.createPolls);
+    if (chat.kind !== "direct_chat") {
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.createPolls);
     } else {
         return true;
     }
@@ -868,11 +902,11 @@ export function canSendMessages(
     userLookup: UserLookup,
     proposalsBotUserId: string
 ): boolean {
-    if (chat.kind === "group_chat") {
-        return !chat.frozen && isPermitted(chat.myRole, chat.permissions.sendMessages);
+    if (chat.kind !== "direct_chat") {
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.sendMessages);
     }
 
-    const user = userLookup[chat.them];
+    const user = userLookup[chat.them.id];
     if (user === undefined || user.suspended) {
         return false;
     }
@@ -886,41 +920,41 @@ export function canSendMessages(
 }
 
 export function canReactToMessages(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
-        return !chat.frozen && isPermitted(chat.myRole, chat.permissions.reactToMessages);
+    if (chat.kind !== "direct_chat") {
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.reactToMessages);
     } else {
         return true;
     }
 }
 
 export function canReplyInThread(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat" && !chat.frozen) {
-        return isPermitted(chat.myRole, chat.permissions.replyInThread);
+    if (chat.kind !== "direct_chat" && !chat.frozen) {
+        return isPermitted(chat.membership.role, chat.permissions.replyInThread);
     } else {
         return false;
     }
 }
 
-export function canLeaveGroup<T>(thing: AccessControlled & Permissioned<T>): boolean {
+export function canLeaveGroup(thing: AccessControlled & HasMembershipRole): boolean {
     if (!thing.frozen) {
         // TODO - this is not really correct - you should be able to leave if you are not the *only* owner
-        return thing.myRole !== "owner";
+        return thing.membership.role !== "owner";
     } else {
         return false;
     }
 }
 
-export function canDeleteGroup<T>(thing: AccessControlled & Permissioned<T>): boolean {
+export function canDeleteGroup(thing: AccessControlled & HasMembershipRole): boolean {
     if (!thing.frozen) {
-        return hasOwnerRights(thing.myRole);
+        return hasOwnerRights(thing.membership.role);
     } else {
         return false;
     }
 }
 
-export function canMakePrivate<T>(thing: AccessControlled & Permissioned<T>): boolean {
+export function canMakePrivate(thing: AccessControlled & HasMembershipRole): boolean {
     if (!thing.frozen) {
-        return thing.public && hasOwnerRights(thing.myRole);
+        return thing.public && hasOwnerRights(thing.membership.role);
     } else {
         return false;
     }
@@ -931,20 +965,18 @@ function hasOwnerRights(role: MemberRole): boolean {
 }
 
 function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean {
-    if (role === "previewer") {
-        return false;
-    }
-
+    if (role === "none") return false;
     switch (permissionRole) {
         case "owner":
             return hasOwnerRights(role);
-        case "admins":
-            return role !== "participant" && role !== "moderator";
-        case "moderators":
-            return role !== "participant";
-        case "members":
+        case "admin":
+            return role !== "member" && role !== "moderator";
+        case "moderator":
+            return role !== "member";
+        case "member":
             return true;
     }
+    return false;
 }
 
 export function mergeChatMetrics(a: Metrics, b: Metrics): Metrics {
@@ -976,9 +1008,8 @@ export function metricsEqual(a: Metrics, b: Metrics): boolean {
 }
 
 export function getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
-    if (chat.kind === "direct_chat") return undefined;
-    return chat.mentions.find(
-        (m) => !messagesRead.isRead(chat.chatId, m.messageIndex, m.messageId)
+    return chat.membership.mentions.find(
+        (m) => !messagesRead.isRead(chat.id, m.messageIndex, m.messageId)
     );
 }
 
@@ -1393,10 +1424,7 @@ export function getTypingString(
 }
 
 export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
-    if (chat.kind === "group_chat" && chat.myRole === "previewer") return undefined;
+    if (chat.kind === "group_chat" && chat.membership.role === "none") return undefined;
 
-    return messagesRead.getFirstUnreadMessageIndex(
-        chat.chatId,
-        chat.latestMessage?.event.messageIndex
-    );
+    return messagesRead.getFirstUnreadMessageIndex(chat.id, chat.latestMessage?.event.messageIndex);
 }

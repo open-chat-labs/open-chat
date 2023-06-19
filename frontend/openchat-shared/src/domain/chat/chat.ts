@@ -3,10 +3,17 @@ import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
 import type { AccessGate, AccessControlled, AccessRules } from "../access";
-import type { ChatPermissionRole, ChatPermissions, MemberRole, Permissioned } from "../permission";
+import type {
+    ChatPermissionRole,
+    ChatPermissions,
+    HasMembershipRole,
+    MemberRole,
+    Permissioned,
+} from "../permission";
 import type { HasIdentity } from "../identity";
 import type { HasLevel } from "../structure";
 import type { NotAuthorised, SuccessNoUpdates, UserSuspended } from "../response";
+import { ChatMap, emptyChatMetrics } from "../../utils";
 
 export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
 export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
@@ -462,16 +469,15 @@ export type LocalChatSummaryUpdates = {
               archived?: boolean;
           }
         | {
-              kind: "group_chat";
+              kind: "group_chat" | "channel";
               name?: string;
               description?: string;
               public?: boolean;
-              myRole?: MemberRole;
               permissions?: Partial<ChatPermissions>;
-              notificationsMuted?: boolean;
-              archived?: boolean;
               frozen?: boolean;
               gate?: AccessGate;
+              notificationsMuted?: boolean;
+              archived?: boolean;
           };
     removedAtTimestamp?: bigint;
     lastUpdated: number;
@@ -768,7 +774,7 @@ export type EventsSuccessResult<T extends ChatEvent> = {
 
 export type UpdatesResult = {
     state: ChatStateFull;
-    updatedEvents: Record<string, UpdatedEvent[]>;
+    updatedEvents: ChatMap<UpdatedEvent[]>;
     anyUpdates: boolean;
 };
 
@@ -881,7 +887,7 @@ export type FavouriteChatsInitial = {
 };
 
 export type UserCanisterChannelSummary = {
-    channelId: string;
+    channelId: ChannelIdentifier;
     readByMeUpTo?: number;
     dateReadPinned?: bigint;
     threadsRead: [number, number][];
@@ -988,7 +994,7 @@ export type UserCanisterChannelSummaryUpdates = {
 };
 
 export type UserCanisterGroupChatSummary = {
-    chatId: string;
+    chatId: GroupChatIdentifier;
     readByMeUpTo: number | undefined;
     threadsRead: Record<number, number>;
     archived: boolean;
@@ -996,7 +1002,7 @@ export type UserCanisterGroupChatSummary = {
 };
 
 export type UserCanisterGroupChatSummaryUpdates = {
-    chatId: string;
+    chatId: GroupChatIdentifier;
     readByMeUpTo: number | undefined;
     threadsRead: Record<number, number>;
     archived: boolean | undefined;
@@ -1006,7 +1012,6 @@ export type UserCanisterGroupChatSummaryUpdates = {
 export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;
 
 type ChatSummaryUpdatesCommon = {
-    chatId: string;
     readByMeUpTo?: number;
     latestEventIndex?: number;
     latestMessage?: EventWrapper<Message>;
@@ -1018,11 +1023,13 @@ type ChatSummaryUpdatesCommon = {
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
+    chatId: DirectChatIdentifier;
     kind: "direct_chat";
     readByThemUpTo?: number;
 };
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
+    chatId: GroupChatIdentifier;
     kind: "group_chat";
     lastUpdated: bigint;
     name?: string;
@@ -1122,10 +1129,11 @@ export type MultiUserChat = GroupChatSummary | ChannelSummary;
 
 export type ChatType = ChatSummary["kind"];
 
-type ChatSummaryCommon = {
+type ChatSummaryCommon = HasMembershipRole & {
     latestEventIndex: number;
     latestMessage?: EventWrapper<Message>;
     metrics: Metrics;
+    membership: ChatMembership;
 };
 
 export type ChannelSummary = DataContent &
@@ -1144,7 +1152,6 @@ export type ChannelSummary = DataContent &
         memberCount: number;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
-        membership?: ChatMembership;
     };
 
 export type DirectChatSummary = ChatSummaryCommon & {
@@ -1153,7 +1160,6 @@ export type DirectChatSummary = ChatSummaryCommon & {
     them: DirectChatIdentifier;
     readByThemUpTo: number | undefined;
     dateCreated: bigint;
-    membership: ChatMembership; // this just makes our lives easier
 };
 
 export type GroupChatSummary = DataContent &
@@ -1173,8 +1179,18 @@ export type GroupChatSummary = DataContent &
         previewed: boolean;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
-        membership?: ChatMembership;
     };
+
+export const nullMembership: ChatMembership = {
+    joined: BigInt(0),
+    role: "none",
+    mentions: [],
+    latestThreads: [],
+    myMetrics: emptyChatMetrics(),
+    notificationsMuted: false,
+    readByMeUpTo: undefined,
+    archived: false,
+};
 
 export type ChatMembership = {
     joined: bigint;

@@ -1,3 +1,5 @@
+import type { MemberRole } from "./permission";
+
 export type AccessGate =
     | NoGate
     | Sns1NeuronGate

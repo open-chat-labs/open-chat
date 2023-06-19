@@ -144,9 +144,10 @@ import {
     GroupSearchResponse,
     emptyUpdatesSuccessResponse,
     ChatIdentifier,
-    MultiUserChatIdentifier,
     DirectChatIdentifier,
     GroupChatIdentifier,
+    ChatMap,
+    UpdatedEvent,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -281,7 +282,7 @@ export class OpenChatAgent extends EventTarget {
         if (chatId.kind === "group_chat") {
             if (event.event.content.kind === "crypto_content") {
                 return this.userClient.sendMessageWithTransferToGroup(
-                    chatId.id,
+                    chatId,
                     event.event.content.transfer.recipient,
                     user,
                     event,
@@ -289,7 +290,7 @@ export class OpenChatAgent extends EventTarget {
                 );
             }
             return this.sendGroupMessage(
-                chatId.id,
+                chatId,
                 user.username,
                 mentioned,
                 event,
@@ -297,19 +298,19 @@ export class OpenChatAgent extends EventTarget {
             );
         }
         if (chatId.kind === "direct_chat") {
-            return this.sendDirectMessage(chatId.id, user, event, threadRootMessageIndex);
+            return this.sendDirectMessage(chatId, user, event, threadRootMessageIndex);
         }
         throw new Error("TODO - send channel message not implemented");
     }
 
     private sendGroupMessage(
-        chatId: string,
+        chatId: GroupChatIdentifier,
         senderName: string,
         mentioned: User[],
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        return this.getGroupClient(chatId).sendMessage(
+        return this.getGroupClient(chatId.id).sendMessage(
             senderName,
             mentioned,
             event,
@@ -326,7 +327,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private sendDirectMessage(
-        chatId: string,
+        chatId: DirectChatIdentifier,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
@@ -942,7 +943,7 @@ export class OpenChatAgent extends EventTarget {
 
         const addedGroupChatIds = current.groupChats
             .map((g) => g.id.id)
-            .concat(updates.groupChats.added.map((g) => g.id.id));
+            .concat(updates.groupChats.added.map((g) => g.chatId.id));
 
         const groupIndexResponse = await this._groupIndexClient.filterGroups(
             addedGroupChatIds,
@@ -950,11 +951,13 @@ export class OpenChatAgent extends EventTarget {
         );
 
         const groupsToCheckForUpdates = new Set(
-            groupIndexResponse.activeGroups.concat(updates.groupChats.updated.map((g) => g.chatId))
+            groupIndexResponse.activeGroups.concat(
+                updates.groupChats.updated.map((g) => g.chatId.id)
+            )
         );
 
         const addedGroupPromises = updates.groupChats.added.map((g) =>
-            this.getGroupClient(g.chatId).summary()
+            this.getGroupClient(g.chatId.id).summary()
         );
 
         const updatedGroupPromises = current.groupChats
@@ -1020,7 +1023,7 @@ export class OpenChatAgent extends EventTarget {
         const userResponse = await this.userClient.getInitialState();
         if (userResponse.timestamp === undefined) {
             const groupPromises = userResponse.groupChats.summaries.map((g) =>
-                this.getGroupClient(g.chatId).summary()
+                this.getGroupClient(g.chatId.id).summary()
             );
 
             const groupPromiseResults = await waitAll(groupPromises);
@@ -1038,7 +1041,7 @@ export class OpenChatAgent extends EventTarget {
             anyErrors = groupPromiseResults.errors.length > 0;
         } else {
             const groupPromises = userResponse.groupChats.summaries.map((g) =>
-                this.getGroupClient(g.chatId).summary()
+                this.getGroupClient(g.chatId.id).summary()
             );
             const groupUpdatePromises = (userResponse.groupChats.cached?.summaries ?? []).map((g) =>
                 this.getGroupClient(g.id.id).summaryUpdates(g.lastUpdated)
@@ -1074,14 +1077,16 @@ export class OpenChatAgent extends EventTarget {
                 groupUpdatePromiseResults.errors.length > 0;
         }
 
+        const updatedEvents = new ChatMap<UpdatedEvent[]>();
+
         return await this.hydrateChatState(state).then((s) => {
             if (!anyErrors) {
-                setCachedChats(this.db, this.principal, state, {});
+                setCachedChats(this.db, this.principal, state, updatedEvents);
             }
 
             return {
                 state: s,
-                updatedEvents: {},
+                updatedEvents,
                 anyUpdates: true,
             };
         });
@@ -1675,7 +1680,7 @@ export class OpenChatAgent extends EventTarget {
                 "TODO - setCachedMessageFromNotification not implemented for channel messages"
             );
         }
-        return setCachedMessageIfNotExists(this.db, chatId.id, message, threadRootMessageIndex);
+        return setCachedMessageIfNotExists(this.db, chatId, message, threadRootMessageIndex);
     }
 
     freezeGroup(
@@ -1725,7 +1730,7 @@ export class OpenChatAgent extends EventTarget {
         if (chatId.kind === "channel") {
             throw new Error("TODO - deleteFailedMessage not implemented for channel messages");
         }
-        return removeFailedMessage(this.db, chatId.id, messageId, threadRootMessageIndex);
+        return removeFailedMessage(this.db, chatId, messageId, threadRootMessageIndex);
     }
 
     claimPrize(chatId: GroupChatIdentifier, messageId: bigint): Promise<ClaimPrizeResponse> {

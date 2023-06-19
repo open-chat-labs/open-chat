@@ -307,7 +307,6 @@ import {
     GroupSearchResponse,
     ChatPermissions,
     ChatIdentifier,
-    MultiUserChat,
     ChatMap,
     chatIdentifiersEqual,
     GroupChatIdentifier,
@@ -1605,7 +1604,7 @@ export class OpenChat extends OpenChatAgentWorker {
             chatStateStore.updateProp(chatId, "members", (p) => [
                 ...p,
                 {
-                    role: "participant",
+                    role: "member",
                     userId,
                     username: this._liveState.userStore[userId]?.username ?? "unknown",
                 },

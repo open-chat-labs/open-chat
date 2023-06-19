@@ -1,4 +1,4 @@
-import type {
+import {
     ChatEvent,
     ChatMetrics,
     ChatSummary,
@@ -26,6 +26,7 @@ import type {
     GroupCanisterSummaryUpdatesResponse,
     GroupCanisterThreadDetails,
     UpdatedEvent,
+    ChatMap,
 } from "openchat-shared";
 import { toRecord } from "./list";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
@@ -426,11 +427,11 @@ export function isSuccessfulGroupSummaryUpdatesResponse(
 export function getUpdatedEvents(
     directChats: DirectChatSummaryUpdates[],
     groupChats: GroupCanisterGroupChatSummaryUpdates[]
-): Record<string, UpdatedEvent[]> {
-    const result = {} as Record<string, UpdatedEvent[]>;
+): ChatMap<UpdatedEvent[]> {
+    const result = new ChatMap<UpdatedEvent[]>();
 
-    directChats.forEach((c) => (result[c.chatId] = c.updatedEvents));
-    groupChats.forEach((c) => (result[c.chatId] = c.updatedEvents));
+    directChats.forEach((c) => result.set(c.chatId, c.updatedEvents));
+    groupChats.forEach((c) => result.set(c.chatId, c.updatedEvents));
 
     return result;
 }
