@@ -392,7 +392,7 @@ export class OpenChatAgent extends EventTarget {
             chatId,
             this.userClient.chatEventsWindow(
                 eventIndexRange,
-                chatId.id,
+                chatId,
                 messageIndex,
                 latestClientMainEventIndex
             ),
@@ -446,7 +446,7 @@ export class OpenChatAgent extends EventTarget {
             chatId,
             this.userClient.chatEvents(
                 eventIndexRange,
-                chatId.id,
+                chatId,
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
@@ -468,7 +468,7 @@ export class OpenChatAgent extends EventTarget {
             chatId,
             this.userClient.chatEventsByIndex(
                 eventIndexes,
-                chatId.id,
+                chatId,
                 threadRootMessageIndex,
                 latestClientEventIndex
             ),
@@ -683,7 +683,7 @@ export class OpenChatAgent extends EventTarget {
 
             if (chatKind === "direct_chat") {
                 return this.userClient
-                    .chatEventsByIndex(idxs, ctx.chatId.id, ctx.threadRootMessageIndex, latestIndex)
+                    .chatEventsByIndex(idxs, ctx.chatId, ctx.threadRootMessageIndex, latestIndex)
                     .then((resp) => this.messagesFromEventsResponse(ctx.chatId.id, resp));
             } else if (chatKind === "group_chat") {
                 const client = this.getGroupClient(ctx.chatId.id);
