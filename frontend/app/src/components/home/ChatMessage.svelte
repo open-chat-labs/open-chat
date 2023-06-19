@@ -11,6 +11,7 @@
         OpenChat,
         PartialUserSummary,
         MessageReminderCreatedContent,
+        ChatIdentifier,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -52,7 +53,7 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let chatId: string;
+    export let chatId: ChatIdentifier;
     export let chatType: "group_chat" | "direct_chat";
     export let user: CreatedUser;
     export let sender: PartialUserSummary | undefined;

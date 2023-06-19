@@ -13,6 +13,7 @@
         EventWrapper,
         Message,
         OpenChat,
+        ChatIdentifier,
     } from "openchat-client";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
@@ -23,11 +24,12 @@
     import ChatFrozenEvent from "./ChatFrozenEvent.svelte";
     import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
     import page from "page";
+    import { routeForChatIdentifier } from "routes";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let chatId: string;
+    export let chatId: ChatIdentifier;
     export let chatType: "group_chat" | "direct_chat";
     export let user: CreatedUser;
     export let event: EventWrapper<ChatEvent>;
@@ -94,7 +96,7 @@
     function initiateThread() {
         if (event.event.kind === "message") {
             if (event.event.thread !== undefined) {
-                page(`/${chatId}/${event.event.messageIndex}`);
+                page(`${routeForChatIdentifier(chatId)}/${event.event.messageIndex}`);
             } else {
                 client.openThread(event as EventWrapper<Message>, true);
             }

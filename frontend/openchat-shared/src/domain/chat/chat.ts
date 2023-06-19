@@ -1299,13 +1299,13 @@ export type CandidateMember = {
 
 export type CandidateGroupChat = AccessControlled &
     HasLevel &
+    HasMembershipRole &
     Permissioned<ChatPermissions> & {
         chatId: GroupChatIdentifier;
         name: string;
         description: string;
         rules: AccessRules;
         members: CandidateMember[];
-        myRole: MemberRole;
         avatar?: DataContent;
     };
 

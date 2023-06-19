@@ -26,7 +26,7 @@
     import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
     import { pathParams } from "../../routes";
     import page from "page";
-    import { compareRoles } from "openchat-shared";
+    import { GroupChatIdentifier, compareRoles } from "openchat-shared";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
     import CommunityChannels from "./communities/details/CommunityChannels.svelte";
 
@@ -64,7 +64,7 @@
     function onChangeGroupRole(
         ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>
     ): void {
-        if ($selectedChatId !== undefined) {
+        if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
             let { userId, newRole, oldRole } = ev.detail;
             changeGroupRole($selectedChatId, userId, newRole, oldRole);
         }
@@ -80,7 +80,7 @@
     }
 
     function onRemoveGroupMember(ev: CustomEvent<string>): void {
-        if ($selectedChatId !== undefined) {
+        if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
             chatStateStore.updateProp($selectedChatId, "members", (ps) =>
                 ps.filter((p) => p.userId !== ev.detail)
             );
@@ -93,7 +93,7 @@
     }
 
     async function inviteGroupUsers(ev: CustomEvent<UserSummary[]>) {
-        if ($selectedChatId !== undefined) {
+        if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
             const userIds = ev.detail.map((u) => u.userId);
 
             invitingUsers = true;
@@ -157,7 +157,7 @@
     }
 
     function changeGroupRole(
-        chatId: string,
+        chatId: GroupChatIdentifier,
         userId: string,
         newRole: MemberRole,
         oldRole: MemberRole
@@ -184,7 +184,7 @@
         toastStore.showSuccessToast("TODO - change community role");
     }
 
-    function removeGroupMember(chatId: string, userId: string): Promise<void> {
+    function removeGroupMember(chatId: GroupChatIdentifier, userId: string): Promise<void> {
         return client
             .removeMember(chatId, userId)
             .then((resp) => {
@@ -199,7 +199,7 @@
     }
 
     async function onBlockGroupUser(ev: CustomEvent<{ userId: string }>) {
-        if ($selectedChatId !== undefined) {
+        if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
             const success = await client.blockUser($selectedChatId, ev.detail.userId);
             if (success) {
                 toastStore.showSuccessToast("blockUserSucceeded");
@@ -214,7 +214,7 @@
     }
 
     async function onUnblockGroupUser(ev: CustomEvent<UserSummary>) {
-        if ($selectedChatId !== undefined) {
+        if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
             const success = await client.unblockUser($selectedChatId, ev.detail.userId);
             if (success) {
                 toastStore.showSuccessToast("unblockUserSucceeded");
@@ -236,7 +236,9 @@
         dispatch("showInviteGroupUsers", ev.detail);
     }
 
-    function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: AccessRules }>) {
+    function updateGroupRules(
+        ev: CustomEvent<{ chatId: GroupChatIdentifier; rules: AccessRules }>
+    ) {
         chatStateStore.setProp(ev.detail.chatId, "rules", ev.detail.rules);
     }
 
@@ -244,8 +246,6 @@
         lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
             ? findMessage($eventsStore, lastState.threadRootMessageId)
             : undefined;
-
-    $: console.log("LastState: ", lastState);
 </script>
 
 <Panel right {empty}>
@@ -300,7 +300,7 @@
             on:showInviteUsers={showInviteGroupUsers}
             on:removeMember={onRemoveGroupMember}
             on:changeRole={onChangeGroupRole} />
-    {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined}
+    {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && $selectedChatId.kind === "group_chat"}
         <PinnedMessages
             on:chatWith
             on:goToMessageIndex={goToMessageIndex}

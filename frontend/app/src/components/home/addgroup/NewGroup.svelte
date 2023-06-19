@@ -17,6 +17,7 @@
         OpenChat,
         UnsupportedValueError,
         UpdateGroupResponse,
+        GroupChatIdentifier,
     } from "openchat-client";
     import StageHeader from "../StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
@@ -24,6 +25,7 @@
     import AreYouSure from "../../AreYouSure.svelte";
     import VisibilityControl from "../VisibilityControl.svelte";
     import { interpolateLevel } from "../../../utils/i18n";
+    import { routeForChatIdentifier } from "routes";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -44,12 +46,11 @@
     };
     let rulesValid = true;
     $: steps = getSteps(editing);
-    $: editing = candidateGroup.id !== "";
+    $: editing = candidateGroup.chatId.id !== "";
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
-    $: canEditPermissions =
-        candidateGroup.id === "" ? true : client.canChangePermissions(candidateGroup.id);
+    $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.chatId);
 
     $: permissionsDirty = client.havePermissionsChanged(
         originalGroup.permissions,
@@ -124,13 +125,13 @@
         throw new UnsupportedValueError(`Unexpected CreateGroupResponse type received`, resp);
     }
 
-    function optionallyInviteUsers(canisterId: string): Promise<void> {
+    function optionallyInviteUsers(chatId: GroupChatIdentifier): Promise<void> {
         if (candidateGroup.members.length === 0) {
             return Promise.resolve();
         }
         return client
             .inviteUsers(
-                canisterId,
+                chatId,
                 candidateGroup.members.map((m) => m.user.userId)
             )
             .then((resp) => {
@@ -176,9 +177,9 @@
     }
 
     function doMakeGroupPrivate(): Promise<void> {
-        if (candidateGroup.id === "") return Promise.resolve();
+        if (!editing) return Promise.resolve();
 
-        return client.makeGroupPrivate(candidateGroup.id).then((success) => {
+        return client.makeGroupPrivate(candidateGroup.chatId).then((success) => {
             if (success) {
                 originalGroup = {
                     ...originalGroup,
@@ -191,11 +192,11 @@
     }
 
     function doUpdatePermissions(): Promise<void> {
-        if (candidateGroup.id === "") return Promise.resolve();
+        if (!editing) return Promise.resolve();
 
         return client
             .updateGroupPermissions(
-                candidateGroup.id,
+                candidateGroup.chatId,
                 originalGroup.permissions,
                 candidateGroup.permissions
             )
@@ -213,11 +214,11 @@
     }
 
     function doUpdateGate(gate: AccessGate): Promise<void> {
-        if (candidateGroup.id === "") return Promise.resolve();
+        if (!editing) return Promise.resolve();
 
         return client
             .updateGroup(
-                candidateGroup.id,
+                candidateGroup.chatId,
                 undefined,
                 undefined,
                 undefined,
@@ -244,26 +245,28 @@
     }
 
     function doUpdateRules(): Promise<void> {
-        if (candidateGroup.id === "") return Promise.resolve();
+        if (!editing) return Promise.resolve();
 
-        return client.updateGroupRules(candidateGroup.id, candidateGroup.rules).then((success) => {
-            if (success) {
-                dispatch("updateGroupRules", {
-                    chatId: candidateGroup.id,
-                    rules: candidateGroup.rules,
-                });
-            } else {
-                toastStore.showFailureToast(interpolateError("group.rulesUpdateFailed"));
-            }
-        });
+        return client
+            .updateGroupRules(candidateGroup.chatId, candidateGroup.rules)
+            .then((success) => {
+                if (success) {
+                    dispatch("updateGroupRules", {
+                        chatId: candidateGroup.chatId,
+                        rules: candidateGroup.rules,
+                    });
+                } else {
+                    toastStore.showFailureToast(interpolateError("group.rulesUpdateFailed"));
+                }
+            });
     }
 
     function doUpdateInfo(): Promise<void> {
-        if (candidateGroup.id === "") return Promise.resolve();
+        if (!editing) return Promise.resolve();
 
         return client
             .updateGroup(
-                candidateGroup.id,
+                candidateGroup.chatId,
                 nameDirty ? candidateGroup.name : undefined,
                 descDirty ? candidateGroup.description : undefined,
                 undefined,
@@ -302,9 +305,10 @@
                     if (err) toastStore.showFailureToast(interpolateError(err));
                     step = 0;
                 } else {
-                    return optionallyInviteUsers(resp.canisterId)
+                    const chatId: GroupChatIdentifier = { kind: "group_chat", id: resp.canisterId };
+                    return optionallyInviteUsers(chatId)
                         .then(() => {
-                            onGroupCreated(resp.canisterId);
+                            onGroupCreated(chatId);
                         })
                         .catch((err) => {
                             toastStore.showFailureToast("inviteUsersFailed");
@@ -319,8 +323,8 @@
             .finally(() => (busy = false));
     }
 
-    function onGroupCreated(canisterId: string) {
-        const url = `/group/${canisterId}`;
+    function onGroupCreated(canisterId: GroupChatIdentifier) {
+        const url = routeForChatIdentifier(canisterId);
         dispatch("groupCreated", {
             chatId: canisterId,
             public: candidateGroup.public,

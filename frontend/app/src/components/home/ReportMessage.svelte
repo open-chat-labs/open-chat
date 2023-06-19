@@ -13,10 +13,10 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import Flag from "svelte-material-icons/Flag.svelte";
     import { createEventDispatcher, getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import type { ChatIdentifier, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
 
-    export let chatId: string;
+    export let chatId: ChatIdentifier;
     export let eventIndex: number;
     export let messageId: bigint;
     export let threadRootMessageIndex: number | undefined;

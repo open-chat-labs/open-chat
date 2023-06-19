@@ -49,7 +49,6 @@ export function createCandidateCommunity(id: string): Community {
         gate: { kind: "no_gate" },
         public: true,
         permissions: defaultPermissions,
-        myRole: "owner",
         historyVisible: true,
         frozen: false,
         level: "community",

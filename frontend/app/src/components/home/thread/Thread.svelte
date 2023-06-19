@@ -52,7 +52,7 @@
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
     $: threadRootMessage = rootEvent.event;
-    $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them);
+    $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.id);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
         draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {}))
     );

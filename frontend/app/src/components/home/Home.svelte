@@ -34,6 +34,7 @@
         DirectChatIdentifier,
         GroupChatIdentifier,
         chatIdentifiersEqual,
+        nullMembership,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -842,8 +843,11 @@
             },
             rules: defaultAccessRules,
             gate: { kind: "no_gate" },
-            myRole: "owner",
             level,
+            membership: {
+                ...nullMembership,
+                role: "owner",
+            },
         };
     }
 
@@ -861,7 +865,6 @@
             frozen: chat.frozen,
             members: [],
             permissions: { ...chat.permissions },
-            myRole: chat.membership.role,
             rules: rules !== undefined ? { ...rules } : defaultAccessRules,
             avatar: {
                 blobUrl: chat.blobUrl,
@@ -869,6 +872,7 @@
             },
             gate: chat.gate,
             level: "group",
+            membership: chat.membership,
         };
     }
 

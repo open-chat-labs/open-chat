@@ -34,7 +34,7 @@
     $: proposalTopicsStore = client.proposalTopicsStore;
     $: filteredProposalsStore = client.filteredProposalsStore;
     $: topics = [...$proposalTopicsStore];
-    $: groupTopics = $selectedChatId === OC_PROPOSALS_GROUP;
+    $: groupTopics = $selectedChatId?.id === OC_PROPOSALS_GROUP;
 
     $: grouped = [
         ...client.groupBy(topics, ([id, _]) => {

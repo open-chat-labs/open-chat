@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { RehydratedReplyContext, OpenChat } from "openchat-client";
+    import type { RehydratedReplyContext, OpenChat, ChatIdentifier } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
@@ -9,12 +9,13 @@
     import { createEventDispatcher, getContext } from "svelte";
     const dispatch = createEventDispatcher();
     import page from "page";
+    import { routeForChatIdentifier } from "routes";
 
     const client = getContext<OpenChat>("client");
     const currentUser = client.user;
 
     export let messageId: bigint;
-    export let chatId: string;
+    export let chatId: ChatIdentifier;
     export let repliesTo: RehydratedReplyContext;
     export let readonly: boolean;
 
@@ -25,13 +26,13 @@
 
     function getUrl() {
         const path = [
-            repliesTo.sourceContext.chatId,
+            routeForChatIdentifier(repliesTo.sourceContext.chatId),
             repliesTo.sourceContext.threadRootMessageIndex ?? repliesTo.messageIndex,
         ];
         if (repliesTo.sourceContext.threadRootMessageIndex !== undefined) {
             path.push(repliesTo.messageIndex);
         }
-        return "/" + path.join("/");
+        return path.join("/");
     }
 
     function zoomToMessage() {

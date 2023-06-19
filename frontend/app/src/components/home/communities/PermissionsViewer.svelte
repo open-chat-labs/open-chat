@@ -10,8 +10,8 @@
 
     const roleLabels: Record<CommunityPermissionRole, string> = {
         owner: "permissions.ownerOnly",
-        admins: "permissions.ownerAndAdmins",
-        members: "permissions.allMembers",
+        admin: "permissions.ownerAndAdmins",
+        member: "permissions.allMembers",
     };
 
     $: partitioned = partitionPermissions(permissions);
@@ -23,8 +23,8 @@
                 return dict;
             },
             {
-                admins: new Set(),
-                members: new Set(),
+                admin: new Set(),
+                member: new Set(),
                 owner: new Set(),
             } as PermissionsByRole
         );

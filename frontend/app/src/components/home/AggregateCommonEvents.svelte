@@ -1,12 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { OpenChat, UserLookup, UserSummary } from "openchat-client";
+    import type { ChatIdentifier, OpenChat, UserLookup, UserSummary } from "openchat-client";
     import { afterUpdate, getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
 
-    export let chatId: string;
+    export let chatId: ChatIdentifier;
     export let user: UserSummary | undefined;
     export let joined: Set<string>;
     export let messagesDeleted: number[];

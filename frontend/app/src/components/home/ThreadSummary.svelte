@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { OpenChat, ThreadSummary } from "openchat-client";
+    import type { ChatIdentifier, OpenChat, ThreadSummary } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
@@ -14,7 +14,7 @@
     export let me: boolean;
     export let selected: boolean;
     export let url: string;
-    export let chatId: string;
+    export let chatId: ChatIdentifier;
     export let threadRootMessageIndex: number;
 
     $: messagesRead = client.messagesRead;

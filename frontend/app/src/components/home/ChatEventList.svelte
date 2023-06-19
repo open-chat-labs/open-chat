@@ -20,6 +20,7 @@
         SendingThreadMessage,
         ReactionSelected,
         ThreadReactionSelected,
+        ChatIdentifier,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -324,7 +325,7 @@
     }
 
     export async function scrollToMessageIndex(
-        chatId: string,
+        chatId: ChatIdentifier,
         index: number,
         preserveFocus: boolean,
         filling: boolean = false,

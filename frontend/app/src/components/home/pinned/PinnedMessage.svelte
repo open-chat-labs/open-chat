@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import Link from "../../Link.svelte";
-    import type { CreatedUser, Message, OpenChat } from "openchat-client";
+    import type { CreatedUser, GroupChatIdentifier, Message, OpenChat } from "openchat-client";
     import ChatMessageContent from "../ChatMessageContent.svelte";
     import RepliesTo from "../RepliesTo.svelte";
     import Avatar from "../../Avatar.svelte";
@@ -17,7 +17,7 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let chatId: string;
+    export let chatId: GroupChatIdentifier;
     export let user: CreatedUser;
     export let senderId: string;
     export let msg: Message;
