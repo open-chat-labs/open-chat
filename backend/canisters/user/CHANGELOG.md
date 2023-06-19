@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add support for sending the KINIC token ([#3811](https://github.com/open-chat-labs/open-chat/pull/3811))
+  
 ### Fixed
 
 - Fix pinned chat changes not coming through in `initial_state_v2` and `updates_v2` ([#3810](https://github.com/open-chat-labs/open-chat/pull/3810))

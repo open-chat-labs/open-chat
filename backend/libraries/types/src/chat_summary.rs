@@ -270,6 +270,7 @@ pub struct ChatMetrics {
     pub sns1_messages: u64,
     pub ckbtc_messages: u64,
     pub chat_messages: u64,
+    pub kinic_messages: u64,
     pub deleted_messages: u64,
     pub giphy_messages: u64,
     pub prize_messages: u64,
