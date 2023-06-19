@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add ability to import a group into a community ([#3792](https://github.com/open-ic/open-chat/pull/3792))
+
 ## [[2.0.724](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.724-group)] - 2023-06-16
 
 ### Changed

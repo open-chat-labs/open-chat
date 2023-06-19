@@ -31,3 +31,11 @@ pub fn caller_is_local_group_index() -> Result<(), String> {
         Err("Caller is not the local_group_index".to_string())
     }
 }
+
+pub fn caller_is_community_being_imported_into() -> Result<(), String> {
+    if read_state(|state| state.is_caller_community_being_imported_into()) {
+        Ok(())
+    } else {
+        Err("Caller is not the community this group is being imported into".to_string())
+    }
+}
