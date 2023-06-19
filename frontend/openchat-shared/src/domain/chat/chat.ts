@@ -12,7 +12,14 @@ import type {
 } from "../permission";
 import type { HasIdentity } from "../identity";
 import type { HasLevel } from "../structure";
-import type { NotAuthorised, SuccessNoUpdates, UserSuspended } from "../response";
+import type {
+    NotAuthorised,
+    Success,
+    SuccessNoUpdates,
+    UserSuspended,
+    ChatFrozen,
+    Failure,
+} from "../response";
 import { ChatMap, emptyChatMetrics } from "../../utils";
 
 export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
@@ -1473,10 +1480,6 @@ export type SendMessageNotInGroup = {
     kind: "not_in_group";
 };
 
-export type ChatFrozen = {
-    kind: "chat_frozen";
-};
-
 export type GateCheckFailed = {
     kind: "gate_check_failed";
     reason: GateCheckFailedReason;
@@ -1651,16 +1654,7 @@ export type UpdatePermissionsResponse =
     | "user_suspended"
     | "chat_frozen";
 
-export type AddRemoveReactionResponse =
-    | "success"
-    | "no_change"
-    | "invalid"
-    | "message_not_found"
-    | "not_in_group"
-    | "not_authorized"
-    | "chat_not_found"
-    | "user_suspended"
-    | "chat_frozen";
+export type AddRemoveReactionResponse = Success | Failure;
 
 export type DeleteMessageResponse =
     | "not_in_group"

@@ -1,5 +1,6 @@
 import type { CallerNotInGroup, ChatIdentifier, MessageContent } from "../chat/chat";
 import type { DataContent } from "../data/data";
+import type { ChatNotFound } from "../response";
 
 export type GroupMatch = DataContent & {
     chatId: string;
@@ -36,10 +37,6 @@ export type TooManyUsers = {
 
 export type TermInvalid = {
     kind: "term_invalid";
-};
-
-export type ChatNotFound = {
-    kind: "chat_not_found";
 };
 
 export type GroupSearchSuccess = {

@@ -1242,7 +1242,13 @@ export class OpenChatAgent extends EventTarget {
                 );
 
             case "channel":
-                throw new Error("TODO - add channel reaction not implemented");
+                return this.communityClient(chatId.communityId).addReaction(
+                    chatId,
+                    username,
+                    messageId,
+                    reaction,
+                    threadRootMessageIndex
+                );
         }
     }
 

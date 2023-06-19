@@ -9,8 +9,6 @@ import type {
     ApiLeaveGroupResponse,
     ApiMarkReadResponse,
     ApiSetAvatarResponse,
-    ApiAddReactionResponse,
-    ApiRemoveReactionResponse,
     ApiDirectChatEvent,
     ApiDeleteMessageResponse,
     ApiUndeleteMessageResponse,
@@ -70,7 +68,6 @@ import {
     LeaveGroupResponse,
     MarkReadResponse,
     SetAvatarResponse,
-    AddRemoveReactionResponse,
     DeleteMessageResponse,
     UndeleteMessageResponse,
     EditMessageResponse,
@@ -117,7 +114,6 @@ import {
     DirectChatsUpdates,
     DirectChatIdentifier,
     nullMembership,
-    GroupChatIdentifier,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -230,36 +226,6 @@ export function undeleteMessageResponse(
         return { kind: "user_suspended" };
     }
     throw new UnsupportedValueError("Unexpected ApiUndeleteMessageResponse type received", candid);
-}
-
-export function addRemoveReactionResponse(
-    candid: ApiAddReactionResponse | ApiRemoveReactionResponse
-): AddRemoveReactionResponse {
-    if ("Success" in candid || "SuccessV2" in candid) {
-        return "success";
-    }
-    if ("NoChange" in candid) {
-        return "no_change";
-    }
-    if ("InvalidReaction" in candid) {
-        return "invalid";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiAddRemoveReactionResponse type received",
-        candid
-    );
 }
 
 export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {

@@ -6,8 +6,6 @@ import type {
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
     ApiUpdateGroupResponse,
-    ApiAddReactionResponse,
-    ApiRemoveReactionResponse,
     ApiDeleteMessageResponse,
     ApiUndeleteMessageResponse,
     ApiEditMessageResponse,
@@ -51,8 +49,6 @@ import {
     SendMessageResponse,
     RemoveMemberResponse,
     UpdateGroupResponse,
-    AddRemoveReactionResponse,
-    DeleteMessageResponse,
     UndeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
@@ -93,6 +89,7 @@ import {
     DeclineInvitationResponse,
     GroupChatIdentifier,
     ChatIdentifier,
+    DeleteMessageResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
@@ -519,39 +516,6 @@ export function undeleteMessageResponse(
     throw new UnsupportedValueError("Unexpected ApiUndeleteMessageResponse type received", candid);
 }
 
-export function addRemoveReactionResponse(
-    candid: ApiAddReactionResponse | ApiRemoveReactionResponse
-): AddRemoveReactionResponse {
-    if ("Success" in candid || "SuccessV2" in candid) {
-        return "success";
-    }
-    if ("NoChange" in candid) {
-        return "no_change";
-    }
-    if ("InvalidReaction" in candid) {
-        return "invalid";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "not_in_group";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiAddRemoveReactionResponse type received",
-        candid
-    );
-}
-
 // TODO fill this in
 export function apiGateUpdate(): ApiGroupGateUpdate {
     return { NoChange: null };
@@ -870,7 +834,7 @@ export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Mes
 export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse | ApiCommunityEventsResponse,
-    chatId: GroupChatIdentifier,
+    chatId: ChatIdentifier,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined
 ): Promise<EventsResponse<GroupChatEvent>> {

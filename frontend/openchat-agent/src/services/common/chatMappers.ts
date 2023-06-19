@@ -48,6 +48,8 @@ import type {
     ApiReportedMessage,
     ApiGroupRole,
     ApiCommunityPermissions,
+    ApiAddReactionResponse as ApiAddDirectReactionResponse,
+    ApiRemoveReactionResponse as ApiRemoveDirectReactionResponse,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -104,14 +106,25 @@ import {
     CommunityPermissions,
     ChatIdentifier,
     chatIdentifiersEqual,
+    AddRemoveReactionResponse,
+    CommonResponses,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
-import type { ApiGroupCanisterGroupChatSummary } from "../group/candid/idl";
+import type {
+    ApiGroupCanisterGroupChatSummary,
+    ApiAddReactionResponse as ApiAddGroupReactionResponse,
+    ApiRemoveReactionResponse as ApiRemoveGroupReactionResponse,
+} from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
     ApiCommunityCanisterCommunitySummary,
 } from "../localUserIndex/candid/idl";
-import type { ApiCommunityPermissionRole, ApiCommunityRole } from "../community/candid/idl";
+import type {
+    ApiCommunityPermissionRole,
+    ApiCommunityRole,
+    ApiAddReactionResponse as ApiAddChannelReactionResponse,
+    ApiRemoveReactionResponse as ApiRemoveChannelReactionResponse,
+} from "../community/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -1271,4 +1284,23 @@ export function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateChe
         return "min_stake_not_met";
     }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
+}
+
+export function addRemoveReactionResponse(
+    candid:
+        | ApiAddDirectReactionResponse
+        | ApiRemoveDirectReactionResponse
+        | ApiAddGroupReactionResponse
+        | ApiRemoveGroupReactionResponse
+        | ApiAddChannelReactionResponse
+        | ApiRemoveChannelReactionResponse
+): AddRemoveReactionResponse {
+    if ("Success" in candid || "SuccessV2" in candid) {
+        return CommonResponses.success;
+    } else if ("NoChange" in candid) {
+        return CommonResponses.success;
+    } else {
+        console.warn("AddRemoveReaction failed with: ", candid);
+        return CommonResponses.failure;
+    }
 }

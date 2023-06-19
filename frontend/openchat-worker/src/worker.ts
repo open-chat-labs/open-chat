@@ -1357,26 +1357,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             // Community level functions
             case "addMembersToChannel":
                 agent
-                    .communityClient(payload.communityId)
-                    .addMembersToChannel(payload.channelId, payload.userIds, payload.username)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "addCommunityReaction":
-                agent
-                    .communityClient(payload.communityId)
-                    .addReaction(
-                        payload.channelId,
-                        payload.username,
-                        payload.messageId,
-                        payload.reaction,
-                        payload.threadRootMessageIndex
-                    )
+                    .communityClient(payload.chatId.communityId)
+                    .addMembersToChannel(payload.chatId, payload.userIds, payload.username)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1399,8 +1381,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "changeChannelRole":
                 agent
-                    .communityClient(payload.communityId)
-                    .changeChannelRole(payload.channelId, payload.userId, payload.newRole)
+                    .communityClient(payload.chatId.communityId)
+                    .changeChannelRole(payload.chatId, payload.userId, payload.newRole)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1435,8 +1417,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "declineChannelInvitation":
                 agent
-                    .communityClient(payload.communityId)
-                    .declineInvitation(payload.channelId)
+                    .communityClient(payload.chatId.communityId)
+                    .declineInvitation(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1447,8 +1429,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "deleteChannel":
                 agent
-                    .communityClient(payload.communityId)
-                    .deleteChannel(payload.channelId)
+                    .communityClient(payload.chatId.communityId)
+                    .deleteChannel(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1459,9 +1441,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "deleteChannelMessages":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.chatId.communityId)
                     .deleteMessages(
-                        payload.channelId,
+                        payload.chatId,
                         payload.messageIds,
                         payload.threadRootMessageIndex,
                         payload.asPlatformModerator
@@ -1476,9 +1458,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "deleteChannelMessage":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.chatId.communityId)
                     .deleteMessage(
-                        payload.channelId,
+                        payload.chatId,
                         payload.messageId,
                         payload.sender,
                         payload.threadRootMessageIndex
@@ -1505,8 +1487,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "editChannelMessage":
                 agent
-                    .communityClient(payload.communityId)
-                    .editMessage(payload.channelId, payload.message, payload.threadRootMessageIndex)
+                    .communityClient(payload.chatId.communityId)
+                    .editMessage(payload.chatId, payload.message, payload.threadRootMessageIndex)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1517,9 +1499,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "channelEvents":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.chatId.communityId)
                     .events(
-                        payload.channelId,
+                        payload.chatId,
                         payload.startIndex,
                         payload.ascending,
                         payload.threadRootMessageIndex,
@@ -1535,9 +1517,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "channelEventsByIndex":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.chatId.communityId)
                     .eventsByIndex(
-                        payload.channelId,
+                        payload.chatId,
                         payload.eventIndexes,
                         payload.threadRootMessageIndex,
                         payload.latestClientEventIndex
@@ -1552,9 +1534,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "channelEventsWindow":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.chatId.communityId)
                     .eventsWindow(
-                        payload.channelId,
+                        payload.chatId,
                         payload.messageIndex,
                         payload.threadRootMessageIndex,
                         payload.latestClientEventIndex
@@ -1581,8 +1563,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "joinChannel":
                 agent
-                    .communityClient(payload.communityId)
-                    .joinChannel(payload.channelId)
+                    .communityClient(payload.chatId.communityId)
+                    .joinChannel(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1593,8 +1575,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "leaveChannel":
                 agent
-                    .communityClient(payload.communityId)
-                    .leaveChannel(payload.channelId)
+                    .communityClient(payload.chatId.communityId)
+                    .leaveChannel(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1605,8 +1587,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "makeChannelPrivate":
                 agent
-                    .communityClient(payload.communityId)
-                    .makeChannelPrivate(payload.channelId)
+                    .communityClient(payload.chatId.communityId)
+                    .makeChannelPrivate(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1629,9 +1611,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "channelMessagesByMessageIndex":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.chatId.communityId)
                     .messagesByMessageIndex(
-                        payload.channelId,
+                        payload.chatId,
                         payload.messageIndexes,
                         payload.latestClientEventIndex,
                         payload.threadRootMessageIndex
@@ -1646,8 +1628,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "pinChannelMessage":
                 agent
-                    .communityClient(payload.communityId)
-                    .pinMessage(payload.channelId, payload.messageIndex)
+                    .communityClient(payload.chatId.communityId)
+                    .pinMessage(payload.chatId, payload.messageIndex)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1670,25 +1652,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "removeChannelMember":
                 agent
-                    .communityClient(payload.communityId)
-                    .removeMemberFromChannel(payload.channelId, payload.userId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "removeChannelReaction":
-                agent
-                    .communityClient(payload.communityId)
-                    .removeReaction(
-                        payload.channelId,
-                        payload.messageId,
-                        payload.reaction,
-                        payload.threadRootMessageIndex
-                    )
+                    .communityClient(payload.chatId.communityId)
+                    .removeMemberFromChannel(payload.chatId, payload.userId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1723,9 +1688,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "searchChannel":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.chatId.communityId)
                     .searchChannel(
-                        payload.channelId,
+                        payload.chatId,
                         payload.maxResults,
                         payload.users,
                         payload.searchTerm
@@ -1740,8 +1705,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "selectedChannelInitial":
                 agent
-                    .communityClient(payload.communityId)
-                    .selectedChannelInitial(payload.channelId)
+                    .communityClient(payload.chatId.communityId)
+                    .selectedChannelInitial(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1752,8 +1717,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "selectedChannelUpdates":
                 agent
-                    .communityClient(payload.communityId)
-                    .selectedChannelUpdates(payload.channelId, payload.updatesSince)
+                    .communityClient(payload.chatId.communityId)
+                    .selectedChannelUpdates(payload.chatId, payload.updatesSince)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1764,9 +1729,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "sendChannelMessage":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.chatId.communityId)
                     .sendMessage(
-                        payload.channelId,
+                        payload.chatId,
                         payload.senderName,
                         payload.mentioned,
                         payload.event,
@@ -1782,8 +1747,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "toggleMuteChannelNotifications":
                 agent
-                    .communityClient(payload.communityId)
-                    .toggleMuteChannelNotifications(payload.channelId, payload.mute)
+                    .communityClient(payload.chatId.communityId)
+                    .toggleMuteChannelNotifications(payload.chatId, payload.mute)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1818,9 +1783,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "undeleteChannelMessages":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.chatId.communityId)
                     .undeleteMessages(
-                        payload.channelId,
+                        payload.chatId,
                         payload.messageIds,
                         payload.threadRootMessageIndex
                     )
@@ -1834,9 +1799,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "updateChannel":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.chatId.communityId)
                     .updateChannel(
-                        payload.channelId,
+                        payload.chatId,
                         payload.name,
                         payload.description,
                         payload.rules,

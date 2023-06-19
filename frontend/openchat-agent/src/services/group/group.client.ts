@@ -54,7 +54,6 @@ import {
     sendMessageResponse,
     removeMemberResponse,
     updateGroupResponse,
-    addRemoveReactionResponse,
     deleteMessageResponse,
     undeleteMessageResponse,
     editMessageResponse,
@@ -97,7 +96,13 @@ import {
     setCachedGroupDetails,
 } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
-import { apiAccessGate, apiMessageContent, apiOptional, apiUser } from "../common/chatMappers";
+import {
+    addRemoveReactionResponse,
+    apiAccessGate,
+    apiMessageContent,
+    apiOptional,
+    apiUser,
+} from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { identity, mergeGroupChatDetails } from "../../utils/chat";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
