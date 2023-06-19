@@ -127,7 +127,7 @@ impl RuntimeState {
             gate: data.gate.value.clone(),
             channels,
             membership,
-            metrics: data.chat_metrics.clone(),
+            metrics: data.cached_chat_metrics.value.clone(),
         }
     }
 
@@ -187,7 +187,7 @@ struct Data {
     activity_notification_state: ActivityNotificationState,
     groups_being_imported: GroupsBeingImported,
     test_mode: bool,
-    chat_metrics: ChatMetrics,
+    cached_chat_metrics: Timestamped<ChatMetrics>,
 }
 
 impl Data {
@@ -246,7 +246,7 @@ impl Data {
             activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             groups_being_imported: GroupsBeingImported::default(),
             test_mode,
-            chat_metrics: ChatMetrics::default(),
+            cached_chat_metrics: Timestamped::default(),
         }
     }
 
@@ -261,14 +261,14 @@ impl Data {
             || self.is_invite_code_valid(invite_code)
     }
 
-    pub fn build_chat_metrics(&mut self) {
+    pub fn build_chat_metrics(&mut self, now: TimestampMillis) {
         let mut metrics = ChatMetricsInternal::default();
 
         for channel in self.channels.iter().filter(|c| c.chat.is_public) {
             metrics.merge(channel.chat.events.metrics());
         }
 
-        self.chat_metrics = metrics.hydrate();
+        self.cached_chat_metrics = Timestamped::new(metrics.hydrate(), now);
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {

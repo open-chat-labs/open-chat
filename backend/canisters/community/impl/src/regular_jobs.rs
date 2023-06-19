@@ -19,6 +19,6 @@ fn retry_deleting_files(_: &dyn Environment, _: &mut Data) {
     storage_bucket_client::retry_failed();
 }
 
-fn build_chat_metrics(_: &dyn Environment, data: &mut Data) {
-    data.build_chat_metrics();
+fn build_chat_metrics(env: &dyn Environment, data: &mut Data) {
+    data.build_chat_metrics(env.now());
 }
