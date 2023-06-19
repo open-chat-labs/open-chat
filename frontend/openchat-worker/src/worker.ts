@@ -324,25 +324,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
-            case "directChatEventsByEventIndex":
+            case "chatEventsByEventIndex":
                 agent
-                    .directChatEventsByEventIndex(
-                        payload.chatId,
-                        payload.eventIndexes,
-                        payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "groupChatEventsByEventIndex":
-                agent
-                    .groupChatEventsByEventIndex(
+                    .chatEventsByEventIndex(
                         payload.chatId,
                         payload.eventIndexes,
                         payload.threadRootMessageIndex,
@@ -648,9 +632,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
-            case "addDirectChatReaction":
+            case "addReaction":
                 agent
-                    .addDirectChatReaction(
+                    .addReaction(
                         payload.chatId,
                         payload.messageId,
                         payload.reaction,
@@ -665,42 +649,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
-            case "removeDirectChatReaction":
+            case "removeReaction":
                 agent
-                    .removeDirectChatReaction(
-                        payload.chatId,
-                        payload.messageId,
-                        payload.reaction,
-                        payload.threadRootMessageIndex
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "addGroupChatReaction":
-                agent
-                    .addGroupChatReaction(
-                        payload.chatId,
-                        payload.messageId,
-                        payload.reaction,
-                        payload.username,
-                        payload.threadRootMessageIndex
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "removeGroupChatReaction":
-                agent
-                    .removeGroupChatReaction(
+                    .removeReaction(
                         payload.chatId,
                         payload.messageId,
                         payload.reaction,
@@ -980,7 +931,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "searchDirectChat":
                 agent
-                    .searchDirectChat(payload.userId, payload.searchTerm, payload.maxResults)
+                    .searchDirectChat(payload.chatId, payload.searchTerm, payload.maxResults)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

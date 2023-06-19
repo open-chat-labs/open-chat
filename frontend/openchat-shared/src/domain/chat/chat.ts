@@ -807,6 +807,19 @@ export type DirectChatsInitial = {
 export type ChatIdentifier = ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier;
 export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
 
+export function chatIdentifiersEqual(a: ChatIdentifier, b: ChatIdentifier): boolean {
+    if (a.kind !== b.kind) {
+        return false;
+    }
+
+    switch (a.kind) {
+        case "channel":
+            return b.kind === "channel" && a.communityId === b.communityId && a.id === b.id;
+        default:
+            return a.id === b.id;
+    }
+}
+
 // export class ChatIdentifier {
 //     private constructor(
 //         public value: ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier
@@ -858,7 +871,7 @@ export type GroupChatIdentifier = {
 
 export type ChannelIdentifier = {
     kind: "channel";
-    communtityId: string;
+    communityId: string;
     id: string;
 };
 
@@ -1110,7 +1123,6 @@ export type MultiUserChat = GroupChatSummary | ChannelSummary;
 export type ChatType = ChatSummary["kind"];
 
 type ChatSummaryCommon = {
-    id: ChatIdentifier;
     latestEventIndex: number;
     latestMessage?: EventWrapper<Message>;
     metrics: Metrics;
@@ -1122,6 +1134,7 @@ export type ChannelSummary = DataContent &
     HasLevel &
     Permissioned<ChatPermissions> & {
         kind: "channel";
+        id: ChannelIdentifier;
         subtype: GroupSubtype;
         name: string;
         description: string;
@@ -1136,7 +1149,8 @@ export type ChannelSummary = DataContent &
 
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
-    them: string;
+    id: DirectChatIdentifier;
+    them: DirectChatIdentifier;
     readByThemUpTo: number | undefined;
     dateCreated: bigint;
     membership: ChatMembership; // this just makes our lives easier
@@ -1148,6 +1162,7 @@ export type GroupChatSummary = DataContent &
     HasLevel &
     Permissioned<ChatPermissions> & {
         kind: "group_chat";
+        id: GroupChatIdentifier;
         name: string;
         description: string;
         minVisibleEventIndex: number;

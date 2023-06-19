@@ -172,10 +172,8 @@ export type WorkerRequest =
     | ListNervousSystemFunctions
     | BlockUserFromGroup
     | UnblockUserFromGroup
-    | AddGroupChatReaction
-    | RemoveGroupChatReaction
-    | RemoveDirectChatReaction
-    | AddDirectChatReaction
+    | RemoveReaction
+    | AddReaction
     | DeleteMessage
     | UndeleteMessage
     | RegisterPollVote
@@ -200,8 +198,7 @@ export type WorkerRequest =
     | SearchUsers
     | CheckUsername
     | RehydrateMessage
-    | DirectChatEventsByEventIndex
-    | GroupChatEventsByEventIndex
+    | ChatEventsByEventIndex
     | DirectChatEventsWindow
     | GroupChatEventsWindow
     | LastOnline
@@ -320,27 +317,27 @@ type CreateChannel = {
 };
 
 type DisableInviteCode = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "disableInviteCode";
 };
 
 type EnableInviteCode = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "enableInviteCode";
 };
 
 type ResetInviteCode = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "resetInviteCode";
 };
 
 type GetInviteCode = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "getInviteCode";
 };
 
 type GroupMessagesByMessageIndex = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     messageIndexes: Set<number>;
     latestClientEventIndex: number | undefined;
     kind: "getGroupMessagesByMessageIndex";
@@ -390,14 +387,14 @@ type RefreshAccountBalance = {
 };
 
 type SearchDirectChat = {
-    userId: string;
+    chatId: DirectChatIdentifier;
     searchTerm: string;
     maxResults: number;
     kind: "searchDirectChat";
 };
 
 type SearchGroupChat = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     searchTerm: string;
     userIds: string[];
     maxResults: number;
@@ -410,7 +407,7 @@ type SetGroupInvite = {
 };
 
 type DismissRecommendations = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "dismissRecommendation";
 };
 
@@ -428,7 +425,7 @@ type SearchGroups = {
 };
 
 type GetGroupRules = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "getGroupRules";
 };
 
@@ -438,7 +435,7 @@ type GetRecommendedGroups = {
 };
 
 type RegisterProposalVote = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     messageIndex: number;
     adopt: boolean;
     kind: "registerProposalVote";
@@ -536,38 +533,21 @@ type UnblockUserFromGroup = {
     kind: "unblockUserFromGroupChat";
 };
 
-type AddGroupChatReaction = {
-    chatId: GroupChatIdentifier;
+type RemoveReaction = {
+    chatId: ChatIdentifier;
+    messageId: bigint;
+    reaction: string;
+    threadRootMessageIndex?: number;
+    kind: "removeReaction";
+};
+
+type AddReaction = {
+    chatId: ChatIdentifier;
     messageId: bigint;
     reaction: string;
     username: string;
     threadRootMessageIndex?: number;
-    kind: "addGroupChatReaction";
-};
-
-type RemoveGroupChatReaction = {
-    chatId: GroupChatIdentifier;
-    messageId: bigint;
-    reaction: string;
-    threadRootMessageIndex?: number;
-    kind: "removeGroupChatReaction";
-};
-
-type RemoveDirectChatReaction = {
-    chatId: DirectChatIdentifier;
-    messageId: bigint;
-    reaction: string;
-    threadRootMessageIndex?: number;
-    kind: "removeDirectChatReaction";
-};
-
-type AddDirectChatReaction = {
-    chatId: DirectChatIdentifier;
-    messageId: bigint;
-    reaction: string;
-    username: string;
-    threadRootMessageIndex?: number;
-    kind: "addDirectChatReaction";
+    kind: "addReaction";
 };
 
 type DeleteMessage = {
@@ -711,27 +691,19 @@ type DirectChatEventsWindow = {
 
 type GroupChatEventsWindow = {
     eventIndexRange: IndexRange;
-    chatId: GroupChatIdentifier;
+    chatId: ChatIdentifier;
     messageIndex: number;
     latestClientMainEventIndex: number | undefined;
     threadRootMessageIndex: number | undefined;
     kind: "groupChatEventsWindow";
 };
 
-type DirectChatEventsByEventIndex = {
-    chatId: DirectChatIdentifier;
+type ChatEventsByEventIndex = {
+    chatId: ChatIdentifier;
     eventIndexes: number[];
     threadRootMessageIndex: number | undefined;
     latestClientEventIndex: number | undefined;
-    kind: "directChatEventsByEventIndex";
-};
-
-type GroupChatEventsByEventIndex = {
-    chatId: GroupChatIdentifier;
-    eventIndexes: number[];
-    threadRootMessageIndex: number | undefined;
-    latestClientEventIndex: number | undefined;
-    kind: "groupChatEventsByEventIndex";
+    kind: "chatEventsByEventIndex";
 };
 
 export type RehydrateMessage = {
@@ -781,28 +753,28 @@ type MarkAsOnline = {
 };
 
 type FreezeGroup = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     reason: string | undefined;
     kind: "freezeGroup";
 };
 
 type UnfreezeGroup = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "unfreezeGroup";
 };
 
 type DeleteFrozenGroup = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "deleteFrozenGroup";
 };
 
 type AddHotGroupExclusion = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "addHotGroupExclusion";
 };
 
 type RemoveHotGroupExclusion = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "removeHotGroupExclusion";
 };
 
@@ -857,7 +829,7 @@ type GetUpdates = {
 };
 
 type GetDeletedGroupMessage = {
-    chatId: string;
+    chatId: GroupChatIdentifier;
     messageId: bigint;
     threadRootMessageIndex: number | undefined;
     kind: "getDeletedGroupMessage";
@@ -1052,7 +1024,7 @@ type DeleteFailedMessage = {
 };
 
 type ClaimPrize = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     messageId: bigint;
     kind: "claimPrize";
 };
@@ -1094,7 +1066,7 @@ type ReportMessage = {
 };
 
 type DeclineInvitation = {
-    chatId: ChatIdentifier;
+    chatId: GroupChatIdentifier;
     kind: "declineInvitation";
 };
 
@@ -1417,10 +1389,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? EventsResponse<DirectChatEvent>
     : T extends GroupChatEventsWindow
     ? EventsResponse<GroupChatEvent>
-    : T extends DirectChatEventsByEventIndex
-    ? EventsResponse<DirectChatEvent>
-    : T extends GroupChatEventsByEventIndex
-    ? EventsResponse<GroupChatEvent>
+    : T extends chatEventsByEventIndex
+    ? EventsResponse<ChatEvent>
     : T extends RehydrateMessage
     ? EventWrapper<Message>
     : T extends CheckUsername
@@ -1467,13 +1437,9 @@ export type WorkerResult<T> = T extends PinMessage
     ? DeleteMessageResponse
     : T extends UndeleteMessage
     ? UndeleteMessageResponse
-    : T extends AddDirectChatReaction
+    : T extends AddReaction
     ? AddRemoveReactionResponse
-    : T extends RemoveDirectChatReaction
-    ? AddRemoveReactionResponse
-    : T extends AddGroupChatReaction
-    ? AddRemoveReactionResponse
-    : T extends RemoveGroupChatReaction
+    : T extends RemoveReaction
     ? AddRemoveReactionResponse
     : T extends BlockUserFromGroup
     ? BlockUserResponse
