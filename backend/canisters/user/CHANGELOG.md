@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Fix pinned chat changes not coming through in `initial_state` and `updates` ([#3810](https://github.com/open-chat-labs/open-chat/pull/3810))
+- Fix pinned chat changes not coming through in `initial_state_2` and `updates_v2` ([#3810](https://github.com/open-chat-labs/open-chat/pull/3810))
 
 ## [[2.0.725](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.725-user)] - 2023-06-16
 
