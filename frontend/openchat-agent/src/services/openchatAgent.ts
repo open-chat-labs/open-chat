@@ -230,7 +230,7 @@ export class OpenChatAgent extends EventTarget {
         if (!this._groupClients[chatId]) {
             const inviteCode = this.getProvidedInviteCode(chatId);
             this._groupClients[chatId] = GroupClient.create(
-                chatId,
+                { kind: "group_chat", id: chatId },
                 this.identity,
                 this.config,
                 this.db,
@@ -882,7 +882,7 @@ export class OpenChatAgent extends EventTarget {
         searchTerm: string,
         maxResults = 10
     ): Promise<SearchDirectChatResponse> {
-        return this.userClient.searchDirectChat(chatId.id, searchTerm, maxResults);
+        return this.userClient.searchDirectChat(chatId, searchTerm, maxResults);
     }
 
     async getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
@@ -942,7 +942,7 @@ export class OpenChatAgent extends EventTarget {
                 : userResponse;
 
         const addedGroupChatIds = current.groupChats
-            .map((g) => g.id.id)
+            .map((g) => g.chatId.id)
             .concat(updates.groupChats.added.map((g) => g.chatId.id));
 
         const groupIndexResponse = await this._groupIndexClient.filterGroups(
@@ -961,8 +961,8 @@ export class OpenChatAgent extends EventTarget {
         );
 
         const updatedGroupPromises = current.groupChats
-            .filter((g) => groupsToCheckForUpdates.has(g.id.id))
-            .map((g) => this.getGroupClient(g.id.id).summaryUpdates(g.lastUpdated));
+            .filter((g) => groupsToCheckForUpdates.has(g.chatId.id))
+            .map((g) => this.getGroupClient(g.chatId.id).summaryUpdates(g.lastUpdated));
 
         const groupPromiseResults = await waitAll(addedGroupPromises);
 
@@ -991,7 +991,7 @@ export class OpenChatAgent extends EventTarget {
             .concat(
                 mergeGroupChatUpdates(current.groupChats, updates.groupChats.updated, groupUpdates)
             )
-            .filter((g) => !chatsRemoved.has(g.id.id));
+            .filter((g) => !chatsRemoved.has(g.chatId.id));
 
         const state = {
             latestUserCanisterUpdates: updates.timestamp,
@@ -1044,7 +1044,7 @@ export class OpenChatAgent extends EventTarget {
                 this.getGroupClient(g.chatId.id).summary()
             );
             const groupUpdatePromises = (userResponse.groupChats.cached?.summaries ?? []).map((g) =>
-                this.getGroupClient(g.id.id).summaryUpdates(g.lastUpdated)
+                this.getGroupClient(g.chatId.id).summaryUpdates(g.lastUpdated)
             );
 
             const groupPromiseResults = await waitAll(groupPromises);
@@ -1110,7 +1110,7 @@ export class OpenChatAgent extends EventTarget {
         const latestMessage =
             chat.latestMessage !== undefined
                 ? await this.rehydrateMessage(
-                      chat.id,
+                      chat.chatId,
                       chat.latestMessage,
                       undefined,
                       chat.latestEventIndex

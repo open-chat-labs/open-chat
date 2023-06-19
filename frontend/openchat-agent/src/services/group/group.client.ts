@@ -22,7 +22,7 @@ import type {
     PinMessageResponse,
     UnpinMessageResponse,
     RegisterPollVoteResponse,
-    GroupPermissions,
+    ChatPermissions,
     MakeGroupPrivateResponse,
     InviteCodeResponse,
     EnableInviteCodeResponse,
@@ -43,6 +43,7 @@ import type {
     DeclineInvitationResponse,
     EventsSuccessResult,
     ChatEvent,
+    GroupChatIdentifier,
 } from "openchat-shared";
 import { textToCode } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -112,16 +113,16 @@ export class GroupClient extends CandidService {
     constructor(
         identity: Identity,
         private config: AgentConfig,
-        private chatId: string,
+        private chatId: GroupChatIdentifier,
         private db: Database,
         private inviteCode: string | undefined
     ) {
         super(identity);
-        this.groupService = this.createServiceClient<GroupService>(idlFactory, chatId, config);
+        this.groupService = this.createServiceClient<GroupService>(idlFactory, chatId.id, config);
     }
 
     static create(
-        chatId: string,
+        chatId: GroupChatIdentifier,
         identity: Identity,
         config: AgentConfig,
         db: Database,
@@ -370,7 +371,7 @@ export class GroupClient extends CandidService {
 
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
         return DataClient.create(this.identity, this.config)
-            .uploadData(message.content, [this.chatId])
+            .uploadData(message.content, [this.chatId.id])
             .then((content) => {
                 return this.handleResponse(
                     this.groupService.edit_message_v2({
@@ -405,8 +406,8 @@ export class GroupClient extends CandidService {
 
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
-            ? dataClient.forwardData(event.event.content, [this.chatId])
-            : dataClient.uploadData(event.event.content, [this.chatId]);
+            ? dataClient.forwardData(event.event.content, [this.chatId.id])
+            : dataClient.uploadData(event.event.content, [this.chatId.id]);
 
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
@@ -450,7 +451,7 @@ export class GroupClient extends CandidService {
         name?: string,
         description?: string,
         rules?: AccessRules,
-        permissions?: Partial<GroupPermissions>,
+        permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
         gate?: AccessGate
@@ -569,7 +570,7 @@ export class GroupClient extends CandidService {
     }
 
     async getGroupDetails(latestEventIndex: number): Promise<GroupChatDetailsResponse> {
-        const fromCache = await getCachedGroupDetails(this.db, this.chatId);
+        const fromCache = await getCachedGroupDetails(this.db, this.chatId.id);
         if (fromCache !== undefined) {
             if (fromCache.latestEventIndex >= latestEventIndex) {
                 return fromCache;
@@ -580,7 +581,7 @@ export class GroupClient extends CandidService {
 
         const response = await this.getGroupDetailsFromBackend(latestEventIndex);
         if (response !== "caller_not_in_group") {
-            await setCachedGroupDetails(this.db, this.chatId, response);
+            await setCachedGroupDetails(this.db, this.chatId.id, response);
         }
         return response;
     }
@@ -597,7 +598,7 @@ export class GroupClient extends CandidService {
     async getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
         const response = await this.getGroupDetailsUpdatesFromBackend(previous);
         if (response.latestEventIndex > previous.latestEventIndex) {
-            await setCachedGroupDetails(this.db, this.chatId, response);
+            await setCachedGroupDetails(this.db, this.chatId.id, response);
         }
         return response;
     }

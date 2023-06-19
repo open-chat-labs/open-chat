@@ -117,6 +117,7 @@ import {
     DirectChatsUpdates,
     DirectChatIdentifier,
     nullMembership,
+    GroupChatIdentifier,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -161,7 +162,7 @@ export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
 
 export function searchDirectChatResponse(
     candid: ApiSearchDirectChatResponse,
-    chatId: string
+    chatId: DirectChatIdentifier
 ): SearchDirectChatResponse {
     if ("Success" in candid) {
         return {
@@ -185,7 +186,7 @@ export function searchDirectChatResponse(
     );
 }
 
-export function messageMatch(candid: ApiMessageMatch, chatId: string): MessageMatch {
+export function messageMatch(candid: ApiMessageMatch, chatId: ChatIdentifier): MessageMatch {
     const sender = candid.sender.toString();
     return {
         chatId,

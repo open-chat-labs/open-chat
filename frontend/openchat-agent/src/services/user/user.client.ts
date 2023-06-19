@@ -678,18 +678,18 @@ export class UserClient extends CandidService {
     }
 
     searchDirectChat(
-        userId: string,
+        chatId: DirectChatIdentifier,
         searchTerm: string,
         maxResults: number
     ): Promise<SearchDirectChatResponse> {
         const args = {
-            user_id: Principal.fromText(userId),
+            user_id: Principal.fromText(chatId.id),
             search_term: searchTerm,
             max_results: maxResults,
         };
         return this.handleQueryResponse(
             () => this.userService.search_messages(args),
-            (res) => searchDirectChatResponse(res, userId),
+            (res) => searchDirectChatResponse(res, chatId),
             args
         );
     }

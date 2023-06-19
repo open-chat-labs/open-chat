@@ -1,4 +1,4 @@
-import type { CallerNotInGroup, MessageContent } from "../chat/chat";
+import type { CallerNotInGroup, ChatIdentifier, MessageContent } from "../chat/chat";
 import type { DataContent } from "../data/data";
 
 export type GroupMatch = DataContent & {
@@ -20,7 +20,7 @@ export interface CommunityMatch {
 }
 
 export type MessageMatch = {
-    chatId: string;
+    chatId: ChatIdentifier;
     messageIndex: number;
     content: MessageContent;
     sender: string;

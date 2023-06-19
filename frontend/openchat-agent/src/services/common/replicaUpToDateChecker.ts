@@ -14,8 +14,8 @@ export async function ensureReplicaIsUpToDate(
     if (chats === undefined) return;
 
     const chat =
-        chats.directChats.find((c) => chatIdentifiersEqual(c.id, chatId)) ??
-        chats.groupChats.find((c) => chatIdentifiersEqual(c.id, chatId));
+        chats.directChats.find((c) => chatIdentifiersEqual(c.chatId, chatId)) ??
+        chats.groupChats.find((c) => chatIdentifiersEqual(c.chatId, chatId));
 
     const latestSavedEventIndex = chat?.latestEventIndex;
     if (latestSavedEventIndex === undefined) return;

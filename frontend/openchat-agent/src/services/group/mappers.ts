@@ -76,7 +76,7 @@ import {
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
     AccessRules,
-    GroupPermissions,
+    ChatPermissions,
     SearchGroupChatResponse,
     codeToText,
     UnsupportedValueError,
@@ -91,6 +91,8 @@ import {
     ClaimPrizeResponse,
     UpdatedEvent,
     DeclineInvitationResponse,
+    GroupChatIdentifier,
+    ChatIdentifier,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
@@ -117,7 +119,7 @@ export function apiRole(role: MemberRole): ApiRole | undefined {
             return { Admin: null };
         case "moderator":
             return { Moderator: null };
-        case "participant":
+        case "member":
             return { Participant: null };
         case "owner":
             return { Owner: null };
@@ -177,7 +179,7 @@ export function summaryResponse(
 
 function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanisterGroupChatSummary {
     return {
-        chatId: candid.chat_id.toString(),
+        chatId: { kind: "group_chat", id: candid.chat_id.toString() },
         lastUpdated: candid.last_updated,
         name: candid.name,
         description: candid.description,
@@ -228,7 +230,7 @@ function groupChatSummaryUpdates(
     candid: ApiGroupCanisterGroupChatSummaryUpdates
 ): GroupCanisterGroupChatSummaryUpdates {
     return {
-        chatId: candid.chat_id.toString(),
+        chatId: { kind: "group_chat", id: candid.chat_id.toString() },
         lastUpdated: candid.last_updated,
         name: optional(candid.name, identity),
         description: optional(candid.description, identity),
@@ -293,7 +295,7 @@ function groupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
 }
 
 export function apiOptionalGroupPermissions(
-    permissions: Partial<GroupPermissions>
+    permissions: Partial<ChatPermissions>
 ): OptionalGroupPermissions {
     return {
         block_users: apiOptional(apiPermissionRole, permissions.blockUsers),
@@ -818,7 +820,7 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
 export async function getMessagesByMessageIndexResponse(
     principal: Principal,
     candid: ApiMessagesByMessageIndexResponse,
-    chatId: string,
+    chatId: GroupChatIdentifier,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined
 ): Promise<EventsResponse<Message>> {
@@ -868,7 +870,7 @@ export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Mes
 export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse | ApiCommunityEventsResponse,
-    chatId: string,
+    chatId: GroupChatIdentifier,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined
 ): Promise<EventsResponse<GroupChatEvent>> {
@@ -921,7 +923,7 @@ export async function getEventsResponse(
 
 export function searchGroupChatResponse(
     candid: ApiSearchGroupChatResponse,
-    chatId: string
+    chatId: GroupChatIdentifier
 ): SearchGroupChatResponse {
     if ("Success" in candid) {
         return {
@@ -1014,7 +1016,7 @@ export function disableInviteCodeResponse(
     );
 }
 
-export function threadPreview(chatId: string, candid: ApiThreadPreview): ThreadPreview {
+export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview): ThreadPreview {
     return {
         chatId,
         latestReplies: candid.latest_replies
@@ -1035,7 +1037,7 @@ function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Message> {
 
 export function threadPreviewsResponse(
     candid: ApiThreadPreviewsResponse,
-    chatId: string,
+    chatId: ChatIdentifier,
     latestClientThreadUpdate: bigint | undefined
 ): ThreadPreviewsResponse {
     if ("Success" in candid) {
