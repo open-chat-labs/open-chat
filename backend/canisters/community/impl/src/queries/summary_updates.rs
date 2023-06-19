@@ -97,6 +97,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         channels_added,
         channels_updated,
         membership,
+        metrics: Some(state.data.aggregate_chat_metrics()),
     })
 }
 

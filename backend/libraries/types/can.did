@@ -349,6 +349,7 @@ type CommunityCanisterCommunitySummary =
         latest_event_index: EventIndex;
         channels: vec CommunityCanisterChannelSummary;
         membership: opt CommunityMembership;
+        metrics: ChatMetrics;
     };
 
 type CommunityMembership =
@@ -410,6 +411,7 @@ type CommunityCanisterCommunitySummaryUpdates =
         channels_added: vec CommunityCanisterChannelSummary;
         channels_updated: vec CommunityCanisterChannelSummaryUpdates;
         membership: opt CommunityMembershipUpdates;
+        metrics: opt ChatMetrics;
     };
 
 type CommunityMembershipUpdates = 

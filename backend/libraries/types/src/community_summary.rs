@@ -1,5 +1,5 @@
 use crate::{
-    AccessGate, ChannelId, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
+    AccessGate, ChannelId, ChatMetrics, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     CommunityPermissions, CommunityRole, EventIndex, FrozenGroupInfo, OptionUpdate, TimestampMillis,
 };
 use candid::CandidType;
@@ -21,6 +21,7 @@ pub struct CommunityCanisterCommunitySummary {
     pub latest_event_index: EventIndex,
     pub channels: Vec<CommunityCanisterChannelSummary>,
     pub membership: Option<CommunityMembership>,
+    pub metrics: ChatMetrics,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -46,6 +47,7 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub channels_added: Vec<CommunityCanisterChannelSummary>,
     pub channels_updated: Vec<CommunityCanisterChannelSummaryUpdates>,
     pub membership: Option<CommunityMembershipUpdates>,
+    pub metrics: Option<ChatMetrics>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
