@@ -9,6 +9,7 @@ export LEDGER_CANISTER_ICP=ryjl3-tyaaa-aaaaa-aaaba-cai
 export LEDGER_CANISTER_SNS1=zfcdd-tqaaa-aaaaq-aaaga-cai
 export LEDGER_CANISTER_BTC=mxzaz-hqaaa-aaaar-qaada-cai
 export LEDGER_CANISTER_CHAT=2ouva-viaaa-aaaaq-aaamq-cai
+export LEDGER_CANISTER_KINIC=73mez-iiaaa-aaaaq-aaasq-cai
 export BLOB_URL_PATTERN=https://{canisterId}.raw.icp0.io/{blobType}/
 
 npx rollup -c

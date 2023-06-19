@@ -142,6 +142,9 @@
             &.chat {
                 background-image: url("../assets/spinner.svg");
             }
+            &.kinic {
+                background-image: url("../assets/kinic_token.png");
+            }
         }
     }
 </style>
