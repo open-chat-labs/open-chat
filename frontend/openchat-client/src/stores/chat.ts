@@ -15,6 +15,8 @@ import {
     UpdatedEvent,
     ChatIdentifier,
     ChatMap,
+    DirectChatIdentifier,
+    nullMembership,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
@@ -492,22 +494,21 @@ export function clearSelectedChat(newSelectedChatId?: ChatIdentifier): void {
     });
 }
 
-export function createDirectChat(chatId: ChatIdentifier): void {
+export function createDirectChat(chatId: DirectChatIdentifier): void {
     uninitializedDirectChats.update((chatSummaries) => {
         const clone = chatSummaries.clone();
         clone.set(chatId, {
             kind: "direct_chat",
-            them: chatId.toString(),
-            id: chatId,
-            readByMeUpTo: undefined,
+            chatId: chatId,
+            them: chatId,
             readByThemUpTo: undefined,
             latestMessage: undefined,
             latestEventIndex: 0,
             dateCreated: BigInt(Date.now()),
-            notificationsMuted: false,
             metrics: emptyChatMetrics(),
-            myMetrics: emptyChatMetrics(),
-            archived: false,
+            membership: {
+                ...nullMembership,
+            },
         });
         return clone as ChatMap<DirectChatSummary>;
     });

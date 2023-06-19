@@ -1,5 +1,11 @@
 import { derived, writable } from "svelte/store";
-import type { ChatType } from "openchat-client";
+import type {
+    ChannelIdentifier,
+    ChatIdentifier,
+    ChatType,
+    DirectChatIdentifier,
+    GroupChatIdentifier,
+} from "openchat-client";
 
 export const notFound = writable(false);
 
@@ -91,8 +97,11 @@ export function selectedChannelRoute(ctx: PageJS.Context): RouteParams {
     const $qs = qs(ctx);
     return {
         kind: "selected_channel_route",
-        communityId: ctx.params["communityId"],
-        channelId: ctx.params["channelId"],
+        chatId: {
+            kind: "channel",
+            communityId: ctx.params["communityId"],
+            id: ctx.params["channelId"],
+        },
         messageIndex: ctx.params["messageIndex"] ? Number(ctx.params["messageIndex"]) : undefined,
         threadMessageIndex: ctx.params["threadMessageIndex"]
             ? Number(ctx.params["threadMessageIndex"])
@@ -116,7 +125,7 @@ export function favouritesRoute(ctx: PageJS.Context): RouteParams {
 
 export function chatSelectedRoute(
     ctx: PageJS.Context,
-    chatType: ChatType | "unknown" = "unknown"
+    chatType: "direct_chat" | "group_chat"
 ): RouteParams {
     const $qs = qs(ctx);
 
@@ -130,8 +139,7 @@ export function chatSelectedRoute(
 
     return {
         kind: "global_chat_selected_route",
-        chatId,
-        chatType,
+        chatId: { kind: chatType, id: chatId },
         messageIndex: ctx.params["messageIndex"] ? Number(ctx.params["messageIndex"]) : undefined,
         threadMessageIndex: ctx.params["threadMessageIndex"]
             ? Number(ctx.params["threadMessageIndex"])
@@ -188,16 +196,16 @@ export type HomeRoute = {
 
 export type GlobalChatSelectedRoute = {
     kind: "global_chat_selected_route";
-    chatType: ChatType | "unknown";
-    chatId: string;
+    chatId: GroupChatIdentifier | DirectChatIdentifier;
     messageIndex?: number;
     threadMessageIndex?: number;
     open: boolean;
 };
 
+// TODO - what is the route for a selected favourite channel? It needs to contain the communityId
 export type FavouritesRoute = {
     kind: "favourites_route";
-    chatId?: string;
+    chatId?: ChatIdentifier;
     messageIndex?: number;
     threadMessageIndex?: number;
     open: boolean;
@@ -208,10 +216,20 @@ export type SelectedCommunityRoute = {
     communityId: string;
 };
 
+export function routeForChatIdentifier(chatId: ChatIdentifier): string {
+    switch (chatId.kind) {
+        case "direct_chat":
+            return `/user/${chatId.id}`;
+        case "group_chat":
+            return `/group/${chatId.id}`;
+        case "channel":
+            return `/community/${chatId.communityId}/channel/${chatId.id}`;
+    }
+}
+
 export type SelectedChannelRoute = {
     kind: "selected_channel_route";
-    communityId: string;
-    channelId: string;
+    chatId: ChannelIdentifier;
     messageIndex?: number;
     threadMessageIndex?: number;
     open: boolean;

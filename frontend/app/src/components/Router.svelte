@@ -134,13 +134,6 @@
             () => (route = Home)
         );
         page(
-            "/:chatId?/:messageIndex?/:threadMessageIndex?",
-            redirectHashRoutes,
-            parsePathParams(chatSelectedRoute),
-            track,
-            () => (route = Home)
-        );
-        page(
             "*",
             parsePathParams(() => ({ kind: "not_found_route" })),
             () => {

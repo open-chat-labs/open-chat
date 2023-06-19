@@ -1297,14 +1297,15 @@ export type CandidateMember = {
     user: UserSummary;
 };
 
-export type CandidateGroupChat = HasIdentity &
-    AccessControlled &
+export type CandidateGroupChat = AccessControlled &
     HasLevel &
     Permissioned<ChatPermissions> & {
+        chatId: GroupChatIdentifier;
         name: string;
         description: string;
         rules: AccessRules;
         members: CandidateMember[];
+        myRole: MemberRole;
         avatar?: DataContent;
     };
 

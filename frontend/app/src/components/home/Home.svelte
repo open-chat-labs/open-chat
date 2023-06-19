@@ -30,13 +30,17 @@
         Community,
         Level,
         GroupSearchResponse,
+        ChatIdentifier,
+        DirectChatIdentifier,
+        GroupChatIdentifier,
+        chatIdentifiersEqual,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import page from "page";
-    import { chatTypeToPath, pathParams } from "../../routes";
+    import { chatTypeToPath, pathParams, routeForChatIdentifier } from "../../routes";
     import type { RouteParams } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import {
@@ -88,13 +92,13 @@
 
     type ConfirmLeaveEvent = {
         kind: "leave";
-        chatId: string;
+        chatId: GroupChatIdentifier;
         chatType: ChatType;
     };
 
     type ConfirmDeleteEvent = {
         kind: "delete";
-        chatId: string;
+        chatId: GroupChatIdentifier;
         chatType: ChatType;
         doubleCheck: { challenge: string; response: string };
     };
@@ -179,7 +183,7 @@
                 ) {
                     return client.isMessageRead(
                         notification.kind === "direct_notification"
-                            ? notification.sender
+                            ? { kind: "direct_chat", id: notification.sender }
                             : notification.chatId,
                         notification.message.event.messageIndex,
                         notification.message.event.messageId
@@ -194,21 +198,21 @@
     }
 
     async function newChatSelected(
-        chatId: string,
-        chatType: ChatType | "unknown",
+        chatId: ChatIdentifier,
         messageIndex?: number,
         threadMessageIndex?: number
     ): Promise<void> {
-        let chat = $chatSummariesStore[chatId];
+        let chat = $chatSummariesStore.get(chatId);
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
-            const isGroup = chatType === "group_chat" || !(await createDirectChat(chatId));
-            if (isGroup) {
+            if (chatId.kind === "direct_chat") {
+                await createDirectChat(chatId);
+            } else if (chatId.kind === "group_chat") {
                 const code = $querystring.get("code");
                 if (code) {
                     client.groupInvite = {
-                        chatId,
+                        chatId: chatId.id,
                         code,
                     };
                 }
@@ -217,20 +221,21 @@
                     return;
                 }
             }
-
-            chat = $chatSummariesStore[chatId];
+            chat = $chatSummariesStore.get(chatId);
         }
 
-        // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
-        if (chat.archived) {
-            unarchiveChat(chat.chatId);
-        }
+        if (chat !== undefined) {
+            // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
+            if (chat?.membership.archived) {
+                unarchiveChat(chat.chatId);
+            }
 
-        // if it's a known chat let's select it
-        closeNotificationsForChat(chat.chatId);
-        $eventListScrollTop = undefined;
-        client.setSelectedChat(chat.chatId, messageIndex, threadMessageIndex);
-        resetRightPanel();
+            // if it's a known chat let's select it
+            closeNotificationsForChat(chat.chatId);
+            $eventListScrollTop = undefined;
+            client.setSelectedChat(chat.chatId, messageIndex, threadMessageIndex);
+            resetRightPanel();
+        }
     }
 
     // the currentChatMessages component may not exist straight away
@@ -257,10 +262,9 @@
                 closeThread();
 
                 // if the chat in the url is different from the chat we already have selected
-                if (pathParams.chatId !== $selectedChatId?.toString()) {
+                if (pathParams.chatId !== $selectedChatId) {
                     newChatSelected(
                         pathParams.chatId,
-                        pathParams.chatType,
                         pathParams.messageIndex,
                         pathParams.threadMessageIndex
                     );
@@ -418,7 +422,7 @@
         });
     }
 
-    function pinChat(ev: CustomEvent<string>) {
+    function pinChat(ev: CustomEvent<ChatIdentifier>) {
         client.pinChat(ev.detail).then((resp) => {
             if (resp.kind === "limit_exceeded") {
                 toastStore.showSuccessToast("pinChat.limitExceeded", {
@@ -430,7 +434,7 @@
         });
     }
 
-    function unpinChat(ev: CustomEvent<string>) {
+    function unpinChat(ev: CustomEvent<ChatIdentifier>) {
         client.unpinChat(ev.detail).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("pinChat.unpinFailed");
@@ -438,7 +442,7 @@
         });
     }
 
-    function onArchiveChat(ev: CustomEvent<string>) {
+    function onArchiveChat(ev: CustomEvent<ChatIdentifier>) {
         client.archiveChat(ev.detail).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("archiveChatFailed");
@@ -449,11 +453,11 @@
         }
     }
 
-    function onUnarchiveChat(ev: CustomEvent<string>) {
+    function onUnarchiveChat(ev: CustomEvent<ChatIdentifier>) {
         unarchiveChat(ev.detail);
     }
 
-    function unarchiveChat(chatId: string) {
+    function unarchiveChat(chatId: ChatIdentifier) {
         client.unarchiveChat(chatId).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("unarchiveChatFailed");
@@ -514,19 +518,19 @@
         }
     }
 
-    function deleteGroup(chatId: string, chatType: ChatType): Promise<void> {
+    function deleteGroup(chatId: GroupChatIdentifier, chatType: ChatType): Promise<void> {
         page("/");
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
                 toastStore.showSuccessToast("deleteGroupSuccess");
             } else {
                 toastStore.showFailureToast("deleteGroupFailure");
-                page(`/${chatTypeToPath(chatType)}/${chatId}`);
+                page(routeForChatIdentifier(chatId));
             }
         });
     }
 
-    function leaveGroup(chatId: string, chatType: ChatType): Promise<void> {
+    function leaveGroup(chatId: GroupChatIdentifier, chatType: ChatType): Promise<void> {
         page("/");
 
         client.leaveGroup(chatId).then((resp) => {
@@ -536,26 +540,26 @@
                 } else {
                     toastStore.showFailureToast("failedToLeaveGroup");
                 }
-                page(`/${chatTypeToPath(chatType)}/${chatId}`);
+                page(routeForChatIdentifier(chatId));
             }
         });
 
         return Promise.resolve();
     }
 
-    function deleteDirectChat(ev: CustomEvent<string>) {
+    function deleteDirectChat(ev: CustomEvent<DirectChatIdentifier>) {
         if ($pathParams.kind === "global_chat_selected_route" && ev.detail === $pathParams.chatId) {
             page("/");
         }
         tick().then(() => client.removeChat(ev.detail));
     }
 
-    function chatWith(ev: CustomEvent<string>) {
+    function chatWith(ev: CustomEvent<DirectChatIdentifier>) {
         const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === ev.detail;
         });
         if (chat) {
-            page(`/user/${chat.chatId}`);
+            page(routeForChatIdentifier(ev.detail));
         } else {
             createDirectChat(ev.detail);
         }
@@ -565,7 +569,7 @@
         if (ev.detail.chatId === $selectedChatId) {
             currentChatMessages?.externalGoToMessage(ev.detail.messageIndex);
         } else {
-            page(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
+            page(`${routeForChatIdentifier(ev.detail.chatId)}/${ev.detail.messageIndex}`);
         }
     }
 
@@ -582,18 +586,22 @@
     }
 
     function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
+        if (ev.detail.sender === undefined) return;
+
         const chat = $chatSummariesListStore.find((c) => {
-            return c.kind === "direct_chat" && c.them === ev.detail.sender?.userId;
+            return (
+                c.kind === "direct_chat" &&
+                chatIdentifiersEqual(c.them, { kind: "direct_chat", id: ev.detail.sender!.userId })
+            );
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const chatId = chat?.chatId ?? ev.detail.sender!.userId;
+        const chatId = chat?.chatId ?? { kind: "direct_chat", id: ev.detail.sender.userId };
         currentChatDraftMessage.setTextContent(chatId, "");
         currentChatDraftMessage.setReplyingTo(chatId, ev.detail);
         if (chat) {
-            page(`/${chat.chatId}`);
+            page(routeForChatIdentifier(chatId));
         } else {
-            createDirectChat(chatId);
+            createDirectChat(chatId as DirectChatIdentifier);
         }
     }
 
@@ -716,7 +724,7 @@
                     joining = undefined;
                 } else if (select) {
                     joining = undefined;
-                    page(`/${group.chatId}`);
+                    page(routeForChatIdentifier(group.chatId));
                 } else {
                     joining = undefined;
                 }
@@ -739,7 +747,7 @@
         showUpgrade = true;
     }
 
-    function onSelectChat(ev: CustomEvent<string>) {
+    function onSelectChat(ev: CustomEvent<ChatIdentifier>) {
         closeModal();
         if (messageToForward !== undefined) {
             forwardToChat(ev.detail);
@@ -754,13 +762,13 @@
         messageToForward = undefined;
     }
 
-    function forwardToChat(chatId: string) {
-        page(`/${chatId}`);
+    function forwardToChat(chatId: ChatIdentifier) {
+        page(routeForChatIdentifier(chatId));
         messageToForwardStore.set(messageToForward);
     }
 
-    function shareWithChat(chatId: string) {
-        page(`/${chatId}`);
+    function shareWithChat(chatId: ChatIdentifier) {
+        page(routeForChatIdentifier(chatId));
 
         const shareText = share.text ?? "";
         const shareTitle = share.title ?? "";
@@ -779,7 +787,7 @@
     }
 
     function groupCreated(
-        ev: CustomEvent<{ chatId: string; isPublic: boolean; rules: AccessRules }>
+        ev: CustomEvent<{ chatId: GroupChatIdentifier; isPublic: boolean; rules: AccessRules }>
     ) {
         const { chatId, isPublic, rules } = ev.detail;
         chatStateStore.setProp(chatId, "rules", rules);
@@ -811,7 +819,7 @@
     function newGroup(level: Level = "group") {
         modal = ModalType.NewGroup;
         candidateGroup = {
-            id: "",
+            chatId: { kind: "group_chat", id: "" },
             name: "",
             description: "",
             historyVisible: true,
@@ -819,18 +827,18 @@
             frozen: false,
             members: [],
             permissions: {
-                changePermissions: "admins",
-                changeRoles: "admins",
-                removeMembers: "moderators",
-                blockUsers: "moderators",
-                deleteMessages: "moderators",
-                updateGroup: "admins",
-                pinMessages: "admins",
-                inviteUsers: "admins",
-                createPolls: "members",
-                sendMessages: "members",
-                reactToMessages: "members",
-                replyInThread: "members",
+                changePermissions: "admin",
+                changeRoles: "admin",
+                removeMembers: "moderator",
+                blockUsers: "moderator",
+                deleteMessages: "moderator",
+                updateGroup: "admin",
+                pinMessages: "admin",
+                inviteUsers: "admin",
+                createPolls: "member",
+                sendMessages: "member",
+                reactToMessages: "member",
+                replyInThread: "member",
             },
             rules: defaultAccessRules,
             gate: { kind: "no_gate" },
@@ -845,7 +853,7 @@
         modal = ModalType.NewGroup;
         const { chat, rules } = ev.detail;
         candidateGroup = {
-            id: chat.chatId,
+            chatId: chat.chatId,
             name: chat.name,
             description: chat.description,
             historyVisible: chat.historyVisible,
@@ -853,7 +861,7 @@
             frozen: chat.frozen,
             members: [],
             permissions: { ...chat.permissions },
-            myRole: chat.myRole,
+            myRole: chat.membership.role,
             rules: rules !== undefined ? { ...rules } : defaultAccessRules,
             avatar: {
                 blobUrl: chat.blobUrl,
@@ -866,12 +874,16 @@
 
     function filterChatSelection(
         chats: ChatSummary[],
-        selectedChatId: string | undefined
+        selectedChatId: ChatIdentifier | undefined
     ): ChatSummary[] {
-        return chats.filter((c) => selectedChatId !== c.chatId && client.canSendMessages(c.chatId));
+        if (selectedChatId === undefined) return chats;
+        return chats.filter(
+            (c) =>
+                !chatIdentifiersEqual(selectedChatId, c.chatId) && client.canSendMessages(c.chatId)
+        );
     }
 
-    function toggleMuteNotifications(ev: CustomEvent<{ chatId: string; mute: boolean }>) {
+    function toggleMuteNotifications(ev: CustomEvent<{ chatId: ChatIdentifier; mute: boolean }>) {
         const op = ev.detail.mute ? "muted" : "unmuted";
         client.toggleMuteNotifications(ev.detail.chatId, ev.detail.mute).then((success) => {
             if (!success) {
@@ -887,12 +899,12 @@
         // return () => (window.location.href = route);
     }
 
-    async function createDirectChat(chatId: string): Promise<boolean> {
+    async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
         if (!(await client.createDirectChat(chatId))) {
             return false;
         }
 
-        page(`/user/${chatId}`);
+        page(routeForChatIdentifier(chatId));
         return true;
     }
 
