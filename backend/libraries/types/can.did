@@ -1049,6 +1049,7 @@ type Cryptocurrency =
         SNS1;
         CKBTC;
         CHAT;
+        KINIC;
     };
 
 type CryptoTransaction =
