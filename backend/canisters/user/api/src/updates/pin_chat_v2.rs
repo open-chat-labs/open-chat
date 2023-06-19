@@ -1,13 +1,14 @@
+use crate::ChatInList;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub banner_id: Option<u128>,
+    pub chat: ChatInList,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    CommunityNotFound,
+    ChatNotFound,
 }

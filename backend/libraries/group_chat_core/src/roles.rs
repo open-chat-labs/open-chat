@@ -3,14 +3,14 @@ use types::{GroupPermissionRole, GroupPermissions, GroupRole};
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum GroupRoleInternal {
-    #[serde(rename = "o", alias = "Owner")]
+    #[serde(rename = "o")]
     Owner,
-    #[serde(rename = "a", alias = "Admin")]
+    #[serde(rename = "a")]
     Admin,
-    #[serde(rename = "mo", alias = "Moderator")]
+    #[serde(rename = "mo")]
     Moderator,
     #[default]
-    #[serde(rename = "m", alias = "Participant")]
+    #[serde(rename = "m")]
     Member,
 }
 

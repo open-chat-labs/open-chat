@@ -543,6 +543,36 @@ type UnpinChatResponse =
         Success;
     };
 
+type PinChatV2Request =
+    record {
+        chat: ChatInList;
+    };
+
+type PinChatV2Response =
+    variant {
+        Success;
+        ChatNotFound;
+    };
+
+type UnpinChatV2Request =
+    record {
+        chat: ChatInList;
+    };
+
+type UnpinChatV2Response =
+    variant {
+        Success;
+        ChatNotFound;
+    };
+
+type ChatInList =
+    variant {
+        Direct: ChatId;
+        Group: ChatId;
+        Favourite: Chat;
+        Community: record { CommunityId; ChannelId; };
+    };
+
 type ArchiveChatArgs =
     record {
         chat_id: ChatId;
@@ -983,6 +1013,8 @@ service: {
     withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
     pin_chat: (PinChatRequest) -> (PinChatResponse);
     unpin_chat: (UnpinChatRequest) -> (UnpinChatResponse);
+    pin_chat_v2: (PinChatV2Request) -> (PinChatV2Response);
+    unpin_chat_v2: (UnpinChatV2Request) -> (UnpinChatV2Response);
     archive_chat: (ArchiveChatArgs) -> (ArchiveChatResponse);
     unarchive_chat: (UnArchiveChatArgs) -> (UnArchiveChatResponse);
     add_remove_favourite_chats: (AddRemoveFavouriteChatsArgs) -> (AddRemoveFavouriteChatsResponse);

@@ -1,6 +1,6 @@
 use crate::{
     AccessGate, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions, GroupRole, Message,
-    MessageId, MessageIndex, Milliseconds, TimestampMillis, UserId,
+    MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -26,21 +26,11 @@ pub enum ChatEvent {
     RoleChanged(RoleChanged),
     UsersBlocked(UsersBlocked),
     UsersUnblocked(UsersUnblocked),
-    MessageEdited(UpdatedMessage),
-    MessageDeleted(UpdatedMessage),
-    MessageUndeleted(UpdatedMessage),
-    MessageReactionAdded(UpdatedMessage),
-    MessageReactionRemoved(UpdatedMessage),
     MessagePinned(MessagePinned),
     MessageUnpinned(MessageUnpinned),
-    PollVoteRegistered(UpdatedMessage),
-    PollVoteDeleted(UpdatedMessage),
-    PollEnded(PollEnded),
     PermissionsChanged(PermissionsChanged),
     GroupVisibilityChanged(GroupVisibilityChanged),
     GroupInviteCodeChanged(GroupInviteCodeChanged),
-    ThreadUpdated(ThreadUpdated),
-    ProposalsUpdated(ProposalsUpdated),
     ChatFrozen(GroupFrozen),
     ChatUnfrozen(GroupUnfrozen),
     EventsTimeToLiveUpdated(EventsTimeToLiveUpdated),
@@ -191,26 +181,6 @@ pub struct MessageUnpinned {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct UpdatedMessage {
-    pub updated_by: UserId,
-    pub event_index: EventIndex,
-    pub message_id: MessageId,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct PollVoteRegistered {
-    pub user_id: UserId,
-    pub message_id: MessageId,
-    pub existing_vote_removed: bool, // TODO do we need this?
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct PollEnded {
-    pub event_index: EventIndex,
-    pub message_index: MessageIndex,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PermissionsChanged {
     pub old_permissions: GroupPermissions,
     pub new_permissions: GroupPermissions,
@@ -241,24 +211,6 @@ pub enum GroupInviteCodeChange {
     Enabled,
     Disabled,
     Reset,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ThreadUpdated {
-    pub message_index: MessageIndex,
-    pub event_index: EventIndex,
-    pub latest_thread_message_index_if_updated: Option<MessageIndex>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ProposalsUpdated {
-    pub proposals: Vec<ProposalUpdated>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ProposalUpdated {
-    pub event_index: EventIndex,
-    pub message_index: MessageIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

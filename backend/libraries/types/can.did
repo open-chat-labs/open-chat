@@ -81,6 +81,7 @@ type ChatMetrics =
         file_messages: nat64;
         polls: nat64;
         poll_votes: nat64;
+        cycles_messages: nat64;
         icp_messages: nat64;
         sns1_messages: nat64;
         ckbtc_messages: nat64;
@@ -211,23 +212,13 @@ type ChatEvent =
         ParticipantDismissedAsSuperAdmin: ParticipantDismissedAsSuperAdmin;
         ParticipantRelinquishesSuperAdmin: ParticipantRelinquishesSuperAdmin;
         RoleChanged: RoleChanged;
-        MessageEdited: UpdatedMessage;
-        MessageDeleted: UpdatedMessage;
-        MessageUndeleted: UpdatedMessage;
-        MessageReactionAdded: UpdatedMessage;
-        MessageReactionRemoved: UpdatedMessage;
         UsersBlocked: UsersBlocked;
         UsersUnblocked: UsersUnblocked;
         MessagePinned: MessagePinned;
         MessageUnpinned: MessageUnpinned;
-        PollVoteRegistered: UpdatedMessage;
-        PollVoteDeleted: UpdatedMessage;
-        PollEnded: PollEnded;
         PermissionsChanged: PermissionsChanged;
         GroupVisibilityChanged: GroupVisibilityChanged;
         GroupInviteCodeChanged: GroupInviteCodeChanged;
-        ThreadUpdated: ThreadUpdated;
-        ProposalsUpdated: ProposalsUpdated;
         GroupRulesChanged: GroupRulesChanged;
         ChatFrozen: ChatFrozen;
         ChatUnfrozen: ChatUnfrozen;
@@ -743,13 +734,6 @@ type MessageContent =
         ReportedMessage: ReportedMessage;
     };
 
-type UpdatedMessage =
-    record {
-        updated_by: UserId;
-        event_index: EventIndex;
-        message_id: MessageId;
-    };
-
 type MessageMatch =
     record {
         message_index: MessageIndex;
@@ -864,12 +848,6 @@ type PollContent =
         config: PollConfig;
         votes: PollVotes;
         ended: bool;
-    };
-
-type PollEnded =
-    record {
-        event_index: EventIndex;
-        message_index: MessageIndex;
     };
 
 type PollVotes =
@@ -1298,13 +1276,6 @@ type ThreadSummary =
         latest_event_timestamp: TimestampMillis;
     };
 
-type ThreadUpdated =
-    record {
-        event_index: EventIndex;
-        message_index: MessageIndex;
-        latest_thread_message_index_if_updated: opt MessageIndex;
-    };
-
 type ThreadSyncDetails =
     record {
         root_message_index: MessageIndex;
@@ -1320,17 +1291,6 @@ type GroupCanisterThreadDetails =
         latest_event: EventIndex;
         latest_message: MessageIndex;
         last_updated: TimestampMillis;
-    };
-
-type ProposalsUpdated =
-    record {
-        proposals: vec ProposalUpdated;
-    };
-
-type ProposalUpdated =
-    record {
-        event_index: EventIndex;
-        message_index: MessageIndex;
     };
 
 type AccessRules =

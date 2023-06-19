@@ -53,7 +53,7 @@ As early adopters we were fortunate to be given a dedicated subnet which was whi
 
 ### Verifiable source code {#2-2}
 
-The OpenChat source code is available on [github](https://github.com/open-ic/open-chat) under the [GNU Affero General Public License](https://en.wikipedia.org/wiki/GNU_Affero_General_Public_License) which is approved by the Open Source Initiative as an "open source license". Essentially this license allows the source code to be copied and modified but only if the modified code is also available under the same license.
+The OpenChat source code is available on [github](https://github.com/open-chat-labs/open-chat) under the [GNU Affero General Public License](https://en.wikipedia.org/wiki/GNU_Affero_General_Public_License) which is approved by the Open Source Initiative as an "open source license". Essentially this license allows the source code to be copied and modified but only if the modified code is also available under the same license.
 
 All of our canisters use the Rust language and CDK. The source code is built into the WASMs used by each type of OpenChat canister in a repeatable way using docker. Anyone who pulls the OpenChat source code and uses the docker build will produce identical WASM files.
 
@@ -266,7 +266,7 @@ The _search_ endpoint on the _group index_ takes a _search term_ and _maximum re
 
 ### OpenStorage canisters {#2-9}
 
-[OpenStorage](https://github.com/open-ic/open-storage) is a scalable file storage system built by the OpenChat team which is available to be used by other projects. It consists of an _index_ canister and dynamically created _bucket_ canisters which hold the file data. Once a bucket is full it becomes read-only and a new bucket is created. OpenStorage implements [_content addressing_](https://en.wikipedia.org/wiki/Content-addressable_storage) so that for duplicate files the data is only stored once. This makes the _forwarding_ of _file_ messages on OpenChat cheap and quick. _Files_ in OpenStorage are _owned_ by users, in the case of OpenChat the sender of a file message is the file owner. Internally a file holds a reference to the underlying _blob_. It uses reference counting so that if all the files for a given blob are deleted then the blob is deleted.
+[OpenStorage](https://github.com/open-chat-labs/open-storage) is a scalable file storage system built by the OpenChat team which is available to be used by other projects. It consists of an _index_ canister and dynamically created _bucket_ canisters which hold the file data. Once a bucket is full it becomes read-only and a new bucket is created. OpenStorage implements [_content addressing_](https://en.wikipedia.org/wiki/Content-addressable_storage) so that for duplicate files the data is only stored once. This makes the _forwarding_ of _file_ messages on OpenChat cheap and quick. _Files_ in OpenStorage are _owned_ by users, in the case of OpenChat the sender of a file message is the file owner. Internally a file holds a reference to the underlying _blob_. It uses reference counting so that if all the files for a given blob are deleted then the blob is deleted.
 
 Each user is given a byte allowance which they can’t exceed. The first file reference a user has to a blob comes out of the user’s allowance but any further file references the user has to the same blob do not. This allows a user to upload or forward the same file multiple times without additional cost.
 

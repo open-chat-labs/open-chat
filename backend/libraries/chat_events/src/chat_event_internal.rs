@@ -19,63 +19,63 @@ use types::{
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ChatEventInternal {
-    #[serde(rename = "m", alias = "Message")]
+    #[serde(rename = "m")]
     Message(Box<MessageInternal>),
-    #[serde(rename = "dcc", alias = "DirectChatCreated")]
+    #[serde(rename = "dcc")]
     DirectChatCreated(DirectChatCreated),
-    #[serde(rename = "gcc", alias = "GroupChatCreated")]
+    #[serde(rename = "gcc")]
     GroupChatCreated(Box<GroupCreated>),
-    #[serde(rename = "nc", alias = "GroupNameChanged")]
+    #[serde(rename = "nc")]
     GroupNameChanged(Box<GroupNameChanged>),
-    #[serde(rename = "dc", alias = "GroupDescriptionChanged")]
+    #[serde(rename = "dc")]
     GroupDescriptionChanged(Box<GroupDescriptionChanged>),
-    #[serde(rename = "grc", alias = "GroupRulesChanged")]
+    #[serde(rename = "grc")]
     GroupRulesChanged(Box<GroupRulesChanged>),
-    #[serde(rename = "ac", alias = "AvatarChanged")]
+    #[serde(rename = "ac")]
     AvatarChanged(Box<AvatarChanged>),
-    #[serde(rename = "ot", alias = "OwnershipTransferred")]
+    #[serde(rename = "ot")]
     OwnershipTransferred(Box<OwnershipTransferred>),
-    #[serde(rename = "ma", alias = "ParticipantsAdded")]
+    #[serde(rename = "ma")]
     ParticipantsAdded(Box<MembersAdded>),
-    #[serde(rename = "mr", alias = "ParticipantsRemoved")]
+    #[serde(rename = "mr")]
     ParticipantsRemoved(Box<MembersRemoved>),
-    #[serde(rename = "mj", alias = "ParticipantJoined")]
+    #[serde(rename = "mj")]
     ParticipantJoined(Box<MemberJoined>),
-    #[serde(rename = "ml", alias = "ParticipantLeft")]
+    #[serde(rename = "ml")]
     ParticipantLeft(Box<MemberLeft>),
-    #[serde(rename = "asa", alias = "ParticipantAssumesSuperAdmin")]
+    #[serde(rename = "asa")]
     ParticipantAssumesSuperAdmin(Box<ParticipantAssumesSuperAdmin>),
-    #[serde(rename = "dsa", alias = "ParticipantDismissedAsSuperAdmin")]
+    #[serde(rename = "dsa")]
     ParticipantDismissedAsSuperAdmin(Box<ParticipantDismissedAsSuperAdmin>),
-    #[serde(rename = "rsa", alias = "ParticipantRelinquishesSuperAdmin")]
+    #[serde(rename = "rsa")]
     ParticipantRelinquishesSuperAdmin(Box<ParticipantRelinquishesSuperAdmin>),
-    #[serde(rename = "rc", alias = "RoleChanged")]
+    #[serde(rename = "rc")]
     RoleChanged(Box<RoleChanged>),
-    #[serde(rename = "ub", alias = "UsersBlocked")]
+    #[serde(rename = "ub")]
     UsersBlocked(Box<UsersBlocked>),
-    #[serde(rename = "uub", alias = "UsersUnblocked")]
+    #[serde(rename = "uub")]
     UsersUnblocked(Box<UsersUnblocked>),
-    #[serde(rename = "mp", alias = "MessagePinned")]
+    #[serde(rename = "mp")]
     MessagePinned(Box<MessagePinned>),
-    #[serde(rename = "mup", alias = "MessageUnpinned")]
+    #[serde(rename = "mup")]
     MessageUnpinned(Box<MessageUnpinned>),
-    #[serde(rename = "pc", alias = "PermissionsChanged")]
+    #[serde(rename = "pc")]
     PermissionsChanged(Box<PermissionsChanged>),
-    #[serde(rename = "vc", alias = "GroupVisibilityChanged")]
+    #[serde(rename = "vc")]
     GroupVisibilityChanged(Box<GroupVisibilityChanged>),
-    #[serde(rename = "icc", alias = "GroupInviteCodeChanged")]
+    #[serde(rename = "icc")]
     GroupInviteCodeChanged(Box<GroupInviteCodeChanged>),
-    #[serde(rename = "fz", alias = "ChatFrozen")]
+    #[serde(rename = "fz")]
     ChatFrozen(Box<GroupFrozen>),
-    #[serde(rename = "ufz", alias = "ChatUnfrozen")]
+    #[serde(rename = "ufz")]
     ChatUnfrozen(Box<GroupUnfrozen>),
-    #[serde(rename = "ttl", alias = "EventsTimeToLiveUpdated")]
+    #[serde(rename = "ttl")]
     EventsTimeToLiveUpdated(Box<EventsTimeToLiveUpdated>),
-    #[serde(rename = "gu", alias = "GroupGateUpdated")]
+    #[serde(rename = "gu")]
     GroupGateUpdated(Box<GroupGateUpdated>),
-    #[serde(rename = "ui", alias = "UsersInvited")]
+    #[serde(rename = "ui")]
     UsersInvited(Box<UsersInvited>),
-    #[serde(rename = "e", alias = "Empty", other)]
+    #[serde(rename = "e")]
     Empty,
 }
 
@@ -145,27 +145,27 @@ impl ChatEventInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MessageInternal {
-    #[serde(rename = "x", alias = "message_index")]
+    #[serde(rename = "x")]
     pub message_index: MessageIndex,
-    #[serde(rename = "i", alias = "message_id")]
+    #[serde(rename = "i")]
     pub message_id: MessageId,
-    #[serde(rename = "s", alias = "sender")]
+    #[serde(rename = "s")]
     pub sender: UserId,
-    #[serde(rename = "c", alias = "content")]
+    #[serde(rename = "c")]
     pub content: MessageContentInternal,
-    #[serde(rename = "p", alias = "replies_to", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "p", default, skip_serializing_if = "Option::is_none")]
     pub replies_to: Option<ReplyContextInternal>,
-    #[serde(rename = "r", alias = "reactions", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "r", default, skip_serializing_if = "is_empty_slice")]
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
-    #[serde(rename = "u", alias = "last_updated", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "u", default, skip_serializing_if = "Option::is_none")]
     pub last_updated: Option<TimestampMillis>,
-    #[serde(rename = "e", alias = "last_edited", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
     pub last_edited: Option<TimestampMillis>,
-    #[serde(rename = "d", alias = "deleted_by", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "d", default, skip_serializing_if = "Option::is_none")]
     pub deleted_by: Option<DeletedByInternal>,
-    #[serde(rename = "t", alias = "thread_summary", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "t", default, skip_serializing_if = "Option::is_none")]
     pub thread_summary: Option<ThreadSummaryInternal>,
-    #[serde(rename = "f", alias = "forwarded", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "f", default, skip_serializing_if = "is_default")]
     pub forwarded: bool,
 }
 
@@ -258,55 +258,38 @@ impl MessageInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentInternal {
-    #[serde(rename = "t", alias = "Text")]
+    #[serde(rename = "t")]
     Text(TextContent),
-    #[serde(rename = "i", alias = "Image")]
+    #[serde(rename = "i")]
     Image(ImageContent),
-    #[serde(rename = "v", alias = "Video")]
+    #[serde(rename = "v")]
     Video(VideoContent),
-    #[serde(rename = "a", alias = "Audio")]
+    #[serde(rename = "a")]
     Audio(AudioContent),
-    #[serde(rename = "f", alias = "File")]
+    #[serde(rename = "f")]
     File(FileContent),
-    #[serde(rename = "p", alias = "Poll")]
+    #[serde(rename = "p")]
     Poll(PollContentInternal),
-    #[serde(rename = "c", alias = "Crypto")]
+    #[serde(rename = "c")]
     Crypto(CryptoContent),
-    #[serde(rename = "d", alias = "Deleted")]
+    #[serde(rename = "d")]
     Deleted(DeletedByInternal),
-    #[serde(rename = "g", alias = "Giphy")]
+    #[serde(rename = "g")]
     Giphy(GiphyContent),
-    #[serde(rename = "gp", alias = "GovernanceProposal")]
+    #[serde(rename = "gp")]
     GovernanceProposal(ProposalContentInternal),
-    #[serde(rename = "pr", alias = "Prize")]
+    #[serde(rename = "pr")]
     Prize(PrizeContentInternal),
-    #[serde(rename = "pw", alias = "PrizeWinner")]
+    #[serde(rename = "pw")]
     PrizeWinner(PrizeWinnerContent),
-    #[serde(rename = "mrc", alias = "MessageReminderCreated")]
+    #[serde(rename = "mrc")]
     MessageReminderCreated(MessageReminderCreatedContent),
-    #[serde(rename = "mr", alias = "MessageReminder")]
+    #[serde(rename = "mr")]
     MessageReminder(MessageReminderContent),
-    #[serde(rename = "rm", alias = "ReportedMessage")]
+    #[serde(rename = "rm")]
     ReportedMessage(ReportedMessageInternal),
-    #[serde(rename = "cu", alias = "Custom")]
+    #[serde(rename = "cu")]
     Custom(CustomContent),
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UpdatedMessageInternal {
-    pub updated_by: UserId,
-    pub message_id: MessageId,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ThreadUpdatedInternal {
-    pub message_index: MessageIndex,
-    pub latest_thread_message_index_if_updated: Option<MessageIndex>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ProposalsUpdatedInternal {
-    pub proposals: Vec<MessageIndex>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -318,9 +301,9 @@ pub struct ProposalContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DeletedByInternal {
-    #[serde(rename = "d", alias = "deleted_by")]
+    #[serde(rename = "d")]
     pub deleted_by: UserId,
-    #[serde(rename = "t", alias = "timestamp")]
+    #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
 }
 
@@ -446,13 +429,13 @@ impl MessageContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ThreadSummaryInternal {
-    #[serde(rename = "i", alias = "participant_ids")]
+    #[serde(rename = "i")]
     pub participant_ids: Vec<UserId>,
-    #[serde(rename = "r", alias = "reply_count")]
+    #[serde(rename = "r")]
     pub reply_count: u32,
-    #[serde(rename = "e", alias = "latest_event_index")]
+    #[serde(rename = "e")]
     pub latest_event_index: EventIndex,
-    #[serde(rename = "t", alias = "latest_event_timestamp")]
+    #[serde(rename = "t")]
     pub latest_event_timestamp: TimestampMillis,
 }
 
@@ -578,9 +561,9 @@ impl From<&MessageContentInternal> for Document {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ReplyContextInternal {
-    #[serde(rename = "l", alias = "event_list_if_other")]
+    #[serde(rename = "l")]
     pub event_list_if_other: Option<(ChatId, Option<MessageIndex>)>,
-    #[serde(rename = "e", alias = "event_index")]
+    #[serde(rename = "e")]
     pub event_index: EventIndex,
 }
 
@@ -614,56 +597,51 @@ impl From<&ReplyContext> for ReplyContextInternal {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ChatMetricsInternal {
-    #[serde(rename = "t", alias = "text_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "t", default, skip_serializing_if = "is_default")]
     pub text_messages: u64,
-    #[serde(rename = "i", alias = "image_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "i", default, skip_serializing_if = "is_default")]
     pub image_messages: u64,
-    #[serde(rename = "v", alias = "video_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "v", default, skip_serializing_if = "is_default")]
     pub video_messages: u64,
-    #[serde(rename = "a", alias = "audio_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "a", default, skip_serializing_if = "is_default")]
     pub audio_messages: u64,
-    #[serde(rename = "f", alias = "file_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "f", default, skip_serializing_if = "is_default")]
     pub file_messages: u64,
-    #[serde(rename = "p", alias = "polls", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "p", default, skip_serializing_if = "is_default")]
     pub polls: u64,
-    #[serde(rename = "pv", alias = "poll_votes", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "pv", default, skip_serializing_if = "is_default")]
     pub poll_votes: u64,
-    #[serde(rename = "icp", alias = "icp_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "icp", default, skip_serializing_if = "is_default")]
     pub icp_messages: u64,
-    #[serde(rename = "sns1", alias = "sns1_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "sns1", default, skip_serializing_if = "is_default")]
     pub sns1_messages: u64,
-    #[serde(rename = "ckbtc", alias = "sns1_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "ckbtc", default, skip_serializing_if = "is_default")]
     pub ckbtc_messages: u64,
-    #[serde(rename = "chat", alias = "sns1_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "chat", default, skip_serializing_if = "is_default")]
     pub chat_messages: u64,
-    #[serde(rename = "d", alias = "deleted_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "d", default, skip_serializing_if = "is_default")]
     pub deleted_messages: u64,
-    #[serde(rename = "g", alias = "giphy_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "g", default, skip_serializing_if = "is_default")]
     pub giphy_messages: u64,
-    #[serde(rename = "pz", alias = "prize_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "pz", default, skip_serializing_if = "is_default")]
     pub prize_messages: u64,
-    #[serde(
-        rename = "pzw",
-        alias = "prize_winner_messages",
-        default,
-        skip_serializing_if = "is_default"
-    )]
+    #[serde(rename = "pzw", default, skip_serializing_if = "is_default")]
     pub prize_winner_messages: u64,
-    #[serde(rename = "rp", alias = "replies", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "rp", default, skip_serializing_if = "is_default")]
     pub replies: u64,
-    #[serde(rename = "e", alias = "edits", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "e", default, skip_serializing_if = "is_default")]
     pub edits: u64,
-    #[serde(rename = "rt", alias = "reactions", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "rt", default, skip_serializing_if = "is_default")]
     pub reactions: u64,
-    #[serde(rename = "pr", alias = "proposals", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "pr", default, skip_serializing_if = "is_default")]
     pub proposals: u64,
-    #[serde(rename = "rpt", alias = "reported_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "rpt", default, skip_serializing_if = "is_default")]
     pub reported_messages: u64,
-    #[serde(rename = "mr", alias = "message_reminders", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "mr", default, skip_serializing_if = "is_default")]
     pub message_reminders: u64,
-    #[serde(rename = "cu", alias = "custom_type_messages", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "cu", default, skip_serializing_if = "is_default")]
     pub custom_type_messages: u64,
-    #[serde(rename = "la", alias = "last_active")]
+    #[serde(rename = "la")]
     pub last_active: TimestampMillis,
 }
 
@@ -700,6 +678,7 @@ impl ChatMetricsInternal {
             file_messages: self.file_messages,
             polls: self.polls,
             poll_votes: self.poll_votes,
+            cycles_messages: 0,
             icp_messages: self.icp_messages,
             sns1_messages: self.sns1_messages,
             ckbtc_messages: self.ckbtc_messages,
