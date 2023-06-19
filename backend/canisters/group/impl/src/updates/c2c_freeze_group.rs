@@ -4,27 +4,32 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_canister::c2c_freeze_group::{Response::*, *};
-use types::{EventWrapper, FrozenGroupInfo, GroupFrozen, Timestamped};
+use types::{EventWrapper, FrozenGroupInfo, GroupFrozen, Timestamped, UserId};
 
 #[update_msgpack(guard = "caller_is_group_index_or_local_group_index")]
 #[trace]
 fn c2c_freeze_group(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| c2c_freeze_group_impl(args, state))
+    mutate_state(|state| freeze_group_impl(args.caller, args.reason, args.return_members, state))
 }
 
-fn c2c_freeze_group_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn freeze_group_impl(
+    caller: UserId,
+    reason: Option<String>,
+    return_members: bool,
+    state: &mut RuntimeState,
+) -> Response {
     if state.data.frozen.is_none() {
         let now = state.env.now();
 
-        let push_event_result = state.data.chat.events.freeze(args.caller, args.reason.clone(), now);
+        let push_event_result = state.data.chat.events.freeze(caller, reason.clone(), now);
 
         state.data.frozen = Timestamped::new(
             Some(FrozenGroupInfo {
                 timestamp: now,
-                frozen_by: args.caller,
-                reason: args.reason.clone(),
+                frozen_by: caller,
+                reason: reason.clone(),
             }),
             now,
         );
@@ -35,14 +40,14 @@ fn c2c_freeze_group_impl(args: Args, state: &mut RuntimeState) -> Response {
             correlation_id: 0,
             expires_at: push_event_result.expires_at,
             event: GroupFrozen {
-                frozen_by: args.caller,
-                reason: args.reason,
+                frozen_by: caller,
+                reason,
             },
         };
 
         handle_activity_notification(state);
 
-        if args.return_members {
+        if return_members {
             SuccessWithMembers(event, state.data.chat.members.iter().map(|p| p.user_id).collect())
         } else {
             Success(event)
