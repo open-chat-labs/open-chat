@@ -27,7 +27,7 @@ async fn remove_participant(args: Args) -> Response {
 
 async fn remove_participant_impl(user_to_remove: UserId, block: bool) -> Response {
     // Check the caller can remove the user
-    let prepare_result = match read_state(|state| prepare(user_to_remove, state)) {
+    let prepare_result = match read_state(|state| prepare(user_to_remove, block, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -53,7 +53,7 @@ struct PrepareResult {
     is_user_to_remove_an_owner: bool,
 }
 
-fn prepare(user_to_remove: UserId, state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> Result<PrepareResult, Response> {
     if state.data.is_frozen() {
         return Err(ChatFrozen);
     }
@@ -68,7 +68,6 @@ fn prepare(user_to_remove: UserId, state: &RuntimeState) -> Result<PrepareResult
         } else {
             // Check if the caller is authorized to remove the user
             let is_user_to_remove_an_owner = match state.data.chat.members.get(&user_to_remove) {
-                None => return Err(UserNotInGroup),
                 Some(member_to_remove) => {
                     if member
                         .role
@@ -79,6 +78,8 @@ fn prepare(user_to_remove: UserId, state: &RuntimeState) -> Result<PrepareResult
                         return Err(NotAuthorized);
                     }
                 }
+                None if block => false,
+                _ => return Err(UserNotInGroup),
             };
 
             Ok(PrepareResult {
