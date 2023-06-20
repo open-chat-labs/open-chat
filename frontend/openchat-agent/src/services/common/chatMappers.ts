@@ -591,15 +591,7 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
         kind: "raw_reply_context",
         eventIndex: candid.event_index,
         sourceContext:
-            optional(candid.event_list_if_other, replySourceContext) ??
-            optional(candid.chat_id_if_other, replySourceContextLegacy),
-    };
-}
-
-// We still need this for data that doesn't have the new format
-function replySourceContextLegacy(chatId: Principal): MessageContext {
-    return {
-        chatId: chatId.toString(),
+            optional(candid.event_list_if_other, replySourceContext)
     };
 }
 
@@ -769,7 +761,6 @@ export function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
 export function apiReplyContextArgs(chatId: string, domain: ReplyContext): ApiReplyContext {
     if (domain.sourceContext !== undefined && chatId !== domain.sourceContext.chatId) {
         return {
-            chat_id_if_other: [Principal.fromText(domain.sourceContext.chatId)],
             event_list_if_other: [
                 [
                     Principal.fromText(domain.sourceContext.chatId),
@@ -780,7 +771,6 @@ export function apiReplyContextArgs(chatId: string, domain: ReplyContext): ApiRe
         };
     } else {
         return {
-            chat_id_if_other: [],
             event_list_if_other: [],
             event_index: domain.eventIndex,
         };
