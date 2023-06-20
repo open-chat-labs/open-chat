@@ -1177,42 +1177,44 @@ impl GroupChatCore {
                 return UserSuspended;
             }
 
-            if let Some(target_member) = self.members.get(&target_user_id) {
-                if member
-                    .role
-                    .can_remove_members_with_role(target_member.role, &self.permissions)
-                {
-                    // Remove the user from the group
-                    self.members.remove(target_user_id);
+            let target_member_role = match self.members.get(&target_user_id) {
+                Some(m) => m.role,
+                None if block => GroupRoleInternal::Member,
+                _ => return TargetUserNotInGroup,
+            };
 
-                    if block {
-                        // Also block the user
-                        self.members.block(target_user_id);
-                    }
+            if member
+                .role
+                .can_remove_members_with_role(target_member_role, &self.permissions)
+            {
+                // Remove the user from the group
+                self.members.remove(target_user_id);
 
-                    // Push relevant event
-                    let event = if block {
-                        let event = UsersBlocked {
-                            user_ids: vec![target_user_id],
-                            blocked_by: user_id,
-                        };
-
-                        ChatEventInternal::UsersBlocked(Box::new(event))
-                    } else {
-                        let event = MembersRemoved {
-                            user_ids: vec![target_user_id],
-                            removed_by: user_id,
-                        };
-                        ChatEventInternal::ParticipantsRemoved(Box::new(event))
-                    };
-                    self.events.push_main_event(event, 0, now);
-
-                    Success
-                } else {
-                    NotAuthorized
+                if block && !self.members.block(target_user_id) {
+                    // Return Success if the user was already blocked
+                    return Success;
                 }
+
+                // Push relevant event
+                let event = if block {
+                    let event = UsersBlocked {
+                        user_ids: vec![target_user_id],
+                        blocked_by: user_id,
+                    };
+
+                    ChatEventInternal::UsersBlocked(Box::new(event))
+                } else {
+                    let event = MembersRemoved {
+                        user_ids: vec![target_user_id],
+                        removed_by: user_id,
+                    };
+                    ChatEventInternal::ParticipantsRemoved(Box::new(event))
+                };
+                self.events.push_main_event(event, 0, now);
+
+                Success
             } else {
-                TargetUserNotInGroup
+                NotAuthorized
             }
         } else {
             UserNotInGroup
