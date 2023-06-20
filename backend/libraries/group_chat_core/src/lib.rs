@@ -1190,11 +1190,9 @@ impl GroupChatCore {
                 // Remove the user from the group
                 self.members.remove(target_user_id);
 
-                if block {
-                    // Also block the user
-                    if !self.members.block(target_user_id) {
-                        return Success;
-                    }
+                if block && !self.members.block(target_user_id) {
+                    // Return Success if the user was already blocked
+                    return Success;
                 }
 
                 // Push relevant event
