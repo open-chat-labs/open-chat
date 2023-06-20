@@ -24,15 +24,10 @@ import {
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
-import { parse } from "uuid";
 
 const CACHE_VERSION = 68;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
-
-type FailedMessageKey = MessageContext & {
-    messageId: bigint;
-};
 
 type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
     chatId: ChatIdentifier;

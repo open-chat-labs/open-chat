@@ -7,6 +7,7 @@ import {
     UserLookup,
     UserSummary,
     emptyChatMetrics,
+    MessageContextMap,
 } from "openchat-shared";
 import {
     addVoteToPoll,
@@ -14,6 +15,7 @@ import {
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
 } from "./chat";
+import type { UnconfirmedState } from "../stores/unconfirmed";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -88,8 +90,10 @@ function createUser(userId: string, username: string): PartialUserSummary {
 
 describe("thread utils", () => {
     test("merge unconfirmed thread message into summary", () => {
-        const chat = mergeUnconfirmedThreadsIntoSummary(defaultGroupChat, {
-            abc_1: {
+        const unconf = new MessageContextMap<UnconfirmedState>();
+        unconf.set(
+            { chatId: { kind: "group_chat", groupId: "abc" }, threadRootMessageIndex: 1 },
+            {
                 messages: [
                     {
                         index: 4,
@@ -108,8 +112,9 @@ describe("thread utils", () => {
                     },
                 ],
                 messageIds: new Set(),
-            },
-        });
+            }
+        );
+        const chat = mergeUnconfirmedThreadsIntoSummary(defaultGroupChat, unconf);
         expect(chat.membership.latestThreads[0].latestEventIndex).toEqual(4);
         expect(chat.membership.latestThreads[0].latestMessageIndex).toEqual(5);
     });

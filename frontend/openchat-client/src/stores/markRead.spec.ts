@@ -40,7 +40,7 @@ describe("mark messages read", () => {
     });
 
     test("mark unconfirmed message as read", () => {
-        unconfirmed.add(abcId.groupId, createDummyMessage(BigInt(100)));
+        unconfirmed.add({ chatId: abcId }, createDummyMessage(BigInt(100)));
         markRead.markMessageRead(abcId, 200, BigInt(100));
         expect(markRead.waiting.get(abcId)?.has(BigInt(100))).toBe(true);
     });

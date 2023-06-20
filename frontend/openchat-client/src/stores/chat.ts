@@ -18,7 +18,6 @@ import {
     DirectChatIdentifier,
     nullMembership,
     chatIdentifiersEqual,
-    chatIdentifierToString,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
@@ -143,6 +142,18 @@ export const selectedThreadKey = derived(
         return undefined;
     }
 );
+export const selectedMessageContext = derived(
+    [selectedChatId, selectedThreadRootMessageIndex],
+    ([$selectedChatId, $selectedThreadRootMessageIndex]) => {
+        if ($selectedChatId !== undefined) {
+            return {
+                chatId: $selectedChatId,
+                threadRootMessageIndex: $selectedThreadRootMessageIndex,
+            };
+        }
+        return undefined;
+    }
+);
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
 export const chatUpdatedStore: Writable<
@@ -192,7 +203,7 @@ export function nextEventAndMessageIndexes(): [number, number] {
     }
     return getNextEventAndMessageIndexes(
         chat,
-        unconfirmed.getMessages(chat.id.toString()).sort(sortByIndex)
+        unconfirmed.getMessages({ chatId: chat.id }).sort(sortByIndex)
     );
 }
 
@@ -296,7 +307,7 @@ export const threadEvents = derived(
         threadServerEventsStore,
         unconfirmed,
         localMessageUpdates,
-        selectedThreadKey,
+        selectedMessageContext,
         failedMessagesStore,
         proposalTallies,
     ],
@@ -304,15 +315,17 @@ export const threadEvents = derived(
         $serverEvents,
         $unconfirmed,
         $localUpdates,
-        $threadKey,
+        $messageContext,
         $failedMessages,
         $proposalTallies,
     ]) => {
-        if ($threadKey === undefined) return [];
-        const failed = $failedMessages[$threadKey]
-            ? Object.values($failedMessages[$threadKey])
+        if ($messageContext === undefined || $messageContext.threadRootMessageIndex === undefined)
+            return [];
+        const failed = $failedMessages.has($messageContext)
+            ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              Object.values($failedMessages.get($messageContext)!)
             : [];
-        const unconfirmed = $unconfirmed[$threadKey]?.messages ?? [];
+        const unconfirmed = $unconfirmed.get($messageContext)?.messages ?? [];
         return mergeEventsAndLocalUpdates(
             $serverEvents,
             [...unconfirmed, ...failed],
@@ -552,11 +565,10 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $proposalTallies,
     ]) => {
         const chatId = get(selectedChatId) ?? { kind: "group_chat", groupId: "" };
-        // TODO sort this out
-        const failedForChat = $failedMessages[chatIdentifierToString(chatId)];
+        const failedForChat = $failedMessages.get({ chatId });
         // for the purpose of merging, unconfirmed and failed can be treated the same
         const failed = failedForChat ? Object.values(failedForChat) : [];
-        const unconfirmed = $unconfirmed[chatId.toString()]?.messages ?? [];
+        const unconfirmed = $unconfirmed.get({ chatId })?.messages ?? [];
         return mergeEventsAndLocalUpdates(
             $serverEventsForSelectedChat,
             [...unconfirmed, ...failed],

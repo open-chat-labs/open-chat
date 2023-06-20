@@ -3,7 +3,7 @@ import { createSetStore } from "./setStore";
 import { EventWrapper, Message, MessageContext, MessageContextMap } from "openchat-shared";
 import { revokeObjectUrls } from "../utils/chat";
 
-type UnconfirmedState = {
+export type UnconfirmedState = {
     messages: EventWrapper<Message>[];
     messageIds: Set<bigint>;
 };

@@ -41,7 +41,6 @@ import {
     GroupChatIdentifier,
     nullMembership,
     HasMembershipRole,
-    chatIdentifierToString,
     MessageContext,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
@@ -314,10 +313,11 @@ export function mergeUnconfirmedThreadsIntoSummary(
         membership: {
             ...chat.membership,
             latestThreads: chat.membership.latestThreads.map((t) => {
-                // TODO sort this out
-                const unconfirmedMsgs =
-                    unconfirmed[`${chatIdentifierToString(chat.id)}_${t.threadRootMessageIndex}`]
-                        ?.messages ?? [];
+                const context = {
+                    chatId: chat.id,
+                    threadRootMessageIndex: t.threadRootMessageIndex,
+                };
+                const unconfirmedMsgs = unconfirmed.get(context)?.messages ?? [];
                 if (unconfirmedMsgs.length > 0) {
                     let msgIdx = t.latestMessageIndex;
                     let evtIdx = t.latestEventIndex;
@@ -419,8 +419,7 @@ export function mergeUnconfirmedIntoSummary(
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
-    // TODO - sort out unconfirmed messages so that it's keyed on the right thing
-    const unconfirmedMessages = unconfirmed[chatIdentifierToString(chatSummary.id)]?.messages;
+    const unconfirmedMessages = unconfirmed.get({ chatId: chatSummary.id })?.messages;
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;

@@ -80,19 +80,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "gate_updated":
                 userIds.add(e.event.updatedBy);
                 break;
-            case "message_deleted":
-            case "message_undeleted":
-            case "message_edited":
-            case "reaction_added":
-            case "reaction_removed":
-            case "poll_vote_registered":
-            case "poll_vote_deleted":
-                userIds.add(e.event.message.updatedBy);
-                break;
             case "direct_chat_created":
-            case "poll_ended":
-            case "thread_updated":
-            case "proposals_updated":
             case "aggregate_common_events":
             case "chat_frozen":
             case "chat_unfrozen":
@@ -223,20 +211,7 @@ export function emptyChatMetrics(): Metrics {
 }
 
 export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
-    return (
-        ew.event.kind !== "reaction_added" &&
-        ew.event.kind !== "message_deleted" &&
-        ew.event.kind !== "message_undeleted" &&
-        ew.event.kind !== "message_edited" &&
-        ew.event.kind !== "reaction_removed" &&
-        ew.event.kind !== "message_pinned" &&
-        ew.event.kind !== "message_unpinned" &&
-        ew.event.kind !== "poll_vote_registered" &&
-        ew.event.kind !== "poll_vote_deleted" &&
-        ew.event.kind !== "poll_ended" &&
-        ew.event.kind !== "thread_updated" &&
-        ew.event.kind !== "proposals_updated"
-    );
+    return ew.event.kind !== "message_pinned" && ew.event.kind !== "message_unpinned";
 }
 
 export function compareRoles(a: MemberRole, b: MemberRole): number {
