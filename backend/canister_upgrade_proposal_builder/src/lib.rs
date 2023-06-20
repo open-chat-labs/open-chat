@@ -10,27 +10,27 @@ use types::{CanisterWasm, UpgradeCanisterWasmArgs, Version};
 #[derive(Parser, Debug)]
 pub struct Config {
     /// Title of the proposal
-    #[arg(short, long)]
+    #[arg(long)]
     pub title: String,
 
     /// Summary of the proposal
-    #[arg(short, long)]
+    #[arg(long)]
     pub summary: String,
 
     /// URL for the proposal
-    #[arg(short, long)]
+    #[arg(long)]
     pub url: String,
 
     /// Custom function_id of the proposal
-    #[arg(short, long)]
+    #[arg(long)]
     pub function_id: u64,
 
     /// Path to the wasm module
-    #[arg(short, long)]
+    #[arg(long)]
     pub wasm_path: std::path::PathBuf,
 
     /// Version of the wasm module
-    #[arg(short, long)]
+    #[arg(long)]
     pub version: Version,
 }
 

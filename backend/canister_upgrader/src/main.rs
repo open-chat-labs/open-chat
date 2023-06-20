@@ -46,39 +46,39 @@ async fn main() {
 
 #[derive(Parser)]
 struct Opts {
-    #[arg(short, long)]
+    #[arg(long)]
     url: String,
 
-    #[arg(short, long)]
+    #[arg(long)]
     controller: String,
 
-    #[arg(short, long)]
+    #[arg(long)]
     user_index: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     group_index: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     notifications_index: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     online_users: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     proposals_bot: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     storage_index: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     cycles_dispenser: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     market_maker: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     canister_to_upgrade: CanisterName,
 
-    #[arg(short, long)]
+    #[arg(long)]
     version: Version,
 }

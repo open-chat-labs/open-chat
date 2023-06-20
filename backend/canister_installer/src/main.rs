@@ -32,57 +32,57 @@ async fn main() {
 
 #[derive(Parser)]
 struct Opts {
-    #[arg(short, long)]
+    #[arg(long)]
     url: String,
 
-    #[arg(short, long)]
+    #[arg(long, action = clap::ArgAction::Set)]
     test_mode: bool,
 
-    #[arg(short, long)]
+    #[arg(long)]
     controller: String,
 
-    #[arg(short, long)]
+    #[arg(long)]
     user_index: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     group_index: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     notifications_index: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     local_user_index: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     local_group_index: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     notifications: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     online_users: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     proposals_bot: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     storage_index: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     cycles_dispenser: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     market_maker: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     nns_governance: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     nns_internet_identity: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     nns_ledger: CanisterId,
 
-    #[arg(short, long)]
+    #[arg(long)]
     nns_cmc: CanisterId,
 }
