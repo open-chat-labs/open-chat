@@ -81,7 +81,7 @@ impl ChatEventsList {
         self.get(event_key, min_visible_event_index, now).is_some()
     }
 
-    pub(crate) fn iter(
+    pub fn iter(
         &self,
         start: Option<EventKey>,
         ascending: bool,

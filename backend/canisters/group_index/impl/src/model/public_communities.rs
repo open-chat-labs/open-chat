@@ -4,8 +4,9 @@ use crate::MARK_ACTIVE_DURATION;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{AccessGate, CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
+use types::{AccessGate, Activity, CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
+use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "PublicCommunitiesTrimmed")]
@@ -78,7 +79,7 @@ impl PublicCommunities {
                     let document: Document = c.into();
                     document.calculate_score(query)
                 } else {
-                    c.activity.member_count
+                    c.hotness_score
                 };
                 (score, c)
             })
@@ -137,6 +138,10 @@ impl PublicCommunities {
     pub fn iter(&self) -> impl Iterator<Item = &PublicCommunityInfo> {
         self.communities.values()
     }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut PublicCommunityInfo> {
+        self.communities.values_mut()
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -153,6 +158,7 @@ pub struct PublicCommunityInfo {
     avatar_id: Option<u128>,
     banner_id: Option<u128>,
     activity: PublicCommunityActivity,
+    hotness_score: u32,
     gate: Option<AccessGate>,
 }
 
@@ -183,6 +189,7 @@ impl PublicCommunityInfo {
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicCommunityActivity::default(),
+            hotness_score: 0,
             frozen: None,
         }
     }
@@ -210,6 +217,47 @@ impl PublicCommunityInfo {
 
     pub fn set_frozen(&mut self, info: Option<FrozenCommunityInfo>) {
         self.frozen = info;
+    }
+
+    // This algorithm is a combination of new, popular, hot and random
+    // newness: how recently the community was created
+    // popularity: how many members
+    // hotness: based on recent activity score
+    // random: to avoid always showing the same communities
+    // Each of these factors is scaled to a value between 0 and 1 and then combined as a weighted sum.
+    pub fn calculate_hotness(&mut self, now: TimestampMillis, random: u32) {
+        const NEWNESS_THRESHOLD_DAYS: f64 = 10.0;
+        let newness = f64::log10(
+            NEWNESS_THRESHOLD_DAYS - f64::min((now - self.created) as f64 / DAY_IN_MS as f64, NEWNESS_THRESHOLD_DAYS),
+        );
+
+        const POPULARITY_THRESHOLD_MEMBERS: f64 = 100000.0;
+        let popularity = f64::log10(f64::min(self.activity.member_count as f64, POPULARITY_THRESHOLD_MEMBERS)) / 5.0;
+
+        // Calculate the hotness score based on the messages and reactions in the given period.
+        // Because the activity data is only updated if the community is active, we need to scale the
+        // activity score based on how long ago the community was active
+        fn calculate_activity_score(activity: &Activity, threshold: f64, period: f64, time_since_activity: f64) -> f64 {
+            let recency_multiplier =
+                if time_since_activity > 0.0 { 1.0 - (f64::min(time_since_activity, period) / period) } else { 1.0 };
+
+            recency_multiplier
+                * f64::log10(f64::min(
+                    threshold,
+                    (activity.messages * activity.message_unique_users) as f64
+                        + (activity.reactions * activity.reaction_unique_users) as f64,
+                ))
+                / f64::log10(threshold)
+        }
+
+        let time_since_activity = now.saturating_sub(self.marked_active_until) as f64;
+        let hotness = 0.5 * calculate_activity_score(&self.activity.last_day, 100_000.0, DAY_IN_MS as f64, time_since_activity)
+            + 0.5 * calculate_activity_score(&self.activity.last_hour, 10_000.0, HOUR_IN_MS as f64, time_since_activity);
+
+        let random = random as f64 / u32::MAX as f64;
+
+        // Weighted sum of new, popular, hot and random
+        self.hotness_score = ((newness + popularity + (3.0 * hotness) + (0.5 * random)) * 1_000_000.0) as u32
     }
 }
 

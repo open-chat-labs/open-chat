@@ -1019,7 +1019,7 @@ impl ChatEvents {
         self.main.latest_event_timestamp()
     }
 
-    fn events_list(
+    pub fn events_list(
         &self,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,

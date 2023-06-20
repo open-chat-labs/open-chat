@@ -1,7 +1,5 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
-use rand::rngs::StdRng;
-use rand::{RngCore, SeedableRng};
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -151,13 +149,12 @@ impl PublicGroups {
         self.groups.values()
     }
 
-    pub fn calculate_hot_groups(&self, now: TimestampMillis) -> Vec<ChatId> {
-        let mut rng = StdRng::seed_from_u64(now);
+    pub fn calculate_hot_groups(&self, now: TimestampMillis, random: u32) -> Vec<ChatId> {
         let one_day_ago = now - DAY_IN_MS;
 
         self.iter()
             .filter(|g| !g.is_frozen() && g.has_been_active_since(one_day_ago) && !g.exclude_from_hotlist)
-            .map(|g| (g, rng.next_u32()))
+            .map(|g| (g, random))
             .max_n_by(CACHED_HOT_GROUPS_COUNT, |(g, random)| g.calculate_weight(*random, now))
             .map(|(g, _)| g.id)
             .collect()

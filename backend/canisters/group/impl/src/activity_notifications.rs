@@ -35,7 +35,7 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
         let mut message_unique_users = HashSet::new();
         let mut reaction_unique_users = HashSet::new();
 
-        let mut inc_participant_count = |count, within_last_hour| {
+        let mut inc_member_count = |count, within_last_hour| {
             activity.last_day.member_count_change += count;
             if within_last_hour {
                 activity.last_hour.member_count_change += count;
@@ -53,7 +53,7 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
 
             match &event.event {
                 ChatEventInternal::GroupChatCreated(_) => {
-                    inc_participant_count(1, within_last_hour);
+                    inc_member_count(1, within_last_hour);
                 }
                 ChatEventInternal::Message(m) => {
                     activity.last_day.messages += 1;
@@ -82,17 +82,21 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
                 }
                 ChatEventInternal::ParticipantsAdded(p) => {
                     let count = p.user_ids.len() as i32;
-                    inc_participant_count(count, within_last_hour);
+                    inc_member_count(count, within_last_hour);
                 }
                 ChatEventInternal::ParticipantsRemoved(p) => {
                     let count = p.user_ids.len() as i32;
-                    inc_participant_count(-count, within_last_hour);
+                    inc_member_count(-count, within_last_hour);
+                }
+                ChatEventInternal::UsersBlocked(p) => {
+                    let count = p.user_ids.len() as i32;
+                    inc_member_count(-count, within_last_hour);
                 }
                 ChatEventInternal::ParticipantJoined(_) => {
-                    inc_participant_count(1, within_last_hour);
+                    inc_member_count(1, within_last_hour);
                 }
                 ChatEventInternal::ParticipantLeft(_) => {
-                    inc_participant_count(-1, within_last_hour);
+                    inc_member_count(-1, within_last_hour);
                 }
                 _ => {}
             }
