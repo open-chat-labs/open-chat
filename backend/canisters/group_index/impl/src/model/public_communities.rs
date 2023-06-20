@@ -221,8 +221,8 @@ impl PublicCommunityInfo {
 
     // This algorithm is a combination of new, popular, hot and random
     // newness: how recently the community was created
-    // popularity: how many members
-    // hotness: based on recent activity score
+    // popularity: based on total members and recent change in member numbers
+    // hotness: based on counts of recent messages and reactions
     // random: to avoid always showing the same communities
     // Each of these factors is scaled to a value between 0 and 1 and then combined as a weighted sum.
     pub fn calculate_hotness(&mut self, now: TimestampMillis, random: u32) {
@@ -231,8 +231,27 @@ impl PublicCommunityInfo {
             NEWNESS_THRESHOLD_DAYS - f64::min((now - self.created) as f64 / DAY_IN_MS as f64, NEWNESS_THRESHOLD_DAYS),
         );
 
-        const POPULARITY_THRESHOLD_MEMBERS: f64 = 100000.0;
-        let popularity = f64::log10(f64::min(self.activity.member_count as f64, POPULARITY_THRESHOLD_MEMBERS)) / 5.0;
+        // A value between 0 and 1 based on the total number of members boosted (or reduced)
+        // by the recent change in members as a percentage of the total
+        let popularity = {
+            const POPULARITY_THRESHOLD_MEMBERS: f64 = 100000.0;
+            let score_based_on_total =
+                f64::log10(f64::min(self.activity.member_count as f64, POPULARITY_THRESHOLD_MEMBERS)) / 5.0;
+
+            let mut change_factor = f64::log10(
+                1.0 + 100.0
+                    * f64::min(
+                        1.0,
+                        f64::abs(self.activity.last_day.member_count_change as f64) / self.activity.member_count as f64,
+                    ),
+            ) / 2.0;
+
+            if self.activity.last_day.member_count_change < 0 {
+                change_factor *= -1.0;
+            }
+
+            score_based_on_total * (0.5 + change_factor)
+        };
 
         // Calculate the hotness score based on the messages and reactions in the given period.
         // Because the activity data is only updated if the community is active, we need to scale the
@@ -257,7 +276,7 @@ impl PublicCommunityInfo {
         let random = random as f64 / u32::MAX as f64;
 
         // Weighted sum of new, popular, hot and random
-        self.hotness_score = ((newness + popularity + (3.0 * hotness) + (0.5 * random)) * 1_000_000.0) as u32
+        self.hotness_score = ((newness + (2.0 * popularity) + (3.0 * hotness) + (0.5 * random)) * 1_000_000.0) as u32
     }
 }
 
