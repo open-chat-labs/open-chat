@@ -19,7 +19,6 @@
         selectedChannelRoute,
         favouritesRoute,
     } from "../routes";
-    import { communitiesEnabled } from "../utils/features";
 
     let route: typeof SvelteComponent | undefined = undefined;
 
@@ -130,6 +129,12 @@
         page(
             "/hotgroups",
             parsePathParams(() => ({ kind: "hot_groups_route" })),
+            track,
+            () => (route = Home)
+        );
+        page(
+            "/",
+            parsePathParams(() => ({ kind: "home_route" })),
             track,
             () => (route = Home)
         );
