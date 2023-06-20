@@ -13,14 +13,9 @@ pub struct Mentions {
 
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
 struct MentionInternal {
-    #[serde(
-        rename = "t",
-        alias = "thread_root_message_index",
-        default,
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "t", default, skip_serializing_if = "Option::is_none")]
     thread_root_message_index: Option<MessageIndex>,
-    #[serde(rename = "i", alias = "message_index")]
+    #[serde(rename = "i")]
     message_index: MessageIndex,
 }
 

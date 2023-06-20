@@ -1,15 +1,15 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEvent;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::update_community::{Response::*, *};
 use group_index_canister::c2c_update_community;
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged, Document,
-    GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged, OptionalCommunityPermissions, Timestamped,
-    UserId,
+    AccessGate, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged,
+    Document, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged, OptionalCommunityPermissions,
+    Timestamped, UserId,
 };
 use utils::document_validation::{validate_avatar, validate_banner};
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -17,6 +17,8 @@ use utils::group_validation::{validate_description, validate_name, validate_rule
 #[update]
 #[trace]
 async fn update_community(mut args: Args) -> Response {
+    run_regular_jobs();
+
     clean_args(&mut args);
 
     let prepare_result = match read_state(|state| prepare(&args, state)) {
@@ -29,6 +31,8 @@ async fn update_community(mut args: Args) -> Response {
             name: prepare_result.name,
             description: prepare_result.description,
             avatar_id: prepare_result.avatar_id,
+            banner_id: prepare_result.banner_id,
+            gate: prepare_result.gate,
         };
 
         let group_index_canister_id = prepare_result.group_index_canister_id;
@@ -67,6 +71,8 @@ struct PrepareResult {
     name: String,
     description: String,
     avatar_id: Option<u128>,
+    banner_id: Option<u128>,
+    gate: Option<AccessGate>,
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -77,6 +83,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     let caller = state.env.caller();
     let avatar_update = args.avatar.as_ref().expand();
     let banner_update = args.banner.as_ref().expand();
+    let gate = args.gate.as_ref().apply_to(state.data.gate.value.as_ref());
 
     if let Some(name) = &args.name {
         if let Err(error) = validate_name(name, state.data.is_public) {
@@ -130,6 +137,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 name: args.name.as_ref().unwrap_or(&state.data.name).clone(),
                 description: args.description.as_ref().unwrap_or(&state.data.description).clone(),
                 avatar_id: avatar_update.map_or(Document::id(&state.data.avatar), |avatar| avatar.map(|a| a.id)),
+                banner_id: banner_update.map_or(Document::id(&state.data.banner), |banner| banner.map(|a| a.id)),
+                gate: gate.cloned(),
             })
         }
     } else {

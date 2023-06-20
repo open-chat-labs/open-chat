@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use aws_sdk_dynamodb::model::AttributeValue;
+use aws_sdk_dynamodb::types::AttributeValue;
 use aws_sdk_dynamodb::Client;
 use aws_types::sdk_config::SdkConfig;
 use index_store::IndexStore;

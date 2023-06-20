@@ -81,10 +81,12 @@ type ChatMetrics =
         file_messages: nat64;
         polls: nat64;
         poll_votes: nat64;
+        cycles_messages: nat64;
         icp_messages: nat64;
         sns1_messages: nat64;
         ckbtc_messages: nat64;
         chat_messages: nat64;
+        kinic_messages: nat64;
         deleted_messages: nat64;
         giphy_messages: nat64;
         prize_messages: nat64;
@@ -211,23 +213,13 @@ type ChatEvent =
         ParticipantDismissedAsSuperAdmin: ParticipantDismissedAsSuperAdmin;
         ParticipantRelinquishesSuperAdmin: ParticipantRelinquishesSuperAdmin;
         RoleChanged: RoleChanged;
-        MessageEdited: UpdatedMessage;
-        MessageDeleted: UpdatedMessage;
-        MessageUndeleted: UpdatedMessage;
-        MessageReactionAdded: UpdatedMessage;
-        MessageReactionRemoved: UpdatedMessage;
         UsersBlocked: UsersBlocked;
         UsersUnblocked: UsersUnblocked;
         MessagePinned: MessagePinned;
         MessageUnpinned: MessageUnpinned;
-        PollVoteRegistered: UpdatedMessage;
-        PollVoteDeleted: UpdatedMessage;
-        PollEnded: PollEnded;
         PermissionsChanged: PermissionsChanged;
         GroupVisibilityChanged: GroupVisibilityChanged;
         GroupInviteCodeChanged: GroupInviteCodeChanged;
-        ThreadUpdated: ThreadUpdated;
-        ProposalsUpdated: ProposalsUpdated;
         GroupRulesChanged: GroupRulesChanged;
         ChatFrozen: ChatFrozen;
         ChatUnfrozen: ChatUnfrozen;
@@ -357,6 +349,7 @@ type CommunityCanisterCommunitySummary =
         latest_event_index: EventIndex;
         channels: vec CommunityCanisterChannelSummary;
         membership: opt CommunityMembership;
+        metrics: ChatMetrics;
     };
 
 type CommunityMembership =
@@ -418,6 +411,7 @@ type CommunityCanisterCommunitySummaryUpdates =
         channels_added: vec CommunityCanisterChannelSummary;
         channels_updated: vec CommunityCanisterChannelSummaryUpdates;
         membership: opt CommunityMembershipUpdates;
+        metrics: opt ChatMetrics;
     };
 
 type CommunityMembershipUpdates = 
@@ -658,7 +652,6 @@ type PublicGroupSummary =
 
 type ReplyContext =
     record {
-        chat_id_if_other: opt ChatId;
         event_list_if_other: opt record { ChatId; opt MessageIndex };
         event_index: EventIndex;
     };
@@ -741,13 +734,6 @@ type MessageContent =
         MessageReminder: MessageReminder;
         Custom: CustomMessageContent;
         ReportedMessage: ReportedMessage;
-    };
-
-type UpdatedMessage =
-    record {
-        updated_by: UserId;
-        event_index: EventIndex;
-        message_id: MessageId;
     };
 
 type MessageMatch =
@@ -864,12 +850,6 @@ type PollContent =
         config: PollConfig;
         votes: PollVotes;
         ended: bool;
-    };
-
-type PollEnded =
-    record {
-        event_index: EventIndex;
-        message_index: MessageIndex;
     };
 
 type PollVotes =
@@ -1070,6 +1050,7 @@ type Cryptocurrency =
         SNS1;
         CKBTC;
         CHAT;
+        KINIC;
     };
 
 type CryptoTransaction =
@@ -1298,13 +1279,6 @@ type ThreadSummary =
         latest_event_timestamp: TimestampMillis;
     };
 
-type ThreadUpdated =
-    record {
-        event_index: EventIndex;
-        message_index: MessageIndex;
-        latest_thread_message_index_if_updated: opt MessageIndex;
-    };
-
 type ThreadSyncDetails =
     record {
         root_message_index: MessageIndex;
@@ -1320,17 +1294,6 @@ type GroupCanisterThreadDetails =
         latest_event: EventIndex;
         latest_message: MessageIndex;
         last_updated: TimestampMillis;
-    };
-
-type ProposalsUpdated =
-    record {
-        proposals: vec ProposalUpdated;
-    };
-
-type ProposalUpdated =
-    record {
-        event_index: EventIndex;
-        message_index: MessageIndex;
     };
 
 type AccessRules =

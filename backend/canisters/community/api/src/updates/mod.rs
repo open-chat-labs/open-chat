@@ -18,6 +18,7 @@ pub mod delete_messages;
 pub mod disable_invite_code;
 pub mod edit_message;
 pub mod enable_invite_code;
+pub mod import_group;
 pub mod join_channel;
 pub mod leave_channel;
 pub mod make_channel_private;

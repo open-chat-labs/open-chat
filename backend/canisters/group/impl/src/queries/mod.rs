@@ -1,4 +1,5 @@
 mod c2c_events_internal;
+mod c2c_export_group;
 mod c2c_name_and_members;
 mod deleted_message;
 mod events;

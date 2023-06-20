@@ -151,15 +151,6 @@ struct Data {
 }
 
 impl Data {
-    pub fn one_off_convert_pinned_to_favourites(&mut self) {
-        let timestamp = self.pinned_chats.timestamp;
-        for chat_id in self.pinned_chats.value.drain(..) {
-            let chat = if self.direct_chats.get(&chat_id).is_some() { Chat::Direct(chat_id) } else { Chat::Group(chat_id) };
-            self.favourite_chats.add(chat, timestamp);
-            self.favourite_chats.pin(chat, timestamp);
-        }
-    }
-
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         owner: Principal,
@@ -222,7 +213,6 @@ impl Data {
     pub fn pin_chat(&mut self, chat_id: ChatId, now: TimestampMillis) {
         let chat = if self.direct_chats.get(&chat_id).is_some() { Chat::Direct(chat_id) } else { Chat::Group(chat_id) };
 
-        self.favourite_chats.pin(chat, now);
         self.favourite_chats.add(chat, now);
     }
 

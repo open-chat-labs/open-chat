@@ -1,6 +1,5 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
-use candid::CandidType;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use search::*;
@@ -165,7 +164,7 @@ impl PublicGroups {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct PublicGroupInfo {
     // Fields common to PrivateGroupInfo
     id: ChatId,

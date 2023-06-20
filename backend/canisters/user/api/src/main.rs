@@ -36,6 +36,7 @@ fn main() {
     generate_candid_method!(user, migrate_user_principal, update);
     generate_candid_method!(user, mute_notifications, update);
     generate_candid_method!(user, pin_chat, update);
+    generate_candid_method!(user, pin_chat_v2, update);
     generate_candid_method!(user, remove_reaction, update);
     generate_candid_method!(user, send_message_with_transfer_to_channel, update);
     generate_candid_method!(user, send_message_with_transfer_to_group, update);
@@ -49,6 +50,7 @@ fn main() {
     generate_candid_method!(user, undelete_messages, update);
     generate_candid_method!(user, unmute_notifications, update);
     generate_candid_method!(user, unpin_chat, update);
+    generate_candid_method!(user, unpin_chat_v2, update);
     generate_candid_method!(user, withdraw_crypto_v2, update);
 
     candid::export_service!();

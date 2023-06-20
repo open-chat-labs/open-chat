@@ -1,21 +1,25 @@
 use crate::model::channels::Channels;
+use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
 use crate::model::members::CommunityMembers;
 use crate::timer_job_types::TimerJob;
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use chat_events::ChatMetricsInternal;
 use fire_and_forget_handler::FireAndForgetHandler;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::ops::Deref;
 use types::{
-    AccessGate, AccessRules, CanisterId, ChannelId, CommunityCanisterCommunitySummary, CommunityMembership,
+    AccessGate, AccessRules, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
     Version,
 };
 use utils::env::Environment;
+use utils::regular_jobs::RegularJobs;
 
 mod activity_notifications;
 mod guards;
@@ -24,6 +28,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod regular_jobs;
 mod timer_job_types;
 mod updates;
 
@@ -36,11 +41,12 @@ canister_state!(RuntimeState);
 struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,
+    pub regular_jobs: RegularJobs<Data>,
 }
 
 impl RuntimeState {
-    pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
-        RuntimeState { env, data }
+    pub fn new(env: Box<dyn Environment>, data: Data, regular_jobs: RegularJobs<Data>) -> RuntimeState {
+        RuntimeState { env, data, regular_jobs }
     }
 
     pub fn is_caller_user_index(&self) -> bool {
@@ -121,6 +127,7 @@ impl RuntimeState {
             gate: data.gate.value.clone(),
             channels,
             membership,
+            metrics: data.cached_chat_metrics.value.clone(),
         }
     }
 
@@ -131,13 +138,6 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
-            canister_ids: CanisterIds {
-                user_index: self.data.user_index_canister_id,
-                group_index: self.data.group_index_canister_id,
-                local_user_index: self.data.local_user_index_canister_id,
-                local_group_index: self.data.local_group_index_canister_id,
-                notifications: self.data.notifications_canister_id,
-            },
             public: self.data.is_public,
             date_created: self.data.date_created,
             members: self.data.members.len(),
@@ -146,6 +146,14 @@ impl RuntimeState {
             blocked: self.data.members.blocked().len() as u32,
             invited: self.data.invited_users.len() as u32,
             frozen: self.data.is_frozen(),
+            groups_being_imported: self.data.groups_being_imported.summaries(),
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                group_index: self.data.group_index_canister_id,
+                local_user_index: self.data.local_user_index_canister_id,
+                local_group_index: self.data.local_group_index_canister_id,
+                notifications: self.data.notifications_canister_id,
+            },
         }
     }
 }
@@ -177,7 +185,9 @@ struct Data {
     timer_jobs: TimerJobs<TimerJob>,
     fire_and_forget_handler: FireAndForgetHandler,
     activity_notification_state: ActivityNotificationState,
+    groups_being_imported: GroupsBeingImported,
     test_mode: bool,
+    cached_chat_metrics: Timestamped<ChatMetrics>,
 }
 
 impl Data {
@@ -234,7 +244,9 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
+            groups_being_imported: GroupsBeingImported::default(),
             test_mode,
+            cached_chat_metrics: Timestamped::default(),
         }
     }
 
@@ -247,6 +259,16 @@ impl Data {
             || self.members.get(caller).is_some()
             || self.invited_users.get(&caller).is_some()
             || self.is_invite_code_valid(invite_code)
+    }
+
+    pub fn build_chat_metrics(&mut self, now: TimestampMillis) {
+        let mut metrics = ChatMetricsInternal::default();
+
+        for channel in self.channels.iter().filter(|c| c.chat.is_public) {
+            metrics.merge(channel.chat.events.metrics());
+        }
+
+        self.cached_chat_metrics = Timestamped::new(metrics.hydrate(), now);
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
@@ -262,6 +284,10 @@ impl Data {
     }
 }
 
+fn run_regular_jobs() {
+    mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+}
+
 #[derive(Serialize, Debug)]
 pub struct Metrics {
     pub memory_used: u64,
@@ -269,7 +295,6 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
     pub git_commit_id: String,
-    pub canister_ids: CanisterIds,
     pub public: bool,
     pub date_created: TimestampMillis,
     pub members: u32,
@@ -278,6 +303,8 @@ pub struct Metrics {
     pub blocked: u32,
     pub invited: u32,
     pub frozen: bool,
+    pub groups_being_imported: Vec<GroupBeingImportedSummary>,
+    pub canister_ids: CanisterIds,
 }
 
 #[derive(Serialize, Debug)]

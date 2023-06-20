@@ -56,6 +56,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     if channels_with_updates.is_empty()
         && channels_removed.is_empty()
         && state.data.events.latest_event_timestamp() <= args.updates_since
+        && state.data.cached_chat_metrics.timestamp <= args.updates_since
         && member
             .map(|m| m.notifications_muted.timestamp <= args.updates_since)
             .unwrap_or_default()
@@ -97,6 +98,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         channels_added,
         channels_updated,
         membership,
+        metrics: state.data.cached_chat_metrics.if_set_after(args.updates_since).cloned(),
     })
 }
 

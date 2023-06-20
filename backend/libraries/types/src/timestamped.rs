@@ -5,9 +5,9 @@ use std::ops::Deref;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct Timestamped<T> {
-    #[serde(rename = "v", alias = "value")]
+    #[serde(rename = "v")]
     pub value: T,
-    #[serde(rename = "t", alias = "timestamp")]
+    #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
 }
 

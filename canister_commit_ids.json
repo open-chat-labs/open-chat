@@ -1,7 +1,7 @@
 {
   "cycles_dispenser": "06e1b287efc463a466cef473fea544d501510dda",
-  "group": "4ded6b9f326ff9bed2da5da41ec7f64e16d1c37c",
-  "group_index": "a8d0a6722a2b72c07b746411137571ac8d04fd35",
+  "group": "353b85e875079f2af71891eb1310ec65ecf5b01d",
+  "group_index": "353b85e875079f2af71891eb1310ec65ecf5b01d",
   "local_group_index": "a8d0a6722a2b72c07b746411137571ac8d04fd35",
   "local_user_index": "4017b05791d0fb51088537f437822f3bd09fe414",
   "market_maker": "e6b3741cf5d6f59ed9b56bcb7f05e1e4cd7912b8",
@@ -11,7 +11,7 @@
   "proposals_bot": "d155915394655e4fb115231d2084b46826fc72c2",
   "proposal_validation": "523ab8e175033df06e3969a5b5d5c13dfe2da948",
   "storage_bucket": "7d524d0d6f8bba3f614f1292bdab97eb187aaf5c",
-  "storage_index": "06e1b287efc463a466cef473fea544d501510dda",
-  "user": "db0d52f193d5b411349c10f977800b325eb12373",
+  "storage_index": "78b868be84098d436fc853c6edd3087eddc60a3d",
+  "user": "8a8231d02b911ecfd0eacac5206807cf10be8059",
   "user_index": "fe0d59f730ad79f4888faa78226f09ca32383b98"
 }

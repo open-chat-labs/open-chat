@@ -155,3 +155,11 @@ pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {
         })
         .collect()
 }
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum ChatInList {
+    Direct(ChatId),
+    Group(ChatId),
+    Favourite(Chat),
+    Community(CommunityId, ChannelId),
+}

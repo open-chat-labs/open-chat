@@ -212,4 +212,18 @@ pub mod happy_path {
             response => panic!("'events_by_index' error: {response:?}"),
         }
     }
+
+    pub fn leave_group(env: &mut StateMachine, user: &User, group_id: ChatId) {
+        let response = super::leave_group(
+            env,
+            user.principal,
+            user.user_id.into(),
+            &user_canister::leave_group::Args {
+                chat_id: group_id,
+                correlation_id: 0,
+            },
+        );
+
+        assert!(matches!(response, user_canister::leave_group::Response::Success));
+    }
 }

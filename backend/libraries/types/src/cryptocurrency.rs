@@ -10,6 +10,7 @@ pub enum Cryptocurrency {
     SNS1,
     CKBTC,
     CHAT,
+    KINIC,
 }
 
 impl Cryptocurrency {
@@ -19,6 +20,7 @@ impl Cryptocurrency {
             Cryptocurrency::SNS1 => "SNS1",
             Cryptocurrency::CKBTC => "ckBTC",
             Cryptocurrency::CHAT => "CHAT",
+            Cryptocurrency::KINIC => "KINIC",
         }
     }
 
@@ -28,6 +30,7 @@ impl Cryptocurrency {
             Cryptocurrency::SNS1 => 8,
             Cryptocurrency::CKBTC => 8,
             Cryptocurrency::CHAT => 8,
+            Cryptocurrency::KINIC => 8,
         }
     }
 
@@ -37,6 +40,7 @@ impl Cryptocurrency {
             Cryptocurrency::SNS1 => 1_000,
             Cryptocurrency::CKBTC => 10,
             Cryptocurrency::CHAT => 100_000,
+            Cryptocurrency::KINIC => 100_000,
         }
     }
 
@@ -46,6 +50,7 @@ impl Cryptocurrency {
             Cryptocurrency::SNS1 => Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
             Cryptocurrency::CKBTC => Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
             Cryptocurrency::CHAT => Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap(),
+            Cryptocurrency::KINIC => Principal::from_text("73mez-iiaaa-aaaaq-aaasq-cai").unwrap(),
         }
     }
 }

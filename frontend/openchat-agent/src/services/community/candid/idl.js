@@ -822,6 +822,32 @@ export const idlFactory = ({ IDL }) => {
     'changed_by' : UserId,
     'now_public' : IDL.Bool,
   });
+<<<<<<< HEAD
+=======
+  const ThreadSummary = IDL.Record({
+    'latest_event_timestamp' : TimestampMillis,
+    'participant_ids' : IDL.Vec(UserId),
+    'reply_count' : IDL.Nat32,
+    'latest_event_index' : EventIndex,
+  });
+  const ChatId = CanisterId;
+  const ReplyContext = IDL.Record({
+    'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
+    'event_index' : EventIndex,
+  });
+  const Message = IDL.Record({
+    'forwarded' : IDL.Bool,
+    'content' : MessageContent,
+    'edited' : IDL.Bool,
+    'last_updated' : IDL.Opt(TimestampMillis),
+    'sender' : UserId,
+    'thread_summary' : IDL.Opt(ThreadSummary),
+    'message_id' : MessageId,
+    'replies_to' : IDL.Opt(ReplyContext),
+    'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
+    'message_index' : MessageIndex,
+  });
+>>>>>>> master
   const PermissionsChanged = IDL.Record({
     'changed_by' : UserId,
     'old_permissions' : GroupPermissions,

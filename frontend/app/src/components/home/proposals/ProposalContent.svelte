@@ -188,28 +188,28 @@
             <div class="summary" class:expanded={summaryExpanded} class:full={showFullSummary}>
                 <Markdown text={proposal.summary} inline={false} />
             </div>
-            <div class="actions">
-                {#if !showFullSummary}
-                    <div class="expand" on:click={toggleSummary}>
-                        <div class="label">
-                            {summaryExpanded ? $_("proposal.readless") : $_("proposal.readmore")}
-                        </div>
-                        <div class="icon" class:open={summaryExpanded}>
-                            <ChevronDown
-                                viewBox="0 -3 24 24"
-                                size="1.6em"
-                                color="var(--icon-txt)" />
-                        </div>
-                    </div>
-                {/if}
-                {#if payload !== undefined}
-                    <div on:click={() => (showPayload = true)} class="payload">
-                        <span>{$_("proposal.details")}</span>
-                        <OpenInNew color="var(--icon-txt)" />
-                    </div>
-                {/if}
-            </div>
         {/if}
+        <div class="actions">
+            {#if !showFullSummary}
+                <div class="expand" on:click={toggleSummary}>
+                    <div class="label">
+                        {summaryExpanded ? $_("proposal.readless") : $_("proposal.readmore")}
+                    </div>
+                    <div class="icon" class:open={summaryExpanded}>
+                        <ChevronDown
+                            viewBox="0 -3 24 24"
+                            size="1.6em"
+                            color="var(--icon-txt)" />
+                    </div>
+                </div>
+            {/if}
+            {#if payload !== undefined}
+                <div on:click={() => (showPayload = true)} class="payload">
+                    <span>{$_("proposal.details")}</span>
+                    <OpenInNew color="var(--icon-txt)" />
+                </div>
+            {/if}
+        </div>
 
         <ProposalProgressLayout>
             <div slot="adopt" class="adopt">

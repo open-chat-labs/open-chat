@@ -48,7 +48,7 @@ impl From<crate::updates::SuccessResult> for SuccessResult {
             avatar_id: value.avatar_id,
             user_canister_wasm_version: None,
             blocked_users_v2: value.blocked_users,
-            pinned_chats: value.favourite_chats.pinned.map(map_chats_to_chat_ids),
+            pinned_chats: value.favourite_chats.chats.map(map_chats_to_chat_ids),
         }
     }
 }

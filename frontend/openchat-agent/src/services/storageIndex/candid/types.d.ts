@@ -953,7 +953,6 @@ export interface RemoveUserArgs { 'user_id' : UserId }
 export type RemoveUserResponse = { 'Success' : null };
 export interface ReplyContext {
   'event_list_if_other' : [] | [[ChatId, [] | [MessageIndex]]],
-  'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
 export interface ReportedMessage {

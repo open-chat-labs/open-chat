@@ -1,4 +1,4 @@
-use crate::{ChatEventInternal, EventKey, MessageInternal, ProposalsUpdatedInternal, UpdatedMessageInternal};
+use crate::{ChatEventInternal, EventKey, MessageInternal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::ops::Deref;
 use types::{
     ChatEvent, EventIndex, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message, MessageId, MessageIndex,
-    PollEnded, PollVoteRegistered, ProposalUpdated, ProposalsUpdated, ThreadUpdated, TimestampMillis, UpdatedMessage, UserId,
+    TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -361,62 +361,6 @@ pub trait Reader {
                 event_index: e.index,
                 mentioned_by: e.event.sender,
             })
-    }
-
-    fn hydrate_updated_message(&self, message: &UpdatedMessageInternal) -> UpdatedMessage {
-        UpdatedMessage {
-            updated_by: message.updated_by,
-            event_index: self.event_index(message.message_id.into()).unwrap_or_default(),
-            message_id: message.message_id,
-        }
-    }
-
-    fn hydrate_poll_vote_registered(&self, poll_vote_registered: &PollVoteRegistered) -> UpdatedMessage {
-        UpdatedMessage {
-            updated_by: poll_vote_registered.user_id,
-            event_index: self.event_index(poll_vote_registered.message_id.into()).unwrap_or_default(),
-            message_id: poll_vote_registered.message_id,
-        }
-    }
-
-    fn hydrate_poll_ended(&self, message_index: MessageIndex) -> PollEnded {
-        let event_index = self.event_index(message_index.into()).unwrap_or_default();
-
-        PollEnded {
-            message_index,
-            event_index,
-        }
-    }
-
-    fn hydrate_thread_updated(
-        &self,
-        message_index: MessageIndex,
-        latest_thread_message_index_if_updated: Option<MessageIndex>,
-    ) -> ThreadUpdated {
-        let event_index = self.event_index(message_index.into()).unwrap_or_default();
-
-        ThreadUpdated {
-            message_index,
-            event_index,
-            latest_thread_message_index_if_updated,
-        }
-    }
-
-    fn hydrate_proposals_updated(&self, updates: &ProposalsUpdatedInternal) -> ProposalsUpdated {
-        let proposals = updates
-            .proposals
-            .iter()
-            .map(|&message_index| {
-                let event_index = self.event_index(message_index.into()).unwrap_or_default();
-
-                ProposalUpdated {
-                    event_index,
-                    message_index,
-                }
-            })
-            .collect();
-
-        ProposalsUpdated { proposals }
     }
 
     fn cap_then_hydrate_events<'a>(

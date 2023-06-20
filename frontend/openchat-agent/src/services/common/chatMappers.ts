@@ -465,6 +465,8 @@ export function apiToken(token: Cryptocurrency): ApiCryptocurrency {
             return { CKBTC: null };
         case "chat":
             return { CHAT: null };
+        case "kinic":
+            throw new Error("KINIC is not supported yet");
     }
 }
 
@@ -603,16 +605,7 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
     return {
         kind: "raw_reply_context",
         eventIndex: candid.event_index,
-        sourceContext:
-            optional(candid.event_list_if_other, replySourceContext) ??
-            optional(candid.chat_id_if_other, replySourceContextLegacy),
-    };
-}
-
-// We still need this for data that doesn't have the new format
-function replySourceContextLegacy(chatId: Principal): MessageContext {
-    return {
-        chatId: { kind: "group_chat", id: chatId.toString() }, // FIXME: this is importantly wrong
+        sourceContext: optional(candid.event_list_if_other, replySourceContext),
     };
 }
 
@@ -791,7 +784,6 @@ export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext
         !chatIdentifiersEqual(chatId, domain.sourceContext.chatId)
     ) {
         return {
-            chat_id_if_other: [Principal.fromText(domain.sourceContext.chatId.id)],
             event_list_if_other: [
                 [
                     Principal.fromText(domain.sourceContext.chatId.id),
@@ -802,7 +794,6 @@ export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext
         };
     } else {
         return {
-            chat_id_if_other: [],
             event_list_if_other: [],
             event_index: domain.eventIndex,
         };

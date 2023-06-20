@@ -3,7 +3,7 @@ use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::events::CommunityEvent;
 use crate::model::members::AddResult;
 use crate::updates::join_channel::join_channel_impl;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -14,6 +14,8 @@ use types::{AccessGate, CanisterId, ChannelId, MemberJoined, UsersUnblocked};
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
 async fn c2c_join_community(args: Args) -> Response {
+    run_regular_jobs();
+
     match read_state(|state| is_permitted_to_join(args.invite_code, args.principal, state)) {
         Ok(Some((gate, user_index_canister_id))) => {
             match check_if_passes_gate(&gate, args.user_id, user_index_canister_id).await {

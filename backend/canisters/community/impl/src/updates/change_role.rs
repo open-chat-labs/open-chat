@@ -1,7 +1,7 @@
 use crate::{
     activity_notifications::handle_activity_notification,
     model::{events::CommunityEvent, members::ChangeRoleResult},
-    mutate_state, read_state, RuntimeState,
+    mutate_state, read_state, run_regular_jobs, RuntimeState,
 };
 use canister_tracing_macros::trace;
 use community_canister::change_role::{Response::*, *};
@@ -12,6 +12,8 @@ use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 #[update]
 #[trace]
 async fn change_role(args: Args) -> Response {
+    run_regular_jobs();
+
     let PrepareResult {
         caller_id,
         user_index_canister_id,

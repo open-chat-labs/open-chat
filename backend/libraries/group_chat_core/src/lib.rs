@@ -28,7 +28,6 @@ pub use mentions::*;
 pub use roles::*;
 
 #[derive(Serialize, Deserialize)]
-#[serde(from = "GroupChatCorePrevious")]
 pub struct GroupChatCore {
     pub is_public: bool,
     pub name: String,
@@ -740,7 +739,7 @@ impl GroupChatCore {
             mentions.remove(&sender);
             for user_id in mentions.iter() {
                 if let Some(mentioned) = self.members.get_mut(user_id) {
-                    mentioned.mentions_v2.add(thread_root_message_index, message_index, now);
+                    mentioned.mentions.add(thread_root_message_index, message_index, now);
                 }
             }
 
@@ -1178,42 +1177,44 @@ impl GroupChatCore {
                 return UserSuspended;
             }
 
-            if let Some(target_member) = self.members.get(&target_user_id) {
-                if member
-                    .role
-                    .can_remove_members_with_role(target_member.role, &self.permissions)
-                {
-                    // Remove the user from the group
-                    self.members.remove(target_user_id);
+            let target_member_role = match self.members.get(&target_user_id) {
+                Some(m) => m.role,
+                None if block => GroupRoleInternal::Member,
+                _ => return TargetUserNotInGroup,
+            };
 
-                    if block {
-                        // Also block the user
-                        self.members.block(target_user_id);
-                    }
+            if member
+                .role
+                .can_remove_members_with_role(target_member_role, &self.permissions)
+            {
+                // Remove the user from the group
+                self.members.remove(target_user_id);
 
-                    // Push relevant event
-                    let event = if block {
-                        let event = UsersBlocked {
-                            user_ids: vec![target_user_id],
-                            blocked_by: user_id,
-                        };
-
-                        ChatEventInternal::UsersBlocked(Box::new(event))
-                    } else {
-                        let event = MembersRemoved {
-                            user_ids: vec![target_user_id],
-                            removed_by: user_id,
-                        };
-                        ChatEventInternal::ParticipantsRemoved(Box::new(event))
-                    };
-                    self.events.push_main_event(event, 0, now);
-
-                    Success
-                } else {
-                    NotAuthorized
+                if block && !self.members.block(target_user_id) {
+                    // Return Success if the user was already blocked
+                    return Success;
                 }
+
+                // Push relevant event
+                let event = if block {
+                    let event = UsersBlocked {
+                        user_ids: vec![target_user_id],
+                        blocked_by: user_id,
+                    };
+
+                    ChatEventInternal::UsersBlocked(Box::new(event))
+                } else {
+                    let event = MembersRemoved {
+                        user_ids: vec![target_user_id],
+                        removed_by: user_id,
+                    };
+                    ChatEventInternal::ParticipantsRemoved(Box::new(event))
+                };
+                self.events.push_main_event(event, 0, now);
+
+                Success
             } else {
-                TargetUserNotInGroup
+                NotAuthorized
             }
         } else {
             UserNotInGroup
@@ -1723,59 +1724,4 @@ pub struct SummaryUpdatesFromEvents {
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct GroupChatCorePrevious {
-    pub is_public: bool,
-    pub name: String,
-    pub description: String,
-    pub rules: AccessRules,
-    pub subtype: Timestamped<Option<GroupSubtype>>,
-    pub avatar: Option<Document>,
-    pub history_visible_to_new_joiners: bool,
-    pub members: GroupMembers,
-    pub events: ChatEvents,
-    pub date_created: TimestampMillis,
-    pub pinned_messages: Vec<MessageIndex>,
-    pub permissions: GroupPermissions,
-    pub date_last_pinned: Option<TimestampMillis>,
-    pub gate: Timestamped<Option<AccessGate>>,
-    #[serde(default)]
-    pub invited_users: InvitedUsers,
-}
-
-impl From<GroupChatCorePrevious> for GroupChatCore {
-    fn from(value: GroupChatCorePrevious) -> Self {
-        let created_by = if let ChatEventInternal::GroupChatCreated(g) = &value
-            .events
-            .main_events_reader(0)
-            .get(EventIndex::from(0).into())
-            .unwrap()
-            .event
-        {
-            g.created_by
-        } else {
-            panic!("Unable to determine who created the group")
-        };
-
-        GroupChatCore {
-            is_public: value.is_public,
-            name: value.name,
-            description: value.description,
-            rules: value.rules,
-            subtype: value.subtype,
-            avatar: value.avatar,
-            history_visible_to_new_joiners: value.history_visible_to_new_joiners,
-            members: value.members,
-            events: value.events,
-            created_by,
-            date_created: value.date_created,
-            pinned_messages: value.pinned_messages,
-            permissions: value.permissions,
-            date_last_pinned: value.date_last_pinned,
-            gate: value.gate,
-            invited_users: value.invited_users,
-        }
-    }
 }

@@ -15,9 +15,9 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    AccessGate, AccessRules, CanisterId, ChatMetrics, Cryptocurrency, Cycles, Document, EventIndex, FrozenGroupInfo,
-    GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis,
-    Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
+    AccessGate, AccessRules, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, EventIndex,
+    FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification,
+    TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -65,6 +65,14 @@ impl RuntimeState {
 
     pub fn is_caller_local_group_index(&self) -> bool {
         self.env.caller() == self.data.local_group_index_canister_id
+    }
+
+    pub fn is_caller_community_being_imported_into(&self) -> bool {
+        if let Some(community_id) = self.data.community_being_imported_into {
+            CommunityId::from(self.env.caller()) == community_id
+        } else {
+            false
+        }
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
@@ -200,6 +208,13 @@ impl RuntimeState {
             new_joiner_rewards: self.data.new_joiner_rewards.as_ref().map(|r| r.metrics()),
             frozen: self.data.is_frozen(),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
+            community_being_imported_into: self.data.community_being_imported_into,
+            serialized_chat_state_bytes: self
+                .data
+                .serialized_chat_state
+                .as_ref()
+                .map(|bytes| bytes.len() as u64)
+                .unwrap_or_default(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -232,6 +247,10 @@ struct Data {
     pub activity_notification_state: ActivityNotificationState,
     pub instruction_counts_log: InstructionCountsLog,
     pub test_mode: bool,
+    #[serde(default)]
+    pub community_being_imported_into: Option<CommunityId>,
+    #[serde(default)]
+    pub serialized_chat_state: Option<Vec<u8>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -292,6 +311,8 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             instruction_counts_log: InstructionCountsLog::default(),
+            community_being_imported_into: None,
+            serialized_chat_state: None,
         }
     }
 
@@ -417,6 +438,8 @@ pub struct Metrics {
     pub new_joiner_rewards: Option<NewJoinerRewardMetrics>,
     pub frozen: bool,
     pub instruction_counts: Vec<InstructionCountEntry>,
+    pub community_being_imported_into: Option<CommunityId>,
+    pub serialized_chat_state_bytes: u64,
     pub canister_ids: CanisterIds,
 }
 

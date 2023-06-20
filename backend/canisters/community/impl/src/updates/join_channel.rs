@@ -1,3 +1,6 @@
+use crate::model::channels::Channel;
+use crate::model::members::CommunityMemberInternal;
+use crate::run_regular_jobs;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
@@ -6,11 +9,13 @@ use community_canister::join_channel::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_chat_core::AddResult;
 use ic_cdk_macros::update;
-use types::{AccessGate, CanisterId, ChannelId, EventIndex, MemberJoined, MessageIndex, UserId};
+use types::{AccessGate, CanisterId, ChannelId, EventIndex, MemberJoined, MessageIndex, TimestampMillis, UserId};
 
 #[update]
 #[trace]
 async fn join_channel(args: Args) -> Response {
+    run_regular_jobs();
+
     let caller = read_state(|state| state.env.caller());
     join_channel_impl(args.channel_id, caller).await
 }
@@ -77,50 +82,13 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
     if let Some(member) = state.data.members.get_mut(user_principal) {
         if let Some(channel) = state.data.channels.get_mut(&channel_id) {
             let now = state.env.now();
-            let min_visible_event_index;
-            let min_visible_message_index;
-
-            if let Some(invitation) = channel.chat.invited_users.get(&member.user_id) {
-                min_visible_event_index = invitation.min_visible_event_index;
-                min_visible_message_index = invitation.min_visible_message_index;
-            } else if channel.chat.history_visible_to_new_joiners {
-                min_visible_event_index = EventIndex::default();
-                min_visible_message_index = MessageIndex::default();
-            } else {
-                let events_reader = channel.chat.events.main_events_reader(now);
-                min_visible_event_index = events_reader.next_event_index();
-                min_visible_message_index = events_reader.next_message_index();
-            };
-
-            match channel.chat.members.add(
-                member.user_id,
-                now,
-                min_visible_event_index,
-                min_visible_message_index,
-                state.data.is_public,
-            ) {
+            match join_channel_unchecked(channel, member, state.data.is_public, now) {
                 AddResult::Success(channel_member) => {
-                    let invitation = channel.chat.invited_users.remove(&member.user_id, now);
-
-                    channel.chat.events.push_main_event(
-                        ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
-                            user_id: member.user_id,
-                            invited_by: invitation.map(|i| i.invited_by),
-                        })),
-                        0,
-                        now,
-                    );
-
-                    member.channels.insert(channel_id);
-
                     let summary = channel.summary(Some(&channel_member), now);
-
                     handle_activity_notification(state);
-
                     Success(Box::new(summary))
                 }
                 AddResult::AlreadyInGroup => {
-                    member.channels.insert(channel_id);
                     let summary = channel.summary_if_member(&member.user_id, now).unwrap();
                     AlreadyInChannel(Box::new(summary))
                 }
@@ -133,4 +101,57 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
     } else {
         UserNotInCommunity
     }
+}
+
+pub(crate) fn join_channel_unchecked(
+    channel: &mut Channel,
+    member: &mut CommunityMemberInternal,
+    notifications_muted: bool,
+    now: TimestampMillis,
+) -> AddResult {
+    let min_visible_event_index;
+    let min_visible_message_index;
+
+    if let Some(invitation) = channel.chat.invited_users.get(&member.user_id) {
+        min_visible_event_index = invitation.min_visible_event_index;
+        min_visible_message_index = invitation.min_visible_message_index;
+    } else if channel.chat.history_visible_to_new_joiners {
+        min_visible_event_index = EventIndex::default();
+        min_visible_message_index = MessageIndex::default();
+    } else {
+        let events_reader = channel.chat.events.main_events_reader(now);
+        min_visible_event_index = events_reader.next_event_index();
+        min_visible_message_index = events_reader.next_message_index();
+    };
+
+    let result = channel.chat.members.add(
+        member.user_id,
+        now,
+        min_visible_event_index,
+        min_visible_message_index,
+        notifications_muted,
+    );
+
+    match &result {
+        AddResult::Success(_) => {
+            let invitation = channel.chat.invited_users.remove(&member.user_id, now);
+
+            channel.chat.events.push_main_event(
+                ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
+                    user_id: member.user_id,
+                    invited_by: invitation.map(|i| i.invited_by),
+                })),
+                0,
+                now,
+            );
+
+            member.channels.insert(channel.id);
+        }
+        AddResult::AlreadyInGroup => {
+            member.channels.insert(channel.id);
+        }
+        AddResult::Blocked | AddResult::UserLimitReached(_) => {}
+    }
+
+    result
 }

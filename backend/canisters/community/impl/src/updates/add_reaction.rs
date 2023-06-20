@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::members::CommunityMembers;
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::Reader;
@@ -11,6 +11,8 @@ use types::{CommunityReactionAddedNotification, EventIndex, EventWrapper, Messag
 #[update_candid_and_msgpack]
 #[trace]
 fn add_reaction(args: Args) -> Response {
+    run_regular_jobs();
+
     mutate_state(|state| add_reaction_impl(args, state))
 }
 

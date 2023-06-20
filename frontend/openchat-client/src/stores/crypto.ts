@@ -9,6 +9,7 @@ const cryptoBalanceStore = writable<BalanceByCrypto>({
     sns1: BigInt(0),
     ckbtc: BigInt(0),
     chat: BigInt(0),
+    kinic: BigInt(0),
 });
 
 export const cryptoBalance = {

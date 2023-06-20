@@ -1,4 +1,4 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::remove_reaction::{Response::*, *};
 use group_chat_core::AddRemoveReactionResult;
@@ -11,6 +11,8 @@ fn remove_reaction(args: Args) -> Response {
 }
 
 fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
+    run_regular_jobs();
+
     if state.data.is_frozen() {
         return CommunityFrozen;
     }

@@ -676,6 +676,12 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
         };
     }
 
+    if ("Empty" in candid) {
+        return {
+            kind: "empty",
+        };
+    }
+
     // todo - we know there are other event types that we are not dealing with yet
     throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
 }

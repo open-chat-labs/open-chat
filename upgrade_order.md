@@ -1,3 +1,3 @@
-Website -> User/Group
+GroupIndex -> User/Group
 
-Website must go before user and group because the `chat_id` field has been removed from the `MessageMatch` type
+GroupIndex must go ahead of group because participant_count has been renamed (with alias) to member_count in PublicGroupActivity and Activity
