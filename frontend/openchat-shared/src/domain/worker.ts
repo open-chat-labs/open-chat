@@ -140,6 +140,7 @@ import type {
     UpdateCommunityResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
+import type { MessageContextMap } from "../utils/map";
 /**
  * Worker request types
  */
@@ -930,7 +931,7 @@ export type WorkerResponse =
     | Response<DeletedDirectMessageResponse>
     | Response<DeletedGroupMessageResponse>
     | Response<undefined>
-    | Response<Record<string, Record<number, EventWrapper<Message>>>>
+    | Response<MessageContextMap<Record<number, EventWrapper<Message>>>>
     | Response<PayForDiamondMembershipResponse>
     | Response<ClaimPrizeResponse>
     | Response<UpdateMarketMakerConfigResponse>
@@ -1484,7 +1485,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends SetUserUpgradeConcurrency
     ? SetUserUpgradeConcurrencyResponse
     : T extends LoadFailedMessages
-    ? Record<string, Record<number, EventWrapper<Message>>>
+    ? MessageContextMap<Record<number, EventWrapper<Message>>>
     : T extends DeleteFailedMessage
     ? void
     : T extends MarkSuspectedBot

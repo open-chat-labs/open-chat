@@ -19,13 +19,20 @@ import {
     type UpdatedEvent,
     ChatMap,
     UnsupportedValueError,
+    MessageContext,
+    MessageContextMap,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
+import { parse } from "uuid";
 
 const CACHE_VERSION = 68;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
+
+type FailedMessageKey = MessageContext & {
+    messageId: bigint;
+};
 
 type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
     chatId: ChatIdentifier;
@@ -74,14 +81,22 @@ function padMessageIndex(i: number): string {
     return i.toString().padStart(10, "0");
 }
 
-export function createFailedCacheKey(
-    chatId: ChatIdentifier,
-    messageId: bigint,
-    threadRootMessageIndex?: number
-): string {
+export function createFailedCacheKey(context: MessageContext, messageId: bigint): string {
+    return JSON.stringify({
+        ...context,
+        messageId,
+    });
+    // return `${messageContextToString(context)}_${messageId}`;
+}
+
+function messageContextToString({ chatId, threadRootMessageIndex }: MessageContext): string {
     return threadRootMessageIndex === undefined
-        ? `${chatIdentiferToString(chatId)}_${messageId}`
-        : `${chatIdentiferToString(chatId)}_${threadRootMessageIndex}_${messageId}`;
+        ? chatIdentiferToString(chatId)
+        : `${chatIdentiferToString(chatId)}_${threadRootMessageIndex}`;
+}
+
+export function createCacheKey(context: MessageContext, index: number): string {
+    return `${messageContextToString(context)}_${padMessageIndex(index)}`;
 }
 
 function chatIdentiferToString(chatId: ChatIdentifier): string {
@@ -95,16 +110,6 @@ function chatIdentiferToString(chatId: ChatIdentifier): string {
         return chatId.groupId;
     }
     throw new UnsupportedValueError("Unknown chatId kind", chatId);
-}
-
-export function createCacheKey(
-    chatId: ChatIdentifier,
-    index: number,
-    threadRootMessageIndex?: number
-): string {
-    return threadRootMessageIndex === undefined
-        ? `${chatIdentiferToString(chatId)}_${padMessageIndex(index)}`
-        : `${chatIdentiferToString(chatId)}_${threadRootMessageIndex}_${padMessageIndex(index)}`;
 }
 
 export function openCache(principal: Principal): Database {
@@ -178,7 +183,10 @@ export async function setCachedChats(
 
     const deleteRequests = updatedEvents.entries().flatMap(([chatId, indexes]) => {
         return indexes.map((i) => {
-            const key = createCacheKey(chatId, i.eventIndex, i.threadRootMessageIndex);
+            const key = createCacheKey(
+                { chatId, threadRootMessageIndex: i.threadRootMessageIndex },
+                i.eventIndex
+            );
             return i.threadRootMessageIndex === undefined
                 ? eventsStore.delete(key)
                 : threadsStore.delete(key);
@@ -229,7 +237,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     const middleEvent = await resolvedDb.getFromIndex(
         store,
         "messageIdx",
-        createCacheKey(chatId, middleMessageIndex, threadRootMessageIndex)
+        createCacheKey({ chatId, threadRootMessageIndex }, middleMessageIndex)
     );
     const midpoint = middleEvent?.index;
 
@@ -254,8 +262,8 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     console.log("aggregate events window: events from ", lowerBound, " to ", upperBound);
 
     const range = IDBKeyRange.bound(
-        createCacheKey(chatId, lowerBound, threadRootMessageIndex),
-        createCacheKey(chatId, upperBound, threadRootMessageIndex)
+        createCacheKey({ chatId, threadRootMessageIndex }, lowerBound),
+        createCacheKey({ chatId, threadRootMessageIndex }, upperBound)
     );
 
     const result = await resolvedDb.getAll(store, range);
@@ -363,8 +371,8 @@ async function aggregateEvents<T extends ChatEvent>(
     const upperBound = ascending ? Math.min(max, startIndex + MAX_EVENTS) : startIndex;
 
     const range = IDBKeyRange.bound(
-        createCacheKey(chatId, lowerBound, threadRootMessageIndex),
-        createCacheKey(chatId, upperBound, threadRootMessageIndex)
+        createCacheKey({ chatId, threadRootMessageIndex }, lowerBound),
+        createCacheKey({ chatId, threadRootMessageIndex }, upperBound)
     );
 
     const store = threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
@@ -383,7 +391,7 @@ export async function getCachedMessageByIndex<T extends ChatEvent>(
     chatId: ChatIdentifier,
     threadRootMessageIndex?: number
 ): Promise<EventWrapper<T> | undefined> {
-    const key = createCacheKey(chatId, eventIndex, threadRootMessageIndex);
+    const key = createCacheKey({ chatId, threadRootMessageIndex }, eventIndex);
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     return (await db).get(store, key) as Promise<EventWrapper<T> | undefined>;
 }
@@ -462,7 +470,7 @@ function makeSerialisable<T extends ChatEvent>(
     return {
         ...ev,
         chatId,
-        messageKey: createCacheKey(chatId, ev.event.messageIndex, threadRootMessageIndex),
+        messageKey: createCacheKey({ chatId, threadRootMessageIndex }, ev.event.messageIndex),
         event: {
             ...ev.event,
             content: removeBlobs ? removeBlobData(ev.event.content) : ev.event.content,
@@ -511,7 +519,7 @@ export async function removeFailedMessage(
 ): Promise<void> {
     const store =
         threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
-    (await db).delete(store, createFailedCacheKey(chatId, messageId, threadRootMessageIndex));
+    (await db).delete(store, createFailedCacheKey({ chatId, threadRootMessageIndex }, messageId));
 }
 
 export async function recordFailedMessage<T extends Message>(
@@ -525,7 +533,7 @@ export async function recordFailedMessage<T extends Message>(
     (await db).put(
         store,
         makeSerialisable<T>(event, chatId, false, threadRootMessageIndex),
-        createFailedCacheKey(chatId, event.event.messageId, threadRootMessageIndex)
+        createFailedCacheKey({ chatId, threadRootMessageIndex }, event.event.messageId)
     );
 }
 
@@ -549,23 +557,25 @@ function rebuildBlobUrls(content: MessageContent): MessageContent {
     return content;
 }
 
+// TODO - hard to say whether this will work until we try it
 export async function loadFailedMessages(
     db: Database
-): Promise<Record<string, Record<number, EventWrapper<Message>>>> {
+): Promise<MessageContextMap<Record<number, EventWrapper<Message>>>> {
     const chatMessages = await (await db).getAll("failed_chat_messages");
     const threadMessages = await (await db).getAll("failed_thread_messages");
     return [...chatMessages, ...threadMessages].reduce((res, ev) => {
         if (ev.messageKey === undefined) return res;
-
-        // drop the messageId from the key
-        const key = ev.messageKey.split("_").slice(0, -1).join("_");
-        if (res[key] === undefined) {
-            res[key] = {};
+        const parsedKey = JSON.parse(ev.messageKey) as MessageContext;
+        if (!res.has(parsedKey)) {
+            res.set(parsedKey, {});
         }
         ev.event.content = rebuildBlobUrls(ev.event.content);
-        res[key][Number(ev.event.messageId)] = ev;
+        const val = res.get(parsedKey);
+        if (val) {
+            val[Number(ev.event.messageId)] = ev;
+        }
         return res;
-    }, {} as Record<string, Record<number, EventWrapper<Message>>>);
+    }, new MessageContextMap<Record<number, EventWrapper<Message>>>());
 }
 
 export async function setCachedEvents<T extends ChatEvent>(
@@ -585,7 +595,7 @@ export async function setCachedEvents<T extends ChatEvent>(
         resp.events.map(async (event) => {
             await eventStore.put(
                 makeSerialisable<T>(event, chatId, true, threadRootMessageIndex),
-                createCacheKey(chatId, event.index, threadRootMessageIndex)
+                createCacheKey({ chatId, threadRootMessageIndex }, event.index)
             );
         })
     );
@@ -618,7 +628,7 @@ export async function setCachedMessageIfNotExists(
     messageEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number
 ): Promise<void> {
-    const key = createCacheKey(chatId, messageEvent.index, threadRootMessageIndex);
+    const key = createCacheKey({ chatId, threadRootMessageIndex }, messageEvent.index);
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const tx = (await db).transaction([store], "readwrite", {
         durability: "relaxed",
@@ -691,7 +701,7 @@ export async function loadMessagesByMessageIndex(
             const evt = await resolvedDb.getFromIndex(
                 "chat_events",
                 "messageIdx",
-                createCacheKey(chatId, msgIdx)
+                createCacheKey({ chatId }, msgIdx)
             );
             if (evt?.event.kind === "message") {
                 messages.push(evt as EventWrapper<Message>);

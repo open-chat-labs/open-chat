@@ -1,12 +1,14 @@
 import { writable } from "svelte/store";
 import { createSetStore } from "./setStore";
-import type { EventWrapper, Message } from "openchat-shared";
+import { EventWrapper, Message, MessageContext, MessageContextMap } from "openchat-shared";
 import { revokeObjectUrls } from "../utils/chat";
 
-export type UnconfirmedMessages = Record<
-    string,
-    { messages: EventWrapper<Message>[]; messageIds: Set<bigint> }
->;
+type UnconfirmedState = {
+    messages: EventWrapper<Message>[];
+    messageIds: Set<bigint>;
+};
+
+export type UnconfirmedMessages = MessageContextMap<UnconfirmedState>;
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 function createUnconfirmedReadByThemStore() {
@@ -15,21 +17,21 @@ function createUnconfirmedReadByThemStore() {
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 function createUnconfirmedStore() {
-    const store = writable<UnconfirmedMessages>({} as UnconfirmedMessages);
-    let storeValue: UnconfirmedMessages = {};
+    const store = writable<UnconfirmedMessages>(new MessageContextMap<UnconfirmedState>());
+    let storeValue: UnconfirmedMessages = new MessageContextMap<UnconfirmedState>();
     store.subscribe((v) => (storeValue = v));
 
     function pruneOldMessages(): void {
-        if (Object.keys(storeValue).length > 0) {
+        if (storeValue.size > 0) {
             const oneMinuteAgo = BigInt(Date.now() - 60000);
             store.update((state) => {
-                return Object.entries(state).reduce((result, [key, { messages }]) => {
+                return state.entries().reduce((result, [key, { messages }]) => {
                     return applyUpdateToState(
                         result,
                         key,
                         removeWhere(messages, (m) => m.timestamp < oneMinuteAgo)
                     );
-                }, {} as UnconfirmedMessages);
+                }, new MessageContextMap<UnconfirmedState>());
             });
         }
     }
@@ -49,21 +51,19 @@ function createUnconfirmedStore() {
 
     function applyUpdateToState(
         state: UnconfirmedMessages,
-        keyUpdated: string,
+        keyUpdated: MessageContext,
         messages: EventWrapper<Message>[]
     ): UnconfirmedMessages {
+        // TODO - double check that we have not affected the reactivity of the store by mutating the state
         if (messages.length === 0) {
-            // Remove the key from the state
-            const { [keyUpdated]: _, ...withKeyRemoved } = state;
-            return withKeyRemoved;
+            state.delete(keyUpdated);
+            return state;
         }
-        return {
-            ...state,
-            [keyUpdated]: {
-                messages,
-                messageIds: new Set<bigint>(messages.map((m) => m.event.messageId)),
-            },
-        };
+        state.set(keyUpdated, {
+            messages,
+            messageIds: new Set<bigint>(messages.map((m) => m.event.messageId)),
+        });
+        return state;
     }
 
     // Remove old messages every 30 seconds
@@ -71,25 +71,23 @@ function createUnconfirmedStore() {
 
     return {
         subscribe: store.subscribe,
-        getMessages: (key: string): EventWrapper<Message>[] => {
-            return storeValue[key]?.messages ?? [];
+        getMessages: (key: MessageContext): EventWrapper<Message>[] => {
+            return storeValue.get(key)?.messages ?? [];
         },
-        add: (key: string, message: EventWrapper<Message>): void => {
+        add: (key: MessageContext, message: EventWrapper<Message>): void => {
             store.update((state) => {
-                const chatEvents = state[key] ?? {};
-                const messages = [...(chatEvents.messages ?? []), message];
+                const messages = [...(state.get(key)?.messages ?? []), message];
                 return applyUpdateToState(state, key, messages);
             });
         },
-        contains: (key: string, messageId: bigint): boolean => {
-            return storeValue[key]?.messageIds.has(messageId) ?? false;
+        contains: (key: MessageContext, messageId: bigint): boolean => {
+            return storeValue.get(key)?.messageIds.has(messageId) ?? false;
         },
-        delete: (key: string, messageId: bigint): boolean => {
-            if (storeValue[key]?.messageIds.has(messageId)) {
+        delete: (key: MessageContext, messageId: bigint): boolean => {
+            if (storeValue.get(key)?.messageIds.has(messageId)) {
                 store.update((state) => {
-                    const chatEvents = state[key] ?? {};
                     const messages = removeWhere(
-                        chatEvents.messages ?? [],
+                        state.get(key)?.messages ?? [],
                         (m) => m.event.messageId === messageId
                     );
                     return applyUpdateToState(state, key, messages);

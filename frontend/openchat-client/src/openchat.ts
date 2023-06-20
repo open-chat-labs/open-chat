@@ -1880,13 +1880,13 @@ export class OpenChat extends OpenChatAgentWorker {
         const userIds = this.userIdsFromEvents(resp.events);
         await this.updateUserStore(chatId, userIds);
 
-        const key = `${chatId}_${threadRootMessageIndex}`;
+        const context = { chatId, threadRootMessageIndex };
 
         this.addServerEventsToStores(chatId, resp.events, threadRootMessageIndex);
 
         for (const event of resp.events) {
             if (event.event.kind === "message") {
-                unconfirmed.delete(key, event.event.messageId);
+                unconfirmed.delete(context, event.event.messageId);
             }
         }
         return [resp.events, userIds];
@@ -2415,8 +2415,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 threadRootMessageIndex,
             });
         }
-        const key = this.localMessagesKey(chatId, threadRootMessageIndex);
-        unconfirmed.delete(key, messageId);
+        const context = { chatId, threadRootMessageIndex };
+        unconfirmed.delete(context, messageId);
         if (threadRootMessageIndex === undefined) {
             messagesRead.removeUnconfirmedMessage(chatId, messageId);
         }
@@ -2472,8 +2472,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         this.user.userId,
                         undefined
                     );
-                    // TODO sort this out
-                    failedMessagesStore.add(chatIdentifierToString(chatId), event);
+                    failedMessagesStore.add({ chatId }, event);
                     this.dispatchEvent(
                         new SendMessageFailed(msg.content.kind === "crypto_content")
                     );
@@ -2487,8 +2486,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     this.user.userId,
                     undefined
                 );
-                // TODO sort this out
-                failedMessagesStore.add(chatIdentifierToString(chatId), event);
+                failedMessagesStore.add({ chatId }, event);
                 this.dispatchEvent(new SendMessageFailed(msg.content.kind === "crypto_content"));
                 this._logger.error("Exception forwarding message", err);
             });
@@ -2529,11 +2527,12 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         const key = this.localMessagesKey(chatId, threadRootMessageIndex);
+        const context = { chatId, threadRootMessageIndex };
 
         for (const event of newEvents) {
             if (event.event.kind === "message") {
-                failedMessagesStore.delete(key, event.event.messageId);
-                if (unconfirmed.delete(key, event.event.messageId)) {
+                failedMessagesStore.delete(context, event.event.messageId);
+                if (unconfirmed.delete(context, event.event.messageId)) {
                     if (threadRootMessageIndex === undefined) {
                         messagesRead.confirmMessage(
                             chatId,
@@ -2565,10 +2564,10 @@ export class OpenChat extends OpenChatAgentWorker {
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined
     ): Promise<void> {
-        const key = this.localMessagesKey(clientChat.id, threadRootMessageIndex);
+        const context = { chatId: clientChat.id, threadRootMessageIndex };
 
-        unconfirmed.add(key, messageEvent);
-        failedMessagesStore.delete(key, messageEvent.event.messageId);
+        unconfirmed.add(context, messageEvent);
+        failedMessagesStore.delete(context, messageEvent.event.messageId);
 
         rtcConnectionsManager.sendMessage([...chatStateStore.getProp(clientChat.id, "userIds")], {
             kind: "remote_user_sent_message",
@@ -2604,8 +2603,7 @@ export class OpenChat extends OpenChatAgentWorker {
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<void> {
-        const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
-        failedMessagesStore.delete(localKey, event.event.messageId);
+        failedMessagesStore.delete({ chatId, threadRootMessageIndex }, event.event.messageId);
         return this.sendRequest({
             kind: "deleteFailedMessage",
             chatId,
@@ -2626,7 +2624,7 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
-        const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
+        const context = { chatId, threadRootMessageIndex };
 
         const [nextEventIndex, nextMessageIndex] =
             threadRootMessageIndex !== undefined
@@ -2650,7 +2648,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const canRetry = this.canRetryMessage(retryEvent.event.content);
 
         // add the *new* event to unconfirmed
-        unconfirmed.add(localKey, retryEvent);
+        unconfirmed.add(context, retryEvent);
 
         // TODO - what about mentions?
         this.sendRequest({
@@ -2696,7 +2694,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         this.user.userId,
                         threadRootMessageIndex
                     );
-                    failedMessagesStore.add(localKey, retryEvent);
+                    failedMessagesStore.add(context, retryEvent);
                     this.dispatchEvent(new SendMessageFailed(!canRetry));
                 }
             })
@@ -2708,7 +2706,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     this.user.userId,
                     threadRootMessageIndex
                 );
-                failedMessagesStore.add(localKey, retryEvent);
+                failedMessagesStore.add(context, retryEvent);
                 this._logger.error("Exception sending message", err);
                 this.dispatchEvent(new SendMessageFailed(!canRetry));
             });
@@ -2733,7 +2731,7 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
-        const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
+        const context = { chatId, threadRootMessageIndex };
 
         if (textContent || fileToAttach) {
             const [nextEventIndex, nextMessageIndex] =
@@ -2794,7 +2792,7 @@ export class OpenChat extends OpenChatAgentWorker {
                             threadRootMessageIndex
                         );
                         if (canRetry) {
-                            failedMessagesStore.add(localKey, event);
+                            failedMessagesStore.add(context, event);
                         }
                         this.dispatchEvent(new SendMessageFailed(!canRetry));
                     }
@@ -2808,7 +2806,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         threadRootMessageIndex
                     );
                     if (canRetry) {
-                        failedMessagesStore.add(localKey, event);
+                        failedMessagesStore.add(context, event);
                     }
                     this._logger.error("Exception sending message", err);
                     this.dispatchEvent(new SendMessageFailed(!canRetry));
@@ -3042,8 +3040,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 parsedMsg.kind === "remote_user_sent_message" &&
                 parsedMsg.threadRootMessageIndex === undefined
             ) {
-                // TODO sort this out
-                unconfirmed.add(chatIdentifierToString(fromChatId), parsedMsg.messageEvent);
+                unconfirmed.add({ chatId: fromChatId }, parsedMsg.messageEvent);
             }
         }
     }
@@ -3108,7 +3105,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 ? nextEventAndMessageIndexesForThread(events)
                 : nextEventAndMessageIndexes();
 
-        const key = this.localMessagesKey(chatId, threadRootMessageIndex);
+        const context = { chatId, threadRootMessageIndex };
 
         if (threadRootMessageIndex !== undefined) {
             this.dispatchEvent(new SendingThreadMessage());
@@ -3117,7 +3114,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         window.setTimeout(() => {
-            unconfirmed.add(key, {
+            unconfirmed.add(context, {
                 ...message.messageEvent,
                 index: eventIndex,
                 event: {
@@ -3834,11 +3831,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         latestMessage !== undefined &&
                         latestMessage.sender === this.user.userId &&
                         (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
-                        // TODO sort this out
-                        !unconfirmed.contains(
-                            chatIdentifierToString(chat.id),
-                            latestMessage.messageId
-                        )
+                        !unconfirmed.contains({ chatId: chat.id }, latestMessage.messageId)
                     ) {
                         messagesRead.markReadUpTo(chat.id, latestMessage.messageIndex);
                     }

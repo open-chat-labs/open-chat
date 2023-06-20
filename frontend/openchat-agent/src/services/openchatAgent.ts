@@ -149,11 +149,13 @@ import {
     ChatMap,
     UpdatedEvent,
     chatIdentifierToString,
+    MessageContext,
+    MessageContextMap,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
 import { waitAll } from "../utils/promise";
-import { MessageContextMap } from "../utils/messageContext";
+import { AsyncMessageContextMap } from "../utils/messageContext";
 import { CommunityClient } from "./community/community.client";
 
 export class OpenChatAgent extends EventTarget {
@@ -623,8 +625,8 @@ export class OpenChatAgent extends EventTarget {
         defaultChatId: ChatIdentifier,
         events: EventWrapper<T>[],
         threadRootMessageIndex: number | undefined
-    ): MessageContextMap<number> {
-        return events.reduce<MessageContextMap<number>>((result, ev) => {
+    ): AsyncMessageContextMap<number> {
+        return events.reduce<AsyncMessageContextMap<number>>((result, ev) => {
             if (
                 ev.event.kind === "message" &&
                 ev.event.repliesTo &&
@@ -639,16 +641,16 @@ export class OpenChatAgent extends EventTarget {
                 );
             }
             return result;
-        }, new MessageContextMap());
+        }, new AsyncMessageContextMap());
     }
 
     private messagesFromEventsResponse<T extends ChatEvent>(
-        chatId: string,
+        context: MessageContext,
         resp: EventsResponse<T>
-    ): [string, EventWrapper<Message>[]] {
+    ): [MessageContext, EventWrapper<Message>[]] {
         if (resp !== "events_failed") {
             return [
-                chatId,
+                context,
                 resp.events.reduce((msgs, ev) => {
                     if (ev.event.kind === "message") {
                         msgs.push(ev as EventWrapper<Message>);
@@ -657,7 +659,7 @@ export class OpenChatAgent extends EventTarget {
                 }, [] as EventWrapper<Message>[]),
             ];
         } else {
-            return [chatId, []];
+            return [context, []];
         }
     }
 
@@ -666,16 +668,16 @@ export class OpenChatAgent extends EventTarget {
         events: EventWrapper<T>[],
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
-    ): Promise<MessageContextMap<EventWrapper<Message>>> {
+    ): Promise<AsyncMessageContextMap<EventWrapper<Message>>> {
         const contextMap = this.findMissingEventIndexesByChat(
             currentChatId,
             events,
             threadRootMessageIndex
         );
 
-        if (contextMap.length === 0) return Promise.resolve(new MessageContextMap());
+        if (contextMap.length === 0) return Promise.resolve(new AsyncMessageContextMap());
 
-        return contextMap.asyncMap((_key, ctx, idxs) => {
+        return contextMap.asyncMap((ctx, idxs) => {
             const chatId = ctx.chatId;
             const chatKind = chatId.kind;
 
@@ -687,16 +689,16 @@ export class OpenChatAgent extends EventTarget {
             if (chatKind === "direct_chat") {
                 return this.userClient
                     .chatEventsByIndex(idxs, chatId, ctx.threadRootMessageIndex, latestIndex)
-                    .then((resp) => this.messagesFromEventsResponse(chatId.userId, resp));
+                    .then((resp) => this.messagesFromEventsResponse(ctx, resp));
             } else if (chatKind === "group_chat") {
                 const client = this.getGroupClient(chatId.groupId);
                 return client
                     .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, latestIndex)
-                    .then((resp) => this.messagesFromEventsResponse(chatId.groupId, resp));
+                    .then((resp) => this.messagesFromEventsResponse(ctx, resp));
             } else if (chatKind === "channel") {
                 throw new Error("TODO - Not implemented");
             } else {
-                return Promise.resolve(["", []]);
+                throw new UnsupportedValueError("unknown chatid kind supplied", chatId);
             }
         });
     }
@@ -704,7 +706,7 @@ export class OpenChatAgent extends EventTarget {
     private rehydrateEvent<T extends ChatEvent>(
         ev: EventWrapper<T>,
         defaultChatId: ChatIdentifier,
-        missingReplies: MessageContextMap<EventWrapper<Message>>,
+        missingReplies: AsyncMessageContextMap<EventWrapper<Message>>,
         threadRootMessageIndex: number | undefined
     ): EventWrapper<T> {
         if (ev.event.kind === "message") {
@@ -1721,7 +1723,7 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.markSuspectedBot();
     }
 
-    loadFailedMessages(): Promise<Record<string, Record<number, EventWrapper<Message>>>> {
+    loadFailedMessages(): Promise<MessageContextMap<Record<number, EventWrapper<Message>>>> {
         return loadFailedMessages(this.db);
     }
 
