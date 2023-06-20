@@ -42,6 +42,7 @@
     let messagesDivHeight: number;
     let previousLatestEventIndex: number | undefined = undefined;
 
+    $: selectedMessageContext = client.selectedMessageContext;
     $: focusMessageIndex = client.focusThreadMessageIndex;
     $: currentChatMembers = client.currentChatMembers;
     $: lastCryptoSent = client.lastCryptoSent;
@@ -228,15 +229,15 @@
     }
 
     function isConfirmed(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "message") {
-            return !unconfirmed.contains($selectedThreadKey ?? "", evt.event.messageId);
+        if (evt.event.kind === "message" && $selectedMessageContext) {
+            return !unconfirmed.contains($selectedMessageContext, evt.event.messageId);
         }
         return true;
     }
 
     function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "message") {
-            return failedMessagesStore.contains($selectedThreadKey ?? "", evt.event.messageId);
+        if (evt.event.kind === "message" && $selectedMessageContext) {
+            return failedMessagesStore.contains($selectedMessageContext, evt.event.messageId);
         }
         return false;
     }
@@ -281,7 +282,7 @@
     chatSummary={chat} />
 
 <ChatEventList
-    selectedThreadKey={$selectedThreadKey}
+    selectedMessageContext={$selectedMessageContext}
     threadRootEvent={rootEvent}
     rootSelector={"thread-messages"}
     maintainScroll={false}

@@ -8,7 +8,7 @@
     export let chat: ChatSummary;
 
     $: userStore = client.userStore;
-    $: userId = chat.kind === "direct_chat" ? chat.them : "";
+    $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: isSuspended = $userStore[userId]?.suspended ?? false;
     $: subtext = isSuspended ? $_("accountSuspended") : "";
@@ -16,7 +16,7 @@
 
     $: {
         if (checkLastOnline && chat.kind === "direct_chat") {
-            client.getLastOnlineDate(chat.them, $now).then((lastOnline) => {
+            client.getLastOnlineDate(chat.them.userId, $now).then((lastOnline) => {
                 if (lastOnline !== undefined && lastOnline !== 0) {
                     subtext = client.formatLastOnlineDate($_, $now, lastOnline);
                 } else {

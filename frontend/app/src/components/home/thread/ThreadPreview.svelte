@@ -1,10 +1,11 @@
 <script lang="ts">
-    import type {
+    import {
         ThreadPreview,
         GroupChatSummary,
         EventWrapper,
         Message,
         OpenChat,
+        routeForChatIdentifier,
     } from "openchat-client";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
@@ -17,7 +18,6 @@
     import Markdown from "../Markdown.svelte";
     import Avatar from "../../Avatar.svelte";
     import LinkButton from "../../LinkButton.svelte";
-    import { routeForChatIdentifier } from "routes";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;

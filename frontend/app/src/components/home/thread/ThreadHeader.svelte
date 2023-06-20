@@ -41,7 +41,7 @@
         const someoneTyping = client.getTypingString(
             $_,
             $userStore,
-            { chatId: chatSummary.chatId, threadRootMessageIndex },
+            { chatId: chatSummary.id, threadRootMessageIndex },
             typing
         );
 
@@ -54,7 +54,7 @@
                     ? $userStore[chatSummary.them.userId]?.username
                     : $_("thread.title"),
                 avatarUrl: client.userAvatarUrl($userStore[chatSummary.them.userId]),
-                userId: chatSummary.them,
+                userId: chatSummary.them.userId,
                 subtext,
                 typing: someoneTyping !== undefined,
             };

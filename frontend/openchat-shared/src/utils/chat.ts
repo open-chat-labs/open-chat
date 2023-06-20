@@ -10,6 +10,8 @@ import {
     MemberRole,
     MessageContent,
     UnsupportedValueError,
+    ChatIdentifier,
+    MessageContext,
 } from "../domain";
 import type { MessageFormatter } from "./i18n";
 
@@ -224,4 +226,27 @@ export function compareRoles(a: MemberRole, b: MemberRole): number {
     if (b === "moderator") return -1;
     if (a === "member") return 1;
     return -1;
+}
+
+export function routeForMessage(ctx: MessageContext, messageIndex: number): string {
+    return ctx.threadRootMessageIndex === undefined
+        ? `${routeForMessageContext(ctx)}/${messageIndex}`
+        : `${routeForMessageContext(ctx)}/${messageIndex}?open=true`;
+}
+
+export function routeForMessageContext({ chatId, threadRootMessageIndex }: MessageContext): string {
+    return threadRootMessageIndex === undefined
+        ? routeForChatIdentifier(chatId)
+        : `${routeForChatIdentifier(chatId)}/${threadRootMessageIndex}`;
+}
+
+export function routeForChatIdentifier(id: ChatIdentifier): string {
+    switch (id.kind) {
+        case "direct_chat":
+            return `/user/${id.userId}`;
+        case "group_chat":
+            return `/group/${id.groupId}`;
+        case "channel":
+            return `/community/${id.communityId}/channel/${id.channelId}`;
+    }
 }

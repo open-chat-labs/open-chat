@@ -18,6 +18,7 @@
         UnsupportedValueError,
         UpdateGroupResponse,
         GroupChatIdentifier,
+        routeForChatIdentifier,
     } from "openchat-client";
     import StageHeader from "../StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
@@ -25,7 +26,6 @@
     import AreYouSure from "../../AreYouSure.svelte";
     import VisibilityControl from "../VisibilityControl.svelte";
     import { interpolateLevel } from "../../../utils/i18n";
-    import { routeForChatIdentifier } from "routes";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();

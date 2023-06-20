@@ -113,8 +113,8 @@ export class CommunityMap<V>
 {
     constructor() {
         super(
-            (k: CommunityIdentifier) => k.id,
-            (k: string) => ({ kind: "community", id: k })
+            (k: CommunityIdentifier) => k.communityId,
+            (k: string) => ({ kind: "community", communityId: k })
         );
     }
 

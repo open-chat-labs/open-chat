@@ -12,6 +12,7 @@
         UserSummary,
         OpenChat,
         GroupSearchResponse,
+        routeForChatIdentifier,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
@@ -25,7 +26,6 @@
     import { iconSize } from "../../stores/iconSize";
     import { discoverHotGroupsDismissed } from "../../stores/settings";
     import { communitiesEnabled } from "../../utils/features";
-    import { chatTypeToPath, routeForChatIdentifier } from "../../routes";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;

@@ -21,7 +21,6 @@
         FailedMessages,
         chatIdentifiersEqual,
         ChatIdentifier,
-        chatIdentifierToString,
     } from "openchat-client";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import page from "page";
@@ -63,6 +62,7 @@
     $: chatStateStore = client.chatStateStore;
     $: userStore = client.userStore;
     $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
+    $: selectedMessageContext = client.selectedMessageContext;
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let chatEventList: ChatEventList | undefined;
@@ -225,7 +225,7 @@
     function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
             // TODO - sort this out
-            return !unconfirmed.contains(chatIdentifierToString(chat.id), evt.event.messageId);
+            return !unconfirmed.contains({ chatId: chat.id }, evt.event.messageId);
         }
         return true;
     }
@@ -233,10 +233,7 @@
     function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
             // TODO Sort this out
-            return failedMessagesStore.contains(
-                chatIdentifierToString(chat.id),
-                evt.event.messageId
-            );
+            return failedMessagesStore.contains({ chatId: chat.id }, evt.event.messageId);
         }
         return false;
     }
@@ -356,8 +353,8 @@
 <ChatEventList
     bind:this={chatEventList}
     rootSelector={"chat-messages"}
-    selectedThreadKey={undefined}
     threadRootEvent={undefined}
+    selectedMessageContext={$selectedMessageContext}
     maintainScroll
     {readonly}
     {unreadMessages}

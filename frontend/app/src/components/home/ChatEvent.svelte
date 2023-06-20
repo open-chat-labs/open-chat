@@ -15,6 +15,7 @@
         OpenChat,
         ChatIdentifier,
         ChatType,
+        routeForChatIdentifier,
     } from "openchat-client";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
@@ -25,7 +26,6 @@
     import ChatFrozenEvent from "./ChatFrozenEvent.svelte";
     import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
     import page from "page";
-    import { routeForChatIdentifier } from "routes";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -61,6 +61,7 @@
 
     let userSummary: UserSummary | undefined = undefined;
 
+    $: messageContext = { chatId, threadRootMessageIndex: threadRootMessage?.messageIndex };
     $: hidden =
         event.event.kind === "message" &&
         event.event.content.kind === "message_reminder_created_content" &&
@@ -109,7 +110,7 @@
     {#if !hidden}
         <ChatMessage
             sender={$userStore[event.event.sender]}
-            senderTyping={client.isTyping($typing, event.event.sender, chatId)}
+            senderTyping={client.isTyping($typing, event.event.sender, messageContext)}
             {focused}
             {observer}
             {confirmed}
@@ -254,6 +255,6 @@
     <ChatFrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_unfrozen"}
     <ChatUnfrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
-{:else if event.event.kind !== "empty" && event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended" && event.event.kind !== "member_joined" && event.event.kind !== "member_left" && event.event.kind !== "events_ttl_updated"}
+{:else if event.event.kind !== "empty" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "member_joined" && event.event.kind !== "member_left" && event.event.kind !== "events_ttl_updated"}
     <div>Unexpected event type</div>
 {/if}

@@ -1,5 +1,10 @@
 <script lang="ts">
-    import type { GroupChatSummary, OpenChat } from "openchat-client";
+    import {
+        GroupChatIdentifier,
+        GroupChatSummary,
+        OpenChat,
+        chatIdentifiersEqual,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import SectionHeader from "../SectionHeader.svelte";
@@ -28,8 +33,10 @@
         page("/");
     }
 
-    function dismissRecommendation(ev: CustomEvent<string>) {
-        hotGroups = mapRemoteData(hotGroups, (data) => data.filter((g) => g.chatId !== ev.detail));
+    function dismissRecommendation(ev: CustomEvent<GroupChatIdentifier>) {
+        hotGroups = mapRemoteData(hotGroups, (data) =>
+            data.filter((g) => !chatIdentifiersEqual(g.id, ev.detail))
+        );
         client.dismissRecommendation(ev.detail);
     }
 
@@ -69,7 +76,7 @@
         </SectionHeader>
 
         <div class="groups">
-            {#each hotGroups.data as group, _i (group.chatId)}
+            {#each hotGroups.data as group, _i (group.id)}
                 <RecommendedGroup
                     on:upgrade
                     on:dismissRecommendation={dismissRecommendation}

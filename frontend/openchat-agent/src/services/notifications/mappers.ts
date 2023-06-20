@@ -113,7 +113,7 @@ export function groupNotification(candid: ApiGroupMessageNotification): GroupNot
 export function directNotification(candid: ApiDirectMessageNotification): DirectNotification {
     return {
         kind: "direct_notification",
-        sender: candid.sender.toString(),
+        sender: { kind: "direct_chat", userId: candid.sender.toString() },
         threadRootMessageIndex: optional(candid.thread_root_message_index, identity),
         message: {
             index: candid.message.index,
@@ -145,7 +145,7 @@ function groupReactionNotification(candid: ApiGroupReactionAddedNotification): G
 function directReactionNotification(candid: ApiDirectReactionAddedNotification): DirectReaction {
     return {
         kind: "direct_reaction",
-        them: candid.them.toString(),
+        them: { kind: "direct_chat", userId: candid.them.toString() },
         username: candid.username,
         message: {
             index: candid.message.index,

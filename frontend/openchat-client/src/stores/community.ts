@@ -28,7 +28,7 @@ function createDummyCommunity(
 ): Community {
     return {
         name,
-        id: { kind: "community", id },
+        id: { kind: "community", communityId: id },
         description:
             "This is an awsome community with lots of interesting things to see and do. Blah blah blah, it _even supports markdown_. Not financial advice. HODL.",
         memberCount,
@@ -109,7 +109,7 @@ export const currentCommunityRules = createDerivedPropStore<CommunitySpecificSta
 
 export const selectedCommunityId = writable<CommunityIdentifier | undefined>({
     kind: "community",
-    id: "1",
+    communityId: "1",
 });
 
 export const selectedCommunity = derived(

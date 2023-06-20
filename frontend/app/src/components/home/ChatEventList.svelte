@@ -21,7 +21,7 @@
         ReactionSelected,
         ThreadReactionSelected,
         ChatIdentifier,
-        chatIdentifierToString,
+        MessageContext,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -50,7 +50,7 @@
     export let firstUnreadMention: Mention | undefined;
     export let footer: boolean;
     export let setFocusMessageIndex: (index: number | undefined) => void;
-    export let selectedThreadKey: string | undefined;
+    export let selectedMessageContext: MessageContext | undefined;
     export let threadRootEvent: EventWrapper<Message> | undefined;
     export let maintainScroll: boolean;
 
@@ -297,11 +297,8 @@
             (ev) =>
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
-                !failedMessagesStore.contains(
-                    // TODO - this needs sorting out - has to to do with the whole failedMessageStore problem
-                    selectedThreadKey ?? chatIdentifierToString(chat.id),
-                    ev.event.messageId
-                )
+                (selectedMessageContext === undefined ||
+                    !failedMessagesStore.contains(selectedMessageContext, ev.event.messageId))
         ) as EventWrapper<Message> | undefined;
     }
 

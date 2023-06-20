@@ -86,12 +86,12 @@
     let textboxId = Symbol();
 
     $: userStore = client.userStore;
-    $: userId = chat.kind === "direct_chat" ? chat.them : "";
+    $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
     $: isGroup = chat.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
-    $: isFrozen = client.isFrozen(chat.chatId);
-    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(chat.chatId);
+    $: isFrozen = client.isFrozen(chat.id);
+    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(chat.id);
 
     $: {
         if (inp) {
@@ -447,8 +447,9 @@
     }
 
     function freezeGroup() {
+        if (chat.id.kind !== "group_chat") return;
         freezingInProgress = true;
-        client.freezeGroup(chat.chatId, undefined).then((success) => {
+        client.freezeGroup(chat.id, undefined).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("failedToFreezeGroup");
             }
@@ -457,8 +458,9 @@
     }
 
     function unfreezeGroup() {
+        if (chat.id.kind !== "group_chat") return;
         freezingInProgress = true;
-        client.unfreezeGroup(chat.chatId).then((success) => {
+        client.unfreezeGroup(chat.id).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("failedToUnfreezeGroup");
             }

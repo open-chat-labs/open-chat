@@ -40,7 +40,7 @@ export const dummyCommunityChannels = writable<{ name: string; description: stri
 
 export function createCandidateCommunity(id: string): Community {
     return {
-        id: { kind: "community", id },
+        id: { kind: "community", communityId: id },
         name: "",
         description: "",
         memberCount: 0,

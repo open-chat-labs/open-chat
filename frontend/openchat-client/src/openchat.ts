@@ -127,6 +127,7 @@ import {
     confirmedThreadEventIndexesLoadedStore,
     isContiguousInThread,
     focusThreadMessageIndex,
+    selectedMessageContext,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -2897,7 +2898,7 @@ export class OpenChat extends OpenChatAgentWorker {
         let message: EventWrapper<Message>;
         switch (notification.kind) {
             case "direct_notification": {
-                chatId = { kind: "direct_chat", userId: notification.sender };
+                chatId = notification.sender;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
                 message = notification.message;
                 break;
@@ -2909,7 +2910,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 break;
             }
             case "direct_reaction": {
-                chatId = { kind: "direct_chat", userId: notification.them };
+                chatId = notification.them;
                 message = notification.message;
                 break;
             }
@@ -4147,7 +4148,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     return c;
                 });
                 allCommunities.update((communities) => {
-                    return communities.filter((c) => c.id.id !== id.id);
+                    return communities.filter((c) => c.id.communityId !== id.communityId);
                 });
                 resolve();
             }, 2000);
@@ -4258,6 +4259,7 @@ export class OpenChat extends OpenChatAgentWorker {
     diamondMembership = diamondMembership;
     selectedThreadRootEvent = selectedThreadRootEvent;
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
+    selectedMessageContext = selectedMessageContext;
 
     // current community stores
     selectedCommunityId = selectedCommunityId;

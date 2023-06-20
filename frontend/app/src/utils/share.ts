@@ -1,9 +1,12 @@
 import type { Message, MessageContent, MessageFormatter, ChatIdentifier } from "openchat-client";
-import { buildCryptoTransferText, buildTransactionUrl } from "openchat-client";
+import {
+    buildCryptoTransferText,
+    buildTransactionUrl,
+    routeForChatIdentifier,
+} from "openchat-client";
 import { toastStore } from "../stores/toast";
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
-import { routeForChatIdentifier } from "routes";
 
 export type Share = {
     title: string | undefined;

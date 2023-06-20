@@ -35,13 +35,15 @@
         GroupChatIdentifier,
         chatIdentifiersEqual,
         nullMembership,
+        CommunityIdentifier,
+        routeForChatIdentifier,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import page from "page";
-    import { chatTypeToPath, pathParams, routeForChatIdentifier } from "../../routes";
+    import { pathParams } from "../../routes";
     import type { RouteParams } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import {
@@ -87,7 +89,7 @@
 
     type ConfirmLeaveCommunityEvent = {
         kind: "leave_community";
-        communityId: string;
+        communityId: CommunityIdentifier;
         chatType: ChatType;
     };
 
@@ -106,7 +108,7 @@
 
     type ConfirmDeleteCommunityEvent = {
         kind: "delete_community";
-        communityId: string;
+        communityId: CommunityIdentifier;
         doubleCheck: { challenge: string; response: string };
     };
 
@@ -184,7 +186,7 @@
                 ) {
                     return client.isMessageRead(
                         notification.kind === "direct_notification"
-                            ? { kind: "direct_chat", userId: notification.sender }
+                            ? notification.sender
                             : notification.chatId,
                         notification.message.event.messageIndex,
                         notification.message.event.messageId

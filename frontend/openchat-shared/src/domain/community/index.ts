@@ -42,7 +42,7 @@ export type CommunityMembership = {
 
 export type CommunityIdentifier = {
     kind: "community";
-    id: string;
+    communityId: string;
 };
 
 export type Community = AccessControlled &

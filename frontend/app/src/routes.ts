@@ -5,6 +5,7 @@ import type {
     ChatType,
     DirectChatIdentifier,
     GroupChatIdentifier,
+    CommunityIdentifier,
 } from "openchat-client";
 
 export const notFound = writable(false);
@@ -89,7 +90,7 @@ export function globalGroupChatRoute(ctx: PageJS.Context): RouteParams {
 export function selectedCommunityRoute(ctx: PageJS.Context): RouteParams {
     return {
         kind: "selected_community_route",
-        communityId: ctx.params["communityId"],
+        communityId: { kind: "community", communityId: ctx.params["communityId"] },
     };
 }
 
@@ -218,19 +219,8 @@ export type FavouritesRoute = {
 
 export type SelectedCommunityRoute = {
     kind: "selected_community_route";
-    communityId: string;
+    communityId: CommunityIdentifier;
 };
-
-export function routeForChatIdentifier(id: ChatIdentifier): string {
-    switch (id.kind) {
-        case "direct_chat":
-            return `/user/${id.userId}`;
-        case "group_chat":
-            return `/group/${id.groupId}`;
-        case "channel":
-            return `/community/${id.communityId}/channel/${id.channelId}`;
-    }
-}
 
 export type SelectedChannelRoute = {
     kind: "selected_channel_route";

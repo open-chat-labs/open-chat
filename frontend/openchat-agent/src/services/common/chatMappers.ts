@@ -1229,7 +1229,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
 
 export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): Community {
     return {
-        id: { kind: "community", id: candid.community_id.toString() },
+        id: { kind: "community", communityId: candid.community_id.toString() },
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
