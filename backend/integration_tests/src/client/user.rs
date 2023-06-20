@@ -219,7 +219,7 @@ pub mod happy_path {
             user.principal,
             user.user_id.into(),
             &user_canister::leave_group::Args {
-                chat_id: group_id.into(),
+                chat_id: group_id,
                 correlation_id: 0,
             },
         );
