@@ -573,7 +573,6 @@ pub struct ReplyContextInternal {
 impl ReplyContextInternal {
     pub fn hydrate(&self) -> ReplyContext {
         ReplyContext {
-            chat_id_if_other: self.event_list_if_other.as_ref().map(|(e, _)| *e),
             event_list_if_other: self.event_list_if_other,
             event_index: self.event_index,
         }
