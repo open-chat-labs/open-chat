@@ -29,20 +29,19 @@
     export let rootEvent: EventWrapper<Message>;
     export let threadRootMessageIndex: number;
 
-    $: byThread = client.typersByThread;
+    $: byContext = client.typersByContext;
     $: userStore = client.userStore;
-    $: chat = normaliseChatSummary($now, chatSummary, $byThread);
+    $: chat = normaliseChatSummary($now, chatSummary, $byContext);
 
     function close() {
         dispatch("closeThread", chatSummary.id);
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        // TODO - sort this out
         const someoneTyping = client.getTypingString(
             $_,
             $userStore,
-            `${chatSummary.chatId}_${threadRootMessageIndex}`,
+            { chatId: chatSummary.chatId, threadRootMessageIndex },
             typing
         );
 

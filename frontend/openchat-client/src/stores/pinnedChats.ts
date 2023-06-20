@@ -1,19 +1,17 @@
-import type { ChatIdentifier } from "openchat-shared";
+import { chatIdentifiersEqual, type ChatIdentifier } from "openchat-shared";
 import { immutableStore } from "./immutable";
 
 export const pinnedChatsStore = createStore();
 
 function createStore() {
-    const store = immutableStore<string[]>([]);
+    const store = immutableStore<ChatIdentifier[]>([]);
     return {
         subscribe: store.subscribe,
         set: store.set,
         pin: (chatId: ChatIdentifier): void => {
-            const key = chatId.toString();
             store.update((ids) => {
-                if (!ids.includes(key)) {
-                    const ids_clone = [...ids];
-                    ids_clone.unshift(key);
+                if (!ids.find((id) => chatIdentifiersEqual(id, chatId))) {
+                    const ids_clone = [chatId, ...ids];
                     return ids_clone;
                 }
                 return ids;
@@ -21,7 +19,7 @@ function createStore() {
         },
         unpin: (chatId: ChatIdentifier): void => {
             store.update((ids) => {
-                const index = ids.indexOf(chatId.toString());
+                const index = ids.findIndex((id) => chatIdentifiersEqual(id, chatId));
                 if (index >= 0) {
                     const ids_clone = [...ids];
                     ids_clone.splice(index, 1);

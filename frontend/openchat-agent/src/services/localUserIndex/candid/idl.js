@@ -80,6 +80,34 @@ export const idlFactory = ({ IDL }) => {
     'change_roles' : CommunityPermissionRole,
     'create_private_channel' : CommunityPermissionRole,
   });
+  const TimestampMillis = IDL.Nat64;
+  const ChatMetrics = IDL.Record({
+    'prize_winner_messages' : IDL.Nat64,
+    'audio_messages' : IDL.Nat64,
+    'cycles_messages' : IDL.Nat64,
+    'chat_messages' : IDL.Nat64,
+    'edits' : IDL.Nat64,
+    'icp_messages' : IDL.Nat64,
+    'last_active' : TimestampMillis,
+    'giphy_messages' : IDL.Nat64,
+    'deleted_messages' : IDL.Nat64,
+    'file_messages' : IDL.Nat64,
+    'poll_votes' : IDL.Nat64,
+    'text_messages' : IDL.Nat64,
+    'message_reminders' : IDL.Nat64,
+    'image_messages' : IDL.Nat64,
+    'replies' : IDL.Nat64,
+    'video_messages' : IDL.Nat64,
+    'sns1_messages' : IDL.Nat64,
+    'polls' : IDL.Nat64,
+    'proposals' : IDL.Nat64,
+    'reported_messages' : IDL.Nat64,
+    'ckbtc_messages' : IDL.Nat64,
+    'reactions' : IDL.Nat64,
+    'kinic_messages' : IDL.Nat64,
+    'custom_type_messages' : IDL.Nat64,
+    'prize_messages' : IDL.Nat64,
+  });
   const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
@@ -90,7 +118,6 @@ export const idlFactory = ({ IDL }) => {
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
   });
-  const TimestampMillis = IDL.Nat64;
   const PermissionRole = IDL.Variant({
     'Moderators' : IDL.Null,
     'Owner' : IDL.Null,
@@ -111,31 +138,6 @@ export const idlFactory = ({ IDL }) => {
     'pin_messages' : PermissionRole,
     'reply_in_thread' : PermissionRole,
     'react_to_messages' : PermissionRole,
-  });
-  const ChatMetrics = IDL.Record({
-    'prize_winner_messages' : IDL.Nat64,
-    'audio_messages' : IDL.Nat64,
-    'chat_messages' : IDL.Nat64,
-    'edits' : IDL.Nat64,
-    'icp_messages' : IDL.Nat64,
-    'last_active' : TimestampMillis,
-    'giphy_messages' : IDL.Nat64,
-    'deleted_messages' : IDL.Nat64,
-    'file_messages' : IDL.Nat64,
-    'poll_votes' : IDL.Nat64,
-    'text_messages' : IDL.Nat64,
-    'message_reminders' : IDL.Nat64,
-    'image_messages' : IDL.Nat64,
-    'replies' : IDL.Nat64,
-    'video_messages' : IDL.Nat64,
-    'sns1_messages' : IDL.Nat64,
-    'polls' : IDL.Nat64,
-    'proposals' : IDL.Nat64,
-    'reported_messages' : IDL.Nat64,
-    'ckbtc_messages' : IDL.Nat64,
-    'reactions' : IDL.Nat64,
-    'custom_type_messages' : IDL.Nat64,
-    'prize_messages' : IDL.Nat64,
   });
   const GovernanceProposalsSubtype = IDL.Record({
     'is_nns' : IDL.Bool,
@@ -246,6 +248,7 @@ export const idlFactory = ({ IDL }) => {
     'InternetComputer' : IDL.Null,
     'CHAT' : IDL.Null,
     'SNS1' : IDL.Null,
+    'KINIC' : IDL.Null,
     'CKBTC' : IDL.Null,
   });
   const PrizeContent = IDL.Record({
@@ -544,6 +547,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Bool,
     'permissions' : CommunityPermissions,
     'community_id' : CommunityId,
+    'metrics' : ChatMetrics,
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,

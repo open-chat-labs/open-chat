@@ -69,7 +69,7 @@ export class LiveState {
     uninitializedDirectChats!: ChatMap<DirectChatSummary>;
     groupPreviews!: ChatMap<GroupChatSummary>;
     selectedChatId: ChatIdentifier | undefined;
-    pinnedChats!: string[];
+    pinnedChats!: ChatIdentifier[];
     chatSummariesList!: ChatSummary[];
     threadsByChat!: ChatMap<ThreadSyncDetails[]>;
     focusMessageIndex: number | undefined;
@@ -124,6 +124,6 @@ export class LiveState {
         blockedUsers.subscribe((data) => (this.blockedUsers = data));
         diamondMembership.subscribe((data) => (this.diamondMembership = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));
-        communities.subscribe((data) => (this.communtities = data));
+        communities.subscribe((data) => (this.communities = data));
     }
 }

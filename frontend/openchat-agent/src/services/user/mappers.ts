@@ -125,7 +125,6 @@ import {
     message,
     messageContent,
     token,
-    updatedMessage,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -608,71 +607,6 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
     if ("DirectChatCreated" in candid) {
         return {
             kind: "direct_chat_created",
-        };
-    }
-
-    if ("MessageReactionAdded" in candid) {
-        return {
-            kind: "reaction_added",
-            message: updatedMessage(candid.MessageReactionAdded),
-        };
-    }
-
-    if ("MessageDeleted" in candid) {
-        return {
-            kind: "message_deleted",
-            message: updatedMessage(candid.MessageDeleted),
-        };
-    }
-
-    if ("MessageUndeleted" in candid) {
-        return {
-            kind: "message_undeleted",
-            message: updatedMessage(candid.MessageUndeleted),
-        };
-    }
-
-    if ("MessageEdited" in candid) {
-        return {
-            kind: "message_edited",
-            message: updatedMessage(candid.MessageEdited),
-        };
-    }
-
-    if ("MessageReactionRemoved" in candid) {
-        return {
-            kind: "reaction_removed",
-            message: updatedMessage(candid.MessageReactionRemoved),
-        };
-    }
-
-    if ("PollVoteRegistered" in candid) {
-        return {
-            kind: "poll_vote_registered",
-            message: updatedMessage(candid.PollVoteRegistered),
-        };
-    }
-
-    if ("PollVoteDeleted" in candid) {
-        return {
-            kind: "poll_vote_deleted",
-            message: updatedMessage(candid.PollVoteDeleted),
-        };
-    }
-
-    if ("PollEnded" in candid) {
-        return {
-            kind: "poll_ended",
-            messageIndex: candid.PollEnded.message_index,
-            eventIndex: candid.PollEnded.event_index,
-        };
-    }
-
-    if ("ThreadUpdated" in candid) {
-        return {
-            kind: "thread_updated",
-            messageIndex: candid.ThreadUpdated.message_index,
-            eventIndex: candid.ThreadUpdated.event_index,
         };
     }
 

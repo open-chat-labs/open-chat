@@ -120,7 +120,6 @@ export type Chat = { 'Group' : ChatId } |
   { 'Channel' : [CommunityId, ChannelId] } |
   { 'Direct' : ChatId };
 export type ChatEvent = { 'Empty' : null } |
-  { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
@@ -129,33 +128,24 @@ export type ChatEvent = { 'Empty' : null } |
   { 'UsersInvited' : UsersInvited } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
-  { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
   { 'ChatFrozen' : ChatFrozen } |
-  { 'PollEnded' : PollEnded } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
-  { 'ThreadUpdated' : ThreadUpdated } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ChatUnfrozen' : ChatUnfrozen } |
-  { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
-  { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
-  { 'MessageUndeleted' : UpdatedMessage } |
   { 'GroupGateUpdated' : GroupGateUpdated } |
   { 'RoleChanged' : RoleChanged } |
-  { 'PollVoteDeleted' : UpdatedMessage } |
   { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
-  { 'ProposalsUpdated' : ProposalsUpdated } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
-  { 'MessageEdited' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface ChatEventWrapper {
@@ -167,6 +157,10 @@ export interface ChatEventWrapper {
 }
 export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
+export type ChatInList = { 'Group' : ChatId } |
+  { 'Favourite' : Chat } |
+  { 'Direct' : ChatId } |
+  { 'Community' : [CommunityId, ChannelId] };
 export interface ChatMessagesRead {
   'threads' : Array<ThreadRead>,
   'read_up_to' : [] | [MessageIndex],
@@ -176,6 +170,7 @@ export interface ChatMessagesRead {
 export interface ChatMetrics {
   'prize_winner_messages' : bigint,
   'audio_messages' : bigint,
+  'cycles_messages' : bigint,
   'chat_messages' : bigint,
   'edits' : bigint,
   'icp_messages' : bigint,
@@ -195,6 +190,7 @@ export interface ChatMetrics {
   'reported_messages' : bigint,
   'ckbtc_messages' : bigint,
   'reactions' : bigint,
+  'kinic_messages' : bigint,
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
@@ -253,6 +249,7 @@ export interface CommunityCanisterCommunitySummary {
   'is_public' : boolean,
   'permissions' : CommunityPermissions,
   'community_id' : CommunityId,
+  'metrics' : ChatMetrics,
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -270,6 +267,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'permissions' : [] | [CommunityPermissions],
   'community_id' : CommunityId,
   'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
+  'metrics' : [] | [ChatMetrics],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'description' : [] | [string],
@@ -383,6 +381,7 @@ export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
 export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CHAT' : null } |
   { 'SNS1' : null } |
+  { 'KINIC' : null } |
   { 'CKBTC' : null };
 export interface CustomMessageContent {
   'data' : Uint8Array | number[],
@@ -1148,6 +1147,9 @@ export interface PermissionsChanged {
 export interface PinChatRequest { 'chat_id' : ChatId }
 export type PinChatResponse = { 'Success' : null } |
   { 'PinnedLimitReached' : number };
+export interface PinChatV2Request { 'chat' : ChatInList }
+export type PinChatV2Response = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
@@ -1163,10 +1165,6 @@ export interface PollContent {
   'votes' : PollVotes,
   'ended' : boolean,
   'config' : PollConfig,
-}
-export interface PollEnded {
-  'event_index' : EventIndex,
-  'message_index' : MessageIndex,
 }
 export interface PollVotes {
   'total' : TotalPollVotes,
@@ -1209,11 +1207,6 @@ export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
   { 'AcceptVotes' : null } |
   { 'Unspecified' : null } |
   { 'Settled' : null };
-export interface ProposalUpdated {
-  'event_index' : EventIndex,
-  'message_index' : MessageIndex,
-}
-export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
@@ -1516,11 +1509,6 @@ export interface ThreadSyncDetails {
   'latest_event' : [] | [EventIndex],
   'latest_message' : [] | [MessageIndex],
 }
-export interface ThreadUpdated {
-  'latest_thread_message_index_if_updated' : [] | [MessageIndex],
-  'event_index' : EventIndex,
-  'message_index' : MessageIndex,
-}
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export type TimestampUpdate = { 'NoChange' : null } |
@@ -1552,11 +1540,9 @@ export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'InternalError' : string };
 export interface UnpinChatRequest { 'chat_id' : ChatId }
 export type UnpinChatResponse = { 'Success' : null };
-export interface UpdatedMessage {
-  'updated_by' : UserId,
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
-}
+export interface UnpinChatV2Request { 'chat' : ChatInList }
+export type UnpinChatV2Response = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface UpdatesArgs { 'updates_since' : TimestampMillis }
 export type UpdatesResponse = {
     'Success' : {
@@ -1737,6 +1723,7 @@ export interface _SERVICE {
     MuteNotificationsResponse
   >,
   'pin_chat' : ActorMethod<[PinChatRequest], PinChatResponse>,
+  'pin_chat_v2' : ActorMethod<[PinChatV2Request], PinChatV2Response>,
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
@@ -1767,6 +1754,7 @@ export interface _SERVICE {
     UnmuteNotificationsResponse
   >,
   'unpin_chat' : ActorMethod<[UnpinChatRequest], UnpinChatResponse>,
+  'unpin_chat_v2' : ActorMethod<[UnpinChatV2Request], UnpinChatV2Response>,
   'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
   'updates_v2' : ActorMethod<[UpdatesV2Args], UpdatesV2Response>,
   'withdraw_crypto_v2' : ActorMethod<

@@ -40,9 +40,7 @@
     let messageEntry: MessageEntry;
 
     $: canSend =
-        mode === "thread"
-            ? client.canReplyInThread(chat.chatId)
-            : client.canSendMessages(chat.chatId);
+        mode === "thread" ? client.canReplyInThread(chat.id) : client.canSendMessages(chat.id);
 
     function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
         return items.reduce<File | undefined>((res, item) => {

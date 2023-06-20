@@ -5,10 +5,9 @@
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type { MessageMatch, ChatSummary } from "openchat-client";
+    import type { MessageMatch, ChatSummary, OpenChat } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import type { OpenChat } from "openchat-client";
     import MentionPicker from "./MentionPicker.svelte";
 
     export let chat: ChatSummary;

@@ -4,8 +4,8 @@
  * But that doesn't work with ChatIdentifier
  *  */
 
-import type { CommunityIdentifier } from "src/domain";
-import type { ChatIdentifier } from "../domain/chat";
+import type { CommunityIdentifier } from "../domain";
+import type { ChatIdentifier, MessageContext } from "../domain/chat";
 
 export interface ISafeMap<K, V> {
     clear(): void;
@@ -43,6 +43,10 @@ export class SafeMap<K, V> implements ISafeMap<K, V> {
 
     values(): V[] {
         return [...this._map.values()];
+    }
+
+    keys(): K[] {
+        return [...this._map.keys()].map((k) => this.fromString(k));
     }
 
     entries(): [K, V][] {
@@ -83,11 +87,23 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> implements ISafeMap<C
         );
     }
 
-    static fromList<T extends { chatId: ChatIdentifier }>(things: T[]): ChatMap<T> {
+    static fromList<T extends { id: ChatIdentifier }>(things: T[]): ChatMap<T> {
         return things.reduce((map, c) => {
-            map.set(c.chatId, c);
+            map.set(c.id, c);
             return map;
         }, new ChatMap<T>());
+    }
+}
+
+export class MessageContextMap<V>
+    extends SafeMap<MessageContext, V>
+    implements ISafeMap<MessageContext, V>
+{
+    constructor() {
+        super(
+            (k: MessageContext) => JSON.stringify(k),
+            (k: string) => JSON.parse(k) as MessageContext
+        );
     }
 }
 

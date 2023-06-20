@@ -247,6 +247,6 @@ export function compareRoles(a: MemberRole, b: MemberRole): number {
     if (b === "admin") return -1;
     if (a === "moderator") return 1;
     if (b === "moderator") return -1;
-    if (a === "participant") return 1;
+    if (a === "member") return 1;
     return -1;
 }

@@ -96,7 +96,7 @@ export class GroupIndexClient extends CandidService {
             scope: apiSearchScope(scope),
         };
         return this.handleQueryResponse(
-            () => this.groupIndexService.search_v2(args),
+            () => this.groupIndexService.search(args),
             searchResponse,
             args
         );

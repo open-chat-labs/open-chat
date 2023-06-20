@@ -165,7 +165,6 @@ export type Chat = { 'Group' : ChatId } |
   { 'Channel' : [CommunityId, ChannelId] } |
   { 'Direct' : ChatId };
 export type ChatEvent = { 'Empty' : null } |
-  { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
@@ -174,33 +173,24 @@ export type ChatEvent = { 'Empty' : null } |
   { 'UsersInvited' : UsersInvited } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
-  { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
   { 'ChatFrozen' : ChatFrozen } |
-  { 'PollEnded' : PollEnded } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
-  { 'ThreadUpdated' : ThreadUpdated } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ChatUnfrozen' : ChatUnfrozen } |
-  { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
-  { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
-  { 'MessageUndeleted' : UpdatedMessage } |
   { 'GroupGateUpdated' : GroupGateUpdated } |
   { 'RoleChanged' : RoleChanged } |
-  { 'PollVoteDeleted' : UpdatedMessage } |
   { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
-  { 'ProposalsUpdated' : ProposalsUpdated } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
-  { 'MessageEdited' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface ChatEventWrapper {
@@ -215,6 +205,7 @@ export type ChatId = CanisterId;
 export interface ChatMetrics {
   'prize_winner_messages' : bigint,
   'audio_messages' : bigint,
+  'cycles_messages' : bigint,
   'chat_messages' : bigint,
   'edits' : bigint,
   'icp_messages' : bigint,
@@ -234,6 +225,7 @@ export interface ChatMetrics {
   'reported_messages' : bigint,
   'ckbtc_messages' : bigint,
   'reactions' : bigint,
+  'kinic_messages' : bigint,
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
@@ -284,6 +276,7 @@ export interface CommunityCanisterCommunitySummary {
   'is_public' : boolean,
   'permissions' : CommunityPermissions,
   'community_id' : CommunityId,
+  'metrics' : ChatMetrics,
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -301,6 +294,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'permissions' : [] | [CommunityPermissions],
   'community_id' : CommunityId,
   'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
+  'metrics' : [] | [ChatMetrics],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'description' : [] | [string],
@@ -378,6 +372,7 @@ export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
 export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CHAT' : null } |
   { 'SNS1' : null } |
+  { 'KINIC' : null } |
   { 'CKBTC' : null };
 export interface CustomMessageContent {
   'data' : Uint8Array | number[],
@@ -800,6 +795,18 @@ export interface ImageContent {
   'caption' : [] | [string],
   'width' : number,
 }
+export interface ImportGroupArgs { 'group_id' : ChatId }
+export type ImportGroupResponse = { 'GroupFrozen' : null } |
+  { 'GroupNotFound' : null } |
+  { 'UserNotGroupOwner' : null } |
+  { 'UserNotInGroup' : null } |
+  { 'UserNotCommunityOwner' : null } |
+  { 'Success' : { 'channel_id' : ChannelId, 'total_bytes' : bigint } } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'GroupAlreadyBeingImported' : null } |
+  { 'GroupImportingToAnotherCommunity' : null } |
+  { 'InternalError' : string };
 export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
@@ -1120,10 +1127,6 @@ export interface PollContent {
   'ended' : boolean,
   'config' : PollConfig,
 }
-export interface PollEnded {
-  'event_index' : EventIndex,
-  'message_index' : MessageIndex,
-}
 export interface PollVotes {
   'total' : TotalPollVotes,
   'user' : Uint32Array | number[],
@@ -1165,11 +1168,6 @@ export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
   { 'AcceptVotes' : null } |
   { 'Unspecified' : null } |
   { 'Settled' : null };
-export interface ProposalUpdated {
-  'event_index' : EventIndex,
-  'message_index' : MessageIndex,
-}
-export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
@@ -1423,11 +1421,6 @@ export interface ThreadSyncDetails {
   'latest_event' : [] | [EventIndex],
   'latest_message' : [] | [MessageIndex],
 }
-export interface ThreadUpdated {
-  'latest_thread_message_index_if_updated' : [] | [MessageIndex],
-  'event_index' : EventIndex,
-  'message_index' : MessageIndex,
-}
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export type TimestampUpdate = { 'NoChange' : null } |
@@ -1523,11 +1516,6 @@ export type UpdateCommunityResponse = { 'NameReserved' : null } |
   { 'NameTaken' : null } |
   { 'InternalError' : null } |
   { 'BannerTooBig' : FieldTooLongResult };
-export interface UpdatedMessage {
-  'updated_by' : UserId,
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
-}
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserFailedError { 'user_id' : UserId, 'error' : string }
 export interface UserFailedGateCheck {
@@ -1603,6 +1591,7 @@ export interface _SERVICE {
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
+  'import_group' : ActorMethod<[ImportGroupArgs], ImportGroupResponse>,
   'invite_code' : ActorMethod<[EmptyArgs], InviteCodeResponse>,
   'join_channel' : ActorMethod<[JoinChannelArgs], JoinChannelResponse>,
   'leave_channel' : ActorMethod<[LeaveChannelArgs], LeaveChannelResponse>,

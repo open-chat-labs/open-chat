@@ -147,6 +147,7 @@ export const idlFactory = ({ IDL }) => {
   const ChatMetrics = IDL.Record({
     'prize_winner_messages' : IDL.Nat64,
     'audio_messages' : IDL.Nat64,
+    'cycles_messages' : IDL.Nat64,
     'chat_messages' : IDL.Nat64,
     'edits' : IDL.Nat64,
     'icp_messages' : IDL.Nat64,
@@ -166,6 +167,7 @@ export const idlFactory = ({ IDL }) => {
     'reported_messages' : IDL.Nat64,
     'ckbtc_messages' : IDL.Nat64,
     'reactions' : IDL.Nat64,
+    'kinic_messages' : IDL.Nat64,
     'custom_type_messages' : IDL.Nat64,
     'prize_messages' : IDL.Nat64,
   });
@@ -280,6 +282,7 @@ export const idlFactory = ({ IDL }) => {
     'InternetComputer' : IDL.Null,
     'CHAT' : IDL.Null,
     'SNS1' : IDL.Null,
+    'KINIC' : IDL.Null,
     'CKBTC' : IDL.Null,
   });
   const PrizeContent = IDL.Record({
@@ -516,7 +519,6 @@ export const idlFactory = ({ IDL }) => {
   const ChatId = CanisterId;
   const ReplyContext = IDL.Record({
     'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
-    'chat_id_if_other' : IDL.Opt(ChatId),
     'event_index' : EventIndex,
   });
   const Message = IDL.Record({
@@ -776,11 +778,6 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'start_index' : EventIndex,
   });
-  const UpdatedMessage = IDL.Record({
-    'updated_by' : UserId,
-    'message_id' : MessageId,
-    'event_index' : EventIndex,
-  });
   const ParticipantJoined = IDL.Record({
     'user_id' : UserId,
     'invited_by' : IDL.Opt(UserId),
@@ -822,32 +819,6 @@ export const idlFactory = ({ IDL }) => {
     'changed_by' : UserId,
     'now_public' : IDL.Bool,
   });
-<<<<<<< HEAD
-=======
-  const ThreadSummary = IDL.Record({
-    'latest_event_timestamp' : TimestampMillis,
-    'participant_ids' : IDL.Vec(UserId),
-    'reply_count' : IDL.Nat32,
-    'latest_event_index' : EventIndex,
-  });
-  const ChatId = CanisterId;
-  const ReplyContext = IDL.Record({
-    'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
-    'event_index' : EventIndex,
-  });
-  const Message = IDL.Record({
-    'forwarded' : IDL.Bool,
-    'content' : MessageContent,
-    'edited' : IDL.Bool,
-    'last_updated' : IDL.Opt(TimestampMillis),
-    'sender' : UserId,
-    'thread_summary' : IDL.Opt(ThreadSummary),
-    'message_id' : MessageId,
-    'replies_to' : IDL.Opt(ReplyContext),
-    'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
-    'message_index' : MessageIndex,
-  });
->>>>>>> master
   const PermissionsChanged = IDL.Record({
     'changed_by' : UserId,
     'old_permissions' : GroupPermissions,
@@ -857,10 +828,6 @@ export const idlFactory = ({ IDL }) => {
     'frozen_by' : UserId,
     'reason' : IDL.Opt(IDL.Text),
   });
-  const PollEnded = IDL.Record({
-    'event_index' : EventIndex,
-    'message_index' : MessageIndex,
-  });
   const GroupInviteCodeChange = IDL.Variant({
     'Enabled' : IDL.Null,
     'Disabled' : IDL.Null,
@@ -869,11 +836,6 @@ export const idlFactory = ({ IDL }) => {
   const GroupInviteCodeChanged = IDL.Record({
     'changed_by' : UserId,
     'change' : GroupInviteCodeChange,
-  });
-  const ThreadUpdated = IDL.Record({
-    'latest_thread_message_index_if_updated' : IDL.Opt(MessageIndex),
-    'event_index' : EventIndex,
-    'message_index' : MessageIndex,
   });
   const UsersUnblocked = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -906,13 +868,6 @@ export const idlFactory = ({ IDL }) => {
     'new_ttl' : IDL.Opt(Milliseconds),
     'updated_by' : UserId,
   });
-  const ProposalUpdated = IDL.Record({
-    'event_index' : EventIndex,
-    'message_index' : MessageIndex,
-  });
-  const ProposalsUpdated = IDL.Record({
-    'proposals' : IDL.Vec(ProposalUpdated),
-  });
   const OwnershipTransferred = IDL.Record({
     'old_owner' : UserId,
     'new_owner' : UserId,
@@ -930,7 +885,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChatEvent = IDL.Variant({
     'Empty' : IDL.Null,
-    'MessageReactionRemoved' : UpdatedMessage,
     'ParticipantJoined' : ParticipantJoined,
     'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin,
     'GroupDescriptionChanged' : GroupDescriptionChanged,
@@ -939,33 +893,24 @@ export const idlFactory = ({ IDL }) => {
     'UsersInvited' : UsersInvited,
     'UsersBlocked' : UsersBlocked,
     'MessageUnpinned' : MessageUnpinned,
-    'MessageReactionAdded' : UpdatedMessage,
     'ParticipantsRemoved' : ParticipantsRemoved,
     'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin,
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
     'ChatFrozen' : ChatFrozen,
-    'PollEnded' : PollEnded,
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
-    'ThreadUpdated' : ThreadUpdated,
     'UsersUnblocked' : UsersUnblocked,
     'ChatUnfrozen' : ChatUnfrozen,
-    'PollVoteRegistered' : UpdatedMessage,
     'ParticipantLeft' : ParticipantLeft,
-    'MessageDeleted' : UpdatedMessage,
     'GroupRulesChanged' : GroupRulesChanged,
     'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
-    'MessageUndeleted' : UpdatedMessage,
     'GroupGateUpdated' : GroupGateUpdated,
     'RoleChanged' : RoleChanged,
-    'PollVoteDeleted' : UpdatedMessage,
     'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated,
-    'ProposalsUpdated' : ProposalsUpdated,
     'OwnershipTransferred' : OwnershipTransferred,
     'DirectChatCreated' : DirectChatCreated,
-    'MessageEdited' : UpdatedMessage,
     'AvatarChanged' : AvatarChanged,
     'ParticipantsAdded' : ParticipantsAdded,
   });
@@ -1002,6 +947,23 @@ export const idlFactory = ({ IDL }) => {
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const ImportGroupArgs = IDL.Record({ 'group_id' : ChatId });
+  const ImportGroupResponse = IDL.Variant({
+    'GroupFrozen' : IDL.Null,
+    'GroupNotFound' : IDL.Null,
+    'UserNotGroupOwner' : IDL.Null,
+    'UserNotInGroup' : IDL.Null,
+    'UserNotCommunityOwner' : IDL.Null,
+    'Success' : IDL.Record({
+      'channel_id' : ChannelId,
+      'total_bytes' : IDL.Nat64,
+    }),
+    'UserNotInCommunity' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'GroupAlreadyBeingImported' : IDL.Null,
+    'GroupImportingToAnotherCommunity' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const InviteCodeResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
@@ -1275,6 +1237,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Bool,
     'permissions' : CommunityPermissions,
     'community_id' : CommunityId,
+    'metrics' : ChatMetrics,
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
@@ -1306,6 +1269,7 @@ export const idlFactory = ({ IDL }) => {
     'permissions' : IDL.Opt(CommunityPermissions),
     'community_id' : CommunityId,
     'channels_updated' : IDL.Vec(CommunityCanisterChannelSummaryUpdates),
+    'metrics' : IDL.Opt(ChatMetrics),
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
@@ -1514,6 +1478,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
+    'import_group' : IDL.Func([ImportGroupArgs], [ImportGroupResponse], []),
     'invite_code' : IDL.Func([EmptyArgs], [InviteCodeResponse], ['query']),
     'join_channel' : IDL.Func([JoinChannelArgs], [JoinChannelResponse], []),
     'leave_channel' : IDL.Func([LeaveChannelArgs], [LeaveChannelResponse], []),

@@ -17,6 +17,8 @@ import {
     ChatMap,
     DirectChatIdentifier,
     nullMembership,
+    chatIdentifiersEqual,
+    chatIdentifierToString,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
@@ -107,7 +109,7 @@ export const chatSummariesListStore = derived(
     [chatSummariesStore, pinnedChatsStore],
     ([summaries, pinnedChats]) => {
         const pinned = pinnedChats.reduce<ChatSummary[]>((result, id) => {
-            const summary = summaries.get(ChatIdentifier.fromString(id));
+            const summary = summaries.get(id);
             if (summary !== undefined) {
                 result.push(summary);
             }
@@ -115,7 +117,7 @@ export const chatSummariesListStore = derived(
         }, []);
         const unpinned = summaries
             .values()
-            .filter((chat) => !pinnedChats.includes(chat.id.toString()))
+            .filter((chat) => !pinnedChats.findIndex((p) => chatIdentifiersEqual(p, chat.id)))
             .sort(compareChats);
         return pinned.concat(unpinned);
     }
@@ -499,7 +501,7 @@ export function createDirectChat(chatId: DirectChatIdentifier): void {
         const clone = chatSummaries.clone();
         clone.set(chatId, {
             kind: "direct_chat",
-            chatId: chatId,
+            id: chatId,
             them: chatId,
             readByThemUpTo: undefined,
             latestMessage: undefined,
@@ -549,8 +551,9 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $failedMessages,
         $proposalTallies,
     ]) => {
-        const chatId = get(selectedChatId) ?? ChatIdentifier.groupFromString("");
-        const failedForChat = $failedMessages[chatId.toString()];
+        const chatId = get(selectedChatId) ?? { kind: "group_chat", groupId: "" };
+        // TODO sort this out
+        const failedForChat = $failedMessages[chatIdentifierToString(chatId)];
         // for the purpose of merging, unconfirmed and failed can be treated the same
         const failed = failedForChat ? Object.values(failedForChat) : [];
         const unconfirmed = $unconfirmed[chatId.toString()]?.messages ?? [];

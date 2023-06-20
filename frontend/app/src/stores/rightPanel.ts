@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 
-import type { ChatSummary, GroupPermissions } from "openchat-client";
+import type { ChatSummary, ChatPermissions } from "openchat-client";
 
 export type RightPanelState =
     | GroupDetailsPanel
@@ -75,7 +75,7 @@ export type UpdatedGroup = {
     name: string;
     desc: string;
     avatar?: UpdatedAvatar;
-    permissions: GroupPermissions;
+    permissions: ChatPermissions;
 };
 
 export function filterByChatType(

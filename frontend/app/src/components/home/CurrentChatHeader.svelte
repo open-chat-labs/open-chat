@@ -30,7 +30,7 @@
     let viewProfile = false;
     let showSuspendUserModal = false;
 
-    $: typingByChat = client.typingByChat;
+    $: typersByContext = client.typersByContext;
     $: userStore = client.userStore;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
     $: isGroup = selectedChatSummary.kind === "group_chat";
@@ -56,16 +56,14 @@
                 name: client.usernameAndIcon(them),
                 avatarUrl: client.userAvatarUrl(them),
                 userId: chatSummary.them.userId,
-                // TODO - sort this out
-                typing: client.getTypingString($_, $userStore, chatSummary.id, typing),
+                typing: client.getTypingString($_, $userStore, { chatId: chatSummary.id }, typing),
             };
         }
         return {
             name: chatSummary.name,
             avatarUrl: client.groupAvatarUrl(chatSummary),
             userId: undefined,
-            // TODO - sort this out
-            typing: client.getTypingString($_, $userStore, chatSummary.id, typing),
+            typing: client.getTypingString($_, $userStore, { chatId: chatSummary.id }, typing),
         };
     }
 
@@ -79,7 +77,7 @@
         viewProfile = false;
     }
 
-    $: chat = normaliseChatSummary($now, selectedChatSummary, $typingByChat);
+    $: chat = normaliseChatSummary($now, selectedChatSummary, $typersByContext);
 </script>
 
 {#if showSuspendUserModal}

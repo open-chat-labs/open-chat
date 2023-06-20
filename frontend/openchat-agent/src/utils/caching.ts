@@ -18,6 +18,7 @@ import {
     type SendMessageSuccess,
     type UpdatedEvent,
     ChatMap,
+    UnsupportedValueError,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
@@ -85,9 +86,15 @@ export function createFailedCacheKey(
 
 function chatIdentiferToString(chatId: ChatIdentifier): string {
     if (chatId.kind === "channel") {
-        return `${chatId.communityId}_${chatId.id}`;
+        return `${chatId.communityId}_${chatId.channelId}`;
     }
-    return chatId.id;
+    if (chatId.kind === "direct_chat") {
+        return chatId.userId;
+    }
+    if (chatId.kind === "group_chat") {
+        return chatId.groupId;
+    }
+    throw new UnsupportedValueError("Unknown chatId kind", chatId);
 }
 
 export function createCacheKey(
@@ -706,6 +713,6 @@ function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
 
     return {
         ...chat,
-        latestMessage: makeSerialisable(chat.latestMessage, chat.chatId, true),
+        latestMessage: makeSerialisable(chat.latestMessage, chat.id, true),
     };
 }

@@ -1,8 +1,13 @@
-import { derived, writable } from "svelte/store";
+import { Writable, derived, writable } from "svelte/store";
 import { setsAreEqual } from "../utils/set";
 import { createChatSpecificObjectStore, createDerivedPropStore } from "./dataByChatFactory";
-import type { Community, CommunityPermissions, CommunitySpecificState } from "openchat-shared";
-import { toRecord } from "src/utils/list";
+import {
+    CommunityMap,
+    type Community,
+    type CommunityPermissions,
+    type CommunitySpecificState,
+    CommunityIdentifier,
+} from "openchat-shared";
 
 const defaultPermissions: CommunityPermissions = {
     changePermissions: "owner",
@@ -23,7 +28,7 @@ function createDummyCommunity(
 ): Community {
     return {
         name,
-        id,
+        id: { kind: "community", id },
         description:
             "This is an awsome community with lots of interesting things to see and do. Blah blah blah, it _even supports markdown_. Not financial advice. HODL.",
         memberCount,
@@ -32,13 +37,16 @@ function createDummyCommunity(
         gate: { kind: "no_gate" },
         public: true,
         permissions: defaultPermissions,
-        myRole: "owner",
         historyVisible: true,
         frozen: false,
         level: "community",
-        joined: BigInt(0),
         lastUpdated: BigInt(0),
         latestEventIndex: 0,
+        channels: [],
+        membership: {
+            role: "owner",
+            joined: BigInt(0),
+        },
     };
 }
 
@@ -63,8 +71,8 @@ const testCommunities: Community[] = [
 export const allCommunities = writable<Community[]>(testCommunities);
 
 // these are the communities I am in
-export const communities = writable<Record<string, Community>>(
-    toRecord(testCommunities.slice(0, 5), (c) => c.id)
+export const communities: Writable<CommunityMap<Community>> = writable(
+    CommunityMap.fromList(testCommunities.slice(0, 5))
 );
 
 export const communitiesList = derived(communities, ($communities) => {
@@ -99,17 +107,20 @@ export const currentCommunityRules = createDerivedPropStore<CommunitySpecificSta
     () => undefined
 );
 
-export const selectedCommunityId = writable<string | undefined>("1");
+export const selectedCommunityId = writable<CommunityIdentifier | undefined>({
+    kind: "community",
+    id: "1",
+});
 
 export const selectedCommunity = derived(
-    [allCommunities, selectedCommunityId],
+    [communities, selectedCommunityId],
     ([$communities, $selectedCommunityId]) => {
         if ($selectedCommunityId === undefined) return undefined;
-        return $communities.find((c) => c.id === $selectedCommunityId);
+        return $communities.get($selectedCommunityId);
     }
 );
 
-export function setSelectedCommunity(id: string): void {
+export function setSelectedCommunity(id: CommunityIdentifier): void {
     selectedCommunityId.set(id);
-    communityStateStore.clear(id);
+    // communityStateStore.clear(id);
 }

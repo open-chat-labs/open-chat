@@ -49,6 +49,40 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFrozen' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const ExploreCommunitiesArgs = IDL.Record({
+    'page_size' : IDL.Nat8,
+    'page_index' : IDL.Nat32,
+    'search_term' : IDL.Opt(IDL.Text),
+  });
+  const Milliseconds = IDL.Nat64;
+  const SnsNeuronGate = IDL.Record({
+    'min_stake_e8s' : IDL.Opt(IDL.Nat64),
+    'min_dissolve_delay' : IDL.Opt(Milliseconds),
+    'governance_canister_id' : CanisterId,
+  });
+  const AccessGate = IDL.Variant({
+    'SnsNeuron' : SnsNeuronGate,
+    'DiamondMember' : IDL.Null,
+  });
+  const CommunityMatch = IDL.Record({
+    'id' : CommunityId,
+    'channel_count' : IDL.Nat32,
+    'gate' : IDL.Opt(AccessGate),
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'avatar_id' : IDL.Opt(IDL.Nat),
+    'banner_id' : IDL.Opt(IDL.Nat),
+    'member_count' : IDL.Nat32,
+  });
+  const ExploreCommunitiesSuccess = IDL.Record({
+    'matches' : IDL.Vec(CommunityMatch),
+  });
+  const ExploreCommunitiesResponse = IDL.Variant({
+    'TermTooShort' : IDL.Nat8,
+    'Success' : ExploreCommunitiesSuccess,
+    'TermTooLong' : IDL.Nat8,
+    'InvalidTerm' : IDL.Null,
+  });
   const FilterGroupsArgs = IDL.Record({
     'active_since' : IDL.Opt(TimestampMillis),
     'chat_ids' : IDL.Vec(ChatId),
@@ -92,16 +126,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupSubtype = IDL.Variant({
     'GovernanceProposals' : GovernanceProposalsSubtype,
-  });
-  const Milliseconds = IDL.Nat64;
-  const SnsNeuronGate = IDL.Record({
-    'min_stake_e8s' : IDL.Opt(IDL.Nat64),
-    'min_dissolve_delay' : IDL.Opt(Milliseconds),
-    'governance_canister_id' : CanisterId,
-  });
-  const AccessGate = IDL.Variant({
-    'SnsNeuron' : SnsNeuronGate,
-    'DiamondMember' : IDL.Null,
   });
   const Version = IDL.Record({
     'major' : IDL.Nat32,
@@ -181,6 +205,7 @@ export const idlFactory = ({ IDL }) => {
     'InternetComputer' : IDL.Null,
     'CHAT' : IDL.Null,
     'SNS1' : IDL.Null,
+    'KINIC' : IDL.Null,
     'CKBTC' : IDL.Null,
   });
   const PrizeContent = IDL.Record({
@@ -483,33 +508,6 @@ export const idlFactory = ({ IDL }) => {
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
-  const SearchScope = IDL.Variant({
-    'All' : IDL.Null,
-    'Communities' : IDL.Null,
-    'Groups' : IDL.Null,
-  });
-  const SearchV2Args = IDL.Record({
-    'max_results' : IDL.Nat8,
-    'scope' : SearchScope,
-    'search_term' : IDL.Text,
-  });
-  const CommunityMatch = IDL.Record({
-    'id' : CommunityId,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'avatar_id' : IDL.Opt(IDL.Nat),
-    'banner_id' : IDL.Opt(IDL.Nat),
-  });
-  const SearchV2Success = IDL.Record({
-    'group_matches' : IDL.Vec(GroupMatch),
-    'community_matches' : IDL.Vec(CommunityMatch),
-  });
-  const SearchV2Response = IDL.Variant({
-    'TermTooShort' : IDL.Nat8,
-    'Success' : SearchV2Success,
-    'TermTooLong' : IDL.Nat8,
-    'InvalidTerm' : IDL.Null,
-  });
   const SetUpgradeConcurrencyArgs = IDL.Record({ 'value' : IDL.Nat32 });
   const SetUpgradeConcurrencyResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
@@ -546,6 +544,11 @@ export const idlFactory = ({ IDL }) => {
         [DeleteFrozenGroupResponse],
         [],
       ),
+    'explore_communities' : IDL.Func(
+        [ExploreCommunitiesArgs],
+        [ExploreCommunitiesResponse],
+        ['query'],
+      ),
     'filter_groups' : IDL.Func(
         [FilterGroupsArgs],
         [FilterGroupsResponse],
@@ -563,7 +566,6 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
-    'search_v2' : IDL.Func([SearchV2Args], [SearchV2Response], ['query']),
     'set_community_upgrade_concurrency' : IDL.Func(
         [SetUpgradeConcurrencyArgs],
         [SetUpgradeConcurrencyResponse],

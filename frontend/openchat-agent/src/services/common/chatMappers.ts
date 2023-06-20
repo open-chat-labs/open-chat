@@ -108,6 +108,7 @@ import {
     chatIdentifiersEqual,
     AddRemoveReactionResponse,
     CommonResponses,
+    chatIdentifierToString,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -452,6 +453,7 @@ export function token(candid: ApiCryptocurrency): Cryptocurrency {
     if ("SNS1" in candid) return "sns1";
     if ("CKBTC" in candid) return "ckbtc";
     if ("CHAT" in candid) return "chat";
+    if ("KINIC" in candid) return "kinic";
     throw new UnsupportedValueError("Unexpected ApiCryptocurrency type received", candid);
 }
 
@@ -611,7 +613,7 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
 
 function replySourceContext([chatId, maybeThreadRoot]: [Principal, [] | [number]]): MessageContext {
     return {
-        chatId: { kind: "group_chat", id: chatId.toString() }, // FIXME: this is importantly wrong
+        chatId: { kind: "group_chat", groupId: chatId.toString() }, // FIXME: this is importantly wrong
         threadRootMessageIndex: optional(maybeThreadRoot, identity),
     };
 }
@@ -751,14 +753,14 @@ export function chatMetrics(candid: ApiChatMetrics): Metrics {
     };
 }
 
-export function memberRole(candid: ApiGroupRole): MemberRole {
+export function memberRole(candid: ApiGroupRole | ApiCommunityRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
     }
     if ("Moderator" in candid) {
         return "moderator";
     }
-    if ("Participant" in candid) {
+    if ("Participant" in candid || "Member" in candid) {
         return "member";
     }
     if ("Owner" in candid) {
@@ -786,7 +788,7 @@ export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext
         return {
             event_list_if_other: [
                 [
-                    Principal.fromText(domain.sourceContext.chatId.id),
+                    Principal.fromText(chatIdentifierToString(domain.sourceContext.chatId)),
                     apiOptional(identity, domain.sourceContext.threadRootMessageIndex),
                 ],
             ],
@@ -1188,7 +1190,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
     }));
     return {
         kind: "group_chat",
-        chatId: { kind: "group_chat", id: candid.chat_id.toString() },
+        id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         latestMessage,
         name: candid.name,
         description: candid.description,
@@ -1227,7 +1229,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
 
 export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): Community {
     return {
-        id: candid.community_id.toString(),
+        id: { kind: "community", id: candid.community_id.toString() },
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
@@ -1251,12 +1253,10 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "community",
         permissions: communityPermissions(candid.permissions),
-        membership: optional(candid.membership, (m) => {
-            return {
-                role: communityPermissionRole(m.role),
-                joined: m.joined,
-            };
-        }),
+        membership: {
+            joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
+            role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
+        },
         channels: [], // TODO - fill in mapping for channels
     };
 }

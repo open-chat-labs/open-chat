@@ -123,7 +123,7 @@ export class UserClient extends CandidService {
     ) {
         super(identity);
         this.userId = userId;
-        this.chatId = { kind: "direct_chat", id: userId };
+        this.chatId = { kind: "direct_chat", userId: userId };
         this.userService = this.createServiceClient<UserService>(idlFactory, userId, config);
     }
 
@@ -283,7 +283,7 @@ export class UserClient extends CandidService {
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            user_id: Principal.fromText(chatId.id),
+            user_id: Principal.fromText(chatId.userId),
             events: new Uint32Array(eventIndexes),
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
@@ -336,7 +336,7 @@ export class UserClient extends CandidService {
         const thread_root_message_index: [] = [];
         const args = {
             thread_root_message_index,
-            user_id: Principal.fromText(chatId.id),
+            user_id: Principal.fromText(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
@@ -396,7 +396,7 @@ export class UserClient extends CandidService {
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            user_id: Principal.fromText(chatId.id),
+            user_id: Principal.fromText(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             start_index: startIndex,
@@ -485,14 +485,14 @@ export class UserClient extends CandidService {
     ): Promise<[SendMessageResponse, Message]> {
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
-            ? dataClient.forwardData(event.event.content, [this.userId, chatId.id])
-            : dataClient.uploadData(event.event.content, [this.userId, chatId.id]);
+            ? dataClient.forwardData(event.event.content, [this.userId, chatId.userId])
+            : dataClient.uploadData(event.event.content, [this.userId, chatId.userId]);
 
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
             const req: ApiSendMessageArgs = {
                 content: apiMessageContent(newContent),
-                recipient: Principal.fromText(chatId.id),
+                recipient: Principal.fromText(chatId.userId),
                 sender_name: sender.username,
                 message_id: event.event.messageId,
                 replies_to: apiOptional(
@@ -505,7 +505,7 @@ export class UserClient extends CandidService {
             };
             console.log("What are we actually sending: ", req);
             return this.handleResponse(this.userService.send_message_v2(req), (resp) =>
-                sendMessageResponse(resp, event.event.sender, chatId.id)
+                sendMessageResponse(resp, event.event.sender, chatId.userId)
             ).then((resp) => [resp, { ...event.event, content: newContent }]);
         });
     }
@@ -549,7 +549,7 @@ export class UserClient extends CandidService {
             sender_name: sender.username,
             mentioned: [],
             message_id: event.event.messageId,
-            group_id: Principal.fromText(groupId.id),
+            group_id: Principal.fromText(groupId.groupId),
             replies_to: apiOptional(
                 (replyContext) => apiReplyContextArgs(groupId, replyContext),
                 event.event.repliesTo
@@ -683,7 +683,7 @@ export class UserClient extends CandidService {
         maxResults: number
     ): Promise<SearchDirectChatResponse> {
         const args = {
-            user_id: Principal.fromText(chatId.id),
+            user_id: Principal.fromText(chatId.userId),
             search_term: searchTerm,
             max_results: maxResults,
         };

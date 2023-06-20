@@ -123,7 +123,11 @@ export class GroupClient extends CandidService {
         private inviteCode: string | undefined
     ) {
         super(identity);
-        this.groupService = this.createServiceClient<GroupService>(idlFactory, chatId.id, config);
+        this.groupService = this.createServiceClient<GroupService>(
+            idlFactory,
+            chatId.groupId,
+            config
+        );
     }
 
     static create(
@@ -376,7 +380,7 @@ export class GroupClient extends CandidService {
 
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
         return DataClient.create(this.identity, this.config)
-            .uploadData(message.content, [this.chatId.id])
+            .uploadData(message.content, [this.chatId.groupId])
             .then((content) => {
                 return this.handleResponse(
                     this.groupService.edit_message_v2({
@@ -411,8 +415,8 @@ export class GroupClient extends CandidService {
 
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
-            ? dataClient.forwardData(event.event.content, [this.chatId.id])
-            : dataClient.uploadData(event.event.content, [this.chatId.id]);
+            ? dataClient.forwardData(event.event.content, [this.chatId.groupId])
+            : dataClient.uploadData(event.event.content, [this.chatId.groupId]);
 
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
@@ -575,7 +579,7 @@ export class GroupClient extends CandidService {
     }
 
     async getGroupDetails(latestEventIndex: number): Promise<GroupChatDetailsResponse> {
-        const fromCache = await getCachedGroupDetails(this.db, this.chatId.id);
+        const fromCache = await getCachedGroupDetails(this.db, this.chatId.groupId);
         if (fromCache !== undefined) {
             if (fromCache.latestEventIndex >= latestEventIndex) {
                 return fromCache;
@@ -586,7 +590,7 @@ export class GroupClient extends CandidService {
 
         const response = await this.getGroupDetailsFromBackend(latestEventIndex);
         if (response !== "caller_not_in_group") {
-            await setCachedGroupDetails(this.db, this.chatId.id, response);
+            await setCachedGroupDetails(this.db, this.chatId.groupId, response);
         }
         return response;
     }
@@ -603,7 +607,7 @@ export class GroupClient extends CandidService {
     async getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
         const response = await this.getGroupDetailsUpdatesFromBackend(previous);
         if (response.latestEventIndex > previous.latestEventIndex) {
-            await setCachedGroupDetails(this.db, this.chatId.id, response);
+            await setCachedGroupDetails(this.db, this.chatId.groupId, response);
         }
         return response;
     }

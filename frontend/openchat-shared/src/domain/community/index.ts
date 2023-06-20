@@ -8,7 +8,6 @@ import type {
     ChannelSummary,
 } from "../chat";
 import type { DataContent } from "../data";
-import type { HasIdentity } from "../identity";
 import type {
     CommunityPermissions,
     HasMembershipRole,

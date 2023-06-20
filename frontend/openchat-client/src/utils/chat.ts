@@ -41,6 +41,8 @@ import {
     GroupChatIdentifier,
     nullMembership,
     HasMembershipRole,
+    chatIdentifierToString,
+    MessageContext,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -112,7 +114,7 @@ export function getUsersToMakeRtcConnectionsWith(
     events: EventWrapper<ChatEvent>[]
 ): string[] {
     if (chat.kind === "direct_chat") {
-        return [chat.chatId.id];
+        return [chat.id.userId];
     }
 
     const activeUsers = getRecentlyActiveUsers(chat, events, MAX_RTC_CONNECTIONS_PER_CHAT);
@@ -178,19 +180,8 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.updatedBy;
         case "users_invited":
             return event.invitedBy;
-        case "message_deleted":
-        case "message_undeleted":
-        case "message_edited":
-        case "reaction_added":
-        case "reaction_removed":
-        case "poll_vote_registered":
-        case "poll_vote_deleted":
-            return event.message.updatedBy;
         case "direct_chat_created":
         case "aggregate_common_events":
-        case "poll_ended":
-        case "thread_updated":
-        case "proposals_updated":
         case "member_dismissed_as_super_admin":
         case "member_left": // We exclude participant_left events since the user is no longer in the group
         case "chat_frozen":
@@ -323,8 +314,10 @@ export function mergeUnconfirmedThreadsIntoSummary(
         membership: {
             ...chat.membership,
             latestThreads: chat.membership.latestThreads.map((t) => {
+                // TODO sort this out
                 const unconfirmedMsgs =
-                    unconfirmed[`${chat.chatId.id}_${t.threadRootMessageIndex}`]?.messages ?? [];
+                    unconfirmed[`${chatIdentifierToString(chat.id)}_${t.threadRootMessageIndex}`]
+                        ?.messages ?? [];
                 if (unconfirmedMsgs.length > 0) {
                     let msgIdx = t.latestMessageIndex;
                     let evtIdx = t.latestEventIndex;
@@ -427,7 +420,7 @@ export function mergeUnconfirmedIntoSummary(
     if (chatSummary.membership === undefined) return chatSummary;
 
     // TODO - sort out unconfirmed messages so that it's keyed on the right thing
-    const unconfirmedMessages = unconfirmed[chatSummary.id.id]?.messages;
+    const unconfirmedMessages = unconfirmed[chatIdentifierToString(chatSummary.id)]?.messages;
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
@@ -1381,11 +1374,10 @@ export function startTyping(
 export function getTypingString(
     formatter: MessageFormatter,
     users: UserLookup,
-    key: string,
+    key: MessageContext,
     typing: TypersByKey
 ): string | undefined {
-    // TODO - sort out typing so it's keyed on the right thing (keep in mind threads!)
-    const typers = typing[key];
+    const typers = typing.get(key);
     if (typers === undefined || typers.size === 0) return undefined;
 
     if (typers.size > 1) {

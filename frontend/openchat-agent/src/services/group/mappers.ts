@@ -101,7 +101,6 @@ import {
     memberRole,
     message,
     messageContent,
-    updatedMessage,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
@@ -176,7 +175,7 @@ export function summaryResponse(
 
 function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanisterGroupChatSummary {
     return {
-        chatId: { kind: "group_chat", id: candid.chat_id.toString() },
+        id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         lastUpdated: candid.last_updated,
         name: candid.name,
         description: candid.description,
@@ -227,7 +226,7 @@ function groupChatSummaryUpdates(
     candid: ApiGroupCanisterGroupChatSummaryUpdates
 ): GroupCanisterGroupChatSummaryUpdates {
     return {
-        chatId: { kind: "group_chat", id: candid.chat_id.toString() },
+        id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         lastUpdated: candid.last_updated,
         name: optional(candid.name, identity),
         description: optional(candid.description, identity),
@@ -1169,41 +1168,6 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
-    if ("MessageDeleted" in candid) {
-        return {
-            kind: "message_deleted",
-            message: updatedMessage(candid.MessageDeleted),
-        };
-    }
-
-    if ("MessageUndeleted" in candid) {
-        return {
-            kind: "message_undeleted",
-            message: updatedMessage(candid.MessageUndeleted),
-        };
-    }
-
-    if ("MessageEdited" in candid) {
-        return {
-            kind: "message_edited",
-            message: updatedMessage(candid.MessageEdited),
-        };
-    }
-
-    if ("MessageReactionAdded" in candid) {
-        return {
-            kind: "reaction_added",
-            message: updatedMessage(candid.MessageReactionAdded),
-        };
-    }
-
-    if ("MessageReactionRemoved" in candid) {
-        return {
-            kind: "reaction_removed",
-            message: updatedMessage(candid.MessageReactionRemoved),
-        };
-    }
-
     if ("UsersBlocked" in candid) {
         return {
             kind: "users_blocked",
@@ -1275,28 +1239,6 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
-    if ("PollVoteRegistered" in candid) {
-        return {
-            kind: "poll_vote_registered",
-            message: updatedMessage(candid.PollVoteRegistered),
-        };
-    }
-
-    if ("PollVoteDeleted" in candid) {
-        return {
-            kind: "poll_vote_deleted",
-            message: updatedMessage(candid.PollVoteDeleted),
-        };
-    }
-
-    if ("PollEnded" in candid) {
-        return {
-            kind: "poll_ended",
-            messageIndex: candid.PollEnded.message_index,
-            eventIndex: candid.PollEnded.event_index,
-        };
-    }
-
     if ("PermissionsChanged" in candid) {
         return {
             kind: "permissions_changed",
@@ -1326,24 +1268,6 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "group_invite_code_changed",
             change,
             changedBy: candid.GroupInviteCodeChanged.changed_by.toString(),
-        };
-    }
-
-    if ("ThreadUpdated" in candid) {
-        return {
-            kind: "thread_updated",
-            messageIndex: candid.ThreadUpdated.message_index,
-            eventIndex: candid.ThreadUpdated.event_index,
-        };
-    }
-
-    if ("ProposalsUpdated" in candid) {
-        return {
-            kind: "proposals_updated",
-            proposals: candid.ProposalsUpdated.proposals.map((p) => ({
-                messageIndex: p.message_index,
-                eventIndex: p.event_index,
-            })),
         };
     }
 

@@ -36,7 +36,7 @@
     $: pinnedChatsStore = client.pinnedChatsStore;
     $: blockedUsers = client.blockedUsers;
     $: messagesRead = client.messagesRead;
-    $: typingByChat = client.typingByChat;
+    $: typersByContext = client.typersByContext;
     $: userStore = client.userStore;
 
     const dispatch = createEventDispatcher();
@@ -51,16 +51,14 @@
                 name: client.usernameAndIcon(them),
                 avatarUrl: client.userAvatarUrl(them),
                 userId: chatSummary.them,
-                // TODO - sort this out
-                typing: client.getTypingString($_, $userStore, chatSummary.id, typing),
+                typing: client.getTypingString($_, $userStore, { chatId: chatSummary.id }, typing),
             };
         }
         return {
             name: chatSummary.name,
             avatarUrl: client.groupAvatarUrl(chatSummary),
             userId: undefined,
-            // TODO - sort this out
-            typing: client.getTypingString($_, $userStore, chatSummary.id, typing),
+            typing: client.getTypingString($_, $userStore, { chatId: chatSummary.id }, typing),
         };
     }
 
@@ -117,7 +115,7 @@
         }
     }
 
-    $: chat = normaliseChatSummary($now, chatSummary, $typingByChat);
+    $: chat = normaliseChatSummary($now, chatSummary, $typersByContext);
     $: lastMessage = formatLatestMessage(chatSummary, $userStore);
 
     $: {

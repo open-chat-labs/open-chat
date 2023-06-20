@@ -10,7 +10,6 @@ import type {
     MemberRole,
     Permissioned,
 } from "../permission";
-import type { HasIdentity } from "../identity";
 import type { HasLevel } from "../structure";
 import type {
     NotAuthorised,
@@ -508,19 +507,7 @@ export type LocalMessageUpdates = {
 
 export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;
 
-export type DirectChatEvent =
-    | Message
-    | MessageDeleted
-    | MessageUndeleted
-    | MessageEdited
-    | ReactionAdded
-    | ReactionRemoved
-    | PollVoteDeleted
-    | PollVoteRegistered
-    | PollEnded
-    | DirectChatCreated
-    | ThreadUpdated
-    | EmptyEvent;
+export type DirectChatEvent = Message | DirectChatCreated | EmptyEvent;
 
 export type GroupChatEvent =
     | Message
@@ -532,11 +519,6 @@ export type GroupChatEvent =
     | MemberLeft
     | GroupNameChanged
     | AvatarChanged
-    | MessageDeleted
-    | MessageUndeleted
-    | MessageEdited
-    | ReactionAdded
-    | ReactionRemoved
     | GroupDescChanged
     | GroupRulesChanged
     | UsersBlocked
@@ -548,15 +530,10 @@ export type GroupChatEvent =
     | OwnershipTransferred
     | MessagePinned
     | MessageUnpinned
-    | PollVoteRegistered
-    | PollVoteDeleted
-    | PollEnded
     | PermissionsChanged
     | GroupVisibilityChanged
     | GroupInviteCodeChanged
     | DirectChatCreated
-    | ThreadUpdated
-    | ProposalsUpdated
     | ChatFrozenEvent
     | GateUpdatedEvent
     | ChatUnfrozenEvent
@@ -799,7 +776,7 @@ export type ChatStateFull = {
 export type CurrentChatState = {
     chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
-    pinnedChats: ChatStateIdentifier[];
+    pinnedChats: ChatIdentifier[];
 };
 
 export type CachedGroupChatSummaries = {

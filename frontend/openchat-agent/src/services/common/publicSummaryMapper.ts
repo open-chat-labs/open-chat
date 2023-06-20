@@ -10,7 +10,7 @@ import { nullMembership, type GroupChatSummary } from "openchat-shared";
 export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSummary {
     return {
         kind: "group_chat",
-        chatId: { kind: "group_chat", id: candid.chat_id.toString() },
+        id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         latestEventIndex: candid.latest_event_index,
         latestMessage: optional(candid.latest_message, (ev) => ({
             index: ev.index,

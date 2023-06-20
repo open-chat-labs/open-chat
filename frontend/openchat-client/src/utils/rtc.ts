@@ -20,7 +20,7 @@ export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
 
 function findDirectChatByUserId(userId: string): DirectChatSummary | undefined {
     return get(chatSummariesListStore).find(
-        (c) => c.kind === "direct_chat" && c.them === userId
+        (c) => c.kind === "direct_chat" && c.them.userId === userId
     ) as DirectChatSummary | undefined;
 }
 
@@ -30,16 +30,16 @@ function findChatById(chatId: ChatIdentifier): ChatSummary | undefined {
 
 function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
     return msg.chatType === "group_chat"
-        ? findChatById(msg.chatId)
+        ? findChatById(msg.id)
         : findDirectChatByUserId(msg.userId);
 }
 
 function isDirectChatWith(chat: ChatSummary, userId: string): boolean {
-    return chat.kind === "direct_chat" && chat.them === userId;
+    return chat.kind === "direct_chat" && chat.them.userId === userId;
 }
 
 function isBlockedUser(chat: ChatSummary): boolean {
-    return chat.kind === "direct_chat" && get(blockedUsers).has(chat.them);
+    return chat.kind === "direct_chat" && get(blockedUsers).has(chat.them.userId);
 }
 
 export function filterWebRtcMessage(msg: WebRtcMessage): ChatIdentifier | undefined {
@@ -110,7 +110,7 @@ export function parseWebRtcMessage(chatId: ChatIdentifier, msg: WebRtcMessage): 
     ) {
         return {
             ...msg,
-            chatId,
+            id: chatId,
             messageId: BigInt(msg.messageId),
         };
     }
@@ -125,7 +125,7 @@ export function parseWebRtcMessage(chatId: ChatIdentifier, msg: WebRtcMessage): 
         }
         return {
             ...msg,
-            chatId,
+            id: chatId,
             messageEvent: {
                 ...msg.messageEvent,
                 event: {

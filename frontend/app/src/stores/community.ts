@@ -1,5 +1,5 @@
-import { Community, CommunityPermissions, CommunityMap } from "openchat-client";
-import { Writable, writable } from "svelte/store";
+import type { Community, CommunityPermissions } from "openchat-client";
+import { writable } from "svelte/store";
 
 // TODO - come back and decide on default permissions
 const defaultPermissions: CommunityPermissions = {
@@ -61,8 +61,3 @@ export function createCandidateCommunity(id: string): Community {
         },
     };
 }
-
-// TODO - not sure how this whole thing is going to work yet
-export const communities: Writable<CommunityMap<Community>> = writable(
-    new CommunityMap<Community>()
-);

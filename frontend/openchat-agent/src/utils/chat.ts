@@ -27,6 +27,7 @@ import {
     UpdatedEvent,
     ChatMap,
     Metrics,
+    chatIdentifiersEqual,
 } from "openchat-shared";
 import { toRecord } from "./list";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
@@ -74,7 +75,7 @@ export function mergeUpdates(
 ): ChatSummary | undefined {
     if (!chat) return undefined;
 
-    if (chat.chatId !== updatedChat.chatId) {
+    if (!chatIdentifiersEqual(chat.id, updatedChat.id)) {
         throw new Error("Cannot update chat from a chat with a different chat id");
     }
 
@@ -270,7 +271,7 @@ export function mergeDirectChatUpdates(
     const lookup = ChatMap.fromList(updates);
 
     return directChats.map((c) => {
-        const u = lookup.get(c.chatId);
+        const u = lookup.get(c.id);
 
         if (u === undefined) return c;
 
@@ -305,8 +306,8 @@ export function mergeGroupChatUpdates(
         ChatMap.fromList<GroupCanisterGroupChatSummaryUpdates>(groupCanisterUpdates);
 
     return groupChats.map((c) => {
-        const u = userLookup.get(c.chatId);
-        const g = groupLookup.get(c.chatId);
+        const u = userLookup.get(c.id);
+        const g = groupLookup.get(c.id);
 
         if (u === undefined && g === undefined) return c;
 
@@ -315,13 +316,12 @@ export function mergeGroupChatUpdates(
 
         const blobReferenceUpdate = mapOptionUpdate(g?.avatarId, (avatarId) => ({
             blobId: avatarId,
-            canisterId: c.chatId.id,
+            canisterId: c.id.groupId,
         }));
 
         return {
             kind: "group_chat",
-            chatId: c.chatId,
-            id: c.chatId,
+            id: c.id,
             name: g?.name ?? c.name,
             description: g?.description ?? c.description,
             minVisibleEventIndex: c.minVisibleEventIndex,
@@ -373,12 +373,11 @@ export function mergeGroupChats(
     const userCanisterGroupLookup = ChatMap.fromList(userCanisterGroups);
 
     return groupCanisterGroups.map((g) => {
-        const u = userCanisterGroupLookup.get(g.chatId);
+        const u = userCanisterGroupLookup.get(g.id);
 
         return {
             kind: "group_chat",
-            chatId: g.chatId,
-            id: g.chatId,
+            id: g.id,
             name: g.name,
             description: g.description,
             minVisibleEventIndex: g.minVisibleEventIndex,
@@ -396,7 +395,7 @@ export function mergeGroupChats(
             metrics: g.metrics,
             blobReference:
                 g.avatarId !== undefined
-                    ? { blobId: g.avatarId, canisterId: g.chatId.id }
+                    ? { blobId: g.avatarId, canisterId: g.id.groupId }
                     : undefined,
             dateLastPinned: g.dateLastPinned,
             dateReadPinned: u?.dateReadPinned,
@@ -456,8 +455,8 @@ export function getUpdatedEvents(
 ): ChatMap<UpdatedEvent[]> {
     const result = new ChatMap<UpdatedEvent[]>();
 
-    directChats.forEach((c) => result.set(c.chatId, c.updatedEvents));
-    groupChats.forEach((c) => result.set(c.chatId, c.updatedEvents));
+    directChats.forEach((c) => result.set(c.id, c.updatedEvents));
+    groupChats.forEach((c) => result.set(c.id, c.updatedEvents));
 
     return result;
 }
@@ -467,7 +466,7 @@ export function identity<T>(x: T): T {
 }
 
 export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
-    if (chat.chatId.kind === "group_chat" && chat.membership.role === "none") return undefined;
+    if (chat.id.kind === "group_chat" && chat.membership.role === "none") return undefined;
     return chat.membership.readByMeUpTo;
 }
 
