@@ -19,7 +19,11 @@
     export let showTopUp = false;
     export let refreshing = false;
 
-    onMount(refresh);
+    $: {
+        if (token) {
+            refresh();
+        }
+    }
 
     export function refresh() {
         if (disabled) return;
