@@ -1,6 +1,5 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{mutate_state, RuntimeState, FIVE_MINUTES_IN_MS};
-use rand::RngCore;
 use std::time::Duration;
 use types::{ChatId, Milliseconds};
 
@@ -17,8 +16,8 @@ fn run() {
 
 fn calculate_hot_group_ids(state: &mut RuntimeState) -> Vec<ChatId> {
     let now = state.env.now();
-    let random = state.env.rng().next_u32();
-    state.data.public_groups.calculate_hot_groups(now, random)
+    let rng = state.env.rng();
+    state.data.public_groups.calculate_hot_groups(now, rng)
 }
 
 async fn hydrate_and_set_hot_groups(chat_ids: Vec<ChatId>) {
