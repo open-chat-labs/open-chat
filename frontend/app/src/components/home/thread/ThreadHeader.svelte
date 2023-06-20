@@ -34,10 +34,11 @@
     $: chat = normaliseChatSummary($now, chatSummary, $byThread);
 
     function close() {
-        dispatch("closeThread", chatSummary.chatId);
+        dispatch("closeThread", chatSummary.id);
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
+        // TODO - sort this out
         const someoneTyping = client.getTypingString(
             $_,
             $userStore,
@@ -50,8 +51,10 @@
             someoneTyping ?? ($mobileWidth ? `${$_("thread.title")}: ${msgTxt}` : msgTxt);
         if (chatSummary.kind === "direct_chat") {
             return {
-                title: $mobileWidth ? $userStore[chatSummary.them]?.username : $_("thread.title"),
-                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
+                title: $mobileWidth
+                    ? $userStore[chatSummary.them.userId]?.username
+                    : $_("thread.title"),
+                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them.userId]),
                 userId: chatSummary.them,
                 subtext,
                 typing: someoneTyping !== undefined,

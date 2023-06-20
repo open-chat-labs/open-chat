@@ -508,6 +508,7 @@ export function createDirectChat(chatId: DirectChatIdentifier): void {
             metrics: emptyChatMetrics(),
             membership: {
                 ...nullMembership,
+                role: "owner",
             },
         });
         return clone as ChatMap<DirectChatSummary>;

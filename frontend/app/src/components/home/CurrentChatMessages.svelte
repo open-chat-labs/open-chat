@@ -19,7 +19,9 @@
         FilteredProposals,
         MessageReadState,
         FailedMessages,
-        OPENCHAT_BOT_USER_ID,
+        chatIdentifiersEqual,
+        ChatIdentifier,
+        chatIdentifierToString,
     } from "openchat-client";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import page from "page";
@@ -67,7 +69,7 @@
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
     let initialised = false;
-    let currentChatId = "";
+    let currentChatId: ChatIdentifier | undefined;
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
 
@@ -97,10 +99,10 @@
 
                     const isIntersecting = entry.intersectionRatio >= intersectionRatioRequired;
                     if (isIntersecting && messageReadTimers[idx] === undefined) {
-                        const chatId = chat.chatId;
+                        const chatId = chat.id;
                         const timer = window.setTimeout(() => {
-                            if (chatId === chat.chatId) {
-                                client.markMessageRead(chat.chatId, idx, id);
+                            if (chatId === chat.id) {
+                                client.markMessageRead(chat.id, idx, id);
                                 if (id !== undefined) {
                                     client.broadcastMessageRead(chat, id);
                                 }
@@ -119,7 +121,7 @@
     });
 
     function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
-        client.retrySendMessage(chat.chatId, ev.detail, events, undefined);
+        client.retrySendMessage(chat.id, ev.detail, events, undefined);
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
@@ -127,12 +129,12 @@
     }
 
     function doGoToMessageIndex(index: number): void {
-        page(`/${chat.chatId}`);
-        chatEventList?.scrollToMessageIndex(chat.chatId, index, false);
+        page(`/${chat.id}`);
+        chatEventList?.scrollToMessageIndex(chat.id, index, false);
     }
 
     export function scrollToMessageIndex(index: number, preserveFocus: boolean) {
-        chatEventList?.scrollToMessageIndex(chat.chatId, index, preserveFocus);
+        chatEventList?.scrollToMessageIndex(chat.id, index, preserveFocus);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -141,7 +143,7 @@
     }
 
     function onEditEvent(ev: CustomEvent<EventWrapper<Message>>) {
-        currentChatDraftMessage.setEditing(chat.chatId, ev.detail);
+        currentChatDraftMessage.setEditing(chat.id, ev.detail);
     }
 
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
@@ -178,7 +180,7 @@
         }
         const firstKey =
             prefix + (first.event.kind === "message" ? first.event.messageId : first.index);
-        chatStateStore.updateProp(chat.chatId, "userGroupKeys", (keys) => {
+        chatStateStore.updateProp(chat.id, "userGroupKeys", (keys) => {
             keys.add(firstKey);
             return keys;
         });
@@ -194,12 +196,13 @@
         groupInner(filteredProposals)
     );
 
-    $: privatePreview = chat.kind === "group_chat" && chat.myRole === "previewer" && !chat.public;
+    $: privatePreview =
+        chat.kind === "group_chat" && chat.membership.role === "none" && !chat.public;
     $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
 
     $: {
-        if (chat.chatId !== currentChatId) {
-            currentChatId = chat.chatId;
+        if (currentChatId === undefined || !chatIdentifiersEqual(chat.id, currentChatId)) {
+            currentChatId = chat.id;
             initialised = false;
 
             // If the chat is empty, there is nothing to initialise, so we can set initialised to true
@@ -221,14 +224,19 @@
 
     function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return !unconfirmed.contains(chat.chatId, evt.event.messageId);
+            // TODO - sort this out
+            return !unconfirmed.contains(chatIdentifierToString(chat.id), evt.event.messageId);
         }
         return true;
     }
 
     function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return failedMessagesStore.contains(chat.chatId, evt.event.messageId);
+            // TODO Sort this out
+            return failedMessagesStore.contains(
+                chatIdentifierToString(chat.id),
+                evt.event.messageId
+            );
         }
         return false;
     }
@@ -239,7 +247,7 @@
         evt: EventWrapper<ChatEventType>
     ): boolean {
         if (evt.event.kind === "message") {
-            const confirmedRead = client.messageIsReadByThem(chat.chatId, evt.event.messageIndex);
+            const confirmedRead = client.messageIsReadByThem(chat.id, evt.event.messageIndex);
             if (confirmedRead && readByThem.has(evt.event.messageId)) {
                 unconfirmedReadByThem.delete(evt.event.messageId);
             }
@@ -257,9 +265,9 @@
                     ? evt.event.messageIndex
                     : evt.event.messagesDeleted[evt.event.messagesDeleted.length - 1];
             let messageId = evt.event.kind === "message" ? evt.event.messageId : undefined;
-            const isRead = client.isMessageRead(chat.chatId, messageIndex, messageId);
+            const isRead = client.isMessageRead(chat.id, messageIndex, messageId);
             if (!isRead && evt.event.kind === "message" && evt.event.sender === user.userId) {
-                client.markMessageRead(chat.chatId, messageIndex, messageId);
+                client.markMessageRead(chat.id, messageIndex, messageId);
                 return true;
             }
             return isRead;
@@ -355,7 +363,7 @@
     {unreadMessages}
     {firstUnreadMention}
     {footer}
-    setFocusMessageIndex={(idx) => client.setFocusMessageIndex(chat.chatId, idx)}
+    setFocusMessageIndex={(idx) => client.setFocusMessageIndex(chat.id, idx)}
     {events}
     {chat}
     bind:initialised
@@ -366,13 +374,13 @@
             <ProposalBot />
         {:else if chat.kind === "group_chat"}
             <InitialGroupMessage group={chat} />
-        {:else if client.isOpenChatBot(chat.them)}
+        {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
             <Robot />
-        {:else}
+        {:else if chat.kind === "direct_chat"}
             <div class="big-avatar">
                 <Avatar
-                    url={client.userAvatarUrl($userStore[chat.them])}
-                    userId={chat.them}
+                    url={client.userAvatarUrl($userStore[chat.them.userId])}
+                    userId={chat.them.userId}
                     size={AvatarSize.Large} />
             </div>
         {/if}
@@ -396,7 +404,7 @@
                         failed={isFailed($failedMessagesStore, evt)}
                         readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($messagesRead, evt)}
-                        chatId={chat.chatId}
+                        chatId={chat.id}
                         chatType={chat.kind}
                         {user}
                         me={isMe(evt)}

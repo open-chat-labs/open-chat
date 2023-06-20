@@ -25,7 +25,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { discoverHotGroupsDismissed } from "../../stores/settings";
     import { communitiesEnabled } from "../../utils/features";
-    import { chatTypeToPath } from "../../routes";
+    import { chatTypeToPath, routeForChatIdentifier } from "../../routes";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -62,7 +62,7 @@
         }
 
         if (chat.kind === "direct_chat") {
-            const username = $userStore[chat.them]?.username;
+            const username = $userStore[chat.them.userId]?.username;
             return username ? username.toLowerCase().indexOf(lowercaseSearch) >= 0 : false;
         }
         return false;
@@ -93,7 +93,7 @@
 
     function chatSelected(ev: CustomEvent<ChatSummaryType>): void {
         chatScrollTop = chatListElement.scrollTop;
-        const url = `/${chatTypeToPath(ev.detail.kind)}/${ev.detail.chatId}`;
+        const url = routeForChatIdentifier(ev.detail.id);
         page(url);
         closeSearch();
     }
@@ -165,11 +165,11 @@
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">{$_("yourChats")}</h3>
                 {/if}
-                {#each chats as chatSummary (chatSummary.chatId)}
+                {#each chats as chatSummary (chatSummary.id)}
                     <ChatSummary
                         {chatSummary}
-                        selected={$selectedChatId === chatSummary.chatId}
-                        visible={searchTerm !== "" || !chatSummary.archived}
+                        selected={$selectedChatId === chatSummary.id}
+                        visible={searchTerm !== "" || !chatSummary.membership.archived}
                         on:chatSelected={chatSelected}
                         on:pinChat
                         on:unpinChat

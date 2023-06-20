@@ -46,11 +46,11 @@
     };
     let rulesValid = true;
     $: steps = getSteps(editing);
-    $: editing = candidateGroup.chatId.id !== "";
+    $: editing = candidateGroup.id.groupId !== "";
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
-    $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.chatId);
+    $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.id);
 
     $: permissionsDirty = client.havePermissionsChanged(
         originalGroup.permissions,
@@ -179,7 +179,7 @@
     function doMakeGroupPrivate(): Promise<void> {
         if (!editing) return Promise.resolve();
 
-        return client.makeGroupPrivate(candidateGroup.chatId).then((success) => {
+        return client.makeGroupPrivate(candidateGroup.id).then((success) => {
             if (success) {
                 originalGroup = {
                     ...originalGroup,
@@ -196,7 +196,7 @@
 
         return client
             .updateGroupPermissions(
-                candidateGroup.chatId,
+                candidateGroup.id,
                 originalGroup.permissions,
                 candidateGroup.permissions
             )
@@ -218,7 +218,7 @@
 
         return client
             .updateGroup(
-                candidateGroup.chatId,
+                candidateGroup.id,
                 undefined,
                 undefined,
                 undefined,
@@ -247,18 +247,16 @@
     function doUpdateRules(): Promise<void> {
         if (!editing) return Promise.resolve();
 
-        return client
-            .updateGroupRules(candidateGroup.chatId, candidateGroup.rules)
-            .then((success) => {
-                if (success) {
-                    dispatch("updateGroupRules", {
-                        chatId: candidateGroup.chatId,
-                        rules: candidateGroup.rules,
-                    });
-                } else {
-                    toastStore.showFailureToast(interpolateError("group.rulesUpdateFailed"));
-                }
-            });
+        return client.updateGroupRules(candidateGroup.id, candidateGroup.rules).then((success) => {
+            if (success) {
+                dispatch("updateGroupRules", {
+                    chatId: candidateGroup.id,
+                    rules: candidateGroup.rules,
+                });
+            } else {
+                toastStore.showFailureToast(interpolateError("group.rulesUpdateFailed"));
+            }
+        });
     }
 
     function doUpdateInfo(): Promise<void> {
@@ -266,7 +264,7 @@
 
         return client
             .updateGroup(
-                candidateGroup.chatId,
+                candidateGroup.id,
                 nameDirty ? candidateGroup.name : undefined,
                 descDirty ? candidateGroup.description : undefined,
                 undefined,
@@ -305,7 +303,10 @@
                     if (err) toastStore.showFailureToast(interpolateError(err));
                     step = 0;
                 } else {
-                    const chatId: GroupChatIdentifier = { kind: "group_chat", id: resp.canisterId };
+                    const chatId: GroupChatIdentifier = {
+                        kind: "group_chat",
+                        groupId: resp.canisterId,
+                    };
                     return optionallyInviteUsers(chatId)
                         .then(() => {
                             onGroupCreated(chatId);

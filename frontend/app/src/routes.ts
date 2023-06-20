@@ -100,7 +100,7 @@ export function selectedChannelRoute(ctx: PageJS.Context): RouteParams {
         chatId: {
             kind: "channel",
             communityId: ctx.params["communityId"],
-            id: ctx.params["channelId"],
+            channelId: ctx.params["channelId"],
         },
         messageIndex: ctx.params["messageIndex"] ? Number(ctx.params["messageIndex"]) : undefined,
         threadMessageIndex: ctx.params["threadMessageIndex"]
@@ -137,9 +137,14 @@ export function chatSelectedRoute(
         };
     }
 
+    const identifier =
+        chatType === "direct_chat"
+            ? ({ kind: "direct_chat", userId: chatId } as DirectChatIdentifier)
+            : ({ kind: "group_chat", groupId: chatId } as GroupChatIdentifier);
+
     return {
         kind: "global_chat_selected_route",
-        chatId: { kind: chatType, id: chatId },
+        chatId: identifier,
         messageIndex: ctx.params["messageIndex"] ? Number(ctx.params["messageIndex"]) : undefined,
         threadMessageIndex: ctx.params["threadMessageIndex"]
             ? Number(ctx.params["threadMessageIndex"])
@@ -216,14 +221,14 @@ export type SelectedCommunityRoute = {
     communityId: string;
 };
 
-export function routeForChatIdentifier(chatId: ChatIdentifier): string {
-    switch (chatId.kind) {
+export function routeForChatIdentifier(id: ChatIdentifier): string {
+    switch (id.kind) {
         case "direct_chat":
-            return `/user/${chatId.id}`;
+            return `/user/${id.userId}`;
         case "group_chat":
-            return `/group/${chatId.id}`;
+            return `/group/${id.groupId}`;
         case "channel":
-            return `/community/${chatId.communityId}/channel/${chatId.id}`;
+            return `/community/${id.communityId}/channel/${id.channelId}`;
     }
 }
 

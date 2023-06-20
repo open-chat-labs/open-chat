@@ -968,7 +968,7 @@ export function communityChannelSummary(
     }));
     return {
         kind: "channel",
-        chatId: { kind: "channel", communityId, id: candid.channel_id.toString() },
+        id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
         latestMessage,
         name: candid.name,
         description: candid.description,

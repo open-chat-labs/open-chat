@@ -792,13 +792,13 @@ export type ChatStateFull = {
     groupChats: GroupChatSummary[];
     avatarId: bigint | undefined;
     blockedUsers: string[];
-    pinnedChats: string[];
+    pinnedChats: ChatIdentifier[];
 };
 
 export type CurrentChatState = {
     chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
-    pinnedChats: string[];
+    pinnedChats: ChatStateIdentifier[];
 };
 
 export type CachedGroupChatSummaries = {
@@ -820,6 +820,19 @@ export type DirectChatsInitial = {
 export type ChatIdentifier = ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier;
 export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
 
+export function chatIdentifierToString(id: ChatIdentifier): string {
+    switch (id.kind) {
+        case "direct_chat":
+            return id.userId;
+        case "group_chat":
+            return id.groupId;
+        default:
+            throw new Error(
+                "TODO Channel chat identifiers should not serialised - get rid of the calling code"
+            );
+    }
+}
+
 export function chatIdentifiersEqual(a: ChatIdentifier, b: ChatIdentifier): boolean {
     if (a.kind !== b.kind) {
         return false;
@@ -827,9 +840,15 @@ export function chatIdentifiersEqual(a: ChatIdentifier, b: ChatIdentifier): bool
 
     switch (a.kind) {
         case "channel":
-            return b.kind === "channel" && a.communityId === b.communityId && a.id === b.id;
-        default:
-            return a.id === b.id;
+            return (
+                b.kind === "channel" &&
+                a.communityId === b.communityId &&
+                a.channelId === b.channelId
+            );
+        case "direct_chat":
+            return b.kind === "direct_chat" && a.userId === b.userId;
+        case "group_chat":
+            return b.kind === "group_chat" && a.groupId === b.groupId;
     }
 }
 
@@ -874,18 +893,18 @@ export function chatIdentifiersEqual(a: ChatIdentifier, b: ChatIdentifier): bool
 
 export type DirectChatIdentifier = {
     kind: "direct_chat";
-    id: string;
+    userId: string;
 };
 
 export type GroupChatIdentifier = {
     kind: "group_chat";
-    id: string;
+    groupId: string;
 };
 
 export type ChannelIdentifier = {
     kind: "channel";
     communityId: string;
-    id: string;
+    channelId: string;
 };
 
 export type FavouriteChatsInitial = {
@@ -1001,7 +1020,7 @@ export type UserCanisterChannelSummaryUpdates = {
 };
 
 export type UserCanisterGroupChatSummary = {
-    chatId: GroupChatIdentifier;
+    id: GroupChatIdentifier;
     readByMeUpTo: number | undefined;
     threadsRead: Record<number, number>;
     archived: boolean;
@@ -1009,7 +1028,7 @@ export type UserCanisterGroupChatSummary = {
 };
 
 export type UserCanisterGroupChatSummaryUpdates = {
-    chatId: GroupChatIdentifier;
+    id: GroupChatIdentifier;
     readByMeUpTo: number | undefined;
     threadsRead: Record<number, number>;
     archived: boolean | undefined;
@@ -1030,13 +1049,13 @@ type ChatSummaryUpdatesCommon = {
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
-    chatId: DirectChatIdentifier;
+    id: DirectChatIdentifier;
     kind: "direct_chat";
     readByThemUpTo?: number;
 };
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
-    chatId: GroupChatIdentifier;
+    id: GroupChatIdentifier;
     kind: "group_chat";
     lastUpdated: bigint;
     name?: string;
@@ -1149,7 +1168,7 @@ export type ChannelSummary = DataContent &
     HasLevel &
     Permissioned<ChatPermissions> & {
         kind: "channel";
-        chatId: ChannelIdentifier;
+        id: ChannelIdentifier;
         subtype: GroupSubtype;
         name: string;
         description: string;
@@ -1163,7 +1182,7 @@ export type ChannelSummary = DataContent &
 
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
-    chatId: DirectChatIdentifier;
+    id: DirectChatIdentifier;
     them: DirectChatIdentifier;
     readByThemUpTo: number | undefined;
     dateCreated: bigint;
@@ -1175,7 +1194,7 @@ export type GroupChatSummary = DataContent &
     HasLevel &
     Permissioned<ChatPermissions> & {
         kind: "group_chat";
-        chatId: GroupChatIdentifier;
+        id: GroupChatIdentifier;
         name: string;
         description: string;
         minVisibleEventIndex: number;
@@ -1219,7 +1238,7 @@ export type GroupCanisterSummaryUpdatesResponse =
 
 export type GroupCanisterGroupChatSummary = AccessControlled &
     Permissioned<ChatPermissions> & {
-        chatId: GroupChatIdentifier;
+        id: GroupChatIdentifier;
         lastUpdated: bigint;
         name: string;
         description: string;
@@ -1247,7 +1266,7 @@ export type UpdatedEvent = {
 };
 
 export type GroupCanisterGroupChatSummaryUpdates = {
-    chatId: GroupChatIdentifier;
+    id: GroupChatIdentifier;
     lastUpdated: bigint;
     name: string | undefined;
     description: string | undefined;
@@ -1301,7 +1320,7 @@ export type CandidateGroupChat = AccessControlled &
     HasLevel &
     HasMembershipRole &
     Permissioned<ChatPermissions> & {
-        chatId: GroupChatIdentifier;
+        id: GroupChatIdentifier;
         name: string;
         description: string;
         rules: AccessRules;

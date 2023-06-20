@@ -4,6 +4,8 @@ import type {
     ChatIdentifier,
     ChatMap,
     ChatSummary,
+    Community,
+    CommunityMap,
     DiamondMembershipDetails,
     DirectChatSummary,
     EnhancedReplyContext,
@@ -46,6 +48,7 @@ import { pinnedChatsStore } from "./stores/pinnedChats";
 import { blockedUsers } from "./stores/blockedUsers";
 import { diamondMembership, isDiamond } from "./stores/diamond";
 import type DRange from "drange";
+import { communities } from "./stores/community";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -83,6 +86,7 @@ export class LiveState {
     diamondMembership!: DiamondMembershipDetails | undefined;
     isDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
+    communities!: CommunityMap<Community>;
 
     constructor() {
         confirmedThreadEventIndexesLoadedStore.subscribe(
@@ -120,5 +124,6 @@ export class LiveState {
         blockedUsers.subscribe((data) => (this.blockedUsers = data));
         diamondMembership.subscribe((data) => (this.diamondMembership = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));
+        communities.subscribe((data) => (this.communtities = data));
     }
 }

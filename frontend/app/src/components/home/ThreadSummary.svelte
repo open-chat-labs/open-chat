@@ -20,7 +20,7 @@
     $: messagesRead = client.messagesRead;
     $: userStore = client.userStore;
     $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
-    $: isFollowedByMe = $threadsFollowedByMeStore[chatId]?.has(threadRootMessageIndex) ?? false;
+    $: isFollowedByMe = $threadsFollowedByMeStore.get(chatId)?.has(threadRootMessageIndex) ?? false;
     $: lastMessageIndex = threadSummary.numberOfReplies - 1; //using this as a surrogate for message index for now
     $: unreadCount = client.unreadThreadMessageCount(
         chatId,

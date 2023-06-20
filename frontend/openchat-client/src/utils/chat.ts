@@ -14,7 +14,6 @@ import {
     PollVotes,
     PollContent,
     MemberRole,
-    PermissionRole,
     CryptocurrencyContent,
     AggregateCommonEvents,
     Metrics,
@@ -40,7 +39,6 @@ import {
     ChatIdentifier,
     ISafeMap,
     GroupChatIdentifier,
-    ChatMembership,
     nullMembership,
     HasMembershipRole,
 } from "openchat-shared";
@@ -59,6 +57,7 @@ import { formatTokens } from "./cryptoFormatter";
 import { currentChatUserIds } from "../stores/chat";
 import type { TypersByKey } from "../stores/typing";
 import { tallyKey } from "../stores/proposalTallies";
+import { hasOwnerRights, isPermitted } from "./permissions";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -113,7 +112,7 @@ export function getUsersToMakeRtcConnectionsWith(
     events: EventWrapper<ChatEvent>[]
 ): string[] {
     if (chat.kind === "direct_chat") {
-        return [chat.id.toString()];
+        return [chat.chatId.id];
     }
 
     const activeUsers = getRecentlyActiveUsers(chat, events, MAX_RTC_CONNECTIONS_PER_CHAT);
@@ -325,7 +324,7 @@ export function mergeUnconfirmedThreadsIntoSummary(
             ...chat.membership,
             latestThreads: chat.membership.latestThreads.map((t) => {
                 const unconfirmedMsgs =
-                    unconfirmed[`${chat.id.id}_${t.threadRootMessageIndex}`]?.messages ?? [];
+                    unconfirmed[`${chat.chatId.id}_${t.threadRootMessageIndex}`]?.messages ?? [];
                 if (unconfirmedMsgs.length > 0) {
                     let msgIdx = t.latestMessageIndex;
                     let evtIdx = t.latestEventIndex;
@@ -345,18 +344,6 @@ export function mergeUnconfirmedThreadsIntoSummary(
                 return t;
             }),
         },
-    };
-}
-
-function mergeMembership(
-    current: ChatMembership,
-    updated: Partial<ChatMembership> | undefined
-): ChatMembership {
-    if (updated === undefined) return current;
-
-    return {
-        ...current,
-        ...updated,
     };
 }
 
@@ -439,7 +426,8 @@ export function mergeUnconfirmedIntoSummary(
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
-    const unconfirmedMessages = unconfirmed[chatSummary.id.toString()]?.messages;
+    // TODO - sort out unconfirmed messages so that it's keyed on the right thing
+    const unconfirmedMessages = unconfirmed[chatSummary.id.id]?.messages;
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
@@ -710,7 +698,10 @@ export function groupChatFromCandidate(
         dateReadPinned: undefined,
         gate: candidate.gate,
         level: "group",
-        membership: nullMembership,
+        membership: {
+            ...nullMembership,
+            role: "owner",
+        },
     };
 }
 
@@ -906,7 +897,7 @@ export function canSendMessages(
         return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.sendMessages);
     }
 
-    const user = userLookup[chat.them.id];
+    const user = userLookup[chat.them.userId];
     if (user === undefined || user.suspended) {
         return false;
     }
@@ -958,25 +949,6 @@ export function canMakePrivate(thing: AccessControlled & HasMembershipRole): boo
     } else {
         return false;
     }
-}
-
-function hasOwnerRights(role: MemberRole): boolean {
-    return role === "owner";
-}
-
-function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean {
-    if (role === "none") return false;
-    switch (permissionRole) {
-        case "owner":
-            return hasOwnerRights(role);
-        case "admin":
-            return role !== "member" && role !== "moderator";
-        case "moderator":
-            return role !== "member";
-        case "member":
-            return true;
-    }
-    return false;
 }
 
 export function mergeChatMetrics(a: Metrics, b: Metrics): Metrics {
@@ -1385,7 +1357,7 @@ export function stopTyping(
     rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
         kind: "remote_user_stopped_typing",
         chatType: kind,
-        chatId: id,
+        id,
         userId,
         threadRootMessageIndex,
     });
@@ -1399,7 +1371,7 @@ export function startTyping(
     rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
         kind: "remote_user_typing",
         chatType: kind,
-        chatId: id,
+        id,
         userId,
         threadRootMessageIndex,
     });
@@ -1411,6 +1383,7 @@ export function getTypingString(
     key: string,
     typing: TypersByKey
 ): string | undefined {
+    // TODO - sort out typing so it's keyed on the right thing (keep in mind threads!)
     const typers = typing[key];
     if (typers === undefined || typers.size === 0) return undefined;
 

@@ -26,7 +26,7 @@
     import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
     import { pathParams } from "../../routes";
     import page from "page";
-    import { GroupChatIdentifier, compareRoles } from "openchat-shared";
+    import { CommunityIdentifier, GroupChatIdentifier, compareRoles } from "openchat-shared";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
     import CommunityChannels from "./communities/details/CommunityChannels.svelte";
 
@@ -176,7 +176,7 @@
     }
 
     function changeCommunityRole(
-        _id: string,
+        _id: CommunityIdentifier,
         _userId: string,
         _newRole: MemberRole,
         _oldRole: MemberRole

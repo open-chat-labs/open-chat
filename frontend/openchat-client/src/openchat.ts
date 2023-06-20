@@ -4,6 +4,13 @@ import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
 import { load } from "@fingerprintjs/botd";
 import {
+    canChangeRoles as canChangeCommunityRoles,
+    canBlockUsers as canBlockCommunityUsers,
+    canUnblockUsers as canUnblockCommunityUsers,
+    canInviteUsers as canInviteCommunityUsers,
+    canRemoveMembers as canRemoveCommunityMembers,
+} from "./utils/community";
+import {
     buildUserAvatarUrl,
     canBlockUsers,
     canChangePermissions,
@@ -311,6 +318,7 @@ import {
     chatIdentifiersEqual,
     GroupChatIdentifier,
     DirectChatIdentifier,
+    type CommunityIdentifier,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -1052,8 +1060,13 @@ export class OpenChat extends OpenChatAgentWorker {
         return dataContent?.blobUrl ?? "../assets/landscape.png";
     }
 
-    canBlockUsers(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, canBlockUsers);
+    canBlockUsers(chatId: ChatIdentifier | CommunityIdentifier): boolean {
+        switch (chatId.kind) {
+            case "community":
+                return this.communityPredicate(chatId, canBlockCommunityUsers);
+            default:
+                return this.chatPredicate(chatId, canBlockUsers);
+        }
     }
 
     canCreatePolls(chatId: ChatIdentifier): boolean {
@@ -1082,30 +1095,59 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    canChangeRoles(chatId: ChatIdentifier, currentRole: MemberRole, newRole: MemberRole): boolean {
-        return this.chatPredicate(chatId, (chat) => canChangeRoles(chat, currentRole, newRole));
+    canChangeRoles(
+        id: ChatIdentifier | CommunityIdentifier,
+        currentRole: MemberRole,
+        newRole: MemberRole
+    ): boolean {
+        switch (id.kind) {
+            case "community":
+                return this.communityPredicate(id, (community) =>
+                    canChangeCommunityRoles(community, currentRole, newRole)
+                );
+            default:
+                return this.chatPredicate(id, (chat) => canChangeRoles(chat, currentRole, newRole));
+        }
     }
 
-    canPromote(chatId: ChatIdentifier, currentRole: MemberRole, newRole: MemberRole): boolean {
+    canPromote(
+        chatId: ChatIdentifier | CommunityIdentifier,
+        currentRole: MemberRole,
+        newRole: MemberRole
+    ): boolean {
         return (
             compareRoles(newRole, currentRole) > 0 &&
             this.canChangeRoles(chatId, currentRole, newRole)
         );
     }
 
-    canDemote(chatId: ChatIdentifier, currentRole: MemberRole, newRole: MemberRole): boolean {
+    canDemote(
+        chatId: ChatIdentifier | CommunityIdentifier,
+        currentRole: MemberRole,
+        newRole: MemberRole
+    ): boolean {
         return (
             compareRoles(newRole, currentRole) < 0 &&
             this.canChangeRoles(chatId, currentRole, newRole)
         );
     }
 
-    canUnblockUsers(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, canUnblockUsers);
+    canUnblockUsers(identifier: ChatIdentifier | CommunityIdentifier): boolean {
+        switch (identifier.kind) {
+            case "community":
+                return this.communityPredicate(identifier, canUnblockCommunityUsers);
+            default:
+                return this.chatPredicate(identifier, canUnblockUsers);
+        }
     }
 
-    canRemoveMembers(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, canRemoveMembers);
+    canRemoveMembers(id: ChatIdentifier | CommunityIdentifier): boolean {
+        switch (id.kind) {
+            case "community":
+                return this.communityPredicate(id, canRemoveCommunityMembers);
+            default:
+                return this.chatPredicate(id, canRemoveMembers);
+        }
     }
 
     canEditGroupDetails(chatId: ChatIdentifier): boolean {
@@ -1116,8 +1158,13 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.chatPredicate(chatId, canChangePermissions);
     }
 
-    canInviteUsers(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, canInviteUsers);
+    canInviteUsers(id: ChatIdentifier | CommunityIdentifier): boolean {
+        switch (id.kind) {
+            case "community":
+                return this.communityPredicate(id, canInviteCommunityUsers);
+            default:
+                return this.chatPredicate(id, canInviteUsers);
+        }
     }
 
     canDeleteGroup(chatId: ChatIdentifier): boolean {
@@ -1160,6 +1207,14 @@ export class OpenChat extends OpenChatAgentWorker {
     ): boolean {
         const chat = this._liveState.chatSummaries.get(chatId);
         return chat !== undefined && predicate(chat);
+    }
+
+    private communityPredicate(
+        communityId: CommunityIdentifier,
+        predicate: (community: Community) => boolean
+    ): boolean {
+        const community = this._liveState.communities.get(communityId);
+        return community !== undefined && predicate(community);
     }
 
     private groupChatPredicate(

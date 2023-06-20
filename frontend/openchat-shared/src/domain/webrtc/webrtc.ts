@@ -12,7 +12,7 @@ export type WebRtcMessage =
 
 type WebRtcMessageCommon = {
     chatType: ChatSummary["kind"];
-    chatId: ChatIdentifier;
+    id: ChatIdentifier;
     userId: string;
     threadRootMessageIndex?: number;
 };

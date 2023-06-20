@@ -99,7 +99,7 @@
     });
 
     function addHotGroupExclusion(chatId: string): void {
-        client.addHotGroupExclusion({ kind: "group_chat", id: chatId }).then((success) => {
+        client.addHotGroupExclusion({ kind: "group_chat", groupId: chatId }).then((success) => {
             if (success) {
                 console.log("Hot group exclusion added", chatId);
             } else {
@@ -109,7 +109,7 @@
     }
 
     function deleteFrozenGroup(chatId: string): void {
-        client.deleteFrozenGroup({ kind: "group_chat", id: chatId }).then((success) => {
+        client.deleteFrozenGroup({ kind: "group_chat", groupId: chatId }).then((success) => {
             if (success) {
                 console.log("Group deleted", chatId);
             } else {
@@ -119,7 +119,7 @@
     }
 
     function freezeGroup(chatId: string, reason: string | undefined): void {
-        client.freezeGroup({ kind: "group_chat", id: chatId }, reason).then((success) => {
+        client.freezeGroup({ kind: "group_chat", groupId: chatId }, reason).then((success) => {
             if (success) {
                 console.log("Group frozen", chatId);
             } else {
@@ -129,7 +129,7 @@
     }
 
     function removeHotGroupExclusion(chatId: string): void {
-        client.removeHotGroupExclusion({ kind: "group_chat", id: chatId }).then((success) => {
+        client.removeHotGroupExclusion({ kind: "group_chat", groupId: chatId }).then((success) => {
             if (success) {
                 console.log("Hot group exclusion removed", chatId);
             } else {
@@ -139,7 +139,7 @@
     }
 
     function unfreezeGroup(chatId: string): void {
-        client.unfreezeGroup({ kind: "group_chat", id: chatId }).then((success) => {
+        client.unfreezeGroup({ kind: "group_chat", groupId: chatId }).then((success) => {
             if (success) {
                 console.log("Group unfrozen", chatId);
             } else {
@@ -155,7 +155,7 @@
     ): void {
         client
             .deleteMessage(
-                { kind: "group_chat", id: chatId },
+                { kind: "group_chat", groupId: chatId },
                 threadRootMessageIndex,
                 messageId,
                 true

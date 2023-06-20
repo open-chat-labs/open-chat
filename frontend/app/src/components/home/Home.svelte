@@ -184,7 +184,7 @@
                 ) {
                     return client.isMessageRead(
                         notification.kind === "direct_notification"
-                            ? { kind: "direct_chat", id: notification.sender }
+                            ? { kind: "direct_chat", userId: notification.sender }
                             : notification.chatId,
                         notification.message.event.messageIndex,
                         notification.message.event.messageId
@@ -213,7 +213,7 @@
                 const code = $querystring.get("code");
                 if (code) {
                     client.groupInvite = {
-                        chatId: chatId.id,
+                        chatId: chatId.groupId,
                         code,
                     };
                 }
@@ -228,13 +228,13 @@
         if (chat !== undefined) {
             // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
             if (chat?.membership.archived) {
-                unarchiveChat(chat.chatId);
+                unarchiveChat(chat.id);
             }
 
             // if it's a known chat let's select it
-            closeNotificationsForChat(chat.chatId);
+            closeNotificationsForChat(chat.id);
             $eventListScrollTop = undefined;
-            client.setSelectedChat(chat.chatId, messageIndex, threadMessageIndex);
+            client.setSelectedChat(chat.id, messageIndex, threadMessageIndex);
             resetRightPanel();
         }
     }
@@ -592,11 +592,14 @@
         const chat = $chatSummariesListStore.find((c) => {
             return (
                 c.kind === "direct_chat" &&
-                chatIdentifiersEqual(c.them, { kind: "direct_chat", id: ev.detail.sender!.userId })
+                chatIdentifiersEqual(c.them, {
+                    kind: "direct_chat",
+                    userId: ev.detail.sender!.userId,
+                })
             );
         });
 
-        const chatId = chat?.chatId ?? { kind: "direct_chat", id: ev.detail.sender.userId };
+        const chatId = chat?.id ?? { kind: "direct_chat", userId: ev.detail.sender.userId };
         currentChatDraftMessage.setTextContent(chatId, "");
         currentChatDraftMessage.setReplyingTo(chatId, ev.detail);
         if (chat) {
@@ -691,7 +694,7 @@
     ): Promise<void> {
         const { group, select } = ev.detail;
 
-        const rules = await client.getGroupRules(group.chatId);
+        const rules = await client.getGroupRules(group.id);
 
         if (rules === undefined) {
             toastStore.showFailureToast("group.getRulesFailed");
@@ -725,7 +728,7 @@
                     joining = undefined;
                 } else if (select) {
                     joining = undefined;
-                    page(routeForChatIdentifier(group.chatId));
+                    page(routeForChatIdentifier(group.id));
                 } else {
                     joining = undefined;
                 }
@@ -737,9 +740,9 @@
         let chat = ev.detail;
         page("/");
         tick().then(() => {
-            client.removeChat(chat.chatId);
+            client.removeChat(chat.id);
             if (!chat.public) {
-                client.declineInvitation(chat.chatId);
+                client.declineInvitation(chat.id);
             }
         });
     }
@@ -820,7 +823,7 @@
     function newGroup(level: Level = "group") {
         modal = ModalType.NewGroup;
         candidateGroup = {
-            chatId: { kind: "group_chat", id: "" },
+            id: { kind: "group_chat", groupId: "" },
             name: "",
             description: "",
             historyVisible: true,
@@ -857,7 +860,7 @@
         modal = ModalType.NewGroup;
         const { chat, rules } = ev.detail;
         candidateGroup = {
-            chatId: chat.chatId,
+            id: chat.id,
             name: chat.name,
             description: chat.description,
             historyVisible: chat.historyVisible,
@@ -882,8 +885,7 @@
     ): ChatSummary[] {
         if (selectedChatId === undefined) return chats;
         return chats.filter(
-            (c) =>
-                !chatIdentifiersEqual(selectedChatId, c.chatId) && client.canSendMessages(c.chatId)
+            (c) => !chatIdentifiersEqual(selectedChatId, c.id) && client.canSendMessages(c.id)
         );
     }
 

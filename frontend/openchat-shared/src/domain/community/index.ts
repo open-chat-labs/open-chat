@@ -41,12 +41,17 @@ export type CommunityMembership = {
     role: MemberRole;
 };
 
-export type Community = HasIdentity &
-    AccessControlled &
+export type CommunityIdentifier = {
+    kind: "community";
+    id: string;
+};
+
+export type Community = AccessControlled &
     HasLevel &
     HasMembershipRole &
     Permissioned<CommunityPermissions> & {
         name: string;
+        id: CommunityIdentifier;
         latestEventIndex: number;
         lastUpdated: bigint;
         description: string;
@@ -104,7 +109,8 @@ export type AddMembersToChannelResponse =
     | NotAuthorised
     | Success
     | UserNotInCommunity
-    | UserSuspended;
+    | UserSuspended
+    | CommunityFrozen;
 
 export type BlockCommunityUserResponse =
     | NotAuthorised

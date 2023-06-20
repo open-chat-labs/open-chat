@@ -32,7 +32,7 @@
 
     $: typingByChat = client.typingByChat;
     $: userStore = client.userStore;
-    $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them : "";
+    $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
     $: isGroup = selectedChatSummary.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: hasUserProfile = !isGroup && !isBot;
@@ -51,19 +51,21 @@
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         if (chatSummary.kind === "direct_chat") {
-            const them = $userStore[chatSummary.them];
+            const them = $userStore[chatSummary.them.userId];
             return {
                 name: client.usernameAndIcon(them),
                 avatarUrl: client.userAvatarUrl(them),
-                userId: chatSummary.them,
-                typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
+                userId: chatSummary.them.userId,
+                // TODO - sort this out
+                typing: client.getTypingString($_, $userStore, chatSummary.id, typing),
             };
         }
         return {
             name: chatSummary.name,
             avatarUrl: client.groupAvatarUrl(chatSummary),
             userId: undefined,
-            typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
+            // TODO - sort this out
+            typing: client.getTypingString($_, $userStore, chatSummary.id, typing),
         };
     }
 

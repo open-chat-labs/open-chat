@@ -1,4 +1,9 @@
-import type { Notification, OpenChat, ChatIdentifier } from "openchat-client";
+import {
+    type Notification,
+    type OpenChat,
+    type ChatIdentifier,
+    chatIdentifierToString,
+} from "openchat-client";
 import page from "page";
 
 import { isCanisterUrl } from "../utils/urls";
@@ -76,7 +81,7 @@ export async function closeNotificationsForChat(chatId: ChatIdentifier): Promise
     if (registration !== undefined) {
         const notifications = await registration.getNotifications();
         for (const notification of notifications) {
-            if (notification.data?.path.startsWith(chatId.id)) {
+            if (notification.data?.path.startsWith(chatIdentifierToString(chatId))) {
                 notification.close();
             }
         }

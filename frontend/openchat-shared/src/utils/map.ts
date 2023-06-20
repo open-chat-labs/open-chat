@@ -4,6 +4,7 @@
  * But that doesn't work with ChatIdentifier
  *  */
 
+import type { CommunityIdentifier } from "src/domain";
 import type { ChatIdentifier } from "../domain/chat";
 
 export interface ISafeMap<K, V> {
@@ -87,6 +88,25 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> implements ISafeMap<C
             map.set(c.chatId, c);
             return map;
         }, new ChatMap<T>());
+    }
+}
+
+export class CommunityMap<V>
+    extends SafeMap<CommunityIdentifier, V>
+    implements ISafeMap<CommunityIdentifier, V>
+{
+    constructor() {
+        super(
+            (k: CommunityIdentifier) => k.id,
+            (k: string) => ({ kind: "community", id: k })
+        );
+    }
+
+    static fromList<T extends { id: CommunityIdentifier }>(things: T[]): CommunityMap<T> {
+        return things.reduce((map, c) => {
+            map.set(c.id, c);
+            return map;
+        }, new CommunityMap<T>());
     }
 }
 

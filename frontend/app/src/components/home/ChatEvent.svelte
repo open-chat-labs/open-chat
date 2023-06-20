@@ -14,6 +14,7 @@
         Message,
         OpenChat,
         ChatIdentifier,
+        ChatType,
     } from "openchat-client";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
@@ -30,7 +31,7 @@
     const dispatch = createEventDispatcher();
 
     export let chatId: ChatIdentifier;
-    export let chatType: "group_chat" | "direct_chat";
+    export let chatType: ChatType;
     export let user: CreatedUser;
     export let event: EventWrapper<ChatEvent>;
     export let first: boolean;

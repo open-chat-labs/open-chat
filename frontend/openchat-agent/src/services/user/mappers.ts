@@ -709,7 +709,7 @@ function userCanisterChannelSummary(
         chatId: {
             kind: "channel",
             communityId: "", // TODO - we need to make sure that we pass the community id in here
-            id: candid.channel_id.toString(),
+            channelId: candid.channel_id.toString(),
         },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
@@ -737,16 +737,16 @@ function communitiesInitial(candid: ApiCommunitiesInitial): CommunitiesInitial {
 
 function chatIndentifier(candid: ApiChat): ChatIdentifier {
     if ("Group" in candid) {
-        return { kind: "group_chat", id: candid.Group.toString() };
+        return { kind: "group_chat", groupId: candid.Group.toString() };
     }
     if ("Direct" in candid) {
-        return { kind: "direct_chat", id: candid.Direct.toString() };
+        return { kind: "direct_chat", userId: candid.Direct.toString() };
     }
     if ("Channel" in candid) {
         return {
             kind: "channel",
             communityId: candid.Channel[0].toString(),
-            id: candid.Channel[1].toString(),
+            channelId: candid.Channel[1].toString(),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChat type received", candid);
@@ -857,7 +857,7 @@ function userCanisterGroupSummary(
     summary: ApiUserCanisterGroupChatSummary
 ): UserCanisterGroupChatSummary {
     return {
-        chatId: { kind: "group_chat", id: summary.chat_id.toString() },
+        id: { kind: "group_chat", groupId: summary.chat_id.toString() },
         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
         threadsRead: summary.threads_read.reduce((curr, next) => {
             curr[next[0]] = next[1];
@@ -872,7 +872,7 @@ function userCanisterGroupSummaryUpdates(
     summary: ApiUserCanisterGroupChatSummaryUpdates
 ): UserCanisterGroupChatSummaryUpdates {
     return {
-        chatId: { kind: "group_chat", id: summary.chat_id.toString() },
+        id: { kind: "group_chat", groupId: summary.chat_id.toString() },
         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
         threadsRead: summary.threads_read.reduce((curr, next) => {
             curr[next[0]] = next[1];
@@ -886,7 +886,7 @@ function userCanisterGroupSummaryUpdates(
 function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectChatSummaryUpdates {
     return {
         kind: "direct_chat",
-        chatId: { kind: "direct_chat", id: candid.chat_id.toString() },
+        id: { kind: "direct_chat", userId: candid.chat_id.toString() },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         latestMessage: optional(candid.latest_message, (ev) => ({
@@ -942,7 +942,7 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
         event: message(ev.event),
     }));
     return {
-        chatId: { kind: "group_chat", id: candid.chat_id.toString() },
+        id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         kind: "group_chat",
         latestMessage,
         name: candid.name,
@@ -998,20 +998,21 @@ function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {
 
 function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
     return {
-        chatId: { kind: "direct_chat", id: candid.them.toString() },
+        id: { kind: "direct_chat", userId: candid.them.toString() },
         kind: "direct_chat",
         latestMessage: {
             index: candid.latest_message.index,
             timestamp: candid.latest_message.timestamp,
             event: message(candid.latest_message.event),
         },
-        them: { kind: "direct_chat", id: candid.them.toString() },
+        them: { kind: "direct_chat", userId: candid.them.toString() },
         latestEventIndex: candid.latest_event_index,
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         dateCreated: candid.date_created,
         metrics: chatMetrics(candid.metrics),
         membership: {
             ...nullMembership,
+            role: "owner",
             myMetrics: chatMetrics(candid.my_metrics),
             notificationsMuted: candid.notifications_muted,
             readByMeUpTo: optional(candid.read_by_me_up_to, identity),
