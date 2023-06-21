@@ -5,11 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add 'group' prefix to group invite links ([#3828](https://github.com/open-chat-labs/open-chat/pull/3828))
+
 ## [[2.0.715](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.715-local_user_index)] - 2023-06-07
 
 ### Changed
 
-- Reinstate code for the Bitcoin Miami promo  ([#3741](https://github.com/open-chat-labs/open-chat/pull/3741))
+- Reinstate code for the Bitcoin Miami promo ([#3741](https://github.com/open-chat-labs/open-chat/pull/3741))
 
 ## [[2.0.714](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.714-local_user_index)] - 2023-06-02
 
