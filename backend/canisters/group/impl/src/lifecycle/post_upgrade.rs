@@ -38,10 +38,12 @@ fn post_upgrade(args: Args) {
 
     // TODO: Remove this one-time sync operation
     mutate_state(|state| {
-        if !state.data.synced_gate_with_group_index || state.data.chat.gate.value.is_none() {
+        if !state.data.synced_gate_with_group_index {
             state.data.synced_gate_with_group_index = true;
 
-            ic_cdk_timers::set_timer(Duration::ZERO, sync_access_gate);
+            if state.data.chat.gate.value.is_some() {
+                ic_cdk_timers::set_timer(Duration::ZERO, sync_access_gate);
+            }
         }
     });
 }
