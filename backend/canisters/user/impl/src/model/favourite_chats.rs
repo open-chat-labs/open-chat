@@ -20,7 +20,7 @@ impl FavouriteChats {
 
     pub fn remove(&mut self, chat: &Chat, now: TimestampMillis) -> bool {
         self.unpin(chat, now);
-        
+
         if self.chats.value.contains(chat) {
             self.chats.timestamp = now;
             self.chats.value.retain(|c| c != chat);
