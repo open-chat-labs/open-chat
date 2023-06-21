@@ -1,5 +1,4 @@
 use std::time::Duration;
-
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
 use crate::model::upgrade_instruction_counts::InstructionCountFunctionId;
