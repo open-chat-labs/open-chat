@@ -385,7 +385,10 @@ const confirmedEventIndexesLoadedStore = derived([serverEventsStore], ([serverEv
 });
 
 export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
-    return get(selectedChatId) === chatId ? get(confirmedEventIndexesLoadedStore) : new DRange();
+    const selected = get(selectedChatId);
+    return selected !== undefined && chatIdentifiersEqual(selected, chatId)
+        ? get(confirmedEventIndexesLoadedStore)
+        : new DRange();
 }
 
 export const currentChatRules = createDerivedPropStore<ChatSpecificState, "rules">(

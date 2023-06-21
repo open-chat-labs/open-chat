@@ -13,6 +13,7 @@
         OpenChat,
         GroupSearchResponse,
         routeForChatIdentifier,
+        chatIdentifiersEqual,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
@@ -168,7 +169,7 @@
                 {#each chats as chatSummary (chatSummary.id)}
                     <ChatSummary
                         {chatSummary}
-                        selected={$selectedChatId === chatSummary.id}
+                        selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
                         on:chatSelected={chatSelected}
                         on:pinChat

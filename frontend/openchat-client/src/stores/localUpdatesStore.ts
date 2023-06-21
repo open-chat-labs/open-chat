@@ -24,14 +24,11 @@ export abstract class LocalUpdatesStore<K, T extends LocalUpdates> {
 
     protected applyUpdate(key: K, updateFn: (current: T) => Partial<T>): void {
         this.store.update((state) => {
-            const current = state.get(key);
-            if (current !== undefined) {
-                state.set(key, {
-                    ...current,
-                    ...updateFn(current),
-                    lastUpdated: Date.now(),
-                });
-            }
+            const current = (state.get(key) ?? { lastUpdated: Date.now() }) as T;
+            state.set(key, {
+                ...current,
+                ...updateFn(current),
+            });
             return state;
         });
     }

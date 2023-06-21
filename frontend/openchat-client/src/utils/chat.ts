@@ -64,7 +64,7 @@ const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
 export function isPreviewing(chat: ChatSummary): boolean {
-    return chat.membership === undefined;
+    return chat.membership.role === "none";
 }
 
 export function isFrozen(thing: AccessControlled): boolean {

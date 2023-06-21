@@ -811,7 +811,18 @@ export function chatIdentifierToString(id: ChatIdentifier): string {
     }
 }
 
-export function chatIdentifiersEqual(a: ChatIdentifier, b: ChatIdentifier): boolean {
+export function chatIdentifiersEqual(
+    a: ChatIdentifier | undefined,
+    b: ChatIdentifier | undefined
+): boolean {
+    if (a === undefined && b === undefined) {
+        return true;
+    }
+
+    if (a === undefined || b === undefined) {
+        return false;
+    }
+
     if (a.kind !== b.kind) {
         return false;
     }
