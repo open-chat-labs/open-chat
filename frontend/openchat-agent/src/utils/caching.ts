@@ -76,6 +76,8 @@ function padMessageIndex(i: number): string {
     return i.toString().padStart(10, "0");
 }
 
+type FailedCacheKey = MessageContext & { messageId: bigint };
+
 export function createFailedCacheKey(context: MessageContext, messageId: bigint): string {
     return JSON.stringify({
         ...context,
@@ -525,10 +527,14 @@ export async function recordFailedMessage<T extends Message>(
 ): Promise<void> {
     const store =
         threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
+    const key = createFailedCacheKey({ chatId, threadRootMessageIndex }, event.event.messageId);
     (await db).put(
         store,
-        makeSerialisable<T>(event, chatId, false, threadRootMessageIndex),
-        createFailedCacheKey({ chatId, threadRootMessageIndex }, event.event.messageId)
+        {
+            ...makeSerialisable<T>(event, chatId, false, threadRootMessageIndex),
+            messageKey: key,
+        },
+        key
     );
 }
 
@@ -552,7 +558,6 @@ function rebuildBlobUrls(content: MessageContent): MessageContent {
     return content;
 }
 
-// TODO - hard to say whether this will work until we try it
 export async function loadFailedMessages(
     db: Database
 ): Promise<MessageContextMap<Record<number, EventWrapper<Message>>>> {
@@ -560,15 +565,15 @@ export async function loadFailedMessages(
     const threadMessages = await (await db).getAll("failed_thread_messages");
     return [...chatMessages, ...threadMessages].reduce((res, ev) => {
         if (ev.messageKey === undefined) return res;
-        const parsedKey = JSON.parse(ev.messageKey) as MessageContext;
-        if (!res.has(parsedKey)) {
-            res.set(parsedKey, {});
-        }
+        const parsedKey = JSON.parse(ev.messageKey) as FailedCacheKey;
+        const context = {
+            chatId: parsedKey.chatId,
+            threadRootMessageIndex: parsedKey.threadRootMessageIndex,
+        };
+        const val = res.get(context) ?? {};
         ev.event.content = rebuildBlobUrls(ev.event.content);
-        const val = res.get(parsedKey);
-        if (val) {
-            val[Number(ev.event.messageId)] = ev;
-        }
+        val[Number(ev.event.messageId)] = ev;
+        res.set(context, val);
         return res;
     }, new MessageContextMap<Record<number, EventWrapper<Message>>>());
 }
