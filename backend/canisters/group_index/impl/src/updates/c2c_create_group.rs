@@ -5,7 +5,7 @@ use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
-use types::{CanisterId, ChatId, Document, GroupSubtype, UserId};
+use types::{AccessGate, CanisterId, ChatId, Document, GroupSubtype, UserId};
 
 #[update_msgpack]
 #[trace]
@@ -36,7 +36,7 @@ async fn c2c_create_group(args: Args) -> Response {
         history_visible_to_new_joiners: args.history_visible_to_new_joiners,
         permissions: args.permissions,
         events_ttl: args.events_ttl,
-        gate: args.gate,
+        gate: args.gate.clone(),
     };
 
     match local_group_index_canister_c2c_client::c2c_create_group(local_group_index_canister, &c2c_create_group_args).await {
@@ -50,6 +50,7 @@ async fn c2c_create_group(args: Args) -> Response {
                         description: args.description,
                         subtype: args.subtype,
                         avatar_id,
+                        gate: args.gate,
                         local_group_index_canister,
                     },
                     state,
@@ -111,6 +112,7 @@ struct CommitArgs {
     description: String,
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
+    gate: Option<AccessGate>,
     local_group_index_canister: CanisterId,
 }
 
@@ -123,6 +125,7 @@ fn commit(args: CommitArgs, state: &mut RuntimeState) {
             description: args.description,
             subtype: args.subtype,
             avatar_id: args.avatar_id,
+            gate: args.gate,
             now,
         });
     } else {
