@@ -66,7 +66,7 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bo
         to,
         fee: None,
         created_at_time: Some(pending_payment.timestamp),
-        memo: None,
+        memo: Some(pending_payment.memo.to_vec().try_into().unwrap()),
         amount: pending_payment.amount.into(),
     };
 

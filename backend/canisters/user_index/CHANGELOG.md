@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `expiry` to referral codes ([#3705](https://github.com/open-chat-labs/open-chat/pull/3705))
 
+### Changed
+
+- Add random Memo to `PendingPayment` to ensure no duplicates ([#3824](https://github.com/open-chat-labs/open-chat/pull/3824))
+
 ## [[2.0.709](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.709-user_index)] - 2023-06-01
 
 ### Added
