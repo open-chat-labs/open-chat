@@ -7,7 +7,7 @@ use group_chat_core::UpdateResult;
 use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{CanisterId, ChatId, Document, UserId};
+use types::{AccessGate, CanisterId, ChatId, Document, UserId};
 
 #[update]
 #[trace]
@@ -26,6 +26,7 @@ async fn update_group_v2(mut args: Args) -> Response {
             name: prepare_result.name,
             description: prepare_result.description,
             avatar_id: prepare_result.avatar_id,
+            gate: prepare_result.gate,
         };
 
         let group_index_canister_id = prepare_result.group_index_canister_id;
@@ -64,6 +65,7 @@ struct PrepareResult {
     name: String,
     description: String,
     avatar_id: Option<u128>,
+    gate: Option<AccessGate>,
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -72,6 +74,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     }
 
     let caller = state.env.caller();
+    let gate = args.gate.as_ref().apply_to(state.data.chat.gate.value.as_ref());
 
     if let Some(member) = state.data.get_member(caller) {
         match state.data.chat.can_update(
@@ -93,6 +96,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     name: args.name.as_ref().unwrap_or(&state.data.chat.name).clone(),
                     description: args.description.as_ref().unwrap_or(&state.data.chat.description).clone(),
                     avatar_id: avatar_update.map_or(Document::id(&state.data.chat.avatar), |avatar| avatar.map(|a| a.id)),
+                    gate: gate.cloned(),
                 })
             }
             UpdateResult::UserSuspended => Err(UserSuspended),

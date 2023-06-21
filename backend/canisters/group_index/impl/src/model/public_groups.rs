@@ -1,13 +1,11 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
-use rand::rngs::StdRng;
-use rand::RngCore;
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use types::{
-    ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis,
+    AccessGate, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, PublicGroupActivity, PublicGroupSummary, TimestampMillis,
     Version,
 };
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
@@ -59,12 +57,13 @@ impl PublicGroups {
             description,
             subtype,
             avatar_id,
+            gate,
             now,
         }: GroupCreatedArgs,
     ) -> bool {
         if self.groups_pending.remove(&name).is_some() {
             self.name_to_id_map.insert(&name, chat_id);
-            let group_info = PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, now);
+            let group_info = PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, gate, now);
             self.groups.insert(chat_id, group_info);
             true
         } else {
@@ -76,19 +75,34 @@ impl PublicGroups {
         self.groups_pending.remove(name);
     }
 
-    pub fn search(&self, search_term: String, max_results: u8) -> Vec<GroupMatch> {
-        let query = Query::parse(search_term);
+    pub fn search(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> Vec<GroupMatch> {
+        let query = search_term.map(Query::parse);
 
-        self.iter()
-            .filter(|g| !g.is_frozen())
-            .map(|g| {
-                let document: Document = g.into();
-                let score = document.calculate_score(&query);
-                (score, g)
+        let mut matches: Vec<_> = self
+            .iter()
+            .filter(|c| !c.is_frozen())
+            .map(|c| {
+                let score = if let Some(query) = &query {
+                    let document: Document = c.into();
+                    document.calculate_score(query)
+                } else if c.hotness_score > 0 {
+                    c.hotness_score
+                } else {
+                    c.activity.member_count
+                };
+                (score, c)
             })
             .filter(|(score, _)| *score > 0)
-            .max_n_by(max_results as usize, |(score, _)| *score)
-            .map(|(_, g)| g.into())
+            .collect();
+
+        matches.sort_by_key(|(score, _)| *score);
+
+        matches
+            .into_iter()
+            .rev()
+            .map(|(_, c)| c.into())
+            .skip(page_index as usize * page_size as usize)
+            .take(page_size as usize)
             .collect()
     }
 
@@ -118,6 +132,7 @@ impl PublicGroups {
         name: String,
         description: String,
         avatar_id: Option<u128>,
+        gate: Option<AccessGate>,
     ) -> UpdateGroupResult {
         match self.groups.get_mut(chat_id) {
             None => UpdateGroupResult::ChatNotFound,
@@ -133,6 +148,7 @@ impl PublicGroups {
                 group.name = name;
                 group.description = description;
                 group.avatar_id = avatar_id;
+                group.gate = gate;
                 UpdateGroupResult::Success
             }
         }
@@ -151,14 +167,17 @@ impl PublicGroups {
         self.groups.values()
     }
 
-    pub fn calculate_hot_groups(&self, now: TimestampMillis, rng: &mut StdRng) -> Vec<ChatId> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut PublicGroupInfo> {
+        self.groups.values_mut()
+    }
+
+    pub fn calculate_hot_groups(&self, now: TimestampMillis) -> Vec<ChatId> {
         let one_day_ago = now - DAY_IN_MS;
 
         self.iter()
             .filter(|g| !g.is_frozen() && g.has_been_active_since(one_day_ago) && !g.exclude_from_hotlist)
-            .map(|g| (g, rng.next_u32()))
-            .max_n_by(CACHED_HOT_GROUPS_COUNT, |(g, random)| g.calculate_weight(*random, now))
-            .map(|(g, _)| g.id)
+            .max_n_by(CACHED_HOT_GROUPS_COUNT, |g| g.hotness_score as usize)
+            .map(|g| g.id)
             .collect()
     }
 }
@@ -177,7 +196,11 @@ pub struct PublicGroupInfo {
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
     activity: PublicGroupActivity,
+    #[serde(default)]
+    hotness_score: u32,
     exclude_from_hotlist: bool,
+    #[serde(default)]
+    gate: Option<AccessGate>,
 }
 
 pub enum UpdateGroupResult {
@@ -194,6 +217,7 @@ impl PublicGroupInfo {
         description: String,
         subtype: Option<GroupSubtype>,
         avatar_id: Option<u128>,
+        gate: Option<AccessGate>,
         now: TimestampMillis,
     ) -> PublicGroupInfo {
         PublicGroupInfo {
@@ -202,9 +226,11 @@ impl PublicGroupInfo {
             description,
             subtype,
             avatar_id,
+            gate,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicGroupActivity::default(),
+            hotness_score: 0,
             frozen: None,
             exclude_from_hotlist: false,
         }
@@ -214,6 +240,18 @@ impl PublicGroupInfo {
         self.id
     }
 
+    pub fn created(&self) -> TimestampMillis {
+        self.created
+    }
+
+    pub fn marked_active_until(&self) -> TimestampMillis {
+        self.marked_active_until
+    }
+
+    pub fn activity(&self) -> &PublicGroupActivity {
+        &self.activity
+    }
+
     pub fn mark_active(&mut self, until: TimestampMillis, activity: PublicGroupActivity) {
         self.marked_active_until = until;
         self.activity = activity;
@@ -221,36 +259,6 @@ impl PublicGroupInfo {
 
     pub fn has_been_active_since(&self, since: TimestampMillis) -> bool {
         self.marked_active_until > since
-    }
-
-    pub fn calculate_weight(&self, random: u32, now: TimestampMillis) -> u64 {
-        let mut weighting = 0u64;
-
-        const MAX_RECENCY_MULTIPLIER: u64 = 1000;
-        const ZERO_WEIGHT_AFTER_DURATION: Milliseconds = DAY_IN_MS;
-
-        // recency_multiplier is MAX_RECENCY_MULTIPLIER for groups which are active now and is
-        // linear down to 0 for groups which were active ZERO_WEIGHT_AFTER_DURATION ago. So for
-        // example, recency_multiplier will be MAX_RECENCY_MULTIPLIER / 2 for a group that was
-        // active ZERO_WEIGHT_AFTER_DURATION / 2 ago.
-        let mut recency_multiplier = MAX_RECENCY_MULTIPLIER;
-        if self.marked_active_until < now {
-            recency_multiplier = recency_multiplier
-                .saturating_sub((MAX_RECENCY_MULTIPLIER * (now - self.marked_active_until)) / ZERO_WEIGHT_AFTER_DURATION);
-        }
-
-        if recency_multiplier > 0 {
-            let activity = &self.activity.last_day;
-
-            weighting += (activity.messages * activity.message_unique_users) as u64;
-            weighting += (activity.reactions * activity.reaction_unique_users) as u64;
-
-            weighting *= recency_multiplier;
-
-            let random_multiplier = (random % 16) as u64;
-            weighting *= random_multiplier;
-        }
-        weighting
     }
 
     pub fn is_frozen(&self) -> bool {
@@ -272,6 +280,10 @@ impl PublicGroupInfo {
     pub fn set_excluded_from_hotlist(&mut self, exclude: bool) {
         self.exclude_from_hotlist = exclude;
     }
+
+    pub fn set_hotness_score(&mut self, hotness_score: u32) {
+        self.hotness_score = hotness_score;
+    }
 }
 
 impl From<&PublicGroupInfo> for GroupMatch {
@@ -281,6 +293,8 @@ impl From<&PublicGroupInfo> for GroupMatch {
             name: group.name.clone(),
             description: group.description.clone(),
             avatar_id: group.avatar_id,
+            member_count: group.activity.member_count,
+            gate: group.gate.clone(),
         }
     }
 }
@@ -311,6 +325,7 @@ pub struct GroupCreatedArgs {
     pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub now: TimestampMillis,
+    pub gate: Option<AccessGate>,
 }
 
 #[derive(PartialEq, Eq, Debug)]

@@ -8,6 +8,8 @@ pub struct GroupMatch {
     pub name: String,
     pub description: String,
     pub avatar_id: Option<u128>,
+    pub member_count: u32,
+    pub gate: Option<AccessGate>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -16,8 +16,7 @@ fn run() {
 
 fn calculate_hot_group_ids(state: &mut RuntimeState) -> Vec<ChatId> {
     let now = state.env.now();
-    let rng = state.env.rng();
-    state.data.public_groups.calculate_hot_groups(now, rng)
+    state.data.public_groups.calculate_hot_groups(now)
 }
 
 async fn hydrate_and_set_hot_groups(chat_ids: Vec<ChatId>) {
