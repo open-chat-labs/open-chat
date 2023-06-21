@@ -37,7 +37,7 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
     };
 
     let favourite_chats = FavouriteChatsInitial {
-        chats: state.data.favourite_chats.chats().iter().copied().collect(),
+        chats: state.data.favourite_chats.chats().to_vec(),
         pinned: state.data.favourite_chats.pinned().to_vec(),
     };
 

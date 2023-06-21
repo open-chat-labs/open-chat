@@ -1,5 +1,5 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
-use crate::{mutate_state, read_state, RuntimeState, FIVE_MINUTES_IN_MS};
+use crate::{mutate_state, RuntimeState, FIVE_MINUTES_IN_MS};
 use std::time::Duration;
 use types::{ChatId, Milliseconds};
 
@@ -10,13 +10,14 @@ pub fn start_job() {
 }
 
 fn run() {
-    let groups = read_state(calculate_hot_group_ids);
+    let groups = mutate_state(calculate_hot_group_ids);
     ic_cdk::spawn(hydrate_and_set_hot_groups(groups));
 }
 
-fn calculate_hot_group_ids(state: &RuntimeState) -> Vec<ChatId> {
+fn calculate_hot_group_ids(state: &mut RuntimeState) -> Vec<ChatId> {
     let now = state.env.now();
-    state.data.public_groups.calculate_hot_groups(now)
+    let rng = state.env.rng();
+    state.data.public_groups.calculate_hot_groups(now, rng)
 }
 
 async fn hydrate_and_set_hot_groups(chat_ids: Vec<ChatId>) {

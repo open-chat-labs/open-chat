@@ -1019,6 +1019,10 @@ impl ChatEvents {
         self.main.latest_event_timestamp()
     }
 
+    pub fn main_events_list(&self) -> &ChatEventsList {
+        &self.main
+    }
+
     fn events_list(
         &self,
         min_visible_event_index: EventIndex,

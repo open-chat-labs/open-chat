@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Allow blocking users who are no longer in the group ([#3818](https://github.com/open-chat-labs/open-chat/pull/3818))
 
+### Removed
+
+- Drop `member_count_change` from group activity ([#3820](https://github.com/open-ic/open-chat/pull/3820))
+
 ## [[2.0.724](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.724-group)] - 2023-06-16
 
 ### Changed
