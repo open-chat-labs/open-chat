@@ -40,6 +40,7 @@
                 moderator: new Set(),
                 member: new Set(),
                 owner: new Set(),
+                none: new Set(),
             } as PermissionsByRole
         );
     }

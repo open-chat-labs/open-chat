@@ -595,7 +595,7 @@ export class UserClient extends CandidService {
         return this.handleResponse(
             this.userService.mark_read_v2({
                 messages_read: request.map(({ chatId, readUpTo, threads, dateReadPinned }) => ({
-                    chat_id: Principal.fromText(chatIdentifierToString(chatId)), // TODO this will blow up with a channelId
+                    chat_id: Principal.fromText(chatIdentifierToString(chatId)), // TODO this will blow up with a channelId - need to convert to use mark_read instead
                     read_up_to: apiOptional(identity, readUpTo),
                     threads: threads.map((t) => ({
                         root_message_index: t.threadRootMessageIndex,

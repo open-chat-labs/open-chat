@@ -628,7 +628,7 @@
 
     function showProfile() {
         if ($selectedChatId !== undefined) {
-            page.replace(`/${$selectedChatId}`);
+            page.replace(routeForChatIdentifier($selectedChatId));
         }
         rightPanelHistory.set([{ kind: "user_profile" }]);
     }
@@ -637,7 +637,7 @@
         if ($selectedChatId !== undefined) {
             if (ev.initiating) {
                 creatingThread = true;
-                page.replace(`/${$selectedChatId}`);
+                page.replace(routeForChatIdentifier($selectedChatId));
             }
 
             tick().then(() => {
@@ -660,7 +660,7 @@
 
     function showGroupDetails() {
         if ($selectedChatId !== undefined) {
-            page.replace(`/${$selectedChatId}`);
+            page.replace(routeForChatIdentifier($selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "group_details",
@@ -671,7 +671,7 @@
 
     function showProposalFilters() {
         if ($selectedChatId !== undefined) {
-            page.replace(`/${$selectedChatId}`);
+            page.replace(routeForChatIdentifier($selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
@@ -682,7 +682,7 @@
 
     function showPinned() {
         if ($selectedChatId !== undefined) {
-            page.replace(`/${$selectedChatId}`);
+            page.replace(routeForChatIdentifier($selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "show_pinned",

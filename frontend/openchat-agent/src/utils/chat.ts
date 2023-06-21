@@ -334,10 +334,6 @@ export function mergeGroupChatUpdates(
             subtype: applyOptionUpdate(c.subtype, g?.subtype),
             previewed: false,
             frozen: applyOptionUpdate(c.frozen, g?.frozen) ?? false,
-            readByMeUpTo:
-                readByMeUpTo !== undefined && latestMessage !== undefined
-                    ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
-                    : readByMeUpTo,
             latestEventIndex: g?.latestEventIndex ?? c.latestEventIndex,
             latestMessage,
             metrics: g?.metrics ?? c.metrics,
@@ -358,6 +354,10 @@ export function mergeGroupChatUpdates(
                     g?.latestThreads ?? [],
                     u?.threadsRead ?? {}
                 ),
+                readByMeUpTo:
+                    readByMeUpTo !== undefined && latestMessage !== undefined
+                        ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
+                        : readByMeUpTo,
                 notificationsMuted: g?.notificationsMuted ?? c.membership.notificationsMuted,
                 myMetrics: g?.myMetrics ?? c.membership.myMetrics,
                 archived: u?.archived ?? c.membership.archived,
