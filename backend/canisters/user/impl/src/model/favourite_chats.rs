@@ -64,7 +64,7 @@ impl FavouriteChats {
     }
 
     pub fn chats_if_updated(&self, since: TimestampMillis) -> Option<Vec<Chat>> {
-        self.chats.if_set_after(since).map(|ids| ids.iter().copied().collect())
+        self.chats.if_set_after(since).map(|ids| ids.to_vec())
     }
 
     pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<Vec<Chat>> {
