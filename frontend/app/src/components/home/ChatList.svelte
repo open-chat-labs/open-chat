@@ -6,7 +6,7 @@
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
     import { _ } from "svelte-i18n";
-    import type {
+    import {
         ChatSummary as ChatSummaryType,
         GroupMatch,
         UserSummary,

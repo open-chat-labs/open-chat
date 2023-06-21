@@ -6,7 +6,7 @@
     import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import AggregateCommonEvents from "./AggregateCommonEvents.svelte";
-    import type {
+    import {
         CreatedUser,
         UserSummary,
         ChatEvent,

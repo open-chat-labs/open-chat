@@ -117,7 +117,7 @@ export class MessageReadTracker {
     }
 
     private sendToServer(api: OpenChat): void {
-        const req = Object.entries(this.state).reduce<MarkReadRequest>((req, [chatId, data]) => {
+        const req = this.state.entries().reduce<MarkReadRequest>((req, [chatId, data]) => {
             if (!data.empty()) {
                 req.push({
                     chatId,

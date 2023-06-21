@@ -25,7 +25,7 @@ export class SafeMap<K, V> implements ISafeMap<K, V> {
     protected constructor(
         private toString: (key: K) => string,
         private fromString: (key: string) => K,
-        private _map: Map<string, V> = new Map<string, V>()
+        protected _map: Map<string, V> = new Map<string, V>()
     ) {}
 
     clone(): ISafeMap<K, V> {
@@ -77,13 +77,18 @@ export class SafeMap<K, V> implements ISafeMap<K, V> {
     get size(): number {
         return this._map.size;
     }
+
+    toMap(): Map<string, V> {
+        return this._map;
+    }
 }
 
 export class ChatMap<V> extends SafeMap<ChatIdentifier, V> implements ISafeMap<ChatIdentifier, V> {
-    constructor() {
+    constructor(_map: Map<string, V> = new Map<string, V>()) {
         super(
             (k: ChatIdentifier) => JSON.stringify(k),
-            (k: string) => JSON.parse(k) as ChatIdentifier
+            (k: string) => JSON.parse(k) as ChatIdentifier,
+            _map
         );
     }
 
@@ -93,17 +98,30 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> implements ISafeMap<C
             return map;
         }, new ChatMap<T>());
     }
+
+    static fromMap<V>(map: Map<string, V>): ChatMap<V> {
+        return new ChatMap<V>(map);
+    }
+
+    static fromJSON<V>(json: string): ChatMap<V> {
+        return new ChatMap<V>(new Map(JSON.parse(json)));
+    }
 }
 
 export class MessageContextMap<V>
     extends SafeMap<MessageContext, V>
     implements ISafeMap<MessageContext, V>
 {
-    constructor() {
+    constructor(_map: Map<string, V> = new Map<string, V>()) {
         super(
             (k: MessageContext) => JSON.stringify(k),
-            (k: string) => JSON.parse(k) as MessageContext
+            (k: string) => JSON.parse(k) as MessageContext,
+            _map
         );
+    }
+
+    static fromMap<V>(map: Map<string, V>): MessageContextMap<V> {
+        return new MessageContextMap<V>(map);
     }
 }
 

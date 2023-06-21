@@ -1007,7 +1007,7 @@ export class OpenChatAgent extends EventTarget {
 
             return {
                 state: s,
-                updatedEvents,
+                updatedEvents: updatedEvents.toMap(),
                 anyUpdates,
             };
         });
@@ -1082,7 +1082,7 @@ export class OpenChatAgent extends EventTarget {
 
             return {
                 state: s,
-                updatedEvents,
+                updatedEvents: updatedEvents.toMap(),
                 anyUpdates: true,
             };
         });
@@ -1723,8 +1723,8 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.markSuspectedBot();
     }
 
-    loadFailedMessages(): Promise<MessageContextMap<Record<number, EventWrapper<Message>>>> {
-        return loadFailedMessages(this.db);
+    loadFailedMessages(): Promise<Map<string, Record<number, EventWrapper<Message>>>> {
+        return loadFailedMessages(this.db).then((messages) => messages.toMap());
     }
 
     deleteFailedMessage(

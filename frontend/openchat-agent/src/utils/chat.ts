@@ -440,13 +440,13 @@ function mergeThreads(
 export function isSuccessfulGroupSummaryResponse(
     response: GroupCanisterSummaryResponse
 ): response is GroupCanisterGroupChatSummary {
-    return "chatId" in response;
+    return "id" in response;
 }
 
 export function isSuccessfulGroupSummaryUpdatesResponse(
     response: GroupCanisterSummaryUpdatesResponse
 ): response is GroupCanisterGroupChatSummaryUpdates {
-    return "chatId" in response;
+    return "id" in response;
 }
 
 export function getUpdatedEvents(

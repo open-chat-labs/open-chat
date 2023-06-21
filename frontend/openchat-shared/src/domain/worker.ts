@@ -931,7 +931,7 @@ export type WorkerResponse =
     | Response<DeletedDirectMessageResponse>
     | Response<DeletedGroupMessageResponse>
     | Response<undefined>
-    | Response<MessageContextMap<Record<number, EventWrapper<Message>>>>
+    | Response<Map<string, Record<number, EventWrapper<Message>>>>
     | Response<PayForDiamondMembershipResponse>
     | Response<ClaimPrizeResponse>
     | Response<UpdateMarketMakerConfigResponse>
@@ -1485,7 +1485,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends SetUserUpgradeConcurrency
     ? SetUserUpgradeConcurrencyResponse
     : T extends LoadFailedMessages
-    ? MessageContextMap<Record<number, EventWrapper<Message>>>
+    ? Map<string, Record<number, EventWrapper<Message>>>
     : T extends DeleteFailedMessage
     ? void
     : T extends MarkSuspectedBot

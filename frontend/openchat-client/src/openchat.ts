@@ -321,6 +321,7 @@ import {
     DirectChatIdentifier,
     type CommunityIdentifier,
     chatIdentifierToString,
+    MessageContextMap,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -554,7 +555,7 @@ export class OpenChat extends OpenChatAgentWorker {
         this._cachePrimer = new CachePrimer(this);
         await this.connectToWorker();
         this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
-            failedMessagesStore.initialise(res)
+            failedMessagesStore.initialise(MessageContextMap.fromMap(res))
         );
         this.getCurrentUser()
             .then((user) => {
@@ -3754,6 +3755,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
                 this.updateReadUpToStore(updatedChats);
                 const chats = this._liveState.myServerChatSummaries.values();
+
                 this._cachePrimer?.processChatUpdates(chats, updatedChats);
 
                 const userIds = this.userIdsFromChatSummaries(updatedChats);
@@ -3795,9 +3797,10 @@ export class OpenChat extends OpenChatAgentWorker {
                         clearSelectedChat();
                         this.dispatchEvent(new SelectedChatInvalid());
                     } else {
+                        const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
                         chatUpdatedStore.set({
                             chatId: selectedChatId,
-                            updatedEvents: chatsResponse.updatedEvents.get(selectedChatId) ?? [],
+                            updatedEvents: updatedEvents.get(selectedChatId) ?? [],
                         });
                     }
                 }

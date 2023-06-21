@@ -116,7 +116,7 @@ export const chatSummariesListStore = derived(
         }, []);
         const unpinned = summaries
             .values()
-            .filter((chat) => !pinnedChats.findIndex((p) => chatIdentifiersEqual(p, chat.id)))
+            .filter((chat) => pinnedChats.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1)
             .sort(compareChats);
         return pinned.concat(unpinned);
     }

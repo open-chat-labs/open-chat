@@ -759,7 +759,7 @@ export type EventsSuccessResult<T extends ChatEvent> = {
 
 export type UpdatesResult = {
     state: ChatStateFull;
-    updatedEvents: ChatMap<UpdatedEvent[]>;
+    updatedEvents: Map<string, UpdatedEvent[]>;
     anyUpdates: boolean;
 };
 
@@ -1616,7 +1616,7 @@ export type InviteUsersResponse =
 
 export type MarkReadRequest = {
     readUpTo: number | undefined;
-    chatId: string;
+    chatId: ChatIdentifier;
     threads: ThreadRead[];
     dateReadPinned: bigint | undefined;
 }[];
