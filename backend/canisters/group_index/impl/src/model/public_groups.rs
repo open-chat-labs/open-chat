@@ -1,14 +1,12 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
-use rand::rngs::StdRng;
-use rand::RngCore;
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use types::{
-    AccessGate, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, Milliseconds, PublicGroupActivity, PublicGroupSummary,
-    TimestampMillis, Version,
+    AccessGate, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, PublicGroupActivity, PublicGroupSummary, TimestampMillis,
+    Version,
 };
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::iterator_extensions::IteratorExtensions;
@@ -173,14 +171,13 @@ impl PublicGroups {
         self.groups.values_mut()
     }
 
-    pub fn calculate_hot_groups(&self, now: TimestampMillis, rng: &mut StdRng) -> Vec<ChatId> {
+    pub fn calculate_hot_groups(&self, now: TimestampMillis) -> Vec<ChatId> {
         let one_day_ago = now - DAY_IN_MS;
 
         self.iter()
             .filter(|g| !g.is_frozen() && g.has_been_active_since(one_day_ago) && !g.exclude_from_hotlist)
-            .map(|g| (g, rng.next_u32()))
-            .max_n_by(CACHED_HOT_GROUPS_COUNT, |(g, random)| g.calculate_weight(*random, now))
-            .map(|(g, _)| g.id)
+            .max_n_by(CACHED_HOT_GROUPS_COUNT, |g| g.hotness_score as usize)
+            .map(|g| g.id)
             .collect()
     }
 }
@@ -262,36 +259,6 @@ impl PublicGroupInfo {
 
     pub fn has_been_active_since(&self, since: TimestampMillis) -> bool {
         self.marked_active_until > since
-    }
-
-    pub fn calculate_weight(&self, random: u32, now: TimestampMillis) -> u64 {
-        let mut weighting = 0u64;
-
-        const MAX_RECENCY_MULTIPLIER: u64 = 1000;
-        const ZERO_WEIGHT_AFTER_DURATION: Milliseconds = DAY_IN_MS;
-
-        // recency_multiplier is MAX_RECENCY_MULTIPLIER for groups which are active now and is
-        // linear down to 0 for groups which were active ZERO_WEIGHT_AFTER_DURATION ago. So for
-        // example, recency_multiplier will be MAX_RECENCY_MULTIPLIER / 2 for a group that was
-        // active ZERO_WEIGHT_AFTER_DURATION / 2 ago.
-        let mut recency_multiplier = MAX_RECENCY_MULTIPLIER;
-        if self.marked_active_until < now {
-            recency_multiplier = recency_multiplier
-                .saturating_sub((MAX_RECENCY_MULTIPLIER * (now - self.marked_active_until)) / ZERO_WEIGHT_AFTER_DURATION);
-        }
-
-        if recency_multiplier > 0 {
-            let activity = &self.activity.last_day;
-
-            weighting += (activity.messages * activity.message_unique_users) as u64;
-            weighting += (activity.reactions * activity.reaction_unique_users) as u64;
-
-            weighting *= recency_multiplier;
-
-            let random_multiplier = (random % 16) as u64;
-            weighting *= random_multiplier;
-        }
-        weighting
     }
 
     pub fn is_frozen(&self) -> bool {
