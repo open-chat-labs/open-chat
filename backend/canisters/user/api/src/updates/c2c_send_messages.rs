@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex};
+use types::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex, MultiUserChat};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -27,7 +27,7 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum C2CReplyContext {
     ThisChat(MessageId),
-    OtherChat(ChatId, EventIndex),
+    OtherChat(MultiUserChat, Option<MessageIndex>, EventIndex),
     OtherEventList(ChatId, Option<MessageIndex>, EventIndex),
 }
 

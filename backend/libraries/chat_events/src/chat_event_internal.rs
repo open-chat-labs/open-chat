@@ -5,16 +5,17 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
-    is_default, is_empty_slice, AudioContent, AvatarChanged, BlobReference, CanisterId, ChatId, ChatMetrics,
-    CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy, DirectChatCreated,
-    EventIndex, EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged, GroupFrozen,
-    GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen,
-    GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersRemoved, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageReminderContent, MessageReminderCreatedContent,
-    MessageUnpinned, OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin,
-    ParticipantRelinquishesSuperAdmin, PermissionsChanged, PollContentInternal, PrizeContent, PrizeContentInternal,
-    PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage, ReportedMessageInternal,
-    RoleChanged, TextContent, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
+    is_default, is_empty_slice, AudioContent, AvatarChanged, BlobReference, CanisterId, ChannelId, ChatId, ChatMetrics,
+    CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy,
+    DirectChatCreated, EventIndex, EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged,
+    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
+    GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersRemoved, Message,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageReminderContent,
+    MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, OwnershipTransferred, ParticipantAssumesSuperAdmin,
+    ParticipantDismissedAsSuperAdmin, ParticipantRelinquishesSuperAdmin, PermissionsChanged, PollContentInternal, PrizeContent,
+    PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage,
+    ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersInvited,
+    UsersUnblocked, VideoContent,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -562,8 +563,43 @@ impl From<&MessageContentInternal> for Document {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy)]
+pub enum MultiUserChatInternal {
+    #[serde(rename = "g")]
+    Group(ChatId),
+    #[serde(rename = "c")]
+    Channel(CommunityId, ChannelId),
+}
+
+impl From<MultiUserChat> for MultiUserChatInternal {
+    fn from(value: MultiUserChat) -> Self {
+        match value {
+            MultiUserChat::Group(c) => MultiUserChatInternal::Group(c),
+            MultiUserChat::Channel(cm, ch) => MultiUserChatInternal::Channel(cm, ch),
+        }
+    }
+}
+
+impl MultiUserChatInternal {
+    pub fn hydrate(&self) -> MultiUserChat {
+        match self {
+            MultiUserChatInternal::Group(c) => MultiUserChat::Group(*c),
+            MultiUserChatInternal::Channel(cm, ch) => MultiUserChat::Channel(*cm, *ch),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "ReplyContextInternalPrevious")]
 pub struct ReplyContextInternal {
+    #[serde(rename = "c")]
+    pub chat_if_other: Option<(MultiUserChatInternal, Option<MessageIndex>)>,
+    #[serde(rename = "e")]
+    pub event_index: EventIndex,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ReplyContextInternalPrevious {
     #[serde(rename = "l")]
     pub event_list_if_other: Option<(ChatId, Option<MessageIndex>)>,
     #[serde(rename = "e")]
@@ -573,7 +609,14 @@ pub struct ReplyContextInternal {
 impl ReplyContextInternal {
     pub fn hydrate(&self) -> ReplyContext {
         ReplyContext {
-            event_list_if_other: self.event_list_if_other,
+            event_list_if_other: self.chat_if_other.as_ref().map(|(c, t)| {
+                if let MultiUserChatInternal::Group(chat_id) = c {
+                    (*chat_id, *t)
+                } else {
+                    panic!("Channels not yet supported");
+                }
+            }),
+            chat_if_other: self.chat_if_other.as_ref().map(|(c, t)| (c.hydrate(), *t)),
             event_index: self.event_index,
         }
     }
@@ -582,7 +625,7 @@ impl ReplyContextInternal {
 impl From<&GroupReplyContext> for ReplyContextInternal {
     fn from(value: &GroupReplyContext) -> Self {
         ReplyContextInternal {
-            event_list_if_other: None,
+            chat_if_other: None,
             event_index: value.event_index,
         }
     }
@@ -591,7 +634,16 @@ impl From<&GroupReplyContext> for ReplyContextInternal {
 impl From<&ReplyContext> for ReplyContextInternal {
     fn from(value: &ReplyContext) -> Self {
         ReplyContextInternal {
-            event_list_if_other: value.event_list_if_other,
+            chat_if_other: value.chat_if_other.map(|(c, t)| (c.into(), t)),
+            event_index: value.event_index,
+        }
+    }
+}
+
+impl From<ReplyContextInternalPrevious> for ReplyContextInternal {
+    fn from(value: ReplyContextInternalPrevious) -> Self {
+        ReplyContextInternal {
+            chat_if_other: value.event_list_if_other.map(|(c, t)| (MultiUserChatInternal::Group(c), t)),
             event_index: value.event_index,
         }
     }
@@ -708,8 +760,8 @@ impl ChatMetricsInternal {
 #[cfg(test)]
 mod tests {
     use crate::{
-        ChatEventInternal, DeletedByInternal, MessageContentInternal, MessageInternal, ReplyContextInternal,
-        ThreadSummaryInternal,
+        ChatEventInternal, DeletedByInternal, MessageContentInternal, MessageInternal, MultiUserChatInternal,
+        ReplyContextInternal, ThreadSummaryInternal,
     };
     use candid::Principal;
     use std::collections::HashSet;
@@ -744,9 +796,12 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        // Before optimisation: 177 239
-        // After optimisation: 53 65
+        // Before optimisation: 177
+        // After optimisation: 53
         assert_eq!(message_bytes_len, 53);
+
+        // Before optimisation: 239
+        // After optimisation: 65
         assert_eq!(event_bytes_len, 65);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
@@ -761,7 +816,7 @@ mod tests {
             sender: principal.into(),
             content: MessageContentInternal::Text(TextContent { text: "123".to_string() }),
             replies_to: Some(ReplyContextInternal {
-                event_list_if_other: Some((principal.into(), Some(1.into()))),
+                chat_if_other: Some((MultiUserChatInternal::Group(principal.into()), Some(1.into()))),
                 event_index: 1.into(),
             }),
             reactions: vec![(Reaction::new("1".to_string()), HashSet::from([principal.into()]))],
@@ -794,12 +849,12 @@ mod tests {
         let event_bytes_len = event_bytes.len();
 
         // Before optimisation: 389
-        // After optimisation: 150
-        assert_eq!(message_bytes_len, 150);
+        // After optimisation: 153
+        assert_eq!(message_bytes_len, 153);
 
         // Before optimisation: 451
-        // After optimisation: 168
-        assert_eq!(event_bytes_len, 168);
+        // After optimisation: 171
+        assert_eq!(event_bytes_len, 171);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
     }
