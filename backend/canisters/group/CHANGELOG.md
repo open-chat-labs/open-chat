@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add ability to import a group into a community ([#3792](https://github.com/open-ic/open-chat/pull/3792))
 - Add support for sending the KINIC token ([#3811](https://github.com/open-chat-labs/open-chat/pull/3811))
+- Support replying to channel messages ([#3825](https://github.com/open-chat-labs/open-chat/pull/3825))
 
 ### Changed
 
