@@ -1,7 +1,7 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
 use rand::rngs::StdRng;
-use rand::{RngCore, SeedableRng};
+use rand::RngCore;
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -151,8 +151,7 @@ impl PublicGroups {
         self.groups.values()
     }
 
-    pub fn calculate_hot_groups(&self, now: TimestampMillis) -> Vec<ChatId> {
-        let mut rng = StdRng::seed_from_u64(now);
+    pub fn calculate_hot_groups(&self, now: TimestampMillis, rng: &mut StdRng) -> Vec<ChatId> {
         let one_day_ago = now - DAY_IN_MS;
 
         self.iter()
