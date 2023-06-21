@@ -21,8 +21,6 @@ pub struct PublicGroupActivity {
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Activity {
-    #[serde(alias = "participant_count_change")]
-    pub member_count_change: i32,
     pub messages: u32,
     pub message_unique_users: u32,
     pub reactions: u32,

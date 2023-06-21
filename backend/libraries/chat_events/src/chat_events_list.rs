@@ -81,7 +81,7 @@ impl ChatEventsList {
         self.get(event_key, min_visible_event_index, now).is_some()
     }
 
-    pub fn iter(
+    pub(crate) fn iter(
         &self,
         start: Option<EventKey>,
         ascending: bool,
@@ -109,6 +109,10 @@ impl ChatEventsList {
         } else {
             Box::new(iter.rev())
         }
+    }
+
+    pub fn values(&self) -> impl Iterator<Item = &EventWrapperInternal<ChatEventInternal>> {
+        self.events_map.values()
     }
 
     pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(

@@ -157,7 +157,7 @@ pub struct PublicCommunityInfo {
     description: String,
     avatar_id: Option<u128>,
     banner_id: Option<u128>,
-    activity: PublicCommunityActivity,
+    activity: Option<PublicCommunityActivity>,
     hotness_score: u32,
     gate: Option<AccessGate>,
 }
@@ -188,7 +188,7 @@ impl PublicCommunityInfo {
             gate,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
-            activity: PublicCommunityActivity::default(),
+            activity: None,
             hotness_score: 0,
             frozen: None,
         }
@@ -200,7 +200,7 @@ impl PublicCommunityInfo {
 
     pub fn mark_active(&mut self, until: TimestampMillis, activity: PublicCommunityActivity) {
         self.marked_active_until = until;
-        self.activity = activity;
+        self.activity = Some(activity);
     }
 
     pub fn has_been_active_since(&self, since: TimestampMillis) -> bool {
@@ -224,43 +224,48 @@ impl PublicCommunityInfo {
     // popularity: based on total members
     // hotness: based on counts of recent messages and reactions
     // random: to avoid always showing the same communities
-    // Each of these factors is scaled to a value between 0 and 1 and then combined as a weighted sum.
+    // Each of these factors is scaled to a value roughly between 0 and 1 and then combined as a weighted sum.
     pub fn calculate_hotness(&mut self, now: TimestampMillis, random: u32) {
-        const NEWNESS_THRESHOLD_DAYS: f64 = 10.0;
-        let newness = f64::log10(
-            NEWNESS_THRESHOLD_DAYS - f64::min((now - self.created) as f64 / DAY_IN_MS as f64, NEWNESS_THRESHOLD_DAYS),
-        );
+        if let Some(activity) = &self.activity {
+            // Linearly scale newness between 0 and 1 based on how long ago the community was created capped at 10 days
+            const NEWNESS_THRESHOLD_DAYS: f64 = 10.0;
+            let newness = 1.0
+                - f64::min(NEWNESS_THRESHOLD_DAYS, ((now - self.created) as f64) / DAY_IN_MS as f64) / NEWNESS_THRESHOLD_DAYS;
 
-        // Based on total members
-        let popularity = f64::log10(self.activity.member_count as f64) / 5.0;
+            // Logarithmically scale popularity (roughly) between 0 and 1 based on the number of members
+            // Communities with 100,000 members would have a score of 1.0 and with 1M a score of 1.2
+            let popularity = f64::log10(activity.member_count as f64) / 5.0;
 
-        // Calculate the hotness score based on the messages and reactions in the given period.
-        // Because the activity data is only updated if the community is active, we need to scale the
-        // activity score based on how long ago the community was active
-        fn calculate_activity_score(activity: &Activity, threshold: f64, period: f64, time_since_activity: f64) -> f64 {
-            let recency_multiplier = 1.0 - (f64::min(time_since_activity, period) / period);
+            // Calculate the hotness score based on the messages and reactions in the given period.
+            // Because the activity data is only updated if the community is active, we need to scale the
+            // activity score based on how long ago the community was active
+            fn calculate_activity_score(activity: &Activity, threshold: f64, period: f64, time_since_activity: f64) -> f64 {
+                let recency_multiplier = 1.0 - (f64::min(time_since_activity, period) / period);
 
-            if recency_multiplier == 0.0 {
-                return 0.0;
+                if recency_multiplier == 0.0 {
+                    return 0.0;
+                }
+
+                recency_multiplier
+                    * f64::log10(f64::min(
+                        threshold,
+                        (activity.messages * activity.message_unique_users) as f64
+                            + (activity.reactions * activity.reaction_unique_users) as f64,
+                    ))
+                    / f64::log10(threshold)
             }
 
-            recency_multiplier
-                * f64::log10(f64::min(
-                    threshold,
-                    (activity.messages * activity.message_unique_users) as f64
-                        + (activity.reactions * activity.reaction_unique_users) as f64,
-                ))
-                / f64::log10(threshold)
+            // The hotness is a weighted sum of the activity in the last hour and the last day between 0 and 1
+            let time_since_activity = now.saturating_sub(self.marked_active_until) as f64;
+            let hotness = 0.5 * calculate_activity_score(&activity.last_day, 100_000.0, DAY_IN_MS as f64, time_since_activity)
+                + 0.5 * calculate_activity_score(&activity.last_hour, 10_000.0, HOUR_IN_MS as f64, time_since_activity);
+
+            // A random number beteen 0 and 1
+            let random = random as f64 / u32::MAX as f64;
+
+            // Weighted sum of new, popular, hot and random
+            self.hotness_score = ((0.5 * newness + popularity + hotness + random) * 1_000_000.0) as u32
         }
-
-        let time_since_activity = now.saturating_sub(self.marked_active_until) as f64;
-        let hotness = 0.5 * calculate_activity_score(&self.activity.last_day, 100_000.0, DAY_IN_MS as f64, time_since_activity)
-            + 0.5 * calculate_activity_score(&self.activity.last_hour, 10_000.0, HOUR_IN_MS as f64, time_since_activity);
-
-        let random = random as f64 / u32::MAX as f64;
-
-        // Weighted sum of new, popular, hot and random
-        self.hotness_score = ((0.5 * newness + popularity + hotness + random) * 1_000_000.0) as u32
     }
 }
 
@@ -272,8 +277,8 @@ impl From<&PublicCommunityInfo> for CommunityMatch {
             description: community.description.clone(),
             avatar_id: community.avatar_id,
             banner_id: community.banner_id,
-            member_count: community.activity.member_count,
-            channel_count: community.activity.channel_count,
+            member_count: community.activity.as_ref().map_or(0, |a| a.member_count),
+            channel_count: community.activity.as_ref().map_or(0, |a| a.channel_count),
             gate: community.gate.clone(),
         }
     }

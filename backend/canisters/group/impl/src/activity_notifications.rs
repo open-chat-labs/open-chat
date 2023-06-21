@@ -35,13 +35,6 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
         let mut message_unique_users = HashSet::new();
         let mut reaction_unique_users = HashSet::new();
 
-        let mut inc_member_count = |count, within_last_hour| {
-            activity.last_day.member_count_change += count;
-            if within_last_hour {
-                activity.last_hour.member_count_change += count;
-            }
-        };
-
         for event in data
             .chat
             .events
@@ -51,54 +44,30 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
         {
             let within_last_hour = event.timestamp >= one_hour_ago;
 
-            match &event.event {
-                ChatEventInternal::GroupChatCreated(_) => {
-                    inc_member_count(1, within_last_hour);
-                }
-                ChatEventInternal::Message(m) => {
-                    activity.last_day.messages += 1;
-                    activity.last_day.reactions += m.reactions.len() as u32;
+            if let ChatEventInternal::Message(m) = &event.event {
+                activity.last_day.messages += 1;
+                activity.last_day.reactions += m.reactions.len() as u32;
 
+                if within_last_hour {
+                    activity.last_hour.messages += 1;
+                    activity.last_hour.reactions += m.reactions.len() as u32
+                }
+
+                if message_unique_users.insert(m.sender) {
+                    activity.last_day.message_unique_users += 1;
                     if within_last_hour {
-                        activity.last_hour.messages += 1;
-                        activity.last_hour.reactions += m.reactions.len() as u32
+                        activity.last_hour.message_unique_users += 1;
                     }
+                }
 
-                    if message_unique_users.insert(m.sender) {
-                        activity.last_day.message_unique_users += 1;
+                for user_id in m.reactions.iter().flat_map(|(_, u)| u.iter()).copied() {
+                    if reaction_unique_users.insert(user_id) {
+                        activity.last_day.reaction_unique_users += 1;
                         if within_last_hour {
-                            activity.last_hour.message_unique_users += 1;
-                        }
-                    }
-
-                    for user_id in m.reactions.iter().flat_map(|(_, u)| u.iter()).copied() {
-                        if reaction_unique_users.insert(user_id) {
-                            activity.last_day.reaction_unique_users += 1;
-                            if within_last_hour {
-                                activity.last_hour.reaction_unique_users += 1;
-                            }
+                            activity.last_hour.reaction_unique_users += 1;
                         }
                     }
                 }
-                ChatEventInternal::ParticipantsAdded(p) => {
-                    let count = p.user_ids.len() as i32;
-                    inc_member_count(count, within_last_hour);
-                }
-                ChatEventInternal::ParticipantsRemoved(p) => {
-                    let count = p.user_ids.len() as i32;
-                    inc_member_count(-count, within_last_hour);
-                }
-                ChatEventInternal::UsersBlocked(p) => {
-                    let count = p.user_ids.len() as i32;
-                    inc_member_count(-count, within_last_hour);
-                }
-                ChatEventInternal::ParticipantJoined(_) => {
-                    inc_member_count(1, within_last_hour);
-                }
-                ChatEventInternal::ParticipantLeft(_) => {
-                    inc_member_count(-1, within_last_hour);
-                }
-                _ => {}
             }
         }
 

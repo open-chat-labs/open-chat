@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- New algo for ordering "hot" groups & communities ([#3820](https://github.com/open-ic/open-chat/pull/3820))
+
 ### Added
 
 - Add ability to import a group into a community ([#3792](https://github.com/open-ic/open-chat/pull/3792))

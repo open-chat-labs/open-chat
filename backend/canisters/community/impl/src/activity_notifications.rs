@@ -1,10 +1,10 @@
-use crate::{model::events::CommunityEvent, Data, RuntimeState};
+use crate::{Data, RuntimeState};
 use chat_events::ChatEventInternal;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_index_canister::c2c_mark_community_active;
 use msgpack::serialize_then_unwrap;
 use std::collections::HashSet;
-use types::{CanisterId, EventIndex, Milliseconds, PublicCommunityActivity, TimestampMillis};
+use types::{CanisterId, Milliseconds, PublicCommunityActivity, TimestampMillis};
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 // If needed, notify the group index canister that there has been activity in this community
@@ -33,38 +33,6 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
             ..Default::default()
         };
 
-        let mut inc_member_count = |count, within_last_hour| {
-            activity.last_day.member_count_change += count;
-            if within_last_hour {
-                activity.last_hour.member_count_change += count;
-            }
-        };
-
-        for event in data.events.iter(None, false).take_while(|e| e.timestamp >= one_day_ago) {
-            let within_last_hour = event.timestamp >= one_hour_ago;
-
-            match &event.event {
-                CommunityEvent::Created(_) => {
-                    inc_member_count(1, within_last_hour);
-                }
-                CommunityEvent::MemberJoined(_) => {
-                    inc_member_count(1, within_last_hour);
-                }
-                CommunityEvent::MembersRemoved(users) => {
-                    let count = users.user_ids.len() as i32;
-                    inc_member_count(-count, within_last_hour);
-                }
-                CommunityEvent::UsersBlocked(users) => {
-                    let count = users.user_ids.len() as i32;
-                    inc_member_count(-count, within_last_hour);
-                }
-                CommunityEvent::MemberLeft(_) => {
-                    inc_member_count(-1, within_last_hour);
-                }
-                _ => {}
-            }
-        }
-
         let mut message_unique_users = HashSet::new();
         let mut reaction_unique_users = HashSet::new();
 
@@ -72,13 +40,14 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
             .channels
             .iter()
             .filter(|channel| channel.chat.is_public)
-            .filter_map(|channel| {
-                channel.chat.events.events_list(EventIndex::default(), None, now).map(|list| {
-                    list.iter(None, false, EventIndex::default(), now)
-                        .take_while(|e| e.timestamp >= one_day_ago)
-                })
+            .flat_map(|channel| {
+                channel
+                    .chat
+                    .events
+                    .main_events_list()
+                    .values()
+                    .take_while(|e| e.timestamp >= one_day_ago)
             })
-            .flatten()
         {
             let within_last_hour = event.timestamp >= one_hour_ago;
 
