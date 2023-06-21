@@ -75,7 +75,7 @@
             : $chatSummariesListStore;
 
     function chatWith(userId: string): void {
-        dispatch("chatWith", userId);
+        dispatch("chatWith", { kind: "direct_chat", userId });
         closeSearch();
     }
 

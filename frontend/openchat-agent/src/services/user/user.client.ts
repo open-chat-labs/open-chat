@@ -504,7 +504,6 @@ export class UserClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 correlation_id: generateUint64(),
             };
-            console.log("What are we actually sending: ", req);
             return this.handleResponse(this.userService.send_message_v2(req), (resp) =>
                 sendMessageResponse(resp, event.event.sender, chatId.userId)
             ).then((resp) => [resp, { ...event.event, content: newContent }]);

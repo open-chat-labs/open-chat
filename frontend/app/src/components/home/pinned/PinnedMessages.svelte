@@ -2,7 +2,12 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type { EventWrapper, GroupChatIdentifier, Message } from "openchat-client";
+    import type {
+        DirectChatIdentifier,
+        EventWrapper,
+        GroupChatIdentifier,
+        Message,
+    } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
@@ -32,7 +37,7 @@
         messages = { kind: "idle" };
     }
 
-    function chatWith(ev: CustomEvent<string>) {
+    function chatWith(ev: CustomEvent<DirectChatIdentifier>) {
         dispatch("close");
         dispatch("chatWith", ev.detail);
     }

@@ -36,7 +36,7 @@
 
     function chatWithUser() {
         closeUserProfile();
-        dispatch("chatWith", senderId);
+        dispatch("chatWith", { kind: "direct_chat", userId: senderId });
     }
 
     function openUserProfile(e: Event) {

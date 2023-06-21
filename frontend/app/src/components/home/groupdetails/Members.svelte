@@ -120,7 +120,8 @@
     }
 
     function userSelected() {
-        dispatch("chatWith", profileUserId);
+        if (profileUserId === undefined) return;
+        dispatch("chatWith", { kind: "direct_chat", userId: profileUserId });
         closeUserProfile();
     }
 </script>

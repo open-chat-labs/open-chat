@@ -167,7 +167,7 @@
 
     function chatWithUser() {
         closeUserProfile();
-        dispatch("chatWith", msg.sender);
+        dispatch("chatWith", { kind: "direct_chat", userId: msg.sender });
     }
 
     function createReplyContext(): EnhancedReplyContext {
