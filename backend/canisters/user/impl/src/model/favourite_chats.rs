@@ -34,7 +34,7 @@ impl FavouriteChats {
         if !self.pinned.value.contains(&chat) {
             self.pinned.timestamp = now;
             self.pinned.value.insert(0, chat);
-            self.chats.value.insert(0, chat);
+            self.add(chat, now);
             true
         } else {
             false
