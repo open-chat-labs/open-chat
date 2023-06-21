@@ -117,12 +117,34 @@ type CommunityMatch =
         gate: opt AccessGate;
     };
 
+type ExploreGroupsArgs =
+    record {
+        search_term: opt text;
+        page_index: nat32;
+        page_size: nat8;
+    };
+
+type ExploreGroupsResponse =
+    variant {
+        Success: ExploreGroupsSuccess;
+        TermTooShort: nat8;
+        TermTooLong: nat8;
+        InvalidTerm;
+    };
+
+type ExploreGroupsSuccess =
+    record {
+        matches: vec GroupMatch;
+    };
+
 type GroupMatch =
     record {
         chat_id: ChatId;
         name: text;
         description: text;
         avatar_id: opt nat;
+        member_count: nat32;
+        gate: opt AccessGate;
     };
 
 type FreezeGroupArgs =
@@ -224,6 +246,7 @@ service: {
     recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
     explore_communities: (ExploreCommunitiesArgs) -> (ExploreCommunitiesResponse) query;
+    explore_groups: (ExploreGroupsArgs) -> (ExploreGroupsResponse) query;
 
     // Only callable by "platform moderators"
     freeze_group: (FreezeGroupArgs) -> (FreezeGroupResponse);

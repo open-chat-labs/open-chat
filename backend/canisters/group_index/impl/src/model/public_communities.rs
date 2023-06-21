@@ -4,9 +4,8 @@ use crate::MARK_ACTIVE_DURATION;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{AccessGate, Activity, CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
+use types::{AccessGate, CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "PublicCommunitiesTrimmed")]
@@ -78,8 +77,10 @@ impl PublicCommunities {
                 let score = if let Some(query) = &query {
                     let document: Document = c.into();
                     document.calculate_score(query)
-                } else {
+                } else if c.hotness_score > 0 {
                     c.hotness_score
+                } else {
+                    c.activity.as_ref().map_or(0, |a| a.member_count)
                 };
                 (score, c)
             })
@@ -90,6 +91,7 @@ impl PublicCommunities {
 
         matches
             .into_iter()
+            .rev()
             .map(|(_, c)| c.into())
             .skip(page_index as usize * page_size as usize)
             .take(page_size as usize)
@@ -198,6 +200,18 @@ impl PublicCommunityInfo {
         self.id
     }
 
+    pub fn created(&self) -> TimestampMillis {
+        self.created
+    }
+
+    pub fn marked_active_until(&self) -> TimestampMillis {
+        self.marked_active_until
+    }
+
+    pub fn activity(&self) -> &Option<PublicCommunityActivity> {
+        &self.activity
+    }
+
     pub fn mark_active(&mut self, until: TimestampMillis, activity: PublicCommunityActivity) {
         self.marked_active_until = until;
         self.activity = Some(activity);
@@ -219,53 +233,8 @@ impl PublicCommunityInfo {
         self.frozen = info;
     }
 
-    // This algorithm is a combination of new, popular, hot and random
-    // newness: how recently the community was created
-    // popularity: based on total members
-    // hotness: based on counts of recent messages and reactions
-    // random: to avoid always showing the same communities
-    // Each of these factors is scaled to a value roughly between 0 and 1 and then combined as a weighted sum.
-    pub fn calculate_hotness(&mut self, now: TimestampMillis, random: u32) {
-        if let Some(activity) = &self.activity {
-            // Linearly scale newness between 0 and 1 based on how long ago the community was created capped at 10 days
-            const NEWNESS_THRESHOLD_DAYS: f64 = 10.0;
-            let newness = 1.0
-                - f64::min(NEWNESS_THRESHOLD_DAYS, ((now - self.created) as f64) / DAY_IN_MS as f64) / NEWNESS_THRESHOLD_DAYS;
-
-            // Logarithmically scale popularity (roughly) between 0 and 1 based on the number of members
-            // Communities with 100,000 members would have a score of 1.0 and with 1M a score of 1.2
-            let popularity = f64::log10(activity.member_count as f64) / 5.0;
-
-            // Calculate the hotness score based on the messages and reactions in the given period.
-            // Because the activity data is only updated if the community is active, we need to scale the
-            // activity score based on how long ago the community was active
-            fn calculate_activity_score(activity: &Activity, threshold: f64, period: f64, time_since_activity: f64) -> f64 {
-                let recency_multiplier = 1.0 - (f64::min(time_since_activity, period) / period);
-
-                if recency_multiplier == 0.0 {
-                    return 0.0;
-                }
-
-                recency_multiplier
-                    * f64::log10(f64::min(
-                        threshold,
-                        (activity.messages * activity.message_unique_users) as f64
-                            + (activity.reactions * activity.reaction_unique_users) as f64,
-                    ))
-                    / f64::log10(threshold)
-            }
-
-            // The hotness is a weighted sum of the activity in the last hour and the last day between 0 and 1
-            let time_since_activity = now.saturating_sub(self.marked_active_until) as f64;
-            let hotness = 0.5 * calculate_activity_score(&activity.last_day, 100_000.0, DAY_IN_MS as f64, time_since_activity)
-                + 0.5 * calculate_activity_score(&activity.last_hour, 10_000.0, HOUR_IN_MS as f64, time_since_activity);
-
-            // A random number beteen 0 and 1
-            let random = random as f64 / u32::MAX as f64;
-
-            // Weighted sum of new, popular, hot and random
-            self.hotness_score = ((0.5 * newness + popularity + hotness + random) * 1_000_000.0) as u32
-        }
+    pub fn set_hotness_score(&mut self, hotness_score: u32) {
+        self.hotness_score = hotness_score;
     }
 }
 
