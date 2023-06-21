@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import Link from "../Link.svelte";
-    import type {
+    import {
         CreatedUser,
         Message,
         EnhancedReplyContext,
@@ -13,6 +13,7 @@
         MessageReminderCreatedContent,
         ChatIdentifier,
         ChatType,
+        routeForMessage,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -118,7 +119,7 @@
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
-    $: msgUrl = `/${chatId}/${msg.messageIndex}?open=true`;
+    $: msgUrl = `${routeForMessage({ chatId }, msg.messageIndex)}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
     $: isPrize = msg.content.kind === "prize_content";
     $: isPrizeWinner = msg.content.kind === "prize_winner_content";

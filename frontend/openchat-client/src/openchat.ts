@@ -113,7 +113,6 @@ import {
     userGroupKeys,
     threadServerEventsStore,
     threadEvents,
-    selectedThreadKey,
     nextEventAndMessageIndexesForThread,
     selectedThreadRootMessageIndex,
     clearServerEvents,
@@ -322,6 +321,7 @@ import {
     type CommunityIdentifier,
     chatIdentifierToString,
     MessageContextMap,
+    messageContextsEqual,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -1818,8 +1818,9 @@ export class OpenChat extends OpenChatAgentWorker {
             return Promise.resolve();
         }
 
-        const { selectedThreadKey } = this._liveState;
-        if (selectedThreadKey === undefined) return;
+        const context = this._liveState.selectedMessageContext;
+
+        if (context?.threadRootMessageIndex === undefined) return;
 
         const eventsResponse = await this.sendRequest({
             kind: "chatEvents",
@@ -1832,7 +1833,7 @@ export class OpenChat extends OpenChatAgentWorker {
             latestClientEventIndex: thread.latestEventIndex,
         });
 
-        if (selectedThreadKey !== this._liveState.selectedThreadKey) {
+        if (!messageContextsEqual(context, this._liveState.selectedMessageContext)) {
             // the selected thread has changed while we were loading the messages
             return;
         }
@@ -2528,7 +2529,6 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
-        const key = this.localMessagesKey(chatId, threadRootMessageIndex);
         const context = { chatId, threadRootMessageIndex };
 
         for (const event of newEvents) {
@@ -2556,7 +2556,7 @@ export class OpenChat extends OpenChatAgentWorker {
             chatStateStore.updateProp(chatId, "serverEvents", (events) =>
                 mergeServerEvents(events, newEvents)
             );
-        } else if (key === this._liveState.selectedThreadKey) {
+        } else if (messageContextsEqual(context, this._liveState.selectedMessageContext)) {
             threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
         }
     }
@@ -4256,7 +4256,6 @@ export class OpenChat extends OpenChatAgentWorker {
     notificationStatus = notificationStatus;
     userMetrics = userMetrics;
     threadEvents = threadEvents;
-    selectedThreadKey = selectedThreadKey;
     isDiamond = isDiamond;
     canExtendDiamond = canExtendDiamond;
     diamondMembership = diamondMembership;

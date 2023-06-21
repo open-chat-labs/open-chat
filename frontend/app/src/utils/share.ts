@@ -1,9 +1,5 @@
 import type { Message, MessageContent, MessageFormatter, ChatIdentifier } from "openchat-client";
-import {
-    buildCryptoTransferText,
-    buildTransactionUrl,
-    routeForChatIdentifier,
-} from "openchat-client";
+import { buildCryptoTransferText, buildTransactionUrl, routeForMessage } from "openchat-client";
 import { toastStore } from "../stores/toast";
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
@@ -255,8 +251,8 @@ export function buildMessageUrl(
     messageIndex: number,
     threadRootMessageIndex?: number
 ): string {
-    const chatUrl = `${window.location.origin}${routeForChatIdentifier(chatId)}/`;
-    return threadRootMessageIndex === undefined
-        ? `${chatUrl}${messageIndex}`
-        : `${chatUrl}${threadRootMessageIndex}/${messageIndex}`;
+    return `${window.location.origin}${routeForMessage(
+        { chatId, threadRootMessageIndex },
+        messageIndex
+    )}`;
 }

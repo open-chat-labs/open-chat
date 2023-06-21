@@ -12,6 +12,7 @@ import type {
     EventWrapper,
     GroupChatSummary,
     Message,
+    MessageContext,
     ThreadSyncDetails,
     UserLookup,
 } from "openchat-shared";
@@ -31,7 +32,6 @@ import {
     focusMessageIndex,
     focusThreadMessageIndex,
     threadEvents,
-    selectedThreadKey,
     threadsFollowedByMeStore,
     currentChatUserIds,
     selectedThreadRootMessageIndex,
@@ -40,6 +40,7 @@ import {
     uninitializedDirectChats,
     confirmedThreadEventIndexesLoadedStore,
     selectedThreadRootEvent,
+    selectedMessageContext,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -75,7 +76,7 @@ export class LiveState {
     focusMessageIndex: number | undefined;
     focusThreadMessageIndex: number | undefined;
     threadEvents!: EventWrapper<ChatEvent>[];
-    selectedThreadKey: string | undefined;
+    selectedMessageContext: MessageContext | undefined;
     selectedThreadRootEvent: EventWrapper<Message> | undefined;
     threadsFollowedByMe!: ChatMap<Set<number>>;
     currentChatUserIds!: Set<string>;
@@ -112,7 +113,7 @@ export class LiveState {
         focusMessageIndex.subscribe((data) => (this.focusMessageIndex = data));
         focusThreadMessageIndex.subscribe((data) => (this.focusThreadMessageIndex = data));
         threadEvents.subscribe((data) => (this.threadEvents = data));
-        selectedThreadKey.subscribe((data) => (this.selectedThreadKey = data));
+        selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));
         selectedThreadRootEvent.subscribe((data) => (this.selectedThreadRootEvent = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
         currentChatUserIds.subscribe((data) => (this.currentChatUserIds = data));

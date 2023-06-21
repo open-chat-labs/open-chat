@@ -19,7 +19,7 @@ import type {
     ChatFrozen,
     Failure,
 } from "../response";
-import { ChatMap, emptyChatMetrics } from "../../utils";
+import { emptyChatMetrics } from "../../utils";
 
 export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
 export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
@@ -811,6 +811,24 @@ export function chatIdentifierToString(id: ChatIdentifier): string {
     }
 }
 
+export function messageContextsEqual(
+    a: MessageContext | undefined,
+    b: MessageContext | undefined
+): boolean {
+    if (a === undefined && b === undefined) {
+        return true;
+    }
+
+    if (a === undefined || b === undefined) {
+        return false;
+    }
+
+    return (
+        chatIdentifiersEqual(a.chatId, b.chatId) &&
+        a.threadRootMessageIndex === b.threadRootMessageIndex
+    );
+}
+
 export function chatIdentifiersEqual(
     a: ChatIdentifier | undefined,
     b: ChatIdentifier | undefined
@@ -840,45 +858,6 @@ export function chatIdentifiersEqual(
             return b.kind === "group_chat" && a.groupId === b.groupId;
     }
 }
-
-// export class ChatIdentifier {
-//     private constructor(
-//         public value: ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier
-//     ) {}
-
-//     create(value: ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier): ChatIdentifier {
-//         return new ChatIdentifier(value);
-//     }
-
-//     toString(): string {
-//         switch (this.value.kind) {
-//             case "channel":
-//                 return `${this.value.communtityId}_${this.value.id}`;
-//             default:
-//                 return this.value.id;
-//         }
-//     }
-
-//     static directFromString(id: string): ChatIdentifier {
-//         return new ChatIdentifier({
-//             kind: "direct_chat",
-//             id,
-//         });
-//     }
-
-//     static groupFromString(id: string): ChatIdentifier {
-//         return new ChatIdentifier({
-//             kind: "group_chat",
-//             id,
-//         });
-//     }
-
-//     equals(other: ChatIdentifier): boolean {
-//         const thisVal = this.toString();
-//         const otherVal = other.toString();
-//         return thisVal === otherVal;
-//     }
-// }
 
 export type DirectChatIdentifier = {
     kind: "direct_chat";

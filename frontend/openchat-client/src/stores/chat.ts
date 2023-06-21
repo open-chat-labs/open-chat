@@ -133,15 +133,6 @@ export const selectedThreadRootEvent = writable<EventWrapper<Message> | undefine
 export const selectedThreadRootMessageIndex = derived(selectedThreadRootEvent, ($rootEvent) => {
     return $rootEvent !== undefined ? $rootEvent.event.messageIndex : undefined;
 });
-export const selectedThreadKey = derived(
-    [selectedChatId, selectedThreadRootMessageIndex],
-    ([$selectedChatId, $selectedThreadRootMessageIndex]) => {
-        if ($selectedChatId !== undefined && $selectedThreadRootMessageIndex !== undefined) {
-            return `${$selectedChatId}_${$selectedThreadRootMessageIndex}`;
-        }
-        return undefined;
-    }
-);
 export const selectedMessageContext = derived(
     [selectedChatId, selectedThreadRootMessageIndex],
     ([$selectedChatId, $selectedThreadRootMessageIndex]) => {
