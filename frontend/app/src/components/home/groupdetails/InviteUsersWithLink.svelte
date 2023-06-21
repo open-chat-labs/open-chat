@@ -30,7 +30,7 @@
     let confirmReset = false;
 
     $: link =
-        `${window.location.origin}/${group.chatId}/?ref=${client.user.userId}` +
+        `${window.location.origin}/group/${group.chatId}/?ref=${client.user.userId}` +
         (!group.public ? `&code=${code}` : "");
 
     $: spinner = loading && code === undefined;
