@@ -17,7 +17,7 @@ fn add_remove_favourite_chats(args: Args) -> Response {
         }
 
         for chat in args.to_remove {
-            state.data.favourite_chats.remove(chat, now);
+            state.data.favourite_chats.remove(&chat, now);
         }
 
         Success
