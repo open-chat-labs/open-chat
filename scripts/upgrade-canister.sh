@@ -32,16 +32,16 @@ CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispens
 MARKET_MAKER_CANISTER_ID=$(dfx canister --network $NETWORK id market_maker)
 
 cargo run \
-  --manifest-path backend/canister_upgrader/Cargo.toml \
-  $IC_URL \
-  $IDENTITY \
-  $USER_INDEX_CANISTER_ID \
-  $GROUP_INDEX_CANISTER_ID \
-  $NOTIFICATIONS_INDEX_CANISTER_ID \
-  $ONLINE_USERS_CANISTER_ID \
-  $PROPOSALS_BOT_CANISTER_ID \
-  $STORAGE_INDEX_CANISTER_ID \
-  $CYCLES_DISPENSER_CANISTER_ID \
-  $MARKET_MAKER_CANISTER_ID \
-  $CANISTER_NAME \
-  $VERSION \
+  --manifest-path backend/canister_upgrader/Cargo.toml -- \
+  --url $IC_URL \
+  --controller $IDENTITY \
+  --user-index $USER_INDEX_CANISTER_ID \
+  --group-index $GROUP_INDEX_CANISTER_ID \
+  --notifications-index $NOTIFICATIONS_INDEX_CANISTER_ID \
+  --online-users $ONLINE_USERS_CANISTER_ID \
+  --proposals-bot $PROPOSALS_BOT_CANISTER_ID \
+  --storage-index $STORAGE_INDEX_CANISTER_ID \
+  --cycles-dispenser $CYCLES_DISPENSER_CANISTER_ID \
+  --market-maker $MARKET_MAKER_CANISTER_ID \
+  --canister-to-upgrade $CANISTER_NAME \
+  --version $VERSION \

@@ -38,22 +38,22 @@ CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispens
 MARKET_MAKER_CANISTER_ID=$(dfx canister --network $NETWORK id market_maker)
 
 cargo run \
-  --manifest-path backend/canister_installer/Cargo.toml \
-  $IC_URL \
-  $TEST_MODE \
-  $IDENTITY \
-  $USER_INDEX_CANISTER_ID \
-  $GROUP_INDEX_CANISTER_ID \
-  $NOTIFICATIONS_INDEX_CANISTER_ID \
-  $LOCAL_USER_INDEX_CANISTER_ID \
-  $LOCAL_GROUP_INDEX_CANISTER_ID \
-  $NOTIFICATIONS_CANISTER_ID \
-  $ONLINE_USERS_CANISTER_ID \
-  $PROPOSALS_BOT_CANISTER_ID \
-  $STORAGE_INDEX_CANISTER_ID \
-  $CYCLES_DISPENSER_CANISTER_ID \
-  $MARKET_MAKER_CANISTER_ID \
-  $NNS_GOVERNANCE_CANISTER_ID \
-  $NNS_INTERNET_IDENTITY_CANISTER_ID \
-  $NNS_LEDGER_CANISTER_ID \
-  $NNS_CMC_CANISTER_ID \
+  --manifest-path backend/canister_installer/Cargo.toml -- \
+  --url $IC_URL \
+  --test-mode $TEST_MODE \
+  --controller $IDENTITY \
+  --user-index $USER_INDEX_CANISTER_ID \
+  --group-index $GROUP_INDEX_CANISTER_ID \
+  --notifications-index $NOTIFICATIONS_INDEX_CANISTER_ID \
+  --local-user-index $LOCAL_USER_INDEX_CANISTER_ID \
+  --local-group-index $LOCAL_GROUP_INDEX_CANISTER_ID \
+  --notifications $NOTIFICATIONS_CANISTER_ID \
+  --online-users $ONLINE_USERS_CANISTER_ID \
+  --proposals-bot $PROPOSALS_BOT_CANISTER_ID \
+  --storage-index $STORAGE_INDEX_CANISTER_ID \
+  --cycles-dispenser $CYCLES_DISPENSER_CANISTER_ID \
+  --market-maker $MARKET_MAKER_CANISTER_ID \
+  --nns-governance $NNS_GOVERNANCE_CANISTER_ID \
+  --nns-internet-identity $NNS_INTERNET_IDENTITY_CANISTER_ID \
+  --nns-ledger $NNS_LEDGER_CANISTER_ID \
+  --nns-cmc $NNS_CMC_CANISTER_ID \
