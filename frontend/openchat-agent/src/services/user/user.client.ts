@@ -1,56 +1,59 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import {
+    ApiChannelMessagesRead,
+    ApiChatMessagesRead,
+    ApiMarkReadArgs,
     ApiSendMessageArgs,
     ApiSendMessageWithTransferToGroupArgs,
     idlFactory,
     UserService,
 } from "./candid/idl";
-import {
-    type InitialStateResponse,
-    type UpdatesResponse,
-    type EventsResponse,
-    type CandidateGroupChat,
-    type CreateGroupResponse,
-    type DeleteGroupResponse,
-    type DirectChatEvent,
-    type Message,
-    type SendMessageResponse,
-    type BlockUserResponse,
-    type UnblockUserResponse,
-    type LeaveGroupResponse,
-    type MarkReadResponse,
-    type IndexRange,
-    type AddRemoveReactionResponse,
-    type DeleteMessageResponse,
-    type UndeleteMessageResponse,
-    type EditMessageResponse,
-    type MarkReadRequest,
-    type WithdrawCryptocurrencyResponse,
-    type CryptocurrencyContent,
-    type PendingCryptocurrencyWithdrawal,
-    type ArchiveChatResponse,
-    type BlobReference,
-    type CreatedUser,
-    type MigrateUserPrincipalResponse,
-    type PinChatResponse,
-    type PublicProfile,
-    type SearchDirectChatResponse,
-    type SetBioResponse,
-    type ToggleMuteNotificationResponse,
-    type UnpinChatResponse,
-    type DeletedDirectMessageResponse,
-    type EventWrapper,
-    type SetMessageReminderResponse,
-    type ChatEvent,
-    type EventsSuccessResult,
-    type Community,
-    type CreateCommunityResponse,
-    type AccessRules,
-    type ChatIdentifier,
-    type DirectChatIdentifier,
-    type GroupChatIdentifier,
-    chatIdentifierToString,
+import type {
+    InitialStateResponse,
+    UpdatesResponse,
+    EventsResponse,
+    CandidateGroupChat,
+    CreateGroupResponse,
+    DeleteGroupResponse,
+    DirectChatEvent,
+    Message,
+    SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    LeaveGroupResponse,
+    MarkReadResponse,
+    IndexRange,
+    AddRemoveReactionResponse,
+    DeleteMessageResponse,
+    UndeleteMessageResponse,
+    EditMessageResponse,
+    MarkReadRequest,
+    WithdrawCryptocurrencyResponse,
+    CryptocurrencyContent,
+    PendingCryptocurrencyWithdrawal,
+    ArchiveChatResponse,
+    BlobReference,
+    CreatedUser,
+    MigrateUserPrincipalResponse,
+    PinChatResponse,
+    PublicProfile,
+    SearchDirectChatResponse,
+    SetBioResponse,
+    ToggleMuteNotificationResponse,
+    UnpinChatResponse,
+    DeletedDirectMessageResponse,
+    EventWrapper,
+    SetMessageReminderResponse,
+    ChatEvent,
+    EventsSuccessResult,
+    Community,
+    CreateCommunityResponse,
+    AccessRules,
+    ChatIdentifier,
+    DirectChatIdentifier,
+    GroupChatIdentifier,
+    ThreadRead,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -590,19 +593,73 @@ export class UserClient extends CandidService {
         );
     }
 
+    private markMessageArg(
+        chatId: string,
+        readUpTo: number | undefined,
+        threads: ThreadRead[],
+        dateReadPinned: bigint | undefined
+    ) {
+        return {
+            chat_id: Principal.fromText(chatId),
+            read_up_to: apiOptional(identity, readUpTo),
+            threads: threads.map((t) => ({
+                root_message_index: t.threadRootMessageIndex,
+                read_up_to: t.readUpTo,
+            })),
+            date_read_pinned: apiOptional(identity, dateReadPinned),
+        };
+    }
+
+    private markChannelMessageArg(
+        channelId: string,
+        readUpTo: number | undefined,
+        threads: ThreadRead[],
+        dateReadPinned: bigint | undefined
+    ) {
+        return {
+            channel_id: BigInt(channelId),
+            read_up_to: apiOptional(identity, readUpTo),
+            threads: threads.map((t) => ({
+                root_message_index: t.threadRootMessageIndex,
+                read_up_to: t.readUpTo,
+            })),
+            date_read_pinned: apiOptional(identity, dateReadPinned),
+        };
+    }
+
+    private markMessageArgs(req: MarkReadRequest): ApiMarkReadArgs {
+        const community: Record<string, ApiChannelMessagesRead[]> = {};
+        const chat: ApiChatMessagesRead[] = [];
+
+        req.forEach(({ chatId, readUpTo, threads, dateReadPinned }) => {
+            if (chatId.kind === "direct_chat") {
+                chat.push(this.markMessageArg(chatId.userId, readUpTo, threads, dateReadPinned));
+            }
+            if (chatId.kind === "group_chat") {
+                chat.push(this.markMessageArg(chatId.groupId, readUpTo, threads, dateReadPinned));
+            }
+            if (chatId.kind === "channel") {
+                if (community[chatId.communityId] === undefined) {
+                    community[chatId.communityId] = [];
+                }
+                community[chatId.communityId].push(
+                    this.markChannelMessageArg(chatId.channelId, readUpTo, threads, dateReadPinned)
+                );
+            }
+        });
+
+        return {
+            messages_read: chat,
+            community_messages_read: Object.entries(community).map(([communityId, read]) => ({
+                community_id: Principal.fromText(communityId),
+                channels_read: read,
+            })),
+        };
+    }
+
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
         return this.handleResponse(
-            this.userService.mark_read_v2({
-                messages_read: request.map(({ chatId, readUpTo, threads, dateReadPinned }) => ({
-                    chat_id: Principal.fromText(chatIdentifierToString(chatId)), // TODO this will blow up with a channelId - need to convert to use mark_read instead
-                    read_up_to: apiOptional(identity, readUpTo),
-                    threads: threads.map((t) => ({
-                        root_message_index: t.threadRootMessageIndex,
-                        read_up_to: t.readUpTo,
-                    })),
-                    date_read_pinned: apiOptional(identity, dateReadPinned),
-                })),
-            }),
+            this.userService.mark_read(this.markMessageArgs(request)),
             markReadResponse
         );
     }

@@ -117,6 +117,10 @@ import {
     DirectChatsUpdates,
     UserCanisterCommunitySummaryUpdates,
     UserCanisterChannelSummaryUpdates,
+    MarkReadArgs,
+    CommunityMessagesRead,
+    ChatMessagesRead,
+    ChannelMessagesRead,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -236,6 +240,10 @@ export {
     DirectChatsUpdates as ApiDirectChatsUpdates,
     UserCanisterChannelSummaryUpdates as ApiUserCanisterChannelSummaryUpdates,
     UserCanisterCommunitySummaryUpdates as ApiUserCanisterCommunitySummaryUpdates,
+    MarkReadArgs as ApiMarkReadArgs,
+    CommunityMessagesRead as ApiCommunityMessagesRead,
+    ChatMessagesRead as ApiChatMessagesRead,
+    ChannelMessagesRead as ApiChannelMessagesRead,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
