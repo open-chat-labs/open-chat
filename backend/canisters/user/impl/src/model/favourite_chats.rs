@@ -1,30 +1,40 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use types::{Chat, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct FavouriteChats {
-    chats: Timestamped<HashSet<Chat>>,
+    chats: Timestamped<Vec<Chat>>,
     pinned: Timestamped<Vec<Chat>>,
 }
 
 impl FavouriteChats {
     pub fn add(&mut self, chat: Chat, now: TimestampMillis) -> bool {
-        self.chats.timestamp = now;
-        self.chats.value.insert(chat)
+        if !self.chats.value.contains(&chat) {
+            self.chats.timestamp = now;
+            self.chats.value.insert(0, chat);
+            true
+        } else {
+            false
+        }
     }
 
-    pub fn remove(&mut self, chat: Chat, now: TimestampMillis) -> bool {
-        self.unpin(&chat, now);
-        self.chats.timestamp = now;
-        self.chats.value.remove(&chat)
+    pub fn remove(&mut self, chat: &Chat, now: TimestampMillis) -> bool {
+        self.unpin(chat, now);
+        
+        if self.chats.value.contains(chat) {
+            self.chats.timestamp = now;
+            self.chats.value.retain(|c| c != chat);
+            true
+        } else {
+            false
+        }
     }
 
     pub fn pin(&mut self, chat: Chat, now: TimestampMillis) -> bool {
         if !self.pinned.value.contains(&chat) {
             self.pinned.timestamp = now;
             self.pinned.value.insert(0, chat);
-            self.chats.value.insert(chat);
+            self.chats.value.insert(0, chat);
             true
         } else {
             false
@@ -45,7 +55,7 @@ impl FavouriteChats {
         self.chats.timestamp > since || self.pinned.timestamp > since
     }
 
-    pub fn chats(&self) -> &HashSet<Chat> {
+    pub fn chats(&self) -> &Vec<Chat> {
         &self.chats.value
     }
 
