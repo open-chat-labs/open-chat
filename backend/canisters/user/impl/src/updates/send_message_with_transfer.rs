@@ -206,7 +206,7 @@ fn prepare(content: &MessageContentInitial, state: &RuntimeState) -> PrepareResu
         _ => return InvalidRequest("Message must include a crypto transfer".to_string()),
     };
 
-    if pending_transaction.units() > 0 {
+    if !pending_transaction.is_zero() {
         Success(pending_transaction)
     } else {
         TransferCannotBeZero
