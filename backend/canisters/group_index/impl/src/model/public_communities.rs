@@ -91,6 +91,7 @@ impl PublicCommunities {
 
         matches
             .into_iter()
+            .rev()
             .map(|(_, c)| c.into())
             .skip(page_index as usize * page_size as usize)
             .take(page_size as usize)
