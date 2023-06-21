@@ -705,7 +705,6 @@ export class OpenChatAgent extends EventTarget {
             }
         });
 
-        console.log("xxx: mapped", mapped);
         return mapped;
     }
 
@@ -788,8 +787,6 @@ export class OpenChatAgent extends EventTarget {
             threadRootMessageIndex,
             latestClientEventIndex
         );
-
-        console.log("xxx: resolved missing", missing);
 
         resp.events = resp.events.map((e) =>
             this.rehydrateEvent(e, currentChatId, missing, threadRootMessageIndex)
