@@ -51,7 +51,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
 }
 
 fn commit(invited_by: UserId, group_id: ChatId, group_name: String, invited_users: Vec<UserId>, state: &mut RuntimeState) {
-    let text = format!("You have been invited to the group [{group_name}](/{group_id}) by @UserId({invited_by}).");
+    let text = format!("You have been invited to the group [{group_name}](/group/{group_id}) by @UserId({invited_by}).");
     let message = MessageContent::Text(TextContent { text });
 
     for user_id in invited_users {
