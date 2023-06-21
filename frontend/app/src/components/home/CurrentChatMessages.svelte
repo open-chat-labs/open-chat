@@ -21,6 +21,7 @@
         FailedMessages,
         chatIdentifiersEqual,
         ChatIdentifier,
+        routeForChatIdentifier,
     } from "openchat-client";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import page from "page";
@@ -101,7 +102,7 @@
                     if (isIntersecting && messageReadTimers[idx] === undefined) {
                         const chatId = chat.id;
                         const timer = window.setTimeout(() => {
-                            if (chatId === chat.id) {
+                            if (chatIdentifiersEqual(chatId, chat.id)) {
                                 client.markMessageRead(chat.id, idx, id);
                                 if (id !== undefined) {
                                     client.broadcastMessageRead(chat, id);
@@ -129,7 +130,7 @@
     }
 
     function doGoToMessageIndex(index: number): void {
-        page(`/${chat.id}`);
+        page(routeForChatIdentifier(chat.id));
         chatEventList?.scrollToMessageIndex(chat.id, index, false);
     }
 

@@ -6,6 +6,7 @@
         OpenChat,
         ChatIdentifier,
         routeForChatIdentifier,
+        chatIdentifiersEqual,
     } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
@@ -40,7 +41,7 @@
     }
 
     function zoomToMessage() {
-        if (repliesTo.sourceContext.chatId === chatId) {
+        if (chatIdentifiersEqual(repliesTo.sourceContext.chatId, chatId)) {
             dispatch("goToMessageIndex", {
                 messageId,
                 index: repliesTo.messageIndex,

@@ -1,9 +1,15 @@
-import type { CallerNotInGroup, ChatIdentifier, MessageContent } from "../chat/chat";
+import type {
+    CallerNotInGroup,
+    ChatIdentifier,
+    GroupChatIdentifier,
+    MessageContent,
+} from "../chat/chat";
+import type { CommunityIdentifier } from "../community";
 import type { DataContent } from "../data/data";
 import type { ChatNotFound } from "../response";
 
 export type GroupMatch = DataContent & {
-    chatId: string;
+    chatId: GroupChatIdentifier;
     name: string;
     description: string;
 };
@@ -11,7 +17,7 @@ export type GroupMatch = DataContent & {
 export type SearchScope = "all" | "groups" | "communities";
 
 export interface CommunityMatch {
-    id: string;
+    id: CommunityIdentifier;
     name: string;
     description: string;
     avatar: DataContent;

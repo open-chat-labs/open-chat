@@ -22,6 +22,7 @@
         ThreadReactionSelected,
         ChatIdentifier,
         MessageContext,
+        chatIdentifiersEqual,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -329,7 +330,7 @@
         hasLookedUpEvent: boolean = false
     ): Promise<void> {
         // it is possible for the chat to change while this function is recursing so double check
-        if (chatId !== chat.id) return Promise.resolve();
+        if (!chatIdentifiersEqual(chatId, chat.id)) return Promise.resolve();
 
         if (index < 0) {
             setFocusMessageIndex(undefined);

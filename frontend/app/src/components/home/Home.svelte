@@ -265,7 +265,7 @@
                 closeThread();
 
                 // if the chat in the url is different from the chat we already have selected
-                if (pathParams.chatId !== $selectedChatId) {
+                if (!chatIdentifiersEqual(pathParams.chatId, $selectedChatId)) {
                     newChatSelected(
                         pathParams.chatId,
                         pathParams.messageIndex,
@@ -569,7 +569,7 @@
     }
 
     function loadMessage(ev: CustomEvent<MessageMatch>): void {
-        if (ev.detail.chatId === $selectedChatId) {
+        if (chatIdentifiersEqual(ev.detail.chatId, $selectedChatId)) {
             currentChatMessages?.externalGoToMessage(ev.detail.messageIndex);
         } else {
             page(`${routeForChatIdentifier(ev.detail.chatId)}/${ev.detail.messageIndex}`);

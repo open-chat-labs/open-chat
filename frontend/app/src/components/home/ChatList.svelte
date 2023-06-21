@@ -84,7 +84,7 @@
      * the routing will take care of the rest
      */
     function selectGroup({ chatId }: GroupMatch): void {
-        page(`/group/${chatId}`);
+        page(routeForChatIdentifier(chatId));
         closeSearch();
     }
 

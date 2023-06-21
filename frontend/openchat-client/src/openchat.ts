@@ -2954,7 +2954,7 @@ export class OpenChat extends OpenChatAgentWorker {
         ]).then(([m, _]) => {
             updateSummaryWithConfirmedMessage(chatId, m);
 
-            if (this._liveState.selectedChatId === chatId) {
+            if (chatIdentifiersEqual(this._liveState.selectedChatId, chatId)) {
                 this.handleMessageSentByOther(serverChat, m);
             }
         });
@@ -3027,7 +3027,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (
             selectedChat !== undefined &&
-            fromChatId === selectedChat.id &&
+            chatIdentifiersEqual(fromChatId, selectedChat.id) &&
             parsedMsg.threadRootMessageIndex === this._liveState.selectedThreadRootMessageIndex
         ) {
             this.handleWebRtcMessageInternal(
