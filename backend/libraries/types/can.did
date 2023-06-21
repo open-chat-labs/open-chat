@@ -30,6 +30,12 @@ type Chat =
         Channel: record { CommunityId; ChannelId; };
     };
 
+type MultiUserChat =
+    variant {
+        Group: ChatId;
+        Channel: record { CommunityId; ChannelId; };
+    };
+
 type AddedToGroupNotification =
     record {
         chat_id: ChatId;
@@ -653,6 +659,7 @@ type PublicGroupSummary =
 type ReplyContext =
     record {
         event_list_if_other: opt record { ChatId; opt MessageIndex };
+        chat_if_other: opt record { MultiUserChat; opt MessageIndex };
         event_index: EventIndex;
     };
 

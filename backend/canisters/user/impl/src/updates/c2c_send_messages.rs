@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
+use chat_events::{MessageContentInternal, MultiUserChatInternal, PushMessageArgs, Reader, ReplyContextInternal};
 use ic_cdk_macros::update;
 use types::{
     BlobReference, CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial,
@@ -229,16 +229,16 @@ fn convert_reply_context(
                 .get(&chat_id)
                 .and_then(|chat| chat.events.main_events_reader(now).event_index(message_id.into()))
                 .map(|event_index| ReplyContextInternal {
-                    event_list_if_other: None,
+                    chat_if_other: None,
                     event_index,
                 })
         }
-        C2CReplyContext::OtherChat(chat_id, event_index) => Some(ReplyContextInternal {
-            event_list_if_other: Some((chat_id, None)),
+        C2CReplyContext::OtherChat(chat, thread_root_message_index, event_index) => Some(ReplyContextInternal {
+            chat_if_other: Some((chat.into(), thread_root_message_index)),
             event_index,
         }),
         C2CReplyContext::OtherEventList(chat_id, thread_root_message_index, event_index) => Some(ReplyContextInternal {
-            event_list_if_other: Some((chat_id, thread_root_message_index)),
+            chat_if_other: Some((MultiUserChatInternal::Group(chat_id), thread_root_message_index)),
             event_index,
         }),
     }

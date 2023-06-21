@@ -4,6 +4,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_canister::c2c_report_message::{Response::*, *};
+use types::MultiUserChat;
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
@@ -18,7 +19,7 @@ fn c2c_report_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     state.data.chat.events.report_message(
         args.user_id,
-        args.chat_id,
+        MultiUserChat::Group(args.chat_id),
         args.thread_root_message_index,
         args.event_index,
         args.reason_code,

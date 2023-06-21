@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support replying to channel messages ([#3825](https://github.com/open-chat-labs/open-chat/pull/3825))
+
 ### Fixed
 
 - Fix ordering of pinned chats ([#3823](https://github.com/open-chat-labs/open-chat/pull/3823))
