@@ -6,6 +6,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
+use rand::Rng;
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
 use types::{Cryptocurrency, DiamondMembershipPlanDuration, UserId, ICP};
@@ -140,13 +141,15 @@ fn process_charge(
             amount_to_treasury -= amount_to_referrer;
             amount_to_treasury -= Cryptocurrency::InternetComputer.fee() as u64;
 
-            state.queue_payment(PendingPayment {
+            let referral_payment = PendingPayment {
                 amount: amount_to_referrer,
                 currency: Cryptocurrency::InternetComputer,
                 timestamp: now_nanos,
                 recipient: share_with.into(),
+                memo: state.env.rng().gen(),
                 reason: PendingPaymentReason::ReferralReward,
-            });
+            };
+            state.queue_payment(referral_payment);
 
             state.data.user_referral_leaderboards.add_reward(
                 share_with,
@@ -156,13 +159,15 @@ fn process_charge(
             );
         }
 
-        state.queue_payment(PendingPayment {
+        let treasury_payment = PendingPayment {
             amount: amount_to_treasury,
             currency: Cryptocurrency::InternetComputer,
             timestamp: now_nanos,
             recipient: SNS_GOVERNANCE_CANISTER_ID,
+            memo: state.env.rng().gen(),
             reason: PendingPaymentReason::Treasury,
-        });
+        };
+        state.queue_payment(treasury_payment);
 
         if manual_payment {
             state.data.diamond_membership_payment_metrics.manual_payments_taken += 1;

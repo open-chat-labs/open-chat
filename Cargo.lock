@@ -7605,7 +7605,7 @@ dependencies = [
  "msgpack",
  "notifications_index_canister",
  "notifications_index_canister_c2c_client",
- "rand_core 0.6.4",
+ "rand",
  "serde",
  "serde_bytes",
  "serde_json",
