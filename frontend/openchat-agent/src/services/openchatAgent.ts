@@ -151,6 +151,7 @@ import {
     chatIdentifierToString,
     MessageContext,
     MessageContextMap,
+    chatIdentifiersEqual,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -677,14 +678,16 @@ export class OpenChatAgent extends EventTarget {
 
         if (contextMap.length === 0) return Promise.resolve(new AsyncMessageContextMap());
 
-        return contextMap.asyncMap((ctx, idxs) => {
+        const mapped = await contextMap.asyncMap((ctx, idxs) => {
             const chatId = ctx.chatId;
             const chatKind = chatId.kind;
 
             // Note that the latestClientEventIndex relates to the *currentChat*, not necessarily the chat for this messageContext
             // So only include it if the context matches the current chat
             // And yes - this is probably trying to tell us something
-            const latestIndex = chatId === currentChatId ? latestClientEventIndex : undefined;
+            const latestIndex = chatIdentifiersEqual(chatId, currentChatId)
+                ? latestClientEventIndex
+                : undefined;
 
             if (chatKind === "direct_chat") {
                 return this.userClient
@@ -701,6 +704,9 @@ export class OpenChatAgent extends EventTarget {
                 throw new UnsupportedValueError("unknown chatid kind supplied", chatId);
             }
         });
+
+        console.log("xxx: mapped", mapped);
+        return mapped;
     }
 
     private rehydrateEvent<T extends ChatEvent>(
@@ -782,6 +788,8 @@ export class OpenChatAgent extends EventTarget {
             threadRootMessageIndex,
             latestClientEventIndex
         );
+
+        console.log("xxx: resolved missing", missing);
 
         resp.events = resp.events.map((e) =>
             this.rehydrateEvent(e, currentChatId, missing, threadRootMessageIndex)

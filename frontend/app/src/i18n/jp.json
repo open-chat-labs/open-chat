@@ -333,9 +333,9 @@
         "atLeastTwo": "最小 2"
     },
     "role": {
-        "admins": "管理者",
-        "members": "メンバー",
-        "moderators": "モデレーター",
+        "admin": "管理者",
+        "member": "メンバー",
+        "moderator": "モデレーター",
         "owner": "所有者"
     },
     "permissions": {

@@ -5,56 +5,58 @@
 
     export let permissions: ChatPermissions;
     export let isPublic: boolean;
+
+    let roles = chatRoles.filter((role) => role !== "none");
 </script>
 
 <SelectPermissionRole
-    roles={chatRoles}
+    {roles}
     label={$_("permissions.changePermissions")}
     bind:rolePermission={permissions.changePermissions} />
 <SelectPermissionRole
-    roles={chatRoles}
+    {roles}
     label={$_("permissions.changeRoles")}
     bind:rolePermission={permissions.changeRoles} />
 {#if isPublic}
     <SelectPermissionRole
-        roles={chatRoles}
+        {roles}
         label={$_("permissions.blockUsers")}
         bind:rolePermission={permissions.blockUsers} />
 {:else}
     <SelectPermissionRole
-        roles={chatRoles}
+        {roles}
         label={$_("permissions.removeMembers")}
         bind:rolePermission={permissions.removeMembers} />
     <SelectPermissionRole
-        roles={chatRoles}
+        {roles}
         label={$_("permissions.inviteUsers")}
         bind:rolePermission={permissions.inviteUsers} />
 {/if}
 <SelectPermissionRole
-    roles={chatRoles}
+    {roles}
     label={$_("permissions.deleteMessages")}
     bind:rolePermission={permissions.deleteMessages} />
 <SelectPermissionRole
-    roles={chatRoles}
+    {roles}
     label={$_("permissions.updateGroup")}
     bind:rolePermission={permissions.updateGroup} />
 <SelectPermissionRole
-    roles={chatRoles}
+    {roles}
     label={$_("permissions.pinMessages")}
     bind:rolePermission={permissions.pinMessages} />
 <SelectPermissionRole
-    roles={chatRoles}
+    {roles}
     label={$_("permissions.createPolls")}
     bind:rolePermission={permissions.createPolls} />
 <SelectPermissionRole
-    roles={chatRoles}
+    {roles}
     label={$_("permissions.sendMessages")}
     bind:rolePermission={permissions.sendMessages} />
 <SelectPermissionRole
-    roles={chatRoles}
+    {roles}
     label={$_("permissions.reactToMessages")}
     bind:rolePermission={permissions.reactToMessages} />
 <SelectPermissionRole
-    roles={chatRoles}
+    {roles}
     label={$_("permissions.replyInThread")}
     bind:rolePermission={permissions.replyInThread} />
