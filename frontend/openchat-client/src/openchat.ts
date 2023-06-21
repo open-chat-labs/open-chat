@@ -2594,12 +2594,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return;
     }
 
-    private localMessagesKey(chatId: ChatIdentifier, threadRootMessageIndex?: number): string {
-        // TODO sort this out
-        const key = chatIdentifierToString(chatId);
-        return threadRootMessageIndex === undefined ? key : `${key}_${threadRootMessageIndex}`;
-    }
-
     deleteFailedMessage(
         chatId: ChatIdentifier,
         event: EventWrapper<Message>,
