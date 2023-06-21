@@ -7,16 +7,15 @@ use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
     is_default, is_empty_slice, AudioContent, AvatarChanged, BlobReference, CanisterId, ChannelId, ChatId, ChatMetrics,
-    CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy,
-    DirectChatCreated, EventIndex, EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged,
-    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
-    GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersRemoved, Message,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageReminderContent,
-    MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, OwnershipTransferred, ParticipantAssumesSuperAdmin,
-    ParticipantDismissedAsSuperAdmin, ParticipantRelinquishesSuperAdmin, PermissionsChanged, PollContentInternal, PrizeContent,
-    PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage,
-    ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersInvited,
-    UsersUnblocked, VideoContent,
+    CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy, DirectChatCreated, EventIndex,
+    EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
+    GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
+    ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersRemoved, Message, MessageContent, MessageContentInitial,
+    MessageId, MessageIndex, MessagePinned, MessageReminderContent, MessageReminderCreatedContent, MessageUnpinned,
+    MultiUserChat, OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin,
+    ParticipantRelinquishesSuperAdmin, PermissionsChanged, PollContentInternal, PrizeContent, PrizeContentInternal,
+    PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage, ReportedMessageInternal,
+    RoleChanged, TextContent, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -517,17 +516,9 @@ impl From<&MessageContentInternal> for Document {
                 document.add_field(token.token_symbol().to_string(), 1.0, false);
 
                 if let CryptoTransaction::Completed(c) = &c.transfer {
-                    let amount_string = match c {
-                        CompletedCryptoTransaction::NNS(t) => {
-                            format!("{}", t.amount)
-                        }
-                        CompletedCryptoTransaction::SNS(t) => {
-                            format!("{}", t.amount)
-                        }
-                        CompletedCryptoTransaction::ICRC1(t) => {
-                            format_crypto_amount(t.amount.clone(), t.token.decimals() as u32)
-                        }
-                    };
+                    let amount = c.units();
+                    let decimals = c.token().decimals();
+                    let amount_string = format_crypto_amount(amount, decimals as u32);
                     document.add_field(amount_string, 1.0, false);
                 }
 

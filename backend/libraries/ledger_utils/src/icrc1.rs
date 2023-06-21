@@ -32,7 +32,7 @@ pub async fn process_transaction(
             to: types::icrc1::CryptoAccount::Account(transaction.to),
             memo: transaction.memo.clone(),
             created: transaction.created,
-            block_index: block_index.into(),
+            block_index,
         })),
         Ok(Err(transfer_error)) => {
             let error_message = format!("Transfer failed. {transfer_error:?}");
