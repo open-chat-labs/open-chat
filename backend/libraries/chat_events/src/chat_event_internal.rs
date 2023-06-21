@@ -1,4 +1,5 @@
 use crate::incr;
+use ledger_utils::format_crypto_amount;
 use search::Document;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
@@ -522,6 +523,9 @@ impl From<&MessageContentInternal> for Document {
                         }
                         CompletedCryptoTransaction::SNS(t) => {
                             format!("{}", t.amount)
+                        }
+                        CompletedCryptoTransaction::ICRC1(t) => {
+                            format_crypto_amount(t.amount.clone(), t.token.decimals() as u32)
                         }
                     };
                     document.add_field(amount_string, 1.0, false);

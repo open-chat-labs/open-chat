@@ -7,7 +7,7 @@ use group_canister::claim_prize::{Response::*, *};
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
 use icrc_ledger_types::icrc1::account::Account;
-use ledger_utils::{nns, sns};
+use ledger_utils::{icrc1, nns, sns};
 use types::nns::UserOrAccount;
 use types::{
     CanisterId, CompletedCryptoTransaction, Cryptocurrency, GroupMessageNotification, MessageId, Notification,
@@ -34,6 +34,9 @@ async fn claim_prize(args: Args) -> Response {
         PendingCryptoTransaction::SNS(t) => {
             sns::process_transaction(t, prepare_result.group, prepare_result.ledger_canister_id).await
         }
+        PendingCryptoTransaction::ICRC1(t) => {
+            icrc1::process_transaction(t, prepare_result.group, prepare_result.ledger_canister_id).await
+        }
     };
 
     match result {
@@ -48,9 +51,9 @@ async fn claim_prize(args: Args) -> Response {
             }
         }
         Err(failed_transaction) => {
+            let e8s = failed_transaction.units() as u64;
             // Rollback the prize reservation
-            let error_message =
-                mutate_state(|state| rollback(args, prepare_result.user_id, failed_transaction.amount(), state));
+            let error_message = mutate_state(|state| rollback(args, prepare_result.user_id, Tokens::from_e8s(e8s), state));
             TransferFailed(error_message, failed_transaction)
         }
     }

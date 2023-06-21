@@ -95,7 +95,7 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
 fn extract_ckbtc_amount(content: &MessageContent) -> Option<u64> {
     if let MessageContent::Crypto(c) = content {
         if c.transfer.token() == Cryptocurrency::CKBTC {
-            return Some(c.transfer.units().try_into().unwrap());
+            return Some(c.transfer.units() as u64);
         }
     }
     None
