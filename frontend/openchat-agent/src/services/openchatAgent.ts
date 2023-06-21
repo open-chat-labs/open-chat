@@ -266,10 +266,10 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {
         if (chatId.kind === "group_chat") {
-            return this.editGroupMessage(chatId.toString(), msg, threadRootMessageIndex);
+            return this.editGroupMessage(chatId, msg, threadRootMessageIndex);
         }
         if (chatId.kind === "direct_chat") {
-            return this.editDirectMessage(chatId.toString(), msg, threadRootMessageIndex);
+            return this.editDirectMessage(chatId, msg, threadRootMessageIndex);
         }
         if (chatId.kind === "channel") {
             throw new Error("TODO Not implemented");
@@ -324,11 +324,11 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private editGroupMessage(
-        chatId: string,
+        chatId: GroupChatIdentifier,
         message: Message,
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {
-        return this.getGroupClient(chatId).editMessage(message, threadRootMessageIndex);
+        return this.getGroupClient(chatId.groupId).editMessage(message, threadRootMessageIndex);
     }
 
     private sendDirectMessage(
@@ -341,11 +341,11 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private editDirectMessage(
-        recipientId: string,
+        recipientId: DirectChatIdentifier,
         message: Message,
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {
-        return this.userClient.editMessage(recipientId, message, threadRootMessageIndex);
+        return this.userClient.editMessage(recipientId.userId, message, threadRootMessageIndex);
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
