@@ -1,7 +1,7 @@
 use crate::updates::c2c_unfreeze_group::c2c_unfreeze_group_impl;
 use crate::{mutate_state, run_regular_jobs, CommunityBeingImportedInto, RuntimeState, StartImportIntoCommunityResult};
 use canister_tracing_macros::trace;
-use group_canister::convert_to_community::{Response::*, *};
+use group_canister::convert_into_community::{Response::*, *};
 use ic_cdk_macros::update;
 use types::CanisterId;
 use utils::consts::OPENCHAT_BOT_USER_ID;

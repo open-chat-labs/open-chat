@@ -34,14 +34,14 @@ fn import_group_succeeds() {
         env,
         user1.principal,
         group_id.into(),
-        &group_canister::convert_to_community::Args {
+        &group_canister::convert_into_community::Args {
             rules: AccessRules::default(),
             permissions: None,
             history_visible_to_new_joiners: true,
         },
     );
 
-    if let group_canister::convert_to_community::Response::Success(community_id) = convert_to_community_response {
+    if let group_canister::convert_into_community::Response::Success(community_id) = convert_to_community_response {
         tick_many(env, 20);
 
         let expected_channel_names = vec![group_name];
