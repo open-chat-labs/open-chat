@@ -57,7 +57,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     let caller = state.env.caller();
 
     let member = match state.data.members.get(caller) {
-        Some(p) => p,
+        Some(m) => m,
         None => return Err(UserNotInCommunity),
     };
 
