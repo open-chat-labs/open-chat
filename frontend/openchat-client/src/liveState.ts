@@ -1,13 +1,18 @@
 import type {
     AuthProvider,
     ChatEvent,
+    ChatIdentifier,
+    ChatMap,
     ChatSummary,
+    Community,
+    CommunityMap,
     DiamondMembershipDetails,
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
     GroupChatSummary,
     Message,
+    MessageContext,
     ThreadSyncDetails,
     UserLookup,
 } from "openchat-shared";
@@ -27,7 +32,6 @@ import {
     focusMessageIndex,
     focusThreadMessageIndex,
     threadEvents,
-    selectedThreadKey,
     threadsFollowedByMeStore,
     currentChatUserIds,
     selectedThreadRootMessageIndex,
@@ -36,6 +40,7 @@ import {
     uninitializedDirectChats,
     confirmedThreadEventIndexesLoadedStore,
     selectedThreadRootEvent,
+    selectedMessageContext,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -44,6 +49,7 @@ import { pinnedChatsStore } from "./stores/pinnedChats";
 import { blockedUsers } from "./stores/blockedUsers";
 import { diamondMembership, isDiamond } from "./stores/diamond";
 import type DRange from "drange";
+import { communities } from "./stores/community";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -58,21 +64,21 @@ export class LiveState {
     userStore!: UserLookup;
     remainingStorage!: number;
     currentChatReplyingTo: EnhancedReplyContext | undefined;
-    serverChatSummaries!: Record<string, ChatSummary>;
-    myServerChatSummaries!: Record<string, ChatSummary>;
-    chatSummaries!: Record<string, ChatSummary>;
-    uninitializedDirectChats!: Record<string, DirectChatSummary>;
-    groupPreviews!: Record<string, GroupChatSummary>;
-    selectedChatId: string | undefined;
-    pinnedChats!: string[];
+    serverChatSummaries!: ChatMap<ChatSummary>;
+    myServerChatSummaries!: ChatMap<ChatSummary>;
+    chatSummaries!: ChatMap<ChatSummary>;
+    uninitializedDirectChats!: ChatMap<DirectChatSummary>;
+    groupPreviews!: ChatMap<GroupChatSummary>;
+    selectedChatId: ChatIdentifier | undefined;
+    pinnedChats!: ChatIdentifier[];
     chatSummariesList!: ChatSummary[];
-    threadsByChat!: Record<string, ThreadSyncDetails[]>;
+    threadsByChat!: ChatMap<ThreadSyncDetails[]>;
     focusMessageIndex: number | undefined;
     focusThreadMessageIndex: number | undefined;
     threadEvents!: EventWrapper<ChatEvent>[];
-    selectedThreadKey: string | undefined;
+    selectedMessageContext: MessageContext | undefined;
     selectedThreadRootEvent: EventWrapper<Message> | undefined;
-    threadsFollowedByMe!: Record<string, Set<number>>;
+    threadsFollowedByMe!: ChatMap<Set<number>>;
     currentChatUserIds!: Set<string>;
     selectedThreadRootMessageIndex: number | undefined;
     chatsInitialised!: boolean;
@@ -81,6 +87,7 @@ export class LiveState {
     diamondMembership!: DiamondMembershipDetails | undefined;
     isDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
+    communities!: CommunityMap<Community>;
 
     constructor() {
         confirmedThreadEventIndexesLoadedStore.subscribe(
@@ -106,7 +113,7 @@ export class LiveState {
         focusMessageIndex.subscribe((data) => (this.focusMessageIndex = data));
         focusThreadMessageIndex.subscribe((data) => (this.focusThreadMessageIndex = data));
         threadEvents.subscribe((data) => (this.threadEvents = data));
-        selectedThreadKey.subscribe((data) => (this.selectedThreadKey = data));
+        selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));
         selectedThreadRootEvent.subscribe((data) => (this.selectedThreadRootEvent = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
         currentChatUserIds.subscribe((data) => (this.currentChatUserIds = data));
@@ -118,5 +125,6 @@ export class LiveState {
         blockedUsers.subscribe((data) => (this.blockedUsers = data));
         diamondMembership.subscribe((data) => (this.diamondMembership = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));
+        communities.subscribe((data) => (this.communities = data));
     }
 }

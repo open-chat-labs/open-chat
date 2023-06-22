@@ -18,7 +18,7 @@
         members = [
             ...members,
             {
-                role: "participant",
+                role: "member",
                 user: ev.detail,
             },
         ];

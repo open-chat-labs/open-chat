@@ -1,44 +1,43 @@
-import { writable } from "svelte/store";
+import type { SafeMap } from "openchat-shared";
+import { Writable, writable } from "svelte/store";
 
 const PRUNE_LOCAL_UPDATES_INTERVAL: number = 30 * 1000;
 
 export interface LocalUpdates {
-    lastUpdated: number
+    lastUpdated: number;
 }
 
-export abstract class LocalUpdatesStore<T extends LocalUpdates> {
-    private store = writable<Record<string, T>>({});
-    private storeValue: Record<string, T> = {};
+export abstract class LocalUpdatesStore<K, T extends LocalUpdates> {
+    private store: Writable<SafeMap<K, T>>;
+    private storeValue: SafeMap<K, T>;
 
-    constructor() {
-        this.store.subscribe(value => this.storeValue = value);
+    subscribe: typeof this.store.subscribe;
+
+    constructor(initialValue: SafeMap<K, T>) {
+        this.store = writable<SafeMap<K, T>>(initialValue);
+        this.storeValue = initialValue;
+        this.store.subscribe((value) => (this.storeValue = value));
+        this.subscribe = this.store.subscribe;
 
         window.setInterval(() => this.pruneLocalUpdates(), PRUNE_LOCAL_UPDATES_INTERVAL);
     }
 
-    subscribe = this.store.subscribe;
-
-    protected applyUpdate(
-        key: string,
-        updateFn: (current: T) => Partial<T>
-    ): void {
+    protected applyUpdate(key: K, updateFn: (current: T) => Partial<T>): void {
         this.store.update((state) => {
-            const current = state[key];
-            state[key] = {
+            const current = (state.get(key) ?? { lastUpdated: Date.now() }) as T;
+            state.set(key, {
                 ...current,
                 ...updateFn(current),
-                lastUpdated: Date.now(),
-            };
+            });
             return state;
         });
     }
 
-    protected deleteKey(key: string): void {
-        if (this.storeValue[key] !== undefined) {
+    protected deleteKey(key: K): void {
+        if (this.storeValue.has(key)) {
             this.store.update((state) => {
-                const clone = { ...state };
-                delete clone[key];
-                return clone;
+                state.delete(key);
+                return state;
             });
         }
     }
@@ -47,15 +46,15 @@ export abstract class LocalUpdatesStore<T extends LocalUpdates> {
         const now = Date.now();
 
         let updated = false;
-        const newStoreValue = Object.entries(this.storeValue).reduce((result, [key, updates]) => {
+        const newStoreValue = this.storeValue.entries().reduce((result, [key, updates]) => {
             // Only keep updates which are < 30 seconds old
             if (now - updates.lastUpdated < 30 * 1000) {
-                result[key] = updates;
+                result.set(key, updates);
             } else {
                 updated = true;
             }
             return result;
-        }, {} as Record<string, T>)
+        }, this.storeValue.empty());
 
         if (updated) {
             this.store.set(newStoreValue);

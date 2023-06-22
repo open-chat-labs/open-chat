@@ -1,10 +1,11 @@
 import {
     AddMembersToChannelResponse,
-    AddReactionResponse,
     BlockCommunityUserResponse,
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
+    ChannelIdentifier,
     ChannelMessageMatch,
+    ChannelSummary,
     CommonResponses,
     CommunityInviteCodeResponse,
     CommunityPermissions,
@@ -19,7 +20,6 @@ import {
     EnableCommunityInviteCodeResponse,
     EventsResponse,
     GateCheckFailedReason,
-    GroupChatSummary,
     JoinChannelResponse,
     LeaveChannelResponse,
     MakeChannelPrivateResponse,
@@ -28,7 +28,6 @@ import {
     Message,
     PinChannelMessageResponse,
     RemoveChannelMemberResponse,
-    RemoveChannelReactionResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
     SelectedChannelInitialResponse,
@@ -43,9 +42,9 @@ import {
     UpdateCommunityResponse,
     UserFailedError,
     UserFailedGateCheck,
+    emptyChatMetrics,
 } from "openchat-shared";
 import type {
-    ApiAddReactionResponse,
     ApiAddMembersToChannelResponse,
     ApiBlockUserResponse,
     ApiChangeChannelRoleResponse,
@@ -67,8 +66,6 @@ import type {
     ApiPinMessageResponse,
     ApiRemoveMemberResponse,
     ApiRemoveMemberFromChannelResponse,
-    ApiRemoveReactionResponse,
-    ApiEnableInviteCodeResponse,
     ApiRulesResponse,
     ApiSearchChannelResponse,
     ApiSelectedChannelInitialResponse,
@@ -91,6 +88,7 @@ import type {
     ApiUserFailedError,
     ApiCommunityCanisterChannelSummary,
     ApiMessageMatch,
+    ApiEnableInviteCodeResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -118,13 +116,13 @@ export function addMembersToChannelResponse(
         return addToChannelFailed(candid.Failed);
     }
     if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChannel;
+        return CommonResponses.userNotInChat;
     }
     if ("PartialSuccess" in candid) {
         return addToChannelPartialSuccess(candid.PartialSuccess);
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.channelNotFound;
+        return CommonResponses.chatNotFound;
     }
     if ("UserLimitReached" in candid) {
         return CommonResponses.userLimitReached;
@@ -203,40 +201,6 @@ function addToChannelPartialSuccess(
     };
 }
 
-export function addReactionResponse(candid: ApiAddReactionResponse): AddReactionResponse {
-    if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChannel;
-    }
-    if ("MessageNotFound" in candid) {
-        return CommonResponses.messageNotFound;
-    }
-    if ("NoChange" in candid) {
-        return CommonResponses.noChange;
-    }
-    if ("ChannelNotFound" in candid) {
-        return CommonResponses.channelNotFound;
-    }
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
-    }
-    if ("Success" in candid) {
-        return CommonResponses.success;
-    }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
-    }
-    if ("InvalidReaction" in candid) {
-        return { kind: "invalid_reaction" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiAddReactionResponse type received", candid);
-}
-
 export function blockUserResponse(candid: ApiBlockUserResponse): BlockCommunityUserResponse {
     if ("NotAuthorized" in candid) {
         return CommonResponses.notAuthorized;
@@ -278,10 +242,10 @@ export function changeChannelRoleResponse(
         return CommonResponses.invalid;
     }
     if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChannel;
+        return CommonResponses.userNotInChat;
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.channelNotFound;
+        return CommonResponses.chatNotFound;
     }
     if ("NotAuthorized" in candid) {
         return CommonResponses.notAuthorized;
@@ -385,7 +349,7 @@ export function declineInvitationResponse(
         return { kind: "not_invited" };
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.channelNotFound;
+        return CommonResponses.chatNotFound;
     }
     if ("Success" in candid) {
         return CommonResponses.success;
@@ -401,10 +365,10 @@ export function declineInvitationResponse(
 
 export function deleteChannelResponse(candid: ApiDeleteChannelResponse): DeleteChannelResponse {
     if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChannel;
+        return CommonResponses.userNotInChat;
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.channelNotFound;
+        return CommonResponses.chatNotFound;
     }
     if ("NotAuthorized" in candid) {
         return CommonResponses.notAuthorized;
@@ -428,13 +392,13 @@ export function deleteMessagesResponse(
     candid: ApiDeleteMessagesResponse
 ): DeleteChannelMessagesResponse {
     if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChannel;
+        return CommonResponses.userNotInChat;
     }
     if ("MessageNotFound" in candid) {
         return CommonResponses.messageNotFound;
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.channelNotFound;
+        return CommonResponses.chatNotFound;
     }
     if ("Success" in candid) {
         return CommonResponses.success;
@@ -463,13 +427,13 @@ export function deleteMessageResponse(
     sender: string
 ): DeleteChannelMessageResponse {
     if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChannel;
+        return CommonResponses.userNotInChat;
     }
     if ("MessageNotFound" in candid) {
         return CommonResponses.messageNotFound;
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.channelNotFound;
+        return CommonResponses.chatNotFound;
     }
     if ("NotAuthorized" in candid) {
         return CommonResponses.notAuthorized;
@@ -512,13 +476,13 @@ export function disableInviteCodeResponse(
 
 export function editMessageResponse(candid: ApiEditMessageResponse): EditChannelMessageResponse {
     if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChannel;
+        return CommonResponses.userNotInChat;
     }
     if ("MessageNotFound" in candid) {
         return CommonResponses.messageNotFound;
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.channelNotFound;
+        return CommonResponses.chatNotFound;
     }
     if ("Success" in candid) {
         return CommonResponses.success;
@@ -566,7 +530,10 @@ export function inviteCodeResponse(candid: ApiInviteCodeResponse): CommunityInvi
     throw new UnsupportedValueError("Unexpected ApiEnableInviteCodeResponse type received", candid);
 }
 
-export function joinChannelResponse(candid: ApiJoinChannelResponse): JoinChannelResponse {
+export function joinChannelResponse(
+    candid: ApiJoinChannelResponse,
+    communityId: string
+): JoinChannelResponse {
     if ("NotInvited" in candid) {
         return { kind: "not_invited" };
     }
@@ -577,13 +544,13 @@ export function joinChannelResponse(candid: ApiJoinChannelResponse): JoinChannel
         return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.channelNotFound;
+        return CommonResponses.chatNotFound;
     }
     if ("UserLimitReached" in candid) {
         return CommonResponses.userLimitReached;
     }
     if ("Success" in candid) {
-        return { kind: "success", channel: groupChatSummary(candid.Success) };
+        return { kind: "success", channel: communityChannelSummary(candid.Success, communityId) };
     }
     if ("UserNotInCommunity" in candid) {
         return CommonResponses.userNotInCommunity;
@@ -605,13 +572,13 @@ export function joinChannelResponse(candid: ApiJoinChannelResponse): JoinChannel
 
 export function leaveChannelResponse(candid: ApiLeaveChannelResponse): LeaveChannelResponse {
     if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChannel;
+        return CommonResponses.userNotInChat;
     }
     if ("LastOwnerCannotLeave" in candid) {
         return { kind: "last_owner_cannot_leave" };
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.channelNotFound;
+        return CommonResponses.chatNotFound;
     }
     if ("Success" in candid) {
         return CommonResponses.success;
@@ -636,10 +603,10 @@ export function makeChannelPrivateResponse(
     candid: ApiMakeChannelPrivateResponse
 ): MakeChannelPrivateResponse {
     if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChannel;
+        return CommonResponses.userNotInChat;
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.channelNotFound;
+        return CommonResponses.chatNotFound;
     }
     if ("NotAuthorized" in candid) {
         return CommonResponses.notAuthorized;
@@ -695,7 +662,7 @@ export function makeCommunityPrivateResponse(
 export async function messagesByMessageIndexResponse(
     principal: Principal,
     candid: ApiMessagesByMessageIndexResponse,
-    chatId: string,
+    chatId: ChannelIdentifier,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined
 ): Promise<EventsResponse<Message>> {
@@ -772,17 +739,6 @@ export function removeMemberFromChannelResponse(
         return CommonResponses.success;
     } else {
         console.warn("RemoveChannelMember failed with", candid);
-        return CommonResponses.failure;
-    }
-}
-
-export function removeReactionResponse(
-    candid: ApiRemoveReactionResponse
-): RemoveChannelReactionResponse {
-    if ("Success" in candid) {
-        return CommonResponses.success;
-    } else {
-        console.warn("RemoveChannelReaction failed with", candid);
         return CommonResponses.failure;
     }
 }
@@ -1001,23 +957,23 @@ export function apiOptionalCommunityPermissions(
     };
 }
 
-export function groupChatSummary(candid: ApiCommunityCanisterChannelSummary): GroupChatSummary {
+export function communityChannelSummary(
+    candid: ApiCommunityCanisterChannelSummary,
+    communityId: string
+): ChannelSummary {
     const latestMessage = optional(candid.latest_message, (ev) => ({
         index: ev.index,
         timestamp: ev.timestamp,
         event: message(ev.event),
     }));
     return {
-        kind: "group_chat",
-        chatId: candid.channel_id.toString(),
-        id: candid.channel_id.toString(),
+        kind: "channel",
+        id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
         latestMessage,
-        readByMeUpTo: latestMessage?.event.messageIndex,
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
         historyVisible: candid.history_visible_to_new_joiners,
-        joined: candid.joined,
         minVisibleEventIndex: candid.min_visible_event_index,
         minVisibleMessageIndex: candid.min_visible_message_index,
         latestEventIndex: candid.latest_event_index,
@@ -1026,21 +982,24 @@ export function groupChatSummary(candid: ApiCommunityCanisterChannelSummary): Gr
             blobId,
             canisterId: candid.channel_id.toString(),
         })),
-        notificationsMuted: candid.notifications_muted,
         memberCount: 0, //TODO this doesn't exist on commmunity channel
-        myRole: memberRole(candid.role),
-        mentions: [],
         permissions: groupPermissions(candid.permissions),
         metrics: chatMetrics(candid.metrics),
-        myMetrics: chatMetrics(candid.my_metrics),
-        latestThreads: [],
         subtype: optional(candid.subtype, apiGroupSubtype),
-        archived: false,
-        previewed: false,
         frozen: false, // TODO - doesn't exist
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: undefined,
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
+        membership: {
+            joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
+            notificationsMuted: false,
+            role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
+            myMetrics: emptyChatMetrics(),
+            readByMeUpTo: latestMessage?.event.messageIndex,
+            latestThreads: [],
+            mentions: [],
+            archived: false,
+        },
     };
 }

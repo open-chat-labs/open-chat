@@ -334,9 +334,9 @@
         "atLeastTwo": "Mínimo de 2"
     },
     "role": {
-        "admins": "administradores",
-        "members": "miembros",
-        "moderators": "Moderadores",
+        "admin": "administradores",
+        "member": "miembros",
+        "moderator": "Moderadores",
         "owner": "Propietarios"
     },
     "permissions": {

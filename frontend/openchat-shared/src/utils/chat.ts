@@ -1,6 +1,6 @@
 import {
     ChatEvent,
-    ChatMetrics,
+    Metrics,
     ChatSummary,
     Cryptocurrency,
     cryptoLookup,
@@ -10,6 +10,8 @@ import {
     MemberRole,
     MessageContent,
     UnsupportedValueError,
+    ChatIdentifier,
+    MessageContext,
 } from "../domain";
 import type { MessageFormatter } from "./i18n";
 
@@ -83,19 +85,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "gate_updated":
                 userIds.add(e.event.updatedBy);
                 break;
-            case "message_deleted":
-            case "message_undeleted":
-            case "message_edited":
-            case "reaction_added":
-            case "reaction_removed":
-            case "poll_vote_registered":
-            case "poll_vote_deleted":
-                userIds.add(e.event.message.updatedBy);
-                break;
             case "direct_chat_created":
-            case "poll_ended":
-            case "thread_updated":
-            case "proposals_updated":
             case "aggregate_common_events":
             case "chat_frozen":
             case "chat_unfrozen":
@@ -182,7 +172,18 @@ export function getMinVisibleEventIndex(chat: ChatSummary): number {
 }
 
 export function getDisplayDate(chat: ChatSummary): bigint {
-    const started = chat.kind === "direct_chat" ? chat.dateCreated : chat.joined;
+    let started = BigInt(0);
+    switch (chat.kind) {
+        case "direct_chat":
+            started = chat.dateCreated;
+            break;
+        case "group_chat":
+            started = chat.membership?.joined ?? started;
+            break;
+        case "channel":
+            started = chat.membership?.joined ?? started;
+            break;
+    }
 
     return chat.latestMessage && chat.latestMessage.timestamp > started
         ? chat.latestMessage.timestamp
@@ -193,7 +194,7 @@ export function compareChats(a: ChatSummary, b: ChatSummary): number {
     return Number(getDisplayDate(b) - getDisplayDate(a));
 }
 
-export function emptyChatMetrics(): ChatMetrics {
+export function emptyChatMetrics(): Metrics {
     return {
         audioMessages: 0,
         edits: 0,
@@ -215,20 +216,7 @@ export function emptyChatMetrics(): ChatMetrics {
 }
 
 export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
-    return (
-        ew.event.kind !== "reaction_added" &&
-        ew.event.kind !== "message_deleted" &&
-        ew.event.kind !== "message_undeleted" &&
-        ew.event.kind !== "message_edited" &&
-        ew.event.kind !== "reaction_removed" &&
-        ew.event.kind !== "message_pinned" &&
-        ew.event.kind !== "message_unpinned" &&
-        ew.event.kind !== "poll_vote_registered" &&
-        ew.event.kind !== "poll_vote_deleted" &&
-        ew.event.kind !== "poll_ended" &&
-        ew.event.kind !== "thread_updated" &&
-        ew.event.kind !== "proposals_updated"
-    );
+    return ew.event.kind !== "message_pinned" && ew.event.kind !== "message_unpinned";
 }
 
 export function compareRoles(a: MemberRole, b: MemberRole): number {
@@ -239,6 +227,29 @@ export function compareRoles(a: MemberRole, b: MemberRole): number {
     if (b === "admin") return -1;
     if (a === "moderator") return 1;
     if (b === "moderator") return -1;
-    if (a === "participant") return 1;
+    if (a === "member") return 1;
     return -1;
+}
+
+export function routeForMessage(ctx: MessageContext, messageIndex: number): string {
+    return ctx.threadRootMessageIndex === undefined
+        ? `${routeForMessageContext(ctx)}/${messageIndex}`
+        : `${routeForMessageContext(ctx)}/${messageIndex}?open=true`;
+}
+
+export function routeForMessageContext({ chatId, threadRootMessageIndex }: MessageContext): string {
+    return threadRootMessageIndex === undefined
+        ? routeForChatIdentifier(chatId)
+        : `${routeForChatIdentifier(chatId)}/${threadRootMessageIndex}`;
+}
+
+export function routeForChatIdentifier(id: ChatIdentifier): string {
+    switch (id.kind) {
+        case "direct_chat":
+            return `/user/${id.userId}`;
+        case "group_chat":
+            return `/group/${id.groupId}`;
+        case "channel":
+            return `/community/${id.communityId}/channel/${id.channelId}`;
+    }
 }

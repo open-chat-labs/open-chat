@@ -2,23 +2,26 @@ import type { AccessControlled, AccessRules } from "../access";
 import type {
     GateCheckFailed,
     GateCheckFailedReason,
-    GroupChatSummary,
     Member,
     Message,
     MessageContent,
+    ChannelSummary,
 } from "../chat";
 import type { DataContent } from "../data";
-import type { HasIdentity } from "../identity";
-import type { CommunityPermissionRole, Permissioned } from "../permission";
 import type {
-    ChannelNotFound,
+    CommunityPermissions,
+    HasMembershipRole,
+    MemberRole,
+    Permissioned,
+} from "../permission";
+import type {
+    ChatNotFound,
     CommunityFrozen,
     CommunityNotPublic,
     Failure,
     InteralError,
     Invalid,
     MessageNotFound,
-    NoChange,
     NotAuthorised,
     NotPlatformModerator,
     Success,
@@ -26,36 +29,37 @@ import type {
     TargetUserNotInCommunity,
     UserBlocked,
     UserLimitReached,
-    UserNotInChannel,
+    UserNotInChat,
     UserNotInCommunity,
     UserSuspended,
 } from "../response";
 import type { HasLevel } from "../structure";
 
-export type Community = HasIdentity &
-    AccessControlled &
+export type CommunityMembership = {
+    joined: bigint;
+    role: MemberRole;
+};
+
+export type CommunityIdentifier = {
+    kind: "community";
+    communityId: string;
+};
+
+export type Community = AccessControlled &
     HasLevel &
+    HasMembershipRole &
     Permissioned<CommunityPermissions> & {
         name: string;
-        joined: bigint;
+        id: CommunityIdentifier;
         latestEventIndex: number;
         lastUpdated: bigint;
         description: string;
         memberCount: number;
         avatar: DataContent;
         banner: DataContent;
+        membership?: CommunityMembership;
+        channels: ChannelSummary[];
     };
-
-export type CommunityPermissions = {
-    changePermissions: CommunityPermissionRole;
-    changeRoles: CommunityPermissionRole;
-    inviteUsers: CommunityPermissionRole;
-    removeMembers: CommunityPermissionRole;
-    blockUsers: CommunityPermissionRole;
-    updateDetails: CommunityPermissionRole;
-    createPublicChannel: CommunityPermissionRole;
-    createPrivateChannel: CommunityPermissionRole;
-};
 
 // TODO - not sure if this really needs to be a thing yet
 export type DefaultChannel = {
@@ -98,28 +102,14 @@ export interface AddMembersToChannelPartialSuccess {
 export type AddMembersToChannelResponse =
     | AddMembersToChannelFailed
     | AddMembersToChannelPartialSuccess
-    | UserNotInChannel
-    | ChannelNotFound
+    | UserNotInChat
+    | ChatNotFound
     | UserLimitReached
     | NotAuthorised
     | Success
     | UserNotInCommunity
     | UserSuspended
     | CommunityFrozen;
-
-export type AddReactionResponse =
-    | UserNotInChannel
-    | ChannelNotFound
-    | MessageNotFound
-    | NoChange
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen
-    | InvalidReaction;
-
-export type InvalidReaction = { kind: "invalid_reaction" };
 
 export type BlockCommunityUserResponse =
     | NotAuthorised
@@ -135,8 +125,8 @@ export type BlockCommunityUserResponse =
 
 export type ChangeChannelRoleResponse =
     | Invalid
-    | UserNotInChannel
-    | ChannelNotFound
+    | UserNotInChat
+    | ChatNotFound
     | NotAuthorised
     | Success
     | UserNotInCommunity
@@ -171,13 +161,13 @@ export type CreateChannelResponse =
 
 export type DeclineChannelInvitationResponse =
     | { kind: "not_invited" }
-    | ChannelNotFound
+    | ChatNotFound
     | Success
     | UserNotInCommunity;
 
 export type DeleteChannelResponse =
-    | UserNotInChannel
-    | ChannelNotFound
+    | UserNotInChat
+    | ChatNotFound
     | NotAuthorised
     | Success
     | UserNotInCommunity
@@ -185,9 +175,9 @@ export type DeleteChannelResponse =
     | CommunityFrozen;
 
 export type DeleteChannelMessagesResponse =
-    | UserNotInChannel
+    | UserNotInChat
     | MessageNotFound
-    | ChannelNotFound
+    | ChatNotFound
     | Success
     | UserNotInCommunity
     | UserSuspended
@@ -196,9 +186,9 @@ export type DeleteChannelMessagesResponse =
     | InteralError;
 
 export type DeleteChannelMessageResponse =
-    | UserNotInChannel
+    | UserNotInChat
     | MessageNotFound
-    | ChannelNotFound
+    | ChatNotFound
     | NotAuthorised
     | (Success & { content: MessageContent })
     | UserNotInCommunity
@@ -212,9 +202,9 @@ export type DisableCommunityInviteCodeResponse =
     | CommunityFrozen;
 
 export type EditChannelMessageResponse =
-    | UserNotInChannel
+    | UserNotInChat
     | MessageNotFound
-    | ChannelNotFound
+    | ChatNotFound
     | Success
     | UserNotInCommunity
     | UserSuspended
@@ -235,9 +225,9 @@ export type JoinChannelResponse =
     | { kind: "not_invited" }
     | { kind: "already_in_channel" }
     | GateCheckFailed
-    | ChannelNotFound
+    | ChatNotFound
     | UserLimitReached
-    | (Success & { channel: GroupChatSummary })
+    | (Success & { channel: ChannelSummary })
     | UserNotInCommunity
     | UserSuspended
     | CommunityFrozen
@@ -245,17 +235,17 @@ export type JoinChannelResponse =
     | UserBlocked;
 
 export type LeaveChannelResponse =
-    | UserNotInChannel
+    | UserNotInChat
     | { kind: "last_owner_cannot_leave" }
-    | ChannelNotFound
+    | ChatNotFound
     | Success
     | UserNotInCommunity
     | UserSuspended
     | CommunityFrozen;
 
 export type MakeChannelPrivateResponse =
-    | UserNotInChannel
-    | ChannelNotFound
+    | UserNotInChat
+    | ChatNotFound
     | NotAuthorised
     | Success
     | UserNotInCommunity
@@ -282,8 +272,6 @@ export type PinChannelMessageResponse = Failure | (Success & { event: PushEventR
 export type RemoveCommunityMemberResponse = Success | Failure;
 
 export type RemoveChannelMemberResponse = Success | Failure;
-
-export type RemoveChannelReactionResponse = Success | Failure;
 
 export type CommunityRulesResponse = Failure | (Success & { rules?: string });
 

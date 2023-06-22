@@ -7,6 +7,7 @@ import {
     UserLookup,
     UserSummary,
     emptyChatMetrics,
+    MessageContextMap,
 } from "openchat-shared";
 import {
     addVoteToPoll,
@@ -14,6 +15,7 @@ import {
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
 } from "./chat";
+import type { UnconfirmedState } from "../stores/unconfirmed";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -25,53 +27,54 @@ const defaultGroupChat: GroupChatSummary = {
     kind: "group_chat",
     name: "whatever",
     description: "whatever",
-    chatId: "abc",
-    id: "abc",
+    id: { kind: "group_chat", groupId: "abc" },
     lastUpdated: BigInt(0),
-    readByMeUpTo: undefined,
     latestMessage: undefined,
     public: true,
     historyVisible: false,
-    joined: BigInt(0),
     minVisibleEventIndex: 0,
     minVisibleMessageIndex: 0,
     latestEventIndex: 0,
-    notificationsMuted: false,
     memberCount: 10,
-    myRole: "admin",
-    mentions: [],
     permissions: {
-        changePermissions: "admins",
-        changeRoles: "admins",
-        removeMembers: "moderators",
-        blockUsers: "moderators",
-        deleteMessages: "moderators",
-        updateGroup: "admins",
-        pinMessages: "admins",
-        inviteUsers: "admins",
-        createPolls: "members",
-        sendMessages: "members",
-        reactToMessages: "members",
-        replyInThread: "members",
+        changePermissions: "admin",
+        changeRoles: "admin",
+        removeMembers: "moderator",
+        blockUsers: "moderator",
+        deleteMessages: "moderator",
+        updateGroup: "admin",
+        pinMessages: "admin",
+        inviteUsers: "admin",
+        createPolls: "member",
+        sendMessages: "member",
+        reactToMessages: "member",
+        replyInThread: "member",
     },
     metrics: emptyChatMetrics(),
-    myMetrics: emptyChatMetrics(),
-    latestThreads: [
-        {
-            threadRootMessageIndex: 1,
-            lastUpdated: BigInt(0),
-            latestEventIndex: 3,
-            latestMessageIndex: 3,
-        },
-    ],
     subtype: undefined,
-    archived: false,
     previewed: false,
     frozen: false,
     dateLastPinned: undefined,
     dateReadPinned: undefined,
     gate: { kind: "no_gate" },
     level: "group",
+    membership: {
+        archived: false,
+        mentions: [],
+        notificationsMuted: false,
+        role: "admin",
+        readByMeUpTo: undefined,
+        joined: BigInt(0),
+        myMetrics: emptyChatMetrics(),
+        latestThreads: [
+            {
+                threadRootMessageIndex: 1,
+                lastUpdated: BigInt(0),
+                latestEventIndex: 3,
+                latestMessageIndex: 3,
+            },
+        ],
+    },
 };
 
 function createUser(userId: string, username: string): PartialUserSummary {
@@ -87,8 +90,10 @@ function createUser(userId: string, username: string): PartialUserSummary {
 
 describe("thread utils", () => {
     test("merge unconfirmed thread message into summary", () => {
-        const chat = mergeUnconfirmedThreadsIntoSummary(defaultGroupChat, {
-            abc_1: {
+        const unconf = new MessageContextMap<UnconfirmedState>();
+        unconf.set(
+            { chatId: { kind: "group_chat", groupId: "abc" }, threadRootMessageIndex: 1 },
+            {
                 messages: [
                     {
                         index: 4,
@@ -107,10 +112,11 @@ describe("thread utils", () => {
                     },
                 ],
                 messageIds: new Set(),
-            },
-        });
-        expect(chat.latestThreads[0].latestEventIndex).toEqual(4);
-        expect(chat.latestThreads[0].latestMessageIndex).toEqual(5);
+            }
+        );
+        const chat = mergeUnconfirmedThreadsIntoSummary(defaultGroupChat, unconf);
+        expect(chat.membership.latestThreads[0].latestEventIndex).toEqual(4);
+        expect(chat.membership.latestThreads[0].latestMessageIndex).toEqual(5);
     });
 });
 

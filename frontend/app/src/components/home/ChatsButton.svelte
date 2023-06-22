@@ -15,9 +15,9 @@
 
     function updateUnreadChatsCount(chats: ChatSummary[]) {
         chatsWithUnreadMsgs = chats.reduce((num, chat) => {
-            if (chat.notificationsMuted) return num;
+            if (chat.membership.notificationsMuted) return num;
             const unread = client.unreadMessageCount(
-                chat.chatId,
+                chat.id,
                 chat.latestMessage?.event.messageIndex
             );
             return unread > 0 ? num + 1 : num;

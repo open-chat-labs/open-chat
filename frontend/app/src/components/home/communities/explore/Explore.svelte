@@ -26,7 +26,7 @@
     $: myCommunities = client.communities;
     $: isDiamond = client.isDiamond;
 
-    $: communities = $allCommunities.filter((c) => $myCommunities[c.id] === undefined);
+    $: communities = $allCommunities.filter((c) => !$myCommunities.has(c.id));
 
     // TODO - this is probably not going to be here. We'll probably move it to Home.svelte
     async function joinCommunity(ev: CustomEvent<string>) {

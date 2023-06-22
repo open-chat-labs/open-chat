@@ -37,3 +37,29 @@ export const UserStatus = {
     Online: 1,
     None: 2,
 };
+
+export class MessageContextMap extends Map {
+    set(key, value) {
+        return super.set(JSON.stringify(key), value);
+    }
+    get(key) {
+        return super.get(JSON.stringify(key));
+    }
+    has(key) {
+        return super.has(JSON.stringify(key));
+    }
+}
+
+export class ChatMap extends Map {
+    set(key, value) {
+        return super.set(JSON.stringify(key), value);
+    }
+    get(key) {
+        return super.get(JSON.stringify(key));
+    }
+    has(key) {
+        return super.has(JSON.stringify(key));
+    }
+}
+
+export class MessageMap extends Map {}

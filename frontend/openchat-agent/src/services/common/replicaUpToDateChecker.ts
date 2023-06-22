@@ -1,10 +1,11 @@
 import type { Principal } from "@dfinity/principal";
 import { openDbAndGetCachedChats } from "../../utils/caching";
 import { ReplicaNotUpToDateError } from "../error";
+import { chatIdentifiersEqual, type ChatIdentifier } from "openchat-shared";
 
 export async function ensureReplicaIsUpToDate(
     principal: Principal,
-    chatId: string,
+    chatId: ChatIdentifier,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined,
     latestEventIndex: number
@@ -13,8 +14,8 @@ export async function ensureReplicaIsUpToDate(
     if (chats === undefined) return;
 
     const chat =
-        chats.directChats.find((c) => c.chatId === chatId) ??
-        chats.groupChats.find((c) => c.chatId === chatId);
+        chats.directChats.find((c) => chatIdentifiersEqual(c.id, chatId)) ??
+        chats.groupChats.find((c) => chatIdentifiersEqual(c.id, chatId));
 
     const latestSavedEventIndex = chat?.latestEventIndex;
     if (latestSavedEventIndex === undefined) return;

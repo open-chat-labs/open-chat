@@ -1,4 +1,5 @@
 import type {
+    ChatIdentifier,
     ChatSummary,
     DirectChatSummary,
     MessageContent,
@@ -13,35 +14,35 @@ export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
     if (chat === undefined) return false;
     const selectedChat = get(selectedChatStore);
     if (selectedChat === undefined) return false;
-    if (chat.chatId !== selectedChat.chatId) return false;
+    if (chat.id !== selectedChat.id) return false;
     return true;
 }
 
 function findDirectChatByUserId(userId: string): DirectChatSummary | undefined {
     return get(chatSummariesListStore).find(
-        (c) => c.kind === "direct_chat" && c.them === userId
+        (c) => c.kind === "direct_chat" && c.them.userId === userId
     ) as DirectChatSummary | undefined;
 }
 
-function findChatById(chatId: string): ChatSummary | undefined {
-    return get(chatSummariesStore)[chatId];
+function findChatById(chatId: ChatIdentifier): ChatSummary | undefined {
+    return get(chatSummariesStore).get(chatId);
 }
 
 function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
     return msg.chatType === "group_chat"
-        ? findChatById(msg.chatId)
+        ? findChatById(msg.id)
         : findDirectChatByUserId(msg.userId);
 }
 
 function isDirectChatWith(chat: ChatSummary, userId: string): boolean {
-    return chat.kind === "direct_chat" && chat.them === userId;
+    return chat.kind === "direct_chat" && chat.them.userId === userId;
 }
 
 function isBlockedUser(chat: ChatSummary): boolean {
-    return chat.kind === "direct_chat" && get(blockedUsers).has(chat.them);
+    return chat.kind === "direct_chat" && get(blockedUsers).has(chat.them.userId);
 }
 
-export function filterWebRtcMessage(msg: WebRtcMessage): string | undefined {
+export function filterWebRtcMessage(msg: WebRtcMessage): ChatIdentifier | undefined {
     const fromChat = findChatByChatType(msg);
     const selectedChat = get(selectedChatStore);
 
@@ -51,7 +52,7 @@ export function filterWebRtcMessage(msg: WebRtcMessage): string | undefined {
     }
 
     if (
-        fromChat.chatId === selectedChat.chatId &&
+        fromChat.id === selectedChat.id &&
         isDirectChatWith(selectedChat, msg.userId) &&
         isBlockedUser(selectedChat)
     ) {
@@ -59,7 +60,7 @@ export function filterWebRtcMessage(msg: WebRtcMessage): string | undefined {
         return undefined;
     }
 
-    return fromChat.chatId;
+    return fromChat.id;
 }
 
 function hydrateBigIntsInContent(content: MessageContent): MessageContent {
@@ -100,7 +101,7 @@ function hydrateBigIntsInContent(content: MessageContent): MessageContent {
 /**
  * This is just here to cast various bits to bigint - it sucks but it appears to be necessary
  */
-export function parseWebRtcMessage(chatId: string, msg: WebRtcMessage): WebRtcMessage {
+export function parseWebRtcMessage(chatId: ChatIdentifier, msg: WebRtcMessage): WebRtcMessage {
     if (
         msg.kind === "remote_user_read_message" ||
         msg.kind === "remote_user_toggled_reaction" ||
@@ -109,7 +110,7 @@ export function parseWebRtcMessage(chatId: string, msg: WebRtcMessage): WebRtcMe
     ) {
         return {
             ...msg,
-            chatId,
+            id: chatId,
             messageId: BigInt(msg.messageId),
         };
     }
@@ -124,7 +125,7 @@ export function parseWebRtcMessage(chatId: string, msg: WebRtcMessage): WebRtcMe
         }
         return {
             ...msg,
-            chatId,
+            id: chatId,
             messageEvent: {
                 ...msg.messageEvent,
                 event: {

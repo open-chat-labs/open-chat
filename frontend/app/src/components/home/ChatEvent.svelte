@@ -6,13 +6,16 @@
     import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import AggregateCommonEvents from "./AggregateCommonEvents.svelte";
-    import type {
+    import {
         CreatedUser,
         UserSummary,
         ChatEvent,
         EventWrapper,
         Message,
         OpenChat,
+        ChatIdentifier,
+        ChatType,
+        routeForChatIdentifier,
     } from "openchat-client";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
@@ -27,8 +30,8 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let chatId: string;
-    export let chatType: "group_chat" | "direct_chat";
+    export let chatId: ChatIdentifier;
+    export let chatType: ChatType;
     export let user: CreatedUser;
     export let event: EventWrapper<ChatEvent>;
     export let first: boolean;
@@ -58,6 +61,7 @@
 
     let userSummary: UserSummary | undefined = undefined;
 
+    $: messageContext = { chatId, threadRootMessageIndex: threadRootMessage?.messageIndex };
     $: hidden =
         event.event.kind === "message" &&
         event.event.content.kind === "message_reminder_created_content" &&
@@ -94,7 +98,7 @@
     function initiateThread() {
         if (event.event.kind === "message") {
             if (event.event.thread !== undefined) {
-                page(`/${chatId}/${event.event.messageIndex}`);
+                page(`${routeForChatIdentifier(chatId)}/${event.event.messageIndex}`);
             } else {
                 client.openThread(event as EventWrapper<Message>, true);
             }
@@ -106,7 +110,7 @@
     {#if !hidden}
         <ChatMessage
             sender={$userStore[event.event.sender]}
-            senderTyping={client.isTyping($typing, event.event.sender, chatId)}
+            senderTyping={client.isTyping($typing, event.event.sender, messageContext)}
             {focused}
             {observer}
             {confirmed}
@@ -251,6 +255,6 @@
     <ChatFrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_unfrozen"}
     <ChatUnfrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
-{:else if event.event.kind !== "empty" && event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended" && event.event.kind !== "member_joined" && event.event.kind !== "member_left" && event.event.kind !== "events_ttl_updated"}
+{:else if event.event.kind !== "empty" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "member_joined" && event.event.kind !== "member_left" && event.event.kind !== "events_ttl_updated"}
     <div>Unexpected event type</div>
 {/if}

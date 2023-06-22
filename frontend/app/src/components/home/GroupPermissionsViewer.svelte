@@ -1,19 +1,20 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
-    import { GroupPermissions, GroupPermissionRole, groupRoles } from "openchat-client";
+    import { ChatPermissions, ChatPermissionRole, chatRoles } from "openchat-client";
 
-    export let permissions: GroupPermissions;
+    export let permissions: ChatPermissions;
     export let isPublic: boolean;
 
-    type PermissionsByRole = Record<GroupPermissionRole, Set<string>>;
-    type PermissionsEntry = [keyof GroupPermissions, GroupPermissionRole];
+    type PermissionsByRole = Record<ChatPermissionRole, Set<string>>;
+    type PermissionsEntry = [keyof ChatPermissions, ChatPermissionRole];
 
-    const roleLabels: Record<GroupPermissionRole, string> = {
+    const roleLabels: Record<ChatPermissionRole, string> = {
         owner: "permissions.ownerOnly",
-        admins: "permissions.ownerAndAdmins",
-        moderators: "permissions.ownerAndAdminsAndModerators",
-        members: "permissions.allMembers",
+        admin: "permissions.ownerAndAdmins",
+        moderator: "permissions.ownerAndAdminsAndModerators",
+        member: "permissions.allMembers",
+        none: "",
     };
 
     $: partitioned = partitionPermissions(permissions);
@@ -28,24 +29,25 @@
         return true;
     }
 
-    function partitionPermissions(permissions: GroupPermissions): PermissionsByRole {
+    function partitionPermissions(permissions: ChatPermissions): PermissionsByRole {
         return (Object.entries(permissions) as PermissionsEntry[]).filter(filterPermissions).reduce(
             (dict: PermissionsByRole, [key, val]) => {
-                dict[val].add($_(`permissions.${key}`));
+                dict[val].add($_(`permissions.${String(key)}`));
                 return dict;
             },
             {
-                admins: new Set(),
-                moderators: new Set(),
-                members: new Set(),
+                admin: new Set(),
+                moderator: new Set(),
+                member: new Set(),
                 owner: new Set(),
+                none: new Set(),
             } as PermissionsByRole
         );
     }
 </script>
 
 <ul>
-    {#each groupRoles as role}
+    {#each chatRoles as role}
         {#if partitioned[role].size > 0}
             <li class="section">
                 <div class="who-can">{$_(roleLabels[role])}</div>

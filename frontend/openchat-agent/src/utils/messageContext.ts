@@ -1,45 +1,36 @@
-import { MessageContext, messageContextFromString, messageContextToString } from "openchat-shared";
+import { MessageContext, MessageContextMap } from "openchat-shared";
 import { waitAll } from "./promise";
 
-export class MessageContextMap<T> {
-    constructor(private _map: Record<string, T[]> = {}) {}
-
+export class AsyncMessageContextMap<T> extends MessageContextMap<T[]> {
     insert(context: MessageContext, val: T): void {
-        const key = messageContextToString(context);
-        if (this._map[key] === undefined) {
-            this._map[key] = [];
+        if (!this.has(context)) {
+            this.set(context, []);
         }
-        this._map[key].push(val);
+        this.get(context)?.push(val);
     }
 
     public get length(): number {
-        return Object.keys(this._map).length;
+        return this.size;
     }
 
     lookup(key: MessageContext): T[] {
-        return this._map[messageContextToString(key)] ?? [];
+        return this.get(key) ?? [];
     }
 
     async asyncMap<A>(
-        fn: (s: string, k: MessageContext, t: T[]) => Promise<[string, A[]]>
-    ): Promise<MessageContextMap<A>> {
-        const intermediate: Promise<[string, A[]]>[] = [];
-        Object.entries(this._map).forEach(([key, val]) => {
-            intermediate.push(fn(key, messageContextFromString(key), val));
-        }, {} as Record<string, Promise<A[]>>);
-
+        fn: (k: MessageContext, t: T[]) => Promise<[MessageContext, A[]]>
+    ): Promise<AsyncMessageContextMap<A>> {
+        const intermediate = this.entries().map(([key, val]) => fn(key, val));
         const result = await waitAll(intermediate);
         if (result.errors.length > 0) {
             console.error("Some missing indexes could not be resolved: ", result.errors);
         }
-        return new MessageContextMap(
-            result.success.reduce<Record<string, A[]>>((res, [messageContext, messages]) => {
-                if (!res[messageContext]) {
-                    res[messageContext] = [];
-                }
-                res[messageContext] = res[messageContext].concat(messages);
+        return result.success.reduce<AsyncMessageContextMap<A>>(
+            (res, [messageContext, messages]) => {
+                res.set(messageContext, (res.get(messageContext) ?? []).concat(messages));
                 return res;
-            }, {})
+            },
+            new AsyncMessageContextMap<A>()
         );
     }
 }

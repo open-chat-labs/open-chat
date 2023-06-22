@@ -40,9 +40,7 @@
     let messageEntry: MessageEntry;
 
     $: canSend =
-        mode === "thread"
-            ? client.canReplyInThread(chat.chatId)
-            : client.canSendMessages(chat.chatId);
+        mode === "thread" ? client.canReplyInThread(chat.id) : client.canSendMessages(chat.id);
 
     function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
         return items.reduce<File | undefined>((res, item) => {
@@ -96,7 +94,7 @@
         {#if editingEvent === undefined && (replyingTo || fileToAttach !== undefined)}
             <div class="draft-container">
                 {#if replyingTo}
-                    <ReplyingTo chatId={chat.chatId} readonly on:cancelReply {user} {replyingTo} />
+                    <ReplyingTo chatId={chat.id} readonly on:cancelReply {user} {replyingTo} />
                 {/if}
                 {#if fileToAttach !== undefined}
                     {#if fileToAttach.kind === "image_content" || fileToAttach.kind === "audio_content" || fileToAttach.kind === "video_content" || fileToAttach.kind === "file_content" || fileToAttach.kind === "crypto_content"}

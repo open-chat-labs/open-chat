@@ -4,7 +4,7 @@
     import Footer from "./Footer.svelte";
     import { closeNotificationsForChat } from "../../utils/notifications";
     import { getContext, onMount, tick } from "svelte";
-    import type {
+    import {
         ChatEvent,
         ChatSummary,
         EnhancedReplyContext,
@@ -17,6 +17,8 @@
         OpenChat,
         FilteredProposals,
         User,
+        ChatIdentifier,
+        chatIdentifiersEqual,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -34,7 +36,7 @@
     const client = getContext<OpenChat>("client");
     const user = client.user;
 
-    let previousChatId: string | undefined = undefined;
+    let previousChatId: ChatIdentifier | undefined = undefined;
     let unreadMessages = 0;
     let firstUnreadMention: Mention | undefined;
     let creatingPoll = false;
@@ -59,19 +61,19 @@
     $: showFooter = !showSearchHeader && !client.isReadOnly();
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
 
-    $: canSend = client.canSendMessages(chat.chatId);
-    $: preview = client.isPreviewing(chat.chatId);
-    $: canPin = client.canPinMessages(chat.chatId);
-    $: canBlockUser = client.canBlockUsers(chat.chatId);
-    $: canDelete = client.canDeleteOtherUsersMessages(chat.chatId);
-    $: canReplyInThread = client.canReplyInThread(chat.chatId);
-    $: canReact = client.canReactToMessages(chat.chatId);
-    $: canInvite = client.canInviteUsers(chat.chatId);
-    $: readonly = client.isChatReadOnly(chat.chatId);
+    $: canSend = client.canSendMessages(chat.id);
+    $: preview = client.isPreviewing(chat.id);
+    $: canPin = client.canPinMessages(chat.id);
+    $: canBlockUser = client.canBlockUsers(chat.id);
+    $: canDelete = client.canDeleteOtherUsersMessages(chat.id);
+    $: canReplyInThread = client.canReplyInThread(chat.id);
+    $: canReact = client.canReactToMessages(chat.id);
+    $: canInvite = client.canInviteUsers(chat.id);
+    $: readonly = client.isChatReadOnly(chat.id);
 
     $: {
-        if (chat.chatId !== previousChatId) {
-            previousChatId = chat.chatId;
+        if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
+            previousChatId = chat.id;
             showSearchHeader = false;
             unreadMessages = getUnreadMessageCount(chat);
             firstUnreadMention = client.getFirstUnreadMention(chat);
@@ -93,13 +95,13 @@
     });
 
     function getUnreadMessageCount(chat: ChatSummary): number {
-        if (client.isPreviewing(chat.chatId)) return 0;
+        if (client.isPreviewing(chat.id)) return 0;
 
-        return messagesRead.unreadMessageCount(chat.chatId, chat.latestMessage?.event.messageIndex);
+        return messagesRead.unreadMessageCount(chat.id, chat.latestMessage?.event.messageIndex);
     }
 
     function onWindowFocus() {
-        closeNotificationsForChat(chat.chatId);
+        closeNotificationsForChat(chat.id);
     }
 
     function onMarkAllRead() {
@@ -107,7 +109,7 @@
     }
 
     function createPoll() {
-        if (!client.canCreatePolls(chat.chatId)) return;
+        if (!client.canCreatePolls(chat.id)) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -123,7 +125,7 @@
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
-        currentChatDraftMessage.setAttachment(chat.chatId, ev.detail);
+        currentChatDraftMessage.setAttachment(chat.id, ev.detail);
     }
 
     function attachGif(ev: CustomEvent<string>) {
@@ -135,7 +137,7 @@
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         showSearchHeader = false;
-        currentChatDraftMessage.setReplyingTo(chat.chatId, ev.detail);
+        currentChatDraftMessage.setReplyingTo(chat.id, ev.detail);
     }
 
     function searchChat(ev: CustomEvent<string>) {
@@ -163,7 +165,7 @@
         if ($currentChatEditingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
-                    chat.chatId,
+                    chat.id,
                     text,
                     $currentChatFileToAttach,
                     $currentChatEditingEvent
@@ -184,7 +186,7 @@
         fileToAttach: MessageContent | undefined
     ) {
         client.sendMessageWithAttachment(
-            chat.chatId,
+            chat.id,
             events,
             textContent,
             mentioned,
@@ -201,15 +203,15 @@
     function forwardMessage(msg: Message) {
         if (!canSend || !client.canForward(msg.content)) return;
 
-        client.forwardMessage(chat.chatId, msg);
+        client.forwardMessage(chat.id, msg);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {
-        currentChatDraftMessage.setTextContent(chat.chatId, ev.detail);
+        currentChatDraftMessage.setTextContent(chat.id, ev.detail);
     }
 
     function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
-        return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them);
+        return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them.userId);
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {
@@ -306,9 +308,9 @@
             on:joinGroup
             on:cancelPreview
             on:upgrade
-            on:cancelReply={() => currentChatDraftMessage.setReplyingTo(chat.chatId, undefined)}
-            on:clearAttachment={() => currentChatDraftMessage.setAttachment(chat.chatId, undefined)}
-            on:cancelEditEvent={() => currentChatDraftMessage.clear(chat.chatId)}
+            on:cancelReply={() => currentChatDraftMessage.setReplyingTo(chat.id, undefined)}
+            on:clearAttachment={() => currentChatDraftMessage.setAttachment(chat.id, undefined)}
+            on:cancelEditEvent={() => currentChatDraftMessage.clear(chat.id)}
             on:setTextContent={setTextContent}
             on:startTyping={() => client.startTyping(chat, user.userId)}
             on:stopTyping={() => client.stopTyping(chat, user.userId)}

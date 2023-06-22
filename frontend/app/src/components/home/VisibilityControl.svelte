@@ -6,9 +6,9 @@
         E8S_PER_TOKEN,
         AccessControlled,
         OpenChat,
-        HasIdentity,
         Permissioned,
         HasLevel,
+        HasMembershipRole,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Radio from "../Radio.svelte";
@@ -25,8 +25,8 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let candidate: AccessControlled & HasIdentity & HasLevel & Permissioned<T>;
-    export let original: AccessControlled & HasIdentity;
+    export let candidate: AccessControlled & HasLevel & Permissioned<T> & HasMembershipRole;
+    export let original: AccessControlled;
     export let editing: boolean;
 
     let minDissolveDelay = client.getMinDissolveDelayDays(original.gate);
@@ -58,7 +58,7 @@
 
     $: isDiamond = client.isDiamond;
 
-    $: canMakePrivate = candidate.id !== undefined ? client.canMakePrivate(candidate) : true;
+    $: canMakePrivate = !editing ? client.canMakePrivate(candidate) : true;
 
     function toggleScope() {
         candidate.public = !candidate.public;

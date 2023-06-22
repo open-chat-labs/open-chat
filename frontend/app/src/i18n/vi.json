@@ -334,9 +334,9 @@
         "atLeastTwo": "Tối thiểu 2"
     },
     "role": {
-        "admins": "Quản trị viên",
-        "members": "Các thành viên",
-        "moderators": "người điều hành",
+        "admin": "Quản trị viên",
+        "member": "Các thành viên",
+        "moderator": "người điều hành",
         "owner": "Những chủ sở hữu"
     },
     "permissions": {

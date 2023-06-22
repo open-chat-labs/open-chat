@@ -11,7 +11,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import AreYouSure from "../../AreYouSure.svelte";
     import { toastStore } from "../../../stores/toast";
-    import type { OpenChat, GroupChatSummary } from "openchat-client";
+    import { OpenChat, GroupChatSummary, routeForChatIdentifier } from "openchat-client";
     import { canShare, shareLink } from "../../../utils/share";
     import Markdown from "../Markdown.svelte";
 
@@ -30,7 +30,7 @@
     let confirmReset = false;
 
     $: link =
-        `${window.location.origin}/group/${group.chatId}/?ref=${client.user.userId}` +
+        `${window.location.origin}${routeForChatIdentifier(group.id)}/?ref=${client.user.userId}` +
         (!group.public ? `&code=${code}` : "");
 
     $: spinner = loading && code === undefined;
@@ -43,7 +43,7 @@
         }
         loading = true;
         client
-            .getInviteCode(group.chatId)
+            .getInviteCode(group.id)
             .then((resp) => {
                 if (resp.kind === "success") {
                     ready = true;
@@ -74,7 +74,7 @@
         loading = true;
         if (checked) {
             client
-                .enableInviteCode(group.chatId)
+                .enableInviteCode(group.id)
                 .then((resp) => {
                     if (resp.kind === "success") {
                         code = resp.code;
@@ -94,7 +94,7 @@
                 });
         } else {
             client
-                .disableInviteCode(group.chatId)
+                .disableInviteCode(group.id)
                 .catch((err) => {
                     code = undefined;
                     checked = true;
@@ -109,7 +109,7 @@
 
     function resetLink(): Promise<void> {
         return client
-            .resetInviteCode(group.chatId)
+            .resetInviteCode(group.id)
             .then((resp) => {
                 if (resp.kind === "success") {
                     code = resp.code;

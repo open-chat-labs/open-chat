@@ -1,45 +1,44 @@
 import { writable } from "svelte/store";
-import type { EventWrapper, Message } from "openchat-shared";
+import { EventWrapper, Message, MessageContext, MessageContextMap } from "openchat-shared";
 
-export type FailedMessages = Record<string, Record<number, EventWrapper<Message>>>;
+type FailedMessageState = Record<number, EventWrapper<Message>>;
+export type FailedMessages = MessageContextMap<FailedMessageState>;
 
 function createFailedMessagesStore() {
-    const store = writable<FailedMessages>({} as FailedMessages);
-    let storeValue: FailedMessages = {};
+    const store = writable<FailedMessages>(new MessageContextMap<FailedMessageState>());
+    let storeValue: FailedMessages = new MessageContextMap<FailedMessageState>();
     store.subscribe((v) => (storeValue = v));
 
     return {
         subscribe: store.subscribe,
-        getMessages: (key: string): EventWrapper<Message>[] => {
-            const chatState = storeValue[key];
+        getMessages: (key: MessageContext): EventWrapper<Message>[] => {
+            const chatState = storeValue.get(key);
             return chatState ? Object.values(chatState) : [];
         },
-        add: (key: string, message: EventWrapper<Message>): void => {
+        add: (key: MessageContext, message: EventWrapper<Message>): void => {
             store.update((state) => {
-                const chatState = state[key] ?? {};
-                return {
-                    ...state,
-                    [key]: {
-                        ...chatState,
-                        [Number(message.event.messageId)]: message,
-                    },
-                };
+                // TODO double check reactivity (can clone if necessary)
+                const chatState = state.get(key) ?? {};
+                state.set(key, {
+                    ...chatState,
+                    [Number(message.event.messageId)]: message,
+                });
+                return state;
             });
         },
-        contains: (key: string, messageId: bigint): boolean => {
-            const chatState = storeValue[key];
+        contains: (key: MessageContext, messageId: bigint): boolean => {
+            const chatState = storeValue.get(key);
             return chatState ? chatState[Number(messageId)] !== undefined : false;
         },
-        delete: (key: string, messageId: bigint): boolean => {
-            const chatState = storeValue[key];
+        delete: (key: MessageContext, messageId: bigint): boolean => {
+            const chatState = storeValue.get(key);
             if (chatState && chatState[Number(messageId)]) {
                 delete chatState[Number(messageId)];
-                store.update((state) => ({
-                    ...state,
-                    [key]: {
-                        ...chatState,
-                    },
-                }));
+                store.update((state) => {
+                    // TODO double check reactivity (can clone if necessary)
+                    state.set(key, { ...chatState });
+                    return state;
+                });
                 return true;
             }
             return false;

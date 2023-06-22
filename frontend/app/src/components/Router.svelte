@@ -19,7 +19,6 @@
         selectedChannelRoute,
         favouritesRoute,
     } from "../routes";
-    import { communitiesEnabled } from "../utils/features";
 
     let route: typeof SvelteComponent | undefined = undefined;
 
@@ -134,9 +133,8 @@
             () => (route = Home)
         );
         page(
-            "/:chatId?/:messageIndex?/:threadMessageIndex?",
-            redirectHashRoutes,
-            parsePathParams(chatSelectedRoute),
+            "/",
+            parsePathParams(() => ({ kind: "home_route" })),
             track,
             () => (route = Home)
         );

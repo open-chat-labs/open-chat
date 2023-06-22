@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { AccessRules, ChatMetrics, Community } from "openchat-client";
+    import type { AccessRules, Metrics, Community } from "openchat-client";
     import {
         communityAdvancedOpen,
         communityPermissionsOpen,
@@ -18,13 +18,8 @@
 
     export let community: Community;
     export let rules: AccessRules | undefined;
-    export let metrics: ChatMetrics;
+    export let metrics: Metrics;
     export let canDelete: boolean;
-
-    // access
-    // rules
-    // permissions
-    // stats?
 </script>
 
 <div class="details">

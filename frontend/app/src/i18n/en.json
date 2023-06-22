@@ -385,9 +385,9 @@
     },
     "role": {
         "owner": "Owners",
-        "admins": "Admins",
-        "moderators": "Moderators",
-        "members": "Members"
+        "admin": "Admins",
+        "moderator": "Moderators",
+        "member": "Members"
     },
     "permissions": {
         "whoCan": "Who can ",

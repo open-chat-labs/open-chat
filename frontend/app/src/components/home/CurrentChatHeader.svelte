@@ -30,9 +30,9 @@
     let viewProfile = false;
     let showSuspendUserModal = false;
 
-    $: typingByChat = client.typingByChat;
+    $: typersByContext = client.typersByContext;
     $: userStore = client.userStore;
-    $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them : "";
+    $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
     $: isGroup = selectedChatSummary.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: hasUserProfile = !isGroup && !isBot;
@@ -51,19 +51,19 @@
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         if (chatSummary.kind === "direct_chat") {
-            const them = $userStore[chatSummary.them];
+            const them = $userStore[chatSummary.them.userId];
             return {
                 name: client.usernameAndIcon(them),
                 avatarUrl: client.userAvatarUrl(them),
-                userId: chatSummary.them,
-                typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
+                userId: chatSummary.them.userId,
+                typing: client.getTypingString($_, $userStore, { chatId: chatSummary.id }, typing),
             };
         }
         return {
             name: chatSummary.name,
             avatarUrl: client.groupAvatarUrl(chatSummary),
             userId: undefined,
-            typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
+            typing: client.getTypingString($_, $userStore, { chatId: chatSummary.id }, typing),
         };
     }
 
@@ -77,7 +77,7 @@
         viewProfile = false;
     }
 
-    $: chat = normaliseChatSummary($now, selectedChatSummary, $typingByChat);
+    $: chat = normaliseChatSummary($now, selectedChatSummary, $typersByContext);
 </script>
 
 {#if showSuspendUserModal}

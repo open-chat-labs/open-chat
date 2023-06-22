@@ -36,7 +36,7 @@
     $: pinnedChatsStore = client.pinnedChatsStore;
     $: blockedUsers = client.blockedUsers;
     $: messagesRead = client.messagesRead;
-    $: typingByChat = client.typingByChat;
+    $: typersByContext = client.typersByContext;
     $: userStore = client.userStore;
 
     const dispatch = createEventDispatcher();
@@ -46,26 +46,26 @@
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         if (chatSummary.kind === "direct_chat") {
-            const them = $userStore[chatSummary.them];
+            const them = $userStore[chatSummary.them.userId];
             return {
                 name: client.usernameAndIcon(them),
                 avatarUrl: client.userAvatarUrl(them),
                 userId: chatSummary.them,
-                typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
+                typing: client.getTypingString($_, $userStore, { chatId: chatSummary.id }, typing),
             };
         }
         return {
             name: chatSummary.name,
             avatarUrl: client.groupAvatarUrl(chatSummary),
             userId: undefined,
-            typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
+            typing: client.getTypingString($_, $userStore, { chatId: chatSummary.id }, typing),
         };
     }
 
     function getUnreadMentionCount(chat: ChatSummary): number {
         if (chat.kind === "direct_chat") return 0;
-        return chat.mentions.filter(
-            (m) => !client.isMessageRead(chat.chatId, m.messageIndex, m.messageId)
+        return chat.membership.mentions.filter(
+            (m) => !client.isMessageRead(chat.id, m.messageIndex, m.messageId)
         ).length;
     }
 
@@ -98,22 +98,24 @@
      */
     function updateUnreadCounts(chatSummary: ChatSummary) {
         unreadMessages = client.unreadMessageCount(
-            chatSummary.chatId,
+            chatSummary.id,
             chatSummary.latestMessage?.event.messageIndex
         );
         unreadMentions = getUnreadMentionCount(chatSummary);
 
-        if (chatSummary.archived && unreadMessages > 0) {
+        if (chatSummary.membership.archived && unreadMessages > 0) {
             unarchiveChat();
         }
     }
 
     function deleteDirectChat() {
-        dispatch("deleteDirectChat", chatSummary.chatId);
-        delOffset = -60;
+        if (chatSummary.id.kind === "direct_chat") {
+            dispatch("deleteDirectChat", chatSummary.id);
+            delOffset = -60;
+        }
     }
 
-    $: chat = normaliseChatSummary($now, chatSummary, $typingByChat);
+    $: chat = normaliseChatSummary($now, chatSummary, $typersByContext);
     $: lastMessage = formatLatestMessage(chatSummary, $userStore);
 
     $: {
@@ -162,20 +164,20 @@
     }
 
     function pinChat() {
-        dispatch("pinChat", chatSummary.chatId);
+        dispatch("pinChat", chatSummary.id);
     }
 
     function unpinChat() {
-        dispatch("unpinChat", chatSummary.chatId);
+        dispatch("unpinChat", chatSummary.id);
     }
 
     function toggleMuteNotifications(mute: boolean) {
-        dispatch("toggleMuteNotifications", { chatId: chatSummary.chatId, mute });
+        dispatch("toggleMuteNotifications", { chatId: chatSummary.id, mute });
     }
 
     function archiveChat() {
         client.markAllRead(chatSummary);
-        dispatch("archiveChat", chatSummary.chatId);
+        dispatch("archiveChat", chatSummary.id);
     }
 
     function selectChat() {
@@ -183,17 +185,17 @@
     }
 
     function unarchiveChat() {
-        dispatch("unarchiveChat", chatSummary.chatId);
+        dispatch("unarchiveChat", chatSummary.id);
     }
 
     $: displayDate = client.getDisplayDate(chatSummary);
-    $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
-    $: readonly = client.isChatReadOnly(chatSummary.chatId);
+    $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId);
+    $: readonly = client.isChatReadOnly(chatSummary.id);
     $: canDelete =
         (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
-        (chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer");
-    $: pinned = $pinnedChatsStore.includes(chatSummary.chatId);
-    $: muted = chatSummary.notificationsMuted;
+        (chatSummary.kind === "group_chat" && chatSummary.membership.role === "none");
+    $: pinned = $pinnedChatsStore.includes(chatSummary.id);
+    $: muted = chatSummary.membership.notificationsMuted;
 </script>
 
 {#if visible}
@@ -217,7 +219,7 @@
                 {blocked}
                 url={chat.avatarUrl}
                 showStatus={true}
-                userId={chat.userId}
+                userId={chat.userId?.userId}
                 size={AvatarSize.Default} />
         </div>
         <div class="details" class:rtl={$rtlStore}>
@@ -316,7 +318,7 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                {#if chatSummary.archived}
+                                {#if chatSummary.membership.archived}
                                     <MenuItem on:click={selectChat}>
                                         <ArchiveOffIcon
                                             size={$iconSize}

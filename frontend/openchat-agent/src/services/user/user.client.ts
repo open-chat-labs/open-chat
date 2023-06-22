@@ -1,6 +1,9 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import {
+    ApiChannelMessagesRead,
+    ApiChatMessagesRead,
+    ApiMarkReadArgs,
     ApiSendMessageArgs,
     ApiSendMessageWithTransferToGroupArgs,
     idlFactory,
@@ -47,6 +50,10 @@ import type {
     Community,
     CreateCommunityResponse,
     AccessRules,
+    ChatIdentifier,
+    DirectChatIdentifier,
+    GroupChatIdentifier,
+    ThreadRead,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -65,7 +72,6 @@ import {
     sendMessageResponse,
     setAvatarResponse,
     setBioResponse,
-    addRemoveReactionResponse,
     unblockResponse,
     withdrawCryptoResponse,
     sendMessageWithTransferToGroupResponse,
@@ -99,6 +105,7 @@ import {
     apiPendingCryptoContent,
     apiPendingCryptocurrencyWithdrawal,
     apiReplyContextArgs,
+    addRemoveReactionResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
@@ -110,6 +117,7 @@ import type { AgentConfig } from "../../config";
 export class UserClient extends CandidService {
     private userService: UserService;
     userId: string;
+    private chatId: DirectChatIdentifier;
 
     constructor(
         identity: Identity,
@@ -119,6 +127,7 @@ export class UserClient extends CandidService {
     ) {
         super(identity);
         this.userId = userId;
+        this.chatId = { kind: "direct_chat", userId: userId };
         this.userService = this.createServiceClient<UserService>(idlFactory, userId, config);
     }
 
@@ -132,18 +141,18 @@ export class UserClient extends CandidService {
     }
 
     private setCachedEvents<T extends ChatEvent>(
-        userId: string,
+        chatId: ChatIdentifier,
         resp: EventsResponse<T>,
         threadRootMessageIndex?: number
     ): EventsResponse<T> {
-        setCachedEvents(this.db, userId, resp, threadRootMessageIndex).catch((err) =>
+        setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
             this.config.logger.error("Error writing cached group events", err)
         );
         return resp;
     }
 
     private handleMissingEvents(
-        userId: string,
+        chatId: DirectChatIdentifier,
         [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
@@ -153,11 +162,11 @@ export class UserClient extends CandidService {
         } else {
             return this.chatEventsByIndexFromBackend(
                 [...missing],
-                userId,
+                chatId,
                 threadRootMessageIndex,
                 latestClientEventIndex
             )
-                .then((resp) => this.setCachedEvents(userId, resp, threadRootMessageIndex))
+                .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
                 .then((resp) => {
                     if (resp !== "events_failed") {
                         return mergeSuccessResponses(cachedEvents, resp);
@@ -172,7 +181,7 @@ export class UserClient extends CandidService {
             disable_cache: apiOptional(identity, false),
         };
         return this.handleQueryResponse(
-            () => this.userService.initial_state_v2(args),
+            () => this.userService.initial_state(args),
             initialStateResponse,
             args
         );
@@ -183,7 +192,7 @@ export class UserClient extends CandidService {
             updates_since: updatesSince,
         };
         return this.handleQueryResponse(
-            () => this.userService.updates_v2(args),
+            () => this.userService.updates(args),
             getUpdatesResponse,
             args
         );
@@ -256,49 +265,49 @@ export class UserClient extends CandidService {
 
     chatEventsByIndex(
         eventIndexes: number[],
-        userId: string,
+        chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return getCachedEventsByIndex<DirectChatEvent>(
             this.db,
             eventIndexes,
-            userId,
+            chatId,
             threadRootMessageIndex
         ).then((res) =>
-            this.handleMissingEvents(userId, res, threadRootMessageIndex, latestClientEventIndex)
+            this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestClientEventIndex)
         );
     }
 
     private chatEventsByIndexFromBackend(
         eventIndexes: number[],
-        userId: string,
+        chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            user_id: Principal.fromText(userId),
+            user_id: Principal.fromText(chatId.userId),
             events: new Uint32Array(eventIndexes),
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
             () => this.userService.events_by_index(args),
-            (resp) => getEventsResponse(this.principal, resp, userId, latestClientEventIndex),
+            (resp) => getEventsResponse(this.principal, resp, chatId, latestClientEventIndex),
             args
         );
     }
 
     async chatEventsWindow(
         eventIndexRange: IndexRange,
-        userId: string,
+        chatId: DirectChatIdentifier,
         messageIndex: number,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<DirectChatEvent>(
             this.db,
             eventIndexRange,
-            userId,
+            chatId,
             messageIndex
         );
         if (totalMiss || missing.size >= MAX_MISSING) {
@@ -309,13 +318,13 @@ export class UserClient extends CandidService {
                 totalMiss
             );
             return this.chatEventsWindowFromBackend(
-                userId,
+                chatId,
                 messageIndex,
                 latestClientEventIndex
-            ).then((resp) => this.setCachedEvents(userId, resp));
+            ).then((resp) => this.setCachedEvents(chatId, resp));
         } else {
             return this.handleMissingEvents(
-                userId,
+                chatId,
                 [cachedEvents, missing],
                 undefined,
                 latestClientEventIndex
@@ -324,14 +333,14 @@ export class UserClient extends CandidService {
     }
 
     private async chatEventsWindowFromBackend(
-        userId: string,
+        chatId: DirectChatIdentifier,
         messageIndex: number,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         const thread_root_message_index: [] = [];
         const args = {
             thread_root_message_index,
-            user_id: Principal.fromText(userId),
+            user_id: Principal.fromText(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
@@ -339,14 +348,14 @@ export class UserClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.userService.events_window(args),
-            (resp) => getEventsResponse(this.principal, resp, userId, latestClientEventIndex),
+            (resp) => getEventsResponse(this.principal, resp, chatId, latestClientEventIndex),
             args
         );
     }
 
     async chatEvents(
         eventIndexRange: IndexRange,
-        userId: string,
+        chatId: DirectChatIdentifier,
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
@@ -355,7 +364,7 @@ export class UserClient extends CandidService {
         const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
             this.db,
             eventIndexRange,
-            userId,
+            chatId,
             startIndex,
             ascending,
             threadRootMessageIndex
@@ -366,15 +375,15 @@ export class UserClient extends CandidService {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log("We didn't get enough back from the cache, going to the api");
             return this.chatEventsFromBackend(
-                userId,
+                chatId,
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
                 latestClientEventIndex
-            ).then((resp) => this.setCachedEvents(userId, resp, threadRootMessageIndex));
+            ).then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex));
         } else {
             return this.handleMissingEvents(
-                userId,
+                chatId,
                 [cachedEvents, missing],
                 threadRootMessageIndex,
                 latestClientEventIndex
@@ -383,7 +392,7 @@ export class UserClient extends CandidService {
     }
 
     private chatEventsFromBackend(
-        userId: string,
+        chatId: DirectChatIdentifier,
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
@@ -391,7 +400,7 @@ export class UserClient extends CandidService {
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            user_id: Principal.fromText(userId),
+            user_id: Principal.fromText(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             start_index: startIndex,
@@ -401,7 +410,7 @@ export class UserClient extends CandidService {
 
         return this.handleQueryResponse(
             () => this.userService.events(args),
-            (resp) => getEventsResponse(this.principal, resp, userId, latestClientEventIndex),
+            (resp) => getEventsResponse(this.principal, resp, chatId, latestClientEventIndex),
             args
         );
     }
@@ -451,43 +460,43 @@ export class UserClient extends CandidService {
     }
 
     sendMessage(
-        chatId: string,
+        chatId: DirectChatIdentifier,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
+        removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageToBackend(chatId, sender, event, threadRootMessageIndex)
             .then(
                 setCachedMessageFromSendResponse(
                     this.db,
-                    this.userId,
+                    this.chatId,
                     event,
                     threadRootMessageIndex
                 )
             )
             .catch((err) => {
-                recordFailedMessage(this.db, this.userId, event, threadRootMessageIndex);
+                recordFailedMessage(this.db, this.chatId, event, threadRootMessageIndex);
                 throw err;
             });
     }
 
     sendMessageToBackend(
-        chatId: string,
+        chatId: DirectChatIdentifier,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
-            ? dataClient.forwardData(event.event.content, [this.userId, chatId])
-            : dataClient.uploadData(event.event.content, [this.userId, chatId]);
+            ? dataClient.forwardData(event.event.content, [this.userId, chatId.userId])
+            : dataClient.uploadData(event.event.content, [this.userId, chatId.userId]);
 
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
             const req: ApiSendMessageArgs = {
                 content: apiMessageContent(newContent),
-                recipient: Principal.fromText(chatId),
+                recipient: Principal.fromText(chatId.userId),
                 sender_name: sender.username,
                 message_id: event.event.messageId,
                 replies_to: apiOptional(
@@ -498,21 +507,20 @@ export class UserClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 correlation_id: generateUint64(),
             };
-            console.log("What are we actually sending: ", req);
             return this.handleResponse(this.userService.send_message_v2(req), (resp) =>
-                sendMessageResponse(resp, event.event.sender, chatId)
+                sendMessageResponse(resp, event.event.sender, chatId.userId)
             ).then((resp) => [resp, { ...event.event, content: newContent }]);
         });
     }
 
     sendMessageWithTransferToGroup(
-        groupId: string,
+        groupId: GroupChatIdentifier,
         recipientId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
+        removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToGroupToBackend(
             groupId,
             recipientId,
@@ -528,7 +536,7 @@ export class UserClient extends CandidService {
     }
 
     sendMessageWithTransferToGroupToBackend(
-        groupId: string,
+        groupId: GroupChatIdentifier,
         recipientId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
@@ -544,7 +552,7 @@ export class UserClient extends CandidService {
             sender_name: sender.username,
             mentioned: [],
             message_id: event.event.messageId,
-            group_id: Principal.fromText(groupId),
+            group_id: Principal.fromText(groupId.groupId),
             replies_to: apiOptional(
                 (replyContext) => apiReplyContextArgs(groupId, replyContext),
                 event.event.repliesTo
@@ -585,19 +593,73 @@ export class UserClient extends CandidService {
         );
     }
 
+    private markMessageArg(
+        chatId: string,
+        readUpTo: number | undefined,
+        threads: ThreadRead[],
+        dateReadPinned: bigint | undefined
+    ) {
+        return {
+            chat_id: Principal.fromText(chatId),
+            read_up_to: apiOptional(identity, readUpTo),
+            threads: threads.map((t) => ({
+                root_message_index: t.threadRootMessageIndex,
+                read_up_to: t.readUpTo,
+            })),
+            date_read_pinned: apiOptional(identity, dateReadPinned),
+        };
+    }
+
+    private markChannelMessageArg(
+        channelId: string,
+        readUpTo: number | undefined,
+        threads: ThreadRead[],
+        dateReadPinned: bigint | undefined
+    ) {
+        return {
+            channel_id: BigInt(channelId),
+            read_up_to: apiOptional(identity, readUpTo),
+            threads: threads.map((t) => ({
+                root_message_index: t.threadRootMessageIndex,
+                read_up_to: t.readUpTo,
+            })),
+            date_read_pinned: apiOptional(identity, dateReadPinned),
+        };
+    }
+
+    private markMessageArgs(req: MarkReadRequest): ApiMarkReadArgs {
+        const community: Record<string, ApiChannelMessagesRead[]> = {};
+        const chat: ApiChatMessagesRead[] = [];
+
+        req.forEach(({ chatId, readUpTo, threads, dateReadPinned }) => {
+            if (chatId.kind === "direct_chat") {
+                chat.push(this.markMessageArg(chatId.userId, readUpTo, threads, dateReadPinned));
+            }
+            if (chatId.kind === "group_chat") {
+                chat.push(this.markMessageArg(chatId.groupId, readUpTo, threads, dateReadPinned));
+            }
+            if (chatId.kind === "channel") {
+                if (community[chatId.communityId] === undefined) {
+                    community[chatId.communityId] = [];
+                }
+                community[chatId.communityId].push(
+                    this.markChannelMessageArg(chatId.channelId, readUpTo, threads, dateReadPinned)
+                );
+            }
+        });
+
+        return {
+            messages_read: chat,
+            community_messages_read: Object.entries(community).map(([communityId, read]) => ({
+                community_id: Principal.fromText(communityId),
+                channels_read: read,
+            })),
+        };
+    }
+
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
         return this.handleResponse(
-            this.userService.mark_read_v2({
-                messages_read: request.map(({ chatId, readUpTo, threads, dateReadPinned }) => ({
-                    chat_id: Principal.fromText(chatId),
-                    read_up_to: apiOptional(identity, readUpTo),
-                    threads: threads.map((t) => ({
-                        root_message_index: t.threadRootMessageIndex,
-                        read_up_to: t.readUpTo,
-                    })),
-                    date_read_pinned: apiOptional(identity, dateReadPinned),
-                })),
-            }),
+            this.userService.mark_read(this.markMessageArgs(request)),
             markReadResponse
         );
     }
@@ -673,18 +735,18 @@ export class UserClient extends CandidService {
     }
 
     searchDirectChat(
-        userId: string,
+        chatId: DirectChatIdentifier,
         searchTerm: string,
         maxResults: number
     ): Promise<SearchDirectChatResponse> {
         const args = {
-            user_id: Principal.fromText(userId),
+            user_id: Principal.fromText(chatId.userId),
             search_term: searchTerm,
             max_results: maxResults,
         };
         return this.handleQueryResponse(
             () => this.userService.search_messages(args),
-            (res) => searchDirectChatResponse(res, userId),
+            (res) => searchDirectChatResponse(res, chatId),
             args
         );
     }

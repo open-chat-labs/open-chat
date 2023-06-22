@@ -1,10 +1,11 @@
 <script lang="ts">
-    import type {
+    import {
         ThreadPreview,
         GroupChatSummary,
         EventWrapper,
         Message,
         OpenChat,
+        routeForChatIdentifier,
     } from "openchat-client";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
@@ -29,8 +30,8 @@
     $: messagesRead = client.messagesRead;
     $: missingMessages = thread.totalReplies - thread.latestReplies.length;
     $: threadRootMessageIndex = thread.rootMessage.event.messageIndex;
-    $: chat = $chatSummariesStore[thread.chatId] as GroupChatSummary;
-    $: syncDetails = chat?.latestThreads?.find(
+    $: chat = $chatSummariesStore.get(thread.chatId) as GroupChatSummary;
+    $: syncDetails = chat?.membership?.latestThreads?.find(
         (t) => t.threadRootMessageIndex === threadRootMessageIndex
     );
     $: unreadCount = syncDetails
@@ -64,7 +65,7 @@
         if (unreadCount > 0 && unreadCount < thread.latestReplies.length + 1) {
             const lastMsgIdx = lastMessageIndex(thread.latestReplies);
             if (lastMsgIdx !== undefined) {
-                client.markThreadRead(chat.chatId, threadRootMessageIndex, lastMsgIdx);
+                client.markThreadRead(chat.id, threadRootMessageIndex, lastMsgIdx);
             }
         }
     }
@@ -82,7 +83,11 @@
     });
 
     function selectThread() {
-        page(`/${thread.chatId}/${thread.rootMessage.event.messageIndex}?open=true`);
+        page(
+            `${routeForChatIdentifier(thread.chatId)}/${
+                thread.rootMessage.event.messageIndex
+            }?open=true`
+        );
     }
 </script>
 

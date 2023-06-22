@@ -3,7 +3,7 @@
     import Flag from "svelte-material-icons/Flag.svelte";
     import { tweened } from "svelte/motion";
     import { _ } from "svelte-i18n";
-    import type { ChatMetrics, OpenChat } from "openchat-client";
+    import type { Metrics, OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { writable } from "svelte/store";
     import { iconSize } from "stores/iconSize";
@@ -11,12 +11,12 @@
     import TooltipPopup from "../TooltipPopup.svelte";
 
     const client = getContext<OpenChat>("client");
-    export let stats: ChatMetrics;
+    export let stats: Metrics;
     export let showReported: boolean = false;
 
     let hoveredIndex: number | undefined;
     let rendered = false;
-    let previousStats: ChatMetrics | undefined = undefined;
+    let previousStats: Metrics | undefined = undefined;
     let totalMessages = 0;
     let textPerc = writable(12.5);
     let imagePerc = writable(12.5);

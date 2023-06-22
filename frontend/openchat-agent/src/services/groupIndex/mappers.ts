@@ -244,7 +244,7 @@ export function setUpgradeConcurrencyResponse(
 
 function groupMatch(candid: ApiGroupMatch): GroupMatch {
     return {
-        chatId: candid.chat_id.toString(),
+        chatId: { kind: "group_chat", groupId: candid.chat_id.toString() },
         name: candid.name,
         description: candid.description,
         blobReference: optional(candid.avatar_id, (blobId) => ({
@@ -256,7 +256,7 @@ function groupMatch(candid: ApiGroupMatch): GroupMatch {
 
 function communityMatch(candid: ApiCommunityMatch): CommunityMatch {
     return {
-        id: candid.id.toString(),
+        id: { kind: "community", communityId: candid.id.toString() },
         name: candid.name,
         description: candid.description,
         avatar: {

@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import Link from "../Link.svelte";
-    import type {
+    import {
         CreatedUser,
         Message,
         EnhancedReplyContext,
@@ -11,6 +11,9 @@
         OpenChat,
         PartialUserSummary,
         MessageReminderCreatedContent,
+        ChatIdentifier,
+        ChatType,
+        routeForMessage,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -52,8 +55,8 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let chatId: string;
-    export let chatType: "group_chat" | "direct_chat";
+    export let chatId: ChatIdentifier;
+    export let chatType: ChatType;
     export let user: CreatedUser;
     export let sender: PartialUserSummary | undefined;
     export let msg: Message;
@@ -116,7 +119,7 @@
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
-    $: msgUrl = `/${chatId}/${msg.messageIndex}?open=true`;
+    $: msgUrl = `${routeForMessage({ chatId }, msg.messageIndex)}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
     $: isPrize = msg.content.kind === "prize_content";
     $: isPrizeWinner = msg.content.kind === "prize_winner_content";
@@ -165,7 +168,7 @@
 
     function chatWithUser() {
         closeUserProfile();
-        dispatch("chatWith", msg.sender);
+        dispatch("chatWith", { kind: "direct_chat", userId: msg.sender });
     }
 
     function createReplyContext(): EnhancedReplyContext {
