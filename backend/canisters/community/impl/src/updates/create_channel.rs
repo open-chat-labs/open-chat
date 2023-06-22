@@ -43,13 +43,9 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
         .err()
         {
             match response {
-                c2c_join_community::Response::GateCheckFailed(_) => return NotAuthorized,
-                c2c_join_community::Response::NotInvited => return NotAuthorized,
                 c2c_join_community::Response::Blocked => return NotAuthorized,
-                c2c_join_community::Response::MemberLimitReached(_) => return NotAuthorized,
-                c2c_join_community::Response::CommunityFrozen => return CommunityFrozen,
-                c2c_join_community::Response::InternalError(_) => return NotAuthorized,
-                _ => {}
+                c2c_join_community::Response::AlreadyInCommunity(_) => {}
+                _ => panic!("Unexpected response from c2c_join_community"),
             }
         }
 
