@@ -295,7 +295,7 @@ type CreateCommunityResponse =
         MaxCommunitiesCreated: nat32;
         NameTaken;
         Throttled;
-        InternalError;
+        InternalError: text;
         RulesTooLong: FieldTooLongResult;
         RulesTooShort: FieldTooShortResult;
         UserSuspended;
