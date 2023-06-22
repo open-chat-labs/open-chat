@@ -282,7 +282,7 @@ struct Data {
     pub activity_notification_state: ActivityNotificationState,
     pub instruction_counts_log: InstructionCountsLog,
     pub test_mode: bool,
-    #[serde(skip_deserializing)]
+    #[serde(default)]
     pub community_being_imported_into: Option<CommunityBeingImportedInto>,
     #[serde(default)]
     pub serialized_chat_state: Option<Vec<u8>>,
