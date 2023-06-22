@@ -150,7 +150,6 @@ import {
     UpdatedEvent,
     chatIdentifierToString,
     MessageContext,
-    MessageContextMap,
     chatIdentifiersEqual,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";

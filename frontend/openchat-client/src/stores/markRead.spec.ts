@@ -1,6 +1,11 @@
 import { MessageReadTracker, MessagesRead } from "./markRead";
-import { unconfirmed } from "./unconfirmed";
-import type { EventWrapper, GroupChatIdentifier, Message } from "openchat-shared";
+import { UnconfirmedState, unconfirmed } from "./unconfirmed";
+import {
+    MessageContextMap,
+    type EventWrapper,
+    type GroupChatIdentifier,
+    type Message,
+} from "openchat-shared";
 
 const abcId: GroupChatIdentifier = { kind: "group_chat", groupId: "abc" };
 
@@ -30,7 +35,8 @@ describe("mark messages read", () => {
 
     beforeEach(() => {
         jest.useFakeTimers();
-        unconfirmed.clear();
+        const mockedUnconfirmed = new MessageContextMap<UnconfirmedState>();
+        unconfirmed.clear(mockedUnconfirmed);
         if (markRead.waiting.get(abcId) !== undefined) {
             markRead.waiting.get(abcId)?.clear();
         }

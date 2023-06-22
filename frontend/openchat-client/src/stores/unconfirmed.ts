@@ -96,7 +96,8 @@ function createUnconfirmedStore() {
             }
             return false;
         },
-        clear: (): void => store.set({} as UnconfirmedMessages),
+        clear: (initialVal: UnconfirmedMessages = {} as UnconfirmedMessages): void =>
+            store.set(initialVal),
     };
 }
 

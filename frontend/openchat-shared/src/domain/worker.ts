@@ -140,7 +140,6 @@ import type {
     UpdateCommunityResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
-import type { MessageContextMap } from "../utils/map";
 /**
  * Worker request types
  */
