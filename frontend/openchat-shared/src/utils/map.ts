@@ -7,33 +7,19 @@
 import type { CommunityIdentifier } from "../domain";
 import type { ChatIdentifier, MessageContext } from "../domain/chat";
 
-export interface ISafeMap<K, V> {
-    clear(): void;
-    clone(): ISafeMap<K, V>;
-    empty(): ISafeMap<K, V>;
-    entries(): [K, V][];
-    values(): V[];
-    delete(key: K): boolean;
-    forEach(callbackfn: (value: V, key: K) => void): void;
-    get(key: K): V | undefined;
-    has(key: K): boolean;
-    set(key: K, value: V): this;
-    get size(): number;
-}
-
-export class SafeMap<K, V> implements ISafeMap<K, V> {
+export class SafeMap<K, V> {
     protected constructor(
         private toString: (key: K) => string,
         private fromString: (key: string) => K,
         protected _map: Map<string, V> = new Map<string, V>()
     ) {}
 
-    clone(): ISafeMap<K, V> {
+    clone(): SafeMap<K, V> {
         const clone = new SafeMap<K, V>(this.toString, this.fromString, new Map(this._map));
         return clone;
     }
 
-    empty(): ISafeMap<K, V> {
+    empty(): SafeMap<K, V> {
         return new SafeMap<K, V>(this.toString, this.fromString);
     }
 
@@ -83,7 +69,7 @@ export class SafeMap<K, V> implements ISafeMap<K, V> {
     }
 }
 
-export class ChatMap<V> extends SafeMap<ChatIdentifier, V> implements ISafeMap<ChatIdentifier, V> {
+export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
     constructor(_map: Map<string, V> = new Map<string, V>()) {
         super(
             (k: ChatIdentifier) => JSON.stringify(k),
@@ -108,10 +94,7 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> implements ISafeMap<C
     }
 }
 
-export class MessageContextMap<V>
-    extends SafeMap<MessageContext, V>
-    implements ISafeMap<MessageContext, V>
-{
+export class MessageContextMap<V> extends SafeMap<MessageContext, V> {
     constructor(_map: Map<string, V> = new Map<string, V>()) {
         super(
             (k: MessageContext) => JSON.stringify(k),
@@ -125,10 +108,7 @@ export class MessageContextMap<V>
     }
 }
 
-export class CommunityMap<V>
-    extends SafeMap<CommunityIdentifier, V>
-    implements ISafeMap<CommunityIdentifier, V>
-{
+export class CommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
     constructor() {
         super(
             (k: CommunityIdentifier) => k.communityId,
@@ -144,7 +124,7 @@ export class CommunityMap<V>
     }
 }
 
-export class MessageMap<V> extends SafeMap<bigint, V> implements ISafeMap<bigint, V> {
+export class MessageMap<V> extends SafeMap<bigint, V> {
     constructor() {
         super(
             (k: bigint) => k.toString(),

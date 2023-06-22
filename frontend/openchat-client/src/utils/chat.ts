@@ -36,12 +36,12 @@ import {
     getContentAsText,
     eventIsVisible,
     AccessControlled,
-    ChatIdentifier,
-    ISafeMap,
     GroupChatIdentifier,
     nullMembership,
     HasMembershipRole,
     MessageContext,
+    ChatMap,
+    MessageMap,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -341,9 +341,9 @@ export function mergeUnconfirmedThreadsIntoSummary(
 }
 
 export function mergeLocalSummaryUpdates(
-    server: ISafeMap<ChatIdentifier, ChatSummary>,
-    localUpdates: ISafeMap<ChatIdentifier, LocalChatSummaryUpdates>
-): ISafeMap<ChatIdentifier, ChatSummary> {
+    server: ChatMap<ChatSummary>,
+    localUpdates: ChatMap<LocalChatSummaryUpdates>
+): ChatMap<ChatSummary> {
     if (Object.keys(localUpdates).length === 0) return server;
 
     const merged = server.clone();
@@ -415,7 +415,7 @@ export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
     unconfirmed: UnconfirmedMessages,
-    localUpdates: ISafeMap<bigint, LocalMessageUpdates>
+    localUpdates: MessageMap<LocalMessageUpdates>
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
@@ -1043,7 +1043,7 @@ export function markAllRead(chat: ChatSummary): void {
 export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
-    localUpdates: ISafeMap<bigint, LocalMessageUpdates>,
+    localUpdates: MessageMap<LocalMessageUpdates>,
     proposalTallies: Record<string, Tally>
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new Set<number>();
