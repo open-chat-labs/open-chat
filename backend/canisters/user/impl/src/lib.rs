@@ -78,6 +78,11 @@ impl RuntimeState {
         self.data.group_chats.get(&caller.into()).is_some()
     }
 
+    pub fn is_caller_known_commuity_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.communities.get(&caller.into()).is_some()
+    }
+
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
         let args = c2c_push_notification::Args {
             recipients,
