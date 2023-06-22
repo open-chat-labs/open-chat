@@ -9,7 +9,7 @@ use std::ops::Deref;
 use types::{AccessRules, ChatId};
 
 #[test]
-fn import_group_succeeds() {
+fn convert_into_community_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -48,18 +48,51 @@ fn import_group_succeeds() {
 
         let summary1 = client::community::happy_path::summary(env, &user1, community_id);
         assert_eq!(
-            summary1.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
+            summary1.channels.into_iter().map(|c| c.name).collect_vec(),
             expected_channel_names
         );
 
         let summary2 = client::community::happy_path::summary(env, &user2, community_id);
         assert_eq!(
-            summary2.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
+            summary2.channels.into_iter().map(|c| c.name).collect_vec(),
             expected_channel_names
         );
     } else {
         panic!("'convert_into_community' error: {convert_into_community_response:?}");
     }
+}
+
+#[test]
+fn not_group_owner_returns_unauthorized() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let TestData {
+        user1: _,
+        user2,
+        group_id,
+        group_name: _,
+    } = init_test_data(env, canister_ids, *controller);
+
+    let convert_into_community_response = client::group::convert_into_community(
+        env,
+        user2.principal,
+        group_id.into(),
+        &group_canister::convert_into_community::Args {
+            rules: AccessRules::default(),
+            permissions: None,
+            history_visible_to_new_joiners: true,
+        },
+    );
+
+    assert!(matches!(
+        convert_into_community_response,
+        group_canister::convert_into_community::Response::NotAuthorized
+    ));
 }
 
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
