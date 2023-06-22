@@ -33,6 +33,9 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                         getContentAsText(fakeFormatter, e.event.repliesTo.content)
                     ).forEach((id) => userIds.add(id));
                 }
+                if (e.event.content.kind === "reported_message_content") {
+                    e.event.content.reports.forEach((r) => userIds.add(r.reportedBy));
+                }
                 extractUserIdsFromMentions(
                     getContentAsText(fakeFormatter, e.event.content)
                 ).forEach((id) => userIds.add(id));

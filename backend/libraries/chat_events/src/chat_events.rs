@@ -11,10 +11,10 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    ChatId, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails,
+    Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails,
     GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message, MessageContentInitial, MessageId,
-    MessageIndex, MessageMatch, Milliseconds, PollVotes, ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet,
-    Reaction, RegisterVoteResult, TimestampMillis, Timestamped, UserId, VoteOperation,
+    MessageIndex, MessageMatch, Milliseconds, MultiUserChat, PollVotes, ProposalUpdate, PushEventResult, PushIfNotContains,
+    RangeSet, Reaction, RegisterVoteResult, TimestampMillis, Timestamped, UserId, VoteOperation,
 };
 use types::{Hash, MessageReport, ReportedMessageInternal};
 
@@ -631,7 +631,7 @@ impl ChatEvents {
     pub fn report_message(
         &mut self,
         user_id: UserId,
-        chat_id: ChatId,
+        chat: MultiUserChat,
         thread_root_message_index: Option<MessageIndex>,
         event_index: EventIndex,
         reason_code: u32,
@@ -642,9 +642,21 @@ impl ChatEvents {
         // and `event_index`. This allows us to quickly find any existing reports for the same
         // message.
         let mut hasher = Sha256::new();
-        let chat_id_bytes = chat_id.as_ref();
-        hasher.update([chat_id_bytes.len() as u8]);
-        hasher.update(chat_id_bytes);
+        match &chat {
+            MultiUserChat::Group(chat_id) => {
+                let chat_id_bytes = chat_id.as_ref();
+                hasher.update([chat_id_bytes.len() as u8]);
+                hasher.update(chat_id_bytes);
+            }
+            MultiUserChat::Channel(community_id, channel_id) => {
+                let community_id_bytes = community_id.as_ref();
+                hasher.update([community_id_bytes.len() as u8]);
+                hasher.update(community_id);
+                let channel_id_bytes = channel_id.to_be_bytes();
+                hasher.update([channel_id_bytes.len() as u8]);
+                hasher.update(channel_id_bytes);
+            }
+        }
         if let Some(root_message_index_bytes) = thread_root_message_index.map(u32::from).map(|i| i.to_be_bytes()) {
             hasher.update([root_message_index_bytes.len() as u8]);
             hasher.update(root_message_index_bytes);
@@ -686,7 +698,7 @@ impl ChatEvents {
                 }],
             }),
             replies_to: Some(ReplyContextInternal {
-                event_list_if_other: Some((chat_id, thread_root_message_index)),
+                chat_if_other: Some((chat.into(), thread_root_message_index)),
                 event_index,
             }),
             forwarded: false,
@@ -1017,6 +1029,10 @@ impl ChatEvents {
 
     pub fn latest_event_timestamp(&self) -> Option<TimestampMillis> {
         self.main.latest_event_timestamp()
+    }
+
+    pub fn main_events_list(&self) -> &ChatEventsList {
+        &self.main
     }
 
     fn events_list(

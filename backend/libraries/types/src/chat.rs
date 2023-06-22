@@ -10,3 +10,9 @@ pub enum Chat {
     Group(ChatId),
     Channel(CommunityId, ChannelId),
 }
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy)]
+pub enum MultiUserChat {
+    Group(ChatId),
+    Channel(CommunityId, ChannelId),
+}

@@ -111,6 +111,10 @@ impl ChatEventsList {
         }
     }
 
+    pub fn values(&self) -> impl Iterator<Item = &EventWrapperInternal<ChatEventInternal>> {
+        self.events_map.values()
+    }
+
     pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(
         &self,
         since: TimestampMillis,

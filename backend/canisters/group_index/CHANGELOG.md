@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add ability to import a group into a community ([#3792](https://github.com/open-ic/open-chat/pull/3792))
+- Added `explore_groups` endpoint ([#3826](https://github.com/open-ic/open-chat/pull/3826))
+
+### Changed
+
+- New algo for ordering "hot" groups & communities ([#3820](https://github.com/open-ic/open-chat/pull/3820))
 
 ## [[2.0.723](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.723-group_index)] - 2023-06-16
 

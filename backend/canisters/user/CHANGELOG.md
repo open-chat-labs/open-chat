@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support replying to channel messages ([#3825](https://github.com/open-chat-labs/open-chat/pull/3825))
+- Support simplified transfers of icrc1 tokens ([#3827](https://github.com/open-chat-labs/open-chat/pull/3827))
+
+### Fixed
+
+- Fix ordering of pinned chats ([#3823](https://github.com/open-chat-labs/open-chat/pull/3823))
+
 ## [[2.0.726](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.726-user)] - 2023-06-19
 
 ### Added

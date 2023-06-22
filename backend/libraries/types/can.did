@@ -10,7 +10,7 @@ type EventIndex = nat32;
 type FileId = nat;
 type Hash = blob;
 type ICP = Tokens;
-type Memo = nat64;
+type Memo = blob;
 type MessageId = nat;
 type MessageIndex = nat32;
 type Milliseconds = nat64;
@@ -26,6 +26,12 @@ type UserId = CanisterId;
 type Chat =
     variant {
         Direct: ChatId;
+        Group: ChatId;
+        Channel: record { CommunityId; ChannelId; };
+    };
+
+type MultiUserChat =
+    variant {
         Group: ChatId;
         Channel: record { CommunityId; ChannelId; };
     };
@@ -653,6 +659,7 @@ type PublicGroupSummary =
 type ReplyContext =
     record {
         event_list_if_other: opt record { ChatId; opt MessageIndex };
+        chat_if_other: opt record { MultiUserChat; opt MessageIndex };
         event_index: EventIndex;
     };
 
@@ -1064,18 +1071,21 @@ type PendingCryptoTransaction =
     variant {
         NNS: NnsPendingCryptoTransaction;
         SNS: SnsPendingCryptoTransaction;
+        ICRC1: Icrc1PendingCryptoTransaction;
     };
 
 type CompletedCryptoTransaction =
     variant {
         NNS: NnsCompletedCryptoTransaction;
         SNS: SnsCompletedCryptoTransaction;
+        ICRC1: Icrc1CompletedCryptoTransaction;
     };
 
 type FailedCryptoTransaction =
     variant {
         NNS: NnsFailedCryptoTransaction;
         SNS: SnsFailedCryptoTransaction;
+        ICRC1: Icrc1FailedCryptoTransaction;
     };
 
 type NnsPendingCryptoTransaction =
@@ -1084,7 +1094,7 @@ type NnsPendingCryptoTransaction =
         amount: Tokens;
         to: NnsUserOrAccount;
         fee: opt Tokens;
-        memo: opt Memo;
+        memo: opt nat64;
         created: TimestampNanos;
     };
 
@@ -1095,7 +1105,7 @@ type NnsCompletedCryptoTransaction =
         fee: Tokens;
         from: NnsCryptoAccount;
         to: NnsCryptoAccount;
-        memo: Memo;
+        memo: nat64;
         created: TimestampNanos;
         transaction_hash: TransactionHash;
         block_index: BlockIndex;
@@ -1108,7 +1118,7 @@ type NnsFailedCryptoTransaction =
         fee: Tokens;
         from: NnsCryptoAccount;
         to: NnsCryptoAccount;
-        memo: Memo;
+        memo: nat64;
         created: TimestampNanos;
         transaction_hash: TransactionHash;
         error_message: text;
@@ -1132,7 +1142,7 @@ type SnsPendingCryptoTransaction =
         amount: Tokens;
         to: Icrc1Account;
         fee: Tokens;
-        memo: opt Memo;
+        memo: opt nat64;
         created: TimestampNanos;
     };
 
@@ -1141,9 +1151,9 @@ type SnsCompletedCryptoTransaction =
         token: Cryptocurrency;
         amount: Tokens;
         fee: Tokens;
-        from: SnsAccount;
-        to: SnsAccount;
-        memo: opt Memo;
+        from: Icrc1AccountOrMint;
+        to: Icrc1AccountOrMint;
+        memo: opt nat64;
         created: TimestampNanos;
         transaction_hash: TransactionHash;
         block_index: BlockIndex;
@@ -1154,15 +1164,15 @@ type SnsFailedCryptoTransaction =
         token: Cryptocurrency;
         amount: Tokens;
         fee: Tokens;
-        from: SnsAccount;
-        to: SnsAccount;
-        memo: opt Memo;
+        from: Icrc1AccountOrMint;
+        to: Icrc1AccountOrMint;
+        memo: opt nat64;
         created: TimestampNanos;
         transaction_hash: TransactionHash;
         error_message: text;
     };
 
-type SnsAccount =
+type Icrc1AccountOrMint =
     variant {
         Mint;
         Account: Icrc1Account;
@@ -1172,6 +1182,40 @@ type Icrc1Account =
     record {
         owner: principal;
         subaccount: opt blob;
+    };
+
+type Icrc1PendingCryptoTransaction =
+    record {
+        token: Cryptocurrency;
+        amount: nat;
+        fee: nat;
+        to: Icrc1Account;
+        memo: opt Memo;
+        created: TimestampNanos;
+    };
+
+type Icrc1CompletedCryptoTransaction =
+    record {
+        token: Cryptocurrency;
+        amount: nat;
+        fee: nat;
+        from: Icrc1AccountOrMint;
+        to: Icrc1AccountOrMint;
+        memo: opt Memo;
+        created: TimestampNanos;
+        block_index: BlockIndex;
+    };
+
+type Icrc1FailedCryptoTransaction =
+    record {
+        token: Cryptocurrency;
+        amount: nat;
+        fee: nat;
+        from: Icrc1AccountOrMint;
+        to: Icrc1AccountOrMint;
+        memo: opt Memo;
+        created: TimestampNanos;
+        error_message: text;
     };
 
 type VideoContent =

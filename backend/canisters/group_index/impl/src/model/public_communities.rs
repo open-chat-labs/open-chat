@@ -77,8 +77,10 @@ impl PublicCommunities {
                 let score = if let Some(query) = &query {
                     let document: Document = c.into();
                     document.calculate_score(query)
+                } else if c.hotness_score > 0 {
+                    c.hotness_score
                 } else {
-                    c.activity.member_count
+                    c.activity.as_ref().map_or(0, |a| a.member_count)
                 };
                 (score, c)
             })
@@ -89,6 +91,7 @@ impl PublicCommunities {
 
         matches
             .into_iter()
+            .rev()
             .map(|(_, c)| c.into())
             .skip(page_index as usize * page_size as usize)
             .take(page_size as usize)
@@ -137,6 +140,10 @@ impl PublicCommunities {
     pub fn iter(&self) -> impl Iterator<Item = &PublicCommunityInfo> {
         self.communities.values()
     }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut PublicCommunityInfo> {
+        self.communities.values_mut()
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -152,7 +159,8 @@ pub struct PublicCommunityInfo {
     description: String,
     avatar_id: Option<u128>,
     banner_id: Option<u128>,
-    activity: PublicCommunityActivity,
+    activity: Option<PublicCommunityActivity>,
+    hotness_score: u32,
     gate: Option<AccessGate>,
 }
 
@@ -182,7 +190,8 @@ impl PublicCommunityInfo {
             gate,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
-            activity: PublicCommunityActivity::default(),
+            activity: None,
+            hotness_score: 0,
             frozen: None,
         }
     }
@@ -191,9 +200,21 @@ impl PublicCommunityInfo {
         self.id
     }
 
+    pub fn created(&self) -> TimestampMillis {
+        self.created
+    }
+
+    pub fn marked_active_until(&self) -> TimestampMillis {
+        self.marked_active_until
+    }
+
+    pub fn activity(&self) -> &Option<PublicCommunityActivity> {
+        &self.activity
+    }
+
     pub fn mark_active(&mut self, until: TimestampMillis, activity: PublicCommunityActivity) {
         self.marked_active_until = until;
-        self.activity = activity;
+        self.activity = Some(activity);
     }
 
     pub fn has_been_active_since(&self, since: TimestampMillis) -> bool {
@@ -211,6 +232,10 @@ impl PublicCommunityInfo {
     pub fn set_frozen(&mut self, info: Option<FrozenCommunityInfo>) {
         self.frozen = info;
     }
+
+    pub fn set_hotness_score(&mut self, hotness_score: u32) {
+        self.hotness_score = hotness_score;
+    }
 }
 
 impl From<&PublicCommunityInfo> for CommunityMatch {
@@ -221,8 +246,8 @@ impl From<&PublicCommunityInfo> for CommunityMatch {
             description: community.description.clone(),
             avatar_id: community.avatar_id,
             banner_id: community.banner_id,
-            member_count: community.activity.member_count,
-            channel_count: community.activity.channel_count,
+            member_count: community.activity.as_ref().map_or(0, |a| a.member_count),
+            channel_count: community.activity.as_ref().map_or(0, |a| a.channel_count),
             gate: community.gate.clone(),
         }
     }
