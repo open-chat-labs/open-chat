@@ -5601,6 +5601,8 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "community_canister",
+ "community_canister_c2c_client",
  "group_canister",
  "group_canister_c2c_client",
  "group_index_canister",

@@ -31,3 +31,11 @@ pub fn caller_is_group_index_or_local_group_index() -> Result<(), String> {
         Err("Caller is not the group_index or the local_group_index".to_string())
     }
 }
+
+pub fn caller_is_proposals_bot() -> Result<(), String> {
+    if read_state(|state| state.is_caller_proposals_bot()) {
+        Ok(())
+    } else {
+        Err("Caller is not the proposals_bot".to_string())
+    }
+}

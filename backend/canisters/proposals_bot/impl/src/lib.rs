@@ -4,7 +4,7 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, ChatId, Cycles, ProposalId, TimestampMillis, Timestamped, Version};
+use types::{CanisterId, Cycles, MultiUserChat, ProposalId, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 
 mod governance_clients;
@@ -103,7 +103,7 @@ pub struct Metrics {
 pub struct NervousSystemMetrics {
     pub name: String,
     pub governance_canister_id: CanisterId,
-    pub chat_id: ChatId,
+    pub chat_id: MultiUserChat,
     pub latest_successful_sync: Option<TimestampMillis>,
     pub latest_failed_sync: Option<TimestampMillis>,
     pub latest_successful_proposals_update: Option<TimestampMillis>,
