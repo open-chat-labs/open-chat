@@ -82,7 +82,7 @@ export function addedToGroupNotification(
 ): AddedToGroupNotification {
     return {
         kind: "added_to_group_notification",
-        chatId: candid.chat_id.toString(),
+        chatId: { kind: "group_chat", groupId: candid.chat_id.toString() },
         groupName: candid.group_name,
         addedBy: candid.added_by.toString(),
         addedByUsername: candid.added_by_name,
@@ -101,7 +101,7 @@ export function groupNotification(candid: ApiGroupMessageNotification): GroupNot
             event: message(candid.message.event),
         },
         senderName: candid.sender_name,
-        chatId: candid.chat_id.toString(),
+        chatId: { kind: "group_chat", groupId: candid.chat_id.toString() },
         groupName: candid.group_name,
         mentioned: candid.mentioned.map((m) => ({
             userId: m.user_id.toText(),
@@ -113,7 +113,7 @@ export function groupNotification(candid: ApiGroupMessageNotification): GroupNot
 export function directNotification(candid: ApiDirectMessageNotification): DirectNotification {
     return {
         kind: "direct_notification",
-        sender: candid.sender.toString(),
+        sender: { kind: "direct_chat", userId: candid.sender.toString() },
         threadRootMessageIndex: optional(candid.thread_root_message_index, identity),
         message: {
             index: candid.message.index,
@@ -127,7 +127,7 @@ export function directNotification(candid: ApiDirectMessageNotification): Direct
 function groupReactionNotification(candid: ApiGroupReactionAddedNotification): GroupReaction {
     return {
         kind: "group_reaction",
-        chatId: candid.chat_id.toString(),
+        chatId: { kind: "group_chat", groupId: candid.chat_id.toString() },
         threadRootMessageIndex: optional(candid.thread_root_message_index, identity),
         groupName: candid.group_name,
         addedBy: candid.added_by.toString(),
@@ -145,7 +145,7 @@ function groupReactionNotification(candid: ApiGroupReactionAddedNotification): G
 function directReactionNotification(candid: ApiDirectReactionAddedNotification): DirectReaction {
     return {
         kind: "direct_reaction",
-        them: candid.them.toString(),
+        them: { kind: "direct_chat", userId: candid.them.toString() },
         username: candid.username,
         message: {
             index: candid.message.index,

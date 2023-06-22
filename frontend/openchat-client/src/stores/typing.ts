@@ -1,26 +1,29 @@
+import { MessageContext, MessageContextMap, chatIdentifiersEqual } from "openchat-shared";
 import { writable, derived } from "svelte/store";
 
-export type TypersByKey = Record<string, Set<string>>;
+export type TypersByKey = MessageContextMap<Set<string>>;
 
 type UserTyping = {
-    chatId: string;
-    threadRootMessageIndex?: number;
+    context: MessageContext;
     timeout: number;
 };
 type UsersTyping = Record<string, UserTyping>;
 
+function contextsMatch(a: MessageContext, b: MessageContext): boolean {
+    return (
+        chatIdentifiersEqual(a.chatId, b.chatId) &&
+        a.threadRootMessageIndex === b.threadRootMessageIndex
+    );
+}
+
 export function isTyping(
     usersTyping: UsersTyping,
     userId: string,
-    chatId: string,
-    threadRootMessageIndex?: number
+    context: MessageContext
 ): boolean {
     const userTyping = usersTyping[userId];
     if (userTyping === undefined) return false;
-    if (threadRootMessageIndex === undefined) return userTyping.chatId === chatId;
-    return (
-        userTyping.chatId === chatId && userTyping.threadRootMessageIndex === threadRootMessageIndex
-    );
+    return contextsMatch(context, userTyping.context);
 }
 
 const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -29,7 +32,7 @@ const usersTyping = writable<UsersTyping>({});
 
 export const typing = {
     subscribe: usersTyping.subscribe,
-    startTyping: (chatId: string, userId: string, threadRootMessageIndex?: number): void =>
+    startTyping: (context: MessageContext, userId: string): void =>
         usersTyping.update((users) => {
             // Start a timeout which will mark the user as having stopped typing if no further 'user typing' events are
             // received within MARK_TYPING_STOPPED_INTERVAL_MS.
@@ -44,40 +47,24 @@ export const typing = {
                 window.clearTimeout(existingEntry.timeout);
             }
 
-            // Mark that the user is typing in the new chat and include the timeout so that if subsequent events are
+            // Mark the context that the user is typing in and include the timeout so that if subsequent events are
             // received we can clear the timeout.
-            users[userId] = { chatId, timeout, threadRootMessageIndex };
+            users[userId] = { context, timeout };
 
             return users;
         }),
     stopTyping: (userId: string): void => _delete(userId),
 };
 
-// a derived store to show users typing by chat
-export const byChat = derived([usersTyping], ([$users]) => {
-    return Object.entries($users).reduce((byChat, [userId, { chatId }]) => {
-        if (byChat[chatId] === undefined) {
-            byChat[chatId] = new Set<string>();
+// a derived store to show users typing by message context
+export const byContext = derived([usersTyping], ([$users]) => {
+    return Object.entries($users).reduce((byContext, [userId, { context }]) => {
+        if (!byContext.has(context)) {
+            byContext.set(context, new Set<string>());
         }
-        byChat[chatId].add(userId);
-        return byChat;
-    }, {} as Record<string, Set<string>>);
-});
-
-// a derived store to show users typing by thread
-export const byThread = derived([usersTyping], ([$users]) => {
-    return Object.entries($users).reduce(
-        (byThread, [userId, { chatId, threadRootMessageIndex }]) => {
-            if (threadRootMessageIndex === undefined) return byThread;
-            const key = `${chatId}_${threadRootMessageIndex}`;
-            if (byThread[key] === undefined) {
-                byThread[key] = new Set<string>();
-            }
-            byThread[key].add(userId);
-            return byThread;
-        },
-        {} as Record<string, Set<string>>
-    );
+        byContext.get(context)?.add(userId);
+        return byContext;
+    }, new MessageContextMap<Set<string>>());
 });
 
 function _delete(userId: string): void {

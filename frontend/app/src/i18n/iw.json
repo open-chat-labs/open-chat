@@ -343,9 +343,9 @@
         "atLeastTwo": "מינימום 2"
     },
     "role": {
-        "admins": "מנהלי מערכת",
-        "members": "חברים",
-        "moderators": "מנחים",
+        "admin": "מנהלי מערכת",
+        "member": "חברים",
+        "moderator": "מנחים",
         "owner": "בעלים"
     },
     "permissions": {

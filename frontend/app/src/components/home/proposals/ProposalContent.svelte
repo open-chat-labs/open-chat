@@ -3,6 +3,7 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../../stores/rtl";
     import {
+        ChatIdentifier,
         ProposalContent,
         ProposalDecisionStatus,
         RegisterProposalVoteResponse,
@@ -26,7 +27,7 @@
     const dispatch = createEventDispatcher();
 
     export let content: ProposalContent;
-    export let chatId: string;
+    export let chatId: ChatIdentifier;
     export let messageIndex: number;
     export let messageId: bigint;
     export let collapsed: boolean;
@@ -86,7 +87,7 @@
     }
 
     function onVote(adopt: boolean) {
-        if (votingDisabled) {
+        if (votingDisabled || chatId.kind !== "group_chat") {
             return;
         }
 

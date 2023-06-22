@@ -143,7 +143,7 @@
                             </MenuItem>
                         {/if}
                         {#if canDemoteToMember}
-                            <MenuItem on:click={() => changeRole("participant")}>
+                            <MenuItem on:click={() => changeRole("member")}>
                                 <AccountRemoveOutline
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}

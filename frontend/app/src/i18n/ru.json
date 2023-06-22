@@ -333,9 +333,9 @@
         "atLeastTwo": "Минимум 2"
     },
     "role": {
-        "admins": "Админы",
-        "members": "Члены",
-        "moderators": "Модераторы",
+        "admin": "Админы",
+        "member": "Члены",
+        "moderator": "Модераторы",
         "owner": "Владельцы"
     },
     "permissions": {

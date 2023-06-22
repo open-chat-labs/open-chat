@@ -9,8 +9,6 @@ import type {
     ApiLeaveGroupResponse,
     ApiMarkReadResponse,
     ApiSetAvatarResponse,
-    ApiAddReactionResponse,
-    ApiRemoveReactionResponse,
     ApiDirectChatEvent,
     ApiDeleteMessageResponse,
     ApiUndeleteMessageResponse,
@@ -43,6 +41,20 @@ import type {
     ApiDeletedDirectMessageResponse,
     ApiSetMessageReminderResponse,
     ApiCreateCommunityResponse,
+    ApiGroupChatsInitial,
+    ApiCachedGroupChatSummaries,
+    ApiDirectChatsInitial,
+    ApiCommunitiesInitial,
+    ApiUserCanisterCommunitySummary,
+    ApiUserCanisterChannelSummary,
+    ApiFavouriteChatsInitial,
+    ApiChat,
+    ApiCommunitiesUpdates,
+    ApiUserCanisterCommunitySummaryUpdates,
+    ApiUserCanisterChannelSummaryUpdates,
+    ApiFavouriteChatsUpdates,
+    ApiGroupChatsUpdates,
+    ApiDirectChatsUpdates,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -56,7 +68,6 @@ import {
     LeaveGroupResponse,
     MarkReadResponse,
     SetAvatarResponse,
-    AddRemoveReactionResponse,
     DeleteMessageResponse,
     UndeleteMessageResponse,
     EditMessageResponse,
@@ -87,6 +98,22 @@ import {
     SetMessageReminderResponse,
     CommonResponses,
     CreateCommunityResponse,
+    GroupChatsInitial,
+    CachedGroupChatSummaries,
+    DirectChatsInitial,
+    CommunitiesInitial,
+    UserCanisterCommunitySummary,
+    UserCanisterChannelSummary,
+    FavouriteChatsInitial,
+    ChatIdentifier,
+    CommunitiesUpdates,
+    UserCanisterCommunitySummaryUpdates,
+    UserCanisterChannelSummaryUpdates,
+    FavouriteChatsUpdates,
+    GroupChatsUpdates,
+    DirectChatsUpdates,
+    DirectChatIdentifier,
+    nullMembership,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -98,7 +125,6 @@ import {
     message,
     messageContent,
     token,
-    updatedMessage,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -131,7 +157,7 @@ export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
 
 export function searchDirectChatResponse(
     candid: ApiSearchDirectChatResponse,
-    chatId: string
+    chatId: DirectChatIdentifier
 ): SearchDirectChatResponse {
     if ("Success" in candid) {
         return {
@@ -155,7 +181,7 @@ export function searchDirectChatResponse(
     );
 }
 
-export function messageMatch(candid: ApiMessageMatch, chatId: string): MessageMatch {
+export function messageMatch(candid: ApiMessageMatch, chatId: ChatIdentifier): MessageMatch {
     const sender = candid.sender.toString();
     return {
         chatId,
@@ -199,36 +225,6 @@ export function undeleteMessageResponse(
         return { kind: "user_suspended" };
     }
     throw new UnsupportedValueError("Unexpected ApiUndeleteMessageResponse type received", candid);
-}
-
-export function addRemoveReactionResponse(
-    candid: ApiAddReactionResponse | ApiRemoveReactionResponse
-): AddRemoveReactionResponse {
-    if ("Success" in candid || "SuccessV2" in candid) {
-        return "success";
-    }
-    if ("NoChange" in candid) {
-        return "no_change";
-    }
-    if ("InvalidReaction" in candid) {
-        return "invalid";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiAddRemoveReactionResponse type received",
-        candid
-    );
 }
 
 export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {
@@ -562,7 +558,7 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
 export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse,
-    chatId: string,
+    chatId: DirectChatIdentifier,
     latestClientEventIndexPreRequest: number | undefined
 ): Promise<EventsResponse<DirectChatEvent>> {
     if ("Success" in candid) {
@@ -614,71 +610,6 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
         };
     }
 
-    if ("MessageReactionAdded" in candid) {
-        return {
-            kind: "reaction_added",
-            message: updatedMessage(candid.MessageReactionAdded),
-        };
-    }
-
-    if ("MessageDeleted" in candid) {
-        return {
-            kind: "message_deleted",
-            message: updatedMessage(candid.MessageDeleted),
-        };
-    }
-
-    if ("MessageUndeleted" in candid) {
-        return {
-            kind: "message_undeleted",
-            message: updatedMessage(candid.MessageUndeleted),
-        };
-    }
-
-    if ("MessageEdited" in candid) {
-        return {
-            kind: "message_edited",
-            message: updatedMessage(candid.MessageEdited),
-        };
-    }
-
-    if ("MessageReactionRemoved" in candid) {
-        return {
-            kind: "reaction_removed",
-            message: updatedMessage(candid.MessageReactionRemoved),
-        };
-    }
-
-    if ("PollVoteRegistered" in candid) {
-        return {
-            kind: "poll_vote_registered",
-            message: updatedMessage(candid.PollVoteRegistered),
-        };
-    }
-
-    if ("PollVoteDeleted" in candid) {
-        return {
-            kind: "poll_vote_deleted",
-            message: updatedMessage(candid.PollVoteDeleted),
-        };
-    }
-
-    if ("PollEnded" in candid) {
-        return {
-            kind: "poll_ended",
-            messageIndex: candid.PollEnded.message_index,
-            eventIndex: candid.PollEnded.event_index,
-        };
-    }
-
-    if ("ThreadUpdated" in candid) {
-        return {
-            kind: "thread_updated",
-            messageIndex: candid.ThreadUpdated.message_index,
-            eventIndex: candid.ThreadUpdated.event_index,
-        };
-    }
-
     if ("Empty" in candid) {
         return {
             kind: "empty",
@@ -689,36 +620,154 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
     throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
 }
 
+function cachedGroupChatSummaries(candid: ApiCachedGroupChatSummaries): CachedGroupChatSummaries {
+    return {
+        summaries: candid.summaries.map((s) => groupChatSummary(s, true)),
+        timestamp: candid.timestamp,
+    };
+}
+
+function groupChatsInitial(candid: ApiGroupChatsInitial): GroupChatsInitial {
+    return {
+        summaries: candid.summaries.map(userCanisterGroupSummary),
+        pinned: candid.pinned.map((c) => c.toString()),
+        cached: optional(candid.cached, cachedGroupChatSummaries),
+    };
+}
+
+function directChatsInitial(candid: ApiDirectChatsInitial): DirectChatsInitial {
+    return {
+        summaries: candid.summaries.map(directChatSummary),
+        pinned: candid.pinned.map((c) => c.toString()),
+    };
+}
+
+function userCanisterChannelSummary(
+    candid: ApiUserCanisterChannelSummary
+): UserCanisterChannelSummary {
+    return {
+        chatId: {
+            kind: "channel",
+            communityId: "", // TODO - we need to make sure that we pass the community id in here
+            channelId: candid.channel_id.toString(),
+        },
+        readByMeUpTo: optional(candid.read_by_me_up_to, identity),
+        dateReadPinned: optional(candid.date_read_pinned, identity),
+        threadsRead: candid.threads_read,
+        archived: candid.archived,
+    };
+}
+
+function userCanisterCommunitySummary(
+    candid: ApiUserCanisterCommunitySummary
+): UserCanisterCommunitySummary {
+    return {
+        communityId: candid.community_id.toString(),
+        channels: candid.channels.map(userCanisterChannelSummary),
+        pinnedChannels: candid.pinned.map((p) => p.toString()),
+        archived: candid.archived,
+    };
+}
+
+function communitiesInitial(candid: ApiCommunitiesInitial): CommunitiesInitial {
+    return {
+        summaries: candid.summaries.map(userCanisterCommunitySummary),
+    };
+}
+
+function chatIndentifier(candid: ApiChat): ChatIdentifier {
+    if ("Group" in candid) {
+        return { kind: "group_chat", groupId: candid.Group.toString() };
+    }
+    if ("Direct" in candid) {
+        return { kind: "direct_chat", userId: candid.Direct.toString() };
+    }
+    if ("Channel" in candid) {
+        return {
+            kind: "channel",
+            communityId: candid.Channel[0].toString(),
+            channelId: candid.Channel[1].toString(),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiChat type received", candid);
+}
+
+function favouriteChatsInitial(candid: ApiFavouriteChatsInitial): FavouriteChatsInitial {
+    return {
+        chats: candid.chats.map(chatIndentifier),
+        pinned: candid.pinned.map(chatIndentifier),
+    };
+}
+
 export function initialStateResponse(candid: ApiInitialStateResponse): InitialStateResponse {
     if ("Success" in candid) {
         const result = candid.Success;
         return {
-            timestamp: result.timestamp,
-            directChats: result.direct_chats.map(directChatSummary),
-            cacheTimestamp: undefined,
-            cachedGroupChatSummaries: [],
-            groupChatsAdded: result.group_chats.map(userCanisterGroupSummary),
-            avatarId: optional(result.avatar_id, identity),
             blockedUsers: result.blocked_users.map((u) => u.toString()),
-            pinnedChats: result.pinned_chats.map((c) => c.toString()),
-        };
-    }
-    if ("SuccessCached" in candid) {
-        const result = candid.SuccessCached;
-        return {
-            timestamp: result.timestamp,
-            directChats: result.direct_chats.map(directChatSummary),
-            cacheTimestamp: result.cache_timestamp,
-            cachedGroupChatSummaries: result.cached_group_chat_summaries.map((g) =>
-                groupChatSummary(g, false)
-            ),
-            groupChatsAdded: result.group_chats_added.map(userCanisterGroupSummary),
+            communities: communitiesInitial(candid.Success.communities),
+            groupChats: groupChatsInitial(candid.Success.group_chats),
+            favouriteChats: favouriteChatsInitial(candid.Success.favourite_chats),
             avatarId: optional(result.avatar_id, identity),
-            blockedUsers: result.blocked_users.map((u) => u.toString()),
-            pinnedChats: result.pinned_chats.map((c) => c.toString()),
+            directChats: directChatsInitial(candid.Success.direct_chats),
+            timestamp: result.timestamp,
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
+}
+
+export function userCanisterChannelSummaryUpdates(
+    candid: ApiUserCanisterChannelSummaryUpdates
+): UserCanisterChannelSummaryUpdates {
+    return {
+        channelId: candid.channel_id.toString(),
+        readByMeUpTo: optional(candid.read_by_me_up_to, identity),
+        dateReadPinned: optional(candid.date_read_pinned, identity),
+        threadsRead: candid.threads_read.map(([idx1, idx2]) => [idx1, idx2]),
+        archived: optional(candid.archived, identity),
+    };
+}
+
+export function userCanisterCommunitySummaryUpdates(
+    candid: ApiUserCanisterCommunitySummaryUpdates
+): UserCanisterCommunitySummaryUpdates {
+    return {
+        communityId: candid.community_id.toString(),
+        channels: candid.channels.map(userCanisterChannelSummaryUpdates),
+        pinned: optional(candid.pinned, (p) => p.map((p) => p.toString())),
+        archived: optional(candid.archived, identity),
+    };
+}
+
+export function communitiesUpdates(candid: ApiCommunitiesUpdates): CommunitiesUpdates {
+    return {
+        added: candid.added.map(userCanisterCommunitySummary),
+        updated: candid.updated.map(userCanisterCommunitySummaryUpdates),
+        removed: candid.removed.map((c) => c.toString()),
+    };
+}
+
+export function favouriteChatsUpdates(candid: ApiFavouriteChatsUpdates): FavouriteChatsUpdates {
+    return {
+        chats: optional(candid.chats, (c) => c.map(chatIndentifier)),
+        pinned: optional(candid.pinned, (c) => c.map(chatIndentifier)),
+    };
+}
+
+export function groupChatsUpdates(candid: ApiGroupChatsUpdates): GroupChatsUpdates {
+    return {
+        added: candid.added.map(userCanisterGroupSummary),
+        pinned: optional(candid.pinned, (p) => p.map((p) => p.toString())),
+        updated: candid.updated.map(userCanisterGroupSummaryUpdates),
+        removed: candid.removed.map((c) => c.toString()),
+    };
+}
+
+export function directChatsUpdates(candid: ApiDirectChatsUpdates): DirectChatsUpdates {
+    return {
+        added: candid.added.map(directChatSummary),
+        pinned: optional(candid.pinned, (p) => p.map((p) => p.toString())),
+        updated: candid.updated.map(directChatSummaryUpdates),
+    };
 }
 
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
@@ -726,18 +775,12 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
         return {
             kind: "success",
             timestamp: candid.Success.timestamp,
-            directChatsAdded: candid.Success.direct_chats_added.map(directChatSummary),
-            directChatsUpdated: candid.Success.direct_chats_updated.map(directChatSummaryUpdates),
-            groupChatsAdded: candid.Success.group_chats_added.map(userCanisterGroupSummary),
-            groupChatsUpdated: candid.Success.group_chats_updated.map(
-                userCanisterGroupSummaryUpdates
-            ),
-            chatsRemoved: candid.Success.chats_removed.map((c) => c.toString()),
+            blockedUsers: optional(candid.Success.blocked_users, (b) => b.map((u) => u.toString())),
+            communities: communitiesUpdates(candid.Success.communities),
+            favouriteChats: favouriteChatsUpdates(candid.Success.favourite_chats),
+            groupChats: groupChatsUpdates(candid.Success.group_chats),
             avatarId: optionUpdate(candid.Success.avatar_id, identity),
-            blockedUsers: optional(candid.Success.blocked_users_v2, (b) =>
-                b.map((u) => u.toString())
-            ),
-            pinnedChats: optional(candid.Success.pinned_chats, (p) => p.map((c) => c.toString())),
+            directChats: directChatsUpdates(candid.Success.direct_chats),
         };
     }
 
@@ -754,7 +797,7 @@ function userCanisterGroupSummary(
     summary: ApiUserCanisterGroupChatSummary
 ): UserCanisterGroupChatSummary {
     return {
-        chatId: summary.chat_id.toString(),
+        id: { kind: "group_chat", groupId: summary.chat_id.toString() },
         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
         threadsRead: summary.threads_read.reduce((curr, next) => {
             curr[next[0]] = next[1];
@@ -769,7 +812,7 @@ function userCanisterGroupSummaryUpdates(
     summary: ApiUserCanisterGroupChatSummaryUpdates
 ): UserCanisterGroupChatSummaryUpdates {
     return {
-        chatId: summary.chat_id.toString(),
+        id: { kind: "group_chat", groupId: summary.chat_id.toString() },
         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
         threadsRead: summary.threads_read.reduce((curr, next) => {
             curr[next[0]] = next[1];
@@ -783,7 +826,7 @@ function userCanisterGroupSummaryUpdates(
 function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectChatSummaryUpdates {
     return {
         kind: "direct_chat",
-        chatId: candid.chat_id.toString(),
+        id: { kind: "direct_chat", userId: candid.chat_id.toString() },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         latestMessage: optional(candid.latest_message, (ev) => ({
@@ -815,7 +858,7 @@ function memberRole(candid: ApiGroupRole): MemberRole {
         return "moderator";
     }
     if ("Participant" in candid) {
-        return "participant";
+        return "member";
     }
     if ("Owner" in candid) {
         return "owner";
@@ -839,20 +882,13 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
         event: message(ev.event),
     }));
     return {
+        id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         kind: "group_chat",
-        chatId: candid.chat_id.toString(),
-        id: candid.chat_id.toString(),
         latestMessage,
-        readByMeUpTo: optional(candid.read_by_me_up_to, (r) =>
-            limitReadByMeUpTo && latestMessage !== undefined
-                ? Math.min(latestMessage.event.messageIndex, r)
-                : r
-        ),
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
         historyVisible: candid.history_visible_to_new_joiners,
-        joined: candid.joined,
         minVisibleEventIndex: candid.min_visible_event_index,
         minVisibleMessageIndex: candid.min_visible_message_index,
         latestEventIndex: candid.latest_event_index,
@@ -861,24 +897,32 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
             blobId,
             canisterId: candid.chat_id.toString(),
         })),
-        notificationsMuted: candid.notifications_muted,
         memberCount: candid.participant_count,
-        myRole: memberRole(candid.role),
-        mentions: candid.mentions
-            .filter((m) => m.thread_root_message_index.length === 0)
-            .map(mention),
         permissions: groupPermissions(candid.permissions),
         metrics: chatMetrics(candid.metrics),
-        myMetrics: chatMetrics(candid.my_metrics),
-        latestThreads: candid.latest_threads.map(threadSyncDetails),
         subtype: optional(candid.subtype, apiGroupSubtype),
-        archived: candid.archived,
         previewed: false,
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
+        membership: {
+            joined: candid.joined,
+            role: memberRole(candid.role),
+            mentions: candid.mentions
+                .filter((m) => m.thread_root_message_index.length === 0)
+                .map(mention),
+            latestThreads: candid.latest_threads.map(threadSyncDetails),
+            myMetrics: chatMetrics(candid.my_metrics),
+            notificationsMuted: candid.notifications_muted,
+            readByMeUpTo: optional(candid.read_by_me_up_to, (r) =>
+                limitReadByMeUpTo && latestMessage !== undefined
+                    ? Math.min(latestMessage.event.messageIndex, r)
+                    : r
+            ),
+            archived: candid.archived,
+        },
     };
 }
 
@@ -894,23 +938,26 @@ function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {
 
 function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
     return {
+        id: { kind: "direct_chat", userId: candid.them.toString() },
         kind: "direct_chat",
-        chatId: candid.them.toString(),
-        id: candid.them.toString(),
         latestMessage: {
             index: candid.latest_message.index,
             timestamp: candid.latest_message.timestamp,
             event: message(candid.latest_message.event),
         },
-        them: candid.them.toString(),
+        them: { kind: "direct_chat", userId: candid.them.toString() },
         latestEventIndex: candid.latest_event_index,
-        readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         dateCreated: candid.date_created,
-        notificationsMuted: candid.notifications_muted,
         metrics: chatMetrics(candid.metrics),
-        myMetrics: chatMetrics(candid.my_metrics),
-        archived: candid.archived,
+        membership: {
+            ...nullMembership,
+            role: "owner",
+            myMetrics: chatMetrics(candid.my_metrics),
+            notificationsMuted: candid.notifications_muted,
+            readByMeUpTo: optional(candid.read_by_me_up_to, identity),
+            archived: candid.archived,
+        },
     };
 }
 

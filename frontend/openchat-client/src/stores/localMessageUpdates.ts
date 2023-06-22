@@ -1,61 +1,62 @@
-import type {
-    LocalMessageUpdates,
-    LocalPollVote,
-    LocalReaction,
-    MessageContent,
-    ThreadSummary,
+import {
+    MessageMap,
+    type LocalMessageUpdates,
+    type LocalPollVote,
+    type LocalReaction,
+    type MessageContent,
+    type ThreadSummary,
 } from "openchat-shared";
 import { mergeThreadSummaries } from "../utils/chat";
 import { LocalUpdatesStore } from "./localUpdatesStore";
 
-class LocalMessageUpdatesStore extends LocalUpdatesStore<LocalMessageUpdates> {
-    markCancelled(messageId: string, content: MessageContent): void {
+class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpdates> {
+    markCancelled(messageId: bigint, content: MessageContent): void {
         this.applyUpdate(messageId, (_) => ({
             cancelledReminder: content,
         }));
     }
-    revertCancelled(messageId: string): void {
+    revertCancelled(messageId: bigint): void {
         this.applyUpdate(messageId, (_) => ({
             cancelledReminder: undefined,
         }));
     }
-    markDeleted(messageId: string, deletedBy: string): void {
+    markDeleted(messageId: bigint, deletedBy: string): void {
         this.applyUpdate(messageId, (_) => ({
             deleted: { deletedBy, timestamp: BigInt(Date.now()) },
         }));
     }
-    markUndeleted(messageId: string, content?: MessageContent): void {
+    markUndeleted(messageId: bigint, content?: MessageContent): void {
         this.applyUpdate(messageId, (_) => ({
             deleted: undefined,
             undeletedContent: content,
         }));
     }
-    markContentRevealed(messageId: string, content: MessageContent): void {
+    markContentRevealed(messageId: bigint, content: MessageContent): void {
         this.applyUpdate(messageId, (_) => ({
             deleted: undefined,
             revealedContent: content,
         }));
     }
-    markContentEdited(messageId: string, content: MessageContent): void {
+    markContentEdited(messageId: bigint, content: MessageContent): void {
         this.applyUpdate(messageId, (_) => ({ editedContent: content }));
     }
-    revertEditedContent(messageId: string): void {
+    revertEditedContent(messageId: bigint): void {
         this.applyUpdate(messageId, (_) => ({ editedContent: undefined }));
     }
-    markReaction(messageId: string, reaction: LocalReaction): void {
+    markReaction(messageId: bigint, reaction: LocalReaction): void {
         this.applyUpdate(messageId, (updates) => ({
             reactions: [...(updates?.reactions ?? []), reaction],
         }));
     }
-    markPrizeClaimed(messageId: string, userId: string): void {
+    markPrizeClaimed(messageId: bigint, userId: string): void {
         this.applyUpdate(messageId, (_) => ({ prizeClaimed: userId }));
     }
-    markPollVote(messageId: string, vote: LocalPollVote): void {
+    markPollVote(messageId: bigint, vote: LocalPollVote): void {
         this.applyUpdate(messageId, (updates) => ({
             pollVotes: [...(updates?.pollVotes ?? []), vote],
         }));
     }
-    markThreadSummaryUpdated(threadRootMessageId: string, summary: ThreadSummary): void {
+    markThreadSummaryUpdated(threadRootMessageId: bigint, summary: ThreadSummary): void {
         this.applyUpdate(threadRootMessageId, (updates) => {
             return {
                 threadSummary:
@@ -67,4 +68,4 @@ class LocalMessageUpdatesStore extends LocalUpdatesStore<LocalMessageUpdates> {
     }
 }
 
-export const localMessageUpdates = new LocalMessageUpdatesStore();
+export const localMessageUpdates = new LocalMessageUpdatesStore(new MessageMap());

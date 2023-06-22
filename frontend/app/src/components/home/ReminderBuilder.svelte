@@ -10,10 +10,10 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import { createEventDispatcher, getContext } from "svelte";
     import { now } from "../../stores/time";
-    import type { OpenChat } from "openchat-client";
+    import type { ChatIdentifier, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
 
-    export let chatId: string;
+    export let chatId: ChatIdentifier;
     export let eventIndex: number;
     export let threadRootMessageIndex: number | undefined;
 

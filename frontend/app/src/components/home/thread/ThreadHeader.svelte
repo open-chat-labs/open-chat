@@ -29,19 +29,19 @@
     export let rootEvent: EventWrapper<Message>;
     export let threadRootMessageIndex: number;
 
-    $: byThread = client.typersByThread;
+    $: byContext = client.typersByContext;
     $: userStore = client.userStore;
-    $: chat = normaliseChatSummary($now, chatSummary, $byThread);
+    $: chat = normaliseChatSummary($now, chatSummary, $byContext);
 
     function close() {
-        dispatch("closeThread", chatSummary.chatId);
+        dispatch("closeThread", chatSummary.id);
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const someoneTyping = client.getTypingString(
             $_,
             $userStore,
-            `${chatSummary.chatId}_${threadRootMessageIndex}`,
+            { chatId: chatSummary.id, threadRootMessageIndex },
             typing
         );
 
@@ -50,9 +50,11 @@
             someoneTyping ?? ($mobileWidth ? `${$_("thread.title")}: ${msgTxt}` : msgTxt);
         if (chatSummary.kind === "direct_chat") {
             return {
-                title: $mobileWidth ? $userStore[chatSummary.them]?.username : $_("thread.title"),
-                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
-                userId: chatSummary.them,
+                title: $mobileWidth
+                    ? $userStore[chatSummary.them.userId]?.username
+                    : $_("thread.title"),
+                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them.userId]),
+                userId: chatSummary.them.userId,
                 subtext,
                 typing: someoneTyping !== undefined,
             };

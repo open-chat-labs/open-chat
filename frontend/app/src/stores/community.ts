@@ -40,7 +40,7 @@ export const dummyCommunityChannels = writable<{ name: string; description: stri
 
 export function createCandidateCommunity(id: string): Community {
     return {
-        id,
+        id: { kind: "community", communityId: id },
         name: "",
         description: "",
         memberCount: 0,
@@ -49,12 +49,15 @@ export function createCandidateCommunity(id: string): Community {
         gate: { kind: "no_gate" },
         public: true,
         permissions: defaultPermissions,
-        myRole: "owner",
         historyVisible: true,
         frozen: false,
         level: "community",
-        joined: BigInt(0),
         lastUpdated: BigInt(0),
         latestEventIndex: 0,
+        channels: [],
+        membership: {
+            role: "owner",
+            joined: BigInt(0),
+        },
     };
 }

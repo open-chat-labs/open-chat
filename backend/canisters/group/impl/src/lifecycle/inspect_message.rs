@@ -41,6 +41,7 @@ fn accept_if_valid(state: &RuntimeState) {
             | "put_chunk"
             | "register_poll_vote"
             | "register_proposal_vote"
+            | "register_proposal_vote_v2"
             | "toggle_mute_notifications" => true,
             _ => false,
         }

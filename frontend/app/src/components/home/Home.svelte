@@ -30,13 +30,20 @@
         Community,
         Level,
         GroupSearchResponse,
+        ChatIdentifier,
+        DirectChatIdentifier,
+        GroupChatIdentifier,
+        chatIdentifiersEqual,
+        nullMembership,
+        CommunityIdentifier,
+        routeForChatIdentifier,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import page from "page";
-    import { chatTypeToPath, pathParams } from "../../routes";
+    import { pathParams } from "../../routes";
     import type { RouteParams } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import {
@@ -66,6 +73,7 @@
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
     import { createCandidateCommunity } from "../../stores/community";
+    import { interpolateLevel } from "../../utils/i18n";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -81,26 +89,26 @@
 
     type ConfirmLeaveCommunityEvent = {
         kind: "leave_community";
-        communityId: string;
+        communityId: CommunityIdentifier;
         chatType: ChatType;
     };
 
     type ConfirmLeaveEvent = {
         kind: "leave";
-        chatId: string;
+        chatId: GroupChatIdentifier;
         chatType: ChatType;
     };
 
     type ConfirmDeleteEvent = {
         kind: "delete";
-        chatId: string;
+        chatId: GroupChatIdentifier;
         chatType: ChatType;
         doubleCheck: { challenge: string; response: string };
     };
 
     type ConfirmDeleteCommunityEvent = {
         kind: "delete_community";
-        communityId: string;
+        communityId: CommunityIdentifier;
         doubleCheck: { challenge: string; response: string };
     };
 
@@ -193,21 +201,21 @@
     }
 
     async function newChatSelected(
-        chatId: string,
-        chatType: ChatType | "unknown",
+        chatId: ChatIdentifier,
         messageIndex?: number,
         threadMessageIndex?: number
     ): Promise<void> {
-        let chat = $chatSummariesStore[chatId];
+        let chat = $chatSummariesStore.get(chatId);
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
-            const isGroup = chatType === "group_chat" || !(await createDirectChat(chatId));
-            if (isGroup) {
+            if (chatId.kind === "direct_chat") {
+                await createDirectChat(chatId);
+            } else if (chatId.kind === "group_chat") {
                 const code = $querystring.get("code");
                 if (code) {
                     client.groupInvite = {
-                        chatId,
+                        chatId: chatId.groupId,
                         code,
                     };
                 }
@@ -216,20 +224,21 @@
                     return;
                 }
             }
-
-            chat = $chatSummariesStore[chatId];
+            chat = $chatSummariesStore.get(chatId);
         }
 
-        // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
-        if (chat.archived) {
-            unarchiveChat(chat.chatId);
-        }
+        if (chat !== undefined) {
+            // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
+            if (chat?.membership.archived) {
+                unarchiveChat(chat.id);
+            }
 
-        // if it's a known chat let's select it
-        closeNotificationsForChat(chat.chatId);
-        $eventListScrollTop = undefined;
-        client.setSelectedChat(chat.chatId, messageIndex, threadMessageIndex);
-        resetRightPanel();
+            // if it's a known chat let's select it
+            closeNotificationsForChat(chat.id);
+            $eventListScrollTop = undefined;
+            client.setSelectedChat(chat.id, messageIndex, threadMessageIndex);
+            resetRightPanel();
+        }
     }
 
     // the currentChatMessages component may not exist straight away
@@ -256,10 +265,9 @@
                 closeThread();
 
                 // if the chat in the url is different from the chat we already have selected
-                if (pathParams.chatId !== $selectedChatId?.toString()) {
+                if (!chatIdentifiersEqual(pathParams.chatId, $selectedChatId)) {
                     newChatSelected(
                         pathParams.chatId,
-                        pathParams.chatType,
                         pathParams.messageIndex,
                         pathParams.threadMessageIndex
                     );
@@ -417,7 +425,7 @@
         });
     }
 
-    function pinChat(ev: CustomEvent<string>) {
+    function pinChat(ev: CustomEvent<ChatIdentifier>) {
         client.pinChat(ev.detail).then((resp) => {
             if (resp.kind === "limit_exceeded") {
                 toastStore.showSuccessToast("pinChat.limitExceeded", {
@@ -429,7 +437,7 @@
         });
     }
 
-    function unpinChat(ev: CustomEvent<string>) {
+    function unpinChat(ev: CustomEvent<ChatIdentifier>) {
         client.unpinChat(ev.detail).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("pinChat.unpinFailed");
@@ -437,7 +445,7 @@
         });
     }
 
-    function onArchiveChat(ev: CustomEvent<string>) {
+    function onArchiveChat(ev: CustomEvent<ChatIdentifier>) {
         client.archiveChat(ev.detail).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("archiveChatFailed");
@@ -448,11 +456,11 @@
         }
     }
 
-    function onUnarchiveChat(ev: CustomEvent<string>) {
+    function onUnarchiveChat(ev: CustomEvent<ChatIdentifier>) {
         unarchiveChat(ev.detail);
     }
 
-    function unarchiveChat(chatId: string) {
+    function unarchiveChat(chatId: ChatIdentifier) {
         client.unarchiveChat(chatId).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("unarchiveChatFailed");
@@ -513,19 +521,19 @@
         }
     }
 
-    function deleteGroup(chatId: string, chatType: ChatType): Promise<void> {
+    function deleteGroup(chatId: GroupChatIdentifier, chatType: ChatType): Promise<void> {
         page("/");
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
                 toastStore.showSuccessToast("deleteGroupSuccess");
             } else {
                 toastStore.showFailureToast("deleteGroupFailure");
-                page(`/${chatTypeToPath(chatType)}/${chatId}`);
+                page(routeForChatIdentifier(chatId));
             }
         });
     }
 
-    function leaveGroup(chatId: string, chatType: ChatType): Promise<void> {
+    function leaveGroup(chatId: GroupChatIdentifier, chatType: ChatType): Promise<void> {
         page("/");
 
         client.leaveGroup(chatId).then((resp) => {
@@ -535,36 +543,36 @@
                 } else {
                     toastStore.showFailureToast("failedToLeaveGroup");
                 }
-                page(`/${chatTypeToPath(chatType)}/${chatId}`);
+                page(routeForChatIdentifier(chatId));
             }
         });
 
         return Promise.resolve();
     }
 
-    function deleteDirectChat(ev: CustomEvent<string>) {
+    function deleteDirectChat(ev: CustomEvent<DirectChatIdentifier>) {
         if ($pathParams.kind === "global_chat_selected_route" && ev.detail === $pathParams.chatId) {
             page("/");
         }
         tick().then(() => client.removeChat(ev.detail));
     }
 
-    function chatWith(ev: CustomEvent<string>) {
+    function chatWith(ev: CustomEvent<DirectChatIdentifier>) {
         const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === ev.detail;
         });
         if (chat) {
-            page(`/user/${chat.chatId}`);
+            page(routeForChatIdentifier(ev.detail));
         } else {
             createDirectChat(ev.detail);
         }
     }
 
     function loadMessage(ev: CustomEvent<MessageMatch>): void {
-        if (ev.detail.chatId === $selectedChatId) {
+        if (chatIdentifiersEqual(ev.detail.chatId, $selectedChatId)) {
             currentChatMessages?.externalGoToMessage(ev.detail.messageIndex);
         } else {
-            page(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
+            page(`${routeForChatIdentifier(ev.detail.chatId)}/${ev.detail.messageIndex}`);
         }
     }
 
@@ -581,18 +589,25 @@
     }
 
     function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
+        if (ev.detail.sender === undefined) return;
+
         const chat = $chatSummariesListStore.find((c) => {
-            return c.kind === "direct_chat" && c.them === ev.detail.sender?.userId;
+            return (
+                c.kind === "direct_chat" &&
+                chatIdentifiersEqual(c.them, {
+                    kind: "direct_chat",
+                    userId: ev.detail.sender!.userId,
+                })
+            );
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const chatId = chat?.chatId ?? ev.detail.sender!.userId;
+        const chatId = chat?.id ?? { kind: "direct_chat", userId: ev.detail.sender.userId };
         currentChatDraftMessage.setTextContent(chatId, "");
         currentChatDraftMessage.setReplyingTo(chatId, ev.detail);
         if (chat) {
-            page(`/${chat.chatId}`);
+            page(routeForChatIdentifier(chatId));
         } else {
-            createDirectChat(chatId);
+            createDirectChat(chatId as DirectChatIdentifier);
         }
     }
 
@@ -613,7 +628,7 @@
 
     function showProfile() {
         if ($selectedChatId !== undefined) {
-            page.replace(`/${$selectedChatId}`);
+            page.replace(routeForChatIdentifier($selectedChatId));
         }
         rightPanelHistory.set([{ kind: "user_profile" }]);
     }
@@ -622,7 +637,7 @@
         if ($selectedChatId !== undefined) {
             if (ev.initiating) {
                 creatingThread = true;
-                page.replace(`/${$selectedChatId}`);
+                page.replace(routeForChatIdentifier($selectedChatId));
             }
 
             tick().then(() => {
@@ -645,7 +660,7 @@
 
     function showGroupDetails() {
         if ($selectedChatId !== undefined) {
-            page.replace(`/${$selectedChatId}`);
+            page.replace(routeForChatIdentifier($selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "group_details",
@@ -656,7 +671,7 @@
 
     function showProposalFilters() {
         if ($selectedChatId !== undefined) {
-            page.replace(`/${$selectedChatId}`);
+            page.replace(routeForChatIdentifier($selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
@@ -667,7 +682,7 @@
 
     function showPinned() {
         if ($selectedChatId !== undefined) {
-            page.replace(`/${$selectedChatId}`);
+            page.replace(routeForChatIdentifier($selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "show_pinned",
@@ -681,7 +696,7 @@
     ): Promise<void> {
         const { group, select } = ev.detail;
 
-        const rules = await client.getGroupRules(group.chatId);
+        const rules = await client.getGroupRules(group.id);
 
         if (rules === undefined) {
             toastStore.showFailureToast("group.getRulesFailed");
@@ -715,7 +730,7 @@
                     joining = undefined;
                 } else if (select) {
                     joining = undefined;
-                    page(`/${group.chatId}`);
+                    page(routeForChatIdentifier(group.id));
                 } else {
                     joining = undefined;
                 }
@@ -727,9 +742,9 @@
         let chat = ev.detail;
         page("/");
         tick().then(() => {
-            client.removeChat(chat.chatId);
+            client.removeChat(chat.id);
             if (!chat.public) {
-                client.declineInvitation(chat.chatId);
+                client.declineInvitation(chat.id);
             }
         });
     }
@@ -738,7 +753,7 @@
         showUpgrade = true;
     }
 
-    function onSelectChat(ev: CustomEvent<string>) {
+    function onSelectChat(ev: CustomEvent<ChatIdentifier>) {
         closeModal();
         if (messageToForward !== undefined) {
             forwardToChat(ev.detail);
@@ -753,13 +768,13 @@
         messageToForward = undefined;
     }
 
-    function forwardToChat(chatId: string) {
-        page(`/${chatId}`);
+    function forwardToChat(chatId: ChatIdentifier) {
+        page(routeForChatIdentifier(chatId));
         messageToForwardStore.set(messageToForward);
     }
 
-    function shareWithChat(chatId: string) {
-        page(`/${chatId}`);
+    function shareWithChat(chatId: ChatIdentifier) {
+        page(routeForChatIdentifier(chatId));
 
         const shareText = share.text ?? "";
         const shareTitle = share.title ?? "";
@@ -778,7 +793,7 @@
     }
 
     function groupCreated(
-        ev: CustomEvent<{ chatId: string; isPublic: boolean; rules: AccessRules }>
+        ev: CustomEvent<{ chatId: GroupChatIdentifier; isPublic: boolean; rules: AccessRules }>
     ) {
         const { chatId, isPublic, rules } = ev.detail;
         chatStateStore.setProp(chatId, "rules", rules);
@@ -810,7 +825,7 @@
     function newGroup(level: Level = "group") {
         modal = ModalType.NewGroup;
         candidateGroup = {
-            id: "",
+            id: { kind: "group_chat", groupId: "" },
             name: "",
             description: "",
             historyVisible: true,
@@ -818,23 +833,26 @@
             frozen: false,
             members: [],
             permissions: {
-                changePermissions: "admins",
-                changeRoles: "admins",
-                removeMembers: "moderators",
-                blockUsers: "moderators",
-                deleteMessages: "moderators",
-                updateGroup: "admins",
-                pinMessages: "admins",
-                inviteUsers: "admins",
-                createPolls: "members",
-                sendMessages: "members",
-                reactToMessages: "members",
-                replyInThread: "members",
+                changePermissions: "admin",
+                changeRoles: "admin",
+                removeMembers: "moderator",
+                blockUsers: "moderator",
+                deleteMessages: "moderator",
+                updateGroup: "admin",
+                pinMessages: "admin",
+                inviteUsers: "admin",
+                createPolls: "member",
+                sendMessages: "member",
+                reactToMessages: "member",
+                replyInThread: "member",
             },
             rules: defaultAccessRules,
             gate: { kind: "no_gate" },
-            myRole: "owner",
             level,
+            membership: {
+                ...nullMembership,
+                role: "owner",
+            },
         };
     }
 
@@ -844,7 +862,7 @@
         modal = ModalType.NewGroup;
         const { chat, rules } = ev.detail;
         candidateGroup = {
-            id: chat.chatId,
+            id: chat.id,
             name: chat.name,
             description: chat.description,
             historyVisible: chat.historyVisible,
@@ -852,7 +870,6 @@
             frozen: chat.frozen,
             members: [],
             permissions: { ...chat.permissions },
-            myRole: chat.myRole,
             rules: rules !== undefined ? { ...rules } : defaultAccessRules,
             avatar: {
                 blobUrl: chat.blobUrl,
@@ -860,17 +877,21 @@
             },
             gate: chat.gate,
             level: "group",
+            membership: chat.membership,
         };
     }
 
     function filterChatSelection(
         chats: ChatSummary[],
-        selectedChatId: string | undefined
+        selectedChatId: ChatIdentifier | undefined
     ): ChatSummary[] {
-        return chats.filter((c) => selectedChatId !== c.chatId && client.canSendMessages(c.chatId));
+        if (selectedChatId === undefined) return chats;
+        return chats.filter(
+            (c) => !chatIdentifiersEqual(selectedChatId, c.id) && client.canSendMessages(c.id)
+        );
     }
 
-    function toggleMuteNotifications(ev: CustomEvent<{ chatId: string; mute: boolean }>) {
+    function toggleMuteNotifications(ev: CustomEvent<{ chatId: ChatIdentifier; mute: boolean }>) {
         const op = ev.detail.mute ? "muted" : "unmuted";
         client.toggleMuteNotifications(ev.detail.chatId, ev.detail.mute).then((success) => {
             if (!success) {
@@ -886,12 +907,12 @@
         // return () => (window.location.href = route);
     }
 
-    async function createDirectChat(chatId: string): Promise<boolean> {
+    async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
         if (!(await client.createDirectChat(chatId))) {
             return false;
         }
 
-        page(`/user/${chatId}`);
+        page(routeForChatIdentifier(chatId));
         return true;
     }
 
@@ -1029,9 +1050,11 @@
         confirmActionEvent.kind === "delete_community"
             ? confirmActionEvent.doubleCheck
             : undefined}
-        title={confirmActionEvent.kind === "rules" ? $_("group.rules.acceptTitle") : undefined}
-        yesLabel={confirmActionEvent.kind === "rules" ? $_("group.rules.accept") : undefined}
-        noLabel={confirmActionEvent.kind === "rules" ? $_("group.rules.reject") : undefined}
+        title={confirmActionEvent.kind === "rules"
+            ? interpolateLevel("rules.acceptTitle", "group")
+            : undefined}
+        yesLabel={confirmActionEvent.kind === "rules" ? $_("rules.accept") : undefined}
+        noLabel={confirmActionEvent.kind === "rules" ? $_("rules.reject") : undefined}
         message={confirmMessage}
         action={onConfirmAction} />
 {/if}

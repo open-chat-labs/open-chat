@@ -1,6 +1,6 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import type { OpenChat, PrizeContent } from "openchat-client";
+    import type { ChatIdentifier, OpenChat, PrizeContent } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -15,7 +15,7 @@
     const client = getContext<OpenChat>("client");
 
     export let content: PrizeContent;
-    export let chatId: string;
+    export let chatId: ChatIdentifier;
     export let messageId: bigint;
 
     $: total = content.prizesRemaining + content.prizesPending + content.winners.length;
@@ -30,7 +30,7 @@
     let progressWidth = 0;
 
     function claim(e: MouseEvent) {
-        if (e.isTrusted) {
+        if (e.isTrusted && chatId.kind === "group_chat") {
             claimsStore.add(messageId);
             client
                 .claimPrize(chatId, messageId)

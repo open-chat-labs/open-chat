@@ -17,6 +17,8 @@
         OpenChat,
         UnsupportedValueError,
         UpdateGroupResponse,
+        GroupChatIdentifier,
+        routeForChatIdentifier,
     } from "openchat-client";
     import StageHeader from "../StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
@@ -44,12 +46,11 @@
     };
     let rulesValid = true;
     $: steps = getSteps(editing);
-    $: editing = candidateGroup.id !== "";
+    $: editing = candidateGroup.id.groupId !== "";
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
-    $: canEditPermissions =
-        candidateGroup.id === "" ? true : client.canChangePermissions(candidateGroup.id);
+    $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.id);
 
     $: permissionsDirty = client.havePermissionsChanged(
         originalGroup.permissions,
@@ -124,13 +125,13 @@
         throw new UnsupportedValueError(`Unexpected CreateGroupResponse type received`, resp);
     }
 
-    function optionallyInviteUsers(canisterId: string): Promise<void> {
+    function optionallyInviteUsers(chatId: GroupChatIdentifier): Promise<void> {
         if (candidateGroup.members.length === 0) {
             return Promise.resolve();
         }
         return client
             .inviteUsers(
-                canisterId,
+                chatId,
                 candidateGroup.members.map((m) => m.user.userId)
             )
             .then((resp) => {
@@ -176,7 +177,7 @@
     }
 
     function doMakeGroupPrivate(): Promise<void> {
-        if (candidateGroup.id === "") return Promise.resolve();
+        if (!editing) return Promise.resolve();
 
         return client.makeGroupPrivate(candidateGroup.id).then((success) => {
             if (success) {
@@ -191,7 +192,7 @@
     }
 
     function doUpdatePermissions(): Promise<void> {
-        if (candidateGroup.id === "") return Promise.resolve();
+        if (!editing) return Promise.resolve();
 
         return client
             .updateGroupPermissions(
@@ -213,7 +214,7 @@
     }
 
     function doUpdateGate(gate: AccessGate): Promise<void> {
-        if (candidateGroup.id === "") return Promise.resolve();
+        if (!editing) return Promise.resolve();
 
         return client
             .updateGroup(
@@ -244,7 +245,7 @@
     }
 
     function doUpdateRules(): Promise<void> {
-        if (candidateGroup.id === "") return Promise.resolve();
+        if (!editing) return Promise.resolve();
 
         return client.updateGroupRules(candidateGroup.id, candidateGroup.rules).then((success) => {
             if (success) {
@@ -259,7 +260,7 @@
     }
 
     function doUpdateInfo(): Promise<void> {
-        if (candidateGroup.id === "") return Promise.resolve();
+        if (!editing) return Promise.resolve();
 
         return client
             .updateGroup(
@@ -302,9 +303,13 @@
                     if (err) toastStore.showFailureToast(interpolateError(err));
                     step = 0;
                 } else {
-                    return optionallyInviteUsers(resp.canisterId)
+                    const chatId: GroupChatIdentifier = {
+                        kind: "group_chat",
+                        groupId: resp.canisterId,
+                    };
+                    return optionallyInviteUsers(chatId)
                         .then(() => {
-                            onGroupCreated(resp.canisterId);
+                            onGroupCreated(chatId);
                         })
                         .catch((err) => {
                             toastStore.showFailureToast("inviteUsersFailed");
@@ -319,8 +324,8 @@
             .finally(() => (busy = false));
     }
 
-    function onGroupCreated(canisterId: string) {
-        const url = `/group/${canisterId}`;
+    function onGroupCreated(canisterId: GroupChatIdentifier) {
+        const url = routeForChatIdentifier(canisterId);
         dispatch("groupCreated", {
             chatId: canisterId,
             public: candidateGroup.public,

@@ -75,8 +75,25 @@ export interface CanisterWasm {
   'module' : Uint8Array | number[],
 }
 export type ChannelId = bigint;
+export interface ChannelMembership {
+  'role' : GroupRole,
+  'notifications_muted' : boolean,
+  'joined' : TimestampMillis,
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'mentions' : Array<Mention>,
+  'my_metrics' : ChatMetrics,
+}
+export interface ChannelMembershipUpdates {
+  'role' : [] | [GroupRole],
+  'notifications_muted' : [] | [boolean],
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'mentions' : Array<Mention>,
+  'my_metrics' : [] | [ChatMetrics],
+}
+export type Chat = { 'Group' : ChatId } |
+  { 'Channel' : [CommunityId, ChannelId] } |
+  { 'Direct' : ChatId };
 export type ChatEvent = { 'Empty' : null } |
-  { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
@@ -85,33 +102,24 @@ export type ChatEvent = { 'Empty' : null } |
   { 'UsersInvited' : UsersInvited } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
-  { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
   { 'ChatFrozen' : ChatFrozen } |
-  { 'PollEnded' : PollEnded } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
-  { 'ThreadUpdated' : ThreadUpdated } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ChatUnfrozen' : ChatUnfrozen } |
-  { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
-  { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
-  { 'MessageUndeleted' : UpdatedMessage } |
   { 'GroupGateUpdated' : GroupGateUpdated } |
   { 'RoleChanged' : RoleChanged } |
-  { 'PollVoteDeleted' : UpdatedMessage } |
   { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
-  { 'ProposalsUpdated' : ProposalsUpdated } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
-  { 'MessageEdited' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface ChatEventWrapper {
@@ -126,6 +134,7 @@ export type ChatId = CanisterId;
 export interface ChatMetrics {
   'prize_winner_messages' : bigint,
   'audio_messages' : bigint,
+  'cycles_messages' : bigint,
   'chat_messages' : bigint,
   'edits' : bigint,
   'icp_messages' : bigint,
@@ -145,6 +154,7 @@ export interface ChatMetrics {
   'reported_messages' : bigint,
   'ckbtc_messages' : bigint,
   'reactions' : bigint,
+  'kinic_messages' : bigint,
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
@@ -159,23 +169,18 @@ export interface CommunityCanisterChannelSummary {
   'min_visible_event_index' : EventIndex,
   'gate' : [] | [AccessGate],
   'name' : string,
-  'role' : GroupRole,
-  'notifications_muted' : boolean,
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
-  'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'next_message_expiry' : [] | [TimestampMillis],
-  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'membership' : [] | [ChannelMembership],
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
-  'mentions' : Array<Mention>,
   'member_count' : number,
   'expired_messages' : Array<MessageIndexRange>,
-  'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface CommunityCanisterChannelSummaryUpdates {
@@ -187,31 +192,27 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'date_last_pinned' : [] | [TimestampMillis],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
-  'role' : [] | [GroupRole],
-  'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
   'avatar_id' : DocumentIdUpdate,
-  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
-  'mentions' : Array<Mention>,
   'member_count' : [] | [number],
-  'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface CommunityCanisterCommunitySummary {
   'is_public' : boolean,
   'permissions' : CommunityPermissions,
   'community_id' : CommunityId,
+  'metrics' : ChatMetrics,
   'gate' : [] | [AccessGate],
   'name' : string,
-  'role' : CommunityRole,
   'description' : string,
   'last_updated' : TimestampMillis,
   'channels' : Array<CommunityCanisterChannelSummary>,
-  'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'membership' : [] | [CommunityMembership],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
@@ -222,20 +223,28 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'permissions' : [] | [CommunityPermissions],
   'community_id' : CommunityId,
   'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
+  'metrics' : [] | [ChatMetrics],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
-  'role' : [] | [CommunityRole],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
-  'channels_removed' : Array<ChannelId>,
   'avatar_id' : DocumentIdUpdate,
   'channels_added' : Array<CommunityCanisterChannelSummary>,
+  'membership' : [] | [CommunityMembershipUpdates],
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'banner_id' : DocumentIdUpdate,
   'member_count' : [] | [number],
 }
 export type CommunityId = CanisterId;
+export interface CommunityMembership {
+  'role' : CommunityRole,
+  'joined' : TimestampMillis,
+}
+export interface CommunityMembershipUpdates {
+  'role' : [] | [CommunityRole],
+  'channels_removed' : Array<ChannelId>,
+}
 export type CommunityPermissionRole = { 'Owners' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
@@ -267,6 +276,7 @@ export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
 export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CHAT' : null } |
   { 'SNS1' : null } |
+  { 'KINIC' : null } |
   { 'CKBTC' : null };
 export interface CustomMessageContent {
   'data' : Uint8Array | number[],
@@ -853,10 +863,6 @@ export interface PollContent {
   'ended' : boolean,
   'config' : PollConfig,
 }
-export interface PollEnded {
-  'event_index' : EventIndex,
-  'message_index' : MessageIndex,
-}
 export interface PollVotes {
   'total' : TotalPollVotes,
   'user' : Uint32Array | number[],
@@ -904,11 +910,6 @@ export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
   { 'AcceptVotes' : null } |
   { 'Unspecified' : null } |
   { 'Settled' : null };
-export interface ProposalUpdated {
-  'event_index' : EventIndex,
-  'message_index' : MessageIndex,
-}
-export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
@@ -1049,11 +1050,6 @@ export interface ThreadSyncDetails {
   'latest_event' : [] | [EventIndex],
   'latest_message' : [] | [MessageIndex],
 }
-export interface ThreadUpdated {
-  'latest_thread_message_index_if_updated' : [] | [MessageIndex],
-  'event_index' : EventIndex,
-  'message_index' : MessageIndex,
-}
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export type TimestampUpdate = { 'NoChange' : null } |
@@ -1071,11 +1067,6 @@ export interface UpdateUserIdArgs {
 export type UpdateUserIdResponse = { 'UserIdAlreadyExists' : null } |
   { 'Success' : null } |
   { 'UserNotFound' : null };
-export interface UpdatedMessage {
-  'updated_by' : UserId,
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
-}
 export interface User { 'username' : string, 'user_id' : UserId }
 export type UserArgs = {};
 export interface UserConfig { 'byte_limit' : bigint, 'user_id' : UserId }

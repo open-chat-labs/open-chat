@@ -42,6 +42,7 @@
     let messagesDivHeight: number;
     let previousLatestEventIndex: number | undefined = undefined;
 
+    $: selectedMessageContext = client.selectedMessageContext;
     $: focusMessageIndex = client.focusThreadMessageIndex;
     $: currentChatMembers = client.currentChatMembers;
     $: lastCryptoSent = client.lastCryptoSent;
@@ -52,7 +53,7 @@
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
     $: threadRootMessage = rootEvent.event;
-    $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them);
+    $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
         draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {}))
     );
@@ -60,8 +61,8 @@
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
     $: fileToAttach = derived(draftMessage, (d) => d.attachment);
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
-    $: canSend = client.canReplyInThread(chat.chatId);
-    $: canReact = client.canReactToMessages(chat.chatId);
+    $: canSend = client.canReplyInThread(chat.id);
+    $: canReact = client.canReactToMessages(chat.id);
     $: expandedDeletedMessages = client.expandedDeletedMessages;
     $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
@@ -70,8 +71,7 @@
         user.userId,
         $expandedDeletedMessages
     ) as EventWrapper<Message>[][][];
-    $: readonly = client.isChatReadOnly(chat.chatId);
-    $: selectedThreadKey = client.selectedThreadKey;
+    $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
     $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
 
@@ -84,7 +84,7 @@
                 previousLatestEventIndex !== undefined &&
                 thread.latestEventIndex > previousLatestEventIndex
             ) {
-                client.loadNewMessages(chat.chatId, rootEvent);
+                client.loadNewMessages(chat.id, rootEvent);
                 previousLatestEventIndex = thread.latestEventIndex;
             }
         }
@@ -115,7 +115,7 @@
         if ($editingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
-                    chat.chatId,
+                    chat.id,
                     text,
                     $fileToAttach,
                     $editingEvent,
@@ -137,7 +137,7 @@
     }
 
     function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
-        client.retrySendMessage(chat.chatId, ev.detail, $threadEvents, threadRootMessageIndex);
+        client.retrySendMessage(chat.id, ev.detail, $threadEvents, threadRootMessageIndex);
     }
 
     function sendMessageWithAttachment(
@@ -146,7 +146,7 @@
         fileToAttach: MessageContent | undefined
     ) {
         client.sendMessageWithAttachment(
-            chat.chatId,
+            chat.id,
             $threadEvents,
             textContent,
             mentioned,
@@ -192,7 +192,7 @@
     }
 
     function createPoll() {
-        if (!client.canCreatePolls(chat.chatId)) return;
+        if (!client.canCreatePolls(chat.id)) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -228,21 +228,21 @@
     }
 
     function isConfirmed(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "message") {
-            return !unconfirmed.contains($selectedThreadKey ?? "", evt.event.messageId);
+        if (evt.event.kind === "message" && $selectedMessageContext) {
+            return !unconfirmed.contains($selectedMessageContext, evt.event.messageId);
         }
         return true;
     }
 
     function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "message") {
-            return failedMessagesStore.contains($selectedThreadKey ?? "", evt.event.messageId);
+        if (evt.event.kind === "message" && $selectedMessageContext) {
+            return failedMessagesStore.contains($selectedMessageContext, evt.event.messageId);
         }
         return false;
     }
 
     function goToMessageIndex(index: number) {
-        chatEventList?.scrollToMessageIndex(chat.chatId, index, false);
+        chatEventList?.scrollToMessageIndex(chat.id, index, false);
     }
 
     function onGoToMessageIndex(
@@ -281,7 +281,7 @@
     chatSummary={chat} />
 
 <ChatEventList
-    selectedThreadKey={$selectedThreadKey}
+    selectedMessageContext={$selectedMessageContext}
     threadRootEvent={rootEvent}
     rootSelector={"thread-messages"}
     maintainScroll={false}
@@ -289,7 +289,7 @@
     {readonly}
     unreadMessages={0}
     firstUnreadMention={undefined}
-    setFocusMessageIndex={(idx) => client.setFocusThreadMessageIndex(chat.chatId, idx)}
+    setFocusMessageIndex={(idx) => client.setFocusThreadMessageIndex(chat.id, idx)}
     footer
     {events}
     {chat}
@@ -311,7 +311,7 @@
                 {#each dayGroup as userGroup}
                     {#each userGroup as evt, i (eventKey(evt))}
                         <ChatEvent
-                            chatId={chat.chatId}
+                            chatId={chat.id}
                             chatType={chat.kind}
                             {user}
                             event={evt}
@@ -330,9 +330,9 @@
                             pinned={false}
                             supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
                             supportsReply={evt.event.messageId !== rootEvent.event.messageId}
-                            canPin={client.canPinMessages(chat.chatId)}
-                            canBlockUser={client.canBlockUsers(chat.chatId)}
-                            canDelete={client.canDeleteOtherUsersMessages(chat.chatId)}
+                            canPin={client.canPinMessages(chat.id)}
+                            canBlockUser={client.canBlockUsers(chat.id)}
+                            canDelete={client.canDeleteOtherUsersMessages(chat.id)}
                             publicGroup={chat.kind === "group_chat" && chat.public}
                             editing={$editingEvent === evt}
                             {canSend}

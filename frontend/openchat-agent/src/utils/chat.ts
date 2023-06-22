@@ -1,6 +1,5 @@
-import type {
+import {
     ChatEvent,
-    ChatMetrics,
     ChatSummary,
     ChatSummaryUpdates,
     DirectChatSummary,
@@ -26,6 +25,9 @@ import type {
     GroupCanisterSummaryUpdatesResponse,
     GroupCanisterThreadDetails,
     UpdatedEvent,
+    ChatMap,
+    Metrics,
+    chatIdentifiersEqual,
 } from "openchat-shared";
 import { toRecord } from "./list";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
@@ -73,7 +75,7 @@ export function mergeUpdates(
 ): ChatSummary | undefined {
     if (!chat) return undefined;
 
-    if (chat.chatId !== updatedChat.chatId) {
+    if (!chatIdentifiersEqual(chat.id, updatedChat.id)) {
         throw new Error("Cannot update chat from a chat with a different chat id");
     }
 
@@ -94,14 +96,18 @@ function mergeUpdatedDirectChat(
 ): DirectChatSummary {
     return {
         ...chat,
-        readByMeUpTo: updatedChat.readByMeUpTo ?? chat.readByMeUpTo,
         readByThemUpTo: updatedChat.readByThemUpTo ?? chat.readByThemUpTo,
         latestEventIndex: getLatestEventIndex(chat, updatedChat),
         latestMessage: getLatestMessage(chat, updatedChat),
-        notificationsMuted: updatedChat.notificationsMuted ?? chat.notificationsMuted,
         metrics: updatedChat.metrics ?? chat.metrics,
-        myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
-        archived: updatedChat.archived ?? chat.archived,
+        membership: {
+            ...chat.membership,
+            readByMeUpTo: updatedChat.readByMeUpTo ?? chat.membership.readByMeUpTo,
+            notificationsMuted:
+                updatedChat.notificationsMuted ?? chat.membership.notificationsMuted,
+            myMetrics: updatedChat.myMetrics ?? chat.membership.myMetrics,
+            archived: updatedChat.archived ?? chat.membership.archived,
+        },
     };
 }
 
@@ -110,33 +116,42 @@ function mergeUpdatedGroupChat(
     updatedChat: GroupChatSummaryUpdates
 ): GroupChatSummary {
     const latestMessage = getLatestMessage(chat, updatedChat);
-    const readByMeUpTo = updatedChat.readByMeUpTo ?? chat.readByMeUpTo;
+    const readByMeUpTo = updatedChat.readByMeUpTo ?? chat.membership.readByMeUpTo;
     return {
         ...chat,
         name: updatedChat.name ?? chat.name,
         description: updatedChat.description ?? chat.description,
-        readByMeUpTo:
-            latestMessage !== undefined && readByMeUpTo !== undefined
-                ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
-                : readByMeUpTo,
         lastUpdated: updatedChat.lastUpdated,
         latestEventIndex: getLatestEventIndex(chat, updatedChat),
         latestMessage,
         blobReference: applyOptionUpdate(chat.blobReference, updatedChat.avatarBlobReferenceUpdate),
-        notificationsMuted: updatedChat.notificationsMuted ?? chat.notificationsMuted,
         memberCount: updatedChat.memberCount ?? chat.memberCount,
-        myRole: updatedChat.myRole ?? (chat.myRole === "previewer" ? "participant" : chat.myRole),
-        mentions: mergeMentions(chat.mentions, updatedChat.mentions),
         permissions: updatedChat.permissions ?? chat.permissions,
         metrics: updatedChat.metrics ?? chat.metrics,
-        myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
         public: updatedChat.public ?? chat.public,
-        latestThreads: mergeThreadSyncDetails(updatedChat.latestThreads, chat.latestThreads),
         subtype: mergeSubtype(updatedChat.subtype, chat.subtype),
-        archived: updatedChat.archived ?? chat.archived,
         frozen: applyOptionUpdate(chat.frozen, updatedChat.frozen) ?? false,
         dateLastPinned: updatedChat.dateLastPinned ?? chat.dateLastPinned,
         dateReadPinned: updatedChat.dateReadPinned ?? chat.dateReadPinned,
+        membership: {
+            ...chat.membership,
+            readByMeUpTo:
+                latestMessage !== undefined && readByMeUpTo !== undefined
+                    ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
+                    : readByMeUpTo,
+            notificationsMuted:
+                updatedChat.notificationsMuted ?? chat.membership.notificationsMuted,
+            role:
+                updatedChat.myRole ??
+                (chat.membership.role === "none" ? "member" : chat.membership.role),
+            mentions: mergeMentions(chat.membership.mentions, updatedChat.mentions),
+            myMetrics: updatedChat.myMetrics ?? chat.membership.myMetrics,
+            latestThreads: mergeThreadSyncDetails(
+                updatedChat.latestThreads,
+                chat.membership.latestThreads
+            ),
+            archived: updatedChat.archived ?? chat.membership.archived,
+        },
     };
 }
 
@@ -253,10 +268,10 @@ export function mergeDirectChatUpdates(
     directChats: DirectChatSummary[],
     updates: DirectChatSummaryUpdates[]
 ): DirectChatSummary[] {
-    const lookup = toRecord(updates, (u) => u.chatId);
+    const lookup = ChatMap.fromList(updates);
 
     return directChats.map((c) => {
-        const u = lookup[c.chatId];
+        const u = lookup.get(c.id);
 
         if (u === undefined) return c;
 
@@ -267,13 +282,16 @@ export function mergeDirectChatUpdates(
             them: c.them,
             readByThemUpTo: u.readByThemUpTo ?? c.readByThemUpTo,
             dateCreated: c.dateCreated,
-            readByMeUpTo: u.readByMeUpTo ?? c.readByMeUpTo,
             latestEventIndex: u.latestEventIndex ?? c.latestEventIndex,
             latestMessage: u.latestMessage ?? c.latestMessage,
-            notificationsMuted: u.notificationsMuted ?? c.notificationsMuted,
             metrics: u.metrics ?? c.metrics,
-            myMetrics: u.myMetrics ?? c.myMetrics,
-            archived: u.archived ?? c.archived,
+            membership: {
+                ...c.membership,
+                readByMeUpTo: u.readByMeUpTo ?? c.membership.readByMeUpTo,
+                notificationsMuted: u.notificationsMuted ?? c.membership.notificationsMuted,
+                myMetrics: u.myMetrics ?? c.membership.myMetrics,
+                archived: u.archived ?? c.membership.archived,
+            },
         };
     });
 }
@@ -283,62 +301,67 @@ export function mergeGroupChatUpdates(
     userCanisterUpdates: UserCanisterGroupChatSummaryUpdates[],
     groupCanisterUpdates: GroupCanisterGroupChatSummaryUpdates[]
 ): GroupChatSummary[] {
-    const userLookup = toRecord(userCanisterUpdates, (c) => c.chatId);
-    const groupLookup = toRecord(groupCanisterUpdates, (c) => c.chatId);
+    const userLookup = ChatMap.fromList<UserCanisterGroupChatSummaryUpdates>(userCanisterUpdates);
+    const groupLookup =
+        ChatMap.fromList<GroupCanisterGroupChatSummaryUpdates>(groupCanisterUpdates);
 
     return groupChats.map((c) => {
-        const u = userLookup[c.chatId];
-        const g = groupLookup[c.chatId];
+        const u = userLookup.get(c.id);
+        const g = groupLookup.get(c.id);
 
         if (u === undefined && g === undefined) return c;
 
         const latestMessage = g?.latestMessage ?? c.latestMessage;
-        const readByMeUpTo = u?.readByMeUpTo ?? c.readByMeUpTo;
+        const readByMeUpTo = u?.readByMeUpTo ?? c.membership.readByMeUpTo;
 
         const blobReferenceUpdate = mapOptionUpdate(g?.avatarId, (avatarId) => ({
             blobId: avatarId,
-            canisterId: c.chatId,
+            canisterId: c.id.groupId,
         }));
 
         return {
             kind: "group_chat",
-            chatId: c.chatId,
-            id: c.chatId,
+            id: c.id,
             name: g?.name ?? c.name,
             description: g?.description ?? c.description,
-            joined: c.joined,
             minVisibleEventIndex: c.minVisibleEventIndex,
             minVisibleMessageIndex: c.minVisibleMessageIndex,
             lastUpdated: g?.lastUpdated ?? c.lastUpdated,
             memberCount: g?.memberCount ?? c.memberCount,
-            mentions: g === undefined ? c.mentions : [...g.mentions, ...c.mentions],
             public: g?.public ?? c.public,
-            myRole: g?.myRole ?? c.myRole,
             permissions: g?.permissions ?? c.permissions,
             historyVisible: c.historyVisible,
-            latestThreads: mergeThreads(
-                c.latestThreads,
-                g?.latestThreads ?? [],
-                u?.threadsRead ?? {}
-            ),
             subtype: applyOptionUpdate(c.subtype, g?.subtype),
             previewed: false,
             frozen: applyOptionUpdate(c.frozen, g?.frozen) ?? false,
-            readByMeUpTo:
-                readByMeUpTo !== undefined && latestMessage !== undefined
-                    ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
-                    : readByMeUpTo,
             latestEventIndex: g?.latestEventIndex ?? c.latestEventIndex,
             latestMessage,
-            notificationsMuted: g?.notificationsMuted ?? c.notificationsMuted,
             metrics: g?.metrics ?? c.metrics,
-            myMetrics: g?.myMetrics ?? c.myMetrics,
-            archived: u?.archived ?? c.archived,
             blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
             gate: applyOptionUpdate(c.gate, g?.gate) ?? { kind: "no_gate" },
             level: "group",
+            membership: {
+                ...c.membership,
+                mentions:
+                    g === undefined
+                        ? c.membership.mentions
+                        : [...g.mentions, ...c.membership.mentions],
+                role: g?.myRole ?? c.membership.role,
+                latestThreads: mergeThreads(
+                    c.membership.latestThreads,
+                    g?.latestThreads ?? [],
+                    u?.threadsRead ?? {}
+                ),
+                readByMeUpTo:
+                    readByMeUpTo !== undefined && latestMessage !== undefined
+                        ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
+                        : readByMeUpTo,
+                notificationsMuted: g?.notificationsMuted ?? c.membership.notificationsMuted,
+                myMetrics: g?.myMetrics ?? c.membership.myMetrics,
+                archived: u?.archived ?? c.membership.archived,
+            },
         };
     });
 }
@@ -347,44 +370,47 @@ export function mergeGroupChats(
     userCanisterGroups: UserCanisterGroupChatSummary[],
     groupCanisterGroups: GroupCanisterGroupChatSummary[]
 ): GroupChatSummary[] {
-    const userCanisterGroupLookup = toRecord(userCanisterGroups, (u) => u.chatId);
+    const userCanisterGroupLookup = ChatMap.fromList(userCanisterGroups);
 
     return groupCanisterGroups.map((g) => {
-        const u = userCanisterGroupLookup[g.chatId];
+        const u = userCanisterGroupLookup.get(g.id);
 
         return {
             kind: "group_chat",
-            chatId: g.chatId,
-            id: g.chatId,
+            id: g.id,
             name: g.name,
             description: g.description,
-            joined: g.joined,
             minVisibleEventIndex: g.minVisibleEventIndex,
             minVisibleMessageIndex: g.minVisibleMessageIndex,
             lastUpdated: g.lastUpdated,
             memberCount: g.memberCount,
-            mentions: g.mentions,
             public: g.public,
-            myRole: g.myRole,
             permissions: g.permissions,
             historyVisible: g.historyVisible,
-            latestThreads: mergeThreads([], g.latestThreads, u.threadsRead),
             subtype: g.subtype,
             previewed: false,
             frozen: g.frozen,
-            readByMeUpTo: u?.readByMeUpTo,
             latestEventIndex: g.latestEventIndex,
             latestMessage: g.latestMessage,
-            notificationsMuted: g.notificationsMuted,
             metrics: g.metrics,
-            myMetrics: g.myMetrics,
-            archived: u?.archived ?? false,
             blobReference:
-                g.avatarId !== undefined ? { blobId: g.avatarId, canisterId: g.chatId } : undefined,
+                g.avatarId !== undefined
+                    ? { blobId: g.avatarId, canisterId: g.id.groupId }
+                    : undefined,
             dateLastPinned: g.dateLastPinned,
             dateReadPinned: u?.dateReadPinned,
             gate: g.gate,
             level: "group",
+            membership: {
+                joined: g.joined,
+                role: g.myRole,
+                mentions: g.mentions,
+                latestThreads: mergeThreads([], g.latestThreads, u?.threadsRead ?? {}),
+                myMetrics: g.myMetrics,
+                notificationsMuted: g.notificationsMuted,
+                readByMeUpTo: u?.readByMeUpTo,
+                archived: u?.archived ?? false,
+            },
         };
     });
 }
@@ -414,23 +440,23 @@ function mergeThreads(
 export function isSuccessfulGroupSummaryResponse(
     response: GroupCanisterSummaryResponse
 ): response is GroupCanisterGroupChatSummary {
-    return "chatId" in response;
+    return "id" in response;
 }
 
 export function isSuccessfulGroupSummaryUpdatesResponse(
     response: GroupCanisterSummaryUpdatesResponse
 ): response is GroupCanisterGroupChatSummaryUpdates {
-    return "chatId" in response;
+    return "id" in response;
 }
 
 export function getUpdatedEvents(
     directChats: DirectChatSummaryUpdates[],
     groupChats: GroupCanisterGroupChatSummaryUpdates[]
-): Record<string, UpdatedEvent[]> {
-    const result = {} as Record<string, UpdatedEvent[]>;
+): ChatMap<UpdatedEvent[]> {
+    const result = new ChatMap<UpdatedEvent[]>();
 
-    directChats.forEach((c) => (result[c.chatId] = c.updatedEvents));
-    groupChats.forEach((c) => (result[c.chatId] = c.updatedEvents));
+    directChats.forEach((c) => result.set(c.id, c.updatedEvents));
+    groupChats.forEach((c) => result.set(c.id, c.updatedEvents));
 
     return result;
 }
@@ -440,20 +466,18 @@ export function identity<T>(x: T): T {
 }
 
 export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
-    if (chat.kind === "group_chat" && chat.myRole === "previewer") return undefined;
-    return chat.readByMeUpTo;
+    if (chat.id.kind === "group_chat" && chat.membership.role === "none") return undefined;
+    return chat.membership.readByMeUpTo;
 }
 
 export function threadsReadFromChat(chat: ChatSummary): ThreadRead[] {
-    return chat.kind === "group_chat"
-        ? chat.latestThreads
-              .filter((t) => t.readUpTo !== undefined)
-              .map((t) => ({
-                  threadRootMessageIndex: t.threadRootMessageIndex,
-                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  readUpTo: t.readUpTo!,
-              }))
-        : [];
+    return chat.membership.latestThreads
+        .filter((t) => t.readUpTo !== undefined)
+        .map((t) => ({
+            threadRootMessageIndex: t.threadRootMessageIndex,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            readUpTo: t.readUpTo!,
+        }));
 }
 
 export function buildBlobUrl(
@@ -483,7 +507,7 @@ function buildIdenticonUrl(userId: string): string {
     return `data:image/svg+xml;base64,${identicon}`;
 }
 
-export function emptyChatMetrics(): ChatMetrics {
+export function emptyChatMetrics(): Metrics {
     return {
         audioMessages: 0,
         edits: 0,

@@ -1,8 +1,15 @@
-import type { CallerNotInGroup, MessageContent } from "../chat/chat";
+import type {
+    CallerNotInGroup,
+    ChatIdentifier,
+    GroupChatIdentifier,
+    MessageContent,
+} from "../chat/chat";
+import type { CommunityIdentifier } from "../community";
 import type { DataContent } from "../data/data";
+import type { ChatNotFound } from "../response";
 
 export type GroupMatch = DataContent & {
-    chatId: string;
+    chatId: GroupChatIdentifier;
     name: string;
     description: string;
 };
@@ -10,7 +17,7 @@ export type GroupMatch = DataContent & {
 export type SearchScope = "all" | "groups" | "communities";
 
 export interface CommunityMatch {
-    id: string;
+    id: CommunityIdentifier;
     name: string;
     description: string;
     avatar: DataContent;
@@ -20,7 +27,7 @@ export interface CommunityMatch {
 }
 
 export type MessageMatch = {
-    chatId: string;
+    chatId: ChatIdentifier;
     messageIndex: number;
     content: MessageContent;
     sender: string;
@@ -36,10 +43,6 @@ export type TooManyUsers = {
 
 export type TermInvalid = {
     kind: "term_invalid";
-};
-
-export type ChatNotFound = {
-    kind: "chat_not_found";
 };
 
 export type GroupSearchSuccess = {

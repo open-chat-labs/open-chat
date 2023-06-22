@@ -6,13 +6,13 @@
     import MembersHeader from "./MembersHeader.svelte";
     import VirtualList from "../../VirtualList.svelte";
     import type {
-        AccessControlled,
         FullMember,
-        HasIdentity,
         Member as MemberType,
         OpenChat,
         PartialUserSummary,
         UserLookup,
+        Community,
+        MultiUserChat,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import MembersSelectionButton from "../MembersSelectionButton.svelte";
@@ -23,7 +23,7 @@
     const userId = client.user.userId;
 
     export let closeIcon: "close" | "back";
-    export let collection: HasIdentity & AccessControlled;
+    export let collection: Community | MultiUserChat;
     export let invited: Set<string>;
     export let members: MemberType[];
     export let blocked: Set<string>;
@@ -120,7 +120,8 @@
     }
 
     function userSelected() {
-        dispatch("chatWith", profileUserId);
+        if (profileUserId === undefined) return;
+        dispatch("chatWith", { kind: "direct_chat", userId: profileUserId });
         closeUserProfile();
     }
 </script>
@@ -170,7 +171,7 @@
             canPromoteToOwner={me.role !== "owner" && client.isPlatformModerator()}
             canDemoteToAdmin={client.canDemote(collection.id, me.role, "admin")}
             canDemoteToModerator={client.canDemote(collection.id, me.role, "moderator")}
-            canDemoteToMember={client.canDemote(collection.id, me.role, "participant")}
+            canDemoteToMember={client.canDemote(collection.id, me.role, "member")}
             on:openUserProfile={openUserProfile}
             on:changeRole />
     {/if}
@@ -183,7 +184,7 @@
             canDemoteToAdmin={client.canDemote(collection.id, item.role, "admin")}
             canPromoteToModerator={client.canPromote(collection.id, item.role, "moderator")}
             canDemoteToModerator={client.canDemote(collection.id, item.role, "moderator")}
-            canDemoteToMember={client.canDemote(collection.id, item.role, "participant")}
+            canDemoteToMember={client.canDemote(collection.id, item.role, "member")}
             canBlockUser={client.canBlockUsers(collection.id)}
             canRemoveMember={client.canRemoveMembers(collection.id)}
             {searchTerm}

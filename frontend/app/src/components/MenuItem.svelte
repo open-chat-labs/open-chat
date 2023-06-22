@@ -42,6 +42,10 @@
             background-color: var(--menu-hv);
         }
 
+        .icon {
+            flex: 0 0 24px;
+        }
+
         .icon:not(:empty) {
             display: flex;
         }

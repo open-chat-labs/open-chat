@@ -8,7 +8,7 @@
     import Pin from "svelte-material-icons/Pin.svelte";
     import { rtlStore } from "../../stores/rtl";
     import { _ } from "svelte-i18n";
-    import type { OpenChat } from "openchat-client";
+    import type { ChatType, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
@@ -16,7 +16,7 @@
     export let timestamp: bigint;
     export let confirmed: boolean;
     export let failed: boolean;
-    export let chatType: "group_chat" | "direct_chat";
+    export let chatType: ChatType;
     export let readByThem: boolean;
     export let me: boolean;
     export let fill: boolean;

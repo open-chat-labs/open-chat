@@ -35,7 +35,7 @@
     const dispatch = createEventDispatcher();
 
     let actualWidth = 0;
-    let editing = original.id !== "";
+    let editing = original.id.communityId !== "";
     let step = 0;
     let busy = false;
     let candidate = original;
