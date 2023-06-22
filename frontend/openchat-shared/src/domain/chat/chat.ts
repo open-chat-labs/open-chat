@@ -3,10 +3,23 @@ import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
 import type { AccessGate, AccessControlled, AccessRules } from "../access";
-import type { GroupPermissionRole, MemberRole, Permissioned } from "../permission";
-import type { HasIdentity } from "../identity";
+import type {
+    ChatPermissionRole,
+    ChatPermissions,
+    HasMembershipRole,
+    MemberRole,
+    Permissioned,
+} from "../permission";
 import type { HasLevel } from "../structure";
-import type { NotAuthorised, SuccessNoUpdates, UserSuspended } from "../response";
+import type {
+    NotAuthorised,
+    Success,
+    SuccessNoUpdates,
+    UserSuspended,
+    ChatFrozen,
+    Failure,
+} from "../response";
+import { emptyChatMetrics } from "../../utils";
 
 export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
 export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
@@ -380,22 +393,16 @@ export interface FileContent extends DataContent {
 export type ReplyContext = RawReplyContext | RehydratedReplyContext;
 
 export type MessageContext = {
-    chatId: string;
+    chatId: ChatIdentifier;
     threadRootMessageIndex?: number;
 };
 
 export function messageContextFromString(ctxStr: string): MessageContext {
-    const [chatId, threadRootMessageIndex] = ctxStr.split("_");
-    return {
-        chatId,
-        threadRootMessageIndex: threadRootMessageIndex ? Number(threadRootMessageIndex) : undefined,
-    };
+    return JSON.parse(ctxStr);
 }
 
 export function messageContextToString(ctx: MessageContext): string {
-    return ctx.threadRootMessageIndex !== undefined
-        ? `${ctx.chatId}_${ctx.threadRootMessageIndex}`
-        : ctx.chatId;
+    return JSON.stringify(ctx);
 }
 
 export type RawReplyContext = {
@@ -468,16 +475,15 @@ export type LocalChatSummaryUpdates = {
               archived?: boolean;
           }
         | {
-              kind: "group_chat";
+              kind: "group_chat" | "channel";
               name?: string;
               description?: string;
               public?: boolean;
-              myRole?: MemberRole;
-              permissions?: Partial<GroupPermissions>;
-              notificationsMuted?: boolean;
-              archived?: boolean;
+              permissions?: Partial<ChatPermissions>;
               frozen?: boolean;
               gate?: AccessGate;
+              notificationsMuted?: boolean;
+              archived?: boolean;
           };
     removedAtTimestamp?: bigint;
     lastUpdated: number;
@@ -501,19 +507,7 @@ export type LocalMessageUpdates = {
 
 export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;
 
-export type DirectChatEvent =
-    | Message
-    | MessageDeleted
-    | MessageUndeleted
-    | MessageEdited
-    | ReactionAdded
-    | ReactionRemoved
-    | PollVoteDeleted
-    | PollVoteRegistered
-    | PollEnded
-    | DirectChatCreated
-    | ThreadUpdated
-    | EmptyEvent;
+export type DirectChatEvent = Message | DirectChatCreated | EmptyEvent;
 
 export type GroupChatEvent =
     | Message
@@ -525,11 +519,6 @@ export type GroupChatEvent =
     | MemberLeft
     | GroupNameChanged
     | AvatarChanged
-    | MessageDeleted
-    | MessageUndeleted
-    | MessageEdited
-    | ReactionAdded
-    | ReactionRemoved
     | GroupDescChanged
     | GroupRulesChanged
     | UsersBlocked
@@ -541,15 +530,10 @@ export type GroupChatEvent =
     | OwnershipTransferred
     | MessagePinned
     | MessageUnpinned
-    | PollVoteRegistered
-    | PollVoteDeleted
-    | PollEnded
     | PermissionsChanged
     | GroupVisibilityChanged
     | GroupInviteCodeChanged
     | DirectChatCreated
-    | ThreadUpdated
-    | ProposalsUpdated
     | ChatFrozenEvent
     | GateUpdatedEvent
     | ChatUnfrozenEvent
@@ -706,8 +690,8 @@ export type ProposalsUpdated = {
 
 export type PermissionsChanged = {
     kind: "permissions_changed";
-    oldPermissions: GroupPermissions;
-    newPermissions: GroupPermissions;
+    oldPermissions: ChatPermissions;
+    newPermissions: ChatPermissions;
     changedBy: string;
 };
 
@@ -775,7 +759,7 @@ export type EventsSuccessResult<T extends ChatEvent> = {
 
 export type UpdatesResult = {
     state: ChatStateFull;
-    updatedEvents: Record<string, UpdatedEvent[]>;
+    updatedEvents: Map<string, UpdatedEvent[]>;
     anyUpdates: boolean;
 };
 
@@ -786,24 +770,143 @@ export type ChatStateFull = {
     groupChats: GroupChatSummary[];
     avatarId: bigint | undefined;
     blockedUsers: string[];
-    pinnedChats: string[];
+    pinnedChats: ChatIdentifier[];
 };
 
 export type CurrentChatState = {
     chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
-    pinnedChats: string[];
+    pinnedChats: ChatIdentifier[];
+};
+
+export type CachedGroupChatSummaries = {
+    summaries: GroupChatSummary[];
+    timestamp: bigint;
+};
+
+export type GroupChatsInitial = {
+    summaries: UserCanisterGroupChatSummary[];
+    pinned: string[];
+    cached?: CachedGroupChatSummaries;
+};
+
+export type DirectChatsInitial = {
+    summaries: DirectChatSummary[];
+    pinned: string[];
+};
+
+export type ChatIdentifier = ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier;
+export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
+
+export function chatIdentifierToString(id: ChatIdentifier): string {
+    switch (id.kind) {
+        case "direct_chat":
+            return id.userId;
+        case "group_chat":
+            return id.groupId;
+        default:
+            throw new Error(
+                "TODO Channel chat identifiers should not serialised - get rid of the calling code"
+            );
+    }
+}
+
+export function messageContextsEqual(
+    a: MessageContext | undefined,
+    b: MessageContext | undefined
+): boolean {
+    if (a === undefined && b === undefined) {
+        return true;
+    }
+
+    if (a === undefined || b === undefined) {
+        return false;
+    }
+
+    return (
+        chatIdentifiersEqual(a.chatId, b.chatId) &&
+        a.threadRootMessageIndex === b.threadRootMessageIndex
+    );
+}
+
+export function chatIdentifiersEqual(
+    a: ChatIdentifier | undefined,
+    b: ChatIdentifier | undefined
+): boolean {
+    if (a === undefined && b === undefined) {
+        return true;
+    }
+
+    if (a === undefined || b === undefined) {
+        return false;
+    }
+
+    if (a.kind !== b.kind) {
+        return false;
+    }
+
+    switch (a.kind) {
+        case "channel":
+            return (
+                b.kind === "channel" &&
+                a.communityId === b.communityId &&
+                a.channelId === b.channelId
+            );
+        case "direct_chat":
+            return b.kind === "direct_chat" && a.userId === b.userId;
+        case "group_chat":
+            return b.kind === "group_chat" && a.groupId === b.groupId;
+    }
+}
+
+export type DirectChatIdentifier = {
+    kind: "direct_chat";
+    userId: string;
+};
+
+export type GroupChatIdentifier = {
+    kind: "group_chat";
+    groupId: string;
+};
+
+export type ChannelIdentifier = {
+    kind: "channel";
+    communityId: string;
+    channelId: string;
+};
+
+export type FavouriteChatsInitial = {
+    chats: ChatIdentifier[];
+    pinned: ChatIdentifier[];
+};
+
+export type UserCanisterChannelSummary = {
+    chatId: ChannelIdentifier;
+    readByMeUpTo?: number;
+    dateReadPinned?: bigint;
+    threadsRead: [number, number][];
+    archived: boolean;
+};
+
+export type UserCanisterCommunitySummary = {
+    communityId: string;
+    channels: UserCanisterChannelSummary[];
+    pinnedChannels: string[];
+    archived: boolean;
+};
+
+export type CommunitiesInitial = {
+    summaries: UserCanisterCommunitySummary[];
 };
 
 export type InitialStateResponse = {
-    timestamp: bigint;
-    directChats: DirectChatSummary[];
-    cacheTimestamp: bigint | undefined;
-    cachedGroupChatSummaries: GroupChatSummary[];
-    groupChatsAdded: UserCanisterGroupChatSummary[];
-    avatarId: bigint | undefined;
     blockedUsers: string[];
-    pinnedChats: string[];
+    communities: CommunitiesInitial;
+    groupChats: GroupChatsInitial;
+    avatarId: bigint | undefined;
+    directChats: DirectChatsInitial;
+    favouriteChats: FavouriteChatsInitial;
+    timestamp: bigint;
 };
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
@@ -811,18 +914,81 @@ export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
 export type UpdatesSuccessResponse = {
     kind: "success";
     timestamp: bigint;
-    directChatsAdded: DirectChatSummary[];
-    directChatsUpdated: DirectChatSummaryUpdates[];
-    groupChatsAdded: UserCanisterGroupChatSummary[];
-    groupChatsUpdated: UserCanisterGroupChatSummaryUpdates[];
-    chatsRemoved: string[];
-    avatarId: OptionUpdate<bigint>;
+    communities: CommunitiesUpdates;
     blockedUsers: string[] | undefined;
-    pinnedChats: string[] | undefined;
+    favouriteChats: FavouriteChatsUpdates;
+    groupChats: GroupChatsUpdates;
+    avatarId: OptionUpdate<bigint>;
+    directChats: DirectChatsUpdates;
+};
+
+export function emptyUpdatesSuccessResponse(timestamp: bigint): UpdatesSuccessResponse {
+    return {
+        kind: "success",
+        timestamp,
+        blockedUsers: undefined,
+        favouriteChats: {},
+        avatarId: undefined,
+        communities: {
+            added: [],
+            updated: [],
+            removed: [],
+        },
+        groupChats: {
+            added: [],
+            pinned: undefined,
+            updated: [],
+            removed: [],
+        },
+        directChats: {
+            added: [],
+            pinned: undefined,
+            updated: [],
+        },
+    };
+}
+
+export type DirectChatsUpdates = {
+    added: DirectChatSummary[];
+    pinned?: string[];
+    updated: DirectChatSummaryUpdates[];
+};
+
+export type GroupChatsUpdates = {
+    added: UserCanisterGroupChatSummary[];
+    pinned?: string[];
+    updated: UserCanisterGroupChatSummaryUpdates[];
+    removed: string[];
+};
+
+export type FavouriteChatsUpdates = {
+    chats?: ChatIdentifier[];
+    pinned?: ChatIdentifier[];
+};
+
+export type CommunitiesUpdates = {
+    added: UserCanisterCommunitySummary[];
+    updated: UserCanisterCommunitySummaryUpdates[];
+    removed: string[];
+};
+
+export type UserCanisterCommunitySummaryUpdates = {
+    communityId: string;
+    channels: UserCanisterChannelSummaryUpdates[];
+    pinned?: string[];
+    archived?: boolean;
+};
+
+export type UserCanisterChannelSummaryUpdates = {
+    channelId: string;
+    readByMeUpTo?: number;
+    dateReadPinned?: bigint;
+    threadsRead: [number, number][];
+    archived?: boolean;
 };
 
 export type UserCanisterGroupChatSummary = {
-    chatId: string;
+    id: GroupChatIdentifier;
     readByMeUpTo: number | undefined;
     threadsRead: Record<number, number>;
     archived: boolean;
@@ -830,7 +996,7 @@ export type UserCanisterGroupChatSummary = {
 };
 
 export type UserCanisterGroupChatSummaryUpdates = {
-    chatId: string;
+    id: GroupChatIdentifier;
     readByMeUpTo: number | undefined;
     threadsRead: Record<number, number>;
     archived: boolean | undefined;
@@ -840,23 +1006,24 @@ export type UserCanisterGroupChatSummaryUpdates = {
 export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;
 
 type ChatSummaryUpdatesCommon = {
-    chatId: string;
     readByMeUpTo?: number;
     latestEventIndex?: number;
     latestMessage?: EventWrapper<Message>;
     notificationsMuted?: boolean;
     updatedEvents: UpdatedEvent[];
-    metrics?: ChatMetrics;
-    myMetrics?: ChatMetrics;
+    metrics?: Metrics;
+    myMetrics?: Metrics;
     archived?: boolean;
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
+    id: DirectChatIdentifier;
     kind: "direct_chat";
     readByThemUpTo?: number;
 };
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
+    id: GroupChatIdentifier;
     kind: "group_chat";
     lastUpdated: bigint;
     name?: string;
@@ -865,7 +1032,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     memberCount?: number;
     myRole?: MemberRole;
     mentions: Mention[];
-    permissions?: GroupPermissions;
+    permissions?: ChatPermissions;
     public?: boolean;
     latestThreads?: ThreadSyncDetailsUpdates[];
     subtype?: GroupSubtypeUpdate;
@@ -901,21 +1068,6 @@ export type Member = {
 };
 
 export type FullMember = Member & PartialUserSummary;
-
-export type GroupPermissions = {
-    changePermissions: GroupPermissionRole;
-    changeRoles: GroupPermissionRole;
-    removeMembers: GroupPermissionRole;
-    blockUsers: GroupPermissionRole;
-    deleteMessages: GroupPermissionRole;
-    updateGroup: GroupPermissionRole;
-    pinMessages: GroupPermissionRole;
-    inviteUsers: GroupPermissionRole;
-    createPolls: GroupPermissionRole;
-    sendMessages: GroupPermissionRole;
-    reactToMessages: GroupPermissionRole;
-    replyInThread: GroupPermissionRole;
-};
 
 export type GroupChatDetailsResponse = "caller_not_in_group" | GroupChatDetails;
 
@@ -965,24 +1117,41 @@ export type GroupChatDetailsUpdates = {
     invitedUsers?: Set<string>;
 };
 
-export type ChatSummary = DirectChatSummary | GroupChatSummary;
+export type ChatSummary = DirectChatSummary | MultiUserChat;
+
+export type MultiUserChat = GroupChatSummary | ChannelSummary;
 
 export type ChatType = ChatSummary["kind"];
 
-type ChatSummaryCommon = HasIdentity & {
-    chatId: string; // this represents a Principal
-    readByMeUpTo: number | undefined;
+type ChatSummaryCommon = HasMembershipRole & {
     latestEventIndex: number;
     latestMessage?: EventWrapper<Message>;
-    notificationsMuted: boolean;
-    metrics: ChatMetrics;
-    myMetrics: ChatMetrics;
-    archived: boolean;
+    metrics: Metrics;
+    membership: ChatMembership;
 };
+
+export type ChannelSummary = DataContent &
+    AccessControlled &
+    ChatSummaryCommon &
+    HasLevel &
+    Permissioned<ChatPermissions> & {
+        kind: "channel";
+        id: ChannelIdentifier;
+        subtype: GroupSubtype;
+        name: string;
+        description: string;
+        minVisibleEventIndex: number;
+        minVisibleMessageIndex: number;
+        lastUpdated: bigint;
+        memberCount: number;
+        dateLastPinned: bigint | undefined;
+        dateReadPinned: bigint | undefined;
+    };
 
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
-    them: string;
+    id: DirectChatIdentifier;
+    them: DirectChatIdentifier;
     readByThemUpTo: number | undefined;
     dateCreated: bigint;
 };
@@ -991,22 +1160,42 @@ export type GroupChatSummary = DataContent &
     ChatSummaryCommon &
     AccessControlled &
     HasLevel &
-    Permissioned<GroupPermissions> & {
+    Permissioned<ChatPermissions> & {
         kind: "group_chat";
+        id: GroupChatIdentifier;
         name: string;
         description: string;
-        joined: bigint;
         minVisibleEventIndex: number;
         minVisibleMessageIndex: number;
         lastUpdated: bigint;
         memberCount: number;
-        mentions: Mention[];
-        latestThreads: ThreadSyncDetails[];
         subtype: GroupSubtype;
         previewed: boolean;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
     };
+
+export const nullMembership: ChatMembership = {
+    joined: BigInt(0),
+    role: "none",
+    mentions: [],
+    latestThreads: [],
+    myMetrics: emptyChatMetrics(),
+    notificationsMuted: false,
+    readByMeUpTo: undefined,
+    archived: false,
+};
+
+export type ChatMembership = {
+    joined: bigint;
+    role: ChatPermissionRole;
+    mentions: Mention[];
+    latestThreads: ThreadSyncDetails[];
+    myMetrics: Metrics;
+    notificationsMuted: boolean;
+    readByMeUpTo: number | undefined;
+    archived: boolean;
+};
 
 export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup;
 
@@ -1016,8 +1205,8 @@ export type GroupCanisterSummaryUpdatesResponse =
     | CallerNotInGroup;
 
 export type GroupCanisterGroupChatSummary = AccessControlled &
-    Permissioned<GroupPermissions> & {
-        chatId: string;
+    Permissioned<ChatPermissions> & {
+        id: GroupChatIdentifier;
         lastUpdated: bigint;
         name: string;
         description: string;
@@ -1028,11 +1217,12 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         latestMessage: EventWrapper<Message> | undefined;
         latestEventIndex: number;
         joined: bigint;
+        myRole: MemberRole;
         memberCount: number;
         mentions: Mention[];
         notificationsMuted: boolean;
-        metrics: ChatMetrics;
-        myMetrics: ChatMetrics;
+        metrics: Metrics;
+        myMetrics: Metrics;
         latestThreads: GroupCanisterThreadDetails[];
         dateLastPinned: bigint | undefined;
     };
@@ -1044,7 +1234,7 @@ export type UpdatedEvent = {
 };
 
 export type GroupCanisterGroupChatSummaryUpdates = {
-    chatId: string;
+    id: GroupChatIdentifier;
     lastUpdated: bigint;
     name: string | undefined;
     description: string | undefined;
@@ -1056,10 +1246,10 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     memberCount: number | undefined;
     myRole: MemberRole | undefined;
     mentions: Mention[];
-    permissions: GroupPermissions | undefined;
+    permissions: ChatPermissions | undefined;
     notificationsMuted: boolean | undefined;
-    metrics: ChatMetrics | undefined;
-    myMetrics: ChatMetrics | undefined;
+    metrics: Metrics | undefined;
+    myMetrics: Metrics | undefined;
     latestThreads: GroupCanisterThreadDetails[];
     frozen: OptionUpdate<boolean>;
     updatedEvents: UpdatedEvent[];
@@ -1094,10 +1284,11 @@ export type CandidateMember = {
     user: UserSummary;
 };
 
-export type CandidateGroupChat = HasIdentity &
-    AccessControlled &
+export type CandidateGroupChat = AccessControlled &
     HasLevel &
-    Permissioned<GroupPermissions> & {
+    HasMembershipRole &
+    Permissioned<ChatPermissions> & {
+        id: GroupChatIdentifier;
         name: string;
         description: string;
         rules: AccessRules;
@@ -1277,10 +1468,6 @@ export type SendMessageNotInGroup = {
     kind: "not_in_group";
 };
 
-export type ChatFrozen = {
-    kind: "chat_frozen";
-};
-
 export type GateCheckFailed = {
     kind: "gate_check_failed";
     reason: GateCheckFailedReason;
@@ -1419,7 +1606,7 @@ export type InviteUsersResponse =
 
 export type MarkReadRequest = {
     readUpTo: number | undefined;
-    chatId: string;
+    chatId: ChatIdentifier;
     threads: ThreadRead[];
     dateReadPinned: bigint | undefined;
 }[];
@@ -1455,16 +1642,7 @@ export type UpdatePermissionsResponse =
     | "user_suspended"
     | "chat_frozen";
 
-export type AddRemoveReactionResponse =
-    | "success"
-    | "no_change"
-    | "invalid"
-    | "message_not_found"
-    | "not_in_group"
-    | "not_authorized"
-    | "chat_not_found"
-    | "user_suspended"
-    | "chat_frozen";
+export type AddRemoveReactionResponse = Success | Failure;
 
 export type DeleteMessageResponse =
     | "not_in_group"
@@ -1587,7 +1765,7 @@ export type ThreadPreviewsSuccess = {
 };
 
 export type ThreadPreview = {
-    chatId: string;
+    chatId: ChatIdentifier;
     latestReplies: EventWrapper<Message>[];
     totalReplies: number;
     rootMessage: EventWrapper<Message>;
@@ -1595,7 +1773,7 @@ export type ThreadPreview = {
 
 export type MessageAction = "emoji" | "file" | undefined;
 
-export type ChatMetrics = {
+export type Metrics = {
     audioMessages: number;
     edits: number;
     icpMessages: number;

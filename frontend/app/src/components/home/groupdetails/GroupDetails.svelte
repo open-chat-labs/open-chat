@@ -34,8 +34,8 @@
     export let rules: AccessRules | undefined;
 
     // capture a snapshot of the chat as it is right now
-    $: canEdit = client.canEditGroupDetails(chat.chatId);
-    $: canInvite = client.canInviteUsers(chat.chatId);
+    $: canEdit = client.canEditGroupDetails(chat.id);
+    $: canInvite = client.canInviteUsers(chat.id);
     $: avatarSrc = client.groupAvatarUrl(chat);
 
     function editGroup() {
@@ -147,7 +147,7 @@
             headerText={interpolateLevel("stats.groupStats", chat.level)}>
             <Stats showReported={false} stats={chat.metrics} />
         </CollapsibleCard>
-        {#if client.canDeleteGroup(chat.chatId)}
+        {#if client.canDeleteGroup(chat.id)}
             <CollapsibleCard
                 on:toggle={groupAdvancedOpen.toggle}
                 open={$groupAdvancedOpen}

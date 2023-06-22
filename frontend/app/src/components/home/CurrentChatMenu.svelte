@@ -40,7 +40,7 @@
 
     $: messagesRead = client.messagesRead;
     $: isProposalGroup = client.isProposalGroup;
-    $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them : "";
+    $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
     $: userStore = client.userStore;
     $: isBot = $userStore[userId]?.kind === "bot";
     $: isSuspended = $userStore[userId]?.suspended ?? false;
@@ -65,11 +65,11 @@
         hasUnreadPinned =
             hasPinned &&
             chat.kind === "group_chat" &&
-            client.unreadPinned(chat.chatId, chat.dateLastPinned);
+            client.unreadPinned(chat.id, chat.dateLastPinned);
     }
 
     function toggleMuteNotifications(mute: boolean) {
-        dispatch("toggleMuteNotifications", { chatId: selectedChatSummary.chatId, mute });
+        dispatch("toggleMuteNotifications", { chatId: selectedChatSummary.id, mute });
     }
 
     function showGroupDetails() {
@@ -113,27 +113,31 @@
     }
 
     function leaveGroup() {
-        dispatch("leaveGroup", { kind: "leave", chatId: selectedChatSummary.chatId });
+        dispatch("leaveGroup", { kind: "leave", chatId: selectedChatSummary.id });
     }
 
     function convertToCommunity() {
-        dispatch("convertToCommunity", { chatId: selectedChatSummary.chatId });
+        dispatch("convertToCommunity", { chatId: selectedChatSummary.id });
     }
 
     function freezeGroup() {
-        client.freezeGroup(selectedChatSummary.chatId, undefined).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("failedToFreezeGroup");
-            }
-        });
+        if (selectedChatSummary.id.kind === "group_chat") {
+            client.freezeGroup(selectedChatSummary.id, undefined).then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast("failedToFreezeGroup");
+                }
+            });
+        }
     }
 
     function unfreezeGroup() {
-        client.unfreezeGroup(selectedChatSummary.chatId).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("failedToUnfreezeGroup");
-            }
-        });
+        if (selectedChatSummary.id.kind === "group_chat") {
+            client.unfreezeGroup(selectedChatSummary.id).then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast("failedToUnfreezeGroup");
+                }
+            });
+        }
     }
 
     function onSuspendUser() {
@@ -195,7 +199,7 @@
                     color={membersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         </span>
-        {#if client.canInviteUsers(selectedChatSummary.chatId)}
+        {#if client.canInviteUsers(selectedChatSummary.id)}
             <span on:click={showInviteGroupUsers}>
                 <HoverIcon title={$_("group.inviteUsers")}>
                     <AccountMultiplePlus
@@ -259,7 +263,7 @@
                                 slot="icon" />
                             <div slot="text">{$_("members")}</div>
                         </MenuItem>
-                        {#if client.canInviteUsers(selectedChatSummary.chatId)}
+                        {#if client.canInviteUsers(selectedChatSummary.id)}
                             <MenuItem on:click={showInviteGroupUsers}>
                                 <AccountMultiplePlus
                                     size={$iconSize}
@@ -271,7 +275,7 @@
                     {/if}
 
                     {#if notificationsSupported}
-                        {#if selectedChatSummary.notificationsMuted === true}
+                        {#if selectedChatSummary.membership.notificationsMuted === true}
                             <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                 <Bell
                                     size={$iconSize}
@@ -298,7 +302,7 @@
                     </MenuItem>
 
                     {#if client.user.isPlatformModerator}
-                        {#if client.isFrozen(selectedChatSummary.chatId)}
+                        {#if client.isFrozen(selectedChatSummary.id)}
                             <MenuItem warning on:click={unfreezeGroup}>
                                 <TickIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
                                 <div slot="text">{$_("unfreezeGroup")}</div>
@@ -314,7 +318,7 @@
                         {/if}
                     {/if}
 
-                    {#if client.canLeaveGroup(selectedChatSummary.chatId)}
+                    {#if client.canLeaveGroup(selectedChatSummary.id)}
                         <MenuItem warning on:click={leaveGroup}>
                             <LocationExit size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                             <div slot="text">{$_("leaveGroup")}</div>
@@ -338,7 +342,7 @@
                         </MenuItem>
                     {/if}
                     {#if notificationsSupported}
-                        {#if selectedChatSummary.notificationsMuted === true}
+                        {#if selectedChatSummary.membership.notificationsMuted === true}
                             <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                 <Bell
                                     size={$iconSize}

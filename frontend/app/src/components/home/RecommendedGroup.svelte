@@ -1,6 +1,11 @@
 <script lang="ts">
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize, GroupChatSummary, OpenChat, UserStatus } from "openchat-client";
+    import {
+        AvatarSize,
+        GroupChatSummary,
+        OpenChat,
+        routeForChatIdentifier,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -21,14 +26,14 @@
     export let joining: GroupChatSummary | undefined;
 
     $: chatSummariesStore = client.chatSummariesStore;
-    $: member = $chatSummariesStore[group.chatId] !== undefined;
+    $: member = $chatSummariesStore.has(group.id);
 
-    function dismiss({ chatId }: GroupChatSummary) {
-        dispatch("dismissRecommendation", chatId);
+    function dismiss({ id }: GroupChatSummary) {
+        dispatch("dismissRecommendation", id);
     }
 
-    function gotoGroup({ chatId }: GroupChatSummary) {
-        page(`/${chatId}`);
+    function gotoGroup({ id }: GroupChatSummary) {
+        page(routeForChatIdentifier(id));
     }
 
     function joinGroup(group: GroupChatSummary) {
@@ -38,7 +43,7 @@
         });
     }
     function leaveGroup(group: GroupChatSummary) {
-        dispatch("leaveGroup", { kind: "leave", chatId: group.chatId });
+        dispatch("leaveGroup", { kind: "leave", chatId: group.id });
     }
 </script>
 

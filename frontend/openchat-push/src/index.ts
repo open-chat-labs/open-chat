@@ -8,6 +8,8 @@ import {
     Cryptocurrency,
     E8S_PER_TOKEN,
     UnsupportedValueError,
+    routeForMessage,
+    routeForChatIdentifier,
 } from "openchat-shared";
 
 declare const self: ServiceWorkerGlobalScope;
@@ -67,7 +69,9 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     });
 
     // If notifications are disabled or an OC browser window already has the focus then don't show a notification
-    const isClientFocused = windowClients.some((wc) => wc.focused && wc.visibilityState === "visible");
+    const isClientFocused = windowClients.some(
+        (wc) => wc.focused && wc.visibilityState === "visible"
+    );
     if (isClientFocused && isMessageNotification(notification)) {
         console.debug("PUSH: suppressing notification because client focused", id);
         return;
@@ -110,6 +114,8 @@ async function showNotification(notification: Notification, id: string): Promise
     let tag: string;
     let timestamp: number;
 
+    //TODO - all this url stuff sucks - we should probably be using MessageContext with some utils
+
     // If true, we close existing notifications where the `path` matches, this ensures this new notification will
     // trigger an alert. If false, and there is already at least one notification with a matching path, then this new
     // notification will be silent
@@ -122,8 +128,8 @@ async function showNotification(notification: Notification, id: string): Promise
         title = notification.senderName;
         body = content.text;
         icon = content.image ?? icon;
-        path = `user/${notification.sender}/${notification.message.event.messageIndex}`;
-        tag = notification.sender;
+        path = `user/${notification.sender.userId}/${notification.message.event.messageIndex}`;
+        tag = notification.sender.userId;
         timestamp = Number(notification.message.timestamp);
         closeExistingNotifications = true;
     } else if (notification.kind === "group_notification") {
@@ -135,33 +141,43 @@ async function showNotification(notification: Notification, id: string): Promise
         title = notification.groupName;
         body = `${notification.senderName}: ${content.text}`;
         icon = content.image ?? icon;
-        path =
-            notification.threadRootMessageIndex !== undefined
-                ? `group/${notification.chatId}/${notification.threadRootMessageIndex}/${notification.message.event.messageIndex}?open=true`
-                : `group/${notification.chatId}/${notification.message.event.messageIndex}`;
-        tag = notification.threadRootMessageIndex !== undefined ? path : notification.chatId;
+        path = routeForMessage(
+            {
+                chatId: notification.chatId,
+                threadRootMessageIndex: notification.threadRootMessageIndex,
+            },
+            notification.message.event.messageIndex
+        );
+        tag =
+            notification.threadRootMessageIndex !== undefined ? path : notification.chatId.groupId;
         timestamp = Number(notification.message.timestamp);
         closeExistingNotifications = true;
     } else if (notification.kind === "direct_reaction") {
         title = notification.username;
         body = `${notification.username} reacted '${notification.reaction}' to your message`;
-        path = `user/${notification.them}/${notification.message.event.messageIndex}`;
+        path = routeForMessage(
+            { chatId: notification.them },
+            notification.message.event.messageIndex
+        );
         tag = path;
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "group_reaction") {
         title = notification.groupName;
         body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
-        path =
-            notification.threadRootMessageIndex !== undefined
-                ? `group/${notification.chatId}/${notification.threadRootMessageIndex}/${notification.message.event.messageIndex}?open=true`
-                : `group/${notification.chatId}/${notification.message.event.messageIndex}`;
+        path = routeForMessage(
+            {
+                chatId: notification.chatId,
+                threadRootMessageIndex: notification.threadRootMessageIndex,
+            },
+            notification.message.event.messageIndex
+        );
         tag = path;
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "added_to_group_notification") {
         // TODO Multi language support
         title = notification.groupName;
         body = `${notification.addedByUsername} added you to the group "${notification.groupName}"`;
-        path = `group/${notification.chatId}`;
+        path = routeForChatIdentifier(notification.chatId);
         tag = path;
         timestamp = Number(notification.timestamp);
     } else {
@@ -310,7 +326,9 @@ function extractMessageContentFromCryptoContent(
 }
 
 function isMessageNotification(notification: Notification): boolean {
-    return notification.kind === "direct_notification" || notification.kind === "group_notification";
+    return (
+        notification.kind === "direct_notification" || notification.kind === "group_notification"
+    );
 }
 
 function toSymbol(token: Cryptocurrency): string {

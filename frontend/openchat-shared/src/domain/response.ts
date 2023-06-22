@@ -1,10 +1,11 @@
-export type UserNotInChannel = { kind: "user_not_in_channel" };
-export type ChannelNotFound = { kind: "channel_not_found" };
+export type UserNotInChat = { kind: "user_not_in_chat" };
+export type ChatNotFound = { kind: "chat_not_found" };
 export type UserLimitReached = { kind: "user_limit_reached" };
 export type Success = { kind: "success" };
 export type SuccessNoUpdates = { kind: "success_no_updates" };
 export type UserNotInCommunity = { kind: "user_not_in_community" };
 export type CommunityFrozen = { kind: "community_frozen" };
+export type ChatFrozen = { kind: "chat_frozen" };
 export type CommunityNotPublic = { kind: "community_not_public" };
 export type MessageNotFound = {
     kind: "message_not_found";
@@ -36,8 +37,8 @@ export type NotPlatformModerator = {
 };
 
 export const CommonResponses = {
-    userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
-    channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
+    userNotInChat: { kind: "user_not_in_chat" } as UserNotInChat,
+    chatNotFound: { kind: "chat_not_found" } as ChatNotFound,
     userLimitReached: { kind: "user_limit_reached" } as UserLimitReached,
     notAuthorized: { kind: "not_authorized" } as NotAuthorised,
     success: { kind: "success" } as Success,

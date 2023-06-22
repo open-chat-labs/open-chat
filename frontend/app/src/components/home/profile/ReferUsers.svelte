@@ -50,7 +50,7 @@
     function onChat() {
         if (viewedUserId !== undefined) {
             closeUserProfile();
-            dispatch("chatWith", viewedUserId);
+            dispatch("chatWith", { kind: "direct_chat", userId: viewedUserId });
         }
     }
 </script>

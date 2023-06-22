@@ -6,8 +6,6 @@ import type {
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
     ApiUpdateGroupResponse,
-    ApiAddReactionResponse,
-    ApiRemoveReactionResponse,
     ApiDeleteMessageResponse,
     ApiUndeleteMessageResponse,
     ApiEditMessageResponse,
@@ -51,8 +49,6 @@ import {
     SendMessageResponse,
     RemoveMemberResponse,
     UpdateGroupResponse,
-    AddRemoveReactionResponse,
-    DeleteMessageResponse,
     UndeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
@@ -76,7 +72,7 @@ import {
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
     AccessRules,
-    GroupPermissions,
+    ChatPermissions,
     SearchGroupChatResponse,
     codeToText,
     UnsupportedValueError,
@@ -91,6 +87,9 @@ import {
     ClaimPrizeResponse,
     UpdatedEvent,
     DeclineInvitationResponse,
+    GroupChatIdentifier,
+    ChatIdentifier,
+    DeleteMessageResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
@@ -102,7 +101,6 @@ import {
     memberRole,
     message,
     messageContent,
-    updatedMessage,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
@@ -117,7 +115,7 @@ export function apiRole(role: MemberRole): ApiRole | undefined {
             return { Admin: null };
         case "moderator":
             return { Moderator: null };
-        case "participant":
+        case "member":
             return { Participant: null };
         case "owner":
             return { Owner: null };
@@ -177,7 +175,7 @@ export function summaryResponse(
 
 function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanisterGroupChatSummary {
     return {
-        chatId: candid.chat_id.toString(),
+        id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         lastUpdated: candid.last_updated,
         name: candid.name,
         description: candid.description,
@@ -228,7 +226,7 @@ function groupChatSummaryUpdates(
     candid: ApiGroupCanisterGroupChatSummaryUpdates
 ): GroupCanisterGroupChatSummaryUpdates {
     return {
-        chatId: candid.chat_id.toString(),
+        id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         lastUpdated: candid.last_updated,
         name: optional(candid.name, identity),
         description: optional(candid.description, identity),
@@ -293,7 +291,7 @@ function groupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
 }
 
 export function apiOptionalGroupPermissions(
-    permissions: Partial<GroupPermissions>
+    permissions: Partial<ChatPermissions>
 ): OptionalGroupPermissions {
     return {
         block_users: apiOptional(apiPermissionRole, permissions.blockUsers),
@@ -515,39 +513,6 @@ export function undeleteMessageResponse(
         return { kind: "chat_frozen" };
     }
     throw new UnsupportedValueError("Unexpected ApiUndeleteMessageResponse type received", candid);
-}
-
-export function addRemoveReactionResponse(
-    candid: ApiAddReactionResponse | ApiRemoveReactionResponse
-): AddRemoveReactionResponse {
-    if ("Success" in candid || "SuccessV2" in candid) {
-        return "success";
-    }
-    if ("NoChange" in candid) {
-        return "no_change";
-    }
-    if ("InvalidReaction" in candid) {
-        return "invalid";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "not_in_group";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiAddRemoveReactionResponse type received",
-        candid
-    );
 }
 
 // TODO fill this in
@@ -818,7 +783,7 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
 export async function getMessagesByMessageIndexResponse(
     principal: Principal,
     candid: ApiMessagesByMessageIndexResponse,
-    chatId: string,
+    chatId: GroupChatIdentifier,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined
 ): Promise<EventsResponse<Message>> {
@@ -868,7 +833,7 @@ export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Mes
 export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse | ApiCommunityEventsResponse,
-    chatId: string,
+    chatId: ChatIdentifier,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined
 ): Promise<EventsResponse<GroupChatEvent>> {
@@ -921,7 +886,7 @@ export async function getEventsResponse(
 
 export function searchGroupChatResponse(
     candid: ApiSearchGroupChatResponse,
-    chatId: string
+    chatId: GroupChatIdentifier
 ): SearchGroupChatResponse {
     if ("Success" in candid) {
         return {
@@ -1014,7 +979,7 @@ export function disableInviteCodeResponse(
     );
 }
 
-export function threadPreview(chatId: string, candid: ApiThreadPreview): ThreadPreview {
+export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview): ThreadPreview {
     return {
         chatId,
         latestReplies: candid.latest_replies
@@ -1035,7 +1000,7 @@ function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Message> {
 
 export function threadPreviewsResponse(
     candid: ApiThreadPreviewsResponse,
-    chatId: string,
+    chatId: ChatIdentifier,
     latestClientThreadUpdate: bigint | undefined
 ): ThreadPreviewsResponse {
     if ("Success" in candid) {
@@ -1203,41 +1168,6 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
-    if ("MessageDeleted" in candid) {
-        return {
-            kind: "message_deleted",
-            message: updatedMessage(candid.MessageDeleted),
-        };
-    }
-
-    if ("MessageUndeleted" in candid) {
-        return {
-            kind: "message_undeleted",
-            message: updatedMessage(candid.MessageUndeleted),
-        };
-    }
-
-    if ("MessageEdited" in candid) {
-        return {
-            kind: "message_edited",
-            message: updatedMessage(candid.MessageEdited),
-        };
-    }
-
-    if ("MessageReactionAdded" in candid) {
-        return {
-            kind: "reaction_added",
-            message: updatedMessage(candid.MessageReactionAdded),
-        };
-    }
-
-    if ("MessageReactionRemoved" in candid) {
-        return {
-            kind: "reaction_removed",
-            message: updatedMessage(candid.MessageReactionRemoved),
-        };
-    }
-
     if ("UsersBlocked" in candid) {
         return {
             kind: "users_blocked",
@@ -1309,28 +1239,6 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
-    if ("PollVoteRegistered" in candid) {
-        return {
-            kind: "poll_vote_registered",
-            message: updatedMessage(candid.PollVoteRegistered),
-        };
-    }
-
-    if ("PollVoteDeleted" in candid) {
-        return {
-            kind: "poll_vote_deleted",
-            message: updatedMessage(candid.PollVoteDeleted),
-        };
-    }
-
-    if ("PollEnded" in candid) {
-        return {
-            kind: "poll_ended",
-            messageIndex: candid.PollEnded.message_index,
-            eventIndex: candid.PollEnded.event_index,
-        };
-    }
-
     if ("PermissionsChanged" in candid) {
         return {
             kind: "permissions_changed",
@@ -1360,24 +1268,6 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "group_invite_code_changed",
             change,
             changedBy: candid.GroupInviteCodeChanged.changed_by.toString(),
-        };
-    }
-
-    if ("ThreadUpdated" in candid) {
-        return {
-            kind: "thread_updated",
-            messageIndex: candid.ThreadUpdated.message_index,
-            eventIndex: candid.ThreadUpdated.event_index,
-        };
-    }
-
-    if ("ProposalsUpdated" in candid) {
-        return {
-            kind: "proposals_updated",
-            proposals: candid.ProposalsUpdated.proposals.map((p) => ({
-                messageIndex: p.message_index,
-                eventIndex: p.event_index,
-            })),
         };
     }
 

@@ -333,9 +333,9 @@
         "atLeastTwo": "至少 2 个"
     },
     "role": {
-        "admins": "管理员",
-        "members": "成员",
-        "moderators": "主持人",
+        "admin": "管理员",
+        "member": "成员",
+        "moderator": "主持人",
         "owner": "拥有者"
     },
     "permissions": {

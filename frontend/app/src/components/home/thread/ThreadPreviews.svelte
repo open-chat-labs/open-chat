@@ -3,7 +3,13 @@
     import Loading from "../../Loading.svelte";
     import ThreadPreviewComponent from "./ThreadPreview.svelte";
     import { getContext } from "svelte";
-    import type { ThreadPreview, EventWrapper, Message, ThreadSyncDetails } from "openchat-client";
+    import type {
+        ThreadPreview,
+        EventWrapper,
+        Message,
+        ThreadSyncDetails,
+        GroupChatIdentifier,
+    } from "openchat-client";
     import { toastStore } from "../../../stores/toast";
     import type { OpenChat } from "openchat-client";
 
@@ -28,15 +34,19 @@
     $: {
         // TODO - this might run a bit more frequently than we need it to. Not 100% sure yet.
         // we definitely cannot get away with *just* doing it onMount though.
+
+        // TODO this is only going to work for groups and not channels at the moment
         loading = true;
         client
             .threadPreviews(
                 client.toRecord2(
-                    Object.entries($threadsByChatStore),
-                    ([chatId, _]) => chatId,
+                    $threadsByChatStore
+                        .entries()
+                        .filter(([chatId, _]) => chatId.kind === "group_chat"),
+                    ([chatId, _]) => (chatId as GroupChatIdentifier).groupId,
                     ([chatId, threads]) => {
                         const latestEventIndex =
-                            $serverChatSummariesStore[chatId]?.latestEventIndex;
+                            $serverChatSummariesStore.get(chatId)?.latestEventIndex;
                         return [threads, latestEventIndex] as [
                             ThreadSyncDetails[],
                             number | undefined

@@ -332,9 +332,9 @@
         "atLeastTwo": "Au moins 2"
     },
     "role": {
-        "admins": "Administrateurs",
-        "members": "Membres",
-        "moderators": "Modérateurs",
+        "admin": "Administrateurs",
+        "member": "Membres",
+        "moderator": "Modérateurs",
         "owner": "Les propriétaires"
     },
     "permissions": {

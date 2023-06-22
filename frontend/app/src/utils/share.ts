@@ -1,5 +1,5 @@
-import type { Message, MessageContent, MessageFormatter } from "openchat-client";
-import { buildCryptoTransferText, buildTransactionUrl } from "openchat-client";
+import type { Message, MessageContent, MessageFormatter, ChatIdentifier } from "openchat-client";
+import { buildCryptoTransferText, buildTransactionUrl, routeForMessage } from "openchat-client";
 import { toastStore } from "../stores/toast";
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
@@ -40,7 +40,7 @@ const permittedMimeTypes: Record<string, string> = {
 };
 
 export function copyMessageUrl(
-    chatId: string,
+    chatId: ChatIdentifier,
     messageIndex: number,
     threadRootMessageIndex?: number
 ): void {
@@ -247,12 +247,12 @@ function buildDummyFilename(mimeType: string, title?: string): string {
 }
 
 export function buildMessageUrl(
-    chatId: string,
+    chatId: ChatIdentifier,
     messageIndex: number,
     threadRootMessageIndex?: number
 ): string {
-    const chatUrl = `${window.location.origin}/${chatId}/`;
-    return threadRootMessageIndex === undefined
-        ? `${chatUrl}${messageIndex}`
-        : `${chatUrl}${threadRootMessageIndex}/${messageIndex}`;
+    return `${window.location.origin}${routeForMessage(
+        { chatId, threadRootMessageIndex },
+        messageIndex
+    )}`;
 }

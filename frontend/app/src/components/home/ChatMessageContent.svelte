@@ -19,7 +19,7 @@
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
     import ProposalContent from "./proposals/ProposalContent.svelte";
     import IntersectionObserver from "./IntersectionObserver.svelte";
-    import type { MessageContent } from "openchat-client";
+    import type { ChatIdentifier, MessageContent } from "openchat-client";
     import { _ } from "svelte-i18n";
 
     export let content: MessageContent;
@@ -34,7 +34,7 @@
     export let myUserId: string | undefined;
     export let messageId: bigint;
     export let edited: boolean;
-    export let chatId: string;
+    export let chatId: ChatIdentifier;
     export let messageIndex: number;
     export let collapsed = false;
     export let undeleting: boolean = false;

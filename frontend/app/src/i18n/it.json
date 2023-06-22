@@ -333,9 +333,9 @@
         "atLeastTwo": "Minimo 2"
     },
     "role": {
-        "admins": "Amministratori",
-        "members": "Membri",
-        "moderators": "Moderatori",
+        "admin": "Amministratori",
+        "member": "Membri",
+        "moderator": "Moderatori",
         "owner": "Proprietari"
     },
     "permissions": {

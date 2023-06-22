@@ -1,4 +1,9 @@
-import type { Notification, OpenChat } from "openchat-client";
+import {
+    type Notification,
+    type OpenChat,
+    type ChatIdentifier,
+    chatIdentifierToString,
+} from "openchat-client";
 import page from "page";
 
 import { isCanisterUrl } from "../utils/urls";
@@ -68,12 +73,15 @@ function supported(): boolean {
     );
 }
 
-export async function closeNotificationsForChat(chatId: string): Promise<void> {
+export async function closeNotificationsForChat(chatId: ChatIdentifier): Promise<void> {
+    if (chatId.kind === "channel") {
+        throw new Error("TODO - work out how to close channel notifications");
+    }
     const registration = await getRegistration();
     if (registration !== undefined) {
         const notifications = await registration.getNotifications();
         for (const notification of notifications) {
-            if (notification.data?.path.startsWith(chatId)) {
+            if (notification.data?.path.startsWith(chatIdentifierToString(chatId))) {
                 notification.close();
             }
         }

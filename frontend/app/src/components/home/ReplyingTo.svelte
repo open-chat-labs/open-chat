@@ -1,5 +1,10 @@
 <script lang="ts">
-    import type { EnhancedReplyContext, CreatedUser, OpenChat } from "openchat-client";
+    import type {
+        EnhancedReplyContext,
+        CreatedUser,
+        OpenChat,
+        ChatIdentifier,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { createEventDispatcher, getContext } from "svelte";
@@ -14,7 +19,7 @@
     export let replyingTo: EnhancedReplyContext;
     export let user: CreatedUser;
     export let readonly: boolean;
-    export let chatId: string;
+    export let chatId: ChatIdentifier;
 
     $: me = replyingTo.sender?.userId === user?.userId;
 

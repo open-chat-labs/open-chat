@@ -26,7 +26,7 @@
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
-    import type { Message, OpenChat } from "openchat-client";
+    import type { ChatIdentifier, Message, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
     import { now } from "../../stores/time";
@@ -35,7 +35,7 @@
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let chatId: string;
+    export let chatId: ChatIdentifier;
     export let isProposal: boolean;
     export let inert: boolean;
     export let publicGroup: boolean;
@@ -79,7 +79,7 @@
             : threadRootMessage?.messageIndex;
 
     function blockUser() {
-        if (!canBlockUser) return;
+        if (!canBlockUser || chatId.kind !== "group_chat") return;
         client.blockUser(chatId, msg.sender).then((success) => {
             if (success) {
                 toastStore.showSuccessToast("blockUserSucceeded");

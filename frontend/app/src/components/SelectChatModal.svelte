@@ -2,9 +2,11 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { rtlStore } from "../stores/rtl";
     import type {
+        ChatIdentifier,
         ChatSummary,
         DirectChatSummary,
         GroupChatSummary,
+        MultiUserChat,
         OpenChat,
     } from "openchat-client";
     import Avatar from "./Avatar.svelte";
@@ -27,7 +29,7 @@
     const dispatch = createEventDispatcher();
 
     type NormalisedChat = {
-        id: string;
+        id: ChatIdentifier;
         userId: string | undefined;
         name: string;
         avatarUrl: string;
@@ -45,36 +47,39 @@
         now: number,
         chatSummary: ChatSummary
     ): Promise<NormalisedChat> {
-        if (chatSummary.kind === "direct_chat") {
-            const description = await buildDirectChatDescription(chatSummary, now);
-            const them = $userStore[chatSummary.them];
-            return {
-                id: chatSummary.chatId,
-                userId: chatSummary.them,
-                name: client.usernameAndIcon(them),
-                avatarUrl: client.userAvatarUrl(them),
-                description,
-            };
+        switch (chatSummary.kind) {
+            case "direct_chat":
+                const description = await buildDirectChatDescription(chatSummary, now);
+                const them = $userStore[chatSummary.them.userId];
+                return {
+                    id: chatSummary.id,
+                    userId: chatSummary.them.userId,
+                    name: client.usernameAndIcon(them),
+                    avatarUrl: client.userAvatarUrl(them),
+                    description,
+                };
+
+            default:
+                return {
+                    id: chatSummary.id,
+                    userId: undefined,
+                    name: chatSummary.name,
+                    avatarUrl: client.groupAvatarUrl(chatSummary),
+                    description: buildGroupChatDescription(chatSummary),
+                };
         }
-        return {
-            id: chatSummary.chatId,
-            userId: undefined,
-            name: chatSummary.name,
-            avatarUrl: client.groupAvatarUrl(chatSummary),
-            description: buildGroupChatDescription(chatSummary),
-        };
     }
 
     async function buildDirectChatDescription(
         chat: DirectChatSummary,
         now: number
     ): Promise<string> {
-        return (await client.getUserStatus(chat.them, now)) === UserStatus.Online
+        return (await client.getUserStatus(chat.them.userId, now)) === UserStatus.Online
             ? $_("onlineNow")
             : $_("offline");
     }
 
-    function buildGroupChatDescription(group: GroupChatSummary): string {
+    function buildGroupChatDescription(group: MultiUserChat): string {
         if (group.description.length > 0) {
             return group.description;
         } else {
@@ -85,7 +90,7 @@
         }
     }
 
-    function selectChat(chatId: string) {
+    function selectChat(chatId: ChatIdentifier) {
         dispatch("select", chatId);
     }
 </script>

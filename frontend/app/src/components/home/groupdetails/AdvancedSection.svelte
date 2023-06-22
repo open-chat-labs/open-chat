@@ -12,7 +12,7 @@
     function deleteGroup() {
         dispatch("deleteGroup", {
             kind: "delete",
-            chatId: group.chatId,
+            chatId: group.id,
             doubleCheck: {
                 challenge: $_("typeGroupName", { values: { name: group.name } }),
                 response: group.name,

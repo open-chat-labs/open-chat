@@ -100,7 +100,7 @@
     });
 
     function addHotGroupExclusion(chatId: string): void {
-        client.addHotGroupExclusion(chatId).then((success) => {
+        client.addHotGroupExclusion({ kind: "group_chat", groupId: chatId }).then((success) => {
             if (success) {
                 console.log("Hot group exclusion added", chatId);
             } else {
@@ -110,7 +110,7 @@
     }
 
     function deleteFrozenGroup(chatId: string): void {
-        client.deleteFrozenGroup(chatId).then((success) => {
+        client.deleteFrozenGroup({ kind: "group_chat", groupId: chatId }).then((success) => {
             if (success) {
                 console.log("Group deleted", chatId);
             } else {
@@ -120,7 +120,7 @@
     }
 
     function freezeGroup(chatId: string, reason: string | undefined): void {
-        client.freezeGroup(chatId, reason).then((success) => {
+        client.freezeGroup({ kind: "group_chat", groupId: chatId }, reason).then((success) => {
             if (success) {
                 console.log("Group frozen", chatId);
             } else {
@@ -130,7 +130,7 @@
     }
 
     function removeHotGroupExclusion(chatId: string): void {
-        client.removeHotGroupExclusion(chatId).then((success) => {
+        client.removeHotGroupExclusion({ kind: "group_chat", groupId: chatId }).then((success) => {
             if (success) {
                 console.log("Hot group exclusion removed", chatId);
             } else {
@@ -140,7 +140,7 @@
     }
 
     function unfreezeGroup(chatId: string): void {
-        client.unfreezeGroup(chatId).then((success) => {
+        client.unfreezeGroup({ kind: "group_chat", groupId: chatId }).then((success) => {
             if (success) {
                 console.log("Group unfrozen", chatId);
             } else {
@@ -154,13 +154,25 @@
         messageId: bigint,
         threadRootMessageIndex?: number | undefined
     ): void {
-        client.deleteMessage(chatId, threadRootMessageIndex, messageId, true).then((success) => {
-            if (success) {
-                console.log("Message deleted", chatId, messageId, threadRootMessageIndex);
-            } else {
-                console.log("Failed to delete message", chatId, messageId, threadRootMessageIndex);
-            }
-        });
+        client
+            .deleteMessage(
+                { kind: "group_chat", groupId: chatId },
+                threadRootMessageIndex,
+                messageId,
+                true
+            )
+            .then((success) => {
+                if (success) {
+                    console.log("Message deleted", chatId, messageId, threadRootMessageIndex);
+                } else {
+                    console.log(
+                        "Failed to delete message",
+                        chatId,
+                        messageId,
+                        threadRootMessageIndex
+                    );
+                }
+            });
     }
 
     function setGroupUpgradeConcurrency(value: number): void {

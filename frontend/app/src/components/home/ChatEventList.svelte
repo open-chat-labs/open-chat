@@ -20,6 +20,9 @@
         SendingThreadMessage,
         ReactionSelected,
         ThreadReactionSelected,
+        ChatIdentifier,
+        MessageContext,
+        chatIdentifiersEqual,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -48,7 +51,7 @@
     export let firstUnreadMention: Mention | undefined;
     export let footer: boolean;
     export let setFocusMessageIndex: (index: number | undefined) => void;
-    export let selectedThreadKey: string | undefined;
+    export let selectedMessageContext: MessageContext | undefined;
     export let threadRootEvent: EventWrapper<Message> | undefined;
     export let maintainScroll: boolean;
 
@@ -170,7 +173,7 @@
 
     async function afterReaction(messageId: bigint, kind: "add" | "remove") {
         if (
-            !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
+            !client.moreNewMessagesAvailable(chat.id, threadRootEvent) &&
             chat.latestMessage?.event?.messageId === messageId &&
             kind === "add" &&
             insideBottomThreshold()
@@ -189,7 +192,7 @@
 
     async function afterThreadReaction(messageId: bigint, kind: "add" | "remove") {
         if (
-            !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
+            !client.moreNewMessagesAvailable(chat.id, threadRootEvent) &&
             kind === "add" &&
             insideBottomThreshold()
         ) {
@@ -210,15 +213,12 @@
             latestEventIndex: event.index,
             latestEventTimestamp: event.timestamp,
         };
-        client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
+        client.markThreadSummaryUpdated(rootEvent.event.messageId, summary);
         afterSendMessage();
     }
 
     async function afterSendMessage() {
-        if (
-            !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
-            scrollToBottomOnSend
-        ) {
+        if (!client.moreNewMessagesAvailable(chat.id, threadRootEvent) && scrollToBottomOnSend) {
             await scrollBottom("smooth");
             scrollToBottomOnSend = false;
         }
@@ -241,12 +241,12 @@
     }
 
     function shouldLoadPreviousMessages() {
-        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId, threadRootEvent);
+        morePrevAvailable = client.morePreviousMessagesAvailable(chat.id, threadRootEvent);
         return insideTopThreshold() && morePrevAvailable;
     }
 
     function shouldLoadNewMessages() {
-        moreNewAvailable = client.moreNewMessagesAvailable(chat.chatId, threadRootEvent);
+        moreNewAvailable = client.moreNewMessagesAvailable(chat.id, threadRootEvent);
         return insideBottomThreshold() && moreNewAvailable;
     }
 
@@ -257,13 +257,11 @@
         const loadPromises = [];
         if (loadingNew) {
             console.debug("SCROLL: about to load new message");
-            loadPromises.push(client.loadNewMessages(chat.chatId, threadRootEvent));
+            loadPromises.push(client.loadNewMessages(chat.id, threadRootEvent));
         }
         if (loadingPrev) {
             console.debug("SCROLL: about to load previous message");
-            loadPromises.push(
-                client.loadPreviousMessages(chat.chatId, threadRootEvent, initialLoad)
-            );
+            loadPromises.push(client.loadPreviousMessages(chat.id, threadRootEvent, initialLoad));
         }
         if (loadPromises.length > 0) {
             await Promise.all(loadPromises);
@@ -282,7 +280,7 @@
 
     function scrollToMention(mention: Mention | undefined) {
         if (mention !== undefined) {
-            scrollToMessageIndex(chat.chatId, mention.messageIndex, false);
+            scrollToMessageIndex(chat.id, mention.messageIndex, false);
         }
     }
 
@@ -300,7 +298,8 @@
             (ev) =>
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
-                !failedMessagesStore.contains(selectedThreadKey ?? chat.chatId, ev.event.messageId)
+                (selectedMessageContext === undefined ||
+                    !failedMessagesStore.contains(selectedMessageContext, ev.event.messageId))
         ) as EventWrapper<Message> | undefined;
     }
 
@@ -324,14 +323,14 @@
     }
 
     export async function scrollToMessageIndex(
-        chatId: string,
+        chatId: ChatIdentifier,
         index: number,
         preserveFocus: boolean,
         filling: boolean = false,
         hasLookedUpEvent: boolean = false
     ): Promise<void> {
         // it is possible for the chat to change while this function is recursing so double check
-        if (chatId !== chat.chatId) return Promise.resolve();
+        if (!chatIdentifiersEqual(chatId, chat.id)) return Promise.resolve();
 
         if (index < 0) {
             setFocusMessageIndex(undefined);
@@ -389,7 +388,7 @@
         if (messageIndex === undefined || initialLoad === false) return;
         await tick();
         initialised = true;
-        await scrollToMessageIndex(chat.chatId, messageIndex, false);
+        await scrollToMessageIndex(chat.id, messageIndex, false);
     }
 
     async function onLoadedPreviousMessages(initialLoad: boolean) {
@@ -427,7 +426,7 @@
     async function onLoadedNewMessages() {
         if (
             !loadingFromUserScroll &&
-            !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
+            !client.moreNewMessagesAvailable(chat.id, threadRootEvent) &&
             insideBottomThreshold()
         ) {
             // only scroll if we are now within threshold from the bottom
@@ -465,7 +464,7 @@
     }
 
     async function loadIndexThenScrollToBottom(messageIndex: number) {
-        await scrollToMessageIndex(chat.chatId, messageIndex, false);
+        await scrollToMessageIndex(chat.id, messageIndex, false);
         await scrollBottom();
     }
 

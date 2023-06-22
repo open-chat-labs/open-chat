@@ -84,6 +84,7 @@ export const idlFactory = ({ IDL }) => {
     'InternetComputer' : IDL.Null,
     'CHAT' : IDL.Null,
     'SNS1' : IDL.Null,
+    'KINIC' : IDL.Null,
     'CKBTC' : IDL.Null,
   });
   const PayForDiamondMembershipArgs = IDL.Record({

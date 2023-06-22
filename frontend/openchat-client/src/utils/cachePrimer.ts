@@ -1,6 +1,5 @@
 import type { ChatEvent, ChatSummary, EventsResponse, IndexRange } from "openchat-shared";
-import { compareChats, missingUserIds, userIdsFromEvents } from "openchat-shared";
-import { toRecord } from "./list";
+import { ChatMap, compareChats, missingUserIds, userIdsFromEvents } from "openchat-shared";
 import { Poller } from "./poller";
 import { boolFromLS } from "../stores/localStorageSetting";
 import { messagesRead } from "../stores/markRead";
@@ -9,7 +8,7 @@ import { get } from "svelte/store";
 import type { OpenChat } from "../openchat";
 
 export class CachePrimer {
-    private pending: Record<string, ChatSummary> = {};
+    private pending: ChatMap<ChatSummary> = new ChatMap();
     private runner: Poller | undefined = undefined;
 
     constructor(private api: OpenChat) {
@@ -17,13 +16,15 @@ export class CachePrimer {
     }
 
     processChatUpdates(previous: ChatSummary[], next: ChatSummary[]): void {
-        const record = toRecord(previous, (c) => c.chatId);
-        const updated = next.filter((c) => !c.archived && hasBeenUpdated(record[c.chatId], c));
+        const record = ChatMap.fromList(previous);
+        const updated = next.filter(
+            (c) => !c.membership.archived && hasBeenUpdated(record.get(c.id), c)
+        );
 
         if (updated.length > 0) {
             for (const chat of updated) {
-                this.pending[chat.chatId] = chat;
-                debug("enqueued " + chat.chatId);
+                this.pending.set(chat.id, chat);
+                debug("enqueued " + chat.id);
             }
 
             if (this.runner === undefined) {
@@ -35,31 +36,31 @@ export class CachePrimer {
 
     async processNext(): Promise<void> {
         try {
-            const chat = Object.values(this.pending).sort(compareChats)[0];
+            const chat = this.pending.values().sort(compareChats)[0];
             if (chat === undefined) {
                 debug("queue empty");
                 return;
             }
-            delete this.pending[chat.chatId];
+            this.pending.delete(chat.id);
 
             const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(
-                chat.chatId,
+                chat.id,
                 chat.latestMessage?.event.messageIndex
             );
 
             const userIds = new Set<string>();
             if (firstUnreadMessage !== undefined) {
-                debug(chat.chatId + " loading events window");
+                debug(chat.id + " loading events window");
                 const eventsWindowResponse = await this.getEventsWindow(chat, firstUnreadMessage);
-                debug(chat.chatId + " loaded events window");
+                debug(chat.id + " loaded events window");
                 if (eventsWindowResponse !== "events_failed") {
                     userIdsFromEvents(eventsWindowResponse.events).forEach((u) => userIds.add(u));
                 }
             }
 
-            debug(chat.chatId + " loading latest events");
+            debug(chat.id + " loading latest events");
             const latestEventsResponse = await this.getLatestEvents(chat);
-            debug(chat.chatId + " loaded latest events");
+            debug(chat.id + " loaded latest events");
             if (latestEventsResponse !== "events_failed") {
                 userIdsFromEvents(latestEventsResponse.events).forEach((u) => userIds.add(u));
             }
@@ -67,16 +68,16 @@ export class CachePrimer {
             if (userIds.size > 0) {
                 const missing = missingUserIds(get(userStore), userIds);
                 if (missing.length > 0) {
-                    debug(`${chat.chatId} loading ${missing.length} users`);
+                    debug(`${chat.id} loading ${missing.length} users`);
                     await this.api.getUsers(
                         { userGroups: [{ users: missing, updatedSince: BigInt(0) }] },
                         true
                     );
                 }
             }
-            debug(chat.chatId + " completed");
+            debug(chat.id + " completed");
         } finally {
-            if (Object.keys(this.pending).length === 0) {
+            if (this.pending.size === 0) {
                 this.runner?.stop();
                 this.runner = undefined;
                 debug("runner stopped");
@@ -88,23 +89,26 @@ export class CachePrimer {
         chat: ChatSummary,
         firstUnreadMessage: number
     ): Promise<EventsResponse<ChatEvent>> {
-        if (chat.kind === "direct_chat") {
-            return await this.api.sendRequest({
-                kind: "directChatEventsWindow",
-                eventIndexRange: [0, chat.latestEventIndex],
-                theirUserId: chat.them,
-                messageIndex: firstUnreadMessage,
-                latestClientMainEventIndex: chat.latestEventIndex,
-            });
-        } else {
-            return await this.api.sendRequest({
-                kind: "groupChatEventsWindow",
-                eventIndexRange: [chat.minVisibleEventIndex, chat.latestEventIndex],
-                chatId: chat.chatId,
-                messageIndex: firstUnreadMessage,
-                latestClientMainEventIndex: chat.latestEventIndex,
-                threadRootMessageIndex: undefined,
-            });
+        switch (chat.kind) {
+            case "direct_chat":
+                return await this.api.sendRequest({
+                    kind: "directChatEventsWindow",
+                    eventIndexRange: [0, chat.latestEventIndex],
+                    chatId: chat.them,
+                    messageIndex: firstUnreadMessage,
+                    latestClientMainEventIndex: chat.latestEventIndex,
+                });
+            case "group_chat":
+                return await this.api.sendRequest({
+                    kind: "groupChatEventsWindow",
+                    eventIndexRange: [chat.minVisibleEventIndex, chat.latestEventIndex],
+                    chatId: chat.id,
+                    messageIndex: firstUnreadMessage,
+                    latestClientMainEventIndex: chat.latestEventIndex,
+                    threadRootMessageIndex: undefined,
+                });
+            case "channel":
+                throw new Error("TODO - cache primer doesn't work for channels yet");
         }
     }
 
@@ -117,7 +121,7 @@ export class CachePrimer {
         return await this.api.sendRequest({
             kind: "chatEvents",
             chatType: chat.kind,
-            chatId: chat.chatId,
+            chatId: chat.id,
             eventIndexRange: range,
             startIndex: chat.latestEventIndex,
             ascending: false,
