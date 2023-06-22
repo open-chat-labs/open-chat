@@ -20,6 +20,7 @@ import type {
     Failure,
 } from "../response";
 import { emptyChatMetrics } from "../../utils";
+import type { CommunityIdentifier, CommunitySummary } from "../community";
 
 export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
 export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
@@ -890,7 +891,7 @@ export type UserCanisterChannelSummary = {
 };
 
 export type UserCanisterCommunitySummary = {
-    communityId: string;
+    id: CommunityIdentifier;
     channels: UserCanisterChannelSummary[];
     pinnedChannels: string[];
     archived: boolean;
@@ -974,14 +975,14 @@ export type CommunitiesUpdates = {
 };
 
 export type UserCanisterCommunitySummaryUpdates = {
-    communityId: string;
+    id: CommunityIdentifier;
     channels: UserCanisterChannelSummaryUpdates[];
     pinned?: string[];
     archived?: boolean;
 };
 
 export type UserCanisterChannelSummaryUpdates = {
-    channelId: string;
+    id: ChannelIdentifier;
     readByMeUpTo?: number;
     dateReadPinned?: bigint;
     threadsRead: [number, number][];
@@ -1824,16 +1825,24 @@ export type SnsFunctionType =
 export type FilterGroupsResponse = {
     timestamp: bigint;
     activeGroups: string[];
-    deletedGroups: DeletedGroupInfo[];
+    deletedGroups: DeletedInfo[];
     upgradesInProgress: string[];
 };
 
-export type DeletedGroupInfo = {
+export type ActiveGroupsResponse = {
+    timestamp: bigint;
+    activeGroups: string[];
+    deletedGroups: DeletedInfo[];
+    deletedCommunities: DeletedInfo[];
+    activeCommunities: string[];
+};
+
+export type DeletedInfo = {
     id: string;
     timestamp: bigint;
-    deletedBy: string;
-    groupName: string;
+    name: string;
     public: boolean;
+    deletedBy: string;
 };
 
 export type FreezeGroupResponse =

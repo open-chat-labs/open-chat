@@ -27,6 +27,10 @@ export interface Theme {
         bd: string;
     };
 
+    unread: {
+        mute: string;
+    };
+
     collapsible: {
         closed: {
             header: {

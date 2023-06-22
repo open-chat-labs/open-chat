@@ -52,6 +52,8 @@ import {
     CommunityCanisterCommunitySummary,
     CommunityCanisterCommunitySummaryUpdates,
     CommunityCanisterChannelSummaryUpdates,
+    ChannelMembershipUpdates,
+    CommunityMembershipUpdates,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -106,6 +108,8 @@ export {
     CommunityCanisterCommunitySummary as ApiCommunityCanisterCommunitySummary,
     CommunityCanisterCommunitySummaryUpdates as ApiCommunityCanisterCommunitySummaryUpdates,
     CommunityCanisterChannelSummaryUpdates as ApiCommunityCanisterChannelSummaryUpdates,
+    ChannelMembershipUpdates as ApiChannelMembershipUpdates,
+    CommunityMembershipUpdates as ApiCommunityMembershipUpdates,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -643,12 +643,13 @@ function directChatsInitial(candid: ApiDirectChatsInitial): DirectChatsInitial {
 }
 
 function userCanisterChannelSummary(
-    candid: ApiUserCanisterChannelSummary
+    candid: ApiUserCanisterChannelSummary,
+    communitId: string
 ): UserCanisterChannelSummary {
     return {
         chatId: {
             kind: "channel",
-            communityId: "", // TODO - we need to make sure that we pass the community id in here
+            communityId: communitId,
             channelId: candid.channel_id.toString(),
         },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
@@ -661,9 +662,10 @@ function userCanisterChannelSummary(
 function userCanisterCommunitySummary(
     candid: ApiUserCanisterCommunitySummary
 ): UserCanisterCommunitySummary {
+    const communityId = candid.community_id.toString();
     return {
-        communityId: candid.community_id.toString(),
-        channels: candid.channels.map(userCanisterChannelSummary),
+        id: { kind: "community", communityId },
+        channels: candid.channels.map((c) => userCanisterChannelSummary(c, communityId)),
         pinnedChannels: candid.pinned.map((p) => p.toString()),
         archived: candid.archived,
     };
@@ -716,10 +718,11 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
 }
 
 export function userCanisterChannelSummaryUpdates(
-    candid: ApiUserCanisterChannelSummaryUpdates
+    candid: ApiUserCanisterChannelSummaryUpdates,
+    communityId: string
 ): UserCanisterChannelSummaryUpdates {
     return {
-        channelId: candid.channel_id.toString(),
+        id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
         threadsRead: candid.threads_read.map(([idx1, idx2]) => [idx1, idx2]),
@@ -730,9 +733,10 @@ export function userCanisterChannelSummaryUpdates(
 export function userCanisterCommunitySummaryUpdates(
     candid: ApiUserCanisterCommunitySummaryUpdates
 ): UserCanisterCommunitySummaryUpdates {
+    const communityId = candid.community_id.toString();
     return {
-        communityId: candid.community_id.toString(),
-        channels: candid.channels.map(userCanisterChannelSummaryUpdates),
+        id: { kind: "community", communityId },
+        channels: candid.channels.map((c) => userCanisterChannelSummaryUpdates(c, communityId)),
         pinned: optional(candid.pinned, (p) => p.map((p) => p.toString())),
         archived: optional(candid.archived, identity),
     };

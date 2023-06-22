@@ -173,6 +173,8 @@ export async function setCachedChats(
         groupChats,
     };
 
+    console.log("xxx: writing chats to cache", stateToCache);
+
     const tx = (await db).transaction(["chats", "chat_events", "thread_events"], "readwrite");
     const chatsStore = tx.objectStore("chats");
     const eventsStore = tx.objectStore("chat_events");

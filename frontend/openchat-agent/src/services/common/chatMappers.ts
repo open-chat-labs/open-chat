@@ -50,6 +50,7 @@ import type {
     ApiCommunityPermissions,
     ApiAddReactionResponse as ApiAddDirectReactionResponse,
     ApiRemoveReactionResponse as ApiRemoveDirectReactionResponse,
+    ApiMention,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -111,12 +112,17 @@ import {
     emptyChatMetrics,
     ChannelSummary,
     CommunitySummary,
+    GroupCanisterThreadDetails,
+    Mention,
+    EventWrapper,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
     ApiGroupCanisterGroupChatSummary,
     ApiAddReactionResponse as ApiAddGroupReactionResponse,
     ApiRemoveReactionResponse as ApiRemoveGroupReactionResponse,
+    ApiGroupCanisterThreadDetails,
+    ApiMessageEventWrapper,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -1345,4 +1351,38 @@ export function addRemoveReactionResponse(
         console.warn("AddRemoveReaction failed with: ", candid);
         return CommonResponses.failure;
     }
+}
+
+export function groupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
+    return {
+        kind: "governance_proposals",
+        isNns: subtype.GovernanceProposals.is_nns,
+        governanceCanisterId: subtype.GovernanceProposals.governance_canister_id.toString(),
+    };
+}
+
+export function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Message> {
+    return {
+        event: message(candid.event),
+        index: candid.index,
+        timestamp: candid.timestamp,
+    };
+}
+
+export function threadDetails(candid: ApiGroupCanisterThreadDetails): GroupCanisterThreadDetails {
+    return {
+        threadRootMessageIndex: candid.root_message_index,
+        lastUpdated: candid.last_updated,
+        latestEventIndex: candid.latest_event,
+        latestMessageIndex: candid.latest_message,
+    };
+}
+
+export function mention(candid: ApiMention): Mention {
+    return {
+        messageId: candid.message_id,
+        messageIndex: candid.message_index,
+        eventIndex: candid.event_index,
+        mentionedBy: candid.mentioned_by.toString(),
+    };
 }

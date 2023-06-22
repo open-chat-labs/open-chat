@@ -10,9 +10,11 @@ import type {
     ChannelIdentifier,
     GroupSubtype,
     EventWrapper,
-    ChatMembership,
+    GroupCanisterThreadDetails,
+    Mention,
 } from "../chat";
 import type { DataContent } from "../data";
+import type { OptionUpdate } from "../optionUpdate";
 import type {
     ChatPermissions,
     CommunityPermissions,
@@ -349,3 +351,58 @@ export type JoinCommunityResponse =
     | (Success & { community: CommunitySummary });
 
 export type CommunitySummaryResponse = Failure | CommunitySummary;
+
+export type CommunitySummaryUpdatesResponse =
+    | SuccessNoUpdates
+    | Failure
+    | CommunityCanisterCommunitySummaryUpdates;
+
+export type CommunityCanisterCommunitySummaryUpdates = {
+    id: CommunityIdentifier;
+    public: boolean | undefined;
+    permissions: CommunityPermissions | undefined;
+    channelsUpdated: CommunityCanisterChannelSummaryUpdates[];
+    metrics: Metrics | undefined;
+    gate: OptionUpdate<AccessGate>;
+    name: string | undefined;
+    description: string | undefined;
+    lastUpdated: bigint;
+    avatarId: OptionUpdate<bigint>;
+    channelsAdded: ChannelSummary[];
+    membership: CommunityMembershipUpdates | undefined;
+    frozen: OptionUpdate<boolean>;
+    latestEventIndex: number | undefined;
+    bannerId: OptionUpdate<bigint>;
+    memberCount: number | undefined;
+};
+
+export type CommunityCanisterChannelSummaryUpdates = {
+    id: ChannelIdentifier;
+    public: boolean | undefined;
+    permissions: ChatPermissions | undefined;
+    metrics: Metrics | undefined;
+    subtype: OptionUpdate<GroupSubtype>;
+    dateLastPinned: bigint | undefined;
+    gate: OptionUpdate<AccessGate>;
+    name: string | undefined;
+    description: string | undefined;
+    lastUpdated: bigint;
+    avatarId: OptionUpdate<bigint>;
+    membership: ChannelMembershipUpdates | undefined;
+    latestEventIndex: number | undefined;
+    memberCount: number | undefined;
+    latestMessage: EventWrapper<Message> | undefined;
+};
+
+export type CommunityMembershipUpdates = {
+    role: MemberRole | undefined;
+    channelsRemoved: ChannelIdentifier[];
+};
+
+export type ChannelMembershipUpdates = {
+    role: MemberRole | undefined;
+    notificationsMuted: boolean | undefined;
+    latestThreads: GroupCanisterThreadDetails[];
+    mentions: Mention[];
+    myMetrics: Metrics | undefined;
+};

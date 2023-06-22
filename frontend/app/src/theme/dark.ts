@@ -43,6 +43,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
         disabledTxt: txtLow,
         primary,
 
+        unread: {
+            mute: "rgba(255,255,255,0.3",
+        },
+
         progress: {
             bd: "rgba(255,255,255,0.2)",
         },

@@ -101,6 +101,10 @@ import {
     memberRole,
     message,
     messageContent,
+    groupSubtype,
+    messageEvent,
+    threadDetails,
+    mention,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
@@ -261,32 +265,6 @@ function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
         eventIndex,
         threadRootMessageIndex: optional(threadRootMessageIndex, identity),
         timestamp,
-    };
-}
-
-function threadDetails(candid: ApiGroupCanisterThreadDetails): GroupCanisterThreadDetails {
-    return {
-        threadRootMessageIndex: candid.root_message_index,
-        lastUpdated: candid.last_updated,
-        latestEventIndex: candid.latest_event,
-        latestMessageIndex: candid.latest_message,
-    };
-}
-
-function mention(candid: ApiMention): Mention {
-    return {
-        messageId: candid.message_id,
-        messageIndex: candid.message_index,
-        eventIndex: candid.event_index,
-        mentionedBy: candid.mentioned_by.toString(),
-    };
-}
-
-function groupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
-    return {
-        kind: "governance_proposals",
-        isNns: subtype.GovernanceProposals.is_nns,
-        governanceCanisterId: subtype.GovernanceProposals.governance_canister_id.toString(),
     };
 }
 
@@ -987,14 +965,6 @@ export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview):
             .sort((e1, e2) => e1.index - e2.index),
         totalReplies: candid.total_replies,
         rootMessage: messageEvent(candid.root_message),
-    };
-}
-
-function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Message> {
-    return {
-        event: message(candid.event),
-        index: candid.index,
-        timestamp: candid.timestamp,
     };
 }
 

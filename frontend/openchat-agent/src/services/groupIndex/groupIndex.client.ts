@@ -13,6 +13,9 @@ import type {
     SearchResponse,
     SearchScope,
     GroupSearchResponse,
+    CommunityIdentifier,
+    GroupChatIdentifier,
+    ActiveGroupsResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
@@ -28,6 +31,7 @@ import {
     unfreezeGroupResponse,
     apiSearchScope,
     searchGroupsResponse,
+    activeGroupsResponse,
 } from "./mappers";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
@@ -47,6 +51,23 @@ export class GroupIndexClient extends CandidService {
 
     static create(identity: Identity, config: AgentConfig): GroupIndexClient {
         return new GroupIndexClient(identity, config);
+    }
+
+    activeGroups(
+        communityIds: CommunityIdentifier[],
+        groupIds: GroupChatIdentifier[],
+        activeSince: bigint
+    ): Promise<ActiveGroupsResponse> {
+        const args = {
+            group_ids: groupIds.map((c) => Principal.fromText(c.groupId)),
+            community_ids: communityIds.map((c) => Principal.fromText(c.communityId)),
+            active_since: apiOptional(identity, activeSince),
+        };
+        return this.handleQueryResponse(
+            () => this.groupIndexService.active_groups(args),
+            activeGroupsResponse,
+            args
+        );
     }
 
     filterGroups(chatIds: string[], activeSince: bigint): Promise<FilterGroupsResponse> {
