@@ -11,7 +11,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import AreYouSure from "../../AreYouSure.svelte";
     import { toastStore } from "../../../stores/toast";
-    import type { OpenChat, GroupChatSummary } from "openchat-client";
+    import { OpenChat, GroupChatSummary, routeForChatIdentifier } from "openchat-client";
     import { canShare, shareLink } from "../../../utils/share";
     import Markdown from "../Markdown.svelte";
 
@@ -30,7 +30,7 @@
     let confirmReset = false;
 
     $: link =
-        `${window.location.origin}/group/${group.chatId}/?ref=${client.user.userId}` +
+        `${window.location.origin}${routeForChatIdentifier(group.id)}/?ref=${client.user.userId}` +
         (!group.public ? `&code=${code}` : "");
 
     $: spinner = loading && code === undefined;
