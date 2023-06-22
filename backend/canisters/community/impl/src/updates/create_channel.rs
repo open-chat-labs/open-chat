@@ -1,21 +1,60 @@
+use crate::guards::caller_is_proposals_bot;
 use crate::{
     activity_notifications::handle_activity_notification, model::channels::Channel, mutate_state, run_regular_jobs,
     RuntimeState,
 };
-use canister_api_macros::update_candid_and_msgpack;
+use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
+use community_canister::c2c_join_community;
 use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
+use ic_cdk_macros::update;
 use rand::Rng;
 use types::ChannelId;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
-#[update_candid_and_msgpack]
+use super::c2c_join_community::c2c_join_community_impl;
+
+#[update]
 #[trace]
 fn create_channel(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| create_channel_impl(args, state))
+}
+
+#[update_msgpack(guard = "caller_is_proposals_bot")]
+#[trace]
+fn c2c_create_proposals_channel(args: Args) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| {
+        let caller = state.env.caller();
+
+        if let Some(response) = c2c_join_community_impl(
+            &c2c_join_community::Args {
+                user_id: caller.into(),
+                principal: caller,
+                invite_code: None,
+                is_platform_moderator: false,
+            },
+            state,
+        )
+        .err()
+        {
+            match response {
+                c2c_join_community::Response::GateCheckFailed(_) => return NotAuthorized,
+                c2c_join_community::Response::NotInvited => return NotAuthorized,
+                c2c_join_community::Response::Blocked => return NotAuthorized,
+                c2c_join_community::Response::MemberLimitReached(_) => return NotAuthorized,
+                c2c_join_community::Response::CommunityFrozen => return CommunityFrozen,
+                c2c_join_community::Response::InternalError(_) => return NotAuthorized,
+                _ => {}
+            }
+        }
+
+        create_channel_impl(args, state)
+    })
 }
 
 fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {

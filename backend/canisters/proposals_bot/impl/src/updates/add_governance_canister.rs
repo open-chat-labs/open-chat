@@ -88,7 +88,7 @@ async fn create_group(args: &Args, is_nns: bool) -> Result<MultiUserChat, Respon
 }
 
 async fn create_channel(args: &Args, is_nns: bool) -> Result<MultiUserChat, Response> {
-    let create_channel_args = community_canister::create_channel::Args {
+    let create_channel_args = community_canister::c2c_create_proposals_channel::Args {
         is_public: true,
         name: format!("{} Proposals", &args.name),
         description: args
@@ -113,8 +113,8 @@ async fn create_channel(args: &Args, is_nns: bool) -> Result<MultiUserChat, Resp
 
     let community_id = args.community_id.unwrap();
 
-    match community_canister_c2c_client::create_channel(community_id.into(), &create_channel_args).await {
-        Ok(community_canister::create_channel::Response::Success(result)) => {
+    match community_canister_c2c_client::c2c_create_proposals_channel(community_id.into(), &create_channel_args).await {
+        Ok(community_canister::c2c_create_proposals_channel::Response::Success(result)) => {
             Ok(MultiUserChat::Channel(community_id, result.channel_id))
         }
         Ok(response) => Err(InternalError(format!("Unable to create channel: {response:?}"))),
