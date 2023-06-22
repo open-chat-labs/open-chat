@@ -10,7 +10,10 @@ use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::heartbeat;
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
-use types::{CanisterId, ChatId, MessageContentInitial, MessageId, Proposal, ProposalContent, ProposalId, ProposalUpdate};
+use types::{
+    CanisterId, ChannelId, ChatId, CommunityId, MessageContentInitial, MessageId, MultiUserChat, Proposal, ProposalContent,
+    ProposalId, ProposalUpdate,
+};
 
 #[heartbeat]
 fn heartbeat() {
@@ -139,8 +142,6 @@ mod retrieve_proposals {
 }
 
 mod push_proposals {
-    use types::{ChannelId, CommunityId, MultiUserChat};
-
     use super::*;
 
     pub fn run() {
@@ -249,8 +250,6 @@ mod push_proposals {
 }
 
 mod update_proposals {
-    use types::{ChannelId, CommunityId, MultiUserChat};
-
     use super::*;
 
     pub fn run() {
