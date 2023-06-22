@@ -8,6 +8,14 @@ pub fn caller_is_governance_principal() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_group_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_group_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not a group canister".to_string())
+    }
+}
+
 pub fn caller_is_community_canister() -> Result<(), String> {
     if read_state(|state| state.is_caller_community_canister()) {
         Ok(())

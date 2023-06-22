@@ -13,7 +13,7 @@ pub enum Response {
     GroupNotFound,
     AlreadyImportingToAnotherCommunity,
     UserNotInGroup,
-    UserNotGroupOwner,
+    NotAuthorized,
     UserSuspended,
     ChatFrozen,
     InternalError(String),

@@ -6,6 +6,7 @@ generate_c2c_call!(c2c_active_groups);
 generate_c2c_call!(c2c_filter_groups);
 
 // Updates
+generate_c2c_call!(c2c_convert_group_into_community);
 generate_c2c_call!(c2c_create_community);
 generate_c2c_call!(c2c_create_group);
 generate_c2c_call!(c2c_delete_community);

@@ -9,9 +9,6 @@ use types::{AccessGate, CanisterId, CommunityId, Document, UserId};
 #[update_msgpack]
 #[trace]
 async fn c2c_create_community(args: Args) -> Response {
-    let avatar_id = Document::id(&args.avatar);
-    let banner_id = Document::id(&args.banner);
-
     let (user_id, principal) = match validate_caller().await {
         Ok((u, p)) => (u, p),
         Err(response) => return response,
@@ -37,13 +34,25 @@ async fn c2c_create_community(args: Args) -> Response {
         permissions: args.permissions,
         gate: args.gate.clone(),
         default_channels: args.default_channels,
+        source_group: None,
     };
 
-    match local_group_index_canister_c2c_client::c2c_create_community(local_group_index_canister, &c2c_create_community_args)
-        .await
-    {
+    match create_community_impl(c2c_create_community_args, local_group_index_canister).await {
+        Ok(community_id) => Success(SuccessResult { community_id }),
+        Err(error) => InternalError(error),
+    }
+}
+
+pub(crate) async fn create_community_impl(
+    args: local_group_index_canister::c2c_create_community::Args,
+    local_group_index_canister: CanisterId,
+) -> Result<CommunityId, String> {
+    match local_group_index_canister_c2c_client::c2c_create_community(local_group_index_canister, &args).await {
         Ok(local_group_index_canister::c2c_create_community::Response::Success(result)) => {
             mutate_state(|state| {
+                let avatar_id = Document::id(&args.avatar);
+                let banner_id = Document::id(&args.banner);
+
                 commit(
                     args.is_public,
                     result.community_id,
@@ -56,15 +65,12 @@ async fn c2c_create_community(args: Args) -> Response {
                     state,
                 )
             });
-            Success(SuccessResult {
-                community_id: result.community_id,
-            })
+            Ok(result.community_id)
         }
-        Ok(local_group_index_canister::c2c_create_community::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
-        Ok(local_group_index_canister::c2c_create_community::Response::InternalError(_)) => InternalError,
-        Err(_) => {
+        Ok(local_group_index_canister::c2c_create_community::Response::InternalError(error)) => Err(error),
+        Err(error) => {
             mutate_state(|state| rollback(args.is_public, &args.name, state));
-            InternalError
+            Err(format!("{error:?}"))
         }
     }
 }
@@ -83,7 +89,7 @@ async fn validate_caller() -> Result<(UserId, Principal), Response> {
     {
         Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => Ok((caller, r.principal)),
         Ok(user_index_canister::c2c_lookup_user::Response::UserNotFound) => Err(UserNotFound),
-        Err(_) => Err(InternalError),
+        Err(error) => Err(InternalError(format!("{error:?}"))),
     }
 }
 
@@ -103,7 +109,7 @@ fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<Prep
             local_group_index_canister,
         })
     } else {
-        Err(InternalError)
+        Err(InternalError("No available LocalGroupIndex found".to_string()))
     }
 }
 

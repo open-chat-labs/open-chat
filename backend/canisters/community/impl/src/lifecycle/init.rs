@@ -1,5 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
-use crate::Data;
+use crate::updates::import_group::commit_group_to_import;
+use crate::{mutate_state, Data};
 use canister_tracing_macros::trace;
 use community_canister::init::Args;
 use ic_cdk_macros::init;
@@ -46,4 +47,10 @@ fn init(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Initialization complete");
+
+    if let Some(group) = args.source_group {
+        mutate_state(|state| {
+            commit_group_to_import(args.created_by_user_id, group.group_id, group.total_bytes, true, state);
+        });
+    }
 }

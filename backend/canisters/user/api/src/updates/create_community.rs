@@ -33,7 +33,7 @@ pub enum Response {
     UserSuspended,
     Unauthorized,
     DefaultChannelsInvalid,
-    InternalError,
+    InternalError(String),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
