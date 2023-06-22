@@ -77,7 +77,7 @@ async fn create_group(args: &Args, is_nns: bool) -> Result<MultiUserChat, Respon
         events_ttl: None,
         gate: None,
     };
-    
+
     match group_index_canister_c2c_client::c2c_create_group(group_index_canister_id, &create_group_args).await {
         Ok(group_index_canister::c2c_create_group::Response::Success(result)) => Ok(MultiUserChat::Group(result.chat_id)),
         Ok(response) => Err(InternalError(format!("Unable to create group: {response:?}"))),
