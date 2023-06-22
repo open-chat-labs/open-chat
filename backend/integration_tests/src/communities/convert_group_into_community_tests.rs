@@ -30,7 +30,7 @@ fn import_group_succeeds() {
         client::group::happy_path::send_text_message(env, &user1, group_id, None, text, None);
     }
 
-    let convert_to_community_response = client::group::convert_to_community(
+    let convert_into_community_response = client::group::convert_into_community(
         env,
         user1.principal,
         group_id.into(),
@@ -41,7 +41,7 @@ fn import_group_succeeds() {
         },
     );
 
-    if let group_canister::convert_into_community::Response::Success(community_id) = convert_to_community_response {
+    if let group_canister::convert_into_community::Response::Success(community_id) = convert_into_community_response {
         tick_many(env, 20);
 
         let expected_channel_names = vec![group_name];
@@ -58,7 +58,7 @@ fn import_group_succeeds() {
             expected_channel_names
         );
     } else {
-        panic!("'convert_to_community' error: {convert_to_community_response:?}");
+        panic!("'convert_into_community' error: {convert_into_community_response:?}");
     }
 }
 

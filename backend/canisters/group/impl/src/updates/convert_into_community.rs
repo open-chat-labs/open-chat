@@ -8,7 +8,7 @@ use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update]
 #[trace]
-async fn convert_to_community(args: Args) -> Response {
+async fn convert_into_community(args: Args) -> Response {
     run_regular_jobs();
 
     let PrepareResult {
