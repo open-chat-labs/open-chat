@@ -21,7 +21,7 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response
     let caller = state.env.caller();
 
     let member = match state.data.members.get(caller) {
-        Some(p) => p,
+        Some(m) => m,
         None => return UserNotInCommunity,
     };
 
