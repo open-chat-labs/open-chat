@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support replying to channel messages ([#3825](https://github.com/open-chat-labs/open-chat/pull/3825))
 - Support simplified transfers of icrc1 tokens ([#3827](https://github.com/open-chat-labs/open-chat/pull/3827))
+- Allow known communities to call `c2c_vote_on_proposal` ([#3831](https://github.com/open-chat-labs/open-chat/pull/3831))
 
 ### Fixed
 
