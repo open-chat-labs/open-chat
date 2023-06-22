@@ -1,8 +1,8 @@
-use candid::{CandidType, Principal};
+use candid::Principal;
 use serde::{Deserialize, Serialize};
-use types::{AccessGate, AccessRules, CommunityId, CommunityPermissions, Document, UserId};
+use types::{AccessGate, AccessRules, CommunityId, CommunityPermissions, Document, SourceGroup, UserId};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub created_by_user_id: UserId,
     pub created_by_user_principal: Principal,
@@ -16,16 +16,16 @@ pub struct Args {
     pub permissions: Option<CommunityPermissions>,
     pub gate: Option<AccessGate>,
     pub default_channels: Vec<String>,
+    pub source_group: Option<SourceGroup>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    CyclesBalanceTooLow,
     InternalError(String),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub community_id: CommunityId,
 }
