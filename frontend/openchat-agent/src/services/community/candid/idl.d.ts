@@ -49,6 +49,9 @@ import {
     UpdateCommunityResponse,
     CommunityCanisterChannelSummary,
     MessageMatch,
+    CommunityCanisterCommunitySummary,
+    CommunityCanisterCommunitySummaryUpdates,
+    CommunityCanisterChannelSummaryUpdates,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -100,6 +103,9 @@ export {
     UpdateCommunityResponse as ApiUpdateCommunityResponse,
     CommunityCanisterChannelSummary as ApiCommunityCanisterChannelSummary,
     MessageMatch as ApiMessageMatch,
+    CommunityCanisterCommunitySummary as ApiCommunityCanisterCommunitySummary,
+    CommunityCanisterCommunitySummaryUpdates as ApiCommunityCanisterCommunitySummaryUpdates,
+    CommunityCanisterChannelSummaryUpdates as ApiCommunityCanisterChannelSummaryUpdates,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

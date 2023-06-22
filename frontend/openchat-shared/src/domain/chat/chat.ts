@@ -768,6 +768,7 @@ export type ChatStateFull = {
     latestActiveGroupsCheck: bigint;
     directChats: DirectChatSummary[];
     groupChats: GroupChatSummary[];
+    communities: CommunitySummary[];
     avatarId: bigint | undefined;
     blockedUsers: string[];
     pinnedChats: ChatIdentifier[];

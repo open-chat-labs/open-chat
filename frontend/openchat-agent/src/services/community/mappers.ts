@@ -5,11 +5,11 @@ import {
     ChangeCommunityRoleResponse,
     ChannelIdentifier,
     ChannelMessageMatch,
-    ChannelSummary,
     CommonResponses,
     CommunityInviteCodeResponse,
     CommunityPermissions,
     CommunityRulesResponse,
+    CommunitySummaryResponse,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
@@ -42,7 +42,6 @@ import {
     UpdateCommunityResponse,
     UserFailedError,
     UserFailedGateCheck,
-    emptyChatMetrics,
 } from "openchat-shared";
 import type {
     ApiAddMembersToChannelResponse,
@@ -86,19 +85,15 @@ import type {
     ApiAddMembersToChannelPartialSuccess,
     ApiUserFailedGateCheck,
     ApiUserFailedError,
-    ApiCommunityCanisterChannelSummary,
     ApiMessageMatch,
     ApiEnableInviteCodeResponse,
 } from "./candid/idl";
 import {
-    accessGate,
     apiCommunityPermissionRole,
-    apiGroupSubtype,
     apiOptional,
-    chatMetrics,
+    communityChannelSummary,
+    communitySummary,
     gateCheckFailedReason,
-    groupPermissions,
-    memberRole,
     message,
     messageContent,
 } from "../common/chatMappers";
@@ -842,8 +837,13 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendChannel
     }
 }
 
-export function summaryResponse(_candid: ApiSummaryResponse): unknown {
-    return {};
+export function summaryResponse(candid: ApiSummaryResponse): CommunitySummaryResponse {
+    if ("Success" in candid) {
+        return communitySummary(candid.Success);
+    } else {
+        console.warn("CommunitySummary failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function summaryUpdatesResponse(_candid: ApiSummaryUpdatesResponse): unknown {
@@ -925,6 +925,19 @@ export function apiMemberRole(domain: MemberRole): ApiGroupRole {
     }
 }
 
+export function communityRole(candid: ApiCommunityRole): MemberRole {
+    if ("Member" in candid) {
+        return "member";
+    }
+    if ("Admin" in candid) {
+        return "admin";
+    }
+    if ("Owner" in candid) {
+        return "owner";
+    }
+    throw new UnsupportedValueError("Unknown community role", candid);
+}
+
 export function apiCommunityRole(newRole: MemberRole): ApiCommunityRole {
     switch (newRole) {
         case "owner":
@@ -954,52 +967,5 @@ export function apiOptionalCommunityPermissions(
             apiCommunityPermissionRole,
             permissions.createPrivateChannel
         ),
-    };
-}
-
-export function communityChannelSummary(
-    candid: ApiCommunityCanisterChannelSummary,
-    communityId: string
-): ChannelSummary {
-    const latestMessage = optional(candid.latest_message, (ev) => ({
-        index: ev.index,
-        timestamp: ev.timestamp,
-        event: message(ev.event),
-    }));
-    return {
-        kind: "channel",
-        id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
-        latestMessage,
-        name: candid.name,
-        description: candid.description,
-        public: candid.is_public,
-        historyVisible: candid.history_visible_to_new_joiners,
-        minVisibleEventIndex: candid.min_visible_event_index,
-        minVisibleMessageIndex: candid.min_visible_message_index,
-        latestEventIndex: candid.latest_event_index,
-        lastUpdated: candid.last_updated,
-        blobReference: optional(candid.avatar_id, (blobId) => ({
-            blobId,
-            canisterId: candid.channel_id.toString(),
-        })),
-        memberCount: 0, //TODO this doesn't exist on commmunity channel
-        permissions: groupPermissions(candid.permissions),
-        metrics: chatMetrics(candid.metrics),
-        subtype: optional(candid.subtype, apiGroupSubtype),
-        frozen: false, // TODO - doesn't exist
-        dateLastPinned: optional(candid.date_last_pinned, identity),
-        dateReadPinned: undefined,
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
-        level: "group",
-        membership: {
-            joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
-            notificationsMuted: false,
-            role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
-            myMetrics: emptyChatMetrics(),
-            readByMeUpTo: latestMessage?.event.messageIndex,
-            latestThreads: [],
-            mentions: [],
-            archived: false,
-        },
     };
 }

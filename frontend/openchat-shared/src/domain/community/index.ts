@@ -1,4 +1,4 @@
-import type { AccessControlled, AccessRules } from "../access";
+import type { AccessControlled, AccessGate, AccessRules } from "../access";
 import type {
     GateCheckFailed,
     GateCheckFailedReason,
@@ -6,9 +6,15 @@ import type {
     Message,
     MessageContent,
     ChannelSummary,
+    Metrics,
+    ChannelIdentifier,
+    GroupSubtype,
+    EventWrapper,
+    ChatMembership,
 } from "../chat";
 import type { DataContent } from "../data";
 import type {
+    ChatPermissions,
     CommunityPermissions,
     HasMembershipRole,
     MemberRole,
@@ -45,7 +51,7 @@ export type CommunityIdentifier = {
     communityId: string;
 };
 
-export type Community = AccessControlled &
+export type CommunitySummary = AccessControlled &
     HasLevel &
     HasMembershipRole &
     Permissioned<CommunityPermissions> & {
@@ -340,4 +346,6 @@ export type CreateCommunityResponse = Failure | (Success & { id: string }) | { k
 export type JoinCommunityResponse =
     | Failure
     | GateCheckFailed
-    | (Success & { community: Community });
+    | (Success & { community: CommunitySummary });
+
+export type CommunitySummaryResponse = Failure | CommunitySummary;

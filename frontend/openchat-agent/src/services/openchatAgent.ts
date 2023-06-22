@@ -157,6 +157,7 @@ import { applyOptionUpdate } from "../utils/mapping";
 import { waitAll } from "../utils/promise";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 import { CommunityClient } from "./community/community.client";
+import { mergeCommunities } from "../utils/community";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -1022,6 +1023,9 @@ export class OpenChatAgent extends EventTarget {
         let anyErrors: boolean;
         const userResponse = await this.userClient.getInitialState();
         if (userResponse.timestamp === undefined) {
+            const communityPromises = userResponse.communities.summaries.map((c) =>
+                this.communityClient(c.communityId).summary()
+            );
             const groupPromises = userResponse.groupChats.summaries.map((g) =>
                 this.getGroupClient(g.id.groupId).summary()
             );
@@ -1029,11 +1033,17 @@ export class OpenChatAgent extends EventTarget {
             const groupPromiseResults = await waitAll(groupPromises);
             const groupChats = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
 
+            const communityPromiseResults = await waitAll(communityPromises);
+            const communities = communityPromiseResults.success;
+
+            console.log("xxx: communities summaries", communityPromiseResults.success);
+
             state = {
                 latestUserCanisterUpdates: userResponse.timestamp,
                 latestActiveGroupsCheck: userResponse.timestamp,
                 directChats: userResponse.directChats.summaries,
                 groupChats: mergeGroupChats(userResponse.groupChats.summaries, groupChats),
+                communities: mergeCommunities(userResponse.communities.summaries, communities),
                 avatarId: userResponse.avatarId,
                 blockedUsers: userResponse.blockedUsers,
                 pinnedChats: userResponse.favouriteChats.chats ?? [],
