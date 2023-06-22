@@ -2,15 +2,15 @@ use crate::{
     activity_notifications::handle_activity_notification, model::channels::Channel, mutate_state, run_regular_jobs,
     RuntimeState,
 };
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
-use ic_cdk_macros::update;
 use rand::Rng;
 use types::ChannelId;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 fn create_channel(args: Args) -> Response {
     run_regular_jobs();

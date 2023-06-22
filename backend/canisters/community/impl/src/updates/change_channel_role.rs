@@ -1,10 +1,10 @@
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::change_channel_role::{Response::*, *};
 use group_chat_core::ChangeRoleResult;
-use ic_cdk_macros::update;
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 fn change_channel_role(args: Args) -> Response {
     run_regular_jobs();

@@ -139,6 +139,8 @@ mod retrieve_proposals {
 }
 
 mod push_proposals {
+    use types::{ChannelId, CommunityId, MultiUserChat};
+
     use super::*;
 
     pub fn run() {
@@ -148,11 +150,23 @@ mod push_proposals {
             proposal,
         }) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposal_to_push())
         {
-            ic_cdk::spawn(push_proposal(governance_canister_id, chat_id, proposal));
+            match chat_id {
+                MultiUserChat::Group(group_id) => {
+                    ic_cdk::spawn(push_group_proposal(governance_canister_id, group_id, proposal));
+                }
+                MultiUserChat::Channel(community_id, channel_id) => {
+                    ic_cdk::spawn(push_channel_proposal(
+                        governance_canister_id,
+                        community_id,
+                        channel_id,
+                        proposal,
+                    ));
+                }
+            }
         }
     }
 
-    async fn push_proposal(governance_canister_id: CanisterId, chat_id: ChatId, proposal: Proposal) {
+    async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatId, proposal: Proposal) {
         let message_id = generate_message_id(governance_canister_id, proposal.id());
         let send_message_args = group_canister::send_message_v2::Args {
             message_id,
@@ -168,22 +182,41 @@ mod push_proposals {
             forwarding: false,
             correlation_id: 0,
         };
-        match group_canister_c2c_client::send_message_v2(chat_id.into(), &send_message_args).await {
-            Ok(_) => {
-                mutate_state(|state| {
-                    state
-                        .data
-                        .nervous_systems
-                        .mark_proposal_pushed(&governance_canister_id, proposal, message_id);
-                });
-            }
-            _ => mutate_state(|state| {
-                state
-                    .data
-                    .nervous_systems
-                    .mark_proposal_push_failed(&governance_canister_id, proposal);
+
+        let failed = group_canister_c2c_client::send_message_v2(group_id.into(), &send_message_args)
+            .await
+            .is_err();
+
+        mark_proposal_pushed(governance_canister_id, proposal, message_id, failed);
+    }
+
+    async fn push_channel_proposal(
+        governance_canister_id: CanisterId,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        proposal: Proposal,
+    ) {
+        let message_id = generate_message_id(governance_canister_id, proposal.id());
+        let send_message_args = community_canister::send_message::Args {
+            message_id,
+            thread_root_message_index: None,
+            content: MessageContentInitial::GovernanceProposal(ProposalContent {
+                governance_canister_id,
+                proposal: proposal.clone(),
+                my_vote: None,
             }),
-        }
+            sender_name: "ProposalsBot".to_string(),
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            channel_id,
+        };
+
+        let failed = community_canister_c2c_client::send_message(community_id.into(), &send_message_args)
+            .await
+            .is_err();
+
+        mark_proposal_pushed(governance_canister_id, proposal, message_id, failed);
     }
 
     // Deterministically generate each MessageId so that there is never any chance of a proposal
@@ -197,9 +230,27 @@ mod push_proposals {
         let array16: [u8; 16] = array32[..16].try_into().unwrap();
         u128::from_ne_bytes(array16).into()
     }
+
+    fn mark_proposal_pushed(governance_canister_id: CanisterId, proposal: Proposal, message_id: MessageId, failed: bool) {
+        mutate_state(|state| {
+            if failed {
+                state
+                    .data
+                    .nervous_systems
+                    .mark_proposal_push_failed(&governance_canister_id, proposal);
+            } else {
+                state
+                    .data
+                    .nervous_systems
+                    .mark_proposal_pushed(&governance_canister_id, proposal, message_id);
+            }
+        });
+    }
 }
 
 mod update_proposals {
+    use types::{ChannelId, CommunityId, MultiUserChat};
+
     use super::*;
 
     pub fn run() {
@@ -209,32 +260,67 @@ mod update_proposals {
             proposals,
         }) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposals_to_update())
         {
-            ic_cdk::spawn(update_proposals(governance_canister_id, chat_id, proposals));
+            match chat_id {
+                MultiUserChat::Group(group_id) => {
+                    ic_cdk::spawn(update_group_proposals(governance_canister_id, group_id, proposals));
+                }
+                MultiUserChat::Channel(community_id, channel_id) => {
+                    ic_cdk::spawn(update_channel_proposals(
+                        governance_canister_id,
+                        community_id,
+                        channel_id,
+                        proposals,
+                    ));
+                }
+            }
         }
     }
 
-    async fn update_proposals(governance_canister_id: CanisterId, chat_id: ChatId, proposals: Vec<ProposalUpdate>) {
+    async fn update_group_proposals(governance_canister_id: CanisterId, group_id: ChatId, proposals: Vec<ProposalUpdate>) {
         let update_proposals_args = group_canister::c2c_update_proposals::Args {
             proposals: proposals.clone(),
             correlation_id: 0,
         };
-        match group_canister_c2c_client::c2c_update_proposals(chat_id.into(), &update_proposals_args).await {
-            Ok(_) => {
-                mutate_state(|state| {
-                    let now = state.env.now();
-                    state
-                        .data
-                        .nervous_systems
-                        .mark_proposals_updated(&governance_canister_id, now);
-                });
-            }
-            _ => mutate_state(|state| {
-                let now = state.env.now();
+
+        let failed = group_canister_c2c_client::c2c_update_proposals(group_id.into(), &update_proposals_args)
+            .await
+            .is_err();
+
+        mark_proposals_updated(governance_canister_id, proposals, failed);
+    }
+
+    async fn update_channel_proposals(
+        governance_canister_id: CanisterId,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        proposals: Vec<ProposalUpdate>,
+    ) {
+        let update_proposals_args = community_canister::c2c_update_proposals::Args {
+            channel_id,
+            proposals: proposals.clone(),
+        };
+
+        let failed = community_canister_c2c_client::c2c_update_proposals(community_id.into(), &update_proposals_args)
+            .await
+            .is_err();
+
+        mark_proposals_updated(governance_canister_id, proposals, failed);
+    }
+
+    fn mark_proposals_updated(governance_canister_id: CanisterId, proposals: Vec<ProposalUpdate>, failed: bool) {
+        mutate_state(|state| {
+            let now = state.env.now();
+            if failed {
                 state
                     .data
                     .nervous_systems
                     .mark_proposals_update_failed(&governance_canister_id, proposals, now);
-            }),
-        }
+            } else {
+                state
+                    .data
+                    .nervous_systems
+                    .mark_proposals_updated(&governance_canister_id, now);
+            }
+        });
     }
 }
