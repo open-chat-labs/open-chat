@@ -613,7 +613,7 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
 
 function replySourceContext([chatId, maybeThreadRoot]: [Principal, [] | [number]]): MessageContext {
     return {
-        chatId: { kind: "group_chat", groupId: chatId.toString() }, // FIXME: this is importantly wrong
+        chatId: { kind: "group_chat", groupId: chatId.toString() }, // TODO this will need to change for communities but should be fine for now
         threadRootMessageIndex: optional(maybeThreadRoot, identity),
     };
 }
