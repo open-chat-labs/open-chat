@@ -566,6 +566,40 @@ type PinMessageResponse =
         NoChange;
     };
 
+type RegisterProposalVoteArgs =
+    record {
+        channel_id: ChannelId;
+        message_index: MessageIndex;
+        adopt: bool;
+    };
+
+type RegisterProposalVoteResponse =
+    variant {
+        Success;
+        AlreadyVoted: bool;
+        CommunityFrozen;
+        UserNotInCommunity;
+        UserSuspended;
+        ChannelNotFound;
+        UserNotInChannel;
+        NoEligibleNeurons;
+        ProposalMessageNotFound;
+        ProposalNotFound;
+        ProposalNotAcceptingVotes;
+        InternalError: text;
+    };
+
+type RegisterProposalVoteV2Response =
+    variant {
+        Success;
+        CommunityFrozen;
+        UserNotInCommunity;
+        UserSuspended;
+        ChannelNotFound;
+        UserNotInChannel;
+        ProposalMessageNotFound;
+    };
+
 type RemoveMemberArgs =
     record {
         user_id: UserId;
@@ -818,6 +852,8 @@ service: {
     make_channel_private: (MakeChannelPrivateArgs) -> (MakeChannelPrivateResponse);
     make_private: (EmptyArgs) -> (MakePrivateResponse);
     pin_message: (PinMessageArgs) -> (PinMessageResponse);
+    register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
+    register_proposal_vote_v2: (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
     remove_member: (RemoveMemberArgs) -> (RemoveMemberResponse);
     remove_member_from_channel: (RemoveMemberFromChannelArgs) -> (RemoveMemberFromChannelResponse);
     remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
