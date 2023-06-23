@@ -53,6 +53,7 @@ pub(crate) fn delete_group(
         },
         members,
     );
+    crate::jobs::push_group_deleted_notifications::start_job_if_required(state);
 
     Success
 }
