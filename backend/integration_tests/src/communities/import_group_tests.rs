@@ -39,25 +39,37 @@ fn import_group_succeeds() {
         &community_canister::import_group::Args { group_id },
     );
 
-    if let community_canister::import_group::Response::Success(_) = import_group_response {
-        tick_many(env, 20);
+    assert!(matches!(
+        import_group_response,
+        community_canister::import_group::Response::Success(_)
+    ));
 
-        let expected_channel_names: Vec<_> = default_channels.into_iter().chain([group_name]).sorted().collect();
+    tick_many(env, 30);
 
-        let summary1 = client::community::happy_path::summary(env, &user1, community_id);
-        assert_eq!(
-            summary1.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
-            expected_channel_names
-        );
+    let expected_channel_names: Vec<_> = default_channels.into_iter().chain([group_name]).sorted().collect();
 
-        let summary2 = client::community::happy_path::summary(env, &user2, community_id);
-        assert_eq!(
-            summary2.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
-            expected_channel_names
-        );
-    } else {
-        panic!("'import_group' error: {import_group_response:?}");
-    }
+    let community_summary1 = client::community::happy_path::summary(env, &user1, community_id);
+    assert_eq!(
+        community_summary1.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
+        expected_channel_names
+    );
+
+    let community_summary2 = client::community::happy_path::summary(env, &user2, community_id);
+    assert_eq!(
+        community_summary2.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
+        expected_channel_names
+    );
+
+    let initial_state1 = client::user::happy_path::initial_state(env, &user1);
+    assert!(initial_state1.group_chats.summaries.is_empty());
+    assert_eq!(initial_state1.communities.summaries.len(), 1);
+
+    let initial_state2 = client::user::happy_path::initial_state(env, &user2);
+    assert!(initial_state2.group_chats.summaries.is_empty());
+    assert_eq!(initial_state2.communities.summaries.len(), 1);
+
+    // Check that the group has been deleted
+    assert!(!env.canister_exists(group_id.into()));
 }
 
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {

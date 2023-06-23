@@ -9,6 +9,7 @@ pub mod c2c_make_community_private;
 pub mod c2c_make_private;
 pub mod c2c_mark_active;
 pub mod c2c_mark_community_active;
+pub mod c2c_mark_group_import_complete;
 pub mod c2c_start_importing_group_into_community;
 pub mod c2c_update_community;
 pub mod c2c_update_group;

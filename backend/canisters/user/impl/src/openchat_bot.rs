@@ -1,7 +1,7 @@
 use crate::updates::c2c_send_messages::{handle_message_impl, HandleMessageArgs};
 use crate::{RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use ic_ledger_types::Tokens;
-use types::{EventWrapper, Message, MessageContent, SuspensionDuration, TextContent, UserId};
+use types::{ChannelId, CommunityId, EventWrapper, Message, MessageContent, SuspensionDuration, TextContent, UserId};
 use user_canister::c2c_send_messages::C2CReplyContext;
 use user_canister::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserSuspended};
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
@@ -11,6 +11,20 @@ use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 pub(crate) fn send_group_deleted_message(deleted_by: UserId, group_name: String, public: bool, state: &mut RuntimeState) {
     let visibility = if public { "public" } else { "private" };
     let text = format!("The {visibility} group \"{group_name}\" was deleted by @UserId({deleted_by})");
+
+    send_text_message(text, false, state);
+}
+
+pub(crate) fn send_group_imported_into_community_message(
+    group_name: String,
+    public: bool,
+    community_name: String,
+    community_id: CommunityId,
+    channel_id: ChannelId,
+    state: &mut RuntimeState,
+) {
+    let visibility = if public { "public" } else { "private" };
+    let text = format!("The {visibility} group \"{group_name}\" was deleted because it was imported into the [\"{community_name}\"](/community/{community_id}/channel/{channel_id}) community");
 
     send_text_message(text, false, state);
 }

@@ -21,12 +21,23 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
         cached_groups.remove_group(&chat_id);
     }
 
-    openchat_bot::send_group_deleted_message(
-        args.deleted_group.deleted_by,
-        args.deleted_group.group_name,
-        args.deleted_group.public,
-        state,
-    );
-
+    if let Some(community) = args.deleted_group.community_imported_into {
+        openchat_bot::send_group_imported_into_community_message(
+            args.deleted_group.group_name,
+            args.deleted_group.public,
+            community.community_name,
+            community.community_id,
+            community.channel_id,
+            state,
+        );
+        state.data.communities.join(community.community_id, now);
+    } else {
+        openchat_bot::send_group_deleted_message(
+            args.deleted_group.deleted_by,
+            args.deleted_group.group_name,
+            args.deleted_group.public,
+            state,
+        );
+    }
     Success
 }
