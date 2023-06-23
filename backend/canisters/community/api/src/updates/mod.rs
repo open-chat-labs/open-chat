@@ -8,7 +8,6 @@ pub mod c2c_invite_users;
 pub mod c2c_invite_users_to_channel;
 pub mod c2c_join_community;
 pub mod c2c_leave_community;
-pub mod c2c_report_message;
 pub mod c2c_set_user_suspended;
 pub mod c2c_unfreeze_community;
 pub mod c2c_update_proposals;
