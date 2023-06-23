@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add support for channels to proposals_bot ([#3832](https://github.com/open-chat-labs/open-chat/pull/3832))
+- Implement `import_proposals_group_into_community` ([#3844](https://github.com/open-chat-labs/open-chat/pull/3844))
 
 ## [[2.0.711](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.711-proposals_bot)] - 2023-06-01
 
