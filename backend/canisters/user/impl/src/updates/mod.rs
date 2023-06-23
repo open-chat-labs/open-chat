@@ -8,6 +8,7 @@ pub mod c2c_charge_user_account;
 pub mod c2c_delete_messages;
 pub mod c2c_edit_message;
 pub mod c2c_grant_super_admin;
+pub mod c2c_mark_community_updated_for_user;
 pub mod c2c_mark_group_updated_for_user;
 pub mod c2c_mark_read_v2;
 pub mod c2c_notify_events;
