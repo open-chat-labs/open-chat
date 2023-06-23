@@ -176,9 +176,15 @@ type ChannelSummaryResponse =
         PrivateChannel;
     };
 
+type SummaryArgs =
+    record {
+        invite_code: opt nat64;
+    };
+
 type SummaryResponse =
     variant {
         Success: CommunityCanisterCommunitySummary;
+        Invited: CommunityMatch;
         PrivateCommunity;
     };
 
@@ -853,7 +859,7 @@ service: {
     search_channel: (SearchChannelArgs) -> (SearchChannelResponse) query;
     selected_channel_initial: (SelectedChannelInitialArgs) -> (SelectedChannelInitialResponse) query;
     selected_channel_updates: (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesResponse) query;
-    summary: (EmptyArgs) -> (SummaryResponse) query;
+    summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
 
     add_members_to_channel: (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
