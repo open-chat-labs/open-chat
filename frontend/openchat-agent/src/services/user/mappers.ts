@@ -644,12 +644,12 @@ function directChatsInitial(candid: ApiDirectChatsInitial): DirectChatsInitial {
 
 function userCanisterChannelSummary(
     candid: ApiUserCanisterChannelSummary,
-    communitId: string
+    communityId: string
 ): UserCanisterChannelSummary {
     return {
         id: {
             kind: "channel",
-            communityId: communitId,
+            communityId: communityId,
             channelId: candid.channel_id.toString(),
         },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
