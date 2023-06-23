@@ -47,6 +47,7 @@ fn main() {
     generate_candid_method!(community, toggle_mute_notifications, update);
     generate_candid_method!(community, unblock_user, update);
     generate_candid_method!(community, undelete_messages, update);
+    generate_candid_method!(community, unpin_message, update);
     generate_candid_method!(community, update_channel, update);
     generate_candid_method!(community, update_community, update);
 

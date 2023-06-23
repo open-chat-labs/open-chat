@@ -38,5 +38,6 @@ pub mod toggle_mute_channel_notifications;
 pub mod toggle_mute_notifications;
 pub mod unblock_user;
 pub mod undelete_messages;
+pub mod unpin_message;
 pub mod update_channel;
 pub mod update_community;
