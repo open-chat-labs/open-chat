@@ -44,7 +44,7 @@ fn import_group_succeeds() {
         community_canister::import_group::Response::Success(_)
     ));
 
-    tick_many(env, 30);
+    tick_many(env, 10);
 
     let expected_channel_names: Vec<_> = default_channels.into_iter().chain([group_name]).sorted().collect();
 
