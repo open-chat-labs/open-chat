@@ -69,7 +69,7 @@ fn is_permitted_to_join(
     }
 }
 
-fn c2c_join_community_impl(args: &Args, state: &mut RuntimeState) -> Result<Vec<ChannelId>, Response> {
+pub(crate) fn c2c_join_community_impl(args: &Args, state: &mut RuntimeState) -> Result<Vec<ChannelId>, Response> {
     let now = state.env.now();
 
     // Unblock "platform moderator" if necessary

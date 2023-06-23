@@ -62,6 +62,10 @@ impl Channels {
         self.default_channels.iter().filter_map(|id| self.channels.get(id)).collect()
     }
 
+    pub fn add_default_channel(&mut self, channel_id: ChannelId) {
+        self.default_channels.insert(channel_id);
+    }
+
     pub fn remove_member(&mut self, user_id: UserId) -> HashMap<ChannelId, GroupMemberInternal> {
         self.channels
             .iter_mut()

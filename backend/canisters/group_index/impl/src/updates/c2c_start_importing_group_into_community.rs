@@ -27,7 +27,7 @@ async fn c2c_start_importing_group_into_community(args: Args) -> Response {
             AlreadyImportingToAnotherCommunity
         }
         Ok(group_canister::c2c_start_import_into_community::Response::UserNotInGroup) => UserNotInGroup,
-        Ok(group_canister::c2c_start_import_into_community::Response::UserNotGroupOwner) => UserNotGroupOwner,
+        Ok(group_canister::c2c_start_import_into_community::Response::NotAuthorized) => NotAuthorized,
         Ok(group_canister::c2c_start_import_into_community::Response::UserSuspended) => UserSuspended,
         Ok(group_canister::c2c_start_import_into_community::Response::ChatFrozen) => ChatFrozen,
         Err(error) => InternalError(format!("{error:?}")),

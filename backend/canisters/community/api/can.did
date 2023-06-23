@@ -92,19 +92,6 @@ type MessagesByMessageIndexResponse =
         ReplicaNotUpToDate: EventIndex;
     };
 
-type RulesArgs =
-    record {
-        invite_code: opt nat64;
-    };
-
-type RulesResponse =
-    variant {
-        Success: record {
-            rules: opt text;
-        };
-        NotAuthorized;
-    };
-
 type SearchChannelArgs =
     record {
         channel_id: ChannelId;
@@ -176,9 +163,15 @@ type ChannelSummaryResponse =
         PrivateChannel;
     };
 
+type SummaryArgs =
+    record {
+        invite_code: opt nat64;
+    };
+
 type SummaryResponse =
     variant {
         Success: CommunityCanisterCommunitySummary;
+        Invited: CommunityMatch;
         PrivateCommunity;
     };
 
@@ -566,6 +559,28 @@ type PinMessageResponse =
         NoChange;
     };
 
+type RegisterPollVoteArgs =
+    record {
+        channel_id: ChannelId;
+        thread_root_message_index: opt MessageIndex;
+        message_index: MessageIndex;
+        poll_option: nat32;
+        operation: VoteOperation;
+    };
+
+type RegisterPollVoteResponse =
+    variant {
+        Success: PollVotes;
+        CommunityFrozen;
+        UserNotInCommunity;
+        UserSuspended;
+        ChannelNotFound;
+        UserNotInChannel;
+        PollNotFound;
+        PollEnded;
+        OptionIndexOutOfRange;
+    };
+
 type RegisterProposalVoteArgs =
     record {
         channel_id: ChannelId;
@@ -827,11 +842,10 @@ service: {
     invite_code: (EmptyArgs) -> (InviteCodeResponse) query;
     local_user_index: (EmptyArgs) -> (LocalUserIndexResponse) query;
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
-    rules: (RulesArgs) -> (RulesResponse) query;
     search_channel: (SearchChannelArgs) -> (SearchChannelResponse) query;
     selected_channel_initial: (SelectedChannelInitialArgs) -> (SelectedChannelInitialResponse) query;
     selected_channel_updates: (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesResponse) query;
-    summary: (EmptyArgs) -> (SummaryResponse) query;
+    summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
 
     add_members_to_channel: (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
@@ -852,6 +866,7 @@ service: {
     make_channel_private: (MakeChannelPrivateArgs) -> (MakeChannelPrivateResponse);
     make_private: (EmptyArgs) -> (MakePrivateResponse);
     pin_message: (PinMessageArgs) -> (PinMessageResponse);
+    register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
     register_proposal_vote_v2: (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
     remove_member: (RemoveMemberArgs) -> (RemoveMemberResponse);
@@ -863,6 +878,7 @@ service: {
     toggle_mute_notifications: (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
     undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
+    unpin_message: (PinMessageArgs) -> (PinMessageResponse);
     update_channel: (UpdateChannelArgs) -> (UpdateChannelResponse);
     update_community: (UpdateCommunityArgs) -> (UpdateCommunityResponse);
 }

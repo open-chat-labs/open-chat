@@ -20,9 +20,8 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     NameTaken,
-    CyclesBalanceTooLow,
     UserNotFound,
-    InternalError,
+    InternalError(String),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

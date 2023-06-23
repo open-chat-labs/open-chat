@@ -55,7 +55,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     let cycles_to_use = if state.data.canister_pool.is_empty() {
         let cycles_required = COMMUNITY_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
         if !utils::cycles::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
-            return Err(CyclesBalanceTooLow);
+            return Err(InternalError("Cycles balance too low".to_string()));
         }
         cycles_required
     } else {
@@ -83,6 +83,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         banner: args.banner,
         gate: args.gate,
         default_channels: args.default_channels,
+        source_group: args.source_group,
         wasm_version: canister_wasm.version,
         test_mode: state.data.test_mode,
     };

@@ -28,9 +28,11 @@ async fn import_group(args: Args) -> Response {
     )
     .await
     {
-        Ok(C2cResponse::Success(total_bytes)) => mutate_state(|state| commit(user_id, args.group_id, total_bytes, state)),
+        Ok(C2cResponse::Success(total_bytes)) => {
+            mutate_state(|state| commit_group_to_import(user_id, args.group_id, total_bytes, false, state))
+        }
         Ok(C2cResponse::UserNotInGroup) => UserNotInGroup,
-        Ok(C2cResponse::UserNotGroupOwner) => UserNotGroupOwner,
+        Ok(C2cResponse::NotAuthorized) => UserNotGroupOwner,
         Ok(C2cResponse::UserSuspended) => UserSuspended,
         Ok(C2cResponse::GroupNotFound) => GroupNotFound,
         Ok(C2cResponse::AlreadyImportingToAnotherCommunity) => GroupImportingToAnotherCommunity,
@@ -65,7 +67,13 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     }
 }
 
-fn commit(user_id: UserId, group_id: ChatId, total_bytes: u64, state: &mut RuntimeState) -> Response {
+pub(crate) fn commit_group_to_import(
+    user_id: UserId,
+    group_id: ChatId,
+    total_bytes: u64,
+    make_default_channel: bool,
+    state: &mut RuntimeState,
+) -> Response {
     let now = state.env.now();
     let channel_id: ChannelId = state.env.rng().gen();
 
@@ -75,6 +83,11 @@ fn commit(user_id: UserId, group_id: ChatId, total_bytes: u64, state: &mut Runti
         .add(group_id, channel_id, user_id, total_bytes, now)
     {
         crate::jobs::import_groups::start_job_if_required(state);
+
+        if make_default_channel {
+            state.data.channels.add_default_channel(channel_id);
+        }
+
         Success(SuccessResult { channel_id, total_bytes })
     } else {
         GroupAlreadyBeingImported

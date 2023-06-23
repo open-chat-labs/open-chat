@@ -349,6 +349,24 @@ type MakePrivateResponse =
         InternalError;
     };
 
+type ConvertIntoCommunityArgs =
+    record {
+        rules: AccessRules;
+        permissions: opt CommunityPermissions;
+        history_visible_to_new_joiners: bool;
+    };
+
+type ConvertIntoCommunityResponse =
+    variant {
+        Success: CommunityId;
+        CallerNotInGroup;
+        AlreadyImportingToAnotherCommunity;
+        NotAuthorized;
+        UserSuspended;
+        ChatFrozen;
+        InternalError: text;
+    };
+
 type SummaryArgs =
     record {
     };
@@ -665,6 +683,7 @@ type ResetInviteCodeResponse =
 service: {
     // Owner only
     make_private: (MakePrivateArgs) -> (MakePrivateResponse);
+    convert_into_community: (ConvertIntoCommunityArgs) -> (ConvertIntoCommunityResponse);
 
     // Admin only
     block_user: (BlockUserArgs) -> (BlockUserResponse); // public only

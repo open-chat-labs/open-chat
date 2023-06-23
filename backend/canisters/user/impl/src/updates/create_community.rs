@@ -38,13 +38,12 @@ async fn create_community(mut args: Args) -> Response {
                 })
             }
             c2c_create_community::Response::NameTaken => NameTaken,
-            c2c_create_community::Response::CyclesBalanceTooLow
-            | c2c_create_community::Response::UserNotFound
-            | c2c_create_community::Response::InternalError => InternalError,
+            c2c_create_community::Response::UserNotFound => InternalError("User not found".to_string()),
+            c2c_create_community::Response::InternalError(error) => InternalError(error),
         },
         Err(error) => {
             error!(?error, "Error calling create community");
-            InternalError
+            InternalError(format!("{error:?}"))
         }
     }
 }

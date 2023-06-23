@@ -53,6 +53,11 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn is_caller_group_canister(&self) -> bool {
+        let caller: ChatId = self.env.caller().into();
+        self.data.public_groups.get(&caller).is_some() || self.data.private_groups.get(&caller).is_some()
+    }
+
     pub fn is_caller_community_canister(&self) -> bool {
         let caller: CommunityId = self.env.caller().into();
         self.data.public_communities.get(&caller).is_some() || self.data.private_communities.get(&caller).is_some()
