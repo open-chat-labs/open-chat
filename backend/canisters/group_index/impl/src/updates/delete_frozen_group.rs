@@ -1,5 +1,5 @@
 use crate::updates::c2c_delete_group::delete_group;
-use crate::{read_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use group_index_canister::delete_frozen_group::{Response::*, *};
@@ -13,7 +13,6 @@ async fn delete_frozen_group(args: Args) -> Response {
     let PrepareResult {
         caller,
         user_index_canister_id,
-        local_group_index_canister_id,
     } = match read_state(|state| prepare(&args.chat_id, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
@@ -32,31 +31,22 @@ async fn delete_frozen_group(args: Args) -> Response {
             Err(error) => return InternalError(format!("{error:?}")),
         };
 
-    match delete_group(args.chat_id, local_group_index_canister_id, user_id, name, members).await {
-        Ok(local_group_index_canister::c2c_delete_group::Response::Success) => Success,
-        Ok(local_group_index_canister::c2c_delete_group::Response::ChatNotFound) => ChatNotFound,
-        Err(error) => InternalError(format!("{error:?}")),
-    }
+    mutate_state(|state| delete_group(args.chat_id, name, user_id, members, None, state));
+    Success
 }
 
 struct PrepareResult {
     caller: Principal,
     user_index_canister_id: CanisterId,
-    local_group_index_canister_id: CanisterId,
 }
 
 fn prepare(chat_id: &ChatId, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if let Some(local_group_index_canister_id) = state.data.local_index_map.get_index_canister_for_group(chat_id) {
-        match state.data.group_frozen_info(chat_id) {
-            Some(Some(_)) => Ok(PrepareResult {
-                caller: state.env.caller(),
-                user_index_canister_id: state.data.user_index_canister_id,
-                local_group_index_canister_id,
-            }),
-            Some(None) => Err(ChatNotFrozen),
-            None => Err(ChatNotFound),
-        }
-    } else {
-        Err(ChatNotFound)
+    match state.data.group_frozen_info(chat_id) {
+        Some(Some(_)) => Ok(PrepareResult {
+            caller: state.env.caller(),
+            user_index_canister_id: state.data.user_index_canister_id,
+        }),
+        Some(None) => Err(ChatNotFrozen),
+        None => Err(ChatNotFound),
     }
 }

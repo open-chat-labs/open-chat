@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add ability to import a group into a community ([#3792](https://github.com/open-ic/open-chat/pull/3792))
 - Added `explore_groups` endpoint ([#3826](https://github.com/open-ic/open-chat/pull/3826))
 - Implement converting a group into a community ([#3833](https://github.com/open-chat-labs/open-chat/pull/3833))
+- Add `c2c_mark_group_import_complete` ([#3840](https://github.com/open-ic/open-chat/pull/3840))
 
 ### Changed
 

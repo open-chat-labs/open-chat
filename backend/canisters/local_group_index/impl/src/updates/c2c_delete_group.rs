@@ -21,6 +21,7 @@ fn c2c_delete_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 }
 
+// TODO make this retry upon failure
 async fn delete_canister(canister_id: CanisterId) {
     let _ = stop(canister_id).await;
 

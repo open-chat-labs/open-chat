@@ -8,6 +8,7 @@ use crate::model::public_communities::PublicCommunities;
 use crate::model::public_groups::PublicGroups;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
+use fire_and_forget_handler::FireAndForgetHandler;
 use model::local_group_index_map::LocalGroupIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -128,6 +129,8 @@ struct Data {
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
     pub local_index_map: LocalGroupIndexMap,
+    #[serde(default)]
+    pub fire_and_forget_handler: FireAndForgetHandler,
 }
 
 impl Data {
@@ -163,6 +166,7 @@ impl Data {
             cached_hot_groups: CachedHotGroups::default(),
             cached_metrics: CachedMetrics::default(),
             local_index_map: LocalGroupIndexMap::default(),
+            fire_and_forget_handler: FireAndForgetHandler::default(),
         }
     }
 
@@ -242,6 +246,7 @@ impl Default for Data {
             cached_hot_groups: CachedHotGroups::default(),
             cached_metrics: CachedMetrics::default(),
             local_index_map: LocalGroupIndexMap::default(),
+            fire_and_forget_handler: FireAndForgetHandler::default(),
         }
     }
 }

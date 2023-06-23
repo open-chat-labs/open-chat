@@ -3,8 +3,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_canister::c2c_delete_group::{Response::*, *};
 use group_index_canister::c2c_delete_group;
-use tracing::error;
-use types::{CanisterId, ChatId, UserId};
+use types::{CanisterId, UserId};
 
 #[update_msgpack]
 #[trace]
@@ -24,21 +23,13 @@ async fn c2c_delete_group(_args: Args) -> Response {
     };
 
     match group_index_canister_c2c_client::c2c_delete_group(group_index_canister_id, &c2c_delete_group_args).await {
-        Ok(response) => match response {
-            c2c_delete_group::Response::ChatNotFound => {
-                error!(chat_id = %prepare_result.chat_id, "Group not found in group index");
-                InternalError("Group not found in group index".to_string())
-            }
-            c2c_delete_group::Response::Success => Success,
-            c2c_delete_group::Response::InternalError(error) => InternalError(error),
-        },
+        Ok(_) => Success,
         Err(error) => InternalError(format!("{error:?}")),
     }
 }
 
 struct PrepareResult {
     group_index_canister_id: CanisterId,
-    chat_id: ChatId,
     deleted_by: UserId,
     group_name: String,
     members: Vec<UserId>,
@@ -56,7 +47,6 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
         } else {
             Ok(PrepareResult {
                 group_index_canister_id: state.data.group_index_canister_id,
-                chat_id: state.env.canister_id().into(),
                 deleted_by: member.user_id,
                 group_name: state.data.chat.name.clone(),
                 members: state.data.chat.members.iter().map(|m| m.user_id).collect(),
