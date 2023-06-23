@@ -1653,7 +1653,6 @@ pub enum UpdateResult {
     RulesTooShort(FieldTooShortResult),
     RulesTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
-    NameTaken,
 }
 
 enum EventsReaderResult<'r> {
