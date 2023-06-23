@@ -341,6 +341,7 @@ import {
     currentCommunityMembers,
     currentCommunityRules,
     selectedCommunity,
+    selectedCommunityChannels,
     selectedCommunityId,
 } from "./stores/community";
 
@@ -4097,6 +4098,11 @@ export class OpenChat extends OpenChatAgentWorker {
         // if we DO belong then we just select it.
         // selecting it will show the channels etc.
         selectedCommunityId.set(communityId);
+        this.clearSelectedChat();
+    }
+
+    clearSelectedCommunity(): void {
+        selectedCommunityId.set(undefined);
     }
 
     joinCommunity(communityId: string): Promise<JoinCommunityResponse> {
@@ -4231,6 +4237,7 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedServerChatStore = selectedServerChatStore;
     pinnedChatsStore = pinnedChatsStore;
     chatSummariesListStore = chatSummariesListStore;
+    selectedCommunityChannels = selectedCommunityChannels;
     chatsLoading = chatsLoading;
     chatsInitialised = chatsInitialised;
     currentChatDraftMessage = currentChatDraftMessage;

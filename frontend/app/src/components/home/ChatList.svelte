@@ -1,7 +1,7 @@
 <script lang="ts">
     import Close from "svelte-material-icons/Close.svelte";
     import CurrentUser from "./CurrentUser.svelte";
-    import CurrentSelection from "./CurrentSelection.svelte";
+    import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import Search from "../Search.svelte";
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
@@ -44,7 +44,10 @@
     $: selectedChatId = client.selectedChatId;
     $: numberOfThreadsStore = client.numberOfThreadsStore;
     $: chatsLoading = client.chatsLoading;
-    $: chatSummariesListStore = client.chatSummariesListStore;
+    $: selectedCommunity = client.selectedCommunity;
+    $: chatSummariesListStore = $selectedCommunity
+        ? client.selectedCommunityChannels
+        : client.chatSummariesListStore;
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
@@ -52,7 +55,6 @@
         !$discoverHotGroupsDismissed &&
         groupSearchResults === undefined &&
         userSearchResults === undefined;
-    $: selectedCommunity = client.selectedCommunity;
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
@@ -128,7 +130,7 @@
 
 {#if user}
     {#if $communitiesEnabled && $selectedCommunity}
-        <CurrentSelection
+        <SelectedCommunityHeader
             community={$selectedCommunity}
             on:leaveCommunity
             on:deleteCommunity

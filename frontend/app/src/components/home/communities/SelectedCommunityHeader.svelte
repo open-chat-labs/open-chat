@@ -1,10 +1,10 @@
 <script lang="ts">
-    import Avatar from "../Avatar.svelte";
+    import Avatar from "../../Avatar.svelte";
     import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../stores/rtl";
+    import { rtlStore } from "../../../stores/rtl";
     import { AvatarSize, OpenChat } from "openchat-client";
-    import SectionHeader from "../SectionHeader.svelte";
-    import CommunityMenu from "./communities/CommunityMenu.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import CommunityMenu from "./CommunityMenu.svelte";
     import { getContext } from "svelte";
     import type { CommunitySummary } from "openchat-shared";
 

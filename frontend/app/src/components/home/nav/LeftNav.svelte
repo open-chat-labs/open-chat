@@ -46,7 +46,7 @@
     }
 
     function directChats() {
-        console.log("direct chats");
+        page("/");
     }
 
     function favouriteChats() {
@@ -55,19 +55,14 @@
 
     function openWallet() {
         dispatch("wallet");
-        console.log("favourite chats");
     }
 
     function selectCommunity(community: CommunitySummary) {
-        client.setSelectedCommunity(community.id);
-        page("/"); // TODO - we will need a new route here to represent the selected community
-        // TODO - we have two different concepts here that are not yet distinct. We can have a community that we are a member of selected *or* a community that we are browsing selected
-        // these two things are different but we don't have the mechanism to distinguish them at the moment
+        page(`/community/${community.id.communityId}`);
     }
 
     function closeIfOpen() {
         if ($navOpen) {
-            console.log("Closing nav on body click");
             navOpen.set(false);
         }
     }

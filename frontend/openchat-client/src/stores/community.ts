@@ -74,7 +74,7 @@ export const allCommunities = writable<CommunitySummary[]>(testCommunities);
 
 // these are the communities I am in
 export const communities: Writable<CommunityMap<CommunitySummary>> = writable(
-    CommunityMap.fromList(testCommunities.slice(0, 5))
+    new CommunityMap<CommunitySummary>()
 );
 
 export const communitiesList = derived(communities, ($communities) => {
@@ -121,6 +121,11 @@ export const selectedCommunity = derived(
         return $communities.get($selectedCommunityId);
     }
 );
+
+export const selectedCommunityChannels = derived([selectedCommunity], ([$selectedCommunity]) => {
+    if ($selectedCommunity === undefined) return [];
+    return $selectedCommunity.channels;
+});
 
 export function setSelectedCommunity(id: CommunityIdentifier): void {
     selectedCommunityId.set(id);

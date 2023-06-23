@@ -256,11 +256,20 @@
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
         if (initialised) {
-            if (pathParams.kind === "communities_route") {
+            if (pathParams.kind === "home_route") {
+                client.clearSelectedCommunity();
+                client.clearSelectedChat();
+                closeThread();
+                filterChatSpecificRightPanelStates();
+            } else if (pathParams.kind === "communities_route") {
+                client.clearSelectedCommunity();
+                client.clearSelectedChat();
                 rightPanelHistory.set([]);
             } else if (pathParams.kind === "selected_community_route") {
                 client.setSelectedCommunity(pathParams.communityId);
             } else if (pathParams.kind === "global_chat_selected_route") {
+                client.clearSelectedCommunity();
+
                 // first close any open thread
                 closeThread();
 
