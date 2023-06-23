@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - New algo for ordering "hot" groups & communities ([#3820](https://github.com/open-ic/open-chat/pull/3820))
+- Unified namespace for public groups and communities ([#3849](https://github.com/open-ic/open-chat/pull/3849))
 
 ## [[2.0.723](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.723-group_index)] - 2023-06-16
 
