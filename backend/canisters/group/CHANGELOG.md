@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support simplified transfers of icrc1 tokens ([#3827](https://github.com/open-chat-labs/open-chat/pull/3827))
 - Implement converting a group into a community ([#3833](https://github.com/open-chat-labs/open-chat/pull/3833))
 - Add `c2c_report_message_v2` to handle groups and channels ([#3842](https://github.com/open-chat-labs/open-chat/pull/3842))
+- Special case the ProposalsBot when importing into a community ([#3844](https://github.com/open-chat-labs/open-chat/pull/3844))
 
 ### Changed
 
