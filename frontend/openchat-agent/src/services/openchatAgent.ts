@@ -151,6 +151,7 @@ import {
     chatIdentifierToString,
     MessageContext,
     chatIdentifiersEqual,
+    CommunitySummary,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1163,7 +1164,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async hydrateChatState(state: ChatStateFull): Promise<ChatStateFull> {
-        // TODO - hydrate communities and channels
+        // TODO - hydrate channels
         const directChatPromises = state.directChats.map((c) => this.hydrateChatSummary(c));
         const groupChatPromises = state.groupChats.map((c) => this.hydrateChatSummary(c));
 
@@ -1174,6 +1175,19 @@ export class OpenChatAgent extends EventTarget {
             ...state,
             directChats,
             groupChats,
+            communities: state.communities.map((c) => this.hydrateCommunity(c)),
+        };
+    }
+
+    hydrateCommunity(community: CommunitySummary): CommunitySummary {
+        return {
+            ...community,
+            avatar: {
+                ...this.rehydrateDataContent(community.avatar, "avatar"),
+            },
+            banner: {
+                ...this.rehydrateDataContent(community.avatar, "banner"),
+            },
         };
     }
 

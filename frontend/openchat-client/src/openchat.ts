@@ -322,6 +322,7 @@ import {
     chatIdentifierToString,
     MessageContextMap,
     messageContextsEqual,
+    CommunityMap,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3743,6 +3744,10 @@ export class OpenChat extends OpenChatAgentWorker {
             const chatsResponse = await this.sendRequest({ kind: "getUpdates" });
 
             if (!init || chatsResponse.anyUpdates) {
+                console.log("xxx: chatsresponse", chatsResponse);
+                communities.set(CommunityMap.fromList(chatsResponse.state.communities));
+
+                // TODO - we need to decide how to handle channels here - do they go in the myServerChatSummaries store? or do we have a separate store for them?
                 const updatedChats = (chatsResponse.state.directChats as ChatSummary[]).concat(
                     chatsResponse.state.groupChats
                 );
@@ -3769,12 +3774,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     pinnedChatsStore.set(chatsResponse.state.pinnedChats);
                 }
 
-                myServerChatSummariesStore.set(
-                    updatedChats.reduce((acc, chat) => {
-                        acc.set(chat.id, chat);
-                        return acc;
-                    }, new ChatMap<ChatSummary>())
-                );
+                myServerChatSummariesStore.set(ChatMap.fromList(updatedChats));
 
                 if (this._liveState.uninitializedDirectChats.size > 0) {
                     for (const chat of updatedChats) {

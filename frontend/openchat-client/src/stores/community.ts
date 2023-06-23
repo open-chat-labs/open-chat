@@ -78,7 +78,7 @@ export const communities: Writable<CommunityMap<CommunitySummary>> = writable(
 );
 
 export const communitiesList = derived(communities, ($communities) => {
-    return Object.values($communities);
+    return $communities.values();
 });
 
 export const communityStateStore = createChatSpecificObjectStore<CommunitySpecificState>(() => ({
