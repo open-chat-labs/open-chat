@@ -46,6 +46,7 @@
             height: unset;
             margin-bottom: 0;
             text-align: center;
+            padding-bottom: calc($sp4 + env(safe-area-inset-bottom));
         }
     }
 

@@ -124,6 +124,7 @@
         border: var(--modal-bd);
         border-radius: $sp4;
         position: relative;
+        max-height: 100%;
 
         &.square {
             border-radius: $sp3;
@@ -150,7 +151,6 @@
                 &.fixed-width {
                     width: 90%;
                 }
-                max-height: 90%;
                 max-width: 850px;
             }
         }
