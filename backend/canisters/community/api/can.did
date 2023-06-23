@@ -878,6 +878,7 @@ service: {
     toggle_mute_notifications: (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
     undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
+    unpin_message: (PinMessageArgs) -> (PinMessageResponse);
     update_channel: (UpdateChannelArgs) -> (UpdateChannelResponse);
     update_community: (UpdateCommunityArgs) -> (UpdateCommunityResponse);
 }
