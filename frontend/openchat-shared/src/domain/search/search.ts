@@ -1,3 +1,4 @@
+import type { AccessGate } from "../access";
 import type {
     CallerNotInGroup,
     ChatIdentifier,
@@ -14,8 +15,6 @@ export type GroupMatch = DataContent & {
     description: string;
 };
 
-export type SearchScope = "all" | "groups" | "communities";
-
 export interface CommunityMatch {
     id: CommunityIdentifier;
     name: string;
@@ -24,6 +23,7 @@ export interface CommunityMatch {
     banner: DataContent;
     memberCount: number;
     channelCount: number;
+    gate: AccessGate;
 }
 
 export type MessageMatch = {
@@ -34,7 +34,7 @@ export type MessageMatch = {
     score: number;
 };
 
-export type SearchResponse = TermInvalid | SearchSuccess;
+export type ExploreCommunitiesResponse = TermInvalid | ExploreSuccess;
 export type GroupSearchResponse = TermInvalid | GroupSearchSuccess;
 
 export type TooManyUsers = {
@@ -50,10 +50,14 @@ export type GroupSearchSuccess = {
     matches: GroupMatch[];
 };
 
+export type ExploreSuccess = {
+    kind: "success";
+    matches: CommunityMatch[];
+};
+
 export type SearchSuccess = {
     kind: "success";
-    groupMatches: GroupMatch[];
-    communityMatches: CommunityMatch[];
+    matches: GroupMatch[];
 };
 
 export type SearchGroupChatResponse =

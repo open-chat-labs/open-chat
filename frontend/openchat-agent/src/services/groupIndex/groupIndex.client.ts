@@ -10,12 +10,11 @@ import type {
     RemoveHotGroupExclusionResponse,
     SetGroupUpgradeConcurrencyResponse,
     UnfreezeGroupResponse,
-    SearchResponse,
-    SearchScope,
     GroupSearchResponse,
     CommunityIdentifier,
     GroupChatIdentifier,
     ActiveGroupsResponse,
+    ExploreCommunitiesResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
@@ -24,14 +23,13 @@ import {
     deleteFrozenGroupResponse,
     filterGroupsResponse,
     freezeGroupResponse,
-    searchResponse,
     recommendedGroupsResponse,
     removeHotGroupExclusionResponse,
     setUpgradeConcurrencyResponse,
     unfreezeGroupResponse,
-    apiSearchScope,
     searchGroupsResponse,
     activeGroupsResponse,
+    exploreCommunitiesResponse,
 } from "./mappers";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
@@ -106,19 +104,19 @@ export class GroupIndexClient extends CandidService {
         );
     }
 
-    search(
-        searchTerm: string,
-        maxResults = 10,
-        scope: SearchScope = "groups"
-    ): Promise<SearchResponse> {
+    exploreCommunities(
+        searchTerm: string | undefined,
+        pageIndex: number,
+        pageSize: number
+    ): Promise<ExploreCommunitiesResponse> {
         const args = {
-            search_term: searchTerm,
-            max_results: maxResults,
-            scope: apiSearchScope(scope),
+            page_size: pageSize,
+            page_index: pageIndex,
+            search_term: apiOptional(identity, searchTerm),
         };
         return this.handleQueryResponse(
-            () => this.groupIndexService.search(args),
-            searchResponse,
+            () => this.groupIndexService.explore_communities(args),
+            exploreCommunitiesResponse,
             args
         );
     }

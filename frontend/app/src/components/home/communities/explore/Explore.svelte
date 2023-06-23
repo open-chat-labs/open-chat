@@ -9,7 +9,6 @@
     import Filters from "./Filters.svelte";
     import type { CommunityMatch, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { toastStore } from "stores/toast";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -17,37 +16,10 @@
 
     let searchTerm = "";
     let searching = false;
-    let joining: Set<string> = new Set();
     let canCreate = true; //TODO - permissions?
     let searchResults: CommunityMatch[] = [];
 
-    $: allCommunities = client.allCommunities;
-    $: myCommunities = client.communities;
     $: isDiamond = client.isDiamond;
-
-    $: communities = $allCommunities.filter((c) => !$myCommunities.has(c.id));
-
-    // TODO - this is probably not going to be here. We'll probably move it to Home.svelte
-    async function joinCommunity(ev: CustomEvent<string>) {
-        joining.add(ev.detail);
-        joining = joining;
-
-        // TODO - rules
-
-        client
-            .joinCommunity(ev.detail)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    toastStore.showSuccessToast("Joined community successfully");
-                } else {
-                    toastStore.showFailureToast("Failed to join community");
-                }
-            })
-            .finally(() => {
-                joining.delete(ev.detail);
-                joining = joining;
-            });
-    }
 
     function createCommunity() {
         if (!$isDiamond) {
@@ -58,23 +30,17 @@
     }
 
     function selectCommunity(community: CommunityMatch) {
-        page(`/community/${community.id}`);
+        page(`/community/${community.id.communityId}`);
     }
 
     function search() {
         searching = true;
-        if (searchTerm === "") {
-            searchResults = [];
-            searching = false;
-            return;
-        }
-
         client
-            .searchCommunities(searchTerm)
+            .exploreCommunities(searchTerm === "" ? undefined : searchTerm, 0, 10)
             .then((results) => {
                 console.log("SearchResults: ", results);
                 if (results.kind === "success") {
-                    searchResults = results.communityMatches;
+                    searchResults = results.matches;
                 }
             })
             .finally(() => (searching = false));

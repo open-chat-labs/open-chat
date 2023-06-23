@@ -257,7 +257,6 @@ import {
     type CurrentUserResponse,
     type RemoveMemberResponse,
     type RegisterProposalVoteResponse,
-    type SearchResponse,
     type GroupInvite,
     type SearchDirectChatResponse,
     type SearchGroupChatResponse,
@@ -323,6 +322,7 @@ import {
     MessageContextMap,
     messageContextsEqual,
     CommunityMap,
+    ExploreCommunitiesResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3306,8 +3306,12 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "searchGroups", searchTerm, maxResults });
     }
 
-    searchCommunities(searchTerm: string, maxResults = 10): Promise<SearchResponse> {
-        return this.sendRequest({ kind: "search", searchTerm, maxResults, scope: "communities" });
+    exploreCommunities(
+        searchTerm: string | undefined,
+        pageIndex: number,
+        pageSize: number
+    ): Promise<ExploreCommunitiesResponse> {
+        return this.sendRequest({ kind: "exploreCommunities", searchTerm, pageIndex, pageSize });
     }
 
     dismissRecommendation(chatId: GroupChatIdentifier): Promise<void> {
@@ -4292,7 +4296,4 @@ export class OpenChat extends OpenChatAgentWorker {
     currentCommunityBlockedUsers = currentCommunityBlockedUsers;
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
     communityStateStore = communityStateStore;
-
-    // TODO - temporarily exposing a test store
-    allCommunities = allCommunities;
 }

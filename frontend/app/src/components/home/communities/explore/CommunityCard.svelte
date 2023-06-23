@@ -3,15 +3,11 @@
 <script lang="ts">
     import type { DataContent, OpenChat } from "openchat-client";
     import Avatar from "../../../Avatar.svelte";
-    import ButtonGroup from "../../../ButtonGroup.svelte";
     import { _ } from "svelte-i18n";
-    import Button from "../../../Button.svelte";
     import Markdown from "../../Markdown.svelte";
     import { AvatarSize } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
-
-    const dispatch = createEventDispatcher();
 
     export let name: string;
     export let description: string;
@@ -43,12 +39,12 @@
             <div class="footer">
                 <div class="members">
                     <span class="number">{memberCount.toLocaleString()}</span>
-                    <span class="label">{"members"}</span>
+                    <span class="label">{$_("communities.memberCount")}</span>
                 </div>
 
-                <div on:click class="channels">
+                <div class="channels">
                     <span class="number">{channelCount.toLocaleString()}</span>
-                    <span class="label">{"channels"}</span>
+                    <span class="label">{$_("communities.channelCount")}</span>
                 </div>
             </div>
         {/if}
@@ -112,11 +108,6 @@
                     .label {
                         color: var(--txt-light);
                     }
-                }
-
-                .channels {
-                    cursor: pointer;
-                    text-decoration: underline;
                 }
             }
         }

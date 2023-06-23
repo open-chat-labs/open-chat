@@ -901,7 +901,9 @@
             "name_taken": "Sorry - there is already a community with this name",
             "failure": "Sorry we were unable to create your community",
             "saveFailed": "Sorry we were unable to save your updates"
-        }
+        },
+        "memberCount": "member(s)",
+        "channelCount": "channel(s)"
     },
     "unableToSaveUserProfile": "Unable to save user profile"
 }
