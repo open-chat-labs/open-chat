@@ -92,19 +92,6 @@ type MessagesByMessageIndexResponse =
         ReplicaNotUpToDate: EventIndex;
     };
 
-type RulesArgs =
-    record {
-        invite_code: opt nat64;
-    };
-
-type RulesResponse =
-    variant {
-        Success: record {
-            rules: opt text;
-        };
-        NotAuthorized;
-    };
-
 type SearchChannelArgs =
     record {
         channel_id: ChannelId;
@@ -855,7 +842,6 @@ service: {
     invite_code: (EmptyArgs) -> (InviteCodeResponse) query;
     local_user_index: (EmptyArgs) -> (LocalUserIndexResponse) query;
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
-    rules: (RulesArgs) -> (RulesResponse) query;
     search_channel: (SearchChannelArgs) -> (SearchChannelResponse) query;
     selected_channel_initial: (SelectedChannelInitialArgs) -> (SelectedChannelInitialResponse) query;
     selected_channel_updates: (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesResponse) query;
