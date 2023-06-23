@@ -8,7 +8,7 @@
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
-    import { AvatarSize, Community, OpenChat } from "openchat-client";
+    import { AvatarSize, CommunitySummary, OpenChat } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import CommunityMenu from "../communities/CommunityMenu.svelte";
     import { _ } from "svelte-i18n";
@@ -44,7 +44,7 @@
     }
 
     function directChats() {
-        console.log("direct chats");
+        page("/");
     }
 
     function favouriteChats() {
@@ -53,19 +53,14 @@
 
     function openWallet() {
         dispatch("wallet");
-        console.log("favourite chats");
     }
 
-    function selectCommunity(community: Community) {
-        client.setSelectedCommunity(community.id);
-        page("/"); // TODO - we will need a new route here to represent the selected community
-        // TODO - we have two different concepts here that are not yet distinct. We can have a community that we are a member of selected *or* a community that we are browsing selected
-        // these two things are different but we don't have the mechanism to distinguish them at the moment
+    function selectCommunity(community: CommunitySummary) {
+        page(`/community/${community.id.communityId}`);
     }
 
     function closeIfOpen() {
         if ($navOpen) {
-            console.log("Closing nav on body click");
             navOpen.set(false);
         }
     }
@@ -88,9 +83,6 @@
                     </span>
                 </MenuIcon>
             </div>
-            <!-- <div slot="menu">
-                <LandingPageMenu />
-            </div> -->
         </LeftNavItem>
 
         {#if user !== undefined}

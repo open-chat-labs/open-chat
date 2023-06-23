@@ -11,7 +11,7 @@
         OpenChat,
         PartialUserSummary,
         UserLookup,
-        Community,
+        CommunitySummary,
         MultiUserChat,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
@@ -23,7 +23,7 @@
     const userId = client.user.userId;
 
     export let closeIcon: "close" | "back";
-    export let collection: Community | MultiUserChat;
+    export let collection: CommunitySummary | MultiUserChat;
     export let invited: Set<string>;
     export let members: MemberType[];
     export let blocked: Set<string>;

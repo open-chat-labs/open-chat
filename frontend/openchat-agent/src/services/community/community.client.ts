@@ -99,6 +99,8 @@ import type {
     User,
     ChannelIdentifier,
     AddRemoveReactionResponse,
+    CommunitySummaryResponse,
+    CommunitySummaryUpdatesResponse,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
 import { DataClient } from "../data/data.client";
@@ -578,11 +580,11 @@ export class CommunityClient extends CandidService {
         });
     }
 
-    summary(): Promise<unknown> {
+    summary(): Promise<CommunitySummaryResponse> {
         return this.handleQueryResponse(() => this.service.summary({}), summaryResponse);
     }
 
-    summaryUpdates(updatesSince: bigint): Promise<unknown> {
+    summaryUpdates(updatesSince: bigint): Promise<CommunitySummaryUpdatesResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.summary_updates({

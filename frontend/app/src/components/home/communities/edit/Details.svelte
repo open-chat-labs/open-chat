@@ -4,14 +4,14 @@
     import Input from "../../../Input.svelte";
     import TextArea from "../../../TextArea.svelte";
     import Legend from "../../../Legend.svelte";
-    import type { Community } from "openchat-client";
+    import type { CommunitySummary } from "openchat-client";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
 
     export let busy: boolean;
-    export let candidate: Community;
+    export let candidate: CommunitySummary;
     export let valid: boolean;
 
     $: {

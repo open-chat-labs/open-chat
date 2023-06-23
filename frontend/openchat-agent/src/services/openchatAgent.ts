@@ -151,12 +151,19 @@ import {
     chatIdentifierToString,
     MessageContext,
     chatIdentifiersEqual,
+    CommunitySummary,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
 import { waitAll } from "../utils/promise";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 import { CommunityClient } from "./community/community.client";
+import {
+    isSuccessfulCommunitySummaryResponse,
+    isSuccessfulCommunitySummaryUpdatesResponse,
+    mergeCommunities,
+    mergeCommunityUpdates,
+} from "../utils/community";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -941,11 +948,16 @@ export class OpenChatAgent extends EventTarget {
                 ? emptyUpdatesSuccessResponse(current.latestUserCanisterUpdates)
                 : userResponse;
 
-        const addedGroupChatIds = current.groupChats
-            .map((g) => g.id.groupId)
-            .concat(updates.groupChats.added.map((g) => g.id.groupId));
+        const addedCommunityIds = current.communities
+            .map((c) => c.id)
+            .concat(updates.communities.added.map((c) => c.id));
 
-        const groupIndexResponse = await this._groupIndexClient.filterGroups(
+        const addedGroupChatIds = current.groupChats
+            .map((g) => g.id)
+            .concat(updates.groupChats.added.map((g) => g.id));
+
+        const groupIndexResponse = await this._groupIndexClient.activeGroups(
+            addedCommunityIds,
             addedGroupChatIds,
             current.latestActiveGroupsCheck
         );
@@ -956,28 +968,56 @@ export class OpenChatAgent extends EventTarget {
             )
         );
 
+        const communitiesToCheckForUpdates = new Set(
+            groupIndexResponse.activeCommunities.concat(
+                updates.communities.updated.map((g) => g.id.communityId)
+            )
+        );
+
         const addedGroupPromises = updates.groupChats.added.map((g) =>
             this.getGroupClient(g.id.groupId).summary()
+        );
+
+        const addedCommunitiesPromise = updates.communities.added.map((c) =>
+            this.communityClient(c.id.communityId).summary()
         );
 
         const updatedGroupPromises = current.groupChats
             .filter((g) => groupsToCheckForUpdates.has(g.id.groupId))
             .map((g) => this.getGroupClient(g.id.groupId).summaryUpdates(g.lastUpdated));
 
+        const updatedCommunitiesPromises = current.communities
+            .filter((c) => communitiesToCheckForUpdates.has(c.id.communityId))
+            .map((c) => this.communityClient(c.id.communityId).summaryUpdates(c.lastUpdated));
+
         const groupPromiseResults = await waitAll(addedGroupPromises);
+        const communityPromiseResults = await waitAll(addedCommunitiesPromise);
 
         const groupUpdatePromiseResults = await waitAll(updatedGroupPromises);
+        const communityUpdatePromiseResults = await waitAll(updatedCommunitiesPromises);
 
         const groups = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
+        const communities = communityPromiseResults.success.filter(
+            isSuccessfulCommunitySummaryResponse
+        );
 
         const groupUpdates = groupUpdatePromiseResults.success.filter(
             isSuccessfulGroupSummaryUpdatesResponse
         );
+        const communityUpdates = communityUpdatePromiseResults.success.filter(
+            isSuccessfulCommunitySummaryUpdatesResponse
+        );
 
-        const anyUpdates = userResponse.kind === "success" || groupUpdates.length > 0;
+        const anyUpdates =
+            userResponse.kind === "success" ||
+            groupUpdates.length > 0 ||
+            communityUpdates.length > 0;
 
         const anyErrors =
-            groupPromiseResults.errors.length > 0 || groupUpdatePromiseResults.errors.length > 0;
+            groupPromiseResults.errors.length > 0 ||
+            groupUpdatePromiseResults.errors.length > 0 ||
+            communityPromiseResults.errors.length > 0 ||
+            communityUpdatePromiseResults.errors.length > 0;
 
         const directChats = updates.directChats.added.concat(
             mergeDirectChatUpdates(current.directChats, updates.directChats.updated)
@@ -987,11 +1027,27 @@ export class OpenChatAgent extends EventTarget {
             updates.groupChats.removed.concat(groupIndexResponse.deletedGroups.map((g) => g.id))
         );
 
+        const communitiesRemoved = new Set(
+            updates.communities.removed.concat(
+                groupIndexResponse.deletedCommunities.map((c) => c.id)
+            )
+        );
+
         const groupChats = mergeGroupChats(updates.groupChats.added, groups)
             .concat(
                 mergeGroupChatUpdates(current.groupChats, updates.groupChats.updated, groupUpdates)
             )
             .filter((g) => !chatsRemoved.has(g.id.groupId));
+
+        const mergedCommunities = communities
+            .concat(
+                mergeCommunityUpdates(
+                    current.communities,
+                    updates.communities.updated,
+                    communityUpdates
+                )
+            )
+            .filter((c) => !communitiesRemoved.has(c.id.communityId));
 
         const state = {
             latestUserCanisterUpdates: updates.timestamp,
@@ -1001,6 +1057,7 @@ export class OpenChatAgent extends EventTarget {
             avatarId: applyOptionUpdate(current.avatarId, updates.avatarId),
             blockedUsers: updates.blockedUsers ?? current.blockedUsers,
             pinnedChats: updates.favouriteChats.chats ?? [],
+            communities: mergedCommunities,
         };
         const updatedEvents = getUpdatedEvents(updates.directChats.updated, groupUpdates);
 
@@ -1021,6 +1078,14 @@ export class OpenChatAgent extends EventTarget {
         let state: ChatStateFull;
         let anyErrors: boolean;
         const userResponse = await this.userClient.getInitialState();
+        const communityPromises = userResponse.communities.summaries.map((c) =>
+            this.communityClient(c.id.communityId).summary()
+        );
+        const communityPromiseResults = await waitAll(communityPromises);
+        const communities = mergeCommunities(
+            userResponse.communities.summaries,
+            communityPromiseResults.success.filter(isSuccessfulCommunitySummaryResponse)
+        );
         if (userResponse.timestamp === undefined) {
             const groupPromises = userResponse.groupChats.summaries.map((g) =>
                 this.getGroupClient(g.id.groupId).summary()
@@ -1034,11 +1099,13 @@ export class OpenChatAgent extends EventTarget {
                 latestActiveGroupsCheck: userResponse.timestamp,
                 directChats: userResponse.directChats.summaries,
                 groupChats: mergeGroupChats(userResponse.groupChats.summaries, groupChats),
+                communities,
                 avatarId: userResponse.avatarId,
                 blockedUsers: userResponse.blockedUsers,
                 pinnedChats: userResponse.favouriteChats.chats ?? [],
             };
-            anyErrors = groupPromiseResults.errors.length > 0;
+            anyErrors =
+                groupPromiseResults.errors.length > 0 || communityPromiseResults.errors.length > 0;
         } else {
             const groupPromises = userResponse.groupChats.summaries.map((g) =>
                 this.getGroupClient(g.id.groupId).summary()
@@ -1068,13 +1135,15 @@ export class OpenChatAgent extends EventTarget {
                 latestActiveGroupsCheck: userResponse.timestamp,
                 directChats: userResponse.directChats.summaries,
                 groupChats,
+                communities,
                 avatarId: userResponse.avatarId,
                 blockedUsers: userResponse.blockedUsers,
                 pinnedChats: userResponse.favouriteChats.chats ?? [],
             };
             anyErrors =
                 groupPromiseResults.errors.length > 0 ||
-                groupUpdatePromiseResults.errors.length > 0;
+                groupUpdatePromiseResults.errors.length > 0 ||
+                communityPromiseResults.errors.length > 0;
         }
 
         const updatedEvents = new ChatMap<UpdatedEvent[]>();
@@ -1093,6 +1162,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async hydrateChatState(state: ChatStateFull): Promise<ChatStateFull> {
+        // TODO - hydrate channels
         const directChatPromises = state.directChats.map((c) => this.hydrateChatSummary(c));
         const groupChatPromises = state.groupChats.map((c) => this.hydrateChatSummary(c));
 
@@ -1103,6 +1173,19 @@ export class OpenChatAgent extends EventTarget {
             ...state,
             directChats,
             groupChats,
+            communities: state.communities.map((c) => this.hydrateCommunity(c)),
+        };
+    }
+
+    hydrateCommunity(community: CommunitySummary): CommunitySummary {
+        return {
+            ...community,
+            avatar: {
+                ...this.rehydrateDataContent(community.avatar, "avatar"),
+            },
+            banner: {
+                ...this.rehydrateDataContent(community.avatar, "banner"),
+            },
         };
     }
 

@@ -533,7 +533,7 @@
         }
 
         &.muted {
-            background-color: var(--chatSummary-bg-selected);
+            background-color: var(--unread-mute);
         }
     }
 

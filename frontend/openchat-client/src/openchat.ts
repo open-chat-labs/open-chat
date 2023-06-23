@@ -308,7 +308,7 @@ import {
     ReferralLeaderboardResponse,
     CommunityPermissions,
     E8S_PER_TOKEN,
-    Community,
+    CommunitySummary,
     CreateCommunityResponse,
     JoinCommunityResponse,
     GroupSearchResponse,
@@ -322,6 +322,7 @@ import {
     chatIdentifierToString,
     MessageContextMap,
     messageContextsEqual,
+    CommunityMap,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -340,6 +341,7 @@ import {
     currentCommunityMembers,
     currentCommunityRules,
     selectedCommunity,
+    selectedCommunityChannels,
     selectedCommunityId,
 } from "./stores/community";
 
@@ -1214,7 +1216,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private communityPredicate(
         communityId: CommunityIdentifier,
-        predicate: (community: Community) => boolean
+        predicate: (community: CommunitySummary) => boolean
     ): boolean {
         const community = this._liveState.communities.get(communityId);
         return community !== undefined && predicate(community);
@@ -3743,6 +3745,9 @@ export class OpenChat extends OpenChatAgentWorker {
             const chatsResponse = await this.sendRequest({ kind: "getUpdates" });
 
             if (!init || chatsResponse.anyUpdates) {
+                communities.set(CommunityMap.fromList(chatsResponse.state.communities));
+
+                // TODO - we need to decide how to handle channels here - do they go in the myServerChatSummaries store? or do we have a separate store for them?
                 const updatedChats = (chatsResponse.state.directChats as ChatSummary[]).concat(
                     chatsResponse.state.groupChats
                 );
@@ -3769,12 +3774,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     pinnedChatsStore.set(chatsResponse.state.pinnedChats);
                 }
 
-                myServerChatSummariesStore.set(
-                    updatedChats.reduce((acc, chat) => {
-                        acc.set(chat.id, chat);
-                        return acc;
-                    }, new ChatMap<ChatSummary>())
-                );
+                myServerChatSummariesStore.set(ChatMap.fromList(updatedChats));
 
                 if (this._liveState.uninitializedDirectChats.size > 0) {
                     for (const chat of updatedChats) {
@@ -4097,6 +4097,11 @@ export class OpenChat extends OpenChatAgentWorker {
         // if we DO belong then we just select it.
         // selecting it will show the channels etc.
         selectedCommunityId.set(communityId);
+        this.clearSelectedChat();
+    }
+
+    clearSelectedCommunity(): void {
+        selectedCommunityId.set(undefined);
     }
 
     joinCommunity(communityId: string): Promise<JoinCommunityResponse> {
@@ -4165,7 +4170,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     createCommunity(
-        candidate: Community,
+        candidate: CommunitySummary,
         rules: AccessRules,
         defaultChannels: string[]
     ): Promise<CreateCommunityResponse> {
@@ -4180,7 +4185,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    saveCommunity(candidate: Community): Promise<void> {
+    saveCommunity(candidate: CommunitySummary): Promise<void> {
         // TODO - this is just a dummy implementation
         communities.update((c) => {
             c.set(candidate.id, candidate);
@@ -4231,6 +4236,7 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedServerChatStore = selectedServerChatStore;
     pinnedChatsStore = pinnedChatsStore;
     chatSummariesListStore = chatSummariesListStore;
+    selectedCommunityChannels = selectedCommunityChannels;
     chatsLoading = chatsLoading;
     chatsInitialised = chatsInitialised;
     currentChatDraftMessage = currentChatDraftMessage;

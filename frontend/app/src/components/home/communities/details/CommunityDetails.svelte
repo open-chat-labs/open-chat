@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { AccessRules, Metrics, Community } from "openchat-client";
+    import type { AccessRules, Metrics, CommunitySummary } from "openchat-client";
     import {
         communityAdvancedOpen,
         communityPermissionsOpen,
@@ -16,7 +16,7 @@
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import Stats from "../../Stats.svelte";
 
-    export let community: Community;
+    export let community: CommunitySummary;
     export let rules: AccessRules | undefined;
     export let metrics: Metrics;
     export let canDelete: boolean;

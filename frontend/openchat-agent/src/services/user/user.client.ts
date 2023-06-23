@@ -47,7 +47,7 @@ import type {
     SetMessageReminderResponse,
     ChatEvent,
     EventsSuccessResult,
-    Community,
+    CommunitySummary,
     CreateCommunityResponse,
     AccessRules,
     ChatIdentifier,
@@ -199,7 +199,7 @@ export class UserClient extends CandidService {
     }
 
     createCommunity(
-        community: Community,
+        community: CommunitySummary,
         rules: AccessRules,
         defaultChannels: string[]
     ): Promise<CreateCommunityResponse> {

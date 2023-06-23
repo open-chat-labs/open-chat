@@ -32,6 +32,10 @@ export function lightTheme(): Theme {
         placeholder: txtLight,
         primary,
 
+        unread: {
+            mute: "rgba(0,0,0,0.1",
+        },
+
         progress: {
             bd: "rgba(255,255,255,0.2)",
         },

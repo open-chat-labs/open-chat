@@ -10,10 +10,10 @@
     import Menu from "../../Menu.svelte";
     import { _ } from "svelte-i18n";
     import MenuItem from "../../MenuItem.svelte";
-    import type { Community } from "openchat-client";
+    import type { CommunitySummary } from "openchat-client";
     import { createEventDispatcher } from "svelte";
 
-    export let community: Community;
+    export let community: CommunitySummary;
 
     const dispatch = createEventDispatcher();
 

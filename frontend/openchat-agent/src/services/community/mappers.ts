@@ -4,12 +4,17 @@ import {
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
     ChannelIdentifier,
+    ChannelMembershipUpdates,
     ChannelMessageMatch,
-    ChannelSummary,
     CommonResponses,
+    CommunityCanisterChannelSummaryUpdates,
+    CommunityCanisterCommunitySummaryUpdates,
     CommunityInviteCodeResponse,
+    CommunityMembershipUpdates,
     CommunityPermissions,
     CommunityRulesResponse,
+    CommunitySummaryResponse,
+    CommunitySummaryUpdatesResponse,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
@@ -42,7 +47,6 @@ import {
     UpdateCommunityResponse,
     UserFailedError,
     UserFailedGateCheck,
-    emptyChatMetrics,
 } from "openchat-shared";
 import type {
     ApiAddMembersToChannelResponse,
@@ -86,24 +90,33 @@ import type {
     ApiAddMembersToChannelPartialSuccess,
     ApiUserFailedGateCheck,
     ApiUserFailedError,
-    ApiCommunityCanisterChannelSummary,
     ApiMessageMatch,
     ApiEnableInviteCodeResponse,
+    ApiCommunityCanisterCommunitySummaryUpdates,
+    ApiCommunityCanisterChannelSummaryUpdates,
+    ApiChannelMembershipUpdates,
+    ApiCommunityMembershipUpdates,
 } from "./candid/idl";
 import {
     accessGate,
     apiCommunityPermissionRole,
-    apiGroupSubtype,
     apiOptional,
     chatMetrics,
+    communityChannelSummary,
+    communityPermissions,
+    communitySummary,
     gateCheckFailedReason,
     groupPermissions,
+    groupSubtype,
     memberRole,
+    mention,
     message,
     messageContent,
+    messageEvent,
+    threadDetails,
 } from "../common/chatMappers";
 import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
-import { identity, optional } from "../../utils/mapping";
+import { identity, optionUpdate, optional } from "../../utils/mapping";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
 import { groupRules, member, messageWrapper } from "../group/mappers";
@@ -842,12 +855,105 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendChannel
     }
 }
 
-export function summaryResponse(_candid: ApiSummaryResponse): unknown {
-    return {};
+export function summaryResponse(candid: ApiSummaryResponse): CommunitySummaryResponse {
+    if ("Success" in candid) {
+        return communitySummary(candid.Success);
+    } else {
+        console.warn("CommunitySummary failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
-export function summaryUpdatesResponse(_candid: ApiSummaryUpdatesResponse): unknown {
-    return {};
+export function summaryUpdatesResponse(
+    candid: ApiSummaryUpdatesResponse
+): CommunitySummaryUpdatesResponse {
+    if ("Success" in candid) {
+        return communitySummaryUpdates(candid.Success);
+    }
+    if ("SuccessNoUpdates" in candid) {
+        return CommonResponses.successNoUpdates;
+    }
+    if ("PrivateCommunity" in candid) {
+        return CommonResponses.failure;
+    }
+    throw new UnsupportedValueError("invalid ApiSummaryUpdatesResponse recieved", candid);
+}
+
+export function communitySummaryUpdates(
+    candid: ApiCommunityCanisterCommunitySummaryUpdates
+): CommunityCanisterCommunitySummaryUpdates {
+    const communityId = candid.community_id.toString();
+    return {
+        id: { kind: "community", communityId },
+        public: optional(candid.is_public, identity),
+        permissions: optional(candid.permissions, communityPermissions),
+        channelsUpdated: candid.channels_updated.map((c) =>
+            communityChannelUpdates(c, communityId)
+        ),
+        metrics: optional(candid.metrics, chatMetrics),
+        gate: optionUpdate(candid.gate, accessGate),
+        name: optional(candid.name, identity),
+        description: optional(candid.description, identity),
+        lastUpdated: candid.last_updated,
+        avatarId: optionUpdate(candid.avatar_id, identity),
+        channelsAdded: candid.channels_added.map((c) => communityChannelSummary(c, communityId)),
+        membership: optional(candid.membership, (m) => communityMembershipUpdates(m, communityId)),
+        frozen: optionUpdate(candid.frozen, (_) => true),
+        latestEventIndex: optional(candid.latest_event_index, identity),
+        bannerId: optionUpdate(candid.avatar_id, identity),
+        memberCount: optional(candid.member_count, identity),
+    };
+}
+
+export function communityMembershipUpdates(
+    candid: ApiCommunityMembershipUpdates,
+    communityId: string
+): CommunityMembershipUpdates {
+    return {
+        role: optional(candid.role, memberRole),
+        channelsRemoved: candid.channels_removed.map((c) => ({
+            kind: "channel",
+            communityId,
+            channelId: c.toString(),
+        })),
+    };
+}
+
+export function communityChannelUpdates(
+    candid: ApiCommunityCanisterChannelSummaryUpdates,
+    communityId: string
+): CommunityCanisterChannelSummaryUpdates {
+    return {
+        id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
+        public: optional(candid.is_public, identity),
+        permissions: optional(candid.permissions, groupPermissions),
+        metrics: optional(candid.metrics, chatMetrics),
+        subtype: optionUpdate(candid.subtype, groupSubtype),
+        dateLastPinned: optional(candid.date_last_pinned, identity),
+        gate: optionUpdate(candid.gate, accessGate),
+        name: optional(candid.name, identity),
+        description: optional(candid.description, identity),
+        lastUpdated: candid.last_updated,
+        avatarId: optionUpdate(candid.avatar_id, identity),
+        membership: optional(candid.membership, channelMembershipUpdates),
+        latestEventIndex: optional(candid.latest_event_index, identity),
+        memberCount: optional(candid.member_count, identity),
+        latestMessage: optional(candid.latest_message, messageEvent),
+    };
+}
+
+export function channelMembershipUpdates(
+    candid: ApiChannelMembershipUpdates
+): ChannelMembershipUpdates {
+    return {
+        role: optional(candid.role, memberRole),
+        notificationsMuted: optional(candid.notifications_muted, identity),
+        latestThreads: candid.latest_threads.map(threadDetails),
+        mentions: candid.mentions
+            .filter((m) => m.thread_root_message_index.length === 0)
+            .map(mention),
+        myMetrics: optional(candid.my_metrics, chatMetrics),
+    };
 }
 
 export function toggleMuteChannelNotificationsResponse(
@@ -925,6 +1031,19 @@ export function apiMemberRole(domain: MemberRole): ApiGroupRole {
     }
 }
 
+export function communityRole(candid: ApiCommunityRole): MemberRole {
+    if ("Member" in candid) {
+        return "member";
+    }
+    if ("Admin" in candid) {
+        return "admin";
+    }
+    if ("Owner" in candid) {
+        return "owner";
+    }
+    throw new UnsupportedValueError("Unknown community role", candid);
+}
+
 export function apiCommunityRole(newRole: MemberRole): ApiCommunityRole {
     switch (newRole) {
         case "owner":
@@ -954,52 +1073,5 @@ export function apiOptionalCommunityPermissions(
             apiCommunityPermissionRole,
             permissions.createPrivateChannel
         ),
-    };
-}
-
-export function communityChannelSummary(
-    candid: ApiCommunityCanisterChannelSummary,
-    communityId: string
-): ChannelSummary {
-    const latestMessage = optional(candid.latest_message, (ev) => ({
-        index: ev.index,
-        timestamp: ev.timestamp,
-        event: message(ev.event),
-    }));
-    return {
-        kind: "channel",
-        id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
-        latestMessage,
-        name: candid.name,
-        description: candid.description,
-        public: candid.is_public,
-        historyVisible: candid.history_visible_to_new_joiners,
-        minVisibleEventIndex: candid.min_visible_event_index,
-        minVisibleMessageIndex: candid.min_visible_message_index,
-        latestEventIndex: candid.latest_event_index,
-        lastUpdated: candid.last_updated,
-        blobReference: optional(candid.avatar_id, (blobId) => ({
-            blobId,
-            canisterId: candid.channel_id.toString(),
-        })),
-        memberCount: 0, //TODO this doesn't exist on commmunity channel
-        permissions: groupPermissions(candid.permissions),
-        metrics: chatMetrics(candid.metrics),
-        subtype: optional(candid.subtype, apiGroupSubtype),
-        frozen: false, // TODO - doesn't exist
-        dateLastPinned: optional(candid.date_last_pinned, identity),
-        dateReadPinned: undefined,
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
-        level: "group",
-        membership: {
-            joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
-            notificationsMuted: false,
-            role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
-            myMetrics: emptyChatMetrics(),
-            readByMeUpTo: latestMessage?.event.messageIndex,
-            latestThreads: [],
-            mentions: [],
-            archived: false,
-        },
     };
 }
