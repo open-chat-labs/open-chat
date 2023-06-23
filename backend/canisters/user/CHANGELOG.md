@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support simplified transfers of icrc1 tokens ([#3827](https://github.com/open-chat-labs/open-chat/pull/3827))
 - Allow known communities to call `c2c_vote_on_proposal` ([#3831](https://github.com/open-chat-labs/open-chat/pull/3831))
 - Implement converting a group into a community ([#3833](https://github.com/open-chat-labs/open-chat/pull/3833))
+- Handle when a group is imported into a community ([#3840](https://github.com/open-chat-labs/open-chat/pull/3840))
 
 ### Fixed
 
