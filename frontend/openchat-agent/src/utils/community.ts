@@ -200,12 +200,12 @@ export function mergeChannelUpdates(
 
 function mergeThreads(
     current: ThreadSyncDetails[],
-    groupCanisterUpdates: GroupCanisterThreadDetails[],
+    communityCanisterUpdates: GroupCanisterThreadDetails[],
     readUpToUpdates: Record<number, number>
 ): ThreadSyncDetails[] {
     const threadsRecord = toRecord(current, (t) => t.threadRootMessageIndex);
 
-    for (const groupUpdate of groupCanisterUpdates) {
+    for (const groupUpdate of communityCanisterUpdates) {
         threadsRecord[groupUpdate.threadRootMessageIndex] = {
             ...threadsRecord[groupUpdate.threadRootMessageIndex],
             ...groupUpdate,

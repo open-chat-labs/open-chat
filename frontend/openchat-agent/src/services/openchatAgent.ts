@@ -990,8 +990,6 @@ export class OpenChatAgent extends EventTarget {
             .filter((c) => communitiesToCheckForUpdates.has(c.id.communityId))
             .map((c) => this.communityClient(c.id.communityId).summaryUpdates(c.lastUpdated));
 
-        // TODO - would be very nice to do all these requests in parallel but the error tracking might get a bit hairy
-
         const groupPromiseResults = await waitAll(addedGroupPromises);
         const communityPromiseResults = await waitAll(addedCommunitiesPromise);
 
@@ -1096,8 +1094,6 @@ export class OpenChatAgent extends EventTarget {
             const groupPromiseResults = await waitAll(groupPromises);
             const groupChats = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
 
-            // TODO - check whether we need to do any merging here
-            // I'm not sure why we would since this is the initial state.
             state = {
                 latestUserCanisterUpdates: userResponse.timestamp,
                 latestActiveGroupsCheck: userResponse.timestamp,

@@ -1311,7 +1311,8 @@ export function communityChannelSummary(
             joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
             notificationsMuted: false,
             role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
-            myMetrics: emptyChatMetrics(),
+            myMetrics:
+                optional(candid.membership, (m) => chatMetrics(m.my_metrics)) ?? emptyChatMetrics(),
             readByMeUpTo: latestMessage?.event.messageIndex,
             latestThreads: [],
             mentions: [],
