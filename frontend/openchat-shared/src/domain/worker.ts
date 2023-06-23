@@ -108,7 +108,7 @@ import type {
     BlockCommunityUserResponse,
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
-    Community,
+    CommunitySummary,
     CommunityInviteCodeResponse,
     CommunityRulesResponse,
     CreateChannelResponse,
@@ -1293,7 +1293,7 @@ type UpdateCommunity = {
 
 type CreateCommunity = {
     kind: "createCommunity";
-    community: Community;
+    community: CommunitySummary;
     rules: AccessRules;
     defaultChannels: string[];
 };

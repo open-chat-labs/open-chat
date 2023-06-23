@@ -14,6 +14,7 @@ import {
     SetUpgradeConcurrencyResponse,
     CommunityMatch,
     SearchScope,
+    ActiveGroupsResponse,
 } from "./types";
 export {
     _SERVICE as GroupIndexService,
@@ -30,6 +31,7 @@ export {
     SetUpgradeConcurrencyResponse as ApiSetUpgradeConcurrencyResponse,
     CommunityMatch as ApiCommunityMatch,
     SearchScope as ApiSearchScope,
+    ActiveGroupsResponse as ApiActiveGroupsResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

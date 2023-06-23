@@ -643,17 +643,21 @@ function directChatsInitial(candid: ApiDirectChatsInitial): DirectChatsInitial {
 }
 
 function userCanisterChannelSummary(
-    candid: ApiUserCanisterChannelSummary
+    candid: ApiUserCanisterChannelSummary,
+    communityId: string
 ): UserCanisterChannelSummary {
     return {
-        chatId: {
+        id: {
             kind: "channel",
-            communityId: "", // TODO - we need to make sure that we pass the community id in here
+            communityId: communityId,
             channelId: candid.channel_id.toString(),
         },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
-        threadsRead: candid.threads_read,
+        threadsRead: candid.threads_read.reduce((curr, next) => {
+            curr[next[0]] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
         archived: candid.archived,
     };
 }
@@ -661,10 +665,15 @@ function userCanisterChannelSummary(
 function userCanisterCommunitySummary(
     candid: ApiUserCanisterCommunitySummary
 ): UserCanisterCommunitySummary {
+    const communityId = candid.community_id.toString();
     return {
-        communityId: candid.community_id.toString(),
-        channels: candid.channels.map(userCanisterChannelSummary),
-        pinnedChannels: candid.pinned.map((p) => p.toString()),
+        id: { kind: "community", communityId },
+        channels: candid.channels.map((c) => userCanisterChannelSummary(c, communityId)),
+        pinned: candid.pinned.map((p) => ({
+            kind: "channel",
+            communityId,
+            channelId: p.toString(),
+        })),
         archived: candid.archived,
     };
 }
@@ -716,13 +725,17 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
 }
 
 export function userCanisterChannelSummaryUpdates(
-    candid: ApiUserCanisterChannelSummaryUpdates
+    candid: ApiUserCanisterChannelSummaryUpdates,
+    communityId: string
 ): UserCanisterChannelSummaryUpdates {
     return {
-        channelId: candid.channel_id.toString(),
+        id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
-        threadsRead: candid.threads_read.map(([idx1, idx2]) => [idx1, idx2]),
+        threadsRead: candid.threads_read.reduce((curr, next) => {
+            curr[next[0]] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
         archived: optional(candid.archived, identity),
     };
 }
@@ -730,10 +743,13 @@ export function userCanisterChannelSummaryUpdates(
 export function userCanisterCommunitySummaryUpdates(
     candid: ApiUserCanisterCommunitySummaryUpdates
 ): UserCanisterCommunitySummaryUpdates {
+    const communityId = candid.community_id.toString();
     return {
-        communityId: candid.community_id.toString(),
-        channels: candid.channels.map(userCanisterChannelSummaryUpdates),
-        pinned: optional(candid.pinned, (p) => p.map((p) => p.toString())),
+        id: { kind: "community", communityId },
+        channels: candid.channels.map((c) => userCanisterChannelSummaryUpdates(c, communityId)),
+        pinned: optional(candid.pinned, (p) =>
+            p.map((p) => ({ kind: "channel", communityId, channelId: p.toString() }))
+        ),
         archived: optional(candid.archived, identity),
     };
 }

@@ -3,7 +3,7 @@ import { setsAreEqual } from "../utils/set";
 import { createChatSpecificObjectStore, createDerivedPropStore } from "./dataByChatFactory";
 import {
     CommunityMap,
-    type Community,
+    type CommunitySummary,
     type CommunityPermissions,
     type CommunitySpecificState,
     CommunityIdentifier,
@@ -25,7 +25,7 @@ function createDummyCommunity(
     name = `Community name ${id}`,
     url = "../assets/unknownUserAvatar.svg",
     memberCount = 2000
-): Community {
+): CommunitySummary {
     return {
         name,
         id: { kind: "community", communityId: id },
@@ -46,11 +46,13 @@ function createDummyCommunity(
         membership: {
             role: "owner",
             joined: BigInt(0),
+            archived: false,
+            pinned: [],
         },
     };
 }
 
-const testCommunities: Community[] = [
+const testCommunities: CommunitySummary[] = [
     createDummyCommunity("1", "OpenChat community", "../assets/evil-robot.svg", 30515),
     createDummyCommunity("2", "SNS1 fans", "../assets/sns1_medium.png"),
     createDummyCommunity("3", "ckBTC Enthusiasts", "../assets/ckbtc_nobackground.png", 1286),
@@ -68,15 +70,15 @@ const testCommunities: Community[] = [
 ];
 
 // these are all the communities that exist (this would come from the back end during explore)
-export const allCommunities = writable<Community[]>(testCommunities);
+export const allCommunities = writable<CommunitySummary[]>(testCommunities);
 
 // these are the communities I am in
-export const communities: Writable<CommunityMap<Community>> = writable(
-    CommunityMap.fromList(testCommunities.slice(0, 5))
+export const communities: Writable<CommunityMap<CommunitySummary>> = writable(
+    new CommunityMap<CommunitySummary>()
 );
 
 export const communitiesList = derived(communities, ($communities) => {
-    return Object.values($communities);
+    return $communities.values();
 });
 
 export const communityStateStore = createChatSpecificObjectStore<CommunitySpecificState>(() => ({
@@ -119,6 +121,11 @@ export const selectedCommunity = derived(
         return $communities.get($selectedCommunityId);
     }
 );
+
+export const selectedCommunityChannels = derived([selectedCommunity], ([$selectedCommunity]) => {
+    if ($selectedCommunity === undefined) return [];
+    return $selectedCommunity.channels;
+});
 
 export function setSelectedCommunity(id: CommunityIdentifier): void {
     selectedCommunityId.set(id);

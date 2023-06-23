@@ -301,9 +301,8 @@ export function mergeGroupChatUpdates(
     userCanisterUpdates: UserCanisterGroupChatSummaryUpdates[],
     groupCanisterUpdates: GroupCanisterGroupChatSummaryUpdates[]
 ): GroupChatSummary[] {
-    const userLookup = ChatMap.fromList<UserCanisterGroupChatSummaryUpdates>(userCanisterUpdates);
-    const groupLookup =
-        ChatMap.fromList<GroupCanisterGroupChatSummaryUpdates>(groupCanisterUpdates);
+    const userLookup = ChatMap.fromList(userCanisterUpdates);
+    const groupLookup = ChatMap.fromList(groupCanisterUpdates);
 
     return groupChats.map((c) => {
         const u = userLookup.get(c.id);

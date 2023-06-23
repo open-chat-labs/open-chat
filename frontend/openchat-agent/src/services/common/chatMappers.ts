@@ -50,6 +50,7 @@ import type {
     ApiCommunityPermissions,
     ApiAddReactionResponse as ApiAddDirectReactionResponse,
     ApiRemoveReactionResponse as ApiRemoveDirectReactionResponse,
+    ApiMention,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -101,7 +102,6 @@ import {
     ReportedMessageContent,
     GroupChatSummary,
     GateCheckFailedReason,
-    Community,
     CommunityPermissionRole,
     CommunityPermissions,
     ChatIdentifier,
@@ -109,12 +109,20 @@ import {
     AddRemoveReactionResponse,
     CommonResponses,
     chatIdentifierToString,
+    emptyChatMetrics,
+    ChannelSummary,
+    CommunitySummary,
+    GroupCanisterThreadDetails,
+    Mention,
+    EventWrapper,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
     ApiGroupCanisterGroupChatSummary,
     ApiAddReactionResponse as ApiAddGroupReactionResponse,
     ApiRemoveReactionResponse as ApiRemoveGroupReactionResponse,
+    ApiGroupCanisterThreadDetails,
+    ApiMessageEventWrapper,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -125,6 +133,7 @@ import type {
     ApiCommunityRole,
     ApiAddReactionResponse as ApiAddChannelReactionResponse,
     ApiRemoveReactionResponse as ApiRemoveChannelReactionResponse,
+    ApiCommunityCanisterChannelSummary,
 } from "../community/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -1227,9 +1236,10 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
     };
 }
 
-export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): Community {
+export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): CommunitySummary {
+    const communityId = candid.community_id.toString();
     return {
-        id: { kind: "community", communityId: candid.community_id.toString() },
+        id: { kind: "community", communityId },
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
@@ -1256,8 +1266,58 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         membership: {
             joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
             role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
+            archived: false, // TODO not sure what to do about this
+            pinned: [], // TODO also not sure about this - comes from the user canister
         },
-        channels: [], // TODO - fill in mapping for channels
+        channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
+    };
+}
+
+export function communityChannelSummary(
+    candid: ApiCommunityCanisterChannelSummary,
+    communityId: string
+): ChannelSummary {
+    const latestMessage = optional(candid.latest_message, (ev) => ({
+        index: ev.index,
+        timestamp: ev.timestamp,
+        event: message(ev.event),
+    }));
+    return {
+        kind: "channel",
+        id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
+        latestMessage,
+        name: candid.name,
+        description: candid.description,
+        public: candid.is_public,
+        historyVisible: candid.history_visible_to_new_joiners,
+        minVisibleEventIndex: candid.min_visible_event_index,
+        minVisibleMessageIndex: candid.min_visible_message_index,
+        latestEventIndex: candid.latest_event_index,
+        lastUpdated: candid.last_updated,
+        blobReference: optional(candid.avatar_id, (blobId) => ({
+            blobId,
+            canisterId: candid.channel_id.toString(),
+        })),
+        memberCount: candid.member_count,
+        permissions: groupPermissions(candid.permissions),
+        metrics: chatMetrics(candid.metrics),
+        subtype: optional(candid.subtype, apiGroupSubtype),
+        frozen: false, // TODO - doesn't exist
+        dateLastPinned: optional(candid.date_last_pinned, identity),
+        dateReadPinned: undefined,
+        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        level: "group",
+        membership: {
+            joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
+            notificationsMuted: false,
+            role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
+            myMetrics:
+                optional(candid.membership, (m) => chatMetrics(m.my_metrics)) ?? emptyChatMetrics(),
+            readByMeUpTo: latestMessage?.event.messageIndex,
+            latestThreads: [],
+            mentions: [],
+            archived: false,
+        },
     };
 }
 
@@ -1294,4 +1354,38 @@ export function addRemoveReactionResponse(
         console.warn("AddRemoveReaction failed with: ", candid);
         return CommonResponses.failure;
     }
+}
+
+export function groupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
+    return {
+        kind: "governance_proposals",
+        isNns: subtype.GovernanceProposals.is_nns,
+        governanceCanisterId: subtype.GovernanceProposals.governance_canister_id.toString(),
+    };
+}
+
+export function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Message> {
+    return {
+        event: message(candid.event),
+        index: candid.index,
+        timestamp: candid.timestamp,
+    };
+}
+
+export function threadDetails(candid: ApiGroupCanisterThreadDetails): GroupCanisterThreadDetails {
+    return {
+        threadRootMessageIndex: candid.root_message_index,
+        lastUpdated: candid.last_updated,
+        latestEventIndex: candid.latest_event,
+        latestMessageIndex: candid.latest_message,
+    };
+}
+
+export function mention(candid: ApiMention): Mention {
+    return {
+        messageId: candid.message_id,
+        messageIndex: candid.message_index,
+        eventIndex: candid.event_index,
+        mentionedBy: candid.mentioned_by.toString(),
+    };
 }

@@ -5,10 +5,9 @@
     import page from "page";
     import CommunityCard from "./CommunityCard.svelte";
     import Search from "../../..//Search.svelte";
-    import { pathParams } from "../../../../routes";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import Filters from "./Filters.svelte";
-    import type { Community, CommunityMatch, OpenChat } from "openchat-client";
+    import type { CommunityMatch, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { toastStore } from "stores/toast";
     import FancyLoader from "../../../icons/FancyLoader.svelte";

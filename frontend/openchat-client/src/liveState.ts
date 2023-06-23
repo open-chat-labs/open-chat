@@ -4,7 +4,7 @@ import type {
     ChatIdentifier,
     ChatMap,
     ChatSummary,
-    Community,
+    CommunitySummary,
     CommunityMap,
     DiamondMembershipDetails,
     DirectChatSummary,
@@ -87,7 +87,7 @@ export class LiveState {
     diamondMembership!: DiamondMembershipDetails | undefined;
     isDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
-    communities!: CommunityMap<Community>;
+    communities!: CommunityMap<CommunitySummary>;
 
     constructor() {
         confirmedThreadEventIndexesLoadedStore.subscribe(

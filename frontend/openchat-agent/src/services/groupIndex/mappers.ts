@@ -11,8 +11,10 @@ import type {
     CommunityMatch,
     SearchScope,
     GroupSearchResponse,
+    ActiveGroupsResponse,
 } from "openchat-shared";
 import type {
+    ApiActiveGroupsResponse,
     ApiAddHotGroupExclusionResponse,
     ApiCommunityMatch,
     ApiDeleteFrozenGroupResponse,
@@ -34,6 +36,28 @@ import {
 } from "openchat-shared";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
 
+export function activeGroupsResponse(candid: ApiActiveGroupsResponse): ActiveGroupsResponse {
+    return {
+        timestamp: candid.Success.timestamp,
+        activeGroups: candid.Success.active_groups.map((g) => g.toString()),
+        activeCommunities: candid.Success.active_communities.map((c) => c.toString()),
+        deletedCommunities: candid.Success.deleted_communities.map((d) => ({
+            id: d.id.toString(),
+            timestamp: d.timestamp,
+            deletedBy: d.deleted_by.toString(),
+            name: d.name,
+            public: d.public,
+        })),
+        deletedGroups: candid.Success.deleted_groups.map((d) => ({
+            id: d.id.toString(),
+            timestamp: d.timestamp,
+            deletedBy: d.deleted_by.toString(),
+            name: d.name,
+            public: d.public,
+        })),
+    };
+}
+
 export function filterGroupsResponse(candid: ApiFilterGroupsResponse): FilterGroupsResponse {
     return {
         timestamp: candid.Success.timestamp,
@@ -42,7 +66,7 @@ export function filterGroupsResponse(candid: ApiFilterGroupsResponse): FilterGro
             id: d.id.toString(),
             timestamp: d.timestamp,
             deletedBy: d.deleted_by.toString(),
-            groupName: d.group_name,
+            name: d.group_name,
             public: d.public,
         })),
         upgradesInProgress: candid.Success.upgrades_in_progress.map((c) => c.toString()),

@@ -1,4 +1,4 @@
-import type { AccessControlled, AccessRules } from "../access";
+import type { AccessControlled, AccessGate, AccessRules } from "../access";
 import type {
     GateCheckFailed,
     GateCheckFailedReason,
@@ -6,9 +6,17 @@ import type {
     Message,
     MessageContent,
     ChannelSummary,
+    Metrics,
+    ChannelIdentifier,
+    GroupSubtype,
+    EventWrapper,
+    GroupCanisterThreadDetails,
+    Mention,
 } from "../chat";
 import type { DataContent } from "../data";
+import type { OptionUpdate } from "../optionUpdate";
 import type {
+    ChatPermissions,
     CommunityPermissions,
     HasMembershipRole,
     MemberRole,
@@ -38,6 +46,8 @@ import type { HasLevel } from "../structure";
 export type CommunityMembership = {
     joined: bigint;
     role: MemberRole;
+    archived: boolean;
+    pinned: ChannelIdentifier[];
 };
 
 export type CommunityIdentifier = {
@@ -45,7 +55,7 @@ export type CommunityIdentifier = {
     communityId: string;
 };
 
-export type Community = AccessControlled &
+export type CommunitySummary = AccessControlled &
     HasLevel &
     HasMembershipRole &
     Permissioned<CommunityPermissions> & {
@@ -340,4 +350,61 @@ export type CreateCommunityResponse = Failure | (Success & { id: string }) | { k
 export type JoinCommunityResponse =
     | Failure
     | GateCheckFailed
-    | (Success & { community: Community });
+    | (Success & { community: CommunitySummary });
+
+export type CommunitySummaryResponse = Failure | CommunitySummary;
+
+export type CommunitySummaryUpdatesResponse =
+    | SuccessNoUpdates
+    | Failure
+    | CommunityCanisterCommunitySummaryUpdates;
+
+export type CommunityCanisterCommunitySummaryUpdates = {
+    id: CommunityIdentifier;
+    public: boolean | undefined;
+    permissions: CommunityPermissions | undefined;
+    channelsUpdated: CommunityCanisterChannelSummaryUpdates[];
+    metrics: Metrics | undefined;
+    gate: OptionUpdate<AccessGate>;
+    name: string | undefined;
+    description: string | undefined;
+    lastUpdated: bigint;
+    avatarId: OptionUpdate<bigint>;
+    channelsAdded: ChannelSummary[];
+    membership: CommunityMembershipUpdates | undefined;
+    frozen: OptionUpdate<boolean>;
+    latestEventIndex: number | undefined;
+    bannerId: OptionUpdate<bigint>;
+    memberCount: number | undefined;
+};
+
+export type CommunityCanisterChannelSummaryUpdates = {
+    id: ChannelIdentifier;
+    public: boolean | undefined;
+    permissions: ChatPermissions | undefined;
+    metrics: Metrics | undefined;
+    subtype: OptionUpdate<GroupSubtype>;
+    dateLastPinned: bigint | undefined;
+    gate: OptionUpdate<AccessGate>;
+    name: string | undefined;
+    description: string | undefined;
+    lastUpdated: bigint;
+    avatarId: OptionUpdate<bigint>;
+    membership: ChannelMembershipUpdates | undefined;
+    latestEventIndex: number | undefined;
+    memberCount: number | undefined;
+    latestMessage: EventWrapper<Message> | undefined;
+};
+
+export type CommunityMembershipUpdates = {
+    role: MemberRole | undefined;
+    channelsRemoved: ChannelIdentifier[];
+};
+
+export type ChannelMembershipUpdates = {
+    role: MemberRole | undefined;
+    notificationsMuted: boolean | undefined;
+    latestThreads: GroupCanisterThreadDetails[];
+    mentions: Mention[];
+    myMetrics: Metrics | undefined;
+};
