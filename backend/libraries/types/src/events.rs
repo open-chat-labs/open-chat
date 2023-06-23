@@ -251,3 +251,10 @@ pub struct ChannelDeleted {
     pub name: String,
     pub deleted_by: UserId,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct DefaultChannelsChanged {
+    pub added: Vec<ChannelId>,
+    pub removed: Vec<ChannelId>,
+    pub changed_by: UserId,
+}

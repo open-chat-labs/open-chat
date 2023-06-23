@@ -2,11 +2,11 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use user_canister::add_remove_favourite_chats::{Response::*, *};
+use user_canister::manage_favourite_chats::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
-fn add_remove_favourite_chats(args: Args) -> Response {
+fn manage_favourite_chats(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| {

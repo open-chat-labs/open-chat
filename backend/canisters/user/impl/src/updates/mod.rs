@@ -1,6 +1,5 @@
 pub mod add_hot_group_exclusions;
 pub mod add_reaction;
-pub mod add_remove_favourite_chats;
 pub mod archive_chat;
 pub mod archive_unarchive_chats;
 pub mod block_user;
@@ -31,6 +30,7 @@ pub mod edit_message;
 pub mod init_user_principal_migration;
 pub mod leave_community;
 pub mod leave_group;
+pub mod manage_favourite_chats;
 pub mod mark_read;
 pub mod migrate_user_principal;
 pub mod mute_notifications;

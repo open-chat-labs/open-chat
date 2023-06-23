@@ -17,7 +17,6 @@ fn main() {
     generate_candid_method!(user, updates, query);
     generate_candid_method!(user, add_hot_group_exclusions, update);
     generate_candid_method!(user, add_reaction, update);
-    generate_candid_method!(user, add_remove_favourite_chats, update);
     generate_candid_method!(user, archive_chat, update);
     generate_candid_method!(user, archive_unarchive_chats, update);
     generate_candid_method!(user, block_user, update);
@@ -31,6 +30,7 @@ fn main() {
     generate_candid_method!(user, init_user_principal_migration, update);
     generate_candid_method!(user, leave_community, update);
     generate_candid_method!(user, leave_group, update);
+    generate_candid_method!(user, manage_favourite_chats, update);
     generate_candid_method!(user, mark_read, update);
     generate_candid_method!(user, mark_read_v2, update);
     generate_candid_method!(user, migrate_user_principal, update);

@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Handle when a group is imported into a community ([#3840](https://github.com/open-chat-labs/open-chat/pull/3840))
 - Add `c2c_mark_community_updated_for_user` endpoint ([#3846](https://github.com/open-chat-labs/open-chat/pull/3846))
 
+### Changed
+
+- Renamed `add_remove_favourite_chats` to `manage_favourite_chats` ([#3847](https://github.com/open-chat-labs/open-chat/pull/3847))
+
 ### Fixed
 
 - Fix ordering of pinned chats ([#3823](https://github.com/open-chat-labs/open-chat/pull/3823))

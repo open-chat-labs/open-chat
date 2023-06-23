@@ -529,6 +529,21 @@ type MakeChannelPrivateResponse =
         AlreadyPrivate;
     };
 
+type ManageDefaultChannelsArgs =
+    record {
+        to_add: vec ChannelId;
+        to_remove: vec ChannelId;
+    };
+
+type ManageDefaultChannelsResponse =
+    variant {
+        Success;
+        CommunityFrozen;
+        UserNotInCommunity;
+        UserSuspended;
+        NotAuthorized;
+    };
+
 type MakePrivateResponse =
     variant {
         Success;
@@ -865,6 +880,7 @@ service: {
     leave_channel: (LeaveChannelArgs) -> (LeaveChannelResponse);
     make_channel_private: (MakeChannelPrivateArgs) -> (MakeChannelPrivateResponse);
     make_private: (EmptyArgs) -> (MakePrivateResponse);
+    manage_default_channels: (ManageDefaultChannelsArgs) -> (ManageDefaultChannelsResponse);
     pin_message: (PinMessageArgs) -> (PinMessageResponse);
     register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);

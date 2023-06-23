@@ -26,6 +26,7 @@ pub mod join_channel;
 pub mod leave_channel;
 pub mod make_channel_private;
 pub mod make_private;
+pub mod manage_default_channels;
 pub mod pin_message;
 pub mod register_poll_vote;
 pub mod register_proposal_vote;
