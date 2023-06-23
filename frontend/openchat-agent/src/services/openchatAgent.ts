@@ -1154,8 +1154,6 @@ export class OpenChatAgent extends EventTarget {
                 setCachedChats(this.db, this.principal, state, updatedEvents);
             }
 
-            console.log("xxx: initial state", state);
-
             return {
                 state: s,
                 updatedEvents: updatedEvents.toMap(),

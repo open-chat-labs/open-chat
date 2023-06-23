@@ -194,7 +194,6 @@ function mergeThreads(
 export function isSuccessfulCommunitySummaryResponse(
     response: CommunitySummaryResponse
 ): response is CommunitySummary {
-    console.log("xxx: community response", response);
     return "id" in response;
 }
 
