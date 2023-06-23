@@ -105,7 +105,17 @@
     function save() {
         busy = true;
         if (editing) {
-            client.saveCommunity(candidate).finally(() => (busy = false));
+            client
+                .saveCommunity(candidate, candidateRules)
+                .then((success: boolean) => {
+                    if (success) {
+                        toastStore.showSuccessToast("communities.saved");
+                        dispatch("close");
+                    } else {
+                        toastStore.showFailureToast("communities.errors.saveFailed");
+                    }
+                })
+                .finally(() => (busy = false));
         } else {
             client
                 .createCommunity(

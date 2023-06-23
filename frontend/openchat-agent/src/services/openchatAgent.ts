@@ -65,7 +65,6 @@ import {
     GroupInvite,
     ChatPermissions,
     AccessRules,
-    SearchResponse,
     IndexRange,
     InviteCodeResponse,
     JoinGroupResponse,
@@ -139,7 +138,6 @@ import {
     DeclineInvitationResponse,
     UpdatesSuccessResponse,
     AccessGate,
-    SearchScope,
     JoinCommunityResponse,
     GroupSearchResponse,
     emptyUpdatesSuccessResponse,
@@ -152,6 +150,7 @@ import {
     MessageContext,
     chatIdentifiersEqual,
     CommunitySummary,
+    ExploreCommunitiesResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -853,23 +852,26 @@ export class OpenChatAgent extends EventTarget {
             .then((users) => users.map((u) => this.rehydrateUserSummary(u)));
     }
 
-    search(searchTerm: string, maxResults = 10, scope: SearchScope): Promise<SearchResponse> {
-        return this._groupIndexClient.search(searchTerm, maxResults, scope).then((res) => {
-            if (res.kind === "success") {
-                return {
-                    ...res,
-                    groupMatches: res.groupMatches.map((match) =>
-                        this.rehydrateDataContent(match, "avatar")
-                    ),
-                    communityMatches: res.communityMatches.map((match) => ({
-                        ...match,
-                        avatar: this.rehydrateDataContent(match.avatar, "avatar"),
-                        banner: this.rehydrateDataContent(match.banner, "banner"),
-                    })),
-                };
-            }
-            return res;
-        });
+    exploreCommunities(
+        searchTerm: string | undefined,
+        pageIndex: number,
+        pageSize = 10
+    ): Promise<ExploreCommunitiesResponse> {
+        return this._groupIndexClient
+            .exploreCommunities(searchTerm, pageIndex, pageSize)
+            .then((res) => {
+                if (res.kind === "success") {
+                    return {
+                        ...res,
+                        matches: res.matches.map((match) => ({
+                            ...match,
+                            avatar: this.rehydrateDataContent(match.avatar, "avatar"),
+                            banner: this.rehydrateDataContent(match.banner, "banner"),
+                        })),
+                    };
+                }
+                return res;
+            });
     }
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {

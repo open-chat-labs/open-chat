@@ -873,9 +873,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
-            case "search":
+            case "exploreCommunities":
                 agent
-                    .search(payload.searchTerm, payload.maxResults, payload.scope)
+                    .exploreCommunities(payload.searchTerm, payload.pageIndex, payload.pageSize)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
