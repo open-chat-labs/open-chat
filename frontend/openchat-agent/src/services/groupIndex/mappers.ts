@@ -4,14 +4,13 @@ import type {
     FilterGroupsResponse,
     FreezeGroupResponse,
     GroupMatch,
-    SearchResponse,
     RemoveHotGroupExclusionResponse,
     SetGroupUpgradeConcurrencyResponse,
     UnfreezeGroupResponse,
     CommunityMatch,
-    SearchScope,
     GroupSearchResponse,
     ActiveGroupsResponse,
+    ExploreCommunitiesResponse,
 } from "openchat-shared";
 import type {
     ApiActiveGroupsResponse,
@@ -21,13 +20,12 @@ import type {
     ApiFilterGroupsResponse,
     ApiFreezeGroupResponse,
     ApiGroupMatch,
-    ApiGroupSearchResponse,
+    ApiSearchResponse,
     ApiRecommendedGroupsResponse,
     ApiRemoveHotGroupExclusionResponse,
-    ApiSearchResponse,
-    ApiSearchScope,
     ApiSetUpgradeConcurrencyResponse,
     ApiUnfreezeGroupResponse,
+    ApiExploreCommunitiesResponse,
 } from "./candid/idl";
 import {
     DeleteFrozenGroupResponse,
@@ -35,6 +33,7 @@ import {
     UnsupportedValueError,
 } from "openchat-shared";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
+import { accessGate } from "../common/chatMappers";
 
 export function activeGroupsResponse(candid: ApiActiveGroupsResponse): ActiveGroupsResponse {
     return {
@@ -82,12 +81,13 @@ export function recommendedGroupsResponse(
     throw new Error(`Unknown GroupIndex.RecommendedGroupsResponse of ${candid}`);
 }
 
-export function searchResponse(candid: ApiSearchResponse): SearchResponse {
+export function exploreCommunitiesResponse(
+    candid: ApiExploreCommunitiesResponse
+): ExploreCommunitiesResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
-            groupMatches: candid.Success.group_matches.map(groupMatch),
-            communityMatches: candid.Success.community_matches.map(communityMatch),
+            matches: candid.Success.matches.map(communityMatch),
         };
     }
     if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
@@ -96,7 +96,7 @@ export function searchResponse(candid: ApiSearchResponse): SearchResponse {
     throw new Error(`Unknown GroupIndex.SearchResponse of ${candid}`);
 }
 
-export function searchGroupsResponse(candid: ApiGroupSearchResponse): GroupSearchResponse {
+export function searchGroupsResponse(candid: ApiSearchResponse): GroupSearchResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
@@ -107,17 +107,6 @@ export function searchGroupsResponse(candid: ApiGroupSearchResponse): GroupSearc
         return { kind: "term_invalid" };
     }
     throw new Error(`Unknown GroupIndex.GroupSearchResponse of ${candid}`);
-}
-
-export function apiSearchScope(scope: SearchScope): ApiSearchScope {
-    switch (scope) {
-        case "all":
-            return { All: null };
-        case "communities":
-            return { Communities: null };
-        case "groups":
-            return { Groups: null };
-    }
 }
 
 export function freezeGroupResponse(candid: ApiFreezeGroupResponse): FreezeGroupResponse {
@@ -295,7 +284,8 @@ function communityMatch(candid: ApiCommunityMatch): CommunityMatch {
                 canisterId: candid.id.toString(),
             })),
         },
-        memberCount: 1000, //TODO fill in
-        channelCount: 15, //TODO fill in
+        memberCount: candid.member_count,
+        channelCount: candid.channel_count,
+        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
     };
 }

@@ -257,7 +257,6 @@ import {
     type CurrentUserResponse,
     type RemoveMemberResponse,
     type RegisterProposalVoteResponse,
-    type SearchResponse,
     type GroupInvite,
     type SearchDirectChatResponse,
     type SearchGroupChatResponse,
@@ -323,6 +322,7 @@ import {
     MessageContextMap,
     messageContextsEqual,
     CommunityMap,
+    ExploreCommunitiesResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3306,8 +3306,12 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "searchGroups", searchTerm, maxResults });
     }
 
-    searchCommunities(searchTerm: string, maxResults = 10): Promise<SearchResponse> {
-        return this.sendRequest({ kind: "search", searchTerm, maxResults, scope: "communities" });
+    exploreCommunities(
+        searchTerm: string | undefined,
+        pageIndex: number,
+        pageSize: number
+    ): Promise<ExploreCommunitiesResponse> {
+        return this.sendRequest({ kind: "exploreCommunities", searchTerm, pageIndex, pageSize });
     }
 
     dismissRecommendation(chatId: GroupChatIdentifier): Promise<void> {
@@ -4185,13 +4189,32 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    saveCommunity(candidate: CommunitySummary): Promise<void> {
-        // TODO - this is just a dummy implementation
-        communities.update((c) => {
-            c.set(candidate.id, candidate);
-            return c;
-        });
-        return Promise.resolve();
+    saveCommunity(community: CommunitySummary, rules: AccessRules): Promise<boolean> {
+        return this.sendRequest({
+            kind: "updateCommunity",
+            communityId: community.id.communityId,
+            name: community.name,
+            description: community.description,
+            rules: rules,
+            permissions: community.permissions,
+            avatar: community.avatar.blobData,
+            banner: community.banner.blobData,
+            gate: community.gate,
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    communities.update((c) => {
+                        c.set(community.id, community);
+                        return c;
+                    });
+                    return true;
+                }
+                return false;
+            })
+            .catch((err) => {
+                this._logger.error("Error creating community", err);
+                return false;
+            });
     }
 
     // **** End of Communities stuff
@@ -4273,7 +4296,4 @@ export class OpenChat extends OpenChatAgentWorker {
     currentCommunityBlockedUsers = currentCommunityBlockedUsers;
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
     communityStateStore = communityStateStore;
-
-    // TODO - temporarily exposing a test store
-    allCommunities = allCommunities;
 }

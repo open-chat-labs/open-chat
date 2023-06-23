@@ -6,15 +6,15 @@ import {
     FreezeGroupResponse,
     GroupMatch,
     RecommendedGroupsResponse,
-    SearchV2Response,
     SearchResponse,
     UnfreezeGroupResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
     SetUpgradeConcurrencyResponse,
     CommunityMatch,
-    SearchScope,
     ActiveGroupsResponse,
+    ExploreCommunitiesResponse,
+    ExploreCommunitiesSuccess,
 } from "./types";
 export {
     _SERVICE as GroupIndexService,
@@ -23,15 +23,15 @@ export {
     FreezeGroupResponse as ApiFreezeGroupResponse,
     GroupMatch as ApiGroupMatch,
     RecommendedGroupsResponse as ApiRecommendedGroupsResponse,
-    SearchV2Response as ApiSearchResponse,
-    SearchResponse as ApiGroupSearchResponse,
+    SearchResponse as ApiSearchResponse,
     UnfreezeGroupResponse as ApiUnfreezeGroupResponse,
     AddHotGroupExclusionResponse as ApiAddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse as ApiRemoveHotGroupExclusionResponse,
     SetUpgradeConcurrencyResponse as ApiSetUpgradeConcurrencyResponse,
     CommunityMatch as ApiCommunityMatch,
-    SearchScope as ApiSearchScope,
     ActiveGroupsResponse as ApiActiveGroupsResponse,
+    ExploreCommunitiesResponse as ApiExploreCommunitiesResponse,
+    ExploreCommunitiesSuccess as ApiExploreCommunitiesSuccess,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -146,6 +146,7 @@
     .footer {
         position: relative;
         flex: 0 0 toRem(60);
+        padding-bottom: env(safe-area-inset-bottom);
     }
 
     .footer-overlay {

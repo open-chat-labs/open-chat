@@ -662,6 +662,8 @@
     }
 
     function communityDetails() {
+        // what do we do here if the community is not selected
+        // do we select it?
         if ($selectedCommunityId !== undefined) {
             rightPanelHistory.set([{ kind: "community_details" }]);
         }
