@@ -29,8 +29,12 @@ impl ActivityNotificationState {
         if self.last_notification_date > now.saturating_sub(interval) {
             None
         } else {
-            self.last_notification_date = now;
-            Some(self.mark_active_duration)
+            Some(self.notify(now))
         }
+    }
+
+    pub fn notify(&mut self, now: TimestampMillis) -> Milliseconds {
+        self.last_notification_date = now;
+        self.mark_active_duration
     }
 }

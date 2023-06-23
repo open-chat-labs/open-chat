@@ -1,93 +1,59 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::guards::caller_is_group_canister;
+use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_delete_group::{Response::*, *};
-use ic_cdk::api::call::CallResult;
-use types::{CanisterId, ChatId, DeletedGroupInfo, UserId};
+use types::{ChatId, CommunityImportedInto, DeletedGroupInfo, UserId};
 
-#[update_msgpack]
+#[update_msgpack(guard = "caller_is_group_canister")]
 #[trace]
-async fn c2c_delete_group(args: Args) -> Response {
-    let PrepareResult {
-        local_group_index_canister_id,
-        chat_id,
-    } = match read_state(prepare) {
-        Ok(ok) => ok,
-        Err(response) => return response,
-    };
-
-    match delete_group(
-        chat_id,
-        local_group_index_canister_id,
-        args.deleted_by,
-        args.group_name,
-        args.members,
-    )
-    .await
-    {
-        Ok(local_group_index_canister::c2c_delete_group::Response::Success) => Success,
-        Ok(local_group_index_canister::c2c_delete_group::Response::ChatNotFound) => ChatNotFound,
-        Err(error) => InternalError(format!("{error:?}")),
-    }
+fn c2c_delete_group(args: Args) -> Response {
+    mutate_state(|state| {
+        delete_group(
+            state.env.caller().into(),
+            args.group_name,
+            args.deleted_by,
+            args.members,
+            None,
+            state,
+        )
+    })
 }
 
-struct PrepareResult {
-    pub local_group_index_canister_id: CanisterId,
-    pub chat_id: ChatId,
-}
-
-fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
-    let caller = state.env.caller();
-    let chat_id = ChatId::from(caller);
-
-    if let Some(local_group_index_canister_id) = state.data.local_index_map.get_index_canister_for_group(&chat_id) {
-        Ok(PrepareResult {
-            local_group_index_canister_id,
-            chat_id,
-        })
-    } else {
-        Err(ChatNotFound)
-    }
-}
-
-pub(crate) async fn delete_group(
-    chat_id: ChatId,
-    local_group_index_canister_id: CanisterId,
-    deleted_by: UserId,
+pub(crate) fn delete_group(
+    group_id: ChatId,
     group_name: String,
+    deleted_by: UserId,
     members: Vec<UserId>,
-) -> CallResult<local_group_index_canister::c2c_delete_group::Response> {
-    let response = local_group_index_canister_c2c_client::c2c_delete_group(
-        local_group_index_canister_id,
-        &local_group_index_canister::c2c_delete_group::Args { chat_id },
-    )
-    .await?;
-
-    if matches!(response, local_group_index_canister::c2c_delete_group::Response::Success) {
-        mutate_state(|state| commit(chat_id, deleted_by, group_name, members, state));
+    community_imported_into: Option<CommunityImportedInto>,
+    state: &mut RuntimeState,
+) -> Response {
+    if let Some(local_group_index_canister) = state.data.local_index_map.get_index_canister_for_group(&group_id) {
+        state.data.fire_and_forget_handler.send(
+            local_group_index_canister,
+            "c2c_delete_group_msgpack".to_string(),
+            msgpack::serialize_then_unwrap(local_group_index_canister::c2c_delete_group::Args { chat_id: group_id }),
+        );
     }
 
-    Ok(response)
-}
-
-fn commit(chat_id: ChatId, deleted_by: UserId, name: String, members: Vec<UserId>, state: &mut RuntimeState) {
-    let now = state.env.now();
-
-    let public = state.data.public_groups.delete(&chat_id).is_some();
+    let public = state.data.public_groups.delete(&group_id).is_some();
     if !public {
-        state.data.private_groups.delete(&chat_id);
+        state.data.private_groups.delete(&group_id);
     }
 
     state.data.deleted_groups.insert(
         DeletedGroupInfo {
-            id: chat_id,
-            timestamp: now,
+            id: group_id,
+            timestamp: state.env.now(),
             deleted_by,
-            group_name: name.clone(),
-            name,
+            group_name: group_name.clone(),
+            name: group_name,
             public,
+            community_imported_into,
         },
         members,
     );
     crate::jobs::push_group_deleted_notifications::start_job_if_required(state);
+
+    Success
 }

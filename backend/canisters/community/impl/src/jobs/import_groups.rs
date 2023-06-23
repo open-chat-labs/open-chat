@@ -1,4 +1,4 @@
-use crate::activity_notifications::handle_activity_notification;
+use crate::activity_notifications::extract_activity;
 use crate::model::channels::Channel;
 use crate::model::events::CommunityEvent;
 use crate::model::groups_being_imported::NextBatchResult;
@@ -86,12 +86,14 @@ async fn import_group(group_id: ChatId, from: u64) {
 fn deserialize_group(group_id: ChatId) {
     mutate_state(|state| {
         if let Some(group) = state.data.groups_being_imported.take(&group_id) {
-            let id = group.channel_id();
+            let channel_id = group.channel_id();
             let chat: GroupChatCore = msgpack::deserialize_then_unwrap(group.bytes());
 
-            state.data.channels.add(Channel { id, chat });
+            state.data.channels.add(Channel { id: channel_id, chat });
 
-            ic_cdk_timers::set_timer(Duration::ZERO, move || ic_cdk::spawn(process_channel_members(id, 0)));
+            ic_cdk_timers::set_timer(Duration::ZERO, move || {
+                ic_cdk::spawn(process_channel_members(group_id, channel_id, 0))
+            });
         }
     });
 }
@@ -99,7 +101,7 @@ fn deserialize_group(group_id: ChatId) {
 // For each user already in the community, add the new channel to their set of channels.
 // For users who are not members, lookup their principals, then join them to the community, then add
 // them to the default channels, then add the new channel to their set of channels.
-async fn process_channel_members(channel_id: ChannelId, attempt: u32) {
+async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attempt: u32) {
     let (members_to_add, local_user_index_canister_id, is_public) = mutate_state(|state| {
         let channel = state.data.channels.get(&channel_id).unwrap();
         let mut to_add = Vec::new();
@@ -155,11 +157,33 @@ async fn process_channel_members(channel_id: ChannelId, attempt: u32) {
             });
         } else if attempt < 30 {
             ic_cdk_timers::set_timer(Duration::from_secs(30), move || {
-                ic_cdk::spawn(process_channel_members(channel_id, attempt + 1))
+                ic_cdk::spawn(process_channel_members(group_id, channel_id, attempt + 1))
             });
             return;
         }
     }
 
-    mutate_state(handle_activity_notification);
+    ic_cdk_timers::set_timer(Duration::ZERO, move || mark_import_complete(group_id, channel_id));
+}
+
+fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
+    mutate_state(|state| {
+        let channel = state.data.channels.get(&channel_id).unwrap();
+        let now = state.env.now();
+        let public_community_activity = state.data.is_public.then(|| extract_activity(now, &state.data));
+
+        state.data.fire_and_forget_handler.send(
+            state.data.group_index_canister_id,
+            "c2c_mark_group_import_complete_msgpack".to_string(),
+            msgpack::serialize_then_unwrap(group_index_canister::c2c_mark_group_import_complete::Args {
+                community_name: state.data.name.clone(),
+                channel_id,
+                group_id,
+                group_name: channel.chat.name.clone(),
+                members: channel.chat.members.iter().map(|m| m.user_id).collect(),
+                mark_active_duration: state.data.activity_notification_state.notify(now),
+                public_community_activity,
+            }),
+        )
+    });
 }
