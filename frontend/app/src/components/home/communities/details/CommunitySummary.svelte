@@ -39,6 +39,7 @@
             banner={$selectedCommunity.banner}
             avatar={$selectedCommunity.avatar}
             memberCount={$selectedCommunity.memberCount}
+            gate={$selectedCommunity.gate}
             channelCount={0}
             header />
         <CommunityDetails

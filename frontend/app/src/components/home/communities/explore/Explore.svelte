@@ -116,6 +116,7 @@
                     banner={community.banner}
                     memberCount={community.memberCount}
                     channelCount={community.channelCount}
+                    gate={community.gate}
                     on:click={() => selectCommunity(community)} />
             {/each}
         {/if}

@@ -149,7 +149,7 @@
                     <Details bind:valid={detailsValid} bind:busy bind:candidate />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
-                    <VisibilityControl {candidate} {original} {editing} />
+                    <VisibilityControl bind:candidate {original} {editing} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
                     <Rules

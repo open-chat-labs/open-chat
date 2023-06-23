@@ -1186,7 +1186,7 @@ export class OpenChatAgent extends EventTarget {
                 ...this.rehydrateDataContent(community.avatar, "avatar"),
             },
             banner: {
-                ...this.rehydrateDataContent(community.avatar, "banner"),
+                ...this.rehydrateDataContent(community.banner, "banner"),
             },
         };
     }

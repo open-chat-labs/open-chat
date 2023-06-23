@@ -6,18 +6,18 @@
 </script>
 
 <div class="detail">
-    <div>{gate.kind === "openchat_gate" ? $_("group.chatHolder") : $_("group.sns1Holder")}</div>
+    <div>{gate.kind === "openchat_gate" ? $_("access.chatHolder") : $_("access.sns1Holder")}</div>
     <div class="params">
         {#if gate.minDissolveDelay}
             <div>
-                {`${$_("group.minDissolveDelayN", {
+                {`${$_("access.minDissolveDelayN", {
                     values: { n: gate.minDissolveDelay / (24 * 60 * 60 * 1000) },
                 })}`}
             </div>
         {/if}
         {#if gate.minStakeE8s}
             <div>
-                {`${$_("group.minStakeN", { values: { n: gate.minStakeE8s / E8S_PER_TOKEN } })}`}
+                {`${$_("access.minStakeN", { values: { n: gate.minStakeE8s / E8S_PER_TOKEN } })}`}
             </div>
         {/if}
     </div>

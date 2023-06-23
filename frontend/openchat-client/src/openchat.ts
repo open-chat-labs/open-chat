@@ -1935,6 +1935,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     hasAccessGateChanged(current: AccessGate, original: AccessGate): boolean {
+        console.log("hasAccessGateChanged", current, original);
         if (current === original) return false;
         if (current.kind !== original.kind) return true;
         if (
