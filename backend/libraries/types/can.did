@@ -1519,3 +1519,25 @@ type MessageReport =
 type EmptyArgs =
     record {
     };
+
+type CommunityMatch =
+    record {
+        id: CommunityId;
+        name: text;
+        description: text;
+        avatar_id: opt nat;
+        banner_id: opt nat;
+        member_count: nat32;
+        channel_count: nat32;
+        gate: opt AccessGate;
+    };
+
+type GroupMatch =
+    record {
+        chat_id: ChatId;
+        name: text;
+        description: text;
+        avatar_id: opt nat;
+        member_count: nat32;
+        gate: opt AccessGate;
+    };
