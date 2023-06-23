@@ -7,6 +7,7 @@ use community_canister::*;
 generate_c2c_call!(c2c_create_proposals_channel);
 generate_c2c_call!(c2c_delete_community);
 generate_c2c_call!(c2c_freeze_community);
+generate_c2c_call!(c2c_import_proposals_group);
 generate_c2c_call!(c2c_invite_users);
 generate_c2c_call!(c2c_invite_users_to_channel);
 generate_c2c_call!(c2c_join_community);

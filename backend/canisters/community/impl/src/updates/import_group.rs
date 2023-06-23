@@ -1,10 +1,30 @@
+use crate::guards::caller_is_proposals_bot;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::import_group::{Response::*, *};
 use group_index_canister::c2c_start_importing_group_into_community::Response as C2cResponse;
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{CanisterId, ChannelId, ChatId, UserId};
+
+#[update_msgpack(guard = "caller_is_proposals_bot")]
+async fn c2c_import_proposals_group(
+    args: community_canister::c2c_import_proposals_group::Args,
+) -> community_canister::c2c_import_proposals_group::Response {
+    run_regular_jobs();
+
+    let (group_index_canister_id, user_id) =
+        read_state(|state| (state.data.group_index_canister_id, state.env.caller().into()));
+
+    match import_group_impl(args.group_id, user_id, group_index_canister_id).await {
+        Success(_) => community_canister::c2c_import_proposals_group::Response::Success,
+        InternalError(error) => community_canister::c2c_import_proposals_group::Response::InternalError(error),
+        response => community_canister::c2c_import_proposals_group::Response::InternalError(format!(
+            "Unexpected response from 'c2c_start_importing_group_into_community': {response:?}"
+        )),
+    }
+}
 
 #[update]
 #[trace]
@@ -19,17 +39,18 @@ async fn import_group(args: Args) -> Response {
         Err(response) => return response,
     };
 
+    import_group_impl(args.group_id, user_id, group_index_canister_id).await
+}
+
+async fn import_group_impl(group_id: ChatId, user_id: UserId, group_index_canister_id: CanisterId) -> Response {
     match group_index_canister_c2c_client::c2c_start_importing_group_into_community(
         group_index_canister_id,
-        &group_index_canister::c2c_start_importing_group_into_community::Args {
-            user_id,
-            group_id: args.group_id,
-        },
+        &group_index_canister::c2c_start_importing_group_into_community::Args { user_id, group_id },
     )
     .await
     {
         Ok(C2cResponse::Success(total_bytes)) => {
-            mutate_state(|state| commit_group_to_import(user_id, args.group_id, total_bytes, false, state))
+            mutate_state(|state| commit_group_to_import(user_id, group_id, total_bytes, false, state))
         }
         Ok(C2cResponse::UserNotInGroup) => UserNotInGroup,
         Ok(C2cResponse::NotAuthorized) => UserNotGroupOwner,
