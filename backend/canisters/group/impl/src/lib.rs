@@ -2,6 +2,7 @@ use crate::model::new_joiner_rewards::{NewJoinerRewardMetrics, NewJoinerRewardSt
 use crate::model::upgrade_instruction_counts::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use crate::new_joiner_rewards::process_new_joiner_reward;
 use crate::timer_job_types::TimerJob;
+use crate::updates::c2c_freeze_group::freeze_group_impl;
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -19,6 +20,7 @@ use types::{
     FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification,
     TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
 };
+use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
@@ -68,7 +70,12 @@ impl RuntimeState {
     }
 
     pub fn is_caller_community_being_imported_into(&self) -> bool {
-        if let Some(community_id) = self.data.community_being_imported_into {
+        if let Some(community_id) = self
+            .data
+            .community_being_imported_into
+            .as_ref()
+            .and_then(|c| c.community_id())
+        {
             CommunityId::from(self.env.caller()) == community_id
         } else {
             false
@@ -166,6 +173,30 @@ impl RuntimeState {
         result
     }
 
+    pub fn start_importing_into_community(&mut self, community: CommunityBeingImportedInto) -> StartImportIntoCommunityResult {
+        use StartImportIntoCommunityResult::*;
+
+        if self.data.community_being_imported_into.is_some() {
+            AlreadyImportingToAnotherCommunity
+        } else if self.data.is_frozen() {
+            ChatFrozen
+        } else {
+            self.data.community_being_imported_into = Some(community);
+            let serialized = msgpack::serialize_then_unwrap(&self.data.chat);
+            let total_bytes = serialized.len() as u64;
+            self.data.serialized_chat_state = Some(serialized);
+
+            freeze_group_impl(
+                OPENCHAT_BOT_USER_ID,
+                Some("Chat is being imported into a community".to_string()),
+                false,
+                self,
+            );
+
+            Success(total_bytes)
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         let group_chat_core = &self.data.chat;
         let now = self.env.now();
@@ -208,7 +239,11 @@ impl RuntimeState {
             new_joiner_rewards: self.data.new_joiner_rewards.as_ref().map(|r| r.metrics()),
             frozen: self.data.is_frozen(),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
-            community_being_imported_into: self.data.community_being_imported_into,
+            community_being_imported_into: self
+                .data
+                .community_being_imported_into
+                .as_ref()
+                .and_then(|c| c.community_id()),
             serialized_chat_state_bytes: self
                 .data
                 .serialized_chat_state
@@ -248,7 +283,7 @@ struct Data {
     pub instruction_counts_log: InstructionCountsLog,
     pub test_mode: bool,
     #[serde(default)]
-    pub community_being_imported_into: Option<CommunityId>,
+    pub community_being_imported_into: Option<CommunityBeingImportedInto>,
     #[serde(default)]
     pub serialized_chat_state: Option<Vec<u8>>,
     #[serde(default)]
@@ -459,6 +494,22 @@ struct AddMemberArgs {
     mute_notifications: bool,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum CommunityBeingImportedInto {
+    New,
+    Existing(CommunityId),
+}
+
+impl CommunityBeingImportedInto {
+    fn community_id(&self) -> Option<CommunityId> {
+        if let CommunityBeingImportedInto::Existing(community_id) = self {
+            Some(*community_id)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
     pub user_index: CanisterId,
@@ -468,4 +519,10 @@ pub struct CanisterIds {
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub icp_ledger: CanisterId,
+}
+
+pub enum StartImportIntoCommunityResult {
+    Success(u64),
+    AlreadyImportingToAnotherCommunity,
+    ChatFrozen,
 }

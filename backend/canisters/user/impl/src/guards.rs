@@ -32,8 +32,8 @@ pub fn caller_is_group_index() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_known_group_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_known_group_canister()) {
+pub fn caller_is_known_group_or_community_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_known_group_canister() || state.is_caller_known_commuity_canister()) {
         Ok(())
     } else {
         Err("Caller is not a known group canister".to_owned())

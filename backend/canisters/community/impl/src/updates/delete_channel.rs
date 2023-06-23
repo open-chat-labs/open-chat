@@ -2,12 +2,12 @@ use crate::{
     activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, run_regular_jobs,
     RuntimeState,
 };
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::delete_channel::{Response::*, *};
-use ic_cdk_macros::update;
 use types::{ChannelDeleted, ChannelId};
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 fn delete_channel(args: Args) -> Response {
     run_regular_jobs();

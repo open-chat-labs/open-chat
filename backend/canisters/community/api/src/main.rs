@@ -10,7 +10,6 @@ fn main() {
     generate_candid_method!(community, invite_code, query);
     generate_candid_method!(community, local_user_index, query);
     generate_candid_method!(community, messages_by_message_index, query);
-    generate_candid_method!(community, rules, query);
     generate_candid_method!(community, search_channel, query);
     generate_candid_method!(community, selected_channel_initial, query);
     generate_candid_method!(community, selected_channel_updates, query);
@@ -35,6 +34,7 @@ fn main() {
     generate_candid_method!(community, make_channel_private, update);
     generate_candid_method!(community, make_private, update);
     generate_candid_method!(community, pin_message, update);
+    generate_candid_method!(community, register_poll_vote, update);
     generate_candid_method!(community, register_proposal_vote, update);
     generate_candid_method!(community, register_proposal_vote_v2, update);
     generate_candid_method!(community, remove_member, update);
@@ -46,6 +46,7 @@ fn main() {
     generate_candid_method!(community, toggle_mute_notifications, update);
     generate_candid_method!(community, unblock_user, update);
     generate_candid_method!(community, undelete_messages, update);
+    generate_candid_method!(community, unpin_message, update);
     generate_candid_method!(community, update_channel, update);
     generate_candid_method!(community, update_community, update);
 

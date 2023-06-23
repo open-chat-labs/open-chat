@@ -141,7 +141,7 @@ pub mod happy_path {
             env,
             sender.principal,
             community_id.into(),
-            &community_canister::summary::Args {},
+            &community_canister::summary::Args { invite_code: None },
         );
 
         match response {
