@@ -8,3 +8,4 @@ pub mod join_community;
 pub mod join_group;
 pub mod register_user;
 pub mod report_message;
+pub mod report_message_v2;

@@ -7,6 +7,7 @@ fn main() {
     generate_candid_method!(local_user_index, join_group, update);
     generate_candid_method!(local_user_index, join_community, update);
     generate_candid_method!(local_user_index, register_user, update);
+    generate_candid_method!(local_user_index, report_message_v2, update);
     generate_candid_method!(local_user_index, report_message, update);
 
     candid::export_service!();
