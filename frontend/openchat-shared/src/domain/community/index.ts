@@ -46,6 +46,8 @@ import type { HasLevel } from "../structure";
 export type CommunityMembership = {
     joined: bigint;
     role: MemberRole;
+    archived: boolean;
+    pinned: ChannelIdentifier[];
 };
 
 export type CommunityIdentifier = {

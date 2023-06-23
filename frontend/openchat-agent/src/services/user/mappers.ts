@@ -654,7 +654,10 @@ function userCanisterChannelSummary(
         },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
-        threadsRead: candid.threads_read,
+        threadsRead: candid.threads_read.reduce((curr, next) => {
+            curr[next[0]] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
         archived: candid.archived,
     };
 }
@@ -666,7 +669,11 @@ function userCanisterCommunitySummary(
     return {
         id: { kind: "community", communityId },
         channels: candid.channels.map((c) => userCanisterChannelSummary(c, communityId)),
-        pinnedChannels: candid.pinned.map((p) => p.toString()),
+        pinned: candid.pinned.map((p) => ({
+            kind: "channel",
+            communityId,
+            channelId: p.toString(),
+        })),
         archived: candid.archived,
     };
 }
@@ -725,7 +732,10 @@ export function userCanisterChannelSummaryUpdates(
         id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
-        threadsRead: candid.threads_read.map(([idx1, idx2]) => [idx1, idx2]),
+        threadsRead: candid.threads_read.reduce((curr, next) => {
+            curr[next[0]] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
         archived: optional(candid.archived, identity),
     };
 }
@@ -737,7 +747,9 @@ export function userCanisterCommunitySummaryUpdates(
     return {
         id: { kind: "community", communityId },
         channels: candid.channels.map((c) => userCanisterChannelSummaryUpdates(c, communityId)),
-        pinned: optional(candid.pinned, (p) => p.map((p) => p.toString())),
+        pinned: optional(candid.pinned, (p) =>
+            p.map((p) => ({ kind: "channel", communityId, channelId: p.toString() }))
+        ),
         archived: optional(candid.archived, identity),
     };
 }

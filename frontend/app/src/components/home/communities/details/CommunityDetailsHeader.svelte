@@ -13,11 +13,11 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../../stores/iconSize";
-    import type { Community, Level } from "openchat-client";
+    import type { CommunitySummary, Level } from "openchat-client";
     import { interpolateLevel } from "../../../../utils/i18n";
     import { popRightPanelHistory, pushRightPanelHistory } from "../../../../stores/rightPanel";
 
-    export let community: Community;
+    export let community: CommunitySummary;
     export let canEdit: boolean;
     export let level: Level;
 

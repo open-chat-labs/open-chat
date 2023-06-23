@@ -308,7 +308,7 @@ import {
     ReferralLeaderboardResponse,
     CommunityPermissions,
     E8S_PER_TOKEN,
-    Community,
+    CommunitySummary,
     CreateCommunityResponse,
     JoinCommunityResponse,
     GroupSearchResponse,
@@ -1214,7 +1214,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private communityPredicate(
         communityId: CommunityIdentifier,
-        predicate: (community: Community) => boolean
+        predicate: (community: CommunitySummary) => boolean
     ): boolean {
         const community = this._liveState.communities.get(communityId);
         return community !== undefined && predicate(community);
@@ -4165,7 +4165,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     createCommunity(
-        candidate: Community,
+        candidate: CommunitySummary,
         rules: AccessRules,
         defaultChannels: string[]
     ): Promise<CreateCommunityResponse> {
@@ -4180,7 +4180,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    saveCommunity(candidate: Community): Promise<void> {
+    saveCommunity(candidate: CommunitySummary): Promise<void> {
         // TODO - this is just a dummy implementation
         communities.update((c) => {
             c.set(candidate.id, candidate);

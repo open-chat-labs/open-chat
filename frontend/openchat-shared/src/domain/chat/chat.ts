@@ -886,14 +886,14 @@ export type UserCanisterChannelSummary = {
     chatId: ChannelIdentifier;
     readByMeUpTo?: number;
     dateReadPinned?: bigint;
-    threadsRead: [number, number][];
+    threadsRead: Record<number, number>;
     archived: boolean;
 };
 
 export type UserCanisterCommunitySummary = {
     id: CommunityIdentifier;
     channels: UserCanisterChannelSummary[];
-    pinnedChannels: string[];
+    pinned: ChannelIdentifier[];
     archived: boolean;
 };
 
@@ -977,7 +977,7 @@ export type CommunitiesUpdates = {
 export type UserCanisterCommunitySummaryUpdates = {
     id: CommunityIdentifier;
     channels: UserCanisterChannelSummaryUpdates[];
-    pinned?: string[];
+    pinned?: ChannelIdentifier[];
     archived?: boolean;
 };
 
@@ -985,7 +985,7 @@ export type UserCanisterChannelSummaryUpdates = {
     id: ChannelIdentifier;
     readByMeUpTo?: number;
     dateReadPinned?: bigint;
-    threadsRead: [number, number][];
+    threadsRead: Record<number, number>;
     archived?: boolean;
 };
 

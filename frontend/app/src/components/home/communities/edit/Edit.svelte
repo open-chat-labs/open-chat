@@ -10,8 +10,7 @@
     import type {
         AccessRules,
         CandidateMember,
-        Community,
-        CreateCommunityResponse,
+        CommunitySummary,
         DefaultChannel,
         OpenChat,
     } from "openchat-client";
@@ -26,7 +25,7 @@
     import { toastStore } from "stores/toast";
     import { interpolateLevel } from "../../../../utils/i18n";
 
-    export let original: Community = createCandidateCommunity("");
+    export let original: CommunitySummary = createCandidateCommunity("");
 
     //TODO - at the moment we are *always* passing in the default access rules even in the edit case because we don't know where to get the rules from yet
     export let originalRules: AccessRules;

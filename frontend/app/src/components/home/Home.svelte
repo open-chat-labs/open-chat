@@ -27,7 +27,7 @@
         defaultAccessRules,
         EventWrapper,
         ChatType,
-        Community,
+        CommunitySummary,
         Level,
         GroupSearchResponse,
         ChatIdentifier,
@@ -78,7 +78,7 @@
     const client = getContext<OpenChat>("client");
     const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
-    let candidateCommunity: Community | undefined;
+    let candidateCommunity: CommunitySummary | undefined;
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -928,7 +928,7 @@
         candidateCommunity = createCandidateCommunity("");
     }
 
-    function editCommunity(ev: CustomEvent<Community>) {
+    function editCommunity(ev: CustomEvent<CommunitySummary>) {
         modal = ModalType.EditCommunity;
         candidateCommunity = ev.detail;
     }
