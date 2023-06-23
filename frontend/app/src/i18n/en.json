@@ -896,9 +896,11 @@
         "mustHaveUniqueChannels": "You cannot have duplicate default channel names",
         "noBlankChannels": "All default channels must have a name",
         "created": "Your community has been created successfully",
+        "saved": "Your community has been updated successfully",
         "errors": {
             "name_taken": "Sorry - there is already a community with this name",
-            "failure": "Sorry we were unable to create your community"
+            "failure": "Sorry we were unable to create your community",
+            "saveFailed": "Sorry we were unable to save your updates"
         }
     },
     "unableToSaveUserProfile": "Unable to save user profile"

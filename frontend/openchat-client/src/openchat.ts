@@ -4185,13 +4185,32 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    saveCommunity(candidate: CommunitySummary): Promise<void> {
-        // TODO - this is just a dummy implementation
-        communities.update((c) => {
-            c.set(candidate.id, candidate);
-            return c;
-        });
-        return Promise.resolve();
+    saveCommunity(community: CommunitySummary, rules: AccessRules): Promise<boolean> {
+        return this.sendRequest({
+            kind: "updateCommunity",
+            communityId: community.id.communityId,
+            name: community.name,
+            description: community.description,
+            rules: rules,
+            permissions: community.permissions,
+            avatar: community.avatar.blobData,
+            banner: community.banner.blobData,
+            gate: community.gate,
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    communities.update((c) => {
+                        c.set(community.id, community);
+                        return c;
+                    });
+                    return true;
+                }
+                return false;
+            })
+            .catch((err) => {
+                this._logger.error("Error creating community", err);
+                return false;
+            });
     }
 
     // **** End of Communities stuff
