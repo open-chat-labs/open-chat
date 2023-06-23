@@ -3745,7 +3745,6 @@ export class OpenChat extends OpenChatAgentWorker {
             const chatsResponse = await this.sendRequest({ kind: "getUpdates" });
 
             if (!init || chatsResponse.anyUpdates) {
-                console.log("xxx: chatsresponse", chatsResponse);
                 communities.set(CommunityMap.fromList(chatsResponse.state.communities));
 
                 // TODO - we need to decide how to handle channels here - do they go in the myServerChatSummaries store? or do we have a separate store for them?

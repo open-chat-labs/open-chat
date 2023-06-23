@@ -29,8 +29,6 @@
     $: communities = client.communitiesList;
     $: selectedCommunity = client.selectedCommunity;
 
-    $: console.log("xxx: communities", $communities);
-
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
     function toggleNav() {
