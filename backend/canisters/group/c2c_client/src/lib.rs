@@ -10,7 +10,6 @@ generate_c2c_call!(c2c_summary_updates);
 generate_c2c_call!(public_summary);
 
 generate_candid_c2c_call!(events);
-generate_candid_c2c_call!(http_request);
 generate_candid_c2c_call!(invite_code);
 generate_candid_c2c_call!(local_user_index);
 generate_candid_c2c_call!(selected_initial);
@@ -21,6 +20,7 @@ generate_c2c_call!(c2c_freeze_group);
 generate_c2c_call!(c2c_invite_users);
 generate_c2c_call!(c2c_join_group);
 generate_c2c_call!(c2c_leave_group);
+generate_c2c_call!(c2c_report_message_v2);
 generate_c2c_call!(c2c_report_message);
 generate_c2c_call!(c2c_set_user_suspended);
 generate_c2c_call!(c2c_start_import_into_community);

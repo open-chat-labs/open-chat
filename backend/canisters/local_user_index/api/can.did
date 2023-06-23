@@ -144,6 +144,15 @@ type ReportMessageArgs =
         notes: opt text;
     };
 
+type ReportMessageV2Args =
+    record {
+        chat_id: MultiUserChat;
+        thread_root_message_index: opt MessageIndex;
+        event_index: EventIndex;
+        reason_code: nat32;
+        notes: opt text;
+    };
+
 type ReportMessageResponse =
     variant {
         Success;
@@ -157,5 +166,6 @@ service: {
     invite_users_to_community: (InviteUsersToCommunityArgs) -> (InviteUsersToCommunityResponse);
     invite_users_to_group: (InviteUsersToGroupArgs) -> (InviteUsersToGroupResponse);
     register_user: (RegisterUserArgs) -> (RegisterUserResponse);
+    report_message_v2: (ReportMessageV2Args) -> (ReportMessageResponse);
     report_message: (ReportMessageArgs) -> (ReportMessageResponse);
 }
