@@ -647,7 +647,7 @@ function userCanisterChannelSummary(
     communitId: string
 ): UserCanisterChannelSummary {
     return {
-        chatId: {
+        id: {
             kind: "channel",
             communityId: communitId,
             channelId: candid.channel_id.toString(),

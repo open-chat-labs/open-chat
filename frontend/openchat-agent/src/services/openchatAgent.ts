@@ -161,6 +161,7 @@ import { CommunityClient } from "./community/community.client";
 import {
     isSuccessfulCommunitySummaryResponse,
     isSuccessfulCommunitySummaryUpdatesResponse,
+    mergeCommunities,
     mergeCommunityUpdates,
 } from "../utils/community";
 
@@ -1083,8 +1084,9 @@ export class OpenChatAgent extends EventTarget {
             this.communityClient(c.id.communityId).summary()
         );
         const communityPromiseResults = await waitAll(communityPromises);
-        const communities = communityPromiseResults.success.filter(
-            isSuccessfulCommunitySummaryResponse
+        const communities = mergeCommunities(
+            userResponse.communities.summaries,
+            communityPromiseResults.success.filter(isSuccessfulCommunitySummaryResponse)
         );
         if (userResponse.timestamp === undefined) {
             const groupPromises = userResponse.groupChats.summaries.map((g) =>

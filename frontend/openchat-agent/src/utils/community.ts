@@ -12,21 +12,50 @@ import {
     ChatMap,
     ThreadSyncDetails,
     GroupCanisterThreadDetails,
+    UserCanisterChannelSummary,
 } from "openchat-shared";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
 import { toRecord } from "./list";
 
 export function mergeCommunities(
-    _userCanisterCommunities: UserCanisterCommunitySummary[],
+    userCanisterCommunities: UserCanisterCommunitySummary[],
     communityCanisterCommunities: CommunitySummary[]
 ): CommunitySummary[] {
-    // const userCanisterCommunityLookup = CommunityMap.fromList(userCanisterCommunities);
+    const userCanisterCommunityLookup = CommunityMap.fromList(userCanisterCommunities);
 
     return communityCanisterCommunities.map((community) => {
-        // const _u = userCanisterCommunityLookup.get(community.id);
+        const u = userCanisterCommunityLookup.get(community.id);
 
         return {
             ...community,
+            membership: {
+                ...community.membership,
+                archived: u?.archived ?? community.membership.archived,
+                pinned: u?.pinned ?? community.membership.pinned,
+            },
+            channels: mergeChannels(u?.channels ?? [], community.channels),
+        };
+    });
+}
+
+export function mergeChannels(
+    userCanisterChannels: UserCanisterChannelSummary[],
+    communityCanisterChannels: ChannelSummary[]
+): ChannelSummary[] {
+    const userCanisterGroupLookup = ChatMap.fromList(userCanisterChannels);
+
+    return communityCanisterChannels.map((c) => {
+        const u = userCanisterGroupLookup.get(c.id);
+
+        return {
+            ...c,
+            dateReadPinned: u?.dateReadPinned,
+            membership: {
+                ...c.membership,
+                latestThreads: mergeThreads([], c.membership.latestThreads, u?.threadsRead ?? {}),
+                readByMeUpTo: u?.readByMeUpTo,
+                archived: u?.archived ?? false,
+            },
         };
     });
 }

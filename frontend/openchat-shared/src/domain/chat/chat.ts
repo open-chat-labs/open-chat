@@ -883,7 +883,7 @@ export type FavouriteChatsInitial = {
 };
 
 export type UserCanisterChannelSummary = {
-    chatId: ChannelIdentifier;
+    id: ChannelIdentifier;
     readByMeUpTo?: number;
     dateReadPinned?: bigint;
     threadsRead: Record<number, number>;
