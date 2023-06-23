@@ -18,6 +18,7 @@ impl PublicGroupAndCommunityNames {
         self.names.insert(name, canister_id);
     }
 
+    // Only removes the entry if both the name and canister_id match
     pub fn remove(&mut self, name: &str, canister_id: CanisterId) -> bool {
         if let Some(c) = self.names.get(name).copied() {
             if c == canister_id {
