@@ -2,10 +2,10 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{
-    AvatarChanged, BannerChanged, ChannelDeleted, CommunityPermissionsChanged, CommunityRoleChanged, EventIndex, EventWrapper,
-    GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged,
-    GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersRemoved, TimestampMillis,
-    UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    AvatarChanged, BannerChanged, ChannelDeleted, CommunityPermissionsChanged, CommunityRoleChanged, DefaultChannelsChanged,
+    EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
+    GroupNameChanged, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersRemoved,
+    TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -37,6 +37,7 @@ pub enum CommunityEvent {
     Unfrozen(Box<GroupUnfrozen>),
     GateUpdated(Box<GroupGateUpdated>),
     ChannelDeleted(Box<ChannelDeleted>),
+    DefaultChannelsChanged(Box<DefaultChannelsChanged>),
 }
 
 impl CommunityEvents {
