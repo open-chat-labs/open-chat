@@ -1,19 +1,13 @@
-#![allow(dead_code)]
-use super::private_communities::PrivateCommunityInfo;
+use crate::model::private_communities::PrivateCommunityInfo;
 use crate::MARK_ACTIVE_DURATION;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{AccessGate, CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
-use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 
 #[derive(Serialize, Deserialize, Default)]
-#[serde(from = "PublicCommunitiesTrimmed")]
 pub struct PublicCommunities {
     communities: HashMap<CommunityId, PublicCommunityInfo>,
-    #[serde(skip)]
-    name_to_id_map: CaseInsensitiveHashMap<CommunityId>,
-    communities_pending: CaseInsensitiveHashMap<TimestampMillis>,
 }
 
 impl PublicCommunities {
@@ -29,19 +23,6 @@ impl PublicCommunities {
         self.communities.get_mut(community_id)
     }
 
-    pub fn is_name_taken(&self, name: &str) -> bool {
-        self.name_to_id_map.contains_key(name) || self.communities_pending.contains_key(name)
-    }
-
-    pub fn reserve_name(&mut self, name: &str, now: TimestampMillis) -> bool {
-        if self.is_name_taken(name) {
-            false
-        } else {
-            self.communities_pending.insert(name, now);
-            true
-        }
-    }
-
     #[allow(clippy::too_many_arguments)]
     pub fn handle_community_created(
         &mut self,
@@ -52,19 +33,11 @@ impl PublicCommunities {
         banner_id: Option<u128>,
         gate: Option<AccessGate>,
         now: TimestampMillis,
-    ) -> bool {
-        if self.communities_pending.remove(&name).is_some() {
-            self.name_to_id_map.insert(&name, community_id);
-            let community_info = PublicCommunityInfo::new(community_id, name, description, avatar_id, banner_id, gate, now);
-            self.communities.insert(community_id, community_info);
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn handle_community_creation_failed(&mut self, name: &str) {
-        self.communities_pending.remove(name);
+    ) {
+        self.communities.insert(
+            community_id,
+            PublicCommunityInfo::new(community_id, name, description, avatar_id, banner_id, gate, now),
+        );
     }
 
     pub fn search(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> Vec<CommunityMatch> {
@@ -110,14 +83,6 @@ impl PublicCommunities {
         match self.communities.get_mut(community_id) {
             None => UpdateCommunityResult::CommunityNotFound,
             Some(mut community) => {
-                if community.name != name {
-                    if self.name_to_id_map.contains_key(&name) || self.communities_pending.contains_key(&name) {
-                        return UpdateCommunityResult::NameTaken;
-                    }
-                    self.name_to_id_map.remove(&community.name);
-                    self.name_to_id_map.insert(&name, *community_id);
-                }
-
                 community.name = name;
                 community.description = description;
                 community.avatar_id = avatar_id;
@@ -129,12 +94,7 @@ impl PublicCommunities {
     }
 
     pub fn delete(&mut self, community_id: &CommunityId) -> Option<PublicCommunityInfo> {
-        if let Some(community) = self.communities.remove(community_id) {
-            self.name_to_id_map.remove(&community.name);
-            Some(community)
-        } else {
-            None
-        }
+        self.communities.remove(community_id)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &PublicCommunityInfo> {
@@ -167,7 +127,6 @@ pub struct PublicCommunityInfo {
 pub enum UpdateCommunityResult {
     Success,
     CommunityNotFound,
-    NameTaken,
 }
 
 impl PublicCommunityInfo {
@@ -198,6 +157,10 @@ impl PublicCommunityInfo {
 
     pub fn id(&self) -> CommunityId {
         self.id
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_str()
     }
 
     pub fn created(&self) -> TimestampMillis {
@@ -269,27 +232,5 @@ impl From<PublicCommunityInfo> for PrivateCommunityInfo {
         private_community_info.mark_active(public_community_info.marked_active_until);
         private_community_info.set_frozen(public_community_info.frozen);
         private_community_info
-    }
-}
-
-#[derive(Deserialize)]
-struct PublicCommunitiesTrimmed {
-    communities: HashMap<CommunityId, PublicCommunityInfo>,
-    communities_pending: CaseInsensitiveHashMap<TimestampMillis>,
-}
-
-impl From<PublicCommunitiesTrimmed> for PublicCommunities {
-    fn from(value: PublicCommunitiesTrimmed) -> Self {
-        let mut public_communities = PublicCommunities {
-            communities: value.communities,
-            communities_pending: value.communities_pending,
-            ..Default::default()
-        };
-
-        for (community_id, community) in public_communities.communities.iter() {
-            public_communities.name_to_id_map.insert(&community.name, *community_id);
-        }
-
-        public_communities
     }
 }

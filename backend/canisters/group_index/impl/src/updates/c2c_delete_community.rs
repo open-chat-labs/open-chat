@@ -73,10 +73,16 @@ pub(crate) async fn delete_community(
 fn commit(community_id: CommunityId, deleted_by: UserId, name: String, members: Vec<UserId>, state: &mut RuntimeState) {
     let now = state.env.now();
 
-    let public = state.data.public_communities.delete(&community_id).is_some();
-    if !public {
+    let public = if let Some(community) = state.data.public_communities.delete(&community_id) {
+        state
+            .data
+            .public_group_and_community_names
+            .remove(community.name(), community_id.into());
+        true
+    } else {
         state.data.private_communities.delete(&community_id);
-    }
+        false
+    };
 
     state.data.deleted_communities.insert(
         DeletedCommunityInfo {

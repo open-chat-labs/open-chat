@@ -15,6 +15,10 @@ fn c2c_make_community_private_impl(state: &mut RuntimeState) -> Response {
     let community_id = CommunityId::from(caller);
 
     if let Some(community) = state.data.public_communities.delete(&community_id) {
+        state
+            .data
+            .public_group_and_community_names
+            .remove(community.name(), community_id.into());
         state.data.private_communities.add(community.into());
         Success
     } else {

@@ -5,6 +5,7 @@ use crate::model::local_group_index_map::LocalGroupIndex;
 use crate::model::private_communities::PrivateCommunities;
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_communities::PublicCommunities;
+use crate::model::public_group_and_community_names::PublicGroupAndCommunityNames;
 use crate::model::public_groups::PublicGroups;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
@@ -115,6 +116,8 @@ struct Data {
     pub public_communities: PublicCommunities,
     pub private_communities: PrivateCommunities,
     pub deleted_communities: DeletedCommunities,
+    #[serde(default)]
+    pub public_group_and_community_names: PublicGroupAndCommunityNames,
     pub governance_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
     pub community_canister_wasm: CanisterWasm,
@@ -152,6 +155,7 @@ impl Data {
             public_communities: PublicCommunities::default(),
             private_communities: PrivateCommunities::default(),
             deleted_communities: DeletedCommunities::default(),
+            public_group_and_community_names: PublicGroupAndCommunityNames::default(),
             governance_principals: governance_principals.into_iter().collect(),
             group_canister_wasm,
             community_canister_wasm,
@@ -232,6 +236,7 @@ impl Default for Data {
             public_communities: PublicCommunities::default(),
             private_communities: PrivateCommunities::default(),
             deleted_communities: DeletedCommunities::default(),
+            public_group_and_community_names: PublicGroupAndCommunityNames::default(),
             governance_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
             community_canister_wasm: CanisterWasm::default(),

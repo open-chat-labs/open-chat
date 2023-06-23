@@ -61,7 +61,9 @@ async fn c2c_create_group(args: Args) -> Response {
         Ok(local_group_index_canister::c2c_create_group::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
         Ok(local_group_index_canister::c2c_create_group::Response::InternalError(_)) => InternalError,
         Err(_) => {
-            mutate_state(|state| rollback(args.is_public, &args.name, state));
+            if args.is_public {
+                mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
+            }
             InternalError
         }
     }
@@ -92,7 +94,7 @@ struct PrepareResult {
 fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     let now = state.env.now();
 
-    if is_public && !state.data.public_groups.reserve_name(name, now) {
+    if is_public && !state.data.public_group_and_community_names.reserve_name(name, now) {
         return Err(NameTaken);
     }
 
@@ -119,6 +121,10 @@ struct CommitArgs {
 fn commit(args: CommitArgs, state: &mut RuntimeState) {
     let now = state.env.now();
     if args.is_public {
+        state
+            .data
+            .public_group_and_community_names
+            .insert(&args.name, args.chat_id.into());
         state.data.public_groups.handle_group_created(GroupCreatedArgs {
             chat_id: args.chat_id,
             name: args.name,
@@ -135,10 +141,4 @@ fn commit(args: CommitArgs, state: &mut RuntimeState) {
         .data
         .local_index_map
         .add_group(args.local_group_index_canister, args.chat_id);
-}
-
-fn rollback(is_public: bool, name: &str, state: &mut RuntimeState) {
-    if is_public {
-        state.data.public_groups.handle_group_creation_failed(name);
-    }
 }

@@ -5,4 +5,5 @@ pub mod local_group_index_map;
 pub mod private_communities;
 pub mod private_groups;
 pub mod public_communities;
+pub mod public_group_and_community_names;
 pub mod public_groups;
