@@ -104,12 +104,10 @@ import {
     selectedChatId,
     selectedChatStore,
     selectedServerChatStore,
-    myServerChatSummariesStore,
     serverChatSummariesStore,
     setSelectedChat,
     threadsByChatStore,
     threadsFollowedByMeStore,
-    updateSummaryWithConfirmedMessage,
     userGroupKeys,
     threadServerEventsStore,
     threadEvents,
@@ -321,7 +319,6 @@ import {
     chatIdentifierToString,
     MessageContextMap,
     messageContextsEqual,
-    CommunityMap,
     ExploreCommunitiesResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
@@ -344,6 +341,7 @@ import {
     selectedCommunityChannels,
     selectedCommunityId,
 } from "./stores/community";
+import { setGlobalState, updateSummaryWithConfirmedMessage } from "./stores/global";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -3750,12 +3748,9 @@ export class OpenChat extends OpenChatAgentWorker {
             const chatsResponse = await this.sendRequest({ kind: "getUpdates" });
 
             if (!init || chatsResponse.anyUpdates) {
-                communities.set(CommunityMap.fromList(chatsResponse.state.communities));
-
-                // TODO - we need to decide how to handle channels here - do they go in the myServerChatSummaries store? or do we have a separate store for them?
-                const updatedChats = (chatsResponse.state.directChats as ChatSummary[]).concat(
-                    chatsResponse.state.groupChats
-                );
+                const updatedChats = (chatsResponse.state.directChats as ChatSummary[])
+                    .concat(chatsResponse.state.groupChats)
+                    .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
 
                 this.updateReadUpToStore(updatedChats);
                 const chats = this._liveState.myServerChatSummaries.values();
@@ -3779,7 +3774,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     pinnedChatsStore.set(chatsResponse.state.pinnedChats);
                 }
 
-                myServerChatSummariesStore.set(ChatMap.fromList(updatedChats));
+                setGlobalState(chatsResponse.state.communities, updatedChats);
+                // myServerChatSummariesStore.set(ChatMap.fromList(updatedChats));
 
                 if (this._liveState.uninitializedDirectChats.size > 0) {
                     for (const chat of updatedChats) {

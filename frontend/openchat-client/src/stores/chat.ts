@@ -35,7 +35,7 @@ import { pinnedChatsStore } from "./pinnedChats";
 import DRange from "drange";
 import { snsFunctions } from "./snsFunctions";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
-import { createDerivedPropStore, createChatSpecificObjectStore } from "./dataByChatFactory";
+import { createChatSpecificObjectStore } from "./dataByChatFactory";
 import { localMessageUpdates } from "./localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
@@ -43,12 +43,25 @@ import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
 import type { OpenChat } from "../openchat";
+import { selectedCommunity } from "./community";
+import { globalStateStore } from "./global";
+import { createDerivedPropStore } from "./derived";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
-// Chats which the current user is a member of
-export const myServerChatSummariesStore: Writable<ChatMap<ChatSummary>> = immutableStore(
-    new ChatMap<ChatSummary>()
+export const myServerChatSummariesStore = derived(
+    [globalStateStore, selectedCommunity],
+    ([$allState, $selectedCommunity]) => {
+        if ($selectedCommunity === undefined) {
+            const globalChats = [
+                ...$allState.directChats.values(),
+                ...$allState.groupChats.values(),
+            ];
+            return ChatMap.fromList(globalChats);
+        } else {
+            return ChatMap.fromList($selectedCommunity.channels);
+        }
+    }
 );
 
 export const uninitializedDirectChats: Writable<ChatMap<DirectChatSummary>> = immutableStore(
@@ -463,34 +476,6 @@ export function setSelectedChat(
         new Set<string>(clientChat.kind === "direct_chat" ? [clientChat.id.toString()] : [])
     );
     resetFilteredProposalsStore(clientChat);
-}
-
-export function updateSummaryWithConfirmedMessage(
-    chatId: ChatIdentifier,
-    message: EventWrapper<Message>
-): void {
-    myServerChatSummariesStore.update((summaries) => {
-        const summary = summaries.get(chatId);
-        if (summary === undefined) return summaries;
-
-        const latestEventIndex = Math.max(message.index, summary.latestEventIndex);
-        const overwriteLatestMessage =
-            summary.latestMessage === undefined ||
-            message.index > summary.latestMessage.index ||
-            // If they are the same message, take the confirmed one since it'll have the correct timestamp
-            message.event.messageId === summary.latestMessage.event.messageId;
-
-        const latestMessage = overwriteLatestMessage ? message : summary.latestMessage;
-
-        const clone = summaries.clone();
-        clone.set(chatId, {
-            ...summary,
-            latestEventIndex,
-            latestMessage,
-        });
-
-        return clone as ChatMap<ChatSummary>;
-    });
 }
 
 export function clearSelectedChat(newSelectedChatId?: ChatIdentifier): void {

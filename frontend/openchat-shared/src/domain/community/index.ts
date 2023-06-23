@@ -68,7 +68,7 @@ export type CommunitySummary = AccessControlled &
         avatar: DataContent;
         banner: DataContent;
         membership?: CommunityMembership;
-        channels: ChannelSummary[];
+        channels: ChannelSummary[]; // TODO - this might be better as a ChatMap - but that would have some serialisation complications
     };
 
 // TODO - not sure if this really needs to be a thing yet
