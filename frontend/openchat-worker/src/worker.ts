@@ -1390,34 +1390,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "createChannel":
-                agent
-                    .communityClient(payload.communityId)
-                    .createChannel(payload.candidate)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "declineChannelInvitation":
                 agent
                     .communityClient(payload.chatId.communityId)
                     .declineInvitation(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "deleteChannel":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .deleteChannel(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1757,26 +1733,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.messageIds,
                         payload.threadRootMessageIndex
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "updateChannel":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .updateChannel(
-                        payload.chatId,
-                        payload.name,
-                        payload.description,
-                        payload.rules,
-                        payload.permissions,
-                        payload.avatar,
-                        payload.gate
                     )
                     .then((response) =>
                         sendResponse(correlationId, {

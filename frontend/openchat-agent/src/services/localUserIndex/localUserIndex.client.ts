@@ -109,4 +109,19 @@ export class LocalUserIndexClient extends CandidService {
             inviteUsersResponse
         );
     }
+
+    inviteUsersToChannel(
+        communityId: string,
+        channelId: string,
+        userIds: string[]
+    ): Promise<InviteUsersResponse> {
+        return this.handleResponse(
+            this.localUserIndexService.invite_users_to_channel({
+                community_id: Principal.fromText(communityId),
+                channel_id: BigInt(channelId),
+                user_ids: userIds.map((u) => Principal.fromText(u)),
+            }),
+            inviteUsersResponse
+        );
+    }
 }

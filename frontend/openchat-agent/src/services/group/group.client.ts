@@ -53,7 +53,6 @@ import {
     changeRoleResponse,
     sendMessageResponse,
     removeMemberResponse,
-    updateGroupResponse,
     deleteMessageResponse,
     undeleteMessageResponse,
     editMessageResponse,
@@ -101,6 +100,7 @@ import {
     apiAccessGate,
     apiMessageContent,
     apiOptional,
+    updateGroupResponse,
     apiUser,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";

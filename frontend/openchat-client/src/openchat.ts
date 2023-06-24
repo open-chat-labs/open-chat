@@ -320,6 +320,8 @@ import {
     MessageContextMap,
     messageContextsEqual,
     ExploreCommunitiesResponse,
+    MultiUserChatIdentifier,
+    MultiUserChat,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -897,7 +899,7 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    makeGroupPrivate(chatId: GroupChatIdentifier): Promise<boolean> {
+    makeGroupPrivate(chatId: MultiUserChatIdentifier): Promise<boolean> {
         return this.sendRequest({ kind: "makeGroupPrivate", chatId })
             .then((resp) => {
                 if (resp === "success") {
@@ -916,7 +918,8 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    deleteGroup(chatId: GroupChatIdentifier): Promise<boolean> {
+    deleteGroup(chatId: MultiUserChatIdentifier): Promise<boolean> {
+        // TODO we don't use the local updates mechnism here at the moment for some reason. Probably should.
         return this.sendRequest({ kind: "deleteGroup", chatId })
             .then((resp) => {
                 if (resp === "success") {
@@ -999,7 +1002,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     updateGroupRules(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         rules: AccessRules | undefined
     ): Promise<boolean> {
         return this.sendRequest({ kind: "updateGroup", chatId, rules })
@@ -1011,7 +1014,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     updateGroupPermissions(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         originalPermissions: ChatPermissions,
         updatedPermissions: ChatPermissions
     ): Promise<boolean> {
@@ -1173,26 +1176,26 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    canDeleteGroup(chatId: ChatIdentifier): boolean {
-        return this.groupChatPredicate(chatId, canDeleteGroup);
+    canDeleteGroup(chatId: MultiUserChatIdentifier): boolean {
+        return this.multiUserChatPredicate(chatId, canDeleteGroup);
     }
 
     canMakePrivate = canMakePrivate;
 
-    canMakeGroupPrivate(chatId: ChatIdentifier): boolean {
-        return this.groupChatPredicate(chatId, canMakePrivate);
+    canMakeGroupPrivate(chatId: MultiUserChatIdentifier): boolean {
+        return this.multiUserChatPredicate(chatId, canMakePrivate);
     }
 
-    canLeaveGroup(chatId: ChatIdentifier): boolean {
-        return this.groupChatPredicate(chatId, canLeaveGroup);
+    canLeaveGroup(chatId: MultiUserChatIdentifier): boolean {
+        return this.multiUserChatPredicate(chatId, canLeaveGroup);
     }
 
-    isPreviewing(chatId: ChatIdentifier): boolean {
-        return this.groupChatPredicate(chatId, isPreviewing);
+    isPreviewing(chatId: MultiUserChatIdentifier): boolean {
+        return this.multiUserChatPredicate(chatId, isPreviewing);
     }
 
-    isFrozen(chatId: ChatIdentifier): boolean {
-        return this.groupChatPredicate(chatId, isFrozen);
+    isFrozen(chatId: MultiUserChatIdentifier): boolean {
+        return this.multiUserChatPredicate(chatId, isFrozen);
     }
 
     isOpenChatBot(userId: string): boolean {
@@ -1203,7 +1206,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return (this._user?.suspensionDetails ?? undefined) != undefined;
     }
 
-    isChatReadOnly(chatId: ChatIdentifier): boolean {
+    isChatReadOnly(chatId: MultiUserChatIdentifier): boolean {
         return this.isReadOnly() || this.isPreviewing(chatId);
     }
 
@@ -1223,12 +1226,16 @@ export class OpenChat extends OpenChatAgentWorker {
         return community !== undefined && predicate(community);
     }
 
-    private groupChatPredicate(
-        chatId: ChatIdentifier,
-        predicate: (chat: GroupChatSummary) => boolean
+    private multiUserChatPredicate(
+        chatId: MultiUserChatIdentifier,
+        predicate: (chat: MultiUserChat) => boolean
     ): boolean {
         const chat = this._liveState.chatSummaries.get(chatId);
-        return chat !== undefined && chat.kind === "group_chat" && predicate(chat);
+        return (
+            chat !== undefined &&
+            (chat.kind === "group_chat" || chat.kind === "channel") &&
+            predicate(chat)
+        );
     }
 
     isPlatformModerator(): boolean {
@@ -1927,7 +1934,6 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     hasAccessGateChanged(current: AccessGate, original: AccessGate): boolean {
-        console.log("hasAccessGateChanged", current, original);
         if (current === original) return false;
         if (current.kind !== original.kind) return true;
         if (
@@ -3204,7 +3210,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    inviteUsers(chatId: GroupChatIdentifier, userIds: string[]): Promise<InviteUsersResponse> {
+    inviteUsers(chatId: MultiUserChatIdentifier, userIds: string[]): Promise<InviteUsersResponse> {
         this.inviteUsersLocally(chatId, userIds);
         return this.sendRequest({ kind: "inviteUsers", chatId, userIds })
             .then((resp) => {
@@ -3216,7 +3222,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch((err) => {
                 this._logger.error("Error uninviting users", err);
                 this.uninviteUsersLocally(chatId, userIds);
-                return "internal_error";
+                return "failure";
             });
     }
 
@@ -3491,9 +3497,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     updateGroup(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         name?: string,
-        description?: string,
+        desc?: string,
         rules?: AccessRules,
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
@@ -3503,7 +3509,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "updateGroup",
             chatId,
             name,
-            description,
+            desc,
             rules,
             permissions,
             avatar,
@@ -3513,7 +3519,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 localChatSummaryUpdates.markUpdated(chatId, {
                     kind: "group_chat",
                     name,
-                    description,
+                    description: desc,
                     permissions,
                     gate,
                 });
@@ -3525,10 +3531,7 @@ export class OpenChat extends OpenChatAgentWorker {
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.sendRequest({ kind: "createGroupChat", candidate }).then((resp) => {
             if (resp.kind === "success") {
-                const group = groupChatFromCandidate(
-                    { kind: "group_chat", groupId: resp.canisterId },
-                    candidate
-                );
+                const group = groupChatFromCandidate(resp.canisterId, candidate);
                 localChatSummaryUpdates.markAdded(group);
             }
             return resp;
@@ -3646,7 +3649,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private onChatFrozen(
-        chatId: ChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         event: EventWrapper<ChatFrozenEvent | ChatUnfrozenEvent>
     ): void {
         const frozen = event.event.kind === "chat_frozen";

@@ -154,21 +154,6 @@ export type ChangeCommunityRoleResponse =
     | TargetUserNotInCommunity
     | InteralError;
 
-export type CreateChannelResponse =
-    | { kind: "max_channels_created" }
-    | { kind: "name_reserved" }
-    | { kind: "rules_too_long" }
-    | { kind: "description_too_long" }
-    | { kind: "name_too_short" }
-    | NotAuthorised
-    | { kind: "avatar_too_big" }
-    | { kind: "success"; channelId: string }
-    | UserSuspended
-    | { kind: "rules_too_short" }
-    | CommunityFrozen
-    | { kind: "name_too_long" }
-    | { kind: "name_taken" };
-
 export type DeclineChannelInvitationResponse =
     | { kind: "not_invited" }
     | ChatNotFound
@@ -310,8 +295,6 @@ export type SearchChannelResponse = Failure | (Success & { matches: ChannelMessa
 export type UnblockCommunityUserResponse = Failure | Success;
 
 export type UndeleteChannelMessagesResponse = Failure | (Success & { messages: Message[] });
-
-export type UpdateChannelResponse = Failure | Success;
 
 export type UpdateCommunityResponse = Failure | Success;
 

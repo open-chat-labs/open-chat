@@ -26,6 +26,7 @@
     import ChatFrozenEvent from "./ChatFrozenEvent.svelte";
     import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
     import page from "page";
+    import { interpolateLevel } from "../../utils/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -61,6 +62,9 @@
 
     let userSummary: UserSummary | undefined = undefined;
 
+    $: level = $_(`level.${chatType === "channel" ? "channel" : "group"}`).toLowerCase() as
+        | "channel"
+        | "group";
     $: messageContext = { chatId, threadRootMessageIndex: threadRootMessage?.messageIndex };
     $: hidden =
         event.event.kind === "message" &&
@@ -154,7 +158,7 @@
             msg={event.event} />
     {/if}
 {:else if event.event.kind === "group_chat_created"}
-    <GroupChatCreatedEvent event={event.event} {me} timestamp={event.timestamp} />
+    <GroupChatCreatedEvent {chatType} event={event.event} {me} timestamp={event.timestamp} />
 {:else if event.event.kind === "direct_chat_created"}
     <DirectChatCreatedEvent timestamp={event.timestamp} />
 {:else if event.event.kind === "members_added"}
@@ -211,26 +215,30 @@
         timestamp={event.timestamp} />
 {:else if event.event.kind === "name_changed"}
     <GroupChangedEvent
+        {level}
         user={userSummary}
         changedBy={event.event.changedBy}
-        property={$_("groupName")}
+        property={interpolateLevel("groupName", level, true)}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "desc_changed"}
     <GroupChangedEvent
+        {level}
         user={userSummary}
         changedBy={event.event.changedBy}
-        property={$_("groupDesc")}
+        property={interpolateLevel("groupDesc", level, true)}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "rules_changed"}
     <GroupRulesChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "avatar_changed"}
     <GroupChangedEvent
+        {level}
         user={userSummary}
         changedBy={event.event.changedBy}
-        property={$_("groupAvatar")}
+        property={interpolateLevel("groupAvatar", level, true)}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "gate_updated"}
     <GroupChangedEvent
+        {level}
         user={userSummary}
         changedBy={event.event.updatedBy}
         property={$_("group.groupGate")}

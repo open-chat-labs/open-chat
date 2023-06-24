@@ -18,6 +18,7 @@ import type {
     UserSuspended,
     ChatFrozen,
     Failure,
+    CommunityFrozen,
 } from "../response";
 import { emptyChatMetrics } from "../../utils";
 import type { CommunityIdentifier, CommunitySummary } from "../community";
@@ -831,6 +832,18 @@ export function messageContextsEqual(
     );
 }
 
+export function chatIdentifierUnset(id: ChatIdentifier | undefined): boolean {
+    if (id === undefined) return true;
+    switch (id.kind) {
+        case "channel":
+            return id.channelId === "";
+        case "direct_chat":
+            return id.userId === "";
+        case "group_chat":
+            return id.groupId === "";
+    }
+}
+
 export function chatIdentifiersEqual(
     a: ChatIdentifier | undefined,
     b: ChatIdentifier | undefined
@@ -1290,7 +1303,7 @@ export type CandidateGroupChat = AccessControlled &
     HasLevel &
     HasMembershipRole &
     Permissioned<ChatPermissions> & {
-        id: GroupChatIdentifier;
+        id: MultiUserChatIdentifier;
         name: string;
         description: string;
         rules: AccessRules;
@@ -1315,11 +1328,13 @@ export type CreateGroupResponse =
     | GroupRulesTooShort
     | GroupRulesTooLong
     | UnauthorizedToCreatePublicGroup
+    | NotAuthorised
+    | CommunityFrozen
     | UserSuspended;
 
 export type CreateGroupSuccess = {
     kind: "success";
-    canisterId: string;
+    canisterId: MultiUserChatIdentifier;
 };
 
 export type CreateGroupInternalError = InternalError;
@@ -1526,12 +1541,7 @@ export type ChangeRoleResponse =
     | "chat_frozen"
     | "success";
 
-export type DeleteGroupResponse =
-    | "internal_error"
-    | "not_authorized"
-    | "chat_frozen"
-    | "success"
-    | "user_suspended";
+export type DeleteGroupResponse = "success" | "failure";
 
 export type MakeGroupPrivateResponse =
     | "internal_error"
@@ -1598,14 +1608,7 @@ export type JoinGroupResponse =
     | ChatFrozen
     | InternalError;
 
-export type InviteUsersResponse =
-    | "success"
-    | "group_not_found"
-    | "caller_not_in_group"
-    | "not_authorized"
-    | "chat_frozen"
-    | "too_many_invites"
-    | "internal_error";
+export type InviteUsersResponse = "success" | "failure";
 
 export type MarkReadRequest = {
     readUpTo: number | undefined;
@@ -1636,7 +1639,8 @@ export type UpdateGroupResponse =
     | "rules_too_long"
     | "user_suspended"
     | "chat_frozen"
-    | "internal_error";
+    | "internal_error"
+    | "failure";
 
 export type UpdatePermissionsResponse =
     | "success"

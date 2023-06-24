@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 import type { Identity } from "@dfinity/agent";
 import {
     Database,
@@ -382,11 +383,15 @@ export class OpenChatAgent extends EventTarget {
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
-        return this.userClient.createGroup(candidate);
+        if (candidate.id.kind === "channel") {
+            return this.communityClient(candidate.id.communityId).createChannel(candidate);
+        } else {
+            return this.userClient.createGroup(candidate);
+        }
     }
 
     updateGroup(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         name?: string,
         desc?: string,
         rules?: AccessRules,
@@ -394,30 +399,55 @@ export class OpenChatAgent extends EventTarget {
         avatar?: Uint8Array,
         gate?: AccessGate
     ): Promise<UpdateGroupResponse> {
-        return this.getGroupClient(chatId.groupId).updateGroup(
-            name,
-            desc,
-            rules,
-            permissions,
-            avatar,
-            undefined,
-            gate
-        );
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).updateGroup(
+                    name,
+                    desc,
+                    rules,
+                    permissions,
+                    avatar,
+                    undefined,
+                    gate
+                );
+            case "channel":
+                return this.communityClient(chatId.communityId).updateChannel(
+                    chatId,
+                    name,
+                    desc,
+                    rules,
+                    permissions,
+                    avatar,
+                    gate
+                );
+        }
     }
 
     async inviteUsers(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         userIds: string[]
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
         }
 
-        const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
-        return this.createLocalUserIndexClient(localUserIndex).inviteUsersToGroup(
-            chatId.groupId,
-            userIds
-        );
+        switch (chatId.kind) {
+            case "group_chat":
+                const groupLocalUserIndex = await this.getGroupClient(
+                    chatId.groupId
+                ).localUserIndex();
+                return this.createLocalUserIndexClient(groupLocalUserIndex).inviteUsersToGroup(
+                    chatId.groupId,
+                    userIds
+                );
+            case "channel":
+                const communityLocalUserIndex = await this.communityClient(
+                    chatId.communityId
+                ).localUserIndex();
+                return this.createLocalUserIndexClient(
+                    communityLocalUserIndex
+                ).inviteUsersToChannel(chatId.communityId, chatId.channelId, userIds);
+        }
     }
 
     chatEventsWindow(
@@ -1275,24 +1305,28 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async hydrateChatState(state: ChatStateFull): Promise<ChatStateFull> {
-        // TODO - hydrate channels
         const directChatPromises = state.directChats.map((c) => this.hydrateChatSummary(c));
         const groupChatPromises = state.groupChats.map((c) => this.hydrateChatSummary(c));
+        const communitiesPromise = state.communities.map((c) => this.hydrateCommunity(c));
 
         const directChats = await Promise.all(directChatPromises);
         const groupChats = await Promise.all(groupChatPromises);
+        const communities = await Promise.all(communitiesPromise);
 
         return {
             ...state,
             directChats,
             groupChats,
-            communities: state.communities.map((c) => this.hydrateCommunity(c)),
+            communities,
         };
     }
 
-    hydrateCommunity(community: CommunitySummary): CommunitySummary {
+    async hydrateCommunity(community: CommunitySummary): Promise<CommunitySummary> {
+        const channelPromises = community.channels.map((c) => this.hydrateChatSummary(c));
+        const channels = await Promise.all(channelPromises);
         return {
             ...community,
+            channels,
             avatar: {
                 ...this.rehydrateDataContent(community.avatar, "avatar"),
             },
@@ -1313,16 +1347,14 @@ export class OpenChatAgent extends EventTarget {
                   )
                 : undefined;
 
-        if (chat.kind === "group_chat") {
-            return {
-                ...(this.rehydrateDataContent(chat as GroupChatSummary, "avatar") as T),
-                latestMessage,
-            };
-        } else {
-            return {
-                ...chat,
-                latestMessage,
-            };
+        switch (chat.kind) {
+            case "direct_chat":
+                return { ...chat, latestMessage };
+            default:
+                return {
+                    ...(this.rehydrateDataContent(chat, "avatar") as T),
+                    latestMessage,
+                };
         }
     }
 
@@ -1346,12 +1378,24 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId.groupId).changeRole(userId, newRole);
     }
 
-    deleteGroup(chatId: GroupChatIdentifier): Promise<DeleteGroupResponse> {
-        return this.userClient.deleteGroup(chatId.groupId);
+    deleteGroup(chatId: MultiUserChatIdentifier): Promise<DeleteGroupResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.userClient.deleteGroup(chatId.groupId);
+            case "channel":
+                return this.communityClient(chatId.communityId).deleteChannel(chatId);
+        }
     }
 
-    makeGroupPrivate(chatId: GroupChatIdentifier): Promise<MakeGroupPrivateResponse> {
-        return this.getGroupClient(chatId.groupId).makeGroupPrivate();
+    makeGroupPrivate(chatId: MultiUserChatIdentifier): Promise<MakeGroupPrivateResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).makeGroupPrivate();
+            case "channel":
+                // TODO - harmonise response types and clean up mapping
+                throw new Error("make channel private not implemented");
+            // return this.communityClient(chatId.communityId).makeChannelPrivate(chatId);
+        }
     }
 
     removeMember(chatId: GroupChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
@@ -1691,23 +1735,19 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.withdrawCryptocurrency(domain);
     }
 
-    getInviteCode(chatId: MultiUserChatIdentifier): Promise<InviteCodeResponse> {
-        if (chatId.kind === "group_chat") {
-            return this.getGroupClient(chatId.groupId).getInviteCode();
-        } else {
-            return this.communityClient(chatId.communityId).getInviteCode(chatId.channelId);
-        }
+    getInviteCode(chatId: GroupChatIdentifier): Promise<InviteCodeResponse> {
+        return this.getGroupClient(chatId.groupId).getInviteCode();
     }
 
-    enableInviteCode(chatId: MultiUserChatIdentifier): Promise<EnableInviteCodeResponse> {
+    enableInviteCode(chatId: GroupChatIdentifier): Promise<EnableInviteCodeResponse> {
         return this.getGroupClient(chatId.groupId).enableInviteCode();
     }
 
-    disableInviteCode(chatId: MultiUserChatIdentifier): Promise<DisableInviteCodeResponse> {
+    disableInviteCode(chatId: GroupChatIdentifier): Promise<DisableInviteCodeResponse> {
         return this.getGroupClient(chatId.groupId).disableInviteCode();
     }
 
-    resetInviteCode(chatId: MultiUserChatIdentifier): Promise<ResetInviteCodeResponse> {
+    resetInviteCode(chatId: GroupChatIdentifier): Promise<ResetInviteCodeResponse> {
         return this.getGroupClient(chatId.groupId).resetInviteCode();
     }
 

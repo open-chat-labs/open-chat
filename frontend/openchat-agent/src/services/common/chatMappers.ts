@@ -51,6 +51,8 @@ import type {
     ApiAddReactionResponse as ApiAddDirectReactionResponse,
     ApiRemoveReactionResponse as ApiRemoveDirectReactionResponse,
     ApiMention,
+    ApiCreateGroupResponse,
+    ApiDeleteGroupResponse,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -115,6 +117,12 @@ import {
     GroupCanisterThreadDetails,
     Mention,
     EventWrapper,
+    UpdateGroupResponse,
+    CreateGroupResponse,
+    MultiUserChatIdentifier,
+    ChannelIdentifier,
+    GroupChatIdentifier,
+    DeleteGroupResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -123,6 +131,7 @@ import type {
     ApiRemoveReactionResponse as ApiRemoveGroupReactionResponse,
     ApiGroupCanisterThreadDetails,
     ApiMessageEventWrapper,
+    ApiUpdateGroupResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -134,6 +143,9 @@ import type {
     ApiAddReactionResponse as ApiAddChannelReactionResponse,
     ApiRemoveReactionResponse as ApiRemoveChannelReactionResponse,
     ApiCommunityCanisterChannelSummary,
+    ApiUpdateChannelResponse,
+    ApiCreateChannelResponse,
+    ApiDeleteChannelResponse,
 } from "../community/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -1388,4 +1400,162 @@ export function mention(candid: ApiMention): Mention {
         eventIndex: candid.event_index,
         mentionedBy: candid.mentioned_by.toString(),
     };
+}
+
+export function updateGroupResponse(
+    candid: ApiUpdateGroupResponse | ApiUpdateChannelResponse
+): UpdateGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("DescriptionTooLong" in candid) {
+        return "desc_too_long";
+    }
+    if ("NameTooLong" in candid) {
+        return "name_too_long";
+    }
+    if ("NameTooShort" in candid) {
+        return "name_too_short";
+    }
+    if ("NameReserved" in candid) {
+        return "name_reserved";
+    }
+    if ("Unchanged" in candid) {
+        return "unchanged";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorized";
+    }
+    if ("NameTaken" in candid) {
+        return "name_taken";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "not_in_group";
+    }
+    if ("AvatarTooBig" in candid) {
+        return "avatar_too_big";
+    }
+    if ("RulesTooLong" in candid) {
+        return "rules_too_long";
+    }
+    if ("RulesTooShort" in candid) {
+        return "rules_too_short";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
+    }
+    if (
+        "UserNotInChannel" in candid ||
+        "ChannelNotFound" in candid ||
+        "UserNotInCommunity" in candid ||
+        "CommunityFrozen" in candid
+    ) {
+        console.warn("UpdateGroupResponse failed with: ", candid);
+        return "failure";
+    }
+    throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
+}
+
+export function createGroupResponse(
+    candid: ApiCreateGroupResponse | ApiCreateChannelResponse,
+    id: MultiUserChatIdentifier
+): CreateGroupResponse {
+    if ("Success" in candid) {
+        if ("channel_id" in candid.Success && id.kind === "channel") {
+            const canisterId: ChannelIdentifier = {
+                kind: "channel",
+                communityId: id.communityId,
+                channelId: candid.Success.channel_id.toString(),
+            };
+            return { kind: "success", canisterId };
+        }
+        if ("chat_id" in candid.Success && id.kind === "group_chat") {
+            const canisterId: GroupChatIdentifier = {
+                kind: "group_chat",
+                groupId: candid.Success.chat_id.toString(),
+            };
+            return { kind: "success", canisterId };
+        }
+        throw new Error("Unexpected CreateGroup success response: " + candid.Success);
+    }
+
+    if ("NameTaken" in candid) {
+        return { kind: "group_name_taken" };
+    }
+
+    if ("NameTooLong" in candid) {
+        return { kind: "name_too_long" };
+    }
+
+    if ("NameTooShort" in candid) {
+        return { kind: "name_too_short" };
+    }
+
+    if ("NameReserved" in candid) {
+        return { kind: "name_reserved" };
+    }
+
+    if ("DescriptionTooLong" in candid) {
+        return { kind: "description_too_long" };
+    }
+
+    if ("Throttled" in candid) {
+        return { kind: "throttled" };
+    }
+
+    if ("InternalError" in candid) {
+        return { kind: "internal_error" };
+    }
+
+    if ("AvatarTooBig" in candid) {
+        return { kind: "avatar_too_big" };
+    }
+
+    if ("MaxGroupsCreated" in candid || "MaxChannelsCreated" in candid) {
+        // todo - make sure we handle this in the UI
+        return { kind: "max_groups_created" };
+    }
+
+    if ("RulesTooLong" in candid) {
+        return { kind: "rules_too_long" };
+    }
+
+    if ("RulesTooShort" in candid) {
+        return { kind: "rules_too_short" };
+    }
+
+    if ("UserSuspended" in candid) {
+        return { kind: "user_suspended" };
+    }
+
+    if ("UnauthorizedToCreatePublicGroup" in candid) {
+        return { kind: "unauthorized_to_create_public_group" };
+    }
+
+    if ("NotAuthorized" in candid) {
+        return CommonResponses.notAuthorized;
+    }
+
+    if ("CommunityFrozen" in candid) {
+        return CommonResponses.communityFrozen;
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
+}
+
+export function deleteGroupResponse(
+    candid: ApiDeleteGroupResponse | ApiDeleteChannelResponse
+): DeleteGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("DeleteGroupResponse failed with: ", candid);
+        return "failure";
+    }
 }

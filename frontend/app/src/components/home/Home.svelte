@@ -37,6 +37,8 @@
         nullMembership,
         CommunityIdentifier,
         routeForChatIdentifier,
+        MultiUserChat,
+        MultiUserChatIdentifier,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -101,8 +103,8 @@
 
     type ConfirmDeleteEvent = {
         kind: "delete";
-        chatId: GroupChatIdentifier;
-        chatType: ChatType;
+        chatId: MultiUserChatIdentifier;
+        level: Level;
         doubleCheck: { challenge: string; response: string };
     };
 
@@ -497,7 +499,7 @@
             case "delete_community":
                 return $_("communities.deleteMessage");
             case "delete":
-                return $_("irreversible");
+                return interpolateLevel("irreversible", confirmActionEvent.level, true);
             case "rules": {
                 return confirmActionEvent.rules;
             }
@@ -527,7 +529,7 @@
                     rightPanelHistory.set([]);
                 });
             case "delete":
-                return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.chatType).then(
+                return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.level).then(
                     (_) => {
                         rightPanelHistory.set([]);
                     }
@@ -539,13 +541,17 @@
         }
     }
 
-    function deleteGroup(chatId: GroupChatIdentifier, chatType: ChatType): Promise<void> {
-        page("/");
+    function deleteGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
+        if (chatId.kind === "channel") {
+            page(`/community/${chatId.communityId}`);
+        } else {
+            page("/");
+        }
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
-                toastStore.showSuccessToast("deleteGroupSuccess");
+                toastStore.showSuccessToast(interpolateLevel("deleteGroupSuccess", level));
             } else {
-                toastStore.showFailureToast("deleteGroupFailure");
+                toastStore.showFailureToast(interpolateLevel("deleteGroupFailure", level, true));
                 page(routeForChatIdentifier(chatId));
             }
         });
@@ -843,9 +849,16 @@
     }
 
     function newGroup(level: Level = "group") {
+        if (level === "channel" && $selectedCommunityId === undefined) {
+            return;
+        }
+        const id: MultiUserChatIdentifier =
+            level === "channel"
+                ? { kind: "channel", communityId: $selectedCommunityId!.communityId, channelId: "" }
+                : { kind: "group_chat", groupId: "" };
         modal = ModalType.NewGroup;
         candidateGroup = {
-            id: { kind: "group_chat", groupId: "" },
+            id,
             name: "",
             description: "",
             historyVisible: true,
@@ -876,9 +889,7 @@
         };
     }
 
-    function editGroup(
-        ev: CustomEvent<{ chat: GroupChatSummary; rules: AccessRules | undefined }>
-    ) {
+    function editGroup(ev: CustomEvent<{ chat: MultiUserChat; rules: AccessRules | undefined }>) {
         modal = ModalType.NewGroup;
         const { chat, rules } = ev.detail;
         candidateGroup = {
@@ -896,7 +907,7 @@
                 blobData: chat.blobData,
             },
             gate: chat.gate,
-            level: "group",
+            level: chat.id.kind === "group_chat" ? "group" : "channel",
             membership: chat.membership,
         };
     }

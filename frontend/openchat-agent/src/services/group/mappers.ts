@@ -492,55 +492,6 @@ export function apiGateUpdate(): ApiGroupGateUpdate {
     return { NoChange: null };
 }
 
-export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroupResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("DescriptionTooLong" in candid) {
-        return "desc_too_long";
-    }
-    if ("NameTooLong" in candid) {
-        return "name_too_long";
-    }
-    if ("NameTooShort" in candid) {
-        return "name_too_short";
-    }
-    if ("NameReserved" in candid) {
-        return "name_reserved";
-    }
-    if ("Unchanged" in candid) {
-        return "unchanged";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("NameTaken" in candid) {
-        return "name_taken";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "not_in_group";
-    }
-    if ("AvatarTooBig" in candid) {
-        return "avatar_too_big";
-    }
-    if ("RulesTooLong" in candid) {
-        return "rules_too_long";
-    }
-    if ("RulesTooShort" in candid) {
-        return "rules_too_short";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
-}
-
 export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {
     if ("Success" in candid) {
         return "success";

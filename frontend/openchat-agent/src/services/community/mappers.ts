@@ -15,11 +15,9 @@ import {
     CommunityRulesResponse,
     CommunitySummaryResponse,
     CommunitySummaryUpdatesResponse,
-    CreateChannelResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
-    DeleteChannelResponse,
     DisableCommunityInviteCodeResponse,
     EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
@@ -43,7 +41,6 @@ import {
     UnblockCommunityUserResponse,
     UndeleteChannelMessagesResponse,
     UnsupportedValueError,
-    UpdateChannelResponse,
     UpdateCommunityResponse,
     UserFailedError,
     UserFailedGateCheck,
@@ -53,9 +50,7 @@ import type {
     ApiBlockUserResponse,
     ApiChangeChannelRoleResponse,
     ApiChangeRoleResponse,
-    ApiCreateChannelResponse,
     ApiDeclineInvitationResponse,
-    ApiDeleteChannelResponse,
     ApiDeleteMessagesResponse,
     ApiDeletedMessageResponse,
     ApiDisableInviteCodeResponse,
@@ -81,7 +76,6 @@ import type {
     ApiToggleMuteNotificationsResponse,
     ApiUnblockUserResponse,
     ApiUndeleteMessagesResponse,
-    ApiUpdateChannelResponse,
     ApiUpdateCommunityResponse,
     ApiGroupRole,
     ApiCommunityRole,
@@ -312,49 +306,6 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommuni
     throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
 }
 
-export function createChannelResponse(candid: ApiCreateChannelResponse): CreateChannelResponse {
-    if ("MaxChannelsCreated" in candid) {
-        return { kind: "max_channels_created" };
-    }
-    if ("NameReserved" in candid) {
-        return { kind: "name_reserved" };
-    }
-    if ("RulesTooLong" in candid) {
-        return { kind: "rules_too_long" };
-    }
-    if ("DescriptionTooLong" in candid) {
-        return { kind: "description_too_long" };
-    }
-    if ("NameTooShort" in candid) {
-        return { kind: "name_too_short" };
-    }
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
-    }
-    if ("AvatarTooBig" in candid) {
-        return { kind: "avatar_too_big" };
-    }
-    if ("Success" in candid) {
-        return { kind: "success", channelId: candid.Success.channel_id.toString() };
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
-    }
-    if ("RulesTooShort" in candid) {
-        return { kind: "rules_too_short" };
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
-    }
-    if ("NameTooLong" in candid) {
-        return { kind: "name_too_long" };
-    }
-    if ("NameTaken" in candid) {
-        return { kind: "name_taken" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiCreateChannelResponse type received", candid);
-}
-
 export function declineInvitationResponse(
     candid: ApiDeclineInvitationResponse
 ): DeclineChannelInvitationResponse {
@@ -374,31 +325,6 @@ export function declineInvitationResponse(
         "Unexpected ApiDeclineInvitationResponse type received",
         candid
     );
-}
-
-export function deleteChannelResponse(candid: ApiDeleteChannelResponse): DeleteChannelResponse {
-    if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChat;
-    }
-    if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound;
-    }
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
-    }
-    if ("Success" in candid) {
-        return CommonResponses.success;
-    }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteChannelResponse type received", candid);
 }
 
 export function deleteMessagesResponse(
@@ -1034,15 +960,6 @@ export function undeleteMessagesResponse(
         return { kind: "success", messages: candid.Success.messages.map(message) };
     } else {
         console.warn("UndeleteChannelMessages failed with", candid);
-        return CommonResponses.failure;
-    }
-}
-
-export function updateChannelResponse(candid: ApiUpdateChannelResponse): UpdateChannelResponse {
-    if ("Success" in candid) {
-        return CommonResponses.success;
-    } else {
-        console.warn("UpdateChannel failed with", candid);
         return CommonResponses.failure;
     }
 }

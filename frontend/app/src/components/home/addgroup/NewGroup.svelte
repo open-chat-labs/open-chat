@@ -17,8 +17,9 @@
         OpenChat,
         UnsupportedValueError,
         UpdateGroupResponse,
-        GroupChatIdentifier,
         routeForChatIdentifier,
+        chatIdentifierUnset,
+        MultiUserChatIdentifier,
     } from "openchat-client";
     import StageHeader from "../StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
@@ -46,7 +47,7 @@
     };
     let rulesValid = true;
     $: steps = getSteps(editing);
-    $: editing = candidateGroup.id.groupId !== "";
+    $: editing = !chatIdentifierUnset(candidateGroup.id);
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
@@ -103,6 +104,7 @@
         if (resp === "rules_too_long") return "groupRulesTooLong";
         if (resp === "user_suspended") return "userSuspended";
         if (resp === "chat_frozen") return "chatFrozen";
+        if (resp === "failure") return "failure";
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
@@ -122,10 +124,10 @@
         if (resp.kind === "user_suspended") return "userSuspended";
         if (resp.kind === "unauthorized_to_create_public_group")
             return "unauthorizedToCreatePublicGroup";
-        throw new UnsupportedValueError(`Unexpected CreateGroupResponse type received`, resp);
+        return "failure";
     }
 
-    function optionallyInviteUsers(chatId: GroupChatIdentifier): Promise<void> {
+    function optionallyInviteUsers(chatId: MultiUserChatIdentifier): Promise<void> {
         if (candidateGroup.members.length === 0) {
             return Promise.resolve();
         }
@@ -303,13 +305,9 @@
                     if (err) toastStore.showFailureToast(interpolateError(err));
                     step = 0;
                 } else {
-                    const chatId: GroupChatIdentifier = {
-                        kind: "group_chat",
-                        groupId: resp.canisterId,
-                    };
-                    return optionallyInviteUsers(chatId)
+                    return optionallyInviteUsers(resp.canisterId)
                         .then(() => {
-                            onGroupCreated(chatId);
+                            onGroupCreated(resp.canisterId);
                         })
                         .catch((err) => {
                             toastStore.showFailureToast("inviteUsersFailed");
@@ -324,7 +322,7 @@
             .finally(() => (busy = false));
     }
 
-    function onGroupCreated(canisterId: GroupChatIdentifier) {
+    function onGroupCreated(canisterId: MultiUserChatIdentifier) {
         const url = routeForChatIdentifier(canisterId);
         dispatch("groupCreated", {
             chatId: canisterId,

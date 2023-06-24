@@ -9,9 +9,7 @@ import {
     blockUserResponse,
     changeChannelRoleResponse,
     changeRoleResponse,
-    createChannelResponse,
     declineInvitationResponse,
-    deleteChannelResponse,
     deleteMessagesResponse,
     deleteMessageResponse,
     disableInviteCodeResponse,
@@ -38,7 +36,6 @@ import {
     toggleMuteNotificationsResponse,
     unblockUserResponse,
     undeleteMessagesResponse,
-    updateChannelResponse,
     updateCommunityResponse,
     apiMemberRole,
     apiCommunityRole,
@@ -53,6 +50,9 @@ import {
     apiUser,
     apiAccessGate,
     addRemoveReactionResponse,
+    updateGroupResponse,
+    createGroupResponse,
+    deleteGroupResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -65,11 +65,9 @@ import type {
     CommunityInviteCodeResponse,
     CommunityPermissions,
     CommunityRulesResponse,
-    CreateChannelResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
-    DeleteChannelResponse,
     DisableCommunityInviteCodeResponse,
     EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
@@ -93,7 +91,6 @@ import type {
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
     UndeleteChannelMessagesResponse,
-    UpdateChannelResponse,
     UpdateCommunityResponse,
     User,
     ChannelIdentifier,
@@ -101,6 +98,9 @@ import type {
     CommunitySummaryResponse,
     CommunitySummaryUpdatesResponse,
     SendMessageResponse,
+    UpdateGroupResponse,
+    CreateGroupResponse,
+    DeleteGroupResponse,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
 import { DataClient } from "../data/data.client";
@@ -204,7 +204,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    createChannel(channel: CandidateChannel): Promise<CreateChannelResponse> {
+    createChannel(channel: CandidateChannel): Promise<CreateGroupResponse> {
         return this.handleResponse(
             this.service.create_channel({
                 is_public: channel.public,
@@ -224,7 +224,7 @@ export class CommunityClient extends CandidService {
                 rules: apiGroupRules(channel.rules),
                 gate: apiMaybeAccessGate(channel.gate),
             }),
-            createChannelResponse
+            (resp) => createGroupResponse(resp, channel.id)
         );
     }
 
@@ -237,12 +237,12 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    deleteChannel(chatId: ChannelIdentifier): Promise<DeleteChannelResponse> {
+    deleteChannel(chatId: ChannelIdentifier): Promise<DeleteGroupResponse> {
         return this.handleResponse(
             this.service.delete_channel({
                 channel_id: BigInt(chatId.channelId),
             }),
-            deleteChannelResponse
+            deleteGroupResponse
         );
     }
 
@@ -683,7 +683,7 @@ export class CommunityClient extends CandidService {
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
         gate?: AccessGate
-    ): Promise<UpdateChannelResponse> {
+    ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.service.update_channel({
                 channel_id: BigInt(chatId.channelId),
@@ -708,7 +708,7 @@ export class CommunityClient extends CandidService {
                               },
                           },
             }),
-            updateChannelResponse
+            updateGroupResponse
         );
     }
 

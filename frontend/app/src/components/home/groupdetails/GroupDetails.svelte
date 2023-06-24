@@ -19,7 +19,7 @@
     } from "../../../stores/settings";
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsersWithLink from "./InviteUsersWithLink.svelte";
-    import type { OpenChat, GroupChatSummary, AccessRules, MultiUserChat } from "openchat-client";
+    import type { OpenChat, AccessRules, MultiUserChat } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import AccessGateSummary from "../AccessGateSummary.svelte";
     import { interpolateLevel } from "../../../utils/i18n";

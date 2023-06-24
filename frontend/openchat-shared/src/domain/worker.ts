@@ -56,11 +56,11 @@ import type {
     RemoveHotGroupExclusionResponse,
     SetGroupUpgradeConcurrencyResponse,
     DeclineInvitationResponse,
-    CandidateChannel,
     ChatIdentifier,
     GroupChatIdentifier,
     DirectChatIdentifier,
     ChannelIdentifier,
+    MultiUserChatIdentifier,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -110,12 +110,10 @@ import type {
     CommunitySummary,
     CommunityInviteCodeResponse,
     CommunityRulesResponse,
-    CreateChannelResponse,
     CreateCommunityResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
-    DeleteChannelResponse,
     DisableCommunityInviteCodeResponse,
     EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
@@ -134,7 +132,6 @@ import type {
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
     UndeleteChannelMessagesResponse,
-    UpdateChannelResponse,
     UpdateCommunityResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
@@ -223,7 +220,6 @@ export type WorkerRequest =
     | ResetInviteCode
     | DisableInviteCode
     | CreateGroupChat
-    | CreateChannel
     | SetCachedMessageFromNotification
     | FreezeGroup
     | UnfreezeGroup
@@ -252,7 +248,6 @@ export type WorkerRequest =
     | BlockCommunityUser
     | ChangeChannelRole
     | DeclineChannelInvitation
-    | DeleteChannel
     | DeleteChannelMessages
     | DeleteChannelMessage
     | DisableCommunityInviteCode
@@ -279,7 +274,6 @@ export type WorkerRequest =
     | ToggleMuteCommunityNotifications
     | UnblockCommunityUser
     | UndeleteChannelMessages
-    | UpdateChannel
     | UpdateCommunity
     | CreateCommunity
     | ExploreCommunities
@@ -300,12 +294,6 @@ type SetCachedMessageFromNotification = {
 type CreateGroupChat = {
     candidate: CandidateGroupChat;
     kind: "createGroupChat";
-};
-
-type CreateChannel = {
-    candidate: CandidateChannel;
-    communityId: string;
-    kind: "createChannel";
 };
 
 type DisableInviteCode = {
@@ -447,7 +435,7 @@ type RemoveMember = {
 };
 
 type InviteUsers = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     userIds: string[];
     kind: "inviteUsers";
 };
@@ -567,7 +555,7 @@ type RegisterPollVote = {
 };
 
 type UpdateGroup = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     name?: string;
     desc?: string;
     rules?: AccessRules;
@@ -593,12 +581,12 @@ type LeaveGroup = {
 };
 
 type DeleteGroup = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     kind: "deleteGroup";
 };
 
 type MakeGroupPrivate = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     kind: "makeGroupPrivate";
 };
 
@@ -927,9 +915,7 @@ export type WorkerResponse =
     | Response<BlockCommunityUserResponse>
     | Response<ChangeChannelRoleResponse>
     | Response<ChangeCommunityRoleResponse>
-    | Response<CreateChannelResponse>
     | Response<DeclineChannelInvitationResponse>
-    | Response<DeleteChannelResponse>
     | Response<DeleteChannelMessagesResponse>
     | Response<DeleteChannelMessageResponse>
     | Response<DisableCommunityInviteCode>
@@ -951,7 +937,6 @@ export type WorkerResponse =
     | Response<ToggleMuteCommunityNotificationsResponse>
     | Response<UnblockCommunityUserResponse>
     | Response<UndeleteChannelMessagesResponse>
-    | Response<UpdateChannelResponse>
     | Response<UpdateCommunityResponse>
     | Response<CreateCommunityResponse>
     | Response<JoinCommunityResponse>
@@ -1072,11 +1057,6 @@ type ChangeChannelRole = {
 
 type DeclineChannelInvitation = {
     kind: "declineChannelInvitation";
-    chatId: ChannelIdentifier;
-};
-
-type DeleteChannel = {
-    kind: "deleteChannel";
     chatId: ChannelIdentifier;
 };
 
@@ -1242,18 +1222,6 @@ type UndeleteChannelMessages = {
     chatId: ChannelIdentifier;
     messageIds: bigint[];
     threadRootMessageIndex: number | undefined;
-};
-
-type UpdateChannel = {
-    kind: "updateChannel";
-    chatId: ChannelIdentifier;
-    name?: string;
-    description?: string;
-    rules?: AccessRules;
-    permissions?: Partial<ChatPermissions>;
-    avatar?: Uint8Array;
-    banner?: Uint8Array;
-    gate?: AccessGate;
 };
 
 type UpdateCommunity = {
@@ -1488,12 +1456,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? ChangeChannelRoleResponse
     : T extends ChangeCommunityRole
     ? ChangeCommunityRoleResponse
-    : T extends CreateChannel
-    ? CreateChannelResponse
     : T extends DeclineChannelInvitation
     ? DeclineChannelInvitationResponse
-    : T extends DeleteChannel
-    ? DeleteChannelResponse
     : T extends DeleteChannelMessages
     ? DeleteChannelMessagesResponse
     : T extends DeleteChannelMessage
@@ -1544,8 +1508,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? UnblockCommunityUserResponse
     : T extends UndeleteChannelMessages
     ? UndeleteChannelMessagesResponse
-    : T extends UpdateChannel
-    ? UpdateChannelResponse
     : T extends UpdateCommunity
     ? UpdateCommunityResponse
     : T extends CreateCommunity

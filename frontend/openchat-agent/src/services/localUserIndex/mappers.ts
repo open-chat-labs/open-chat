@@ -9,6 +9,7 @@ import {
 } from "openchat-shared";
 import type {
     ApiInviteUsersResponse,
+    ApiInviteUsersToChannelResponse,
     ApiJoinCommunityResponse,
     ApiJoinGroupResponse,
     ApiRegisterUserResponse,
@@ -79,29 +80,15 @@ export function reportMessageResponse(candid: ApiReportMessageResponse): ReportM
     throw new UnsupportedValueError("Unexpected ApiReportMessageResponse type received", candid);
 }
 
-export function inviteUsersResponse(candid: ApiInviteUsersResponse): InviteUsersResponse {
+export function inviteUsersResponse(
+    candid: ApiInviteUsersResponse | ApiInviteUsersToChannelResponse
+): InviteUsersResponse {
     if ("Success" in candid) {
         return "success";
+    } else {
+        console.warn("InviteUsersResponse was unsuccessful", candid);
+        return "failure";
     }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("GroupNotFound" in candid) {
-        return "group_not_found";
-    }
-    if ("TooManyInvites" in candid) {
-        return "too_many_invites";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiInviteUsersResponse type received", candid);
 }
 
 export function joinCommunityResponse(candid: ApiJoinCommunityResponse): JoinCommunityResponse {

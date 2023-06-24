@@ -42,6 +42,8 @@ import {
     MessageContext,
     ChatMap,
     MessageMap,
+    MultiUserChatIdentifier,
+    MultiUserChat,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -665,11 +667,11 @@ export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): Eve
 }
 
 export function groupChatFromCandidate(
-    chatId: GroupChatIdentifier,
+    chatId: MultiUserChatIdentifier,
     candidate: CandidateGroupChat
-): GroupChatSummary {
+): MultiUserChat {
     return {
-        kind: "group_chat",
+        kind: chatId.kind,
         id: chatId,
         latestEventIndex: 0,
         latestMessage: undefined,
@@ -695,7 +697,7 @@ export function groupChatFromCandidate(
             ...nullMembership,
             role: "owner",
         },
-    };
+    } as MultiUserChat;
 }
 
 function updatePollContent(content: PollContent, votes: LocalPollVote[]): PollContent {
