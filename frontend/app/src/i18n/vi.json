@@ -889,6 +889,26 @@
         "general": "Tổng quan",
         "mustHaveOneChannel": "Bạn phải tạo ít nhất một kênh mặc định",
         "mustHaveUniqueChannels": "Bạn không thể có tên kênh mặc định trùng lặp",
-        "noBlankChannels": "Tất cả các kênh mặc định phải có tên"
-    }
+        "noBlankChannels": "Tất cả các kênh mặc định phải có tên",
+        "members": "Các thành viên",
+        "created": "Cộng đồng của bạn đã được tạo thành công",
+        "saved": "Cộng đồng của bạn đã được cập nhật thành công",
+        "errors": {
+            "name_taken": "Xin lỗi - đã có một cộng đồng có tên này",
+            "failure": "Xin lỗi, chúng tôi không thể tạo cộng đồng của bạn",
+            "saveFailed": "Xin lỗi, chúng tôi không thể lưu cập nhật của bạn"
+        },
+        "memberCount": "các thành viên)",
+        "channelCount": "kênh truyền hình)"
+    },
+    "groupCreatedBy": "{username} đã tạo {level}",
+    "groupName": "tên {level}",
+    "groupAvatar": "hình đại diện {level}",
+    "deleteGroup": "Xóa {level}",
+    "deleteGroupSuccess": "{level} đã xóa thành công",
+    "deleteGroupFailure": "Không thể xóa {level}",
+    "irreversible": "Bạn có chắc chắn muốn xóa {level} này không? Điều này không thể được hoàn tác!",
+    "thisIsPublicGroupWithN": "Đây là {level} công khai với {number} thành viên",
+    "thisIsPrivateGroupWithN": "Đây là {level} riêng tư với {number} thành viên",
+    "unableToSaveUserProfile": "Không thể lưu hồ sơ người dùng"
 }

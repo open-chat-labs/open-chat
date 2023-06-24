@@ -888,6 +888,26 @@
         "general": "Generale",
         "mustHaveOneChannel": "Devi creare almeno un canale predefinito",
         "mustHaveUniqueChannels": "Non puoi avere nomi di canale predefiniti duplicati",
-        "noBlankChannels": "Tutti i canali predefiniti devono avere un nome"
-    }
+        "noBlankChannels": "Tutti i canali predefiniti devono avere un nome",
+        "members": "Membri",
+        "created": "La tua comunità è stata creata con successo",
+        "saved": "La tua community è stata aggiornata con successo",
+        "errors": {
+            "name_taken": "Siamo spiacenti, esiste già una community con questo nome",
+            "failure": "Spiacenti, non siamo riusciti a creare la tua community",
+            "saveFailed": "Spiacenti, non siamo riusciti a salvare i tuoi aggiornamenti"
+        },
+        "memberCount": "membri)",
+        "channelCount": "canale(i)"
+    },
+    "groupCreatedBy": "{username} ha creato {level}",
+    "groupName": "{level} nome",
+    "groupAvatar": "{level} avatar",
+    "deleteGroup": "Elimina {level}",
+    "deleteGroupSuccess": "{level} eliminato con successo",
+    "deleteGroupFailure": "Impossibile eliminare {level}",
+    "irreversible": "Vuoi assolutamente eliminare questo {level}? Questo non può essere annullato!",
+    "thisIsPublicGroupWithN": "Questo è un pubblico {level} con {number} membri",
+    "thisIsPrivateGroupWithN": "Questo è un {level} privato con {number} membri",
+    "unableToSaveUserProfile": "Impossibile salvare il profilo utente"
 }

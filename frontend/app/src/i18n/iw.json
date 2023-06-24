@@ -886,6 +886,26 @@
         "general": "כללי",
         "mustHaveOneChannel": "עליך ליצור לפחות ערוץ ברירת מחדל אחד",
         "mustHaveUniqueChannels": "אתה לא יכול לקבל שמות ערוצי ברירת מחדל כפולים",
-        "noBlankChannels": "לכל ערוצי ברירת המחדל חייבים להיות שם"
-    }
+        "noBlankChannels": "לכל ערוצי ברירת המחדל חייבים להיות שם",
+        "members": "חברים",
+        "created": "הקהילה שלך נוצרה בהצלחה",
+        "saved": "הקהילה שלך עודכנה בהצלחה",
+        "errors": {
+            "name_taken": "סליחה - כבר קיימת קהילה בשם זה",
+            "failure": "מצטערים שלא הצלחנו ליצור את הקהילה שלך",
+            "saveFailed": "מצטערים שלא הצלחנו לשמור את העדכונים שלך"
+        },
+        "memberCount": "חבר/ים",
+        "channelCount": "ערוץ(ים)"
+    },
+    "groupCreatedBy": "{username} יצר את ה-{level}",
+    "groupName": "שם {level}",
+    "groupAvatar": "דמות {level}",
+    "deleteGroup": "מחק את {level}",
+    "deleteGroupSuccess": "{level} נמחק בהצלחה",
+    "deleteGroupFailure": "לא ניתן למחוק את {level}",
+    "irreversible": "האם אתה בהחלט רוצה למחוק את ה-{level} הזה? אי אפשר לבטל את זה!",
+    "thisIsPublicGroupWithN": "זהו {level} ציבורי עם חברים של {number}",
+    "thisIsPrivateGroupWithN": "זהו {level} פרטי עם חברי {number}",
+    "unableToSaveUserProfile": "לא ניתן לשמור את פרופיל המשתמש"
 }

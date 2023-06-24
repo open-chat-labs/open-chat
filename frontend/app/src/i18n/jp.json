@@ -889,6 +889,26 @@
         "general": "全般的",
         "mustHaveOneChannel": "少なくとも 1 つのデフォルト チャネルを作成する必要があります",
         "mustHaveUniqueChannels": "デフォルトのチャンネル名を重複させることはできません",
-        "noBlankChannels": "すべてのデフォルトチャンネルには名前が必要です"
-    }
+        "noBlankChannels": "すべてのデフォルトチャンネルには名前が必要です",
+        "members": "メンバー",
+        "created": "コミュニティが正常に作成されました",
+        "saved": "コミュニティは正常に更新されました",
+        "errors": {
+            "name_taken": "申し訳ありませんが、この名前のコミュニティがすでに存在します",
+            "failure": "申し訳ありませんが、コミュニティを作成できませんでした",
+            "saveFailed": "申し訳ありませんが、更新を保存できませんでした"
+        },
+        "memberCount": "メンバー",
+        "channelCount": "チャンネル"
+    },
+    "groupCreatedBy": "{username} が {level} を作成しました",
+    "groupName": "{level}の名前",
+    "groupAvatar": "{level} アバター",
+    "deleteGroup": "{level}を削除",
+    "deleteGroupSuccess": "{level} は正常に削除されました",
+    "deleteGroupFailure": "{level} を削除できません",
+    "irreversible": "この {level} を削除してもよろしいですか?これは、元に戻すことはできません！",
+    "thisIsPublicGroupWithN": "これは、{level} 人のメンバーがいる公開 {number} です",
+    "thisIsPrivateGroupWithN": "これは、{level} メンバーがいるプライベート {number} です",
+    "unableToSaveUserProfile": "ユーザープロファイルを保存できません"
 }

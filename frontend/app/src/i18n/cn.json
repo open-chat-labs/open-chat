@@ -889,6 +889,26 @@
         "general": "一般的",
         "mustHaveOneChannel": "您必须至少创建一个默认频道",
         "mustHaveUniqueChannels": "您不能有重复的默认频道名称",
-        "noBlankChannels": "所有默认频道都必须有一个名称"
-    }
+        "noBlankChannels": "所有默认频道都必须有一个名称",
+        "members": "会员",
+        "created": "您的社区已成功创建",
+        "saved": "您的社区已成功更新",
+        "errors": {
+            "name_taken": "抱歉 - 已有一个同名社区",
+            "failure": "抱歉，我们无法创建您的社区",
+            "saveFailed": "抱歉，我们无法保存您的更新"
+        },
+        "memberCount": "会员",
+        "channelCount": "频道"
+    },
+    "groupCreatedBy": "{username} 创建了 {level}",
+    "groupName": "{level} 名称",
+    "groupAvatar": "{level} 头像",
+    "deleteGroup": "删除{level}",
+    "deleteGroupSuccess": "{level} 已成功删除",
+    "deleteGroupFailure": "无法删除{level}",
+    "irreversible": "您确定要删除此 {level} 吗？这不能被撤消！",
+    "thisIsPublicGroupWithN": "这是一个具有 {level} 成员的公共 {number}",
+    "thisIsPrivateGroupWithN": "这是一个拥有 {level} 成员的私有 {number}",
+    "unableToSaveUserProfile": "无法保存用户个人资料"
 }

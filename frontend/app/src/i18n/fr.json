@@ -888,6 +888,26 @@
         "general": "Général",
         "mustHaveOneChannel": "Vous devez créer au moins un canal par défaut",
         "mustHaveUniqueChannels": "Vous ne pouvez pas avoir de noms de chaîne par défaut en double",
-        "noBlankChannels": "Tous les canaux par défaut doivent avoir un nom"
-    }
+        "noBlankChannels": "Tous les canaux par défaut doivent avoir un nom",
+        "members": "Membres",
+        "created": "Votre communauté a été créée avec succès",
+        "saved": "Votre communauté a été mise à jour avec succès",
+        "errors": {
+            "name_taken": "Désolé - il existe déjà une communauté avec ce nom",
+            "failure": "Désolé, nous n'avons pas pu créer votre communauté",
+            "saveFailed": "Désolé, nous n'avons pas pu enregistrer vos mises à jour"
+        },
+        "memberCount": "membres)",
+        "channelCount": "chaîne(s)"
+    },
+    "groupCreatedBy": "{username} a créé le {level}",
+    "groupName": "{level} nom",
+    "groupAvatar": "avatar {level}",
+    "deleteGroup": "Supprimer {level}",
+    "deleteGroupSuccess": "{level} supprimé avec succès",
+    "deleteGroupFailure": "Impossible de supprimer {level}",
+    "irreversible": "Voulez-vous vraiment supprimer ce {level} ? Ça ne peut pas être annulé!",
+    "thisIsPublicGroupWithN": "Ceci est un public {level} avec {number} membres",
+    "thisIsPrivateGroupWithN": "Ceci est un {level} privé avec {number} membres",
+    "unableToSaveUserProfile": "Impossible d'enregistrer le profil utilisateur"
 }

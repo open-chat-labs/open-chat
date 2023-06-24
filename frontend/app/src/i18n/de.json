@@ -890,6 +890,26 @@
         "general": "Allgemein",
         "mustHaveOneChannel": "Sie müssen mindestens einen Standardkanal erstellen",
         "mustHaveUniqueChannels": "Sie können keine doppelten Standardkanalnamen haben",
-        "noBlankChannels": "Alle Standardkanäle müssen einen Namen haben"
-    }
+        "noBlankChannels": "Alle Standardkanäle müssen einen Namen haben",
+        "members": "Mitglieder",
+        "created": "Ihre Community wurde erfolgreich erstellt",
+        "saved": "Ihre Community wurde erfolgreich aktualisiert",
+        "errors": {
+            "name_taken": "Entschuldigung, es gibt bereits eine Community mit diesem Namen",
+            "failure": "Es tut uns leid, dass wir Ihre Community nicht erstellen konnten",
+            "saveFailed": "Leider konnten wir Ihre Aktualisierungen nicht speichern"
+        },
+        "memberCount": "Mitglied(er)",
+        "channelCount": "Kanal(e)"
+    },
+    "groupCreatedBy": "{username} hat den {level} erstellt",
+    "groupName": "{level} Name",
+    "groupAvatar": "{level}-Avatar",
+    "deleteGroup": "{level} löschen",
+    "deleteGroupSuccess": "{level} erfolgreich gelöscht",
+    "deleteGroupFailure": "{level} kann nicht gelöscht werden",
+    "irreversible": "Möchten Sie diesen {level} unbedingt löschen? Das kann nicht rückgängig gemacht werden!",
+    "thisIsPublicGroupWithN": "Dies ist eine öffentliche {level} mit {number}-Mitgliedern",
+    "thisIsPrivateGroupWithN": "Dies ist ein privates {level} mit {number}-Mitgliedern",
+    "unableToSaveUserProfile": "Benutzerprofil konnte nicht gespeichert werden"
 }
