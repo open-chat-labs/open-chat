@@ -1306,7 +1306,7 @@ export function communityChannelSummary(
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: undefined,
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
-        level: "group",
+        level: "channel",
         membership: {
             joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
             notificationsMuted: false,

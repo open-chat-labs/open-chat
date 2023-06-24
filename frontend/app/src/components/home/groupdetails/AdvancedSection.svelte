@@ -3,9 +3,9 @@
     import { createEventDispatcher } from "svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import type { GroupChatSummary } from "openchat-client";
+    import type { MultiUserChat } from "openchat-client";
 
-    export let group: GroupChatSummary;
+    export let group: MultiUserChat;
 
     const dispatch = createEventDispatcher();
 

@@ -518,8 +518,6 @@
     "untranslateMessage": "取消翻译",
     "unableToTranslate": "无法翻译",
     "faqUrlCopiedToClipboard": "常见问题网址已复制到剪贴板！",
-    "thisIsPublicGroupWithN": "这是一个拥有 {number} 成员的公共群聊",
-    "thisIsPrivateGroupWithN": "这是一个有 {number} 成员的私人群聊",
     "copy": "复制",
     "failedToShareLink": "分享链接失败",
     "failedToLeaveGroup": "尝试将您从群聊中移除时出错",

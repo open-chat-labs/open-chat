@@ -518,8 +518,6 @@
     "untranslateMessage": "Отменить перевод",
     "unableToTranslate": "Невозможно перевести",
     "faqUrlCopiedToClipboard": "Ссылка на часто задаваемые вопросы скопирована в буфер обмена!",
-    "thisIsPublicGroupWithN": "Это общедоступная группа с участниками: {number}",
-    "thisIsPrivateGroupWithN": "Это частная группа с {number} участников",
     "copy": "Копировать",
     "failedToShareLink": "Не удалось поделиться ссылкой",
     "groupInviteChangedBy": "{changedBy} {changed} приглашение в группу",

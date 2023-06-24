@@ -15,6 +15,7 @@
         Message,
         UserSummary,
         OpenChat,
+        MultiUserChat,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
@@ -49,16 +50,14 @@
     $: currentCommunityMembers = client.currentCommunityMembers;
     $: currentCommunityInvited = client.currentCommunityInvitedUsers;
     $: currentCommunityBlocked = client.currentCommunityBlockedUsers;
-    $: currentCommunityRules = client.currentCommunityRules;
     $: selectedCommunity = client.selectedCommunity;
-    $: communityStateStore = client.communityStateStore;
 
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
     $: user = $userStore[currentUser.userId] ?? client.nullUser("unknown");
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $numberOfColumns === 2;
-    $: groupChat = selectedChatStore as Readable<GroupChatSummary>;
+    $: multiUserChat = selectedChatStore as Readable<MultiUserChat>;
     $: empty = $rightPanelHistory.length === 0;
 
     function onChangeGroupRole(
@@ -104,7 +103,7 @@
                     switch (resp) {
                         case "success":
                             popRightPanelHistory();
-                            if ($groupChat?.public ?? false) {
+                            if ($multiUserChat?.public ?? false) {
                                 toastStore.showSuccessToast("group.usersInvited");
                             }
                             break;
@@ -251,7 +250,7 @@
 <Panel right {empty}>
     {#if lastState.kind === "group_details" && $selectedChatId !== undefined}
         <GroupDetails
-            chat={$groupChat}
+            chat={$multiUserChat}
             memberCount={$currentChatMembers.length}
             rules={$currentChatRules}
             on:close={popRightPanelHistory}
@@ -289,7 +288,7 @@
     {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined}
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
-            collection={$groupChat}
+            collection={$multiUserChat}
             invited={$currentChatInvited}
             members={$currentChatMembers}
             blocked={$currentChatBlocked}
@@ -306,7 +305,7 @@
             on:goToMessageIndex={goToMessageIndex}
             chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
-            dateLastPinned={$groupChat.dateLastPinned}
+            dateLastPinned={$multiUserChat.dateLastPinned}
             on:close={popRightPanelHistory} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile

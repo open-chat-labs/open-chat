@@ -184,7 +184,7 @@
         </span>
     {/if}
 
-    {#if selectedChatSummary.kind === "group_chat"}
+    {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
         <span on:click={showGroupDetails}>
             <HoverIcon title={$_("groupDetails")}>
                 <FileDocument
@@ -236,7 +236,7 @@
                         <div slot="text">{$_("searchChat")}</div>
                     </MenuItem>
                 {/if}
-                {#if selectedChatSummary.kind === "group_chat"}
+                {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
                     {#if $mobileWidth}
                         {#if hasPinned}
                             <MenuItem on:click={showPinned}>

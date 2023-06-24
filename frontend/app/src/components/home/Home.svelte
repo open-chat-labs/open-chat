@@ -209,6 +209,7 @@
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
+            // TODO - deal with channels
             if (chatId.kind === "direct_chat") {
                 await createDirectChat(chatId);
             } else if (chatId.kind === "group_chat") {
@@ -267,8 +268,16 @@
                 rightPanelHistory.set([]);
             } else if (pathParams.kind === "selected_community_route") {
                 client.setSelectedCommunity(pathParams.communityId);
-            } else if (pathParams.kind === "global_chat_selected_route") {
-                client.clearSelectedCommunity();
+            } else if (
+                pathParams.kind === "global_chat_selected_route" ||
+                pathParams.kind === "selected_channel_route"
+            ) {
+                if (pathParams.kind === "global_chat_selected_route") {
+                    client.clearSelectedCommunity();
+                }
+                if (pathParams.kind === "selected_channel_route") {
+                    client.setSelectedCommunity(pathParams.communityId, false);
+                }
 
                 // first close any open thread
                 closeThread();

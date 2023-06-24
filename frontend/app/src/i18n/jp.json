@@ -518,8 +518,6 @@
     "untranslateMessage": "翻訳しない",
     "unableToTranslate": "翻訳できません",
     "faqUrlCopiedToClipboard": "FAQのURLをクリップボードにコピーしました！",
-    "thisIsPublicGroupWithN": "これは{number}メンバーのパブリックグループです",
-    "thisIsPrivateGroupWithN": "これは{number}メンバーのプライベートグループです",
     "copy": "コピー",
     "failedToShareLink": "リンクの共有に失敗しました",
     "groupInviteChangedBy": "{changedBy}{changed}グループの招待",

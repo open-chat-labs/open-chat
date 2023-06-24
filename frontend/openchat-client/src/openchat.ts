@@ -329,7 +329,6 @@ import {
     diamondDurationToMs,
 } from "./stores/diamond";
 import {
-    allCommunities,
     communities,
     communitiesList,
     communityStateStore,
@@ -341,7 +340,11 @@ import {
     selectedCommunityChannels,
     selectedCommunityId,
 } from "./stores/community";
-import { setGlobalState, updateSummaryWithConfirmedMessage } from "./stores/global";
+import {
+    globalStateStore,
+    setGlobalState,
+    updateSummaryWithConfirmedMessage,
+} from "./stores/global";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1507,7 +1510,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const threadRootMessageIndex = threadRootEvent.event.messageIndex;
 
         const eventsResponse = await this.sendRequest({
-            kind: "groupChatEventsWindow",
+            kind: "chatEventsWindow",
             eventIndexRange: [0, threadRootEvent.event.thread.latestEventIndex],
             chatId,
             messageIndex,
@@ -1556,23 +1559,14 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             const range = indexRangeForChat(clientChat);
-            const eventsPromise: Promise<EventsResponse<ChatEvent>> =
-                chatId.kind === "direct_chat"
-                    ? this.sendRequest({
-                          kind: "directChatEventsWindow",
-                          eventIndexRange: range,
-                          chatId,
-                          messageIndex,
-                          latestClientMainEventIndex: serverChat?.latestEventIndex,
-                      })
-                    : this.sendRequest({
-                          kind: "groupChatEventsWindow",
-                          eventIndexRange: range,
-                          chatId,
-                          messageIndex,
-                          latestClientMainEventIndex: serverChat?.latestEventIndex,
-                          threadRootMessageIndex: undefined,
-                      });
+            const eventsPromise: Promise<EventsResponse<ChatEvent>> = this.sendRequest({
+                kind: "chatEventsWindow",
+                eventIndexRange: range,
+                chatId,
+                messageIndex,
+                latestClientMainEventIndex: serverChat?.latestEventIndex,
+                threadRootMessageIndex: undefined,
+            });
             const eventsResponse = await eventsPromise;
 
             if (eventsResponse === undefined || eventsResponse === "events_failed") {
@@ -2152,6 +2146,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private async loadDetails(clientChat: ChatSummary): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
+        // TODO - need to sort out what the channel equivalent of this is
+        // are we just going to get the channel summary - probably not because we don't want all the members etc in the summary
         if (clientChat.kind === "group_chat") {
             if (!chatStateStore.getProp(clientChat.id, "detailsLoaded")) {
                 const resp = await this.sendRequest({
@@ -2180,6 +2176,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async updateDetails(clientChat: ChatSummary): Promise<void> {
+        // TODO - channels
         if (clientChat.kind === "group_chat") {
             const latestEventIndex = chatStateStore.getProp(clientChat.id, "latestEventIndex");
             if (latestEventIndex !== undefined && latestEventIndex < clientChat.latestEventIndex) {
@@ -4092,13 +4089,15 @@ export class OpenChat extends OpenChatAgentWorker {
     // **** Communities Stuff
 
     // TODO - this will almost certainly need to be more complicated
-    setSelectedCommunity(communityId: CommunityIdentifier): void {
+    setSelectedCommunity(communityId: CommunityIdentifier, clearChat = true): void {
         // TODO - we may or may not already belong to this community
         // if we do NOT belong to it, we need to look up the community and then insert it into the store
         // if we DO belong then we just select it.
         // selecting it will show the channels etc.
         selectedCommunityId.set(communityId);
-        this.clearSelectedChat();
+        if (clearChat) {
+            this.clearSelectedChat();
+        }
     }
 
     clearSelectedCommunity(): void {
@@ -4143,31 +4142,12 @@ export class OpenChat extends OpenChatAgentWorker {
         // });
     }
 
-    deleteCommunity(id: CommunityIdentifier): Promise<void> {
-        return new Promise<void>((resolve) => {
-            setTimeout(() => {
-                communities.update((c) => {
-                    c.delete(id);
-                    return c;
-                });
-                allCommunities.update((communities) => {
-                    return communities.filter((c) => c.id.communityId !== id.communityId);
-                });
-                resolve();
-            }, 2000);
-        });
+    deleteCommunity(_id: CommunityIdentifier): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 
-    leaveCommunity(id: CommunityIdentifier): Promise<void> {
-        return new Promise<void>((resolve) => {
-            setTimeout(() => {
-                communities.update((c) => {
-                    c.delete(id);
-                    return c;
-                });
-                resolve();
-            }, 2000);
-        });
+    leaveCommunity(_id: CommunityIdentifier): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 
     createCommunity(
@@ -4200,9 +4180,9 @@ export class OpenChat extends OpenChatAgentWorker {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    communities.update((c) => {
-                        c.set(community.id, community);
-                        return c;
+                    globalStateStore.update((g) => {
+                        g.communities.set(community.id, community);
+                        return g;
                     });
                     return true;
                 }

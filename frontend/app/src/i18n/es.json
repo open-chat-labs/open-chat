@@ -519,8 +519,6 @@
     "untranslateMessage": "Destraducir",
     "unableToTranslate": "no se puede traducir",
     "faqUrlCopiedToClipboard": "URL de preguntas frecuentes copiada al portapapeles.",
-    "thisIsPublicGroupWithN": "Este es un grupo público con miembros {number}",
-    "thisIsPrivateGroupWithN": "Este es un grupo privado con miembros {number}",
     "copy": "Dupdo",
     "failedToShareLink": "No se pudo compartir el enlace",
     "groupInviteChangedBy": "{changedBy} {changed} la invitación del grupo",

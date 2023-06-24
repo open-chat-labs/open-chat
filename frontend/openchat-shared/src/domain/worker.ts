@@ -130,7 +130,6 @@ import type {
     SearchChannelResponse,
     SelectedChannelInitialResponse,
     SelectedChannelUpdatesResponse,
-    SendChannelMessageResponse,
     ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
@@ -195,8 +194,7 @@ export type WorkerRequest =
     | CheckUsername
     | RehydrateMessage
     | ChatEventsByEventIndex
-    | DirectChatEventsWindow
-    | GroupChatEventsWindow
+    | ChatEventsWindow
     | LastOnline
     | MarkAsOnline
     | GetGroupDetails
@@ -277,7 +275,6 @@ export type WorkerRequest =
     | SearchChannel
     | SelectedChannelInitial
     | SelectedChannelUpdates
-    | SendChannelMessage
     | ToggleMuteChannelNotifications
     | ToggleMuteCommunityNotifications
     | UnblockCommunityUser
@@ -676,21 +673,13 @@ type SearchUsers = {
     kind: "searchUsers";
 };
 
-type DirectChatEventsWindow = {
-    eventIndexRange: IndexRange;
-    chatId: DirectChatIdentifier;
-    messageIndex: number;
-    latestClientMainEventIndex: number | undefined;
-    kind: "directChatEventsWindow";
-};
-
-type GroupChatEventsWindow = {
+type ChatEventsWindow = {
     eventIndexRange: IndexRange;
     chatId: ChatIdentifier;
     messageIndex: number;
     latestClientMainEventIndex: number | undefined;
     threadRootMessageIndex: number | undefined;
-    kind: "groupChatEventsWindow";
+    kind: "chatEventsWindow";
 };
 
 type ChatEventsByEventIndex = {
@@ -958,7 +947,6 @@ export type WorkerResponse =
     | Response<SearchChannelResponse>
     | Response<SelectedChannelInitialResponse>
     | Response<SelectedChannelUpdatesResponse>
-    | Response<SendChannelMessageResponse>
     | Response<ToggleMuteChannelNotificationsResponse>
     | Response<ToggleMuteCommunityNotificationsResponse>
     | Response<UnblockCommunityUserResponse>
@@ -1231,15 +1219,6 @@ type SelectedChannelUpdates = {
     updatesSince: bigint;
 };
 
-type SendChannelMessage = {
-    kind: "sendChannelMessage";
-    chatId: ChannelIdentifier;
-    senderName: string;
-    mentioned: User[];
-    event: EventWrapper<Message>;
-    threadRootMessageIndex?: number;
-};
-
 type ToggleMuteChannelNotifications = {
     kind: "toggleMuteChannelNotifications";
     chatId: ChannelIdentifier;
@@ -1335,10 +1314,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? Record<string, number>
     : T extends MarkAsOnline
     ? void
-    : T extends DirectChatEventsWindow
-    ? EventsResponse<DirectChatEvent>
-    : T extends GroupChatEventsWindow
-    ? EventsResponse<GroupChatEvent>
+    : T extends ChatEventsWindow
+    ? EventsResponse<ChatEvent>
     : T extends ChatEventsByEventIndex
     ? EventsResponse<ChatEvent>
     : T extends RehydrateMessage
@@ -1559,8 +1536,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? SelectedChannelInitialResponse
     : T extends SelectedChannelUpdates
     ? SelectedChannelUpdatesResponse
-    : T extends SendChannelMessage
-    ? SendChannelMessageResponse
     : T extends ToggleMuteChannelNotifications
     ? ToggleMuteChannelNotificationsResponse
     : T extends ToggleMuteCommunityNotifications

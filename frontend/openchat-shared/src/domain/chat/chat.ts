@@ -1404,6 +1404,7 @@ export type SendMessageResponse =
     | NotAuthorised
     | ThreadMessageNotFound
     | UserSuspended
+    | Failure
     | ChatFrozen;
 
 export type SendMessageSuccess = {

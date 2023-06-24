@@ -518,8 +518,6 @@
     "untranslateMessage": "Annulla la traduzione",
     "unableToTranslate": "Impossibile tradurre",
     "faqUrlCopiedToClipboard": "URL delle domande frequenti copiato negli appunti!",
-    "thisIsPublicGroupWithN": "Questo è un gruppo pubblico con {number} membri",
-    "thisIsPrivateGroupWithN": "Questo è un gruppo privato con {number} membri",
     "copy": "copia",
     "failedToShareLink": "Impossibile condividere il collegamento",
     "groupInviteChangedBy": "{changedBy} {changed} l'invito del gruppo",

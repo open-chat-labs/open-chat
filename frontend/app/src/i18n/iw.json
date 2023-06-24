@@ -516,8 +516,6 @@
     "untranslateMessage": "בטל תרגום",
     "unableToTranslate": "לא מצליח לתרגם",
     "faqUrlCopiedToClipboard": "כתובת ה-URL של שאלות נפוצות הועתקה ללוח!",
-    "thisIsPublicGroupWithN": "זוהי קבוצה ציבורית עם חברים ב-{number}",
-    "thisIsPrivateGroupWithN": "זוהי קבוצה פרטית עם חברי {number}",
     "copy": "עותק",
     "failedToShareLink": "שיתוף הקישור נכשל",
     "groupInviteChangedBy": "{changedBy} {changed} ההזמנה לקבוצה",

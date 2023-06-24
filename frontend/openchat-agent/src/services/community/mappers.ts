@@ -37,7 +37,7 @@ import {
     SearchChannelResponse,
     SelectedChannelInitialResponse,
     SelectedChannelUpdatesResponse,
-    SendChannelMessageResponse,
+    SendMessageResponse,
     ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
@@ -840,20 +840,60 @@ export function selectedChannelUpdatesResponse(
     }
 }
 
-export function sendMessageResponse(candid: ApiSendMessageResponse): SendChannelMessageResponse {
+export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
             timestamp: candid.Success.timestamp,
-            eventIndex: candid.Success.event_index,
-            expiresAt: optional(candid.Success.expires_at, identity),
             messageIndex: candid.Success.message_index,
+            eventIndex: candid.Success.event_index,
         };
-    } else {
-        console.warn("SendChannelMessage failed with", candid);
-        return CommonResponses.failure;
     }
+    if ("CallerNotInGroup" in candid) {
+        return { kind: "not_in_group" };
+    }
+    if ("TextTooLong" in candid) {
+        return { kind: "text_too_long" };
+    }
+    if ("MessageEmpty" in candid) {
+        return { kind: "message_empty" };
+    }
+    if ("InvalidRequest" in candid) {
+        return { kind: "invalid_request", reason: candid.InvalidRequest };
+    }
+    if ("InvalidPoll" in candid) {
+        return { kind: "invalid_poll" };
+    }
+    if ("NotAuthorized" in candid) {
+        return { kind: "not_authorized" };
+    }
+    if ("ThreadMessageNotFound" in candid) {
+        return { kind: "thread_message_not_found" };
+    }
+    if ("UserSuspended" in candid) {
+        return { kind: "user_suspended" };
+    }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
+
+    return CommonResponses.failure;
 }
+
+// export function sendMessageResponse(candid: ApiSendMessageResponse): SendChannelMessageResponse {
+//     if ("Success" in candid) {
+//         return {
+//             kind: "success",
+//             timestamp: candid.Success.timestamp,
+//             eventIndex: candid.Success.event_index,
+//             expiresAt: optional(candid.Success.expires_at, identity),
+//             messageIndex: candid.Success.message_index,
+//         };
+//     } else {
+//         console.warn("SendChannelMessage failed with", candid);
+//         return CommonResponses.failure;
+//     }
+// }
 
 export function summaryResponse(candid: ApiSummaryResponse): CommunitySummaryResponse {
     if ("Success" in candid) {

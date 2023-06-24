@@ -89,7 +89,6 @@ import type {
     SearchChannelResponse,
     SelectedChannelInitialResponse,
     SelectedChannelUpdatesResponse,
-    SendChannelMessageResponse,
     ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
@@ -101,23 +100,40 @@ import type {
     AddRemoveReactionResponse,
     CommunitySummaryResponse,
     CommunitySummaryUpdatesResponse,
+    SendMessageResponse,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
 import { DataClient } from "../data/data.client";
 import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
 import { getEventsResponse } from "../group/mappers";
+import {
+    Database,
+    recordFailedMessage,
+    removeFailedMessage,
+    setCachedMessageFromSendResponse,
+} from "../../utils/caching";
 
 export class CommunityClient extends CandidService {
     private service: CommunityService;
 
-    private constructor(communityId: string, identity: Identity, private config: AgentConfig) {
+    private constructor(
+        communityId: string,
+        identity: Identity,
+        private config: AgentConfig,
+        private db: Database
+    ) {
         super(identity);
 
         this.service = this.createServiceClient<CommunityService>(idlFactory, communityId, config);
     }
 
-    static create(communityId: string, identity: Identity, config: AgentConfig): CommunityClient {
-        return new CommunityClient(communityId, identity, config);
+    static create(
+        communityId: string,
+        identity: Identity,
+        config: AgentConfig,
+        db: Database
+    ): CommunityClient {
+        return new CommunityClient(communityId, identity, config, db);
     }
 
     addMembersToChannel(
@@ -546,14 +562,16 @@ export class CommunityClient extends CandidService {
             selectedChannelUpdatesResponse
         );
     }
-
     sendMessage(
         chatId: ChannelIdentifier,
         senderName: string,
         mentioned: User[],
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
-    ): Promise<SendChannelMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
+        // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
+        removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
+
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(event.event.content, [chatId.communityId])
@@ -576,7 +594,24 @@ export class CommunityClient extends CandidService {
                 forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             };
-            return this.handleResponse(this.service.send_message(args), sendMessageResponse);
+            return this.handleResponse(this.service.send_message(args), sendMessageResponse)
+                .then((resp) => {
+                    const retVal: [SendMessageResponse, Message] = [
+                        resp,
+                        { ...event.event, content: newContent },
+                    ];
+                    setCachedMessageFromSendResponse(
+                        this.db,
+                        chatId,
+                        event,
+                        threadRootMessageIndex
+                    )(retVal);
+                    return retVal;
+                })
+                .catch((err) => {
+                    recordFailedMessage(this.db, chatId, event, threadRootMessageIndex);
+                    throw err;
+                });
         });
     }
 

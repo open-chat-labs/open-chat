@@ -520,8 +520,6 @@
     "untranslateMessage": "Unübersetzen",
     "unableToTranslate": "Übersetzen nicht möglich",
     "faqUrlCopiedToClipboard": "FAQ-URL in die Zwischenablage kopiert!",
-    "thisIsPublicGroupWithN": "Dies ist eine öffentliche Gruppe mit {number} Mitgliedern",
-    "thisIsPrivateGroupWithN": "Dies ist eine private Gruppe mit {number} Mitgliedern",
     "copy": "Kopieren",
     "failedToShareLink": "Link konnte nicht geteilt werden",
     "groupInviteChangedBy": "{changedBy} {changed} die Gruppeneinladung",

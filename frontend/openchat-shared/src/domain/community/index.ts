@@ -332,15 +332,6 @@ export type SelectedChannelUpdatesResponse =
     | (Success & SelectedChannelUpdates)
     | SuccessNoUpdates;
 
-export type SendChannelMessageResponse =
-    | Failure
-    | (Success & {
-          timestamp: bigint;
-          eventIndex: number;
-          expiresAt?: bigint;
-          messageIndex: number;
-      });
-
 export type ToggleMuteChannelNotificationsResponse = Failure | Success;
 
 export type ToggleMuteCommunityNotificationsResponse = Failure | Success;

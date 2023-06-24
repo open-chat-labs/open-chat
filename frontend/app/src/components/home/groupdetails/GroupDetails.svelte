@@ -19,7 +19,7 @@
     } from "../../../stores/settings";
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsersWithLink from "./InviteUsersWithLink.svelte";
-    import type { OpenChat, GroupChatSummary, AccessRules } from "openchat-client";
+    import type { OpenChat, GroupChatSummary, AccessRules, MultiUserChat } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import AccessGateSummary from "../AccessGateSummary.svelte";
     import { interpolateLevel } from "../../../utils/i18n";
@@ -29,7 +29,7 @@
     const client = getContext<OpenChat>("client");
     const currentUser = client.user;
 
-    export let chat: GroupChatSummary;
+    export let chat: MultiUserChat;
     export let memberCount: number;
     export let rules: AccessRules | undefined;
 
@@ -52,7 +52,7 @@
         dispatch("showGroupMembers");
     }
 
-    function description(chat: GroupChatSummary): string {
+    function description(chat: MultiUserChat): string {
         let description = chat.description;
 
         if (chat.subtype?.kind === "governance_proposals" ?? false) {
@@ -127,7 +127,7 @@
                 <Markdown inline={false} text={rules.text} />
             </CollapsibleCard>
         {/if}
-        {#if canInvite}
+        {#if canInvite && chat.kind === "group_chat"}
             <CollapsibleCard
                 on:toggle={groupInviteUsersOpen.toggle}
                 open={$groupInviteUsersOpen}

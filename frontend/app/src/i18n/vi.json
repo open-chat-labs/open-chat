@@ -519,8 +519,6 @@
     "untranslateMessage": "Chưa dịch",
     "unableToTranslate": "Không thể dịch",
     "faqUrlCopiedToClipboard": "Đã sao chép url câu hỏi thường gặp vào khay nhớ tạm!",
-    "thisIsPublicGroupWithN": "Đây là nhóm công khai có {number} thành viên",
-    "thisIsPrivateGroupWithN": "Đây là một nhóm riêng tư có {number} thành viên",
     "copy": "Sao chép",
     "failedToShareLink": "Không chia sẻ được liên kết",
     "groupInviteChangedBy": "{changedBy} {changed} mời nhóm",
