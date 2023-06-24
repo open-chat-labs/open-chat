@@ -595,13 +595,13 @@ type UnArchiveChatResponse =
         ChatNotFound;
     };
 
-type AddRemoveFavouriteChatsArgs =
+type ManageFavouriteChatsArgs =
     record {
         to_add: vec Chat;
         to_remove: vec Chat;
     };
 
-type AddRemoveFavouriteChatsResponse =
+type ManageFavouriteChatsResponse =
     variant {
         Success;
         UserSuspended;
@@ -1017,7 +1017,7 @@ service: {
     unpin_chat_v2: (UnpinChatV2Request) -> (UnpinChatV2Response);
     archive_chat: (ArchiveChatArgs) -> (ArchiveChatResponse);
     unarchive_chat: (UnArchiveChatArgs) -> (UnArchiveChatResponse);
-    add_remove_favourite_chats: (AddRemoveFavouriteChatsArgs) -> (AddRemoveFavouriteChatsResponse);
+    manage_favourite_chats: (ManageFavouriteChatsArgs) -> (ManageFavouriteChatsResponse);
     archive_unarchive_chats: (ArchiveUnarchiveChatsArgs) -> (ArchiveUnarchiveChatsResponse);
 
     init_user_principal_migration: (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);

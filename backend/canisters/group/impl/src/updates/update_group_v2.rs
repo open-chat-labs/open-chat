@@ -109,7 +109,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             UpdateResult::RulesTooShort(v) => Err(RulesTooShort(v)),
             UpdateResult::RulesTooLong(v) => Err(RulesTooLong(v)),
             UpdateResult::AvatarTooBig(v) => Err(AvatarTooBig(v)),
-            UpdateResult::NameTaken => Err(NameTaken),
         }
     } else {
         Err(CallerNotInGroup)

@@ -49,7 +49,6 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 UpdateResult::RulesTooShort(v) => RulesTooShort(v),
                 UpdateResult::RulesTooLong(v) => RulesTooLong(v),
                 UpdateResult::AvatarTooBig(v) => AvatarTooBig(v),
-                UpdateResult::NameTaken => NameTaken,
             }
         } else {
             UserNotInCommunity
