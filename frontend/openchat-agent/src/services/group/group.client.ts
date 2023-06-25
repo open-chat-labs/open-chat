@@ -61,8 +61,6 @@ import {
     groupDetailsUpdatesResponse,
     unblockUserResponse,
     getMessagesByMessageIndexResponse,
-    pinMessageResponse,
-    unpinMessageResponse,
     searchGroupChatResponse,
     makeGroupPrivateResponse,
     inviteCodeResponse,
@@ -102,6 +100,8 @@ import {
     apiOptional,
     updateGroupResponse,
     apiUser,
+    pinMessageResponse,
+    unpinMessageResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { identity, mergeGroupChatDetails } from "../../utils/chat";
