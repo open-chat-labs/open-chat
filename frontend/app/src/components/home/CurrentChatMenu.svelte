@@ -324,7 +324,7 @@
                             <div slot="text">{$_("leaveGroup")}</div>
                         </MenuItem>
                     {/if}
-                    {#if $communitiesEnabled}
+                    {#if $communitiesEnabled && selectedChatSummary.kind === "group_chat"}
                         <MenuItem warning on:click={convertToCommunity}>
                             <ConvertToCommunity
                                 size={$iconSize}

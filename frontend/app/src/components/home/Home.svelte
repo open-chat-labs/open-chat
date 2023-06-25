@@ -269,7 +269,7 @@
                 client.clearSelectedChat();
                 rightPanelHistory.set([]);
             } else if (pathParams.kind === "selected_community_route") {
-                client.setSelectedCommunity(pathParams.communityId);
+                await client.setSelectedCommunity(pathParams.communityId);
             } else if (
                 pathParams.kind === "global_chat_selected_route" ||
                 pathParams.kind === "selected_channel_route"
@@ -278,7 +278,7 @@
                     client.clearSelectedCommunity();
                 }
                 if (pathParams.kind === "selected_channel_route") {
-                    client.setSelectedCommunity(pathParams.communityId, false);
+                    await client.setSelectedCommunity(pathParams.communityId, false);
                 }
 
                 // first close any open thread

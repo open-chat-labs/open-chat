@@ -241,7 +241,7 @@
         {level}
         user={userSummary}
         changedBy={event.event.updatedBy}
-        property={$_("group.groupGate")}
+        property={$_("access.gate").toLowerCase()}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "group_visibility_changed"}
     <GroupVisibilityChangedEvent

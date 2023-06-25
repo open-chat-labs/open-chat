@@ -155,6 +155,7 @@ import {
     ChannelIdentifier,
     MultiUserChatIdentifier,
     CommunityIdentifier,
+    CommunitySummaryResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1318,6 +1319,14 @@ export class OpenChatAgent extends EventTarget {
                 anyUpdates: true,
             };
         });
+    }
+
+    async getCommunitySummary(communityId: string): Promise<CommunitySummaryResponse> {
+        const resp = await this.communityClient(communityId).summary();
+        if (isSuccessfulCommunitySummaryResponse(resp)) {
+            return this.hydrateCommunity(resp);
+        }
+        return resp;
     }
 
     async hydrateChatState(state: ChatStateFull): Promise<ChatStateFull> {

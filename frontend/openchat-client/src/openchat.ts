@@ -4118,12 +4118,26 @@ export class OpenChat extends OpenChatAgentWorker {
     // **** Communities Stuff
 
     // TODO - this will almost certainly need to be more complicated
-    setSelectedCommunity(communityId: CommunityIdentifier, clearChat = true): void {
-        // TODO - we may or may not already belong to this community
-        // if we do NOT belong to it, we need to look up the community and then insert it into the store
-        // if we DO belong then we just select it.
-        // selecting it will show the channels etc.
-        selectedCommunityId.set(communityId);
+    async setSelectedCommunity(id: CommunityIdentifier, clearChat = true): Promise<void> {
+        const community = this._liveState.communities.get(id);
+        if (community === undefined) {
+            // if we don't have the community it means we're not a member and we need to look it up
+            const resp = await this.sendRequest({
+                kind: "getCommunitySummary",
+                communityId: id.communityId,
+            });
+            console.log("community summary: ", resp);
+            if ("id" in resp) {
+                globalStateStore.update((global) => {
+                    global.communities.set(resp.id, resp);
+                    return global;
+                });
+            }
+            console.log("We are not a member of this community - we'll have to look it up");
+        }
+
+        //TODO - we *might* need to look up some details here - not quite clear yet
+        selectedCommunityId.set(id);
         if (clearChat) {
             this.clearSelectedChat();
         }

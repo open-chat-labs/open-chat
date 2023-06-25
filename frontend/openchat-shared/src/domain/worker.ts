@@ -133,6 +133,7 @@ import type {
     UndeleteChannelMessagesResponse,
     UpdateCommunityResponse,
     CommunityIdentifier,
+    CommunitySummaryResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -277,7 +278,13 @@ export type WorkerRequest =
     | UpdateCommunity
     | CreateCommunity
     | ExploreCommunities
+    | GetCommunitySummary
     | ChangeCommunityRole;
+
+type GetCommunitySummary = {
+    communityId: string;
+    kind: "getCommunitySummary";
+};
 
 type ReferralLeaderboard = {
     args?: ReferralLeaderboardRange;
@@ -945,6 +952,7 @@ export type WorkerResponse =
     | Response<UpdateCommunityResponse>
     | Response<CreateCommunityResponse>
     | Response<JoinCommunityResponse>
+    | Response<CommunitySummaryResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1515,4 +1523,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? JoinCommunityResponse
     : T extends SearchGroups
     ? GroupSearchResponse
+    : T extends GetCommunitySummary
+    ? CommunitySummaryResponse
     : never;
