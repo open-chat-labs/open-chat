@@ -99,6 +99,16 @@ export class LocalUserIndexClient extends CandidService {
         );
     }
 
+    inviteUsersToCommunity(communityId: string, userIds: string[]): Promise<InviteUsersResponse> {
+        return this.handleResponse(
+            this.localUserIndexService.invite_users_to_community({
+                community_id: Principal.fromText(communityId),
+                user_ids: userIds.map((u) => Principal.fromText(u)),
+            }),
+            inviteUsersResponse
+        );
+    }
+
     inviteUsersToGroup(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
         return this.handleResponse(
             this.localUserIndexService.invite_users_to_group({

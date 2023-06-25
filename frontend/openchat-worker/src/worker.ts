@@ -805,6 +805,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
+            case "inviteUsersToCommunity":
+                agent
+                    .inviteUsersToCommunity(payload.id, payload.userIds)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
             case "removeMember":
                 agent
                     .removeMember(payload.chatId, payload.userId)

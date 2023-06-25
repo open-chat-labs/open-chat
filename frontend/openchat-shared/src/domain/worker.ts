@@ -132,6 +132,7 @@ import type {
     UnblockCommunityUserResponse,
     UndeleteChannelMessagesResponse,
     UpdateCommunityResponse,
+    CommunityIdentifier,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -151,6 +152,7 @@ export type WorkerRequest =
     | ChangeRole
     | RemoveMember
     | InviteUsers
+    | InviteUsersToCommunity
     | PushSub
     | RemoveSub
     | SubscriptionExists
@@ -436,6 +438,12 @@ type InviteUsers = {
     chatId: MultiUserChatIdentifier;
     userIds: string[];
     kind: "inviteUsers";
+};
+
+type InviteUsersToCommunity = {
+    id: CommunityIdentifier;
+    userIds: string[];
+    kind: "inviteUsersToCommunity";
 };
 
 type RemoveSub = {
@@ -1348,6 +1356,8 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends RemoveSub
     ? void
     : T extends InviteUsers
+    ? InviteUsersResponse
+    : T extends InviteUsersToCommunity
     ? InviteUsersResponse
     : T extends RemoveMember
     ? RemoveMemberResponse

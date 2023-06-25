@@ -154,6 +154,7 @@ import {
     ExploreCommunitiesResponse,
     ChannelIdentifier,
     MultiUserChatIdentifier,
+    CommunityIdentifier,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -421,6 +422,21 @@ export class OpenChatAgent extends EventTarget {
                     gate
                 );
         }
+    }
+
+    async inviteUsersToCommunity(
+        id: CommunityIdentifier,
+        userIds: string[]
+    ): Promise<InviteUsersResponse> {
+        if (!userIds.length) {
+            return Promise.resolve<InviteUsersResponse>("success");
+        }
+
+        const communityLocalUserIndex = await this.communityClient(id.communityId).localUserIndex();
+        return this.createLocalUserIndexClient(communityLocalUserIndex).inviteUsersToCommunity(
+            id.communityId,
+            userIds
+        );
     }
 
     async inviteUsers(

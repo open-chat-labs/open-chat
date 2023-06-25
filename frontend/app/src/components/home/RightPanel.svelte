@@ -9,7 +9,6 @@
     import type {
         ChatEvent,
         EventWrapper,
-        GroupChatSummary,
         AccessRules,
         MemberRole,
         Message,
@@ -89,6 +88,30 @@
 
     function onRemoveCommunityMember(ev: CustomEvent<string>): void {
         toastStore.showSuccessToast("TODO - remove community member");
+    }
+
+    async function inviteCommunityUsers(ev: CustomEvent<UserSummary[]>) {
+        if ($selectedCommunity !== undefined) {
+            const userIds = ev.detail.map((u) => u.userId);
+
+            invitingUsers = true;
+
+            await client.inviteUsersToCommunity($selectedCommunity.id, userIds).then((resp) => {
+                switch (resp) {
+                    case "success":
+                        popRightPanelHistory();
+                        if ($multiUserChat?.public ?? false) {
+                            toastStore.showSuccessToast("communities.usersInvited");
+                        }
+                        break;
+                    default:
+                        toastStore.showFailureToast("communities.errors.inviteUsers");
+                        break;
+                }
+            });
+
+            invitingUsers = false;
+        }
     }
 
     async function inviteGroupUsers(ev: CustomEvent<UserSummary[]>) {
@@ -260,7 +283,7 @@
         <InviteUsers
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
-            on:inviteUsers={inviteGroupUsers}
+            on:inviteUsers={inviteCommunityUsers}
             on:cancelInviteUsers={popRightPanelHistory} />
     {:else if lastState.kind === "show_community_members" && $selectedCommunity}
         <Members

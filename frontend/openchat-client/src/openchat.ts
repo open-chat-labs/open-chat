@@ -3223,6 +3223,35 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    private inviteUsersToCommunityLocally(id: CommunityIdentifier, userIds: string[]): void {
+        communityStateStore.updateProp(id, "invitedUsers", (b) => new Set([...b, ...userIds]));
+    }
+
+    private uninviteUsersToCommunityLocally(id: CommunityIdentifier, userIds: string[]): void {
+        communityStateStore.updateProp(id, "invitedUsers", (b) => {
+            return new Set([...b].filter((u) => !userIds.includes(u)));
+        });
+    }
+
+    inviteUsersToCommunity(
+        id: CommunityIdentifier,
+        userIds: string[]
+    ): Promise<InviteUsersResponse> {
+        this.inviteUsersToCommunityLocally(id, userIds);
+        return this.sendRequest({ kind: "inviteUsersToCommunity", id, userIds })
+            .then((resp) => {
+                if (resp !== "success") {
+                    this.uninviteUsersToCommunityLocally(id, userIds);
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this._logger.error("Error inviting users to community", err);
+                this.uninviteUsersToCommunityLocally(id, userIds);
+                return "failure";
+            });
+    }
+
     removeMember(chatId: GroupChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
         return this.sendRequest({ kind: "removeMember", chatId, userId });
     }
