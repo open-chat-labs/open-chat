@@ -107,9 +107,6 @@
                                 toastStore.showSuccessToast("group.usersInvited");
                             }
                             break;
-                        case "too_many_invites":
-                            toastStore.showFailureToast("group.tooManyInvites");
-                            break;
                         default:
                             toastStore.showFailureToast("group.inviteUsersFailed");
                             break;

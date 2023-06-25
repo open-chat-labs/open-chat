@@ -4,6 +4,7 @@
     import TooltipPopup from "../TooltipPopup.svelte";
     import { E8S_PER_TOKEN, AccessGate } from "openchat-client";
     import { createEventDispatcher } from "svelte";
+    import type { Alignment, Position } from "../../utils/alignment";
 
     export let gate: AccessGate;
     export let position: Position = "top";

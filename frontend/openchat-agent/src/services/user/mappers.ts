@@ -1,7 +1,5 @@
 import type {
     ApiEventsResponse,
-    ApiCreateGroupResponse,
-    ApiDeleteGroupResponse,
     ApiDirectChatEventWrapper,
     ApiSendMessageResponse,
     ApiBlockUserResponse,
@@ -59,8 +57,6 @@ import type {
 import {
     EventsResponse,
     EventWrapper,
-    CreateGroupResponse,
-    DeleteGroupResponse,
     DirectChatEvent,
     SendMessageResponse,
     BlockUserResponse,

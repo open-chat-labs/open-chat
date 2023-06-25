@@ -1190,11 +1190,13 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.multiUserChatPredicate(chatId, canLeaveGroup);
     }
 
-    isPreviewing(chatId: MultiUserChatIdentifier): boolean {
+    isPreviewing(chatId: ChatIdentifier): boolean {
+        if (chatId.kind === "direct_chat") return false;
         return this.multiUserChatPredicate(chatId, isPreviewing);
     }
 
-    isFrozen(chatId: MultiUserChatIdentifier): boolean {
+    isFrozen(chatId: ChatIdentifier): boolean {
+        if (chatId.kind === "direct_chat") return false;
         return this.multiUserChatPredicate(chatId, isFrozen);
     }
 
@@ -1206,7 +1208,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return (this._user?.suspensionDetails ?? undefined) != undefined;
     }
 
-    isChatReadOnly(chatId: MultiUserChatIdentifier): boolean {
+    isChatReadOnly(chatId: ChatIdentifier): boolean {
+        if (chatId.kind === "direct_chat") return false;
         return this.isReadOnly() || this.isPreviewing(chatId);
     }
 

@@ -36,7 +36,6 @@ import {
     getContentAsText,
     eventIsVisible,
     AccessControlled,
-    GroupChatIdentifier,
     nullMembership,
     HasMembershipRole,
     MessageContext,
