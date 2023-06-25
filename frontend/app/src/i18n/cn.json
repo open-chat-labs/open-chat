@@ -896,10 +896,12 @@
         "errors": {
             "name_taken": "抱歉 - 已有一个同名社区",
             "failure": "抱歉，我们无法创建您的社区",
-            "saveFailed": "抱歉，我们无法保存您的更新"
+            "saveFailed": "抱歉，我们无法保存您的更新",
+            "inviteUsers": "抱歉，我们无法邀请这些用户"
         },
         "memberCount": "会员",
-        "channelCount": "频道"
+        "channelCount": "频道",
+        "usersInvited": "用户已被邀请加入您的社区"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",

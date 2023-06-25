@@ -895,10 +895,12 @@
         "errors": {
             "name_taken": "Désolé - il existe déjà une communauté avec ce nom",
             "failure": "Désolé, nous n'avons pas pu créer votre communauté",
-            "saveFailed": "Désolé, nous n'avons pas pu enregistrer vos mises à jour"
+            "saveFailed": "Désolé, nous n'avons pas pu enregistrer vos mises à jour",
+            "inviteUsers": "Désolé, nous n'avons pas pu inviter ces utilisateurs"
         },
         "memberCount": "membres)",
-        "channelCount": "chaîne(s)"
+        "channelCount": "chaîne(s)",
+        "usersInvited": "Des utilisateurs ont été invités dans votre communauté"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",

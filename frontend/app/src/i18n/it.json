@@ -895,10 +895,12 @@
         "errors": {
             "name_taken": "Siamo spiacenti, esiste già una community con questo nome",
             "failure": "Spiacenti, non siamo riusciti a creare la tua community",
-            "saveFailed": "Spiacenti, non siamo riusciti a salvare i tuoi aggiornamenti"
+            "saveFailed": "Spiacenti, non siamo riusciti a salvare i tuoi aggiornamenti",
+            "inviteUsers": "Spiacenti, non siamo riusciti a invitare questi utenti"
         },
         "memberCount": "membri)",
-        "channelCount": "canale(i)"
+        "channelCount": "canale(i)",
+        "usersInvited": "Gli utenti sono stati invitati alla tua comunità"
     },
     "groupCreatedBy": "{username} ha creato {level}",
     "groupName": "{level} nome",

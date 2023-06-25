@@ -896,10 +896,12 @@
         "errors": {
             "name_taken": "申し訳ありませんが、この名前のコミュニティがすでに存在します",
             "failure": "申し訳ありませんが、コミュニティを作成できませんでした",
-            "saveFailed": "申し訳ありませんが、更新を保存できませんでした"
+            "saveFailed": "申し訳ありませんが、更新を保存できませんでした",
+            "inviteUsers": "申し訳ありませんが、これらのユーザーを招待できませんでした"
         },
         "memberCount": "メンバー",
-        "channelCount": "チャンネル"
+        "channelCount": "チャンネル",
+        "usersInvited": "ユーザーがコミュニティに招待されました"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",

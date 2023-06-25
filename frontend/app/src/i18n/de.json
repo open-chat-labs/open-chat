@@ -897,10 +897,12 @@
         "errors": {
             "name_taken": "Entschuldigung, es gibt bereits eine Community mit diesem Namen",
             "failure": "Es tut uns leid, dass wir Ihre Community nicht erstellen konnten",
-            "saveFailed": "Leider konnten wir Ihre Aktualisierungen nicht speichern"
+            "saveFailed": "Leider konnten wir Ihre Aktualisierungen nicht speichern",
+            "inviteUsers": "Leider konnten wir diese Benutzer nicht einladen"
         },
         "memberCount": "Mitglied(er)",
-        "channelCount": "Kanal(e)"
+        "channelCount": "Kanal(e)",
+        "usersInvited": "Benutzer wurden zu Ihrer Community eingeladen"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",

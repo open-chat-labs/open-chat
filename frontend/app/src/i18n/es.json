@@ -897,10 +897,12 @@
         "errors": {
             "name_taken": "Lo sentimos, ya existe una comunidad con este nombre.",
             "failure": "Lo sentimos, no pudimos crear tu comunidad.",
-            "saveFailed": "Lo sentimos, no pudimos guardar sus actualizaciones."
+            "saveFailed": "Lo sentimos, no pudimos guardar sus actualizaciones.",
+            "inviteUsers": "Lo sentimos, no pudimos invitar a estos usuarios."
         },
         "memberCount": "miembro(s)",
-        "channelCount": "canales"
+        "channelCount": "canales",
+        "usersInvited": "Los usuarios han sido invitados a su comunidad."
     },
     "groupCreatedBy": "{username} creó el {level}",
     "groupName": "{level} nombre",

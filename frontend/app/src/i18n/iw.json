@@ -893,10 +893,12 @@
         "errors": {
             "name_taken": "סליחה - כבר קיימת קהילה בשם זה",
             "failure": "מצטערים שלא הצלחנו ליצור את הקהילה שלך",
-            "saveFailed": "מצטערים שלא הצלחנו לשמור את העדכונים שלך"
+            "saveFailed": "מצטערים שלא הצלחנו לשמור את העדכונים שלך",
+            "inviteUsers": "מצטערים שלא הצלחנו להזמין משתמשים אלה"
         },
         "memberCount": "חבר/ים",
-        "channelCount": "ערוץ(ים)"
+        "channelCount": "ערוץ(ים)",
+        "usersInvited": "משתמשים הוזמנו לקהילה שלך"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",

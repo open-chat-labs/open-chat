@@ -896,10 +896,12 @@
         "errors": {
             "name_taken": "Xin lỗi - đã có một cộng đồng có tên này",
             "failure": "Xin lỗi, chúng tôi không thể tạo cộng đồng của bạn",
-            "saveFailed": "Xin lỗi, chúng tôi không thể lưu cập nhật của bạn"
+            "saveFailed": "Xin lỗi, chúng tôi không thể lưu cập nhật của bạn",
+            "inviteUsers": "Rất tiếc, chúng tôi không thể mời những người dùng này"
         },
         "memberCount": "các thành viên)",
-        "channelCount": "kênh truyền hình)"
+        "channelCount": "kênh truyền hình)",
+        "usersInvited": "Người dùng đã được mời vào cộng đồng của bạn"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",
