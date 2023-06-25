@@ -1589,18 +1589,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "pinChannelMessage":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .pinMessage(payload.chatId, payload.messageIndex)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "removeCommunityMember":
                 agent
                     .communityClient(payload.communityId)

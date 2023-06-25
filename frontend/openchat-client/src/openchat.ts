@@ -2360,51 +2360,45 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    unpinMessage(chatId: ChatIdentifier, messageIndex: number): Promise<boolean> {
-        if (chatId.kind === "group_chat") {
-            this.removePinnedMessage(chatId, messageIndex);
-            return this.sendRequest({ kind: "unpinMessage", chatId, messageIndex })
-                .then((resp) => {
-                    if (resp !== "success" && resp !== "no_change") {
-                        this.addPinnedMessage(chatId, messageIndex);
-                        return false;
-                    }
-                    return true;
-                })
-                .catch((err) => {
-                    this._logger.error("Unpin message failed: ", err);
+    unpinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
+        this.removePinnedMessage(chatId, messageIndex);
+        return this.sendRequest({ kind: "unpinMessage", chatId, messageIndex })
+            .then((resp) => {
+                if (resp !== "success") {
                     this.addPinnedMessage(chatId, messageIndex);
                     return false;
-                });
-        }
-        return Promise.resolve(false);
+                }
+                return true;
+            })
+            .catch((err) => {
+                this._logger.error("Unpin message failed: ", err);
+                this.addPinnedMessage(chatId, messageIndex);
+                return false;
+            });
     }
 
-    pinMessage(chatId: ChatIdentifier, messageIndex: number): Promise<boolean> {
-        if (chatId.kind === "group_chat") {
-            this.addPinnedMessage(chatId, messageIndex);
-            return this.sendRequest({
-                kind: "pinMessage",
-                chatId,
-                messageIndex,
-            })
-                .then((resp) => {
-                    if (resp.kind !== "success" && resp.kind !== "no_change") {
-                        this.removePinnedMessage(chatId, messageIndex);
-                        return false;
-                    }
-                    if (resp.kind === "success") {
-                        this.markPinnedMessagesRead(chatId, resp.timestamp);
-                    }
-                    return true;
-                })
-                .catch((err) => {
-                    this._logger.error("Pin message failed: ", err);
+    pinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
+        this.addPinnedMessage(chatId, messageIndex);
+        return this.sendRequest({
+            kind: "pinMessage",
+            chatId,
+            messageIndex,
+        })
+            .then((resp) => {
+                if (resp.kind !== "success" && resp.kind !== "no_change") {
                     this.removePinnedMessage(chatId, messageIndex);
                     return false;
-                });
-        }
-        return Promise.resolve(false);
+                }
+                if (resp.kind === "success") {
+                    this.markPinnedMessagesRead(chatId, resp.timestamp);
+                }
+                return true;
+            })
+            .catch((err) => {
+                this._logger.error("Pin message failed: ", err);
+                this.removePinnedMessage(chatId, messageIndex);
+                return false;
+            });
     }
 
     private removeMessage(

@@ -19,6 +19,7 @@ import type {
     ChatFrozen,
     Failure,
     CommunityFrozen,
+    NoChange,
 } from "../response";
 import { emptyChatMetrics } from "../../utils";
 import type { CommunityIdentifier, CommunitySummary } from "../community";
@@ -1673,14 +1674,7 @@ export type UndeleteMessageResponse =
     | UserSuspended
     | ChatFrozen;
 
-export type UnpinMessageResponse =
-    | "no_change"
-    | "caller_not_in_group"
-    | "not_authorized"
-    | "message_not_found"
-    | "user_suspended"
-    | "chat_frozen"
-    | "success";
+export type UnpinMessageResponse = "failure" | "success";
 
 export type PinMessageResponse =
     | {
@@ -1688,13 +1682,8 @@ export type PinMessageResponse =
           eventIndex: number;
           timestamp: bigint;
       }
-    | { kind: "index_out_of_range" }
-    | { kind: "no_change" }
-    | { kind: "caller_not_in_group" }
-    | { kind: "not_authorized" }
-    | { kind: "message_not_found" }
-    | UserSuspended
-    | ChatFrozen;
+    | NoChange
+    | Failure;
 
 export type DeletedGroupMessageResponse =
     | {

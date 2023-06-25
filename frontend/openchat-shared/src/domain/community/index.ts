@@ -257,13 +257,6 @@ export type MakeCommunityPrivateResponse =
     | CommunityFrozen
     | InteralError;
 
-export type PushEventResult = {
-    timestamp: bigint;
-    index: number;
-    expiresAt?: bigint;
-};
-export type PinChannelMessageResponse = Failure | (Success & { event: PushEventResult });
-
 export type RemoveCommunityMemberResponse = Success | Failure;
 
 export type RemoveChannelMemberResponse = Success | Failure;

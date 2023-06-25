@@ -29,7 +29,6 @@ import {
     MakeCommunityPrivateResponse,
     MemberRole,
     Message,
-    PinChannelMessageResponse,
     RemoveChannelMemberResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
@@ -62,7 +61,6 @@ import type {
     ApiMakeChannelPrivateResponse,
     ApiMakePrivateResponse,
     ApiMessagesByMessageIndexResponse,
-    ApiPinMessageResponse,
     ApiRemoveMemberResponse,
     ApiRemoveMemberFromChannelResponse,
     ApiRulesResponse,
@@ -642,22 +640,6 @@ export async function messagesByMessageIndexResponse(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
         candid
     );
-}
-
-export function pinMessageResponse(candid: ApiPinMessageResponse): PinChannelMessageResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            event: {
-                timestamp: candid.Success.timestamp,
-                index: candid.Success.index,
-                expiresAt: optional(candid.Success.expires_at, identity),
-            },
-        };
-    } else {
-        console.warn("PinChannelMessage failed with", candid);
-        return CommonResponses.failure;
-    }
 }
 
 export function removeMemberResponse(

@@ -123,6 +123,8 @@ import {
     ChannelIdentifier,
     GroupChatIdentifier,
     DeleteGroupResponse,
+    PinMessageResponse,
+    UnpinMessageResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -132,6 +134,8 @@ import type {
     ApiGroupCanisterThreadDetails,
     ApiMessageEventWrapper,
     ApiUpdateGroupResponse,
+    ApiUnpinMessageResponse,
+    ApiPinMessageResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -146,6 +150,7 @@ import type {
     ApiUpdateChannelResponse,
     ApiCreateChannelResponse,
     ApiDeleteChannelResponse,
+    ApiPinChannelMessageResponse,
 } from "../community/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -1556,6 +1561,32 @@ export function deleteGroupResponse(
         return "success";
     } else {
         console.warn("DeleteGroupResponse failed with: ", candid);
+        return "failure";
+    }
+}
+
+export function pinMessageResponse(
+    candid: ApiPinMessageResponse | ApiPinChannelMessageResponse
+): PinMessageResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            eventIndex: candid.Success.index,
+            timestamp: candid.Success.timestamp,
+        };
+    } else if ("NoChange" in candid) {
+        return CommonResponses.noChange;
+    } else {
+        console.warn("PinMessageResponse failed with: ", candid);
+        return CommonResponses.failure;
+    }
+}
+
+export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMessageResponse {
+    if ("Success" in candid || "SuccessV2" in candid || "NoChange" in candid) {
+        return "success";
+    } else {
+        console.warn("UnpinMessageResponse failed with: ", candid);
         return "failure";
     }
 }

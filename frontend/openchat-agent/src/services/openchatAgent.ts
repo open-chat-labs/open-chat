@@ -1703,12 +1703,26 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    pinMessage(chatId: GroupChatIdentifier, messageIndex: number): Promise<PinMessageResponse> {
-        return this.getGroupClient(chatId.groupId).pinMessage(messageIndex);
+    pinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<PinMessageResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).pinMessage(messageIndex);
+            case "channel":
+                return this.communityClient(chatId.communityId).pinMessage(chatId, messageIndex);
+        }
     }
 
-    unpinMessage(chatId: GroupChatIdentifier, messageIndex: number): Promise<UnpinMessageResponse> {
-        return this.getGroupClient(chatId.groupId).unpinMessage(messageIndex);
+    unpinMessage(
+        chatId: MultiUserChatIdentifier,
+        messageIndex: number
+    ): Promise<UnpinMessageResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).unpinMessage(messageIndex);
+            case "channel":
+                // return this.communityClient(chatId.communityId).unpinMessage(chatId, messageIndex);
+                throw new Error("TODO - unpin channel message not implemented");
+        }
     }
 
     registerPollVote(

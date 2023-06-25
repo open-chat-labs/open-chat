@@ -22,7 +22,6 @@ import {
     makeChannelPrivateResponse,
     makeCommunityPrivateResponse,
     messagesByMessageIndexResponse,
-    pinMessageResponse,
     removeMemberResponse,
     removeMemberFromChannelResponse,
     rulesResponse,
@@ -50,6 +49,8 @@ import {
     apiUser,
     apiAccessGate,
     addRemoveReactionResponse,
+    pinMessageResponse,
+    unpinMessageResponse,
     updateGroupResponse,
     createGroupResponse,
     deleteGroupResponse,
@@ -81,7 +82,6 @@ import type {
     MakeCommunityPrivateResponse,
     MemberRole,
     Message,
-    PinChannelMessageResponse,
     RemoveChannelMemberResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
@@ -101,6 +101,7 @@ import type {
     UpdateGroupResponse,
     CreateGroupResponse,
     DeleteGroupResponse,
+    PinMessageResponse,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
 import { DataClient } from "../data/data.client";
@@ -455,10 +456,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    pinMessage(
-        chatId: ChannelIdentifier,
-        messageIndex: number
-    ): Promise<PinChannelMessageResponse> {
+    pinMessage(chatId: ChannelIdentifier, messageIndex: number): Promise<PinMessageResponse> {
         return this.handleResponse(
             this.service.pin_message({
                 channel_id: BigInt(chatId.channelId),

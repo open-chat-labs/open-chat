@@ -122,7 +122,6 @@ import type {
     LeaveChannelResponse,
     MakeChannelPrivateResponse,
     MakeCommunityPrivateResponse,
-    PinChannelMessageResponse,
     RemoveChannelMemberResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
@@ -262,7 +261,6 @@ export type WorkerRequest =
     | MakeChannelPrivate
     | MakeCommunityPrivate
     | ChannelMessagesByMessageIndex
-    | PinChannelMessage
     | RemoveCommunityMember
     | RemoveChannelMember
     | ResetCommunityInviteCode
@@ -478,13 +476,13 @@ type SendMessage = {
 };
 
 export type PinMessage = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageIndex: number;
     kind: "pinMessage";
 };
 
 export type UnpinMessage = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageIndex: number;
     kind: "unpinMessage";
 };
@@ -925,7 +923,6 @@ export type WorkerResponse =
     | Response<LeaveChannelResponse>
     | Response<MakeChannelPrivateResponse>
     | Response<MakeCommunityPrivateResponse>
-    | Response<PinChannelMessageResponse>
     | Response<RemoveCommunityMemberResponse>
     | Response<RemoveChannelMemberResponse>
     | Response<EnableCommunityInviteCodeResponse>
@@ -1149,12 +1146,6 @@ type ChannelMessagesByMessageIndex = {
     messageIndexes: number[];
     latestClientEventIndex: number | undefined;
     threadRootMessageIndex: number | undefined;
-};
-
-type PinChannelMessage = {
-    kind: "pinChannelMessage";
-    chatId: ChannelIdentifier;
-    messageIndex: number;
 };
 
 type RemoveCommunityMember = {
@@ -1484,8 +1475,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? MakeCommunityPrivateResponse
     : T extends ChannelMessagesByMessageIndex
     ? EventsResponse<Message>
-    : T extends PinChannelMessage
-    ? PinChannelMessageResponse
     : T extends RemoveCommunityMember
     ? RemoveCommunityMemberResponse
     : T extends RemoveChannelMember

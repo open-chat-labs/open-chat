@@ -644,63 +644,6 @@ export function deletedMessageResponse(
     );
 }
 
-export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            eventIndex: candid.Success.index,
-            timestamp: candid.Success.timestamp,
-        };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return { kind: "caller_not_in_group" };
-    }
-    if ("NotAuthorized" in candid) {
-        return { kind: "not_authorized" };
-    }
-    if ("NoChange" in candid) {
-        return { kind: "no_change" };
-    }
-    if ("MessageIndexOutOfRange" in candid) {
-        return { kind: "index_out_of_range" };
-    }
-    if ("MessageNotFound" in candid) {
-        return { kind: "message_not_found" };
-    }
-    if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiPinMessageResponse type received", candid);
-}
-
-export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMessageResponse {
-    if ("Success" in candid || "SuccessV2" in candid) {
-        return "success";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("NoChange" in candid) {
-        return "no_change";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiUnpinMessageResponse type received", candid);
-}
-
 export async function getMessagesByMessageIndexResponse(
     principal: Principal,
     candid: ApiMessagesByMessageIndexResponse,
