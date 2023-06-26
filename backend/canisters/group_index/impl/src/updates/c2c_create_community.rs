@@ -69,7 +69,9 @@ pub(crate) async fn create_community_impl(
         }
         Ok(local_group_index_canister::c2c_create_community::Response::InternalError(error)) => Err(error),
         Err(error) => {
-            mutate_state(|state| rollback(args.is_public, &args.name, state));
+            if args.is_public {
+                mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
+            }
             Err(format!("{error:?}"))
         }
     }
@@ -100,7 +102,7 @@ struct PrepareResult {
 fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     let now = state.env.now();
 
-    if is_public && !state.data.public_communities.reserve_name(name, now) {
+    if is_public && !state.data.public_group_and_community_names.reserve_name(name, now) {
         return Err(NameTaken);
     }
 
@@ -127,6 +129,7 @@ fn commit(
 ) {
     let now = state.env.now();
     if is_public {
+        state.data.public_group_and_community_names.insert(&name, community_id.into());
         state.data.public_communities.handle_community_created(
             community_id,
             name,
@@ -146,10 +149,4 @@ fn commit(
         .data
         .local_index_map
         .add_community(local_group_index_canister, community_id);
-}
-
-fn rollback(is_public: bool, name: &str, state: &mut RuntimeState) {
-    if is_public {
-        state.data.public_communities.handle_community_creation_failed(name);
-    }
 }

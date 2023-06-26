@@ -36,10 +36,18 @@ pub(crate) fn delete_group(
         );
     }
 
-    let public = state.data.public_groups.delete(&group_id).is_some();
-    if !public {
+    let public = if let Some(group) = state.data.public_groups.delete(&group_id) {
+        // This won't remove the name if the group was converted into a community because the name
+        // will now be assigned to the community
+        state
+            .data
+            .public_group_and_community_names
+            .remove(group.name(), group_id.into());
+        true
+    } else {
         state.data.private_groups.delete(&group_id);
-    }
+        false
+    };
 
     state.data.deleted_groups.insert(
         DeletedGroupInfo {

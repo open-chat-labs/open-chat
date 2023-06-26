@@ -15,6 +15,10 @@ fn c2c_make_private_impl(state: &mut RuntimeState) -> Response {
     let chat_id = ChatId::from(caller);
 
     if let Some(group) = state.data.public_groups.delete(&chat_id) {
+        state
+            .data
+            .public_group_and_community_names
+            .remove(group.name(), chat_id.into());
         state.data.cached_hot_groups.remove(chat_id);
         state.data.private_groups.add(group.into());
         Success
