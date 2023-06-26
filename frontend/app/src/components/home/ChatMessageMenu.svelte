@@ -112,7 +112,7 @@
     }
 
     function pinMessage() {
-        if (!canPin || inThread) return;
+        if (!canPin || inThread || chatId.kind === "direct_chat") return;
         client.pinMessage(chatId, msg.messageIndex).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("pinMessageFailed");
@@ -121,7 +121,7 @@
     }
 
     function unpinMessage() {
-        if (!canPin || inThread) return;
+        if (!canPin || inThread || chatId.kind === "direct_chat") return;
         client.unpinMessage(chatId, msg.messageIndex).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("unpinMessageFailed");

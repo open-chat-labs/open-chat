@@ -18,6 +18,8 @@ import type {
     UserSuspended,
     ChatFrozen,
     Failure,
+    CommunityFrozen,
+    NoChange,
 } from "../response";
 import { emptyChatMetrics } from "../../utils";
 import type { CommunityIdentifier, CommunitySummary } from "../community";
@@ -110,9 +112,9 @@ export type CompletedCryptocurrencyTransfer = {
     sender: string;
     amountE8s: bigint;
     feeE8s: bigint;
-    memo: bigint;
+    // memo: bigint;
     blockIndex: bigint;
-    transactionHash: string;
+    transactionHash: string | undefined;
 };
 
 export type PendingCryptocurrencyTransfer = {
@@ -121,7 +123,7 @@ export type PendingCryptocurrencyTransfer = {
     recipient: string;
     amountE8s: bigint;
     feeE8s?: bigint;
-    memo?: bigint;
+    // memo?: bigint;
     createdAtNanos: bigint;
 };
 
@@ -131,7 +133,7 @@ export type FailedCryptocurrencyTransfer = {
     recipient: string;
     amountE8s: bigint;
     feeE8s: bigint;
-    memo: bigint;
+    // memo: bigint;
     errorMessage: string;
 };
 
@@ -831,6 +833,18 @@ export function messageContextsEqual(
     );
 }
 
+export function chatIdentifierUnset(id: ChatIdentifier | undefined): boolean {
+    if (id === undefined) return true;
+    switch (id.kind) {
+        case "channel":
+            return id.channelId === "";
+        case "direct_chat":
+            return id.userId === "";
+        case "group_chat":
+            return id.groupId === "";
+    }
+}
+
 export function chatIdentifiersEqual(
     a: ChatIdentifier | undefined,
     b: ChatIdentifier | undefined
@@ -1071,20 +1085,20 @@ export type Member = {
 
 export type FullMember = Member & PartialUserSummary;
 
-export type GroupChatDetailsResponse = "caller_not_in_group" | GroupChatDetails;
+export type GroupChatDetailsResponse = "failure" | GroupChatDetails;
 
 export type GroupChatDetailsUpdatesResponse =
     | ({ kind: "success" } & GroupChatDetailsUpdates)
-    | { kind: "success_no_updates"; latestEventIndex: number }
-    | "caller_not_in_group";
+    | { kind: "success_no_updates"; timestamp: bigint }
+    | Failure;
 
 export type GroupChatDetails = {
     members: Member[];
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
-    latestEventIndex: number;
     rules: AccessRules;
+    timestamp: bigint;
 };
 
 /**
@@ -1097,7 +1111,7 @@ export type ChatSpecificState = {
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
-    latestEventIndex?: number;
+    lastUpdated: bigint;
     rules?: AccessRules;
     userIds: Set<string>;
     focusMessageIndex?: number;
@@ -1114,9 +1128,9 @@ export type GroupChatDetailsUpdates = {
     blockedUsersRemoved: Set<string>;
     pinnedMessagesRemoved: Set<number>;
     pinnedMessagesAdded: Set<number>;
-    latestEventIndex: number;
     rules?: AccessRules;
     invitedUsers?: Set<string>;
+    timestamp: bigint;
 };
 
 export type ChatSummary = DirectChatSummary | MultiUserChat;
@@ -1290,7 +1304,7 @@ export type CandidateGroupChat = AccessControlled &
     HasLevel &
     HasMembershipRole &
     Permissioned<ChatPermissions> & {
-        id: GroupChatIdentifier;
+        id: MultiUserChatIdentifier;
         name: string;
         description: string;
         rules: AccessRules;
@@ -1315,11 +1329,13 @@ export type CreateGroupResponse =
     | GroupRulesTooShort
     | GroupRulesTooLong
     | UnauthorizedToCreatePublicGroup
+    | NotAuthorised
+    | CommunityFrozen
     | UserSuspended;
 
 export type CreateGroupSuccess = {
     kind: "success";
-    canisterId: string;
+    canisterId: MultiUserChatIdentifier;
 };
 
 export type CreateGroupInternalError = InternalError;
@@ -1376,14 +1392,7 @@ export type MemberLimitReached = {
     kind: "member_limit_reached";
 };
 
-export type EditMessageResponse =
-    | "success"
-    | "chat_not_found"
-    | "message_not_found"
-    | "user_blocked"
-    | "not_in_group"
-    | "user_suspended"
-    | "chat_frozen";
+export type EditMessageResponse = "success" | "failure";
 
 export type SendMessageResponse =
     | SendMessageSuccess
@@ -1404,6 +1413,7 @@ export type SendMessageResponse =
     | NotAuthorised
     | ThreadMessageNotFound
     | UserSuspended
+    | Failure
     | ChatFrozen;
 
 export type SendMessageSuccess = {
@@ -1525,12 +1535,7 @@ export type ChangeRoleResponse =
     | "chat_frozen"
     | "success";
 
-export type DeleteGroupResponse =
-    | "internal_error"
-    | "not_authorized"
-    | "chat_frozen"
-    | "success"
-    | "user_suspended";
+export type DeleteGroupResponse = "success" | "failure";
 
 export type MakeGroupPrivateResponse =
     | "internal_error"
@@ -1597,14 +1602,7 @@ export type JoinGroupResponse =
     | ChatFrozen
     | InternalError;
 
-export type InviteUsersResponse =
-    | "success"
-    | "group_not_found"
-    | "caller_not_in_group"
-    | "not_authorized"
-    | "chat_frozen"
-    | "too_many_invites"
-    | "internal_error";
+export type InviteUsersResponse = "success" | "failure";
 
 export type MarkReadRequest = {
     readUpTo: number | undefined;
@@ -1635,7 +1633,8 @@ export type UpdateGroupResponse =
     | "rules_too_long"
     | "user_suspended"
     | "chat_frozen"
-    | "internal_error";
+    | "internal_error"
+    | "failure";
 
 export type UpdatePermissionsResponse =
     | "success"
@@ -1668,14 +1667,7 @@ export type UndeleteMessageResponse =
     | UserSuspended
     | ChatFrozen;
 
-export type UnpinMessageResponse =
-    | "no_change"
-    | "caller_not_in_group"
-    | "not_authorized"
-    | "message_not_found"
-    | "user_suspended"
-    | "chat_frozen"
-    | "success";
+export type UnpinMessageResponse = "failure" | "success";
 
 export type PinMessageResponse =
     | {
@@ -1683,13 +1675,8 @@ export type PinMessageResponse =
           eventIndex: number;
           timestamp: bigint;
       }
-    | { kind: "index_out_of_range" }
-    | { kind: "no_change" }
-    | { kind: "caller_not_in_group" }
-    | { kind: "not_authorized" }
-    | { kind: "message_not_found" }
-    | UserSuspended
-    | ChatFrozen;
+    | NoChange
+    | Failure;
 
 export type DeletedGroupMessageResponse =
     | {

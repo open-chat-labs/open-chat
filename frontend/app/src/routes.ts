@@ -103,6 +103,7 @@ export function selectedChannelRoute(ctx: PageJS.Context): RouteParams {
             communityId: ctx.params["communityId"],
             channelId: ctx.params["channelId"],
         },
+        communityId: { kind: "community", communityId: ctx.params["communityId"] },
         messageIndex: ctx.params["messageIndex"] ? Number(ctx.params["messageIndex"]) : undefined,
         threadMessageIndex: ctx.params["threadMessageIndex"]
             ? Number(ctx.params["threadMessageIndex"])
@@ -225,6 +226,7 @@ export type SelectedCommunityRoute = {
 export type SelectedChannelRoute = {
     kind: "selected_channel_route";
     chatId: ChannelIdentifier;
+    communityId: CommunityIdentifier;
     messageIndex?: number;
     threadMessageIndex?: number;
     open: boolean;

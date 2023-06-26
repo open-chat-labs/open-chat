@@ -45,21 +45,33 @@
     let unreadMentions: number;
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        if (chatSummary.kind === "direct_chat") {
-            const them = $userStore[chatSummary.them.userId];
-            return {
-                name: client.usernameAndIcon(them),
-                avatarUrl: client.userAvatarUrl(them),
-                userId: chatSummary.them,
-                typing: client.getTypingString($_, $userStore, { chatId: chatSummary.id }, typing),
-            };
+        switch (chatSummary.kind) {
+            case "direct_chat":
+                const them = $userStore[chatSummary.them.userId];
+                return {
+                    name: client.usernameAndIcon(them),
+                    avatarUrl: client.userAvatarUrl(them),
+                    userId: chatSummary.them,
+                    typing: client.getTypingString(
+                        $_,
+                        $userStore,
+                        { chatId: chatSummary.id },
+                        typing
+                    ),
+                };
+            default:
+                return {
+                    name: chatSummary.name,
+                    avatarUrl: client.groupAvatarUrl(chatSummary),
+                    userId: undefined,
+                    typing: client.getTypingString(
+                        $_,
+                        $userStore,
+                        { chatId: chatSummary.id },
+                        typing
+                    ),
+                };
         }
-        return {
-            name: chatSummary.name,
-            avatarUrl: client.groupAvatarUrl(chatSummary),
-            userId: undefined,
-            typing: client.getTypingString($_, $userStore, { chatId: chatSummary.id }, typing),
-        };
     }
 
     function getUnreadMentionCount(chat: ChatSummary): number {

@@ -217,6 +217,34 @@ export const Notification = IDL.Variant({
                 'memo' : IDL.Opt(IDL.Nat64),
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
+              'ICRC1' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'fee' : IDL.Nat,
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'KINIC' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                'amount' : IDL.Nat,
+              }),
             }),
             'winner' : IDL.Principal,
             'prize_message' : IDL.Nat32,
@@ -285,6 +313,34 @@ export const Notification = IDL.Variant({
                   'error_message' : IDL.Text,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'from' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'error_message' : IDL.Text,
+                  'amount' : IDL.Nat,
+                }),
               }),
               'Completed' : IDL.Variant({
                 'NNS' : IDL.Record({
@@ -339,6 +395,34 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'block_index' : IDL.Nat64,
+                  'from' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'amount' : IDL.Nat,
+                }),
               }),
               'Pending' : IDL.Variant({
                 'NNS' : IDL.Record({
@@ -374,6 +458,23 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'amount' : IDL.Nat,
                 }),
               }),
             }),
@@ -420,6 +521,15 @@ export const Notification = IDL.Variant({
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
+            'chat_if_other' : IDL.Opt(
+              IDL.Tuple(
+                IDL.Variant({
+                  'Group' : IDL.Principal,
+                  'Channel' : IDL.Tuple(IDL.Principal, IDL.Nat),
+                }),
+                IDL.Opt(IDL.Nat32),
+              )
+            ),
             'event_list_if_other' : IDL.Opt(
               IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
             ),
@@ -652,6 +762,34 @@ export const Notification = IDL.Variant({
                 'memo' : IDL.Opt(IDL.Nat64),
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
+              'ICRC1' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'fee' : IDL.Nat,
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'KINIC' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                'amount' : IDL.Nat,
+              }),
             }),
             'winner' : IDL.Principal,
             'prize_message' : IDL.Nat32,
@@ -720,6 +858,34 @@ export const Notification = IDL.Variant({
                   'error_message' : IDL.Text,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'from' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'error_message' : IDL.Text,
+                  'amount' : IDL.Nat,
+                }),
               }),
               'Completed' : IDL.Variant({
                 'NNS' : IDL.Record({
@@ -774,6 +940,34 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'block_index' : IDL.Nat64,
+                  'from' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'amount' : IDL.Nat,
+                }),
               }),
               'Pending' : IDL.Variant({
                 'NNS' : IDL.Record({
@@ -809,6 +1003,23 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'amount' : IDL.Nat,
                 }),
               }),
             }),
@@ -855,6 +1066,15 @@ export const Notification = IDL.Variant({
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
+            'chat_if_other' : IDL.Opt(
+              IDL.Tuple(
+                IDL.Variant({
+                  'Group' : IDL.Principal,
+                  'Channel' : IDL.Tuple(IDL.Principal, IDL.Nat),
+                }),
+                IDL.Opt(IDL.Nat32),
+              )
+            ),
             'event_list_if_other' : IDL.Opt(
               IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
             ),
@@ -1092,6 +1312,34 @@ export const Notification = IDL.Variant({
                 'memo' : IDL.Opt(IDL.Nat64),
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
+              'ICRC1' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'fee' : IDL.Nat,
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'KINIC' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                'amount' : IDL.Nat,
+              }),
             }),
             'winner' : IDL.Principal,
             'prize_message' : IDL.Nat32,
@@ -1160,6 +1408,34 @@ export const Notification = IDL.Variant({
                   'error_message' : IDL.Text,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'from' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'error_message' : IDL.Text,
+                  'amount' : IDL.Nat,
+                }),
               }),
               'Completed' : IDL.Variant({
                 'NNS' : IDL.Record({
@@ -1214,6 +1490,34 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'block_index' : IDL.Nat64,
+                  'from' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'amount' : IDL.Nat,
+                }),
               }),
               'Pending' : IDL.Variant({
                 'NNS' : IDL.Record({
@@ -1249,6 +1553,23 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'amount' : IDL.Nat,
                 }),
               }),
             }),
@@ -1295,6 +1616,15 @@ export const Notification = IDL.Variant({
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
+            'chat_if_other' : IDL.Opt(
+              IDL.Tuple(
+                IDL.Variant({
+                  'Group' : IDL.Principal,
+                  'Channel' : IDL.Tuple(IDL.Principal, IDL.Nat),
+                }),
+                IDL.Opt(IDL.Nat32),
+              )
+            ),
             'event_list_if_other' : IDL.Opt(
               IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
             ),
@@ -1540,6 +1870,34 @@ export const Notification = IDL.Variant({
                 'memo' : IDL.Opt(IDL.Nat64),
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
+              'ICRC1' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'fee' : IDL.Nat,
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'KINIC' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                'amount' : IDL.Nat,
+              }),
             }),
             'winner' : IDL.Principal,
             'prize_message' : IDL.Nat32,
@@ -1608,6 +1966,34 @@ export const Notification = IDL.Variant({
                   'error_message' : IDL.Text,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'from' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'error_message' : IDL.Text,
+                  'amount' : IDL.Nat,
+                }),
               }),
               'Completed' : IDL.Variant({
                 'NNS' : IDL.Record({
@@ -1662,6 +2048,34 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'block_index' : IDL.Nat64,
+                  'from' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'amount' : IDL.Nat,
+                }),
               }),
               'Pending' : IDL.Variant({
                 'NNS' : IDL.Record({
@@ -1697,6 +2111,23 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'amount' : IDL.Nat,
                 }),
               }),
             }),
@@ -1743,6 +2174,15 @@ export const Notification = IDL.Variant({
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
+            'chat_if_other' : IDL.Opt(
+              IDL.Tuple(
+                IDL.Variant({
+                  'Group' : IDL.Principal,
+                  'Channel' : IDL.Tuple(IDL.Principal, IDL.Nat),
+                }),
+                IDL.Opt(IDL.Nat32),
+              )
+            ),
             'event_list_if_other' : IDL.Opt(
               IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
             ),
@@ -1983,6 +2423,34 @@ export const Notification = IDL.Variant({
                 'memo' : IDL.Opt(IDL.Nat64),
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
+              'ICRC1' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'fee' : IDL.Nat,
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'KINIC' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                'amount' : IDL.Nat,
+              }),
             }),
             'winner' : IDL.Principal,
             'prize_message' : IDL.Nat32,
@@ -2051,6 +2519,34 @@ export const Notification = IDL.Variant({
                   'error_message' : IDL.Text,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'from' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'error_message' : IDL.Text,
+                  'amount' : IDL.Nat,
+                }),
               }),
               'Completed' : IDL.Variant({
                 'NNS' : IDL.Record({
@@ -2105,6 +2601,34 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'block_index' : IDL.Nat64,
+                  'from' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'amount' : IDL.Nat,
+                }),
               }),
               'Pending' : IDL.Variant({
                 'NNS' : IDL.Record({
@@ -2140,6 +2664,23 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'amount' : IDL.Nat,
                 }),
               }),
             }),
@@ -2186,6 +2727,15 @@ export const Notification = IDL.Variant({
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
+            'chat_if_other' : IDL.Opt(
+              IDL.Tuple(
+                IDL.Variant({
+                  'Group' : IDL.Principal,
+                  'Channel' : IDL.Tuple(IDL.Principal, IDL.Nat),
+                }),
+                IDL.Opt(IDL.Nat32),
+              )
+            ),
             'event_list_if_other' : IDL.Opt(
               IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
             ),
@@ -2420,6 +2970,34 @@ export const Notification = IDL.Variant({
                 'memo' : IDL.Opt(IDL.Nat64),
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
+              'ICRC1' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'fee' : IDL.Nat,
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'KINIC' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                'amount' : IDL.Nat,
+              }),
             }),
             'winner' : IDL.Principal,
             'prize_message' : IDL.Nat32,
@@ -2488,6 +3066,34 @@ export const Notification = IDL.Variant({
                   'error_message' : IDL.Text,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'from' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'error_message' : IDL.Text,
+                  'amount' : IDL.Nat,
+                }),
               }),
               'Completed' : IDL.Variant({
                 'NNS' : IDL.Record({
@@ -2542,6 +3148,34 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'block_index' : IDL.Nat64,
+                  'from' : IDL.Variant({
+                    'Mint' : IDL.Null,
+                    'Account' : IDL.Record({
+                      'owner' : IDL.Principal,
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'amount' : IDL.Nat,
+                }),
               }),
               'Pending' : IDL.Variant({
                 'NNS' : IDL.Record({
@@ -2577,6 +3211,23 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
+                'ICRC1' : IDL.Record({
+                  'to' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                  'fee' : IDL.Nat,
+                  'created' : IDL.Nat64,
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'KINIC' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
+                  'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'amount' : IDL.Nat,
                 }),
               }),
             }),
@@ -2623,6 +3274,15 @@ export const Notification = IDL.Variant({
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
+            'chat_if_other' : IDL.Opt(
+              IDL.Tuple(
+                IDL.Variant({
+                  'Group' : IDL.Principal,
+                  'Channel' : IDL.Tuple(IDL.Principal, IDL.Nat),
+                }),
+                IDL.Opt(IDL.Nat32),
+              )
+            ),
             'event_list_if_other' : IDL.Opt(
               IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
             ),

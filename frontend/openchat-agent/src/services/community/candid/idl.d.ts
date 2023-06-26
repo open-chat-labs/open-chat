@@ -85,7 +85,7 @@ export {
     MakePrivateResponse as ApiMakePrivateResponse,
     MessagesByMessageIndexResponse as ApiMessagesByMessageIndexResponse,
     OptionalCommunityPermissions as ApiOptionalCommunityPermissions,
-    PinMessageResponse as ApiPinMessageResponse,
+    PinMessageResponse as ApiPinChannelMessageResponse,
     RemoveMemberResponse as ApiRemoveMemberResponse,
     RemoveMemberFromChannelResponse as ApiRemoveMemberFromChannelResponse,
     RemoveReactionResponse as ApiRemoveReactionResponse,

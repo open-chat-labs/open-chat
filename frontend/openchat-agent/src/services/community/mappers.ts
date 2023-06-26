@@ -12,16 +12,12 @@ import {
     CommunityInviteCodeResponse,
     CommunityMembershipUpdates,
     CommunityPermissions,
-    CommunityRulesResponse,
     CommunitySummaryResponse,
     CommunitySummaryUpdatesResponse,
-    CreateChannelResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
-    DeleteChannelResponse,
     DisableCommunityInviteCodeResponse,
-    EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
     EventsResponse,
     GateCheckFailedReason,
@@ -31,19 +27,15 @@ import {
     MakeCommunityPrivateResponse,
     MemberRole,
     Message,
-    PinChannelMessageResponse,
     RemoveChannelMemberResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
-    SelectedChannelInitialResponse,
-    SelectedChannelUpdatesResponse,
-    SendChannelMessageResponse,
+    SendMessageResponse,
     ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
     UndeleteChannelMessagesResponse,
     UnsupportedValueError,
-    UpdateChannelResponse,
     UpdateCommunityResponse,
     UserFailedError,
     UserFailedGateCheck,
@@ -53,13 +45,10 @@ import type {
     ApiBlockUserResponse,
     ApiChangeChannelRoleResponse,
     ApiChangeRoleResponse,
-    ApiCreateChannelResponse,
     ApiDeclineInvitationResponse,
-    ApiDeleteChannelResponse,
     ApiDeleteMessagesResponse,
     ApiDeletedMessageResponse,
     ApiDisableInviteCodeResponse,
-    ApiEditMessageResponse,
     ApiInviteCodeResponse,
     ApiJoinChannelResponse,
     ApiLeaveChannelResponse,
@@ -67,13 +56,9 @@ import type {
     ApiMakeChannelPrivateResponse,
     ApiMakePrivateResponse,
     ApiMessagesByMessageIndexResponse,
-    ApiPinMessageResponse,
     ApiRemoveMemberResponse,
     ApiRemoveMemberFromChannelResponse,
-    ApiRulesResponse,
     ApiSearchChannelResponse,
-    ApiSelectedChannelInitialResponse,
-    ApiSelectedChannelUpdatesResponse,
     ApiSendMessageResponse,
     ApiSummaryResponse,
     ApiSummaryUpdatesResponse,
@@ -81,7 +66,6 @@ import type {
     ApiToggleMuteNotificationsResponse,
     ApiUnblockUserResponse,
     ApiUndeleteMessagesResponse,
-    ApiUpdateChannelResponse,
     ApiUpdateCommunityResponse,
     ApiGroupRole,
     ApiCommunityRole,
@@ -119,7 +103,7 @@ import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 import { identity, optionUpdate, optional } from "../../utils/mapping";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
-import { groupRules, member, messageWrapper } from "../group/mappers";
+import { messageWrapper } from "../group/mappers";
 import { ReplicaNotUpToDateError } from "../error";
 
 export function addMembersToChannelResponse(
@@ -312,49 +296,6 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommuni
     throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
 }
 
-export function createChannelResponse(candid: ApiCreateChannelResponse): CreateChannelResponse {
-    if ("MaxChannelsCreated" in candid) {
-        return { kind: "max_channels_created" };
-    }
-    if ("NameReserved" in candid) {
-        return { kind: "name_reserved" };
-    }
-    if ("RulesTooLong" in candid) {
-        return { kind: "rules_too_long" };
-    }
-    if ("DescriptionTooLong" in candid) {
-        return { kind: "description_too_long" };
-    }
-    if ("NameTooShort" in candid) {
-        return { kind: "name_too_short" };
-    }
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
-    }
-    if ("AvatarTooBig" in candid) {
-        return { kind: "avatar_too_big" };
-    }
-    if ("Success" in candid) {
-        return { kind: "success", channelId: candid.Success.channel_id.toString() };
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
-    }
-    if ("RulesTooShort" in candid) {
-        return { kind: "rules_too_short" };
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
-    }
-    if ("NameTooLong" in candid) {
-        return { kind: "name_too_long" };
-    }
-    if ("NameTaken" in candid) {
-        return { kind: "name_taken" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiCreateChannelResponse type received", candid);
-}
-
 export function declineInvitationResponse(
     candid: ApiDeclineInvitationResponse
 ): DeclineChannelInvitationResponse {
@@ -374,31 +315,6 @@ export function declineInvitationResponse(
         "Unexpected ApiDeclineInvitationResponse type received",
         candid
     );
-}
-
-export function deleteChannelResponse(candid: ApiDeleteChannelResponse): DeleteChannelResponse {
-    if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChat;
-    }
-    if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound;
-    }
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
-    }
-    if ("Success" in candid) {
-        return CommonResponses.success;
-    }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteChannelResponse type received", candid);
 }
 
 export function deleteMessagesResponse(
@@ -485,31 +401,6 @@ export function disableInviteCodeResponse(
         "Unexpected ApiDisableInviteCodeResponse type received",
         candid
     );
-}
-
-export function editMessageResponse(candid: ApiEditMessageResponse): EditChannelMessageResponse {
-    if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChat;
-    }
-    if ("MessageNotFound" in candid) {
-        return CommonResponses.messageNotFound;
-    }
-    if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound;
-    }
-    if ("Success" in candid) {
-        return CommonResponses.success;
-    }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
-    }
-    throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
 
 export function enableInviteCodeResponse(
@@ -718,22 +609,6 @@ export async function messagesByMessageIndexResponse(
     );
 }
 
-export function pinMessageResponse(candid: ApiPinMessageResponse): PinChannelMessageResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            event: {
-                timestamp: candid.Success.timestamp,
-                index: candid.Success.index,
-                expiresAt: optional(candid.Success.expires_at, identity),
-            },
-        };
-    } else {
-        console.warn("PinChannelMessage failed with", candid);
-        return CommonResponses.failure;
-    }
-}
-
 export function removeMemberResponse(
     candid: ApiRemoveMemberResponse
 ): RemoveCommunityMemberResponse {
@@ -752,18 +627,6 @@ export function removeMemberFromChannelResponse(
         return CommonResponses.success;
     } else {
         console.warn("RemoveChannelMember failed with", candid);
-        return CommonResponses.failure;
-    }
-}
-
-export function rulesResponse(candid: ApiRulesResponse): CommunityRulesResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            rules: optional(candid.Success.rules, identity),
-        };
-    } else {
-        console.warn("CommunityRules failed with", candid);
         return CommonResponses.failure;
     }
 }
@@ -790,70 +653,60 @@ export function messageMatch(candid: ApiMessageMatch): ChannelMessageMatch {
     };
 }
 
-export function selectedChannelInitialResponse(
-    candid: ApiSelectedChannelInitialResponse
-): SelectedChannelInitialResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            members: candid.Success.members.map(member),
-            invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
-            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
-            timestamp: candid.Success.timestamp,
-            pinnedMessages: new Set(candid.Success.pinned_messages),
-            latestEventIndex: candid.Success.latest_event_index,
-            rules: groupRules(candid.Success.rules),
-        };
-    } else {
-        console.warn("SelectedChannelInitial failed with", candid);
-        return CommonResponses.failure;
-    }
-}
-
-export function selectedChannelUpdatesResponse(
-    candid: ApiSelectedChannelUpdatesResponse
-): SelectedChannelUpdatesResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            membersAddedOrUpdated: candid.Success.members_added_or_updated.map(member),
-            membersRemoved: new Set(candid.Success.members_removed.map((u) => u.toString())),
-            blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
-            blockedUsersRemoved: new Set(
-                candid.Success.blocked_users_removed.map((u) => u.toString())
-            ),
-            pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
-            pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
-            latestEventIndex: candid.Success.latest_event_index,
-            rules: optional(candid.Success.rules, groupRules),
-            invitedUsers: optional(
-                candid.Success.invited_users,
-                (invited_users) => new Set(invited_users.map((u) => u.toString()))
-            ),
-            timestamp: candid.Success.timestamp,
-        };
-    } else if ("SuccessNoUpdates" in candid) {
-        return CommonResponses.successNoUpdates;
-    } else {
-        console.warn("SelectedChannelUpdates failed with", candid);
-        return CommonResponses.failure;
-    }
-}
-
-export function sendMessageResponse(candid: ApiSendMessageResponse): SendChannelMessageResponse {
+export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
             timestamp: candid.Success.timestamp,
-            eventIndex: candid.Success.event_index,
-            expiresAt: optional(candid.Success.expires_at, identity),
             messageIndex: candid.Success.message_index,
+            eventIndex: candid.Success.event_index,
         };
-    } else {
-        console.warn("SendChannelMessage failed with", candid);
-        return CommonResponses.failure;
     }
+    if ("CallerNotInGroup" in candid) {
+        return { kind: "not_in_group" };
+    }
+    if ("TextTooLong" in candid) {
+        return { kind: "text_too_long" };
+    }
+    if ("MessageEmpty" in candid) {
+        return { kind: "message_empty" };
+    }
+    if ("InvalidRequest" in candid) {
+        return { kind: "invalid_request", reason: candid.InvalidRequest };
+    }
+    if ("InvalidPoll" in candid) {
+        return { kind: "invalid_poll" };
+    }
+    if ("NotAuthorized" in candid) {
+        return { kind: "not_authorized" };
+    }
+    if ("ThreadMessageNotFound" in candid) {
+        return { kind: "thread_message_not_found" };
+    }
+    if ("UserSuspended" in candid) {
+        return { kind: "user_suspended" };
+    }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
+
+    return CommonResponses.failure;
 }
+
+// export function sendMessageResponse(candid: ApiSendMessageResponse): SendChannelMessageResponse {
+//     if ("Success" in candid) {
+//         return {
+//             kind: "success",
+//             timestamp: candid.Success.timestamp,
+//             eventIndex: candid.Success.event_index,
+//             expiresAt: optional(candid.Success.expires_at, identity),
+//             messageIndex: candid.Success.message_index,
+//         };
+//     } else {
+//         console.warn("SendChannelMessage failed with", candid);
+//         return CommonResponses.failure;
+//     }
+// }
 
 export function summaryResponse(candid: ApiSummaryResponse): CommunitySummaryResponse {
     if ("Success" in candid) {
@@ -994,15 +847,6 @@ export function undeleteMessagesResponse(
         return { kind: "success", messages: candid.Success.messages.map(message) };
     } else {
         console.warn("UndeleteChannelMessages failed with", candid);
-        return CommonResponses.failure;
-    }
-}
-
-export function updateChannelResponse(candid: ApiUpdateChannelResponse): UpdateChannelResponse {
-    if ("Success" in candid) {
-        return CommonResponses.success;
-    } else {
-        console.warn("UpdateChannel failed with", candid);
         return CommonResponses.failure;
     }
 }

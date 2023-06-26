@@ -72,9 +72,12 @@ function handleAgentEvent(ev: Event): void {
 
 type Uncorrelated = Omit<WorkerResponse, "correlationId" | "kind">;
 
-const sendError = (correlationId: string) => {
+const sendError = (correlationId: string, payload?: unknown) => {
     return (error: unknown) => {
         logger?.error("WORKER: sending error: ", error);
+        if (payload !== undefined) {
+            console.error("WORKER: error caused by paylaod: ", payload);
+        }
         postMessage({
             kind: "worker_error",
             correlationId,
@@ -149,7 +152,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getDeletedGroupMessage":
@@ -164,7 +167,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getDeletedDirectMessage":
@@ -175,7 +178,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getUpdates":
@@ -186,7 +189,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "createUserClient":
@@ -211,7 +214,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         });
                     })
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getUsers":
@@ -222,7 +225,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getAllCachedUsers":
@@ -233,7 +236,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "markMessagesRead":
@@ -244,18 +247,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getGroupDetails":
                 agent
-                    .getGroupDetails(payload.chatId, payload.latestEventIndex)
+                    .getGroupDetails(payload.chatId, payload.timestamp)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getGroupDetailsUpdates":
@@ -266,7 +269,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "lastOnline":
@@ -277,7 +280,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "markAsOnline":
@@ -288,40 +291,24 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response: undefined,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
-            case "directChatEventsWindow":
+            case "chatEventsWindow":
                 agent
-                    .directChatEventsWindow(
+                    .chatEventsWindow(
                         payload.eventIndexRange,
                         payload.chatId,
                         payload.messageIndex,
-                        payload.latestClientMainEventIndex
+                        payload.latestClientMainEventIndex,
+                        payload.threadRootMessageIndex
                     )
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "groupChatEventsWindow":
-                agent
-                    .groupChatEventsWindow(
-                        payload.eventIndexRange,
-                        payload.chatId,
-                        payload.messageIndex,
-                        payload.threadRootMessageIndex,
-                        payload.latestClientMainEventIndex
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "chatEventsByEventIndex":
@@ -337,7 +324,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "rehydrateMessage":
@@ -353,7 +340,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "checkUsername":
@@ -364,7 +351,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "searchUsers":
@@ -375,7 +362,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "migrateUserPrincipal":
@@ -386,7 +373,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "initUserPrincipalMigration":
@@ -397,7 +384,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response: undefined,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getUserStorageLimits":
@@ -408,7 +395,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getPublicGroupSummary":
@@ -419,7 +406,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "toggleMuteNotifications":
@@ -430,7 +417,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "archiveChat":
@@ -441,7 +428,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "unarchiveChat":
@@ -452,7 +439,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "pinChat":
@@ -463,7 +450,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "unpinChat":
@@ -474,7 +461,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "blockUserFromDirectChat":
@@ -485,7 +472,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "unblockUserFromDirectChat":
@@ -496,7 +483,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "setUserAvatar":
@@ -507,7 +494,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "makeGroupPrivate":
@@ -518,7 +505,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "deleteGroup":
@@ -529,7 +516,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "leaveGroup":
@@ -540,7 +527,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "joinGroup":
@@ -551,7 +538,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "joinCommunity":
@@ -562,7 +549,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "updateGroup":
@@ -581,7 +568,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "registerPollVote":
@@ -598,7 +585,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "deleteMessage":
@@ -614,7 +601,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "undeleteMessage":
@@ -629,7 +616,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "addReaction":
@@ -646,7 +633,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "removeReaction":
@@ -662,7 +649,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "blockUserFromGroupChat":
@@ -673,7 +660,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "unblockUserFromGroupChat":
@@ -684,7 +671,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getProposalVoteDetails":
@@ -699,7 +686,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "listNervousSystemFunctions":
@@ -710,7 +697,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "unpinMessage":
@@ -721,7 +708,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "pinMessage":
@@ -732,7 +719,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "sendMessage":
@@ -749,7 +736,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "editMessage":
@@ -760,7 +747,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "registerUser":
@@ -771,7 +758,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "subscriptionExists":
@@ -782,7 +769,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "pushSubscription":
@@ -793,7 +780,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response: undefined,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "removeSubscription":
@@ -804,7 +791,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response: undefined,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "inviteUsers":
@@ -815,7 +802,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "inviteUsersToCommunity":
+                agent
+                    .inviteUsersToCommunity(payload.id, payload.userIds)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "removeMember":
@@ -826,7 +824,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "changeRole":
@@ -837,7 +835,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "registerProposalVote":
@@ -848,7 +846,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getRecommendedGroups":
@@ -859,7 +857,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getGroupRules":
@@ -870,7 +868,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "exploreCommunities":
@@ -881,7 +879,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "searchGroups":
@@ -892,7 +890,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "dismissRecommendation":
@@ -903,7 +901,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response: undefined,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "groupInvite":
@@ -926,7 +924,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "searchDirectChat":
@@ -937,7 +935,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "refreshAccountBalance":
@@ -948,7 +946,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "threadPreviews":
@@ -959,7 +957,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getUser":
@@ -970,7 +968,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getPublicProfile":
@@ -981,7 +979,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "setUsername":
@@ -992,7 +990,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "setBio":
@@ -1003,7 +1001,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getBio":
@@ -1014,7 +1012,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "withdrawCryptocurrency":
@@ -1025,7 +1023,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getGroupMessagesByMessageIndex":
@@ -1040,7 +1038,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getInviteCode":
@@ -1051,7 +1049,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "enableInviteCode":
@@ -1062,7 +1060,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "disableInviteCode":
@@ -1073,7 +1071,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "resetInviteCode":
@@ -1084,7 +1082,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "createGroupChat":
@@ -1095,7 +1093,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "setCachedMessageFromNotification":
@@ -1110,7 +1108,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response: undefined,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "freezeGroup":
@@ -1121,7 +1119,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "unfreezeGroup":
@@ -1132,7 +1130,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "deleteFrozenGroup":
@@ -1143,7 +1141,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "addHotGroupExclusion":
@@ -1154,7 +1152,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "removeHotGroupExclusion":
@@ -1165,7 +1163,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "suspendUser":
@@ -1176,7 +1174,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "unsuspendUser":
@@ -1187,7 +1185,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "setGroupUpgradeConcurrency":
@@ -1198,7 +1196,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "setUserUpgradeConcurrency":
@@ -1209,7 +1207,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "markSuspectedBot":
@@ -1220,7 +1218,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "loadFailedMessages":
@@ -1231,7 +1229,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "deleteFailedMessage":
@@ -1246,7 +1244,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response: undefined,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
             case "claimPrize":
                 agent
@@ -1256,7 +1254,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "payForDiamondMembership":
@@ -1273,7 +1271,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "updateMarketMakerConfig":
@@ -1284,7 +1282,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "setMessageReminder":
@@ -1301,7 +1299,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "cancelMessageReminder":
@@ -1312,7 +1310,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "getReferralLeaderboard":
@@ -1323,7 +1321,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "reportMessage":
@@ -1340,7 +1338,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "declineInvitation":
@@ -1351,7 +1349,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             // Community level functions
@@ -1364,7 +1362,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "blockCommunityUser":
@@ -1376,7 +1374,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "changeChannelRole":
@@ -1388,7 +1386,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "changeCommunityRole":
@@ -1400,19 +1398,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "createChannel":
-                agent
-                    .communityClient(payload.communityId)
-                    .createChannel(payload.candidate)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "declineChannelInvitation":
@@ -1424,19 +1410,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "deleteChannel":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .deleteChannel(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "deleteChannelMessages":
@@ -1453,7 +1427,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "deleteChannelMessage":
@@ -1470,7 +1444,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "disableCommunityInviteCode":
@@ -1482,71 +1456,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "editChannelMessage":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .editMessage(payload.chatId, payload.message, payload.threadRootMessageIndex)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "channelEvents":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .events(
-                        payload.chatId,
-                        payload.startIndex,
-                        payload.ascending,
-                        payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "channelEventsByIndex":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .eventsByIndex(
-                        payload.chatId,
-                        payload.eventIndexes,
-                        payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "channelEventsWindow":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .eventsWindow(
-                        payload.chatId,
-                        payload.messageIndex,
-                        payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "communityInviteCode":
@@ -1558,7 +1468,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "joinChannel":
@@ -1570,7 +1480,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "leaveChannel":
@@ -1582,7 +1492,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "makeChannelPrivate":
@@ -1594,7 +1504,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "makeCommunityPrivate":
@@ -1606,7 +1516,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "channelMessagesByMessageIndex":
@@ -1623,19 +1533,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "pinChannelMessage":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .pinMessage(payload.chatId, payload.messageIndex)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "removeCommunityMember":
@@ -1647,7 +1545,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "removeChannelMember":
@@ -1659,7 +1557,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "resetCommunityInviteCode":
@@ -1671,19 +1569,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "communityRules":
-                agent
-                    .communityClient(payload.communityId)
-                    .rules(payload.inviteCode)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "searchChannel":
@@ -1700,49 +1586,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "selectedChannelInitial":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .selectedChannelInitial(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "selectedChannelUpdates":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .selectedChannelUpdates(payload.chatId, payload.updatesSince)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "sendChannelMessage":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .sendMessage(
-                        payload.chatId,
-                        payload.senderName,
-                        payload.mentioned,
-                        payload.event,
-                        payload.threadRootMessageIndex
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "toggleMuteChannelNotifications":
@@ -1754,7 +1598,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "toggleMuteCommunityNotifications":
@@ -1766,7 +1610,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "unblockCommunityUser":
@@ -1778,7 +1622,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "undeleteChannelMessages":
@@ -1794,27 +1638,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "updateChannel":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .updateChannel(
-                        payload.chatId,
-                        payload.name,
-                        payload.description,
-                        payload.rules,
-                        payload.permissions,
-                        payload.avatar,
-                        payload.gate
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "updateCommunity":
@@ -1834,7 +1658,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
                 break;
 
             case "createCommunity":
@@ -1845,7 +1669,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             response,
                         })
                     )
-                    .catch(sendError(correlationId));
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "getCommunitySummary":
+                agent
+                    .getCommunitySummary(payload.communityId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
                 break;
 
             default:

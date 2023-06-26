@@ -12,6 +12,7 @@
     export let changedBy: string;
     export let property: string;
     export let timestamp: bigint;
+    export let level: string;
 
     $: userStore = client.userStore;
     $: me = changedBy === user?.userId;
@@ -20,6 +21,7 @@
         values: {
             changed: property,
             changedBy: changedByStr,
+            level,
         },
     });
 </script>

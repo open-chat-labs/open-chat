@@ -75,10 +75,6 @@ function hydrateBigIntsInContent(content: MessageContent): MessageContent {
                         content.transfer.feeE8s !== undefined
                             ? BigInt(content.transfer.feeE8s)
                             : undefined,
-                    memo:
-                        content.transfer.memo !== undefined
-                            ? BigInt(content.transfer.memo)
-                            : undefined,
                 },
             };
         }
@@ -89,7 +85,6 @@ function hydrateBigIntsInContent(content: MessageContent): MessageContent {
                     ...content.transfer,
                     amountE8s: BigInt(content.transfer.amountE8s),
                     feeE8s: BigInt(content.transfer.feeE8s),
-                    memo: BigInt(content.transfer.memo),
                     blockIndex: BigInt(content.transfer.blockIndex),
                 },
             };

@@ -1,13 +1,14 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 
 <script lang="ts">
-    import type { DataContent, OpenChat } from "openchat-client";
+    import type { AccessGate, DataContent, OpenChat } from "openchat-client";
     import Avatar from "../../../Avatar.svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "../../Markdown.svelte";
     import { AvatarSize } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
+    import AccessGateIcon from "../../AccessGateIcon.svelte";
 
     export let name: string;
     export let description: string;
@@ -15,14 +16,19 @@
     export let banner: DataContent;
     export let memberCount: number;
     export let channelCount: number;
-
     export let header = false;
+    export let gate: AccessGate;
 
     const client = getContext<OpenChat>("client");
 </script>
 
 <div class:header on:click class="card">
     <CommunityBanner square={header} {banner}>
+        {#if !header}
+            <div class="gate">
+                <AccessGateIcon position={"bottom"} align={"end"} on:upgrade {gate} />
+            </div>
+        {/if}
         <div class="avatar">
             <Avatar
                 url={client.communityAvatarUrl(avatar)}
@@ -64,6 +70,12 @@
             position: absolute;
             bottom: toRem(-15);
             left: $sp4;
+        }
+
+        .gate {
+            position: absolute;
+            top: $sp4;
+            right: $sp4;
         }
 
         &.header {

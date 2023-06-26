@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 import type { Identity } from "@dfinity/agent";
 import {
     Database,
@@ -151,6 +152,10 @@ import {
     chatIdentifiersEqual,
     CommunitySummary,
     ExploreCommunitiesResponse,
+    ChannelIdentifier,
+    MultiUserChatIdentifier,
+    CommunityIdentifier,
+    CommunitySummaryResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -230,7 +235,8 @@ export class OpenChatAgent extends EventTarget {
             this._communityClients[communityId] = CommunityClient.create(
                 communityId,
                 this.identity,
-                this.config
+                this.config,
+                this.db
             );
         }
         return this._communityClients[communityId];
@@ -270,16 +276,14 @@ export class OpenChatAgent extends EventTarget {
         msg: Message,
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {
-        if (chatId.kind === "group_chat") {
-            return this.editGroupMessage(chatId, msg, threadRootMessageIndex);
+        switch (chatId.kind) {
+            case "direct_chat":
+                return this.editDirectMessage(chatId, msg, threadRootMessageIndex);
+            case "group_chat":
+                return this.editGroupMessage(chatId, msg, threadRootMessageIndex);
+            case "channel":
+                return this.editChannelMessage(chatId, msg, threadRootMessageIndex);
         }
-        if (chatId.kind === "direct_chat") {
-            return this.editDirectMessage(chatId, msg, threadRootMessageIndex);
-        }
-        if (chatId.kind === "channel") {
-            throw new Error("TODO Not implemented");
-        }
-        throw new UnsupportedValueError("Unexpect chat type", chatId);
     }
 
     sendMessage(
@@ -289,6 +293,15 @@ export class OpenChatAgent extends EventTarget {
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
+        if (chatId.kind === "channel") {
+            return this.sendChannelMessage(
+                chatId,
+                user.username,
+                mentioned,
+                event,
+                threadRootMessageIndex
+            );
+        }
         if (chatId.kind === "group_chat") {
             if (event.event.content.kind === "crypto_content") {
                 return this.userClient.sendMessageWithTransferToGroup(
@@ -310,7 +323,23 @@ export class OpenChatAgent extends EventTarget {
         if (chatId.kind === "direct_chat") {
             return this.sendDirectMessage(chatId, user, event, threadRootMessageIndex);
         }
-        throw new Error("TODO - send channel message not implemented");
+        throw new UnsupportedValueError("Unexpect chat type", chatId);
+    }
+
+    private sendChannelMessage(
+        chatId: ChannelIdentifier,
+        senderName: string,
+        mentioned: User[],
+        event: EventWrapper<Message>,
+        threadRootMessageIndex?: number
+    ): Promise<[SendMessageResponse, Message]> {
+        return this.communityClient(chatId.communityId).sendMessage(
+            chatId,
+            senderName,
+            mentioned,
+            event,
+            threadRootMessageIndex
+        );
     }
 
     private sendGroupMessage(
@@ -336,6 +365,18 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId.groupId).editMessage(message, threadRootMessageIndex);
     }
 
+    private editChannelMessage(
+        chatId: ChannelIdentifier,
+        message: Message,
+        threadRootMessageIndex?: number
+    ): Promise<EditMessageResponse> {
+        return this.communityClient(chatId.communityId).editMessage(
+            chatId,
+            message,
+            threadRootMessageIndex
+        );
+    }
+
     private sendDirectMessage(
         chatId: DirectChatIdentifier,
         sender: CreatedUser,
@@ -354,11 +395,15 @@ export class OpenChatAgent extends EventTarget {
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
-        return this.userClient.createGroup(candidate);
+        if (candidate.id.kind === "channel") {
+            return this.communityClient(candidate.id.communityId).createChannel(candidate);
+        } else {
+            return this.userClient.createGroup(candidate);
+        }
     }
 
     updateGroup(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         name?: string,
         desc?: string,
         rules?: AccessRules,
@@ -366,33 +411,107 @@ export class OpenChatAgent extends EventTarget {
         avatar?: Uint8Array,
         gate?: AccessGate
     ): Promise<UpdateGroupResponse> {
-        return this.getGroupClient(chatId.groupId).updateGroup(
-            name,
-            desc,
-            rules,
-            permissions,
-            avatar,
-            undefined,
-            gate
-        );
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).updateGroup(
+                    name,
+                    desc,
+                    rules,
+                    permissions,
+                    avatar,
+                    undefined,
+                    gate
+                );
+            case "channel":
+                return this.communityClient(chatId.communityId).updateChannel(
+                    chatId,
+                    name,
+                    desc,
+                    rules,
+                    permissions,
+                    avatar,
+                    gate
+                );
+        }
     }
 
-    async inviteUsers(
-        chatId: GroupChatIdentifier,
+    async inviteUsersToCommunity(
+        id: CommunityIdentifier,
         userIds: string[]
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
         }
 
-        const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
-        return this.createLocalUserIndexClient(localUserIndex).inviteUsersToGroup(
-            chatId.groupId,
+        const communityLocalUserIndex = await this.communityClient(id.communityId).localUserIndex();
+        return this.createLocalUserIndexClient(communityLocalUserIndex).inviteUsersToCommunity(
+            id.communityId,
             userIds
         );
     }
 
-    directChatEventsWindow(
+    async inviteUsers(
+        chatId: MultiUserChatIdentifier,
+        userIds: string[]
+    ): Promise<InviteUsersResponse> {
+        if (!userIds.length) {
+            return Promise.resolve<InviteUsersResponse>("success");
+        }
+
+        switch (chatId.kind) {
+            case "group_chat":
+                const groupLocalUserIndex = await this.getGroupClient(
+                    chatId.groupId
+                ).localUserIndex();
+                return this.createLocalUserIndexClient(groupLocalUserIndex).inviteUsersToGroup(
+                    chatId.groupId,
+                    userIds
+                );
+            case "channel":
+                const communityLocalUserIndex = await this.communityClient(
+                    chatId.communityId
+                ).localUserIndex();
+                return this.createLocalUserIndexClient(
+                    communityLocalUserIndex
+                ).inviteUsersToChannel(chatId.communityId, chatId.channelId, userIds);
+        }
+    }
+
+    chatEventsWindow(
+        eventIndexRange: IndexRange,
+        chatId: ChatIdentifier,
+        messageIndex: number,
+        latestClientMainEventIndex: number | undefined,
+        threadRootMessageIndex: number | undefined
+    ): Promise<EventsResponse<ChatEvent>> {
+        switch (chatId.kind) {
+            case "direct_chat":
+                return this.directChatEventsWindow(
+                    eventIndexRange,
+                    chatId,
+                    messageIndex,
+                    latestClientMainEventIndex
+                );
+            case "group_chat":
+                return this.groupChatEventsWindow(
+                    eventIndexRange,
+                    chatId,
+                    messageIndex,
+                    latestClientMainEventIndex,
+                    threadRootMessageIndex
+                );
+            case "channel":
+                return this.channelEventsWindow(
+                    eventIndexRange,
+                    chatId,
+                    messageIndex,
+                    latestClientMainEventIndex,
+                    threadRootMessageIndex
+                );
+        }
+    }
+
+    private directChatEventsWindow(
         eventIndexRange: IndexRange,
         chatId: DirectChatIdentifier,
         messageIndex: number,
@@ -439,7 +558,14 @@ export class OpenChatAgent extends EventTarget {
                 latestClientEventIndex
             );
         } else if (chatId.kind === "channel") {
-            throw new Error("TODO Not implemented");
+            return this.channelEvents(
+                eventIndexRange,
+                chatId,
+                startIndex,
+                ascending,
+                threadRootMessageIndex,
+                latestClientEventIndex
+            );
         }
         throw new UnsupportedValueError("Unexpect chat type", chatId);
     }
@@ -487,16 +613,34 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    groupChatEventsWindow(
+    private channelEventsWindow(
+        eventIndexRange: IndexRange, //TODO - used for caching
+        chatId: ChannelIdentifier,
+        messageIndex: number,
+        latestClientMainEventIndex: number | undefined,
+        threadRootMessageIndex: number | undefined
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        return this.rehydrateEventResponse(
+            chatId,
+            this.communityClient(chatId.communityId).eventsWindow(
+                chatId,
+                eventIndexRange,
+                messageIndex,
+                threadRootMessageIndex,
+                latestClientMainEventIndex
+            ),
+            threadRootMessageIndex,
+            latestClientMainEventIndex
+        );
+    }
+
+    private groupChatEventsWindow(
         eventIndexRange: IndexRange,
-        chatId: ChatIdentifier,
+        chatId: GroupChatIdentifier,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestClientMainEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
-        if (chatId.kind !== "group_chat") {
-            throw new Error("groupChatEventsWindow called with unexpected chatId kind");
-        }
         return this.rehydrateEventResponse(
             chatId,
             this.getGroupClient(chatId.groupId).chatEventsWindow(
@@ -507,6 +651,29 @@ export class OpenChatAgent extends EventTarget {
             ),
             threadRootMessageIndex,
             latestClientMainEventIndex
+        );
+    }
+
+    private channelEvents(
+        eventIndexRange: IndexRange, // TODO this is used for caching which still needs doing
+        chatId: ChannelIdentifier,
+        startIndex: number,
+        ascending: boolean,
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        return this.rehydrateEventResponse(
+            chatId,
+            this.communityClient(chatId.communityId).events(
+                chatId,
+                eventIndexRange,
+                startIndex,
+                ascending,
+                threadRootMessageIndex,
+                latestClientEventIndex
+            ),
+            threadRootMessageIndex,
+            latestClientEventIndex
         );
     }
 
@@ -704,7 +871,10 @@ export class OpenChatAgent extends EventTarget {
                     .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, latestIndex)
                     .then((resp) => this.messagesFromEventsResponse(ctx, resp));
             } else if (chatKind === "channel") {
-                throw new Error("TODO - Not implemented");
+                const client = this.communityClient(chatId.communityId);
+                return client
+                    .eventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, latestIndex)
+                    .then((resp) => this.messagesFromEventsResponse(ctx, resp));
             } else {
                 throw new UnsupportedValueError("unknown chatid kind supplied", chatId);
             }
@@ -1163,30 +1333,42 @@ export class OpenChatAgent extends EventTarget {
         });
     }
 
+    async getCommunitySummary(communityId: string): Promise<CommunitySummaryResponse> {
+        const resp = await this.communityClient(communityId).summary();
+        if (isSuccessfulCommunitySummaryResponse(resp)) {
+            return this.hydrateCommunity(resp);
+        }
+        return resp;
+    }
+
     async hydrateChatState(state: ChatStateFull): Promise<ChatStateFull> {
-        // TODO - hydrate channels
         const directChatPromises = state.directChats.map((c) => this.hydrateChatSummary(c));
         const groupChatPromises = state.groupChats.map((c) => this.hydrateChatSummary(c));
+        const communitiesPromise = state.communities.map((c) => this.hydrateCommunity(c));
 
         const directChats = await Promise.all(directChatPromises);
         const groupChats = await Promise.all(groupChatPromises);
+        const communities = await Promise.all(communitiesPromise);
 
         return {
             ...state,
             directChats,
             groupChats,
-            communities: state.communities.map((c) => this.hydrateCommunity(c)),
+            communities,
         };
     }
 
-    hydrateCommunity(community: CommunitySummary): CommunitySummary {
+    async hydrateCommunity(community: CommunitySummary): Promise<CommunitySummary> {
+        const channelPromises = community.channels.map((c) => this.hydrateChatSummary(c));
+        const channels = await Promise.all(channelPromises);
         return {
             ...community,
+            channels,
             avatar: {
                 ...this.rehydrateDataContent(community.avatar, "avatar"),
             },
             banner: {
-                ...this.rehydrateDataContent(community.avatar, "banner"),
+                ...this.rehydrateDataContent(community.banner, "banner"),
             },
         };
     }
@@ -1202,16 +1384,14 @@ export class OpenChatAgent extends EventTarget {
                   )
                 : undefined;
 
-        if (chat.kind === "group_chat") {
-            return {
-                ...(this.rehydrateDataContent(chat as GroupChatSummary, "avatar") as T),
-                latestMessage,
-            };
-        } else {
-            return {
-                ...chat,
-                latestMessage,
-            };
+        switch (chat.kind) {
+            case "direct_chat":
+                return { ...chat, latestMessage };
+            default:
+                return {
+                    ...(this.rehydrateDataContent(chat, "avatar") as T),
+                    latestMessage,
+                };
         }
     }
 
@@ -1235,12 +1415,24 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId.groupId).changeRole(userId, newRole);
     }
 
-    deleteGroup(chatId: GroupChatIdentifier): Promise<DeleteGroupResponse> {
-        return this.userClient.deleteGroup(chatId.groupId);
+    deleteGroup(chatId: MultiUserChatIdentifier): Promise<DeleteGroupResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.userClient.deleteGroup(chatId.groupId);
+            case "channel":
+                return this.communityClient(chatId.communityId).deleteChannel(chatId);
+        }
     }
 
-    makeGroupPrivate(chatId: GroupChatIdentifier): Promise<MakeGroupPrivateResponse> {
-        return this.getGroupClient(chatId.groupId).makeGroupPrivate();
+    makeGroupPrivate(chatId: MultiUserChatIdentifier): Promise<MakeGroupPrivateResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).makeGroupPrivate();
+            case "channel":
+                // TODO - harmonise response types and clean up mapping
+                throw new Error("make channel private not implemented");
+            // return this.communityClient(chatId.communityId).makeChannelPrivate(chatId);
+        }
     }
 
     removeMember(chatId: GroupChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
@@ -1467,17 +1659,33 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getGroupDetails(
-        chatId: GroupChatIdentifier,
-        latestEventIndex: number
+        chatId: MultiUserChatIdentifier,
+        timestamp: bigint
     ): Promise<GroupChatDetailsResponse> {
-        return this.getGroupClient(chatId.groupId).getGroupDetails(latestEventIndex);
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).getGroupDetails(timestamp);
+            case "channel":
+                return this.communityClient(chatId.communityId).getChannelDetails(
+                    chatId,
+                    timestamp
+                );
+        }
     }
 
     async getGroupDetailsUpdates(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         previous: GroupChatDetails
     ): Promise<GroupChatDetails> {
-        return this.getGroupClient(chatId.groupId).getGroupDetailsUpdates(previous);
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).getGroupDetailsUpdates(previous);
+            case "channel":
+                return this.communityClient(chatId.communityId).getChannelDetailsUpdates(
+                    chatId,
+                    previous
+                );
+        }
     }
 
     getPublicGroupSummary(chatId: GroupChatIdentifier): Promise<GroupChatSummary | undefined> {
@@ -1548,12 +1756,25 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    pinMessage(chatId: GroupChatIdentifier, messageIndex: number): Promise<PinMessageResponse> {
-        return this.getGroupClient(chatId.groupId).pinMessage(messageIndex);
+    pinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<PinMessageResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).pinMessage(messageIndex);
+            case "channel":
+                return this.communityClient(chatId.communityId).pinMessage(chatId, messageIndex);
+        }
     }
 
-    unpinMessage(chatId: GroupChatIdentifier, messageIndex: number): Promise<UnpinMessageResponse> {
-        return this.getGroupClient(chatId.groupId).unpinMessage(messageIndex);
+    unpinMessage(
+        chatId: MultiUserChatIdentifier,
+        messageIndex: number
+    ): Promise<UnpinMessageResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).unpinMessage(messageIndex);
+            case "channel":
+                return this.communityClient(chatId.communityId).unpinMessage(chatId, messageIndex);
+        }
     }
 
     registerPollVote(

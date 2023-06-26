@@ -19,7 +19,6 @@ import {
     EventsSuccessResult,
     EventsArgs,
     ChatEvent,
-    AddParticipantsResponse,
     SendMessageArgs,
     SendMessageResponse,
     EditMessageResponse,
@@ -33,7 +32,7 @@ import {
     BlockUserResponse,
     UnblockUserResponse,
     SelectedInitialResponse,
-    SelectedUpdatesResponse,
+    SelectedUpdatesV2Response,
     Participant,
     Role,
     MakePrivateResponse,
@@ -64,7 +63,7 @@ import {
     DeletedMessageResponse,
     ClaimPrizeResponse,
     GroupGateUpdate,
-    DeclineInvitationResponse
+    DeclineInvitationResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -99,7 +98,7 @@ export {
     BlockUserResponse as ApiBlockUserResponse,
     UnblockUserResponse as ApiUnblockUserResponse,
     SelectedInitialResponse as ApiSelectedInitialResponse,
-    SelectedUpdatesResponse as ApiSelectedUpdatesResponse,
+    SelectedUpdatesV2Response as ApiSelectedUpdatesResponse,
     Participant as ApiParticipant,
     Role as ApiRole,
     MakePrivateResponse as ApiMakePrivateResponse,

@@ -29,7 +29,7 @@
         pushRightPanelHistory({ kind: "show_community_members" });
     }
     function invite() {
-        dispatch("invite");
+        pushRightPanelHistory({ kind: "invite_community_users" });
     }
     function showChannels() {
         dispatch("showChannels");

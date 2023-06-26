@@ -68,7 +68,7 @@ export type CommunitySummary = AccessControlled &
         avatar: DataContent;
         banner: DataContent;
         membership?: CommunityMembership;
-        channels: ChannelSummary[];
+        channels: ChannelSummary[]; // TODO - this might be better as a ChatMap - but that would have some serialisation complications
     };
 
 // TODO - not sure if this really needs to be a thing yet
@@ -154,21 +154,6 @@ export type ChangeCommunityRoleResponse =
     | TargetUserNotInCommunity
     | InteralError;
 
-export type CreateChannelResponse =
-    | { kind: "max_channels_created" }
-    | { kind: "name_reserved" }
-    | { kind: "rules_too_long" }
-    | { kind: "description_too_long" }
-    | { kind: "name_too_short" }
-    | NotAuthorised
-    | { kind: "avatar_too_big" }
-    | { kind: "success"; channelId: string }
-    | UserSuspended
-    | { kind: "rules_too_short" }
-    | CommunityFrozen
-    | { kind: "name_too_long" }
-    | { kind: "name_taken" };
-
 export type DeclineChannelInvitationResponse =
     | { kind: "not_invited" }
     | ChatNotFound
@@ -208,15 +193,6 @@ export type DeleteChannelMessageResponse =
 export type DisableCommunityInviteCodeResponse =
     | NotAuthorised
     | Success
-    | UserSuspended
-    | CommunityFrozen;
-
-export type EditChannelMessageResponse =
-    | UserNotInChat
-    | MessageNotFound
-    | ChatNotFound
-    | Success
-    | UserNotInCommunity
     | UserSuspended
     | CommunityFrozen;
 
@@ -272,18 +248,9 @@ export type MakeCommunityPrivateResponse =
     | CommunityFrozen
     | InteralError;
 
-export type PushEventResult = {
-    timestamp: bigint;
-    index: number;
-    expiresAt?: bigint;
-};
-export type PinChannelMessageResponse = Failure | (Success & { event: PushEventResult });
-
 export type RemoveCommunityMemberResponse = Success | Failure;
 
 export type RemoveChannelMemberResponse = Success | Failure;
-
-export type CommunityRulesResponse = Failure | (Success & { rules?: string });
 
 export type ChannelMessageMatch = {
     content: MessageContent;
@@ -292,54 +259,13 @@ export type ChannelMessageMatch = {
     messageIndex: number;
 };
 
-export type SelectedChannelUpdates = {
-    blockedUsersRemoved: Set<string>;
-    pinnedMessagesRemoved: Set<number>;
-    invitedUsers?: Set<string>;
-    membersAddedOrUpdated: Member[];
-    pinnedMessagesAdded: Set<number>;
-    membersRemoved: Set<string>;
-    timestamp: bigint;
-    latestEventIndex: number;
-    rules?: AccessRules;
-    blockedUsersAdded: Set<string>;
-};
-
 export type SearchChannelResponse = Failure | (Success & { matches: ChannelMessageMatch[] });
 
 export type UnblockCommunityUserResponse = Failure | Success;
 
 export type UndeleteChannelMessagesResponse = Failure | (Success & { messages: Message[] });
 
-export type UpdateChannelResponse = Failure | Success;
-
 export type UpdateCommunityResponse = Failure | Success;
-
-export type SelectedChannelInitialResponse =
-    | Failure
-    | (Success & {
-          members: Member[];
-          invitedUsers: Set<string>;
-          blockedUsers: Set<string>;
-          timestamp: bigint;
-          pinnedMessages: Set<number>;
-          latestEventIndex: number;
-          rules: AccessRules;
-      });
-
-export type SelectedChannelUpdatesResponse =
-    | Failure
-    | (Success & SelectedChannelUpdates)
-    | SuccessNoUpdates;
-
-export type SendChannelMessageResponse =
-    | Failure
-    | (Success & {
-          timestamp: bigint;
-          eventIndex: number;
-          expiresAt?: bigint;
-          messageIndex: number;
-      });
 
 export type ToggleMuteChannelNotificationsResponse = Failure | Success;
 
