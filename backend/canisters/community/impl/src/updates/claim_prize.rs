@@ -1,18 +1,12 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::ReservePrizeResult;
 use community_canister::claim_prize::{Response::*, *};
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
-use icrc_ledger_types::icrc1::account::Account;
-use ledger_utils::process_transaction;
-use types::nns::UserOrAccount;
-use types::{
-    CanisterId, CompletedCryptoTransaction, Cryptocurrency, GroupMessageNotification, Notification, PendingCryptoTransaction,
-    UserId,
-};
+use ledger_utils::{create_pending_transaction, process_transaction};
+use types::{CanisterId, CompletedCryptoTransaction, GroupMessageNotification, Notification, PendingCryptoTransaction, UserId};
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 
 #[update]
@@ -104,33 +98,11 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
         ReservePrizeResult::PrizeEnded => return Err(Box::new(PrizeEnded)),
     };
 
-    let principal = Principal::from(user_id);
-
-    let transaction = match token {
-        Cryptocurrency::InternetComputer => PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
-            token,
-            amount,
-            to: UserOrAccount::User(user_id),
-            fee: None,
-            memo: None,
-            created: now_nanos,
-        }),
-        _ => PendingCryptoTransaction::SNS(types::sns::PendingCryptoTransaction {
-            token,
-            amount,
-            to: Account {
-                owner: principal,
-                subaccount: None,
-            },
-            fee: Tokens::from_e8s(token.fee() as u64),
-            memo: None,
-            created: now_nanos,
-        }),
-    };
+    let transaction = create_pending_transaction(token, amount, user_id, now_nanos);
 
     Ok(PrepareResult {
         group: state.env.canister_id(),
-        ledger_canister_id: transaction.token().ledger_canister_id(),
+        ledger_canister_id: token.ledger_canister_id(),
         transaction,
         user_id,
     })

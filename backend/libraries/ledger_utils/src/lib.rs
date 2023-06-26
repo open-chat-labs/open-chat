@@ -4,9 +4,44 @@ pub mod sns;
 
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
+use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
-use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TransactionHash};
+use types::{
+    nns::UserOrAccount, CanisterId, CompletedCryptoTransaction, Cryptocurrency, FailedCryptoTransaction,
+    PendingCryptoTransaction, TimestampNanos, TransactionHash, UserId,
+};
+
+pub fn create_pending_transaction(
+    token: Cryptocurrency,
+    amount: Tokens,
+    user_id: UserId,
+    now_nanos: TimestampNanos,
+) -> PendingCryptoTransaction {
+    let principal = Principal::from(user_id);
+
+    match token {
+        Cryptocurrency::InternetComputer => PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
+            token,
+            amount,
+            to: UserOrAccount::User(user_id),
+            fee: None,
+            memo: None,
+            created: now_nanos,
+        }),
+        _ => PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
+            token,
+            amount: amount.e8s().into(),
+            to: Account {
+                owner: principal,
+                subaccount: None,
+            },
+            fee: token.fee(),
+            memo: None,
+            created: now_nanos,
+        }),
+    }
+}
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,

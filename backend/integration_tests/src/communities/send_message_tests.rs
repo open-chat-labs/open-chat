@@ -5,6 +5,7 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use ic_ledger_types::Tokens;
 use ic_test_state_machine_client::StateMachine;
+use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
 use types::nns::{self, UserOrAccount};
 use types::{
@@ -72,14 +73,12 @@ fn send_crypto_in_channel() {
             message_id: random_message_id(),
             content: MessageContentInitial::Crypto(CryptoContent {
                 recipient: user2.user_id,
-                transfer: CryptoTransaction::Pending(PendingCryptoTransaction::NNS(nns::PendingCryptoTransaction {
-                    token: Cryptocurrency::InternetComputer,
-                    amount: Tokens::from_e8s(10000),
-                    to: UserOrAccount::User(user2.user_id),
-                    fee: None,
-                    memo: None,
-                    created: now_nanos(env),
-                })),
+                transfer: CryptoTransaction::Pending(create_pending_transaction(
+                    Cryptocurrency::InternetComputer,
+                    Tokens::from_e8s(10000),
+                    user2.user_id,
+                    now_nanos(env),
+                )),
                 caption: None,
             }),
             sender_name: user1.username(),

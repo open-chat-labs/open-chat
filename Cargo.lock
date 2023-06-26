@@ -4130,6 +4130,7 @@ dependencies = [
  "icrc-ledger-types",
  "itertools",
  "lazy_static",
+ "ledger_utils",
  "local_user_index_canister",
  "notifications_canister",
  "notifications_index_canister",
