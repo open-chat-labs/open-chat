@@ -1478,12 +1478,12 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    async joinCommunity(communityId: string): Promise<JoinCommunityResponse> {
+    async joinCommunity(id: CommunityIdentifier): Promise<JoinCommunityResponse> {
         // TODO - we need to capture invide code somehow here, but it doesn't really fit at the moment
         // const inviteCode = this.getProvidedInviteCode(chatId);
-        const localUserIndex = await this.communityClient(communityId).localUserIndex();
+        const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).joinCommunity(
-            communityId,
+            id.communityId,
             undefined
         );
     }
@@ -2129,7 +2129,12 @@ export class OpenChatAgent extends EventTarget {
             threadRootMessageIndex
         );
     }
-    declineInvitation(chatId: GroupChatIdentifier): Promise<DeclineInvitationResponse> {
-        return this.getGroupClient(chatId.groupId).declineInvitation();
+    declineInvitation(chatId: MultiUserChatIdentifier): Promise<DeclineInvitationResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).declineInvitation();
+            case "channel":
+                return this.communityClient(chatId.communityId).declineInvitation(chatId);
+        }
     }
 }

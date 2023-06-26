@@ -74,7 +74,6 @@ import {
     summaryUpdatesResponse,
     deletedMessageResponse,
     claimPrizeResponse,
-    declineInvitationResponse,
 } from "./mappers";
 import {
     Database,
@@ -93,6 +92,7 @@ import { Principal } from "@dfinity/principal";
 import {
     addRemoveReactionResponse,
     apiAccessGate,
+    declineInvitationResponse,
     apiMessageContent,
     editMessageResponse,
     apiOptional,

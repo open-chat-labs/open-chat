@@ -167,8 +167,6 @@
     "searchForUsername": "ユーザー名を検索する",
     "startNewChat": "新規チャットを開始する",
     "chatWith": "{username}とチャット",
-    "joinGroup": "グループに参加",
-    "joinGroupFailed": "グループに参加できません",
     "youreBlocked": "申し訳ございませんが、あなたはこのグループからブロックされています",
     "reply": "返信",
     "replyPrivately": "プライベートで返信",

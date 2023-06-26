@@ -75,6 +75,7 @@ export const allCommunities = writable<CommunitySummary[]>(testCommunities);
 
 // these are the communities I am in
 export const communities = derived([globalStateStore], ([$globalStateStore]) => {
+    console.log("xxx rebuilding communities list");
     return $globalStateStore.communities;
 });
 

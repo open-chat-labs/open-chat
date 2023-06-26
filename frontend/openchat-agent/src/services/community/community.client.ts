@@ -9,7 +9,6 @@ import {
     blockUserResponse,
     changeChannelRoleResponse,
     changeRoleResponse,
-    declineInvitationResponse,
     deleteMessagesResponse,
     deleteMessageResponse,
     disableInviteCodeResponse,
@@ -48,6 +47,7 @@ import {
     pinMessageResponse,
     updateGroupResponse,
     createGroupResponse,
+    declineInvitationResponse,
     editMessageResponse,
     deleteGroupResponse,
     unpinMessageResponse,
@@ -64,7 +64,6 @@ import type {
     ChangeCommunityRoleResponse,
     CommunityInviteCodeResponse,
     CommunityPermissions,
-    DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
     DisableCommunityInviteCodeResponse,
@@ -104,6 +103,7 @@ import type {
     ChatEvent,
     EventsSuccessResult,
     EditMessageResponse,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
 import { DataClient } from "../data/data.client";
@@ -239,7 +239,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    declineInvitation(chatId: ChannelIdentifier): Promise<DeclineChannelInvitationResponse> {
+    declineInvitation(chatId: ChannelIdentifier): Promise<DeclineInvitationResponse> {
         return this.handleResponse(
             this.service.decline_invitation({
                 channel_id: [BigInt(chatId.channelId)],

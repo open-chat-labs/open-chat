@@ -154,12 +154,6 @@ export type ChangeCommunityRoleResponse =
     | TargetUserNotInCommunity
     | InteralError;
 
-export type DeclineChannelInvitationResponse =
-    | { kind: "not_invited" }
-    | ChatNotFound
-    | Success
-    | UserNotInCommunity;
-
 export type DeleteChannelResponse =
     | UserNotInChat
     | ChatNotFound

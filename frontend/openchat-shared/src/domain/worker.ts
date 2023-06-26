@@ -578,7 +578,7 @@ type JoinGroup = {
 };
 
 type JoinCommunity = {
-    communityId: string;
+    id: CommunityIdentifier;
     kind: "joinCommunity";
 };
 
@@ -1034,7 +1034,7 @@ type ReportMessage = {
 };
 
 type DeclineInvitation = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     kind: "declineInvitation";
 };
 

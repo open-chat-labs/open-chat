@@ -167,8 +167,6 @@
     "searchForUsername": "Поиск по имени",
     "startNewChat": "Начать новый чат",
     "chatWith": "Чат с {username}",
-    "joinGroup": "Присоединиться к группе",
-    "joinGroupFailed": "Невозможно присоединиться к группе",
     "youreBlocked": "Извините, вы заблокированы в этой группе",
     "reply": "Ответить",
     "replyPrivately": "Ответить лично",

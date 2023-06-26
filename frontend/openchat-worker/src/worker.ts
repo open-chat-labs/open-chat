@@ -543,7 +543,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "joinCommunity":
                 agent
-                    .joinCommunity(payload.communityId)
+                    .joinCommunity(payload.id)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

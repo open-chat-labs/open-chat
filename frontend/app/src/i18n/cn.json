@@ -145,8 +145,6 @@
     "searchForUsername": "搜索用户名",
     "startNewChat": "新建聊天",
     "chatWith": "与{username}聊天",
-    "joinGroup": "加入群聊",
-    "joinGroupFailed": "无法加入群聊",
     "youreBlocked": "抱歉 - 您已被该群聊加入黑名单",
     "reply": "回复",
     "replyPrivately": "在私聊中回复",

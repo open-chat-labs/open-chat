@@ -1886,4 +1886,4 @@ export type ClaimPrizeResponse =
 
 export type ReportMessageResponse = "success" | "failure";
 
-export type DeclineInvitationResponse = "success" | "not_invited" | "internal_error";
+export type DeclineInvitationResponse = "success" | "failure";

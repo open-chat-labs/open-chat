@@ -1921,6 +1921,13 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    removeCommunity(id: CommunityIdentifier): void {
+        globalStateStore.update((state) => {
+            state.communities.delete(id);
+            return state;
+        });
+    }
+
     clearSelectedChat = clearSelectedChat;
     private mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
     messageContentFromFile(file: File): Promise<MessageContent> {
@@ -4082,7 +4089,7 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    declineInvitation(chatId: GroupChatIdentifier): Promise<boolean> {
+    declineInvitation(chatId: MultiUserChatIdentifier): Promise<boolean> {
         return this.sendRequest({ kind: "declineInvitation", chatId })
             .then((res) => {
                 return res === "success";
@@ -4120,7 +4127,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 kind: "getCommunitySummary",
                 communityId: id.communityId,
             });
-            console.log("community summary: ", resp);
             if ("id" in resp) {
                 globalStateStore.update((global) => {
                     global.communities.set(resp.id, resp);
@@ -4140,9 +4146,9 @@ export class OpenChat extends OpenChatAgentWorker {
         selectedCommunityId.set(undefined);
     }
 
-    joinCommunity(communityId: string): Promise<JoinCommunityResponse> {
+    joinCommunity(id: CommunityIdentifier): Promise<JoinCommunityResponse> {
         // TODO - we will need to do something like all of the stuff that's commented out here
-        return this.sendRequest({ kind: "joinCommunity", communityId });
+        return this.sendRequest({ kind: "joinCommunity", id });
         // .then((resp) => {
         //     if (resp.kind === "success") {
         //         localChatSummaryUpdates.markAdded(resp);

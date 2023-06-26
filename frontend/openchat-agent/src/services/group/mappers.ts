@@ -1118,21 +1118,3 @@ export function rulesResponse(candid: ApiRulesResponse): AccessRules | undefined
         };
     }
 }
-
-export function declineInvitationResponse(
-    candid: ApiDeclineInvitationResponse
-): DeclineInvitationResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("NotInvited" in candid) {
-        return "not_invited";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiDeclineInvitationResponse type received",
-        candid
-    );
-}

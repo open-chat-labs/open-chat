@@ -764,17 +764,6 @@
             .catch(() => (joining = undefined));
     }
 
-    function cancelPreview(ev: CustomEvent<GroupChatSummary>) {
-        let chat = ev.detail;
-        page("/");
-        tick().then(() => {
-            client.removeChat(chat.id);
-            if (!chat.public) {
-                client.declineInvitation(chat.id);
-            }
-        });
-    }
-
     function upgrade() {
         showUpgrade = true;
     }
@@ -1028,7 +1017,6 @@
             on:showProposalFilters={showProposalFilters}
             on:showGroupMembers={showGroupMembers}
             on:joinGroup={joinGroup}
-            on:cancelPreview={cancelPreview}
             on:upgrade={upgrade}
             on:showPinned={showPinned}
             on:toggleMuteNotifications={toggleMuteNotifications}

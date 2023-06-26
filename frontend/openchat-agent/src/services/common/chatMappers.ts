@@ -129,6 +129,7 @@ import {
     AccessRules,
     GroupChatDetailsUpdatesResponse,
     EditMessageResponse,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -145,6 +146,7 @@ import type {
     ApiGroupRules,
     ApiSelectedUpdatesResponse,
     ApiEditMessageResponse,
+    ApiDeclineInvitationResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -163,6 +165,7 @@ import type {
     ApiSelectedChannelInitialResponse,
     ApiSelectedChannelUpdatesResponse,
     ApiEditMessageResponse as ApiEditChannelMessageResponse,
+    ApiDeclineInvitationResponse as ApiDeclineChannelInvitationResponse,
 } from "../community/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -1769,6 +1772,17 @@ export function editMessageResponse(
         return "success";
     } else {
         console.warn("EditMessageResponse failed with: ", candid);
+        return "failure";
+    }
+}
+
+export function declineInvitationResponse(
+    candid: ApiDeclineInvitationResponse | ApiDeclineChannelInvitationResponse
+): DeclineInvitationResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("DeclineInvitationResponse failed with: ", candid);
         return "failure";
     }
 }

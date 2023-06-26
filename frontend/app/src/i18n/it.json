@@ -167,8 +167,6 @@
     "searchForUsername": "Cerca un nome utente",
     "startNewChat": "Avvia una nuova chat",
     "chatWith": "Chatta con {username}",
-    "joinGroup": "Unirsi al gruppo",
-    "joinGroupFailed": "Impossibile entrare nel gruppo",
     "youreBlocked": "Siamo spiacenti, sei stato bloccato da questo gruppo",
     "reply": "Rispondi",
     "replyPrivately": "Rispondi in privato",

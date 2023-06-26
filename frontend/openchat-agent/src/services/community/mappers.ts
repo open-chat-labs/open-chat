@@ -296,27 +296,6 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommuni
     throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
 }
 
-export function declineInvitationResponse(
-    candid: ApiDeclineInvitationResponse
-): DeclineChannelInvitationResponse {
-    if ("NotInvited" in candid) {
-        return { kind: "not_invited" };
-    }
-    if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound;
-    }
-    if ("Success" in candid) {
-        return CommonResponses.success;
-    }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiDeclineInvitationResponse type received",
-        candid
-    );
-}
-
 export function deleteMessagesResponse(
     candid: ApiDeleteMessagesResponse
 ): DeleteChannelMessagesResponse {
