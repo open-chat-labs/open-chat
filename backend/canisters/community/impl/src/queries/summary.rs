@@ -17,11 +17,12 @@ fn c2c_summary(args: Args) -> Response {
 
 fn summary_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
-    let member = state.data.members.get(caller);
 
     if !state.data.is_accessible(caller, args.invite_code) {
         return PrivateCommunity;
     }
+
+    let member = state.data.members.get(caller);
 
     if member.is_none() && !state.data.is_public {
         return Invited(CommunityMatch {

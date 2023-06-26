@@ -14,6 +14,8 @@ use user_canister::c2c_remove_from_community;
 #[update]
 #[trace]
 async fn block_user(args: community_canister::block_user::Args) -> community_canister::block_user::Response {
+    run_regular_jobs();
+
     if !read_state(|state| state.data.is_public) {
         return community_canister::block_user::Response::CommunityNotPublic;
     }
@@ -24,12 +26,12 @@ async fn block_user(args: community_canister::block_user::Args) -> community_can
 #[update]
 #[trace]
 async fn remove_member(args: Args) -> Response {
+    run_regular_jobs();
+
     remove_member_impl(args.user_id, false).await
 }
 
 async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
-    run_regular_jobs();
-
     // Check the caller can remove the user
     let prepare_result = match read_state(|state| prepare(user_id, state)) {
         Ok(ok) => ok,

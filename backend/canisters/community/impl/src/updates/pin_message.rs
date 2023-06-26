@@ -7,18 +7,20 @@ use ic_cdk_macros::update;
 #[update]
 #[trace]
 fn pin_message(args: Args) -> Response {
+    run_regular_jobs();
+
     mutate_state(|state| pin_message_impl(args, true, state))
 }
 
 #[update]
 #[trace]
 fn unpin_message(args: Args) -> Response {
+    run_regular_jobs();
+
     mutate_state(|state| pin_message_impl(args, false, state))
 }
 
 fn pin_message_impl(args: Args, pin: bool, state: &mut RuntimeState) -> Response {
-    run_regular_jobs();
-
     if state.data.is_frozen() {
         return CommunityFrozen;
     }
