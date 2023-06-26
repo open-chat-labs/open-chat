@@ -4,6 +4,7 @@ mod deleted_message;
 mod events;
 mod events_by_index;
 mod events_window;
+mod explore_channels;
 mod http_request;
 mod invite_code;
 mod local_user_index;

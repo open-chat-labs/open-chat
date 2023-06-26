@@ -60,6 +60,27 @@ type EventsResponse =
         ReplicaNotUpToDate: EventIndex;
     };
 
+type ExploreChannelsArgs =
+    record {
+        search_term: opt text;
+        page_index: nat32;
+        page_size: nat8;
+    };
+
+type ExploreChannelsResponse =
+    variant {
+        Success: ExploreChannelsSuccess;
+        TermTooShort: nat8;
+        TermTooLong: nat8;
+        InvalidTerm;
+        PrivateCommunity;
+    };
+
+type ExploreChannelsSuccess =
+    record {
+        matches: vec ChannelMatch;
+    };
+
 type InviteCodeResponse =
     variant {
         Success: record {
@@ -854,6 +875,7 @@ service: {
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
     events_window: (EventsWindowArgs) -> (EventsResponse) query;
+    explore_channels: (ExploreChannelsArgs) -> (ExploreChannelsResponse) query;
     invite_code: (EmptyArgs) -> (InviteCodeResponse) query;
     local_user_index: (EmptyArgs) -> (LocalUserIndexResponse) query;
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
