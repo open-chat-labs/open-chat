@@ -1582,7 +1582,9 @@ export function pinMessageResponse(
     }
 }
 
-export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMessageResponse {
+export function unpinMessageResponse(
+    candid: ApiUnpinMessageResponse | ApiPinChannelMessageResponse
+): UnpinMessageResponse {
     if ("Success" in candid || "SuccessV2" in candid || "NoChange" in candid) {
         return "success";
     } else {

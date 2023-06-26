@@ -53,6 +53,7 @@ import {
     updateGroupResponse,
     createGroupResponse,
     deleteGroupResponse,
+    unpinMessageResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -101,6 +102,7 @@ import type {
     CreateGroupResponse,
     DeleteGroupResponse,
     PinMessageResponse,
+    UnpinMessageResponse,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
 import { DataClient } from "../data/data.client";
@@ -452,6 +454,16 @@ export class CommunityClient extends CandidService {
                     threadRootMessageIndex,
                     latestClientEventIndex
                 )
+        );
+    }
+
+    unpinMessage(chatId: ChannelIdentifier, messageIndex: number): Promise<UnpinMessageResponse> {
+        return this.handleResponse(
+            this.service.unpin_message({
+                channel_id: BigInt(chatId.channelId),
+                message_index: messageIndex,
+            }),
+            unpinMessageResponse
         );
     }
 

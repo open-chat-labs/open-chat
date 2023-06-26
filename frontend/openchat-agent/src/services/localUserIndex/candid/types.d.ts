@@ -207,6 +207,16 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'member_count' : [] | [number],
 }
 export type CommunityId = CanisterId;
+export interface CommunityMatch {
+  'id' : CommunityId,
+  'channel_count' : number,
+  'gate' : [] | [AccessGate],
+  'name' : string,
+  'description' : string,
+  'avatar_id' : [] | [bigint],
+  'banner_id' : [] | [bigint],
+  'member_count' : number,
+}
 export interface CommunityMembership {
   'role' : CommunityRole,
   'joined' : TimestampMillis,
@@ -234,7 +244,8 @@ export type CommunityRole = { 'Member' : null } |
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
-  { 'SNS' : SnsCompletedCryptoTransaction };
+  { 'SNS' : SnsCompletedCryptoTransaction } |
+  { 'ICRC1' : Icrc1CompletedCryptoTransaction };
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
@@ -337,7 +348,8 @@ export interface EventsTimeToLiveUpdated {
   'updated_by' : UserId,
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
-  { 'SNS' : SnsFailedCryptoTransaction };
+  { 'SNS' : SnsFailedCryptoTransaction } |
+  { 'ICRC1' : Icrc1FailedCryptoTransaction };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -499,6 +511,14 @@ export interface GroupInviteCodeChanged {
   'changed_by' : UserId,
   'change' : GroupInviteCodeChange,
 }
+export interface GroupMatch {
+  'gate' : [] | [AccessGate],
+  'name' : string,
+  'description' : string,
+  'avatar_id' : [] | [bigint],
+  'chat_id' : ChatId,
+  'member_count' : number,
+}
 export interface GroupMessageNotification {
   'hide' : boolean,
   'mentioned' : Array<User>,
@@ -569,6 +589,36 @@ export interface ICPRegistrationFee {
 export interface Icrc1Account {
   'owner' : Principal,
   'subaccount' : [] | [Uint8Array | number[]],
+}
+export type Icrc1AccountOrMint = { 'Mint' : null } |
+  { 'Account' : Icrc1Account };
+export interface Icrc1CompletedCryptoTransaction {
+  'to' : Icrc1AccountOrMint,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'block_index' : BlockIndex,
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [Memo],
+  'amount' : bigint,
+}
+export interface Icrc1FailedCryptoTransaction {
+  'to' : Icrc1AccountOrMint,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [Memo],
+  'error_message' : string,
+  'amount' : bigint,
+}
+export interface Icrc1PendingCryptoTransaction {
+  'to' : Icrc1Account,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'memo' : [] | [Memo],
+  'amount' : bigint,
 }
 export interface ImageContent {
   'height' : number,
@@ -667,7 +717,7 @@ export type JoinGroupResponse = { 'NotInvited' : null } |
   { 'ParticipantLimitReached' : number } |
   { 'AlreadyInGroupV2' : GroupCanisterGroupChatSummary } |
   { 'InternalError' : string };
-export type Memo = bigint;
+export type Memo = Uint8Array | number[];
 export interface Mention {
   'message_id' : MessageId,
   'event_index' : EventIndex,
@@ -767,6 +817,8 @@ export interface MessagesSuccessResult {
   'latest_event_index' : EventIndex,
 }
 export type Milliseconds = bigint;
+export type MultiUserChat = { 'Group' : ChatId } |
+  { 'Channel' : [CommunityId, ChannelId] };
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
@@ -775,7 +827,7 @@ export interface NnsCompletedCryptoTransaction {
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'from' : NnsCryptoAccount,
-  'memo' : Memo,
+  'memo' : bigint,
   'amount' : Tokens,
 }
 export type NnsCryptoAccount = { 'Mint' : null } |
@@ -787,7 +839,7 @@ export interface NnsFailedCryptoTransaction {
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : NnsCryptoAccount,
-  'memo' : Memo,
+  'memo' : bigint,
   'error_message' : string,
   'amount' : Tokens,
 }
@@ -797,7 +849,7 @@ export interface NnsPendingCryptoTransaction {
   'fee' : [] | [Tokens],
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
-  'memo' : [] | [Memo],
+  'memo' : [] | [bigint],
   'amount' : Tokens,
 }
 export interface NnsProposal {
@@ -886,7 +938,8 @@ export interface ParticipantsRemoved {
   'removed_by' : UserId,
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
-  { 'SNS' : SnsPendingCryptoTransaction };
+  { 'SNS' : SnsPendingCryptoTransaction } |
+  { 'ICRC1' : Icrc1PendingCryptoTransaction };
 export type PermissionRole = { 'Moderators' : null } |
   { 'Owner' : null } |
   { 'Admins' : null } |
@@ -994,6 +1047,7 @@ export type RegisterUserResponse = { 'UsernameTooShort' : number } |
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface ReplyContext {
+  'chat_if_other' : [] | [[MultiUserChat, [] | [MessageIndex]]],
   'event_list_if_other' : [] | [[ChatId, [] | [MessageIndex]]],
   'event_index' : EventIndex,
 }
@@ -1006,6 +1060,13 @@ export interface ReportMessageArgs {
 }
 export type ReportMessageResponse = { 'Success' : null } |
   { 'InternalError' : string };
+export interface ReportMessageV2Args {
+  'notes' : [] | [string],
+  'chat_id' : MultiUserChat,
+  'reason_code' : number,
+  'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
 export interface ReportedMessage {
   'count' : number,
   'reports' : Array<MessageReport>,
@@ -1028,27 +1089,25 @@ export interface SelectedGroupUpdates {
   'rules' : [] | [AccessRules],
   'blocked_users_added' : Array<UserId>,
 }
-export type SnsAccount = { 'Mint' : null } |
-  { 'Account' : Icrc1Account };
 export interface SnsCompletedCryptoTransaction {
-  'to' : SnsAccount,
+  'to' : Icrc1AccountOrMint,
   'fee' : Tokens,
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
-  'from' : SnsAccount,
-  'memo' : [] | [Memo],
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [bigint],
   'amount' : Tokens,
 }
 export interface SnsFailedCryptoTransaction {
-  'to' : SnsAccount,
+  'to' : Icrc1AccountOrMint,
   'fee' : Tokens,
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
-  'from' : SnsAccount,
-  'memo' : [] | [Memo],
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [bigint],
   'error_message' : string,
   'amount' : Tokens,
 }
@@ -1063,7 +1122,7 @@ export interface SnsPendingCryptoTransaction {
   'fee' : Tokens,
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
-  'memo' : [] | [Memo],
+  'memo' : [] | [bigint],
   'amount' : Tokens,
 }
 export interface SnsProposal {
@@ -1179,4 +1238,8 @@ export interface _SERVICE {
   'join_group' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
   'report_message' : ActorMethod<[ReportMessageArgs], ReportMessageResponse>,
+  'report_message_v2' : ActorMethod<
+    [ReportMessageV2Args],
+    ReportMessageResponse
+  >,
 }

@@ -1745,8 +1745,7 @@ export class OpenChatAgent extends EventTarget {
             case "group_chat":
                 return this.getGroupClient(chatId.groupId).unpinMessage(messageIndex);
             case "channel":
-                // return this.communityClient(chatId.communityId).unpinMessage(chatId, messageIndex);
-                throw new Error("TODO - unpin channel message not implemented");
+                return this.communityClient(chatId.communityId).unpinMessage(chatId, messageIndex);
         }
     }
 
