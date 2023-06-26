@@ -100,16 +100,25 @@ import type {
     UnpinMessageResponse,
     GroupChatDetailsResponse,
     GroupChatDetails,
+    IndexRange,
+    ChatEvent,
+    EventsSuccessResult,
+    EditMessageResponse,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
 import { DataClient } from "../data/data.client";
-import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
+import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import { getEventsResponse } from "../group/mappers";
 import {
     Database,
+    getCachedEvents,
+    getCachedEventsByIndex,
+    getCachedEventsWindow,
     getCachedGroupDetails,
+    mergeSuccessResponses,
     recordFailedMessage,
     removeFailedMessage,
+    setCachedEvents,
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
@@ -289,7 +298,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         message: Message,
         threadRootMessageIndex: number | undefined
-    ): Promise<EditChannelMessageResponse> {
+    ): Promise<EditMessageResponse> {
         return DataClient.create(this.identity, this.config)
             .uploadData(message.content, [chatId.communityId])
             .then((content) => {
@@ -309,7 +318,45 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(this.service.enable_invite_code({}), enableInviteCodeResponse);
     }
 
-    events(
+    async events(
+        chatId: ChannelIdentifier,
+        eventIndexRange: IndexRange,
+        startIndex: number,
+        ascending: boolean,
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
+            this.db,
+            eventIndexRange,
+            chatId,
+            startIndex,
+            ascending,
+            threadRootMessageIndex
+        );
+
+        // we may or may not have all of the requested events
+        if (missing.size >= MAX_MISSING) {
+            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
+            console.log("We didn't get enough back from the cache, going to the api");
+            return this.eventsFromBackend(
+                chatId,
+                startIndex,
+                ascending,
+                threadRootMessageIndex,
+                latestClientEventIndex
+            ).then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex));
+        } else {
+            return this.handleMissingEvents(
+                chatId,
+                [cachedEvents, missing],
+                threadRootMessageIndex,
+                latestClientEventIndex
+            );
+        }
+    }
+
+    eventsFromBackend(
         chatId: ChannelIdentifier,
         startIndex: number,
         ascending: boolean,
@@ -345,6 +392,22 @@ export class CommunityClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
+        return getCachedEventsByIndex<GroupChatEvent>(
+            this.db,
+            eventIndexes,
+            chatId,
+            threadRootMessageIndex
+        ).then((res) =>
+            this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestClientEventIndex)
+        );
+    }
+
+    private eventsByIndexFromBackend(
+        chatId: ChannelIdentifier,
+        eventIndexes: number[],
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             channel_id: BigInt(chatId.channelId),
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -365,7 +428,44 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    eventsWindow(
+    async eventsWindow(
+        chatId: ChannelIdentifier,
+        eventIndexRange: IndexRange,
+        messageIndex: number,
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<GroupChatEvent>(
+            this.db,
+            eventIndexRange,
+            chatId,
+            messageIndex,
+            threadRootMessageIndex
+        );
+        if (totalMiss || missing.size >= MAX_MISSING) {
+            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
+            console.log(
+                "We didn't get enough back from the cache, going to the api",
+                missing.size,
+                totalMiss
+            );
+            return this.eventsWindowFromBackend(
+                chatId,
+                messageIndex,
+                threadRootMessageIndex,
+                latestClientEventIndex
+            ).then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex));
+        } else {
+            return this.handleMissingEvents(
+                chatId,
+                [cachedEvents, missing],
+                undefined,
+                latestClientEventIndex
+            );
+        }
+    }
+
+    private async eventsWindowFromBackend(
         chatId: ChannelIdentifier,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
@@ -391,6 +491,42 @@ export class CommunityClient extends CandidService {
                 );
             }
         );
+    }
+
+    private handleMissingEvents(
+        chatId: ChannelIdentifier,
+        [cachedEvents, missing]: [EventsSuccessResult<GroupChatEvent>, Set<number>],
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        if (missing.size === 0) {
+            return Promise.resolve(cachedEvents);
+        } else {
+            return this.eventsByIndexFromBackend(
+                chatId,
+                [...missing],
+                threadRootMessageIndex,
+                latestClientEventIndex
+            )
+                .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
+                .then((resp) => {
+                    if (resp !== "events_failed") {
+                        return mergeSuccessResponses(cachedEvents, resp);
+                    }
+                    return resp;
+                });
+        }
+    }
+
+    private setCachedEvents<T extends ChatEvent>(
+        chatId: ChannelIdentifier,
+        resp: EventsResponse<T>,
+        threadRootMessageIndex?: number
+    ): EventsResponse<T> {
+        setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
+            this.config.logger.error("Error writing cached channel events", err)
+        );
+        return resp;
     }
 
     inviteCode(): Promise<CommunityInviteCodeResponse> {

@@ -614,16 +614,17 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private channelEventsWindow(
-        _eventIndexRange: IndexRange, //TODO - used for caching
+        eventIndexRange: IndexRange, //TODO - used for caching
         chatId: ChannelIdentifier,
         messageIndex: number,
-        threadRootMessageIndex: number | undefined,
-        latestClientMainEventIndex: number | undefined
+        latestClientMainEventIndex: number | undefined,
+        threadRootMessageIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.communityClient(chatId.communityId).eventsWindow(
                 chatId,
+                eventIndexRange,
                 messageIndex,
                 threadRootMessageIndex,
                 latestClientMainEventIndex
@@ -654,7 +655,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private channelEvents(
-        _eventIndexRange: IndexRange, // TODO this is used for caching which still needs doing
+        eventIndexRange: IndexRange, // TODO this is used for caching which still needs doing
         chatId: ChannelIdentifier,
         startIndex: number,
         ascending: boolean,
@@ -665,6 +666,7 @@ export class OpenChatAgent extends EventTarget {
             chatId,
             this.communityClient(chatId.communityId).events(
                 chatId,
+                eventIndexRange,
                 startIndex,
                 ascending,
                 threadRootMessageIndex,

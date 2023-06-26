@@ -1390,7 +1390,8 @@ export function getTypingString(
 }
 
 export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
-    if (chat.kind === "group_chat" && chat.membership.role === "none") return undefined;
+    if ((chat.kind === "group_chat" || chat.kind === "channel") && chat.membership.role === "none")
+        return undefined;
 
     return messagesRead.getFirstUnreadMessageIndex(chat.id, chat.latestMessage?.event.messageIndex);
 }

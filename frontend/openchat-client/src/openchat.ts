@@ -4127,7 +4127,6 @@ export class OpenChat extends OpenChatAgentWorker {
                     return global;
                 });
             }
-            console.log("We are not a member of this community - we'll have to look it up");
         }
 
         //TODO - we *might* need to look up some details here - not quite clear yet

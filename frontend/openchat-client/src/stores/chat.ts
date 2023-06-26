@@ -433,7 +433,7 @@ export function setSelectedChat(
 ): void {
     // TODO don't think this should be in here really
     if (
-        clientChat.kind === "group_chat" &&
+        (clientChat.kind === "group_chat" || clientChat.kind === "channel") &&
         clientChat.subtype !== undefined &&
         clientChat.subtype.kind === "governance_proposals" &&
         !clientChat.subtype.isNns

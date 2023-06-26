@@ -247,7 +247,6 @@ export class GroupClient extends CandidService {
                 totalMiss
             );
             return this.chatEventsWindowFromBackend(
-                eventIndexRange,
                 messageIndex,
                 threadRootMessageIndex,
                 latestClientEventIndex
@@ -262,7 +261,6 @@ export class GroupClient extends CandidService {
     }
 
     private async chatEventsWindowFromBackend(
-        _eventIndexRange: IndexRange,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
@@ -309,7 +307,6 @@ export class GroupClient extends CandidService {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log("We didn't get enough back from the cache, going to the api");
             return this.chatEventsFromBackend(
-                eventIndexRange,
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
@@ -325,7 +322,6 @@ export class GroupClient extends CandidService {
     }
 
     private chatEventsFromBackend(
-        _eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,

@@ -16,6 +16,7 @@
         ChatIdentifier,
         ChatType,
         routeForChatIdentifier,
+        Level,
     } from "openchat-client";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
@@ -62,9 +63,8 @@
 
     let userSummary: UserSummary | undefined = undefined;
 
-    $: level = $_(`level.${chatType === "channel" ? "channel" : "group"}`).toLowerCase() as
-        | "channel"
-        | "group";
+    $: levelType = (chatType === "channel" ? "channel" : "group") as Level;
+    $: level = $_(`level.${levelType}`).toLowerCase();
     $: messageContext = { chatId, threadRootMessageIndex: threadRootMessage?.messageIndex };
     $: hidden =
         event.event.kind === "message" &&
@@ -218,14 +218,14 @@
         {level}
         user={userSummary}
         changedBy={event.event.changedBy}
-        property={interpolateLevel("groupName", level, true)}
+        property={interpolateLevel("groupName", levelType, true)}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "desc_changed"}
     <GroupChangedEvent
         {level}
         user={userSummary}
         changedBy={event.event.changedBy}
-        property={interpolateLevel("groupDesc", level, true)}
+        property={interpolateLevel("groupDesc", levelType, true)}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "rules_changed"}
     <GroupRulesChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
@@ -234,7 +234,7 @@
         {level}
         user={userSummary}
         changedBy={event.event.changedBy}
-        property={interpolateLevel("groupAvatar", level, true)}
+        property={interpolateLevel("groupAvatar", levelType, true)}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "gate_updated"}
     <GroupChangedEvent
