@@ -34,25 +34,17 @@ export const idlFactory = ({ IDL }) => {
     'InvalidReaction' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });
+  const ArchiveChatArgs = IDL.Record({ 'chat_id' : ChatId });
+  const ArchiveChatResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const CommunityId = CanisterId;
   const ChannelId = IDL.Nat;
   const Chat = IDL.Variant({
     'Group' : ChatId,
     'Channel' : IDL.Tuple(CommunityId, ChannelId),
     'Direct' : ChatId,
-  });
-  const AddRemoveFavouriteChatsArgs = IDL.Record({
-    'to_add' : IDL.Vec(Chat),
-    'to_remove' : IDL.Vec(Chat),
-  });
-  const AddRemoveFavouriteChatsResponse = IDL.Variant({
-    'Success' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-  });
-  const ArchiveChatArgs = IDL.Record({ 'chat_id' : ChatId });
-  const ArchiveChatResponse = IDL.Variant({
-    'ChatNotFound' : IDL.Null,
-    'Success' : IDL.Null,
   });
   const ArchiveUnarchiveChatsArgs = IDL.Record({
     'to_archive' : IDL.Vec(Chat),
@@ -148,7 +140,7 @@ export const idlFactory = ({ IDL }) => {
     'RulesTooShort' : FieldTooShortResult,
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
-    'InternalError' : IDL.Null,
+    'InternalError' : IDL.Text,
     'MaxCommunitiesCreated' : IDL.Nat32,
     'BannerTooBig' : FieldTooLongResult,
   });
@@ -381,7 +373,6 @@ export const idlFactory = ({ IDL }) => {
   const TimestampNanos = IDL.Nat64;
   const TransactionHash = IDL.Vec(IDL.Nat8);
   const BlockIndex = IDL.Nat64;
-  const Memo = IDL.Nat64;
   const NnsCompletedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
@@ -390,31 +381,43 @@ export const idlFactory = ({ IDL }) => {
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
     'from' : NnsCryptoAccount,
-    'memo' : Memo,
+    'memo' : IDL.Nat64,
     'amount' : Tokens,
   });
   const Icrc1Account = IDL.Record({
     'owner' : IDL.Principal,
     'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
-  const SnsAccount = IDL.Variant({
+  const Icrc1AccountOrMint = IDL.Variant({
     'Mint' : IDL.Null,
     'Account' : Icrc1Account,
   });
   const SnsCompletedCryptoTransaction = IDL.Record({
-    'to' : SnsAccount,
+    'to' : Icrc1AccountOrMint,
     'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
-    'from' : SnsAccount,
-    'memo' : IDL.Opt(Memo),
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(IDL.Nat64),
     'amount' : Tokens,
+  });
+  const Memo = IDL.Vec(IDL.Nat8);
+  const Icrc1CompletedCryptoTransaction = IDL.Record({
+    'to' : Icrc1AccountOrMint,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'block_index' : BlockIndex,
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(Memo),
+    'amount' : IDL.Nat,
   });
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
     'SNS' : SnsCompletedCryptoTransaction,
+    'ICRC1' : Icrc1CompletedCryptoTransaction,
   });
   const PrizeWinnerContent = IDL.Record({
     'transaction' : CompletedCryptoTransaction,
@@ -433,24 +436,35 @@ export const idlFactory = ({ IDL }) => {
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : NnsCryptoAccount,
-    'memo' : Memo,
+    'memo' : IDL.Nat64,
     'error_message' : IDL.Text,
     'amount' : Tokens,
   });
   const SnsFailedCryptoTransaction = IDL.Record({
-    'to' : SnsAccount,
+    'to' : Icrc1AccountOrMint,
     'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
-    'from' : SnsAccount,
-    'memo' : IDL.Opt(Memo),
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(IDL.Nat64),
     'error_message' : IDL.Text,
     'amount' : Tokens,
+  });
+  const Icrc1FailedCryptoTransaction = IDL.Record({
+    'to' : Icrc1AccountOrMint,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(Memo),
+    'error_message' : IDL.Text,
+    'amount' : IDL.Nat,
   });
   const FailedCryptoTransaction = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
     'SNS' : SnsFailedCryptoTransaction,
+    'ICRC1' : Icrc1FailedCryptoTransaction,
   });
   const NnsUserOrAccount = IDL.Variant({
     'User' : UserId,
@@ -461,7 +475,7 @@ export const idlFactory = ({ IDL }) => {
     'fee' : IDL.Opt(Tokens),
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
-    'memo' : IDL.Opt(Memo),
+    'memo' : IDL.Opt(IDL.Nat64),
     'amount' : Tokens,
   });
   const SnsPendingCryptoTransaction = IDL.Record({
@@ -469,12 +483,21 @@ export const idlFactory = ({ IDL }) => {
     'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
-    'memo' : IDL.Opt(Memo),
+    'memo' : IDL.Opt(IDL.Nat64),
     'amount' : Tokens,
+  });
+  const Icrc1PendingCryptoTransaction = IDL.Record({
+    'to' : Icrc1Account,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'memo' : IDL.Opt(Memo),
+    'amount' : IDL.Nat,
   });
   const PendingCryptoTransaction = IDL.Variant({
     'NNS' : NnsPendingCryptoTransaction,
     'SNS' : SnsPendingCryptoTransaction,
+    'ICRC1' : Icrc1PendingCryptoTransaction,
   });
   const CryptoTransaction = IDL.Variant({
     'Failed' : FailedCryptoTransaction,
@@ -627,7 +650,12 @@ export const idlFactory = ({ IDL }) => {
     'reply_count' : IDL.Nat32,
     'latest_event_index' : EventIndex,
   });
+  const MultiUserChat = IDL.Variant({
+    'Group' : ChatId,
+    'Channel' : IDL.Tuple(CommunityId, ChannelId),
+  });
   const ReplyContext = IDL.Record({
+    'chat_if_other' : IDL.Opt(IDL.Tuple(MultiUserChat, IDL.Opt(MessageIndex))),
     'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
     'event_index' : EventIndex,
   });
@@ -1002,6 +1030,14 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'InternalError' : IDL.Text,
+  });
+  const ManageFavouriteChatsArgs = IDL.Record({
+    'to_add' : IDL.Vec(Chat),
+    'to_remove' : IDL.Vec(Chat),
+  });
+  const ManageFavouriteChatsResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
   });
   const ThreadRead = IDL.Record({
     'root_message_index' : MessageIndex,
@@ -1412,11 +1448,6 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
-    'add_remove_favourite_chats' : IDL.Func(
-        [AddRemoveFavouriteChatsArgs],
-        [AddRemoveFavouriteChatsResponse],
-        [],
-      ),
     'archive_chat' : IDL.Func([ArchiveChatArgs], [ArchiveChatResponse], []),
     'archive_unarchive_chats' : IDL.Func(
         [ArchiveUnarchiveChatsArgs],
@@ -1491,6 +1522,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
+    'manage_favourite_chats' : IDL.Func(
+        [ManageFavouriteChatsArgs],
+        [ManageFavouriteChatsResponse],
+        [],
+      ),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'mark_read_v2' : IDL.Func([MarkReadV2Args], [MarkReadResponse], []),
     'messages_by_message_index' : IDL.Func(

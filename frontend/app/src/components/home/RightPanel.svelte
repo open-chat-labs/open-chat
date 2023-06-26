@@ -9,12 +9,12 @@
     import type {
         ChatEvent,
         EventWrapper,
-        GroupChatSummary,
         AccessRules,
         MemberRole,
         Message,
         UserSummary,
         OpenChat,
+        MultiUserChat,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
@@ -49,16 +49,14 @@
     $: currentCommunityMembers = client.currentCommunityMembers;
     $: currentCommunityInvited = client.currentCommunityInvitedUsers;
     $: currentCommunityBlocked = client.currentCommunityBlockedUsers;
-    $: currentCommunityRules = client.currentCommunityRules;
     $: selectedCommunity = client.selectedCommunity;
-    $: communityStateStore = client.communityStateStore;
 
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
     $: user = $userStore[currentUser.userId] ?? client.nullUser("unknown");
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $numberOfColumns === 2;
-    $: groupChat = selectedChatStore as Readable<GroupChatSummary>;
+    $: multiUserChat = selectedChatStore as Readable<MultiUserChat>;
     $: empty = $rightPanelHistory.length === 0;
 
     function onChangeGroupRole(
@@ -92,6 +90,30 @@
         toastStore.showSuccessToast("TODO - remove community member");
     }
 
+    async function inviteCommunityUsers(ev: CustomEvent<UserSummary[]>) {
+        if ($selectedCommunity !== undefined) {
+            const userIds = ev.detail.map((u) => u.userId);
+
+            invitingUsers = true;
+
+            await client.inviteUsersToCommunity($selectedCommunity.id, userIds).then((resp) => {
+                switch (resp) {
+                    case "success":
+                        popRightPanelHistory();
+                        if ($multiUserChat?.public ?? false) {
+                            toastStore.showSuccessToast("communities.usersInvited");
+                        }
+                        break;
+                    default:
+                        toastStore.showFailureToast("communities.errors.inviteUsers");
+                        break;
+                }
+            });
+
+            invitingUsers = false;
+        }
+    }
+
     async function inviteGroupUsers(ev: CustomEvent<UserSummary[]>) {
         if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
             const userIds = ev.detail.map((u) => u.userId);
@@ -104,12 +126,9 @@
                     switch (resp) {
                         case "success":
                             popRightPanelHistory();
-                            if ($groupChat?.public ?? false) {
+                            if ($multiUserChat?.public ?? false) {
                                 toastStore.showSuccessToast("group.usersInvited");
                             }
-                            break;
-                        case "too_many_invites":
-                            toastStore.showFailureToast("group.tooManyInvites");
                             break;
                         default:
                             toastStore.showFailureToast("group.inviteUsersFailed");
@@ -251,7 +270,7 @@
 <Panel right {empty}>
     {#if lastState.kind === "group_details" && $selectedChatId !== undefined}
         <GroupDetails
-            chat={$groupChat}
+            chat={$multiUserChat}
             memberCount={$currentChatMembers.length}
             rules={$currentChatRules}
             on:close={popRightPanelHistory}
@@ -264,7 +283,7 @@
         <InviteUsers
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
-            on:inviteUsers={inviteGroupUsers}
+            on:inviteUsers={inviteCommunityUsers}
             on:cancelInviteUsers={popRightPanelHistory} />
     {:else if lastState.kind === "show_community_members" && $selectedCommunity}
         <Members
@@ -289,7 +308,7 @@
     {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined}
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
-            collection={$groupChat}
+            collection={$multiUserChat}
             invited={$currentChatInvited}
             members={$currentChatMembers}
             blocked={$currentChatBlocked}
@@ -306,7 +325,7 @@
             on:goToMessageIndex={goToMessageIndex}
             chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
-            dateLastPinned={$groupChat.dateLastPinned}
+            dateLastPinned={$multiUserChat.dateLastPinned}
             on:close={popRightPanelHistory} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile

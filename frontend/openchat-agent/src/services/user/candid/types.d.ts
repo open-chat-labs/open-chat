@@ -29,12 +29,6 @@ export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'UserSuspended' : null } |
   { 'InvalidReaction' : null } |
   { 'SuccessV2' : PushEventResult };
-export interface AddRemoveFavouriteChatsArgs {
-  'to_add' : Array<Chat>,
-  'to_remove' : Array<Chat>,
-}
-export type AddRemoveFavouriteChatsResponse = { 'Success' : null } |
-  { 'UserSuspended' : null };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -281,6 +275,16 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'member_count' : [] | [number],
 }
 export type CommunityId = CanisterId;
+export interface CommunityMatch {
+  'id' : CommunityId,
+  'channel_count' : number,
+  'gate' : [] | [AccessGate],
+  'name' : string,
+  'description' : string,
+  'avatar_id' : [] | [bigint],
+  'banner_id' : [] | [bigint],
+  'member_count' : number,
+}
 export interface CommunityMembership {
   'role' : CommunityRole,
   'joined' : TimestampMillis,
@@ -312,7 +316,8 @@ export type CommunityRole = { 'Member' : null } |
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
-  { 'SNS' : SnsCompletedCryptoTransaction };
+  { 'SNS' : SnsCompletedCryptoTransaction } |
+  { 'ICRC1' : Icrc1CompletedCryptoTransaction };
 export interface Contact { 'nickname' : [] | [string], 'user_id' : UserId }
 export type ContactsArgs = {};
 export type ContactsResponse = { 'Success' : { 'contacts' : Array<Contact> } };
@@ -341,7 +346,7 @@ export type CreateCommunityResponse = { 'DefaultChannelsInvalid' : null } |
   { 'RulesTooShort' : FieldTooShortResult } |
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null } |
-  { 'InternalError' : null } |
+  { 'InternalError' : string } |
   { 'MaxCommunitiesCreated' : number } |
   { 'BannerTooBig' : FieldTooLongResult };
 export interface CreateCommunitySuccessResult { 'community_id' : CommunityId }
@@ -550,7 +555,8 @@ export interface EventsWindowArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
-  { 'SNS' : SnsFailedCryptoTransaction };
+  { 'SNS' : SnsFailedCryptoTransaction } |
+  { 'ICRC1' : Icrc1FailedCryptoTransaction };
 export interface FavouriteChatsInitial {
   'chats' : Array<Chat>,
   'pinned' : Array<Chat>,
@@ -731,6 +737,14 @@ export interface GroupInviteCodeChanged {
   'changed_by' : UserId,
   'change' : GroupInviteCodeChange,
 }
+export interface GroupMatch {
+  'gate' : [] | [AccessGate],
+  'name' : string,
+  'description' : string,
+  'avatar_id' : [] | [bigint],
+  'chat_id' : ChatId,
+  'member_count' : number,
+}
 export interface GroupMessageNotification {
   'hide' : boolean,
   'mentioned' : Array<User>,
@@ -803,6 +817,36 @@ export interface ICPRegistrationFee {
 export interface Icrc1Account {
   'owner' : Principal,
   'subaccount' : [] | [Uint8Array | number[]],
+}
+export type Icrc1AccountOrMint = { 'Mint' : null } |
+  { 'Account' : Icrc1Account };
+export interface Icrc1CompletedCryptoTransaction {
+  'to' : Icrc1AccountOrMint,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'block_index' : BlockIndex,
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [Memo],
+  'amount' : bigint,
+}
+export interface Icrc1FailedCryptoTransaction {
+  'to' : Icrc1AccountOrMint,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [Memo],
+  'error_message' : string,
+  'amount' : bigint,
+}
+export interface Icrc1PendingCryptoTransaction {
+  'to' : Icrc1Account,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'memo' : [] | [Memo],
+  'amount' : bigint,
 }
 export interface ImageContent {
   'height' : number,
@@ -882,13 +926,19 @@ export type LeaveGroupResponse = { 'GroupNotFound' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'InternalError' : string };
+export interface ManageFavouriteChatsArgs {
+  'to_add' : Array<Chat>,
+  'to_remove' : Array<Chat>,
+}
+export type ManageFavouriteChatsResponse = { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface MarkReadArgs {
   'community_messages_read' : Array<CommunityMessagesRead>,
   'messages_read' : Array<ChatMessagesRead>,
 }
 export type MarkReadResponse = { 'Success' : null };
 export interface MarkReadV2Args { 'messages_read' : Array<ChatMessagesRead> }
-export type Memo = bigint;
+export type Memo = Uint8Array | number[];
 export interface Mention {
   'message_id' : MessageId,
   'event_index' : EventIndex,
@@ -1010,6 +1060,8 @@ export type MigrateUserPrincipalResponse = { 'PrincipalAlreadyInUse' : null } |
   { 'InternalError' : string } |
   { 'MigrationNotInitialized' : null };
 export type Milliseconds = bigint;
+export type MultiUserChat = { 'Group' : ChatId } |
+  { 'Channel' : [CommunityId, ChannelId] };
 export interface MuteNotificationsArgs { 'chat_id' : ChatId }
 export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null } |
@@ -1022,7 +1074,7 @@ export interface NnsCompletedCryptoTransaction {
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'from' : NnsCryptoAccount,
-  'memo' : Memo,
+  'memo' : bigint,
   'amount' : Tokens,
 }
 export type NnsCryptoAccount = { 'Mint' : null } |
@@ -1034,7 +1086,7 @@ export interface NnsFailedCryptoTransaction {
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : NnsCryptoAccount,
-  'memo' : Memo,
+  'memo' : bigint,
   'error_message' : string,
   'amount' : Tokens,
 }
@@ -1044,7 +1096,7 @@ export interface NnsPendingCryptoTransaction {
   'fee' : [] | [Tokens],
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
-  'memo' : [] | [Memo],
+  'memo' : [] | [bigint],
   'amount' : Tokens,
 }
 export interface NnsProposal {
@@ -1134,7 +1186,8 @@ export interface ParticipantsRemoved {
   'removed_by' : UserId,
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
-  { 'SNS' : SnsPendingCryptoTransaction };
+  { 'SNS' : SnsPendingCryptoTransaction } |
+  { 'ICRC1' : Icrc1PendingCryptoTransaction };
 export type PermissionRole = { 'Moderators' : null } |
   { 'Owner' : null } |
   { 'Admins' : null } |
@@ -1254,6 +1307,7 @@ export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'UserSuspended' : null } |
   { 'SuccessV2' : PushEventResult };
 export interface ReplyContext {
+  'chat_if_other' : [] | [[MultiUserChat, [] | [MessageIndex]]],
   'event_list_if_other' : [] | [[ChatId, [] | [MessageIndex]]],
   'event_index' : EventIndex,
 }
@@ -1420,27 +1474,25 @@ export type SetMessageReminderResponse = {
   { 'Success' : bigint } |
   { 'ReminderDateInThePast' : null } |
   { 'UserSuspended' : null };
-export type SnsAccount = { 'Mint' : null } |
-  { 'Account' : Icrc1Account };
 export interface SnsCompletedCryptoTransaction {
-  'to' : SnsAccount,
+  'to' : Icrc1AccountOrMint,
   'fee' : Tokens,
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
-  'from' : SnsAccount,
-  'memo' : [] | [Memo],
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [bigint],
   'amount' : Tokens,
 }
 export interface SnsFailedCryptoTransaction {
-  'to' : SnsAccount,
+  'to' : Icrc1AccountOrMint,
   'fee' : Tokens,
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
-  'from' : SnsAccount,
-  'memo' : [] | [Memo],
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [bigint],
   'error_message' : string,
   'amount' : Tokens,
 }
@@ -1455,7 +1507,7 @@ export interface SnsPendingCryptoTransaction {
   'fee' : Tokens,
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
-  'memo' : [] | [Memo],
+  'memo' : [] | [bigint],
   'amount' : Tokens,
 }
 export interface SnsProposal {
@@ -1661,10 +1713,6 @@ export interface _SERVICE {
     AddHotGroupExclusionsResponse
   >,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
-  'add_remove_favourite_chats' : ActorMethod<
-    [AddRemoveFavouriteChatsArgs],
-    AddRemoveFavouriteChatsResponse
-  >,
   'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
   'archive_unarchive_chats' : ActorMethod<
     [ArchiveUnarchiveChatsArgs],
@@ -1708,6 +1756,10 @@ export interface _SERVICE {
   >,
   'leave_community' : ActorMethod<[LeaveCommunityArgs], LeaveCommunityResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
+  'manage_favourite_chats' : ActorMethod<
+    [ManageFavouriteChatsArgs],
+    ManageFavouriteChatsResponse
+  >,
   'mark_read' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
   'mark_read_v2' : ActorMethod<[MarkReadV2Args], MarkReadResponse>,
   'messages_by_message_index' : ActorMethod<

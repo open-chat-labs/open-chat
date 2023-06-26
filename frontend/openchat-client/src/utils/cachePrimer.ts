@@ -89,27 +89,15 @@ export class CachePrimer {
         chat: ChatSummary,
         firstUnreadMessage: number
     ): Promise<EventsResponse<ChatEvent>> {
-        switch (chat.kind) {
-            case "direct_chat":
-                return await this.api.sendRequest({
-                    kind: "directChatEventsWindow",
-                    eventIndexRange: [0, chat.latestEventIndex],
-                    chatId: chat.them,
-                    messageIndex: firstUnreadMessage,
-                    latestClientMainEventIndex: chat.latestEventIndex,
-                });
-            case "group_chat":
-                return await this.api.sendRequest({
-                    kind: "groupChatEventsWindow",
-                    eventIndexRange: [chat.minVisibleEventIndex, chat.latestEventIndex],
-                    chatId: chat.id,
-                    messageIndex: firstUnreadMessage,
-                    latestClientMainEventIndex: chat.latestEventIndex,
-                    threadRootMessageIndex: undefined,
-                });
-            case "channel":
-                throw new Error("TODO - cache primer doesn't work for channels yet");
-        }
+        const minVisible = "minVisibleEventIndex" in chat ? chat.minVisibleEventIndex : 0;
+        return await this.api.sendRequest({
+            kind: "chatEventsWindow",
+            eventIndexRange: [minVisible, chat.latestEventIndex],
+            chatId: chat.id,
+            messageIndex: firstUnreadMessage,
+            latestClientMainEventIndex: chat.latestEventIndex,
+            threadRootMessageIndex: undefined,
+        });
     }
 
     private async getLatestEvents(chat: ChatSummary): Promise<EventsResponse<ChatEvent>> {

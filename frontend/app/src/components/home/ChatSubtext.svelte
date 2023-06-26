@@ -29,7 +29,7 @@
 
 {#if chat.kind === "direct_chat"}
     {subtext}
-{:else if chat.kind === "group_chat"}
+{:else if chat.kind === "group_chat" || chat.kind === "channel"}
     <div class="wrapper">
         <div class="visibility">
             <div class={`img ${chat.public ? "public" : "private"}`} />

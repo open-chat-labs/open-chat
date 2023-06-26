@@ -77,7 +77,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const TransactionHash = IDL.Vec(IDL.Nat8);
   const BlockIndex = IDL.Nat64;
-  const Memo = IDL.Nat64;
   const NnsCompletedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
@@ -86,31 +85,43 @@ export const idlFactory = ({ IDL }) => {
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
     'from' : NnsCryptoAccount,
-    'memo' : Memo,
+    'memo' : IDL.Nat64,
     'amount' : Tokens,
   });
   const Icrc1Account = IDL.Record({
     'owner' : IDL.Principal,
     'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
-  const SnsAccount = IDL.Variant({
+  const Icrc1AccountOrMint = IDL.Variant({
     'Mint' : IDL.Null,
     'Account' : Icrc1Account,
   });
   const SnsCompletedCryptoTransaction = IDL.Record({
-    'to' : SnsAccount,
+    'to' : Icrc1AccountOrMint,
     'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
-    'from' : SnsAccount,
-    'memo' : IDL.Opt(Memo),
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(IDL.Nat64),
     'amount' : Tokens,
+  });
+  const Memo = IDL.Vec(IDL.Nat8);
+  const Icrc1CompletedCryptoTransaction = IDL.Record({
+    'to' : Icrc1AccountOrMint,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'block_index' : BlockIndex,
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(Memo),
+    'amount' : IDL.Nat,
   });
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
     'SNS' : SnsCompletedCryptoTransaction,
+    'ICRC1' : Icrc1CompletedCryptoTransaction,
   });
   const NnsFailedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
@@ -119,24 +130,35 @@ export const idlFactory = ({ IDL }) => {
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : NnsCryptoAccount,
-    'memo' : Memo,
+    'memo' : IDL.Nat64,
     'error_message' : IDL.Text,
     'amount' : Tokens,
   });
   const SnsFailedCryptoTransaction = IDL.Record({
-    'to' : SnsAccount,
+    'to' : Icrc1AccountOrMint,
     'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
-    'from' : SnsAccount,
-    'memo' : IDL.Opt(Memo),
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(IDL.Nat64),
     'error_message' : IDL.Text,
     'amount' : Tokens,
+  });
+  const Icrc1FailedCryptoTransaction = IDL.Record({
+    'to' : Icrc1AccountOrMint,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(Memo),
+    'error_message' : IDL.Text,
+    'amount' : IDL.Nat,
   });
   const FailedCryptoTransaction = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
     'SNS' : SnsFailedCryptoTransaction,
+    'ICRC1' : Icrc1FailedCryptoTransaction,
   });
   const ClaimPrizeResponse = IDL.Variant({
     'PrizeFullyClaimed' : IDL.Null,
@@ -149,6 +171,37 @@ export const idlFactory = ({ IDL }) => {
     'PrizeEnded' : IDL.Null,
     'FailedAfterTransfer' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'TransferFailed' : IDL.Tuple(IDL.Text, FailedCryptoTransaction),
+  });
+  const CommunityPermissionRole = IDL.Variant({
+    'Owners' : IDL.Null,
+    'Admins' : IDL.Null,
+    'Members' : IDL.Null,
+  });
+  const CommunityPermissions = IDL.Record({
+    'create_public_channel' : CommunityPermissionRole,
+    'block_users' : CommunityPermissionRole,
+    'change_permissions' : CommunityPermissionRole,
+    'update_details' : CommunityPermissionRole,
+    'remove_members' : CommunityPermissionRole,
+    'invite_users' : CommunityPermissionRole,
+    'change_roles' : CommunityPermissionRole,
+    'create_private_channel' : CommunityPermissionRole,
+  });
+  const AccessRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
+  const ConvertIntoCommunityArgs = IDL.Record({
+    'permissions' : IDL.Opt(CommunityPermissions),
+    'history_visible_to_new_joiners' : IDL.Bool,
+    'rules' : AccessRules,
+  });
+  const CommunityId = CanisterId;
+  const ConvertIntoCommunityResponse = IDL.Variant({
+    'AlreadyImportingToAnotherCommunity' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : CommunityId,
+    'UserSuspended' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const EmptyArgs = IDL.Record({});
   const DeclineInvitationResponse = IDL.Variant({
@@ -328,7 +381,7 @@ export const idlFactory = ({ IDL }) => {
     'fee' : IDL.Opt(Tokens),
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
-    'memo' : IDL.Opt(Memo),
+    'memo' : IDL.Opt(IDL.Nat64),
     'amount' : Tokens,
   });
   const SnsPendingCryptoTransaction = IDL.Record({
@@ -336,12 +389,21 @@ export const idlFactory = ({ IDL }) => {
     'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
-    'memo' : IDL.Opt(Memo),
+    'memo' : IDL.Opt(IDL.Nat64),
     'amount' : Tokens,
+  });
+  const Icrc1PendingCryptoTransaction = IDL.Record({
+    'to' : Icrc1Account,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'memo' : IDL.Opt(Memo),
+    'amount' : IDL.Nat,
   });
   const PendingCryptoTransaction = IDL.Variant({
     'NNS' : NnsPendingCryptoTransaction,
     'SNS' : SnsPendingCryptoTransaction,
+    'ICRC1' : Icrc1PendingCryptoTransaction,
   });
   const CryptoTransaction = IDL.Variant({
     'Failed' : FailedCryptoTransaction,
@@ -508,7 +570,13 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
   });
   const ChatId = CanisterId;
+  const ChannelId = IDL.Nat;
+  const MultiUserChat = IDL.Variant({
+    'Group' : ChatId,
+    'Channel' : IDL.Tuple(CommunityId, ChannelId),
+  });
   const ReplyContext = IDL.Record({
+    'chat_if_other' : IDL.Opt(IDL.Tuple(MultiUserChat, IDL.Opt(MessageIndex))),
     'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
     'event_index' : EventIndex,
   });
@@ -889,7 +957,6 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
-  const AccessRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const SelectedInitialSuccess = IDL.Record({
     'participants' : IDL.Vec(Participant),
     'invited_users' : IDL.Vec(UserId),
@@ -1247,6 +1314,11 @@ export const idlFactory = ({ IDL }) => {
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'change_role' : IDL.Func([ChangeRoleArgs], [ChangeRoleResponse], []),
     'claim_prize' : IDL.Func([ClaimPrizeArgs], [ClaimPrizeResponse], []),
+    'convert_into_community' : IDL.Func(
+        [ConvertIntoCommunityArgs],
+        [ConvertIntoCommunityResponse],
+        [],
+      ),
     'decline_invitation' : IDL.Func(
         [EmptyArgs],
         [DeclineInvitationResponse],

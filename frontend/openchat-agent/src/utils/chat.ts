@@ -227,7 +227,7 @@ export function mergeGroupChatDetails(
     updates: GroupChatDetailsUpdates
 ): GroupChatDetails {
     return {
-        latestEventIndex: updates.latestEventIndex,
+        timestamp: updates.timestamp,
         members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
             added: [],
             updated: updates.membersAddedOrUpdated,

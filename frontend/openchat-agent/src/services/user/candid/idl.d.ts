@@ -38,12 +38,18 @@ import {
     TotalPollVotes,
     CryptoContent,
     CryptoTransaction,
+    CompletedCryptoTransaction,
+    FailedCryptoTransaction,
+    PendingCryptoTransaction,
     NnsPendingCryptoTransaction,
     NnsCompletedCryptoTransaction,
     NnsFailedCryptoTransaction,
     SnsPendingCryptoTransaction,
     SnsCompletedCryptoTransaction,
     SnsFailedCryptoTransaction,
+    Icrc1CompletedCryptoTransaction,
+    Icrc1FailedCryptoTransaction,
+    Icrc1PendingCryptoTransaction,
     DeletedContent,
     TimestampMillis,
     BlobReference,
@@ -121,6 +127,7 @@ import {
     CommunityMessagesRead,
     ChatMessagesRead,
     ChannelMessagesRead,
+    MultiUserChat,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -244,6 +251,13 @@ export {
     CommunityMessagesRead as ApiCommunityMessagesRead,
     ChatMessagesRead as ApiChatMessagesRead,
     ChannelMessagesRead as ApiChannelMessagesRead,
+    Icrc1CompletedCryptoTransaction as ApiIcrc1CompletedCryptoTransaction,
+    Icrc1FailedCryptoTransaction as ApiIcrc1FailedCryptoTransaction,
+    Icrc1PendingCryptoTransaction as ApiIcrc1PendingCryptoTransaction,
+    CompletedCryptoTransaction as ApiCompletedCryptoTransaction,
+    FailedCryptoTransaction as ApiFailedCryptoTransaction,
+    PendingCryptoTransaction as ApiPendingCryptoTransaction,
+    MultiUserChat as ApiMultiUserChat,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -4,8 +4,11 @@
     import TooltipPopup from "../TooltipPopup.svelte";
     import { E8S_PER_TOKEN, AccessGate } from "openchat-client";
     import { createEventDispatcher } from "svelte";
+    import type { Alignment, Position } from "../../utils/alignment";
 
     export let gate: AccessGate;
+    export let position: Position = "top";
+    export let align: Alignment = "start";
 
     const dispatch = createEventDispatcher();
 
@@ -33,7 +36,7 @@
 
 {#if gate.kind !== "no_gate"}
     {#if gate.kind === "diamond_gate"}
-        <TooltipWrapper position={"top"} align={"start"}>
+        <TooltipWrapper {position} {align}>
             <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">💎</div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
@@ -42,7 +45,7 @@
             </div>
         </TooltipWrapper>
     {:else if gate.kind === "openchat_gate"}
-        <TooltipWrapper position={"top"} align={"start"}>
+        <TooltipWrapper {position} {align}>
             <div slot="target" class="icon oc" />
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
@@ -52,7 +55,7 @@
             </div>
         </TooltipWrapper>
     {:else if gate.kind === "sns1_gate"}
-        <TooltipWrapper position={"top"} align={"start"}>
+        <TooltipWrapper {position} {align}>
             <div slot="target" class="icon sns1" />
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>

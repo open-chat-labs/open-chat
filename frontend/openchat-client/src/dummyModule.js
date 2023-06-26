@@ -63,3 +63,5 @@ export class ChatMap extends Map {
 }
 
 export class MessageMap extends Map {}
+
+export class CommunityMap extends Map {}

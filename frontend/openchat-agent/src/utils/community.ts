@@ -172,7 +172,7 @@ export function mergeChannelUpdates(
             dateLastPinned: c?.dateLastPinned ?? channel.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? channel.dateReadPinned,
             gate: applyOptionUpdate(channel.gate, c?.gate) ?? { kind: "no_gate" },
-            level: "group",
+            level: "channel",
             membership: {
                 ...channel.membership,
                 mentions:

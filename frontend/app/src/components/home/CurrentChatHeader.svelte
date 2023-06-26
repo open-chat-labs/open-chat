@@ -17,6 +17,7 @@
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import SuspendModal from "./SuspendModal.svelte";
+    import { defaultStrategy } from "@dfinity/agent/lib/cjs/polling";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -33,9 +34,10 @@
     $: typersByContext = client.typersByContext;
     $: userStore = client.userStore;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
-    $: isGroup = selectedChatSummary.kind === "group_chat";
+    $: isMultiUser =
+        selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel";
     $: isBot = $userStore[userId]?.kind === "bot";
-    $: hasUserProfile = !isGroup && !isBot;
+    $: hasUserProfile = !isMultiUser && !isBot;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -50,21 +52,33 @@
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        if (chatSummary.kind === "direct_chat") {
-            const them = $userStore[chatSummary.them.userId];
-            return {
-                name: client.usernameAndIcon(them),
-                avatarUrl: client.userAvatarUrl(them),
-                userId: chatSummary.them.userId,
-                typing: client.getTypingString($_, $userStore, { chatId: chatSummary.id }, typing),
-            };
+        switch (chatSummary.kind) {
+            case "direct_chat":
+                const them = $userStore[chatSummary.them.userId];
+                return {
+                    name: client.usernameAndIcon(them),
+                    avatarUrl: client.userAvatarUrl(them),
+                    userId: chatSummary.them.userId,
+                    typing: client.getTypingString(
+                        $_,
+                        $userStore,
+                        { chatId: chatSummary.id },
+                        typing
+                    ),
+                };
+            default:
+                return {
+                    name: chatSummary.name,
+                    avatarUrl: client.groupAvatarUrl(chatSummary),
+                    userId: undefined,
+                    typing: client.getTypingString(
+                        $_,
+                        $userStore,
+                        { chatId: chatSummary.id },
+                        typing
+                    ),
+                };
         }
-        return {
-            name: chatSummary.name,
-            avatarUrl: client.groupAvatarUrl(chatSummary),
-            userId: undefined,
-            typing: client.getTypingString($_, $userStore, { chatId: chatSummary.id }, typing),
-        };
     }
 
     function openUserProfile() {
@@ -111,7 +125,7 @@
     </div>
     <div class="chat-details">
         <div class="chat-name" title={chat.name}>
-            {#if isGroup && !readonly}
+            {#if isMultiUser && !readonly}
                 <span on:click={showGroupDetails} class="group-details">
                     {chat.name}
                 </span>
@@ -130,7 +144,7 @@
                 <ChatSubtext chat={selectedChatSummary} />
             {:else if chat.typing !== undefined}
                 {chat.typing} <Typing />
-            {:else if isGroup}
+            {:else if isMultiUser}
                 <div class="members" on:click={showGroupMembers}>
                     <ChatSubtext chat={selectedChatSummary} />
                 </div>
