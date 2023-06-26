@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Allow blocking users who are no longer in the group ([#3818](https://github.com/open-chat-labs/open-chat/pull/3818))
 - Sync access gate with group_index ([#3826](https://github.com/open-ic/open-chat/pull/3826))
 - Simplify `c2c_delete_group` ([#3840](https://github.com/open-ic/open-chat/pull/3840))
+- Refactored `claim_prize` ([#3854](https://github.com/open-ic/open-chat/pull/3854))
 
 ### Removed
 
