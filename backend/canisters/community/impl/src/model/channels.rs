@@ -2,6 +2,7 @@ use chat_events::Reader;
 use group_chat_core::{GroupChatCore, GroupMemberInternal};
 use search::*;
 use serde::{Deserialize, Serialize};
+use std::cmp::Reverse;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{
@@ -96,7 +97,7 @@ impl Channels {
             .map(|c| {
                 let score = if let Some(query) = &query {
                     let document: Document = c.into();
-                    u32::MAX - document.calculate_score(query)
+                    document.calculate_score(query)
                 } else {
                     0
                 };
@@ -106,9 +107,9 @@ impl Channels {
             .collect();
 
         if query.is_some() {
-            matches.sort_by_key(|(score, _)| *score);
+            matches.sort_by_key(|(score, _)| Reverse(*score));
         } else {
-            matches.sort_by_key(|(_, channel)| channel.chat.name.to_lowercase());
+            matches.sort_by_cached_key(|(_, channel)| channel.chat.name.to_lowercase());
         };
 
         matches
