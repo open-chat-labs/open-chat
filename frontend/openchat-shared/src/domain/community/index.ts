@@ -261,26 +261,11 @@ export type RemoveCommunityMemberResponse = Success | Failure;
 
 export type RemoveChannelMemberResponse = Success | Failure;
 
-export type CommunityRulesResponse = Failure | (Success & { rules?: string });
-
 export type ChannelMessageMatch = {
     content: MessageContent;
     sender: string;
     score: number;
     messageIndex: number;
-};
-
-export type SelectedChannelUpdates = {
-    blockedUsersRemoved: Set<string>;
-    pinnedMessagesRemoved: Set<number>;
-    invitedUsers?: Set<string>;
-    membersAddedOrUpdated: Member[];
-    pinnedMessagesAdded: Set<number>;
-    membersRemoved: Set<string>;
-    timestamp: bigint;
-    latestEventIndex: number;
-    rules?: AccessRules;
-    blockedUsersAdded: Set<string>;
 };
 
 export type SearchChannelResponse = Failure | (Success & { matches: ChannelMessageMatch[] });
@@ -290,23 +275,6 @@ export type UnblockCommunityUserResponse = Failure | Success;
 export type UndeleteChannelMessagesResponse = Failure | (Success & { messages: Message[] });
 
 export type UpdateCommunityResponse = Failure | Success;
-
-export type SelectedChannelInitialResponse =
-    | Failure
-    | (Success & {
-          members: Member[];
-          invitedUsers: Set<string>;
-          blockedUsers: Set<string>;
-          timestamp: bigint;
-          pinnedMessages: Set<number>;
-          latestEventIndex: number;
-          rules: AccessRules;
-      });
-
-export type SelectedChannelUpdatesResponse =
-    | Failure
-    | (Success & SelectedChannelUpdates)
-    | SuccessNoUpdates;
 
 export type ToggleMuteChannelNotificationsResponse = Failure | Success;
 

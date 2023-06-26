@@ -303,6 +303,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
     confirmedEventIndexesLoaded: new DRange(),
     serverEvents: [],
     expandedDeletedMessages: new Set(),
+    lastUpdated: BigInt(0),
 }));
 
 export const threadServerEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
@@ -405,10 +406,6 @@ export const currentChatMembers = createDerivedPropStore<ChatSpecificState, "mem
     "members",
     () => []
 );
-export const chatDetailsLatestEventIndex = createDerivedPropStore<
-    ChatSpecificState,
-    "latestEventIndex"
->(chatStateStore, "latestEventIndex", () => undefined);
 
 export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(
     chatStateStore,

@@ -2155,27 +2155,21 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private async loadDetails(clientChat: ChatSummary): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
-        // TODO - need to sort out what the channel equivalent of this is
-        // are we just going to get the channel summary - probably not because we don't want all the members etc in the summary
-        if (clientChat.kind === "group_chat") {
+        if (clientChat.kind === "group_chat" || clientChat.kind === "channel") {
             if (!chatStateStore.getProp(clientChat.id, "detailsLoaded")) {
                 const resp = await this.sendRequest({
                     kind: "getGroupDetails",
                     chatId: clientChat.id,
-                    latestEventIndex: clientChat.latestEventIndex,
+                    timestamp: clientChat.lastUpdated,
                 });
-                if (resp !== "caller_not_in_group") {
+                if (resp !== "failure") {
                     chatStateStore.setProp(clientChat.id, "detailsLoaded", true);
-                    chatStateStore.setProp(
-                        clientChat.id,
-                        "latestEventIndex",
-                        resp.latestEventIndex
-                    );
                     chatStateStore.setProp(clientChat.id, "members", resp.members);
                     chatStateStore.setProp(clientChat.id, "blockedUsers", resp.blockedUsers);
                     chatStateStore.setProp(clientChat.id, "invitedUsers", resp.invitedUsers);
                     chatStateStore.setProp(clientChat.id, "pinnedMessages", resp.pinnedMessages);
                     chatStateStore.setProp(clientChat.id, "rules", resp.rules);
+                    chatStateStore.setProp(clientChat.id, "lastUpdated", resp.timestamp);
                 }
                 await this.updateUserStore(clientChat.id, []);
             } else {
@@ -2185,10 +2179,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async updateDetails(clientChat: ChatSummary): Promise<void> {
-        // TODO - channels
-        if (clientChat.kind === "group_chat") {
-            const latestEventIndex = chatStateStore.getProp(clientChat.id, "latestEventIndex");
-            if (latestEventIndex !== undefined && latestEventIndex < clientChat.latestEventIndex) {
+        if (clientChat.kind === "group_chat" || clientChat.kind === "channel") {
+            const timestamp = chatStateStore.getProp(clientChat.id, "lastUpdated");
+            if (timestamp !== undefined && timestamp < clientChat.lastUpdated) {
                 const gd = await this.sendRequest({
                     kind: "getGroupDetailsUpdates",
                     chatId: clientChat.id,
@@ -2197,7 +2190,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         blockedUsers: chatStateStore.getProp(clientChat.id, "blockedUsers"),
                         invitedUsers: chatStateStore.getProp(clientChat.id, "invitedUsers"),
                         pinnedMessages: chatStateStore.getProp(clientChat.id, "pinnedMessages"),
-                        latestEventIndex,
+                        timestamp: chatStateStore.getProp(clientChat.id, "lastUpdated"),
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         rules: chatStateStore.getProp(clientChat.id, "rules")!,
                     },
@@ -2207,6 +2200,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 chatStateStore.setProp(clientChat.id, "invitedUsers", gd.invitedUsers);
                 chatStateStore.setProp(clientChat.id, "pinnedMessages", gd.pinnedMessages);
                 chatStateStore.setProp(clientChat.id, "rules", gd.rules);
+                chatStateStore.setProp(clientChat.id, "lastUpdated", gd.timestamp);
                 await this.updateUserStore(clientChat.id, []);
             }
         }

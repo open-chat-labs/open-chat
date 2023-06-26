@@ -1647,17 +1647,33 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getGroupDetails(
-        chatId: GroupChatIdentifier,
-        latestEventIndex: number
+        chatId: MultiUserChatIdentifier,
+        timestamp: bigint
     ): Promise<GroupChatDetailsResponse> {
-        return this.getGroupClient(chatId.groupId).getGroupDetails(latestEventIndex);
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).getGroupDetails(timestamp);
+            case "channel":
+                return this.communityClient(chatId.communityId).getChannelDetails(
+                    chatId,
+                    timestamp
+                );
+        }
     }
 
     async getGroupDetailsUpdates(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         previous: GroupChatDetails
     ): Promise<GroupChatDetails> {
-        return this.getGroupClient(chatId.groupId).getGroupDetailsUpdates(previous);
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).getGroupDetailsUpdates(previous);
+            case "channel":
+                return this.communityClient(chatId.communityId).getChannelDetailsUpdates(
+                    chatId,
+                    previous
+                );
+        }
     }
 
     getPublicGroupSummary(chatId: GroupChatIdentifier): Promise<GroupChatSummary | undefined> {

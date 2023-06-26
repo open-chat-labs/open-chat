@@ -16,12 +16,6 @@ import type {
     ApiDeletedContent,
     ApiCryptoContent,
     ApiCryptoTransaction,
-    ApiNnsPendingCryptoTransaction,
-    ApiNnsCompletedCryptoTransaction,
-    ApiNnsFailedCryptoTransaction,
-    ApiSnsPendingCryptoTransaction,
-    ApiSnsCompletedCryptoTransaction,
-    ApiSnsFailedCryptoTransaction,
     ApiUser,
     ApiICP,
     ApiPollContent,
@@ -53,6 +47,10 @@ import type {
     ApiMention,
     ApiCreateGroupResponse,
     ApiDeleteGroupResponse,
+    ApiCompletedCryptoTransaction,
+    ApiPendingCryptoTransaction,
+    ApiFailedCryptoTransaction,
+    ApiMultiUserChat,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -125,6 +123,10 @@ import {
     DeleteGroupResponse,
     PinMessageResponse,
     UnpinMessageResponse,
+    GroupChatDetailsResponse,
+    Member,
+    AccessRules,
+    GroupChatDetailsUpdatesResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -136,6 +138,10 @@ import type {
     ApiUpdateGroupResponse,
     ApiUnpinMessageResponse,
     ApiPinMessageResponse,
+    ApiSelectedInitialResponse,
+    ApiParticipant,
+    ApiGroupRules,
+    ApiSelectedUpdatesResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -151,6 +157,8 @@ import type {
     ApiCreateChannelResponse,
     ApiDeleteChannelResponse,
     ApiPinChannelMessageResponse,
+    ApiSelectedChannelInitialResponse,
+    ApiSelectedChannelUpdatesResponse,
 } from "../community/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -282,10 +290,13 @@ function messageReminder(candid: ApiMessageReminder): MessageReminderContent {
 }
 
 function prizeWinnerContent(senderId: string, candid: ApiPrizeWinnerContent): PrizeWinnerContent {
-    const transfer = "NNS" in candid.transaction ? candid.transaction.NNS : candid.transaction.SNS;
     return {
         kind: "prize_winner_content",
-        transaction: completedCryptoTransfer(transfer, senderId, candid.winner.toString()),
+        transaction: completedCryptoTransfer(
+            candid.transaction,
+            senderId,
+            candid.winner.toString()
+        ),
         prizeMessageIndex: candid.prize_message,
     };
 }
@@ -504,66 +515,109 @@ function cryptoTransfer(
     recipient: string
 ): CryptocurrencyTransfer {
     if ("Pending" in candid) {
-        const transfer = "NNS" in candid.Pending ? candid.Pending.NNS : candid.Pending.SNS;
-        return pendingCryptoTransfer(transfer, recipient);
+        return pendingCryptoTransfer(candid.Pending, recipient);
     }
     if ("Completed" in candid) {
-        const transfer = "NNS" in candid.Completed ? candid.Completed.NNS : candid.Completed.SNS;
-        return completedCryptoTransfer(transfer, sender, recipient);
+        return completedCryptoTransfer(candid.Completed, sender, recipient);
     }
     if ("Failed" in candid) {
-        const transfer = "NNS" in candid.Failed ? candid.Failed.NNS : candid.Failed.SNS;
-        return failedCryptoTransfer(transfer, recipient);
+        return failedCryptoTransfer(candid.Failed, recipient);
     }
     throw new UnsupportedValueError("Unexpected ApiCryptoTransaction type received", candid);
 }
 
 function pendingCryptoTransfer(
-    candid: ApiNnsPendingCryptoTransaction | ApiSnsPendingCryptoTransaction,
+    candid: ApiPendingCryptoTransaction,
     recipient: string
 ): PendingCryptocurrencyTransfer {
-    return {
-        kind: "pending",
-        token: token(candid.token),
-        recipient,
-        amountE8s: candid.amount.e8s,
-        feeE8s: Array.isArray(candid.fee) ? optional(candid.fee, (f) => f.e8s) : candid.fee.e8s,
-        memo: optional(candid.memo, identity),
-        createdAtNanos: candid.created,
-    };
+    if ("NNS" in candid || "SNS" in candid) {
+        const trans = "NNS" in candid ? candid.NNS : candid.SNS;
+        return {
+            kind: "pending",
+            token: token(trans.token),
+            recipient,
+            amountE8s: trans.amount.e8s,
+            feeE8s: Array.isArray(trans.fee) ? optional(trans.fee, (f) => f.e8s) : trans.fee.e8s,
+            createdAtNanos: trans.created,
+        };
+    }
+    if ("ICRC1" in candid) {
+        return {
+            kind: "pending",
+            token: token(candid.ICRC1.token),
+            recipient,
+            amountE8s: candid.ICRC1.amount,
+            feeE8s: candid.ICRC1.fee,
+            createdAtNanos: candid.ICRC1.created,
+        };
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiPendingCryptoTransaction type received", candid);
 }
 
 export function completedCryptoTransfer(
-    candid: ApiNnsCompletedCryptoTransaction | ApiSnsCompletedCryptoTransaction,
+    candid: ApiCompletedCryptoTransaction,
     sender: string,
     recipient: string
 ): CompletedCryptocurrencyTransfer {
-    return {
-        kind: "completed",
-        token: token(candid.token),
-        recipient,
-        sender,
-        amountE8s: candid.amount.e8s,
-        feeE8s: candid.fee.e8s,
-        memo: Array.isArray(candid.memo) ? candid.memo[0] ?? BigInt(0) : candid.memo,
-        blockIndex: candid.block_index,
-        transactionHash: bytesToHexString(candid.transaction_hash),
-    };
+    if ("NNS" in candid || "SNS" in candid) {
+        const trans = "NNS" in candid ? candid.NNS : candid.SNS;
+        return {
+            kind: "completed",
+            token: token(trans.token),
+            recipient,
+            sender,
+            amountE8s: trans.amount.e8s,
+            feeE8s: trans.fee.e8s,
+            blockIndex: trans.block_index,
+            transactionHash: bytesToHexString(trans.transaction_hash),
+        };
+    }
+    if ("ICRC1" in candid) {
+        return {
+            kind: "completed",
+            token: token(candid.ICRC1.token),
+            recipient,
+            sender,
+            amountE8s: candid.ICRC1.amount,
+            feeE8s: candid.ICRC1.fee,
+            blockIndex: candid.ICRC1.block_index,
+            transactionHash: undefined,
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiCompletedCryptoTransaction type received",
+        candid
+    );
 }
 
 export function failedCryptoTransfer(
-    candid: ApiNnsFailedCryptoTransaction | ApiSnsFailedCryptoTransaction,
+    candid: ApiFailedCryptoTransaction,
     recipient: string
 ): FailedCryptocurrencyTransfer {
-    return {
-        kind: "failed",
-        token: token(candid.token),
-        recipient,
-        amountE8s: candid.amount.e8s,
-        feeE8s: candid.fee.e8s,
-        memo: Array.isArray(candid.memo) ? candid.memo[0] ?? BigInt(0) : candid.memo,
-        errorMessage: candid.error_message,
-    };
+    if ("NNS" in candid || "SNS" in candid) {
+        const trans = "NNS" in candid ? candid.NNS : candid.SNS;
+        return {
+            kind: "failed",
+            token: token(trans.token),
+            recipient,
+            amountE8s: trans.amount.e8s,
+            feeE8s: trans.fee.e8s,
+            errorMessage: trans.error_message,
+        };
+    }
+    if ("ICRC1" in candid) {
+        return {
+            kind: "failed",
+            token: token(candid.ICRC1.token),
+            recipient,
+            amountE8s: candid.ICRC1.amount,
+            feeE8s: candid.ICRC1.fee,
+            errorMessage: candid.ICRC1.error_message,
+        };
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiFailedCryptoTransaction type received", candid);
 }
 
 function imageContent(candid: ApiImageContent): ImageContent {
@@ -633,15 +687,32 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
     return {
         kind: "raw_reply_context",
         eventIndex: candid.event_index,
-        sourceContext: optional(candid.event_list_if_other, replySourceContext),
+        sourceContext: optional(candid.chat_if_other, replySourceContext),
     };
 }
 
-function replySourceContext([chatId, maybeThreadRoot]: [Principal, [] | [number]]): MessageContext {
-    return {
-        chatId: { kind: "group_chat", groupId: chatId.toString() }, // TODO this will need to change for communities but should be fine for now
-        threadRootMessageIndex: optional(maybeThreadRoot, identity),
-    };
+function replySourceContext([chatId, maybeThreadRoot]: [
+    ApiMultiUserChat,
+    [] | [number]
+]): MessageContext {
+    if ("Group" in chatId) {
+        return {
+            chatId: { kind: "group_chat", groupId: chatId.Group.toString() },
+            threadRootMessageIndex: optional(maybeThreadRoot, identity),
+        };
+    }
+    if ("Channel" in chatId) {
+        const [communityId, channelId] = chatId.Channel;
+        return {
+            chatId: {
+                kind: "channel",
+                communityId: communityId.toString(),
+                channelId: channelId.toString(),
+            },
+            threadRootMessageIndex: optional(maybeThreadRoot, identity),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiMultiUserChat type received", chatId);
 }
 
 function reactions(candid: [string, Principal[]][]): Reaction[] {
@@ -803,6 +874,21 @@ export function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
     };
 }
 
+function apiMultiUserChat(chatId: ChatIdentifier): ApiMultiUserChat {
+    switch (chatId.kind) {
+        case "group_chat":
+            return {
+                Group: Principal.fromText(chatId.groupId),
+            };
+        case "channel":
+            return {
+                Channel: [Principal.fromText(chatId.communityId), BigInt(chatId.channelId)],
+            };
+        default:
+            throw new Error("Cannot convert a DirectChatIdentifier into an ApiMultiUserChat");
+    }
+}
+
 export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext): ApiReplyContext {
     if (domain.sourceContext?.chatId.kind === "channel") {
         throw new Error("TODO channel reply contexts not yet supported");
@@ -812,6 +898,12 @@ export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext
         !chatIdentifiersEqual(chatId, domain.sourceContext.chatId)
     ) {
         return {
+            chat_if_other: [
+                [
+                    apiMultiUserChat(domain.sourceContext.chatId),
+                    apiOptional(identity, domain.sourceContext.threadRootMessageIndex),
+                ],
+            ],
             event_list_if_other: [
                 [
                     Principal.fromText(chatIdentifierToString(domain.sourceContext.chatId)),
@@ -822,6 +914,7 @@ export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext
         };
     } else {
         return {
+            chat_if_other: [],
             event_list_if_other: [],
             event_index: domain.eventIndex,
         };
@@ -1118,7 +1211,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
                         },
                         amount: apiICP(domain.amountE8s),
                         fee: [],
-                        memo: apiOptional(identity, domain.memo),
+                        memo: [],
                         created: domain.createdAtNanos,
                     },
                 },
@@ -1134,7 +1227,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
                         },
                         amount: apiICP(domain.amountE8s),
                         fee: apiICP(domain.feeE8s ?? BigInt(0)),
-                        memo: apiOptional(identity, domain.memo),
+                        memo: [],
                         created: domain.createdAtNanos,
                     },
                 },
@@ -1591,4 +1684,76 @@ export function unpinMessageResponse(
         console.warn("UnpinMessageResponse failed with: ", candid);
         return "failure";
     }
+}
+
+export function groupDetailsResponse(
+    candid: ApiSelectedInitialResponse | ApiSelectedChannelInitialResponse
+): GroupChatDetailsResponse {
+    if (
+        "CallerNotInGroup" in candid ||
+        "UserNotInChannel" in candid ||
+        "UserNotInCommunity" in candid ||
+        "ChannelNotFound" in candid
+    ) {
+        return "failure";
+    }
+    if ("Success" in candid) {
+        const members =
+            "participants" in candid.Success ? candid.Success.participants : candid.Success.members;
+        return {
+            members: members.map(member),
+            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
+            invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
+            pinnedMessages: new Set(candid.Success.pinned_messages),
+            rules: groupRules(candid.Success.rules),
+            timestamp: candid.Success.timestamp,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
+}
+
+export function groupDetailsUpdatesResponse(
+    candid: ApiSelectedUpdatesResponse | ApiSelectedChannelUpdatesResponse
+): GroupChatDetailsUpdatesResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            membersAddedOrUpdated: candid.Success.members_added_or_updated.map(member),
+            membersRemoved: new Set(candid.Success.members_removed.map((u) => u.toString())),
+            blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
+            blockedUsersRemoved: new Set(
+                candid.Success.blocked_users_removed.map((u) => u.toString())
+            ),
+            pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
+            pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
+            rules: optional(candid.Success.rules, groupRules),
+            invitedUsers: optional(
+                candid.Success.invited_users,
+                (invited_users) => new Set(invited_users.map((u) => u.toString()))
+            ),
+            timestamp: candid.Success.timestamp,
+        };
+    } else if ("SuccessNoUpdates" in candid) {
+        return {
+            kind: "success_no_updates",
+            timestamp: candid.SuccessNoUpdates || BigInt(Date.now()),
+        };
+    } else {
+        console.warn("Unexpected ApiSelectedUpdatesResponse type received", candid);
+        return CommonResponses.failure;
+    }
+}
+
+export function member(candid: ApiParticipant): Member {
+    return {
+        role: memberRole(candid.role),
+        userId: candid.user_id.toString(),
+    };
+}
+
+export function groupRules(candid: ApiGroupRules): AccessRules {
+    return {
+        text: candid.text,
+        enabled: candid.enabled,
+    };
 }

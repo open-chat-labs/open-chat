@@ -12,7 +12,6 @@ import {
     CommunityInviteCodeResponse,
     CommunityMembershipUpdates,
     CommunityPermissions,
-    CommunityRulesResponse,
     CommunitySummaryResponse,
     CommunitySummaryUpdatesResponse,
     DeclineChannelInvitationResponse,
@@ -32,8 +31,6 @@ import {
     RemoveChannelMemberResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
-    SelectedChannelInitialResponse,
-    SelectedChannelUpdatesResponse,
     SendMessageResponse,
     ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
@@ -63,10 +60,7 @@ import type {
     ApiMessagesByMessageIndexResponse,
     ApiRemoveMemberResponse,
     ApiRemoveMemberFromChannelResponse,
-    ApiRulesResponse,
     ApiSearchChannelResponse,
-    ApiSelectedChannelInitialResponse,
-    ApiSelectedChannelUpdatesResponse,
     ApiSendMessageResponse,
     ApiSummaryResponse,
     ApiSummaryUpdatesResponse,
@@ -111,7 +105,7 @@ import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 import { identity, optionUpdate, optional } from "../../utils/mapping";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
-import { groupRules, member, messageWrapper } from "../group/mappers";
+import { messageWrapper } from "../group/mappers";
 import { ReplicaNotUpToDateError } from "../error";
 
 export function addMembersToChannelResponse(
@@ -664,18 +658,6 @@ export function removeMemberFromChannelResponse(
     }
 }
 
-export function rulesResponse(candid: ApiRulesResponse): CommunityRulesResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            rules: optional(candid.Success.rules, identity),
-        };
-    } else {
-        console.warn("CommunityRules failed with", candid);
-        return CommonResponses.failure;
-    }
-}
-
 export function searchChannelResponse(candid: ApiSearchChannelResponse): SearchChannelResponse {
     if ("Success" in candid) {
         return {
@@ -696,56 +678,6 @@ export function messageMatch(candid: ApiMessageMatch): ChannelMessageMatch {
         score: candid.score,
         messageIndex: candid.message_index,
     };
-}
-
-export function selectedChannelInitialResponse(
-    candid: ApiSelectedChannelInitialResponse
-): SelectedChannelInitialResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            members: candid.Success.members.map(member),
-            invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
-            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
-            timestamp: candid.Success.timestamp,
-            pinnedMessages: new Set(candid.Success.pinned_messages),
-            latestEventIndex: candid.Success.latest_event_index,
-            rules: groupRules(candid.Success.rules),
-        };
-    } else {
-        console.warn("SelectedChannelInitial failed with", candid);
-        return CommonResponses.failure;
-    }
-}
-
-export function selectedChannelUpdatesResponse(
-    candid: ApiSelectedChannelUpdatesResponse
-): SelectedChannelUpdatesResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            membersAddedOrUpdated: candid.Success.members_added_or_updated.map(member),
-            membersRemoved: new Set(candid.Success.members_removed.map((u) => u.toString())),
-            blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
-            blockedUsersRemoved: new Set(
-                candid.Success.blocked_users_removed.map((u) => u.toString())
-            ),
-            pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
-            pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
-            latestEventIndex: candid.Success.latest_event_index,
-            rules: optional(candid.Success.rules, groupRules),
-            invitedUsers: optional(
-                candid.Success.invited_users,
-                (invited_users) => new Set(invited_users.map((u) => u.toString()))
-            ),
-            timestamp: candid.Success.timestamp,
-        };
-    } else if ("SuccessNoUpdates" in candid) {
-        return CommonResponses.successNoUpdates;
-    } else {
-        console.warn("SelectedChannelUpdates failed with", candid);
-        return CommonResponses.failure;
-    }
 }
 
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {

@@ -24,10 +24,7 @@ import {
     messagesByMessageIndexResponse,
     removeMemberResponse,
     removeMemberFromChannelResponse,
-    rulesResponse,
     searchChannelResponse,
-    selectedChannelInitialResponse,
-    selectedChannelUpdatesResponse,
     sendMessageResponse,
     summaryResponse,
     summaryUpdatesResponse,
@@ -54,6 +51,8 @@ import {
     createGroupResponse,
     deleteGroupResponse,
     unpinMessageResponse,
+    groupDetailsResponse,
+    groupDetailsUpdatesResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -65,7 +64,6 @@ import type {
     ChangeCommunityRoleResponse,
     CommunityInviteCodeResponse,
     CommunityPermissions,
-    CommunityRulesResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
@@ -85,8 +83,6 @@ import type {
     RemoveChannelMemberResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
-    SelectedChannelInitialResponse,
-    SelectedChannelUpdatesResponse,
     ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
@@ -103,6 +99,8 @@ import type {
     DeleteGroupResponse,
     PinMessageResponse,
     UnpinMessageResponse,
+    GroupChatDetailsResponse,
+    GroupChatDetails,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
 import { DataClient } from "../data/data.client";
@@ -110,10 +108,13 @@ import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
 import { getEventsResponse } from "../group/mappers";
 import {
     Database,
+    getCachedGroupDetails,
     recordFailedMessage,
     removeFailedMessage,
+    setCachedGroupDetails,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
+import { mergeGroupChatDetails } from "../../utils/chat";
 
 export class CommunityClient extends CandidService {
     private service: CommunityService;
@@ -520,16 +521,6 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(this.service.reset_invite_code({}), enableInviteCodeResponse);
     }
 
-    rules(inviteCode: string | undefined): Promise<CommunityRulesResponse> {
-        return this.handleQueryResponse(
-            () =>
-                this.service.rules({
-                    invite_code: apiOptional((c) => BigInt(c), inviteCode),
-                }),
-            rulesResponse
-        );
-    }
-
     searchChannel(
         chatId: ChannelIdentifier,
         maxResults: number,
@@ -548,29 +539,76 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    selectedChannelInitial(chatId: ChannelIdentifier): Promise<SelectedChannelInitialResponse> {
+    async getChannelDetails(
+        chatId: ChannelIdentifier,
+        timestamp: bigint
+    ): Promise<GroupChatDetailsResponse> {
+        const fromCache = await getCachedGroupDetails(this.db, chatId.channelId);
+        if (fromCache !== undefined) {
+            if (fromCache.timestamp >= timestamp) {
+                return fromCache;
+            } else {
+                return this.getChannelDetailsUpdates(chatId, fromCache);
+            }
+        }
+
+        const response = await this.getChannelDetailsFromBackend(chatId);
+        if (response !== "failure") {
+            await setCachedGroupDetails(this.db, chatId.channelId, response);
+        }
+        return response;
+    }
+
+    private getChannelDetailsFromBackend(
+        chatId: ChannelIdentifier
+    ): Promise<GroupChatDetailsResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.selected_channel_initial({
                     channel_id: BigInt(chatId.channelId),
                 }),
-            selectedChannelInitialResponse
+            groupDetailsResponse
         );
     }
 
-    selectedChannelUpdates(
+    async getChannelDetailsUpdates(
         chatId: ChannelIdentifier,
-        updatesSince: bigint
-    ): Promise<SelectedChannelUpdatesResponse> {
-        return this.handleQueryResponse(
+        previous: GroupChatDetails
+    ): Promise<GroupChatDetails> {
+        const response = await this.getChannelDetailsUpdatesFromBackend(chatId, previous);
+        if (response.timestamp > previous.timestamp) {
+            await setCachedGroupDetails(this.db, chatId.channelId, response);
+        }
+        return response;
+    }
+
+    private async getChannelDetailsUpdatesFromBackend(
+        chatId: ChannelIdentifier,
+        previous: GroupChatDetails
+    ): Promise<GroupChatDetails> {
+        const updatesResponse = await this.handleQueryResponse(
             () =>
                 this.service.selected_channel_updates({
                     channel_id: BigInt(chatId.channelId),
-                    updates_since: updatesSince,
+                    updates_since: previous.timestamp,
                 }),
-            selectedChannelUpdatesResponse
+            groupDetailsUpdatesResponse
         );
+
+        if (updatesResponse.kind === "failure") {
+            return previous;
+        }
+
+        if (updatesResponse.kind === "success_no_updates") {
+            return {
+                ...previous,
+                timestamp: updatesResponse.timestamp,
+            };
+        }
+
+        return mergeGroupChatDetails(previous, updatesResponse);
     }
+
     sendMessage(
         chatId: ChannelIdentifier,
         senderName: string,
@@ -625,7 +663,13 @@ export class CommunityClient extends CandidService {
     }
 
     summary(): Promise<CommunitySummaryResponse> {
-        return this.handleQueryResponse(() => this.service.summary({}), summaryResponse);
+        return this.handleQueryResponse(
+            () =>
+                this.service.summary({
+                    invite_code: [], // TODO: add invite code
+                }),
+            summaryResponse
+        );
     }
 
     summaryUpdates(updatesSince: bigint): Promise<CommunitySummaryUpdatesResponse> {

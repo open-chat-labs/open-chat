@@ -57,8 +57,6 @@ import {
     undeleteMessageResponse,
     editMessageResponse,
     blockUserResponse,
-    groupDetailsResponse,
-    groupDetailsUpdatesResponse,
     unblockUserResponse,
     getMessagesByMessageIndexResponse,
     searchGroupChatResponse,
@@ -102,6 +100,8 @@ import {
     apiUser,
     pinMessageResponse,
     unpinMessageResponse,
+    groupDetailsResponse,
+    groupDetailsUpdatesResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { identity, mergeGroupChatDetails } from "../../utils/chat";
@@ -578,26 +578,24 @@ export class GroupClient extends CandidService {
         );
     }
 
-    async getGroupDetails(latestEventIndex: number): Promise<GroupChatDetailsResponse> {
+    async getGroupDetails(timestamp: bigint): Promise<GroupChatDetailsResponse> {
         const fromCache = await getCachedGroupDetails(this.db, this.chatId.groupId);
         if (fromCache !== undefined) {
-            if (fromCache.latestEventIndex >= latestEventIndex) {
+            if (fromCache.timestamp >= timestamp) {
                 return fromCache;
             } else {
                 return this.getGroupDetailsUpdates(fromCache);
             }
         }
 
-        const response = await this.getGroupDetailsFromBackend(latestEventIndex);
-        if (response !== "caller_not_in_group") {
+        const response = await this.getGroupDetailsFromBackend();
+        if (response !== "failure") {
             await setCachedGroupDetails(this.db, this.chatId.groupId, response);
         }
         return response;
     }
 
-    private getGroupDetailsFromBackend(
-        _latestEventIndex: number
-    ): Promise<GroupChatDetailsResponse> {
+    private getGroupDetailsFromBackend(): Promise<GroupChatDetailsResponse> {
         return this.handleQueryResponse(
             () => this.groupService.selected_initial({}),
             groupDetailsResponse
@@ -606,7 +604,7 @@ export class GroupClient extends CandidService {
 
     async getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
         const response = await this.getGroupDetailsUpdatesFromBackend(previous);
-        if (response.latestEventIndex > previous.latestEventIndex) {
+        if (response.timestamp > previous.timestamp) {
             await setCachedGroupDetails(this.db, this.chatId.groupId, response);
         }
         return response;
@@ -616,22 +614,22 @@ export class GroupClient extends CandidService {
         previous: GroupChatDetails
     ): Promise<GroupChatDetails> {
         const args = {
-            updates_since: previous.latestEventIndex,
+            updates_since: previous.timestamp,
         };
         const updatesResponse = await this.handleQueryResponse(
-            () => this.groupService.selected_updates(args),
+            () => this.groupService.selected_updates_v2(args),
             groupDetailsUpdatesResponse,
             args
         );
 
-        if (updatesResponse === "caller_not_in_group") {
+        if (updatesResponse.kind === "failure") {
             return previous;
         }
 
         if (updatesResponse.kind === "success_no_updates") {
             return {
                 ...previous,
-                latestEventIndex: updatesResponse.latestEventIndex,
+                timestamp: updatesResponse.timestamp,
             };
         }
 

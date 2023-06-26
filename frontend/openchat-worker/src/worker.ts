@@ -252,7 +252,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "getGroupDetails":
                 agent
-                    .getGroupDetails(payload.chatId, payload.latestEventIndex)
+                    .getGroupDetails(payload.chatId, payload.timestamp)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1636,18 +1636,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "communityRules":
-                agent
-                    .communityClient(payload.communityId)
-                    .rules(payload.inviteCode)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "searchChannel":
                 agent
                     .communityClient(payload.chatId.communityId)
@@ -1657,30 +1645,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.users,
                         payload.searchTerm
                     )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "selectedChannelInitial":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .selectedChannelInitial(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "selectedChannelUpdates":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .selectedChannelUpdates(payload.chatId, payload.updatesSince)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

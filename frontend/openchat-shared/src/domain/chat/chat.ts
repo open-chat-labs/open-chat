@@ -112,9 +112,9 @@ export type CompletedCryptocurrencyTransfer = {
     sender: string;
     amountE8s: bigint;
     feeE8s: bigint;
-    memo: bigint;
+    // memo: bigint;
     blockIndex: bigint;
-    transactionHash: string;
+    transactionHash: string | undefined;
 };
 
 export type PendingCryptocurrencyTransfer = {
@@ -123,7 +123,7 @@ export type PendingCryptocurrencyTransfer = {
     recipient: string;
     amountE8s: bigint;
     feeE8s?: bigint;
-    memo?: bigint;
+    // memo?: bigint;
     createdAtNanos: bigint;
 };
 
@@ -133,7 +133,7 @@ export type FailedCryptocurrencyTransfer = {
     recipient: string;
     amountE8s: bigint;
     feeE8s: bigint;
-    memo: bigint;
+    // memo: bigint;
     errorMessage: string;
 };
 
@@ -1085,20 +1085,20 @@ export type Member = {
 
 export type FullMember = Member & PartialUserSummary;
 
-export type GroupChatDetailsResponse = "caller_not_in_group" | GroupChatDetails;
+export type GroupChatDetailsResponse = "failure" | GroupChatDetails;
 
 export type GroupChatDetailsUpdatesResponse =
     | ({ kind: "success" } & GroupChatDetailsUpdates)
-    | { kind: "success_no_updates"; latestEventIndex: number }
-    | "caller_not_in_group";
+    | { kind: "success_no_updates"; timestamp: bigint }
+    | Failure;
 
 export type GroupChatDetails = {
     members: Member[];
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
-    latestEventIndex: number;
     rules: AccessRules;
+    timestamp: bigint;
 };
 
 /**
@@ -1111,7 +1111,7 @@ export type ChatSpecificState = {
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
-    latestEventIndex?: number;
+    lastUpdated: bigint;
     rules?: AccessRules;
     userIds: Set<string>;
     focusMessageIndex?: number;
@@ -1128,9 +1128,9 @@ export type GroupChatDetailsUpdates = {
     blockedUsersRemoved: Set<string>;
     pinnedMessagesRemoved: Set<number>;
     pinnedMessagesAdded: Set<number>;
-    latestEventIndex: number;
     rules?: AccessRules;
     invitedUsers?: Set<string>;
+    timestamp: bigint;
 };
 
 export type ChatSummary = DirectChatSummary | MultiUserChat;

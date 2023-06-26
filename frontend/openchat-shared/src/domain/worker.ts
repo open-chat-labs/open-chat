@@ -109,7 +109,6 @@ import type {
     ChangeCommunityRoleResponse,
     CommunitySummary,
     CommunityInviteCodeResponse,
-    CommunityRulesResponse,
     CreateCommunityResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
@@ -125,8 +124,6 @@ import type {
     RemoveChannelMemberResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
-    SelectedChannelInitialResponse,
-    SelectedChannelUpdatesResponse,
     ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
@@ -267,7 +264,6 @@ export type WorkerRequest =
     | RemoveCommunityMember
     | RemoveChannelMember
     | ResetCommunityInviteCode
-    | CommunityRules
     | SearchChannel
     | SelectedChannelInitial
     | SelectedChannelUpdates
@@ -713,13 +709,13 @@ type MarkMessagesRead = {
 };
 
 type GetGroupDetails = {
-    chatId: GroupChatIdentifier;
-    latestEventIndex: number;
+    chatId: MultiUserChatIdentifier;
+    timestamp: bigint;
     kind: "getGroupDetails";
 };
 
 type GetGroupDetailUpdates = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     previous: GroupChatDetails;
     kind: "getGroupDetailsUpdates";
 };
@@ -941,10 +937,7 @@ export type WorkerResponse =
     | Response<RemoveCommunityMemberResponse>
     | Response<RemoveChannelMemberResponse>
     | Response<EnableCommunityInviteCodeResponse>
-    | Response<CommunityRulesResponse>
     | Response<SearchChannelResponse>
-    | Response<SelectedChannelInitialResponse>
-    | Response<SelectedChannelUpdatesResponse>
     | Response<ToggleMuteChannelNotificationsResponse>
     | Response<ToggleMuteCommunityNotificationsResponse>
     | Response<UnblockCommunityUserResponse>
@@ -1179,12 +1172,6 @@ type RemoveChannelMember = {
 type ResetCommunityInviteCode = {
     kind: "resetCommunityInviteCode";
     communityId: string;
-};
-
-type CommunityRules = {
-    kind: "communityRules";
-    communityId: string;
-    inviteCode: string | undefined;
 };
 
 type SearchChannel = {
@@ -1499,14 +1486,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? RemoveChannelMemberResponse
     : T extends ResetCommunityInviteCode
     ? EnableCommunityInviteCodeResponse
-    : T extends CommunityRules
-    ? CommunityRulesResponse
     : T extends SearchChannel
     ? SearchChannelResponse
-    : T extends SelectedChannelInitial
-    ? SelectedChannelInitialResponse
-    : T extends SelectedChannelUpdates
-    ? SelectedChannelUpdatesResponse
     : T extends ToggleMuteChannelNotifications
     ? ToggleMuteChannelNotificationsResponse
     : T extends ToggleMuteCommunityNotifications

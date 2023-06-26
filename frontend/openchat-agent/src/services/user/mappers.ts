@@ -334,17 +334,12 @@ export function sendMessageWithTransferToGroupResponse(
     recipient: string
 ): SendMessageResponse {
     if ("Success" in candid) {
-        const transfer =
-            "NNS" in candid.Success.transfer
-                ? candid.Success.transfer.NNS
-                : candid.Success.transfer.SNS;
-
         return {
             kind: "transfer_success",
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(transfer, sender, recipient),
+            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -406,17 +401,12 @@ export function sendMessageResponse(
         };
     }
     if ("TransferSuccessV2" in candid) {
-        const transfer =
-            "NNS" in candid.TransferSuccessV2.transfer
-                ? candid.TransferSuccessV2.transfer.NNS
-                : candid.TransferSuccessV2.transfer.SNS;
-
         return {
             kind: "transfer_success",
             timestamp: candid.TransferSuccessV2.timestamp,
             messageIndex: candid.TransferSuccessV2.message_index,
             eventIndex: candid.TransferSuccessV2.event_index,
-            transfer: completedCryptoTransfer(transfer, sender, recipient),
+            transfer: completedCryptoTransfer(candid.TransferSuccessV2.transfer, sender, recipient),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -960,21 +950,18 @@ export function withdrawCryptoResponse(
     if ("TransactionFailed" in candid) {
         if ("NNS" in candid.TransactionFailed) {
             return failedNnsCryptoWithdrawal(candid.TransactionFailed.NNS);
-        } else {
+        } else if ("SNS" in candid.TransactionFailed) {
             return failedSnsCryptoWithdrawal(candid.TransactionFailed.SNS);
         }
     }
     if ("Success" in candid) {
         if ("NNS" in candid.Success) {
             return completedNnsCryptoWithdrawal(candid.Success.NNS);
-        } else {
+        } else if ("SNS" in candid.Success) {
             return completedSnsCryptoWithdrawal(candid.Success.SNS);
         }
     }
-    throw new UnsupportedValueError(
-        "Unexpected ApiWithdrawCryptocurrencyResponse type received",
-        candid
-    );
+    throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");
 }
 
 export function migrateUserPrincipal(

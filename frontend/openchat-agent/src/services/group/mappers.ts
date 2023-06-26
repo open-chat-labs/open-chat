@@ -8,9 +8,6 @@ import type {
     ApiDeleteMessageResponse,
     ApiUndeleteMessageResponse,
     ApiEditMessageResponse,
-    ApiSelectedInitialResponse,
-    ApiParticipant,
-    ApiSelectedUpdatesResponse,
     ApiRole,
     ApiMessagesByMessageIndexResponse,
     ApiMessageEventWrapper,
@@ -46,9 +43,6 @@ import {
     EditMessageResponse,
     BlockUserResponse,
     ChangeRoleResponse,
-    Member,
-    GroupChatDetailsResponse,
-    GroupChatDetailsUpdatesResponse,
     UnblockUserResponse,
     MemberRole,
     Message,
@@ -275,76 +269,11 @@ export function apiOptionalGroupPermissions(
     };
 }
 
-export function member(candid: ApiParticipant): Member {
-    return {
-        role: memberRole(candid.role),
-        userId: candid.user_id.toString(),
-    };
-}
-
-export function groupRules(candid: ApiGroupRules): AccessRules {
-    return {
-        text: candid.text,
-        enabled: candid.enabled,
-    };
-}
-
 export function apiGroupRules(rules: AccessRules): ApiGroupRules {
     return {
         text: rules.text,
         enabled: rules.enabled,
     };
-}
-
-export function groupDetailsUpdatesResponse(
-    candid: ApiSelectedUpdatesResponse
-): GroupChatDetailsUpdatesResponse {
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("SuccessNoUpdates" in candid) {
-        return {
-            kind: "success_no_updates",
-            latestEventIndex: candid.SuccessNoUpdates,
-        };
-    }
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            membersAddedOrUpdated: candid.Success.participants_added_or_updated.map(member),
-            membersRemoved: new Set(candid.Success.participants_removed.map((u) => u.toString())),
-            blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
-            blockedUsersRemoved: new Set(
-                candid.Success.blocked_users_removed.map((u) => u.toString())
-            ),
-            pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
-            pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
-            latestEventIndex: candid.Success.latest_event_index,
-            rules: optional(candid.Success.rules, groupRules),
-            invitedUsers: optional(
-                candid.Success.invited_users,
-                (invited_users) => new Set(invited_users.map((u) => u.toString()))
-            ),
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
-}
-
-export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupChatDetailsResponse {
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("Success" in candid) {
-        return {
-            members: candid.Success.participants.map(member),
-            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
-            invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
-            pinnedMessages: new Set(candid.Success.pinned_messages),
-            latestEventIndex: candid.Success.latest_event_index,
-            rules: groupRules(candid.Success.rules),
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
 export function makeGroupPrivateResponse(candid: ApiMakePrivateResponse): MakeGroupPrivateResponse {
