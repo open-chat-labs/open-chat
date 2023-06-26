@@ -70,16 +70,13 @@ type ExploreChannelsArgs =
 
 type ExploreChannelsResponse =
     variant {
-        Success: ExploreChannelsSuccess;
+        Success: record {
+            matches: vec ChannelMatch;
+        };
         TermTooShort: nat8;
         TermTooLong: nat8;
         InvalidTerm;
         PrivateCommunity;
-    };
-
-type ExploreChannelsSuccess =
-    record {
-        matches: vec ChannelMatch;
     };
 
 type InviteCodeResponse =
