@@ -23,7 +23,7 @@ fn summary_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     let member = state.data.members.get(caller);
-    
+
     if member.is_none() && !state.data.is_public {
         return Invited(CommunityMatch {
             id: state.env.canister_id().into(),
