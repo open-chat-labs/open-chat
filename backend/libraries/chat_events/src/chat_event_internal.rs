@@ -597,6 +597,8 @@ pub struct ReplyContextInternal {
 pub struct ReplyContextInternalPrevious {
     #[serde(rename = "l")]
     pub event_list_if_other: Option<(ChatId, Option<MessageIndex>)>,
+    #[serde(rename = "c")]
+    pub chat_if_other: Option<(MultiUserChatInternal, Option<MessageIndex>)>,
     #[serde(rename = "e")]
     pub event_index: EventIndex,
 }
@@ -638,7 +640,10 @@ impl From<&ReplyContext> for ReplyContextInternal {
 impl From<ReplyContextInternalPrevious> for ReplyContextInternal {
     fn from(value: ReplyContextInternalPrevious) -> Self {
         ReplyContextInternal {
-            chat_if_other: value.event_list_if_other.map(|(c, t)| (MultiUserChatInternal::Group(c), t)),
+            chat_if_other: value
+                .event_list_if_other
+                .map(|(c, t)| (MultiUserChatInternal::Group(c), t))
+                .or(value.chat_if_other),
             event_index: value.event_index,
         }
     }
