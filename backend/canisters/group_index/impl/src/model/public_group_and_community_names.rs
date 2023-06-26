@@ -20,12 +20,11 @@ impl PublicGroupAndCommunityNames {
 
     // Only removes the entry if both the name and canister_id match
     pub fn remove(&mut self, name: &str, canister_id: CanisterId) -> bool {
-        if let Some(c) = self.names.get(name).copied() {
-            if c == canister_id {
-                return self.names.remove(name).is_some();
-            }
+        if self.names.get(name).map_or(false, |c| *c == canister_id) {
+            self.names.remove(name).is_some()
+        } else {
+            false
         }
-        false
     }
 
     pub fn reserve_name(&mut self, name: &str, now: TimestampMillis) -> bool {
