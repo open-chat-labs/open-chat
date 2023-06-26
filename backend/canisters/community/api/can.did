@@ -352,6 +352,28 @@ type ChangeRoleResponse =
         InternalError: text;
     };
 
+type ClaimPrizeArgs =
+    record {
+        channel_id: ChannelId;
+        message_id: MessageId;
+    };
+
+type ClaimPrizeResponse =
+    variant {
+        Success;
+        MessageNotFound;
+        UserNotInCommunity;
+        UserNotInChannel;
+        UserSuspended;
+        CommunityFrozen;
+        ChannelNotFound;
+        AlreadyClaimed;
+        PrizeFullyClaimed;
+        PrizeEnded;
+        TransferFailed: record { text; FailedCryptoTransaction; };
+        FailedAfterTransfer: record { text; CompletedCryptoTransaction; };
+    };
+
 type CreateChannelArgs =
     record {
         is_public: bool;
@@ -888,6 +910,7 @@ service: {
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     change_channel_role: (ChangeChannelRoleArgs) -> (ChangeChannelRoleResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
+    claim_prize: (ClaimPrizeArgs) -> (ClaimPrizeResponse);
     create_channel: (CreateChannelArgs) -> (CreateChannelResponse);
     decline_invitation: (DeclineInvitationArgs) -> (DeclineInvitationResponse);
     delete_channel: (DeleteChannelArgs) -> (DeleteChannelResponse);

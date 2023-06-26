@@ -22,6 +22,7 @@ fn main() {
     generate_candid_method!(community, block_user, update);
     generate_candid_method!(community, change_channel_role, update);
     generate_candid_method!(community, change_role, update);
+    generate_candid_method!(community, claim_prize, update);
     generate_candid_method!(community, create_channel, update);
     generate_candid_method!(community, decline_invitation, update);
     generate_candid_method!(community, delete_channel, update);

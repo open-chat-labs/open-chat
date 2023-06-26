@@ -6,7 +6,19 @@ use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
-use types::{CanisterId, TransactionHash};
+use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TransactionHash};
+
+pub async fn process_transaction(
+    transaction: PendingCryptoTransaction,
+    sender: CanisterId,
+    ledger_canister_id: CanisterId,
+) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
+    match transaction {
+        PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, sender, ledger_canister_id).await,
+        PendingCryptoTransaction::SNS(t) => sns::process_transaction(t, sender, ledger_canister_id).await,
+        PendingCryptoTransaction::ICRC1(t) => icrc1::process_transaction(t, sender, ledger_canister_id).await,
+    }
+}
 
 pub fn default_ledger_account(principal: Principal) -> AccountIdentifier {
     AccountIdentifier::new(&principal, &DEFAULT_SUBACCOUNT)

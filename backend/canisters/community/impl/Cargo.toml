@@ -31,8 +31,11 @@ http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
+ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
+icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
+ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
