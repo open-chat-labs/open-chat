@@ -7,6 +7,7 @@ fn main() {
     generate_candid_method!(community, events, query);
     generate_candid_method!(community, events_by_index, query);
     generate_candid_method!(community, events_window, query);
+    generate_candid_method!(community, explore_channels, query);
     generate_candid_method!(community, invite_code, query);
     generate_candid_method!(community, local_user_index, query);
     generate_candid_method!(community, messages_by_message_index, query);

@@ -1534,7 +1534,18 @@ type CommunityMatch =
 
 type GroupMatch =
     record {
+        id: ChatId;
         chat_id: ChatId;
+        name: text;
+        description: text;
+        avatar_id: opt nat;
+        member_count: nat32;
+        gate: opt AccessGate;
+    };
+
+type ChannelMatch =
+    record {
+        id: ChannelId;
         name: text;
         description: text;
         avatar_id: opt nat;

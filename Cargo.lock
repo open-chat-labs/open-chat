@@ -1391,6 +1391,7 @@ dependencies = [
  "notifications_canister",
  "notifications_canister_c2c_client",
  "rand",
+ "search",
  "serde",
  "serializer",
  "storage_bucket_client",

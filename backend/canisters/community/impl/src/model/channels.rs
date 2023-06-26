@@ -1,11 +1,13 @@
 use chat_events::Reader;
 use group_chat_core::{GroupChatCore, GroupMemberInternal};
+use search::*;
 use serde::{Deserialize, Serialize};
+use std::cmp::Reverse;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{
-    AccessRules, ChannelId, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
-    CommunityCanisterChannelSummaryUpdates, Document, EventIndex, GroupPermissions, MessageIndex, TimestampMillis, UserId,
+    AccessRules, ChannelId, ChannelMatch, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
+    CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissions, MessageIndex, TimestampMillis, UserId,
     MAX_THREADS_IN_SUMMARY,
 };
 
@@ -84,6 +86,39 @@ impl Channels {
     pub fn iter(&self) -> impl Iterator<Item = &Channel> {
         self.channels.values()
     }
+
+    pub fn search(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> Vec<ChannelMatch> {
+        let query = search_term.map(Query::parse);
+
+        let mut matches: Vec<_> = self
+            .channels
+            .values()
+            .filter(|c| c.chat.is_public)
+            .map(|c| {
+                let score = if let Some(query) = &query {
+                    let document: Document = c.into();
+                    document.calculate_score(query)
+                } else {
+                    0
+                };
+                (score, c)
+            })
+            .filter(|(score, _)| *score > 0)
+            .collect();
+
+        if query.is_some() {
+            matches.sort_by_key(|(score, _)| Reverse(*score));
+        } else {
+            matches.sort_by_cached_key(|(_, channel)| channel.chat.name.to_lowercase());
+        };
+
+        matches
+            .into_iter()
+            .map(|(_, c)| c.into())
+            .skip(page_index as usize * page_size as usize)
+            .take(page_size as usize)
+            .collect()
+    }
 }
 
 impl Channel {
@@ -153,7 +188,7 @@ impl Channel {
             name: chat.name.clone(),
             description: chat.description.clone(),
             subtype: chat.subtype.value.clone(),
-            avatar_id: Document::id(&chat.avatar),
+            avatar_id: types::Document::id(&chat.avatar),
             is_public: chat.is_public,
             history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
             min_visible_event_index,
@@ -222,4 +257,27 @@ impl Channel {
 pub enum ChannelUpdates {
     Added(CommunityCanisterChannelSummary),
     Updated(CommunityCanisterChannelSummaryUpdates),
+}
+
+impl From<&Channel> for ChannelMatch {
+    fn from(channel: &Channel) -> Self {
+        ChannelMatch {
+            id: channel.id,
+            name: channel.chat.name.clone(),
+            description: channel.chat.description.clone(),
+            avatar_id: types::Document::id(&channel.chat.avatar),
+            member_count: channel.chat.members.len(),
+            gate: channel.chat.gate.value.clone(),
+        }
+    }
+}
+
+impl From<&Channel> for Document {
+    fn from(channel: &Channel) -> Self {
+        let mut document = Document::default();
+        document
+            .add_field(channel.chat.name.clone(), 5.0, true)
+            .add_field(channel.chat.description.clone(), 1.0, true);
+        document
+    }
 }
