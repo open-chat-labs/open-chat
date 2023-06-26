@@ -1392,14 +1392,7 @@ export type MemberLimitReached = {
     kind: "member_limit_reached";
 };
 
-export type EditMessageResponse =
-    | "success"
-    | "chat_not_found"
-    | "message_not_found"
-    | "user_blocked"
-    | "not_in_group"
-    | "user_suspended"
-    | "chat_frozen";
+export type EditMessageResponse = "success" | "failure";
 
 export type SendMessageResponse =
     | SendMessageSuccess

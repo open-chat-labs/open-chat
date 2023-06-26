@@ -114,7 +114,6 @@ import type {
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
     DisableCommunityInviteCodeResponse,
-    EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
     JoinChannelResponse,
     JoinCommunityResponse,
@@ -250,7 +249,6 @@ export type WorkerRequest =
     | DeleteChannelMessages
     | DeleteChannelMessage
     | DisableCommunityInviteCode
-    | EditChannelMessage
     | EnableCommunityInviteCode
     | ChannelEvents
     | ChannelEventsByIndex
@@ -928,7 +926,6 @@ export type WorkerResponse =
     | Response<DeleteChannelMessagesResponse>
     | Response<DeleteChannelMessageResponse>
     | Response<DisableCommunityInviteCode>
-    | Response<EditChannelMessageResponse>
     | Response<CommunityInviteCodeResponse>
     | Response<JoinChannelResponse>
     | Response<LeaveChannelResponse>
@@ -1085,13 +1082,6 @@ type DeleteChannelMessage = {
 type DisableCommunityInviteCode = {
     kind: "disableCommunityInviteCode";
     communityId: string;
-};
-
-type EditChannelMessage = {
-    kind: "editChannelMessage";
-    chatId: ChannelIdentifier;
-    message: Message;
-    threadRootMessageIndex: number | undefined;
 };
 
 type EnableCommunityInviteCode = {
@@ -1460,8 +1450,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? DeleteChannelMessageResponse
     : T extends DisableCommunityInviteCode
     ? DisableCommunityInviteCodeResponse
-    : T extends EditChannelMessage
-    ? EditChannelMessageResponse
     : T extends ChannelEvents
     ? EventsResponse<GroupChatEvent>
     : T extends ChannelEventsByIndex

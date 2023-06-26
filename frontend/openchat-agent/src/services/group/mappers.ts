@@ -415,28 +415,6 @@ export function apiGateUpdate(): ApiGroupGateUpdate {
     return { NoChange: null };
 }
 
-export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "not_in_group";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
-}
-
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
     if ("Success" in candid) {
         return {

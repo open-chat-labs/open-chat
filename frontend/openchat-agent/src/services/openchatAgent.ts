@@ -276,16 +276,14 @@ export class OpenChatAgent extends EventTarget {
         msg: Message,
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {
-        if (chatId.kind === "group_chat") {
-            return this.editGroupMessage(chatId, msg, threadRootMessageIndex);
+        switch (chatId.kind) {
+            case "direct_chat":
+                return this.editDirectMessage(chatId, msg, threadRootMessageIndex);
+            case "group_chat":
+                return this.editGroupMessage(chatId, msg, threadRootMessageIndex);
+            case "channel":
+                return this.editChannelMessage(chatId, msg, threadRootMessageIndex);
         }
-        if (chatId.kind === "direct_chat") {
-            return this.editDirectMessage(chatId, msg, threadRootMessageIndex);
-        }
-        if (chatId.kind === "channel") {
-            throw new Error("TODO Not implemented");
-        }
-        throw new UnsupportedValueError("Unexpect chat type", chatId);
     }
 
     sendMessage(
@@ -365,6 +363,18 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {
         return this.getGroupClient(chatId.groupId).editMessage(message, threadRootMessageIndex);
+    }
+
+    private editChannelMessage(
+        chatId: ChannelIdentifier,
+        message: Message,
+        threadRootMessageIndex?: number
+    ): Promise<EditMessageResponse> {
+        return this.communityClient(chatId.communityId).editMessage(
+            chatId,
+            message,
+            threadRootMessageIndex
+        );
     }
 
     private sendDirectMessage(

@@ -51,6 +51,7 @@ import type {
     ApiPendingCryptoTransaction,
     ApiFailedCryptoTransaction,
     ApiMultiUserChat,
+    ApiEditMessageResponse as ApiEditDirectMessageResponse,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -127,6 +128,7 @@ import {
     Member,
     AccessRules,
     GroupChatDetailsUpdatesResponse,
+    EditMessageResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -142,6 +144,7 @@ import type {
     ApiParticipant,
     ApiGroupRules,
     ApiSelectedUpdatesResponse,
+    ApiEditMessageResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -159,6 +162,7 @@ import type {
     ApiPinChannelMessageResponse,
     ApiSelectedChannelInitialResponse,
     ApiSelectedChannelUpdatesResponse,
+    ApiEditMessageResponse as ApiEditChannelMessageResponse,
 } from "../community/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -1756,4 +1760,15 @@ export function groupRules(candid: ApiGroupRules): AccessRules {
         text: candid.text,
         enabled: candid.enabled,
     };
+}
+
+export function editMessageResponse(
+    candid: ApiEditMessageResponse | ApiEditChannelMessageResponse | ApiEditDirectMessageResponse
+): EditMessageResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("EditMessageResponse failed with: ", candid);
+        return "failure";
+    }
 }

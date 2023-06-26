@@ -196,15 +196,6 @@ export type DisableCommunityInviteCodeResponse =
     | UserSuspended
     | CommunityFrozen;
 
-export type EditChannelMessageResponse =
-    | UserNotInChat
-    | MessageNotFound
-    | ChatNotFound
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen;
-
 export type EnableCommunityInviteCodeResponse =
     | NotAuthorised
     | (Success & { code: bigint })

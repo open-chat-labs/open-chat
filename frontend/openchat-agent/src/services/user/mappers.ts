@@ -12,7 +12,6 @@ import type {
     ApiUndeleteMessageResponse,
     ApiSearchDirectChatResponse,
     ApiMessageMatch,
-    ApiEditMessageResponse,
     ApiInitialStateResponse,
     ApiUpdatesResponse,
     ApiGroupRole,
@@ -66,7 +65,6 @@ import {
     SetAvatarResponse,
     DeleteMessageResponse,
     UndeleteMessageResponse,
-    EditMessageResponse,
     InitialStateResponse,
     UpdatesResponse,
     MemberRole,
@@ -307,25 +305,6 @@ export function archiveChatResponse(candid: ApiArchiveChatResponse): ArchiveChat
     }
 
     throw new UnsupportedValueError("Unexpected ApiArchiveChatResponse type received", candid);
-}
-
-export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    if ("UserBlocked" in candid) {
-        return "user_blocked";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
 
 export function sendMessageWithTransferToGroupResponse(
