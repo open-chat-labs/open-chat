@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Renamed `add_remove_favourite_chats` to `manage_favourite_chats` ([#3847](https://github.com/open-chat-labs/open-chat/pull/3847))
+- Remove invalid replies to old messages in the Feature Requests group ([#3851](https://github.com/open-chat-labs/open-chat/pull/3851))
 
 ### Fixed
 

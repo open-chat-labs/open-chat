@@ -1,4 +1,5 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
+use crate::model::private_groups::PrivateGroupInfo;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
 use search::*;
 use serde::{Deserialize, Serialize};
@@ -12,15 +13,10 @@ use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::iterator_extensions::IteratorExtensions;
 use utils::time::DAY_IN_MS;
 
-use super::private_groups::PrivateGroupInfo;
-
 #[derive(Serialize, Deserialize, Default)]
-#[serde(from = "PublicGroupsTrimmed")]
 pub struct PublicGroups {
     groups: HashMap<ChatId, PublicGroupInfo>,
-    #[serde(skip)]
-    name_to_id_map: CaseInsensitiveHashMap<ChatId>,
-    groups_pending: CaseInsensitiveHashMap<TimestampMillis>,
+    pub groups_pending: CaseInsensitiveHashMap<TimestampMillis>,
 }
 
 impl PublicGroups {
@@ -36,19 +32,6 @@ impl PublicGroups {
         self.groups.get_mut(chat_id)
     }
 
-    pub fn is_name_taken(&self, name: &str) -> bool {
-        self.name_to_id_map.contains_key(name) || self.groups_pending.contains_key(name)
-    }
-
-    pub fn reserve_name(&mut self, name: &str, now: TimestampMillis) -> bool {
-        if self.is_name_taken(name) {
-            false
-        } else {
-            self.groups_pending.insert(name, now);
-            true
-        }
-    }
-
     pub fn handle_group_created(
         &mut self,
         GroupCreatedArgs {
@@ -60,19 +43,11 @@ impl PublicGroups {
             gate,
             now,
         }: GroupCreatedArgs,
-    ) -> bool {
-        if self.groups_pending.remove(&name).is_some() {
-            self.name_to_id_map.insert(&name, chat_id);
-            let group_info = PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, gate, now);
-            self.groups.insert(chat_id, group_info);
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn handle_group_creation_failed(&mut self, name: &str) {
-        self.groups_pending.remove(name);
+    ) {
+        self.groups.insert(
+            chat_id,
+            PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, gate, now),
+        );
     }
 
     pub fn search(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> Vec<GroupMatch> {
@@ -137,14 +112,6 @@ impl PublicGroups {
         match self.groups.get_mut(chat_id) {
             None => UpdateGroupResult::ChatNotFound,
             Some(mut group) => {
-                if group.name != name {
-                    if self.name_to_id_map.contains_key(&name) || self.groups_pending.contains_key(&name) {
-                        return UpdateGroupResult::NameTaken;
-                    }
-                    self.name_to_id_map.remove(&group.name);
-                    self.name_to_id_map.insert(&name, *chat_id);
-                }
-
                 group.name = name;
                 group.description = description;
                 group.avatar_id = avatar_id;
@@ -155,12 +122,7 @@ impl PublicGroups {
     }
 
     pub fn delete(&mut self, chat_id: &ChatId) -> Option<PublicGroupInfo> {
-        if let Some(group) = self.groups.remove(chat_id) {
-            self.name_to_id_map.remove(&group.name);
-            Some(group)
-        } else {
-            None
-        }
+        self.groups.remove(chat_id)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &PublicGroupInfo> {
@@ -206,7 +168,6 @@ pub struct PublicGroupInfo {
 pub enum UpdateGroupResult {
     Success,
     ChatNotFound,
-    NameTaken,
 }
 
 impl PublicGroupInfo {
@@ -238,6 +199,10 @@ impl PublicGroupInfo {
 
     pub fn id(&self) -> ChatId {
         self.id
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_str()
     }
 
     pub fn created(&self) -> TimestampMillis {
@@ -343,27 +308,5 @@ impl PartialOrd for WeightedGroup {
 impl Ord for WeightedGroup {
     fn cmp(&self, other: &Self) -> Ordering {
         self.weighting.cmp(&other.weighting)
-    }
-}
-
-#[derive(Deserialize)]
-struct PublicGroupsTrimmed {
-    groups: HashMap<ChatId, PublicGroupInfo>,
-    groups_pending: CaseInsensitiveHashMap<TimestampMillis>,
-}
-
-impl From<PublicGroupsTrimmed> for PublicGroups {
-    fn from(value: PublicGroupsTrimmed) -> Self {
-        let mut public_groups = PublicGroups {
-            groups: value.groups,
-            groups_pending: value.groups_pending,
-            ..Default::default()
-        };
-
-        for (chat_id, group) in public_groups.groups.iter() {
-            public_groups.name_to_id_map.insert(&group.name, *chat_id);
-        }
-
-        public_groups
     }
 }

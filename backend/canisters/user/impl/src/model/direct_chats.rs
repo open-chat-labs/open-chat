@@ -14,6 +14,12 @@ pub struct DirectChats {
 }
 
 impl DirectChats {
+    pub fn remove_invalid_feature_requests_replies(&mut self, now: TimestampMillis) {
+        for chat in self.direct_chats.values_mut() {
+            chat.events.remove_invalid_feature_requests_replies(now);
+        }
+    }
+
     pub fn get(&self, chat_id: &ChatId) -> Option<&DirectChat> {
         self.direct_chats.get(chat_id)
     }

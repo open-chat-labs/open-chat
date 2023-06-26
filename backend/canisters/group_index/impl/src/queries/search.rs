@@ -123,7 +123,7 @@ mod tests {
 
         for (id, name, description) in groups_raw {
             let chat_id = Principal::from_slice(&[id]).into();
-            data.public_groups.reserve_name(name, env.now);
+            data.public_group_and_community_names.reserve_name(name, env.now);
             data.public_groups.handle_group_created(GroupCreatedArgs {
                 chat_id,
                 name: name.to_string(),
