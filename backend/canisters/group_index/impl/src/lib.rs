@@ -116,7 +116,6 @@ struct Data {
     pub public_communities: PublicCommunities,
     pub private_communities: PrivateCommunities,
     pub deleted_communities: DeletedCommunities,
-    #[serde(default)]
     pub public_group_and_community_names: PublicGroupAndCommunityNames,
     pub governance_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
@@ -132,7 +131,6 @@ struct Data {
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
     pub local_index_map: LocalGroupIndexMap,
-    #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
 }
 

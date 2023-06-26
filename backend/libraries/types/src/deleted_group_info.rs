@@ -10,7 +10,6 @@ pub struct DeletedGroupInfo {
     pub group_name: String,
     pub name: String,
     pub public: bool,
-    #[serde(default)]
     pub community_imported_into: Option<CommunityImportedInto>,
 }
 

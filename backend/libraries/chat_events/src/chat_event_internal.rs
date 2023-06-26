@@ -585,18 +585,7 @@ impl MultiUserChatInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "ReplyContextInternalPrevious")]
 pub struct ReplyContextInternal {
-    #[serde(rename = "c")]
-    pub chat_if_other: Option<(MultiUserChatInternal, Option<MessageIndex>)>,
-    #[serde(rename = "e")]
-    pub event_index: EventIndex,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ReplyContextInternalPrevious {
-    #[serde(rename = "l")]
-    pub event_list_if_other: Option<(ChatId, Option<MessageIndex>)>,
     #[serde(rename = "c")]
     pub chat_if_other: Option<(MultiUserChatInternal, Option<MessageIndex>)>,
     #[serde(rename = "e")]
@@ -606,11 +595,11 @@ pub struct ReplyContextInternalPrevious {
 impl ReplyContextInternal {
     pub fn hydrate(&self) -> ReplyContext {
         ReplyContext {
-            event_list_if_other: self.chat_if_other.as_ref().map(|(c, t)| {
+            event_list_if_other: self.chat_if_other.as_ref().and_then(|(c, t)| {
                 if let MultiUserChatInternal::Group(chat_id) = c {
-                    (*chat_id, *t)
+                    Some((*chat_id, *t))
                 } else {
-                    panic!("Channels not yet supported");
+                    None
                 }
             }),
             chat_if_other: self.chat_if_other.as_ref().map(|(c, t)| (c.hydrate(), *t)),
@@ -632,18 +621,6 @@ impl From<&ReplyContext> for ReplyContextInternal {
     fn from(value: &ReplyContext) -> Self {
         ReplyContextInternal {
             chat_if_other: value.chat_if_other.map(|(c, t)| (c.into(), t)),
-            event_index: value.event_index,
-        }
-    }
-}
-
-impl From<ReplyContextInternalPrevious> for ReplyContextInternal {
-    fn from(value: ReplyContextInternalPrevious) -> Self {
-        ReplyContextInternal {
-            chat_if_other: value
-                .event_list_if_other
-                .map(|(c, t)| (MultiUserChatInternal::Group(c), t))
-                .or(value.chat_if_other),
             event_index: value.event_index,
         }
     }
@@ -735,7 +712,6 @@ impl ChatMetricsInternal {
             file_messages: self.file_messages,
             polls: self.polls,
             poll_votes: self.poll_votes,
-            cycles_messages: 0,
             icp_messages: self.icp_messages,
             sns1_messages: self.sns1_messages,
             ckbtc_messages: self.ckbtc_messages,

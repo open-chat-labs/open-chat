@@ -31,7 +31,6 @@ fn current_user_impl(state: &RuntimeState) -> Response {
         });
 
         let now = state.env.now();
-        let is_platform_moderator = state.data.platform_moderators.contains(&u.user_id);
 
         Success(SuccessResult {
             user_id: u.user_id,
@@ -41,8 +40,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             wasm_version: Version::default(),
             icp_account: default_ledger_account(u.user_id.into()),
             referrals: state.data.users.referrals(&u.user_id),
-            is_super_admin: is_platform_moderator,
-            is_platform_moderator,
+            is_platform_moderator: state.data.platform_moderators.contains(&u.user_id),
             suspension_details,
             is_suspected_bot: state.data.users.is_suspected_bot(&u.user_id),
             diamond_membership_details: u.diamond_membership_details.hydrate(now),

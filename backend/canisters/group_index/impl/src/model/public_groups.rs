@@ -9,14 +9,12 @@ use types::{
     AccessGate, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, PublicGroupActivity, PublicGroupSummary, TimestampMillis,
     Version,
 };
-use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::iterator_extensions::IteratorExtensions;
 use utils::time::DAY_IN_MS;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PublicGroups {
     groups: HashMap<ChatId, PublicGroupInfo>,
-    pub groups_pending: CaseInsensitiveHashMap<TimestampMillis>,
 }
 
 impl PublicGroups {
@@ -158,10 +156,8 @@ pub struct PublicGroupInfo {
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
     activity: PublicGroupActivity,
-    #[serde(default)]
     hotness_score: u32,
     exclude_from_hotlist: bool,
-    #[serde(default)]
     gate: Option<AccessGate>,
 }
 

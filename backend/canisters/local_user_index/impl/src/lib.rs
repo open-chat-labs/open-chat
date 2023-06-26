@@ -136,7 +136,6 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(default = "internet_identity_canister_id")]
     pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
@@ -147,16 +146,9 @@ struct Data {
     pub max_concurrent_canister_upgrades: u32,
     pub user_upgrade_concurrency: u32,
     pub platform_moderators_group: Option<ChatId>,
-    #[serde(default)]
     pub referral_codes: ReferralCodes,
-    #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
-    #[serde(default)]
     pub btc_miami_payments_queue: BtcMiamiPaymentsQueue,
-}
-
-fn internet_identity_canister_id() -> CanisterId {
-    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 #[derive(Serialize, Deserialize)]

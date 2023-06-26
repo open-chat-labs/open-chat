@@ -8,7 +8,6 @@ use types::{ChatId, MessageIndex, TimestampMillis, Timestamped};
 pub struct GroupChats {
     groups_created: u32,
     group_chats: HashMap<ChatId, GroupChat>,
-    #[serde(default)]
     pinned: Timestamped<Vec<ChatId>>,
     removed: Vec<RemovedGroup>,
 }

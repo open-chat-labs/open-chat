@@ -282,12 +282,8 @@ struct Data {
     pub activity_notification_state: ActivityNotificationState,
     pub instruction_counts_log: InstructionCountsLog,
     pub test_mode: bool,
-    #[serde(default)]
     pub community_being_imported_into: Option<CommunityBeingImportedInto>,
-    #[serde(default)]
     pub serialized_chat_state: Option<Vec<u8>>,
-    #[serde(default)]
-    pub synced_gate_with_group_index: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -350,7 +346,6 @@ impl Data {
             instruction_counts_log: InstructionCountsLog::default(),
             community_being_imported_into: None,
             serialized_chat_state: None,
-            synced_gate_with_group_index: false,
         }
     }
 
