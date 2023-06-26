@@ -62,6 +62,7 @@ type EventsResponse =
 
 type ExploreChannelsArgs =
     record {
+        invite_code: opt nat64;
         search_term: opt text;
         page_index: nat32;
         page_size: nat8;
