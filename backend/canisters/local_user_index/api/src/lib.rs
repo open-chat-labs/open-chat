@@ -65,7 +65,6 @@ pub struct UserRegistered {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SuperAdminStatusChanged {
     pub user_id: UserId,
-    #[serde(alias = "is_platform_operator")]
     pub is_super_admin: bool,
 }
 
