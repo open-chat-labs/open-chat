@@ -8,7 +8,7 @@ use ic_test_state_machine_client::StateMachine;
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
 use types::{
-    ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent, MessageContentInitial
+    ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent, MessageContentInitial,
 };
 
 #[test]
