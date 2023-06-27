@@ -18,8 +18,6 @@ pub fn create_pending_transaction(
     user_id: UserId,
     now_nanos: TimestampNanos,
 ) -> PendingCryptoTransaction {
-    let principal = Principal::from(user_id);
-
     match token {
         Cryptocurrency::InternetComputer => PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
             token,
@@ -33,7 +31,7 @@ pub fn create_pending_transaction(
             token,
             amount: amount.e8s().into(),
             to: Account {
-                owner: principal,
+                owner: Principal::from(user_id),
                 subaccount: None,
             },
             fee: token.fee(),
