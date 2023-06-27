@@ -76,7 +76,6 @@ struct Data {
     files: Files,
     index_sync_state: IndexSyncState,
     created: TimestampMillis,
-    #[serde(default)]
     freezing_limit: Timestamped<Option<Cycles>>,
     test_mode: bool,
 }

@@ -45,7 +45,6 @@ type CurrentUserResponse =
             wasm_version: Version;
             icp_account: AccountIdentifier;
             referrals: vec UserId;
-            is_super_admin: bool;
             is_platform_moderator: bool;
             suspension_details: opt SuspensionDetails;
             is_suspected_bot: bool;

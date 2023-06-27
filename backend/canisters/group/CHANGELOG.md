@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Refactored `claim_prize` ([#3854](https://github.com/open-chat-labs/open-chat/pull/3854))
+
+## [[2.0.735](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.724-group)] - 2023-06-27
+
 ### Added
 
 - Add ability to import a group into a community ([#3792](https://github.com/open-chat-labs/open-chat/pull/3792))
@@ -20,7 +26,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Allow blocking users who are no longer in the group ([#3818](https://github.com/open-chat-labs/open-chat/pull/3818))
 - Sync access gate with group_index ([#3826](https://github.com/open-chat-labs/open-chat/pull/3826))
 - Simplify `c2c_delete_group` ([#3840](https://github.com/open-chat-labs/open-chat/pull/3840))
-- Refactored `claim_prize` ([#3854](https://github.com/open-chat-labs/open-chat/pull/3854))
 
 ### Removed
 

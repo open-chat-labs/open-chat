@@ -28,7 +28,6 @@ pub struct PendingPayment {
     pub currency: Cryptocurrency,
     pub timestamp: TimestampNanos,
     pub recipient: Principal,
-    #[serde(default)]
     pub memo: [u8; 32],
     pub reason: PendingPaymentReason,
 }

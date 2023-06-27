@@ -91,8 +91,6 @@ pub struct UserSuspended {
 pub struct UserJoinedGroup {
     pub user_id: UserId,
     pub chat_id: ChatId,
-    #[serde(default)]
-    pub as_super_admin: bool,
     pub latest_message_index: Option<MessageIndex>,
 }
 
@@ -133,7 +131,5 @@ pub struct GlobalUser {
     pub user_id: UserId,
     pub principal: Principal,
     pub is_bot: bool,
-    #[serde(default)]
-    pub is_super_admin: bool,
     pub is_platform_moderator: bool,
 }

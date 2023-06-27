@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.732](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.732-local_group_index)] - 2023-06-27
+
 ### Added
 
 - Implement converting a group into a community ([#3833](https://github.com/open-chat-labs/open-chat/pull/3833))

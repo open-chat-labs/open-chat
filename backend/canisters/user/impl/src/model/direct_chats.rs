@@ -8,7 +8,6 @@ use types::{ChatId, EventWrapper, Message, MessageIndex, TimestampMillis, Timest
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
-    #[serde(default)]
     pinned: Timestamped<Vec<ChatId>>,
     metrics: ChatMetricsInternal,
 }
