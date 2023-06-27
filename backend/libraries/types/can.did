@@ -1553,3 +1553,17 @@ type ChannelMatch =
         member_count: nat32;
         gate: opt AccessGate;
     };
+
+type ThreadPreview =
+    record {
+        root_message: MessageEventWrapper;
+        latest_replies: vec MessageEventWrapper;
+        total_replies: nat32;
+    };
+
+type CommunityMember = 
+    record {
+        user_id: UserId;
+        date_added: TimestampMillis;
+        role: CommunityRole;
+    };

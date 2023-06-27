@@ -169,6 +169,45 @@ type SelectedChannelUpdatesResponse =
         ChannelNotFound;
     };
 
+type SelectedInitialResponse =
+    variant {
+        Success: SelectedInitialSuccess;
+        UserNotInCommunity;
+    };
+
+type SelectedInitialSuccess = 
+    record {
+        timestamp: TimestampMillis;
+        latest_event_index: EventIndex;
+        members: vec CommunityMember;
+        blocked_users: vec UserId;
+        invited_users: vec UserId;
+        rules: AccessRules;
+    };
+
+type SelectedUpdatesArgs =
+    record {
+        updates_since: TimestampMillis;
+    };
+
+type SelectedUpdatesResponse =
+    variant {
+        Success: SelectedUpdatesSuccess;
+        SuccessNoUpdates;
+        UserNotInCommunity;
+    };
+
+type SelectedUpdatesSuccess = 
+    record {
+        timestamp: TimestampMillis;
+        members_added_or_updated: vec CommunityMember;
+        members_removed: vec UserId;
+        blocked_users_added: vec UserId;
+        blocked_users_removed: vec UserId;
+        invited_users: opt vec UserId;
+        rules: opt AccessRules;
+    };
+
 type ChannelSummaryArgs =
     record {
         channel_id: ChannelId;
@@ -220,6 +259,25 @@ type SummaryUpdatesResponse =
         Success: CommunityCanisterCommunitySummaryUpdates;
         SuccessNoUpdates;
         PrivateCommunity;
+    };
+
+type ThreadPreviewsArgs =
+    record {
+        channel_id: ChannelId;
+        threads: vec MessageIndex;
+        latest_client_thread_update: opt TimestampMillis;
+    };
+
+type ThreadPreviewsResponse =
+    variant {
+        Success: record {
+            threads: vec ThreadPreview;
+            timestamp: TimestampMillis;
+        };
+        UserNotInCommunity;
+        ChannelNotFound;
+        UserNotInChannel;
+        ReplicaNotUpToDate: TimestampMillis;
     };
 
 type AddMembersToChannelArgs =
@@ -902,8 +960,11 @@ service: {
     search_channel: (SearchChannelArgs) -> (SearchChannelResponse) query;
     selected_channel_initial: (SelectedChannelInitialArgs) -> (SelectedChannelInitialResponse) query;
     selected_channel_updates: (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesResponse) query;
+    selected_initial: (EmptyArgs) -> (SelectedInitialResponse) query;
+    selected_updates: (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
+    thread_previews: (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
 
     add_members_to_channel: (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
