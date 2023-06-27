@@ -18,7 +18,7 @@ pub enum Notification {
     ChannelMessageNotification(ChannelMessageNotification),
     DirectReactionAddedNotification(DirectReactionAddedNotification),
     GroupReactionAddedNotification(GroupReactionAddedNotification),
-    CommunityReactionAddedNotification(CommunityReactionAddedNotification),
+    ChannelReactionAddedNotification(ChannelReactionAddedNotification),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -95,7 +95,7 @@ pub struct GroupReactionAddedNotification {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityReactionAddedNotification {
+pub struct ChannelReactionAddedNotification {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
