@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ReservePrizeResult;
-use group_canister::claim_prize::{Response::*, *};
+use community_canister::claim_prize::{Response::*, *};
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
 use ledger_utils::{create_pending_transaction, process_transaction};
@@ -57,63 +57,78 @@ struct PrepareResult {
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<Response>> {
     if state.data.is_frozen() {
-        return Err(Box::new(ChatFrozen));
+        return Err(Box::new(CommunityFrozen));
     }
 
     let caller = state.env.caller();
 
-    if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
-            return Err(Box::new(UserSuspended));
-        }
+    let member = match state.data.members.get(caller) {
+        Some(m) => m,
+        None => return Err(Box::new(UserNotInCommunity)),
+    };
 
-        let now = state.env.now();
-        let now_nanos = state.env.now_nanos();
-        let min_visible_event_index = member.min_visible_event_index();
-        let user_id = member.user_id;
-
-        let (token, amount) = match state
-            .data
-            .chat
-            .events
-            .reserve_prize(args.message_id, min_visible_event_index, user_id, now)
-        {
-            ReservePrizeResult::AlreadyClaimed => return Err(Box::new(AlreadyClaimed)),
-            ReservePrizeResult::Success(token, amount) => (token, amount),
-            ReservePrizeResult::MessageNotFound => return Err(Box::new(MessageNotFound)),
-            ReservePrizeResult::PrizeFullyClaimed => return Err(Box::new(PrizeFullyClaimed)),
-            ReservePrizeResult::PrizeEnded => return Err(Box::new(PrizeEnded)),
-        };
-
-        let transaction = create_pending_transaction(token, amount, user_id, now_nanos);
-
-        Ok(PrepareResult {
-            group: state.env.canister_id(),
-            ledger_canister_id: token.ledger_canister_id(),
-            transaction,
-            user_id,
-        })
-    } else {
-        Err(Box::new(CallerNotInGroup))
+    if member.suspended.value {
+        return Err(Box::new(UserSuspended));
     }
+
+    let channel = match state.data.channels.get_mut(&args.channel_id) {
+        Some(c) => c,
+        None => return Err(Box::new(ChannelNotFound)),
+    };
+
+    let channel_member = match channel.chat.members.get(&member.user_id) {
+        Some(m) => m,
+        None => return Err(Box::new(UserNotInChannel)),
+    };
+
+    let now = state.env.now();
+    let now_nanos = state.env.now_nanos();
+    let min_visible_event_index = channel_member.min_visible_event_index();
+    let user_id = member.user_id;
+
+    let (token, amount) = match channel
+        .chat
+        .events
+        .reserve_prize(args.message_id, min_visible_event_index, user_id, now)
+    {
+        ReservePrizeResult::AlreadyClaimed => return Err(Box::new(AlreadyClaimed)),
+        ReservePrizeResult::Success(token, amount) => (token, amount),
+        ReservePrizeResult::MessageNotFound => return Err(Box::new(MessageNotFound)),
+        ReservePrizeResult::PrizeFullyClaimed => return Err(Box::new(PrizeFullyClaimed)),
+        ReservePrizeResult::PrizeEnded => return Err(Box::new(PrizeEnded)),
+    };
+
+    let transaction = create_pending_transaction(token, amount, user_id, now_nanos);
+
+    Ok(PrepareResult {
+        group: state.env.canister_id(),
+        ledger_canister_id: token.ledger_canister_id(),
+        transaction,
+        user_id,
+    })
 }
 
 fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, state: &mut RuntimeState) -> Option<String> {
     let now = state.env.now();
-    match state
-        .data
+
+    let channel = match state.data.channels.get_mut(&args.channel_id) {
+        Some(c) => c,
+        None => return Some("ChannelNotFound".to_string()),
+    };
+
+    match channel
         .chat
         .events
         .claim_prize(args.message_id, winner, transaction, state.env.rng(), now)
     {
         chat_events::ClaimPrizeResult::Success(message_event) => {
             // Send a notification to group participants
-            let notification_recipients = state.data.chat.members.users_to_notify(None).into_iter().collect();
+            let notification_recipients = channel.chat.members.users_to_notify(None).into_iter().collect();
 
             let notification = Notification::GroupMessageNotification(GroupMessageNotification {
                 chat_id: state.env.canister_id().into(),
                 thread_root_message_index: None,
-                group_name: state.data.chat.name.clone(),
+                group_name: channel.chat.name.clone(),
                 sender: OPENCHAT_BOT_USER_ID,
                 sender_name: OPENCHAT_BOT_USERNAME.to_string(),
                 message: message_event,
@@ -131,8 +146,13 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
 }
 
 fn rollback(args: Args, user_id: UserId, amount: Tokens, state: &mut RuntimeState) -> String {
+    let channel = match state.data.channels.get_mut(&args.channel_id) {
+        Some(c) => c,
+        None => return "ChannelNotFound".to_string(),
+    };
+
     let now = state.env.now();
-    match state.data.chat.events.unreserve_prize(args.message_id, user_id, amount, now) {
+    match channel.chat.events.unreserve_prize(args.message_id, user_id, amount, now) {
         chat_events::UnreservePrizeResult::Success => "prize reservation cancelled".to_string(),
         chat_events::UnreservePrizeResult::MessageNotFound => "prize message not found".to_string(),
         chat_events::UnreservePrizeResult::ReservationNotFound => "prize reservation not found".to_string(),

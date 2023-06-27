@@ -14,6 +14,7 @@ pub mod c2c_unfreeze_community;
 pub mod c2c_update_proposals;
 pub mod change_channel_role;
 pub mod change_role;
+pub mod claim_prize;
 pub mod create_channel;
 pub mod decline_invitation;
 pub mod delete_channel;

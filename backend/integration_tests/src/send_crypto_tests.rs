@@ -3,9 +3,9 @@ use crate::rng::{random_message_id, random_string};
 use crate::utils::now_nanos;
 use crate::{client, TestEnv};
 use ic_ledger_types::Tokens;
+use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
-use types::nns::UserOrAccount;
-use types::{nns, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial, PendingCryptoTransaction};
+use types::{CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial};
 
 #[test]
 fn send_direct_message_with_transfer_succeeds() {
@@ -38,14 +38,12 @@ fn send_direct_message_with_transfer_succeeds() {
             message_id: random_message_id(),
             content: MessageContentInitial::Crypto(CryptoContent {
                 recipient: user2.user_id,
-                transfer: CryptoTransaction::Pending(PendingCryptoTransaction::NNS(nns::PendingCryptoTransaction {
-                    token: Cryptocurrency::InternetComputer,
-                    amount: Tokens::from_e8s(10000),
-                    to: UserOrAccount::User(user2.user_id),
-                    fee: None,
-                    memo: None,
-                    created: now_nanos(env),
-                })),
+                transfer: CryptoTransaction::Pending(create_pending_transaction(
+                    Cryptocurrency::InternetComputer,
+                    Tokens::from_e8s(10000),
+                    user2.user_id,
+                    now_nanos(env),
+                )),
                 caption: None,
             }),
             sender_name: user1.username(),
@@ -99,14 +97,12 @@ fn send_message_with_transfer_to_group_succeeds() {
             message_id: random_message_id(),
             content: MessageContentInitial::Crypto(CryptoContent {
                 recipient: user2.user_id,
-                transfer: CryptoTransaction::Pending(PendingCryptoTransaction::NNS(nns::PendingCryptoTransaction {
-                    token: Cryptocurrency::InternetComputer,
-                    amount: Tokens::from_e8s(10000),
-                    to: UserOrAccount::User(user2.user_id),
-                    fee: None,
-                    memo: None,
-                    created: now_nanos(env),
-                })),
+                transfer: CryptoTransaction::Pending(create_pending_transaction(
+                    Cryptocurrency::InternetComputer,
+                    Tokens::from_e8s(10000),
+                    user2.user_id,
+                    now_nanos(env),
+                )),
                 caption: None,
             }),
             sender_name: user1.username(),

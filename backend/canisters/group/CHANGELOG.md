@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add ability to import a group into a community ([#3792](https://github.com/open-ic/open-chat/pull/3792))
+- Add ability to import a group into a community ([#3792](https://github.com/open-chat-labs/open-chat/pull/3792))
 - Add support for sending the KINIC token ([#3811](https://github.com/open-chat-labs/open-chat/pull/3811))
 - Support replying to channel messages ([#3825](https://github.com/open-chat-labs/open-chat/pull/3825))
 - Support simplified transfers of icrc1 tokens ([#3827](https://github.com/open-chat-labs/open-chat/pull/3827))
@@ -18,12 +18,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Allow blocking users who are no longer in the group ([#3818](https://github.com/open-chat-labs/open-chat/pull/3818))
-- Sync access gate with group_index ([#3826](https://github.com/open-ic/open-chat/pull/3826))
-- Simplify `c2c_delete_group` ([#3840](https://github.com/open-ic/open-chat/pull/3840))
+- Sync access gate with group_index ([#3826](https://github.com/open-chat-labs/open-chat/pull/3826))
+- Simplify `c2c_delete_group` ([#3840](https://github.com/open-chat-labs/open-chat/pull/3840))
+- Refactored `claim_prize` ([#3854](https://github.com/open-chat-labs/open-chat/pull/3854))
 
 ### Removed
 
-- Drop `member_count_change` from group activity ([#3820](https://github.com/open-ic/open-chat/pull/3820))
+- Drop `member_count_change` from group activity ([#3820](https://github.com/open-chat-labs/open-chat/pull/3820))
 
 ## [[2.0.724](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.724-group)] - 2023-06-16
 
