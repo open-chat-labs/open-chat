@@ -103,7 +103,7 @@ impl Channels {
                 };
                 (score, c)
             })
-            .filter(|(score, _)| *score > 0)
+            .filter(|(score, _)| query.is_none() || *score > 0)
             .collect();
 
         if query.is_some() {
