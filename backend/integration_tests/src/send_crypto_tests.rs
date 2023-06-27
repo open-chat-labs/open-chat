@@ -5,8 +5,7 @@ use crate::{client, TestEnv};
 use ic_ledger_types::Tokens;
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
-use types::nns::UserOrAccount;
-use types::{nns, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial, PendingCryptoTransaction};
+use types::{CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial};
 
 #[test]
 fn send_direct_message_with_transfer_succeeds() {

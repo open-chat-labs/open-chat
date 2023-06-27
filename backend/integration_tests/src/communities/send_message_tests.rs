@@ -7,10 +7,8 @@ use ic_ledger_types::Tokens;
 use ic_test_state_machine_client::StateMachine;
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
-use types::nns::{self, UserOrAccount};
 use types::{
-    ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent, MessageContentInitial,
-    PendingCryptoTransaction,
+    ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent, MessageContentInitial
 };
 
 #[test]
