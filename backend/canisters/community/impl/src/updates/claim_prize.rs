@@ -127,7 +127,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
             // Send a notification to group participants
             let notification_recipients = channel.chat.members.users_to_notify(None).into_iter().collect();
 
-            let notification = Notification::CommunityMessageNotification(ChannelMessageNotification {
+            let notification = Notification::ChannelMessageNotification(ChannelMessageNotification {
                 community_id: state.env.canister_id().into(),
                 channel_id: args.channel_id,
                 thread_root_message_index: None,

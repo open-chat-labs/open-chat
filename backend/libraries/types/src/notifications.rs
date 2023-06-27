@@ -15,7 +15,7 @@ pub enum Notification {
     AddedToGroupNotification(AddedToGroupNotification),
     DirectMessageNotification(DirectMessageNotification),
     GroupMessageNotification(GroupMessageNotification),
-    CommunityMessageNotification(ChannelMessageNotification),
+    ChannelMessageNotification(ChannelMessageNotification),
     DirectReactionAddedNotification(DirectReactionAddedNotification),
     GroupReactionAddedNotification(GroupReactionAddedNotification),
     CommunityReactionAddedNotification(CommunityReactionAddedNotification),
