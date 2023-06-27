@@ -66,7 +66,7 @@ pub struct CommunityMessageNotification {
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub community_name: String,
-    pub group_name: String,
+    pub channel_name: String,
     pub sender: UserId,
     pub sender_name: String,
     pub message: EventWrapper<Message>,
