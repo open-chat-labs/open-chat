@@ -3,7 +3,7 @@ use crate::timer_job_types::{JoinUserToGroup, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use local_user_index_canister::{Event, SuperAdminStatusChanged};
+use local_user_index_canister::{Event, PlatformModeratorStatusChanged};
 use types::UserId;
 use user_canister::c2c_grant_super_admin;
 use user_index_canister::add_platform_moderator::{Response::*, *};
@@ -32,7 +32,7 @@ fn is_already_platform_moderator(user_id: &UserId, state: &RuntimeState) -> bool
 fn commit(user_id: UserId, state: &mut RuntimeState) {
     state.data.platform_moderators.insert(user_id);
     state.push_event_to_all_local_user_indexes(
-        Event::SuperAdminStatusChanged(SuperAdminStatusChanged {
+        Event::SuperAdminStatusChanged(PlatformModeratorStatusChanged {
             user_id,
             is_super_admin: true,
         }),
