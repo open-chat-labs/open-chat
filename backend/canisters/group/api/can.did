@@ -529,13 +529,6 @@ type ThreadPreviewsResponse =
         ReplicaNotUpToDate: TimestampMillis;
     };
 
-type ThreadPreview =
-    record {
-        root_message: MessageEventWrapper;
-        latest_replies: vec MessageEventWrapper;
-        total_replies: nat32;
-    };
-
 type DeletedMessageArgs =
     record {
         thread_root_message_index: opt MessageIndex;
