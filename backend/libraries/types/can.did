@@ -411,7 +411,6 @@ type CommunityCanisterCommunitySummaryUpdates =
         is_public: opt bool;
         member_count: opt nat32;
         permissions: opt CommunityPermissions;
-        updated_events: vec record { opt nat32; nat32; nat64 };
         frozen: FrozenGroupUpdate;
         gate: AccessGateUpdate;
         latest_event_index: opt EventIndex;
@@ -440,6 +439,7 @@ type CommunityCanisterChannelSummaryUpdates =
         latest_event_index: opt EventIndex;
         member_count: opt nat32;
         permissions: opt GroupPermissions;
+        updated_events: vec record { opt nat32; nat32; nat64 };
         metrics: opt ChatMetrics;
         date_last_pinned: opt TimestampMillis;
         events_ttl: EventsTimeToLiveUpdate;
