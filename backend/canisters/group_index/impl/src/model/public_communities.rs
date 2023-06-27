@@ -53,7 +53,7 @@ impl PublicCommunities {
                 } else if c.hotness_score > 0 {
                     c.hotness_score
                 } else {
-                    c.activity.as_ref().map_or(0, |a| a.member_count)
+                    c.activity.as_ref().map_or(1, |a| a.member_count)
                 };
                 (score, c)
             })

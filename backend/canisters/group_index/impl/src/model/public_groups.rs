@@ -3,7 +3,7 @@ use crate::model::private_groups::PrivateGroupInfo;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
 use search::*;
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
+use std::cmp::{self, Ordering};
 use std::collections::HashMap;
 use types::{
     AccessGate, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, PublicGroupActivity, PublicGroupSummary, TimestampMillis,
@@ -63,7 +63,7 @@ impl PublicGroups {
                 } else if c.hotness_score > 0 {
                     c.hotness_score
                 } else {
-                    c.activity.member_count
+                    cmp::max(1, c.activity.member_count)
                 };
                 (score, c)
             })
