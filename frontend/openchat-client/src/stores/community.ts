@@ -90,6 +90,7 @@ export const selectedCommunityId = writable<CommunityIdentifier | undefined>({
 
 export const communityStateStore = createCommunitySpecificObjectStore<CommunitySpecificState>(
     () => ({
+        detailsLoaded: false,
         members: [],
         blockedUsers: new Set<string>(),
         invitedUsers: new Set<string>(),

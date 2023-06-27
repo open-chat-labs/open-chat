@@ -2,17 +2,17 @@
     import { _ } from "svelte-i18n";
     import ModalContent from "../../../ModalContent.svelte";
     import Button from "../../../Button.svelte";
-    import ButtonGroup from "../../../ButtonGroup.svelte";
     import { menuCloser } from "../../../../actions/closeMenu";
     import ChooseMembers from "../../ChooseMembers.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import type {
-        AccessRules,
-        CandidateMember,
-        CommunitySummary,
-        DefaultChannel,
-        OpenChat,
+    import {
+        routeForChatIdentifier,
+        type AccessRules,
+        type CandidateMember,
+        type CommunitySummary,
+        type DefaultChannel,
+        type OpenChat,
     } from "openchat-client";
     import StageHeader from "../../StageHeader.svelte";
     import PermissionsEditor from "./PermissionsEditor.svelte";
@@ -24,6 +24,7 @@
     import ChooseChannels from "./ChooseChannels.svelte";
     import { toastStore } from "stores/toast";
     import { interpolateLevel } from "../../../../utils/i18n";
+    import page from "page";
 
     export let original: CommunitySummary = createCandidateCommunity("");
 
@@ -87,7 +88,6 @@
     }
 
     onMount(() => {
-        console.log("Cloning input community");
         candidate = {
             ...original,
             permissions: { ...original.permissions },
@@ -126,8 +126,8 @@
                 .then((response) => {
                     if (response.kind === "success") {
                         toastStore.showSuccessToast("communities.created");
-                        // TODO - do we need to *select* the new community?
                         dispatch("close");
+                        page(`/community/${response.id}`);
                     } else {
                         toastStore.showFailureToast(`communities.errors.${response.kind}`);
                     }

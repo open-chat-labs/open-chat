@@ -653,6 +653,9 @@ export const idlFactory = ({ IDL }) => {
     'avatar_id' : DocumentIdUpdate,
     'membership' : IDL.Opt(ChannelMembershipUpdates),
     'latest_event_index' : IDL.Opt(EventIndex),
+    'updated_events' : IDL.Vec(
+      IDL.Tuple(IDL.Opt(IDL.Nat32), IDL.Nat32, IDL.Nat64)
+    ),
     'member_count' : IDL.Opt(IDL.Nat32),
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });

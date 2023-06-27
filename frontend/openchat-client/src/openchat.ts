@@ -443,7 +443,7 @@ export class OpenChat extends OpenChatAgentWorker {
         if (serverChat !== undefined) {
             this.refreshUpdatedEvents(serverChat, updatedEvents);
         }
-        this.updateDetails(chat);
+        this.updateChatDetails(chat);
         this.dispatchEvent(new ChatUpdated());
     }
 
@@ -967,7 +967,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     localChatSummaryUpdates.markAdded(resp);
-                    this.loadDetails(resp);
+                    this.loadChatDetails(resp);
                     messagesRead.syncWithServer(
                         resp.id,
                         resp.membership?.readByMeUpTo,
@@ -1063,11 +1063,11 @@ export class OpenChat extends OpenChatAgentWorker {
     getTypingString = getTypingString;
 
     communityAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
-        return dataContent?.blobUrl ?? "../assets/evil-robot.svg";
+        return dataContent?.blobUrl ?? "/assets/wink.svg";
     }
 
     communityBannerUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
-        return dataContent?.blobUrl ?? "../assets/landscape.png";
+        return dataContent?.blobUrl ?? "/assets/landscape.png";
     }
 
     canBlockUsers(chatId: ChatIdentifier | CommunityIdentifier): boolean {
@@ -1756,11 +1756,11 @@ export class OpenChat extends OpenChatAgentWorker {
         if (selectedChat !== undefined) {
             if (focusMessageIndex !== undefined) {
                 this.loadEventWindow(chatId, focusMessageIndex, undefined, true).then(() => {
-                    this.loadDetails(selectedChat);
+                    this.loadChatDetails(selectedChat);
                 });
             } else {
                 this.loadPreviousMessages(chatId, undefined, true).then(() => {
-                    this.loadDetails(selectedChat);
+                    this.loadChatDetails(selectedChat);
                 });
             }
             if (selectedChat.kind === "direct_chat") {
@@ -2157,7 +2157,55 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    private async loadDetails(clientChat: ChatSummary): Promise<void> {
+    private async loadCommunityDetails(community: CommunitySummary): Promise<void> {
+        if (!communityStateStore.getProp(community.id, "detailsLoaded")) {
+            const resp = await this.sendRequest({
+                kind: "getCommunityDetails",
+                chatId: community.id,
+                timestamp: community.lastUpdated,
+            });
+            if (resp !== "failure") {
+                communityStateStore.setProp(community.id, "detailsLoaded", true);
+                communityStateStore.setProp(community.id, "members", resp.members);
+                communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
+                communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
+                communityStateStore.setProp(community.id, "pinnedMessages", resp.pinnedMessages);
+                communityStateStore.setProp(community.id, "rules", resp.rules);
+                communityStateStore.setProp(community.id, "lastUpdated", resp.timestamp);
+            }
+            await this.updateUserStore(community.id, []); // TODO sort this out
+        } else {
+            await this.updateCommunityDetails(community);
+        }
+    }
+
+    private async updateCommunityDetails(community: CommunitySummary): Promise<void> {
+        const timestamp = communityStateStore.getProp(community.id, "lastUpdated");
+        if (timestamp !== undefined && timestamp < community.lastUpdated) {
+            const gd = await this.sendRequest({
+                kind: "getCommunityDetailsUpdates",
+                chatId: community.id,
+                previous: {
+                    members: communityStateStore.getProp(community.id, "members"),
+                    blockedUsers: communityStateStore.getProp(community.id, "blockedUsers"),
+                    invitedUsers: communityStateStore.getProp(community.id, "invitedUsers"),
+                    pinnedMessages: communityStateStore.getProp(community.id, "pinnedMessages"),
+                    timestamp: communityStateStore.getProp(community.id, "lastUpdated"),
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    rules: communityStateStore.getProp(community.id, "rules")!,
+                },
+            });
+            communityStateStore.setProp(community.id, "members", gd.members);
+            communityStateStore.setProp(community.id, "blockedUsers", gd.blockedUsers);
+            communityStateStore.setProp(community.id, "invitedUsers", gd.invitedUsers);
+            communityStateStore.setProp(community.id, "pinnedMessages", gd.pinnedMessages);
+            communityStateStore.setProp(community.id, "rules", gd.rules);
+            communityStateStore.setProp(community.id, "lastUpdated", gd.timestamp);
+            await this.updateUserStore(community.id, []); // TODO sort this out
+        }
+    }
+
+    private async loadChatDetails(clientChat: ChatSummary): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (clientChat.kind === "group_chat" || clientChat.kind === "channel") {
             if (!chatStateStore.getProp(clientChat.id, "detailsLoaded")) {
@@ -2177,12 +2225,12 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 await this.updateUserStore(clientChat.id, []);
             } else {
-                await this.updateDetails(clientChat);
+                await this.updateChatDetails(clientChat);
             }
         }
     }
 
-    private async updateDetails(clientChat: ChatSummary): Promise<void> {
+    private async updateChatDetails(clientChat: ChatSummary): Promise<void> {
         if (clientChat.kind === "group_chat" || clientChat.kind === "channel") {
             const timestamp = chatStateStore.getProp(clientChat.id, "lastUpdated");
             if (timestamp !== undefined && timestamp < clientChat.lastUpdated) {

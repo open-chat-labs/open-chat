@@ -92,6 +92,8 @@ export function formatMessageDate(
     timeIfToday = false,
     short = false
 ): string {
+    if (timestamp === 0n) return "";
+
     const date = new Date(Number(timestamp));
 
     const startOfToday = getStartOfToday();

@@ -229,6 +229,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'avatar_id' : DocumentIdUpdate,
   'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
+  'updated_events' : Array<[[] | [number], number, bigint]>,
   'member_count' : [] | [number],
   'latest_message' : [] | [MessageEventWrapper],
 }
