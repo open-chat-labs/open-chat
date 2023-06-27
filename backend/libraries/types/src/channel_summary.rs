@@ -53,6 +53,7 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub latest_event_index: Option<EventIndex>,
     pub member_count: Option<u32>,
     pub permissions: Option<GroupPermissions>,
+    pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,

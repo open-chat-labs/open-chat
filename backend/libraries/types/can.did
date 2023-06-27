@@ -439,6 +439,7 @@ type CommunityCanisterChannelSummaryUpdates =
         latest_event_index: opt EventIndex;
         member_count: opt nat32;
         permissions: opt GroupPermissions;
+        updated_events: vec record { opt nat32; nat32; nat64 };
         metrics: opt ChatMetrics;
         date_last_pinned: opt TimestampMillis;
         events_ttl: EventsTimeToLiveUpdate;
