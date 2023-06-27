@@ -10,6 +10,7 @@ candid = { workspace = true }
 ic-ledger-types = { workspace = true }
 itertools = { workspace = true }
 ledger_utils = { path = "../ledger_utils" }
+rand = { workspace = true }
 search = { path = "../search" }
 serde = { workspace = true }
 sha2 = { workspace = true }
