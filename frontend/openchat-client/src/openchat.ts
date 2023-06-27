@@ -4208,42 +4208,23 @@ export class OpenChat extends OpenChatAgentWorker {
         selectedCommunityId.set(undefined);
     }
 
-    joinCommunity(id: CommunityIdentifier): Promise<JoinCommunityResponse> {
-        // TODO - we will need to do something like all of the stuff that's commented out here
-        return this.sendRequest({ kind: "joinCommunity", id });
-        // .then((resp) => {
-        //     if (resp.kind === "success") {
-        //         localChatSummaryUpdates.markAdded(resp);
-        //         this.loadDetails(resp);
-        //         messagesRead.syncWithServer(resp.chatId, resp.readByMeUpTo, [], undefined);
-        //     } else if (resp.kind === "already_in_group") {
-        //         localChatSummaryUpdates.markAdded({
-        //             ...group,
-        //             myRole: "participant" as MemberRole,
-        //         });
-        //     } else {
-        //         if (resp.kind === "blocked") {
-        //             return "blocked";
-        //         } else if (resp.kind === "gate_check_failed") {
-        //             return "gate_check_failed";
-        //         }
-        //         return "failure";
-        //     }
-        //     return "success";
-        // })
-        // .then((resp) => {
-        //     if (
-        //         resp === "success" &&
-        //         this._liveState.groupPreviews[group.chatId] !== undefined
-        //     ) {
-        //         removeGroupPreview(group.chatId);
-        //     }
-        //     return resp;
-        // })
-        // .catch((err) => {
-        //     this._logger.error("Unable to join group", err);
-        //     return "failure";
-        // });
+    joinCommunity(id: CommunityIdentifier): Promise<"success" | "failure" | "gate_check_failed"> {
+        return this.sendRequest({ kind: "joinCommunity", id })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    this.loadCommunityDetails(resp.community);
+                } else {
+                    if (resp.kind === "gate_check_failed") {
+                        return "gate_check_failed";
+                    }
+                    return "failure";
+                }
+                return "success";
+            })
+            .catch((err) => {
+                this._logger.error("Unable to join community", err);
+                return "failure";
+            });
     }
 
     deleteCommunity(_id: CommunityIdentifier): Promise<void> {

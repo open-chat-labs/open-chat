@@ -614,7 +614,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private channelEventsWindow(
-        eventIndexRange: IndexRange, //TODO - used for caching
+        eventIndexRange: IndexRange,
         chatId: ChannelIdentifier,
         messageIndex: number,
         latestClientMainEventIndex: number | undefined,
@@ -1555,7 +1555,12 @@ export class OpenChatAgent extends EventTarget {
                 );
 
             case "channel":
-                throw new Error("TODO - remove channel reaction not implemented");
+                return this.communityClient(chatId.communityId).removeReaction(
+                    chatId,
+                    messageId,
+                    reaction,
+                    threadRootMessageIndex
+                );
         }
     }
 
@@ -1990,11 +1995,6 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         message: EventWrapper<Message>
     ): Promise<void> {
-        if (chatId.kind === "channel") {
-            throw new Error(
-                "TODO - setCachedMessageFromNotification not implemented for channel messages"
-            );
-        }
         return setCachedMessageIfNotExists(this.db, chatId, message, threadRootMessageIndex);
     }
 

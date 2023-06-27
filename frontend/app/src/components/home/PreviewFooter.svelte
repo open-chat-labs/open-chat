@@ -6,7 +6,6 @@
     import { toastStore } from "../../stores/toast";
     import { _ } from "svelte-i18n";
     import { interpolateLevel } from "utils/i18n";
-    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -18,10 +17,9 @@
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
 
-    $: console.log("selectedCommunity: ", $selectedCommunity, previewingCommunity);
-
     let isPlatformModerator = client.isPlatformModerator();
     let freezingInProgress = false;
+    let joiningCommunity = false;
 
     function joinGroup() {
         dispatch("joinGroup", {
@@ -31,12 +29,20 @@
     }
 
     function joinCommunity() {
-        // TODO need to check whether we need to show the rules
-        // then we need to join and deal with the failure
-        console.log("joinCommunity");
-
+        // TODO - we need to deal with rules acceptance here
         if (previewingCommunity && $selectedCommunity) {
-            client.joinCommunity($selectedCommunity.id);
+            joiningCommunity = true;
+            client
+                .joinCommunity($selectedCommunity.id)
+                .then((resp) => {
+                    if (resp === "gate_check_failed") {
+                        console.log("TODO - join group gate check failed");
+                    } else if (resp === "failure") {
+                        toastStore.showFailureToast("communities.errors.joinFailed");
+                        joining = undefined;
+                    }
+                })
+                .finally(() => (joiningCommunity = false));
         }
     }
 
@@ -108,8 +114,8 @@
     </Button>
     {#if previewingCommunity}
         <Button
-            loading={joining !== undefined}
-            disabled={joining !== undefined}
+            loading={joiningCommunity}
+            disabled={joiningCommunity}
             small={true}
             on:click={joinCommunity}>
             {interpolateLevel("communities.joinCommunity", chat.level, true)}

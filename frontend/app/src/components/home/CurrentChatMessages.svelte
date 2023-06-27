@@ -225,7 +225,6 @@
 
     function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            // TODO - sort this out
             return !unconfirmed.contains({ chatId: chat.id }, evt.event.messageId);
         }
         return true;
@@ -233,7 +232,6 @@
 
     function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            // TODO Sort this out
             return failedMessagesStore.contains({ chatId: chat.id }, evt.event.messageId);
         }
         return false;
