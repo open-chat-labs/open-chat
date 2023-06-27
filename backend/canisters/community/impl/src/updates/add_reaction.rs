@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use chat_events::Reader;
 use community_canister::add_reaction::{Response::*, *};
 use group_chat_core::{AddRemoveReactionResult, GroupChatCore};
-use types::{CommunityReactionAddedNotification, EventIndex, EventWrapper, Message, Notification, TimestampMillis, UserId};
+use types::{ChannelReactionAddedNotification, EventIndex, EventWrapper, Message, Notification, TimestampMillis, UserId};
 
 #[update_candid_and_msgpack]
 #[trace]
@@ -103,7 +103,7 @@ fn push_notification(
     state: &mut RuntimeState,
 ) {
     let recipient = message.event.sender;
-    let notification = Notification::CommunityReactionAddedNotification(CommunityReactionAddedNotification {
+    let notification = Notification::ChannelReactionAddedNotification(ChannelReactionAddedNotification {
         community_id: state.env.canister_id().into(),
         channel_id: args.channel_id,
         thread_root_message_index: args.thread_root_message_index,

@@ -8,8 +8,8 @@ use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use itertools::Itertools;
 use types::{
-    ChannelId, CommunityMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification,
-    TimestampMillis, UserId,
+    ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis,
+    UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -75,12 +75,12 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         .unique()
                         .collect();
 
-                    let notification = Notification::CommunityMessageNotification(CommunityMessageNotification {
+                    let notification = Notification::ChannelMessageNotification(ChannelMessageNotification {
                         community_id: state.env.canister_id().into(),
                         channel_id: args.channel_id,
                         thread_root_message_index: args.thread_root_message_index,
                         community_name: state.data.name.clone(),
-                        group_name: channel.chat.name.clone(),
+                        channel_name: channel.chat.name.clone(),
                         sender: user_id,
                         sender_name: args.sender_name,
                         message: result.message_event,
