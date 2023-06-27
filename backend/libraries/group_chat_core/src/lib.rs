@@ -206,21 +206,6 @@ impl GroupChatCore {
                         updates.role_changed = true;
                     }
                 }
-                ChatEventInternal::ParticipantAssumesSuperAdmin(p) => {
-                    if member.map(|m| m.user_id == p.user_id).unwrap_or_default() {
-                        updates.role_changed = true;
-                    }
-                }
-                ChatEventInternal::ParticipantDismissedAsSuperAdmin(p) => {
-                    if member.map(|m| m.user_id == p.user_id).unwrap_or_default() {
-                        updates.role_changed = true;
-                    }
-                }
-                ChatEventInternal::ParticipantRelinquishesSuperAdmin(p) => {
-                    if member.map(|m| m.user_id == p.user_id).unwrap_or_default() {
-                        updates.role_changed = true;
-                    }
-                }
                 ChatEventInternal::ParticipantsAdded(_)
                 | ChatEventInternal::ParticipantsRemoved(_)
                 | ChatEventInternal::ParticipantJoined(_)
@@ -228,14 +213,6 @@ impl GroupChatCore {
                 | ChatEventInternal::UsersBlocked(_)
                 | ChatEventInternal::UsersUnblocked(_) => {
                     updates.members_changed = true;
-                }
-                ChatEventInternal::OwnershipTransferred(ownership) => {
-                    if member
-                        .map(|m| ownership.new_owner == m.user_id || ownership.old_owner == m.user_id)
-                        .unwrap_or_default()
-                    {
-                        updates.role_changed = true;
-                    }
                 }
                 ChatEventInternal::PermissionsChanged(p) => {
                     if updates.permissions.is_none() {
@@ -312,10 +289,6 @@ impl GroupChatCore {
         // Iterate through the new events starting from most recent
         for event_wrapper in events_reader.iter(None, false).take_while(|e| e.timestamp > since) {
             match &event_wrapper.event {
-                ChatEventInternal::OwnershipTransferred(e) => {
-                    user_updates_handler.mark_member_updated(&mut result, e.old_owner, false);
-                    user_updates_handler.mark_member_updated(&mut result, e.new_owner, false);
-                }
                 ChatEventInternal::ParticipantsAdded(p) => {
                     for user_id in p.user_ids.iter() {
                         user_updates_handler.mark_member_updated(&mut result, *user_id, false);
