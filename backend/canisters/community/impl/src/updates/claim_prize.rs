@@ -7,7 +7,7 @@ use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
 use ledger_utils::{create_pending_transaction, process_transaction};
 use types::{
-    CanisterId, CommunityMessageNotification, CompletedCryptoTransaction, Notification, PendingCryptoTransaction, UserId,
+    CanisterId, ChannelMessageNotification, CompletedCryptoTransaction, Notification, PendingCryptoTransaction, UserId,
 };
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 
@@ -127,7 +127,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
             // Send a notification to group participants
             let notification_recipients = channel.chat.members.users_to_notify(None).into_iter().collect();
 
-            let notification = Notification::CommunityMessageNotification(CommunityMessageNotification {
+            let notification = Notification::CommunityMessageNotification(ChannelMessageNotification {
                 community_id: state.env.canister_id().into(),
                 channel_id: args.channel_id,
                 thread_root_message_index: None,
