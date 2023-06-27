@@ -328,3 +328,12 @@ export type ChannelMembershipUpdates = {
     mentions: Mention[];
     myMetrics: Metrics | undefined;
 };
+
+export type ChannelMatch = {
+    id: ChannelIdentifier;
+    gate: AccessGate;
+    name: string;
+    description: string;
+    avatar: DataContent;
+    memberCount: number;
+};

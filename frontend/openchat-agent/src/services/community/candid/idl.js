@@ -664,6 +664,24 @@ export const idlFactory = ({ IDL }) => {
     'PrivateChannel' : IDL.Null,
     'SuccessUpdated' : CommunityCanisterChannelSummaryUpdates,
   });
+  const ClaimPrizeArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'message_id' : MessageId,
+  });
+  const ClaimPrizeResponse = IDL.Variant({
+    'PrizeFullyClaimed' : IDL.Null,
+    'UserNotInChannel' : IDL.Null,
+    'MessageNotFound' : IDL.Null,
+    'ChannelNotFound' : IDL.Null,
+    'AlreadyClaimed' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserNotInCommunity' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+    'PrizeEnded' : IDL.Null,
+    'FailedAfterTransfer' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
+    'TransferFailed' : IDL.Tuple(IDL.Text, FailedCryptoTransaction),
+  });
   const AccessRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const Document = IDL.Record({
     'id' : IDL.Nat,
@@ -984,6 +1002,27 @@ export const idlFactory = ({ IDL }) => {
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const ExploreChannelsArgs = IDL.Record({
+    'page_size' : IDL.Nat8,
+    'page_index' : IDL.Nat32,
+    'invite_code' : IDL.Opt(IDL.Nat64),
+    'search_term' : IDL.Opt(IDL.Text),
+  });
+  const ChannelMatch = IDL.Record({
+    'id' : ChannelId,
+    'gate' : IDL.Opt(AccessGate),
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'avatar_id' : IDL.Opt(IDL.Nat),
+    'member_count' : IDL.Nat32,
+  });
+  const ExploreChannelsResponse = IDL.Variant({
+    'TermTooShort' : IDL.Nat8,
+    'Success' : IDL.Record({ 'matches' : IDL.Vec(ChannelMatch) }),
+    'TermTooLong' : IDL.Nat8,
+    'InvalidTerm' : IDL.Null,
+    'PrivateCommunity' : IDL.Null,
   });
   const ImportGroupArgs = IDL.Record({ 'group_id' : ChatId });
   const ImportGroupResponse = IDL.Variant({
@@ -1539,6 +1578,7 @@ export const idlFactory = ({ IDL }) => {
         [ChannelSummaryUpdatesResponse],
         ['query'],
       ),
+    'claim_prize' : IDL.Func([ClaimPrizeArgs], [ClaimPrizeResponse], []),
     'create_channel' : IDL.Func(
         [CreateChannelArgs],
         [CreateChannelResponse],
@@ -1582,6 +1622,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
+    'explore_channels' : IDL.Func(
+        [ExploreChannelsArgs],
+        [ExploreChannelsResponse],
+        ['query'],
+      ),
     'import_group' : IDL.Func([ImportGroupArgs], [ImportGroupResponse], []),
     'invite_code' : IDL.Func([EmptyArgs], [InviteCodeResponse], ['query']),
     'join_channel' : IDL.Func([JoinChannelArgs], [JoinChannelResponse], []),

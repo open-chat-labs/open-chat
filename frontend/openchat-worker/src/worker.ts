@@ -1683,6 +1683,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
+            case "exploreChannels":
+                agent
+                    .communityClient(payload.id.communityId)
+                    .exploreChannels(payload.searchTerm, payload.pageSize, payload.pageIndex)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

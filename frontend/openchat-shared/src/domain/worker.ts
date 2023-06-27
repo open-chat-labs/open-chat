@@ -110,7 +110,6 @@ import type {
     CommunitySummary,
     CommunityInviteCodeResponse,
     CreateCommunityResponse,
-    DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
     DisableCommunityInviteCodeResponse,
@@ -130,6 +129,7 @@ import type {
     UpdateCommunityResponse,
     CommunityIdentifier,
     CommunitySummaryResponse,
+    ChannelMatch,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -273,7 +273,16 @@ export type WorkerRequest =
     | CreateCommunity
     | ExploreCommunities
     | GetCommunitySummary
+    | ExploreChannels
     | ChangeCommunityRole;
+
+type ExploreChannels = {
+    kind: "exploreChannels";
+    id: CommunityIdentifier;
+    searchTerm: string | undefined;
+    pageSize: number;
+    pageIndex: number;
+};
 
 type GetCommunitySummary = {
     communityId: string;
@@ -922,7 +931,6 @@ export type WorkerResponse =
     | Response<BlockCommunityUserResponse>
     | Response<ChangeChannelRoleResponse>
     | Response<ChangeCommunityRoleResponse>
-    | Response<DeclineChannelInvitationResponse>
     | Response<DeleteChannelMessagesResponse>
     | Response<DeleteChannelMessageResponse>
     | Response<DisableCommunityInviteCode>
@@ -943,6 +951,7 @@ export type WorkerResponse =
     | Response<CreateCommunityResponse>
     | Response<JoinCommunityResponse>
     | Response<CommunitySummaryResponse>
+    | Response<ChannelMatch[]>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1443,7 +1452,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends ChangeCommunityRole
     ? ChangeCommunityRoleResponse
     : T extends DeclineChannelInvitation
-    ? DeclineChannelInvitationResponse
+    ? DeclineInvitationResponse
     : T extends DeleteChannelMessages
     ? DeleteChannelMessagesResponse
     : T extends DeleteChannelMessage
@@ -1494,4 +1503,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? GroupSearchResponse
     : T extends GetCommunitySummary
     ? CommunitySummaryResponse
+    : T extends ExploreChannels
+    ? ChannelMatch[]
     : never;

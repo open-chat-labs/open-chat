@@ -4,6 +4,7 @@ import {
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
     ChannelIdentifier,
+    ChannelMatch,
     ChannelMembershipUpdates,
     ChannelMessageMatch,
     CommonResponses,
@@ -80,6 +81,8 @@ import type {
     ApiCommunityCanisterChannelSummaryUpdates,
     ApiChannelMembershipUpdates,
     ApiCommunityMembershipUpdates,
+    ApiExploreChannelsResponse,
+    ApiChannelMatch,
 } from "./candid/idl";
 import {
     accessGate,
@@ -672,20 +675,33 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     return CommonResponses.failure;
 }
 
-// export function sendMessageResponse(candid: ApiSendMessageResponse): SendChannelMessageResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             timestamp: candid.Success.timestamp,
-//             eventIndex: candid.Success.event_index,
-//             expiresAt: optional(candid.Success.expires_at, identity),
-//             messageIndex: candid.Success.message_index,
-//         };
-//     } else {
-//         console.warn("SendChannelMessage failed with", candid);
-//         return CommonResponses.failure;
-//     }
-// }
+export function exploreChannelsResponse(
+    candid: ApiExploreChannelsResponse,
+    communityId: string
+): ChannelMatch[] {
+    if ("Success" in candid) {
+        return candid.Success.matches.map((m) => channelMatch(m, communityId));
+    } else {
+        console.warn("ExploreChannels failed with", candid);
+        return [];
+    }
+}
+
+export function channelMatch(candid: ApiChannelMatch, communityId: string): ChannelMatch {
+    return {
+        id: { kind: "channel", communityId, channelId: candid.id.toString() },
+        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        name: candid.name,
+        description: candid.description,
+        memberCount: candid.member_count,
+        avatar: {
+            blobReference: optional(candid.avatar_id, (blobId) => ({
+                blobId,
+                canisterId: communityId,
+            })),
+        },
+    };
+}
 
 export function summaryResponse(candid: ApiSummaryResponse): CommunitySummaryResponse {
     if ("Success" in candid) {

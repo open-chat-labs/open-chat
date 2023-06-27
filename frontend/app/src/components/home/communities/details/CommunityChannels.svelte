@@ -1,7 +1,7 @@
 <script lang="ts">
     import Markdown from "../../Markdown.svelte";
     import Avatar from "../../../Avatar.svelte";
-    import { AvatarSize } from "openchat-client";
+    import { AvatarSize, ChannelMatch, OpenChat, routeForChatIdentifier } from "openchat-client";
     import { _ } from "svelte-i18n";
     import SectionHeader from "../../../SectionHeader.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
@@ -9,20 +9,47 @@
     import HoverIcon from "../../../HoverIcon.svelte";
     import Search from "../../../Search.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
-    import { dummyCommunityChannels } from "../../../../stores/community";
     import { iconSize } from "../../../../stores/iconSize";
     import { popRightPanelHistory, rightPanelHistory } from "../../../../stores/rightPanel";
+    import { getContext, onMount } from "svelte";
+    import page from "page";
+
+    const client = getContext<OpenChat>("client");
+
+    $: selectedCommunity = client.selectedCommunity;
 
     let searchTerm = "";
     let searching = false;
+    let pageIndex = 0;
+    let pageSize = 20;
+    let searchResults: ChannelMatch[] = [];
 
     function close() {
         popRightPanelHistory();
     }
 
-    function selectChannel() {
-        console.log("selectChannel");
+    function selectChannel(match: ChannelMatch) {
+        if ($selectedCommunity === undefined) return;
+        page(routeForChatIdentifier(match.id));
     }
+
+    function search() {
+        if ($selectedCommunity === undefined) return;
+        searching = true;
+        client
+            .exploreChannels(
+                $selectedCommunity.id,
+                searchTerm === "" ? undefined : searchTerm,
+                pageIndex,
+                pageSize
+            )
+            .then((results) => {
+                searchResults = results;
+            })
+            .finally(() => (searching = false));
+    }
+
+    onMount(search);
 </script>
 
 <SectionHeader border flush shadow>
@@ -39,25 +66,21 @@
 </SectionHeader>
 
 <div class="search">
-    <Search fill bind:searchTerm bind:searching placeholder={$_("communities.searchGroups")} />
+    <Search
+        on:searchEntered={search}
+        fill
+        bind:searchTerm
+        bind:searching
+        placeholder={$_("communities.searchGroups")} />
 </div>
-<!-- <div class="sort">
-            <Select margin={false}>
-                <option value={""} selected={true} disabled={true}>Sort by</option>
-                <option value={""}>{"Newest"}</option>
-                <option value={""}>{"Member count: Low to high"}</option>
-                <option value={""}>{"Member count: High to low"}</option>
-                <option value={""}>{"Alphabetical: A-Z"}</option>
-                <option value={""}>{"Alphabetical: Z-A"}</option>
-            </Select>
-        </div> -->
+
 <div class="channels">
-    {#each $dummyCommunityChannels as channel}
-        <div class="channel" on:click={selectChannel}>
+    {#each searchResults as channel}
+        <div class="channel" on:click={() => selectChannel(channel)}>
             <div class="details">
                 <div class="avatar">
                     <Avatar
-                        url={"../assets/group.svg"}
+                        url={client.groupAvatarUrl(channel.avatar)}
                         size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
                 </div>
                 <div>
@@ -74,11 +97,6 @@
 </div>
 
 <style lang="scss">
-    .name {
-        @include font(bold, normal, fs-130);
-        margin-bottom: $sp3;
-    }
-
     .search,
     .channels {
         margin: 0 $sp4;

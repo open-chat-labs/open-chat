@@ -84,6 +84,14 @@ export type ChangeRoleResponse = { 'Invalid' : null } |
   { 'UserSuspended' : null } |
   { 'InternalError' : string };
 export type ChannelId = bigint;
+export interface ChannelMatch {
+  'id' : ChannelId,
+  'gate' : [] | [AccessGate],
+  'name' : string,
+  'description' : string,
+  'avatar_id' : [] | [bigint],
+  'member_count' : number,
+}
 export interface ChannelMembership {
   'role' : GroupRole,
   'notifications_muted' : boolean,
@@ -649,6 +657,7 @@ export interface GroupInviteCodeChanged {
   'change' : GroupInviteCodeChange,
 }
 export interface GroupMatch {
+  'id' : ChatId,
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,

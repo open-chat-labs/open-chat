@@ -34,6 +34,7 @@ import {
     apiMemberRole,
     apiCommunityRole,
     apiOptionalCommunityPermissions,
+    exploreChannelsResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -104,6 +105,7 @@ import type {
     EventsSuccessResult,
     EditMessageResponse,
     DeclineInvitationResponse,
+    ChannelMatch,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
 import { DataClient } from "../data/data.client";
@@ -128,7 +130,7 @@ export class CommunityClient extends CandidService {
     private service: CommunityService;
 
     private constructor(
-        communityId: string,
+        private communityId: string,
         identity: Identity,
         private config: AgentConfig,
         private db: Database
@@ -804,6 +806,23 @@ export class CommunityClient extends CandidService {
                     invite_code: [], // TODO: add invite code
                 }),
             summaryResponse
+        );
+    }
+
+    exploreChannels(
+        searchTerm: string | undefined,
+        pageSize: number,
+        pageIndex: number
+    ): Promise<ChannelMatch[]> {
+        return this.handleQueryResponse(
+            () =>
+                this.service.explore_channels({
+                    page_size: pageSize,
+                    page_index: pageIndex,
+                    search_term: apiOptional(identity, searchTerm),
+                    invite_code: [], // TODO: add invite code
+                }),
+            (resp) => exploreChannelsResponse(resp, this.communityId)
         );
     }
 

@@ -129,6 +129,14 @@ export type ChangeRoleResponse = { 'Invalid' : null } |
   { 'TargetUserNotInCommunity' : null } |
   { 'InternalError' : string };
 export type ChannelId = bigint;
+export interface ChannelMatch {
+  'id' : ChannelId,
+  'gate' : [] | [AccessGate],
+  'name' : string,
+  'description' : string,
+  'avatar_id' : [] | [bigint],
+  'member_count' : number,
+}
 export interface ChannelMembership {
   'role' : GroupRole,
   'notifications_muted' : boolean,
@@ -230,6 +238,22 @@ export interface ChatMetrics {
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
+export interface ClaimPrizeArgs {
+  'channel_id' : ChannelId,
+  'message_id' : MessageId,
+}
+export type ClaimPrizeResponse = { 'PrizeFullyClaimed' : null } |
+  { 'UserNotInChannel' : null } |
+  { 'MessageNotFound' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'AlreadyClaimed' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'PrizeEnded' : null } |
+  { 'FailedAfterTransfer' : [string, CompletedCryptoTransaction] } |
+  { 'TransferFailed' : [string, FailedCryptoTransaction] };
 export interface CommunityCanisterChannelSummary {
   'channel_id' : ChannelId,
   'is_public' : boolean,
@@ -564,6 +588,17 @@ export interface EventsWindowArgs {
   'max_events' : number,
   'thread_root_message_index' : [] | [MessageIndex],
 }
+export interface ExploreChannelsArgs {
+  'page_size' : number,
+  'page_index' : number,
+  'invite_code' : [] | [bigint],
+  'search_term' : [] | [string],
+}
+export type ExploreChannelsResponse = { 'TermTooShort' : number } |
+  { 'Success' : { 'matches' : Array<ChannelMatch> } } |
+  { 'TermTooLong' : number } |
+  { 'InvalidTerm' : null } |
+  { 'PrivateCommunity' : null };
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction };
@@ -729,6 +764,7 @@ export interface GroupInviteCodeChanged {
   'change' : GroupInviteCodeChange,
 }
 export interface GroupMatch {
+  'id' : ChatId,
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -1677,6 +1713,7 @@ export interface _SERVICE {
     [ChannelSummaryUpdatesArgs],
     ChannelSummaryUpdatesResponse
   >,
+  'claim_prize' : ActorMethod<[ClaimPrizeArgs], ClaimPrizeResponse>,
   'create_channel' : ActorMethod<[CreateChannelArgs], CreateChannelResponse>,
   'decline_invitation' : ActorMethod<
     [DeclineInvitationArgs],
@@ -1691,6 +1728,10 @@ export interface _SERVICE {
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
+  'explore_channels' : ActorMethod<
+    [ExploreChannelsArgs],
+    ExploreChannelsResponse
+  >,
   'import_group' : ActorMethod<[ImportGroupArgs], ImportGroupResponse>,
   'invite_code' : ActorMethod<[EmptyArgs], InviteCodeResponse>,
   'join_channel' : ActorMethod<[JoinChannelArgs], JoinChannelResponse>,

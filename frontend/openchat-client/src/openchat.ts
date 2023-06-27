@@ -322,6 +322,7 @@ import {
     ExploreCommunitiesResponse,
     MultiUserChatIdentifier,
     MultiUserChat,
+    ChannelMatch,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3335,6 +3336,15 @@ export class OpenChat extends OpenChatAgentWorker {
         pageSize: number
     ): Promise<ExploreCommunitiesResponse> {
         return this.sendRequest({ kind: "exploreCommunities", searchTerm, pageIndex, pageSize });
+    }
+
+    exploreChannels(
+        id: CommunityIdentifier,
+        searchTerm: string | undefined,
+        pageIndex: number,
+        pageSize: number
+    ): Promise<ChannelMatch[]> {
+        return this.sendRequest({ kind: "exploreChannels", id, searchTerm, pageIndex, pageSize });
     }
 
     dismissRecommendation(chatId: GroupChatIdentifier): Promise<void> {
