@@ -3,15 +3,18 @@
 <script lang="ts">
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "openchat-client";
-    import type { GroupChatSummary } from "openchat-client";
+    import type { MultiUserChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import Markdown from "./Markdown.svelte";
+    import { interpolateLevel } from "utils/i18n";
 
     const client = getContext<OpenChat>("client");
 
-    export let group: GroupChatSummary;
+    export let group: MultiUserChat;
+
+    $: level = $_(`level.${group.level}`).toLowerCase();
 </script>
 
 <div class="container">
@@ -26,7 +29,7 @@
     </div>
     <div>
         {$_(group.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN", {
-            values: { number: group.memberCount },
+            values: { number: group.memberCount, level },
         })}
     </div>
     <!-- {#if !group.historyVisibleToNewJoiners}

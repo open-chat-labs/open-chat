@@ -103,7 +103,7 @@ impl Channels {
                 };
                 (score, c)
             })
-            .filter(|(score, _)| *score > 0)
+            .filter(|(score, _)| query.is_none() || *score > 0)
             .collect();
 
         if query.is_some() {
@@ -245,6 +245,7 @@ impl Channel {
             latest_event_index: updates_from_events.latest_event_index,
             member_count: updates_from_events.members_changed.then_some(self.chat.members.len()),
             permissions: updates_from_events.permissions,
+            updated_events: updates_from_events.updated_events,
             metrics: Some(self.chat.events.metrics().hydrate()),
             date_last_pinned: updates_from_events.date_last_pinned,
             events_ttl: updates_from_events.events_ttl,

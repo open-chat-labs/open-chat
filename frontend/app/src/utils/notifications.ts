@@ -74,13 +74,11 @@ function supported(): boolean {
 }
 
 export async function closeNotificationsForChat(chatId: ChatIdentifier): Promise<void> {
-    if (chatId.kind === "channel") {
-        throw new Error("TODO - work out how to close channel notifications");
-    }
     const registration = await getRegistration();
     if (registration !== undefined) {
         const notifications = await registration.getNotifications();
         for (const notification of notifications) {
+            // TODO - this won't work with channels at the moment
             if (notification.data?.path.startsWith(chatIdentifierToString(chatId))) {
                 notification.close();
             }

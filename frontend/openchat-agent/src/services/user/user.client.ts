@@ -58,11 +58,8 @@ import type {
 import { CandidService } from "../candidService";
 import {
     blockResponse,
-    createGroupResponse,
-    deleteGroupResponse,
     deleteMessageResponse,
     undeleteMessageResponse,
-    editMessageResponse,
     getEventsResponse,
     getUpdatesResponse,
     initialStateResponse,
@@ -101,11 +98,14 @@ import {
     apiGroupPermissions,
     apiMaybeAccessGate,
     apiMessageContent,
+    editMessageResponse,
     apiOptional,
     apiPendingCryptoContent,
     apiPendingCryptocurrencyWithdrawal,
     apiReplyContextArgs,
     addRemoveReactionResponse,
+    createGroupResponse,
+    deleteGroupResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
@@ -250,7 +250,7 @@ export class UserClient extends CandidService {
                 rules: apiGroupRules(group.rules),
                 gate: apiMaybeAccessGate(group.gate),
             }),
-            createGroupResponse
+            (resp) => createGroupResponse(resp, group.id)
         );
     }
 

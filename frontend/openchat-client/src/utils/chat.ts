@@ -36,12 +36,13 @@ import {
     getContentAsText,
     eventIsVisible,
     AccessControlled,
-    GroupChatIdentifier,
     nullMembership,
     HasMembershipRole,
     MessageContext,
     ChatMap,
     MessageMap,
+    MultiUserChatIdentifier,
+    MultiUserChat,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -665,11 +666,11 @@ export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): Eve
 }
 
 export function groupChatFromCandidate(
-    chatId: GroupChatIdentifier,
+    chatId: MultiUserChatIdentifier,
     candidate: CandidateGroupChat
-): GroupChatSummary {
+): MultiUserChat {
     return {
-        kind: "group_chat",
+        kind: chatId.kind,
         id: chatId,
         latestEventIndex: 0,
         latestMessage: undefined,
@@ -695,7 +696,7 @@ export function groupChatFromCandidate(
             ...nullMembership,
             role: "owner",
         },
-    };
+    } as MultiUserChat;
 }
 
 function updatePollContent(content: PollContent, votes: LocalPollVote[]): PollContent {
@@ -1389,7 +1390,8 @@ export function getTypingString(
 }
 
 export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
-    if (chat.kind === "group_chat" && chat.membership.role === "none") return undefined;
+    if ((chat.kind === "group_chat" || chat.kind === "channel") && chat.membership.role === "none")
+        return undefined;
 
     return messagesRead.getFirstUnreadMessageIndex(chat.id, chat.latestMessage?.event.messageIndex);
 }

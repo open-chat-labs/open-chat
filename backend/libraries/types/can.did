@@ -438,6 +438,7 @@ type CommunityCanisterChannelSummaryUpdates =
         latest_event_index: opt EventIndex;
         member_count: opt nat32;
         permissions: opt GroupPermissions;
+        updated_events: vec record { opt nat32; nat32; nat64 };
         metrics: opt ChatMetrics;
         date_last_pinned: opt TimestampMillis;
         events_ttl: EventsTimeToLiveUpdate;
@@ -1550,4 +1551,18 @@ type ChannelMatch =
         avatar_id: opt nat;
         member_count: nat32;
         gate: opt AccessGate;
+    };
+
+type ThreadPreview =
+    record {
+        root_message: MessageEventWrapper;
+        latest_replies: vec MessageEventWrapper;
+        total_replies: nat32;
+    };
+
+type CommunityMember = 
+    record {
+        user_id: UserId;
+        date_added: TimestampMillis;
+        role: CommunityRole;
     };

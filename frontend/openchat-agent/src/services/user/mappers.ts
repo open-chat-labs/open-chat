@@ -1,7 +1,5 @@
 import type {
     ApiEventsResponse,
-    ApiCreateGroupResponse,
-    ApiDeleteGroupResponse,
     ApiDirectChatEventWrapper,
     ApiSendMessageResponse,
     ApiBlockUserResponse,
@@ -14,7 +12,6 @@ import type {
     ApiUndeleteMessageResponse,
     ApiSearchDirectChatResponse,
     ApiMessageMatch,
-    ApiEditMessageResponse,
     ApiInitialStateResponse,
     ApiUpdatesResponse,
     ApiGroupRole,
@@ -59,8 +56,6 @@ import type {
 import {
     EventsResponse,
     EventWrapper,
-    CreateGroupResponse,
-    DeleteGroupResponse,
     DirectChatEvent,
     SendMessageResponse,
     BlockUserResponse,
@@ -70,7 +65,6 @@ import {
     SetAvatarResponse,
     DeleteMessageResponse,
     UndeleteMessageResponse,
-    EditMessageResponse,
     InitialStateResponse,
     UpdatesResponse,
     MemberRole,
@@ -313,42 +307,18 @@ export function archiveChatResponse(candid: ApiArchiveChatResponse): ArchiveChat
     throw new UnsupportedValueError("Unexpected ApiArchiveChatResponse type received", candid);
 }
 
-export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    if ("UserBlocked" in candid) {
-        return "user_blocked";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
-}
-
 export function sendMessageWithTransferToGroupResponse(
     candid: ApiSendMessageWithTransferToGroupResponse,
     sender: string,
     recipient: string
 ): SendMessageResponse {
     if ("Success" in candid) {
-        const transfer =
-            "NNS" in candid.Success.transfer
-                ? candid.Success.transfer.NNS
-                : candid.Success.transfer.SNS;
-
         return {
             kind: "transfer_success",
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(transfer, sender, recipient),
+            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -410,17 +380,12 @@ export function sendMessageResponse(
         };
     }
     if ("TransferSuccessV2" in candid) {
-        const transfer =
-            "NNS" in candid.TransferSuccessV2.transfer
-                ? candid.TransferSuccessV2.transfer.NNS
-                : candid.TransferSuccessV2.transfer.SNS;
-
         return {
             kind: "transfer_success",
             timestamp: candid.TransferSuccessV2.timestamp,
             messageIndex: candid.TransferSuccessV2.message_index,
             eventIndex: candid.TransferSuccessV2.event_index,
-            transfer: completedCryptoTransfer(transfer, sender, recipient),
+            transfer: completedCryptoTransfer(candid.TransferSuccessV2.transfer, sender, recipient),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -473,86 +438,6 @@ export function createCommunityResponse(
         console.warn("CreateCommunit failed with", candid);
         return CommonResponses.failure;
     }
-}
-
-export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroupResponse {
-    if ("Success" in candid) {
-        return { kind: "success", canisterId: candid.Success.chat_id.toString() };
-    }
-
-    if ("NameTaken" in candid) {
-        return { kind: "group_name_taken" };
-    }
-
-    if ("NameTooLong" in candid) {
-        return { kind: "name_too_long" };
-    }
-
-    if ("NameTooShort" in candid) {
-        return { kind: "name_too_short" };
-    }
-
-    if ("NameReserved" in candid) {
-        return { kind: "name_reserved" };
-    }
-
-    if ("DescriptionTooLong" in candid) {
-        return { kind: "description_too_long" };
-    }
-
-    if ("Throttled" in candid) {
-        return { kind: "throttled" };
-    }
-
-    if ("InternalError" in candid) {
-        return { kind: "internal_error" };
-    }
-
-    if ("AvatarTooBig" in candid) {
-        return { kind: "avatar_too_big" };
-    }
-
-    if ("MaxGroupsCreated" in candid) {
-        // todo - make sure we handle this in the UI
-        return { kind: "max_groups_created" };
-    }
-
-    if ("RulesTooLong" in candid) {
-        return { kind: "rules_too_long" };
-    }
-
-    if ("RulesTooShort" in candid) {
-        return { kind: "rules_too_short" };
-    }
-
-    if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
-    }
-
-    if ("UnauthorizedToCreatePublicGroup" in candid) {
-        return { kind: "unauthorized_to_create_public_group" };
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
-}
-
-export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroupResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
 }
 
 export async function getEventsResponse(
@@ -1044,21 +929,18 @@ export function withdrawCryptoResponse(
     if ("TransactionFailed" in candid) {
         if ("NNS" in candid.TransactionFailed) {
             return failedNnsCryptoWithdrawal(candid.TransactionFailed.NNS);
-        } else {
+        } else if ("SNS" in candid.TransactionFailed) {
             return failedSnsCryptoWithdrawal(candid.TransactionFailed.SNS);
         }
     }
     if ("Success" in candid) {
         if ("NNS" in candid.Success) {
             return completedNnsCryptoWithdrawal(candid.Success.NNS);
-        } else {
+        } else if ("SNS" in candid.Success) {
             return completedSnsCryptoWithdrawal(candid.Success.SNS);
         }
     }
-    throw new UnsupportedValueError(
-        "Unexpected ApiWithdrawCryptocurrencyResponse type received",
-        candid
-    );
+    throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");
 }
 
 export function migrateUserPrincipal(

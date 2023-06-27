@@ -308,6 +308,16 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'member_count' : [] | [number],
 }
 export type CommunityId = CanisterId;
+export interface CommunityMatch {
+  'id' : CommunityId,
+  'channel_count' : number,
+  'gate' : [] | [AccessGate],
+  'name' : string,
+  'description' : string,
+  'avatar_id' : [] | [bigint],
+  'banner_id' : [] | [bigint],
+  'member_count' : number,
+}
 export interface CommunityMembership {
   'role' : CommunityRole,
   'joined' : TimestampMillis,
@@ -335,7 +345,8 @@ export type CommunityRole = { 'Member' : null } |
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
-  { 'SNS' : SnsCompletedCryptoTransaction };
+  { 'SNS' : SnsCompletedCryptoTransaction } |
+  { 'ICRC1' : Icrc1CompletedCryptoTransaction };
 export interface CreateChannelArgs {
   'is_public' : boolean,
   'permissions' : [] | [GroupPermissions],
@@ -554,7 +565,8 @@ export interface EventsWindowArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
-  { 'SNS' : SnsFailedCryptoTransaction };
+  { 'SNS' : SnsFailedCryptoTransaction } |
+  { 'ICRC1' : Icrc1FailedCryptoTransaction };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -716,6 +728,14 @@ export interface GroupInviteCodeChanged {
   'changed_by' : UserId,
   'change' : GroupInviteCodeChange,
 }
+export interface GroupMatch {
+  'gate' : [] | [AccessGate],
+  'name' : string,
+  'description' : string,
+  'avatar_id' : [] | [bigint],
+  'chat_id' : ChatId,
+  'member_count' : number,
+}
 export interface GroupMessageNotification {
   'hide' : boolean,
   'mentioned' : Array<User>,
@@ -787,6 +807,36 @@ export interface Icrc1Account {
   'owner' : Principal,
   'subaccount' : [] | [Uint8Array | number[]],
 }
+export type Icrc1AccountOrMint = { 'Mint' : null } |
+  { 'Account' : Icrc1Account };
+export interface Icrc1CompletedCryptoTransaction {
+  'to' : Icrc1AccountOrMint,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'block_index' : BlockIndex,
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [Memo],
+  'amount' : bigint,
+}
+export interface Icrc1FailedCryptoTransaction {
+  'to' : Icrc1AccountOrMint,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [Memo],
+  'error_message' : string,
+  'amount' : bigint,
+}
+export interface Icrc1PendingCryptoTransaction {
+  'to' : Icrc1Account,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'memo' : [] | [Memo],
+  'amount' : bigint,
+}
 export interface ImageContent {
   'height' : number,
   'mime_type' : string,
@@ -857,7 +907,16 @@ export type MakePrivateResponse = { 'NotAuthorized' : null } |
   { 'AlreadyPrivate' : null } |
   { 'CommunityFrozen' : null } |
   { 'InternalError' : null };
-export type Memo = bigint;
+export interface ManageDefaultChannelsArgs {
+  'to_add' : Array<ChannelId>,
+  'to_remove' : Array<ChannelId>,
+}
+export type ManageDefaultChannelsResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
+export type Memo = Uint8Array | number[];
 export interface Mention {
   'message_id' : MessageId,
   'event_index' : EventIndex,
@@ -969,6 +1028,8 @@ export interface MessagesSuccessResult {
   'latest_event_index' : EventIndex,
 }
 export type Milliseconds = bigint;
+export type MultiUserChat = { 'Group' : ChatId } |
+  { 'Channel' : [CommunityId, ChannelId] };
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
@@ -977,7 +1038,7 @@ export interface NnsCompletedCryptoTransaction {
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'from' : NnsCryptoAccount,
-  'memo' : Memo,
+  'memo' : bigint,
   'amount' : Tokens,
 }
 export type NnsCryptoAccount = { 'Mint' : null } |
@@ -989,7 +1050,7 @@ export interface NnsFailedCryptoTransaction {
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : NnsCryptoAccount,
-  'memo' : Memo,
+  'memo' : bigint,
   'error_message' : string,
   'amount' : Tokens,
 }
@@ -999,7 +1060,7 @@ export interface NnsPendingCryptoTransaction {
   'fee' : [] | [Tokens],
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
-  'memo' : [] | [Memo],
+  'memo' : [] | [bigint],
   'amount' : Tokens,
 }
 export interface NnsProposal {
@@ -1088,7 +1149,8 @@ export interface ParticipantsRemoved {
   'removed_by' : UserId,
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
-  { 'SNS' : SnsPendingCryptoTransaction };
+  { 'SNS' : SnsPendingCryptoTransaction } |
+  { 'ICRC1' : Icrc1PendingCryptoTransaction };
 export type PermissionRole = { 'Moderators' : null } |
   { 'Owner' : null } |
   { 'Admins' : null } |
@@ -1189,6 +1251,48 @@ export interface PushEventResult {
   'index' : EventIndex,
   'expires_at' : [] | [TimestampMillis],
 }
+export interface RegisterPollVoteArgs {
+  'channel_id' : ChannelId,
+  'poll_option' : number,
+  'operation' : VoteOperation,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'message_index' : MessageIndex,
+}
+export type RegisterPollVoteResponse = { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'PollEnded' : null } |
+  { 'Success' : PollVotes } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'OptionIndexOutOfRange' : null } |
+  { 'PollNotFound' : null };
+export interface RegisterProposalVoteArgs {
+  'channel_id' : ChannelId,
+  'adopt' : boolean,
+  'message_index' : MessageIndex,
+}
+export type RegisterProposalVoteResponse = { 'AlreadyVoted' : boolean } |
+  { 'ProposalNotFound' : null } |
+  { 'ProposalMessageNotFound' : null } |
+  { 'UserNotInChannel' : null } |
+  { 'NoEligibleNeurons' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'ProposalNotAcceptingVotes' : null } |
+  { 'InternalError' : string };
+export type RegisterProposalVoteV2Response = {
+    'ProposalMessageNotFound' : null
+  } |
+  { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemoveMemberArgs { 'user_id' : UserId }
@@ -1231,6 +1335,7 @@ export type RemoveReactionResponse = { 'UserNotInChannel' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null };
 export interface ReplyContext {
+  'chat_if_other' : [] | [[MultiUserChat, [] | [MessageIndex]]],
   'event_list_if_other' : [] | [[ChatId, [] | [MessageIndex]]],
   'event_index' : EventIndex,
 }
@@ -1244,9 +1349,6 @@ export interface RoleChanged {
   'old_role' : GroupRole,
   'new_role' : GroupRole,
 }
-export interface RulesArgs { 'invite_code' : [] | [bigint] }
-export type RulesResponse = { 'NotAuthorized' : null } |
-  { 'Success' : { 'rules' : [] | [string] } };
 export interface SearchChannelArgs {
   'channel_id' : ChannelId,
   'max_results' : number,
@@ -1326,27 +1428,25 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
   { 'InvalidRequest' : string };
-export type SnsAccount = { 'Mint' : null } |
-  { 'Account' : Icrc1Account };
 export interface SnsCompletedCryptoTransaction {
-  'to' : SnsAccount,
+  'to' : Icrc1AccountOrMint,
   'fee' : Tokens,
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
-  'from' : SnsAccount,
-  'memo' : [] | [Memo],
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [bigint],
   'amount' : Tokens,
 }
 export interface SnsFailedCryptoTransaction {
-  'to' : SnsAccount,
+  'to' : Icrc1AccountOrMint,
   'fee' : Tokens,
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
-  'from' : SnsAccount,
-  'memo' : [] | [Memo],
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [bigint],
   'error_message' : string,
   'amount' : Tokens,
 }
@@ -1361,7 +1461,7 @@ export interface SnsPendingCryptoTransaction {
   'fee' : Tokens,
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
-  'memo' : [] | [Memo],
+  'memo' : [] | [bigint],
   'amount' : Tokens,
 }
 export interface SnsProposal {
@@ -1388,9 +1488,9 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
-export type SummaryResponse = {
-    'Success' : CommunityCanisterCommunitySummary
-  } |
+export interface SummaryArgs { 'invite_code' : [] | [bigint] }
+export type SummaryResponse = { 'Invited' : CommunityMatch } |
+  { 'Success' : CommunityCanisterCommunitySummary } |
   { 'PrivateCommunity' : null };
 export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
 export type SummaryUpdatesResponse = {
@@ -1601,11 +1701,27 @@ export interface _SERVICE {
     MakeChannelPrivateResponse
   >,
   'make_private' : ActorMethod<[EmptyArgs], MakePrivateResponse>,
+  'manage_default_channels' : ActorMethod<
+    [ManageDefaultChannelsArgs],
+    ManageDefaultChannelsResponse
+  >,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse
   >,
   'pin_message' : ActorMethod<[PinMessageArgs], PinMessageResponse>,
+  'register_poll_vote' : ActorMethod<
+    [RegisterPollVoteArgs],
+    RegisterPollVoteResponse
+  >,
+  'register_proposal_vote' : ActorMethod<
+    [RegisterProposalVoteArgs],
+    RegisterProposalVoteResponse
+  >,
+  'register_proposal_vote_v2' : ActorMethod<
+    [RegisterProposalVoteArgs],
+    RegisterProposalVoteV2Response
+  >,
   'remove_member' : ActorMethod<[RemoveMemberArgs], RemoveMemberResponse>,
   'remove_member_from_channel' : ActorMethod<
     [RemoveMemberFromChannelArgs],
@@ -1613,7 +1729,6 @@ export interface _SERVICE {
   >,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'reset_invite_code' : ActorMethod<[EmptyArgs], EnableInviteCodeResponse>,
-  'rules' : ActorMethod<[RulesArgs], RulesResponse>,
   'search_channel' : ActorMethod<[SearchChannelArgs], SearchChannelResponse>,
   'selected_channel_initial' : ActorMethod<
     [SelectedChannelInitialArgs],
@@ -1624,7 +1739,7 @@ export interface _SERVICE {
     SelectedChannelUpdatesResponse
   >,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
-  'summary' : ActorMethod<[EmptyArgs], SummaryResponse>,
+  'summary' : ActorMethod<[SummaryArgs], SummaryResponse>,
   'summary_updates' : ActorMethod<[SummaryUpdatesArgs], SummaryUpdatesResponse>,
   'toggle_mute_channel_notifications' : ActorMethod<
     [ToggleMuteChannelNotificationsArgs],
@@ -1639,6 +1754,7 @@ export interface _SERVICE {
     [UndeleteMessagesArgs],
     UndeleteMessagesResponse
   >,
+  'unpin_message' : ActorMethod<[PinMessageArgs], PinMessageResponse>,
   'update_channel' : ActorMethod<[UpdateChannelArgs], UpdateChannelResponse>,
   'update_community' : ActorMethod<
     [UpdateCommunityArgs],

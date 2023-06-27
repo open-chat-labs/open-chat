@@ -1,13 +1,14 @@
-import { Writable, derived, writable } from "svelte/store";
+import { derived, writable } from "svelte/store";
 import { setsAreEqual } from "../utils/set";
-import { createChatSpecificObjectStore, createDerivedPropStore } from "./dataByChatFactory";
-import {
-    CommunityMap,
-    type CommunitySummary,
-    type CommunityPermissions,
-    type CommunitySpecificState,
+import type {
+    CommunitySummary,
+    CommunityPermissions,
+    CommunitySpecificState,
     CommunityIdentifier,
 } from "openchat-shared";
+import { createCommunitySpecificObjectStore } from "./dataByCommunityFactory";
+import { createDerivedPropStore } from "./derived";
+import { globalStateStore } from "./global";
 
 const defaultPermissions: CommunityPermissions = {
     changePermissions: "owner",
@@ -73,19 +74,26 @@ const testCommunities: CommunitySummary[] = [
 export const allCommunities = writable<CommunitySummary[]>(testCommunities);
 
 // these are the communities I am in
-export const communities: Writable<CommunityMap<CommunitySummary>> = writable(
-    new CommunityMap<CommunitySummary>()
-);
+export const communities = derived([globalStateStore], ([$globalStateStore]) => {
+    return $globalStateStore.communities;
+});
 
 export const communitiesList = derived(communities, ($communities) => {
     return $communities.values();
 });
 
-export const communityStateStore = createChatSpecificObjectStore<CommunitySpecificState>(() => ({
-    members: [],
-    blockedUsers: new Set<string>(),
-    invitedUsers: new Set<string>(),
-}));
+export const selectedCommunityId = writable<CommunityIdentifier | undefined>({
+    kind: "community",
+    communityId: "1",
+});
+
+export const communityStateStore = createCommunitySpecificObjectStore<CommunitySpecificState>(
+    () => ({
+        members: [],
+        blockedUsers: new Set<string>(),
+        invitedUsers: new Set<string>(),
+    })
+);
 
 export const currentCommunityMembers = createDerivedPropStore<CommunitySpecificState, "members">(
     communityStateStore,
@@ -108,11 +116,6 @@ export const currentCommunityRules = createDerivedPropStore<CommunitySpecificSta
     "rules",
     () => undefined
 );
-
-export const selectedCommunityId = writable<CommunityIdentifier | undefined>({
-    kind: "community",
-    communityId: "1",
-});
 
 export const selectedCommunity = derived(
     [communities, selectedCommunityId],

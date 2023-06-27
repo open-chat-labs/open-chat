@@ -370,7 +370,7 @@
     {#if showAvatar}
         {#if $isProposalGroup}
             <ProposalBot />
-        {:else if chat.kind === "group_chat"}
+        {:else if chat.kind === "group_chat" || chat.kind === "channel"}
             <InitialGroupMessage group={chat} />
         {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
             <Robot />

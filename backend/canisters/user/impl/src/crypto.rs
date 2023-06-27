@@ -1,5 +1,4 @@
 use crate::read_state;
-use ledger_utils::{icrc1, nns, sns};
 use types::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, UserId};
 
 pub async fn process_transaction(
@@ -34,9 +33,5 @@ async fn process_transaction_internal(
         (my_user_id, ledger_canister_id)
     });
 
-    match transaction {
-        PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, my_user_id.into(), ledger_canister_id).await,
-        PendingCryptoTransaction::SNS(t) => sns::process_transaction(t, my_user_id.into(), ledger_canister_id).await,
-        PendingCryptoTransaction::ICRC1(t) => icrc1::process_transaction(t, my_user_id.into(), ledger_canister_id).await,
-    }
+    ledger_utils::process_transaction(transaction, my_user_id.into(), ledger_canister_id).await
 }

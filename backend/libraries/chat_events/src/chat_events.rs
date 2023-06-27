@@ -4,6 +4,7 @@ use crate::*;
 use candid::Principal;
 use ic_ledger_types::Tokens;
 use itertools::Itertools;
+use rand::rngs::StdRng;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -11,10 +12,11 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails,
-    GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message, MessageContentInitial, MessageId,
-    MessageIndex, MessageMatch, Milliseconds, MultiUserChat, PollVotes, ProposalUpdate, PushEventResult, PushIfNotContains,
-    RangeSet, Reaction, RegisterVoteResult, TimestampMillis, Timestamped, UserId, VoteOperation,
+    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
+    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message,
+    MessageContentInitial, MessageId, MessageIndex, MessageMatch, Milliseconds, MultiUserChat, PollVotes, PrizeWinnerContent,
+    ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, TimestampMillis, Timestamped,
+    UserId, VoteOperation,
 };
 use types::{Hash, MessageReport, ReportedMessageInternal};
 
@@ -586,7 +588,14 @@ impl ChatEvents {
         ReservePrizeResult::MessageNotFound
     }
 
-    pub fn claim_prize(&mut self, message_id: MessageId, winner: UserId, now: TimestampMillis) -> ClaimPrizeResult {
+    pub fn claim_prize(
+        &mut self,
+        message_id: MessageId,
+        winner: UserId,
+        transaction: CompletedCryptoTransaction,
+        rng: &mut StdRng,
+        now: TimestampMillis,
+    ) -> ClaimPrizeResult {
         if let Some((message, event_index)) =
             self.message_internal_mut(EventIndex::default(), None, message_id.into(), TimestampMillis::default())
         {
@@ -598,7 +607,24 @@ impl ChatEvents {
                     message.last_updated = Some(now);
                     let message_index = message.message_index;
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
-                    return ClaimPrizeResult::Success(message_index);
+
+                    // Push a PrizeWinnerContent message to the group from the OpenChatBot
+                    let message_event = self.push_message(PushMessageArgs {
+                        sender: OPENCHAT_BOT_USER_ID,
+                        thread_root_message_index: None,
+                        message_id: MessageId::generate(rng),
+                        content: MessageContentInternal::PrizeWinner(PrizeWinnerContent {
+                            winner,
+                            transaction,
+                            prize_message: message_index,
+                        }),
+                        replies_to: None,
+                        forwarded: false,
+                        correlation_id: 0,
+                        now,
+                    });
+
+                    return ClaimPrizeResult::Success(message_event);
                 } else {
                     return ClaimPrizeResult::ReservationNotFound;
                 }
@@ -1254,8 +1280,9 @@ pub enum ReservePrizeResult {
     PrizeEnded,
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum ClaimPrizeResult {
-    Success(MessageIndex),
+    Success(EventWrapper<Message>),
     MessageNotFound,
     ReservationNotFound,
 }

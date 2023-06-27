@@ -83,6 +83,26 @@ export const idlFactory = ({ IDL }) => {
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
+  const ExploreGroupsArgs = IDL.Record({
+    'page_size' : IDL.Nat8,
+    'page_index' : IDL.Nat32,
+    'search_term' : IDL.Opt(IDL.Text),
+  });
+  const GroupMatch = IDL.Record({
+    'gate' : IDL.Opt(AccessGate),
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'avatar_id' : IDL.Opt(IDL.Nat),
+    'chat_id' : ChatId,
+    'member_count' : IDL.Nat32,
+  });
+  const ExploreGroupsSuccess = IDL.Record({ 'matches' : IDL.Vec(GroupMatch) });
+  const ExploreGroupsResponse = IDL.Variant({
+    'TermTooShort' : IDL.Nat8,
+    'Success' : ExploreGroupsSuccess,
+    'TermTooLong' : IDL.Nat8,
+    'InvalidTerm' : IDL.Null,
+  });
   const FilterGroupsArgs = IDL.Record({
     'active_since' : IDL.Opt(TimestampMillis),
     'chat_ids' : IDL.Vec(ChatId),
@@ -287,7 +307,6 @@ export const idlFactory = ({ IDL }) => {
   const TimestampNanos = IDL.Nat64;
   const TransactionHash = IDL.Vec(IDL.Nat8);
   const BlockIndex = IDL.Nat64;
-  const Memo = IDL.Nat64;
   const NnsCompletedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
@@ -296,31 +315,43 @@ export const idlFactory = ({ IDL }) => {
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
     'from' : NnsCryptoAccount,
-    'memo' : Memo,
+    'memo' : IDL.Nat64,
     'amount' : Tokens,
   });
   const Icrc1Account = IDL.Record({
     'owner' : IDL.Principal,
     'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
-  const SnsAccount = IDL.Variant({
+  const Icrc1AccountOrMint = IDL.Variant({
     'Mint' : IDL.Null,
     'Account' : Icrc1Account,
   });
   const SnsCompletedCryptoTransaction = IDL.Record({
-    'to' : SnsAccount,
+    'to' : Icrc1AccountOrMint,
     'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
-    'from' : SnsAccount,
-    'memo' : IDL.Opt(Memo),
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(IDL.Nat64),
     'amount' : Tokens,
+  });
+  const Memo = IDL.Vec(IDL.Nat8);
+  const Icrc1CompletedCryptoTransaction = IDL.Record({
+    'to' : Icrc1AccountOrMint,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'block_index' : BlockIndex,
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(Memo),
+    'amount' : IDL.Nat,
   });
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
     'SNS' : SnsCompletedCryptoTransaction,
+    'ICRC1' : Icrc1CompletedCryptoTransaction,
   });
   const MessageIndex = IDL.Nat32;
   const PrizeWinnerContent = IDL.Record({
@@ -340,24 +371,35 @@ export const idlFactory = ({ IDL }) => {
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : NnsCryptoAccount,
-    'memo' : Memo,
+    'memo' : IDL.Nat64,
     'error_message' : IDL.Text,
     'amount' : Tokens,
   });
   const SnsFailedCryptoTransaction = IDL.Record({
-    'to' : SnsAccount,
+    'to' : Icrc1AccountOrMint,
     'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
-    'from' : SnsAccount,
-    'memo' : IDL.Opt(Memo),
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(IDL.Nat64),
     'error_message' : IDL.Text,
     'amount' : Tokens,
+  });
+  const Icrc1FailedCryptoTransaction = IDL.Record({
+    'to' : Icrc1AccountOrMint,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(Memo),
+    'error_message' : IDL.Text,
+    'amount' : IDL.Nat,
   });
   const FailedCryptoTransaction = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
     'SNS' : SnsFailedCryptoTransaction,
+    'ICRC1' : Icrc1FailedCryptoTransaction,
   });
   const NnsUserOrAccount = IDL.Variant({
     'User' : UserId,
@@ -368,7 +410,7 @@ export const idlFactory = ({ IDL }) => {
     'fee' : IDL.Opt(Tokens),
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
-    'memo' : IDL.Opt(Memo),
+    'memo' : IDL.Opt(IDL.Nat64),
     'amount' : Tokens,
   });
   const SnsPendingCryptoTransaction = IDL.Record({
@@ -376,12 +418,21 @@ export const idlFactory = ({ IDL }) => {
     'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
-    'memo' : IDL.Opt(Memo),
+    'memo' : IDL.Opt(IDL.Nat64),
     'amount' : Tokens,
+  });
+  const Icrc1PendingCryptoTransaction = IDL.Record({
+    'to' : Icrc1Account,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'memo' : IDL.Opt(Memo),
+    'amount' : IDL.Nat,
   });
   const PendingCryptoTransaction = IDL.Variant({
     'NNS' : NnsPendingCryptoTransaction,
     'SNS' : SnsPendingCryptoTransaction,
+    'ICRC1' : Icrc1PendingCryptoTransaction,
   });
   const CryptoTransaction = IDL.Variant({
     'Failed' : FailedCryptoTransaction,
@@ -441,7 +492,13 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
   });
   const MessageId = IDL.Nat;
+  const ChannelId = IDL.Nat;
+  const MultiUserChat = IDL.Variant({
+    'Group' : ChatId,
+    'Channel' : IDL.Tuple(CommunityId, ChannelId),
+  });
   const ReplyContext = IDL.Record({
+    'chat_if_other' : IDL.Opt(IDL.Tuple(MultiUserChat, IDL.Opt(MessageIndex))),
     'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
     'event_index' : EventIndex,
   });
@@ -495,12 +552,6 @@ export const idlFactory = ({ IDL }) => {
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
-  const GroupMatch = IDL.Record({
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'avatar_id' : IDL.Opt(IDL.Nat),
-    'chat_id' : ChatId,
-  });
   const SearchSuccessResult = IDL.Record({ 'matches' : IDL.Vec(GroupMatch) });
   const SearchResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
@@ -547,6 +598,11 @@ export const idlFactory = ({ IDL }) => {
     'explore_communities' : IDL.Func(
         [ExploreCommunitiesArgs],
         [ExploreCommunitiesResponse],
+        ['query'],
+      ),
+    'explore_groups' : IDL.Func(
+        [ExploreGroupsArgs],
+        [ExploreGroupsResponse],
         ['query'],
       ),
     'filter_groups' : IDL.Func(

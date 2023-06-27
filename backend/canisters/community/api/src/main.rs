@@ -1,12 +1,12 @@
 use candid_gen::generate_candid_method;
 
 fn main() {
-    generate_candid_method!(community, channel_summary, query);
     generate_candid_method!(community, channel_summary_updates, query);
+    generate_candid_method!(community, channel_summary, query);
     generate_candid_method!(community, deleted_message, query);
-    generate_candid_method!(community, events, query);
     generate_candid_method!(community, events_by_index, query);
     generate_candid_method!(community, events_window, query);
+    generate_candid_method!(community, events, query);
     generate_candid_method!(community, explore_channels, query);
     generate_candid_method!(community, invite_code, query);
     generate_candid_method!(community, local_user_index, query);
@@ -14,14 +14,18 @@ fn main() {
     generate_candid_method!(community, search_channel, query);
     generate_candid_method!(community, selected_channel_initial, query);
     generate_candid_method!(community, selected_channel_updates, query);
+    generate_candid_method!(community, selected_initial, query);
+    generate_candid_method!(community, selected_updates, query);
     generate_candid_method!(community, summary, query);
     generate_candid_method!(community, summary_updates, query);
+    generate_candid_method!(community, thread_previews, query);
 
     generate_candid_method!(community, add_members_to_channel, update);
     generate_candid_method!(community, add_reaction, update);
     generate_candid_method!(community, block_user, update);
     generate_candid_method!(community, change_channel_role, update);
     generate_candid_method!(community, change_role, update);
+    generate_candid_method!(community, claim_prize, update);
     generate_candid_method!(community, create_channel, update);
     generate_candid_method!(community, decline_invitation, update);
     generate_candid_method!(community, delete_channel, update);
@@ -37,10 +41,10 @@ fn main() {
     generate_candid_method!(community, manage_default_channels, update);
     generate_candid_method!(community, pin_message, update);
     generate_candid_method!(community, register_poll_vote, update);
-    generate_candid_method!(community, register_proposal_vote, update);
     generate_candid_method!(community, register_proposal_vote_v2, update);
-    generate_candid_method!(community, remove_member, update);
+    generate_candid_method!(community, register_proposal_vote, update);
     generate_candid_method!(community, remove_member_from_channel, update);
+    generate_candid_method!(community, remove_member, update);
     generate_candid_method!(community, remove_reaction, update);
     generate_candid_method!(community, reset_invite_code, update);
     generate_candid_method!(community, send_message, update);

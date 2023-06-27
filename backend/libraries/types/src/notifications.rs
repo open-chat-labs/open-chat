@@ -15,10 +15,10 @@ pub enum Notification {
     AddedToGroupNotification(AddedToGroupNotification),
     DirectMessageNotification(DirectMessageNotification),
     GroupMessageNotification(GroupMessageNotification),
-    CommunityMessageNotification(CommunityMessageNotification),
+    ChannelMessageNotification(ChannelMessageNotification),
     DirectReactionAddedNotification(DirectReactionAddedNotification),
     GroupReactionAddedNotification(GroupReactionAddedNotification),
-    CommunityReactionAddedNotification(CommunityReactionAddedNotification),
+    ChannelReactionAddedNotification(ChannelReactionAddedNotification),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -61,12 +61,12 @@ pub struct GroupMessageNotification {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityMessageNotification {
+pub struct ChannelMessageNotification {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub community_name: String,
-    pub group_name: String,
+    pub channel_name: String,
     pub sender: UserId,
     pub sender_name: String,
     pub message: EventWrapper<Message>,
@@ -95,7 +95,7 @@ pub struct GroupReactionAddedNotification {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityReactionAddedNotification {
+pub struct ChannelReactionAddedNotification {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,

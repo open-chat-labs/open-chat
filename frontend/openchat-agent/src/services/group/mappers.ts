@@ -5,18 +5,11 @@ import type {
     ApiChangeRoleResponse,
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
-    ApiUpdateGroupResponse,
     ApiDeleteMessageResponse,
     ApiUndeleteMessageResponse,
-    ApiEditMessageResponse,
-    ApiSelectedInitialResponse,
-    ApiParticipant,
-    ApiSelectedUpdatesResponse,
     ApiRole,
     ApiMessagesByMessageIndexResponse,
     ApiMessageEventWrapper,
-    ApiPinMessageResponse,
-    ApiUnpinMessageResponse,
     ApiSearchGroupChatResponse,
     ApiMakePrivateResponse,
     ApiInviteCodeResponse,
@@ -45,19 +38,12 @@ import {
     GroupChatEvent,
     SendMessageResponse,
     RemoveMemberResponse,
-    UpdateGroupResponse,
     UndeleteMessageResponse,
-    EditMessageResponse,
     BlockUserResponse,
     ChangeRoleResponse,
-    Member,
-    GroupChatDetailsResponse,
-    GroupChatDetailsUpdatesResponse,
     UnblockUserResponse,
     MemberRole,
     Message,
-    PinMessageResponse,
-    UnpinMessageResponse,
     MakeGroupPrivateResponse,
     InviteCodeResponse,
     EnableInviteCodeResponse,
@@ -281,76 +267,11 @@ export function apiOptionalGroupPermissions(
     };
 }
 
-export function member(candid: ApiParticipant): Member {
-    return {
-        role: memberRole(candid.role),
-        userId: candid.user_id.toString(),
-    };
-}
-
-export function groupRules(candid: ApiGroupRules): AccessRules {
-    return {
-        text: candid.text,
-        enabled: candid.enabled,
-    };
-}
-
 export function apiGroupRules(rules: AccessRules): ApiGroupRules {
     return {
         text: rules.text,
         enabled: rules.enabled,
     };
-}
-
-export function groupDetailsUpdatesResponse(
-    candid: ApiSelectedUpdatesResponse
-): GroupChatDetailsUpdatesResponse {
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("SuccessNoUpdates" in candid) {
-        return {
-            kind: "success_no_updates",
-            latestEventIndex: candid.SuccessNoUpdates,
-        };
-    }
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            membersAddedOrUpdated: candid.Success.participants_added_or_updated.map(member),
-            membersRemoved: new Set(candid.Success.participants_removed.map((u) => u.toString())),
-            blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
-            blockedUsersRemoved: new Set(
-                candid.Success.blocked_users_removed.map((u) => u.toString())
-            ),
-            pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
-            pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
-            latestEventIndex: candid.Success.latest_event_index,
-            rules: optional(candid.Success.rules, groupRules),
-            invitedUsers: optional(
-                candid.Success.invited_users,
-                (invited_users) => new Set(invited_users.map((u) => u.toString()))
-            ),
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
-}
-
-export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupChatDetailsResponse {
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("Success" in candid) {
-        return {
-            members: candid.Success.participants.map(member),
-            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
-            invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
-            pinnedMessages: new Set(candid.Success.pinned_messages),
-            latestEventIndex: candid.Success.latest_event_index,
-            rules: groupRules(candid.Success.rules),
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
 export function makeGroupPrivateResponse(candid: ApiMakePrivateResponse): MakeGroupPrivateResponse {
@@ -492,77 +413,6 @@ export function apiGateUpdate(): ApiGroupGateUpdate {
     return { NoChange: null };
 }
 
-export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroupResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("DescriptionTooLong" in candid) {
-        return "desc_too_long";
-    }
-    if ("NameTooLong" in candid) {
-        return "name_too_long";
-    }
-    if ("NameTooShort" in candid) {
-        return "name_too_short";
-    }
-    if ("NameReserved" in candid) {
-        return "name_reserved";
-    }
-    if ("Unchanged" in candid) {
-        return "unchanged";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("NameTaken" in candid) {
-        return "name_taken";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "not_in_group";
-    }
-    if ("AvatarTooBig" in candid) {
-        return "avatar_too_big";
-    }
-    if ("RulesTooLong" in candid) {
-        return "rules_too_long";
-    }
-    if ("RulesTooShort" in candid) {
-        return "rules_too_short";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
-}
-
-export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "not_in_group";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
-}
-
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -693,63 +543,6 @@ export function deletedMessageResponse(
         "Unexpected ApiDeletedGroupMessageResponse type received",
         candid
     );
-}
-
-export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            eventIndex: candid.Success.index,
-            timestamp: candid.Success.timestamp,
-        };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return { kind: "caller_not_in_group" };
-    }
-    if ("NotAuthorized" in candid) {
-        return { kind: "not_authorized" };
-    }
-    if ("NoChange" in candid) {
-        return { kind: "no_change" };
-    }
-    if ("MessageIndexOutOfRange" in candid) {
-        return { kind: "index_out_of_range" };
-    }
-    if ("MessageNotFound" in candid) {
-        return { kind: "message_not_found" };
-    }
-    if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiPinMessageResponse type received", candid);
-}
-
-export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMessageResponse {
-    if ("Success" in candid || "SuccessV2" in candid) {
-        return "success";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("NoChange" in candid) {
-        return "no_change";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiUnpinMessageResponse type received", candid);
 }
 
 export async function getMessagesByMessageIndexResponse(
