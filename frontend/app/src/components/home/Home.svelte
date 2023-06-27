@@ -81,6 +81,7 @@
     const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
+    let candidateCommunityRules: AccessRules = defaultAccessRules;
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -156,6 +157,7 @@
     $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
     $: selectedCommunityId = client.selectedCommunityId;
+    $: currentCommunityRules = client.currentCommunityRules;
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -944,13 +946,15 @@
     }
 
     function createCommunity() {
-        modal = ModalType.EditCommunity;
         candidateCommunity = createCandidateCommunity("");
+        candidateCommunityRules = defaultAccessRules;
+        modal = ModalType.EditCommunity;
     }
 
     function editCommunity(ev: CustomEvent<CommunitySummary>) {
-        modal = ModalType.EditCommunity;
         candidateCommunity = ev.detail;
+        candidateCommunityRules = $currentCommunityRules ?? defaultAccessRules;
+        modal = ModalType.EditCommunity;
     }
 
     $: bgHeight = $dimensions.height * 0.9;
@@ -997,6 +1001,7 @@
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:newChannel={newChannel}
+            on:editCommunity={editCommunity}
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
             on:loadMessage={loadMessage} />
@@ -1102,7 +1107,7 @@
             <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
         {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}
             <EditCommunity
-                originalRules={defaultAccessRules}
+                originalRules={candidateCommunityRules}
                 original={candidateCommunity}
                 on:close={closeModal} />
         {:else if modal === ModalType.Wallet}

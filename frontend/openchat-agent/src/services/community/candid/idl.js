@@ -1304,6 +1304,38 @@ export const idlFactory = ({ IDL }) => {
     'UserNotInCommunity' : IDL.Null,
     'SuccessNoUpdates' : IDL.Null,
   });
+  const CommunityMember = IDL.Record({
+    'role' : CommunityRole,
+    'user_id' : UserId,
+    'date_added' : TimestampMillis,
+  });
+  const SelectedInitialSuccess = IDL.Record({
+    'members' : IDL.Vec(CommunityMember),
+    'invited_users' : IDL.Vec(UserId),
+    'blocked_users' : IDL.Vec(UserId),
+    'timestamp' : TimestampMillis,
+    'latest_event_index' : EventIndex,
+    'rules' : AccessRules,
+  });
+  const SelectedInitialResponse = IDL.Variant({
+    'Success' : SelectedInitialSuccess,
+    'UserNotInCommunity' : IDL.Null,
+  });
+  const SelectedUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
+  const SelectedUpdatesSuccess = IDL.Record({
+    'blocked_users_removed' : IDL.Vec(UserId),
+    'invited_users' : IDL.Opt(IDL.Vec(UserId)),
+    'members_added_or_updated' : IDL.Vec(CommunityMember),
+    'members_removed' : IDL.Vec(UserId),
+    'timestamp' : TimestampMillis,
+    'rules' : IDL.Opt(AccessRules),
+    'blocked_users_added' : IDL.Vec(UserId),
+  });
+  const SelectedUpdatesResponse = IDL.Variant({
+    'Success' : SelectedUpdatesSuccess,
+    'UserNotInCommunity' : IDL.Null,
+    'SuccessNoUpdates' : IDL.Null,
+  });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageArgs = IDL.Record({
@@ -1432,6 +1464,26 @@ export const idlFactory = ({ IDL }) => {
     'Success' : CommunityCanisterCommunitySummaryUpdates,
     'SuccessNoUpdates' : IDL.Null,
     'PrivateCommunity' : IDL.Null,
+  });
+  const ThreadPreviewsArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'latest_client_thread_update' : IDL.Opt(TimestampMillis),
+    'threads' : IDL.Vec(MessageIndex),
+  });
+  const ThreadPreview = IDL.Record({
+    'latest_replies' : IDL.Vec(MessageEventWrapper),
+    'total_replies' : IDL.Nat32,
+    'root_message' : MessageEventWrapper,
+  });
+  const ThreadPreviewsResponse = IDL.Variant({
+    'UserNotInChannel' : IDL.Null,
+    'ReplicaNotUpToDate' : TimestampMillis,
+    'ChannelNotFound' : IDL.Null,
+    'Success' : IDL.Record({
+      'threads' : IDL.Vec(ThreadPreview),
+      'timestamp' : TimestampMillis,
+    }),
+    'UserNotInCommunity' : IDL.Null,
   });
   const ToggleMuteChannelNotificationsArgs = IDL.Record({
     'channel_id' : ChannelId,
@@ -1698,11 +1750,26 @@ export const idlFactory = ({ IDL }) => {
         [SelectedChannelUpdatesResponse],
         ['query'],
       ),
+    'selected_initial' : IDL.Func(
+        [EmptyArgs],
+        [SelectedInitialResponse],
+        ['query'],
+      ),
+    'selected_updates' : IDL.Func(
+        [SelectedUpdatesArgs],
+        [SelectedUpdatesResponse],
+        ['query'],
+      ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'summary' : IDL.Func([SummaryArgs], [SummaryResponse], ['query']),
     'summary_updates' : IDL.Func(
         [SummaryUpdatesArgs],
         [SummaryUpdatesResponse],
+        ['query'],
+      ),
+    'thread_previews' : IDL.Func(
+        [ThreadPreviewsArgs],
+        [ThreadPreviewsResponse],
         ['query'],
       ),
     'toggle_mute_channel_notifications' : IDL.Func(

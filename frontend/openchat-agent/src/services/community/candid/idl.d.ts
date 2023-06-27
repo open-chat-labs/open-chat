@@ -56,6 +56,10 @@ import {
     CommunityMembershipUpdates,
     ExploreChannelsResponse,
     ChannelMatch,
+    SelectedInitialResponse,
+    SelectedUpdatesResponse,
+    SelectedInitialSuccess,
+    SelectedUpdatesSuccess,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -114,6 +118,10 @@ export {
     CommunityMembershipUpdates as ApiCommunityMembershipUpdates,
     ExploreChannelsResponse as ApiExploreChannelsResponse,
     ChannelMatch as ApiChannelMatch,
+    SelectedInitialResponse as ApiSelectedInitialResponse,
+    SelectedUpdatesResponse as ApiSelectedUpdatesResponse,
+    SelectedInitialSuccess as ApiSelectedInitialSuccess,
+    SelectedUpdatesSuccess as ApiSelectedUpdatesSuccess,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

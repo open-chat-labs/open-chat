@@ -343,6 +343,11 @@ export interface CommunityMatch {
   'banner_id' : [] | [bigint],
   'member_count' : number,
 }
+export interface CommunityMember {
+  'role' : CommunityRole,
+  'user_id' : UserId,
+  'date_added' : TimestampMillis,
+}
 export interface CommunityMembership {
   'role' : CommunityRole,
   'joined' : TimestampMillis,
@@ -1436,6 +1441,29 @@ export interface SelectedGroupUpdates {
   'rules' : [] | [AccessRules],
   'blocked_users_added' : Array<UserId>,
 }
+export type SelectedInitialResponse = { 'Success' : SelectedInitialSuccess } |
+  { 'UserNotInCommunity' : null };
+export interface SelectedInitialSuccess {
+  'members' : Array<CommunityMember>,
+  'invited_users' : Array<UserId>,
+  'blocked_users' : Array<UserId>,
+  'timestamp' : TimestampMillis,
+  'latest_event_index' : EventIndex,
+  'rules' : AccessRules,
+}
+export interface SelectedUpdatesArgs { 'updates_since' : TimestampMillis }
+export type SelectedUpdatesResponse = { 'Success' : SelectedUpdatesSuccess } |
+  { 'UserNotInCommunity' : null } |
+  { 'SuccessNoUpdates' : null };
+export interface SelectedUpdatesSuccess {
+  'blocked_users_removed' : Array<UserId>,
+  'invited_users' : [] | [Array<UserId>],
+  'members_added_or_updated' : Array<CommunityMember>,
+  'members_removed' : Array<UserId>,
+  'timestamp' : TimestampMillis,
+  'rules' : [] | [AccessRules],
+  'blocked_users_added' : Array<UserId>,
+}
 export interface SendMessageArgs {
   'channel_id' : ChannelId,
   'content' : MessageContentInitial,
@@ -1545,6 +1573,26 @@ export interface TextContent { 'text' : string }
 export type TextUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : string };
+export interface ThreadPreview {
+  'latest_replies' : Array<MessageEventWrapper>,
+  'total_replies' : number,
+  'root_message' : MessageEventWrapper,
+}
+export interface ThreadPreviewsArgs {
+  'channel_id' : ChannelId,
+  'latest_client_thread_update' : [] | [TimestampMillis],
+  'threads' : Uint32Array | number[],
+}
+export type ThreadPreviewsResponse = { 'UserNotInChannel' : null } |
+  { 'ReplicaNotUpToDate' : TimestampMillis } |
+  { 'ChannelNotFound' : null } |
+  {
+    'Success' : {
+      'threads' : Array<ThreadPreview>,
+      'timestamp' : TimestampMillis,
+    }
+  } |
+  { 'UserNotInCommunity' : null };
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,
   'participant_ids' : Array<UserId>,
@@ -1780,9 +1828,15 @@ export interface _SERVICE {
     [SelectedChannelUpdatesArgs],
     SelectedChannelUpdatesResponse
   >,
+  'selected_initial' : ActorMethod<[EmptyArgs], SelectedInitialResponse>,
+  'selected_updates' : ActorMethod<
+    [SelectedUpdatesArgs],
+    SelectedUpdatesResponse
+  >,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
   'summary' : ActorMethod<[SummaryArgs], SummaryResponse>,
   'summary_updates' : ActorMethod<[SummaryUpdatesArgs], SummaryUpdatesResponse>,
+  'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,
   'toggle_mute_channel_notifications' : ActorMethod<
     [ToggleMuteChannelNotificationsArgs],
     ToggleMuteChannelNotificationsResponse

@@ -32,6 +32,7 @@
             on:communityDetails
             on:leaveCommunity
             on:deleteCommunity
+            on:editCommunity
             on:newChannel
             {searchResultsAvailable}
             {searchTerm}

@@ -279,6 +279,11 @@ export interface CommunityMatch {
   'banner_id' : [] | [bigint],
   'member_count' : number,
 }
+export interface CommunityMember {
+  'role' : CommunityRole,
+  'user_id' : UserId,
+  'date_added' : TimestampMillis,
+}
 export interface CommunityMembership {
   'role' : CommunityRole,
   'joined' : TimestampMillis,

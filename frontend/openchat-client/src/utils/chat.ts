@@ -1344,13 +1344,12 @@ function toSymbol(token: Cryptocurrency): string {
 }
 
 export function stopTyping(
-    { kind, id }: ChatSummary,
+    { id }: ChatSummary,
     userId: string,
     threadRootMessageIndex?: number
 ): void {
     rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
         kind: "remote_user_stopped_typing",
-        chatType: kind,
         id,
         userId,
         threadRootMessageIndex,
@@ -1358,13 +1357,12 @@ export function stopTyping(
 }
 
 export function startTyping(
-    { kind, id }: ChatSummary,
+    { id }: ChatSummary,
     userId: string,
     threadRootMessageIndex?: number
 ): void {
     rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
         kind: "remote_user_typing",
-        chatType: kind,
         id,
         userId,
         threadRootMessageIndex,

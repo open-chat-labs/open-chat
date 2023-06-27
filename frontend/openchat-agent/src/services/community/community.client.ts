@@ -35,6 +35,8 @@ import {
     apiCommunityRole,
     apiOptionalCommunityPermissions,
     exploreChannelsResponse,
+    communityDetailsResponse,
+    communityDetailsUpdatesResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -106,6 +108,9 @@ import type {
     EditMessageResponse,
     DeclineInvitationResponse,
     ChannelMatch,
+    CommunityIdentifier,
+    CommunityDetailsResponse,
+    CommunityDetails,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
 import { DataClient } from "../data/data.client";
@@ -113,6 +118,7 @@ import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import { getEventsResponse } from "../group/mappers";
 import {
     Database,
+    getCachedCommunityDetails,
     getCachedEvents,
     getCachedEventsByIndex,
     getCachedEventsWindow,
@@ -120,11 +126,12 @@ import {
     mergeSuccessResponses,
     recordFailedMessage,
     removeFailedMessage,
+    setCachedCommunityDetails,
     setCachedEvents,
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
-import { mergeGroupChatDetails } from "../../utils/chat";
+import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
 
 export class CommunityClient extends CandidService {
     private service: CommunityService;
@@ -674,6 +681,69 @@ export class CommunityClient extends CandidService {
                 }),
             searchChannelResponse
         );
+    }
+
+    async getCommunityDetails(
+        id: CommunityIdentifier,
+        lastUpdated: bigint
+    ): Promise<CommunityDetailsResponse> {
+        const fromCache = await getCachedCommunityDetails(this.db, id.communityId);
+        if (fromCache !== undefined) {
+            if (fromCache.lastUpdated >= lastUpdated) {
+                return fromCache;
+            } else {
+                return this.getCommunityDetailsUpdates(id, fromCache);
+            }
+        }
+
+        const response = await this.getCommunityDetailsFromBackend();
+        if (response !== "failure") {
+            await setCachedCommunityDetails(this.db, id.communityId, response);
+        }
+        return response;
+    }
+
+    private getCommunityDetailsFromBackend(): Promise<CommunityDetailsResponse> {
+        return this.handleQueryResponse(
+            () => this.service.selected_initial({}),
+            communityDetailsResponse
+        );
+    }
+
+    async getCommunityDetailsUpdates(
+        id: CommunityIdentifier,
+        previous: CommunityDetails
+    ): Promise<CommunityDetails> {
+        const response = await this.getCommunityDetailsUpdatesFromBackend(previous);
+        if (response.lastUpdated > previous.lastUpdated) {
+            await setCachedCommunityDetails(this.db, id.communityId, response);
+        }
+        return response;
+    }
+
+    private async getCommunityDetailsUpdatesFromBackend(
+        previous: CommunityDetails
+    ): Promise<CommunityDetails> {
+        const updatesResponse = await this.handleQueryResponse(
+            () =>
+                this.service.selected_updates({
+                    updates_since: previous.lastUpdated,
+                }),
+            communityDetailsUpdatesResponse
+        );
+
+        if (updatesResponse.kind === "failure") {
+            return previous;
+        }
+
+        if (updatesResponse.kind === "success_no_updates") {
+            return {
+                ...previous,
+                lastUpdated: updatesResponse.lastUpdated,
+            };
+        }
+
+        return mergeCommunityDetails(previous, updatesResponse);
     }
 
     async getChannelDetails(

@@ -247,6 +247,11 @@ export interface CommunityMatch {
   'banner_id' : [] | [bigint],
   'member_count' : number,
 }
+export interface CommunityMember {
+  'role' : CommunityRole,
+  'user_id' : UserId,
+  'date_added' : TimestampMillis,
+}
 export interface CommunityMembership {
   'role' : CommunityRole,
   'joined' : TimestampMillis,
@@ -1200,6 +1205,11 @@ export interface TextContent { 'text' : string }
 export type TextUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : string };
+export interface ThreadPreview {
+  'latest_replies' : Array<MessageEventWrapper>,
+  'total_replies' : number,
+  'root_message' : MessageEventWrapper,
+}
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,
   'participant_ids' : Array<UserId>,

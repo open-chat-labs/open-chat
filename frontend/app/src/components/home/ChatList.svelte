@@ -27,6 +27,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { discoverHotGroupsDismissed } from "../../stores/settings";
     import { communitiesEnabled } from "../../utils/features";
+    import { pushRightPanelHistory } from "../../stores/rightPanel";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -42,6 +43,7 @@
     let view: "chats" | "threads" = "chats";
 
     $: selectedChatId = client.selectedChatId;
+    $: selectedCommunityId = client.selectedCommunityId;
     $: numberOfThreadsStore = client.numberOfThreadsStore;
     $: chatsLoading = client.chatsLoading;
     $: selectedCommunity = client.selectedCommunity;
@@ -52,7 +54,12 @@
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
     $: showWhatsHot =
+        $selectedCommunityId === undefined &&
         !$discoverHotGroupsDismissed &&
+        groupSearchResults === undefined &&
+        userSearchResults === undefined;
+    $: showBrowseChannnels =
+        $selectedCommunityId !== undefined &&
         groupSearchResults === undefined &&
         userSearchResults === undefined;
 
@@ -126,6 +133,14 @@
         chatListElement.scrollTop = 0;
         chatListScroll.set(0);
     }
+
+    function showChannels() {
+        if ($selectedCommunityId) {
+            pushRightPanelHistory({
+                kind: "community_channels",
+            });
+        }
+    }
 </script>
 
 {#if user}
@@ -134,6 +149,7 @@
             community={$selectedCommunity}
             on:leaveCommunity
             on:deleteCommunity
+            on:editCommunity
             on:communityDetails
             on:newChannel />
     {:else}
@@ -233,6 +249,12 @@
                     </div>
                 </div>
             {/if}
+            {#if showBrowseChannnels}
+                <div class="browse-channels" on:click={showChannels}>
+                    <div class="flame">#</div>
+                    <div class="label">{$_("communities.browseChannels")}</div>
+                </div>
+            {/if}
         {/if}
     </div>
     <NotificationsBar />
@@ -283,7 +305,8 @@
         @include ellipsis();
     }
 
-    .hot-groups {
+    .hot-groups,
+    .browse-channels {
         position: relative;
         display: flex;
         align-items: center;

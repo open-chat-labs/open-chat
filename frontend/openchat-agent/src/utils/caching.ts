@@ -21,11 +21,12 @@ import {
     UnsupportedValueError,
     MessageContext,
     MessageContextMap,
+    CommunityDetails,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
 
-const CACHE_VERSION = 69;
+const CACHE_VERSION = 70;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -61,6 +62,11 @@ export interface ChatSchema extends DBSchema {
         value: GroupChatDetails;
     };
 
+    community_details: {
+        key: string;
+        value: CommunityDetails;
+    };
+
     failed_chat_messages: {
         key: string;
         value: EnhancedWrapper<Message>;
@@ -83,7 +89,6 @@ export function createFailedCacheKey(context: MessageContext, messageId: bigint)
         ...context,
         messageId,
     });
-    // return `${messageContextToString(context)}_${messageId}`;
 }
 
 function messageContextToString({ chatId, threadRootMessageIndex }: MessageContext): string {
@@ -124,6 +129,9 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("group_details")) {
                 db.deleteObjectStore("group_details");
             }
+            if (db.objectStoreNames.contains("community_details")) {
+                db.deleteObjectStore("community_details");
+            }
             if (db.objectStoreNames.contains("failed_chat_messages")) {
                 db.deleteObjectStore("failed_chat_messages");
             }
@@ -136,6 +144,7 @@ export function openCache(principal: Principal): Database {
             threadEvents.createIndex("messageIdx", "messageKey");
             db.createObjectStore("chats");
             db.createObjectStore("group_details");
+            db.createObjectStore("community_details");
             db.createObjectStore("failed_chat_messages");
             db.createObjectStore("failed_thread_messages");
         },
@@ -654,11 +663,26 @@ function messageToEvent(message: Message, resp: SendMessageSuccess): EventWrappe
     };
 }
 
+export async function getCachedCommunityDetails(
+    db: Database,
+    communityId: string
+): Promise<CommunityDetails | undefined> {
+    return (await db).get("community_details", communityId);
+}
+
 export async function getCachedGroupDetails(
     db: Database,
     chatId: string
 ): Promise<GroupChatDetails | undefined> {
     return (await db).get("group_details", chatId);
+}
+
+export async function setCachedCommunityDetails(
+    db: Database,
+    communityId: string,
+    communityDetails: CommunityDetails
+): Promise<void> {
+    await (await db).put("community_details", communityDetails, communityId);
 }
 
 export async function setCachedGroupDetails(

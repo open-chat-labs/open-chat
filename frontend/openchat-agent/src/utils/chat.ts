@@ -28,6 +28,8 @@ import {
     ChatMap,
     Metrics,
     chatIdentifiersEqual,
+    CommunityDetails,
+    CommunityDetailsUpdates,
 } from "openchat-shared";
 import { toRecord } from "./list";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
@@ -220,6 +222,29 @@ function getLatestMessage(
     return updatedChat.latestMessage.index >= chat.latestMessage.index
         ? updatedChat.latestMessage
         : chat.latestMessage;
+}
+
+export function mergeCommunityDetails(
+    previous: CommunityDetails,
+    updates: CommunityDetailsUpdates
+): CommunityDetails {
+    return {
+        lastUpdated: updates.lastUpdated,
+        members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
+            added: [],
+            updated: updates.membersAddedOrUpdated,
+            removed: updates.membersRemoved,
+        }),
+        blockedUsers: new Set<string>(
+            mergeThings(identity, identity, [...previous.blockedUsers], {
+                added: [...updates.blockedUsersAdded],
+                updated: [],
+                removed: updates.blockedUsersRemoved,
+            })
+        ),
+        invitedUsers: updates.invitedUsers ?? previous.invitedUsers,
+        rules: updates.rules ?? previous.rules,
+    };
 }
 
 export function mergeGroupChatDetails(

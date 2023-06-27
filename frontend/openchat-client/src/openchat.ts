@@ -1616,6 +1616,14 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
+    private async updateUserStoreFromCommunityState(id: CommunityIdentifier): Promise<void> {
+        const allUserIds = new Set<string>();
+        communityStateStore.getProp(id, "members").forEach((m) => allUserIds.add(m.userId));
+        communityStateStore.getProp(id, "blockedUsers").forEach((u) => allUserIds.add(u));
+        communityStateStore.getProp(id, "invitedUsers").forEach((u) => allUserIds.add(u));
+        await this.getMissingUsers(allUserIds);
+    }
+
     private async updateUserStore(
         chatId: ChatIdentifier,
         userIdsFromEvents: Iterable<string>
@@ -2161,36 +2169,35 @@ export class OpenChat extends OpenChatAgentWorker {
         if (!communityStateStore.getProp(community.id, "detailsLoaded")) {
             const resp = await this.sendRequest({
                 kind: "getCommunityDetails",
-                chatId: community.id,
-                timestamp: community.lastUpdated,
+                id: community.id,
+                lastUpdated: community.lastUpdated,
             });
             if (resp !== "failure") {
+                console.log("got community details", resp);
                 communityStateStore.setProp(community.id, "detailsLoaded", true);
                 communityStateStore.setProp(community.id, "members", resp.members);
                 communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
                 communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
-                communityStateStore.setProp(community.id, "pinnedMessages", resp.pinnedMessages);
                 communityStateStore.setProp(community.id, "rules", resp.rules);
-                communityStateStore.setProp(community.id, "lastUpdated", resp.timestamp);
+                communityStateStore.setProp(community.id, "lastUpdated", resp.lastUpdated);
             }
-            await this.updateUserStore(community.id, []); // TODO sort this out
+            await this.updateUserStoreFromCommunityState(community.id);
         } else {
             await this.updateCommunityDetails(community);
         }
     }
 
     private async updateCommunityDetails(community: CommunitySummary): Promise<void> {
-        const timestamp = communityStateStore.getProp(community.id, "lastUpdated");
-        if (timestamp !== undefined && timestamp < community.lastUpdated) {
+        const lastUpdated = communityStateStore.getProp(community.id, "lastUpdated");
+        if (lastUpdated !== undefined && lastUpdated < community.lastUpdated) {
             const gd = await this.sendRequest({
                 kind: "getCommunityDetailsUpdates",
-                chatId: community.id,
+                id: community.id,
                 previous: {
                     members: communityStateStore.getProp(community.id, "members"),
                     blockedUsers: communityStateStore.getProp(community.id, "blockedUsers"),
                     invitedUsers: communityStateStore.getProp(community.id, "invitedUsers"),
-                    pinnedMessages: communityStateStore.getProp(community.id, "pinnedMessages"),
-                    timestamp: communityStateStore.getProp(community.id, "lastUpdated"),
+                    lastUpdated: communityStateStore.getProp(community.id, "lastUpdated"),
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     rules: communityStateStore.getProp(community.id, "rules")!,
                 },
@@ -2198,10 +2205,9 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "members", gd.members);
             communityStateStore.setProp(community.id, "blockedUsers", gd.blockedUsers);
             communityStateStore.setProp(community.id, "invitedUsers", gd.invitedUsers);
-            communityStateStore.setProp(community.id, "pinnedMessages", gd.pinnedMessages);
             communityStateStore.setProp(community.id, "rules", gd.rules);
-            communityStateStore.setProp(community.id, "lastUpdated", gd.timestamp);
-            await this.updateUserStore(community.id, []); // TODO sort this out
+            communityStateStore.setProp(community.id, "lastUpdated", gd.lastUpdated);
+            await this.updateUserStoreFromCommunityState(community.id);
         }
     }
 
@@ -4171,7 +4177,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     // TODO - this will almost certainly need to be more complicated
     async setSelectedCommunity(id: CommunityIdentifier, clearChat = true): Promise<void> {
-        const community = this._liveState.communities.get(id);
+        let community = this._liveState.communities.get(id);
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
             const resp = await this.sendRequest({
@@ -4179,6 +4185,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 communityId: id.communityId,
             });
             if ("id" in resp) {
+                community = resp;
                 globalStateStore.update((global) => {
                     global.communities.set(resp.id, resp);
                     return global;
@@ -4186,10 +4193,14 @@ export class OpenChat extends OpenChatAgentWorker {
             }
         }
 
-        //TODO - we *might* need to look up some details here - not quite clear yet
+        communityStateStore.clear(id);
         selectedCommunityId.set(id);
         if (clearChat) {
             this.clearSelectedChat();
+        }
+
+        if (community !== undefined) {
+            this.loadCommunityDetails(community);
         }
     }
 

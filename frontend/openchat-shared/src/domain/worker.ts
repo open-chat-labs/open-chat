@@ -130,6 +130,8 @@ import type {
     CommunityIdentifier,
     CommunitySummaryResponse,
     ChannelMatch,
+    CommunityDetailsResponse,
+    CommunityDetails,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -274,7 +276,21 @@ export type WorkerRequest =
     | ExploreCommunities
     | GetCommunitySummary
     | ExploreChannels
+    | GetCommunityDetails
+    | GetCommunityDetailsUpdates
     | ChangeCommunityRole;
+
+type GetCommunityDetails = {
+    kind: "getCommunityDetails";
+    id: CommunityIdentifier;
+    lastUpdated: bigint;
+};
+
+type GetCommunityDetailsUpdates = {
+    kind: "getCommunityDetailsUpdates";
+    id: CommunityIdentifier;
+    previous: CommunityDetails;
+};
 
 type ExploreChannels = {
     kind: "exploreChannels";
@@ -952,6 +968,8 @@ export type WorkerResponse =
     | Response<JoinCommunityResponse>
     | Response<CommunitySummaryResponse>
     | Response<ChannelMatch[]>
+    | Response<CommunityDetailsResponse>
+    | Response<CommunityDetails>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1505,4 +1523,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? CommunitySummaryResponse
     : T extends ExploreChannels
     ? ChannelMatch[]
+    : T extends GetCommunityDetails
+    ? CommunityDetailsResponse
+    : T extends GetCommunityDetailsUpdates
+    ? CommunityDetails
     : never;

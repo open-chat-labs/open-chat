@@ -83,6 +83,7 @@ export type CommunitySpecificState = {
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     rules?: AccessRules;
+    lastUpdated: bigint;
 };
 
 export interface UserFailedGateCheck {
@@ -337,4 +338,34 @@ export type ChannelMatch = {
     description: string;
     avatar: DataContent;
     memberCount: number;
+};
+
+export type CommunityDetailsResponse = "failure" | CommunityDetails;
+
+export type CommunityDetailsUpdatesResponse =
+    | ({
+          kind: "success";
+      } & CommunityDetailsUpdates)
+    | {
+          kind: "success_no_updates";
+          lastUpdated: bigint;
+      }
+    | Failure;
+
+export type CommunityDetails = {
+    members: Member[];
+    blockedUsers: Set<string>;
+    invitedUsers: Set<string>;
+    rules: AccessRules;
+    lastUpdated: bigint;
+};
+
+export type CommunityDetailsUpdates = {
+    membersAddedOrUpdated: Member[];
+    membersRemoved: Set<string>;
+    blockedUsersAdded: Set<string>;
+    blockedUsersRemoved: Set<string>;
+    rules?: AccessRules;
+    invitedUsers?: Set<string>;
+    lastUpdated: bigint;
 };

@@ -10,12 +10,13 @@ import {
     CommonResponses,
     CommunityCanisterChannelSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
+    CommunityDetailsResponse,
+    CommunityDetailsUpdatesResponse,
     CommunityInviteCodeResponse,
     CommunityMembershipUpdates,
     CommunityPermissions,
     CommunitySummaryResponse,
     CommunitySummaryUpdatesResponse,
-    DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
     DisableCommunityInviteCodeResponse,
@@ -46,7 +47,6 @@ import type {
     ApiBlockUserResponse,
     ApiChangeChannelRoleResponse,
     ApiChangeRoleResponse,
-    ApiDeclineInvitationResponse,
     ApiDeleteMessagesResponse,
     ApiDeletedMessageResponse,
     ApiDisableInviteCodeResponse,
@@ -83,6 +83,8 @@ import type {
     ApiCommunityMembershipUpdates,
     ApiExploreChannelsResponse,
     ApiChannelMatch,
+    ApiSelectedInitialResponse,
+    ApiSelectedUpdatesResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -94,6 +96,7 @@ import {
     communitySummary,
     gateCheckFailedReason,
     groupPermissions,
+    groupRules,
     groupSubtype,
     memberRole,
     mention,
@@ -913,4 +916,57 @@ export function apiOptionalCommunityPermissions(
             permissions.createPrivateChannel
         ),
     };
+}
+
+export function communityDetailsResponse(
+    candid: ApiSelectedInitialResponse
+): CommunityDetailsResponse {
+    if ("Success" in candid) {
+        return {
+            members: candid.Success.members.map((m) => ({
+                role: memberRole(m.role),
+                userId: m.user_id.toString(),
+            })),
+            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
+            invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
+            rules: groupRules(candid.Success.rules),
+            lastUpdated: candid.Success.timestamp,
+        };
+    } else {
+        console.warn("CommunityDetails failed with", candid);
+        return "failure";
+    }
+}
+
+export function communityDetailsUpdatesResponse(
+    candid: ApiSelectedUpdatesResponse
+): CommunityDetailsUpdatesResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            membersAddedOrUpdated: candid.Success.members_added_or_updated.map((m) => ({
+                role: memberRole(m.role),
+                userId: m.user_id.toString(),
+            })),
+            membersRemoved: new Set(candid.Success.members_removed.map((u) => u.toString())),
+            blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
+            blockedUsersRemoved: new Set(
+                candid.Success.blocked_users_removed.map((u) => u.toString())
+            ),
+            rules: optional(candid.Success.rules, groupRules),
+            invitedUsers: optional(
+                candid.Success.invited_users,
+                (invited_users) => new Set(invited_users.map((u) => u.toString()))
+            ),
+            lastUpdated: candid.Success.timestamp,
+        };
+    } else if ("SuccessNoUpdates" in candid) {
+        return {
+            kind: "success_no_updates",
+            lastUpdated: candid.SuccessNoUpdates || BigInt(Date.now()),
+        };
+    } else {
+        console.warn("Unexpected ApiSelectedUpdatesResponse type received", candid);
+        return CommonResponses.failure;
+    }
 }

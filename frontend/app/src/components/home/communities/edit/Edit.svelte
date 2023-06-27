@@ -6,13 +6,12 @@
     import ChooseMembers from "../../ChooseMembers.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import {
-        routeForChatIdentifier,
-        type AccessRules,
-        type CandidateMember,
-        type CommunitySummary,
-        type DefaultChannel,
-        type OpenChat,
+    import type {
+        AccessRules,
+        CandidateMember,
+        CommunitySummary,
+        DefaultChannel,
+        OpenChat,
     } from "openchat-client";
     import StageHeader from "../../StageHeader.svelte";
     import PermissionsEditor from "./PermissionsEditor.svelte";
@@ -27,8 +26,6 @@
     import page from "page";
 
     export let original: CommunitySummary = createCandidateCommunity("");
-
-    //TODO - at the moment we are *always* passing in the default access rules even in the edit case because we don't know where to get the rules from yet
     export let originalRules: AccessRules;
 
     const client = getContext<OpenChat>("client");
