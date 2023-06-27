@@ -48,7 +48,7 @@
     export let supportsReply: boolean;
     export let canQuoteReply: boolean;
     export let canStartThread: boolean;
-    export let groupChat: boolean;
+    export let multiUserChat: boolean;
     export let canForward: boolean;
     export let canBlockUser: boolean;
     export let canEdit: boolean;
@@ -294,7 +294,7 @@
                         <div slot="text">{$_("forward")}</div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && groupChat && !inThread && !me && !isProposal && !inert && !failed}
+                {#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}
                     <MenuItem on:click={() => dispatch("replyPrivately")}>
                         <ReplyOutline
                             size={$iconSize}
@@ -332,7 +332,7 @@
                     </MenuItem>
                 {/if}
                 <MenuItem separator />
-                {#if confirmed && groupChat && !me && canBlockUser && !failed}
+                {#if confirmed && multiUserChat && !me && canBlockUser && !failed}
                     <MenuItem on:click={blockUser}>
                         <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <div slot="text">{$_("blockUser")}</div>
@@ -347,7 +347,7 @@
                         <div slot="text">
                             {#if !reportMessageEnabled}
                                 {me ? $_("deleteMessage") : $_("deleteMessageAndReport")}
-                            {:else if groupChat || me}
+                            {:else if multiUserChat || me}
                                 {$_("deleteMessage")}
                             {:else}
                                 {$_("deleteMessageForMe")}

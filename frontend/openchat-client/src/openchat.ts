@@ -1300,12 +1300,10 @@ export class OpenChat extends OpenChatAgentWorker {
         localMessageUpdates.markDeleted(messageId, this.user.userId);
 
         const recipients = [...chatStateStore.getProp(id, "userIds")];
-        const chatType = chat.kind;
         const userId = this.user.userId;
 
         rtcConnectionsManager.sendMessage(recipients, {
             kind: "remote_user_deleted_message",
-            chatType,
             id,
             messageId,
             userId,
@@ -1315,7 +1313,6 @@ export class OpenChat extends OpenChatAgentWorker {
         function _undelete() {
             rtcConnectionsManager.sendMessage(recipients, {
                 kind: "remote_user_undeleted_message",
-                chatType,
                 id,
                 messageId,
                 userId,
@@ -1498,7 +1495,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.sendRtcMessage([...this._liveState.currentChatUserIds], {
             kind: "remote_user_toggled_reaction",
-            chatType: chat.kind,
             id: chatId,
             messageId: messageId,
             reaction,
@@ -2413,7 +2409,6 @@ export class OpenChat extends OpenChatAgentWorker {
             const userIds = chatStateStore.getProp(chatId, "userIds");
             rtcConnectionsManager.sendMessage([...userIds], {
                 kind: "remote_user_removed_message",
-                chatType,
                 id: chatId,
                 messageId: messageId,
                 userId: userId,
@@ -2575,7 +2570,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
         rtcConnectionsManager.sendMessage([...chatStateStore.getProp(clientChat.id, "userIds")], {
             kind: "remote_user_sent_message",
-            chatType: clientChat.kind,
             id: clientChat.id,
             messageEvent: serialiseMessageForRtc(messageEvent),
             userId: this.user.userId,
@@ -3573,7 +3567,6 @@ export class OpenChat extends OpenChatAgentWorker {
         if (chat.kind === "direct_chat") {
             const rtc: WebRtcMessage = {
                 kind: "remote_user_read_message",
-                chatType: chat.kind,
                 messageId: messageId,
                 id: chat.id,
                 userId: this.user.userId,

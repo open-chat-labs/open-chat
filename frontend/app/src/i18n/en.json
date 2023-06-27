@@ -906,7 +906,9 @@
             "inviteUsers": "Sorry we were unable to invite these users"
         },
         "memberCount": "member(s)",
-        "channelCount": "channel(s)"
+        "channelCount": "channel(s)",
+        "noChannelSelected": "No channel selected",
+        "selectAChannel": "Select a channel or browse for other channels in this community."
     },
     "unableToSaveUserProfile": "Unable to save user profile"
 }

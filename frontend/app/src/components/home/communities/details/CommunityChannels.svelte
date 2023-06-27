@@ -5,17 +5,13 @@
     import { _ } from "svelte-i18n";
     import SectionHeader from "../../../SectionHeader.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../../HoverIcon.svelte";
-    import Button from "../../../Button.svelte";
-    import ButtonGroup from "../../..//ButtonGroup.svelte";
     import Search from "../../../Search.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { dummyCommunityChannels } from "../../../../stores/community";
     import { iconSize } from "../../../../stores/iconSize";
-    import { createEventDispatcher } from "svelte";
-    import { popRightPanelHistory } from "../../../../stores/rightPanel";
-
-    const dispatch = createEventDispatcher();
+    import { popRightPanelHistory, rightPanelHistory } from "../../../../stores/rightPanel";
 
     let searchTerm = "";
     let searching = false;
@@ -23,13 +19,21 @@
     function close() {
         popRightPanelHistory();
     }
+
+    function selectChannel() {
+        console.log("selectChannel");
+    }
 </script>
 
 <SectionHeader border flush shadow>
     <h4>{$_("communities.channels")}</h4>
     <span title={$_("back")} class="back" on:click={close}>
         <HoverIcon>
-            <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+            {#if $rightPanelHistory.length > 1}
+                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+            {:else}
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
+            {/if}
         </HoverIcon>
     </span>
 </SectionHeader>
@@ -49,7 +53,7 @@
         </div> -->
 <div class="channels">
     {#each $dummyCommunityChannels as channel}
-        <div class="channel">
+        <div class="channel" on:click={selectChannel}>
             <div class="details">
                 <div class="avatar">
                     <Avatar
@@ -65,10 +69,6 @@
                     </div>
                 </div>
             </div>
-            <ButtonGroup align={"end"}>
-                <Button tiny hollow>Preview</Button>
-                <Button tiny>Join</Button>
-            </ButtonGroup>
         </div>
     {/each}
 </div>
@@ -108,6 +108,7 @@
             padding: $sp4;
             background-color: var(--accent);
             background-color: var(--recommended-bg);
+            cursor: pointer;
 
             .details {
                 display: flex;
