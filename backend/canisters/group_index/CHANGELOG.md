@@ -5,7 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-## [[2.0.734](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.734-group_index)] - 2023-06-TBD
+### Changed
+
+- Fix `explore_groups` and `explore_communities` in edge case ([#3860](https://github.com/open-chat-labs/open-chat/pull/3860))
+
+## [[2.0.734](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.734-group_index)] - 2023-06-27
 
 ### Added
 
@@ -18,7 +22,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - New algo for ordering "hot" groups & communities ([#3820](https://github.com/open-chat-labs/open-chat/pull/3820))
 - Unified namespace for public groups and communities ([#3849](https://github.com/open-chat-labs/open-chat/pull/3849))
-- Fix `explore_groups` and `explore_communities` in edge case ([#3860](https://github.com/open-chat-labs/open-chat/pull/3860))
 
 ## [[2.0.723](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.723-group_index)] - 2023-06-16
 
