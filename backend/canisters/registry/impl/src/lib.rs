@@ -1,6 +1,7 @@
 use crate::model::tokens::Tokens;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use registry_canister::TokenDetails;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -43,6 +44,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
+            tokens: self.data.tokens.get_all().to_vec(),
             canister_ids: CanisterIds {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
@@ -77,6 +79,7 @@ pub struct Metrics {
     pub wasm_version: Version,
     pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
+    pub tokens: Vec<TokenDetails>,
     pub canister_ids: CanisterIds,
 }
 
