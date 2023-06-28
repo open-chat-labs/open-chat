@@ -61,6 +61,7 @@ import {
     SelectedInitialSuccess,
     SelectedUpdatesSuccess,
     MessagesByMessageIndexResponse,
+    ThreadPreviewsResponse,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -124,6 +125,7 @@ export {
     SelectedInitialSuccess as ApiSelectedInitialSuccess,
     SelectedUpdatesSuccess as ApiSelectedUpdatesSuccess,
     MessagesByMessageIndexResponse as ApiMessagesByMessageIndexResponse,
+    ThreadPreviewsResponse as ApiThreadPreviewsResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

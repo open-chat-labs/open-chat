@@ -56,6 +56,7 @@ import {
     leaveGroupResponse,
     deletedMessageResponse,
     undeleteMessageResponse,
+    threadPreviewsResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -111,6 +112,7 @@ import type {
     DeleteMessageResponse,
     DeletedGroupMessageResponse,
     UndeleteMessageResponse,
+    ThreadPreviewsResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -1009,6 +1011,22 @@ export class CommunityClient extends CandidService {
                 message_ids: [messageId],
             }),
             undeleteMessageResponse
+        );
+    }
+
+    threadPreviews(
+        chatId: ChannelIdentifier,
+        threadRootMessageIndexes: number[],
+        latestClientThreadUpdate: bigint | undefined
+    ): Promise<ThreadPreviewsResponse> {
+        return this.handleQueryResponse(
+            () =>
+                this.service.thread_previews({
+                    channel_id: BigInt(chatId.channelId),
+                    threads: new Uint32Array(threadRootMessageIndexes),
+                    latest_client_thread_update: apiOptional(identity, latestClientThreadUpdate),
+                }),
+            (resp) => threadPreviewsResponse(resp, chatId, latestClientThreadUpdate)
         );
     }
 

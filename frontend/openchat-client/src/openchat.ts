@@ -307,7 +307,6 @@ import {
     E8S_PER_TOKEN,
     CommunitySummary,
     CreateCommunityResponse,
-    JoinCommunityResponse,
     GroupSearchResponse,
     ChatPermissions,
     ChatIdentifier,
@@ -2452,7 +2451,6 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private removeMessage(
-        chatType: ChatSummary["kind"],
         chatId: ChatIdentifier,
         messageId: bigint,
         userId: string,
@@ -2518,13 +2516,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     this.onSendMessageSuccess(chatId, resp, msg, undefined);
                     trackEvent("forward_message");
                 } else {
-                    this.removeMessage(
-                        chat.kind,
-                        chatId,
-                        msg.messageId,
-                        this.user.userId,
-                        undefined
-                    );
+                    this.removeMessage(chatId, msg.messageId, this.user.userId, undefined);
                     failedMessagesStore.add({ chatId }, event);
                     this.dispatchEvent(
                         new SendMessageFailed(msg.content.kind === "crypto_content")
@@ -2532,13 +2524,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
             })
             .catch((err) => {
-                this.removeMessage(
-                    chat.kind,
-                    chatId,
-                    event.event.messageId,
-                    this.user.userId,
-                    undefined
-                );
+                this.removeMessage(chatId, event.event.messageId, this.user.userId, undefined);
                 failedMessagesStore.add({ chatId }, event);
                 this.dispatchEvent(new SendMessageFailed(msg.content.kind === "crypto_content"));
                 this._logger.error("Exception forwarding message", err);
@@ -2733,7 +2719,6 @@ export class OpenChat extends OpenChatAgentWorker {
                     }
                 } else {
                     this.removeMessage(
-                        chat.kind,
                         chatId,
                         msg.messageId,
                         this.user.userId,
@@ -2745,7 +2730,6 @@ export class OpenChat extends OpenChatAgentWorker {
             })
             .catch((err) => {
                 this.removeMessage(
-                    chat.kind,
                     chatId,
                     event.event.messageId,
                     this.user.userId,
@@ -2830,7 +2814,6 @@ export class OpenChat extends OpenChatAgentWorker {
                         }
                     } else {
                         this.removeMessage(
-                            chat.kind,
                             chatId,
                             msg.messageId,
                             this.user.userId,
@@ -2844,7 +2827,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 })
                 .catch((err) => {
                     this.removeMessage(
-                        chat.kind,
                         chatId,
                         event.event.messageId,
                         this.user.userId,
@@ -3076,7 +3058,6 @@ export class OpenChat extends OpenChatAgentWorker {
             this.handleWebRtcMessageInternal(
                 fromChatId,
                 parsedMsg,
-                selectedChat,
                 parsedMsg.threadRootMessageIndex === undefined ? events : threadEvents,
                 parsedMsg.threadRootMessageIndex
             );
@@ -3093,7 +3074,6 @@ export class OpenChat extends OpenChatAgentWorker {
     private handleWebRtcMessageInternal(
         fromChatId: ChatIdentifier,
         msg: WebRtcMessage,
-        chat: ChatSummary,
         events: EventWrapper<ChatEvent>[],
         threadRootMessageIndex: number | undefined
     ): void {
@@ -3114,13 +3094,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 localMessageUpdates.markDeleted(msg.messageId, msg.userId);
                 break;
             case "remote_user_removed_message":
-                this.removeMessage(
-                    chat.kind,
-                    fromChatId,
-                    msg.messageId,
-                    msg.userId,
-                    threadRootMessageIndex
-                );
+                this.removeMessage(fromChatId, msg.messageId, msg.userId, threadRootMessageIndex);
                 break;
             case "remote_user_undeleted_message":
                 localMessageUpdates.markUndeleted(msg.messageId);
@@ -3446,9 +3420,31 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     async threadPreviews(
-        threadsByChat: Record<string, [ThreadSyncDetails[], number | undefined]>
+        chatId: ChatIdentifier | undefined,
+        threadsByChat: ChatMap<ThreadSyncDetails[]>,
+        serverChatSummaries: ChatMap<ChatSummary>
     ): Promise<ThreadPreview[]> {
-        return this.sendRequest({ kind: "threadPreviews", threadsByChat });
+        if (chatId === undefined) return [];
+
+        const request: ChatMap<[ThreadSyncDetails[], number | undefined]> = threadsByChat
+            .entries()
+            .reduce((map, [chatId, threads]) => {
+                if (chatId.kind === "group_chat" || chatId.kind === "channel") {
+                    const latestEventIndex = serverChatSummaries.get(chatId)?.latestEventIndex;
+                    map.set(chatId, [threads, latestEventIndex]);
+                }
+                return map;
+            }, new ChatMap<[ThreadSyncDetails[], number | undefined]>());
+
+        return this.sendRequest({
+            kind: "threadPreviews",
+            threadsByChat: request.toMap(),
+        }).then((threads) => {
+            const events = threads.flatMap((t) => [t.rootMessage, ...t.latestReplies]);
+            const userIds = this.userIdsFromEvents(events);
+            this.getMissingUsers(userIds);
+            return threads;
+        });
     }
 
     getMissingUsers(userIds: string[] | Set<string>): Promise<UsersResponse> {

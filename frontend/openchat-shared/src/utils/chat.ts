@@ -42,9 +42,6 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 break;
             case "member_joined":
             case "member_left":
-            case "member_assumes_super_admin":
-            case "member_relinquishes_super_admin":
-            case "member_dismissed_as_super_admin":
                 userIds.add(e.event.userId);
                 break;
             case "name_changed":
@@ -71,9 +68,6 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 break;
             case "users_unblocked":
                 userIds.add(e.event.unblockedBy);
-                break;
-            case "ownership_transferred":
-                userIds.add(e.event.oldOwner);
                 break;
             case "message_pinned":
                 userIds.add(e.event.pinnedBy);

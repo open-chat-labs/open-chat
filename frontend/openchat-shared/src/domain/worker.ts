@@ -376,7 +376,7 @@ type GetUser = {
 };
 
 type GetThreadPreviews = {
-    threadsByChat: Record<string, [ThreadSyncDetails[], number | undefined]>;
+    threadsByChat: Map<string, [ThreadSyncDetails[], number | undefined]>;
     kind: "threadPreviews";
 };
 

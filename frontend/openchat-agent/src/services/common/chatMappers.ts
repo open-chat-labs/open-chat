@@ -135,6 +135,8 @@ import {
     DeleteMessageResponse,
     DeletedGroupMessageResponse,
     UndeleteMessageResponse,
+    ThreadPreview,
+    ThreadPreviewsResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -155,6 +157,8 @@ import type {
     ApiDeleteMessageResponse,
     ApiDeletedGroupMessageResponse,
     ApiUndeleteMessageResponse,
+    ApiThreadPreviewsResponse,
+    ApiThreadPreview,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -178,7 +182,9 @@ import type {
     ApiLeaveChannelResponse,
     ApiDeletedMessageResponse as ApiDeletedChannelMessageResponse,
     ApiUndeleteMessagesResponse as ApiUndeleteChannelMessageResponse,
+    ApiThreadPreviewsResponse as ApiChannelThreadPreviewsResponse,
 } from "../community/candid/idl";
+import { ReplicaNotUpToDateError } from "../error";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -1858,4 +1864,36 @@ export function undeleteMessageResponse(
         console.warn("UndeleteMessageResponse failed with: ", candid);
         return CommonResponses.failure;
     }
+}
+
+export function threadPreviewsResponse(
+    candid: ApiThreadPreviewsResponse | ApiChannelThreadPreviewsResponse,
+    chatId: ChatIdentifier,
+    latestClientThreadUpdate: bigint | undefined
+): ThreadPreviewsResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "thread_previews_success",
+            threads: candid.Success.threads.map((t) => threadPreview(chatId, t)),
+        };
+    }
+    if ("ReplicaNotUpToDate" in candid) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            candid.ReplicaNotUpToDate,
+            latestClientThreadUpdate ?? BigInt(-1)
+        );
+    }
+    console.warn("ThreadPreviewsResponse failed with: ", candid);
+    return CommonResponses.failure;
+}
+
+export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview): ThreadPreview {
+    return {
+        chatId,
+        latestReplies: candid.latest_replies
+            .map(messageEvent)
+            .sort((e1, e2) => e1.index - e2.index),
+        totalReplies: candid.total_replies,
+        rootMessage: messageEvent(candid.root_message),
+    };
 }

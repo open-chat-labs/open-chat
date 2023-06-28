@@ -1976,34 +1976,55 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async threadPreviews(
-        threadsByChat: Record<string, [ThreadSyncDetails[], number | undefined]>
+        threadsByChat: Map<string, [ThreadSyncDetails[], number | undefined]>
     ): Promise<ThreadPreview[]> {
         function latestMessageTimestamp(messages: EventWrapper<Message>[]): bigint {
             return messages[messages.length - 1]?.timestamp ?? BigInt(0);
         }
 
         return Promise.all(
-            Object.entries(threadsByChat).map(
-                ([chatId, [threadSyncs, latestClientMainEventIndex]]) => {
+            ChatMap.fromMap(threadsByChat)
+                .entries()
+                .map(([chatId, [threadSyncs, latestClientMainEventIndex]]) => {
                     const latestClientThreadUpdate = threadSyncs.reduce(
                         (curr, next) => (next.lastUpdated > curr ? next.lastUpdated : curr),
                         BigInt(0)
                     );
 
-                    return this.getGroupClient(chatId)
-                        .threadPreviews(
-                            threadSyncs.map((t) => t.threadRootMessageIndex),
-                            latestClientThreadUpdate
-                        )
-                        .then(
-                            (response) =>
-                                [response, latestClientMainEventIndex] as [
-                                    ThreadPreviewsResponse,
-                                    number | undefined
-                                ]
-                        );
-                }
-            )
+                    switch (chatId.kind) {
+                        case "group_chat":
+                            return this.getGroupClient(chatId.groupId)
+                                .threadPreviews(
+                                    threadSyncs.map((t) => t.threadRootMessageIndex),
+                                    latestClientThreadUpdate
+                                )
+                                .then(
+                                    (response) =>
+                                        [response, latestClientMainEventIndex] as [
+                                            ThreadPreviewsResponse,
+                                            number | undefined
+                                        ]
+                                );
+
+                        case "channel":
+                            return this.communityClient(chatId.communityId)
+                                .threadPreviews(
+                                    chatId,
+                                    threadSyncs.map((t) => t.threadRootMessageIndex),
+                                    latestClientThreadUpdate
+                                )
+                                .then(
+                                    (response) =>
+                                        [response, latestClientMainEventIndex] as [
+                                            ThreadPreviewsResponse,
+                                            number | undefined
+                                        ]
+                                );
+
+                        case "direct_chat":
+                            throw new Error("direct chat thread previews not supported");
+                    }
+                })
         ).then((responses) =>
             Promise.all(
                 responses.map(([r, latestClientMainEventIndex]) => {

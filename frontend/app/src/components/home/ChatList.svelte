@@ -78,6 +78,8 @@
         return false;
     }
 
+    // TODO - we need to reset the view if the selected chat changes
+
     $: chats =
         searchTerm !== ""
             ? $chatSummariesListStore.filter(chatMatchesSearch)

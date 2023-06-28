@@ -1717,7 +1717,7 @@ export type ResetInviteCodeSuccess = {
     code: string;
 };
 
-export type ThreadPreviewsResponse = CallerNotInGroup | ThreadPreviewsSuccess;
+export type ThreadPreviewsResponse = Failure | ThreadPreviewsSuccess;
 
 export type ThreadPreviewsSuccess = {
     kind: "thread_previews_success";

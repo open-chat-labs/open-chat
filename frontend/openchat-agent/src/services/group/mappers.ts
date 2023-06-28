@@ -5,7 +5,6 @@ import type {
     ApiChangeRoleResponse,
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
-    ApiUndeleteMessageResponse,
     ApiRole,
     ApiMessagesByMessageIndexResponse,
     ApiMessageEventWrapper,
@@ -15,8 +14,6 @@ import type {
     ApiEnableInviteCodeResponse,
     ApiDisableInviteCodeResponse,
     ApiResetInviteCodeResponse,
-    ApiThreadPreviewsResponse,
-    ApiThreadPreview,
     ApiRegisterPollVoteResponse,
     ApiRegisterProposalVoteResponse,
     ApiGroupRules,
@@ -38,7 +35,6 @@ import {
     GroupChatEvent,
     SendMessageResponse,
     RemoveMemberResponse,
-    UndeleteMessageResponse,
     BlockUserResponse,
     ChangeRoleResponse,
     UnblockUserResponse,
@@ -50,8 +46,6 @@ import {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     GroupInviteCodeChange,
-    ThreadPreviewsResponse,
-    ThreadPreview,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
     AccessRules,
@@ -658,45 +652,6 @@ export function disableInviteCodeResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiDisableInviteCodeResponse type received",
-        candid
-    );
-}
-
-export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview): ThreadPreview {
-    return {
-        chatId,
-        latestReplies: candid.latest_replies
-            .map(messageEvent)
-            .sort((e1, e2) => e1.index - e2.index),
-        totalReplies: candid.total_replies,
-        rootMessage: messageEvent(candid.root_message),
-    };
-}
-
-export function threadPreviewsResponse(
-    candid: ApiThreadPreviewsResponse,
-    chatId: ChatIdentifier,
-    latestClientThreadUpdate: bigint | undefined
-): ThreadPreviewsResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "thread_previews_success",
-            threads: candid.Success.threads.map((t) => threadPreview(chatId, t)),
-        };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return {
-            kind: "caller_not_in_group",
-        };
-    }
-    if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byTimestamp(
-            candid.ReplicaNotUpToDate,
-            latestClientThreadUpdate ?? BigInt(-1)
-        );
-    }
-    throw new UnsupportedValueError(
-        "Unexpected Group.ApiThreadPreviewsResponse type received",
         candid
     );
 }
