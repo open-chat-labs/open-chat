@@ -4139,6 +4139,7 @@ dependencies = [
  "online_users_canister",
  "proposals_bot_canister",
  "rand",
+ "registry_canister",
  "serde",
  "serde_bytes",
  "serial_test",

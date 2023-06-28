@@ -15,7 +15,7 @@ fn updates_impl(args: Args, state: &RuntimeState) -> Response {
     if args.since.map_or(true, |since| since < last_updated) {
         Success(SuccessResult {
             last_updated,
-            token_details: Some(state.data.tokens.get_all()),
+            token_details: Some(state.data.tokens.get_all().to_vec()),
         })
     } else {
         SuccessNoUpdates
