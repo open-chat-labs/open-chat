@@ -6,7 +6,6 @@ use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, Tra
 pub async fn process_transaction(
     transaction: types::sns::PendingCryptoTransaction,
     sender: CanisterId,
-    ledger_canister_id: CanisterId,
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
     let from = Account::from(sender);
 
@@ -22,12 +21,13 @@ pub async fn process_transaction(
     let transaction_hash = transaction_hash(from, &args);
 
     let client = ic_icrc1_client::ICRC1Client {
-        ledger_canister_id,
+        ledger_canister_id: transaction.ledger,
         runtime: ic_icrc1_client_cdk::CdkRuntime,
     };
 
     match client.transfer(args).await {
         Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::SNS(types::sns::CompletedCryptoTransaction {
+            // ledger: transaction.ledger,
             token: transaction.token,
             amount: transaction.amount,
             fee: transaction.fee,
@@ -49,6 +49,7 @@ pub async fn process_transaction(
     }
     .map_err(|error| {
         FailedCryptoTransaction::SNS(types::sns::FailedCryptoTransaction {
+            // ledger: transaction.ledger,
             token: transaction.token,
             amount: transaction.amount,
             fee: transaction.fee,
