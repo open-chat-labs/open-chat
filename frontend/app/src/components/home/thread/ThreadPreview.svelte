@@ -99,7 +99,7 @@
             </div>
             <div class="details">
                 <h4 class="title">
-                    {chat.kind === "group_chat" && chat.name}
+                    {(chat.kind === "group_chat" || chat.kind === "channel") && chat.name}
                 </h4>
                 <div class="root-msg">
                     <Markdown
