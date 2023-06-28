@@ -4,6 +4,7 @@ use types::{CommunityCanisterCommunitySummaryUpdates, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub invite_code: Option<u64>,
     pub updates_since: TimestampMillis,
 }
 

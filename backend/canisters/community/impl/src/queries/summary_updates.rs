@@ -23,11 +23,12 @@ fn c2c_summary_updates(args: Args) -> Response {
 
 fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
-    let member = state.data.members.get(caller);
 
-    if member.is_none() && !state.data.is_public {
+    if !state.data.is_accessible(caller, args.invite_code) {
         return PrivateCommunity;
     }
+
+    let member = state.data.members.get(caller);
 
     let (channels_with_updates, channels_removed) = if let Some(m) = member {
         let channels_with_updates: Vec<_> = m

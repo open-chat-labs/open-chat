@@ -16,5 +16,6 @@ pub enum Response {
     ChannelNotFound,
     UserNotInChannel,
     NotAuthorized,
+    ChannelIsDefault,
     AlreadyPrivate,
 }

@@ -4,6 +4,7 @@ use types::{AccessRules, CommunityMember, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub invite_code: Option<u64>,
     pub updates_since: TimestampMillis,
 }
 
@@ -12,7 +13,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     SuccessNoUpdates,
-    UserNotInCommunity,
+    PrivateCommunity,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

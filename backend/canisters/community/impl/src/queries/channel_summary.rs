@@ -23,7 +23,7 @@ fn summary_impl(args: Args, state: &RuntimeState) -> Response {
             return PrivateChannel;
         }
 
-        Success(channel.summary(channel_member, state.env.now()))
+        Success(channel.summary(member.is_some(), channel_member, state.env.now()))
     } else {
         ChannelNotFound
     }

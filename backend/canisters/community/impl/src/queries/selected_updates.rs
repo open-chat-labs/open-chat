@@ -11,11 +11,12 @@ fn selected_updates(args: Args) -> Response {
 
 fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
-    let data = &state.data;
 
-    if data.members.get(caller).is_none() {
-        return UserNotInCommunity;
+    if !state.data.is_accessible(caller, args.invite_code) {
+        return PrivateCommunity;
     }
+
+    let data = &state.data;
 
     // Short circuit prior to calling `ic0.time()` so that query caching works effectively.
     let invited_users_last_updated = data.invited_users.last_updated();
