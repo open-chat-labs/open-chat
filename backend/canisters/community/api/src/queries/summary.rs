@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CommunityCanisterCommunitySummary, CommunityMatch};
+use types::CommunityCanisterCommunitySummary;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -12,6 +12,5 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(CommunityCanisterCommunitySummary),
-    Invited(CommunityMatch),
     PrivateCommunity,
 }

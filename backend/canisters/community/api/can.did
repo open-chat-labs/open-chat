@@ -169,10 +169,15 @@ type SelectedChannelUpdatesResponse =
         ChannelNotFound;
     };
 
+type SelectedInitialArgs =
+    record {
+        invite_code: opt nat64;
+    };
+
 type SelectedInitialResponse =
     variant {
         Success: SelectedInitialSuccess;
-        UserNotInCommunity;
+        PrivateCommunity;
     };
 
 type SelectedInitialSuccess = 
@@ -187,6 +192,7 @@ type SelectedInitialSuccess =
 
 type SelectedUpdatesArgs =
     record {
+        invite_code: opt nat64;
         updates_since: TimestampMillis;
     };
 
@@ -194,7 +200,7 @@ type SelectedUpdatesResponse =
     variant {
         Success: SelectedUpdatesSuccess;
         SuccessNoUpdates;
-        UserNotInCommunity;
+        PrivateCommunity;
     };
 
 type SelectedUpdatesSuccess = 
@@ -229,7 +235,6 @@ type SummaryArgs =
 type SummaryResponse =
     variant {
         Success: CommunityCanisterCommunitySummary;
-        Invited: CommunityMatch;
         PrivateCommunity;
     };
 
@@ -251,6 +256,7 @@ type ChannelSummaryUpdatesResponse =
 
 type SummaryUpdatesArgs =
     record {
+        invite_code: opt nat64;
         updates_since: TimestampMillis;
     };
 
@@ -625,6 +631,7 @@ type MakeChannelPrivateResponse =
         ChannelNotFound;
         UserNotInChannel;
         NotAuthorized;
+        ChannelIsDefault;
         AlreadyPrivate;
     };
 
@@ -637,10 +644,18 @@ type ManageDefaultChannelsArgs =
 type ManageDefaultChannelsResponse =
     variant {
         Success;
+        PartialSucesss: FailedChannels;
+        Failed: FailedChannels;
         CommunityFrozen;
         UserNotInCommunity;
         UserSuspended;
         NotAuthorized;
+    };
+
+type FailedChannels =
+    record {
+        not_found: vec ChannelId;
+        private: vec ChannelId;
     };
 
 type MakePrivateResponse =
@@ -960,7 +975,7 @@ service: {
     search_channel: (SearchChannelArgs) -> (SearchChannelResponse) query;
     selected_channel_initial: (SelectedChannelInitialArgs) -> (SelectedChannelInitialResponse) query;
     selected_channel_updates: (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesResponse) query;
-    selected_initial: (EmptyArgs) -> (SelectedInitialResponse) query;
+    selected_initial: (SelectedInitialArgs) -> (SelectedInitialResponse) query;
     selected_updates: (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;

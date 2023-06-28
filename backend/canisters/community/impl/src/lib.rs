@@ -103,14 +103,13 @@ impl RuntimeState {
 
             (channels, Some(membership))
         } else {
-            // Return all public default channels
+            // Return all default channels
             let channels: Vec<_> = self
                 .data
                 .channels
                 .default_channels()
                 .iter()
-                .filter(|c| c.chat.is_public)
-                .map(|c| c.summary(None, now))
+                .map(|c| c.summary(false, None, now))
                 .collect();
 
             (channels, None)
