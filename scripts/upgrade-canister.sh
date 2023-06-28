@@ -43,7 +43,7 @@ cargo run \
   --proposals-bot $PROPOSALS_BOT_CANISTER_ID \
   --storage-index $STORAGE_INDEX_CANISTER_ID \
   --cycles-dispenser $CYCLES_DISPENSER_CANISTER_ID \
-  --registry $REGISTRY \
+  --registry $REGISTRY_CANISTER_ID \
   --market-maker $MARKET_MAKER_CANISTER_ID \
   --canister-to-upgrade $CANISTER_NAME \
   --version $VERSION \

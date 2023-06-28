@@ -1,11 +1,10 @@
-use candid::Principal;
-use registry_canister::token_details::TokenDetails;
+use registry_canister::updates::TokenDetails;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use types::{CanisterId, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Tokens {
+    last_updated: TimestampMillis,
     tokens: Vec<TokenDetailsInternal>,
 }
 
@@ -18,6 +17,7 @@ impl Tokens {
         decimals: u8,
         fee: u128,
         info_url: Option<String>,
+        how_to_buy_url: Option<String>,
         transaction_url_format: Option<String>,
         now: TimestampMillis,
     ) -> bool {
@@ -31,20 +31,22 @@ impl Tokens {
                 decimals,
                 fee,
                 info_url,
+                how_to_buy_url,
                 transaction_url_format,
                 added: now,
                 last_updated: now,
             });
+            self.last_updated = now;
             true
         }
     }
 
-    pub fn get(&self, filter: Option<HashSet<Principal>>) -> Vec<TokenDetails> {
-        self.tokens
-            .iter()
-            .filter(|t| filter.as_ref().map_or(true, |l| l.contains(&t.ledger_canister_id)))
-            .map(|t| t.into())
-            .collect()
+    pub fn last_updated(&self) -> TimestampMillis {
+        self.last_updated
+    }
+
+    pub fn get_all(&self) -> Vec<TokenDetails> {
+        self.tokens.iter().map(|t| t.into()).collect()
     }
 
     pub fn exists(&self, ledger_canister_id: CanisterId) -> bool {
@@ -66,11 +68,13 @@ struct TokenDetailsInternal {
     pub fee: u128,
     #[serde(rename = "i")]
     pub info_url: Option<String>,
+    #[serde(rename = "h")]
+    pub how_to_buy_url: Option<String>,
     #[serde(rename = "t")]
     pub transaction_url_format: Option<String>,
     #[serde(rename = "a")]
     pub added: TimestampMillis,
-    #[serde(rename = "up")]
+    #[serde(rename = "u")]
     pub last_updated: TimestampMillis,
 }
 
@@ -83,6 +87,7 @@ impl From<&TokenDetailsInternal> for TokenDetails {
             decimals: value.decimals,
             fee: value.fee,
             info_url: value.info_url.clone(),
+            how_to_buy_url: value.how_to_buy_url.clone(),
             transaction_url_format: value.transaction_url_format.clone(),
             last_updated: value.last_updated,
         }

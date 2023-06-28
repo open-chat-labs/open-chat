@@ -1,15 +1,17 @@
 import "../../../libraries/types/can.did";
 
-type TokenDetailsArgs =
+type UpdatesArgs =
     record {
-        ledger_canister_ids: opt vec CanisterId;
+        since: opt TimestampMillis;
     };
 
-type TokenDetailsResponse =
+type UpdatesResponse =
     variant {
         Success: record {
-            token_details: vec TokenDetails;
+            last_updated: TimestampMillis;
+            token_details: opt vec TokenDetails;
         };
+        SuccessNoUpdates;
     };
 
 type TokenDetails =
@@ -20,18 +22,11 @@ type TokenDetails =
         decimals: nat8;
         fee: nat;
         info_url: opt text;
+        how_to_buy_url: opt text;
         transaction_url_format: opt text;
         last_updated: TimestampMillis;
     };
 
-type VersionResponse =
-    variant {
-        Success: record {
-            version: nat64;
-        };
-    };
-
 service : {
-    token_details: (TokenDetailsArgs) -> (TokenDetailsResponse) query;
-    version: (EmptyArgs) -> (VersionResponse) query;
+    updates: (UpdatesArgs) -> (UpdatesResponse) query;
 }

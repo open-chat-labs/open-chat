@@ -4,11 +4,14 @@ use std::fmt::{Display, Formatter};
 
 mod lifecycle;
 mod queries;
-mod updates;
 
+// Need to give an alias to avoid clashing with the 'crate::queries::updates' module
+#[path = "updates/mod.rs"]
+mod _updates;
+
+pub use _updates::*;
 pub use lifecycle::*;
 pub use queries::*;
-pub use updates::*;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 // TODO uncomment the line below once candid is aware of the `rename_all` attribute

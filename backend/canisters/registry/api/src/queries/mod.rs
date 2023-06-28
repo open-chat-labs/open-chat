@@ -1,2 +1,1 @@
-pub mod token_details;
-pub mod version;
+pub mod updates;

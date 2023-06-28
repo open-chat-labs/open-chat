@@ -26,6 +26,7 @@ async fn add_token(args: Args) -> Response {
                 decimals,
                 fee as u128,
                 args.info_url,
+                args.how_to_buy_url,
                 args.transaction_url_format,
                 now,
             ) {
