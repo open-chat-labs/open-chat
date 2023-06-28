@@ -43,7 +43,6 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            version: self.data.version,
             canister_ids: CanisterIds {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
@@ -56,7 +55,6 @@ struct Data {
     governance_principals: HashSet<Principal>,
     cycles_dispenser_canister_id: CanisterId,
     tokens: Tokens,
-    version: u64,
     test_mode: bool,
 }
 
@@ -66,7 +64,6 @@ impl Data {
             governance_principals,
             cycles_dispenser_canister_id,
             tokens: Tokens::default(),
-            version: 0,
             test_mode,
         }
     }
@@ -80,7 +77,6 @@ pub struct Metrics {
     pub wasm_version: Version,
     pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
-    pub version: u64,
     pub canister_ids: CanisterIds,
 }
 

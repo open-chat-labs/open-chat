@@ -30,7 +30,6 @@ async fn add_token(args: Args) -> Response {
                 args.transaction_url_format,
                 now,
             ) {
-                state.data.version += 1;
                 Success
             } else {
                 AlreadyAdded
