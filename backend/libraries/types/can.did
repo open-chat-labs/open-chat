@@ -209,14 +209,10 @@ type ChatEvent =
         GroupNameChanged: GroupNameChanged;
         GroupDescriptionChanged: GroupDescriptionChanged;
         AvatarChanged: AvatarChanged;
-        OwnershipTransferred: OwnershipTransferred;
         ParticipantsAdded: ParticipantsAdded;
         ParticipantsRemoved: ParticipantsRemoved;
         ParticipantJoined: ParticipantJoined;
         ParticipantLeft: ParticipantLeft;
-        ParticipantAssumesSuperAdmin: ParticipantAssumesSuperAdmin;
-        ParticipantDismissedAsSuperAdmin: ParticipantDismissedAsSuperAdmin;
-        ParticipantRelinquishesSuperAdmin: ParticipantRelinquishesSuperAdmin;
         RoleChanged: RoleChanged;
         UsersBlocked: UsersBlocked;
         UsersUnblocked: UsersUnblocked;
@@ -790,21 +786,6 @@ type ParticipantJoined =
     };
 
 type ParticipantLeft =
-    record {
-        user_id: UserId;
-    };
-
-type ParticipantAssumesSuperAdmin =
-    record {
-        user_id: UserId;
-    };
-
-type ParticipantRelinquishesSuperAdmin =
-    record {
-        user_id: UserId;
-    };
-
-type ParticipantDismissedAsSuperAdmin =
     record {
         user_id: UserId;
     };
