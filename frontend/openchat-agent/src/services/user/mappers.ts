@@ -4,7 +4,6 @@ import type {
     ApiSendMessageResponse,
     ApiBlockUserResponse,
     ApiUnblockUserResponse,
-    ApiLeaveGroupResponse,
     ApiMarkReadResponse,
     ApiSetAvatarResponse,
     ApiDirectChatEvent,
@@ -60,7 +59,6 @@ import {
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
-    LeaveGroupResponse,
     MarkReadResponse,
     SetAvatarResponse,
     DeleteMessageResponse,
@@ -189,14 +187,10 @@ export function messageMatch(candid: ApiMessageMatch, chatId: ChatIdentifier): M
 export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteMessageResponse {
     if ("Success" in candid) {
         return "success";
+    } else {
+        console.warn("Unexpected ApiDeleteMessageResponse type received", candid);
+        return "failure";
     }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
 export function undeleteMessageResponse(
@@ -204,21 +198,17 @@ export function undeleteMessageResponse(
 ): UndeleteMessageResponse {
     if ("Success" in candid) {
         if (candid.Success.messages.length == 0) {
-            return { kind: "internal_error" };
+            return CommonResponses.failure;
         } else {
             return {
                 kind: "success",
                 message: message(candid.Success.messages[0]),
             };
         }
+    } else {
+        console.warn("Unexpected ApiUndeleteMessageResponse type received", candid);
+        return CommonResponses.failure;
     }
-    if ("ChatNotFound" in candid) {
-        return { kind: "chat_not_found" };
-    }
-    if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiUndeleteMessageResponse type received", candid);
 }
 
 export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {
@@ -241,34 +231,6 @@ export function markReadResponse(_candid: ApiMarkReadResponse): MarkReadResponse
     // currently only one success type which makes mapping this a bit redundant but I'll
     // leave the pattern in place in case we have other return types in the future.
     return "success";
-}
-
-export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "not_in_group";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("GroupNotFound" in candid) {
-        return "group_not_found";
-    }
-    if ("GroupNotPublic" in candid) {
-        return "group_not_public";
-    }
-    if ("OwnerCannotLeave" in candid) {
-        return "owner_cannot_leave";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
 }
 
 export function blockResponse(_candid: ApiBlockUserResponse): BlockUserResponse {

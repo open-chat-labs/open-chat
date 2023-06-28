@@ -92,7 +92,7 @@
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
-    let groupChat = chatType === "group_chat";
+    let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = false;
     let debug = false;
     let viewProfile = false;
@@ -385,7 +385,7 @@
     <ViewUserProfile
         alignTo={alignProfileTo}
         userId={msg.sender}
-        chatButton={groupChat}
+        chatButton={multiUserChat}
         on:openDirectChat={chatWithUser}
         on:close={closeUserProfile} />
 {/if}
@@ -541,7 +541,7 @@
                     {canQuoteReply}
                     {threadRootMessage}
                     {canStartThread}
-                    {groupChat}
+                    {multiUserChat}
                     {msg}
                     canForward={client.canForward(msg.content)}
                     {canBlockUser}

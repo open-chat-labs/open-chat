@@ -25,6 +25,7 @@ echo "Downloading wasms"
 ./download-canister-wasm.sh online_users $WASM_SRC || exit 1
 ./download-canister-wasm.sh proposal_validation $WASM_SRC || exit 1
 ./download-canister-wasm.sh proposals_bot $WASM_SRC || exit 1
+./download-canister-wasm.sh registry $WASM_SRC || exit 1
 ./download-canister-wasm.sh storage_bucket $WASM_SRC || exit 1
 ./download-canister-wasm.sh storage_index $WASM_SRC || exit 1
 ./download-canister-wasm.sh user $WASM_SRC || exit 1

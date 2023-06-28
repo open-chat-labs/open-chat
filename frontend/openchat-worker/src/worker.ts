@@ -543,7 +543,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "joinCommunity":
                 agent
-                    .joinCommunity(payload.communityId)
+                    .joinCommunity(payload.id)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1413,40 +1413,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "deleteChannelMessages":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .deleteMessages(
-                        payload.chatId,
-                        payload.messageIds,
-                        payload.threadRootMessageIndex,
-                        payload.asPlatformModerator
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "deleteChannelMessage":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .deleteMessage(
-                        payload.chatId,
-                        payload.messageId,
-                        payload.sender,
-                        payload.threadRootMessageIndex
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "disableCommunityInviteCode":
                 agent
                     .communityClient(payload.communityId)
@@ -1475,18 +1441,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 agent
                     .communityClient(payload.chatId.communityId)
                     .joinChannel(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "leaveChannel":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .leaveChannel(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1625,22 +1579,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "undeleteChannelMessages":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .undeleteMessages(
-                        payload.chatId,
-                        payload.messageIds,
-                        payload.threadRootMessageIndex
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "updateCommunity":
                 agent
                     .communityClient(payload.communityId)
@@ -1675,6 +1613,42 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "getCommunitySummary":
                 agent
                     .getCommunitySummary(payload.communityId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "exploreChannels":
+                agent
+                    .communityClient(payload.id.communityId)
+                    .exploreChannels(payload.searchTerm, payload.pageSize, payload.pageIndex)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "getCommunityDetails":
+                agent
+                    .communityClient(payload.id.communityId)
+                    .getCommunityDetails(payload.id, payload.lastUpdated)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "getCommunityDetailsUpdates":
+                agent
+                    .communityClient(payload.id.communityId)
+                    .getCommunityDetailsUpdates(payload.id, payload.previous)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

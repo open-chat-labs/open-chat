@@ -22,6 +22,7 @@ mod notification_tests;
 mod platform_moderator_tests;
 mod poll_tests;
 mod register_user_tests;
+mod registry_tests;
 mod remove_from_group_tests;
 mod rng;
 mod send_crypto_tests;
@@ -67,6 +68,7 @@ pub struct CanisterIds {
     pub proposals_bot: CanisterId,
     pub storage_index: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub registry: CanisterId,
     pub icp_ledger: CanisterId,
     pub cycles_minting_canister: CanisterId,
 }

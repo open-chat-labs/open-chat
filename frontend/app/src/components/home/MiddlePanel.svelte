@@ -56,7 +56,6 @@
             on:chatWith
             on:joinGroup
             on:upgrade
-            on:cancelPreview
             on:showPinned
             on:toggleMuteNotifications
             on:goToMessageIndex

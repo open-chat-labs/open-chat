@@ -1041,6 +1041,7 @@ dependencies = [
  "notifications_index_canister_client",
  "online_users_canister",
  "proposals_bot_canister",
+ "registry_canister",
  "storage_index_canister",
  "storage_index_canister_client",
  "tokio",
@@ -1126,6 +1127,7 @@ dependencies = [
  "notifications_index_canister_client",
  "online_users_canister",
  "proposals_bot_canister",
+ "registry_canister",
  "storage_index_canister",
  "storage_index_canister_client",
  "tokio",
@@ -4137,6 +4139,7 @@ dependencies = [
  "online_users_canister",
  "proposals_bot_canister",
  "rand",
+ "registry_canister",
  "serde",
  "serde_bytes",
  "serial_test",
@@ -5865,6 +5868,55 @@ dependencies = [
  "serde",
  "serde_cbor",
  "url",
+]
+
+[[package]]
+name = "registry_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "human_readable",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "registry_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-agent",
+ "registry_canister",
+ "types",
+]
+
+[[package]]
+name = "registry_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "futures",
+ "http_request",
+ "human_readable",
+ "ic-cdk 0.8.1",
+ "ic-cdk-macros",
+ "ic-cdk-timers",
+ "ic-icrc1",
+ "ic-icrc1-client",
+ "ic-icrc1-client-cdk",
+ "ic-stable-structures",
+ "registry_canister",
+ "serde",
+ "serializer",
+ "tracing",
+ "types",
+ "utils",
 ]
 
 [[package]]

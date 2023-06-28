@@ -81,6 +81,7 @@
     const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
+    let candidateCommunityRules: AccessRules = defaultAccessRules;
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -97,8 +98,9 @@
 
     type ConfirmLeaveEvent = {
         kind: "leave";
-        chatId: GroupChatIdentifier;
+        chatId: MultiUserChatIdentifier;
         chatType: ChatType;
+        level: Level;
     };
 
     type ConfirmDeleteEvent = {
@@ -156,6 +158,7 @@
     $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
     $: selectedCommunityId = client.selectedCommunityId;
+    $: currentCommunityRules = client.currentCommunityRules;
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -493,7 +496,7 @@
 
         switch (confirmActionEvent.kind) {
             case "leave":
-                return $_("confirmLeaveGroup");
+                return interpolateLevel("confirmLeaveGroup", confirmActionEvent.level, true);
             case "leave_community":
                 return $_("communities.leaveMessage");
             case "delete_community":
@@ -521,7 +524,7 @@
     function doConfirmAction(confirmActionEvent: ConfirmActionEvent): Promise<void> {
         switch (confirmActionEvent.kind) {
             case "leave":
-                return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.chatType);
+                return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.level);
             case "leave_community":
                 return client.leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
@@ -557,15 +560,17 @@
         });
     }
 
-    function leaveGroup(chatId: GroupChatIdentifier, chatType: ChatType): Promise<void> {
+    function leaveGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
         page("/");
 
         client.leaveGroup(chatId).then((resp) => {
             if (resp !== "success") {
                 if (resp === "owner_cannot_leave") {
-                    toastStore.showFailureToast("ownerCantLeave");
+                    toastStore.showFailureToast(interpolateLevel("ownerCantLeave", level, true));
                 } else {
-                    toastStore.showFailureToast("failedToLeaveGroup");
+                    toastStore.showFailureToast(
+                        interpolateLevel("failedToLeaveGroup", level, true)
+                    );
                 }
                 page(routeForChatIdentifier(chatId));
             }
@@ -764,17 +769,6 @@
             .catch(() => (joining = undefined));
     }
 
-    function cancelPreview(ev: CustomEvent<GroupChatSummary>) {
-        let chat = ev.detail;
-        page("/");
-        tick().then(() => {
-            client.removeChat(chat.id);
-            if (!chat.public) {
-                client.declineInvitation(chat.id);
-            }
-        });
-    }
-
     function upgrade() {
         showUpgrade = true;
     }
@@ -955,13 +949,15 @@
     }
 
     function createCommunity() {
-        modal = ModalType.EditCommunity;
         candidateCommunity = createCandidateCommunity("");
+        candidateCommunityRules = defaultAccessRules;
+        modal = ModalType.EditCommunity;
     }
 
     function editCommunity(ev: CustomEvent<CommunitySummary>) {
-        modal = ModalType.EditCommunity;
         candidateCommunity = ev.detail;
+        candidateCommunityRules = $currentCommunityRules ?? defaultAccessRules;
+        modal = ModalType.EditCommunity;
     }
 
     $: bgHeight = $dimensions.height * 0.9;
@@ -1008,6 +1004,7 @@
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:newChannel={newChannel}
+            on:editCommunity={editCommunity}
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
             on:loadMessage={loadMessage} />
@@ -1028,7 +1025,6 @@
             on:showProposalFilters={showProposalFilters}
             on:showGroupMembers={showGroupMembers}
             on:joinGroup={joinGroup}
-            on:cancelPreview={cancelPreview}
             on:upgrade={upgrade}
             on:showPinned={showPinned}
             on:toggleMuteNotifications={toggleMuteNotifications}
@@ -1114,7 +1110,7 @@
             <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
         {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}
             <EditCommunity
-                originalRules={defaultAccessRules}
+                originalRules={candidateCommunityRules}
                 original={candidateCommunity}
                 on:close={closeModal} />
         {:else if modal === ModalType.Wallet}

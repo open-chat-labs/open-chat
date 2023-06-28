@@ -526,7 +526,6 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'invited_by' : IDL.Opt(UserId),
   });
-  const ParticipantAssumesSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupDescriptionChanged = IDL.Record({
     'new_description' : IDL.Text,
     'previous_description' : IDL.Text,
@@ -558,7 +557,6 @@ export const idlFactory = ({ IDL }) => {
     'user_ids' : IDL.Vec(UserId),
     'removed_by' : UserId,
   });
-  const ParticipantRelinquishesSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupVisibilityChanged = IDL.Record({
     'changed_by' : UserId,
     'now_public' : IDL.Bool,
@@ -642,7 +640,6 @@ export const idlFactory = ({ IDL }) => {
     'enabled' : IDL.Bool,
     'prev_enabled' : IDL.Bool,
   });
-  const ParticipantDismissedAsSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupNameChanged = IDL.Record({
     'changed_by' : UserId,
     'new_name' : IDL.Text,
@@ -672,10 +669,6 @@ export const idlFactory = ({ IDL }) => {
     'new_ttl' : IDL.Opt(Milliseconds),
     'updated_by' : UserId,
   });
-  const OwnershipTransferred = IDL.Record({
-    'old_owner' : UserId,
-    'new_owner' : UserId,
-  });
   const DirectChatCreated = IDL.Record({});
   const AvatarChanged = IDL.Record({
     'changed_by' : UserId,
@@ -690,7 +683,6 @@ export const idlFactory = ({ IDL }) => {
   const ChatEvent = IDL.Variant({
     'Empty' : IDL.Null,
     'ParticipantJoined' : ParticipantJoined,
-    'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin,
     'GroupDescriptionChanged' : GroupDescriptionChanged,
     'GroupChatCreated' : GroupChatCreated,
     'MessagePinned' : MessagePinned,
@@ -698,7 +690,6 @@ export const idlFactory = ({ IDL }) => {
     'UsersBlocked' : UsersBlocked,
     'MessageUnpinned' : MessageUnpinned,
     'ParticipantsRemoved' : ParticipantsRemoved,
-    'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin,
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
@@ -708,12 +699,10 @@ export const idlFactory = ({ IDL }) => {
     'ChatUnfrozen' : ChatUnfrozen,
     'ParticipantLeft' : ParticipantLeft,
     'GroupRulesChanged' : GroupRulesChanged,
-    'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
     'GroupGateUpdated' : GroupGateUpdated,
     'RoleChanged' : RoleChanged,
     'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated,
-    'OwnershipTransferred' : OwnershipTransferred,
     'DirectChatCreated' : DirectChatCreated,
     'AvatarChanged' : AvatarChanged,
     'ParticipantsAdded' : ParticipantsAdded,
@@ -1049,7 +1038,6 @@ export const idlFactory = ({ IDL }) => {
   const ChatMetrics = IDL.Record({
     'prize_winner_messages' : IDL.Nat64,
     'audio_messages' : IDL.Nat64,
-    'cycles_messages' : IDL.Nat64,
     'chat_messages' : IDL.Nat64,
     'edits' : IDL.Nat64,
     'icp_messages' : IDL.Nat64,

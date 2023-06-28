@@ -52,6 +52,7 @@ import type {
     ApiFailedCryptoTransaction,
     ApiMultiUserChat,
     ApiEditMessageResponse as ApiEditDirectMessageResponse,
+    ApiLeaveGroupResponse,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -129,6 +130,13 @@ import {
     AccessRules,
     GroupChatDetailsUpdatesResponse,
     EditMessageResponse,
+    DeclineInvitationResponse,
+    LeaveGroupResponse,
+    DeleteMessageResponse,
+    DeletedGroupMessageResponse,
+    UndeleteMessageResponse,
+    ThreadPreview,
+    ThreadPreviewsResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -145,6 +153,12 @@ import type {
     ApiGroupRules,
     ApiSelectedUpdatesResponse,
     ApiEditMessageResponse,
+    ApiDeclineInvitationResponse,
+    ApiDeleteMessageResponse,
+    ApiDeletedGroupMessageResponse,
+    ApiUndeleteMessageResponse,
+    ApiThreadPreviewsResponse,
+    ApiThreadPreview,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -163,7 +177,14 @@ import type {
     ApiSelectedChannelInitialResponse,
     ApiSelectedChannelUpdatesResponse,
     ApiEditMessageResponse as ApiEditChannelMessageResponse,
+    ApiDeclineInvitationResponse as ApiDeclineChannelInvitationResponse,
+    ApiDeleteMessagesResponse as ApiDeleteChannelMessageResponse,
+    ApiLeaveChannelResponse,
+    ApiDeletedMessageResponse as ApiDeletedChannelMessageResponse,
+    ApiUndeleteMessagesResponse as ApiUndeleteChannelMessageResponse,
+    ApiThreadPreviewsResponse as ApiChannelThreadPreviewsResponse,
 } from "../community/candid/idl";
+import { ReplicaNotUpToDateError } from "../error";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -1771,4 +1792,108 @@ export function editMessageResponse(
         console.warn("EditMessageResponse failed with: ", candid);
         return "failure";
     }
+}
+
+export function declineInvitationResponse(
+    candid: ApiDeclineInvitationResponse | ApiDeclineChannelInvitationResponse
+): DeclineInvitationResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("DeclineInvitationResponse failed with: ", candid);
+        return "failure";
+    }
+}
+
+export function leaveGroupResponse(
+    candid: ApiLeaveGroupResponse | ApiLeaveChannelResponse
+): LeaveGroupResponse {
+    if (
+        "Success" in candid ||
+        "GroupNotFound" in candid ||
+        "CallerNotInGroup" in candid ||
+        "UserNotInChannel" in candid ||
+        "ChannelNotFound" in candid
+    ) {
+        return "success";
+    }
+    if ("OwnerCannotLeave" in candid || "LastOwnerCannotLeave" in candid) {
+        return "owner_cannot_leave";
+    }
+    return "failure";
+}
+
+export function deleteMessageResponse(
+    candid: ApiDeleteMessageResponse | ApiDeleteChannelMessageResponse
+): DeleteMessageResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("DeleteMessageResponse failed with: ", candid);
+        return "failure";
+    }
+}
+
+export function deletedMessageResponse(
+    candid: ApiDeletedGroupMessageResponse | ApiDeletedChannelMessageResponse
+): DeletedGroupMessageResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            content: messageContent(candid.Success.content, "unknown"),
+        };
+    } else {
+        console.warn("DeletedMessageResponse failed with: ", candid);
+        return CommonResponses.failure;
+    }
+}
+
+export function undeleteMessageResponse(
+    candid: ApiUndeleteMessageResponse | ApiUndeleteChannelMessageResponse
+): UndeleteMessageResponse {
+    if ("Success" in candid) {
+        if (candid.Success.messages.length == 0) {
+            return CommonResponses.failure;
+        } else {
+            return {
+                kind: "success",
+                message: message(candid.Success.messages[0]),
+            };
+        }
+    } else {
+        console.warn("UndeleteMessageResponse failed with: ", candid);
+        return CommonResponses.failure;
+    }
+}
+
+export function threadPreviewsResponse(
+    candid: ApiThreadPreviewsResponse | ApiChannelThreadPreviewsResponse,
+    chatId: ChatIdentifier,
+    latestClientThreadUpdate: bigint | undefined
+): ThreadPreviewsResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "thread_previews_success",
+            threads: candid.Success.threads.map((t) => threadPreview(chatId, t)),
+        };
+    }
+    if ("ReplicaNotUpToDate" in candid) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            candid.ReplicaNotUpToDate,
+            latestClientThreadUpdate ?? BigInt(-1)
+        );
+    }
+    console.warn("ThreadPreviewsResponse failed with: ", candid);
+    return CommonResponses.failure;
+}
+
+export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview): ThreadPreview {
+    return {
+        chatId,
+        latestReplies: candid.latest_replies
+            .map(messageEvent)
+            .sort((e1, e2) => e1.index - e2.index),
+        totalReplies: candid.total_replies,
+        rootMessage: messageEvent(candid.root_message),
+    };
 }

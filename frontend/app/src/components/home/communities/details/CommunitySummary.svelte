@@ -10,8 +10,9 @@
     const client = getContext<OpenChat>("client");
 
     $: selectedCommunity = client.selectedCommunity;
+    $: currentCommunityRules = client.currentCommunityRules;
+    $: rules = $currentCommunityRules ?? defaultAccessRules;
 
-    let rules = { ...defaultAccessRules, enabled: true }; // TODO - shouldn't be the default rules
     let canDelete = true; //TODO - needs to be permissions based
     let canEdit = true; //TODO - needs to be permissions based
     let metrics = emptyChatMetrics(); //TODO where does this come from

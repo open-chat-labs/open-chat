@@ -88,13 +88,13 @@
     "groupUpdateFailed": "グループを更新することができませんでした",
     "groupChangedBy": "{changedBy}が{changed}を変更しました",
     "groupDesc": "{level}の説明",
-    "confirmLeaveGroup": "本当にこのグループから抜けますか？",
+    "confirmLeaveGroup": "本当にこの {level} から離れてもよろしいですか?",
     "directChatCreatedAt": "チャット開始",
     "skip": "スキップ",
     "userLeft": "{username} がグループから脱退しました",
-    "userJoined": "{username} がグループに参加しました",
-    "addedBy": "{changedBy}は{changed}をグループに追加しました",
-    "removedBy": "{changedBy}は{changed}をグループから削除しました",
+    "userJoined": "{username} が {level} に参加しました",
+    "addedBy": "{changedBy} が {changed} を {level} に追加しました",
+    "removedBy": "{changedBy} が {changed} を {level} から削除しました",
     "promotedBy": "{changedBy}が{changed}をグループ管理者に昇格させました",
     "dismissedBy": "{changedBy}は{changed}をグループ管理者を解任しました",
     "blockedBy": "{changedBy}は{changed}をブロックしました",
@@ -167,8 +167,6 @@
     "searchForUsername": "ユーザー名を検索する",
     "startNewChat": "新規チャットを開始する",
     "chatWith": "{username}とチャット",
-    "joinGroup": "グループに参加",
-    "joinGroupFailed": "グループに参加できません",
     "youreBlocked": "申し訳ございませんが、あなたはこのグループからブロックされています",
     "reply": "返信",
     "replyPrivately": "プライベートで返信",
@@ -414,7 +412,7 @@
     "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード",
     "chooseMembers": "メンバーを選択",
     "confirmMembers": "メンバーを確認する",
-    "permissionsChangedBy": "{changedBy}がグループの権限を変更しました",
+    "permissionsChangedBy": "{changedBy} が {level} 権限を変更しました",
     "filterMembers": "フィルターメンバー",
     "publicGroupWithN": "{number}メンバーのパブリックグループ",
     "privateGroupWithN": "{number}メンバーのプライベートグループ",
@@ -514,7 +512,7 @@
     "copy": "コピー",
     "failedToShareLink": "リンクの共有に失敗しました",
     "groupInviteChangedBy": "{changedBy}{changed}グループの招待",
-    "failedToLeaveGroup": "グループからあなたを削除しようとしてエラーが発生しました",
+    "failedToLeaveGroup": "{level} からあなたを削除しようとしてエラーが発生しました",
     "historyOffInfo": "新しい参加者には、参加後に到着するメッセージのみが表示されます。 🤫",
     "memberIsTyping": "{username}は入力中です",
     "membersAreTyping": "{number}メンバーが入力しています",
@@ -649,7 +647,7 @@
     "unsuspendUser": "ユーザーの停止を解除",
     "suspendedUser": "停止中のユーザー",
     "unsuspendedUser": "停止されていないユーザー",
-    "nUsersJoined": "{number} 人のユーザーがグループに参加しました",
+    "nUsersJoined": "{number} 人のユーザーが {level} に参加しました",
     "searchPlaceholder": "ユーザーとグループを検索...",
     "reasonForSuspension": "停止の理由",
     "suspend": "サスペンド",
@@ -752,7 +750,7 @@
     "demoteTo": "{role}に降格",
     "promoteFailed": "{role} に昇格できません",
     "demoteFailed": "{role} に降格できません",
-    "ownerCantLeave": "グループを退会するには、別の所有者を追加する必要があります",
+    "ownerCantLeave": "{level} から離れる前に、別の所有者を追加する必要があります",
     "participant": "メンバー",
     "unauthorizedToCreatePublicGroup": "公開グループを作成する権限がありません",
     "reminders": {
@@ -798,7 +796,7 @@
         "messageReport": "次の理由により、@{username} によって {timestamp} に報告されました: **{reason}**",
         "showing": "{count} 件のレポートのうち最新の {total} 件を表示しています"
     },
-    "invitedBy": "{changedBy} さんが {changed} さんをグループに招待しました",
+    "invitedBy": "{changedBy} が {changed} を {level} に招待しました",
     "halloffame": {
         "menu": "トップリファラー",
         "allTime": "いつも",
@@ -897,11 +895,15 @@
             "name_taken": "申し訳ありませんが、この名前のコミュニティがすでに存在します",
             "failure": "申し訳ありませんが、コミュニティを作成できませんでした",
             "saveFailed": "申し訳ありませんが、更新を保存できませんでした",
-            "inviteUsers": "申し訳ありませんが、これらのユーザーを招待できませんでした"
+            "inviteUsers": "申し訳ありませんが、これらのユーザーを招待できませんでした",
+            "joinFailed": "申し訳ありませんが、このコミュニティに参加できませんでした"
         },
         "memberCount": "メンバー",
         "channelCount": "チャンネル",
-        "usersInvited": "ユーザーがコミュニティに招待されました"
+        "usersInvited": "ユーザーがコミュニティに招待されました",
+        "joinCommunity": "コミュニティに参加する",
+        "noChannelSelected": "チャンネルが選択されていません",
+        "selectAChannel": "チャンネルを選択するか、このコミュニティ内の他のチャンネルを参照します。"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",
@@ -912,5 +914,7 @@
     "irreversible": "この {level} を削除してもよろしいですか?これは、元に戻すことはできません！",
     "thisIsPublicGroupWithN": "これは、{level} 人のメンバーがいる公開 {number} です",
     "thisIsPrivateGroupWithN": "これは、{level} メンバーがいるプライベート {number} です",
-    "unableToSaveUserProfile": "ユーザープロファイルを保存できません"
+    "unableToSaveUserProfile": "ユーザープロファイルを保存できません",
+    "joinGroup": "{level}に参加する",
+    "joinGroupFailed": "{level}に参加できません"
 }

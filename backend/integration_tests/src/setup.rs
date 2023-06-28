@@ -35,6 +35,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let proposals_bot_canister_id = create_canister(env, controller);
     let storage_index_canister_id = create_canister(env, controller);
     let cycles_dispenser_canister_id = create_canister(env, controller);
+    let registry_canister_id = create_canister(env, controller);
 
     let local_user_index_canister_id = create_canister(env, user_index_canister_id);
     let local_group_index_canister_id = create_canister(env, group_index_canister_id);
@@ -52,6 +53,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let notifications_index_canister_wasm = wasms::NOTIFICATIONS_INDEX.clone();
     let online_users_canister_wasm = wasms::ONLINE_USERS.clone();
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
+    let registry_canister_wasm = wasms::REGISTRY.clone();
     let storage_bucket_canister_wasm = wasms::STORAGE_BUCKET.clone();
     let storage_index_canister_wasm = wasms::STORAGE_INDEX.clone();
     let user_canister_wasm = wasms::USER.clone();
@@ -195,6 +197,20 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         cycles_dispenser_init_args,
     );
 
+    let registry_init_args = registry_canister::init::Args {
+        governance_principals: vec![controller],
+        cycles_dispenser_canister_id,
+        wasm_version: Version::min(),
+        test_mode: true,
+    };
+    install_canister(
+        env,
+        controller,
+        registry_canister_id,
+        registry_canister_wasm,
+        registry_init_args,
+    );
+
     let add_local_group_index_canister_response = client::group_index::add_local_group_index_canister(
         env,
         controller,
@@ -291,6 +307,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         proposals_bot: proposals_bot_canister_id,
         storage_index: storage_index_canister_id,
         cycles_dispenser: cycles_dispenser_canister_id,
+        registry: registry_canister_id,
         icp_ledger: icp_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
     }

@@ -2,7 +2,6 @@
     import { _ } from "svelte-i18n";
     import ModalContent from "../../../ModalContent.svelte";
     import Button from "../../../Button.svelte";
-    import ButtonGroup from "../../../ButtonGroup.svelte";
     import { menuCloser } from "../../../../actions/closeMenu";
     import ChooseMembers from "../../ChooseMembers.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
@@ -24,10 +23,9 @@
     import ChooseChannels from "./ChooseChannels.svelte";
     import { toastStore } from "stores/toast";
     import { interpolateLevel } from "../../../../utils/i18n";
+    import page from "page";
 
     export let original: CommunitySummary = createCandidateCommunity("");
-
-    //TODO - at the moment we are *always* passing in the default access rules even in the edit case because we don't know where to get the rules from yet
     export let originalRules: AccessRules;
 
     const client = getContext<OpenChat>("client");
@@ -87,7 +85,6 @@
     }
 
     onMount(() => {
-        console.log("Cloning input community");
         candidate = {
             ...original,
             permissions: { ...original.permissions },
@@ -126,8 +123,8 @@
                 .then((response) => {
                     if (response.kind === "success") {
                         toastStore.showSuccessToast("communities.created");
-                        // TODO - do we need to *select* the new community?
                         dispatch("close");
+                        page(`/community/${response.id}`);
                     } else {
                         toastStore.showFailureToast(`communities.errors.${response.kind}`);
                     }

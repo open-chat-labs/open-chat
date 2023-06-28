@@ -64,7 +64,7 @@
     function setUnreadPinned(hasPinned: boolean, chat: ChatSummary) {
         hasUnreadPinned =
             hasPinned &&
-            chat.kind === "group_chat" &&
+            (chat.kind === "group_chat" || chat.kind === "channel") &&
             client.unreadPinned(chat.id, chat.dateLastPinned);
     }
 
@@ -113,7 +113,12 @@
     }
 
     function leaveGroup() {
-        dispatch("leaveGroup", { kind: "leave", chatId: selectedChatSummary.id });
+        if (selectedChatSummary.kind === "direct_chat") return;
+        dispatch("leaveGroup", {
+            kind: "leave",
+            chatId: selectedChatSummary.id,
+            level: selectedChatSummary.level,
+        });
     }
 
     function convertToCommunity() {

@@ -66,13 +66,12 @@
     "groupUpdateFailed": "群聊更新失败",
     "groupChangedBy": "{changedBy} 更改了 {changed}",
     "groupDesc": "{level} 描述",
-    "confirmLeaveGroup": "确定退出该群？",
     "directChatCreatedAt": "聊天创建于",
     "skip": "跳过",
     "userLeft": "{username} 退出了",
-    "userJoined": "{username} 加入了",
-    "addedBy": "{changedBy} 邀请了 {changed} 加入群聊",
-    "removedBy": "{changedBy} 移除了 {changed}",
+    "userJoined": "{username} 加入了 {level}",
+    "addedBy": "{changedBy} 将 {changed} 添加到 {level}",
+    "removedBy": "{changedBy} 从 {changed} 中删除了 {level}",
     "promotedBy": "{changedBy} 将 {changed} 设为管理员",
     "dismissedBy": "{changedBy} 解除了 {changed} 的管理员权限",
     "blockedBy": "{changedBy} 将 {changed} 加入黑名单",
@@ -145,8 +144,6 @@
     "searchForUsername": "搜索用户名",
     "startNewChat": "新建聊天",
     "chatWith": "与{username}聊天",
-    "joinGroup": "加入群聊",
-    "joinGroupFailed": "无法加入群聊",
     "youreBlocked": "抱歉 - 您已被该群聊加入黑名单",
     "reply": "回复",
     "replyPrivately": "在私聊中回复",
@@ -414,7 +411,7 @@
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",
     "chooseMembers": "选择成员",
     "confirmMembers": "确认成员",
-    "permissionsChangedBy": "{changedBy} 更改了群聊权限",
+    "permissionsChangedBy": "{changedBy} 更改了 {level} 权限",
     "filterMembers": "过滤成员",
     "publicGroupWithN": "有 {number} 个成员的公共群聊",
     "privateGroupWithN": "有 {number} 个成员的私人群聊",
@@ -513,7 +510,7 @@
     "faqUrlCopiedToClipboard": "常见问题网址已复制到剪贴板！",
     "copy": "复制",
     "failedToShareLink": "分享链接失败",
-    "failedToLeaveGroup": "尝试将您从群聊中移除时出错",
+    "failedToLeaveGroup": "尝试将您从 {level} 中删除时发生错误",
     "historyOffInfo": "新加入者只会看到他们加入后到达的消息。 🤫",
     "memberIsTyping": "{username} 正在输入",
     "membersAreTyping": "{number} 成员正在输入",
@@ -649,7 +646,7 @@
     "unsuspendUser": "取消暂停用户",
     "suspendedUser": "暂停用户",
     "unsuspendedUser": "解除暂停的用户",
-    "nUsersJoined": "{number} 位用户加入了群聊",
+    "nUsersJoined": "{number} 用户加入了 {level}",
     "searchPlaceholder": "搜索用户和群聊...",
     "reasonForSuspension": "暂停原因",
     "suspend": "暂停",
@@ -752,7 +749,7 @@
     "demoteTo": "降级为 {role}",
     "promoteFailed": "无法提升到 {role}",
     "demoteFailed": "无法降级到 {role}",
-    "ownerCantLeave": "您必须添加其他所有者才能离开群组",
+    "ownerCantLeave": "您必须先添加另一个所有者，然后才能离开 {level}",
     "participant": "成员",
     "unauthorizedToCreatePublicGroup": "您无权创建公共组",
     "reminders": {
@@ -798,7 +795,7 @@
         "messageReport": "由@{username} 在 {timestamp} 上报告，原因如下：**{reason}**",
         "showing": "显示最近的 {count} 份报告（共 {total} 份）"
     },
-    "invitedBy": "{changedBy} 邀请 {changed} 加入群组",
+    "invitedBy": "{changedBy} 邀请 {changed} 参加 {level}",
     "halloffame": {
         "menu": "热门推荐人",
         "allTime": "整天",
@@ -897,11 +894,15 @@
             "name_taken": "抱歉 - 已有一个同名社区",
             "failure": "抱歉，我们无法创建您的社区",
             "saveFailed": "抱歉，我们无法保存您的更新",
-            "inviteUsers": "抱歉，我们无法邀请这些用户"
+            "inviteUsers": "抱歉，我们无法邀请这些用户",
+            "joinFailed": "抱歉，我们无法加入此社区"
         },
         "memberCount": "会员",
         "channelCount": "频道",
-        "usersInvited": "用户已被邀请加入您的社区"
+        "usersInvited": "用户已被邀请加入您的社区",
+        "joinCommunity": "加入社区",
+        "noChannelSelected": "未选择频道",
+        "selectAChannel": "选择一个频道或浏览此社区中的其他频道。"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",
@@ -912,5 +913,8 @@
     "irreversible": "您确定要删除此 {level} 吗？这不能被撤消！",
     "thisIsPublicGroupWithN": "这是一个具有 {level} 成员的公共 {number}",
     "thisIsPrivateGroupWithN": "这是一个拥有 {level} 成员的私有 {number}",
-    "unableToSaveUserProfile": "无法保存用户个人资料"
+    "unableToSaveUserProfile": "无法保存用户个人资料",
+    "joinGroup": "加入{level}",
+    "joinGroupFailed": "无法加入{level}",
+    "confirmLeaveGroup": "你真的想离开这个{level}吗？"
 }

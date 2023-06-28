@@ -16,6 +16,7 @@ cd $SCRIPT_DIR/..
 ./scripts/generate-wasm.sh online_users
 ./scripts/generate-wasm.sh proposal_validation
 ./scripts/generate-wasm.sh proposals_bot
+./scripts/generate-wasm.sh registry
 ./scripts/generate-wasm.sh storage_bucket
 ./scripts/generate-wasm.sh storage_index
 ./scripts/generate-wasm.sh user

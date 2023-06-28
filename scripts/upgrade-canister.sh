@@ -29,6 +29,7 @@ ONLINE_USERS_CANISTER_ID=$(dfx canister --network $NETWORK id online_users)
 PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
 STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id storage_index)
 CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispenser)
+REGISTRY_CANISTER_ID=$(dfx canister --network $NETWORK id registry)
 MARKET_MAKER_CANISTER_ID=$(dfx canister --network $NETWORK id market_maker)
 
 cargo run \
@@ -42,6 +43,7 @@ cargo run \
   --proposals-bot $PROPOSALS_BOT_CANISTER_ID \
   --storage-index $STORAGE_INDEX_CANISTER_ID \
   --cycles-dispenser $CYCLES_DISPENSER_CANISTER_ID \
+  --registry $REGISTRY_CANISTER_ID \
   --market-maker $MARKET_MAKER_CANISTER_ID \
   --canister-to-upgrade $CANISTER_NAME \
   --version $VERSION \

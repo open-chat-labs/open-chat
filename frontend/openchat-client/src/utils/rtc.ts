@@ -1,13 +1,14 @@
-import type {
-    ChatIdentifier,
-    ChatSummary,
-    DirectChatSummary,
-    MessageContent,
-    WebRtcMessage,
+import {
+    chatIdentifiersEqual,
+    type ChatIdentifier,
+    type ChatSummary,
+    type MessageContent,
+    type WebRtcMessage,
 } from "openchat-shared";
-import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../stores/chat";
+import { selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
 import { blockedUsers } from "../stores/blockedUsers";
+import { globalStateStore } from "src/stores/global";
 
 export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
     const chat = findChatByChatType(msg);
@@ -18,20 +19,13 @@ export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
     return true;
 }
 
-function findDirectChatByUserId(userId: string): DirectChatSummary | undefined {
-    return get(chatSummariesListStore).find(
-        (c) => c.kind === "direct_chat" && c.them.userId === userId
-    ) as DirectChatSummary | undefined;
-}
-
-function findChatById(chatId: ChatIdentifier): ChatSummary | undefined {
-    return get(chatSummariesStore).get(chatId);
-}
-
 function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
-    return msg.chatType === "group_chat"
-        ? findChatById(msg.id)
-        : findDirectChatByUserId(msg.userId);
+    const state = get(globalStateStore);
+    if (msg.id.kind === "direct_chat") {
+        return state.directChats.get({ kind: "direct_chat", userId: msg.userId });
+    } else {
+        return state.groupChats.get(msg.id);
+    }
 }
 
 function isDirectChatWith(chat: ChatSummary, userId: string): boolean {
@@ -52,7 +46,7 @@ export function filterWebRtcMessage(msg: WebRtcMessage): ChatIdentifier | undefi
     }
 
     if (
-        fromChat.id === selectedChat.id &&
+        chatIdentifiersEqual(fromChat.id, selectedChat.id) &&
         isDirectChatWith(selectedChat, msg.userId) &&
         isBlockedUser(selectedChat)
     ) {

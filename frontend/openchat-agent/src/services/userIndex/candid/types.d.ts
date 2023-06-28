@@ -60,6 +60,14 @@ export interface CanisterWasm {
   'module' : Uint8Array | number[],
 }
 export type ChannelId = bigint;
+export interface ChannelMatch {
+  'id' : ChannelId,
+  'gate' : [] | [AccessGate],
+  'name' : string,
+  'description' : string,
+  'avatar_id' : [] | [bigint],
+  'member_count' : number,
+}
 export interface ChannelMembership {
   'role' : GroupRole,
   'notifications_muted' : boolean,
@@ -80,7 +88,6 @@ export type Chat = { 'Group' : ChatId } |
   { 'Direct' : ChatId };
 export type ChatEvent = { 'Empty' : null } |
   { 'ParticipantJoined' : ParticipantJoined } |
-  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'MessagePinned' : MessagePinned } |
@@ -88,7 +95,6 @@ export type ChatEvent = { 'Empty' : null } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
-  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
@@ -98,12 +104,10 @@ export type ChatEvent = { 'Empty' : null } |
   { 'ChatUnfrozen' : ChatUnfrozen } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
-  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'GroupGateUpdated' : GroupGateUpdated } |
   { 'RoleChanged' : RoleChanged } |
   { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
-  { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
@@ -119,7 +123,6 @@ export type ChatId = CanisterId;
 export interface ChatMetrics {
   'prize_winner_messages' : bigint,
   'audio_messages' : bigint,
-  'cycles_messages' : bigint,
   'chat_messages' : bigint,
   'edits' : bigint,
   'icp_messages' : bigint,
@@ -189,6 +192,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'avatar_id' : DocumentIdUpdate,
   'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
+  'updated_events' : Array<[[] | [number], number, bigint]>,
   'member_count' : [] | [number],
   'latest_message' : [] | [MessageEventWrapper],
 }
@@ -237,6 +241,11 @@ export interface CommunityMatch {
   'avatar_id' : [] | [bigint],
   'banner_id' : [] | [bigint],
   'member_count' : number,
+}
+export interface CommunityMember {
+  'role' : CommunityRole,
+  'user_id' : UserId,
+  'date_added' : TimestampMillis,
 }
 export interface CommunityMembership {
   'role' : CommunityRole,
@@ -290,7 +299,6 @@ export type CurrentUserResponse = {
       'avatar_id' : [] | [bigint],
       'is_suspected_bot' : boolean,
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'is_super_admin' : boolean,
       'suspension_details' : [] | [SuspensionDetails],
       'is_platform_moderator' : boolean,
       'diamond_membership_details' : [] | [DiamondMembershipDetails],
@@ -550,6 +558,7 @@ export interface GroupInviteCodeChanged {
   'change' : GroupInviteCodeChange,
 }
 export interface GroupMatch {
+  'id' : ChatId,
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -881,14 +890,11 @@ export interface Participant {
   'user_id' : UserId,
   'date_added' : TimestampMillis,
 }
-export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
-export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
 export interface ParticipantJoined {
   'user_id' : UserId,
   'invited_by' : [] | [UserId],
 }
 export interface ParticipantLeft { 'user_id' : UserId }
-export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
   'unblocked' : Array<UserId>,
@@ -1190,6 +1196,11 @@ export interface TextContent { 'text' : string }
 export type TextUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : string };
+export interface ThreadPreview {
+  'latest_replies' : Array<MessageEventWrapper>,
+  'total_replies' : number,
+  'root_message' : MessageEventWrapper,
+}
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,
   'participant_ids' : Array<UserId>,

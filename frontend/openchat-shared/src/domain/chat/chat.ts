@@ -526,11 +526,7 @@ export type GroupChatEvent =
     | GroupRulesChanged
     | UsersBlocked
     | UsersUnblocked
-    | MemberAssumesSuperAdmin
-    | MemberRelinquishesSuperAdmin
-    | MemberDismissedAsSuperAdmin
     | RoleChanged
-    | OwnershipTransferred
     | MessagePinned
     | MessageUnpinned
     | PermissionsChanged
@@ -1577,15 +1573,7 @@ export type UnblockUserResponse =
     | "user_suspended"
     | "chat_frozen";
 
-export type LeaveGroupResponse =
-    | "success"
-    | "group_not_found"
-    | "internal_error"
-    | "not_in_group"
-    | "owner_cannot_leave"
-    | "group_not_public"
-    | "user_suspended"
-    | "chat_frozen";
+export type LeaveGroupResponse = "success" | "owner_cannot_leave" | "failure";
 
 export type JoinGroupResponse =
     | GroupChatSummary
@@ -1645,27 +1633,14 @@ export type UpdatePermissionsResponse =
 
 export type AddRemoveReactionResponse = Success | Failure;
 
-export type DeleteMessageResponse =
-    | "not_in_group"
-    | "chat_not_found"
-    | "success"
-    | "message_not_found"
-    | "user_suspended"
-    | "chat_frozen"
-    | "internal_error"
-    | "not_platform_moderator";
+export type DeleteMessageResponse = "success" | "failure";
 
 export type UndeleteMessageResponse =
     | {
           kind: "success";
           message: Message;
       }
-    | { kind: "not_in_group" }
-    | { kind: "chat_not_found" }
-    | { kind: "internal_error" }
-    | { kind: "message_not_found" }
-    | UserSuspended
-    | ChatFrozen;
+    | Failure;
 
 export type UnpinMessageResponse = "failure" | "success";
 
@@ -1683,11 +1658,7 @@ export type DeletedGroupMessageResponse =
           kind: "success";
           content: MessageContent;
       }
-    | { kind: "caller_not_in_group" }
-    | { kind: "not_authorized" }
-    | { kind: "message_not_found" }
-    | { kind: "message_not_deleted" }
-    | { kind: "message_hard_deleted" };
+    | Failure;
 
 export type DeletedDirectMessageResponse =
     | {
@@ -1746,7 +1717,7 @@ export type ResetInviteCodeSuccess = {
     code: string;
 };
 
-export type ThreadPreviewsResponse = CallerNotInGroup | ThreadPreviewsSuccess;
+export type ThreadPreviewsResponse = Failure | ThreadPreviewsSuccess;
 
 export type ThreadPreviewsSuccess = {
     kind: "thread_previews_success";
@@ -1886,4 +1857,4 @@ export type ClaimPrizeResponse =
 
 export type ReportMessageResponse = "success" | "failure";
 
-export type DeclineInvitationResponse = "success" | "not_invited" | "internal_error";
+export type DeclineInvitationResponse = "success" | "failure";

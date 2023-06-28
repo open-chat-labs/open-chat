@@ -20,11 +20,6 @@ pub struct ChatEventsList {
 }
 
 impl ChatEventsList {
-    // TODO remove this after next user canister upgrade
-    pub fn remove_invalid_feature_requests_replies(&mut self) -> Vec<EventIndex> {
-        Vec::new()
-    }
-
     pub(crate) fn push_event(
         &mut self,
         event: ChatEventInternal,

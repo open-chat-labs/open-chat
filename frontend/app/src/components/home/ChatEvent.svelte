@@ -163,6 +163,7 @@
     <DirectChatCreatedEvent timestamp={event.timestamp} />
 {:else if event.event.kind === "members_added"}
     <MembersChangedEvent
+        level={levelType}
         user={userSummary}
         changed={event.event.userIds}
         changedBy={event.event.addedBy}
@@ -170,6 +171,7 @@
         timestamp={event.timestamp} />
 {:else if event.event.kind === "users_invited"}
     <MembersChangedEvent
+        level={levelType}
         user={userSummary}
         changed={event.event.userIds}
         changedBy={event.event.invitedBy}
@@ -177,6 +179,7 @@
         timestamp={event.timestamp} />
 {:else if event.event.kind === "members_removed"}
     <MembersChangedEvent
+        level={levelType}
         user={userSummary}
         changed={event.event.userIds}
         changedBy={event.event.removedBy}
@@ -184,6 +187,7 @@
         timestamp={event.timestamp} />
 {:else if event.event.kind === "aggregate_common_events"}
     <AggregateCommonEvents
+        level={levelType}
         {chatId}
         {observer}
         {readByMe}
@@ -194,6 +198,7 @@
     <RoleChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "users_blocked"}
     <MembersChangedEvent
+        level={levelType}
         user={userSummary}
         changed={event.event.userIds}
         changedBy={event.event.blockedBy}
@@ -201,17 +206,11 @@
         timestamp={event.timestamp} />
 {:else if event.event.kind === "users_unblocked"}
     <MembersChangedEvent
+        level={levelType}
         user={userSummary}
         changed={event.event.userIds}
         changedBy={event.event.unblockedBy}
         resourceKey={"unblockedBy"}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "ownership_transferred"}
-    <MembersChangedEvent
-        user={userSummary}
-        changed={[event.event.newOwner]}
-        changedBy={event.event.oldOwner}
-        resourceKey={"ownershipTransferredBy"}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "name_changed"}
     <GroupChangedEvent
@@ -258,7 +257,11 @@
             timestamp={event.timestamp} />
     {/if}
 {:else if event.event.kind === "permissions_changed"}
-    <PermissionsChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
+    <PermissionsChangedEvent
+        level={levelType}
+        user={userSummary}
+        event={event.event}
+        timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_frozen"}
     <ChatFrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_unfrozen"}

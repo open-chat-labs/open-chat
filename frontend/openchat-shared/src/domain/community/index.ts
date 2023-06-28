@@ -12,6 +12,7 @@ import type {
     EventWrapper,
     GroupCanisterThreadDetails,
     Mention,
+    UpdatedEvent,
 } from "../chat";
 import type { DataContent } from "../data";
 import type { OptionUpdate } from "../optionUpdate";
@@ -29,9 +30,7 @@ import type {
     Failure,
     InteralError,
     Invalid,
-    MessageNotFound,
     NotAuthorised,
-    NotPlatformModerator,
     Success,
     SuccessNoUpdates,
     TargetUserNotInCommunity,
@@ -78,10 +77,12 @@ export type DefaultChannel = {
 };
 
 export type CommunitySpecificState = {
+    detailsLoaded: boolean;
     members: Member[];
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     rules?: AccessRules;
+    lastUpdated: bigint;
 };
 
 export interface UserFailedGateCheck {
@@ -154,12 +155,6 @@ export type ChangeCommunityRoleResponse =
     | TargetUserNotInCommunity
     | InteralError;
 
-export type DeclineChannelInvitationResponse =
-    | { kind: "not_invited" }
-    | ChatNotFound
-    | Success
-    | UserNotInCommunity;
-
 export type DeleteChannelResponse =
     | UserNotInChat
     | ChatNotFound
@@ -168,27 +163,6 @@ export type DeleteChannelResponse =
     | UserNotInCommunity
     | UserSuspended
     | CommunityFrozen;
-
-export type DeleteChannelMessagesResponse =
-    | UserNotInChat
-    | MessageNotFound
-    | ChatNotFound
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen
-    | NotPlatformModerator
-    | InteralError;
-
-export type DeleteChannelMessageResponse =
-    | UserNotInChat
-    | MessageNotFound
-    | ChatNotFound
-    | NotAuthorised
-    | (Success & { content: MessageContent })
-    | UserNotInCommunity
-    | { kind: "message_hard_deleted" }
-    | { kind: "message_not_deleted" };
 
 export type DisableCommunityInviteCodeResponse =
     | NotAuthorised
@@ -219,15 +193,6 @@ export type JoinChannelResponse =
     | CommunityFrozen
     | InteralError
     | UserBlocked;
-
-export type LeaveChannelResponse =
-    | UserNotInChat
-    | { kind: "last_owner_cannot_leave" }
-    | ChatNotFound
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen;
 
 export type MakeChannelPrivateResponse =
     | UserNotInChat
@@ -262,8 +227,6 @@ export type ChannelMessageMatch = {
 export type SearchChannelResponse = Failure | (Success & { matches: ChannelMessageMatch[] });
 
 export type UnblockCommunityUserResponse = Failure | Success;
-
-export type UndeleteChannelMessagesResponse = Failure | (Success & { messages: Message[] });
 
 export type UpdateCommunityResponse = Failure | Success;
 
@@ -320,6 +283,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     latestEventIndex: number | undefined;
     memberCount: number | undefined;
     latestMessage: EventWrapper<Message> | undefined;
+    updatedEvents: UpdatedEvent[];
 };
 
 export type CommunityMembershipUpdates = {
@@ -333,4 +297,43 @@ export type ChannelMembershipUpdates = {
     latestThreads: GroupCanisterThreadDetails[];
     mentions: Mention[];
     myMetrics: Metrics | undefined;
+};
+
+export type ChannelMatch = {
+    id: ChannelIdentifier;
+    gate: AccessGate;
+    name: string;
+    description: string;
+    avatar: DataContent;
+    memberCount: number;
+};
+
+export type CommunityDetailsResponse = "failure" | CommunityDetails;
+
+export type CommunityDetailsUpdatesResponse =
+    | ({
+          kind: "success";
+      } & CommunityDetailsUpdates)
+    | {
+          kind: "success_no_updates";
+          lastUpdated: bigint;
+      }
+    | Failure;
+
+export type CommunityDetails = {
+    members: Member[];
+    blockedUsers: Set<string>;
+    invitedUsers: Set<string>;
+    rules: AccessRules;
+    lastUpdated: bigint;
+};
+
+export type CommunityDetailsUpdates = {
+    membersAddedOrUpdated: Member[];
+    membersRemoved: Set<string>;
+    blockedUsersAdded: Set<string>;
+    blockedUsersRemoved: Set<string>;
+    rules?: AccessRules;
+    invitedUsers?: Set<string>;
+    lastUpdated: bigint;
 };

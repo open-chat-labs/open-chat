@@ -17,6 +17,7 @@ lazy_static! {
     pub static ref NOTIFICATIONS_INDEX: CanisterWasm = get_canister_wasm("notifications_index");
     pub static ref ONLINE_USERS: CanisterWasm = get_canister_wasm("online_users");
     pub static ref PROPOSALS_BOT: CanisterWasm = get_canister_wasm("proposals_bot");
+    pub static ref REGISTRY: CanisterWasm = get_canister_wasm("registry");
     pub static ref STORAGE_BUCKET: CanisterWasm = get_canister_wasm("storage_bucket");
     pub static ref STORAGE_INDEX: CanisterWasm = get_canister_wasm("storage_index");
     pub static ref USER: CanisterWasm = get_canister_wasm("user");

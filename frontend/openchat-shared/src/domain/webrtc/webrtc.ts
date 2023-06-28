@@ -1,4 +1,4 @@
-import type { ChatIdentifier, ChatSummary, EventWrapper, Message } from "../chat/chat";
+import type { ChatIdentifier, EventWrapper, Message } from "../chat/chat";
 
 export type WebRtcMessage =
     | RemoteUserStoppedTyping
@@ -11,7 +11,6 @@ export type WebRtcMessage =
     | RemoteUserUndeletedMessage;
 
 type WebRtcMessageCommon = {
-    chatType: ChatSummary["kind"];
     id: ChatIdentifier;
     userId: string;
     threadRootMessageIndex?: number;
