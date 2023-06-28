@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.736](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.736-user)] - 2023-06-27
+
 ### Added
 
 - Support replying to channel messages ([#3825](https://github.com/open-chat-labs/open-chat/pull/3825))

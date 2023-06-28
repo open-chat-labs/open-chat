@@ -28,7 +28,6 @@ pub struct ReferralCodeDetails {
     referral_type: ReferralType,
     created: TimestampMillis,
     claimed: Option<ReferralCodeClaim>,
-    #[serde(default)]
     expiry: Option<TimestampMillis>,
 }
 

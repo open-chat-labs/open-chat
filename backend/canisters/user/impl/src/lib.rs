@@ -125,9 +125,7 @@ struct Data {
     pub owner: Principal,
     pub direct_chats: DirectChats,
     pub group_chats: GroupChats,
-    #[serde(default)]
     pub communities: Communities,
-    #[serde(default)]
     pub favourite_chats: FavouriteChats,
     pub blocked_users: Timestamped<HashSet<UserId>>,
     pub user_index_canister_id: CanisterId,
@@ -151,7 +149,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub contacts: Contacts,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
-    #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
 }
 

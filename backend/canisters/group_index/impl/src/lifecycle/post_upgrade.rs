@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_index_canister::post_upgrade::Args;
@@ -25,18 +25,4 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    // TODO remove this after next upgrade
-    mutate_state(|state| {
-        for group in state.data.public_groups.iter() {
-            state
-                .data
-                .public_group_and_community_names
-                .insert(group.name(), group.id().into());
-        }
-
-        for (name, timestamp) in state.data.public_groups.groups_pending.iter() {
-            state.data.public_group_and_community_names.reserve_name(name, *timestamp);
-        }
-    })
 }

@@ -8,12 +8,7 @@ const ONE_MINUTE: Milliseconds = 60 * 1000;
 pub struct ActivityNotificationState {
     /// When we last notified the group_index canister of activity in this group
     last_notification_date: TimestampMillis,
-    #[serde(default = "default_mark_active_duration")]
     mark_active_duration: Milliseconds,
-}
-
-fn default_mark_active_duration() -> Milliseconds {
-    10 * ONE_MINUTE
 }
 
 impl ActivityNotificationState {

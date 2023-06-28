@@ -87,7 +87,6 @@ type ChatMetrics =
         file_messages: nat64;
         polls: nat64;
         poll_votes: nat64;
-        cycles_messages: nat64;
         icp_messages: nat64;
         sns1_messages: nat64;
         ckbtc_messages: nat64;
@@ -210,14 +209,10 @@ type ChatEvent =
         GroupNameChanged: GroupNameChanged;
         GroupDescriptionChanged: GroupDescriptionChanged;
         AvatarChanged: AvatarChanged;
-        OwnershipTransferred: OwnershipTransferred;
         ParticipantsAdded: ParticipantsAdded;
         ParticipantsRemoved: ParticipantsRemoved;
         ParticipantJoined: ParticipantJoined;
         ParticipantLeft: ParticipantLeft;
-        ParticipantAssumesSuperAdmin: ParticipantAssumesSuperAdmin;
-        ParticipantDismissedAsSuperAdmin: ParticipantDismissedAsSuperAdmin;
-        ParticipantRelinquishesSuperAdmin: ParticipantRelinquishesSuperAdmin;
         RoleChanged: RoleChanged;
         UsersBlocked: UsersBlocked;
         UsersUnblocked: UsersUnblocked;
@@ -791,21 +786,6 @@ type ParticipantJoined =
     };
 
 type ParticipantLeft =
-    record {
-        user_id: UserId;
-    };
-
-type ParticipantAssumesSuperAdmin =
-    record {
-        user_id: UserId;
-    };
-
-type ParticipantRelinquishesSuperAdmin =
-    record {
-        user_id: UserId;
-    };
-
-type ParticipantDismissedAsSuperAdmin =
     record {
         user_id: UserId;
     };

@@ -77,7 +77,6 @@ fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<Message
             user_index_canister::UserJoinedGroup {
                 user_id,
                 chat_id,
-                as_super_admin: false,
                 latest_message_index,
             },
         )));

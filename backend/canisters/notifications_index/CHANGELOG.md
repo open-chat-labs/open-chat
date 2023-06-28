@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.729](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.729-notifications_index)] - 2023-06-27
+
 ### Changed
 
 - Reduce a few timer job intervals ([#3515](https://github.com/open-chat-labs/open-chat/pull/3515))

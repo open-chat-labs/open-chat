@@ -5,7 +5,7 @@ use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap};
 use types::{
-    CanisterId, ChatId, MessageId, Milliseconds, MultiUserChat, Proposal, ProposalId, ProposalRewardStatus, ProposalUpdate,
+    CanisterId, MessageId, Milliseconds, MultiUserChat, Proposal, ProposalId, ProposalRewardStatus, ProposalUpdate,
     TimestampMillis,
 };
 use utils::time::MINUTE_IN_MS;
@@ -181,7 +181,6 @@ impl NervousSystems {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(from = "NervousSystemPrevious")]
 pub struct NervousSystem {
     name: String,
     governance_canister_id: CanisterId,
@@ -193,38 +192,6 @@ pub struct NervousSystem {
     proposals_to_be_pushed: ProposalsToBePushed,
     proposals_to_be_updated: ProposalsToBeUpdated,
     pub active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
-}
-
-// TODO: Remember to remove this after the next release
-#[derive(Serialize, Deserialize, Debug)]
-pub struct NervousSystemPrevious {
-    name: String,
-    governance_canister_id: CanisterId,
-    chat_id: ChatId,
-    latest_successful_sync: Option<TimestampMillis>,
-    latest_failed_sync: Option<TimestampMillis>,
-    latest_successful_proposals_update: Option<TimestampMillis>,
-    latest_failed_proposals_update: Option<TimestampMillis>,
-    proposals_to_be_pushed: ProposalsToBePushed,
-    proposals_to_be_updated: ProposalsToBeUpdated,
-    pub active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
-}
-
-impl From<NervousSystemPrevious> for NervousSystem {
-    fn from(value: NervousSystemPrevious) -> Self {
-        NervousSystem {
-            name: value.name,
-            governance_canister_id: value.governance_canister_id,
-            chat_id: MultiUserChat::Group(value.chat_id),
-            latest_successful_sync: value.latest_successful_sync,
-            latest_failed_sync: value.latest_failed_sync,
-            latest_successful_proposals_update: value.latest_successful_proposals_update,
-            latest_failed_proposals_update: value.latest_failed_proposals_update,
-            proposals_to_be_pushed: value.proposals_to_be_pushed,
-            proposals_to_be_updated: value.proposals_to_be_updated,
-            active_proposals: value.active_proposals,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]

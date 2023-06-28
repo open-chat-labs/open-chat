@@ -11,7 +11,6 @@ pub struct Community {
     pub last_read: TimestampMillis,
     pub last_changed_for_my_data: TimestampMillis,
     pub archived: Timestamped<bool>,
-    #[serde(default)]
     pub pinned: Timestamped<Vec<ChannelId>>,
 }
 

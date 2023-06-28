@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Fix `explore_groups` and `explore_communities` in edge case ([#3860](https://github.com/open-chat-labs/open-chat/pull/3860))
+
+## [[2.0.734](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.734-group_index)] - 2023-06-27
+
 ### Added
 
 - Add ability to import a group into a community ([#3792](https://github.com/open-chat-labs/open-chat/pull/3792))
