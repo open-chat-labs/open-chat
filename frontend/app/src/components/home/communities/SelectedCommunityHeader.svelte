@@ -7,6 +7,7 @@
     import CommunityMenu from "./CommunityMenu.svelte";
     import { getContext } from "svelte";
     import type { CommunitySummary } from "openchat-shared";
+    import VisibilityLabel from "../VisibilityLabel.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -21,13 +22,23 @@
                 userId={undefined}
                 size={AvatarSize.Default} />
         </div>
-        <h4 class="name">{community.name}</h4>
+        <div class="details">
+            <h4 class="name">{community.name}</h4>
+            <div class="wrapper">
+                <VisibilityLabel isPublic={community.public} />
+                <div class="members">
+                    <span class="num">{community.memberCount.toLocaleString()}</span>
+                    {$_("members")}
+                </div>
+            </div>
+        </div>
     </div>
     <span class="menu">
         <CommunityMenu
             on:newChannel
             on:communityDetails
             on:leaveCommunity
+            on:editCommunity
             on:deleteCommunity
             {community} />
     </span>
@@ -43,6 +54,20 @@
 
         @include mobile() {
             padding: 0 $sp3;
+        }
+    }
+    .wrapper {
+        display: flex;
+        gap: $sp3;
+        align-items: center;
+        @include font(book, normal, fs-70);
+    }
+
+    .members {
+        color: var(--txt-light);
+        .num {
+            color: var(--txt);
+            font-weight: 700;
         }
     }
 </style>

@@ -92,16 +92,16 @@
     "groupChangedBy": "{changedBy} שינה את ה-{changed}",
     "groupDesc": "תיאור {level}",
     "typeGroupName": "אנא הקלד **{name}** כדי לאשר.",
-    "confirmLeaveGroup": "האם אתה באמת רוצה לעזוב את הקבוצה הזו?",
+    "confirmLeaveGroup": "האם אתה באמת רוצה לעזוב את {level} הזה?",
     "directChatCreatedAt": "צ'אט התחיל",
     "skip": "לדלג",
     "userLeft": "{username} עזב את הקבוצה",
-    "userJoined": "{username} הצטרף לקבוצה",
-    "addedBy": "{changedBy} הוסיף את {changed} לקבוצה",
-    "removedBy": "{changedBy} הסיר את {changed} מהקבוצה",
+    "userJoined": "{username} הצטרף ל-{level}",
+    "addedBy": "{changedBy} הוסיף את {changed} ל-{level}",
+    "removedBy": "{changedBy} הסיר את {changed} מה-{level}",
     "roleChanged": "{changedBy} שינה את התפקיד של {changed} מ-{oldRole} ל-{newRole}",
     "yourRoleChanged": "{changedBy} שינה את התפקיד שלך מ-{oldRole} ל-{newRole}",
-    "permissionsChangedBy": "{changedBy} שינה את הרשאות הקבוצה",
+    "permissionsChangedBy": "{changedBy} שינה את ההרשאות של {level}",
     "blockedBy": "{changedBy} חסם את {changed}",
     "unblockedBy": "{changedBy} בוטלה החסימה של {changed}",
     "ownershipTransferredBy": "{changedBy} העביר את הבעלות על הקבוצה אל {changed} 🎉",
@@ -178,8 +178,6 @@
     "searchForUsername": "חפש שם משתמש",
     "startNewChat": "התחל צ'אט חדש",
     "chatWith": "צ'אט עם {username}",
-    "joinGroup": "להצטרף לקבוצה",
-    "joinGroupFailed": "לא ניתן להצטרף לקבוצה",
     "youreBlocked": "מצטערים - נחסמת מהקבוצה הזו",
     "reply": "תשובה",
     "replyPrivately": "השב בפרטי",
@@ -512,7 +510,7 @@
     "copy": "עותק",
     "failedToShareLink": "שיתוף הקישור נכשל",
     "groupInviteChangedBy": "{changedBy} {changed} ההזמנה לקבוצה",
-    "failedToLeaveGroup": "אירעה שגיאה בניסיון להסיר אותך מהקבוצה",
+    "failedToLeaveGroup": "אירעה שגיאה בניסיון להסיר אותך מה-{level}",
     "historyOffInfo": "מצטרפים חדשים יראו הודעות שיגיעו רק לאחר שהצטרפו. 🤫",
     "memberIsTyping": "{username} מקליד",
     "membersAreTyping": "חברי {number} מקלידים",
@@ -646,7 +644,7 @@
     "unsuspendUser": "בטל את השעיית המשתמש",
     "suspendedUser": "משתמש מושעה",
     "unsuspendedUser": "משתמש לא מושעה",
-    "nUsersJoined": "{number} משתמשים הצטרפו לקבוצה",
+    "nUsersJoined": "משתמשים {number} הצטרפו ל-{level}",
     "searchPlaceholder": "חפש משתמשים וקבוצות...",
     "reasonForSuspension": "סיבה להשעיה",
     "suspend": "לְהַשְׁעוֹת",
@@ -749,7 +747,7 @@
     "demoteTo": "הורד ל-{role}",
     "promoteFailed": "לא ניתן לקדם ל-{role}",
     "demoteFailed": "לא ניתן לרדת בדרגה ל-{role}",
-    "ownerCantLeave": "עליך להוסיף בעלים נוסף לפני שתוכל לעזוב את הקבוצה",
+    "ownerCantLeave": "עליך להוסיף בעלים נוסף לפני שתוכל לעזוב את {level}",
     "participant": "חבר",
     "unauthorizedToCreatePublicGroup": "אינך מורשה ליצור קבוצות ציבוריות",
     "reminders": {
@@ -795,7 +793,7 @@
         "messageReport": "דווח על ידי @{username} ב-{timestamp} מהסיבה הבאה: **{reason}**",
         "showing": "מציג את ה-{count} העדכני ביותר מתוך {total} דוחות"
     },
-    "invitedBy": "{changedBy} הזמין את {changed} לקבוצה",
+    "invitedBy": "{changedBy} הזמין את {changed} ל-{level}",
     "halloffame": {
         "menu": "מפנים מובילים",
         "allTime": "כל הזמן",
@@ -894,11 +892,15 @@
             "name_taken": "סליחה - כבר קיימת קהילה בשם זה",
             "failure": "מצטערים שלא הצלחנו ליצור את הקהילה שלך",
             "saveFailed": "מצטערים שלא הצלחנו לשמור את העדכונים שלך",
-            "inviteUsers": "מצטערים שלא הצלחנו להזמין משתמשים אלה"
+            "inviteUsers": "מצטערים שלא הצלחנו להזמין משתמשים אלה",
+            "joinFailed": "מצטערים שלא הצלחנו להצטרף לקהילה הזו"
         },
         "memberCount": "חבר/ים",
         "channelCount": "ערוץ(ים)",
-        "usersInvited": "משתמשים הוזמנו לקהילה שלך"
+        "usersInvited": "משתמשים הוזמנו לקהילה שלך",
+        "joinCommunity": "הצטרף לקהילה",
+        "noChannelSelected": "לא נבחר ערוץ",
+        "selectAChannel": "בחר ערוץ או עיין בערוצים אחרים בקהילה זו."
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",
@@ -909,5 +911,7 @@
     "irreversible": "האם אתה בהחלט רוצה למחוק את ה-{level} הזה? אי אפשר לבטל את זה!",
     "thisIsPublicGroupWithN": "זהו {level} ציבורי עם חברים של {number}",
     "thisIsPrivateGroupWithN": "זהו {level} פרטי עם חברי {number}",
-    "unableToSaveUserProfile": "לא ניתן לשמור את פרופיל המשתמש"
+    "unableToSaveUserProfile": "לא ניתן לשמור את פרופיל המשתמש",
+    "joinGroup": "הצטרף ל-{level}",
+    "joinGroupFailed": "לא ניתן להצטרף ל-{level}"
 }

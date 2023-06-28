@@ -89,6 +89,7 @@ export const idlFactory = ({ IDL }) => {
     'search_term' : IDL.Opt(IDL.Text),
   });
   const GroupMatch = IDL.Record({
+    'id' : ChatId,
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,

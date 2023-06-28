@@ -306,7 +306,6 @@
             {preview}
             {blocked}
             on:joinGroup
-            on:cancelPreview
             on:upgrade
             on:cancelReply={() => currentChatDraftMessage.setReplyingTo(chat.id, undefined)}
             on:clearAttachment={() => currentChatDraftMessage.setAttachment(chat.id, undefined)}

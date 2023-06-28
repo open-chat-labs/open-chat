@@ -17,22 +17,19 @@
         ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
-        GroupChatSummary,
         Message,
         MessageAction,
         MessageContent,
         Member,
         Questions,
         OpenChat,
+        MultiUserChat,
     } from "openchat-client";
     import { allQuestions, cryptoCurrencyList, cryptoLookup } from "openchat-client";
-    import Button from "../Button.svelte";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
-    import { toastStore } from "../../stores/toast";
-    import GroupGateIcon from "./AccessGateIcon.svelte";
-    import { gatedGroupsEnabled } from "../../utils/features";
+    import PreviewFooter from "./PreviewFooter.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -41,7 +38,7 @@
     export let preview: boolean;
     export let canSend: boolean;
     export let messageAction: MessageAction = undefined;
-    export let joining: GroupChatSummary | undefined;
+    export let joining: MultiUserChat | undefined;
     export let fileToAttach: MessageContent | undefined;
     export let editingEvent: EventWrapper<Message> | undefined;
     export let replyingTo: EnhancedReplyContext | undefined;
@@ -74,8 +71,6 @@
     let messageEntryHeight: number;
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
-    let isPlatformModerator = client.isPlatformModerator();
-    let freezingInProgress = false;
     let tokens = cryptoCurrencyList
         .filter((t) => !cryptoLookup[t].disabled)
         .map((t) => t.toLowerCase())
@@ -90,7 +85,6 @@
     $: isGroup = chat.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
-    $: isFrozen = client.isFrozen(chat.id);
     $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(chat.id);
 
     $: {
@@ -434,39 +428,6 @@
         replaceTextWith(ev.detail);
         showEmojiSearch = false;
     }
-
-    function joinGroup() {
-        dispatch("joinGroup", {
-            group: chat,
-            select: true,
-        });
-    }
-
-    function cancelPreview() {
-        dispatch("cancelPreview", chat);
-    }
-
-    function freezeGroup() {
-        if (chat.id.kind !== "group_chat") return;
-        freezingInProgress = true;
-        client.freezeGroup(chat.id, undefined).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("failedToFreezeGroup");
-            }
-            freezingInProgress = false;
-        });
-    }
-
-    function unfreezeGroup() {
-        if (chat.id.kind !== "group_chat") return;
-        freezingInProgress = true;
-        client.unfreezeGroup(chat.id).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("failedToUnfreezeGroup");
-            }
-            freezingInProgress = false;
-        });
-    }
 </script>
 
 {#if showMentionPicker}
@@ -495,43 +456,8 @@
         <div class="blocked">
             {$_("userIsBlocked")}
         </div>
-    {:else if preview}
-        <div class="preview">
-            {#if chat.kind === "group_chat" && gatedGroupsEnabled}
-                <div class="gate">
-                    <GroupGateIcon on:upgrade gate={chat.gate} />
-                </div>
-            {/if}
-            {#if isPlatformModerator}
-                {#if isFrozen}
-                    <Button
-                        loading={freezingInProgress}
-                        secondary={true}
-                        small={true}
-                        on:click={unfreezeGroup}>
-                        {$_("unfreezeGroup")}
-                    </Button>
-                {:else}
-                    <Button
-                        loading={freezingInProgress}
-                        secondary={true}
-                        small={true}
-                        on:click={freezeGroup}>
-                        {$_("freezeGroup")}
-                    </Button>
-                {/if}
-            {/if}
-            <Button secondary={true} small={true} on:click={cancelPreview}>
-                {$_("leave")}
-            </Button>
-            <Button
-                loading={joining !== undefined}
-                disabled={joining !== undefined}
-                small={true}
-                on:click={joinGroup}>
-                {$_("joinGroup")}
-            </Button>
-        </div>
+    {:else if preview && chat.kind !== "direct_chat"}
+        <PreviewFooter {joining} {chat} on:joinGroup on:upgrade />
     {:else if !canSend}
         <div class="disabled">
             {mode === "thread" ? $_("readOnlyThread") : $_("readOnlyChat")}

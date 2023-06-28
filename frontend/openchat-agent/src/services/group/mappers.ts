@@ -5,8 +5,6 @@ import type {
     ApiChangeRoleResponse,
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
-    ApiDeleteMessageResponse,
-    ApiUndeleteMessageResponse,
     ApiRole,
     ApiMessagesByMessageIndexResponse,
     ApiMessageEventWrapper,
@@ -16,8 +14,6 @@ import type {
     ApiEnableInviteCodeResponse,
     ApiDisableInviteCodeResponse,
     ApiResetInviteCodeResponse,
-    ApiThreadPreviewsResponse,
-    ApiThreadPreview,
     ApiRegisterPollVoteResponse,
     ApiRegisterProposalVoteResponse,
     ApiGroupRules,
@@ -26,19 +22,19 @@ import type {
     ApiGroupCanisterGroupChatSummaryUpdates,
     ApiGroupCanisterSummaryResponse,
     ApiGroupCanisterSummaryUpdatesResponse,
-    ApiDeletedGroupMessageResponse,
     ApiClaimPrizeResponse,
     ApiGroupGateUpdate,
-    ApiDeclineInvitationResponse,
 } from "./candid/idl";
-import type { ApiEventsResponse as ApiCommunityEventsResponse } from "../community/candid/idl";
+import type {
+    ApiEventsResponse as ApiCommunityEventsResponse,
+    ApiMessagesByMessageIndexResponse as ApiCommunityMessagesByMessageIndexResponse,
+} from "../community/candid/idl";
 import {
     EventsResponse,
     EventWrapper,
     GroupChatEvent,
     SendMessageResponse,
     RemoveMemberResponse,
-    UndeleteMessageResponse,
     BlockUserResponse,
     ChangeRoleResponse,
     UnblockUserResponse,
@@ -50,8 +46,6 @@ import {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     GroupInviteCodeChange,
-    ThreadPreviewsResponse,
-    ThreadPreview,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
     AccessRules,
@@ -63,13 +57,11 @@ import {
     GroupCanisterGroupChatSummaryUpdates,
     GroupCanisterSummaryResponse,
     GroupCanisterSummaryUpdatesResponse,
-    DeletedGroupMessageResponse,
     ClaimPrizeResponse,
     UpdatedEvent,
-    DeclineInvitationResponse,
     GroupChatIdentifier,
     ChatIdentifier,
-    DeleteMessageResponse,
+    MultiUserChatIdentifier,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
@@ -80,7 +72,6 @@ import {
     groupPermissions,
     memberRole,
     message,
-    messageContent,
     groupSubtype,
     messageEvent,
     threadDetails,
@@ -355,59 +346,6 @@ export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserRespon
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
-export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteMessageResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "not_in_group";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    if ("NotPlatformModerator" in candid) {
-        return "not_platform_moderator";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
-}
-
-export function undeleteMessageResponse(
-    candid: ApiUndeleteMessageResponse
-): UndeleteMessageResponse {
-    if ("Success" in candid) {
-        if (candid.Success.messages.length == 0) {
-            return { kind: "internal_error" };
-        } else {
-            return {
-                kind: "success",
-                message: message(candid.Success.messages[0]),
-            };
-        }
-    }
-    if ("CallerNotInGroup" in candid) {
-        return { kind: "not_in_group" };
-    }
-    if ("MessageNotFound" in candid) {
-        return { kind: "message_not_found" };
-    }
-    if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiUndeleteMessageResponse type received", candid);
-}
-
 // TODO fill this in
 export function apiGateUpdate(): ApiGroupGateUpdate {
     return { NoChange: null };
@@ -515,40 +453,10 @@ export function removeMemberResponse(candid: ApiRemoveParticipantResponse): Remo
     );
 }
 
-export function deletedMessageResponse(
-    candid: ApiDeletedGroupMessageResponse
-): DeletedGroupMessageResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            content: messageContent(candid.Success.content, "unknown"),
-        };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return { kind: "caller_not_in_group" };
-    }
-    if ("NotAuthorized" in candid) {
-        return { kind: "not_authorized" };
-    }
-    if ("MessageNotFound" in candid) {
-        return { kind: "message_not_found" };
-    }
-    if ("MessageNotDeleted" in candid) {
-        return { kind: "message_not_deleted" };
-    }
-    if ("MessageHardDeleted" in candid) {
-        return { kind: "message_hard_deleted" };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiDeletedGroupMessageResponse type received",
-        candid
-    );
-}
-
 export async function getMessagesByMessageIndexResponse(
     principal: Principal,
-    candid: ApiMessagesByMessageIndexResponse,
-    chatId: GroupChatIdentifier,
+    candid: ApiMessagesByMessageIndexResponse | ApiCommunityMessagesByMessageIndexResponse,
+    chatId: MultiUserChatIdentifier,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined
 ): Promise<EventsResponse<Message>> {
@@ -568,10 +476,14 @@ export async function getMessagesByMessageIndexResponse(
             latestEventIndex,
         };
     }
-    if ("CallerNotInGroup" in candid) {
-        return "events_failed";
-    }
-    if ("ThreadMessageNotFound" in candid) {
+    if (
+        "CallerNotInGroup" in candid ||
+        "ThreadNotFound" in candid ||
+        "UserNotInChannel" in candid ||
+        "ChannelNotFound" in candid ||
+        "UserNotInCommunity" in candid ||
+        "ThreadMessageNotFound" in candid
+    ) {
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
@@ -744,45 +656,6 @@ export function disableInviteCodeResponse(
     );
 }
 
-export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview): ThreadPreview {
-    return {
-        chatId,
-        latestReplies: candid.latest_replies
-            .map(messageEvent)
-            .sort((e1, e2) => e1.index - e2.index),
-        totalReplies: candid.total_replies,
-        rootMessage: messageEvent(candid.root_message),
-    };
-}
-
-export function threadPreviewsResponse(
-    candid: ApiThreadPreviewsResponse,
-    chatId: ChatIdentifier,
-    latestClientThreadUpdate: bigint | undefined
-): ThreadPreviewsResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "thread_previews_success",
-            threads: candid.Success.threads.map((t) => threadPreview(chatId, t)),
-        };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return {
-            kind: "caller_not_in_group",
-        };
-    }
-    if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byTimestamp(
-            candid.ReplicaNotUpToDate,
-            latestClientThreadUpdate ?? BigInt(-1)
-        );
-    }
-    throw new UnsupportedValueError(
-        "Unexpected Group.ApiThreadPreviewsResponse type received",
-        candid
-    );
-}
-
 export function resetInviteCodeResponse(
     candid: ApiResetInviteCodeResponse
 ): ResetInviteCodeResponse {
@@ -941,35 +814,6 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
-    if ("OwnershipTransferred" in candid) {
-        return {
-            kind: "ownership_transferred",
-            oldOwner: candid.OwnershipTransferred.old_owner.toString(),
-            newOwner: candid.OwnershipTransferred.new_owner.toString(),
-        };
-    }
-
-    if ("ParticipantAssumesSuperAdmin" in candid) {
-        return {
-            kind: "member_assumes_super_admin",
-            userId: candid.ParticipantAssumesSuperAdmin.user_id.toString(),
-        };
-    }
-
-    if ("ParticipantDismissedAsSuperAdmin" in candid) {
-        return {
-            kind: "member_dismissed_as_super_admin",
-            userId: candid.ParticipantDismissedAsSuperAdmin.user_id.toString(),
-        };
-    }
-
-    if ("ParticipantRelinquishesSuperAdmin" in candid) {
-        return {
-            kind: "member_relinquishes_super_admin",
-            userId: candid.ParticipantRelinquishesSuperAdmin.user_id.toString(),
-        };
-    }
-
     if ("RoleChanged" in candid) {
         return {
             kind: "role_changed",
@@ -1117,22 +961,4 @@ export function rulesResponse(candid: ApiRulesResponse): AccessRules | undefined
             enabled: rules !== undefined,
         };
     }
-}
-
-export function declineInvitationResponse(
-    candid: ApiDeclineInvitationResponse
-): DeclineInvitationResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("NotInvited" in candid) {
-        return "not_invited";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiDeclineInvitationResponse type received",
-        candid
-    );
 }

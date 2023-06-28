@@ -2,13 +2,36 @@
     import Button from "../Button.svelte";
     import { _ } from "svelte-i18n";
     import page from "page";
+    import { createEventDispatcher, getContext } from "svelte";
+    import type { OpenChat } from "openchat-client";
+    import { pushRightPanelHistory } from "../../stores/rightPanel";
+
+    const client = getContext<OpenChat>("client");
+
+    $: selectedCommunityId = client.selectedCommunityId;
+
+    function showChannels() {
+        if ($selectedCommunityId) {
+            pushRightPanelHistory({
+                kind: "community_channels",
+            });
+        }
+    }
 </script>
 
-<div class="wrapper">
-    <h2 class="title">{$_("noChatSelected")}</h2>
-    <p class="subtitle">{$_("selectAChat")}</p>
-    <Button on:click={() => page("/hotgroups")}>{$_("showHotGroups")}</Button>
-</div>
+{#if selectedCommunityId === undefined}
+    <div class="wrapper">
+        <h2 class="title">{$_("noChatSelected")}</h2>
+        <p class="subtitle">{$_("selectAChat")}</p>
+        <Button on:click={() => page("/hotgroups")}>{$_("showHotGroups")}</Button>
+    </div>
+{:else}
+    <div class="wrapper">
+        <h2 class="title">{$_("communities.noChannelSelected")}</h2>
+        <p class="subtitle">{$_("communities.selectAChannel")}</p>
+        <Button on:click={showChannels}>{$_("communities.browseChannels")}</Button>
+    </div>
+{/if}
 
 <style lang="scss">
     .wrapper {

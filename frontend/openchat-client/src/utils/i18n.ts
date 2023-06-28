@@ -12,7 +12,7 @@ export function getDecimalSeparator(locale: string | null | undefined): string {
 
 const defaultDecimalSeparator = ".";
 
-type InterpolationValues =
+export type InterpolationValues =
     | Record<string, string | number | boolean | Date | null | undefined>
     | undefined;
 interface MessageObject {

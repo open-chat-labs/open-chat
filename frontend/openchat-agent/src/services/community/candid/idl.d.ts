@@ -54,6 +54,14 @@ import {
     CommunityCanisterChannelSummaryUpdates,
     ChannelMembershipUpdates,
     CommunityMembershipUpdates,
+    ExploreChannelsResponse,
+    ChannelMatch,
+    SelectedInitialResponse,
+    SelectedUpdatesResponse,
+    SelectedInitialSuccess,
+    SelectedUpdatesSuccess,
+    MessagesByMessageIndexResponse,
+    ThreadPreviewsResponse,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -110,6 +118,14 @@ export {
     CommunityCanisterChannelSummaryUpdates as ApiCommunityCanisterChannelSummaryUpdates,
     ChannelMembershipUpdates as ApiChannelMembershipUpdates,
     CommunityMembershipUpdates as ApiCommunityMembershipUpdates,
+    ExploreChannelsResponse as ApiExploreChannelsResponse,
+    ChannelMatch as ApiChannelMatch,
+    SelectedInitialResponse as ApiSelectedInitialResponse,
+    SelectedUpdatesResponse as ApiSelectedUpdatesResponse,
+    SelectedInitialSuccess as ApiSelectedInitialSuccess,
+    SelectedUpdatesSuccess as ApiSelectedUpdatesSuccess,
+    MessagesByMessageIndexResponse as ApiMessagesByMessageIndexResponse,
+    ThreadPreviewsResponse as ApiThreadPreviewsResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

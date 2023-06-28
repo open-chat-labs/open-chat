@@ -111,9 +111,9 @@ export function compareIsNotYouThenUsername(
 }
 
 export function groupAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
-    return dataContent?.blobUrl ?? "../assets/group.svg";
+    return dataContent?.blobUrl ?? "/assets/group.svg";
 }
 
 export function userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
-    return dataContent?.blobUrl ?? "../assets/unknownUserAvatar.svg";
+    return dataContent?.blobUrl ?? "/assets/unknownUserAvatar.svg";
 }

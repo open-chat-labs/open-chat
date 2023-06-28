@@ -110,14 +110,10 @@ import type {
     CommunitySummary,
     CommunityInviteCodeResponse,
     CreateCommunityResponse,
-    DeclineChannelInvitationResponse,
-    DeleteChannelMessageResponse,
-    DeleteChannelMessagesResponse,
     DisableCommunityInviteCodeResponse,
     EnableCommunityInviteCodeResponse,
     JoinChannelResponse,
     JoinCommunityResponse,
-    LeaveChannelResponse,
     MakeChannelPrivateResponse,
     MakeCommunityPrivateResponse,
     RemoveChannelMemberResponse,
@@ -126,10 +122,12 @@ import type {
     ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
-    UndeleteChannelMessagesResponse,
     UpdateCommunityResponse,
     CommunityIdentifier,
     CommunitySummaryResponse,
+    ChannelMatch,
+    CommunityDetailsResponse,
+    CommunityDetails,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -255,7 +253,6 @@ export type WorkerRequest =
     | ChannelEventsWindow
     | CommunityInviteCode
     | JoinChannel
-    | LeaveChannel
     | MakeChannelPrivate
     | MakeCommunityPrivate
     | ChannelMessagesByMessageIndex
@@ -268,12 +265,34 @@ export type WorkerRequest =
     | ToggleMuteChannelNotifications
     | ToggleMuteCommunityNotifications
     | UnblockCommunityUser
-    | UndeleteChannelMessages
     | UpdateCommunity
     | CreateCommunity
     | ExploreCommunities
     | GetCommunitySummary
+    | ExploreChannels
+    | GetCommunityDetails
+    | GetCommunityDetailsUpdates
     | ChangeCommunityRole;
+
+type GetCommunityDetails = {
+    kind: "getCommunityDetails";
+    id: CommunityIdentifier;
+    lastUpdated: bigint;
+};
+
+type GetCommunityDetailsUpdates = {
+    kind: "getCommunityDetailsUpdates";
+    id: CommunityIdentifier;
+    previous: CommunityDetails;
+};
+
+type ExploreChannels = {
+    kind: "exploreChannels";
+    id: CommunityIdentifier;
+    searchTerm: string | undefined;
+    pageSize: number;
+    pageIndex: number;
+};
 
 type GetCommunitySummary = {
     communityId: string;
@@ -318,7 +337,7 @@ type GetInviteCode = {
 };
 
 type GroupMessagesByMessageIndex = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageIndexes: Set<number>;
     latestClientEventIndex: number | undefined;
     kind: "getGroupMessagesByMessageIndex";
@@ -357,7 +376,7 @@ type GetUser = {
 };
 
 type GetThreadPreviews = {
-    threadsByChat: Record<string, [ThreadSyncDetails[], number | undefined]>;
+    threadsByChat: Map<string, [ThreadSyncDetails[], number | undefined]>;
     kind: "threadPreviews";
 };
 
@@ -578,12 +597,12 @@ type JoinGroup = {
 };
 
 type JoinCommunity = {
-    communityId: string;
+    id: CommunityIdentifier;
     kind: "joinCommunity";
 };
 
 type LeaveGroup = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     kind: "leaveGroup";
 };
 
@@ -808,7 +827,7 @@ type GetUpdates = {
 };
 
 type GetDeletedGroupMessage = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageId: bigint;
     threadRootMessageIndex: number | undefined;
     kind: "getDeletedGroupMessage";
@@ -922,13 +941,9 @@ export type WorkerResponse =
     | Response<BlockCommunityUserResponse>
     | Response<ChangeChannelRoleResponse>
     | Response<ChangeCommunityRoleResponse>
-    | Response<DeclineChannelInvitationResponse>
-    | Response<DeleteChannelMessagesResponse>
-    | Response<DeleteChannelMessageResponse>
     | Response<DisableCommunityInviteCode>
     | Response<CommunityInviteCodeResponse>
     | Response<JoinChannelResponse>
-    | Response<LeaveChannelResponse>
     | Response<MakeChannelPrivateResponse>
     | Response<MakeCommunityPrivateResponse>
     | Response<RemoveCommunityMemberResponse>
@@ -938,11 +953,13 @@ export type WorkerResponse =
     | Response<ToggleMuteChannelNotificationsResponse>
     | Response<ToggleMuteCommunityNotificationsResponse>
     | Response<UnblockCommunityUserResponse>
-    | Response<UndeleteChannelMessagesResponse>
     | Response<UpdateCommunityResponse>
     | Response<CreateCommunityResponse>
     | Response<JoinCommunityResponse>
     | Response<CommunitySummaryResponse>
+    | Response<ChannelMatch[]>
+    | Response<CommunityDetailsResponse>
+    | Response<CommunityDetails>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1034,7 +1051,7 @@ type ReportMessage = {
 };
 
 type DeclineInvitation = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     kind: "declineInvitation";
 };
 
@@ -1124,11 +1141,6 @@ type JoinChannel = {
     chatId: ChannelIdentifier;
 };
 
-type LeaveChannel = {
-    kind: "leaveChannel";
-    chatId: ChannelIdentifier;
-};
-
 type MakeChannelPrivate = {
     kind: "makeChannelPrivate";
     chatId: ChannelIdentifier;
@@ -1199,13 +1211,6 @@ type UnblockCommunityUser = {
     kind: "unblockCommunityUser";
     communityId: string;
     userId: string;
-};
-
-type UndeleteChannelMessages = {
-    kind: "undeleteChannelMessages";
-    chatId: ChannelIdentifier;
-    messageIds: bigint[];
-    threadRootMessageIndex: number | undefined;
 };
 
 type UpdateCommunity = {
@@ -1443,12 +1448,8 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends ChangeCommunityRole
     ? ChangeCommunityRoleResponse
     : T extends DeclineChannelInvitation
-    ? DeclineChannelInvitationResponse
+    ? DeclineInvitationResponse
     : T extends DeleteChannelMessages
-    ? DeleteChannelMessagesResponse
-    : T extends DeleteChannelMessage
-    ? DeleteChannelMessageResponse
-    : T extends DisableCommunityInviteCode
     ? DisableCommunityInviteCodeResponse
     : T extends ChannelEvents
     ? EventsResponse<GroupChatEvent>
@@ -1460,8 +1461,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? CommunityInviteCodeResponse
     : T extends JoinChannel
     ? JoinChannelResponse
-    : T extends LeaveChannel
-    ? LeaveChannelResponse
     : T extends MakeChannelPrivate
     ? MakeChannelPrivateResponse
     : T extends MakeCommunityPrivate
@@ -1482,8 +1481,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? ToggleMuteCommunityNotificationsResponse
     : T extends UnblockCommunityUser
     ? UnblockCommunityUserResponse
-    : T extends UndeleteChannelMessages
-    ? UndeleteChannelMessagesResponse
     : T extends UpdateCommunity
     ? UpdateCommunityResponse
     : T extends CreateCommunity
@@ -1494,4 +1491,10 @@ export type WorkerResult<T> = T extends PinMessage
     ? GroupSearchResponse
     : T extends GetCommunitySummary
     ? CommunitySummaryResponse
+    : T extends ExploreChannels
+    ? ChannelMatch[]
+    : T extends GetCommunityDetails
+    ? CommunityDetailsResponse
+    : T extends GetCommunityDetailsUpdates
+    ? CommunityDetails
     : never;

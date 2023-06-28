@@ -92,11 +92,13 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
     };
 }
 
-export function userRegistrationCanisterResponse(candid: ApiUserRegistrationCanisterResponse): string {
+export function userRegistrationCanisterResponse(
+    candid: ApiUserRegistrationCanisterResponse
+): string {
     if ("Success" in candid) {
         return candid.Success.toString();
     }
-    throw new Error(`Unexpected ApiUserRegistrationCanisterResponse type received: ${candid}`)
+    throw new Error(`Unexpected ApiUserRegistrationCanisterResponse type received: ${candid}`);
 }
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
@@ -116,7 +118,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                     ? "not_required"
                     : "in_progress",
             referrals: r.referrals.map((p) => p.toString()),
-            isPlatformModerator: r.is_super_admin,
+            isPlatformModerator: r.is_platform_moderator,
             suspensionDetails: optional(r.suspension_details, suspensionDetails),
             isSuspectedBot: r.is_suspected_bot,
             diamondMembership: optional(r.diamond_membership_details, diamondMembership),

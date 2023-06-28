@@ -27,9 +27,21 @@ async function generateLanguage(lang, code) {
     }
 
     function missingEntries(enEntries, targetEntries) {
+        // if we need to delete a bunch of keys from all languages (for example if the english key has changed), add all the keys to this set
+        const toDelete = new Set([
+            // "confirmLeaveGroup",
+            // "userJoined",
+            // "addedBy",
+            // "removedBy",
+            // "invitedBy",
+            // "permissionsChangedBy",
+            // "failedToLeaveGroup",
+            // "nUsersJoined",
+            // "ownerCantLeave",
+        ]);
         const missing = [];
         enEntries.forEach(([k, v]) => {
-            if (targetEntries.find(([tk]) => tk === k) === undefined) {
+            if (targetEntries.find(([tk]) => tk === k) === undefined || toDelete.has(k)) {
                 const cleaned = v.replace(/{[^}.]*}/g, (match) => {
                     if (tokensByKey[k] === undefined) {
                         tokensByKey[k] = [];

@@ -17,7 +17,6 @@ function createFailedMessagesStore() {
         },
         add: (key: MessageContext, message: EventWrapper<Message>): void => {
             store.update((state) => {
-                // TODO double check reactivity (can clone if necessary)
                 const chatState = state.get(key) ?? {};
                 state.set(key, {
                     ...chatState,
@@ -35,7 +34,6 @@ function createFailedMessagesStore() {
             if (chatState && chatState[Number(messageId)]) {
                 delete chatState[Number(messageId)];
                 store.update((state) => {
-                    // TODO double check reactivity (can clone if necessary)
                     state.set(key, { ...chatState });
                     return state;
                 });

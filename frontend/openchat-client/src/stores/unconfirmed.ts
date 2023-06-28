@@ -54,7 +54,6 @@ function createUnconfirmedStore() {
         keyUpdated: MessageContext,
         messages: EventWrapper<Message>[]
     ): UnconfirmedMessages {
-        // TODO - double check that we have not affected the reactivity of the store by mutating the state
         if (messages.length === 0) {
             state.delete(keyUpdated);
             return state;

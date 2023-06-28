@@ -88,13 +88,13 @@
     "groupUpdateFailed": "Leider konnten wir Ihre Gruppe nicht aktualisieren",
     "groupChangedBy": "{changedBy} hat die {changed} geändert",
     "groupDesc": "{level} Beschreibung",
-    "confirmLeaveGroup": "Möchten Sie diese Gruppe wirklich verlassen?",
+    "confirmLeaveGroup": "Möchten Sie diesen {level} wirklich verlassen?",
     "directChatCreatedAt": "Chat gestartet",
     "skip": "Überspringen",
     "userLeft": "{username} hat die Gruppe verlassen",
-    "userJoined": "{username} ist der Gruppe beigetreten",
-    "addedBy": "{changedBy} hat {changed} zur Gruppe hinzugefügt",
-    "removedBy": "{changedBy} hat {changed} aus der Gruppe entfernt",
+    "userJoined": "{username} ist der Gruppe {level} beigetreten",
+    "addedBy": "{changedBy} hat {changed} zu {level} hinzugefügt",
+    "removedBy": "{changedBy} hat {changed} aus {level} entfernt",
     "promotedBy": "{changedBy} hat {changed} zum Gruppenadministrator befördert",
     "dismissedBy": "{changedBy} hat {changed} als Gruppenadministrator entlassen",
     "blockedBy": "{changedBy} sperrt {changed}",
@@ -167,8 +167,6 @@
     "searchForUsername": "Suchen Sie nach einem Benutzernamen",
     "startNewChat": "Starten Sie einen neuen Chat",
     "chatWith": "Chatten Sie mit {username}",
-    "joinGroup": "Gruppe beitreten",
-    "joinGroupFailed": "Der Gruppe kann nicht beigetreten werden",
     "youreBlocked": "Entschuldigung - Sie wurden für diese Gruppe blockiert",
     "reply": "Antwort",
     "replyPrivately": "Privat antworten",
@@ -416,7 +414,7 @@
     "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s",
     "chooseMembers": "Wähle Mitglieder",
     "confirmMembers": "Mitglieder bestätigen",
-    "permissionsChangedBy": "{changedBy} hat die Gruppenberechtigungen geändert",
+    "permissionsChangedBy": "{changedBy} hat die {level}-Berechtigungen geändert",
     "filterMembers": "Mitglieder filtern",
     "publicGroupWithN": "Öffentliche Gruppe mit {number} Mitglied(ern)",
     "privateGroupWithN": "Private Gruppe mit {number} Mitglied(ern)",
@@ -516,7 +514,7 @@
     "copy": "Kopieren",
     "failedToShareLink": "Link konnte nicht geteilt werden",
     "groupInviteChangedBy": "{changedBy} {changed} die Gruppeneinladung",
-    "failedToLeaveGroup": "Beim Versuch, Sie aus der Gruppe zu entfernen, ist ein Fehler aufgetreten",
+    "failedToLeaveGroup": "Beim Versuch, Sie aus {level} zu entfernen, ist ein Fehler aufgetreten.",
     "historyOffInfo": "Neue Teilnehmer sehen nur Nachrichten, die nach ihrem Beitritt eingehen. 🤫",
     "memberIsTyping": "{username} tippt",
     "membersAreTyping": "{number} Mitglieder schreiben",
@@ -650,7 +648,7 @@
     "unsuspendUser": "Suspendierung des Benutzers aufheben",
     "suspendedUser": "Gesperrter Benutzer",
     "unsuspendedUser": "Nicht gesperrter Benutzer",
-    "nUsersJoined": "{number} Benutzer sind der Gruppe beigetreten",
+    "nUsersJoined": "{number} Benutzer sind der {level} beigetreten",
     "searchPlaceholder": "Nach Benutzern und Gruppen suchen...",
     "reasonForSuspension": "Grund der Suspendierung",
     "suspend": "Aussetzen",
@@ -753,7 +751,7 @@
     "demoteTo": "Zurückstufen auf {role}",
     "promoteFailed": "Heraufstufen auf {role} nicht möglich",
     "demoteFailed": "Herabstufung auf {role} nicht möglich",
-    "ownerCantLeave": "Sie müssen einen weiteren Eigentümer hinzufügen, bevor Sie die Gruppe verlassen können",
+    "ownerCantLeave": "Sie müssen einen weiteren Eigentümer hinzufügen, bevor Sie {level} verlassen können.",
     "participant": "Mitglied",
     "unauthorizedToCreatePublicGroup": "Sie sind nicht berechtigt, öffentliche Gruppen zu erstellen",
     "reminders": {
@@ -799,7 +797,7 @@
         "messageReport": "Von @{username} auf {timestamp} aus folgendem Grund gemeldet: **{reason}**",
         "showing": "Anzeige der neusten {count} von {total} Bericht(en)"
     },
-    "invitedBy": "{changedBy} hat {changed} in die Gruppe eingeladen",
+    "invitedBy": "{changedBy} hat {changed} zum {level} eingeladen",
     "halloffame": {
         "menu": "Top-Empfehlungen",
         "allTime": "Alle Zeit",
@@ -898,11 +896,15 @@
             "name_taken": "Entschuldigung, es gibt bereits eine Community mit diesem Namen",
             "failure": "Es tut uns leid, dass wir Ihre Community nicht erstellen konnten",
             "saveFailed": "Leider konnten wir Ihre Aktualisierungen nicht speichern",
-            "inviteUsers": "Leider konnten wir diese Benutzer nicht einladen"
+            "inviteUsers": "Leider konnten wir diese Benutzer nicht einladen",
+            "joinFailed": "Es tut uns leid, dass wir dieser Community nicht beitreten konnten"
         },
         "memberCount": "Mitglied(er)",
         "channelCount": "Kanal(e)",
-        "usersInvited": "Benutzer wurden zu Ihrer Community eingeladen"
+        "usersInvited": "Benutzer wurden zu Ihrer Community eingeladen",
+        "joinCommunity": "Treten Sie der Community bei",
+        "noChannelSelected": "Kein Kanal ausgewählt",
+        "selectAChannel": "Wählen Sie einen Kanal aus oder suchen Sie nach anderen Kanälen in dieser Community."
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",
@@ -913,5 +915,7 @@
     "irreversible": "Möchten Sie diesen {level} unbedingt löschen? Das kann nicht rückgängig gemacht werden!",
     "thisIsPublicGroupWithN": "Dies ist eine öffentliche {level} mit {number}-Mitgliedern",
     "thisIsPrivateGroupWithN": "Dies ist ein privates {level} mit {number}-Mitgliedern",
-    "unableToSaveUserProfile": "Benutzerprofil konnte nicht gespeichert werden"
+    "unableToSaveUserProfile": "Benutzerprofil konnte nicht gespeichert werden",
+    "joinGroup": "Treten Sie {level} bei",
+    "joinGroupFailed": "Beitritt zu {level} nicht möglich"
 }

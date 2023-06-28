@@ -1,10 +1,11 @@
 import { derived, writable } from "svelte/store";
 import { setsAreEqual } from "../utils/set";
-import type {
+import {
     CommunitySummary,
     CommunityPermissions,
     CommunitySpecificState,
     CommunityIdentifier,
+    defaultAccessRules,
 } from "openchat-shared";
 import { createCommunitySpecificObjectStore } from "./dataByCommunityFactory";
 import { createDerivedPropStore } from "./derived";
@@ -89,9 +90,11 @@ export const selectedCommunityId = writable<CommunityIdentifier | undefined>({
 
 export const communityStateStore = createCommunitySpecificObjectStore<CommunitySpecificState>(
     () => ({
+        detailsLoaded: false,
         members: [],
         blockedUsers: new Set<string>(),
         invitedUsers: new Set<string>(),
+        lastUpdated: BigInt(0),
     })
 );
 
@@ -114,7 +117,7 @@ export const currentCommunityInvitedUsers = createDerivedPropStore<
 export const currentCommunityRules = createDerivedPropStore<CommunitySpecificState, "rules">(
     communityStateStore,
     "rules",
-    () => undefined
+    () => defaultAccessRules
 );
 
 export const selectedCommunity = derived(
