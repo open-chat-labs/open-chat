@@ -1,12 +1,12 @@
-use crate::{ChatEventInternal, EventKey, MessageInternal, MultiUserChatInternal, ReplyContextInternal};
+use crate::{ChatEventInternal, EventKey, MessageInternal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap};
 use std::ops::Deref;
 use types::{
-    CanisterId, ChatEvent, EventIndex, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message, MessageId,
-    MessageIndex, TimestampMillis, UserId,
+    ChatEvent, EventIndex, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message, MessageId, MessageIndex,
+    TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -22,28 +22,7 @@ pub struct ChatEventsList {
 impl ChatEventsList {
     // TODO remove this after next user canister upgrade
     pub fn remove_invalid_feature_requests_replies(&mut self) -> Vec<EventIndex> {
-        let feature_requests_chat =
-            MultiUserChatInternal::Group(CanisterId::from_text("vfaj4-zyaaa-aaaaf-aabya-cai").unwrap().into());
-
-        let mut event_indexes = Vec::new();
-
-        for event in self.events_map.values_mut().take_while(|e| e.timestamp < 1676715565837) {
-            if let Some(message) = event.event.as_message_mut() {
-                if let Some(r) = message.replies_to.as_mut() {
-                    if let Some((c, _)) = r.chat_if_other {
-                        if c == feature_requests_chat {
-                            *r = ReplyContextInternal {
-                                chat_if_other: Some((feature_requests_chat, None)),
-                                event_index: EventIndex::default(),
-                            };
-                            event_indexes.push(event.index);
-                        }
-                    }
-                }
-            }
-        }
-
-        event_indexes
+        Vec::new()
     }
 
     pub(crate) fn push_event(

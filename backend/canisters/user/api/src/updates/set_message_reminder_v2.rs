@@ -1,16 +1,20 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, EventIndex, MessageIndex, TimestampMillis};
-
-use crate::set_message_reminder_v2;
+use types::{Chat, EventIndex, FieldTooLongResult, MessageIndex, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub chat_id: ChatId,
+    pub chat: Chat,
     pub thread_root_message_index: Option<MessageIndex>,
     pub event_index: EventIndex,
     pub notes: Option<String>,
     pub remind_at: TimestampMillis,
 }
 
-pub type Response = set_message_reminder_v2::Response;
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum Response {
+    Success(u64),
+    ReminderDateInThePast,
+    NotesTooLong(FieldTooLongResult),
+    UserSuspended,
+}

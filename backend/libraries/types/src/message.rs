@@ -1,6 +1,5 @@
 use crate::{
-    ChatId, EventIndex, MessageContent, MessageId, MessageIndex, MultiUserChat, Reaction, ThreadSummary, TimestampMillis,
-    UserId,
+    Chat, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -23,7 +22,7 @@ pub struct Message {
 #[serde(from = "ReplyContextPrevious")]
 pub struct ReplyContext {
     pub event_list_if_other: Option<(ChatId, Option<MessageIndex>)>,
-    pub chat_if_other: Option<(MultiUserChat, Option<MessageIndex>)>,
+    pub chat_if_other: Option<(Chat, Option<MessageIndex>)>,
     pub event_index: EventIndex,
 }
 
@@ -42,7 +41,7 @@ impl From<ReplyContextPrevious> for ReplyContext {
     fn from(value: ReplyContextPrevious) -> Self {
         ReplyContext {
             event_list_if_other: value.event_list_if_other,
-            chat_if_other: value.event_list_if_other.map(|(c, t)| (MultiUserChat::Group(c), t)),
+            chat_if_other: value.event_list_if_other.map(|(c, t)| (Chat::Group(c), t)),
             event_index: value.event_index,
         }
     }

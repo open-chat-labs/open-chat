@@ -12,7 +12,7 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
+    Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
     GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message,
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, Milliseconds, MultiUserChat, PollVotes, PrizeWinnerContent,
     ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, TimestampMillis, Timestamped,
@@ -717,6 +717,8 @@ impl ChatEvents {
                 return;
             }
         }
+
+        let chat: Chat = chat.into();
 
         self.push_message(PushMessageArgs {
             sender: OPENCHAT_BOT_USER_ID,
