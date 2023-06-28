@@ -559,6 +559,7 @@ function pendingCryptoTransfer(
         const trans = "NNS" in candid ? candid.NNS : candid.SNS;
         return {
             kind: "pending",
+            ledger: trans.ledger.toString(),
             token: token(trans.token),
             recipient,
             amountE8s: trans.amount.e8s,
@@ -569,6 +570,7 @@ function pendingCryptoTransfer(
     if ("ICRC1" in candid) {
         return {
             kind: "pending",
+            ledger: candid.ICRC1.ledger.toString(),
             token: token(candid.ICRC1.token),
             recipient,
             amountE8s: candid.ICRC1.amount,
@@ -1230,6 +1232,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
             return {
                 Pending: {
                     NNS: {
+                        ledger: Principal.fromText(domain.ledger),
                         token: apiToken(domain.token),
                         to: {
                             User: Principal.fromText(domain.recipient),
@@ -1244,14 +1247,15 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
         } else {
             return {
                 Pending: {
-                    SNS: {
+                    ICRC1: {
+                        ledger: Principal.fromText(domain.ledger),
                         token: apiToken(domain.token),
                         to: {
                             owner: Principal.fromText(domain.recipient),
                             subaccount: [],
                         },
-                        amount: apiICP(domain.amountE8s),
-                        fee: apiICP(domain.feeE8s ?? BigInt(0)),
+                        amount: domain.amountE8s,
+                        fee: domain.feeE8s ?? BigInt(0),
                         memo: [],
                         created: domain.createdAtNanos,
                     },
@@ -1269,11 +1273,12 @@ export function apiPendingCryptocurrencyWithdrawal(
         return {
             withdrawal: {
                 NNS: {
+                    ledger: Principal.fromText(domain.ledger),
                     token: apiToken(domain.token),
                     to: { Account: hexStringToBytes(domain.to) },
                     amount: apiICP(domain.amountE8s),
                     fee: [],
-                    memo: apiOptional(identity, domain.memo),
+                    memo: [],
                     created: domain.createdAtNanos,
                 },
             },
@@ -1281,12 +1286,13 @@ export function apiPendingCryptocurrencyWithdrawal(
     } else {
         return {
             withdrawal: {
-                SNS: {
+                ICRC1: {
+                    ledger: Principal.fromText(domain.ledger),
                     token: apiToken(domain.token),
                     to: { owner: Principal.fromText(domain.to), subaccount: [] },
-                    amount: apiICP(domain.amountE8s),
-                    fee: apiICP(domain.feeE8s ?? BigInt(0)),
-                    memo: apiOptional(identity, domain.memo),
+                    amount: domain.amountE8s,
+                    fee: domain.feeE8s ?? BigInt(0),
+                    memo: [],
                     created: domain.createdAtNanos,
                 },
             },
