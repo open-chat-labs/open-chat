@@ -1386,9 +1386,6 @@ export class OpenChat extends OpenChatAgentWorker {
         messageId: bigint,
         threadRootMessageIndex: number | undefined
     ): Promise<boolean> {
-        if (chatId.kind === "channel") {
-            throw new Error("TODO - implement revealDeletedMessage for channels");
-        }
         const chat = this._liveState.chatSummaries.get(chatId);
 
         if (chat === undefined) {
@@ -1396,7 +1393,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         const result =
-            chatId.kind === "group_chat"
+            chatId.kind === "group_chat" || chatId.kind === "channel"
                 ? this.sendRequest({
                       kind: "getDeletedGroupMessage",
                       chatId,

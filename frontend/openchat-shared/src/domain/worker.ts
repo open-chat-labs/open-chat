@@ -110,8 +110,6 @@ import type {
     CommunitySummary,
     CommunityInviteCodeResponse,
     CreateCommunityResponse,
-    DeleteChannelMessageResponse,
-    DeleteChannelMessagesResponse,
     DisableCommunityInviteCodeResponse,
     EnableCommunityInviteCodeResponse,
     JoinChannelResponse,
@@ -124,7 +122,6 @@ import type {
     ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
-    UndeleteChannelMessagesResponse,
     UpdateCommunityResponse,
     CommunityIdentifier,
     CommunitySummaryResponse,
@@ -268,7 +265,6 @@ export type WorkerRequest =
     | ToggleMuteChannelNotifications
     | ToggleMuteCommunityNotifications
     | UnblockCommunityUser
-    | UndeleteChannelMessages
     | UpdateCommunity
     | CreateCommunity
     | ExploreCommunities
@@ -831,7 +827,7 @@ type GetUpdates = {
 };
 
 type GetDeletedGroupMessage = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageId: bigint;
     threadRootMessageIndex: number | undefined;
     kind: "getDeletedGroupMessage";
@@ -945,8 +941,6 @@ export type WorkerResponse =
     | Response<BlockCommunityUserResponse>
     | Response<ChangeChannelRoleResponse>
     | Response<ChangeCommunityRoleResponse>
-    | Response<DeleteChannelMessagesResponse>
-    | Response<DeleteChannelMessageResponse>
     | Response<DisableCommunityInviteCode>
     | Response<CommunityInviteCodeResponse>
     | Response<JoinChannelResponse>
@@ -959,7 +953,6 @@ export type WorkerResponse =
     | Response<ToggleMuteChannelNotificationsResponse>
     | Response<ToggleMuteCommunityNotificationsResponse>
     | Response<UnblockCommunityUserResponse>
-    | Response<UndeleteChannelMessagesResponse>
     | Response<UpdateCommunityResponse>
     | Response<CreateCommunityResponse>
     | Response<JoinCommunityResponse>
@@ -1220,13 +1213,6 @@ type UnblockCommunityUser = {
     userId: string;
 };
 
-type UndeleteChannelMessages = {
-    kind: "undeleteChannelMessages";
-    chatId: ChannelIdentifier;
-    messageIds: bigint[];
-    threadRootMessageIndex: number | undefined;
-};
-
 type UpdateCommunity = {
     kind: "updateCommunity";
     communityId: string;
@@ -1464,10 +1450,6 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends DeclineChannelInvitation
     ? DeclineInvitationResponse
     : T extends DeleteChannelMessages
-    ? DeleteChannelMessagesResponse
-    : T extends DeleteChannelMessage
-    ? DeleteChannelMessageResponse
-    : T extends DisableCommunityInviteCode
     ? DisableCommunityInviteCodeResponse
     : T extends ChannelEvents
     ? EventsResponse<GroupChatEvent>
@@ -1499,8 +1481,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? ToggleMuteCommunityNotificationsResponse
     : T extends UnblockCommunityUser
     ? UnblockCommunityUserResponse
-    : T extends UndeleteChannelMessages
-    ? UndeleteChannelMessagesResponse
     : T extends UpdateCommunity
     ? UpdateCommunityResponse
     : T extends CreateCommunity

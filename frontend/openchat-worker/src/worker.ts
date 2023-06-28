@@ -1413,40 +1413,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "deleteChannelMessages":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .deleteMessages(
-                        payload.chatId,
-                        payload.messageIds,
-                        payload.threadRootMessageIndex,
-                        payload.asPlatformModerator
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "deleteChannelMessage":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .deleteMessage(
-                        payload.chatId,
-                        payload.messageId,
-                        payload.sender,
-                        payload.threadRootMessageIndex
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "disableCommunityInviteCode":
                 agent
                     .communityClient(payload.communityId)
@@ -1605,22 +1571,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 agent
                     .communityClient(payload.communityId)
                     .unblockUser(payload.userId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "undeleteChannelMessages":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .undeleteMessages(
-                        payload.chatId,
-                        payload.messageIds,
-                        payload.threadRootMessageIndex
-                    )
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

@@ -132,6 +132,9 @@ import {
     EditMessageResponse,
     DeclineInvitationResponse,
     LeaveGroupResponse,
+    DeleteMessageResponse,
+    DeletedGroupMessageResponse,
+    UndeleteMessageResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -149,6 +152,9 @@ import type {
     ApiSelectedUpdatesResponse,
     ApiEditMessageResponse,
     ApiDeclineInvitationResponse,
+    ApiDeleteMessageResponse,
+    ApiDeletedGroupMessageResponse,
+    ApiUndeleteMessageResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -168,7 +174,10 @@ import type {
     ApiSelectedChannelUpdatesResponse,
     ApiEditMessageResponse as ApiEditChannelMessageResponse,
     ApiDeclineInvitationResponse as ApiDeclineChannelInvitationResponse,
+    ApiDeleteMessagesResponse as ApiDeleteChannelMessageResponse,
     ApiLeaveChannelResponse,
+    ApiDeletedMessageResponse as ApiDeletedChannelMessageResponse,
+    ApiUndeleteMessagesResponse as ApiUndeleteChannelMessageResponse,
 } from "../community/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -1806,4 +1815,47 @@ export function leaveGroupResponse(
         return "owner_cannot_leave";
     }
     return "failure";
+}
+
+export function deleteMessageResponse(
+    candid: ApiDeleteMessageResponse | ApiDeleteChannelMessageResponse
+): DeleteMessageResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("DeleteMessageResponse failed with: ", candid);
+        return "failure";
+    }
+}
+
+export function deletedMessageResponse(
+    candid: ApiDeletedGroupMessageResponse | ApiDeletedChannelMessageResponse
+): DeletedGroupMessageResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            content: messageContent(candid.Success.content, "unknown"),
+        };
+    } else {
+        console.warn("DeletedMessageResponse failed with: ", candid);
+        return CommonResponses.failure;
+    }
+}
+
+export function undeleteMessageResponse(
+    candid: ApiUndeleteMessageResponse | ApiUndeleteChannelMessageResponse
+): UndeleteMessageResponse {
+    if ("Success" in candid) {
+        if (candid.Success.messages.length == 0) {
+            return CommonResponses.failure;
+        } else {
+            return {
+                kind: "success",
+                message: message(candid.Success.messages[0]),
+            };
+        }
+    } else {
+        console.warn("UndeleteMessageResponse failed with: ", candid);
+        return CommonResponses.failure;
+    }
 }

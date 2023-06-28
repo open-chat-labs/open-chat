@@ -53,8 +53,6 @@ import {
     changeRoleResponse,
     sendMessageResponse,
     removeMemberResponse,
-    deleteMessageResponse,
-    undeleteMessageResponse,
     blockUserResponse,
     unblockUserResponse,
     getMessagesByMessageIndexResponse,
@@ -72,7 +70,6 @@ import {
     rulesResponse,
     summaryResponse,
     summaryUpdatesResponse,
-    deletedMessageResponse,
     claimPrizeResponse,
 } from "./mappers";
 import {
@@ -94,8 +91,11 @@ import {
     apiAccessGate,
     declineInvitationResponse,
     apiMessageContent,
+    undeleteMessageResponse,
     editMessageResponse,
+    deleteMessageResponse,
     apiOptional,
+    deletedMessageResponse,
     updateGroupResponse,
     apiUser,
     pinMessageResponse,

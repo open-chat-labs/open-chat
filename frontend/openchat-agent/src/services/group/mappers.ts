@@ -5,7 +5,6 @@ import type {
     ApiChangeRoleResponse,
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
-    ApiDeleteMessageResponse,
     ApiUndeleteMessageResponse,
     ApiRole,
     ApiMessagesByMessageIndexResponse,
@@ -26,7 +25,6 @@ import type {
     ApiGroupCanisterGroupChatSummaryUpdates,
     ApiGroupCanisterSummaryResponse,
     ApiGroupCanisterSummaryUpdatesResponse,
-    ApiDeletedGroupMessageResponse,
     ApiClaimPrizeResponse,
     ApiGroupGateUpdate,
 } from "./candid/idl";
@@ -65,12 +63,10 @@ import {
     GroupCanisterGroupChatSummaryUpdates,
     GroupCanisterSummaryResponse,
     GroupCanisterSummaryUpdatesResponse,
-    DeletedGroupMessageResponse,
     ClaimPrizeResponse,
     UpdatedEvent,
     GroupChatIdentifier,
     ChatIdentifier,
-    DeleteMessageResponse,
     MultiUserChatIdentifier,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
@@ -82,7 +78,6 @@ import {
     groupPermissions,
     memberRole,
     message,
-    messageContent,
     groupSubtype,
     messageEvent,
     threadDetails,
@@ -357,59 +352,6 @@ export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserRespon
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
-export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteMessageResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "not_in_group";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    if ("NotPlatformModerator" in candid) {
-        return "not_platform_moderator";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
-}
-
-export function undeleteMessageResponse(
-    candid: ApiUndeleteMessageResponse
-): UndeleteMessageResponse {
-    if ("Success" in candid) {
-        if (candid.Success.messages.length == 0) {
-            return { kind: "internal_error" };
-        } else {
-            return {
-                kind: "success",
-                message: message(candid.Success.messages[0]),
-            };
-        }
-    }
-    if ("CallerNotInGroup" in candid) {
-        return { kind: "not_in_group" };
-    }
-    if ("MessageNotFound" in candid) {
-        return { kind: "message_not_found" };
-    }
-    if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiUndeleteMessageResponse type received", candid);
-}
-
 // TODO fill this in
 export function apiGateUpdate(): ApiGroupGateUpdate {
     return { NoChange: null };
@@ -513,36 +455,6 @@ export function removeMemberResponse(candid: ApiRemoveParticipantResponse): Remo
     }
     throw new UnsupportedValueError(
         "Unexpected ApiRemoveParticipantResponse type received",
-        candid
-    );
-}
-
-export function deletedMessageResponse(
-    candid: ApiDeletedGroupMessageResponse
-): DeletedGroupMessageResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            content: messageContent(candid.Success.content, "unknown"),
-        };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return { kind: "caller_not_in_group" };
-    }
-    if ("NotAuthorized" in candid) {
-        return { kind: "not_authorized" };
-    }
-    if ("MessageNotFound" in candid) {
-        return { kind: "message_not_found" };
-    }
-    if ("MessageNotDeleted" in candid) {
-        return { kind: "message_not_deleted" };
-    }
-    if ("MessageHardDeleted" in candid) {
-        return { kind: "message_hard_deleted" };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiDeletedGroupMessageResponse type received",
         candid
     );
 }

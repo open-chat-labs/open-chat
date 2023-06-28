@@ -770,18 +770,29 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async getDeletedGroupMessage(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         messageId: bigint,
         threadRootMessageIndex?: number
     ): Promise<DeletedGroupMessageResponse> {
-        const response = await this.getGroupClient(chatId.groupId).getDeletedMessage(
-            messageId,
-            threadRootMessageIndex
-        );
-        if (response.kind === "success") {
-            response.content = this.rehydrateMessageContent(response.content);
+        switch (chatId.kind) {
+            case "group_chat":
+                const groupResp = await this.getGroupClient(chatId.groupId).getDeletedMessage(
+                    messageId,
+                    threadRootMessageIndex
+                );
+                if (groupResp.kind === "success") {
+                    groupResp.content = this.rehydrateMessageContent(groupResp.content);
+                }
+                return groupResp;
+            case "channel":
+                const channelResp = await this.communityClient(
+                    chatId.communityId
+                ).getDeletedMessage(chatId, messageId, threadRootMessageIndex);
+                if (channelResp.kind === "success") {
+                    channelResp.content = this.rehydrateMessageContent(channelResp.content);
+                }
+                return channelResp;
         }
-        return response;
     }
 
     async getDeletedDirectMessage(
@@ -1603,17 +1614,40 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex?: number,
         asPlatformModerator?: boolean
     ): Promise<DeleteMessageResponse> {
-        if (chatId.kind === "group_chat") {
-            return this.deleteGroupMessage(
-                chatId.groupId,
-                messageId,
-                threadRootMessageIndex,
-                asPlatformModerator
-            );
-        } else if (chatId.kind === "direct_chat") {
-            return this.deleteDirectMessage(chatId.userId, messageId, threadRootMessageIndex);
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.deleteGroupMessage(
+                    chatId.groupId,
+                    messageId,
+                    threadRootMessageIndex,
+                    asPlatformModerator
+                );
+
+            case "direct_chat":
+                return this.deleteDirectMessage(chatId.userId, messageId, threadRootMessageIndex);
+
+            case "channel":
+                return this.deleteChannelMessage(
+                    chatId,
+                    messageId,
+                    threadRootMessageIndex,
+                    asPlatformModerator
+                );
         }
-        throw new Error("TODO - delete channel message not implemented");
+    }
+
+    private deleteChannelMessage(
+        chatId: ChannelIdentifier,
+        messageId: bigint,
+        threadRootMessageIndex?: number,
+        asPlatformModerator?: boolean
+    ): Promise<DeleteMessageResponse> {
+        return this.communityClient(chatId.communityId).deleteMessages(
+            chatId,
+            [messageId],
+            threadRootMessageIndex,
+            asPlatformModerator
+        );
     }
 
     private deleteGroupMessage(
@@ -1642,28 +1676,25 @@ export class OpenChatAgent extends EventTarget {
         messageId: bigint,
         threadRootMessageIndex?: number
     ): Promise<UndeleteMessageResponse> {
-        if (chatId.kind === "group_chat") {
-            this.undeleteGroupMessage(chatId.groupId, messageId, threadRootMessageIndex);
-        } else if (chatId.kind === "direct_chat") {
-            this.undeleteDirectMessage(chatId.userId, messageId, threadRootMessageIndex);
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).undeleteMessage(
+                    messageId,
+                    threadRootMessageIndex
+                );
+            case "direct_chat":
+                return this.userClient.undeleteMessage(
+                    chatId.userId,
+                    messageId,
+                    threadRootMessageIndex
+                );
+            case "channel":
+                return this.communityClient(chatId.communityId).undeleteMessage(
+                    chatId,
+                    messageId,
+                    threadRootMessageIndex
+                );
         }
-        throw new Error("TODO - undelete channel message not implemented");
-    }
-
-    private undeleteGroupMessage(
-        chatId: string,
-        messageId: bigint,
-        threadRootMessageIndex?: number
-    ): Promise<UndeleteMessageResponse> {
-        return this.getGroupClient(chatId).undeleteMessage(messageId, threadRootMessageIndex);
-    }
-
-    private undeleteDirectMessage(
-        otherUserId: string,
-        messageId: bigint,
-        threadRootMessageIndex?: number
-    ): Promise<UndeleteMessageResponse> {
-        return this.userClient.undeleteMessage(otherUserId, messageId, threadRootMessageIndex);
     }
 
     lastOnline(userIds: string[]): Promise<Record<string, number>> {

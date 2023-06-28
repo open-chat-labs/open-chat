@@ -17,8 +17,6 @@ import {
     CommunityPermissions,
     CommunitySummaryResponse,
     CommunitySummaryUpdatesResponse,
-    DeleteChannelMessageResponse,
-    DeleteChannelMessagesResponse,
     DisableCommunityInviteCodeResponse,
     EnableCommunityInviteCodeResponse,
     EventsResponse,
@@ -35,7 +33,6 @@ import {
     ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
-    UndeleteChannelMessagesResponse,
     UnsupportedValueError,
     UpdateCommunityResponse,
     UpdatedEvent,
@@ -47,8 +44,6 @@ import type {
     ApiBlockUserResponse,
     ApiChangeChannelRoleResponse,
     ApiChangeRoleResponse,
-    ApiDeleteMessagesResponse,
-    ApiDeletedMessageResponse,
     ApiDisableInviteCodeResponse,
     ApiInviteCodeResponse,
     ApiJoinChannelResponse,
@@ -65,7 +60,6 @@ import type {
     ApiToggleMuteChannelNotificationsResponse,
     ApiToggleMuteNotificationsResponse,
     ApiUnblockUserResponse,
-    ApiUndeleteMessagesResponse,
     ApiUpdateCommunityResponse,
     ApiGroupRole,
     ApiCommunityRole,
@@ -99,7 +93,6 @@ import {
     groupSubtype,
     memberRole,
     mention,
-    message,
     messageContent,
     messageEvent,
     threadDetails,
@@ -299,71 +292,6 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommuni
         return CommonResponses.internalError;
     }
     throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
-}
-
-export function deleteMessagesResponse(
-    candid: ApiDeleteMessagesResponse
-): DeleteChannelMessagesResponse {
-    if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChat;
-    }
-    if ("MessageNotFound" in candid) {
-        return CommonResponses.messageNotFound;
-    }
-    if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound;
-    }
-    if ("Success" in candid) {
-        return CommonResponses.success;
-    }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
-    }
-    if ("NotPlatformModerator" in candid) {
-        return CommonResponses.notPlatformModerator;
-    }
-    if ("InternalError" in candid) {
-        return CommonResponses.internalError;
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiDeleteMessagesResponse type received", candid);
-}
-
-export function deleteMessageResponse(
-    candid: ApiDeletedMessageResponse,
-    sender: string
-): DeleteChannelMessageResponse {
-    if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChat;
-    }
-    if ("MessageNotFound" in candid) {
-        return CommonResponses.messageNotFound;
-    }
-    if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound;
-    }
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
-    }
-    if ("Success" in candid) {
-        return { kind: "success", content: messageContent(candid.Success.content, sender) };
-    }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
-    }
-    if ("MessageHardDeleted" in candid) {
-        return { kind: "message_hard_deleted" };
-    }
-    if ("MessageNotDeleted" in candid) {
-        return { kind: "message_not_deleted" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
 export function disableInviteCodeResponse(
@@ -821,17 +749,6 @@ export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockComm
         return CommonResponses.success;
     } else {
         console.warn("UnblockCommunityUser failed with", candid);
-        return CommonResponses.failure;
-    }
-}
-
-export function undeleteMessagesResponse(
-    candid: ApiUndeleteMessagesResponse
-): UndeleteChannelMessagesResponse {
-    if ("Success" in candid) {
-        return { kind: "success", messages: candid.Success.messages.map(message) };
-    } else {
-        console.warn("UndeleteChannelMessages failed with", candid);
         return CommonResponses.failure;
     }
 }

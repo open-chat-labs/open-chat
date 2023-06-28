@@ -166,27 +166,6 @@ export type DeleteChannelResponse =
     | UserSuspended
     | CommunityFrozen;
 
-export type DeleteChannelMessagesResponse =
-    | UserNotInChat
-    | MessageNotFound
-    | ChatNotFound
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen
-    | NotPlatformModerator
-    | InteralError;
-
-export type DeleteChannelMessageResponse =
-    | UserNotInChat
-    | MessageNotFound
-    | ChatNotFound
-    | NotAuthorised
-    | (Success & { content: MessageContent })
-    | UserNotInCommunity
-    | { kind: "message_hard_deleted" }
-    | { kind: "message_not_deleted" };
-
 export type DisableCommunityInviteCodeResponse =
     | NotAuthorised
     | Success
@@ -250,8 +229,6 @@ export type ChannelMessageMatch = {
 export type SearchChannelResponse = Failure | (Success & { matches: ChannelMessageMatch[] });
 
 export type UnblockCommunityUserResponse = Failure | Success;
-
-export type UndeleteChannelMessagesResponse = Failure | (Success & { messages: Message[] });
 
 export type UpdateCommunityResponse = Failure | Success;
 

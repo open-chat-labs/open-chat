@@ -9,8 +9,6 @@ import {
     blockUserResponse,
     changeChannelRoleResponse,
     changeRoleResponse,
-    deleteMessagesResponse,
-    deleteMessageResponse,
     disableInviteCodeResponse,
     enableInviteCodeResponse,
     inviteCodeResponse,
@@ -28,7 +26,6 @@ import {
     toggleMuteChannelNotificationsResponse,
     toggleMuteNotificationsResponse,
     unblockUserResponse,
-    undeleteMessagesResponse,
     updateCommunityResponse,
     apiMemberRole,
     apiCommunityRole,
@@ -50,12 +47,15 @@ import {
     updateGroupResponse,
     createGroupResponse,
     declineInvitationResponse,
+    deleteMessageResponse,
     editMessageResponse,
     deleteGroupResponse,
     unpinMessageResponse,
     groupDetailsResponse,
     groupDetailsUpdatesResponse,
     leaveGroupResponse,
+    deletedMessageResponse,
+    undeleteMessageResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -67,8 +67,6 @@ import type {
     ChangeCommunityRoleResponse,
     CommunityInviteCodeResponse,
     CommunityPermissions,
-    DeleteChannelMessageResponse,
-    DeleteChannelMessagesResponse,
     DisableCommunityInviteCodeResponse,
     EnableCommunityInviteCodeResponse,
     EventWrapper,
@@ -86,7 +84,6 @@ import type {
     ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
-    UndeleteChannelMessagesResponse,
     UpdateCommunityResponse,
     User,
     ChannelIdentifier,
@@ -111,6 +108,9 @@ import type {
     CommunityDetailsResponse,
     CommunityDetails,
     LeaveGroupResponse,
+    DeleteMessageResponse,
+    DeletedGroupMessageResponse,
+    UndeleteMessageResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -271,12 +271,27 @@ export class CommunityClient extends CandidService {
         );
     }
 
+    getDeletedMessage(
+        chatId: ChannelIdentifier,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeletedGroupMessageResponse> {
+        return this.handleResponse(
+            this.service.deleted_message({
+                channel_id: BigInt(chatId.channelId),
+                message_id: messageId,
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            }),
+            deletedMessageResponse
+        );
+    }
+
     deleteMessages(
         chatId: ChannelIdentifier,
         messageIds: bigint[],
         threadRootMessageIndex: number | undefined,
         asPlatformModerator: boolean | undefined
-    ): Promise<DeleteChannelMessagesResponse> {
+    ): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.service.delete_messages({
                 channel_id: BigInt(chatId.channelId),
@@ -284,23 +299,7 @@ export class CommunityClient extends CandidService {
                 as_platform_moderator: apiOptional(identity, asPlatformModerator),
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             }),
-            deleteMessagesResponse
-        );
-    }
-
-    deleteMessage(
-        chatId: ChannelIdentifier,
-        messageId: bigint,
-        sender: string,
-        threadRootMessageIndex: number | undefined
-    ): Promise<DeleteChannelMessageResponse> {
-        return this.handleResponse(
-            this.service.deleted_message({
-                channel_id: BigInt(chatId.channelId),
-                message_id: messageId,
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            }),
-            (res) => deleteMessageResponse(res, sender)
+            deleteMessageResponse
         );
     }
 
@@ -998,18 +997,18 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    undeleteMessages(
+    undeleteMessage(
         chatId: ChannelIdentifier,
-        messageIds: bigint[],
-        threadRootMessageIndex: number | undefined
-    ): Promise<UndeleteChannelMessagesResponse> {
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<UndeleteMessageResponse> {
         return this.handleResponse(
             this.service.undelete_messages({
                 channel_id: BigInt(chatId.channelId),
-                message_ids: messageIds,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_ids: [messageId],
             }),
-            undeleteMessagesResponse
+            undeleteMessageResponse
         );
     }
 

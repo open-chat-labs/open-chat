@@ -1633,27 +1633,14 @@ export type UpdatePermissionsResponse =
 
 export type AddRemoveReactionResponse = Success | Failure;
 
-export type DeleteMessageResponse =
-    | "not_in_group"
-    | "chat_not_found"
-    | "success"
-    | "message_not_found"
-    | "user_suspended"
-    | "chat_frozen"
-    | "internal_error"
-    | "not_platform_moderator";
+export type DeleteMessageResponse = "success" | "failure";
 
 export type UndeleteMessageResponse =
     | {
           kind: "success";
           message: Message;
       }
-    | { kind: "not_in_group" }
-    | { kind: "chat_not_found" }
-    | { kind: "internal_error" }
-    | { kind: "message_not_found" }
-    | UserSuspended
-    | ChatFrozen;
+    | Failure;
 
 export type UnpinMessageResponse = "failure" | "success";
 
@@ -1671,11 +1658,7 @@ export type DeletedGroupMessageResponse =
           kind: "success";
           content: MessageContent;
       }
-    | { kind: "caller_not_in_group" }
-    | { kind: "not_authorized" }
-    | { kind: "message_not_found" }
-    | { kind: "message_not_deleted" }
-    | { kind: "message_hard_deleted" };
+    | Failure;
 
 export type DeletedDirectMessageResponse =
     | {
