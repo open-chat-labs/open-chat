@@ -195,12 +195,21 @@
     }
 
     function changeCommunityRole(
-        _id: CommunityIdentifier,
-        _userId: string,
-        _newRole: MemberRole,
-        _oldRole: MemberRole
+        id: CommunityIdentifier,
+        userId: string,
+        newRole: MemberRole,
+        oldRole: MemberRole
     ) {
-        toastStore.showSuccessToast("TODO - change community role");
+        return client.changeCommunityRole(id, userId, newRole, oldRole).then((success) => {
+            if (!success) {
+                const roleText = $_(newRole);
+                const promotion = compareRoles(newRole, oldRole) > 0;
+                const message = $_(promotion ? "promoteFailed" : "demoteFailed", {
+                    values: { role: roleText },
+                });
+                toastStore.showFailureToast(message);
+            }
+        });
     }
 
     function removeGroupMember(chatId: GroupChatIdentifier, userId: string): Promise<void> {

@@ -145,15 +145,7 @@ export type ChangeChannelRoleResponse =
     | CommunityFrozen
     | { kind: "target_user_not_in_channel" };
 
-export type ChangeCommunityRoleResponse =
-    | Invalid
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen
-    | TargetUserNotInCommunity
-    | InteralError;
+export type ChangeCommunityRoleResponse = "success" | "failure";
 
 export type DeleteChannelResponse =
     | UserNotInChat

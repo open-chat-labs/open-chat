@@ -322,6 +322,7 @@ import {
     MultiUserChatIdentifier,
     MultiUserChat,
     ChannelMatch,
+    communityRoles,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -1113,6 +1114,8 @@ export class OpenChat extends OpenChatAgentWorker {
     ): boolean {
         switch (id.kind) {
             case "community":
+                const found = communityRoles.find((r) => r === newRole);
+                if (!found) return false;
                 return this.communityPredicate(id, (community) =>
                     canChangeCommunityRoles(community, currentRole, newRole)
                 );
@@ -3276,6 +3279,37 @@ export class OpenChat extends OpenChatAgentWorker {
 
     removeMember(chatId: GroupChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
         return this.sendRequest({ kind: "removeMember", chatId, userId });
+    }
+
+    changeCommunityRole(
+        id: CommunityIdentifier,
+        userId: string,
+        newRole: MemberRole,
+        oldRole: MemberRole
+    ): Promise<boolean> {
+        if (newRole === oldRole) return Promise.resolve(true);
+
+        // Update the local store
+        communityStateStore.updateProp(id, "members", (ps) =>
+            ps.map((p) => (p.userId === userId ? { ...p, role: newRole } : p))
+        );
+        return this.sendRequest({ kind: "changeCommunityRole", id, userId, newRole })
+            .then((resp) => {
+                return resp === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Error trying to change role: ", err);
+                return false;
+            })
+            .then((success) => {
+                if (!success) {
+                    // Revert the local store
+                    communityStateStore.updateProp(id, "members", (ps) =>
+                        ps.map((p) => (p.userId === userId ? { ...p, role: oldRole } : p))
+                    );
+                }
+                return success;
+            });
     }
 
     changeRole(

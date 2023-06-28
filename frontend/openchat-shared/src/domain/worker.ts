@@ -1234,7 +1234,7 @@ type CreateCommunity = {
 
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
-    communityId: string;
+    id: CommunityIdentifier;
     userId: string;
     newRole: MemberRole;
 };

@@ -267,31 +267,12 @@ export function changeChannelRoleResponse(
 }
 
 export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommunityRoleResponse {
-    if ("Invalid" in candid) {
-        return CommonResponses.invalid;
-    }
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
-    }
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return "success";
+    } else {
+        console.warn("Unexpected ApiChangeRoleResponse type received", candid);
+        return "failure";
     }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
-    }
-    if ("TargetUserNotInCommunity" in candid) {
-        return CommonResponses.targetUserNotInCommunity;
-    }
-    if ("InternalError" in candid) {
-        return CommonResponses.internalError;
-    }
-    throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
 }
 
 export function disableInviteCodeResponse(

@@ -1391,7 +1391,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "changeCommunityRole":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.id.communityId)
                     .changeRole(payload.userId, payload.newRole)
                     .then((response) =>
                         sendResponse(correlationId, {
