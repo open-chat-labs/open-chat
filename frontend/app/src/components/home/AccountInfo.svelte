@@ -39,7 +39,7 @@
 <div class="account-info">
     <div class="qr-wrapper" class:border>
         <div class="qr" class:smaller={qrSize === "smaller"} class:larger={qrSize === "larger"}>
-            <QR text={account} />
+            <QR text={account} level="Q" />
             <div class={`icon ${token}`} />
         </div>
     </div>
