@@ -105,7 +105,6 @@ import type { AccessGate, AccessRules } from "./access";
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
-    ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
     CommunitySummary,
     CommunityInviteCodeResponse,
@@ -442,7 +441,7 @@ type RegisterProposalVote = {
 };
 
 type ChangeRole = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     userId: string;
     newRole: MemberRole;
     kind: "changeRole";
@@ -939,7 +938,6 @@ export type WorkerResponse =
     | Response<ReferralLeaderboardResponse>
     | Response<ReportMessageResponse>
     | Response<BlockCommunityUserResponse>
-    | Response<ChangeChannelRoleResponse>
     | Response<ChangeCommunityRoleResponse>
     | Response<DisableCommunityInviteCode>
     | Response<CommunityInviteCodeResponse>
@@ -1444,7 +1442,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends BlockCommunityUser
     ? BlockCommunityUserResponse
     : T extends ChangeChannelRole
-    ? ChangeChannelRoleResponse
+    ? ChangeRoleResponse
     : T extends ChangeCommunityRole
     ? ChangeCommunityRoleResponse
     : T extends DeclineChannelInvitation

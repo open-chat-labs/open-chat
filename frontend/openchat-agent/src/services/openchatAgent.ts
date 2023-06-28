@@ -1447,11 +1447,20 @@ export class OpenChatAgent extends EventTarget {
     }
 
     changeRole(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         userId: string,
         newRole: MemberRole
     ): Promise<ChangeRoleResponse> {
-        return this.getGroupClient(chatId.groupId).changeRole(userId, newRole);
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).changeRole(userId, newRole);
+            case "channel":
+                return this.communityClient(chatId.communityId).changeChannelRole(
+                    chatId,
+                    userId,
+                    newRole
+                );
+        }
     }
 
     deleteGroup(chatId: MultiUserChatIdentifier): Promise<DeleteGroupResponse> {

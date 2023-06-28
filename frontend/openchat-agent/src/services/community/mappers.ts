@@ -1,7 +1,6 @@
 import {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
-    ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
     ChannelIdentifier,
     ChannelMatch,
@@ -228,42 +227,6 @@ export function blockUserResponse(candid: ApiBlockUserResponse): BlockCommunityU
         return { kind: "cannot_block_user" };
     }
     throw new UnsupportedValueError("Unexpected ApiBlockUserResponse type received", candid);
-}
-
-export function changeChannelRoleResponse(
-    candid: ApiChangeChannelRoleResponse
-): ChangeChannelRoleResponse {
-    if ("Invalid" in candid) {
-        return CommonResponses.invalid;
-    }
-    if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChat;
-    }
-    if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound;
-    }
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
-    }
-    if ("Success" in candid) {
-        return CommonResponses.success;
-    }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
-    }
-    if ("TargetUserNotInChannel" in candid) {
-        return { kind: "target_user_not_in_channel" };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiChangeChannelRoleResponse type received",
-        candid
-    );
 }
 
 export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommunityRoleResponse {

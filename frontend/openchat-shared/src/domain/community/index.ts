@@ -134,17 +134,6 @@ export type BlockCommunityUserResponse =
     | { kind: "cannot_block_self" }
     | { kind: "cannot_block_user" };
 
-export type ChangeChannelRoleResponse =
-    | Invalid
-    | UserNotInChat
-    | ChatNotFound
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen
-    | { kind: "target_user_not_in_channel" };
-
 export type ChangeCommunityRoleResponse = "success" | "failure";
 
 export type DeleteChannelResponse =

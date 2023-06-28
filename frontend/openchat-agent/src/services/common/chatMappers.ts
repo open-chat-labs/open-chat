@@ -137,6 +137,7 @@ import {
     UndeleteMessageResponse,
     ThreadPreview,
     ThreadPreviewsResponse,
+    ChangeRoleResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -159,6 +160,7 @@ import type {
     ApiUndeleteMessageResponse,
     ApiThreadPreviewsResponse,
     ApiThreadPreview,
+    ApiChangeRoleResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -183,6 +185,7 @@ import type {
     ApiDeletedMessageResponse as ApiDeletedChannelMessageResponse,
     ApiUndeleteMessagesResponse as ApiUndeleteChannelMessageResponse,
     ApiThreadPreviewsResponse as ApiChannelThreadPreviewsResponse,
+    ApiChangeChannelRoleResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 
@@ -1896,4 +1899,15 @@ export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview):
         totalReplies: candid.total_replies,
         rootMessage: messageEvent(candid.root_message),
     };
+}
+
+export function changeRoleResponse(
+    candid: ApiChangeRoleResponse | ApiChangeChannelRoleResponse
+): ChangeRoleResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("ChangeRoleResponse failed with: ", candid);
+        return "failure";
+    }
 }

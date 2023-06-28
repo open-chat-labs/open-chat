@@ -1521,15 +1521,7 @@ export type EmptyEvent = {
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
 
-export type ChangeRoleResponse =
-    | "internal_error"
-    | "user_not_in_group"
-    | "caller_not_in_group"
-    | "not_authorized"
-    | "invalid"
-    | "user_suspended"
-    | "chat_frozen"
-    | "success";
+export type ChangeRoleResponse = "failure" | "success";
 
 export type DeleteGroupResponse = "success" | "failure";
 

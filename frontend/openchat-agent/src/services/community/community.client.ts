@@ -7,8 +7,6 @@ import type { AgentConfig } from "../../config";
 import {
     addMembersToChannelResponse,
     blockUserResponse,
-    changeChannelRoleResponse,
-    changeRoleResponse,
     disableInviteCodeResponse,
     enableInviteCodeResponse,
     inviteCodeResponse,
@@ -33,6 +31,7 @@ import {
     exploreChannelsResponse,
     communityDetailsResponse,
     communityDetailsUpdatesResponse,
+    changeRoleResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -57,6 +56,7 @@ import {
     deletedMessageResponse,
     undeleteMessageResponse,
     threadPreviewsResponse,
+    changeRoleResponse as changeChannelRoleResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -64,7 +64,6 @@ import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
     CandidateChannel,
-    ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
     CommunityInviteCodeResponse,
     CommunityPermissions,
@@ -113,6 +112,7 @@ import type {
     DeletedGroupMessageResponse,
     UndeleteMessageResponse,
     ThreadPreviewsResponse,
+    ChangeRoleResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -210,7 +210,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         userId: string,
         newRole: MemberRole
-    ): Promise<ChangeChannelRoleResponse> {
+    ): Promise<ChangeRoleResponse> {
         return this.handleResponse(
             this.service.change_channel_role({
                 channel_id: BigInt(chatId.channelId),

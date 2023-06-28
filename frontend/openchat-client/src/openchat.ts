@@ -3313,7 +3313,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     changeRole(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         userId: string,
         newRole: MemberRole,
         oldRole: MemberRole

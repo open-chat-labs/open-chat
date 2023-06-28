@@ -15,6 +15,7 @@
         UserSummary,
         OpenChat,
         MultiUserChat,
+        MultiUserChatIdentifier,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
@@ -62,7 +63,10 @@
     function onChangeGroupRole(
         ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>
     ): void {
-        if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
+        if (
+            $selectedChatId !== undefined &&
+            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+        ) {
             let { userId, newRole, oldRole } = ev.detail;
             changeGroupRole($selectedChatId, userId, newRole, oldRole);
         }
@@ -176,7 +180,7 @@
     }
 
     function changeGroupRole(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         userId: string,
         newRole: MemberRole,
         oldRole: MemberRole

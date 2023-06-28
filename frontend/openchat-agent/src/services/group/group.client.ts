@@ -50,7 +50,6 @@ import { CandidService } from "../candidService";
 import {
     apiRole,
     getEventsResponse,
-    changeRoleResponse,
     sendMessageResponse,
     removeMemberResponse,
     blockUserResponse,
@@ -91,6 +90,7 @@ import {
     declineInvitationResponse,
     threadPreviewsResponse,
     apiMessageContent,
+    changeRoleResponse,
     undeleteMessageResponse,
     editMessageResponse,
     deleteMessageResponse,

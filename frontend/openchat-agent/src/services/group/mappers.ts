@@ -391,34 +391,6 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
-export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeRoleResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("UserNotInGroup" in candid) {
-        return "user_not_in_group";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("Invalid" in candid) {
-        return "invalid";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
-}
-
 export function removeMemberResponse(candid: ApiRemoveParticipantResponse): RemoveMemberResponse {
     if ("Success" in candid) {
         return "success";
