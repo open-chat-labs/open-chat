@@ -31,6 +31,7 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
         set_controllers(management_canister, &canister_ids.storage_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.registry, controllers.clone()),
         set_controllers(management_canister, &canister_ids.market_maker, controllers),
         set_controllers(
             management_canister,
@@ -148,6 +149,14 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
+    let registry_canister_wasm = get_canister_wasm(CanisterName::Registry, version);
+    let registry_init_args = registry_canister::init::Args {
+        governance_principals: vec![principal],
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        wasm_version: version,
+        test_mode,
+    };
+
     let market_maker_canister_wasm = get_canister_wasm(CanisterName::MarketMaker, version);
     let market_maker_init_args = market_maker_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
@@ -192,7 +201,7 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    futures::future::join3(
+    futures::future::join4(
         install_wasm(
             management_canister,
             &canister_ids.storage_index,
@@ -204,6 +213,12 @@ async fn install_service_canisters_impl(
             &canister_ids.cycles_dispenser,
             &cycles_dispenser_canister_wasm.module,
             cycles_dispenser_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.registry,
+            &registry_canister_wasm.module,
+            registry_init_args,
         ),
         install_wasm(
             management_canister,
@@ -221,21 +236,12 @@ async fn install_service_canisters_impl(
     let local_user_index_canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
     let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
 
-    futures::future::try_join3(
+    futures::future::try_join(
         user_index_canister_client::upgrade_local_user_index_canister_wasm(
             agent,
             &canister_ids.user_index,
             &user_index_canister::upgrade_local_user_index_canister_wasm::Args {
                 wasm: local_user_index_canister_wasm,
-                filter: None,
-                use_for_new_canisters: None,
-            },
-        ),
-        user_index_canister_client::upgrade_user_canister_wasm(
-            agent,
-            &canister_ids.user_index,
-            &user_index_canister::upgrade_user_canister_wasm::Args {
-                wasm: user_canister_wasm,
                 filter: None,
                 use_for_new_canisters: None,
             },
@@ -253,7 +259,16 @@ async fn install_service_canisters_impl(
     .await
     .unwrap();
 
-    futures::future::try_join3(
+    futures::future::try_join4(
+        user_index_canister_client::upgrade_user_canister_wasm(
+            agent,
+            &canister_ids.user_index,
+            &user_index_canister::upgrade_user_canister_wasm::Args {
+                wasm: user_canister_wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        ),
         group_index_canister_client::upgrade_group_canister_wasm(
             agent,
             &canister_ids.group_index,

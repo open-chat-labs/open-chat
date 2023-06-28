@@ -25,6 +25,7 @@ notifications_index_canister = { path = "../canisters/notifications_index/api" }
 online_users_canister = { path = "../canisters/online_users/api" }
 proposals_bot_canister = { path = "../canisters/proposals_bot/api" }
 rand = { workspace = true }
+registry_canister = { path = "../canisters/registry/api" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serial_test = "2.0.0"

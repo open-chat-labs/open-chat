@@ -79,6 +79,12 @@
       "wasm": "wasms/cycles_dispenser.wasm.gz",
       "build": "./scripts/generate-wasm.sh cycles_dispenser"
     },
+    "registry": {
+      "type": "custom",
+      "candid": "backend/canisters/registry/api/can.did",
+      "wasm": "wasms/registry.wasm.gz",
+      "build": "./scripts/generate-wasm.sh registry"
+    },
     "market_maker": {
       "type": "custom",
       "candid": "backend/canisters/market_maker/api/can.did",
