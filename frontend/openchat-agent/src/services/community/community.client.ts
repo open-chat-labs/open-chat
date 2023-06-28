@@ -15,7 +15,6 @@ import {
     enableInviteCodeResponse,
     inviteCodeResponse,
     joinChannelResponse,
-    leaveChannelResponse,
     localUserIndexResponse,
     makeChannelPrivateResponse,
     makeCommunityPrivateResponse,
@@ -56,6 +55,7 @@ import {
     unpinMessageResponse,
     groupDetailsResponse,
     groupDetailsUpdatesResponse,
+    leaveGroupResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -76,7 +76,6 @@ import type {
     GroupChatEvent,
     ChatPermissions,
     JoinChannelResponse,
-    LeaveChannelResponse,
     MakeChannelPrivateResponse,
     MakeCommunityPrivateResponse,
     MemberRole,
@@ -111,6 +110,7 @@ import type {
     CommunityIdentifier,
     CommunityDetailsResponse,
     CommunityDetails,
+    LeaveGroupResponse,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
 import { DataClient } from "../data/data.client";
@@ -551,12 +551,12 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    leaveChannel(chatId: ChannelIdentifier): Promise<LeaveChannelResponse> {
+    leaveChannel(chatId: ChannelIdentifier): Promise<LeaveGroupResponse> {
         return this.handleResponse(
             this.service.leave_channel({
                 channel_id: BigInt(chatId.channelId),
             }),
-            leaveChannelResponse
+            leaveGroupResponse
         );
     }
 

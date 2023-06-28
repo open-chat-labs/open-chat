@@ -936,11 +936,13 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    leaveGroup(chatId: GroupChatIdentifier): Promise<"success" | "failure" | "owner_cannot_leave"> {
+    leaveGroup(
+        chatId: MultiUserChatIdentifier
+    ): Promise<"success" | "failure" | "owner_cannot_leave"> {
         localChatSummaryUpdates.markRemoved(chatId);
         return this.sendRequest({ kind: "leaveGroup", chatId })
             .then((resp) => {
-                if (resp === "success" || resp === "not_in_group" || resp === "group_not_found") {
+                if (resp === "success") {
                     return "success";
                 } else {
                     const chat = this._liveState.chatSummaries.get(chatId);

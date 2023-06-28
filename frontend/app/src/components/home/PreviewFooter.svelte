@@ -1,6 +1,8 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, tick } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
+    import GateCheckFailed from "./AccessGateCheckFailed.svelte";
+    import Overlay from "../Overlay.svelte";
     import GroupGateIcon from "./AccessGateIcon.svelte";
     import type { MultiUserChat, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
@@ -16,10 +18,12 @@
     $: isFrozen = client.isFrozen(chat.id);
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
+    $: communityGate = $selectedCommunity?.gate;
 
     let isPlatformModerator = client.isPlatformModerator();
     let freezingInProgress = false;
     let joiningCommunity = false;
+    let gateCheckFailed = false;
 
     function joinGroup() {
         dispatch("joinGroup", {
@@ -36,7 +40,7 @@
                 .joinCommunity($selectedCommunity.id)
                 .then((resp) => {
                     if (resp === "gate_check_failed") {
-                        console.log("TODO - join group gate check failed");
+                        gateCheckFailed = true;
                     } else if (resp === "failure") {
                         toastStore.showFailureToast("communities.errors.joinFailed");
                         joining = undefined;
@@ -79,6 +83,12 @@
         });
     }
 </script>
+
+{#if communityGate !== undefined && gateCheckFailed}
+    <Overlay dismissible on:close={() => (gateCheckFailed = false)}>
+        <GateCheckFailed on:close={() => (gateCheckFailed = false)} gate={communityGate} />
+    </Overlay>
+{/if}
 
 <div class="preview">
     {#if previewingCommunity && $selectedCommunity !== undefined}

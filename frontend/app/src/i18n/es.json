@@ -83,13 +83,13 @@
     "groupUpdateFailed": "Lo sentimos, no pudimos actualizar tu grupo",
     "groupChangedBy": "{changedBy} cambiado el {changed}",
     "groupDesc": "{level} descripción",
-    "confirmLeaveGroup": "¿Estás seguro que quieres dejar este grupo?",
+    "confirmLeaveGroup": "¿De verdad quieres dejar este {level}?",
     "directChatCreatedAt": "chat iniciado",
     "skip": "Saltar",
     "userLeft": "{username} ha dejado el grupo",
-    "userJoined": "{username} se ha unido al grupo",
-    "addedBy": "{changedBy} ha agregado a {changed} al grupo",
-    "removedBy": "{changedBy} ha eliminado a {changed} del grupo",
+    "userJoined": "{username} se unió a {level}",
+    "addedBy": "{changedBy} agregó {changed} a {level}",
+    "removedBy": "{changedBy} eliminó {changed} de {level}",
     "promotedBy": "{changedBy} ha promovido a {changed} como administrador",
     "dismissedBy": "{changedBy} ha removido a {changed} como administrador",
     "blockedBy": "{changedBy} ha bloqueado a {changed}",
@@ -413,7 +413,7 @@
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",
     "chooseMembers": "elegir miembros",
     "confirmMembers": "Confirmar miembros",
-    "permissionsChangedBy": "{changedBy} cambió los permisos del grupo",
+    "permissionsChangedBy": "{changedBy} cambió los permisos de {level}",
     "filterMembers": "filtrar miembros",
     "publicGroupWithN": "Grupo público con {número} miembro(s)",
     "privateGroupWithN": "Grupo privado con {number} miembro(s)",
@@ -513,7 +513,7 @@
     "copy": "Dupdo",
     "failedToShareLink": "No se pudo compartir el enlace",
     "groupInviteChangedBy": "{changedBy} {changed} la invitación del grupo",
-    "failedToLeaveGroup": "Se ha producido un error al intentar eliminarte del grupo.",
+    "failedToLeaveGroup": "Se ha producido un error al intentar eliminarte de {level}",
     "historyOffInfo": "Los nuevos miembros solo verán los mensajes que lleguen después de unirse. 🤫",
     "memberIsTyping": "{username} está escribiendo",
     "membersAreTyping": "{number} miembros están escribiendo",
@@ -648,7 +648,7 @@
     "unsuspendUser": "Des-suspender usuario",
     "suspendedUser": "usuario suspendido",
     "unsuspendedUser": "Usuario no suspendido",
-    "nUsersJoined": "{number} usuarios se unieron al grupo",
+    "nUsersJoined": "{number} usuarios se unieron a {level}",
     "searchPlaceholder": "Buscar usuarios y grupos...",
     "reasonForSuspension": "motivo de suspensión",
     "suspend": "Suspender",
@@ -751,7 +751,7 @@
     "demoteTo": "Degradar a {role}",
     "promoteFailed": "No se puede promocionar a {role}",
     "demoteFailed": "No se puede degradar a {role}",
-    "ownerCantLeave": "Debes agregar otro propietario antes de poder abandonar el grupo.",
+    "ownerCantLeave": "Debe agregar otro propietario antes de poder abandonar el {level}",
     "participant": "miembro",
     "unauthorizedToCreatePublicGroup": "No tienes autorización para crear grupos públicos.",
     "reminders": {
@@ -797,7 +797,7 @@
         "messageReport": "Reportado por @{username} el {timestamp} por el siguiente motivo: **{reason}**",
         "showing": "Mostrando los {count} más recientes de {total} informe(s)"
     },
-    "invitedBy": "{changedBy} invitó a {changed} al grupo",
+    "invitedBy": "{changedBy} invitó a {changed} al {level}",
     "halloffame": {
         "menu": "Referencias principales",
         "allTime": "Todo el tiempo",
@@ -896,11 +896,15 @@
             "name_taken": "Lo sentimos, ya existe una comunidad con este nombre.",
             "failure": "Lo sentimos, no pudimos crear tu comunidad.",
             "saveFailed": "Lo sentimos, no pudimos guardar sus actualizaciones.",
-            "inviteUsers": "Lo sentimos, no pudimos invitar a estos usuarios."
+            "inviteUsers": "Lo sentimos, no pudimos invitar a estos usuarios.",
+            "joinFailed": "Lo sentimos, no pudimos unirnos a esta comunidad."
         },
         "memberCount": "miembro(s)",
         "channelCount": "canales",
-        "usersInvited": "Los usuarios han sido invitados a su comunidad."
+        "usersInvited": "Los usuarios han sido invitados a su comunidad.",
+        "joinCommunity": "Únete a la comunidad",
+        "noChannelSelected": "Ningún canal seleccionado",
+        "selectAChannel": "Seleccione un canal o busque otros canales en esta comunidad."
     },
     "groupCreatedBy": "{username} creó el {level}",
     "groupName": "{level} nombre",
@@ -911,5 +915,7 @@
     "irreversible": "¿Definitivamente quieres eliminar este {level}? ¡Esto no se puede deshacer!",
     "thisIsPublicGroupWithN": "Este es un {level} público con {number} miembros",
     "thisIsPrivateGroupWithN": "Este es un {level} privado con {number} miembros",
-    "unableToSaveUserProfile": "No se puede guardar el perfil de usuario"
+    "unableToSaveUserProfile": "No se puede guardar el perfil de usuario",
+    "joinGroup": "Únete a {level}",
+    "joinGroupFailed": "No se puede unir a {level}"
 }

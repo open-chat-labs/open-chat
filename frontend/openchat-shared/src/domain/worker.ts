@@ -116,7 +116,6 @@ import type {
     EnableCommunityInviteCodeResponse,
     JoinChannelResponse,
     JoinCommunityResponse,
-    LeaveChannelResponse,
     MakeChannelPrivateResponse,
     MakeCommunityPrivateResponse,
     RemoveChannelMemberResponse,
@@ -257,7 +256,6 @@ export type WorkerRequest =
     | ChannelEventsWindow
     | CommunityInviteCode
     | JoinChannel
-    | LeaveChannel
     | MakeChannelPrivate
     | MakeCommunityPrivate
     | ChannelMessagesByMessageIndex
@@ -608,7 +606,7 @@ type JoinCommunity = {
 };
 
 type LeaveGroup = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     kind: "leaveGroup";
 };
 
@@ -952,7 +950,6 @@ export type WorkerResponse =
     | Response<DisableCommunityInviteCode>
     | Response<CommunityInviteCodeResponse>
     | Response<JoinChannelResponse>
-    | Response<LeaveChannelResponse>
     | Response<MakeChannelPrivateResponse>
     | Response<MakeCommunityPrivateResponse>
     | Response<RemoveCommunityMemberResponse>
@@ -1148,11 +1145,6 @@ type CommunityInviteCode = {
 
 type JoinChannel = {
     kind: "joinChannel";
-    chatId: ChannelIdentifier;
-};
-
-type LeaveChannel = {
-    kind: "leaveChannel";
     chatId: ChannelIdentifier;
 };
 
@@ -1487,8 +1479,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? CommunityInviteCodeResponse
     : T extends JoinChannel
     ? JoinChannelResponse
-    : T extends LeaveChannel
-    ? LeaveChannelResponse
     : T extends MakeChannelPrivate
     ? MakeChannelPrivateResponse
     : T extends MakeCommunityPrivate

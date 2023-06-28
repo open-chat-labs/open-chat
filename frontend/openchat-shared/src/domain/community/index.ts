@@ -217,15 +217,6 @@ export type JoinChannelResponse =
     | InteralError
     | UserBlocked;
 
-export type LeaveChannelResponse =
-    | UserNotInChat
-    | { kind: "last_owner_cannot_leave" }
-    | ChatNotFound
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen;
-
 export type MakeChannelPrivateResponse =
     | UserNotInChat
     | ChatNotFound

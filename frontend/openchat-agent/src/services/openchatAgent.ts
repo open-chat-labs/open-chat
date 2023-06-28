@@ -1489,12 +1489,17 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.unblockUser(userId);
     }
 
-    leaveGroup(chatId: GroupChatIdentifier): Promise<LeaveGroupResponse> {
-        if (this._groupInvite?.chatId === chatId.groupId) {
-            this._groupInvite = undefined;
-        }
+    leaveGroup(chatId: MultiUserChatIdentifier): Promise<LeaveGroupResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                if (this._groupInvite?.chatId === chatId.groupId) {
+                    this._groupInvite = undefined;
+                }
 
-        return this.userClient.leaveGroup(chatId.groupId);
+                return this.userClient.leaveGroup(chatId.groupId);
+            case "channel":
+                return this.communityClient(chatId.communityId).leaveChannel(chatId);
+        }
     }
 
     async joinGroup(chatId: GroupChatIdentifier): Promise<JoinGroupResponse> {

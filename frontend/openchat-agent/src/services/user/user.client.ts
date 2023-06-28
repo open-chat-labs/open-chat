@@ -63,7 +63,6 @@ import {
     getEventsResponse,
     getUpdatesResponse,
     initialStateResponse,
-    leaveGroupResponse,
     markReadResponse,
     searchDirectChatResponse,
     sendMessageResponse,
@@ -105,6 +104,7 @@ import {
     apiReplyContextArgs,
     addRemoveReactionResponse,
     createGroupResponse,
+    leaveGroupResponse,
     deleteGroupResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";

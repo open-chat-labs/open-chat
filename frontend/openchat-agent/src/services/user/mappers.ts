@@ -243,34 +243,6 @@ export function markReadResponse(_candid: ApiMarkReadResponse): MarkReadResponse
     return "success";
 }
 
-export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "not_in_group";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("GroupNotFound" in candid) {
-        return "group_not_found";
-    }
-    if ("GroupNotPublic" in candid) {
-        return "group_not_public";
-    }
-    if ("OwnerCannotLeave" in candid) {
-        return "owner_cannot_leave";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
-}
-
 export function blockResponse(_candid: ApiBlockUserResponse): BlockUserResponse {
     return "success";
 }

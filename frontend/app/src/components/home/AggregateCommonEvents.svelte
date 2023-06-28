@@ -1,10 +1,11 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { ChatIdentifier, OpenChat, UserLookup, UserSummary } from "openchat-client";
+    import type { ChatIdentifier, Level, OpenChat, UserLookup, UserSummary } from "openchat-client";
     import { afterUpdate, getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
+    import { interpolateLevel } from "../../utils/i18n";
 
     export let chatId: ChatIdentifier;
     export let user: UserSummary | undefined;
@@ -12,6 +13,7 @@
     export let messagesDeleted: number[];
     export let observer: IntersectionObserver;
     export let readByMe: boolean;
+    export let level: Level;
 
     let deletedMessagesElement: HTMLElement;
 
@@ -46,16 +48,12 @@
 
     function buildJoinedText(userStore: UserLookup, userIds: Set<string>): string | undefined {
         return userIds.size > 10
-            ? $_("nUsersJoined", {
-                  values: {
-                      number: userIds.size.toString(),
-                  },
+            ? interpolateLevel("nUsersJoined", level, true, {
+                  number: userIds.size.toString(),
               })
             : userIds.size > 0
-            ? $_("userJoined", {
-                  values: {
-                      username: buildUserList(userStore, userIds),
-                  },
+            ? interpolateLevel("userJoined", level, true, {
+                  username: buildUserList(userStore, userIds),
               })
             : undefined;
     }

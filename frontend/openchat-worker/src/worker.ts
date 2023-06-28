@@ -1483,18 +1483,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "leaveChannel":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .leaveChannel(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "makeChannelPrivate":
                 agent
                     .communityClient(payload.chatId.communityId)

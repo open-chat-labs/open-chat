@@ -1573,15 +1573,7 @@ export type UnblockUserResponse =
     | "user_suspended"
     | "chat_frozen";
 
-export type LeaveGroupResponse =
-    | "success"
-    | "group_not_found"
-    | "internal_error"
-    | "not_in_group"
-    | "owner_cannot_leave"
-    | "group_not_public"
-    | "user_suspended"
-    | "chat_frozen";
+export type LeaveGroupResponse = "success" | "owner_cannot_leave" | "failure";
 
 export type JoinGroupResponse =
     | GroupChatSummary

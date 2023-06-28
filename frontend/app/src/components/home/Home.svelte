@@ -98,8 +98,9 @@
 
     type ConfirmLeaveEvent = {
         kind: "leave";
-        chatId: GroupChatIdentifier;
+        chatId: MultiUserChatIdentifier;
         chatType: ChatType;
+        level: Level;
     };
 
     type ConfirmDeleteEvent = {
@@ -495,7 +496,7 @@
 
         switch (confirmActionEvent.kind) {
             case "leave":
-                return $_("confirmLeaveGroup");
+                return interpolateLevel("confirmLeaveGroup", confirmActionEvent.level, true);
             case "leave_community":
                 return $_("communities.leaveMessage");
             case "delete_community":
@@ -523,7 +524,7 @@
     function doConfirmAction(confirmActionEvent: ConfirmActionEvent): Promise<void> {
         switch (confirmActionEvent.kind) {
             case "leave":
-                return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.chatType);
+                return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.level);
             case "leave_community":
                 return client.leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
@@ -559,15 +560,17 @@
         });
     }
 
-    function leaveGroup(chatId: GroupChatIdentifier, chatType: ChatType): Promise<void> {
+    function leaveGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
         page("/");
 
         client.leaveGroup(chatId).then((resp) => {
             if (resp !== "success") {
                 if (resp === "owner_cannot_leave") {
-                    toastStore.showFailureToast("ownerCantLeave");
+                    toastStore.showFailureToast(interpolateLevel("ownerCantLeave", level, true));
                 } else {
-                    toastStore.showFailureToast("failedToLeaveGroup");
+                    toastStore.showFailureToast(
+                        interpolateLevel("failedToLeaveGroup", level, true)
+                    );
                 }
                 page(routeForChatIdentifier(chatId));
             }

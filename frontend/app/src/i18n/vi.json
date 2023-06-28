@@ -84,13 +84,13 @@
     "groupUpdateFailed": "Xin lỗi, chúng tôi không thể cập nhật nhóm của bạn",
     "groupChangedBy": "{changedBy} đã thay đổi {changed}",
     "groupDesc": "mô tả {level}",
-    "confirmLeaveGroup": "Bạn có thực sự muốn rời khỏi nhóm này không?",
+    "confirmLeaveGroup": "Bạn có thực sự muốn rời khỏi {level} này không?",
     "directChatCreatedAt": "Bắt đầu trò chuyện",
     "skip": "Bỏ qua",
     "userLeft": "{username} đã rời nhóm",
-    "userJoined": "{username} đã tham gia nhóm",
-    "addedBy": "{changedBy} đã thêm {changed} vào nhóm",
-    "removedBy": "{changedBy} đã loại bỏ {changed} ra khỏi nhóm",
+    "userJoined": "{username} đã tham gia {level}",
+    "addedBy": "{changedBy} đã thêm {changed} vào {level}",
+    "removedBy": "{changedBy} đã xóa {changed} khỏi {level}",
     "promotedBy": "{changedBy} đã thăng cấp {changed} lên Quản Trị nhóm",
     "dismissedBy": "{changedBy} đã từ chối {changed} vị trí Quản Trị nhóm",
     "blockedBy": "{changedBy} đã chặn {changed}",
@@ -413,7 +413,7 @@
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
     "chooseMembers": "Chọn thành viên",
     "confirmMembers": "Xác nhận thành viên",
-    "permissionsChangedBy": "{changeBy} đã thay đổi các quyền của nhóm",
+    "permissionsChangedBy": "{changedBy} đã thay đổi quyền của {level}",
     "filterMembers": "lọc thành viên",
     "publicGroupWithN": "Nhóm công khai có {number} thành viên",
     "privateGroupWithN": "Nhóm riêng tư với {number} thành viên",
@@ -513,7 +513,7 @@
     "copy": "Sao chép",
     "failedToShareLink": "Không chia sẻ được liên kết",
     "groupInviteChangedBy": "{changedBy} {changed} mời nhóm",
-    "failedToLeaveGroup": "Đã xảy ra lỗi khi cố gắng xóa bạn khỏi nhóm",
+    "failedToLeaveGroup": "Đã xảy ra lỗi khi cố xóa bạn khỏi {level}",
     "historyOffInfo": "Những người mới tham gia sẽ chỉ thấy tin nhắn đến sau khi họ tham gia. 🤫",
     "memberIsTyping": "{username} đang nhập",
     "membersAreTyping": "{number} thành viên đang nhập",
@@ -647,7 +647,7 @@
     "unsuspendUser": "Hủy tạm ngưng người dùng",
     "suspendedUser": "người dùng bị treo",
     "unsuspendedUser": "Người dùng không bị tạm ngưng",
-    "nUsersJoined": "{number} người dùng đã tham gia nhóm",
+    "nUsersJoined": "{number} người dùng đã tham gia {level}",
     "searchPlaceholder": "Tìm kiếm người dùng và nhóm...",
     "reasonForSuspension": "lý do đình chỉ",
     "suspend": "Đình chỉ",
@@ -750,7 +750,7 @@
     "demoteTo": "Giảm xuống {role}",
     "promoteFailed": "Không thể thăng hạng lên {role}",
     "demoteFailed": "Không thể hạ cấp xuống {role}",
-    "ownerCantLeave": "Bạn phải thêm chủ sở hữu khác trước khi có thể rời khỏi nhóm",
+    "ownerCantLeave": "Bạn phải thêm chủ sở hữu khác trước khi có thể rời khỏi {level}",
     "participant": "thành viên",
     "unauthorizedToCreatePublicGroup": "Bạn không được phép tạo nhóm công khai",
     "reminders": {
@@ -796,7 +796,7 @@
         "messageReport": "Được @{username} báo cáo về {timestamp} vì lý do sau: **{reason}**",
         "showing": "Đang hiển thị {count}/{total} báo cáo gần đây nhất"
     },
-    "invitedBy": "{changedBy} đã mời {changed} vào nhóm",
+    "invitedBy": "{changedBy} đã mời {changed} tham gia {level}",
     "halloffame": {
         "menu": "Người giới thiệu hàng đầu",
         "allTime": "Mọi thời đại",
@@ -895,11 +895,15 @@
             "name_taken": "Xin lỗi - đã có một cộng đồng có tên này",
             "failure": "Xin lỗi, chúng tôi không thể tạo cộng đồng của bạn",
             "saveFailed": "Xin lỗi, chúng tôi không thể lưu cập nhật của bạn",
-            "inviteUsers": "Rất tiếc, chúng tôi không thể mời những người dùng này"
+            "inviteUsers": "Rất tiếc, chúng tôi không thể mời những người dùng này",
+            "joinFailed": "Xin lỗi chúng tôi không thể tham gia cộng đồng này"
         },
         "memberCount": "các thành viên)",
         "channelCount": "kênh truyền hình)",
-        "usersInvited": "Người dùng đã được mời vào cộng đồng của bạn"
+        "usersInvited": "Người dùng đã được mời vào cộng đồng của bạn",
+        "joinCommunity": "Tham gia cộng đồng",
+        "noChannelSelected": "Không có kênh nào được chọn",
+        "selectAChannel": "Chọn một kênh hoặc duyệt tìm các kênh khác trong cộng đồng này."
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",
@@ -910,5 +914,7 @@
     "irreversible": "Bạn có chắc chắn muốn xóa {level} này không? Điều này không thể được hoàn tác!",
     "thisIsPublicGroupWithN": "Đây là {level} công khai với {number} thành viên",
     "thisIsPrivateGroupWithN": "Đây là {level} riêng tư với {number} thành viên",
-    "unableToSaveUserProfile": "Không thể lưu hồ sơ người dùng"
+    "unableToSaveUserProfile": "Không thể lưu hồ sơ người dùng",
+    "joinGroup": "Tham gia {level}",
+    "joinGroupFailed": "Không thể tham gia {level}"
 }

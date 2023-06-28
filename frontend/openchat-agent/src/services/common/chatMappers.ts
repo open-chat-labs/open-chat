@@ -52,6 +52,7 @@ import type {
     ApiFailedCryptoTransaction,
     ApiMultiUserChat,
     ApiEditMessageResponse as ApiEditDirectMessageResponse,
+    ApiLeaveGroupResponse,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -130,6 +131,7 @@ import {
     GroupChatDetailsUpdatesResponse,
     EditMessageResponse,
     DeclineInvitationResponse,
+    LeaveGroupResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -166,6 +168,7 @@ import type {
     ApiSelectedChannelUpdatesResponse,
     ApiEditMessageResponse as ApiEditChannelMessageResponse,
     ApiDeclineInvitationResponse as ApiDeclineChannelInvitationResponse,
+    ApiLeaveChannelResponse,
 } from "../community/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -1785,4 +1788,22 @@ export function declineInvitationResponse(
         console.warn("DeclineInvitationResponse failed with: ", candid);
         return "failure";
     }
+}
+
+export function leaveGroupResponse(
+    candid: ApiLeaveGroupResponse | ApiLeaveChannelResponse
+): LeaveGroupResponse {
+    if (
+        "Success" in candid ||
+        "GroupNotFound" in candid ||
+        "CallerNotInGroup" in candid ||
+        "UserNotInChannel" in candid ||
+        "ChannelNotFound" in candid
+    ) {
+        return "success";
+    }
+    if ("OwnerCannotLeave" in candid || "LastOwnerCannotLeave" in candid) {
+        return "owner_cannot_leave";
+    }
+    return "failure";
 }
