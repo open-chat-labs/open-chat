@@ -36,13 +36,6 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn remove_invalid_feature_requests_replies(&mut self, now: TimestampMillis) {
-        let event_indexes = self.main.remove_invalid_feature_requests_replies();
-        for event_index in event_indexes {
-            self.mark_event_updated(None, event_index, now);
-        }
-    }
-
     pub fn new_direct_chat(events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
             chat_type: ChatType::Direct,
