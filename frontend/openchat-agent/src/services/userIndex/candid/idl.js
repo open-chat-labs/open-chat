@@ -71,7 +71,6 @@ export const idlFactory = ({ IDL }) => {
       'avatar_id' : IDL.Opt(IDL.Nat),
       'is_suspected_bot' : IDL.Bool,
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'is_super_admin' : IDL.Bool,
       'suspension_details' : IDL.Opt(SuspensionDetails),
       'is_platform_moderator' : IDL.Bool,
       'diamond_membership_details' : IDL.Opt(DiamondMembershipDetails),

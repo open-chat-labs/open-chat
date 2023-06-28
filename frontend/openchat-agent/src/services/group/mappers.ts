@@ -29,7 +29,6 @@ import type {
     ApiDeletedGroupMessageResponse,
     ApiClaimPrizeResponse,
     ApiGroupGateUpdate,
-    ApiDeclineInvitationResponse,
 } from "./candid/idl";
 import type { ApiEventsResponse as ApiCommunityEventsResponse } from "../community/candid/idl";
 import {
@@ -66,7 +65,6 @@ import {
     DeletedGroupMessageResponse,
     ClaimPrizeResponse,
     UpdatedEvent,
-    DeclineInvitationResponse,
     GroupChatIdentifier,
     ChatIdentifier,
     DeleteMessageResponse,
@@ -938,35 +936,6 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "users_unblocked",
             userIds: candid.UsersUnblocked.user_ids.map((p) => p.toString()),
             unblockedBy: candid.UsersUnblocked.unblocked_by.toString(),
-        };
-    }
-
-    if ("OwnershipTransferred" in candid) {
-        return {
-            kind: "ownership_transferred",
-            oldOwner: candid.OwnershipTransferred.old_owner.toString(),
-            newOwner: candid.OwnershipTransferred.new_owner.toString(),
-        };
-    }
-
-    if ("ParticipantAssumesSuperAdmin" in candid) {
-        return {
-            kind: "member_assumes_super_admin",
-            userId: candid.ParticipantAssumesSuperAdmin.user_id.toString(),
-        };
-    }
-
-    if ("ParticipantDismissedAsSuperAdmin" in candid) {
-        return {
-            kind: "member_dismissed_as_super_admin",
-            userId: candid.ParticipantDismissedAsSuperAdmin.user_id.toString(),
-        };
-    }
-
-    if ("ParticipantRelinquishesSuperAdmin" in candid) {
-        return {
-            kind: "member_relinquishes_super_admin",
-            userId: candid.ParticipantRelinquishesSuperAdmin.user_id.toString(),
         };
     }
 

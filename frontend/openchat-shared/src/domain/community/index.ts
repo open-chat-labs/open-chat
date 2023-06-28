@@ -12,6 +12,7 @@ import type {
     EventWrapper,
     GroupCanisterThreadDetails,
     Mention,
+    UpdatedEvent,
 } from "../chat";
 import type { DataContent } from "../data";
 import type { OptionUpdate } from "../optionUpdate";
@@ -316,6 +317,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     latestEventIndex: number | undefined;
     memberCount: number | undefined;
     latestMessage: EventWrapper<Message> | undefined;
+    updatedEvents: UpdatedEvent[];
 };
 
 export type CommunityMembershipUpdates = {

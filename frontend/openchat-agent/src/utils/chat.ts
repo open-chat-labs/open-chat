@@ -30,6 +30,7 @@ import {
     chatIdentifiersEqual,
     CommunityDetails,
     CommunityDetailsUpdates,
+    CommunityCanisterCommunitySummaryUpdates,
 } from "openchat-shared";
 import { toRecord } from "./list";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
@@ -475,12 +476,14 @@ export function isSuccessfulGroupSummaryUpdatesResponse(
 
 export function getUpdatedEvents(
     directChats: DirectChatSummaryUpdates[],
-    groupChats: GroupCanisterGroupChatSummaryUpdates[]
+    groupChats: GroupCanisterGroupChatSummaryUpdates[],
+    communities: CommunityCanisterCommunitySummaryUpdates[]
 ): ChatMap<UpdatedEvent[]> {
     const result = new ChatMap<UpdatedEvent[]>();
 
     directChats.forEach((c) => result.set(c.id, c.updatedEvents));
     groupChats.forEach((c) => result.set(c.id, c.updatedEvents));
+    communities.flatMap((c) => c.channelsUpdated).forEach((c) => result.set(c.id, c.updatedEvents));
 
     return result;
 }

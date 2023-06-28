@@ -39,6 +39,7 @@ import {
     UndeleteChannelMessagesResponse,
     UnsupportedValueError,
     UpdateCommunityResponse,
+    UpdatedEvent,
     UserFailedError,
     UserFailedGateCheck,
 } from "openchat-shared";
@@ -787,9 +788,22 @@ export function communityChannelUpdates(
         lastUpdated: candid.last_updated,
         avatarId: optionUpdate(candid.avatar_id, identity),
         membership: optional(candid.membership, channelMembershipUpdates),
+        updatedEvents: candid.updated_events.map(updatedEvent),
         latestEventIndex: optional(candid.latest_event_index, identity),
         memberCount: optional(candid.member_count, identity),
         latestMessage: optional(candid.latest_message, messageEvent),
+    };
+}
+
+function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
+    [] | [number],
+    number,
+    bigint
+]): UpdatedEvent {
+    return {
+        eventIndex,
+        threadRootMessageIndex: optional(threadRootMessageIndex, identity),
+        timestamp,
     };
 }
 

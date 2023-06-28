@@ -722,8 +722,32 @@ export class OpenChatAgent extends EventTarget {
                     latestClientEventIndex
                 );
             case "channel":
-                throw new Error("TODO - chatEventsByEventIndex not implemented for channels");
+                return this.channelEventsByEventIndex(
+                    chatId,
+                    eventIndexes,
+                    threadRootMessageIndex,
+                    latestClientEventIndex
+                );
         }
+    }
+
+    private channelEventsByEventIndex(
+        chatId: ChannelIdentifier,
+        eventIndexes: number[],
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        return this.rehydrateEventResponse(
+            chatId,
+            this.communityClient(chatId.communityId).eventsByIndex(
+                chatId,
+                eventIndexes,
+                threadRootMessageIndex,
+                latestClientEventIndex
+            ),
+            threadRootMessageIndex,
+            latestClientEventIndex
+        );
     }
 
     private groupChatEventsByEventIndex(
@@ -1231,7 +1255,11 @@ export class OpenChatAgent extends EventTarget {
             pinnedChats: updates.favouriteChats.chats ?? [],
             communities: mergedCommunities,
         };
-        const updatedEvents = getUpdatedEvents(updates.directChats.updated, groupUpdates);
+        const updatedEvents = getUpdatedEvents(
+            updates.directChats.updated,
+            groupUpdates,
+            communityUpdates
+        );
 
         return await this.hydrateChatState(state).then((s) => {
             if (!anyErrors) {

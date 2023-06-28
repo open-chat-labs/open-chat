@@ -2173,7 +2173,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 lastUpdated: community.lastUpdated,
             });
             if (resp !== "failure") {
-                console.log("got community details", resp);
                 communityStateStore.setProp(community.id, "detailsLoaded", true);
                 communityStateStore.setProp(community.id, "members", resp.members);
                 communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
@@ -3367,7 +3366,6 @@ export class OpenChat extends OpenChatAgentWorker {
         const exclusions = new Set<string>(
             this._liveState.chatSummariesList
                 .filter((c) => c.kind === "group_chat" && c.public)
-                // TODO sort this out
                 .map((g) => chatIdentifierToString(g.id))
         );
 
@@ -3402,7 +3400,6 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     dismissRecommendation(chatId: GroupChatIdentifier): Promise<void> {
-        // TODO sort this out
         recommendedGroupExclusions.add(chatIdentifierToString(chatId));
         return this.sendRequest({ kind: "dismissRecommendation", chatId });
     }

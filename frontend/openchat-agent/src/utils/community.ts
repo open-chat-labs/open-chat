@@ -110,7 +110,7 @@ export function mergeCommunityUpdates(
             membership: {
                 ...community.membership,
                 role: c?.membership?.role ?? community.membership.role,
-                archived: u?.archived ?? community.membership.archived, // TODO - community membership has no archived property
+                archived: u?.archived ?? community.membership.archived,
                 pinned: u?.pinned ?? community.membership.pinned,
             },
             channels: mergeChannelUpdates(
