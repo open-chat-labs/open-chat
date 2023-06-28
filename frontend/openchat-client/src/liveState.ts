@@ -15,6 +15,7 @@ import type {
     MessageContext,
     ThreadSyncDetails,
     UserLookup,
+    MultiUserChat,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -68,7 +69,7 @@ export class LiveState {
     myServerChatSummaries!: ChatMap<ChatSummary>;
     chatSummaries!: ChatMap<ChatSummary>;
     uninitializedDirectChats!: ChatMap<DirectChatSummary>;
-    groupPreviews!: ChatMap<GroupChatSummary>;
+    groupPreviews!: ChatMap<MultiUserChat>;
     selectedChatId: ChatIdentifier | undefined;
     pinnedChats!: ChatIdentifier[];
     chatSummariesList!: ChatSummary[];

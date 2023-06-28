@@ -501,10 +501,10 @@
         "cryptoTransfers": "Mensaje criptográfico"
     },
     "andNMore": "y {n} más",
-    "confirmMakeGroupPrivate": "¿Definitivamente quieres que este grupo sea privado? ¡Actualmente esta operación no se puede revertir!",
+    "confirmMakeGroupPrivate": "¿Definitivamente quieres que este {level} sea privado? ¡Actualmente esta operación no se puede revertir!",
     "makeGroupPrivate": "Hacer que el grupo sea privado",
-    "makeGroupPrivateFailed": "Error al hacer que el grupo sea privado",
-    "groupVisibilityChangedBy": "{changedBy} hizo el grupo {visibility}",
+    "makeGroupPrivateFailed": "No se pudo hacer que {level} sea privado",
+    "groupVisibilityChangedBy": "{changedBy} hizo el {level} {visibility}",
     "typeGroupName": "Escriba **{name}** para confirmar.",
     "translateMessage": "Traducir",
     "untranslateMessage": "Destraducir",

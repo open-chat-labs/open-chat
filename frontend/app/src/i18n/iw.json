@@ -499,10 +499,10 @@
         "cryptoTransfers": "הודעת קריפטו"
     },
     "andNMore": ", ועוד {n}",
-    "confirmMakeGroupPrivate": "האם אתה בהחלט רוצה להפוך את הקבוצה הזו לפרטית? כרגע לא ניתן לבטל את הפעולה הזו!",
+    "confirmMakeGroupPrivate": "האם אתה בהחלט רוצה להפוך את ה-{level} הזה לפרטי? כרגע לא ניתן לבטל את הפעולה הזו!",
     "makeGroupPrivate": "הפוך את הקבוצה לפרטית",
-    "makeGroupPrivateFailed": "הפיכת הקבוצה לפרטית נכשלה",
-    "groupVisibilityChangedBy": "{changedBy} יצר את הקבוצה {visibility}",
+    "makeGroupPrivateFailed": "הפיכת {level} לפרטי נכשלה",
+    "groupVisibilityChangedBy": "{changedBy} יצר את {level} {visibility}",
     "translateMessage": "לתרגם",
     "untranslateMessage": "בטל תרגום",
     "unableToTranslate": "לא מצליח לתרגם",

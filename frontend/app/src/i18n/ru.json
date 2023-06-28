@@ -500,10 +500,10 @@
         "cryptoTransfers": "Крипто-сообщение"
     },
     "andNMore": "и еще {n}",
-    "confirmMakeGroupPrivate": "Вы определенно хотите сделать эту группу закрытой? В настоящее время эту операцию нельзя отменить!",
+    "confirmMakeGroupPrivate": "Вы определенно хотите сделать этот {level} приватным? В настоящее время эту операцию нельзя отменить!",
     "makeGroupPrivate": "Сделать группу закрытой",
-    "makeGroupPrivateFailed": "Не удалось сделать группу закрытой",
-    "groupVisibilityChangedBy": "{changedBy} создал группу {visibility}",
+    "makeGroupPrivateFailed": "Не удалось сделать {level} приватным",
+    "groupVisibilityChangedBy": "{changedBy} сделал {level} {visibility}",
     "typeGroupName": "Введите **{name}** для подтверждения.",
     "translateMessage": "Перевести",
     "untranslateMessage": "Отменить перевод",

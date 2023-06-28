@@ -62,6 +62,7 @@ import {
     SelectedUpdatesSuccess,
     MessagesByMessageIndexResponse,
     ThreadPreviewsResponse,
+    ChannelSummaryResponse,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -126,6 +127,7 @@ export {
     SelectedUpdatesSuccess as ApiSelectedUpdatesSuccess,
     MessagesByMessageIndexResponse as ApiMessagesByMessageIndexResponse,
     ThreadPreviewsResponse as ApiThreadPreviewsResponse,
+    ChannelSummaryResponse as ApiChannelSummaryResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -500,10 +500,10 @@
         "cryptoTransfers": "Messaggio crittografico"
     },
     "andNMore": ", e {n} altro",
-    "confirmMakeGroupPrivate": "Vuoi assolutamente rendere privato questo gruppo? Attualmente questa operazione non può essere annullata!",
+    "confirmMakeGroupPrivate": "Vuoi assolutamente rendere questo {level} privato? Attualmente questa operazione non può essere annullata!",
     "makeGroupPrivate": "Rendi il gruppo privato",
-    "makeGroupPrivateFailed": "Impossibile rendere privato il gruppo",
-    "groupVisibilityChangedBy": "{changedBy} ha fatto il gruppo {visibility}",
+    "makeGroupPrivateFailed": "Impossibile rendere privato {level}",
+    "groupVisibilityChangedBy": "{changedBy} ha creato {level} {visibility}",
     "typeGroupName": "Digita **{name}** per confermare.",
     "translateMessage": "Tradurre",
     "untranslateMessage": "Annulla la traduzione",

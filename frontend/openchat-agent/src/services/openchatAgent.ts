@@ -244,7 +244,7 @@ export class OpenChatAgent extends EventTarget {
 
     getGroupClient(chatId: string): GroupClient {
         if (!this._groupClients[chatId]) {
-            const inviteCode = this.getProvidedInviteCode(chatId);
+            const inviteCode = this.getProvidedInviteCode({ kind: "group_chat", groupId: chatId });
             this._groupClients[chatId] = GroupClient.create(
                 { kind: "group_chat", groupId: chatId },
                 this.identity,
@@ -267,8 +267,11 @@ export class OpenChatAgent extends EventTarget {
         return LocalUserIndexClient.create(this.identity, this.config, canisterId);
     }
 
-    private getProvidedInviteCode(chatId: string): string | undefined {
-        return this._groupInvite?.chatId === chatId ? this._groupInvite.code : undefined;
+    private getProvidedInviteCode(chatId: MultiUserChatIdentifier): string | undefined {
+        if (this._groupInvite === undefined) return undefined;
+        return chatIdentifiersEqual(this._groupInvite.chatId, chatId)
+            ? this._groupInvite.code
+            : undefined;
     }
 
     editMessage(
@@ -1477,9 +1480,7 @@ export class OpenChatAgent extends EventTarget {
             case "group_chat":
                 return this.getGroupClient(chatId.groupId).makeGroupPrivate();
             case "channel":
-                // TODO - harmonise response types and clean up mapping
-                throw new Error("make channel private not implemented");
-            // return this.communityClient(chatId.communityId).makeChannelPrivate(chatId);
+                return this.communityClient(chatId.communityId).makeChannelPrivate(chatId);
         }
     }
 
@@ -1510,12 +1511,11 @@ export class OpenChatAgent extends EventTarget {
     }
 
     leaveGroup(chatId: MultiUserChatIdentifier): Promise<LeaveGroupResponse> {
+        if (chatIdentifiersEqual(this._groupInvite?.chatId, chatId)) {
+            this._groupInvite = undefined;
+        }
         switch (chatId.kind) {
             case "group_chat":
-                if (this._groupInvite?.chatId === chatId.groupId) {
-                    this._groupInvite = undefined;
-                }
-
                 return this.userClient.leaveGroup(chatId.groupId);
             case "channel":
                 return this.communityClient(chatId.communityId).leaveChannel(chatId);
@@ -1523,7 +1523,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async joinGroup(chatId: GroupChatIdentifier): Promise<JoinGroupResponse> {
-        const inviteCode = this.getProvidedInviteCode(chatId.groupId);
+        const inviteCode = this.getProvidedInviteCode(chatId);
         const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).joinGroup(
             chatId.groupId,

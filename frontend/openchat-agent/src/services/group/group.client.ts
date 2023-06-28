@@ -56,7 +56,6 @@ import {
     unblockUserResponse,
     getMessagesByMessageIndexResponse,
     searchGroupChatResponse,
-    makeGroupPrivateResponse,
     inviteCodeResponse,
     enableInviteCodeResponse,
     disableInviteCodeResponse,
@@ -101,6 +100,7 @@ import {
     pinMessageResponse,
     unpinMessageResponse,
     groupDetailsResponse,
+    makeGroupPrivateResponse,
     groupDetailsUpdatesResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";

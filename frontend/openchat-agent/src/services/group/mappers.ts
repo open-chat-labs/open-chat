@@ -265,28 +265,6 @@ export function apiGroupRules(rules: AccessRules): ApiGroupRules {
     };
 }
 
-export function makeGroupPrivateResponse(candid: ApiMakePrivateResponse): MakeGroupPrivateResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("AlreadyPrivate" in candid) {
-        return "already_private";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiMakePrivateResponse type received", candid);
-}
-
 export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUserResponse {
     if ("Success" in candid) {
         return "success";

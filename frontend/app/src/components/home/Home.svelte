@@ -217,11 +217,11 @@
             // TODO - deal with channels
             if (chatId.kind === "direct_chat") {
                 await createDirectChat(chatId);
-            } else if (chatId.kind === "group_chat") {
+            } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
                 const code = $querystring.get("code");
                 if (code) {
                     client.groupInvite = {
-                        chatId: chatId.groupId,
+                        chatId: chatId,
                         code,
                     };
                 }

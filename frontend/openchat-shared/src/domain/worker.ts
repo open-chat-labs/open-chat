@@ -113,7 +113,6 @@ import type {
     EnableCommunityInviteCodeResponse,
     JoinChannelResponse,
     JoinCommunityResponse,
-    MakeChannelPrivateResponse,
     MakeCommunityPrivateResponse,
     RemoveChannelMemberResponse,
     RemoveCommunityMemberResponse,
@@ -127,6 +126,7 @@ import type {
     ChannelMatch,
     CommunityDetailsResponse,
     CommunityDetails,
+    ChannelSummaryResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -252,7 +252,6 @@ export type WorkerRequest =
     | ChannelEventsWindow
     | CommunityInviteCode
     | JoinChannel
-    | MakeChannelPrivate
     | MakeCommunityPrivate
     | ChannelMessagesByMessageIndex
     | RemoveCommunityMember
@@ -271,7 +270,13 @@ export type WorkerRequest =
     | ExploreChannels
     | GetCommunityDetails
     | GetCommunityDetailsUpdates
+    | GetChannelSummary
     | ChangeCommunityRole;
+
+type GetChannelSummary = {
+    kind: "getChannelSummary";
+    chatId: ChannelIdentifier;
+};
 
 type GetCommunityDetails = {
     kind: "getCommunityDetails";
@@ -942,7 +947,6 @@ export type WorkerResponse =
     | Response<DisableCommunityInviteCode>
     | Response<CommunityInviteCodeResponse>
     | Response<JoinChannelResponse>
-    | Response<MakeChannelPrivateResponse>
     | Response<MakeCommunityPrivateResponse>
     | Response<RemoveCommunityMemberResponse>
     | Response<RemoveChannelMemberResponse>
@@ -958,6 +962,7 @@ export type WorkerResponse =
     | Response<ChannelMatch[]>
     | Response<CommunityDetailsResponse>
     | Response<CommunityDetails>
+    | Response<ChannelSummaryResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1136,11 +1141,6 @@ type CommunityInviteCode = {
 
 type JoinChannel = {
     kind: "joinChannel";
-    chatId: ChannelIdentifier;
-};
-
-type MakeChannelPrivate = {
-    kind: "makeChannelPrivate";
     chatId: ChannelIdentifier;
 };
 
@@ -1459,8 +1459,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? CommunityInviteCodeResponse
     : T extends JoinChannel
     ? JoinChannelResponse
-    : T extends MakeChannelPrivate
-    ? MakeChannelPrivateResponse
     : T extends MakeCommunityPrivate
     ? MakeCommunityPrivateResponse
     : T extends ChannelMessagesByMessageIndex
@@ -1495,4 +1493,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? CommunityDetailsResponse
     : T extends GetCommunityDetailsUpdates
     ? CommunityDetails
+    : T extends GetChannelSummary
+    ? ChannelSummaryResponse
     : never;

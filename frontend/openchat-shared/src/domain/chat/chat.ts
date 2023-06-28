@@ -1525,13 +1525,7 @@ export type ChangeRoleResponse = "failure" | "success";
 
 export type DeleteGroupResponse = "success" | "failure";
 
-export type MakeGroupPrivateResponse =
-    | "internal_error"
-    | "not_authorized"
-    | "already_private"
-    | "user_suspended"
-    | "chat_frozen"
-    | "success";
+export type MakeGroupPrivateResponse = "failure" | "success";
 
 export type RemoveMemberResponse =
     | "user_not_in_group"

@@ -244,6 +244,7 @@
         timestamp={event.timestamp} />
 {:else if event.event.kind === "group_visibility_changed"}
     <GroupVisibilityChangedEvent
+        level={levelType}
         user={userSummary}
         nowPublic={event.event.nowPublic}
         changedBy={event.event.changedBy}

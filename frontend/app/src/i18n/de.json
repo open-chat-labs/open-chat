@@ -502,10 +502,10 @@
         "cryptoTransfers": "Krypto-Nachricht"
     },
     "andNMore": ", und {n} mehr",
-    "confirmMakeGroupPrivate": "Möchten Sie diese Gruppe auf jeden Fall privat machen? Derzeit kann dieser Vorgang nicht rückgängig gemacht werden!",
+    "confirmMakeGroupPrivate": "Möchten Sie diesen {level} unbedingt privat machen? Derzeit kann dieser Vorgang nicht rückgängig gemacht werden!",
     "makeGroupPrivate": "Gruppe privat machen",
-    "makeGroupPrivateFailed": "Gruppe konnte nicht privat gemacht werden",
-    "groupVisibilityChangedBy": "{changedBy} hat die Gruppe {visibility} erstellt",
+    "makeGroupPrivateFailed": "{level} konnte nicht privat gemacht werden",
+    "groupVisibilityChangedBy": "{changedBy} hat den {level} {visibility} erstellt",
     "typeGroupName": "Bitte geben Sie zur Bestätigung **{name}** ein.",
     "translateMessage": "Übersetzen",
     "untranslateMessage": "Unübersetzen",

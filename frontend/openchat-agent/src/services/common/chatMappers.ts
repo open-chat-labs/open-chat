@@ -138,6 +138,7 @@ import {
     ThreadPreview,
     ThreadPreviewsResponse,
     ChangeRoleResponse,
+    MakeGroupPrivateResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -161,6 +162,7 @@ import type {
     ApiThreadPreviewsResponse,
     ApiThreadPreview,
     ApiChangeRoleResponse,
+    ApiMakePrivateResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -186,6 +188,7 @@ import type {
     ApiUndeleteMessagesResponse as ApiUndeleteChannelMessageResponse,
     ApiThreadPreviewsResponse as ApiChannelThreadPreviewsResponse,
     ApiChangeChannelRoleResponse,
+    ApiMakeChannelPrivateResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 
@@ -1908,6 +1911,17 @@ export function changeRoleResponse(
         return "success";
     } else {
         console.warn("ChangeRoleResponse failed with: ", candid);
+        return "failure";
+    }
+}
+
+export function makeGroupPrivateResponse(
+    candid: ApiMakePrivateResponse | ApiMakeChannelPrivateResponse
+): MakeGroupPrivateResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("MakeGroupPrivateResponse failed with: ", candid);
         return "failure";
     }
 }

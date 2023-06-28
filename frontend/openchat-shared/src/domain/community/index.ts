@@ -175,16 +175,6 @@ export type JoinChannelResponse =
     | InteralError
     | UserBlocked;
 
-export type MakeChannelPrivateResponse =
-    | UserNotInChat
-    | ChatNotFound
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | { kind: "channel_already_private" }
-    | CommunityFrozen;
-
 export type MakeCommunityPrivateResponse =
     | NotAuthorised
     | Success
@@ -318,3 +308,4 @@ export type CommunityDetailsUpdates = {
     invitedUsers?: Set<string>;
     lastUpdated: bigint;
 };
+export type ChannelSummaryResponse = Failure | ChannelSummary;

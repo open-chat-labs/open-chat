@@ -1449,18 +1449,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "makeChannelPrivate":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .makeChannelPrivate(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "makeCommunityPrivate":
                 agent
                     .communityClient(payload.communityId)
@@ -1613,6 +1601,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "getCommunitySummary":
                 agent
                     .getCommunitySummary(payload.communityId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "getChannelSummary":
+                agent
+                    .communityClient(payload.chatId.communityId)
+                    .channelSummary(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

@@ -499,10 +499,10 @@
         "cryptoTransfers": "加密信息"
     },
     "andNMore": ", 和 {n} 更多",
-    "confirmMakeGroupPrivate": "您确定要将此群聊设为私有吗？目前此操作无法撤消！",
+    "confirmMakeGroupPrivate": "您确定要将此 {level} 设为私有吗？目前此操作无法撤消！",
     "makeGroupPrivate": "将群聊设为私有",
-    "makeGroupPrivateFailed": "无法将群聊设为私有",
-    "groupVisibilityChangedBy": "{changedBy} 群聊 {visibility}",
+    "makeGroupPrivateFailed": "无法将 {level} 设为私有",
+    "groupVisibilityChangedBy": "{changedBy} 创造了 {level} {visibility}",
     "typeGroupName": "请输入 **{name}** 进行确认。",
     "translateMessage": "翻译",
     "untranslateMessage": "取消翻译",

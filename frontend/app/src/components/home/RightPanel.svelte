@@ -119,7 +119,10 @@
     }
 
     async function inviteGroupUsers(ev: CustomEvent<UserSummary[]>) {
-        if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
+        if (
+            $selectedChatId !== undefined &&
+            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+        ) {
             const userIds = ev.detail.map((u) => u.userId);
 
             invitingUsers = true;

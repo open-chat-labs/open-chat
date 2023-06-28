@@ -500,10 +500,10 @@
         "cryptoTransfers": "暗号メッセージ"
     },
     "andNMore": "、および{n} more",
-    "confirmMakeGroupPrivate": "このグループを絶対に非公開にしますか？現在、この操作を元に戻すことはできません。",
+    "confirmMakeGroupPrivate": "この {level} を非公開にしてもよろしいですか?現在、この操作を元に戻すことはできません。",
     "makeGroupPrivate": "グループをプライベートにする",
-    "makeGroupPrivateFailed": "グループをプライベートにすることができませんでした",
-    "groupVisibilityChangedBy": "{changedBy}がグループを{visibility}にしました",
+    "makeGroupPrivateFailed": "{level} を非公開にできませんでした",
+    "groupVisibilityChangedBy": "{changedBy} は {level} を {visibility} にしました",
     "typeGroupName": "確認するには、**{name}**と入力してください。",
     "translateMessage": "翻訳",
     "untranslateMessage": "翻訳しない",

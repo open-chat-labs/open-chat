@@ -501,10 +501,10 @@
         "cryptoTransfers": "Tin nhắn tiền điện tử"
     },
     "andNMore": "và {n} khác",
-    "confirmMakeGroupPrivate": "Bạn có chắc chắn muốn đặt nhóm này ở chế độ riêng tư không? Hiện tại không thể hoàn tác thao tác này!",
+    "confirmMakeGroupPrivate": "Bạn có chắc chắn muốn đặt {level} này ở chế độ riêng tư không? Hiện tại thao tác này không thể đảo ngược!",
     "makeGroupPrivate": "Đặt nhóm ở chế độ riêng tư",
-    "makeGroupPrivateFailed": "Không thể đặt nhóm ở chế độ riêng tư",
-    "groupVisibilityChangedBy": "{changedBy} đã thành lập nhóm {visibility}",
+    "makeGroupPrivateFailed": "Không thể đặt {level} ở chế độ riêng tư",
+    "groupVisibilityChangedBy": "{changedBy} đã tạo {level} {visibility}",
     "typeGroupName": "Vui lòng nhập ** {name} ** để xác nhận.",
     "translateMessage": "Dịch",
     "untranslateMessage": "Chưa dịch",

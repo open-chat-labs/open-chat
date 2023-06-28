@@ -764,14 +764,27 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    previewChat(chatId: GroupChatIdentifier): Promise<boolean> {
-        return this.sendRequest({ kind: "getPublicGroupSummary", chatId }).then((maybeChat) => {
-            if (maybeChat === undefined || maybeChat.frozen) {
-                return false;
-            }
-            addGroupPreview(maybeChat);
-            return true;
-        });
+    previewChat(chatId: MultiUserChatIdentifier): Promise<boolean> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.sendRequest({ kind: "getPublicGroupSummary", chatId }).then(
+                    (maybeChat) => {
+                        if (maybeChat === undefined || maybeChat.frozen) {
+                            return false;
+                        }
+                        addGroupPreview(maybeChat);
+                        return true;
+                    }
+                );
+            case "channel":
+                return this.sendRequest({ kind: "getChannelSummary", chatId }).then((resp) => {
+                    if (resp.kind === "failure") {
+                        return false;
+                    }
+                    addGroupPreview(resp);
+                    return true;
+                });
+        }
     }
 
     private async addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {

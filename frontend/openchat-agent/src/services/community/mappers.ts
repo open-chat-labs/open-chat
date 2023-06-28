@@ -6,6 +6,7 @@ import {
     ChannelMatch,
     ChannelMembershipUpdates,
     ChannelMessageMatch,
+    ChannelSummaryResponse,
     CommonResponses,
     CommunityCanisterChannelSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
@@ -21,7 +22,6 @@ import {
     EventsResponse,
     GateCheckFailedReason,
     JoinChannelResponse,
-    MakeChannelPrivateResponse,
     MakeCommunityPrivateResponse,
     MemberRole,
     Message,
@@ -41,13 +41,11 @@ import {
 import type {
     ApiAddMembersToChannelResponse,
     ApiBlockUserResponse,
-    ApiChangeChannelRoleResponse,
     ApiChangeRoleResponse,
     ApiDisableInviteCodeResponse,
     ApiInviteCodeResponse,
     ApiJoinChannelResponse,
     ApiLocalUserIndexResponse,
-    ApiMakeChannelPrivateResponse,
     ApiMakePrivateResponse,
     ApiMessagesByMessageIndexResponse,
     ApiRemoveMemberResponse,
@@ -77,6 +75,7 @@ import type {
     ApiChannelMatch,
     ApiSelectedInitialResponse,
     ApiSelectedUpdatesResponse,
+    ApiChannelSummaryResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -334,39 +333,6 @@ export function localUserIndexResponse(candid: ApiLocalUserIndexResponse): strin
     return candid.Success.toString();
 }
 
-export function makeChannelPrivateResponse(
-    candid: ApiMakeChannelPrivateResponse
-): MakeChannelPrivateResponse {
-    if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChat;
-    }
-    if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound;
-    }
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
-    }
-    if ("Success" in candid) {
-        return CommonResponses.success;
-    }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
-    }
-    if ("AlreadyPrivate" in candid) {
-        return { kind: "channel_already_private" };
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiMakeChannelPrivateResponse type received",
-        candid
-    );
-}
-
 export function makeCommunityPrivateResponse(
     candid: ApiMakePrivateResponse
 ): MakeCommunityPrivateResponse {
@@ -550,6 +516,18 @@ export function channelMatch(candid: ApiChannelMatch, communityId: string): Chan
             })),
         },
     };
+}
+
+export function communityChannelSummaryResponse(
+    candid: ApiChannelSummaryResponse,
+    communityId: string
+): ChannelSummaryResponse {
+    if ("Success" in candid) {
+        return communityChannelSummary(candid.Success, communityId);
+    } else {
+        console.warn("CommunityChannelSummary failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function summaryResponse(candid: ApiSummaryResponse): CommunitySummaryResponse {
