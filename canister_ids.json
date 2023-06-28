@@ -43,6 +43,10 @@
     "ic": "iywa7-ayaaa-aaaaf-aemga-cai",
     "ic_test": "qu3kn-6qaaa-aaaaf-ahn7q-cai"
   },
+  "registry": {
+    "ic": "cpi5u-yiaaa-aaaar-aqw5a-cai",
+    "ic_test": "cglwi-oaaaa-aaaar-aqw4q-cai"
+  },
   "sns_governance": {
     "ic": "2jvtu-yqaaa-aaaaq-aaama-cai",
     "ic_test": "t5cdl-3iaaa-aaaak-qbumq-cai"

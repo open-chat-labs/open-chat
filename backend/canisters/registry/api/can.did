@@ -1,0 +1,37 @@
+import "../../../libraries/types/can.did";
+
+type TokenDetailsArgs =
+    record {
+        ledger_canister_ids: opt vec CanisterId;
+    };
+
+type TokenDetailsResponse =
+    variant {
+        Success: record {
+            token_details: vec TokenDetails;
+        };
+    };
+
+type TokenDetails =
+    record {
+        ledger_canister_id: CanisterId;
+        name: text;
+        symbol: text;
+        decimals: nat8;
+        fee: nat;
+        info_url: opt text;
+        transaction_url_format: opt text;
+        last_updated: TimestampMillis;
+    };
+
+type VersionResponse =
+    variant {
+        Success: record {
+            version: nat64;
+        };
+    };
+
+service : {
+    token_details: (TokenDetailsArgs) -> (TokenDetailsResponse) query;
+    version: (EmptyArgs) -> (VersionResponse) query;
+}
