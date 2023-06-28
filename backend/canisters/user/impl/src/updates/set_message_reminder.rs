@@ -17,9 +17,15 @@ fn set_message_reminder(args: set_message_reminder::Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| {
+        let chat = if state.data.direct_chats.get(&args.chat_id).is_some() {
+            Chat::Direct(args.chat_id)
+        } else {
+            Chat::Group(args.chat_id)
+        };
+
         set_message_reminder_impl(
             Args {
-                chat: Chat::Group(args.chat_id),
+                chat,
                 thread_root_message_index: args.thread_root_message_index,
                 event_index: args.event_index,
                 notes: args.notes,
