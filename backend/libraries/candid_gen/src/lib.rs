@@ -52,6 +52,7 @@ fn get_method_attribute(inputs: Vec<String>) -> MethodAttribute {
         | "notifications_index"
         | "online_users"
         | "proposals_bot"
+        | "registry"
         | "storage_bucket"
         | "storage_index"
         | "user"

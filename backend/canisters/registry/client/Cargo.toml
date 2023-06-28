@@ -1,0 +1,13 @@
+[package]
+name = "registry_canister_client"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+canister_client = { path = "../../../libraries/canister_client" }
+ic-agent = { workspace = true }
+types = { path = "../../../libraries/types" }
+registry_canister = { path = "../api" }

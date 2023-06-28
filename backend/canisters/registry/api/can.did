@@ -1,0 +1,32 @@
+import "../../../libraries/types/can.did";
+
+type UpdatesArgs =
+    record {
+        since: opt TimestampMillis;
+    };
+
+type UpdatesResponse =
+    variant {
+        Success: record {
+            last_updated: TimestampMillis;
+            token_details: opt vec TokenDetails;
+        };
+        SuccessNoUpdates;
+    };
+
+type TokenDetails =
+    record {
+        ledger_canister_id: CanisterId;
+        name: text;
+        symbol: text;
+        decimals: nat8;
+        fee: nat;
+        info_url: opt text;
+        how_to_buy_url: opt text;
+        transaction_url_format: opt text;
+        last_updated: TimestampMillis;
+    };
+
+service : {
+    updates: (UpdatesArgs) -> (UpdatesResponse) query;
+}
