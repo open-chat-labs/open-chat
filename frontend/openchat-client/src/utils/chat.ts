@@ -146,8 +146,6 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "message":
             return event.sender;
         case "member_joined":
-        case "member_assumes_super_admin":
-        case "member_relinquishes_super_admin":
             return event.userId;
         case "name_changed":
         case "desc_changed":
@@ -168,8 +166,6 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.blockedBy;
         case "users_unblocked":
             return event.unblockedBy;
-        case "ownership_transferred":
-            return event.oldOwner;
         case "message_pinned":
             return event.pinnedBy;
         case "message_unpinned":
@@ -182,7 +178,6 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.invitedBy;
         case "direct_chat_created":
         case "aggregate_common_events":
-        case "member_dismissed_as_super_admin":
         case "member_left": // We exclude participant_left events since the user is no longer in the group
         case "chat_frozen":
         case "chat_unfrozen":
@@ -782,7 +777,7 @@ export function removeVoteFromPoll(userId: string, answerIdx: number, votes: Pol
 
 export function canChangePermissions(chat: ChatSummary): boolean {
     return (
-        chat.kind === "group_chat" &&
+        (chat.kind === "group_chat" || chat.kind === "channel") &&
         chat.membership !== undefined &&
         !chat.frozen &&
         isPermitted(chat.membership.role, chat.permissions.changePermissions)
