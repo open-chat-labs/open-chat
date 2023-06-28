@@ -147,6 +147,7 @@ async fn transfer_prize_funds_to_group(
 ) -> Result<CompletedCryptoTransaction, String> {
     // Assume ICRC-1 for now
     let pending_transaction = types::sns::PendingCryptoTransaction {
+        ledger: ledger_canister_id,
         token,
         amount: Tokens::from_e8s(amount),
         to: Account {
@@ -158,7 +159,7 @@ async fn transfer_prize_funds_to_group(
         created: now_nanos,
     };
 
-    match sns::process_transaction(pending_transaction, group, ledger_canister_id).await {
+    match sns::process_transaction(pending_transaction, group).await {
         Ok(completed_transaction) => mutate_state(|state| {
             state.data.prizes_sent.push(Prize {
                 group,
