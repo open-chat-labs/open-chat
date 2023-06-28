@@ -856,8 +856,8 @@ impl From<ChatEventInternalPrevious> for ChatEventInternal {
 #[cfg(test)]
 mod tests {
     use crate::{
-        ChatEventInternal, ChatInternal, DeletedByInternal, MessageContentInternal, MessageInternal, MultiUserChatInternal,
-        ReplyContextInternal, ThreadSummaryInternal,
+        ChatEventInternal, ChatInternal, DeletedByInternal, MessageContentInternal, MessageInternal, ReplyContextInternal,
+        ThreadSummaryInternal,
     };
     use candid::Principal;
     use std::collections::HashSet;
