@@ -213,7 +213,9 @@ pub mod nns {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[serde(from = "PendingCryptoTransactionPrevious")]
     pub struct PendingCryptoTransaction {
+        pub ledger: CanisterId,
         pub token: Cryptocurrency,
         pub amount: Tokens,
         pub to: UserOrAccount,
@@ -223,7 +225,9 @@ pub mod nns {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // #[serde(from = "CompletedCryptoTransactionPrevious")]
     pub struct CompletedCryptoTransaction {
+        // pub ledger: CanisterId,
         pub token: Cryptocurrency,
         pub amount: Tokens,
         pub fee: Tokens,
@@ -236,7 +240,9 @@ pub mod nns {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // #[serde(from = "FailedCryptoTransactionPrevious")]
     pub struct FailedCryptoTransaction {
+        // pub ledger: CanisterId,
         pub token: Cryptocurrency,
         pub amount: Tokens,
         pub fee: Tokens,
@@ -247,6 +253,90 @@ pub mod nns {
         pub transaction_hash: TransactionHash,
         pub error_message: String,
     }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct PendingCryptoTransactionPrevious {
+        pub token: Cryptocurrency,
+        pub amount: Tokens,
+        pub to: UserOrAccount,
+        pub fee: Option<Tokens>,
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+    }
+
+    // #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // pub struct CompletedCryptoTransactionPrevious {
+    //     pub token: Cryptocurrency,
+    //     pub amount: Tokens,
+    //     pub fee: Tokens,
+    //     pub from: CryptoAccount,
+    //     pub to: CryptoAccount,
+    //     pub memo: Memo,
+    //     pub created: TimestampNanos,
+    //     pub transaction_hash: TransactionHash,
+    //     pub block_index: BlockIndex,
+    // }
+    //
+    // #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // pub struct FailedCryptoTransactionPrevious {
+    //     pub token: Cryptocurrency,
+    //     pub amount: Tokens,
+    //     pub fee: Tokens,
+    //     pub from: CryptoAccount,
+    //     pub to: CryptoAccount,
+    //     pub memo: Memo,
+    //     pub created: TimestampNanos,
+    //     pub transaction_hash: TransactionHash,
+    //     pub error_message: String,
+    // }
+
+    impl From<PendingCryptoTransactionPrevious> for PendingCryptoTransaction {
+        fn from(value: PendingCryptoTransactionPrevious) -> Self {
+            PendingCryptoTransaction {
+                ledger: value.token.ledger_canister_id(),
+                token: value.token,
+                amount: value.amount,
+                to: value.to,
+                fee: value.fee,
+                memo: value.memo,
+                created: value.created,
+            }
+        }
+    }
+
+    // impl From<CompletedCryptoTransactionPrevious> for CompletedCryptoTransaction {
+    //     fn from(value: CompletedCryptoTransactionPrevious) -> Self {
+    //         CompletedCryptoTransaction {
+    //             ledger: value.token.ledger_canister_id(),
+    //             token: value.token,
+    //             amount: value.amount,
+    //             from: value.from,
+    //             to: value.to,
+    //             fee: value.fee,
+    //             memo: value.memo,
+    //             created: value.created,
+    //             transaction_hash: value.transaction_hash,
+    //             block_index: value.block_index,
+    //         }
+    //     }
+    // }
+    //
+    // impl From<FailedCryptoTransactionPrevious> for FailedCryptoTransaction {
+    //     fn from(value: FailedCryptoTransactionPrevious) -> Self {
+    //         FailedCryptoTransaction {
+    //             ledger: value.token.ledger_canister_id(),
+    //             token: value.token,
+    //             amount: value.amount,
+    //             fee: value.fee,
+    //             from: value.from,
+    //             to: value.to,
+    //             memo: value.memo,
+    //             created: value.created,
+    //             transaction_hash: value.transaction_hash,
+    //             error_message: value.error_message,
+    //         }
+    //     }
+    // }
 }
 
 pub mod sns {
@@ -261,7 +351,9 @@ pub mod sns {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[serde(from = "PendingCryptoTransactionPrevious")]
     pub struct PendingCryptoTransaction {
+        pub ledger: CanisterId,
         pub token: Cryptocurrency,
         pub amount: Tokens,
         pub to: Account,
@@ -271,7 +363,9 @@ pub mod sns {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // #[serde(from = "CompletedCryptoTransactionPrevious")]
     pub struct CompletedCryptoTransaction {
+        // pub ledger: CanisterId,
         pub token: Cryptocurrency,
         pub amount: Tokens,
         pub fee: Tokens,
@@ -284,7 +378,9 @@ pub mod sns {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // #[serde(from = "FailedCryptoTransactionPrevious")]
     pub struct FailedCryptoTransaction {
+        // pub ledger: CanisterId,
         pub token: Cryptocurrency,
         pub amount: Tokens,
         pub fee: Tokens,
@@ -295,6 +391,90 @@ pub mod sns {
         pub transaction_hash: TransactionHash,
         pub error_message: String,
     }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct PendingCryptoTransactionPrevious {
+        pub token: Cryptocurrency,
+        pub amount: Tokens,
+        pub to: Account,
+        pub fee: Tokens,
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+    }
+
+    // #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // pub struct CompletedCryptoTransactionPrevious {
+    //     pub token: Cryptocurrency,
+    //     pub amount: Tokens,
+    //     pub fee: Tokens,
+    //     pub from: CryptoAccount,
+    //     pub to: CryptoAccount,
+    //     pub memo: Option<Memo>,
+    //     pub created: TimestampNanos,
+    //     pub transaction_hash: TransactionHash,
+    //     pub block_index: BlockIndex,
+    // }
+    //
+    // #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // pub struct FailedCryptoTransactionPrevious {
+    //     pub token: Cryptocurrency,
+    //     pub amount: Tokens,
+    //     pub fee: Tokens,
+    //     pub from: CryptoAccount,
+    //     pub to: CryptoAccount,
+    //     pub memo: Option<Memo>,
+    //     pub created: TimestampNanos,
+    //     pub transaction_hash: TransactionHash,
+    //     pub error_message: String,
+    // }
+
+    impl From<PendingCryptoTransactionPrevious> for PendingCryptoTransaction {
+        fn from(value: PendingCryptoTransactionPrevious) -> Self {
+            PendingCryptoTransaction {
+                ledger: value.token.ledger_canister_id(),
+                token: value.token,
+                amount: value.amount,
+                to: value.to,
+                fee: value.fee,
+                memo: value.memo,
+                created: value.created,
+            }
+        }
+    }
+
+    // impl From<CompletedCryptoTransactionPrevious> for CompletedCryptoTransaction {
+    //     fn from(value: CompletedCryptoTransactionPrevious) -> Self {
+    //         CompletedCryptoTransaction {
+    //             ledger: value.token.ledger_canister_id(),
+    //             token: value.token,
+    //             amount: value.amount,
+    //             from: value.from,
+    //             to: value.to,
+    //             fee: value.fee,
+    //             memo: value.memo,
+    //             created: value.created,
+    //             transaction_hash: value.transaction_hash,
+    //             block_index: value.block_index,
+    //         }
+    //     }
+    // }
+    //
+    // impl From<FailedCryptoTransactionPrevious> for FailedCryptoTransaction {
+    //     fn from(value: FailedCryptoTransactionPrevious) -> Self {
+    //         FailedCryptoTransaction {
+    //             ledger: value.token.ledger_canister_id(),
+    //             token: value.token,
+    //             amount: value.amount,
+    //             fee: value.fee,
+    //             from: value.from,
+    //             to: value.to,
+    //             memo: value.memo,
+    //             created: value.created,
+    //             transaction_hash: value.transaction_hash,
+    //             error_message: value.error_message,
+    //         }
+    //     }
+    // }
 }
 
 pub mod icrc1 {
@@ -309,7 +489,9 @@ pub mod icrc1 {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[serde(from = "PendingCryptoTransactionPrevious")]
     pub struct PendingCryptoTransaction {
+        pub ledger: CanisterId,
         pub token: Cryptocurrency,
         pub amount: u128,
         pub to: Account,
@@ -319,7 +501,9 @@ pub mod icrc1 {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // #[serde(from = "CompletedCryptoTransactionPrevious")]
     pub struct CompletedCryptoTransaction {
+        // pub ledger: CanisterId,
         pub token: Cryptocurrency,
         pub amount: u128,
         pub from: CryptoAccount,
@@ -331,7 +515,9 @@ pub mod icrc1 {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // #[serde(from = "FailedCryptoTransactionPrevious")]
     pub struct FailedCryptoTransaction {
+        // pub ledger: CanisterId,
         pub token: Cryptocurrency,
         pub amount: u128,
         pub fee: u128,
@@ -341,4 +527,84 @@ pub mod icrc1 {
         pub created: TimestampNanos,
         pub error_message: String,
     }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct PendingCryptoTransactionPrevious {
+        pub token: Cryptocurrency,
+        pub amount: u128,
+        pub to: Account,
+        pub fee: u128,
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+    }
+
+    // #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // pub struct CompletedCryptoTransactionPrevious {
+    //     pub token: Cryptocurrency,
+    //     pub amount: u128,
+    //     pub from: CryptoAccount,
+    //     pub to: CryptoAccount,
+    //     pub fee: u128,
+    //     pub memo: Option<Memo>,
+    //     pub created: TimestampNanos,
+    //     pub block_index: u64,
+    // }
+    //
+    // #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // pub struct FailedCryptoTransactionPrevious {
+    //     pub token: Cryptocurrency,
+    //     pub amount: u128,
+    //     pub fee: u128,
+    //     pub from: CryptoAccount,
+    //     pub to: CryptoAccount,
+    //     pub memo: Option<Memo>,
+    //     pub created: TimestampNanos,
+    //     pub error_message: String,
+    // }
+
+    impl From<PendingCryptoTransactionPrevious> for PendingCryptoTransaction {
+        fn from(value: PendingCryptoTransactionPrevious) -> Self {
+            PendingCryptoTransaction {
+                ledger: value.token.ledger_canister_id(),
+                token: value.token,
+                amount: value.amount,
+                to: value.to,
+                fee: value.fee,
+                memo: value.memo,
+                created: value.created,
+            }
+        }
+    }
+
+    // impl From<CompletedCryptoTransactionPrevious> for CompletedCryptoTransaction {
+    //     fn from(value: CompletedCryptoTransactionPrevious) -> Self {
+    //         CompletedCryptoTransaction {
+    //             ledger: value.token.ledger_canister_id(),
+    //             token: value.token,
+    //             amount: value.amount,
+    //             from: value.from,
+    //             to: value.to,
+    //             fee: value.fee,
+    //             memo: value.memo,
+    //             created: value.created,
+    //             block_index: value.block_index,
+    //         }
+    //     }
+    // }
+    //
+    // impl From<FailedCryptoTransactionPrevious> for FailedCryptoTransaction {
+    //     fn from(value: FailedCryptoTransactionPrevious) -> Self {
+    //         FailedCryptoTransaction {
+    //             ledger: value.token.ledger_canister_id(),
+    //             token: value.token,
+    //             amount: value.amount,
+    //             fee: value.fee,
+    //             from: value.from,
+    //             to: value.to,
+    //             memo: value.memo,
+    //             created: value.created,
+    //             error_message: value.error_message,
+    //         }
+    //     }
+    // }
 }
