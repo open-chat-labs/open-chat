@@ -30,7 +30,10 @@ import type {
     ApiClaimPrizeResponse,
     ApiGroupGateUpdate,
 } from "./candid/idl";
-import type { ApiEventsResponse as ApiCommunityEventsResponse } from "../community/candid/idl";
+import type {
+    ApiEventsResponse as ApiCommunityEventsResponse,
+    ApiMessagesByMessageIndexResponse as ApiCommunityMessagesByMessageIndexResponse,
+} from "../community/candid/idl";
 import {
     EventsResponse,
     EventWrapper,
@@ -68,6 +71,7 @@ import {
     GroupChatIdentifier,
     ChatIdentifier,
     DeleteMessageResponse,
+    MultiUserChatIdentifier,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
@@ -545,8 +549,8 @@ export function deletedMessageResponse(
 
 export async function getMessagesByMessageIndexResponse(
     principal: Principal,
-    candid: ApiMessagesByMessageIndexResponse,
-    chatId: GroupChatIdentifier,
+    candid: ApiMessagesByMessageIndexResponse | ApiCommunityMessagesByMessageIndexResponse,
+    chatId: MultiUserChatIdentifier,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined
 ): Promise<EventsResponse<Message>> {
@@ -566,10 +570,14 @@ export async function getMessagesByMessageIndexResponse(
             latestEventIndex,
         };
     }
-    if ("CallerNotInGroup" in candid) {
-        return "events_failed";
-    }
-    if ("ThreadMessageNotFound" in candid) {
+    if (
+        "CallerNotInGroup" in candid ||
+        "ThreadNotFound" in candid ||
+        "UserNotInChannel" in candid ||
+        "ChannelNotFound" in candid ||
+        "UserNotInCommunity" in candid ||
+        "ThreadMessageNotFound" in candid
+    ) {
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {

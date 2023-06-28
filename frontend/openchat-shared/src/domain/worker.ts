@@ -341,7 +341,7 @@ type GetInviteCode = {
 };
 
 type GroupMessagesByMessageIndex = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageIndexes: Set<number>;
     latestClientEventIndex: number | undefined;
     kind: "getGroupMessagesByMessageIndex";

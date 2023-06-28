@@ -112,7 +112,11 @@ import type {
     CommunityDetails,
     LeaveGroupResponse,
 } from "openchat-shared";
-import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
+import {
+    apiGroupRules,
+    apiOptionalGroupPermissions,
+    getMessagesByMessageIndexResponse,
+} from "../group/mappers";
 import { DataClient } from "../data/data.client";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import { getEventsResponse } from "../group/mappers";
@@ -123,6 +127,7 @@ import {
     getCachedEventsByIndex,
     getCachedEventsWindow,
     getCachedGroupDetails,
+    loadMessagesByMessageIndex,
     mergeSuccessResponses,
     recordFailedMessage,
     removeFailedMessage,
@@ -499,6 +504,62 @@ export class CommunityClient extends CandidService {
                     latestClientEventIndex
                 );
             }
+        );
+    }
+
+    async getMessagesByMessageIndex(
+        chatId: ChannelIdentifier,
+        messageIndexes: Set<number>,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<Message>> {
+        const fromCache = await loadMessagesByMessageIndex(this.db, chatId, messageIndexes);
+        if (fromCache.missing.size > 0) {
+            console.log("Missing idxs from the cached: ", fromCache.missing);
+
+            const resp = await this.getMessagesByMessageIndexFromBackend(
+                chatId,
+                fromCache.missing,
+                latestClientEventIndex
+            ).then((resp) => this.setCachedEvents(chatId, resp));
+
+            return resp === "events_failed"
+                ? resp
+                : {
+                      events: [...fromCache.messageEvents, ...resp.events],
+                      latestEventIndex: resp.latestEventIndex,
+                  };
+        }
+        return {
+            events: fromCache.messageEvents,
+            latestEventIndex: undefined,
+        };
+    }
+
+    private getMessagesByMessageIndexFromBackend(
+        chatId: ChannelIdentifier,
+        messageIndexes: Set<number>,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<Message>> {
+        const thread_root_message_index: [] = [];
+        const invite_code: [] = [];
+        const args = {
+            channel_id: BigInt(chatId.channelId),
+            thread_root_message_index,
+            messages: new Uint32Array(messageIndexes),
+            invite_code,
+            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
+        };
+        return this.handleQueryResponse(
+            () => this.service.messages_by_message_index(args),
+            (resp) =>
+                getMessagesByMessageIndexResponse(
+                    this.principal,
+                    resp,
+                    chatId,
+                    undefined,
+                    latestClientEventIndex
+                ),
+            args
         );
     }
 

@@ -5,8 +5,8 @@
     import type {
         DirectChatIdentifier,
         EventWrapper,
-        GroupChatIdentifier,
         Message,
+        MultiUserChatIdentifier,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -17,7 +17,7 @@
     import type { OpenChat } from "openchat-client";
 
     export let pinned: Set<number>;
-    export let chatId: GroupChatIdentifier;
+    export let chatId: MultiUserChatIdentifier;
     export let dateLastPinned: bigint | undefined;
 
     const client = getContext<OpenChat>("client");

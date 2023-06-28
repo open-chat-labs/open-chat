@@ -724,7 +724,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.messagesRead.staleThreadsCount(this._liveState.threadsByChat);
     }
 
-    unreadPinned(chatId: ChatIdentifier, dateLastPinned: bigint | undefined): boolean {
+    unreadPinned(chatId: MultiUserChatIdentifier, dateLastPinned: bigint | undefined): boolean {
         return this.messagesRead.unreadPinned(chatId, dateLastPinned);
     }
 
@@ -3551,7 +3551,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getGroupMessagesByMessageIndex(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         messageIndexes: Set<number>
     ): Promise<EventsResponse<Message>> {
         const serverChat = this._liveState.serverChatSummaries.get(chatId);

@@ -1779,19 +1779,33 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getGroupMessagesByMessageIndex(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         messageIndexes: Set<number>,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<Message>> {
-        return this.rehydrateEventResponse(
-            chatId,
-            this.getGroupClient(chatId.groupId).getMessagesByMessageIndex(
-                messageIndexes,
-                latestClientEventIndex
-            ),
-            undefined,
-            latestClientEventIndex
-        );
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.rehydrateEventResponse(
+                    chatId,
+                    this.getGroupClient(chatId.groupId).getMessagesByMessageIndex(
+                        messageIndexes,
+                        latestClientEventIndex
+                    ),
+                    undefined,
+                    latestClientEventIndex
+                );
+            case "channel":
+                return this.rehydrateEventResponse(
+                    chatId,
+                    this.communityClient(chatId.communityId).getMessagesByMessageIndex(
+                        chatId,
+                        messageIndexes,
+                        latestClientEventIndex
+                    ),
+                    undefined,
+                    latestClientEventIndex
+                );
+        }
     }
 
     pinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<PinMessageResponse> {
