@@ -1,6 +1,10 @@
 use crate::{
-    activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, run_regular_jobs,
-    RuntimeState,
+    activity_notifications::handle_activity_notification,
+    model::{
+        channels::{AddDefaultChannelResult, RemoveDefaultChannelResult},
+        events::CommunityEvent,
+    },
+    mutate_state, run_regular_jobs, RuntimeState,
 };
 use canister_tracing_macros::trace;
 use community_canister::manage_default_channels::{Response::*, *};
@@ -31,19 +35,34 @@ fn manage_default_channels_impl(args: Args, state: &mut RuntimeState) -> Respons
             return NotAuthorized;
         }
 
-        let added: Vec<_> = args
-            .to_add
-            .into_iter()
-            .filter(|c| state.data.channels.add_default_channel(*c))
-            .collect();
+        let mut failed_channels = FailedChannels {
+            not_found: Vec::new(),
+            private: Vec::new(),
+        };
 
-        let removed: Vec<_> = args
-            .to_remove
-            .into_iter()
-            .filter(|c| state.data.channels.remove_default_channel(c))
-            .collect();
+        let mut added = Vec::new();
+        let mut removed = Vec::new();
 
-        if !added.is_empty() || !removed.is_empty() {
+        for channel_id in args.to_add.iter() {
+            match state.data.channels.add_default_channel(*channel_id) {
+                AddDefaultChannelResult::Added => added.push(*channel_id),
+                AddDefaultChannelResult::AlreadyDefault => (),
+                AddDefaultChannelResult::Private => failed_channels.private.push(*channel_id),
+                AddDefaultChannelResult::NotFound => failed_channels.not_found.push(*channel_id),
+            }
+        }
+
+        for channel_id in args.to_remove.iter() {
+            match state.data.channels.remove_default_channel(channel_id) {
+                RemoveDefaultChannelResult::Removed => removed.push(*channel_id),
+                RemoveDefaultChannelResult::NotDefault => (),
+                RemoveDefaultChannelResult::NotFound => failed_channels.not_found.push(*channel_id),
+            }
+        }
+
+        let changed = !added.is_empty() || !removed.is_empty();
+
+        if changed {
             let now = state.env.now();
 
             let event = DefaultChannelsChanged {
@@ -60,7 +79,13 @@ fn manage_default_channels_impl(args: Args, state: &mut RuntimeState) -> Respons
             handle_activity_notification(state);
         }
 
-        Success
+        if failed_channels.not_found.is_empty() && failed_channels.private.is_empty() {
+            Success
+        } else if changed {
+            PartialSucesss(failed_channels)
+        } else {
+            Failed(failed_channels)
+        }
     } else {
         UserNotInCommunity
     }

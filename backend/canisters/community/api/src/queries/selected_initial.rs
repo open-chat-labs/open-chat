@@ -1,13 +1,16 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{AccessRules, CommunityMember, Empty, EventIndex, TimestampMillis, UserId};
+use types::{AccessRules, CommunityMember, EventIndex, TimestampMillis, UserId};
 
-pub type Args = Empty;
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct Args {
+    pub invite_code: Option<u64>,
+}
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    UserNotInCommunity,
+    PrivateCommunity,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

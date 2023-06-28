@@ -60,9 +60,11 @@ fn is_permitted_to_join(
             }
 
             if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
-                Err(AlreadyInChannel(Box::new(
-                    channel.summary(Some(channel_member), state.env.now()),
-                )))
+                Err(AlreadyInChannel(Box::new(channel.summary(
+                    true,
+                    Some(channel_member),
+                    state.env.now(),
+                ))))
             } else {
                 Ok(channel
                     .chat
@@ -84,7 +86,7 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
             let now = state.env.now();
             match join_channel_unchecked(channel, member, state.data.is_public, now) {
                 AddResult::Success(channel_member) => {
-                    let summary = channel.summary(Some(&channel_member), now);
+                    let summary = channel.summary(true, Some(&channel_member), now);
                     handle_activity_notification(state);
                     Success(Box::new(summary))
                 }

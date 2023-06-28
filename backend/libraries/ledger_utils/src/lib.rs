@@ -20,6 +20,7 @@ pub fn create_pending_transaction(
 ) -> PendingCryptoTransaction {
     match token {
         Cryptocurrency::InternetComputer => PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
+            ledger: token.ledger_canister_id(),
             token,
             amount,
             to: UserOrAccount::User(user_id),
@@ -28,6 +29,7 @@ pub fn create_pending_transaction(
             created: now_nanos,
         }),
         _ => PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
+            ledger: token.ledger_canister_id(),
             token,
             amount: amount.e8s().into(),
             to: Account {
@@ -44,12 +46,11 @@ pub fn create_pending_transaction(
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
     sender: CanisterId,
-    ledger_canister_id: CanisterId,
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
     match transaction {
-        PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, sender, ledger_canister_id).await,
-        PendingCryptoTransaction::SNS(t) => sns::process_transaction(t, sender, ledger_canister_id).await,
-        PendingCryptoTransaction::ICRC1(t) => icrc1::process_transaction(t, sender, ledger_canister_id).await,
+        PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, sender).await,
+        PendingCryptoTransaction::SNS(t) => sns::process_transaction(t, sender).await,
+        PendingCryptoTransaction::ICRC1(t) => icrc1::process_transaction(t, sender).await,
     }
 }
 

@@ -5,7 +5,6 @@ use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction};
 pub async fn process_transaction(
     transaction: types::nns::PendingCryptoTransaction,
     sender: CanisterId,
-    ledger_canister_id: CanisterId,
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
     let memo = transaction.memo.unwrap_or(Memo(0));
     let fee = transaction.fee.unwrap_or(DEFAULT_FEE);
@@ -29,8 +28,9 @@ pub async fn process_transaction(
 
     let transaction_hash = calculate_transaction_hash(sender, &transfer_args);
 
-    match ic_ledger_types::transfer(ledger_canister_id, transfer_args).await {
+    match ic_ledger_types::transfer(transaction.ledger, transfer_args).await {
         Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::NNS(types::nns::CompletedCryptoTransaction {
+            // ledger: transaction.ledger,
             token: transaction.token,
             amount: transaction.amount,
             fee,
@@ -52,6 +52,7 @@ pub async fn process_transaction(
     }
     .map_err(|error| {
         FailedCryptoTransaction::NNS(types::nns::FailedCryptoTransaction {
+            // ledger: transaction.ledger,
             token: transaction.token,
             amount: transaction.amount,
             fee,

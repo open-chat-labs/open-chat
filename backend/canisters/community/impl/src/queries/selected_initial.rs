@@ -3,15 +3,15 @@ use community_canister::selected_initial::{Response::*, *};
 use ic_cdk_macros::query;
 
 #[query]
-fn selected_initial(_args: Args) -> Response {
-    read_state(selected_initial_impl)
+fn selected_initial(args: Args) -> Response {
+    read_state(|state| selected_initial_impl(args, state))
 }
 
-fn selected_initial_impl(state: &RuntimeState) -> Response {
+fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if state.data.members.get(caller).is_none() {
-        return UserNotInCommunity;
+    if !state.data.is_accessible(caller, args.invite_code) {
+        return PrivateCommunity;
     }
 
     let now = state.env.now();

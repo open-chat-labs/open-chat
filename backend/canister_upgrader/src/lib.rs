@@ -140,6 +140,25 @@ pub async fn upgrade_cycles_dispenser_canister(
     println!("Cycles dispenser canister upgraded");
 }
 
+pub async fn upgrade_registry_canister(
+    identity: BasicIdentity,
+    url: String,
+    registry_canister_id: CanisterId,
+    version: Version,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        registry_canister_id,
+        version,
+        registry_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::Registry,
+    )
+    .await;
+
+    println!("Registry canister upgraded");
+}
+
 pub async fn upgrade_market_maker_canister(
     identity: BasicIdentity,
     url: String,

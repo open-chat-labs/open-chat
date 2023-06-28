@@ -22,6 +22,10 @@ fn make_channel_private_impl(args: Args, state: &mut RuntimeState) -> Response {
             return UserSuspended;
         }
 
+        if state.data.channels.is_default_channel(&args.channel_id) {
+            return ChannelIsDefault;
+        }
+
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
             match channel.chat.make_private(member.user_id, state.env.now()) {
                 MakePrivateResult::Success => {

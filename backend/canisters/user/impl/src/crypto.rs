@@ -22,16 +22,13 @@ async fn process_transaction_internal(
     transaction: PendingCryptoTransaction,
     check_caller: bool,
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
-    let (my_user_id, ledger_canister_id) = read_state(|state| {
+    let my_user_id = read_state(|state| {
         if check_caller && state.env.caller() != state.data.owner {
             panic!("Only the owner can transfer cryptocurrency");
         }
 
-        let my_user_id: UserId = state.env.canister_id().into();
-        let ledger_canister_id = transaction.token().ledger_canister_id();
-
-        (my_user_id, ledger_canister_id)
+        UserId::from(state.env.canister_id())
     });
 
-    ledger_utils::process_transaction(transaction, my_user_id.into(), ledger_canister_id).await
+    ledger_utils::process_transaction(transaction, my_user_id.into()).await
 }

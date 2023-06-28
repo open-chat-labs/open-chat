@@ -11,8 +11,16 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
+    PartialSucesss(FailedChannels),
+    Failed(FailedChannels),
     CommunityFrozen,
     UserNotInCommunity,
     UserSuspended,
     NotAuthorized,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct FailedChannels {
+    pub not_found: Vec<ChannelId>,
+    pub private: Vec<ChannelId>,
 }

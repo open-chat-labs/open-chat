@@ -64,12 +64,34 @@ impl Channels {
         self.default_channels.iter().filter_map(|id| self.channels.get(id)).collect()
     }
 
-    pub fn add_default_channel(&mut self, channel_id: ChannelId) -> bool {
-        self.default_channels.insert(channel_id)
+    pub fn add_default_channel(&mut self, channel_id: ChannelId) -> AddDefaultChannelResult {
+        if let Some(channel) = self.channels.get(&channel_id) {
+            if channel.chat.is_public {
+                if self.default_channels.insert(channel_id) {
+                    AddDefaultChannelResult::Added
+                } else {
+                    AddDefaultChannelResult::AlreadyDefault
+                }
+            } else {
+                AddDefaultChannelResult::Private
+            }
+        } else {
+            AddDefaultChannelResult::NotFound
+        }
     }
 
-    pub fn remove_default_channel(&mut self, channel_id: &ChannelId) -> bool {
-        self.default_channels.remove(channel_id)
+    pub fn remove_default_channel(&mut self, channel_id: &ChannelId) -> RemoveDefaultChannelResult {
+        if self.default_channels.remove(channel_id) {
+            RemoveDefaultChannelResult::Removed
+        } else if self.channels.contains_key(channel_id) {
+            RemoveDefaultChannelResult::NotDefault
+        } else {
+            RemoveDefaultChannelResult::NotFound
+        }
+    }
+
+    pub fn is_default_channel(&self, channel_id: &ChannelId) -> bool {
+        self.default_channels.contains(channel_id)
     }
 
     pub fn remove_member(&mut self, user_id: UserId) -> HashMap<ChannelId, GroupMemberInternal> {
@@ -144,10 +166,15 @@ impl Channel {
 
     pub fn summary_if_member(&self, user_id: &UserId, now: TimestampMillis) -> Option<CommunityCanisterChannelSummary> {
         let member = self.chat.members.get(user_id)?;
-        Some(self.summary(Some(member), now))
+        Some(self.summary(true, Some(member), now))
     }
 
-    pub fn summary(&self, member: Option<&GroupMemberInternal>, now: TimestampMillis) -> CommunityCanisterChannelSummary {
+    pub fn summary(
+        &self,
+        is_community_member: bool,
+        member: Option<&GroupMemberInternal>,
+        now: TimestampMillis,
+    ) -> CommunityCanisterChannelSummary {
         let chat = &self.chat;
 
         let (min_visible_event_index, min_visible_message_index) = if let Some(member) = member {
@@ -161,7 +188,9 @@ impl Channel {
         let user_id = member.map(|m| m.user_id);
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index, now);
         let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
-        let latest_message = main_events_reader.latest_message_event(user_id);
+        let latest_message = is_community_member
+            .then(|| main_events_reader.latest_message_event(user_id))
+            .flatten();
 
         let membership = member.map(|m| ChannelMembership {
             joined: m.date_added,
@@ -213,7 +242,7 @@ impl Channel {
 
         if let Some(m) = member {
             if m.date_added > since {
-                return ChannelUpdates::Added(self.summary(member, now));
+                return ChannelUpdates::Added(self.summary(true, member, now));
             }
         }
 
@@ -281,4 +310,17 @@ impl From<&Channel> for Document {
             .add_field(channel.chat.description.clone(), 1.0, true);
         document
     }
+}
+
+pub enum AddDefaultChannelResult {
+    Added,
+    AlreadyDefault,
+    NotFound,
+    Private,
+}
+
+pub enum RemoveDefaultChannelResult {
+    Removed,
+    NotDefault,
+    NotFound,
 }

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Refactored `claim_prize` ([#3854](https://github.com/open-chat-labs/open-chat/pull/3854))
+- Add `ledger` to pending crypto transactions ([#3866](https://github.com/open-chat-labs/open-chat/pull/3866))
 
 ### Removed
 
