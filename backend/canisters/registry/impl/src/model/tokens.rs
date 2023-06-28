@@ -9,6 +9,7 @@ pub struct Tokens {
 }
 
 impl Tokens {
+    #[allow(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
         ledger_canister_id: CanisterId,
