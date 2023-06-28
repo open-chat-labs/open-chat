@@ -2,7 +2,7 @@ use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use local_user_index_canister::{Event, SuperAdminStatusChanged};
+use local_user_index_canister::{Event, PlatformModeratorStatusChanged};
 use types::UserId;
 use user_canister::c2c_revoke_super_admin;
 use user_index_canister::remove_platform_moderator::{Response::*, *};
@@ -28,7 +28,7 @@ fn commit(user_id: UserId, state: &mut RuntimeState) {
     state.data.platform_moderators.remove(&user_id);
 
     state.push_event_to_all_local_user_indexes(
-        Event::SuperAdminStatusChanged(SuperAdminStatusChanged {
+        Event::SuperAdminStatusChanged(PlatformModeratorStatusChanged {
             user_id,
             is_super_admin: false,
         }),
