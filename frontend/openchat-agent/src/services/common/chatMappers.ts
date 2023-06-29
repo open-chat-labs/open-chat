@@ -746,9 +746,15 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
 }
 
 function replySourceContext([chatId, maybeThreadRoot]: [
-    ApiMultiUserChat,
+    ApiChat,
     [] | [number]
 ]): MessageContext {
+    if ("Direct" in chatId) {
+        return {
+            chatId: { kind: "direct_chat", userId: chatId.Direct.toString() },
+            threadRootMessageIndex: undefined
+        };
+    }
     if ("Group" in chatId) {
         return {
             chatId: { kind: "group_chat", groupId: chatId.Group.toString() },

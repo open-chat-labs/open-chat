@@ -6,7 +6,7 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
-    is_default, is_empty_slice, AudioContent, AvatarChanged, BlobReference, CanisterId, ChannelId, ChatId, ChatMetrics,
+    is_default, is_empty_slice, AudioContent, AvatarChanged, BlobReference, CanisterId, ChannelId, Chat, ChatId, ChatMetrics,
     CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy, DirectChatCreated, EventIndex,
     EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
     GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
@@ -610,27 +610,40 @@ impl From<&MessageContentInternal> for Document {
 }
 
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy)]
-pub enum MultiUserChatInternal {
+pub enum ChatInternal {
+    #[serde(rename = "d")]
+    Direct(ChatId),
     #[serde(rename = "g")]
     Group(ChatId),
     #[serde(rename = "c")]
     Channel(CommunityId, ChannelId),
 }
 
-impl From<MultiUserChat> for MultiUserChatInternal {
-    fn from(value: MultiUserChat) -> Self {
+impl From<Chat> for ChatInternal {
+    fn from(value: Chat) -> Self {
         match value {
-            MultiUserChat::Group(c) => MultiUserChatInternal::Group(c),
-            MultiUserChat::Channel(cm, ch) => MultiUserChatInternal::Channel(cm, ch),
+            Chat::Direct(c) => ChatInternal::Direct(c),
+            Chat::Group(c) => ChatInternal::Group(c),
+            Chat::Channel(cm, ch) => ChatInternal::Channel(cm, ch),
         }
     }
 }
 
-impl MultiUserChatInternal {
-    pub fn hydrate(&self) -> MultiUserChat {
+impl From<MultiUserChat> for ChatInternal {
+    fn from(value: MultiUserChat) -> Self {
+        match value {
+            MultiUserChat::Group(c) => ChatInternal::Group(c),
+            MultiUserChat::Channel(cm, ch) => ChatInternal::Channel(cm, ch),
+        }
+    }
+}
+
+impl ChatInternal {
+    pub fn hydrate(&self) -> Chat {
         match self {
-            MultiUserChatInternal::Group(c) => MultiUserChat::Group(*c),
-            MultiUserChatInternal::Channel(cm, ch) => MultiUserChat::Channel(*cm, *ch),
+            ChatInternal::Direct(c) => Chat::Direct(*c),
+            ChatInternal::Group(c) => Chat::Group(*c),
+            ChatInternal::Channel(cm, ch) => Chat::Channel(*cm, *ch),
         }
     }
 }
@@ -638,7 +651,7 @@ impl MultiUserChatInternal {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ReplyContextInternal {
     #[serde(rename = "c")]
-    pub chat_if_other: Option<(MultiUserChatInternal, Option<MessageIndex>)>,
+    pub chat_if_other: Option<(ChatInternal, Option<MessageIndex>)>,
     #[serde(rename = "e")]
     pub event_index: EventIndex,
 }
@@ -647,7 +660,7 @@ impl ReplyContextInternal {
     pub fn hydrate(&self) -> ReplyContext {
         ReplyContext {
             event_list_if_other: self.chat_if_other.as_ref().and_then(|(c, t)| {
-                if let MultiUserChatInternal::Group(chat_id) = c {
+                if let ChatInternal::Group(chat_id) = c {
                     Some((*chat_id, *t))
                 } else {
                     None
@@ -826,8 +839,8 @@ impl From<ChatEventInternalPrevious> for ChatEventInternal {
 #[cfg(test)]
 mod tests {
     use crate::{
-        ChatEventInternal, DeletedByInternal, MessageContentInternal, MessageInternal, MultiUserChatInternal,
-        ReplyContextInternal, ThreadSummaryInternal,
+        ChatEventInternal, ChatInternal, DeletedByInternal, MessageContentInternal, MessageInternal, ReplyContextInternal,
+        ThreadSummaryInternal,
     };
     use candid::Principal;
     use std::collections::HashSet;
@@ -882,7 +895,7 @@ mod tests {
             sender: principal.into(),
             content: MessageContentInternal::Text(TextContent { text: "123".to_string() }),
             replies_to: Some(ReplyContextInternal {
-                chat_if_other: Some((MultiUserChatInternal::Group(principal.into()), Some(1.into()))),
+                chat_if_other: Some((ChatInternal::Group(principal.into()), Some(1.into()))),
                 event_index: 1.into(),
             }),
             reactions: vec![(Reaction::new("1".to_string()), HashSet::from([principal.into()]))],

@@ -12,9 +12,9 @@ crate-type = ["cdylib"]
 [dependencies]
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
-canister_logger = { workspace = true }
-canister_state_macros = { workspace = true }
-canister_tracing_macros = { workspace = true }
+canister_logger = { path = "../../../libraries/canister_logger" }
+canister_state_macros = { path = "../../../libraries/canister_state_macros" }
+canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
@@ -34,7 +34,7 @@ msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
-serializer = { workspace = true }
+serializer = { path = "../../../libraries/serializer" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
