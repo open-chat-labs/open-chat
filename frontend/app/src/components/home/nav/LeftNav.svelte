@@ -8,6 +8,8 @@
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
+    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
+    import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import { AvatarSize, CommunitySummary, OpenChat } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import CommunityMenu from "../communities/CommunityMenu.svelte";
@@ -44,11 +46,18 @@
     }
 
     function directChats() {
+        console.log("TODO - direct chats");
+        page("/");
+    }
+
+    function groupChats() {
+        console.log("TODO - group chats");
         page("/");
     }
 
     function favouriteChats() {
-        console.log("favourite chats");
+        console.log("TODO - favourite chats");
+        page("/");
     }
 
     function openWallet() {
@@ -91,19 +100,25 @@
             </LeftNavItem>
         {/if}
 
-        <LeftNavItem label={"Open wallet"} on:click={openWallet}>
+        <LeftNavItem label={$_("wallet")} on:click={openWallet}>
             <div class="hover wallet">
                 <Wallet size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
 
-        <LeftNavItem label={"Direct chats"} on:click={directChats}>
+        <LeftNavItem label={$_("communities.directChats")} on:click={directChats}>
             <div class="hover direct">
-                <DirectChats size={iconSize} color={"var(--icon-txt)"} />
+                <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
 
-        <LeftNavItem separator label={"Favourite chats"} on:click={favouriteChats}>
+        <LeftNavItem label={$_("communities.groupChats")} on:click={groupChats}>
+            <div class="hover direct">
+                <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
+            </div>
+        </LeftNavItem>
+
+        <LeftNavItem separator label={$_("communities.favourites")} on:click={favouriteChats}>
             <div class="hover favs">
                 <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>

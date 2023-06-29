@@ -2,19 +2,16 @@ import type {
     ApiEventsResponse,
     ApiEventWrapper,
     ApiGroupChatEvent,
-    ApiChangeRoleResponse,
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
     ApiRole,
     ApiMessagesByMessageIndexResponse,
     ApiMessageEventWrapper,
     ApiSearchGroupChatResponse,
-    ApiMakePrivateResponse,
     ApiInviteCodeResponse,
     ApiEnableInviteCodeResponse,
     ApiDisableInviteCodeResponse,
     ApiResetInviteCodeResponse,
-    ApiRegisterPollVoteResponse,
     ApiRegisterProposalVoteResponse,
     ApiGroupRules,
     ApiRulesResponse,
@@ -36,17 +33,14 @@ import {
     SendMessageResponse,
     RemoveMemberResponse,
     BlockUserResponse,
-    ChangeRoleResponse,
     UnblockUserResponse,
     MemberRole,
     Message,
-    MakeGroupPrivateResponse,
     InviteCodeResponse,
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     GroupInviteCodeChange,
-    RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
     AccessRules,
     ChatPermissions,
@@ -265,28 +259,6 @@ export function apiGroupRules(rules: AccessRules): ApiGroupRules {
     };
 }
 
-export function makeGroupPrivateResponse(candid: ApiMakePrivateResponse): MakeGroupPrivateResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("AlreadyPrivate" in candid) {
-        return "already_private";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiMakePrivateResponse type received", candid);
-}
-
 export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUserResponse {
     if ("Success" in candid) {
         return "success";
@@ -389,34 +361,6 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     }
 
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
-}
-
-export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeRoleResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("UserNotInGroup" in candid) {
-        return "user_not_in_group";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("Invalid" in candid) {
-        return "invalid";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
 }
 
 export function removeMemberResponse(candid: ApiRemoveParticipantResponse): RemoveMemberResponse {
@@ -682,39 +626,6 @@ export function resetInviteCodeResponse(
         "Unexpected Group.ApiResetInviteCodeResponse type received",
         candid
     );
-}
-
-export function registerPollVoteResponse(
-    candid: ApiRegisterPollVoteResponse
-): RegisterPollVoteResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("PollEnded" in candid) {
-        return "poll_ended";
-    }
-    if ("OptionIndexOutOfRange" in candid) {
-        return "out_of_range";
-    }
-    if ("PollNotFound" in candid) {
-        return "poll_not_found";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("PollsNotValidForDirectChats" in candid) {
-        return "polls_not_valid_for_direct_chats";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiRegisterPollVoteResponse type received", candid);
 }
 
 function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {

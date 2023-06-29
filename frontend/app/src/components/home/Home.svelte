@@ -217,11 +217,11 @@
             // TODO - deal with channels
             if (chatId.kind === "direct_chat") {
                 await createDirectChat(chatId);
-            } else if (chatId.kind === "group_chat") {
+            } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
                 const code = $querystring.get("code");
                 if (code) {
                     client.groupInvite = {
-                        chatId: chatId.groupId,
+                        chatId: chatId,
                         code,
                     };
                 }
@@ -449,12 +449,8 @@
     }
 
     function pinChat(ev: CustomEvent<ChatIdentifier>) {
-        client.pinChat(ev.detail).then((resp) => {
-            if (resp.kind === "limit_exceeded") {
-                toastStore.showSuccessToast("pinChat.limitExceeded", {
-                    values: { limit: resp.limit },
-                });
-            } else if (resp.kind === "failure") {
+        client.pinChat(ev.detail).then((success) => {
+            if (!success) {
                 toastStore.showFailureToast("pinChat.failed");
             }
         });

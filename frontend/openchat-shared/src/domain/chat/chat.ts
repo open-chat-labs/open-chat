@@ -1523,25 +1523,11 @@ export type EmptyEvent = {
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
 
-export type ChangeRoleResponse =
-    | "internal_error"
-    | "user_not_in_group"
-    | "caller_not_in_group"
-    | "not_authorized"
-    | "invalid"
-    | "user_suspended"
-    | "chat_frozen"
-    | "success";
+export type ChangeRoleResponse = "failure" | "success";
 
 export type DeleteGroupResponse = "success" | "failure";
 
-export type MakeGroupPrivateResponse =
-    | "internal_error"
-    | "not_authorized"
-    | "already_private"
-    | "user_suspended"
-    | "chat_frozen"
-    | "success";
+export type MakeGroupPrivateResponse = "failure" | "success";
 
 export type RemoveMemberResponse =
     | "user_not_in_group"
@@ -1673,16 +1659,7 @@ export type DeletedDirectMessageResponse =
     | { kind: "message_not_deleted" }
     | { kind: "message_hard_deleted" };
 
-export type RegisterPollVoteResponse =
-    | "caller_not_in_group"
-    | "poll_ended"
-    | "success"
-    | "out_of_range"
-    | "poll_not_found"
-    | "chat_not_found"
-    | "user_suspended"
-    | "chat_frozen"
-    | "polls_not_valid_for_direct_chats";
+export type RegisterPollVoteResponse = "success" | "failure";
 
 export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised;
 

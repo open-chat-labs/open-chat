@@ -5,7 +5,7 @@ import {
     bytesToHexString,
     hexStringToBytes,
     identity,
-    optional
+    optional,
 } from "../../utils/mapping";
 import type {
     ApiBlobReference,
@@ -145,6 +145,9 @@ import {
     UndeleteMessageResponse,
     ThreadPreview,
     ThreadPreviewsResponse,
+    ChangeRoleResponse,
+    MakeGroupPrivateResponse,
+    RegisterPollVoteResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -167,6 +170,9 @@ import type {
     ApiUndeleteMessageResponse,
     ApiThreadPreviewsResponse,
     ApiThreadPreview,
+    ApiChangeRoleResponse,
+    ApiMakePrivateResponse,
+    ApiRegisterPollVoteResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -191,6 +197,9 @@ import type {
     ApiDeletedMessageResponse as ApiDeletedChannelMessageResponse,
     ApiUndeleteMessagesResponse as ApiUndeleteChannelMessageResponse,
     ApiThreadPreviewsResponse as ApiChannelThreadPreviewsResponse,
+    ApiRegisterPollVoteResponse as ApiRegisterChannelPollVoteResponse,
+    ApiChangeChannelRoleResponse,
+    ApiMakeChannelPrivateResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 
@@ -606,7 +615,9 @@ export function completedCryptoTransfer(
             sender,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
-            memo: Array.isArray(trans.memo) ? optional(trans.memo, identity) ?? BigInt(0) : trans.memo,
+            memo: Array.isArray(trans.memo)
+                ? optional(trans.memo, identity) ?? BigInt(0)
+                : trans.memo,
             blockIndex: trans.block_index,
             transactionHash: bytesToHexString(trans.transaction_hash),
         };
@@ -642,7 +653,9 @@ export function failedCryptoTransfer(
             recipient,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
-            memo: Array.isArray(trans.memo) ? optional(trans.memo, identity) ?? BigInt(0) : trans.memo,
+            memo: Array.isArray(trans.memo)
+                ? optional(trans.memo, identity) ?? BigInt(0)
+                : trans.memo,
             errorMessage: trans.error_message,
         };
     }
@@ -1922,4 +1935,48 @@ export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview):
         totalReplies: candid.total_replies,
         rootMessage: messageEvent(candid.root_message),
     };
+}
+
+export function changeRoleResponse(
+    candid: ApiChangeRoleResponse | ApiChangeChannelRoleResponse
+): ChangeRoleResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("ChangeRoleResponse failed with: ", candid);
+        return "failure";
+    }
+}
+
+export function makeGroupPrivateResponse(
+    candid: ApiMakePrivateResponse | ApiMakeChannelPrivateResponse
+): MakeGroupPrivateResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("MakeGroupPrivateResponse failed with: ", candid);
+        return "failure";
+    }
+}
+
+export function registerPollVoteResponse(
+    candid: ApiRegisterPollVoteResponse | ApiRegisterChannelPollVoteResponse
+): RegisterPollVoteResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("RegisterPollVoteResponse failed with: ", candid);
+        return "failure";
+    }
+}
+
+export function apiChatIdentifier(chatId: ChatIdentifier): ApiChat {
+    switch (chatId.kind) {
+        case "group_chat":
+            return { Group: Principal.fromText(chatId.groupId) };
+        case "direct_chat":
+            return { Direct: Principal.fromText(chatId.userId) };
+        case "channel":
+            return { Channel: [Principal.fromText(chatId.communityId), BigInt(chatId.channelId)] };
+    }
 }

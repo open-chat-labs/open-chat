@@ -188,7 +188,9 @@
                     public: candidateGroup.public,
                 };
             } else {
-                toastStore.showFailureToast("makeGroupPrivateFailed");
+                toastStore.showFailureToast(
+                    interpolateLevel("makeGroupPrivateFailed", candidateGroup.level, true)
+                );
             }
         });
     }
@@ -343,7 +345,9 @@
 </script>
 
 {#if confirming}
-    <AreYouSure message={$_("confirmMakeGroupPrivate")} action={updateGroup} />
+    <AreYouSure
+        message={interpolateLevel("confirmMakeGroupPrivate", candidateGroup.level, true)}
+        action={updateGroup} />
 {/if}
 
 <ModalContent bind:actualWidth closeIcon on:close>
@@ -364,6 +368,7 @@
                         on:upgrade
                         original={originalGroup}
                         {editing}
+                        history={true}
                         bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>

@@ -18,6 +18,7 @@ import {
     DirectChatIdentifier,
     nullMembership,
     chatIdentifiersEqual,
+    MultiUserChat,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
@@ -69,8 +70,8 @@ export const uninitializedDirectChats: Writable<ChatMap<DirectChatSummary>> = im
 );
 
 // Groups which the current user is previewing
-export const groupPreviewsStore: Writable<ChatMap<GroupChatSummary>> = immutableStore(
-    new ChatMap<GroupChatSummary>()
+export const groupPreviewsStore: Writable<ChatMap<MultiUserChat>> = immutableStore(
+    new ChatMap<MultiUserChat>()
 );
 
 export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
@@ -506,7 +507,7 @@ export function createDirectChat(chatId: DirectChatIdentifier): void {
     });
 }
 
-export function addGroupPreview(chat: GroupChatSummary): void {
+export function addGroupPreview(chat: MultiUserChat): void {
     localChatSummaryUpdates.delete(chat.id);
     groupPreviewsStore.update((summaries) => {
         const clone = summaries.clone();

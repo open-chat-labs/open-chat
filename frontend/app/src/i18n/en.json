@@ -491,7 +491,8 @@
         "minStakeN": "Min stake {n} tokens",
         "optional": "Optional",
         "openAccessInfo": "There are no special access requirements to join",
-        "gateCheckFailed": "Access gate not met"
+        "gateCheckFailed": "Access gate not met",
+        "cannotMakePublic": "You cannot make a private {level} public as that would risk the privacy of the existing members."
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",
@@ -576,10 +577,10 @@
         "cryptoTransfers": "Crypto message"
     },
     "andNMore": ", and {n} more",
-    "confirmMakeGroupPrivate": "Do you definitely want to make this group private? Currently this operation cannot be reversed!",
+    "confirmMakeGroupPrivate": "Do you definitely want to make this {level} private? Currently this operation cannot be reversed!",
     "makeGroupPrivate": "Make group private",
-    "makeGroupPrivateFailed": "Failed to make group private",
-    "groupVisibilityChangedBy": "{changedBy} made the group {visibility}",
+    "makeGroupPrivateFailed": "Failed to make {level} private",
+    "groupVisibilityChangedBy": "{changedBy} made the {level} {visibility}",
     "translateMessage": "Translate",
     "untranslateMessage": "Untranslate",
     "unableToTranslate": "Unable to translate",
@@ -907,7 +908,12 @@
         "memberCount": "member(s)",
         "channelCount": "channel(s)",
         "noChannelSelected": "No channel selected",
-        "selectAChannel": "Select a channel or browse for other channels in this community."
+        "selectAChannel": "Select a channel or browse for other channels in this community.",
+        "directChats": "Direct chats",
+        "groupChats": "Group chats",
+        "favourites": "Favourites",
+        "addToFavourites": "Add to favourites",
+        "removeFromFavourites": "Remove from favourites"
     },
     "unableToSaveUserProfile": "Unable to save user profile"
 }

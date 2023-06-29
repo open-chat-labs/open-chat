@@ -1,3 +1,5 @@
+import type { MultiUserChatIdentifier } from "./chat";
+
 export function codeToText(code: bigint): string {
     return code.toString(16).padStart(16, "0");
 }
@@ -8,7 +10,7 @@ export function textToCode(codeStr: string): bigint {
 }
 
 export type GroupInvite = {
-    chatId: string;
+    chatId: MultiUserChatIdentifier;
     code: string;
 };
 

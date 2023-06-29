@@ -15,6 +15,7 @@
         UserSummary,
         OpenChat,
         MultiUserChat,
+        MultiUserChatIdentifier,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
@@ -62,7 +63,10 @@
     function onChangeGroupRole(
         ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>
     ): void {
-        if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
+        if (
+            $selectedChatId !== undefined &&
+            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+        ) {
             let { userId, newRole, oldRole } = ev.detail;
             changeGroupRole($selectedChatId, userId, newRole, oldRole);
         }
@@ -115,7 +119,10 @@
     }
 
     async function inviteGroupUsers(ev: CustomEvent<UserSummary[]>) {
-        if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
+        if (
+            $selectedChatId !== undefined &&
+            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+        ) {
             const userIds = ev.detail.map((u) => u.userId);
 
             invitingUsers = true;
@@ -176,7 +183,7 @@
     }
 
     function changeGroupRole(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         userId: string,
         newRole: MemberRole,
         oldRole: MemberRole
@@ -195,12 +202,21 @@
     }
 
     function changeCommunityRole(
-        _id: CommunityIdentifier,
-        _userId: string,
-        _newRole: MemberRole,
-        _oldRole: MemberRole
+        id: CommunityIdentifier,
+        userId: string,
+        newRole: MemberRole,
+        oldRole: MemberRole
     ) {
-        toastStore.showSuccessToast("TODO - change community role");
+        return client.changeCommunityRole(id, userId, newRole, oldRole).then((success) => {
+            if (!success) {
+                const roleText = $_(newRole);
+                const promotion = compareRoles(newRole, oldRole) > 0;
+                const message = $_(promotion ? "promoteFailed" : "demoteFailed", {
+                    values: { role: roleText },
+                });
+                toastStore.showFailureToast(message);
+            }
+        });
     }
 
     function removeGroupMember(chatId: GroupChatIdentifier, userId: string): Promise<void> {

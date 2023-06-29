@@ -500,10 +500,10 @@
         "cryptoTransfers": "Messaggio crittografico"
     },
     "andNMore": ", e {n} altro",
-    "confirmMakeGroupPrivate": "Vuoi assolutamente rendere privato questo gruppo? Attualmente questa operazione non può essere annullata!",
+    "confirmMakeGroupPrivate": "Vuoi assolutamente rendere questo {level} privato? Attualmente questa operazione non può essere annullata!",
     "makeGroupPrivate": "Rendi il gruppo privato",
-    "makeGroupPrivateFailed": "Impossibile rendere privato il gruppo",
-    "groupVisibilityChangedBy": "{changedBy} ha fatto il gruppo {visibility}",
+    "makeGroupPrivateFailed": "Impossibile rendere privato {level}",
+    "groupVisibilityChangedBy": "{changedBy} ha creato {level} {visibility}",
     "typeGroupName": "Digita **{name}** per confermare.",
     "translateMessage": "Tradurre",
     "untranslateMessage": "Annulla la traduzione",
@@ -839,7 +839,8 @@
         "minStakeN": "Puntata minima {n} gettoni",
         "optional": "Opzionale",
         "openAccessInfo": "Non ci sono particolari requisiti di accesso per aderire",
-        "gateCheckFailed": "Cancello di accesso non rispettato"
+        "gateCheckFailed": "Cancello di accesso non rispettato",
+        "cannotMakePublic": "Non puoi rendere pubblico un {level} privato in quanto ciò metterebbe a rischio la privacy dei membri esistenti."
     },
     "communities": {
         "explore": "Esplora le comunità",
@@ -902,7 +903,12 @@
         "usersInvited": "Gli utenti sono stati invitati alla tua comunità",
         "joinCommunity": "Unisciti alla comunità",
         "noChannelSelected": "Nessun canale selezionato",
-        "selectAChannel": "Seleziona un canale o cerca altri canali in questa community."
+        "selectAChannel": "Seleziona un canale o cerca altri canali in questa community.",
+        "directChats": "Chat dirette",
+        "groupChats": "Chat di gruppo",
+        "favourites": "Preferiti",
+        "addToFavourites": "Aggiungi ai preferiti",
+        "removeFromFavourites": "Rimuovi dai preferiti"
     },
     "groupCreatedBy": "{username} ha creato {level}",
     "groupName": "{level} nome",

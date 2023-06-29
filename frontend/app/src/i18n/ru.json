@@ -500,10 +500,10 @@
         "cryptoTransfers": "Крипто-сообщение"
     },
     "andNMore": "и еще {n}",
-    "confirmMakeGroupPrivate": "Вы определенно хотите сделать эту группу закрытой? В настоящее время эту операцию нельзя отменить!",
+    "confirmMakeGroupPrivate": "Вы определенно хотите сделать этот {level} приватным? В настоящее время эту операцию нельзя отменить!",
     "makeGroupPrivate": "Сделать группу закрытой",
-    "makeGroupPrivateFailed": "Не удалось сделать группу закрытой",
-    "groupVisibilityChangedBy": "{changedBy} создал группу {visibility}",
+    "makeGroupPrivateFailed": "Не удалось сделать {level} приватным",
+    "groupVisibilityChangedBy": "{changedBy} сделал {level} {visibility}",
     "typeGroupName": "Введите **{name}** для подтверждения.",
     "translateMessage": "Перевести",
     "untranslateMessage": "Отменить перевод",
@@ -839,7 +839,8 @@
         "minStakeN": "Минимальная доля {n} токенов",
         "optional": "Необязательный",
         "openAccessInfo": "Для присоединения нет особых требований к доступу",
-        "gateCheckFailed": "Въездные ворота не выполнены"
+        "gateCheckFailed": "Въездные ворота не выполнены",
+        "cannotMakePublic": "Вы не можете сделать закрытый {level} общедоступным, так как это поставит под угрозу конфиденциальность существующих участников."
     },
     "communities": {
         "explore": "Исследуйте сообщества",
@@ -902,7 +903,12 @@
         "usersInvited": "Пользователи были приглашены в ваше сообщество",
         "joinCommunity": "Присоединяйтесь к сообществу",
         "noChannelSelected": "Канал не выбран",
-        "selectAChannel": "Выберите канал или найдите другие каналы в этом сообществе."
+        "selectAChannel": "Выберите канал или найдите другие каналы в этом сообществе.",
+        "directChats": "Прямые чаты",
+        "groupChats": "Групповые чаты",
+        "favourites": "Избранное",
+        "addToFavourites": "Добавить в избранное",
+        "removeFromFavourites": "Удалить из избранного"
     },
     "groupCreatedBy": "{username} создал {level}",
     "groupName": "{level} имя",

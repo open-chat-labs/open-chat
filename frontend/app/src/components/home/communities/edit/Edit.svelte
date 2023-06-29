@@ -24,6 +24,7 @@
     import { toastStore } from "stores/toast";
     import { interpolateLevel } from "../../../../utils/i18n";
     import page from "page";
+    import AreYouSure from "../../../AreYouSure.svelte";
 
     export let original: CommunitySummary = createCandidateCommunity("");
     export let originalRules: AccessRules;
@@ -35,6 +36,7 @@
     let editing = original.id.communityId !== "";
     let step = 0;
     let busy = false;
+    let confirming = false;
     let candidate = original;
     let candidateRules = originalRules;
     let members: CandidateMember[] = [];
@@ -99,22 +101,43 @@
         step = ev.detail;
     }
 
-    function save() {
+    function save(yes: boolean = true): Promise<void> {
         busy = true;
         if (editing) {
-            client
-                .saveCommunity(candidate, candidateRules)
-                .then((success: boolean) => {
+            const makePrivate = visDirty && !candidate.public && original.public;
+
+            if (makePrivate && !confirming) {
+                confirming = true;
+                return Promise.resolve();
+            }
+
+            if (makePrivate && confirming && !yes) {
+                confirming = false;
+                busy = false;
+                candidate.public = true;
+                return Promise.resolve();
+            }
+
+            confirming = false;
+
+            const privatePromise = makePrivate ? makeCommunityPrivate() : Promise.resolve(true);
+
+            return privatePromise
+                .then((success) => {
                     if (success) {
-                        toastStore.showSuccessToast("communities.saved");
-                        dispatch("close");
-                    } else {
-                        toastStore.showFailureToast("communities.errors.saveFailed");
+                        client.saveCommunity(candidate, candidateRules).then((success: boolean) => {
+                            if (success) {
+                                toastStore.showSuccessToast("communities.saved");
+                                dispatch("close");
+                            } else {
+                                toastStore.showFailureToast("communities.errors.saveFailed");
+                            }
+                        });
                     }
                 })
                 .finally(() => (busy = false));
         } else {
-            client
+            return client
                 .createCommunity(
                     candidate,
                     candidateRules,
@@ -132,7 +155,32 @@
                 .finally(() => (busy = false));
         }
     }
+
+    function makeCommunityPrivate(): Promise<boolean> {
+        if (!editing) return Promise.resolve(true);
+
+        return client.makeCommunityPrivate(candidate.id).then((success) => {
+            if (success) {
+                original = {
+                    ...original,
+                    public: candidate.public,
+                };
+                return true;
+            } else {
+                toastStore.showFailureToast(
+                    interpolateLevel("makeGroupPrivateFailed", candidate.level, true)
+                );
+                return false;
+            }
+        });
+    }
 </script>
+
+{#if confirming}
+    <AreYouSure
+        message={interpolateLevel("confirmMakeGroupPrivate", candidate.level, true)}
+        action={save} />
+{/if}
 
 <ModalContent bind:actualWidth closeIcon on:close>
     <div class="header" slot="header">
@@ -146,7 +194,7 @@
                     <Details bind:valid={detailsValid} bind:busy bind:candidate />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
-                    <VisibilityControl bind:candidate {original} {editing} />
+                    <VisibilityControl bind:candidate {original} {editing} history={false} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
                     <Rules
@@ -197,7 +245,7 @@
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={save}
+                        on:click={() => save()}
                         >{interpolateLevel("group.update", "community", true)}</Button>
                 {:else if step < steps.length - 1}
                     <Button
@@ -212,7 +260,7 @@
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={save}
+                        on:click={() => save()}
                         >{interpolateLevel("group.create", "community", true)}</Button>
                 {/if}
             </div>

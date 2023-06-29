@@ -28,6 +28,8 @@
     import { rightPanelHistory } from "../../stores/rightPanel";
     import { rtlStore } from "../../stores/rtl";
     import { communitiesEnabled } from "../../utils/features";
+    import HeartMinus from "../icons/HeartMinus.svelte";
+    import HeartPlus from "../icons/HeartPlus.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -38,6 +40,7 @@
     export let hasPinned: boolean;
     export let unreadMessages: number;
 
+    $: favouritesStore = client.favouritesStore;
     $: messagesRead = client.messagesRead;
     $: isProposalGroup = client.isProposalGroup;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
@@ -70,6 +73,14 @@
 
     function toggleMuteNotifications(mute: boolean) {
         dispatch("toggleMuteNotifications", { chatId: selectedChatSummary.id, mute });
+    }
+
+    function addToFavourites() {
+        client.addToFavourites(selectedChatSummary.id);
+    }
+
+    function removeFromFavourites() {
+        client.removeFromFavourites(selectedChatSummary.id);
     }
 
     function showGroupDetails() {
@@ -226,6 +237,23 @@
         </div>
         <div slot="menu">
             <Menu>
+                {#if $communitiesEnabled}
+                    {#if !$favouritesStore.has(selectedChatSummary.id)}
+                        <MenuItem on:click={addToFavourites}>
+                            <HeartPlus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
+                            <div slot="text">
+                                {$_("communities.addToFavourites")}
+                            </div>
+                        </MenuItem>
+                    {:else}
+                        <MenuItem on:click={removeFromFavourites}>
+                            <HeartMinus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
+                            <div slot="text">
+                                {$_("communities.removeFromFavourites")}
+                            </div>
+                        </MenuItem>
+                    {/if}
+                {/if}
                 {#if $mobileWidth}
                     {#if $isProposalGroup}
                         <MenuItem on:click={showProposalFilters}>

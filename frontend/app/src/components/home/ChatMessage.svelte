@@ -318,6 +318,8 @@
     }
 
     function registerVote(ev: CustomEvent<{ answerIndex: number; type: "register" | "delete" }>) {
+        if (chatId.kind === "direct_chat") return;
+
         client
             .registerPollVote(
                 chatId,
