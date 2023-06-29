@@ -311,7 +311,7 @@
                                         <MenuItem on:click={addToFavourites}>
                                             <HeartPlus
                                                 size={$iconSize}
-                                                color={"var(--error)"}
+                                                color={"var(--menu-warn)"}
                                                 slot="icon" />
                                             <div slot="text">
                                                 {$_("communities.addToFavourites")}
@@ -321,7 +321,7 @@
                                         <MenuItem on:click={removeFromFavourites}>
                                             <HeartMinus
                                                 size={$iconSize}
-                                                color={"var(--error)"}
+                                                color={"var(--menu-warn)"}
                                                 slot="icon" />
                                             <div slot="text">
                                                 {$_("communities.removeFromFavourites")}
