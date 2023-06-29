@@ -837,7 +837,8 @@
         "minStakeN": "אסימוני הימור מינימליים של {n}",
         "optional": "אופציונאלי",
         "openAccessInfo": "אין דרישות גישה מיוחדות כדי להצטרף",
-        "gateCheckFailed": "שער הגישה לא נפגש"
+        "gateCheckFailed": "שער הגישה לא נפגש",
+        "cannotMakePublic": "אינך יכול להפוך {level} פרטי לציבורי מכיוון שזה יסכן את הפרטיות של החברים הקיימים."
     },
     "communities": {
         "explore": "חקור קהילות",
@@ -900,7 +901,12 @@
         "usersInvited": "משתמשים הוזמנו לקהילה שלך",
         "joinCommunity": "הצטרף לקהילה",
         "noChannelSelected": "לא נבחר ערוץ",
-        "selectAChannel": "בחר ערוץ או עיין בערוצים אחרים בקהילה זו."
+        "selectAChannel": "בחר ערוץ או עיין בערוצים אחרים בקהילה זו.",
+        "directChats": "צ'אטים ישירים",
+        "groupChats": "צ'אטים קבוצתיים",
+        "favourites": "מועדפים",
+        "addToFavourites": "הוסף למועדפים",
+        "removeFromFavourites": "הסר ממועדפים"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",

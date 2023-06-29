@@ -839,7 +839,8 @@
         "minStakeN": "最小质押 {n} 个代币",
         "optional": "选修的",
         "openAccessInfo": "加入没有特殊的访问要求",
-        "gateCheckFailed": "未满足访问门"
+        "gateCheckFailed": "未满足访问门",
+        "cannotMakePublic": "您不能将私有的 {level} 设为公开，因为这会危及现有成员的隐私。"
     },
     "communities": {
         "explore": "探索社区",
@@ -902,7 +903,12 @@
         "usersInvited": "用户已被邀请加入您的社区",
         "joinCommunity": "加入社区",
         "noChannelSelected": "未选择频道",
-        "selectAChannel": "选择一个频道或浏览此社区中的其他频道。"
+        "selectAChannel": "选择一个频道或浏览此社区中的其他频道。",
+        "directChats": "直接聊天",
+        "groupChats": "群聊",
+        "favourites": "收藏夹",
+        "addToFavourites": "加入“最喜欢的",
+        "removeFromFavourites": "从收藏夹中删除"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",

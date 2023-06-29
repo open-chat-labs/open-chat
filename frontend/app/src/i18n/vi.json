@@ -840,7 +840,8 @@
         "minStakeN": "Cổ phần tối thiểu {n} mã thông báo",
         "optional": "Không bắt buộc",
         "openAccessInfo": "Không có yêu cầu truy cập đặc biệt để tham gia",
-        "gateCheckFailed": "Cổng truy cập không được đáp ứng"
+        "gateCheckFailed": "Cổng truy cập không được đáp ứng",
+        "cannotMakePublic": "Bạn không thể công khai {level} riêng tư vì điều đó sẽ gây rủi ro cho quyền riêng tư của các thành viên hiện có."
     },
     "communities": {
         "explore": "Khám phá cộng đồng",
@@ -903,7 +904,12 @@
         "usersInvited": "Người dùng đã được mời vào cộng đồng của bạn",
         "joinCommunity": "Tham gia cộng đồng",
         "noChannelSelected": "Không có kênh nào được chọn",
-        "selectAChannel": "Chọn một kênh hoặc duyệt tìm các kênh khác trong cộng đồng này."
+        "selectAChannel": "Chọn một kênh hoặc duyệt tìm các kênh khác trong cộng đồng này.",
+        "directChats": "trò chuyện trực tiếp",
+        "groupChats": "Trò chuyện nhóm",
+        "favourites": "yêu thích",
+        "addToFavourites": "Thêm vào mục ưa thích",
+        "removeFromFavourites": "Loại bỏ khỏi mục ưa thích"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",

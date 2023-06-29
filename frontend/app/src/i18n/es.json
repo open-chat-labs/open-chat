@@ -841,7 +841,8 @@
         "minStakeN": "Apuesta mínima {n} tokens",
         "optional": "Opcional",
         "openAccessInfo": "No hay requisitos especiales de acceso para unirse",
-        "gateCheckFailed": "Puerta de acceso no cumplida"
+        "gateCheckFailed": "Puerta de acceso no cumplida",
+        "cannotMakePublic": "No puede hacer público un {level} privado, ya que eso pondría en riesgo la privacidad de los miembros existentes."
     },
     "communities": {
         "explore": "Explora comunidades",
@@ -904,7 +905,12 @@
         "usersInvited": "Los usuarios han sido invitados a su comunidad.",
         "joinCommunity": "Únete a la comunidad",
         "noChannelSelected": "Ningún canal seleccionado",
-        "selectAChannel": "Seleccione un canal o busque otros canales en esta comunidad."
+        "selectAChannel": "Seleccione un canal o busque otros canales en esta comunidad.",
+        "directChats": "Chats directos",
+        "groupChats": "chats grupales",
+        "favourites": "Favoritos",
+        "addToFavourites": "Agregar a favoritos",
+        "removeFromFavourites": "Quitar de favoritos"
     },
     "groupCreatedBy": "{username} creó el {level}",
     "groupName": "{level} nombre",

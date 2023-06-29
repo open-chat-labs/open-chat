@@ -839,7 +839,8 @@
         "minStakeN": "Mise minimale {n} jetons",
         "optional": "Facultatif",
         "openAccessInfo": "Il n'y a pas d'exigences d'accès particulières pour rejoindre",
-        "gateCheckFailed": "Porte d'accès non rencontrée"
+        "gateCheckFailed": "Porte d'accès non rencontrée",
+        "cannotMakePublic": "Vous ne pouvez pas rendre public un {level} privé car cela mettrait en danger la vie privée des membres existants."
     },
     "communities": {
         "explore": "Explorer les communautés",
@@ -902,7 +903,12 @@
         "usersInvited": "Des utilisateurs ont été invités dans votre communauté",
         "joinCommunity": "Rejoignez la communauté",
         "noChannelSelected": "Aucune chaîne sélectionnée",
-        "selectAChannel": "Sélectionnez une chaîne ou recherchez d'autres chaînes dans cette communauté."
+        "selectAChannel": "Sélectionnez une chaîne ou recherchez d'autres chaînes dans cette communauté.",
+        "directChats": "Chats directs",
+        "groupChats": "Discussions de groupe",
+        "favourites": "Favoris",
+        "addToFavourites": "Ajouter aux Favoris",
+        "removeFromFavourites": "Supprimer des favoris"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",

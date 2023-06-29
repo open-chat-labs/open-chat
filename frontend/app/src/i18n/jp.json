@@ -840,7 +840,8 @@
         "minStakeN": "最小ステーク {n} トークン",
         "optional": "オプション",
         "openAccessInfo": "参加するための特別なアクセス要件はありません",
-        "gateCheckFailed": "アクセスゲートが満たされていません"
+        "gateCheckFailed": "アクセスゲートが満たされていません",
+        "cannotMakePublic": "既存のメンバーのプライバシーが危険にさらされるため、非公開の {level} を公開することはできません。"
     },
     "communities": {
         "explore": "コミュニティを探索する",
@@ -903,7 +904,12 @@
         "usersInvited": "ユーザーがコミュニティに招待されました",
         "joinCommunity": "コミュニティに参加する",
         "noChannelSelected": "チャンネルが選択されていません",
-        "selectAChannel": "チャンネルを選択するか、このコミュニティ内の他のチャンネルを参照します。"
+        "selectAChannel": "チャンネルを選択するか、このコミュニティ内の他のチャンネルを参照します。",
+        "directChats": "直接チャット",
+        "groupChats": "グループチャット",
+        "favourites": "お気に入り",
+        "addToFavourites": "お気に入りに追加",
+        "removeFromFavourites": "お気に入りから削除"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",
