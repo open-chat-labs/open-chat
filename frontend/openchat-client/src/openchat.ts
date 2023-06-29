@@ -362,11 +362,6 @@ const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
-type PinChatResponse =
-    | { kind: "success" }
-    | { kind: "limit_exceeded"; limit: number }
-    | { kind: "failure" };
-
 export class OpenChat extends OpenChatAgentWorker {
     private _authClient: Promise<AuthClient>;
     private _identity: Identity | undefined;

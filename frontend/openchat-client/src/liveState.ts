@@ -10,7 +10,6 @@ import type {
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
-    GroupChatSummary,
     Message,
     MessageContext,
     ThreadSyncDetails,
