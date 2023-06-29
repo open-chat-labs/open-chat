@@ -908,7 +908,12 @@
         "memberCount": "member(s)",
         "channelCount": "channel(s)",
         "noChannelSelected": "No channel selected",
-        "selectAChannel": "Select a channel or browse for other channels in this community."
+        "selectAChannel": "Select a channel or browse for other channels in this community.",
+        "directChats": "Direct chats",
+        "groupChats": "Group chats",
+        "favourites": "Favourites",
+        "addToFavourites": "Add to favourites",
+        "removeFromFavourites": "Remove from favourites"
     },
     "unableToSaveUserProfile": "Unable to save user profile"
 }

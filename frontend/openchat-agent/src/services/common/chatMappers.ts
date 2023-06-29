@@ -5,7 +5,7 @@ import {
     bytesToHexString,
     hexStringToBytes,
     identity,
-    optional
+    optional,
 } from "../../utils/mapping";
 import type {
     ApiBlobReference,
@@ -60,6 +60,7 @@ import type {
     ApiMultiUserChat,
     ApiEditMessageResponse as ApiEditDirectMessageResponse,
     ApiLeaveGroupResponse,
+    ApiChat,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -614,7 +615,9 @@ export function completedCryptoTransfer(
             sender,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
-            memo: Array.isArray(trans.memo) ? optional(trans.memo, identity) ?? BigInt(0) : trans.memo,
+            memo: Array.isArray(trans.memo)
+                ? optional(trans.memo, identity) ?? BigInt(0)
+                : trans.memo,
             blockIndex: trans.block_index,
             transactionHash: bytesToHexString(trans.transaction_hash),
         };
@@ -650,7 +653,9 @@ export function failedCryptoTransfer(
             recipient,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
-            memo: Array.isArray(trans.memo) ? optional(trans.memo, identity) ?? BigInt(0) : trans.memo,
+            memo: Array.isArray(trans.memo)
+                ? optional(trans.memo, identity) ?? BigInt(0)
+                : trans.memo,
             errorMessage: trans.error_message,
         };
     }
@@ -1956,5 +1961,16 @@ export function registerPollVoteResponse(
     } else {
         console.warn("RegisterPollVoteResponse failed with: ", candid);
         return "failure";
+    }
+}
+
+export function apiChatIdentifier(chatId: ChatIdentifier): ApiChat {
+    switch (chatId.kind) {
+        case "group_chat":
+            return { Group: Principal.fromText(chatId.groupId) };
+        case "direct_chat":
+            return { Direct: Principal.fromText(chatId.userId) };
+        case "channel":
+            return { Channel: [Principal.fromText(chatId.communityId), BigInt(chatId.channelId)] };
     }
 }

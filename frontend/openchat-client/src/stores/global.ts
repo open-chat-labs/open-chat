@@ -11,14 +11,17 @@ import {
     EventWrapper,
     GroupChatSummary,
     Message,
+    ObjectSet,
 } from "openchat-shared";
 import { immutableStore } from "./immutable";
+import { derived } from "svelte/store";
 
 // This will contain all state.
 type GlobalState = {
     communities: CommunityMap<CommunitySummary>;
     directChats: ChatMap<DirectChatSummary>;
     groupChats: ChatMap<GroupChatSummary>;
+    favourites: ObjectSet<ChatIdentifier>;
 };
 
 /**
@@ -28,7 +31,10 @@ export const globalStateStore = immutableStore<GlobalState>({
     communities: new CommunityMap<CommunitySummary>(),
     directChats: new ChatMap<DirectChatSummary>(),
     groupChats: new ChatMap<GroupChatSummary>(),
+    favourites: new ObjectSet<ChatIdentifier>(),
 });
+
+export const favouritesStore = derived(globalStateStore, (state) => state.favourites);
 
 function updateLastMessage<T extends ChatSummary>(chat: T, message: EventWrapper<Message>): T {
     const latestEventIndex = Math.max(message.index, chat.latestEventIndex);
@@ -86,13 +92,18 @@ export function updateSummaryWithConfirmedMessage(
     });
 }
 
-export function setGlobalState(communities: CommunitySummary[], allChats: ChatSummary[]): void {
+export function setGlobalState(
+    communities: CommunitySummary[],
+    allChats: ChatSummary[],
+    favourites: ChatIdentifier[]
+): void {
     const [channels, directChats, groupChats] = partitionChats(allChats);
 
     const state = {
         communities: CommunityMap.fromList(communities),
         directChats: ChatMap.fromList(directChats),
         groupChats: ChatMap.fromList(groupChats),
+        favourites: ObjectSet.fromList(favourites),
     };
     Object.entries(channels).forEach(([communityId, channels]) => {
         const id: CommunityIdentifier = { kind: "community", communityId };

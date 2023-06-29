@@ -160,6 +160,8 @@ export type UnpinChatResponse = "success" | "failure";
 
 export type ArchiveChatResponse = "chat_not_found" | "success";
 
+export type ManageFavouritesResponse = "success" | "failure";
+
 export type MigrateUserPrincipalResponse =
     | "success"
     | "principal_already_in_use"

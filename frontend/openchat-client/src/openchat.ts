@@ -345,6 +345,7 @@ import {
 } from "./stores/community";
 import {
     globalStateStore,
+    favouritesStore,
     setGlobalState,
     updateSummaryWithConfirmedMessage,
 } from "./stores/global";
@@ -3886,8 +3887,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     pinnedChatsStore.set(chatsResponse.state.pinnedChats);
                 }
 
-                setGlobalState(chatsResponse.state.communities, updatedChats);
-                // myServerChatSummariesStore.set(ChatMap.fromList(updatedChats));
+                // TODO - we need to sort out favourites here
+                setGlobalState(chatsResponse.state.communities, updatedChats, []);
 
                 if (this._liveState.uninitializedDirectChats.size > 0) {
                     for (const chat of updatedChats) {
@@ -4309,6 +4310,52 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    private addToFavouritesLocally(chatId: ChatIdentifier): void {
+        globalStateStore.update((state) => {
+            state.favourites.add(chatId);
+            return state;
+        });
+    }
+
+    private removeFromFavouritesLocally(chatId: ChatIdentifier): void {
+        globalStateStore.update((state) => {
+            state.favourites.delete(chatId);
+            return state;
+        });
+    }
+
+    addToFavourites(chatId: ChatIdentifier): Promise<boolean> {
+        this.addToFavouritesLocally(chatId);
+        return this.sendRequest({ kind: "addToFavourites", chatId })
+            .then((resp) => {
+                if (resp !== "success") {
+                    this.removeFromFavouritesLocally(chatId);
+                }
+                return resp === "success";
+            })
+            .catch((err) => {
+                this.removeFromFavouritesLocally(chatId);
+                this._logger.error("Error adding chat to favourites", err);
+                return false;
+            });
+    }
+
+    removeFromFavourites(chatId: ChatIdentifier): Promise<boolean> {
+        this.removeFromFavouritesLocally(chatId);
+        return this.sendRequest({ kind: "removeFromFavourites", chatId })
+            .then((resp) => {
+                if (resp !== "success") {
+                    this.addToFavouritesLocally(chatId);
+                }
+                return resp === "success";
+            })
+            .catch((err) => {
+                this.addToFavouritesLocally(chatId);
+                this._logger.error("Error removing chat from favourites", err);
+                return false;
+            });
+    }
+
     saveCommunity(community: CommunitySummary, rules: AccessRules): Promise<boolean> {
         return this.sendRequest({
             kind: "updateCommunity",
@@ -4416,4 +4463,5 @@ export class OpenChat extends OpenChatAgentWorker {
     currentCommunityBlockedUsers = currentCommunityBlockedUsers;
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
     communityStateStore = communityStateStore;
+    favouritesStore = favouritesStore;
 }

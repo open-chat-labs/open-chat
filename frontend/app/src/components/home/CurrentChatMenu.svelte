@@ -28,6 +28,7 @@
     import { rightPanelHistory } from "../../stores/rightPanel";
     import { rtlStore } from "../../stores/rtl";
     import { communitiesEnabled } from "../../utils/features";
+    import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -38,6 +39,7 @@
     export let hasPinned: boolean;
     export let unreadMessages: number;
 
+    $: favouritesStore = client.favouritesStore;
     $: messagesRead = client.messagesRead;
     $: isProposalGroup = client.isProposalGroup;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
@@ -70,6 +72,10 @@
 
     function toggleMuteNotifications(mute: boolean) {
         dispatch("toggleMuteNotifications", { chatId: selectedChatSummary.id, mute });
+    }
+
+    function addToFavourites() {
+        client.addToFavourites(selectedChatSummary.id);
     }
 
     function showGroupDetails() {
@@ -226,6 +232,15 @@
         </div>
         <div slot="menu">
             <Menu>
+                {#if $communitiesEnabled && !$favouritesStore.has(selectedChatSummary.id)}
+                    <MenuItem on:click={addToFavourites}>
+                        <HeartOutline
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
+                        <div slot="text">{$_("communities.addToFavourites")}</div>
+                    </MenuItem>
+                {/if}
                 {#if $mobileWidth}
                     {#if $isProposalGroup}
                         <MenuItem on:click={showProposalFilters}>

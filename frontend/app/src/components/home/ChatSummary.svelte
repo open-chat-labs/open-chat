@@ -7,6 +7,7 @@
     import PinIcon from "svelte-material-icons/Pin.svelte";
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
+    import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import MutedIcon from "svelte-material-icons/BellOff.svelte";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
     import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
@@ -25,6 +26,7 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { notificationsSupported } from "../../utils/notifications";
+    import { communitiesEnabled } from "../../utils/features";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -38,6 +40,7 @@
     $: messagesRead = client.messagesRead;
     $: typersByContext = client.typersByContext;
     $: userStore = client.userStore;
+    $: favouritesStore = client.favouritesStore;
 
     const dispatch = createEventDispatcher();
     let hovering = false;
@@ -196,6 +199,10 @@
         dispatch("chatSelected", chatSummary);
     }
 
+    function addToFavourites() {
+        client.addToFavourites(chatSummary.id);
+    }
+
     function unarchiveChat() {
         dispatch("unarchiveChat", chatSummary.id);
     }
@@ -294,6 +301,15 @@
                         </div>
                         <div slot="menu">
                             <Menu>
+                                {#if $communitiesEnabled && !$favouritesStore.has(chatSummary.id)}
+                                    <MenuItem on:click={addToFavourites}>
+                                        <HeartOutline
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("communities.addToFavourites")}</div>
+                                    </MenuItem>
+                                {/if}
                                 {#if !pinned}
                                     <MenuItem on:click={pinChat}>
                                         <PinIcon

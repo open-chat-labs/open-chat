@@ -101,6 +101,7 @@
             ol,
             ul,
             hr,
+            pre,
             blockquote {
                 margin-bottom: toRem(16);
                 &:last-child {
@@ -142,11 +143,23 @@
                 font-family: Menlo, Monaco, "Courier New", monospace;
             }
 
+            code {
+                color: var(--warn);
+                background-color: rgba(255, 255, 255, 0.1);
+                padding: 3px 5px;
+                border-radius: 4px;
+            }
+
             pre {
                 padding: toRem(16);
                 overflow-x: auto;
                 border-radius: toRem(12);
                 border: 1px solid rgba(255, 255, 255, 0.1);
+
+                code {
+                    background-color: transparent;
+                    padding: 0;
+                }
             }
 
             blockquote {

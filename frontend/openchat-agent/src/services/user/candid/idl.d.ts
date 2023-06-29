@@ -129,6 +129,7 @@ import {
     ChannelMessagesRead,
     MultiUserChat,
     ChatInList,
+    ManageFavouriteChatsResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -260,6 +261,7 @@ export {
     PendingCryptoTransaction as ApiPendingCryptoTransaction,
     MultiUserChat as ApiMultiUserChat,
     ChatInList as ApiChatInList,
+    ManageFavouriteChatsResponse as ApiManageFavouriteChatsResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

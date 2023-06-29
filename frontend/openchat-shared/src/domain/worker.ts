@@ -91,6 +91,7 @@ import type {
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
     SetUserUpgradeConcurrencyResponse,
+    ManageFavouritesResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -271,7 +272,19 @@ export type WorkerRequest =
     | GetCommunityDetails
     | GetCommunityDetailsUpdates
     | GetChannelSummary
+    | AddToFavourites
+    | RemoveFromFavourites
     | ChangeCommunityRole;
+
+type AddToFavourites = {
+    kind: "addToFavourites";
+    chatId: ChatIdentifier;
+};
+
+type RemoveFromFavourites = {
+    kind: "removeFromFavourites";
+    chatId: ChatIdentifier;
+};
 
 type GetChannelSummary = {
     kind: "getChannelSummary";
@@ -963,6 +976,7 @@ export type WorkerResponse =
     | Response<CommunityDetailsResponse>
     | Response<CommunityDetails>
     | Response<ChannelSummaryResponse>
+    | Response<ManageFavouritesResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1495,4 +1509,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? CommunityDetails
     : T extends GetChannelSummary
     ? ChannelSummaryResponse
+    : T extends AddToFavourites
+    ? ManageFavouritesResponse
+    : T extends RemoveFromFavourites
+    ? ManageFavouritesResponse
     : never;

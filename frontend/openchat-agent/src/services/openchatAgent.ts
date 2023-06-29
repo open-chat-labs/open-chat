@@ -1269,6 +1269,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedChats: updates.favouriteChats.chats ?? [],
             communities: mergedCommunities,
         };
+
         const updatedEvents = getUpdatedEvents(
             updates.directChats.updated,
             groupUpdates,
@@ -1918,17 +1919,11 @@ export class OpenChatAgent extends EventTarget {
     }
 
     pinChat(chatId: ChatIdentifier): Promise<PinChatResponse> {
-        if (chatId.kind === "channel") {
-            throw new Error("TODO - not implemented");
-        }
-        return this.userClient.pinChat(chatIdentifierToString(chatId));
+        return this.userClient.pinChat(chatId);
     }
 
     unpinChat(chatId: ChatIdentifier): Promise<UnpinChatResponse> {
-        if (chatId.kind === "channel") {
-            throw new Error("TODO - not implemented");
-        }
-        return this.userClient.unpinChat(chatIdentifierToString(chatId));
+        return this.userClient.unpinChat(chatId);
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {

@@ -53,6 +53,7 @@ import type {
     ApiFavouriteChatsUpdates,
     ApiGroupChatsUpdates,
     ApiDirectChatsUpdates,
+    ApiManageFavouriteChatsResponse,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -108,13 +109,14 @@ import {
     DirectChatsUpdates,
     DirectChatIdentifier,
     nullMembership,
+    ManageFavouritesResponse,
 } from "openchat-shared";
 import {
     bytesToBigint,
     bytesToHexString,
     identity,
     optional,
-    optionUpdate
+    optionUpdate,
 } from "../../utils/mapping";
 import {
     apiGroupSubtype,
@@ -641,6 +643,17 @@ export function directChatsUpdates(candid: ApiDirectChatsUpdates): DirectChatsUp
         pinned: optional(candid.pinned, (p) => p.map((p) => p.toString())),
         updated: candid.updated.map(directChatSummaryUpdates),
     };
+}
+
+export function manageFavouritesResponse(
+    candid: ApiManageFavouriteChatsResponse
+): ManageFavouritesResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("ApiManageFavouriteChatsResponse failure response", candid);
+        return "failure";
+    }
 }
 
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {

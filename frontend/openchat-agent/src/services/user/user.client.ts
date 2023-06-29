@@ -55,7 +55,7 @@ import type {
     DirectChatIdentifier,
     GroupChatIdentifier,
     ThreadRead,
-    ChannelIdentifier,
+    ManageFavouritesResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -81,6 +81,7 @@ import {
     deletedMessageResponse,
     setMessageReminderResponse,
     createCommunityResponse,
+    manageFavouritesResponse,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -108,6 +109,7 @@ import {
     createGroupResponse,
     leaveGroupResponse,
     deleteGroupResponse,
+    apiChatIdentifier,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
@@ -176,6 +178,26 @@ export class UserClient extends CandidService {
                     return resp;
                 });
         }
+    }
+
+    addToFavourites(chatId: ChatIdentifier): Promise<ManageFavouritesResponse> {
+        return this.handleResponse(
+            this.userService.manage_favourite_chats({
+                to_add: [apiChatIdentifier(chatId)],
+                to_remove: [],
+            }),
+            manageFavouritesResponse
+        );
+    }
+
+    removeFromFavourites(chatId: ChatIdentifier): Promise<ManageFavouritesResponse> {
+        return this.handleResponse(
+            this.userService.manage_favourite_chats({
+                to_add: [],
+                to_remove: [apiChatIdentifier(chatId)],
+            }),
+            manageFavouritesResponse
+        );
     }
 
     getInitialState(): Promise<InitialStateResponse> {
