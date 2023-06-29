@@ -47,17 +47,17 @@
 
     function directChats() {
         console.log("TODO - direct chats");
-        page("/");
+        page("/user");
     }
 
     function groupChats() {
         console.log("TODO - group chats");
-        page("/");
+        page("/group");
     }
 
     function favouriteChats() {
         console.log("TODO - favourite chats");
-        page("/");
+        page("/favourite");
     }
 
     function openWallet() {

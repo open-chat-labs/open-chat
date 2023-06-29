@@ -12,12 +12,11 @@
         communitesRoute,
         blogRoute,
         shareRoute,
-        chatSelectedRoute,
-        globalDirectChatRoute,
-        globalGroupChatRoute,
+        globalDirectChatSelectedRoute,
+        globalGroupChatSelectedRoute,
         selectedCommunityRoute,
         selectedChannelRoute,
-        favouritesRoute,
+        chatListRoute,
     } from "../routes";
 
     let route: typeof SvelteComponent | undefined = undefined;
@@ -91,16 +90,20 @@
         // this is for explore mode
         page("/communities", parsePathParams(communitesRoute), track, () => (route = Home));
         // global direct chats
+        page("/user", parsePathParams(chatListRoute("user")), track, () => (route = Home));
+        // global direct chat selected
         page(
             "/user/:chatId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(globalDirectChatRoute),
+            parsePathParams(globalDirectChatSelectedRoute("user")),
             track,
             () => (route = Home)
         );
-        // // global group chats
+        // global group chats
+        page("/group", parsePathParams(chatListRoute("group")), track, () => (route = Home));
+        // global group chat selected
         page(
             "/group/:chatId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(globalGroupChatRoute),
+            parsePathParams(globalGroupChatSelectedRoute("group")),
             track,
             () => (route = Home)
         );
@@ -113,15 +116,36 @@
         );
         // selected community channel
         page(
-            "/community/:communityId/channel/:channelId?/:messageIndex?/:threadMessageIndex?",
+            "/community/:communityId/channel/:channelId/:messageIndex?/:threadMessageIndex?",
             parsePathParams(selectedChannelRoute),
             track,
             () => (route = Home)
         );
-        // favourite chats
+        // favourites
         page(
-            "/favourites/:chatId?/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(favouritesRoute),
+            "/favourite",
+            parsePathParams(chatListRoute("favourite")),
+            track,
+            () => (route = Home)
+        );
+        // selected global group favourite
+        page(
+            "/favourite/group/:chatId/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(globalGroupChatSelectedRoute("favourite")),
+            track,
+            () => (route = Home)
+        );
+        // selected global direct favourite
+        page(
+            "/favourite/user/:chatId/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(globalDirectChatSelectedRoute("favourite")),
+            track,
+            () => (route = Home)
+        );
+        // selected favourite channel
+        page(
+            "/favourite/:communityId/channel/:channelId/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(selectedChannelRoute),
             track,
             () => (route = Home)
         );
@@ -134,7 +158,7 @@
         );
         page(
             "/",
-            parsePathParams(() => ({ kind: "home_route" })),
+            parsePathParams(() => ({ kind: "home_route", scope: "none" })),
             track,
             () => (route = Home)
         );

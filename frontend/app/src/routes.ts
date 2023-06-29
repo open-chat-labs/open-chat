@@ -8,6 +8,7 @@ import type {
     CommunityIdentifier,
 } from "openchat-client";
 
+export type ChatListScope = "group" | "user" | "favourite" | "none";
 export const notFound = writable(false);
 
 export const pathContextStore = writable<PageJS.Context | undefined>(undefined);
@@ -27,6 +28,7 @@ function qs(ctx: PageJS.Context): URLSearchParams {
 export function communitesRoute(_ctx: PageJS.Context): RouteParams {
     return {
         kind: "communities_route",
+        scope: "none",
     };
 }
 
@@ -79,12 +81,25 @@ export function blogRoute(ctx: PageJS.Context): RouteParams {
     };
 }
 
-export function globalDirectChatRoute(ctx: PageJS.Context): RouteParams {
-    return chatSelectedRoute(ctx, "direct_chat");
+export function chatListRoute(scope: ChatListScope) {
+    return (_ctx: PageJS.Context): RouteParams => {
+        return {
+            kind: "chat_list_route",
+            scope,
+        };
+    };
 }
 
-export function globalGroupChatRoute(ctx: PageJS.Context): RouteParams {
-    return chatSelectedRoute(ctx, "group_chat");
+export function globalDirectChatSelectedRoute(scope: ChatListScope) {
+    return (ctx: PageJS.Context): RouteParams => {
+        return chatSelectedRoute(ctx, "direct_chat", scope);
+    };
+}
+
+export function globalGroupChatSelectedRoute(scope: ChatListScope) {
+    return (ctx: PageJS.Context): RouteParams => {
+        return chatSelectedRoute(ctx, "group_chat", scope);
+    };
 }
 
 export function selectedCommunityRoute(ctx: PageJS.Context): RouteParams {
@@ -122,12 +137,14 @@ export function favouritesRoute(ctx: PageJS.Context): RouteParams {
             ? Number(ctx.params["threadMessageIndex"])
             : undefined,
         open: $qs.get("open") === "true",
+        scope: "favourite",
     };
 }
 
-export function chatSelectedRoute(
+function chatSelectedRoute(
     ctx: PageJS.Context,
-    chatType: "direct_chat" | "group_chat"
+    chatType: "direct_chat" | "group_chat",
+    scope: ChatListScope
 ): RouteParams {
     const $qs = qs(ctx);
 
@@ -136,6 +153,7 @@ export function chatSelectedRoute(
     if (chatId === undefined) {
         return {
             kind: "home_route",
+            scope,
         };
     }
 
@@ -147,11 +165,13 @@ export function chatSelectedRoute(
     return {
         kind: "global_chat_selected_route",
         chatId: identifier,
+        chatType,
         messageIndex: ctx.params["messageIndex"] ? Number(ctx.params["messageIndex"]) : undefined,
         threadMessageIndex: ctx.params["threadMessageIndex"]
             ? Number(ctx.params["threadMessageIndex"])
             : undefined,
         open: $qs.get("open") === "true",
+        scope,
     };
 }
 
@@ -178,15 +198,19 @@ export type RouteType = RouteParams["kind"];
 export type RouteParams =
     | LandingPageRoute
     | HomeRoute
-    | GlobalChatSelectedRoute
+    | FavouritesRoute
+    | ChatListRoute
+    | GlobalSelectedChatRoute
     | CommunitiesRoute
     | SelectedCommunityRoute
     | SelectedChannelRoute
-    | FavouritesRoute
     | ShareRoute
     | NotFound
     | HotGroupsRoute;
 
+type RouteCommon = { scope: ChatListScope };
+
+export type ChatListRoute = RouteCommon & { kind: "chat_list_route" };
 export type HomeLandingRoute = { kind: "home_landing_route" };
 export type FeaturesRoute = { kind: "features_route" };
 export type ArchitectureRoute = { kind: "architecture_route" };
@@ -197,20 +221,21 @@ export type FaqRoute = { kind: "faq_route" };
 export type DiamondRoute = { kind: "diamond_route" };
 export type GuidelinesRoute = { kind: "guidelines_route" };
 
-export type HomeRoute = {
+export type HomeRoute = RouteCommon & {
     kind: "home_route";
 };
 
-export type GlobalChatSelectedRoute = {
+export type GlobalSelectedChatRoute = RouteCommon & {
     kind: "global_chat_selected_route";
     chatId: GroupChatIdentifier | DirectChatIdentifier;
+    chatType: "group_chat" | "direct_chat";
     messageIndex?: number;
     threadMessageIndex?: number;
     open: boolean;
 };
 
 // TODO - what is the route for a selected favourite channel? It needs to contain the communityId
-export type FavouritesRoute = {
+export type FavouritesRoute = RouteCommon & {
     kind: "favourites_route";
     chatId?: ChatIdentifier;
     messageIndex?: number;
@@ -232,7 +257,7 @@ export type SelectedChannelRoute = {
     open: boolean;
 };
 
-export type CommunitiesRoute = {
+export type CommunitiesRoute = RouteCommon & {
     kind: "communities_route";
 };
 

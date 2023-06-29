@@ -348,6 +348,8 @@ import {
     favouritesStore,
     setGlobalState,
     updateSummaryWithConfirmedMessage,
+    ChatListScope,
+    chatListScopeStore,
 } from "./stores/global";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -4377,6 +4379,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 this._logger.error("Error creating community", err);
                 return false;
             });
+    }
+
+    setChatListScope(scope: ChatListScope): void {
+        chatListScopeStore.set(scope);
     }
 
     // **** End of Communities stuff

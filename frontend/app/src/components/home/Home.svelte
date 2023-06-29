@@ -160,6 +160,8 @@
     $: selectedCommunityId = client.selectedCommunityId;
     $: currentCommunityRules = client.currentCommunityRules;
 
+    $: console.log("PathParams: ", $pathParams);
+
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -262,6 +264,9 @@
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
         if (initialised) {
+            if("scope" in pathParams) {
+                client.setChatListScope(pathParams.scope);
+            }
             if (pathParams.kind === "home_route") {
                 client.clearSelectedCommunity();
                 client.clearSelectedChat();

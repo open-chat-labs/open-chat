@@ -18,6 +18,10 @@ export class ObjectSet<V> {
         this._set.clear();
     }
 
+    values(): V[] {
+        return Array.from(this._set).map((value) => JSON.parse(value));
+    }
+
     delete(value: V): boolean {
         return this._set.delete(this.toString(value));
     }
