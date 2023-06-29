@@ -1290,80 +1290,57 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private async getInitialState(): Promise<UpdatesResult> {
-        let state: ChatStateFull;
-        let anyErrors: boolean;
         const userResponse = await this.userClient.getInitialState();
+
+        const groupPromises = userResponse.groupChats.summaries.map((g) =>
+            this.getGroupClient(g.id.groupId).summary()
+        );
+        const groupUpdatePromises = (userResponse.groupChats.cached?.summaries ??[]).map((g) =>
+            this.getGroupClient(g.id.groupId).summaryUpdates(g.lastUpdated)
+        );
         const communityPromises = userResponse.communities.summaries.map((c) =>
             this.communityClient(c.id.communityId).summary()
         );
+
+        const groupPromiseResults = await waitAll(groupPromises);
+        const groupUpdatePromiseResults = await waitAll(groupUpdatePromises);
         const communityPromiseResults = await waitAll(communityPromises);
+
+        const groups = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
+        const groupUpdates = groupUpdatePromiseResults.success.filter(
+            isSuccessfulGroupSummaryUpdatesResponse
+        );
+
+        const groupChats = mergeGroupChats(userResponse.groupChats.summaries, groups).concat(
+            mergeGroupChatUpdates(
+                userResponse.groupChats.cached?.summaries ?? [],
+                [],
+                groupUpdates
+            )
+        );
+
         const communities = mergeCommunities(
             userResponse.communities.summaries,
             communityPromiseResults.success.filter(isSuccessfulCommunitySummaryResponse)
         );
-        if (userResponse.timestamp === undefined) {
-            const groupPromises = userResponse.groupChats.summaries.map((g) =>
-                this.getGroupClient(g.id.groupId).summary()
-            );
 
-            const groupPromiseResults = await waitAll(groupPromises);
-            const groupChats = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
-
-            state = {
-                latestUserCanisterUpdates: userResponse.timestamp,
-                latestActiveGroupsCheck: userResponse.timestamp,
-                directChats: userResponse.directChats.summaries,
-                groupChats: mergeGroupChats(userResponse.groupChats.summaries, groupChats),
-                communities,
-                avatarId: userResponse.avatarId,
-                blockedUsers: userResponse.blockedUsers,
-                pinnedChats: userResponse.favouriteChats.chats ?? [],
-            };
-            anyErrors =
-                groupPromiseResults.errors.length > 0 || communityPromiseResults.errors.length > 0;
-        } else {
-            const groupPromises = userResponse.groupChats.summaries.map((g) =>
-                this.getGroupClient(g.id.groupId).summary()
-            );
-            const groupUpdatePromises = (userResponse.groupChats.cached?.summaries ?? []).map((g) =>
-                this.getGroupClient(g.id.groupId).summaryUpdates(g.lastUpdated)
-            );
-
-            const groupPromiseResults = await waitAll(groupPromises);
-            const groupUpdatePromiseResults = await waitAll(groupUpdatePromises);
-
-            const groups = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
-            const groupUpdates = groupUpdatePromiseResults.success.filter(
-                isSuccessfulGroupSummaryUpdatesResponse
-            );
-
-            const groupChats = mergeGroupChats(userResponse.groupChats.summaries, groups).concat(
-                mergeGroupChatUpdates(
-                    userResponse.groupChats.cached?.summaries ?? [],
-                    [],
-                    groupUpdates
-                )
-            );
-
-            state = {
-                latestUserCanisterUpdates: userResponse.timestamp,
-                latestActiveGroupsCheck: userResponse.timestamp,
-                directChats: userResponse.directChats.summaries,
-                groupChats,
-                communities,
-                avatarId: userResponse.avatarId,
-                blockedUsers: userResponse.blockedUsers,
-                pinnedChats: userResponse.favouriteChats.chats ?? [],
-            };
-            anyErrors =
-                groupPromiseResults.errors.length > 0 ||
-                groupUpdatePromiseResults.errors.length > 0 ||
-                communityPromiseResults.errors.length > 0;
-        }
-
-        const updatedEvents = new ChatMap<UpdatedEvent[]>();
+        const state = {
+            latestUserCanisterUpdates: userResponse.timestamp,
+            latestActiveGroupsCheck: userResponse.timestamp,
+            directChats: userResponse.directChats.summaries,
+            groupChats,
+            communities,
+            avatarId: userResponse.avatarId,
+            blockedUsers: userResponse.blockedUsers,
+            pinnedChats: userResponse.favouriteChats.chats ?? [],
+        };
+        const anyErrors =
+            groupPromiseResults.errors.length > 0 ||
+            groupUpdatePromiseResults.errors.length > 0 ||
+            communityPromiseResults.errors.length > 0;
 
         return await this.hydrateChatState(state).then((s) => {
+            const updatedEvents = new ChatMap<UpdatedEvent[]>();
             if (!anyErrors) {
                 setCachedChats(this.db, this.principal, state, updatedEvents);
             }
