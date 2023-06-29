@@ -14,6 +14,7 @@ pub struct Args {
     pub permissions: Option<OptionalGroupPermissions>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
+    pub public: Option<bool>,
     pub correlation_id: u64,
 }
 
@@ -33,4 +34,5 @@ pub enum Response {
     UserSuspended,
     ChatFrozen,
     InternalError,
+    CannotMakeGroupPublic,
 }

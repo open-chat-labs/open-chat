@@ -13,6 +13,7 @@ pub struct Args {
     pub banner: OptionUpdate<Document>,
     pub permissions: Option<OptionalCommunityPermissions>,
     pub gate: OptionUpdate<AccessGate>,
+    pub public: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -32,4 +33,5 @@ pub enum Response {
     RulesTooShort(FieldTooShortResult),
     UserSuspended,
     CommunityFrozen,
+    CannotMakeCommunityPublic,
 }
