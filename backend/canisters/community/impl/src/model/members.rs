@@ -199,7 +199,7 @@ impl CommunityMembers {
     }
 
     pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
-        self.principal_to_user_id_map.get(&user_id_or_principal).copied()
+        self.get(user_id_or_principal).map(|m| m.user_id)
     }
 
     pub fn get(&self, user_id_or_principal: Principal) -> Option<&CommunityMemberInternal> {
