@@ -5,10 +5,6 @@ export class ObjectSet<V> {
         return JSON.stringify(value);
     }
 
-    private fromString(value: string): V {
-        return JSON.parse(value);
-    }
-
     clone(): ObjectSet<V> {
         const clone = new ObjectSet<V>(new Set(this._set));
         return clone;
@@ -45,7 +41,7 @@ export class ObjectSet<V> {
 
     static fromList<V>(values: V[]): ObjectSet<V> {
         const set = new ObjectSet<V>();
-        values.forEach((value) => set.set(value));
+        values.forEach((value) => set.add(value));
         return set;
     }
 }
