@@ -164,33 +164,27 @@ impl Channel {
         }
     }
 
-    pub fn summary_if_member(&self, user_id: &UserId, now: TimestampMillis) -> Option<CommunityCanisterChannelSummary> {
-        let member = self.chat.members.get(user_id)?;
-        Some(self.summary(true, Some(member), now))
-    }
-
-    pub fn summary(
-        &self,
-        is_community_member: bool,
-        member: Option<&GroupMemberInternal>,
-        now: TimestampMillis,
-    ) -> CommunityCanisterChannelSummary {
+    pub fn summary(&self, user_id: Option<UserId>, now: TimestampMillis) -> Option<CommunityCanisterChannelSummary> {
         let chat = &self.chat;
+        let member = user_id.and_then(|user_id| chat.members.get(&user_id));
 
-        let (min_visible_event_index, min_visible_message_index) = if let Some(member) = member {
-            (member.min_visible_event_index(), member.min_visible_message_index())
+        let (min_visible_event_index, min_visible_message_index, see_latest_message) = if let Some(member) = member {
+            (member.min_visible_event_index(), member.min_visible_message_index(), true)
         } else if chat.is_public {
-            (EventIndex::default(), MessageIndex::default())
+            (EventIndex::default(), MessageIndex::default(), true)
+        } else if let Some(invitation) = user_id.and_then(|user_id| chat.invited_users.get(&user_id)) {
+            (
+                invitation.min_visible_event_index,
+                invitation.min_visible_message_index,
+                false,
+            )
         } else {
-            panic!("Cannot get private channel summary if user is not a member");
+            return None;
         };
 
-        let user_id = member.map(|m| m.user_id);
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index, now);
         let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
-        let latest_message = is_community_member
-            .then(|| main_events_reader.latest_message_event(user_id))
-            .flatten();
+        let latest_message = if see_latest_message { main_events_reader.latest_message_event(user_id) } else { None };
 
         let membership = member.map(|m| ChannelMembership {
             joined: m.date_added,
@@ -211,7 +205,7 @@ impl Channel {
             ),
         });
 
-        CommunityCanisterChannelSummary {
+        Some(CommunityCanisterChannelSummary {
             channel_id: self.id,
             last_updated: now,
             name: chat.name.clone(),
@@ -233,20 +227,20 @@ impl Channel {
             next_message_expiry: chat.events.next_message_expiry(now),
             gate: chat.gate.value.clone(),
             membership,
-        }
+        })
     }
 
-    pub fn summary_updates(&self, user_id: Option<&UserId>, since: TimestampMillis, now: TimestampMillis) -> ChannelUpdates {
+    pub fn summary_updates(&self, user_id: Option<UserId>, since: TimestampMillis, now: TimestampMillis) -> ChannelUpdates {
         let chat = &self.chat;
-        let member = user_id.and_then(|id| chat.members.get(id));
+        let member = user_id.and_then(|id| chat.members.get(&id));
 
         if let Some(m) = member {
             if m.date_added > since {
-                return ChannelUpdates::Added(self.summary(true, member, now));
+                return ChannelUpdates::Added(self.summary(user_id, now).expect("Channel should be accessible"));
             }
         }
 
-        let updates_from_events = chat.summary_updates_from_events(since, member, now);
+        let updates_from_events = chat.summary_updates_from_events(since, user_id, now);
 
         let membership = member.map(|m| ChannelMembershipUpdates {
             role: updates_from_events.role_changed.then_some(m.role.into()),

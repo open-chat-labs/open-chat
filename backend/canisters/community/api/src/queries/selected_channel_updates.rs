@@ -13,7 +13,7 @@ pub struct Args {
 pub enum Response {
     Success(SelectedGroupUpdates),
     SuccessNoUpdates,
-    UserNotInCommunity,
-    UserNotInChannel,
+    PrivateCommunity,
     ChannelNotFound,
+    PrivateChannel,
 }

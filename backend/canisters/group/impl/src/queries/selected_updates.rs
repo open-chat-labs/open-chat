@@ -35,8 +35,8 @@ fn selected_updates_v2(args: Args) -> Response {
 
 fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
-    let member = match state.data.get_member(caller) {
-        Some(p) => p,
+    let user_id = match state.data.lookup_user_id(caller) {
+        Some(id) => id,
         None => return CallerNotInGroup,
     };
 
@@ -46,11 +46,11 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         return SuccessNoUpdates(latest_event_timestamp);
     }
 
-    let now = state.env.now();
     let updates = state
         .data
         .chat
-        .selected_group_updates_from_events(args.updates_since, member, now);
+        .selected_group_updates_from_events(args.updates_since, Some(user_id), state.env.now())
+        .unwrap();
 
     if updates.has_updates() {
         Success(updates)

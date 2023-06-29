@@ -10,9 +10,9 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    UserNotInCommunity,
-    UserNotInChannel,
+    PrivateCommunity,
     ChannelNotFound,
+    PrivateChannel,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
