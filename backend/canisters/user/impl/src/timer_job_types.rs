@@ -58,9 +58,11 @@ pub struct MessageReminderJobPrevious {
 
 impl From<MessageReminderJobPrevious> for MessageReminderJob {
     fn from(value: MessageReminderJobPrevious) -> Self {
+        let is_direct_chat = read_state(|state| state.data.direct_chats.get(&value.chat_id).is_some());
+
         MessageReminderJob {
             reminder_id: value.reminder_id,
-            chat: Chat::Group(value.chat_id),
+            chat: if is_direct_chat { Chat::Direct(value.chat_id) } else { Chat::Group(value.chat_id) },
             thread_root_message_index: value.thread_root_message_index,
             event_index: value.event_index,
             notes: value.notes,
