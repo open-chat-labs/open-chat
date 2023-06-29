@@ -83,7 +83,7 @@ export type CompletedCryptocurrencyWithdrawal = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
-    transactionHash: string;
+    transactionHash: string | undefined;
 };
 
 export type FailedCryptocurrencyWithdrawal = {
@@ -113,7 +113,7 @@ export type CompletedCryptocurrencyTransfer = {
     sender: string;
     amountE8s: bigint;
     feeE8s: bigint;
-    // memo: bigint;
+    memo: bigint;
     blockIndex: bigint;
     transactionHash: string | undefined;
 };
@@ -125,7 +125,7 @@ export type PendingCryptocurrencyTransfer = {
     recipient: string;
     amountE8s: bigint;
     feeE8s?: bigint;
-    // memo?: bigint;
+    memo?: bigint;
     createdAtNanos: bigint;
 };
 
@@ -135,7 +135,7 @@ export type FailedCryptocurrencyTransfer = {
     recipient: string;
     amountE8s: bigint;
     feeE8s: bigint;
-    // memo: bigint;
+    memo: bigint;
     errorMessage: string;
 };
 

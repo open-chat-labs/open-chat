@@ -1,5 +1,12 @@
 import { Principal } from "@dfinity/principal";
-import { bytesToHexString, hexStringToBytes, identity, optional } from "../../utils/mapping";
+import {
+    bigintToBytes,
+    bytesToBigint,
+    bytesToHexString,
+    hexStringToBytes,
+    identity,
+    optional
+} from "../../utils/mapping";
 import type {
     ApiBlobReference,
     ApiFileContent,
@@ -564,6 +571,7 @@ function pendingCryptoTransfer(
             recipient,
             amountE8s: trans.amount.e8s,
             feeE8s: Array.isArray(trans.fee) ? optional(trans.fee, (f) => f.e8s) : trans.fee.e8s,
+            memo: optional(trans.memo, identity),
             createdAtNanos: trans.created,
         };
     }
@@ -575,6 +583,7 @@ function pendingCryptoTransfer(
             recipient,
             amountE8s: candid.ICRC1.amount,
             feeE8s: candid.ICRC1.fee,
+            memo: optional(candid.ICRC1.memo, bytesToBigint),
             createdAtNanos: candid.ICRC1.created,
         };
     }
@@ -596,6 +605,7 @@ export function completedCryptoTransfer(
             sender,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
+            memo: Array.isArray(trans.memo) ? optional(trans.memo, identity) ?? BigInt(0) : trans.memo,
             blockIndex: trans.block_index,
             transactionHash: bytesToHexString(trans.transaction_hash),
         };
@@ -608,6 +618,7 @@ export function completedCryptoTransfer(
             sender,
             amountE8s: candid.ICRC1.amount,
             feeE8s: candid.ICRC1.fee,
+            memo: optional(candid.ICRC1.memo, bytesToBigint) ?? BigInt(0),
             blockIndex: candid.ICRC1.block_index,
             transactionHash: undefined,
         };
@@ -630,6 +641,7 @@ export function failedCryptoTransfer(
             recipient,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
+            memo: Array.isArray(trans.memo) ? optional(trans.memo, identity) ?? BigInt(0) : trans.memo,
             errorMessage: trans.error_message,
         };
     }
@@ -640,6 +652,7 @@ export function failedCryptoTransfer(
             recipient,
             amountE8s: candid.ICRC1.amount,
             feeE8s: candid.ICRC1.fee,
+            memo: optional(candid.ICRC1.memo, bytesToBigint) ?? BigInt(0),
             errorMessage: candid.ICRC1.error_message,
         };
     }
@@ -1239,7 +1252,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
                         },
                         amount: apiICP(domain.amountE8s),
                         fee: [],
-                        memo: [],
+                        memo: apiOptional(identity, domain.memo),
                         created: domain.createdAtNanos,
                     },
                 },
@@ -1256,7 +1269,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
                         },
                         amount: domain.amountE8s,
                         fee: domain.feeE8s ?? BigInt(0),
-                        memo: [],
+                        memo: apiOptional(bigintToBytes, domain.memo),
                         created: domain.createdAtNanos,
                     },
                 },
@@ -1278,7 +1291,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                     to: { Account: hexStringToBytes(domain.to) },
                     amount: apiICP(domain.amountE8s),
                     fee: [],
-                    memo: [],
+                    memo: apiOptional(identity, domain.memo),
                     created: domain.createdAtNanos,
                 },
             },
@@ -1292,7 +1305,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                     to: { owner: Principal.fromText(domain.to), subaccount: [] },
                     amount: domain.amountE8s,
                     fee: domain.feeE8s ?? BigInt(0),
-                    memo: [],
+                    memo: apiOptional(bigintToBytes, domain.memo),
                     created: domain.createdAtNanos,
                 },
             },
