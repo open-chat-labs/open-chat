@@ -424,6 +424,15 @@ type SetMessageReminderArgs =
         remind_at: TimestampMillis;
     };
 
+type SetMessageReminderV2Args =
+    record {
+        chat: Chat;
+        thread_root_message_index: opt MessageIndex;
+        event_index: EventIndex;
+        notes: opt text;
+        remind_at: TimestampMillis;
+    };
+
 type SetMessageReminderResponse =
     variant {
         Success: nat64;
@@ -1006,6 +1015,7 @@ service: {
     add_hot_group_exclusions: (AddHotGroupExclusionsArgs) -> (AddHotGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
     set_contact: (SetContactArgs) -> (SetContactResponse);
+    set_message_reminder_v2: (SetMessageReminderV2Args) -> (SetMessageReminderResponse);
     set_message_reminder: (SetMessageReminderArgs) -> (SetMessageReminderResponse);
     cancel_message_reminder: (CancelMessageReminderArgs) -> (CancelMessageReminderResponse);
     send_message_with_transfer_to_channel: (SendMessageWithTransferToChannelArgs) -> (SendMessageWithTransferToChannelResponse);

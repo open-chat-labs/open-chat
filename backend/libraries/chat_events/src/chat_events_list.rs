@@ -1,12 +1,12 @@
-use crate::{ChatEventInternal, EventKey, MessageInternal};
+use crate::{ChatEventInternal, ChatInternal, EventKey, MessageInternal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    ChatEvent, EventIndex, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message, MessageId, MessageIndex,
-    TimestampMillis, UserId,
+    ChatEvent, ChatId, EventIndex, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message, MessageId,
+    MessageIndex, TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -20,6 +20,20 @@ pub struct ChatEventsList {
 }
 
 impl ChatEventsList {
+    pub fn fix_direct_chat_replies(&mut self, direct_chats: &HashSet<ChatId>) {
+        for message in self.events_map.values_mut().filter_map(|e| e.event.as_message_mut()) {
+            if let Some(r) = message.replies_to.as_mut() {
+                if let Some((c, _)) = &mut r.chat_if_other {
+                    if let ChatInternal::Group(chat_id) = c {
+                        if direct_chats.contains(chat_id) {
+                            *c = ChatInternal::Direct(*chat_id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     pub(crate) fn push_event(
         &mut self,
         event: ChatEventInternal,

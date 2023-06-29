@@ -26,3 +26,12 @@ impl MultiUserChat {
         }
     }
 }
+
+impl From<MultiUserChat> for Chat {
+    fn from(value: MultiUserChat) -> Self {
+        match value {
+            MultiUserChat::Group(c) => Chat::Group(c),
+            MultiUserChat::Channel(cm, ch) => Chat::Channel(cm, ch),
+        }
+    }
+}

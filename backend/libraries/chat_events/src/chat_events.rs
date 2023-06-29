@@ -10,13 +10,13 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use types::{
-    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
-    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message,
-    MessageContentInitial, MessageId, MessageIndex, MessageMatch, Milliseconds, MultiUserChat, PollVotes, PrizeWinnerContent,
-    ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, TimestampMillis, Timestamped,
-    UserId, VoteOperation,
+    Chat, ChatId, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper,
+    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention,
+    Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, Milliseconds, MultiUserChat, PollVotes,
+    PrizeWinnerContent, ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult,
+    TimestampMillis, Timestamped, UserId, VoteOperation,
 };
 use types::{Hash, MessageReport, ReportedMessageInternal};
 
@@ -36,6 +36,10 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
+    pub fn fix_direct_chat_replies(&mut self, direct_chats: &HashSet<ChatId>) {
+        self.main.fix_direct_chat_replies(direct_chats)
+    }
+
     pub fn new_direct_chat(events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
             chat_type: ChatType::Direct,
@@ -710,6 +714,8 @@ impl ChatEvents {
                 return;
             }
         }
+
+        let chat: Chat = chat.into();
 
         self.push_message(PushMessageArgs {
             sender: OPENCHAT_BOT_USER_ID,

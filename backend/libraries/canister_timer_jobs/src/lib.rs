@@ -9,7 +9,7 @@ use std::time::Duration;
 type TimestampMillis = u64;
 
 pub struct TimerJobs<J> {
-    jobs: BTreeMap<TimerId, (TimestampMillis, JobWrapper<J>)>,
+    pub jobs: BTreeMap<TimerId, (TimestampMillis, JobWrapper<J>)>,
 }
 
 type JobWrapper<J> = Rc<RefCell<Option<J>>>;
