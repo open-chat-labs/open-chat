@@ -28,6 +28,7 @@
     export let candidate: AccessControlled & HasLevel & Permissioned<T> & HasMembershipRole;
     export let original: AccessControlled;
     export let editing: boolean;
+    export let history: boolean;
 
     let minDissolveDelay = client.getMinDissolveDelayDays(original.gate);
     let minStake = client.getMinStakeInTokens(original.gate);
@@ -106,31 +107,37 @@
                 <p>{interpolateLevel("group.publicGroup", candidate.level, true)}</p>
             </div>
             <div class="info">
-                <p>{interpolateLevel("publicGroupInfo", candidate.level, true)}</p>
-                <p>{interpolateLevel("publicGroupUnique", candidate.level, true)}</p>
+                {#if editing && !original.public}
+                    <p>{interpolateLevel("access.cannotMakePublic", candidate.level, true)}</p>
+                {:else}
+                    <p>{interpolateLevel("publicGroupInfo", candidate.level, true)}</p>
+                    <p>{interpolateLevel("publicGroupUnique", candidate.level, true)}</p>
+                {/if}
             </div>
         </Radio>
     </div>
 {/if}
 
-<div class="section">
-    <Checkbox
-        id="history-visible"
-        disabled={candidate.public || editing}
-        on:change={() => (candidate.historyVisible = !candidate.historyVisible)}
-        label={$_("historyVisible")}
-        align={"start"}
-        checked={candidate.historyVisible}>
-        <div class="section-title">{$_("historyVisible")}</div>
-        <div class="info">
-            {#if candidate.historyVisible}
-                <p>{$_("historyOnInfo")}</p>
-            {:else}
-                <p>{$_("historyOffInfo")}</p>
-            {/if}
-        </div>
-    </Checkbox>
-</div>
+{#if history}
+    <div class="section">
+        <Checkbox
+            id="history-visible"
+            disabled={candidate.public || editing}
+            on:change={() => (candidate.historyVisible = !candidate.historyVisible)}
+            label={$_("historyVisible")}
+            align={"start"}
+            checked={candidate.historyVisible}>
+            <div class="section-title">{$_("historyVisible")}</div>
+            <div class="info">
+                {#if candidate.historyVisible}
+                    <p>{$_("historyOnInfo")}</p>
+                {:else}
+                    <p>{$_("historyOffInfo")}</p>
+                {/if}
+            </div>
+        </Checkbox>
+    </div>
+{/if}
 
 {#if $isDiamond && candidate.public}
     <div class="wrapper">

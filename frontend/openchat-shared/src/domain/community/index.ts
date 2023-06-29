@@ -29,7 +29,6 @@ import type {
     CommunityNotPublic,
     Failure,
     InteralError,
-    Invalid,
     NotAuthorised,
     Success,
     SuccessNoUpdates,
@@ -134,26 +133,7 @@ export type BlockCommunityUserResponse =
     | { kind: "cannot_block_self" }
     | { kind: "cannot_block_user" };
 
-export type ChangeChannelRoleResponse =
-    | Invalid
-    | UserNotInChat
-    | ChatNotFound
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen
-    | { kind: "target_user_not_in_channel" };
-
-export type ChangeCommunityRoleResponse =
-    | Invalid
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen
-    | TargetUserNotInCommunity
-    | InteralError;
+export type ChangeCommunityRoleResponse = "success" | "failure";
 
 export type DeleteChannelResponse =
     | UserNotInChat
@@ -193,16 +173,6 @@ export type JoinChannelResponse =
     | CommunityFrozen
     | InteralError
     | UserBlocked;
-
-export type MakeChannelPrivateResponse =
-    | UserNotInChat
-    | ChatNotFound
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | { kind: "channel_already_private" }
-    | CommunityFrozen;
 
 export type MakeCommunityPrivateResponse =
     | NotAuthorised
@@ -337,3 +307,4 @@ export type CommunityDetailsUpdates = {
     invitedUsers?: Set<string>;
     lastUpdated: bigint;
 };
+export type ChannelSummaryResponse = Failure | ChannelSummary;

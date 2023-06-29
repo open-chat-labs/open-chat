@@ -499,10 +499,10 @@
         "cryptoTransfers": "הודעת קריפטו"
     },
     "andNMore": ", ועוד {n}",
-    "confirmMakeGroupPrivate": "האם אתה בהחלט רוצה להפוך את הקבוצה הזו לפרטית? כרגע לא ניתן לבטל את הפעולה הזו!",
+    "confirmMakeGroupPrivate": "האם אתה בהחלט רוצה להפוך את ה-{level} הזה לפרטי? כרגע לא ניתן לבטל את הפעולה הזו!",
     "makeGroupPrivate": "הפוך את הקבוצה לפרטית",
-    "makeGroupPrivateFailed": "הפיכת הקבוצה לפרטית נכשלה",
-    "groupVisibilityChangedBy": "{changedBy} יצר את הקבוצה {visibility}",
+    "makeGroupPrivateFailed": "הפיכת {level} לפרטי נכשלה",
+    "groupVisibilityChangedBy": "{changedBy} יצר את {level} {visibility}",
     "translateMessage": "לתרגם",
     "untranslateMessage": "בטל תרגום",
     "unableToTranslate": "לא מצליח לתרגם",
@@ -837,7 +837,8 @@
         "minStakeN": "אסימוני הימור מינימליים של {n}",
         "optional": "אופציונאלי",
         "openAccessInfo": "אין דרישות גישה מיוחדות כדי להצטרף",
-        "gateCheckFailed": "שער הגישה לא נפגש"
+        "gateCheckFailed": "שער הגישה לא נפגש",
+        "cannotMakePublic": "אינך יכול להפוך {level} פרטי לציבורי מכיוון שזה יסכן את הפרטיות של החברים הקיימים."
     },
     "communities": {
         "explore": "חקור קהילות",
@@ -900,7 +901,12 @@
         "usersInvited": "משתמשים הוזמנו לקהילה שלך",
         "joinCommunity": "הצטרף לקהילה",
         "noChannelSelected": "לא נבחר ערוץ",
-        "selectAChannel": "בחר ערוץ או עיין בערוצים אחרים בקהילה זו."
+        "selectAChannel": "בחר ערוץ או עיין בערוצים אחרים בקהילה זו.",
+        "directChats": "צ'אטים ישירים",
+        "groupChats": "צ'אטים קבוצתיים",
+        "favourites": "מועדפים",
+        "addToFavourites": "הוסף למועדפים",
+        "removeFromFavourites": "הסר ממועדפים"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",

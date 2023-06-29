@@ -82,10 +82,10 @@
 
     $: userStore = client.userStore;
     $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
-    $: isGroup = chat.kind === "group_chat";
+    $: isMultiUser = chat.kind === "group_chat" || chat.kind === "channel";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
-    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(chat.id);
+    $: pollsAllowed = isMultiUser && !isBot && client.canCreatePolls(chat.id);
 
     $: {
         if (inp) {
@@ -268,7 +268,7 @@
      * * /details - opens group details (not yet)
      */
     function parseCommands(txt: string): boolean {
-        if (isGroup && /^\/poll$/.test(txt)) {
+        if (isMultiUser && /^\/poll$/.test(txt)) {
             dispatch("createPoll");
             return true;
         }

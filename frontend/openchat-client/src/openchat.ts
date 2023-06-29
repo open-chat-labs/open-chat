@@ -322,6 +322,7 @@ import {
     MultiUserChatIdentifier,
     MultiUserChat,
     ChannelMatch,
+    communityRoles,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -344,6 +345,7 @@ import {
 } from "./stores/community";
 import {
     globalStateStore,
+    favouritesStore,
     setGlobalState,
     updateSummaryWithConfirmedMessage,
 } from "./stores/global";
@@ -359,11 +361,6 @@ const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
-
-type PinChatResponse =
-    | { kind: "success" }
-    | { kind: "limit_exceeded"; limit: number }
-    | { kind: "failure" };
 
 export class OpenChat extends OpenChatAgentWorker {
     private _authClient: Promise<AuthClient>;
@@ -763,14 +760,27 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    previewChat(chatId: GroupChatIdentifier): Promise<boolean> {
-        return this.sendRequest({ kind: "getPublicGroupSummary", chatId }).then((maybeChat) => {
-            if (maybeChat === undefined || maybeChat.frozen) {
-                return false;
-            }
-            addGroupPreview(maybeChat);
-            return true;
-        });
+    previewChat(chatId: MultiUserChatIdentifier): Promise<boolean> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.sendRequest({ kind: "getPublicGroupSummary", chatId }).then(
+                    (maybeChat) => {
+                        if (maybeChat === undefined || maybeChat.frozen) {
+                            return false;
+                        }
+                        addGroupPreview(maybeChat);
+                        return true;
+                    }
+                );
+            case "channel":
+                return this.sendRequest({ kind: "getChannelSummary", chatId }).then((resp) => {
+                    if (resp.kind === "failure") {
+                        return false;
+                    }
+                    addGroupPreview(resp);
+                    return true;
+                });
+        }
     }
 
     private async addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
@@ -818,32 +828,21 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    pinChat(chatId: ChatIdentifier): Promise<PinChatResponse> {
-        const pinnedChatLimit = 10;
-        if (this._liveState.pinnedChats.length >= pinnedChatLimit) {
-            return Promise.resolve({ kind: "limit_exceeded", limit: pinnedChatLimit });
-        }
-
+    pinChat(chatId: ChatIdentifier): Promise<boolean> {
         pinnedChatsStore.pin(chatId);
         return this.sendRequest({ kind: "pinChat", chatId })
-            .then((resp) => {
-                if (resp.kind === "pinned_limit_reached") {
-                    pinnedChatsStore.unpin(chatId);
-                    return { kind: "limit_exceeded", limit: resp.limit } as PinChatResponse;
-                }
-                return { kind: "success" } as PinChatResponse;
-            })
+            .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error pinning chat", err);
                 pinnedChatsStore.unpin(chatId);
-                return { kind: "failure" };
+                return false;
             });
     }
 
     unpinChat(chatId: ChatIdentifier): Promise<boolean> {
         pinnedChatsStore.unpin(chatId);
         return this.sendRequest({ kind: "unpinChat", chatId })
-            .then((_) => true)
+            .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error unpinning chat", err);
                 pinnedChatsStore.pin(chatId);
@@ -1113,6 +1112,8 @@ export class OpenChat extends OpenChatAgentWorker {
     ): boolean {
         switch (id.kind) {
             case "community":
+                const found = communityRoles.find((r) => r === newRole);
+                if (!found) return false;
                 return this.communityPredicate(id, (community) =>
                     canChangeCommunityRoles(community, currentRole, newRole)
                 );
@@ -1257,7 +1258,7 @@ export class OpenChat extends OpenChatAgentWorker {
     stopTyping = stopTyping;
 
     registerPollVote(
-        chatId: ChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         messageIdx: number,
@@ -3278,8 +3279,39 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "removeMember", chatId, userId });
     }
 
+    changeCommunityRole(
+        id: CommunityIdentifier,
+        userId: string,
+        newRole: MemberRole,
+        oldRole: MemberRole
+    ): Promise<boolean> {
+        if (newRole === oldRole) return Promise.resolve(true);
+
+        // Update the local store
+        communityStateStore.updateProp(id, "members", (ps) =>
+            ps.map((p) => (p.userId === userId ? { ...p, role: newRole } : p))
+        );
+        return this.sendRequest({ kind: "changeCommunityRole", id, userId, newRole })
+            .then((resp) => {
+                return resp === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Error trying to change role: ", err);
+                return false;
+            })
+            .then((success) => {
+                if (!success) {
+                    // Revert the local store
+                    communityStateStore.updateProp(id, "members", (ps) =>
+                        ps.map((p) => (p.userId === userId ? { ...p, role: oldRole } : p))
+                    );
+                }
+                return success;
+            });
+    }
+
     changeRole(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         userId: string,
         newRole: MemberRole,
         oldRole: MemberRole
@@ -3850,8 +3882,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     pinnedChatsStore.set(chatsResponse.state.pinnedChats);
                 }
 
-                setGlobalState(chatsResponse.state.communities, updatedChats);
-                // myServerChatSummariesStore.set(ChatMap.fromList(updatedChats));
+                // TODO - we need to sort out favourites here
+                setGlobalState(chatsResponse.state.communities, updatedChats, []);
 
                 if (this._liveState.uninitializedDirectChats.size > 0) {
                     for (const chat of updatedChats) {
@@ -4262,6 +4294,63 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    makeCommunityPrivate(id: CommunityIdentifier): Promise<boolean> {
+        return this.sendRequest({ kind: "makeCommunityPrivate", id })
+            .then((resp) => {
+                return resp.kind === "success" || resp.kind === "community_already_private";
+            })
+            .catch((err) => {
+                this._logger.error("Error making community private", err);
+                return false;
+            });
+    }
+
+    private addToFavouritesLocally(chatId: ChatIdentifier): void {
+        globalStateStore.update((state) => {
+            state.favourites.add(chatId);
+            return state;
+        });
+    }
+
+    private removeFromFavouritesLocally(chatId: ChatIdentifier): void {
+        globalStateStore.update((state) => {
+            state.favourites.delete(chatId);
+            return state;
+        });
+    }
+
+    addToFavourites(chatId: ChatIdentifier): Promise<boolean> {
+        this.addToFavouritesLocally(chatId);
+        return this.sendRequest({ kind: "addToFavourites", chatId })
+            .then((resp) => {
+                if (resp !== "success") {
+                    this.removeFromFavouritesLocally(chatId);
+                }
+                return resp === "success";
+            })
+            .catch((err) => {
+                this.removeFromFavouritesLocally(chatId);
+                this._logger.error("Error adding chat to favourites", err);
+                return false;
+            });
+    }
+
+    removeFromFavourites(chatId: ChatIdentifier): Promise<boolean> {
+        this.removeFromFavouritesLocally(chatId);
+        return this.sendRequest({ kind: "removeFromFavourites", chatId })
+            .then((resp) => {
+                if (resp !== "success") {
+                    this.addToFavouritesLocally(chatId);
+                }
+                return resp === "success";
+            })
+            .catch((err) => {
+                this.addToFavouritesLocally(chatId);
+                this._logger.error("Error removing chat from favourites", err);
+                return false;
+            });
+    }
+
     saveCommunity(community: CommunitySummary, rules: AccessRules): Promise<boolean> {
         return this.sendRequest({
             kind: "updateCommunity",
@@ -4369,4 +4458,5 @@ export class OpenChat extends OpenChatAgentWorker {
     currentCommunityBlockedUsers = currentCommunityBlockedUsers;
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
     communityStateStore = communityStateStore;
+    favouritesStore = favouritesStore;
 }

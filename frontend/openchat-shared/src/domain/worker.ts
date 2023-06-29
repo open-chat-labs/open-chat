@@ -91,6 +91,7 @@ import type {
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
     SetUserUpgradeConcurrencyResponse,
+    ManageFavouritesResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -105,7 +106,6 @@ import type { AccessGate, AccessRules } from "./access";
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
-    ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
     CommunitySummary,
     CommunityInviteCodeResponse,
@@ -114,7 +114,6 @@ import type {
     EnableCommunityInviteCodeResponse,
     JoinChannelResponse,
     JoinCommunityResponse,
-    MakeChannelPrivateResponse,
     MakeCommunityPrivateResponse,
     RemoveChannelMemberResponse,
     RemoveCommunityMemberResponse,
@@ -128,6 +127,7 @@ import type {
     ChannelMatch,
     CommunityDetailsResponse,
     CommunityDetails,
+    ChannelSummaryResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -253,7 +253,6 @@ export type WorkerRequest =
     | ChannelEventsWindow
     | CommunityInviteCode
     | JoinChannel
-    | MakeChannelPrivate
     | MakeCommunityPrivate
     | ChannelMessagesByMessageIndex
     | RemoveCommunityMember
@@ -272,7 +271,25 @@ export type WorkerRequest =
     | ExploreChannels
     | GetCommunityDetails
     | GetCommunityDetailsUpdates
+    | GetChannelSummary
+    | AddToFavourites
+    | RemoveFromFavourites
     | ChangeCommunityRole;
+
+type AddToFavourites = {
+    kind: "addToFavourites";
+    chatId: ChatIdentifier;
+};
+
+type RemoveFromFavourites = {
+    kind: "removeFromFavourites";
+    chatId: ChatIdentifier;
+};
+
+type GetChannelSummary = {
+    kind: "getChannelSummary";
+    chatId: ChannelIdentifier;
+};
 
 type GetCommunityDetails = {
     kind: "getCommunityDetails";
@@ -442,7 +459,7 @@ type RegisterProposalVote = {
 };
 
 type ChangeRole = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     userId: string;
     newRole: MemberRole;
     kind: "changeRole";
@@ -572,7 +589,7 @@ type UndeleteMessage = {
 };
 
 type RegisterPollVote = {
-    chatId: ChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageIdx: number;
     answerIdx: number;
     voteType: "register" | "delete";
@@ -939,12 +956,10 @@ export type WorkerResponse =
     | Response<ReferralLeaderboardResponse>
     | Response<ReportMessageResponse>
     | Response<BlockCommunityUserResponse>
-    | Response<ChangeChannelRoleResponse>
     | Response<ChangeCommunityRoleResponse>
     | Response<DisableCommunityInviteCode>
     | Response<CommunityInviteCodeResponse>
     | Response<JoinChannelResponse>
-    | Response<MakeChannelPrivateResponse>
     | Response<MakeCommunityPrivateResponse>
     | Response<RemoveCommunityMemberResponse>
     | Response<RemoveChannelMemberResponse>
@@ -960,6 +975,8 @@ export type WorkerResponse =
     | Response<ChannelMatch[]>
     | Response<CommunityDetailsResponse>
     | Response<CommunityDetails>
+    | Response<ChannelSummaryResponse>
+    | Response<ManageFavouritesResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1141,14 +1158,9 @@ type JoinChannel = {
     chatId: ChannelIdentifier;
 };
 
-type MakeChannelPrivate = {
-    kind: "makeChannelPrivate";
-    chatId: ChannelIdentifier;
-};
-
 type MakeCommunityPrivate = {
     kind: "makeCommunityPrivate";
-    communityId: string;
+    id: CommunityIdentifier;
 };
 
 type ChannelMessagesByMessageIndex = {
@@ -1234,7 +1246,7 @@ type CreateCommunity = {
 
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
-    communityId: string;
+    id: CommunityIdentifier;
     userId: string;
     newRole: MemberRole;
 };
@@ -1444,7 +1456,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends BlockCommunityUser
     ? BlockCommunityUserResponse
     : T extends ChangeChannelRole
-    ? ChangeChannelRoleResponse
+    ? ChangeRoleResponse
     : T extends ChangeCommunityRole
     ? ChangeCommunityRoleResponse
     : T extends DeclineChannelInvitation
@@ -1461,8 +1473,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? CommunityInviteCodeResponse
     : T extends JoinChannel
     ? JoinChannelResponse
-    : T extends MakeChannelPrivate
-    ? MakeChannelPrivateResponse
     : T extends MakeCommunityPrivate
     ? MakeCommunityPrivateResponse
     : T extends ChannelMessagesByMessageIndex
@@ -1497,4 +1507,10 @@ export type WorkerResult<T> = T extends PinMessage
     ? CommunityDetailsResponse
     : T extends GetCommunityDetailsUpdates
     ? CommunityDetails
+    : T extends GetChannelSummary
+    ? ChannelSummaryResponse
+    : T extends AddToFavourites
+    ? ManageFavouritesResponse
+    : T extends RemoveFromFavourites
+    ? ManageFavouritesResponse
     : never;

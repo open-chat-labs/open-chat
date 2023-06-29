@@ -19,7 +19,7 @@
     }
 </script>
 
-{#if selectedCommunityId === undefined}
+{#if $selectedCommunityId === undefined}
     <div class="wrapper">
         <h2 class="title">{$_("noChatSelected")}</h2>
         <p class="subtitle">{$_("selectAChat")}</p>

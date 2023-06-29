@@ -502,10 +502,10 @@
         "cryptoTransfers": "Krypto-Nachricht"
     },
     "andNMore": ", und {n} mehr",
-    "confirmMakeGroupPrivate": "Möchten Sie diese Gruppe auf jeden Fall privat machen? Derzeit kann dieser Vorgang nicht rückgängig gemacht werden!",
+    "confirmMakeGroupPrivate": "Möchten Sie diesen {level} unbedingt privat machen? Derzeit kann dieser Vorgang nicht rückgängig gemacht werden!",
     "makeGroupPrivate": "Gruppe privat machen",
-    "makeGroupPrivateFailed": "Gruppe konnte nicht privat gemacht werden",
-    "groupVisibilityChangedBy": "{changedBy} hat die Gruppe {visibility} erstellt",
+    "makeGroupPrivateFailed": "{level} konnte nicht privat gemacht werden",
+    "groupVisibilityChangedBy": "{changedBy} hat den {level} {visibility} erstellt",
     "typeGroupName": "Bitte geben Sie zur Bestätigung **{name}** ein.",
     "translateMessage": "Übersetzen",
     "untranslateMessage": "Unübersetzen",
@@ -841,7 +841,8 @@
         "minStakeN": "Mindesteinsatz {n} Token",
         "optional": "Optional",
         "openAccessInfo": "Für den Beitritt sind keine besonderen Zugangsvoraussetzungen erforderlich",
-        "gateCheckFailed": "Zugangstor nicht erreicht"
+        "gateCheckFailed": "Zugangstor nicht erreicht",
+        "cannotMakePublic": "Sie können ein privates {level} nicht öffentlich machen, da dies die Privatsphäre der bestehenden Mitglieder gefährden würde."
     },
     "communities": {
         "explore": "Entdecken Sie Communities",
@@ -904,7 +905,12 @@
         "usersInvited": "Benutzer wurden zu Ihrer Community eingeladen",
         "joinCommunity": "Treten Sie der Community bei",
         "noChannelSelected": "Kein Kanal ausgewählt",
-        "selectAChannel": "Wählen Sie einen Kanal aus oder suchen Sie nach anderen Kanälen in dieser Community."
+        "selectAChannel": "Wählen Sie einen Kanal aus oder suchen Sie nach anderen Kanälen in dieser Community.",
+        "directChats": "Direkte Chats",
+        "groupChats": "Gruppenchats",
+        "favourites": "Favoriten",
+        "addToFavourites": "Zu Favoriten hinzufügen",
+        "removeFromFavourites": "Von den Favoriten entfernen"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",

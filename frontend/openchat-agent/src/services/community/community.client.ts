@@ -7,14 +7,11 @@ import type { AgentConfig } from "../../config";
 import {
     addMembersToChannelResponse,
     blockUserResponse,
-    changeChannelRoleResponse,
-    changeRoleResponse,
     disableInviteCodeResponse,
     enableInviteCodeResponse,
     inviteCodeResponse,
     joinChannelResponse,
     localUserIndexResponse,
-    makeChannelPrivateResponse,
     makeCommunityPrivateResponse,
     messagesByMessageIndexResponse,
     removeMemberResponse,
@@ -33,6 +30,8 @@ import {
     exploreChannelsResponse,
     communityDetailsResponse,
     communityDetailsUpdatesResponse,
+    changeRoleResponse,
+    communityChannelSummaryResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -48,6 +47,7 @@ import {
     createGroupResponse,
     declineInvitationResponse,
     deleteMessageResponse,
+    makeGroupPrivateResponse,
     editMessageResponse,
     deleteGroupResponse,
     unpinMessageResponse,
@@ -57,6 +57,8 @@ import {
     deletedMessageResponse,
     undeleteMessageResponse,
     threadPreviewsResponse,
+    changeRoleResponse as changeChannelRoleResponse,
+    registerPollVoteResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -64,7 +66,6 @@ import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
     CandidateChannel,
-    ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
     CommunityInviteCodeResponse,
     CommunityPermissions,
@@ -75,7 +76,6 @@ import type {
     GroupChatEvent,
     ChatPermissions,
     JoinChannelResponse,
-    MakeChannelPrivateResponse,
     MakeCommunityPrivateResponse,
     MemberRole,
     Message,
@@ -113,6 +113,10 @@ import type {
     DeletedGroupMessageResponse,
     UndeleteMessageResponse,
     ThreadPreviewsResponse,
+    ChangeRoleResponse,
+    MakeGroupPrivateResponse,
+    ChannelSummaryResponse,
+    RegisterPollVoteResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -210,7 +214,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         userId: string,
         newRole: MemberRole
-    ): Promise<ChangeChannelRoleResponse> {
+    ): Promise<ChangeRoleResponse> {
         return this.handleResponse(
             this.service.change_channel_role({
                 channel_id: BigInt(chatId.channelId),
@@ -626,12 +630,12 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(this.service.local_user_index({}), localUserIndexResponse);
     }
 
-    makeChannelPrivate(chatId: ChannelIdentifier): Promise<MakeChannelPrivateResponse> {
+    makeChannelPrivate(chatId: ChannelIdentifier): Promise<MakeGroupPrivateResponse> {
         return this.handleResponse(
             this.service.make_channel_private({
                 channel_id: BigInt(chatId.channelId),
             }),
-            makeChannelPrivateResponse
+            makeGroupPrivateResponse
         );
     }
 
@@ -929,6 +933,35 @@ export class CommunityClient extends CandidService {
                     throw err;
                 });
         });
+    }
+
+    registerPollVote(
+        chatId: ChannelIdentifier,
+        messageIdx: number,
+        answerIdx: number,
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
+    ): Promise<RegisterPollVoteResponse> {
+        return this.handleResponse(
+            this.service.register_poll_vote({
+                channel_id: BigInt(chatId.channelId),
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                poll_option: answerIdx,
+                operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
+                message_index: messageIdx,
+            }),
+            registerPollVoteResponse
+        );
+    }
+
+    channelSummary(chatId: ChannelIdentifier): Promise<ChannelSummaryResponse> {
+        return this.handleQueryResponse(
+            () =>
+                this.service.channel_summary({
+                    channel_id: BigInt(chatId.channelId),
+                }),
+            (resp) => communityChannelSummaryResponse(resp, this.communityId)
+        );
     }
 
     summary(): Promise<CommunitySummaryResponse> {
