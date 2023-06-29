@@ -11,9 +11,9 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = { workspace = true }
-canister_logger = { workspace = true }
-canister_state_macros = { workspace = true }
-canister_tracing_macros = { workspace = true }
+canister_logger = { path = "../../../libraries/canister_logger" }
+canister_state_macros = { path = "../../../libraries/canister_state_macros" }
+canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
@@ -23,7 +23,7 @@ num-traits = { workspace = true }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serializer = { workspace = true }
+serializer = { path = "../../../libraries/serializer" }
 storage_bucket_canister = { path = "../api" }
 storage_index_canister = { path = "../../storage_index/api" }
 storage_index_canister_c2c_client = { path = "../../storage_index/c2c_client" }

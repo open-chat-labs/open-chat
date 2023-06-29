@@ -1,0 +1,15 @@
+[package]
+name = "canister_logger"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+canister_time = { path = "../canister_time" }
+ic0 = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+tracing-attributes = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["json"] }
