@@ -551,12 +551,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChatId = CanisterId;
   const CommunityId = CanisterId;
-  const MultiUserChat = IDL.Variant({
+  const Chat = IDL.Variant({
     'Group' : ChatId,
     'Channel' : IDL.Tuple(CommunityId, ChannelId),
+    'Direct' : ChatId,
   });
   const ReplyContext = IDL.Record({
-    'chat_if_other' : IDL.Opt(IDL.Tuple(MultiUserChat, IDL.Opt(MessageIndex))),
+    'chat_if_other' : IDL.Opt(IDL.Tuple(Chat, IDL.Opt(MessageIndex))),
     'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
     'event_index' : EventIndex,
   });

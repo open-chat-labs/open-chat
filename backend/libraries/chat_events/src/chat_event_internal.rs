@@ -629,38 +629,21 @@ impl From<Chat> for ChatInternal {
     }
 }
 
+impl From<MultiUserChat> for ChatInternal {
+    fn from(value: MultiUserChat) -> Self {
+        match value {
+            MultiUserChat::Group(c) => ChatInternal::Group(c),
+            MultiUserChat::Channel(cm, ch) => ChatInternal::Channel(cm, ch),
+        }
+    }
+}
+
 impl ChatInternal {
     pub fn hydrate(&self) -> Chat {
         match self {
             ChatInternal::Direct(c) => Chat::Direct(*c),
             ChatInternal::Group(c) => Chat::Group(*c),
             ChatInternal::Channel(cm, ch) => Chat::Channel(*cm, *ch),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy)]
-pub enum MultiUserChatInternal {
-    #[serde(rename = "g")]
-    Group(ChatId),
-    #[serde(rename = "c")]
-    Channel(CommunityId, ChannelId),
-}
-
-impl From<MultiUserChat> for MultiUserChatInternal {
-    fn from(value: MultiUserChat) -> Self {
-        match value {
-            MultiUserChat::Group(c) => MultiUserChatInternal::Group(c),
-            MultiUserChat::Channel(cm, ch) => MultiUserChatInternal::Channel(cm, ch),
-        }
-    }
-}
-
-impl MultiUserChatInternal {
-    pub fn hydrate(&self) -> MultiUserChat {
-        match self {
-            MultiUserChatInternal::Group(c) => MultiUserChat::Group(*c),
-            MultiUserChatInternal::Channel(cm, ch) => MultiUserChat::Channel(*cm, *ch),
         }
     }
 }
