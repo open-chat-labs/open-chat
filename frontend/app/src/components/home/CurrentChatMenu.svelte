@@ -28,7 +28,8 @@
     import { rightPanelHistory } from "../../stores/rightPanel";
     import { rtlStore } from "../../stores/rtl";
     import { communitiesEnabled } from "../../utils/features";
-    import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
+    import HeartMinus from "../icons/HeartMinus.svelte";
+    import HeartPlus from "../icons/HeartPlus.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -76,6 +77,10 @@
 
     function addToFavourites() {
         client.addToFavourites(selectedChatSummary.id);
+    }
+
+    function removeFromFavourites() {
+        client.removeFromFavourites(selectedChatSummary.id);
     }
 
     function showGroupDetails() {
@@ -232,14 +237,22 @@
         </div>
         <div slot="menu">
             <Menu>
-                {#if $communitiesEnabled && !$favouritesStore.has(selectedChatSummary.id)}
-                    <MenuItem on:click={addToFavourites}>
-                        <HeartOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">{$_("communities.addToFavourites")}</div>
-                    </MenuItem>
+                {#if $communitiesEnabled}
+                    {#if !$favouritesStore.has(selectedChatSummary.id)}
+                        <MenuItem on:click={addToFavourites}>
+                            <HeartPlus size={$iconSize} color={"var(--error)"} slot="icon" />
+                            <div slot="text">
+                                {$_("communities.addToFavourites")}
+                            </div>
+                        </MenuItem>
+                    {:else}
+                        <MenuItem on:click={removeFromFavourites}>
+                            <HeartMinus size={$iconSize} color={"var(--error)"} slot="icon" />
+                            <div slot="text">
+                                {$_("communities.removeFromFavourites")}
+                            </div>
+                        </MenuItem>
+                    {/if}
                 {/if}
                 {#if $mobileWidth}
                     {#if $isProposalGroup}

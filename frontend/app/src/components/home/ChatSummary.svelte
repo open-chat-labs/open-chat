@@ -7,7 +7,8 @@
     import PinIcon from "svelte-material-icons/Pin.svelte";
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
-    import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
+    import HeartMinus from "../icons/HeartMinus.svelte";
+    import HeartPlus from "../icons/HeartPlus.svelte";
     import MutedIcon from "svelte-material-icons/BellOff.svelte";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
     import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
@@ -203,6 +204,10 @@
         client.addToFavourites(chatSummary.id);
     }
 
+    function removeFromFavourites() {
+        client.removeFromFavourites(chatSummary.id);
+    }
+
     function unarchiveChat() {
         dispatch("unarchiveChat", chatSummary.id);
     }
@@ -301,14 +306,28 @@
                         </div>
                         <div slot="menu">
                             <Menu>
-                                {#if $communitiesEnabled && !$favouritesStore.has(chatSummary.id)}
-                                    <MenuItem on:click={addToFavourites}>
-                                        <HeartOutline
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("communities.addToFavourites")}</div>
-                                    </MenuItem>
+                                {#if $communitiesEnabled}
+                                    {#if !$favouritesStore.has(chatSummary.id)}
+                                        <MenuItem on:click={addToFavourites}>
+                                            <HeartPlus
+                                                size={$iconSize}
+                                                color={"var(--error)"}
+                                                slot="icon" />
+                                            <div slot="text">
+                                                {$_("communities.addToFavourites")}
+                                            </div>
+                                        </MenuItem>
+                                    {:else}
+                                        <MenuItem on:click={removeFromFavourites}>
+                                            <HeartMinus
+                                                size={$iconSize}
+                                                color={"var(--error)"}
+                                                slot="icon" />
+                                            <div slot="text">
+                                                {$_("communities.removeFromFavourites")}
+                                            </div>
+                                        </MenuItem>
+                                    {/if}
                                 {/if}
                                 {#if !pinned}
                                     <MenuItem on:click={pinChat}>
