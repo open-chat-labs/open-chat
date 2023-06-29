@@ -529,6 +529,7 @@ export const Notification = IDL.Variant({
                 IDL.Variant({
                   'Group' : IDL.Principal,
                   'Channel' : IDL.Tuple(IDL.Principal, IDL.Nat),
+                  'Direct' : IDL.Principal,
                 }),
                 IDL.Opt(IDL.Nat32),
               )
@@ -1077,6 +1078,7 @@ export const Notification = IDL.Variant({
                 IDL.Variant({
                   'Group' : IDL.Principal,
                   'Channel' : IDL.Tuple(IDL.Principal, IDL.Nat),
+                  'Direct' : IDL.Principal,
                 }),
                 IDL.Opt(IDL.Nat32),
               )
@@ -1637,6 +1639,7 @@ export const Notification = IDL.Variant({
                 IDL.Variant({
                   'Group' : IDL.Principal,
                   'Channel' : IDL.Tuple(IDL.Principal, IDL.Nat),
+                  'Direct' : IDL.Principal,
                 }),
                 IDL.Opt(IDL.Nat32),
               )
@@ -2194,6 +2197,7 @@ export const Notification = IDL.Variant({
                 IDL.Variant({
                   'Group' : IDL.Principal,
                   'Channel' : IDL.Tuple(IDL.Principal, IDL.Nat),
+                  'Direct' : IDL.Principal,
                 }),
                 IDL.Opt(IDL.Nat32),
               )
@@ -2747,6 +2751,7 @@ export const Notification = IDL.Variant({
                 IDL.Variant({
                   'Group' : IDL.Principal,
                   'Channel' : IDL.Tuple(IDL.Principal, IDL.Nat),
+                  'Direct' : IDL.Principal,
                 }),
                 IDL.Opt(IDL.Nat32),
               )
@@ -3297,6 +3302,7 @@ export const Notification = IDL.Variant({
                 IDL.Variant({
                   'Group' : IDL.Principal,
                   'Channel' : IDL.Tuple(IDL.Principal, IDL.Nat),
+                  'Direct' : IDL.Principal,
                 }),
                 IDL.Opt(IDL.Nat32),
               )

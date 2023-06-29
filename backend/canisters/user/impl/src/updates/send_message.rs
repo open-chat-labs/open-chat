@@ -7,7 +7,7 @@ use chat_events::{PushMessageArgs, Reader};
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContentInitial, MessageId,
+    CanisterId, Chat, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContentInitial, MessageId,
     MessageIndex, UserId,
 };
 use user_canister::c2c_send_messages;
@@ -170,9 +170,11 @@ fn send_message_impl(
             sender_message_index: message_event.event.message_index,
             content: args.content.into(),
             replies_to: args.replies_to.and_then(|r| {
-                if let Some((chat_id, thread_root_message_index)) = r.event_list_if_other {
-                    Some(C2CReplyContext::OtherEventList(
-                        chat_id,
+                if let Some((chat, thread_root_message_index)) = r.chat_if_other {
+                    Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, r.event_index))
+                } else if let Some((chat_id, thread_root_message_index)) = r.event_list_if_other {
+                    Some(C2CReplyContext::OtherChat(
+                        Chat::Group(chat_id),
                         thread_root_message_index,
                         r.event_index,
                     ))
