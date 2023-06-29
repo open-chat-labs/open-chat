@@ -84,6 +84,7 @@
             kind: "crypto_content",
             caption: message === "" ? undefined : message,
             transfer: {
+                ledger: client.ledgerCanisterId(token),
                 token,
                 kind: "pending",
                 recipient: receiver.userId,

@@ -66,6 +66,7 @@ export type CryptocurrencyDeposit = {
 
 export type PendingCryptocurrencyWithdrawal = {
     kind: "pending";
+    ledger: string;
     token: Cryptocurrency;
     to: string;
     amountE8s: bigint;
@@ -82,7 +83,7 @@ export type CompletedCryptocurrencyWithdrawal = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
-    transactionHash: string;
+    transactionHash: string | undefined;
 };
 
 export type FailedCryptocurrencyWithdrawal = {
@@ -112,18 +113,19 @@ export type CompletedCryptocurrencyTransfer = {
     sender: string;
     amountE8s: bigint;
     feeE8s: bigint;
-    // memo: bigint;
+    memo: bigint;
     blockIndex: bigint;
     transactionHash: string | undefined;
 };
 
 export type PendingCryptocurrencyTransfer = {
     kind: "pending";
+    ledger: string;
     token: Cryptocurrency;
     recipient: string;
     amountE8s: bigint;
     feeE8s?: bigint;
-    // memo?: bigint;
+    memo?: bigint;
     createdAtNanos: bigint;
 };
 
@@ -133,7 +135,7 @@ export type FailedCryptocurrencyTransfer = {
     recipient: string;
     amountE8s: bigint;
     feeE8s: bigint;
-    // memo: bigint;
+    memo: bigint;
     errorMessage: string;
 };
 

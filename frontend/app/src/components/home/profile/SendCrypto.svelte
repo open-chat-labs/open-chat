@@ -46,6 +46,7 @@
         client
             .withdrawCryptocurrency({
                 kind: "pending",
+                ledger: client.ledgerCanisterId(token),
                 token,
                 to: targetAccount,
                 amountE8s: amountToSendE8s,

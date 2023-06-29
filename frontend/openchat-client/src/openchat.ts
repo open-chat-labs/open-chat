@@ -4201,6 +4201,27 @@ export class OpenChat extends OpenChatAgentWorker {
             : this.config.i18nFormatter("unknownUser");
     }
 
+    ledgerCanisterId(token: Cryptocurrency): string {
+        switch (token) {
+            case "chat":
+                return this.config.ledgerCanisterCHAT;
+
+            case "icp":
+                return this.config.ledgerCanisterICP;
+
+            case "ckbtc":
+                return this.config.ledgerCanisterBTC;
+
+            case "sns1":
+                return this.config.ledgerCanisterSNS1;
+
+            case "kinic":
+                return this.config.ledgerCanisterKINIC;
+        }
+    }
+
+    // **** Communities Stuff
+
     // TODO - this will almost certainly need to be more complicated
     async setSelectedCommunity(id: CommunityIdentifier, clearChat = true): Promise<void> {
         let community = this._liveState.communities.get(id);
