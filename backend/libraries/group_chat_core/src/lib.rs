@@ -252,7 +252,7 @@ impl GroupChatCore {
         since: TimestampMillis,
         user_id: Option<UserId>,
         now: TimestampMillis,
-    ) -> SelectedGroupUpdates {
+    ) -> Option<SelectedGroupUpdates> {
         struct UserUpdatesHandler<'a> {
             chat: &'a GroupChatCore,
             users_updated: HashSet<UserId>,
@@ -288,7 +288,7 @@ impl GroupChatCore {
         } else if let Some(invited_user) = user_id.and_then(|user_id| self.invited_users.get(&user_id)) {
             invited_user.min_visible_event_index
         } else {
-            panic!("Cannot get updates for private groups if user is not a member nor is invited");
+            return None;
         };
 
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index, now);
@@ -365,7 +365,7 @@ impl GroupChatCore {
             }
         }
 
-        result
+        Some(result)
     }
 
     pub fn events(

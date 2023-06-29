@@ -46,11 +46,11 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         return SuccessNoUpdates(latest_event_timestamp);
     }
 
-    let now = state.env.now();
     let updates = state
         .data
         .chat
-        .selected_group_updates_from_events(args.updates_since, Some(user_id), now);
+        .selected_group_updates_from_events(args.updates_since, Some(user_id), state.env.now())
+        .unwrap();
 
     if updates.has_updates() {
         Success(updates)
