@@ -1870,21 +1870,29 @@ export class OpenChatAgent extends EventTarget {
     }
 
     registerPollVote(
-        chatId: ChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         messageIdx: number,
         answerIdx: number,
         voteType: "register" | "delete",
         threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
-        if (chatId.kind === "group_chat") {
-            return this.getGroupClient(chatId.groupId).registerPollVote(
-                messageIdx,
-                answerIdx,
-                voteType,
-                threadRootMessageIndex
-            );
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).registerPollVote(
+                    messageIdx,
+                    answerIdx,
+                    voteType,
+                    threadRootMessageIndex
+                );
+            case "channel":
+                return this.communityClient(chatId.communityId).registerPollVote(
+                    chatId,
+                    messageIdx,
+                    answerIdx,
+                    voteType,
+                    threadRootMessageIndex
+                );
         }
-        throw new Error("TODO - channel & direct poll votes not implemented");
     }
 
     withdrawCryptocurrency(

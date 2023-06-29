@@ -63,6 +63,7 @@ import {
     MessagesByMessageIndexResponse,
     ThreadPreviewsResponse,
     ChannelSummaryResponse,
+    RegisterPollVoteResponse,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -128,6 +129,7 @@ export {
     MessagesByMessageIndexResponse as ApiMessagesByMessageIndexResponse,
     ThreadPreviewsResponse as ApiThreadPreviewsResponse,
     ChannelSummaryResponse as ApiChannelSummaryResponse,
+    RegisterPollVoteResponse as ApiRegisterPollVoteResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -576,7 +576,7 @@ type UndeleteMessage = {
 };
 
 type RegisterPollVote = {
-    chatId: ChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageIdx: number;
     answerIdx: number;
     voteType: "register" | "delete";

@@ -58,6 +58,7 @@ import {
     undeleteMessageResponse,
     threadPreviewsResponse,
     changeRoleResponse as changeChannelRoleResponse,
+    registerPollVoteResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -115,6 +116,7 @@ import type {
     ChangeRoleResponse,
     MakeGroupPrivateResponse,
     ChannelSummaryResponse,
+    RegisterPollVoteResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -931,6 +933,25 @@ export class CommunityClient extends CandidService {
                     throw err;
                 });
         });
+    }
+
+    registerPollVote(
+        chatId: ChannelIdentifier,
+        messageIdx: number,
+        answerIdx: number,
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
+    ): Promise<RegisterPollVoteResponse> {
+        return this.handleResponse(
+            this.service.register_poll_vote({
+                channel_id: BigInt(chatId.channelId),
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                poll_option: answerIdx,
+                operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
+                message_index: messageIdx,
+            }),
+            registerPollVoteResponse
+        );
     }
 
     channelSummary(chatId: ChannelIdentifier): Promise<ChannelSummaryResponse> {

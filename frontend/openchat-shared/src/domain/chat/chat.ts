@@ -1657,16 +1657,7 @@ export type DeletedDirectMessageResponse =
     | { kind: "message_not_deleted" }
     | { kind: "message_hard_deleted" };
 
-export type RegisterPollVoteResponse =
-    | "caller_not_in_group"
-    | "poll_ended"
-    | "success"
-    | "out_of_range"
-    | "poll_not_found"
-    | "chat_not_found"
-    | "user_suspended"
-    | "chat_frozen"
-    | "polls_not_valid_for_direct_chats";
+export type RegisterPollVoteResponse = "success" | "failure";
 
 export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised;
 

@@ -139,6 +139,7 @@ import {
     ThreadPreviewsResponse,
     ChangeRoleResponse,
     MakeGroupPrivateResponse,
+    RegisterPollVoteResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -163,6 +164,7 @@ import type {
     ApiThreadPreview,
     ApiChangeRoleResponse,
     ApiMakePrivateResponse,
+    ApiRegisterPollVoteResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -187,6 +189,7 @@ import type {
     ApiDeletedMessageResponse as ApiDeletedChannelMessageResponse,
     ApiUndeleteMessagesResponse as ApiUndeleteChannelMessageResponse,
     ApiThreadPreviewsResponse as ApiChannelThreadPreviewsResponse,
+    ApiRegisterPollVoteResponse as ApiRegisterChannelPollVoteResponse,
     ApiChangeChannelRoleResponse,
     ApiMakeChannelPrivateResponse,
 } from "../community/candid/idl";
@@ -1922,6 +1925,17 @@ export function makeGroupPrivateResponse(
         return "success";
     } else {
         console.warn("MakeGroupPrivateResponse failed with: ", candid);
+        return "failure";
+    }
+}
+
+export function registerPollVoteResponse(
+    candid: ApiRegisterPollVoteResponse | ApiRegisterChannelPollVoteResponse
+): RegisterPollVoteResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("RegisterPollVoteResponse failed with: ", candid);
         return "failure";
     }
 }

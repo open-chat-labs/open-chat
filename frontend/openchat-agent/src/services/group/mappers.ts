@@ -634,39 +634,6 @@ export function resetInviteCodeResponse(
     );
 }
 
-export function registerPollVoteResponse(
-    candid: ApiRegisterPollVoteResponse
-): RegisterPollVoteResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("PollEnded" in candid) {
-        return "poll_ended";
-    }
-    if ("OptionIndexOutOfRange" in candid) {
-        return "out_of_range";
-    }
-    if ("PollNotFound" in candid) {
-        return "poll_not_found";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("PollsNotValidForDirectChats" in candid) {
-        return "polls_not_valid_for_direct_chats";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiRegisterPollVoteResponse type received", candid);
-}
-
 function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
     if ("Message" in candid) {
         return message(candid.Message);

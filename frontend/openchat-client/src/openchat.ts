@@ -1273,7 +1273,7 @@ export class OpenChat extends OpenChatAgentWorker {
     stopTyping = stopTyping;
 
     registerPollVote(
-        chatId: ChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         messageIdx: number,
