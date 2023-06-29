@@ -1,6 +1,5 @@
 use crate::{
-    Chat, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, MultiUserChat, Reaction, ThreadSummary, TimestampMillis,
-    UserId,
+    Chat, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
