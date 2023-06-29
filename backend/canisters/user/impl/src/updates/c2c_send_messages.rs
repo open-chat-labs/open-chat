@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, MultiUserChatInternal, PushMessageArgs, Reader, ReplyContextInternal};
+use chat_events::{ChatInternal, MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
 use ic_cdk_macros::update;
 use types::{
     BlobReference, CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial,
@@ -238,7 +238,7 @@ fn convert_reply_context(
             event_index,
         }),
         C2CReplyContext::OtherEventList(chat_id, thread_root_message_index, event_index) => Some(ReplyContextInternal {
-            chat_if_other: Some((MultiUserChatInternal::Group(chat_id), thread_root_message_index)),
+            chat_if_other: Some((ChatInternal::Group(chat_id), thread_root_message_index)),
             event_index,
         }),
     }
