@@ -31,6 +31,8 @@ import type {
     ApiNnsCompletedCryptoTransaction,
     ApiSnsFailedCryptoTransaction,
     ApiSnsCompletedCryptoTransaction,
+    ApiIcrc1FailedCryptoTransaction,
+    ApiIcrc1CompletedCryptoTransaction,
     ApiArchiveChatResponse,
     ApiIcrc1Account,
     ApiDirectChatSummaryUpdates,
@@ -107,7 +109,13 @@ import {
     DirectChatIdentifier,
     nullMembership,
 } from "openchat-shared";
-import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
+import {
+    bytesToBigint,
+    bytesToHexString,
+    identity,
+    optional,
+    optionUpdate
+} from "../../utils/mapping";
 import {
     apiGroupSubtype,
     chatMetrics,
@@ -852,6 +860,20 @@ function failedSnsCryptoWithdrawal(
     };
 }
 
+function failedIcrc1CryptoWithdrawal(
+    candid: ApiIcrc1FailedCryptoTransaction
+): FailedCryptocurrencyWithdrawal {
+    return {
+        kind: "failed",
+        token: token(candid.token),
+        to: "Account" in candid.to ? formatIcrc1Account(candid.to.Account) : "",
+        amountE8s: candid.amount,
+        feeE8s: candid.fee,
+        memo: optional(candid.memo, bytesToBigint) ?? BigInt(0),
+        errorMessage: candid.error_message,
+    };
+}
+
 function completedNnsCryptoWithdrawal(
     candid: ApiNnsCompletedCryptoTransaction
 ): CompletedCryptocurrencyWithdrawal {
@@ -882,6 +904,21 @@ function completedSnsCryptoWithdrawal(
     };
 }
 
+function completedIcrc1CryptoWithdrawal(
+    candid: ApiIcrc1CompletedCryptoTransaction
+): CompletedCryptocurrencyWithdrawal {
+    return {
+        kind: "completed",
+        token: token(candid.token),
+        to: "Account" in candid.to ? formatIcrc1Account(candid.to.Account) : "",
+        amountE8s: candid.amount,
+        feeE8s: candid.fee,
+        memo: optional(candid.memo, bytesToBigint) ?? BigInt(0),
+        blockIndex: candid.block_index,
+        transactionHash: undefined,
+    };
+}
+
 export function withdrawCryptoResponse(
     candid: ApiWithdrawCryptoResponse
 ): WithdrawCryptocurrencyResponse {
@@ -893,6 +930,8 @@ export function withdrawCryptoResponse(
             return failedNnsCryptoWithdrawal(candid.TransactionFailed.NNS);
         } else if ("SNS" in candid.TransactionFailed) {
             return failedSnsCryptoWithdrawal(candid.TransactionFailed.SNS);
+        } else if ("ICRC1" in candid.TransactionFailed) {
+            return failedIcrc1CryptoWithdrawal(candid.TransactionFailed.ICRC1);
         }
     }
     if ("Success" in candid) {
@@ -900,6 +939,8 @@ export function withdrawCryptoResponse(
             return completedNnsCryptoWithdrawal(candid.Success.NNS);
         } else if ("SNS" in candid.Success) {
             return completedSnsCryptoWithdrawal(candid.Success.SNS);
+        } else if ("ICRC1" in candid.Success) {
+            return completedIcrc1CryptoWithdrawal(candid.Success.ICRC1);
         }
     }
     throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");

@@ -658,6 +658,7 @@ export interface Icrc1PendingCryptoTransaction {
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'memo' : [] | [Memo],
+  'ledger' : CanisterId,
   'amount' : bigint,
 }
 export interface ImageContent {
@@ -811,6 +812,7 @@ export interface NnsPendingCryptoTransaction {
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'memo' : [] | [bigint],
+  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export interface NnsProposal {
@@ -1060,6 +1062,7 @@ export interface SnsPendingCryptoTransaction {
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'memo' : [] | [bigint],
+  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export interface SnsProposal {

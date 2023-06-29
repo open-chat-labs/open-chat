@@ -1,5 +1,12 @@
 import { Principal } from "@dfinity/principal";
-import { bytesToHexString, hexStringToBytes, identity, optional } from "../../utils/mapping";
+import {
+    bigintToBytes,
+    bytesToBigint,
+    bytesToHexString,
+    hexStringToBytes,
+    identity,
+    optional
+} from "../../utils/mapping";
 import type {
     ApiBlobReference,
     ApiFileContent,
@@ -559,20 +566,24 @@ function pendingCryptoTransfer(
         const trans = "NNS" in candid ? candid.NNS : candid.SNS;
         return {
             kind: "pending",
+            ledger: trans.ledger.toString(),
             token: token(trans.token),
             recipient,
             amountE8s: trans.amount.e8s,
             feeE8s: Array.isArray(trans.fee) ? optional(trans.fee, (f) => f.e8s) : trans.fee.e8s,
+            memo: optional(trans.memo, identity),
             createdAtNanos: trans.created,
         };
     }
     if ("ICRC1" in candid) {
         return {
             kind: "pending",
+            ledger: candid.ICRC1.ledger.toString(),
             token: token(candid.ICRC1.token),
             recipient,
             amountE8s: candid.ICRC1.amount,
             feeE8s: candid.ICRC1.fee,
+            memo: optional(candid.ICRC1.memo, bytesToBigint),
             createdAtNanos: candid.ICRC1.created,
         };
     }
@@ -594,6 +605,7 @@ export function completedCryptoTransfer(
             sender,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
+            memo: Array.isArray(trans.memo) ? optional(trans.memo, identity) ?? BigInt(0) : trans.memo,
             blockIndex: trans.block_index,
             transactionHash: bytesToHexString(trans.transaction_hash),
         };
@@ -606,6 +618,7 @@ export function completedCryptoTransfer(
             sender,
             amountE8s: candid.ICRC1.amount,
             feeE8s: candid.ICRC1.fee,
+            memo: optional(candid.ICRC1.memo, bytesToBigint) ?? BigInt(0),
             blockIndex: candid.ICRC1.block_index,
             transactionHash: undefined,
         };
@@ -628,6 +641,7 @@ export function failedCryptoTransfer(
             recipient,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
+            memo: Array.isArray(trans.memo) ? optional(trans.memo, identity) ?? BigInt(0) : trans.memo,
             errorMessage: trans.error_message,
         };
     }
@@ -638,6 +652,7 @@ export function failedCryptoTransfer(
             recipient,
             amountE8s: candid.ICRC1.amount,
             feeE8s: candid.ICRC1.fee,
+            memo: optional(candid.ICRC1.memo, bytesToBigint) ?? BigInt(0),
             errorMessage: candid.ICRC1.error_message,
         };
     }
@@ -1230,13 +1245,14 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
             return {
                 Pending: {
                     NNS: {
+                        ledger: Principal.fromText(domain.ledger),
                         token: apiToken(domain.token),
                         to: {
                             User: Principal.fromText(domain.recipient),
                         },
                         amount: apiICP(domain.amountE8s),
                         fee: [],
-                        memo: [],
+                        memo: apiOptional(identity, domain.memo),
                         created: domain.createdAtNanos,
                     },
                 },
@@ -1244,15 +1260,16 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
         } else {
             return {
                 Pending: {
-                    SNS: {
+                    ICRC1: {
+                        ledger: Principal.fromText(domain.ledger),
                         token: apiToken(domain.token),
                         to: {
                             owner: Principal.fromText(domain.recipient),
                             subaccount: [],
                         },
-                        amount: apiICP(domain.amountE8s),
-                        fee: apiICP(domain.feeE8s ?? BigInt(0)),
-                        memo: [],
+                        amount: domain.amountE8s,
+                        fee: domain.feeE8s ?? BigInt(0),
+                        memo: apiOptional(bigintToBytes, domain.memo),
                         created: domain.createdAtNanos,
                     },
                 },
@@ -1269,6 +1286,7 @@ export function apiPendingCryptocurrencyWithdrawal(
         return {
             withdrawal: {
                 NNS: {
+                    ledger: Principal.fromText(domain.ledger),
                     token: apiToken(domain.token),
                     to: { Account: hexStringToBytes(domain.to) },
                     amount: apiICP(domain.amountE8s),
@@ -1281,12 +1299,13 @@ export function apiPendingCryptocurrencyWithdrawal(
     } else {
         return {
             withdrawal: {
-                SNS: {
+                ICRC1: {
+                    ledger: Principal.fromText(domain.ledger),
                     token: apiToken(domain.token),
                     to: { owner: Principal.fromText(domain.to), subaccount: [] },
-                    amount: apiICP(domain.amountE8s),
-                    fee: apiICP(domain.feeE8s ?? BigInt(0)),
-                    memo: apiOptional(identity, domain.memo),
+                    amount: domain.amountE8s,
+                    fee: domain.feeE8s ?? BigInt(0),
+                    memo: apiOptional(bigintToBytes, domain.memo),
                     created: domain.createdAtNanos,
                 },
             },
