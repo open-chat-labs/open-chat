@@ -515,12 +515,13 @@ export const idlFactory = ({ IDL }) => {
     'reply_count' : IDL.Nat32,
     'latest_event_index' : EventIndex,
   });
-  const MultiUserChat = IDL.Variant({
+  const Chat = IDL.Variant({
     'Group' : ChatId,
     'Channel' : IDL.Tuple(CommunityId, ChannelId),
+    'Direct' : ChatId,
   });
   const ReplyContext = IDL.Record({
-    'chat_if_other' : IDL.Opt(IDL.Tuple(MultiUserChat, IDL.Opt(MessageIndex))),
+    'chat_if_other' : IDL.Opt(IDL.Tuple(Chat, IDL.Opt(MessageIndex))),
     'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
     'event_index' : EventIndex,
   });
@@ -697,6 +698,10 @@ export const idlFactory = ({ IDL }) => {
   const ReportMessageResponse = IDL.Variant({
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
+  });
+  const MultiUserChat = IDL.Variant({
+    'Group' : ChatId,
+    'Channel' : IDL.Tuple(CommunityId, ChannelId),
   });
   const ReportMessageV2Args = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
