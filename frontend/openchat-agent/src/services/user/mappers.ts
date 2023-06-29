@@ -243,18 +243,20 @@ export function unblockResponse(_candid: ApiUnblockUserResponse): UnblockUserRes
 
 export function pinChatResponse(candid: ApiPinChatResponse): PinChatResponse {
     if ("Success" in candid) {
-        return { kind: "success" };
+        return "success";
+    } else {
+        console.warn("Unexpected ApiPinChatResponse type received", candid);
+        return "failure";
     }
-
-    if ("PinnedLimitReached" in candid) {
-        return { kind: "pinned_limit_reached", limit: candid.PinnedLimitReached };
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiPinChatResponse type received", candid);
 }
 
-export function unpinChatResponse(_candid: ApiUnpinChatResponse): UnpinChatResponse {
-    return "success";
+export function unpinChatResponse(candid: ApiUnpinChatResponse): UnpinChatResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("Unexpected ApiUnpinChatResponse type received", candid);
+        return "failure";
+    }
 }
 
 export function archiveChatResponse(candid: ApiArchiveChatResponse): ArchiveChatResponse {

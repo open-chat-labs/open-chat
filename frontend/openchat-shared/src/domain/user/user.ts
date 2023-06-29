@@ -154,9 +154,9 @@ export type RegisterUserResponse =
     | { kind: "referral_code_already_claimed" }
     | { kind: "referral_code_expired" };
 
-export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reached"; limit: number };
+export type PinChatResponse = "success" | "failure";
 
-export type UnpinChatResponse = "success";
+export type UnpinChatResponse = "success" | "failure";
 
 export type ArchiveChatResponse = "chat_not_found" | "success";
 

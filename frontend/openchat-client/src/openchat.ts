@@ -832,32 +832,21 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    pinChat(chatId: ChatIdentifier): Promise<PinChatResponse> {
-        const pinnedChatLimit = 10;
-        if (this._liveState.pinnedChats.length >= pinnedChatLimit) {
-            return Promise.resolve({ kind: "limit_exceeded", limit: pinnedChatLimit });
-        }
-
+    pinChat(chatId: ChatIdentifier): Promise<boolean> {
         pinnedChatsStore.pin(chatId);
         return this.sendRequest({ kind: "pinChat", chatId })
-            .then((resp) => {
-                if (resp.kind === "pinned_limit_reached") {
-                    pinnedChatsStore.unpin(chatId);
-                    return { kind: "limit_exceeded", limit: resp.limit } as PinChatResponse;
-                }
-                return { kind: "success" } as PinChatResponse;
-            })
+            .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error pinning chat", err);
                 pinnedChatsStore.unpin(chatId);
-                return { kind: "failure" };
+                return false;
             });
     }
 
     unpinChat(chatId: ChatIdentifier): Promise<boolean> {
         pinnedChatsStore.unpin(chatId);
         return this.sendRequest({ kind: "unpinChat", chatId })
-            .then((_) => true)
+            .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error unpinning chat", err);
                 pinnedChatsStore.pin(chatId);
@@ -4211,8 +4200,6 @@ export class OpenChat extends OpenChatAgentWorker {
             ? `${user?.username}  ${user?.diamond ? "💎" : ""}`
             : this.config.i18nFormatter("unknownUser");
     }
-
-    // **** Communities Stuff
 
     // TODO - this will almost certainly need to be more complicated
     async setSelectedCommunity(id: CommunityIdentifier, clearChat = true): Promise<void> {

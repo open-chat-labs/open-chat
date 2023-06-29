@@ -2,6 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import {
     ApiChannelMessagesRead,
+    ApiChatInList,
     ApiChatMessagesRead,
     ApiMarkReadArgs,
     ApiSendMessageArgs,
@@ -54,6 +55,7 @@ import type {
     DirectChatIdentifier,
     GroupChatIdentifier,
     ThreadRead,
+    ChannelIdentifier,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -810,23 +812,41 @@ export class UserClient extends CandidService {
         );
     }
 
-    pinChat(chatId: string): Promise<PinChatResponse> {
+    private toChatInList(chatId: ChatIdentifier): ApiChatInList {
+        switch (chatId.kind) {
+            case "direct_chat":
+                return { Direct: Principal.fromText(chatId.userId) };
+            case "group_chat":
+                return { Group: Principal.fromText(chatId.groupId) };
+            case "channel":
+                return {
+                    Community: [Principal.fromText(chatId.communityId), BigInt(chatId.channelId)],
+                };
+        }
+    }
+
+    pinChat(chatId: ChatIdentifier): Promise<PinChatResponse> {
         return this.handleResponse(
-            this.userService.pin_chat({
-                chat_id: Principal.fromText(chatId),
+            this.userService.pin_chat_v2({
+                chat: this.toChatInList(chatId),
             }),
             pinChatResponse
         );
     }
 
-    unpinChat(chatId: string): Promise<UnpinChatResponse> {
+    unpinChat(chatId: ChatIdentifier): Promise<UnpinChatResponse> {
         return this.handleResponse(
-            this.userService.unpin_chat({
-                chat_id: Principal.fromText(chatId),
+            this.userService.unpin_chat_v2({
+                chat: this.toChatInList(chatId),
             }),
             unpinChatResponse
         );
     }
+
+    // export type ChatInList = { 'Group' : ChatId } |
+    //   { 'Favourite' : Chat } |
+    //   { 'Direct' : ChatId } |
+    //   { 'Community' : [CommunityId, ChannelId] };
 
     archiveChat(chatId: string): Promise<ArchiveChatResponse> {
         return this.handleResponse(

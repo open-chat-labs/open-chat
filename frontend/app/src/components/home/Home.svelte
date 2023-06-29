@@ -449,12 +449,8 @@
     }
 
     function pinChat(ev: CustomEvent<ChatIdentifier>) {
-        client.pinChat(ev.detail).then((resp) => {
-            if (resp.kind === "limit_exceeded") {
-                toastStore.showSuccessToast("pinChat.limitExceeded", {
-                    values: { limit: resp.limit },
-                });
-            } else if (resp.kind === "failure") {
+        client.pinChat(ev.detail).then((success) => {
+            if (!success) {
                 toastStore.showFailureToast("pinChat.failed");
             }
         });

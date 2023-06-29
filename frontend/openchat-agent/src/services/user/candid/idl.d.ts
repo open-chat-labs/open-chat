@@ -90,8 +90,8 @@ import {
     Cryptocurrency,
     PublicProfileResponse,
     ThreadSummary,
-    PinChatResponse,
-    UnpinChatResponse,
+    PinChatV2Response,
+    UnpinChatV2Response,
     ProposalDecisionStatus,
     ProposalRewardStatus,
     ThreadSyncDetails,
@@ -128,6 +128,7 @@ import {
     ChatMessagesRead,
     ChannelMessagesRead,
     MultiUserChat,
+    ChatInList,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -210,8 +211,8 @@ export {
     ThreadSummary as ApiThreadSummary,
     ProposalContent as ApiProposalContent,
     Proposal as ApiProposal,
-    PinChatResponse as ApiPinChatResponse,
-    UnpinChatResponse as ApiUnpinChatResponse,
+    PinChatV2Response as ApiPinChatResponse,
+    UnpinChatV2Response as ApiUnpinChatResponse,
     ProposalDecisionStatus as ApiProposalDecisionStatus,
     ProposalRewardStatus as ApiProposalRewardStatus,
     ThreadSyncDetails as ApiThreadSyncDetails,
@@ -258,6 +259,7 @@ export {
     FailedCryptoTransaction as ApiFailedCryptoTransaction,
     PendingCryptoTransaction as ApiPendingCryptoTransaction,
     MultiUserChat as ApiMultiUserChat,
+    ChatInList as ApiChatInList,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
