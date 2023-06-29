@@ -1,8 +1,7 @@
+use crate::set_message_reminder_v2;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{ChatId, EventIndex, MessageIndex, TimestampMillis};
-
-use crate::set_message_reminder_v2;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {

@@ -24,6 +24,8 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
+    // TODO We need this to run once to fix existing OC bot messages, and then to run again after 1
+    // week to fix any new OC bot messages due to message reminders
     mutate_state(|state| {
         let direct_chats: HashSet<_> = state.data.direct_chats.iter().map(|c| ChatId::from(c.them)).collect();
         if let Some(chat) = state.data.direct_chats.get_mut(&OPENCHAT_BOT_USER_ID.into()) {

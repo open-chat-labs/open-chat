@@ -20,7 +20,6 @@ pub struct ChatEventsList {
 }
 
 impl ChatEventsList {
-    // TODO Remove this after next user canister upgrade
     pub fn fix_direct_chat_replies(&mut self, direct_chats: &HashSet<ChatId>) {
         for message in self.events_map.values_mut().filter_map(|e| e.event.as_message_mut()) {
             if let Some(r) = message.replies_to.as_mut() {
