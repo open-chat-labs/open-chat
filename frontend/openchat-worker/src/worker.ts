@@ -300,8 +300,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.eventIndexRange,
                         payload.chatId,
                         payload.messageIndex,
-                        payload.latestClientMainEventIndex,
-                        payload.threadRootMessageIndex
+                        payload.threadRootMessageIndex,
+                        payload.latestClientMainEventIndex
                     )
                     .then((response) =>
                         sendResponse(correlationId, {

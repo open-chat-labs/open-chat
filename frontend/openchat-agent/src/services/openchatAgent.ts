@@ -484,8 +484,8 @@ export class OpenChatAgent extends EventTarget {
         eventIndexRange: IndexRange,
         chatId: ChatIdentifier,
         messageIndex: number,
-        latestClientMainEventIndex: number | undefined,
-        threadRootMessageIndex: number | undefined
+        threadRootMessageIndex: number | undefined,
+        latestClientMainEventIndex: number | undefined
     ): Promise<EventsResponse<ChatEvent>> {
         switch (chatId.kind) {
             case "direct_chat":
@@ -500,16 +500,16 @@ export class OpenChatAgent extends EventTarget {
                     eventIndexRange,
                     chatId,
                     messageIndex,
-                    latestClientMainEventIndex,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
+                    latestClientMainEventIndex
                 );
             case "channel":
                 return this.channelEventsWindow(
                     eventIndexRange,
                     chatId,
                     messageIndex,
-                    latestClientMainEventIndex,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
+                    latestClientMainEventIndex
                 );
         }
     }
@@ -620,8 +620,8 @@ export class OpenChatAgent extends EventTarget {
         eventIndexRange: IndexRange,
         chatId: ChannelIdentifier,
         messageIndex: number,
-        latestClientMainEventIndex: number | undefined,
-        threadRootMessageIndex: number | undefined
+        threadRootMessageIndex: number | undefined,
+        latestClientMainEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
