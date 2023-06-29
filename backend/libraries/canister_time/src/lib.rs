@@ -19,8 +19,5 @@ pub fn timestamp_nanos() -> u64 {
 pub fn timestamp_nanos() -> u64 {
     use std::time::SystemTime;
 
-    SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos() as u64
+    SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos() as u64
 }

@@ -19,9 +19,7 @@ macro_rules! canister_state {
         }
 
         fn replace_state(state: $type) -> $type {
-            __STATE
-                .with(|s| s.replace(Some(state)))
-                .expect(__STATE_NOT_INITIALIZED)
+            __STATE.with(|s| s.replace(Some(state))).expect(__STATE_NOT_INITIALIZED)
         }
 
         fn take_state() -> $type {
