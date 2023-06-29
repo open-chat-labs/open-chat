@@ -76,6 +76,11 @@ members = [
     "backend/libraries/canister_api_macros",
     "backend/libraries/canister_client",
     "backend/libraries/canister_client_macros",
+    "backend/libraries/canister_logger",
+    "backend/libraries/canister_state_macros",
+    "backend/libraries/canister_time",
+    "backend/libraries/canister_timer_jobs",
+    "backend/libraries/canister_tracing_macros",
     "backend/libraries/chat_events",
     "backend/libraries/cycles_dispenser_client",
     "backend/libraries/dynamodb_index_store",
@@ -90,7 +95,9 @@ members = [
     "backend/libraries/msgpack",
     "backend/libraries/storage_bucket_client",
     "backend/libraries/search",
+    "backend/libraries/serializer",
     "backend/libraries/sha256",
+    "backend/libraries/stable_memory",
     "backend/libraries/types",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
@@ -105,10 +112,6 @@ aws-sdk-dynamodb = "0.28.0"
 aws-types = "0.55.3"
 base64 = "0.21.2"
 candid = "0.8.4"
-canister_logger = { git = "https://github.com/open-chat-labs/ic-utils", rev = "e08d113c4849a47142b6a5ba226e3900a97396a1" }
-canister_state_macros = { git = "https://github.com/open-chat-labs/ic-utils", rev = "e08d113c4849a47142b6a5ba226e3900a97396a1" }
-canister_timer_jobs = { git = "https://github.com/open-chat-labs/ic-utils", rev = "e08d113c4849a47142b6a5ba226e3900a97396a1" }
-canister_tracing_macros = { git = "https://github.com/open-chat-labs/ic-utils", rev = "e08d113c4849a47142b6a5ba226e3900a97396a1" }
 ciborium = { git = "https://github.com/enarx/ciborium", rev = "e719537c99b564c3674a56defe53713c702c6f46" }
 clap = "4.3.4"
 dirs = "5.0.1"
@@ -129,6 +132,7 @@ ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "b314222935b7
 ic-stable-structures = "0.5.4"
 ic-test-state-machine-client = { git = "https://github.com/dfinity/test-state-machine-client", rev = "287fd445c098e9c33462df0c810d79f120ed9431" }
 ic-utils = "0.24.1"
+ic0 = "0.18.10"
 icrc-ledger-types = { git = "https://github.com/dfinity/ic", rev = "b314222935b7d06c70036b0b54aa80a33252d79c" }
 itertools = "0.10.5"
 lazy_static = "1.4.0"
@@ -146,10 +150,8 @@ serde = "1.0.164"
 serde_bytes = "0.11.9"
 serde_cbor = "0.11.2"
 serde_json = "1.0.96"
-serializer = { git = "https://github.com/open-chat-labs/ic-utils", rev = "e08d113c4849a47142b6a5ba226e3900a97396a1" }
 sha2 = "0.10.6"
 sha3 = "0.10.8"
-stable_memory = { git = "https://github.com/open-chat-labs/ic-utils", rev = "e08d113c4849a47142b6a5ba226e3900a97396a1" }
 syn = "2.0.18"
 test-case = "3.1.0"
 time = "0.3.22"
