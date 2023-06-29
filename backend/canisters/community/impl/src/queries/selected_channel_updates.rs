@@ -10,25 +10,27 @@ fn selected_channel_updates(args: Args) -> Response {
 fn selected_channel_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    let member = match state.data.members.get(caller) {
-        Some(m) => m,
-        None => return UserNotInCommunity,
-    };
+    if !state.data.is_accessible(caller, None) {
+        return PrivateCommunity;
+    }
 
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
-        if let Some(member) = channel.chat.members.get(&member.user_id) {
-            let now = state.env.now();
-            let updates = channel
-                .chat
-                .selected_group_updates_from_events(args.updates_since, member, now);
+        let user_id = state.data.members.lookup_user_id(caller);
 
-            if updates.has_updates() {
-                Success(updates)
-            } else {
-                SuccessNoUpdates
-            }
+        if !channel.chat.is_accessible(user_id) {
+            return PrivateChannel;
+        }
+
+        let now = state.env.now();
+
+        let updates = channel
+            .chat
+            .selected_group_updates_from_events(args.updates_since, user_id, now);
+
+        if updates.has_updates() {
+            Success(updates)
         } else {
-            UserNotInChannel
+            SuccessNoUpdates
         }
     } else {
         ChannelNotFound

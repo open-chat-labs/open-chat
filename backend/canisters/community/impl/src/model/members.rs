@@ -198,6 +198,10 @@ impl CommunityMembers {
         self.members.values()
     }
 
+    pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
+        self.principal_to_user_id_map.get(&user_id_or_principal).copied()
+    }
+
     pub fn get(&self, user_id_or_principal: Principal) -> Option<&CommunityMemberInternal> {
         let user_id = user_id_or_principal.into();
 

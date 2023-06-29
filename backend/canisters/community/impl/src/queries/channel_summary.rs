@@ -10,20 +10,18 @@ fn channel_summary(args: Args) -> Response {
 
 fn summary_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
-    let member = state.data.members.get(caller);
 
-    if member.is_none() && !state.data.is_public {
+    if !state.data.is_accessible(caller, None) {
         return PrivateCommunity;
     }
 
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
-        let channel_member = member.and_then(|m| channel.chat.members.get(&m.user_id));
+        let user_id = state.data.members.lookup_user_id(caller);
 
-        if channel_member.is_none() && !channel.chat.is_public {
-            return PrivateChannel;
+        match channel.summary(user_id, state.env.now()) {
+            Some(summary) => Success(summary),
+            None => PrivateChannel,
         }
-
-        Success(channel.summary(member.is_some(), channel_member, state.env.now()))
     } else {
         ChannelNotFound
     }

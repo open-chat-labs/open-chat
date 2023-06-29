@@ -149,9 +149,9 @@ type SelectedChannelInitialResponse =
             pinned_messages: vec MessageIndex;
             rules: AccessRules;
         };
-        UserNotInCommunity;
-        UserNotInChannel;
+        PrivateCommunity;
         ChannelNotFound;
+        PrivateChannel;
     };
 
 type SelectedChannelUpdatesArgs =
@@ -164,9 +164,9 @@ type SelectedChannelUpdatesResponse =
     variant {
         Success: SelectedGroupUpdates;
         SuccessNoUpdates;
-        UserNotInCommunity;
-        UserNotInChannel;
+        PrivateCommunity;
         ChannelNotFound;
+        PrivateChannel;
     };
 
 type SelectedInitialArgs =

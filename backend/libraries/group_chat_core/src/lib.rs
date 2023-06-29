@@ -86,6 +86,16 @@ impl GroupChatCore {
         }
     }
 
+    pub fn is_accessible(&self, user_id: Option<UserId>) -> bool {
+        if self.is_public {
+            true
+        } else if let Some(user_id) = user_id {
+            self.members.get(&user_id).is_some() || self.invited_users.get(&user_id).is_some()
+        } else {
+            false
+        }
+    }
+
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
         if self.is_public && self.history_visible_to_new_joiners {
             Some(EventIndex::default())
@@ -96,14 +106,9 @@ impl GroupChatCore {
         }
     }
 
-    pub fn has_updates_since_by_user_id(&self, user_id: &UserId, since: TimestampMillis) -> bool {
-        let member = self.members.get(user_id);
-        self.has_updates_since(member, since)
-    }
-
-    pub fn has_updates_since(&self, member: Option<&GroupMemberInternal>, since: TimestampMillis) -> bool {
-        if let Some(m) = member {
-            if m.date_added > since || m.notifications_muted.timestamp > since {
+    pub fn has_updates_since(&self, user_id: Option<UserId>, since: TimestampMillis) -> bool {
+        if let Some(member) = user_id.and_then(|user_id| self.members.get(&user_id)) {
+            if member.date_added > since || member.notifications_muted.timestamp > since {
                 return true;
             }
         }
@@ -114,20 +119,28 @@ impl GroupChatCore {
     pub fn summary_updates_from_events(
         &self,
         since: TimestampMillis,
-        member: Option<&GroupMemberInternal>,
+        user_id: Option<UserId>,
         now: TimestampMillis,
     ) -> SummaryUpdatesFromEvents {
-        let min_visible_event_index = if let Some(member) = member {
-            member.min_visible_event_index()
+        let member = user_id.and_then(|user_id| self.members.get(&user_id));
+
+        let (min_visible_event_index, see_latest_message) = if let Some(member) = member {
+            (member.min_visible_event_index(), true)
         } else if self.is_public {
-            EventIndex::default()
+            (EventIndex::default(), true)
+        } else if let Some(invited_user) = user_id.and_then(|user_id| self.invited_users.get(&user_id)) {
+            (invited_user.min_visible_event_index, false)
         } else {
             panic!("Cannot get private summary updates if user is not a member");
         };
 
         let user_id = member.map(|m| m.user_id);
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index, now);
-        let latest_message = events_reader.latest_message_event_if_updated(since, user_id);
+        let latest_message = if see_latest_message {
+            events_reader.latest_message_event_if_updated(since, user_id)
+        } else {
+            None
+        };
         let mentions = member
             .map(|m| m.most_recent_mentions(Some(since), &self.events, now))
             .unwrap_or_default();
@@ -237,7 +250,7 @@ impl GroupChatCore {
     pub fn selected_group_updates_from_events(
         &self,
         since: TimestampMillis,
-        member: &GroupMemberInternal,
+        user_id: Option<UserId>,
         now: TimestampMillis,
     ) -> SelectedGroupUpdates {
         struct UserUpdatesHandler<'a> {
@@ -268,7 +281,16 @@ impl GroupChatCore {
             }
         }
 
-        let min_visible_event_index = member.min_visible_event_index();
+        let min_visible_event_index = if self.is_public {
+            EventIndex::default()
+        } else if let Some(member) = user_id.and_then(|user_id| self.members.get(&user_id)) {
+            member.min_visible_event_index()
+        } else if let Some(invited_user) = user_id.and_then(|user_id| self.invited_users.get(&user_id)) {
+            invited_user.min_visible_event_index
+        } else {
+            panic!("Cannot get updates for private groups if user is not a member nor is invited");
+        };
+
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index, now);
         let latest_event_index = events_reader.latest_event_index().unwrap();
 
