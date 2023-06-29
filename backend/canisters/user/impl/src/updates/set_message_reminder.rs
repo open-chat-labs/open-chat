@@ -4,15 +4,41 @@ use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use rand_core::RngCore;
-use types::{FieldTooLongResult, MessageContent, MessageReminderCreatedContent};
+use types::{Chat, FieldTooLongResult, MessageContent, MessageReminderCreatedContent};
 use user_canister::c2c_send_messages::C2CReplyContext;
-use user_canister::set_message_reminder::{Response::*, *};
+use user_canister::set_message_reminder;
+use user_canister::set_message_reminder_v2::{Response::*, *};
 
 const MAX_NOTES_LENGTH: usize = 1000;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
-fn set_message_reminder(args: Args) -> Response {
+fn set_message_reminder(args: set_message_reminder::Args) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| {
+        let chat = if state.data.direct_chats.get(&args.chat_id).is_some() {
+            Chat::Direct(args.chat_id)
+        } else {
+            Chat::Group(args.chat_id)
+        };
+
+        set_message_reminder_impl(
+            Args {
+                chat,
+                thread_root_message_index: args.thread_root_message_index,
+                event_index: args.event_index,
+                notes: args.notes,
+                remind_at: args.remind_at,
+            },
+            state,
+        )
+    })
+}
+
+#[update(guard = "caller_is_owner")]
+#[trace]
+fn set_message_reminder_v2(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| set_message_reminder_impl(args, state))
@@ -45,8 +71,8 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
             notes: args.notes.clone(),
             hidden: false,
         }),
-        Some(C2CReplyContext::OtherEventList(
-            args.chat_id,
+        Some(C2CReplyContext::OtherChat(
+            args.chat,
             args.thread_root_message_index,
             args.event_index,
         )),
@@ -59,7 +85,7 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.data.timer_jobs.enqueue_job(
         TimerJob::MessageReminder(MessageReminderJob {
             reminder_id,
-            chat_id: args.chat_id,
+            chat: args.chat,
             thread_root_message_index: args.thread_root_message_index,
             event_index: args.event_index,
             notes: args.notes,

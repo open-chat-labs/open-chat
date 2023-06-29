@@ -1054,7 +1054,6 @@ dependencies = [
 [[package]]
 name = "canister_logger"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/ic-utils?rev=e08d113c4849a47142b6a5ba226e3900a97396a1#e08d113c4849a47142b6a5ba226e3900a97396a1"
 dependencies = [
  "candid",
  "canister_time",
@@ -1068,12 +1067,10 @@ dependencies = [
 [[package]]
 name = "canister_state_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/ic-utils?rev=e08d113c4849a47142b6a5ba226e3900a97396a1#e08d113c4849a47142b6a5ba226e3900a97396a1"
 
 [[package]]
 name = "canister_time"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/ic-utils?rev=e08d113c4849a47142b6a5ba226e3900a97396a1#e08d113c4849a47142b6a5ba226e3900a97396a1"
 dependencies = [
  "ic0",
 ]
@@ -1081,7 +1078,6 @@ dependencies = [
 [[package]]
 name = "canister_timer_jobs"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/ic-utils?rev=e08d113c4849a47142b6a5ba226e3900a97396a1#e08d113c4849a47142b6a5ba226e3900a97396a1"
 dependencies = [
  "canister_time",
  "ic-cdk-timers",
@@ -1091,7 +1087,6 @@ dependencies = [
 [[package]]
 name = "canister_tracing_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/ic-utils?rev=e08d113c4849a47142b6a5ba226e3900a97396a1#e08d113c4849a47142b6a5ba226e3900a97396a1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6511,7 +6506,6 @@ dependencies = [
 [[package]]
 name = "serializer"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/ic-utils?rev=e08d113c4849a47142b6a5ba226e3900a97396a1#e08d113c4849a47142b6a5ba226e3900a97396a1"
 dependencies = [
  "rmp-serde",
  "serde",
@@ -6755,7 +6749,6 @@ dependencies = [
 [[package]]
 name = "stable_memory"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/ic-utils?rev=e08d113c4849a47142b6a5ba226e3900a97396a1#e08d113c4849a47142b6a5ba226e3900a97396a1"
 dependencies = [
  "ic-cdk 0.8.1",
  "serde",

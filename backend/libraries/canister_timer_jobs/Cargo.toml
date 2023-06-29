@@ -1,0 +1,11 @@
+[package]
+name = "canister_timer_jobs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+canister_time = { path = "../canister_time" }
+ic-cdk-timers = { workspace = true }
+serde = { workspace = true }

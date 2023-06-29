@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-canister_logger = { workspace = true }
+canister_logger = { path = "../canister_logger" }
 num-traits = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

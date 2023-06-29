@@ -15,6 +15,7 @@ fn main() {
     generate_candid_method!(user, search_messages, query);
     generate_candid_method!(user, updates_v2, query);
     generate_candid_method!(user, updates, query);
+
     generate_candid_method!(user, add_hot_group_exclusions, update);
     generate_candid_method!(user, add_reaction, update);
     generate_candid_method!(user, archive_chat, update);
@@ -44,6 +45,7 @@ fn main() {
     generate_candid_method!(user, set_avatar, update);
     generate_candid_method!(user, set_bio, update);
     generate_candid_method!(user, set_contact, update);
+    generate_candid_method!(user, set_message_reminder_v2, update);
     generate_candid_method!(user, set_message_reminder, update);
     generate_candid_method!(user, unarchive_chat, update);
     generate_candid_method!(user, unblock_user, update);

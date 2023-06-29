@@ -2,7 +2,7 @@ use crate::updates::send_message::send_to_recipients_canister;
 use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
-use types::{BlobReference, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, MessageReminderContent, UserId};
+use types::{BlobReference, Chat, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, MessageReminderContent, UserId};
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::C2CReplyContext;
 use utils::consts::OPENCHAT_BOT_USER_ID;
@@ -35,13 +35,38 @@ pub struct DeleteFileReferencesJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(from = "MessageReminderJobPrevious")]
 pub struct MessageReminderJob {
+    pub reminder_id: u64,
+    pub chat: Chat,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub event_index: EventIndex,
+    pub notes: Option<String>,
+    pub reminder_created_message_index: MessageIndex,
+}
+
+// TODO: Delete this after next User release
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MessageReminderJobPrevious {
     pub reminder_id: u64,
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub event_index: EventIndex,
     pub notes: Option<String>,
     pub reminder_created_message_index: MessageIndex,
+}
+
+impl From<MessageReminderJobPrevious> for MessageReminderJob {
+    fn from(value: MessageReminderJobPrevious) -> Self {
+        MessageReminderJob {
+            reminder_id: value.reminder_id,
+            chat: Chat::Group(value.chat_id),
+            thread_root_message_index: value.thread_root_message_index,
+            event_index: value.event_index,
+            notes: value.notes,
+            reminder_created_message_index: value.reminder_created_message_index,
+        }
+    }
 }
 
 impl Job for TimerJob {
@@ -111,7 +136,7 @@ impl Job for DeleteFileReferencesJob {
 
 impl Job for MessageReminderJob {
     fn execute(&self) {
-        let replies_to = C2CReplyContext::OtherEventList(self.chat_id, self.thread_root_message_index, self.event_index);
+        let replies_to = C2CReplyContext::OtherChat(self.chat, self.thread_root_message_index, self.event_index);
         let content = MessageContent::MessageReminder(MessageReminderContent {
             reminder_id: self.reminder_id,
             notes: self.notes.clone(),
