@@ -33,12 +33,10 @@ fn post_upgrade(args: Args) {
         }
 
         for wrapper in state.data.timer_jobs.jobs.values_mut().map(|(_, w)| w) {
-            if let Some(job) = wrapper.borrow_mut().as_mut() {
-                if let TimerJob::MessageReminder(mr) = job {
-                    if let Chat::Group(c) = mr.chat {
-                        if direct_chats.contains(&c) {
-                            mr.chat = Chat::Direct(c);
-                        }
+            if let Some(TimerJob::MessageReminder(mr)) = wrapper.borrow_mut().as_mut() {
+                if let Chat::Group(c) = mr.chat {
+                    if direct_chats.contains(&c) {
+                        mr.chat = Chat::Direct(c);
                     }
                 }
             }
