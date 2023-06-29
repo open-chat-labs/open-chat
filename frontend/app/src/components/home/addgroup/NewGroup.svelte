@@ -368,6 +368,7 @@
                         on:upgrade
                         original={originalGroup}
                         {editing}
+                        history={true}
                         bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>

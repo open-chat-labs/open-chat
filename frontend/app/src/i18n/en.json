@@ -491,7 +491,8 @@
         "minStakeN": "Min stake {n} tokens",
         "optional": "Optional",
         "openAccessInfo": "There are no special access requirements to join",
-        "gateCheckFailed": "Access gate not met"
+        "gateCheckFailed": "Access gate not met",
+        "cannotMakePublic": "You cannot make a private {level} public as that would risk the privacy of the existing members."
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",

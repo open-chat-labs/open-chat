@@ -4290,6 +4290,17 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    makeCommunityPrivate(id: CommunityIdentifier): Promise<boolean> {
+        return this.sendRequest({ kind: "makeCommunityPrivate", id })
+            .then((resp) => {
+                return resp.kind === "success" || resp.kind === "community_already_private";
+            })
+            .catch((err) => {
+                this._logger.error("Error making community private", err);
+                return false;
+            });
+    }
+
     saveCommunity(community: CommunitySummary, rules: AccessRules): Promise<boolean> {
         return this.sendRequest({
             kind: "updateCommunity",

@@ -1451,7 +1451,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "makeCommunityPrivate":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.id.communityId)
                     .makePrivate()
                     .then((response) =>
                         sendResponse(correlationId, {

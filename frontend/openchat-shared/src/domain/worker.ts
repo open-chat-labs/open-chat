@@ -1146,7 +1146,7 @@ type JoinChannel = {
 
 type MakeCommunityPrivate = {
     kind: "makeCommunityPrivate";
-    communityId: string;
+    id: CommunityIdentifier;
 };
 
 type ChannelMessagesByMessageIndex = {
