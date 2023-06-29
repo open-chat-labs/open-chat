@@ -1056,7 +1056,7 @@ export type RegisterUserResponse = { 'UsernameTooShort' : number } |
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface ReplyContext {
-  'chat_if_other' : [] | [[MultiUserChat, [] | [MessageIndex]]],
+  'chat_if_other' : [] | [[Chat, [] | [MessageIndex]]],
   'event_list_if_other' : [] | [[ChatId, [] | [MessageIndex]]],
   'event_index' : EventIndex,
 }
