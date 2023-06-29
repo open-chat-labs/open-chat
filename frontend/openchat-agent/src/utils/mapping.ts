@@ -64,3 +64,11 @@ export function consolidateBytes(bytes: Uint8Array | number[]): Uint8Array {
 export function bytesToHexString(bytes: Uint8Array | number[]): string {
     return consolidateBytes(bytes).reduce((str, byte) => str + byte.toString(16).padStart(2, "0"), "");
 }
+
+export function bigintToBytes(value: bigint): Uint8Array {
+    return hexStringToBytes(value.toString(16));
+}
+
+export function bytesToBigint(bytes: Uint8Array | number[]): bigint {
+    return BigInt("0x" + bytesToHexString(bytes));
+}
