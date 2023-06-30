@@ -1142,6 +1142,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async getUpdates(): Promise<UpdatesResult> {
+        const start = Date.now();
+        let numberOfAsyncCalls = 0;
+
         const current = await getCachedChats(this.db, this.principal);
 
         let directChats: DirectChatSummary[];
@@ -1169,6 +1172,7 @@ export class OpenChatAgent extends EventTarget {
 
         if (current === undefined) {
             const userResponse = await this.userClient.getInitialState();
+            numberOfAsyncCalls++;
 
             directChats = userResponse.directChats.summaries;
             groupsAdded = userResponse.groupChats.summaries;
@@ -1192,6 +1196,7 @@ export class OpenChatAgent extends EventTarget {
             latestActiveGroupsCheck = current.latestActiveGroupsCheck;
 
             const userResponse = await this.userClient.getUpdates(current.latestUserCanisterUpdates);
+            numberOfAsyncCalls++;
 
             avatarId = current.avatarId;
             blockedUsers = current.blockedUsers;
@@ -1232,6 +1237,7 @@ export class OpenChatAgent extends EventTarget {
                 currentGroupChatIds,
                 latestActiveGroupsCheck
             )
+            numberOfAsyncCalls++;
 
             groupIndexResponse.activeGroups.forEach((g) => groupsToCheckForUpdates.add(g));
             groupIndexResponse.deletedGroups.forEach((g) => groupsRemoved.add(g.id));
@@ -1257,6 +1263,12 @@ export class OpenChatAgent extends EventTarget {
         const updatedCommunitiesPromises = currentCommunities
             .filter((c) => communitiesToCheckForUpdates.has(c.id.communityId))
             .map((c) => this.communityClient(c.id.communityId).summaryUpdates(c.lastUpdated));
+
+        numberOfAsyncCalls +=
+            addedGroupsPromises.length +
+            addedCommunitiesPromises.length +
+            updatedGroupPromises.length +
+            updatedCommunitiesPromises.length;
 
         const groupPromiseResults = await waitAll(addedGroupsPromises);
         const communityPromiseResults = await waitAll(addedCommunitiesPromises);
@@ -1323,6 +1335,10 @@ export class OpenChatAgent extends EventTarget {
             if (!anyErrors) {
                 setCachedChats(this.db, this.principal, s, updatedEvents);
             }
+
+            const end = Date.now();
+            const duration = end - start;
+            console.debug(`GetUpdates completed in ${duration}ms. Number of async calls: ${numberOfAsyncCalls}`);
 
             return {
                 state: s,
