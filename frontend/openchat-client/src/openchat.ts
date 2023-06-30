@@ -323,6 +323,7 @@ import {
     MultiUserChat,
     ChannelMatch,
     communityRoles,
+    ChatListScope,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -341,14 +342,12 @@ import {
     currentCommunityRules,
     selectedCommunity,
     selectedCommunityChannels,
-    selectedCommunityId,
 } from "./stores/community";
 import {
     globalStateStore,
     favouritesStore,
     setGlobalState,
     updateSummaryWithConfirmedMessage,
-    ChatListScope,
     chatListScopeStore,
 } from "./stores/global";
 
@@ -4239,7 +4238,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         communityStateStore.clear(id);
-        selectedCommunityId.set(id);
+        chatListScopeStore.set({ kind: "community", id });
         if (clearChat) {
             this.clearSelectedChat();
         }
@@ -4249,9 +4248,9 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    clearSelectedCommunity(): void {
-        selectedCommunityId.set(undefined);
-    }
+    // clearSelectedCommunity(): void {
+    //     selectedCommunityId.set(undefined);
+    // }
 
     joinCommunity(id: CommunityIdentifier): Promise<"success" | "failure" | "gate_check_failed"> {
         return this.sendRequest({ kind: "joinCommunity", id })
@@ -4455,7 +4454,7 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedMessageContext = selectedMessageContext;
 
     // current community stores
-    selectedCommunityId = selectedCommunityId;
+    chatListScope = chatListScopeStore;
     selectedCommunity = selectedCommunity;
     communities = communities;
     communitiesList = communitiesList;

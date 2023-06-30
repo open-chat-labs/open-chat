@@ -90,20 +90,30 @@
         // this is for explore mode
         page("/communities", parsePathParams(communitesRoute), track, () => (route = Home));
         // global direct chats
-        page("/user", parsePathParams(chatListRoute("user")), track, () => (route = Home));
+        page(
+            "/user",
+            parsePathParams(chatListRoute({ kind: "direct_chat" })),
+            track,
+            () => (route = Home)
+        );
         // global direct chat selected
         page(
             "/user/:chatId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(globalDirectChatSelectedRoute("user")),
+            parsePathParams(globalDirectChatSelectedRoute({ kind: "direct_chat" })),
             track,
             () => (route = Home)
         );
         // global group chats
-        page("/group", parsePathParams(chatListRoute("group")), track, () => (route = Home));
+        page(
+            "/group",
+            parsePathParams(chatListRoute({ kind: "group_chat" })),
+            track,
+            () => (route = Home)
+        );
         // global group chat selected
         page(
             "/group/:chatId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(globalGroupChatSelectedRoute("group")),
+            parsePathParams(globalGroupChatSelectedRoute({ kind: "group_chat" })),
             track,
             () => (route = Home)
         );
@@ -124,21 +134,21 @@
         // favourites
         page(
             "/favourite",
-            parsePathParams(chatListRoute("favourite")),
+            parsePathParams(chatListRoute({ kind: "favourite" })),
             track,
             () => (route = Home)
         );
         // selected global group favourite
         page(
             "/favourite/group/:chatId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(globalGroupChatSelectedRoute("favourite")),
+            parsePathParams(globalGroupChatSelectedRoute({ kind: "favourite" })),
             track,
             () => (route = Home)
         );
         // selected global direct favourite
         page(
             "/favourite/user/:chatId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(globalDirectChatSelectedRoute("favourite")),
+            parsePathParams(globalDirectChatSelectedRoute({ kind: "favourite" })),
             track,
             () => (route = Home)
         );
@@ -158,7 +168,7 @@
         );
         page(
             "/",
-            parsePathParams(() => ({ kind: "home_route", scope: "none" })),
+            parsePathParams(() => ({ kind: "home_route", scope: { kind: "none" } })),
             track,
             () => (route = Home)
         );

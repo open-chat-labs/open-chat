@@ -6,9 +6,9 @@ import type {
     DirectChatIdentifier,
     GroupChatIdentifier,
     CommunityIdentifier,
+    ChatListScope,
 } from "openchat-client";
 
-export type ChatListScope = "group" | "user" | "favourite" | "none";
 export const notFound = writable(false);
 
 export const pathContextStore = writable<PageJS.Context | undefined>(undefined);
@@ -28,7 +28,7 @@ function qs(ctx: PageJS.Context): URLSearchParams {
 export function communitesRoute(_ctx: PageJS.Context): RouteParams {
     return {
         kind: "communities_route",
-        scope: "none",
+        scope: { kind: "none" },
     };
 }
 
@@ -102,10 +102,15 @@ export function globalGroupChatSelectedRoute(scope: ChatListScope) {
     };
 }
 
+function createCommunityIdentifier(id: string): CommunityIdentifier {
+    return { kind: "community", communityId: id };
+}
+
 export function selectedCommunityRoute(ctx: PageJS.Context): RouteParams {
     return {
         kind: "selected_community_route",
         communityId: { kind: "community", communityId: ctx.params["communityId"] },
+        scope: { kind: "community", id: createCommunityIdentifier(ctx.params["communityId"]) },
     };
 }
 
@@ -124,6 +129,7 @@ export function selectedChannelRoute(ctx: PageJS.Context): RouteParams {
             ? Number(ctx.params["threadMessageIndex"])
             : undefined,
         open: $qs.get("open") === "true",
+        scope: { kind: "community", id: createCommunityIdentifier(ctx.params["communityId"]) },
     };
 }
 
@@ -137,7 +143,7 @@ export function favouritesRoute(ctx: PageJS.Context): RouteParams {
             ? Number(ctx.params["threadMessageIndex"])
             : undefined,
         open: $qs.get("open") === "true",
-        scope: "favourite",
+        scope: { kind: "favourite" },
     };
 }
 
@@ -234,7 +240,6 @@ export type GlobalSelectedChatRoute = RouteCommon & {
     open: boolean;
 };
 
-// TODO - what is the route for a selected favourite channel? It needs to contain the communityId
 export type FavouritesRoute = RouteCommon & {
     kind: "favourites_route";
     chatId?: ChatIdentifier;
@@ -243,12 +248,12 @@ export type FavouritesRoute = RouteCommon & {
     open: boolean;
 };
 
-export type SelectedCommunityRoute = {
+export type SelectedCommunityRoute = RouteCommon & {
     kind: "selected_community_route";
     communityId: CommunityIdentifier;
 };
 
-export type SelectedChannelRoute = {
+export type SelectedChannelRoute = RouteCommon & {
     kind: "selected_channel_route";
     chatId: ChannelIdentifier;
     communityId: CommunityIdentifier;

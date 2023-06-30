@@ -17,7 +17,6 @@
     import { pathParams } from "../../../routes";
     import page from "page";
     import { createEventDispatcher, getContext } from "svelte";
-    import DirectChats from "../../icons/DirectChats.svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
@@ -30,6 +29,7 @@
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
     $: communities = client.communitiesList;
     $: selectedCommunity = client.selectedCommunity;
+    $: chatListScope = client.chatListScope;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
@@ -106,19 +106,29 @@
             </div>
         </LeftNavItem>
 
-        <LeftNavItem label={$_("communities.directChats")} on:click={directChats}>
+        <LeftNavItem
+            selected={$chatListScope.kind === "direct_chat"}
+            label={$_("communities.directChats")}
+            on:click={directChats}>
             <div class="hover direct">
                 <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
 
-        <LeftNavItem label={$_("communities.groupChats")} on:click={groupChats}>
+        <LeftNavItem
+            selected={$chatListScope.kind === "group_chat"}
+            label={$_("communities.groupChats")}
+            on:click={groupChats}>
             <div class="hover direct">
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
 
-        <LeftNavItem separator label={$_("communities.favourites")} on:click={favouriteChats}>
+        <LeftNavItem
+            selected={$chatListScope.kind === "favourite"}
+            separator
+            label={$_("communities.favourites")}
+            on:click={favouriteChats}>
             <div class="hover favs">
                 <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>

@@ -43,7 +43,7 @@
     let view: "chats" | "threads" = "chats";
 
     $: selectedChatId = client.selectedChatId;
-    $: selectedCommunityId = client.selectedCommunityId;
+    $: chatListScope = client.chatListScope;
     $: numberOfThreadsStore = client.numberOfThreadsStore;
     $: chatsLoading = client.chatsLoading;
     $: selectedCommunity = client.selectedCommunity;
@@ -54,12 +54,12 @@
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
     $: showWhatsHot =
-        $selectedCommunityId === undefined &&
+        $chatListScope.kind !== "community" &&
         !$discoverHotGroupsDismissed &&
         groupSearchResults === undefined &&
         userSearchResults === undefined;
     $: showBrowseChannnels =
-        $selectedCommunityId !== undefined &&
+        $chatListScope.kind === "community" &&
         groupSearchResults === undefined &&
         userSearchResults === undefined;
 
@@ -137,7 +137,7 @@
     }
 
     function showChannels() {
-        if ($selectedCommunityId) {
+        if ($chatListScope.kind === "community") {
             pushRightPanelHistory({
                 kind: "community_channels",
             });

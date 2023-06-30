@@ -58,11 +58,11 @@ export const myServerChatSummariesStore = derived(
     ([$allState, $selectedCommunity, $chatListScope]) => {
         if ($selectedCommunity === undefined) {
             if (communitiesEnabled) {
-                if ($chatListScope === "group") {
+                if ($chatListScope.kind === "group_chat") {
                     return $allState.groupChats;
-                } else if ($chatListScope === "user") {
+                } else if ($chatListScope.kind === "direct_chat") {
                     return $allState.directChats;
-                } else if ($chatListScope === "favourite") {
+                } else if ($chatListScope.kind === "favourite") {
                     const allChannels = ChatMap.fromList(
                         $allState.communities.values().flatMap((c) => c.channels)
                     );
