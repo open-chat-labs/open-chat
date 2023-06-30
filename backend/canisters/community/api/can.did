@@ -617,24 +617,6 @@ type LeaveChannelResponse =
         LastOwnerCannotLeave;
     };
 
-type MakeChannelPrivateArgs =
-    record {
-        channel_id: ChannelId;
-    };
-
-type MakeChannelPrivateResponse =
-    variant {
-        Success;
-        CommunityFrozen;
-        UserNotInCommunity;
-        UserSuspended;
-        ChannelNotFound;
-        UserNotInChannel;
-        NotAuthorized;
-        ChannelIsDefault;
-        AlreadyPrivate;
-    };
-
 type ManageDefaultChannelsArgs =
     record {
         to_add: vec ChannelId;
@@ -656,17 +638,6 @@ type FailedChannels =
     record {
         not_found: vec ChannelId;
         private: vec ChannelId;
-    };
-
-type MakePrivateResponse =
-    variant {
-        Success;
-        CommunityFrozen;
-        UserNotInCommunity;
-        UserSuspended;
-        NotAuthorized;
-        AlreadyPrivate;
-        InternalError;
     };
 
 type PinMessageArgs =
@@ -910,6 +881,7 @@ type UpdateChannelArgs =
         avatar: DocumentUpdate;
         permissions: opt OptionalGroupPermissions;
         gate: AccessGateUpdate;
+        public: opt bool;
     };
 
 type UpdateChannelResponse =
@@ -929,6 +901,8 @@ type UpdateChannelResponse =
         RulesTooShort: FieldTooShortResult;
         UserSuspended;
         CommunityFrozen;
+        CannotMakeChannelPublic;
+        CannotMakeDefaultChannelPrivate;
     };
 
 type UpdateCommunityArgs =
@@ -940,6 +914,7 @@ type UpdateCommunityArgs =
         banner: DocumentUpdate;
         permissions: opt OptionalCommunityPermissions;
         gate: AccessGateUpdate;
+        public: opt bool;
     };
 
 type UpdateCommunityResponse =
@@ -959,6 +934,7 @@ type UpdateCommunityResponse =
         RulesTooShort: FieldTooShortResult;
         UserSuspended;
         CommunityFrozen;
+        CannotMakeCommunityPublic;
     };
 
 service: {
@@ -997,8 +973,6 @@ service: {
     import_group: (ImportGroupArgs) -> (ImportGroupResponse);
     join_channel: (JoinChannelArgs) -> (JoinChannelResponse);
     leave_channel: (LeaveChannelArgs) -> (LeaveChannelResponse);
-    make_channel_private: (MakeChannelPrivateArgs) -> (MakeChannelPrivateResponse);
-    make_private: (EmptyArgs) -> (MakePrivateResponse);
     manage_default_channels: (ManageDefaultChannelsArgs) -> (ManageDefaultChannelsResponse);
     pin_message: (PinMessageArgs) -> (PinMessageResponse);
     register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);

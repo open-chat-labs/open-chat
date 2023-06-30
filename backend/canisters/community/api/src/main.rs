@@ -36,8 +36,6 @@ fn main() {
     generate_candid_method!(community, import_group, update);
     generate_candid_method!(community, join_channel, update);
     generate_candid_method!(community, leave_channel, update);
-    generate_candid_method!(community, make_channel_private, update);
-    generate_candid_method!(community, make_private, update);
     generate_candid_method!(community, manage_default_channels, update);
     generate_candid_method!(community, pin_message, update);
     generate_candid_method!(community, register_poll_vote, update);
