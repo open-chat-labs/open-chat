@@ -160,8 +160,6 @@
     $: chatListScope = client.chatListScope;
     $: currentCommunityRules = client.currentCommunityRules;
 
-    $: console.log("PathParams: ", $pathParams);
-
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -268,12 +266,10 @@
                 client.setChatListScope(pathParams.scope);
             }
             if (pathParams.kind === "home_route") {
-                // client.clearSelectedCommunity();
                 client.clearSelectedChat();
                 closeThread();
                 filterChatSpecificRightPanelStates();
             } else if (pathParams.kind === "communities_route") {
-                // client.clearSelectedCommunity();
                 client.clearSelectedChat();
                 rightPanelHistory.set([]);
             } else if (pathParams.kind === "selected_community_route") {
@@ -282,13 +278,6 @@
                 pathParams.kind === "global_chat_selected_route" ||
                 pathParams.kind === "selected_channel_route"
             ) {
-                // if (pathParams.kind === "global_chat_selected_route") {
-                //     client.clearSelectedCommunity();
-                // }
-                // if (pathParams.kind === "selected_channel_route") {
-                //     await client.setSelectedCommunity(pathParams.communityId, false);
-                // }
-
                 // first close any open thread
                 closeThread();
 
