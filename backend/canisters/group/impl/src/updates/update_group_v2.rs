@@ -23,7 +23,7 @@ async fn update_group_v2(mut args: Args) -> Response {
 
     let group_index_canister_id = prepare_result.group_index_canister_id;
 
-    if !args.public.unwrap_or(true) {
+    if args.public == Some(false) {
         let c2c_make_private_args = c2c_make_private::Args {};
 
         match group_index_canister_c2c_client::c2c_make_private(group_index_canister_id, &c2c_make_private_args).await {

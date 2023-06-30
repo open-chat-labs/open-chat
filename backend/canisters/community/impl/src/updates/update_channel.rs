@@ -20,7 +20,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
         return CommunityFrozen;
     }
 
-    if !args.public.unwrap_or(true) && state.data.channels.is_default_channel(&args.channel_id) {
+    if args.public == Some(false) && state.data.channels.is_default_channel(&args.channel_id) {
         return CannotMakeDefaultChannelPrivate;
     }
 
