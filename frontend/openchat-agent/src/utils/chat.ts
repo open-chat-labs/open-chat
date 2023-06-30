@@ -481,9 +481,18 @@ export function getUpdatedEvents(
 ): ChatMap<UpdatedEvent[]> {
     const result = new ChatMap<UpdatedEvent[]>();
 
-    directChats.forEach((c) => result.set(c.id, c.updatedEvents));
-    groupChats.forEach((c) => result.set(c.id, c.updatedEvents));
-    communities.flatMap((c) => c.channelsUpdated).forEach((c) => result.set(c.id, c.updatedEvents));
+    directChats
+        .filter((c) => c.updatedEvents.length > 0)
+        .forEach((c) => result.set(c.id, c.updatedEvents));
+
+    groupChats
+        .filter((c) => c.updatedEvents.length > 0)
+        .forEach((c) => result.set(c.id, c.updatedEvents));
+
+    communities
+        .flatMap((c) => c.channelsUpdated)
+        .filter((c) => c.updatedEvents.length > 0)
+        .forEach((c) => result.set(c.id, c.updatedEvents));
 
     return result;
 }

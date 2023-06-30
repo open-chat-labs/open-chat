@@ -10,28 +10,29 @@ fn selected_channel_initial(args: Args) -> Response {
 fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    let member = match state.data.members.get(caller) {
-        Some(m) => m,
-        None => return UserNotInCommunity,
-    };
+    if !state.data.is_accessible(caller, None) {
+        return PrivateCommunity;
+    }
 
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
-        if channel.chat.members.get(&member.user_id).is_some() {
-            let now = state.env.now();
-            let chat = &channel.chat;
+        let user_id = state.data.members.lookup_user_id(caller);
 
-            Success(SuccessResult {
-                timestamp: now,
-                latest_event_index: chat.events.latest_event_index().unwrap_or_default(),
-                members: chat.members.iter().map(|m| m.into()).collect(),
-                blocked_users: chat.members.blocked(),
-                invited_users: chat.invited_users.users(),
-                pinned_messages: chat.pinned_messages.clone(),
-                rules: chat.rules.clone(),
-            })
-        } else {
-            UserNotInChannel
+        if !channel.chat.is_accessible(user_id) {
+            return PrivateChannel;
         }
+
+        let now = state.env.now();
+        let chat = &channel.chat;
+
+        Success(SuccessResult {
+            timestamp: now,
+            latest_event_index: chat.events.latest_event_index().unwrap_or_default(),
+            members: chat.members.iter().map(|m| m.into()).collect(),
+            blocked_users: chat.members.blocked(),
+            invited_users: chat.invited_users.users(),
+            pinned_messages: chat.pinned_messages.clone(),
+            rules: chat.rules.clone(),
+        })
     } else {
         ChannelNotFound
     }

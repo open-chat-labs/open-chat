@@ -481,7 +481,7 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
 
 function cachedGroupChatSummaries(candid: ApiCachedGroupChatSummaries): CachedGroupChatSummaries {
     return {
-        summaries: candid.summaries.map((s) => groupChatSummary(s, true)),
+        summaries: candid.summaries.map(groupChatSummary),
         timestamp: candid.timestamp,
     };
 }
@@ -761,7 +761,7 @@ function mention(candid: ApiMention): Mention {
     };
 }
 
-function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true): GroupChatSummary {
+function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
     const latestMessage = optional(candid.latest_message, (ev) => ({
         index: ev.index,
         timestamp: ev.timestamp,
@@ -802,11 +802,7 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
             latestThreads: candid.latest_threads.map(threadSyncDetails),
             myMetrics: chatMetrics(candid.my_metrics),
             notificationsMuted: candid.notifications_muted,
-            readByMeUpTo: optional(candid.read_by_me_up_to, (r) =>
-                limitReadByMeUpTo && latestMessage !== undefined
-                    ? Math.min(latestMessage.event.messageIndex, r)
-                    : r
-            ),
+            readByMeUpTo: optional(candid.read_by_me_up_to, identity),
             archived: candid.archived,
         },
     };

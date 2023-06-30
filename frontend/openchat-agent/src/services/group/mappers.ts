@@ -725,6 +725,35 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("OwnershipTransferred" in candid) {
+        return {
+            kind: "ownership_transferred",
+            oldOwner: candid.OwnershipTransferred.old_owner.toString(),
+            newOwner: candid.OwnershipTransferred.new_owner.toString(),
+        };
+    }
+
+    if ("ParticipantAssumesSuperAdmin" in candid) {
+        return {
+            kind: "member_assumes_super_admin",
+            userId: candid.ParticipantAssumesSuperAdmin.user_id.toString(),
+        };
+    }
+
+    if ("ParticipantDismissedAsSuperAdmin" in candid) {
+        return {
+            kind: "member_dismissed_as_super_admin",
+            userId: candid.ParticipantDismissedAsSuperAdmin.user_id.toString(),
+        };
+    }
+
+    if ("ParticipantRelinquishesSuperAdmin" in candid) {
+        return {
+            kind: "member_relinquishes_super_admin",
+            userId: candid.ParticipantRelinquishesSuperAdmin.user_id.toString(),
+        };
+    }
+
     if ("RoleChanged" in candid) {
         return {
             kind: "role_changed",

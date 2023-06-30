@@ -528,7 +528,11 @@ export type GroupChatEvent =
     | GroupRulesChanged
     | UsersBlocked
     | UsersUnblocked
+    | MemberAssumesSuperAdmin
+    | MemberRelinquishesSuperAdmin
+    | MemberDismissedAsSuperAdmin
     | RoleChanged
+    | OwnershipTransferred
     | MessagePinned
     | MessageUnpinned
     | PermissionsChanged
@@ -935,32 +939,6 @@ export type UpdatesSuccessResponse = {
     avatarId: OptionUpdate<bigint>;
     directChats: DirectChatsUpdates;
 };
-
-export function emptyUpdatesSuccessResponse(timestamp: bigint): UpdatesSuccessResponse {
-    return {
-        kind: "success",
-        timestamp,
-        blockedUsers: undefined,
-        favouriteChats: {},
-        avatarId: undefined,
-        communities: {
-            added: [],
-            updated: [],
-            removed: [],
-        },
-        groupChats: {
-            added: [],
-            pinned: undefined,
-            updated: [],
-            removed: [],
-        },
-        directChats: {
-            added: [],
-            pinned: undefined,
-            updated: [],
-        },
-    };
-}
 
 export type DirectChatsUpdates = {
     added: DirectChatSummary[];

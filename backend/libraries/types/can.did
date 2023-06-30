@@ -854,12 +854,6 @@ type RoleChanged =
         new_role: GroupRole;
     };
 
-type OwnershipTransferred =
-    record {
-        old_owner: UserId;
-        new_owner: UserId;
-    };
-
 type ParticipantsRemoved =
     record {
         user_ids: vec UserId;
