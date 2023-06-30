@@ -67,6 +67,10 @@ export class SafeMap<K, V> {
     toMap(): Map<string, V> {
         return this._map;
     }
+
+    toRecord(): Record<string, V> {
+        return Object.fromEntries(this._map.entries());
+    }
 }
 
 export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
@@ -89,6 +93,10 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
         return new ChatMap<V>(map);
     }
 
+    static fromRecord<V>(rec: Record<string, V>): ChatMap<V> {
+        return new ChatMap<V>(new Map(Object.entries(rec)));
+    }
+
     static fromJSON<V>(json: string): ChatMap<V> {
         return new ChatMap<V>(new Map(JSON.parse(json)));
     }
@@ -101,6 +109,10 @@ export class MessageContextMap<V> extends SafeMap<MessageContext, V> {
             (k: string) => JSON.parse(k) as MessageContext,
             _map
         );
+    }
+
+    static fromRecord<V>(rec: Record<string, V>): MessageContextMap<V> {
+        return new MessageContextMap<V>(new Map(Object.entries(rec)));
     }
 
     static fromMap<V>(map: Map<string, V>): MessageContextMap<V> {

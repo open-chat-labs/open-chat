@@ -3905,7 +3905,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         clearSelectedChat();
                         this.dispatchEvent(new SelectedChatInvalid());
                     } else {
-                        const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
+                        const updatedEvents = ChatMap.fromRecord(chatsResponse.updatedEvents);
                         chatUpdatedStore.set({
                             chatId: selectedChatId,
                             updatedEvents: updatedEvents.get(selectedChatId) ?? [],

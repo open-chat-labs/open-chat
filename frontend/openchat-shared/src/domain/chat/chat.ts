@@ -764,7 +764,7 @@ export type EventsSuccessResult<T extends ChatEvent> = {
 
 export type UpdatesResult = {
     state: ChatStateFull;
-    updatedEvents: Map<string, UpdatedEvent[]>;
+    updatedEvents: Record<string, UpdatedEvent[]>;
     anyUpdates: boolean;
 };
 
