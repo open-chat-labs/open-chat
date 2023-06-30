@@ -362,6 +362,7 @@ const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
+const communitiesEnabled = localStorage.getItem("openchat_communities_enabled") === "true";
 
 export class OpenChat extends OpenChatAgentWorker {
     private _authClient: Promise<AuthClient>;
@@ -831,7 +832,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     pinChat(chatId: ChatIdentifier): Promise<boolean> {
         pinnedChatsStore.pin(chatId);
-        return this.sendRequest({ kind: "pinChat", chatId })
+        return this.sendRequest({ kind: "pinChat", chatId, communitiesEnabled })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error pinning chat", err);
@@ -842,7 +843,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     unpinChat(chatId: ChatIdentifier): Promise<boolean> {
         pinnedChatsStore.unpin(chatId);
-        return this.sendRequest({ kind: "unpinChat", chatId })
+        return this.sendRequest({ kind: "unpinChat", chatId, communitiesEnabled })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error unpinning chat", err);
@@ -3854,7 +3855,10 @@ export class OpenChat extends OpenChatAgentWorker {
             const init = this._liveState.chatsInitialised;
             chatsLoading.set(!init);
 
-            const chatsResponse = await this.sendRequest({ kind: "getUpdates" });
+            const chatsResponse = await this.sendRequest({
+                kind: "getUpdates",
+                communitiesEnabled,
+            });
 
             if (!init || chatsResponse.anyUpdates) {
                 const updatedChats = (chatsResponse.state.directChats as ChatSummary[])
