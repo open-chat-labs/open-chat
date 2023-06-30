@@ -149,4 +149,22 @@ pub mod happy_path {
             response => panic!("'summary' error: {response:?}"),
         }
     }
+
+    pub fn selected_initial(
+        env: &StateMachine,
+        sender: &User,
+        community_id: CommunityId,
+    ) -> community_canister::selected_initial::SuccessResult {
+        let response = super::selected_initial(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::selected_initial::Args { invite_code: None },
+        );
+
+        match response {
+            community_canister::selected_initial::Response::Success(result) => result,
+            response => panic!("'selected_initial' error: {response:?}"),
+        }
+    }
 }
