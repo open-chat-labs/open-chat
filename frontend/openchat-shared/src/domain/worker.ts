@@ -650,11 +650,13 @@ type BlockUserFromDirectChat = {
 
 type UnpinChat = {
     chatId: ChatIdentifier;
+    communitiesEnabled: boolean;
     kind: "unpinChat";
 };
 
 type PinChat = {
     chatId: ChatIdentifier;
+    communitiesEnabled: boolean;
     kind: "pinChat";
 };
 
@@ -841,6 +843,7 @@ type CreateUserClient = {
 
 type GetUpdates = {
     kind: "getUpdates";
+    communitiesEnabled: boolean;
 };
 
 type GetDeletedGroupMessage = {

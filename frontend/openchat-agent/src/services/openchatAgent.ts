@@ -1163,7 +1163,7 @@ export class OpenChatAgent extends EventTarget {
         return undefined;
     }
 
-    async getUpdates(): Promise<UpdatesResult> {
+    async getUpdates(communitiesEnabled: boolean): Promise<UpdatesResult> {
         const start = Date.now();
         let numberOfAsyncCalls = 0;
 
@@ -1207,7 +1207,9 @@ export class OpenChatAgent extends EventTarget {
 
             avatarId = userResponse.avatarId;
             blockedUsers = userResponse.blockedUsers;
-            pinnedChats = this.getMergedPinnedChats(userResponse) ?? [];
+            pinnedChats = communitiesEnabled
+                ? this.getMergedPinnedChats(userResponse) ?? []
+                : userResponse.favouriteChats.chats;
             latestUserCanisterUpdates = userResponse.timestamp;
             anyUpdates = true;
         } else {
@@ -1246,7 +1248,9 @@ export class OpenChatAgent extends EventTarget {
 
                 avatarId = applyOptionUpdate(avatarId, userResponse.avatarId);
                 blockedUsers = userResponse.blockedUsers ?? blockedUsers;
-                pinnedChats = this.getMergedPinnedChats(userResponse) ?? pinnedChats;
+                pinnedChats = communitiesEnabled
+                    ? this.getMergedPinnedChats(userResponse) ?? pinnedChats
+                    : userResponse.favouriteChats.chats ?? pinnedChats;
                 latestUserCanisterUpdates = userResponse.timestamp;
                 anyUpdates = true;
             }
@@ -1914,12 +1918,12 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId.groupId).resetInviteCode();
     }
 
-    pinChat(chatId: ChatIdentifier): Promise<PinChatResponse> {
-        return this.userClient.pinChat(chatId);
+    pinChat(chatId: ChatIdentifier, communitiesEnabled: boolean): Promise<PinChatResponse> {
+        return this.userClient.pinChat(chatId, communitiesEnabled);
     }
 
-    unpinChat(chatId: ChatIdentifier): Promise<UnpinChatResponse> {
-        return this.userClient.unpinChat(chatId);
+    unpinChat(chatId: ChatIdentifier, communitiesEnabled: boolean): Promise<UnpinChatResponse> {
+        return this.userClient.unpinChat(chatId, communitiesEnabled);
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {

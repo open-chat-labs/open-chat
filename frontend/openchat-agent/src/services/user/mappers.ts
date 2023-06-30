@@ -54,6 +54,8 @@ import type {
     ApiGroupChatsUpdates,
     ApiDirectChatsUpdates,
     ApiManageFavouriteChatsResponse,
+    ApiPinChatV2Response,
+    ApiUnpinV2ChatResponse,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -251,7 +253,9 @@ export function unblockResponse(_candid: ApiUnblockUserResponse): UnblockUserRes
     return "success";
 }
 
-export function pinChatResponse(candid: ApiPinChatResponse): PinChatResponse {
+export function pinChatResponse(
+    candid: ApiPinChatResponse | ApiPinChatV2Response
+): PinChatResponse {
     if ("Success" in candid) {
         return "success";
     } else {
@@ -260,7 +264,9 @@ export function pinChatResponse(candid: ApiPinChatResponse): PinChatResponse {
     }
 }
 
-export function unpinChatResponse(candid: ApiUnpinChatResponse): UnpinChatResponse {
+export function unpinChatResponse(
+    candid: ApiUnpinChatResponse | ApiUnpinV2ChatResponse
+): UnpinChatResponse {
     if ("Success" in candid) {
         return "success";
     } else {
