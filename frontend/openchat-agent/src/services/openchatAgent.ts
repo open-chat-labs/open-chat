@@ -1186,6 +1186,7 @@ export class OpenChatAgent extends EventTarget {
             latestUserCanisterUpdates = userResponse.timestamp;
             anyUpdates = true;
         } else {
+            directChats = current.directChats;
             currentGroups = current.groupChats;
             currentCommunities = current.communities;
             latestActiveGroupsCheck = current.latestActiveGroupsCheck;
@@ -1199,7 +1200,7 @@ export class OpenChatAgent extends EventTarget {
 
             if (userResponse.kind === "success") {
                 directChats = userResponse.directChats.added.concat(
-                    mergeDirectChatUpdates(current.directChats, userResponse.directChats.updated)
+                    mergeDirectChatUpdates(directChats, userResponse.directChats.updated)
                 );
                 directChatUpdates = userResponse.directChats.updated;
 
