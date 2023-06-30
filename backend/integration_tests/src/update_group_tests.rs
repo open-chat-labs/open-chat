@@ -86,7 +86,7 @@ fn update_group_privacy_succeeds() {
     // Check the privacy and name have changed
     let summary = client::group::happy_path::summary(env, &user2, group_id);
     assert_eq!(summary.name, new_group_name);
-    assert_eq!(summary.is_public, false);
+    assert!(!summary.is_public);
 
     tick_many(env, 3);
 
