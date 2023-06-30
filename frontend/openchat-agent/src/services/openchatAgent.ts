@@ -159,6 +159,8 @@ import {
     MultiUserChatIdentifier,
     CommunityIdentifier,
     CommunitySummaryResponse,
+    UpdatesSuccessResponse,
+    InitialStateResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1141,6 +1143,26 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
+    // TODO this will need rethinking for communities
+    private getMergedPinnedChats(
+        userResponse: UpdatesSuccessResponse | InitialStateResponse
+    ): ChatIdentifier[] | undefined {
+        if (userResponse.groupChats.pinned || userResponse.directChats.pinned) {
+            const groupIds =
+                userResponse.groupChats.pinned?.map<ChatIdentifier>((c) => ({
+                    kind: "group_chat",
+                    groupId: c,
+                })) ?? [];
+            const directIds =
+                userResponse.directChats.pinned?.map<ChatIdentifier>((c) => ({
+                    kind: "direct_chat",
+                    userId: c,
+                })) ?? [];
+            return [...groupIds, ...directIds];
+        }
+        return undefined;
+    }
+
     async getUpdates(): Promise<UpdatesResult> {
         const start = Date.now();
         let numberOfAsyncCalls = 0;
@@ -1185,8 +1207,7 @@ export class OpenChatAgent extends EventTarget {
 
             avatarId = userResponse.avatarId;
             blockedUsers = userResponse.blockedUsers;
-            pinnedChats = userResponse.favouriteChats.chats;
-
+            pinnedChats = this.getMergedPinnedChats(userResponse) ?? [];
             latestUserCanisterUpdates = userResponse.timestamp;
             anyUpdates = true;
         } else {
@@ -1195,7 +1216,9 @@ export class OpenChatAgent extends EventTarget {
             currentCommunities = current.communities;
             latestActiveGroupsCheck = current.latestActiveGroupsCheck;
 
-            const userResponse = await this.userClient.getUpdates(current.latestUserCanisterUpdates);
+            const userResponse = await this.userClient.getUpdates(
+                current.latestUserCanisterUpdates
+            );
             numberOfAsyncCalls++;
 
             avatarId = current.avatarId;
@@ -1216,13 +1239,14 @@ export class OpenChatAgent extends EventTarget {
 
                 communitiesAdded = userResponse.communities.added;
                 userCanisterCommunityUpdates = userResponse.communities.updated;
-                userCanisterCommunityUpdates.forEach((c) => communitiesToCheckForUpdates.add(c.id.communityId));
+                userCanisterCommunityUpdates.forEach((c) =>
+                    communitiesToCheckForUpdates.add(c.id.communityId)
+                );
                 userResponse.communities.removed.forEach((c) => communitiesRemoved.add(c));
 
                 avatarId = applyOptionUpdate(avatarId, userResponse.avatarId);
                 blockedUsers = userResponse.blockedUsers ?? blockedUsers;
-                pinnedChats = userResponse.favouriteChats.chats ?? pinnedChats;
-
+                pinnedChats = this.getMergedPinnedChats(userResponse) ?? pinnedChats;
                 latestUserCanisterUpdates = userResponse.timestamp;
                 anyUpdates = true;
             }
@@ -1236,13 +1260,15 @@ export class OpenChatAgent extends EventTarget {
                 currentCommunityIds,
                 currentGroupChatIds,
                 latestActiveGroupsCheck
-            )
+            );
             numberOfAsyncCalls++;
 
             groupIndexResponse.activeGroups.forEach((g) => groupsToCheckForUpdates.add(g));
             groupIndexResponse.deletedGroups.forEach((g) => groupsRemoved.add(g.id));
 
-            groupIndexResponse.activeCommunities.forEach((c) => communitiesToCheckForUpdates.add(c));
+            groupIndexResponse.activeCommunities.forEach((c) =>
+                communitiesToCheckForUpdates.add(c)
+            );
             groupIndexResponse.deletedCommunities.forEach((c) => groupsRemoved.add(c.id));
 
             latestActiveGroupsCheck = groupIndexResponse.timestamp;
@@ -1276,7 +1302,9 @@ export class OpenChatAgent extends EventTarget {
         const groupUpdatePromiseResults = await waitAll(updatedGroupPromises);
         const communityUpdatePromiseResults = await waitAll(updatedCommunitiesPromises);
 
-        const groupCanisterGroupSummaries = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
+        const groupCanisterGroupSummaries = groupPromiseResults.success.filter(
+            isSuccessfulGroupSummaryResponse
+        );
         const communityCanisterCommunitySummaries = communityPromiseResults.success.filter(
             isSuccessfulCommunitySummaryResponse
         );
@@ -1299,9 +1327,7 @@ export class OpenChatAgent extends EventTarget {
             communityUpdatePromiseResults.errors.length > 0;
 
         const groupChats = mergeGroupChats(groupsAdded, groupCanisterGroupSummaries)
-            .concat(
-                mergeGroupChatUpdates(currentGroups, userCanisterGroupUpdates, groupUpdates)
-            )
+            .concat(mergeGroupChatUpdates(currentGroups, userCanisterGroupUpdates, groupUpdates))
             .filter((g) => !groupsRemoved.has(g.id.groupId));
 
         const communities = mergeCommunities(communitiesAdded, communityCanisterCommunitySummaries)
@@ -1325,11 +1351,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedChats,
         };
 
-        const updatedEvents = getUpdatedEvents(
-            directChatUpdates,
-            groupUpdates,
-            communityUpdates
-        );
+        const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
 
         return await this.hydrateChatState(state).then((s) => {
             if (!anyErrors) {
@@ -1338,7 +1360,9 @@ export class OpenChatAgent extends EventTarget {
 
             const end = Date.now();
             const duration = end - start;
-            console.debug(`GetUpdates completed in ${duration}ms. Number of async calls: ${numberOfAsyncCalls}`);
+            console.debug(
+                `GetUpdates completed in ${duration}ms. Number of async calls: ${numberOfAsyncCalls}`
+            );
 
             return {
                 state: s,

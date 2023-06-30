@@ -1,5 +1,6 @@
 import { chatIdentifiersEqual, type ChatIdentifier } from "openchat-shared";
 import { immutableStore } from "./immutable";
+import { get } from "svelte/store";
 
 export const pinnedChatsStore = createStore();
 
@@ -8,6 +9,9 @@ function createStore() {
     return {
         subscribe: store.subscribe,
         set: store.set,
+        includes: (chatId: ChatIdentifier): boolean => {
+            return get(store).find((id) => chatIdentifiersEqual(id, chatId)) !== undefined;
+        },
         pin: (chatId: ChatIdentifier): void => {
             store.update((ids) => {
                 if (!ids.find((id) => chatIdentifiersEqual(id, chatId))) {

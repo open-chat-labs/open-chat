@@ -9,7 +9,7 @@ import {
 } from "openchat-shared";
 import { createCommunitySpecificObjectStore } from "./dataByCommunityFactory";
 import { createDerivedPropStore } from "./derived";
-import { globalStateStore } from "./global";
+import { chatListScopeStore, globalStateStore } from "./global";
 
 const defaultPermissions: CommunityPermissions = {
     changePermissions: "owner",
@@ -83,11 +83,6 @@ export const communitiesList = derived(communities, ($communities) => {
     return $communities.values();
 });
 
-export const selectedCommunityId = writable<CommunityIdentifier | undefined>({
-    kind: "community",
-    communityId: "1",
-});
-
 export const communityStateStore = createCommunitySpecificObjectStore<CommunitySpecificState>(
     () => ({
         detailsLoaded: false,
@@ -121,10 +116,10 @@ export const currentCommunityRules = createDerivedPropStore<CommunitySpecificSta
 );
 
 export const selectedCommunity = derived(
-    [communities, selectedCommunityId],
-    ([$communities, $selectedCommunityId]) => {
-        if ($selectedCommunityId === undefined) return undefined;
-        return $communities.get($selectedCommunityId);
+    [communities, chatListScopeStore],
+    ([$communities, $chatListScope]) => {
+        if ($chatListScope.kind !== "community") return undefined;
+        return $communities.get($chatListScope.id);
     }
 );
 
@@ -134,6 +129,5 @@ export const selectedCommunityChannels = derived([selectedCommunity], ([$selecte
 });
 
 export function setSelectedCommunity(id: CommunityIdentifier): void {
-    selectedCommunityId.set(id);
-    // communityStateStore.clear(id);
+    chatListScopeStore.set({ kind: "community", id });
 }

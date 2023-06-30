@@ -157,7 +157,7 @@
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
-    $: selectedCommunityId = client.selectedCommunityId;
+    $: chatListScope = client.chatListScope;
     $: currentCommunityRules = client.currentCommunityRules;
 
     onMount(() => {
@@ -262,13 +262,14 @@
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
         if (initialised) {
+            if ("scope" in pathParams) {
+                client.setChatListScope(pathParams.scope);
+            }
             if (pathParams.kind === "home_route") {
-                client.clearSelectedCommunity();
                 client.clearSelectedChat();
                 closeThread();
                 filterChatSpecificRightPanelStates();
             } else if (pathParams.kind === "communities_route") {
-                client.clearSelectedCommunity();
                 client.clearSelectedChat();
                 rightPanelHistory.set([]);
             } else if (pathParams.kind === "selected_community_route") {
@@ -277,13 +278,6 @@
                 pathParams.kind === "global_chat_selected_route" ||
                 pathParams.kind === "selected_channel_route"
             ) {
-                if (pathParams.kind === "global_chat_selected_route") {
-                    client.clearSelectedCommunity();
-                }
-                if (pathParams.kind === "selected_channel_route") {
-                    await client.setSelectedCommunity(pathParams.communityId, false);
-                }
-
                 // first close any open thread
                 closeThread();
 
@@ -680,7 +674,7 @@
     function communityDetails() {
         // what do we do here if the community is not selected
         // do we select it?
-        if ($selectedCommunityId !== undefined) {
+        if ($chatListScope.kind === "community") {
             rightPanelHistory.set([{ kind: "community_details" }]);
         }
     }
@@ -839,12 +833,12 @@
     }
 
     function newGroup(level: Level = "group") {
-        if (level === "channel" && $selectedCommunityId === undefined) {
+        if (level === "channel" && $chatListScope.kind !== "community") {
             return;
         }
         const id: MultiUserChatIdentifier =
-            level === "channel"
-                ? { kind: "channel", communityId: $selectedCommunityId!.communityId, channelId: "" }
+            level === "channel" && $chatListScope.kind === "community"
+                ? { kind: "channel", communityId: $chatListScope.id.communityId, channelId: "" }
                 : { kind: "group_chat", groupId: "" };
         modal = ModalType.NewGroup;
         candidateGroup = {

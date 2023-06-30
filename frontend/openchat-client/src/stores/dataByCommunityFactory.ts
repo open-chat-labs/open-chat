@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { derived, get, Readable, writable, Writable } from "svelte/store";
-import { selectedCommunityId } from "./community";
 import { type CommunityIdentifier, CommunityMap } from "openchat-shared";
+import { chatListScopeStore } from "./global";
 
 function setDataForCommunity<T>(
     store: Writable<CommunityMap<T>>,
@@ -36,10 +36,10 @@ export function createCommunitySpecificObjectStore<T extends Record<string, unkn
 ) {
     const all: Writable<CommunityMap<T>> = writable<CommunityMap<T>>(new CommunityMap());
     const byCommunity: Readable<T> = derived(
-        [selectedCommunityId, all],
-        ([$selectedCommunityId, $all]) => {
-            if ($selectedCommunityId === undefined) return init();
-            return $all.get($selectedCommunityId) ?? init();
+        [chatListScopeStore, all],
+        ([$chatListScope, $all]) => {
+            if ($chatListScope.kind !== "community") return init();
+            return $all.get($chatListScope.id) ?? init();
         }
     );
     return {

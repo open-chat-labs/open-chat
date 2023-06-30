@@ -14,8 +14,6 @@ fn unpin_chat_v2(args: Args) -> Response {
 }
 
 fn unpin_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
-    run_regular_jobs();
-
     let now = state.env.now();
 
     match args.chat {

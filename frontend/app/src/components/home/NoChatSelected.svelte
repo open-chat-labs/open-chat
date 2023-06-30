@@ -2,16 +2,16 @@
     import Button from "../Button.svelte";
     import { _ } from "svelte-i18n";
     import page from "page";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { pushRightPanelHistory } from "../../stores/rightPanel";
 
     const client = getContext<OpenChat>("client");
 
-    $: selectedCommunityId = client.selectedCommunityId;
+    $: chatListScope = client.chatListScope;
 
     function showChannels() {
-        if ($selectedCommunityId) {
+        if ($chatListScope.kind === "community") {
             pushRightPanelHistory({
                 kind: "community_channels",
             });
@@ -19,7 +19,7 @@
     }
 </script>
 
-{#if $selectedCommunityId === undefined}
+{#if $chatListScope.kind !== "community"}
     <div class="wrapper">
         <h2 class="title">{$_("noChatSelected")}</h2>
         <p class="subtitle">{$_("selectAChat")}</p>

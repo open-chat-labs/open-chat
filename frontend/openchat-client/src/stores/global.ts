@@ -2,6 +2,7 @@
 import {
     ChannelSummary,
     ChatIdentifier,
+    ChatListScope,
     ChatMap,
     ChatSummary,
     CommunityIdentifier,
@@ -14,7 +15,7 @@ import {
     ObjectSet,
 } from "openchat-shared";
 import { immutableStore } from "./immutable";
-import { derived } from "svelte/store";
+import { derived, writable } from "svelte/store";
 
 // This will contain all state.
 type GlobalState = {
@@ -33,6 +34,8 @@ export const globalStateStore = immutableStore<GlobalState>({
     groupChats: new ChatMap<GroupChatSummary>(),
     favourites: new ObjectSet<ChatIdentifier>(),
 });
+
+export const chatListScopeStore = writable<ChatListScope>({ kind: "none" });
 
 export const favouritesStore = derived(globalStateStore, (state) => state.favourites);
 

@@ -218,7 +218,7 @@
     $: canDelete =
         (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
         (chatSummary.kind === "group_chat" && chatSummary.membership.role === "none");
-    $: pinned = $pinnedChatsStore.includes(chatSummary.id);
+    $: pinned = pinnedChatsStore.includes(chatSummary.id);
     $: muted = chatSummary.membership.notificationsMuted;
 </script>
 
