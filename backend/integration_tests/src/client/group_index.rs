@@ -13,7 +13,7 @@ generate_update_call!(unfreeze_group);
 
 pub mod happy_path {
     use ic_test_state_machine_client::StateMachine;
-    use types::{GroupMatch, CanisterId};
+    use types::{CanisterId, GroupMatch};
 
     use crate::User;
 
@@ -34,5 +34,5 @@ pub mod happy_path {
         } else {
             panic!("'explore_groups' error: {response:?}");
         }
-    }    
+    }
 }

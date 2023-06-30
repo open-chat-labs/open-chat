@@ -1305,7 +1305,7 @@ impl GroupChatCore {
                 || (public.is_some() && !member.role.can_change_group_visibility())
             {
                 NotAuthorized
-            } else if public.unwrap_or_default() {
+            } else if *public == Some(true) {
                 CannotMakePublic
             } else {
                 Success

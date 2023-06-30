@@ -1,7 +1,7 @@
 use crate::env::ENV;
 use crate::rng::random_string;
 use crate::utils::tick_many;
-use crate::{client, TestEnv, User, CanisterIds};
+use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use group_canister::update_group_v2;
 use ic_test_state_machine_client::StateMachine;
@@ -11,7 +11,11 @@ use types::{ChatId, OptionUpdate::*};
 #[test]
 fn update_group_name_succeeds() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, controller } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
 
     let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller);
 
@@ -48,7 +52,11 @@ fn update_group_name_succeeds() {
 #[test]
 fn update_group_privacy_succeeds() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, controller } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
 
     let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller);
 
@@ -93,7 +101,7 @@ fn update_group(env: &mut StateMachine, user: &User, group_chat_id: ChatId, args
     if !matches!(response, group_canister::update_group_v2::Response::Success) {
         panic!("'update_group_v2' error: {response:?}");
     }
-} 
+}
 
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
@@ -104,11 +112,7 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
 
     tick_many(env, 3);
 
-    TestData {
-        user1,
-        user2,
-        group_id,
-    }
+    TestData { user1, user2, group_id }
 }
 
 struct TestData {
