@@ -1144,7 +1144,7 @@ export class OpenChatAgent extends EventTarget {
     async getUpdates(): Promise<UpdatesResult> {
         const current = await getCachedChats(this.db, this.principal);
 
-        let directChats: DirectChatSummary[] = [];
+        let directChats: DirectChatSummary[];
         let directChatUpdates: DirectChatSummaryUpdates[] = [];
 
         let currentGroups: GroupChatSummary[] = [];
