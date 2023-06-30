@@ -14,6 +14,7 @@ pub struct Args {
     pub avatar: OptionUpdate<Document>,
     pub permissions: Option<OptionalGroupPermissions>,
     pub gate: OptionUpdate<AccessGate>,
+    pub public: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -33,4 +34,6 @@ pub enum Response {
     RulesTooShort(FieldTooShortResult),
     UserSuspended,
     CommunityFrozen,
+    CannotMakeChannelPublic,
+    CannotMakeDefaultChannelPrivate,
 }

@@ -3,13 +3,13 @@ use crate::model::events::CommunityEvent;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::update_community::{Response::*, *};
-use group_index_canister::c2c_update_community;
+use group_index_canister::{c2c_make_community_private, c2c_update_community};
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
     AccessGate, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged,
-    Document, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged, OptionalCommunityPermissions,
-    Timestamped, UserId,
+    Document, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged, GroupVisibilityChanged,
+    OptionalCommunityPermissions, Timestamped, UserId,
 };
 use utils::document_validation::{validate_avatar, validate_banner};
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -26,8 +26,28 @@ async fn update_community(mut args: Args) -> Response {
         Err(response) => return response,
     };
 
-    if prepare_result.is_public && (args.name.is_some() || args.description.is_some() || args.avatar.has_update()) {
-        let c2c_update_group_args = c2c_update_community::Args {
+    let group_index_canister_id = prepare_result.group_index_canister_id;
+
+    if args.public == Some(false) {
+        let c2c_make_community_private_args = c2c_make_community_private::Args {};
+
+        match group_index_canister_c2c_client::c2c_make_community_private(
+            group_index_canister_id,
+            &c2c_make_community_private_args,
+        )
+        .await
+        {
+            Ok(response) => match response {
+                c2c_make_community_private::Response::CommunityNotFound => {
+                    error!(chat_id = %prepare_result.community_id, "Community not found in index");
+                    return InternalError;
+                }
+                c2c_make_community_private::Response::Success => {}
+            },
+            Err(_) => return InternalError,
+        }
+    } else if prepare_result.is_public && (args.name.is_some() || args.description.is_some() || args.avatar.has_update()) {
+        let c2c_update_community_args = c2c_update_community::Args {
             name: prepare_result.name,
             description: prepare_result.description,
             avatar_id: prepare_result.avatar_id,
@@ -35,9 +55,7 @@ async fn update_community(mut args: Args) -> Response {
             gate: prepare_result.gate,
         };
 
-        let group_index_canister_id = prepare_result.group_index_canister_id;
-
-        match group_index_canister_c2c_client::c2c_update_community(group_index_canister_id, &c2c_update_group_args).await {
+        match group_index_canister_c2c_client::c2c_update_community(group_index_canister_id, &c2c_update_community_args).await {
             Ok(response) => match response {
                 c2c_update_community::Response::Success => {}
                 c2c_update_community::Response::NameTaken => return NameTaken,
@@ -126,13 +144,16 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         let permissions = &state.data.permissions;
         if !member.role.can_update_details(permissions)
             || (args.permissions.is_some() && !member.role.can_change_permissions(permissions))
+            || (args.public.is_some() && !member.role.can_change_community_visibility())
         {
             Err(NotAuthorized)
+        } else if args.public.unwrap_or_default() {
+            Err(CannotMakeCommunityPublic)
         } else {
             Ok(PrepareResult {
                 my_user_id: member.user_id,
                 group_index_canister_id: state.data.group_index_canister_id,
-                is_public: state.data.is_public,
+                is_public: args.public.unwrap_or(state.data.is_public),
                 community_id: state.env.canister_id().into(),
                 name: args.name.as_ref().unwrap_or(&state.data.name).clone(),
                 description: args.description.as_ref().unwrap_or(&state.data.description).clone(),
@@ -257,6 +278,22 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
                 })),
                 state.env.now(),
             );
+        }
+    }
+
+    if let Some(public) = args.public {
+        if state.data.is_public != public {
+            state.data.is_public = public;
+
+            let event = GroupVisibilityChanged {
+                now_public: public,
+                changed_by: my_user_id,
+            };
+
+            state
+                .data
+                .events
+                .push_event(CommunityEvent::VisibilityChanged(Box::new(event)), now);
         }
     }
 

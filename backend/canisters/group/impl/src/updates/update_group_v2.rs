@@ -4,7 +4,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;
 use group_chat_core::UpdateResult;
-use group_index_canister::c2c_update_group;
+use group_index_canister::{c2c_make_private, c2c_update_group};
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{AccessGate, CanisterId, ChatId, Document, UserId};
@@ -21,15 +21,28 @@ async fn update_group_v2(mut args: Args) -> Response {
         Err(response) => return response,
     };
 
-    if prepare_result.is_public && (args.name.is_some() || args.description.is_some() || args.avatar.has_update()) {
+    let group_index_canister_id = prepare_result.group_index_canister_id;
+
+    if args.public == Some(false) {
+        let c2c_make_private_args = c2c_make_private::Args {};
+
+        match group_index_canister_c2c_client::c2c_make_private(group_index_canister_id, &c2c_make_private_args).await {
+            Ok(response) => match response {
+                c2c_make_private::Response::ChatNotFound => {
+                    error!(chat_id = %prepare_result.chat_id, "Group not found in index");
+                    return InternalError;
+                }
+                c2c_make_private::Response::Success => {}
+            },
+            Err(_) => return InternalError,
+        }
+    } else if prepare_result.is_public && (args.name.is_some() || args.description.is_some() || args.avatar.has_update()) {
         let c2c_update_group_args = c2c_update_group::Args {
             name: prepare_result.name,
             description: prepare_result.description,
             avatar_id: prepare_result.avatar_id,
             gate: prepare_result.gate,
         };
-
-        let group_index_canister_id = prepare_result.group_index_canister_id;
 
         match group_index_canister_c2c_client::c2c_update_group(group_index_canister_id, &c2c_update_group_args).await {
             Ok(response) => match response {
@@ -84,6 +97,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             &args.rules,
             &args.avatar,
             &args.permissions,
+            &args.public,
         ) {
             UpdateResult::Success => {
                 let avatar_update = args.avatar.as_ref().expand();
@@ -91,7 +105,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 Ok(PrepareResult {
                     my_user_id: member.user_id,
                     group_index_canister_id: state.data.group_index_canister_id,
-                    is_public: state.data.chat.is_public,
+                    is_public: args.public.unwrap_or(state.data.chat.is_public),
                     chat_id: state.env.canister_id().into(),
                     name: args.name.as_ref().unwrap_or(&state.data.chat.name).clone(),
                     description: args.description.as_ref().unwrap_or(&state.data.chat.description).clone(),
@@ -109,6 +123,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             UpdateResult::RulesTooShort(v) => Err(RulesTooShort(v)),
             UpdateResult::RulesTooLong(v) => Err(RulesTooLong(v)),
             UpdateResult::AvatarTooBig(v) => Err(AvatarTooBig(v)),
+            UpdateResult::CannotMakePublic => Err(CannotMakeGroupPublic),
         }
     } else {
         Err(CallerNotInGroup)
@@ -124,6 +139,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
         args.avatar,
         args.permissions,
         args.gate,
+        args.public,
         args.events_ttl,
         state.env.now(),
     );

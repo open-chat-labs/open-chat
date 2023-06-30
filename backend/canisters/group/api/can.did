@@ -229,6 +229,7 @@ type UpdateGroupV2Args =
         permissions: opt OptionalGroupPermissions;
         events_ttl: EventsTimeToLiveUpdate;
         gate: AccessGateUpdate;
+        public: opt bool;
         correlation_id: nat64;
     };
 
@@ -248,6 +249,7 @@ type UpdateGroupV2Response =
         RulesTooShort: FieldTooShortResult;
         UserSuspended;
         ChatFrozen;
+        CannotMakeGroupPublic;
     };
 
 type PinMessageArgs =

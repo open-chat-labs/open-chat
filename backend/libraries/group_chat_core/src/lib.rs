@@ -1225,15 +1225,27 @@ impl GroupChatCore {
         avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
         gate: OptionUpdate<AccessGate>,
+        public: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
     ) -> UpdateResult {
         use UpdateResult::*;
 
-        let result = self.can_update(&user_id, &name, &description, &rules, &avatar, &permissions);
+        let result = self.can_update(&user_id, &name, &description, &rules, &avatar, &permissions, &public);
 
         if matches!(result, Success) {
-            self.do_update(user_id, name, description, rules, avatar, permissions, gate, events_ttl, now);
+            self.do_update(
+                user_id,
+                name,
+                description,
+                rules,
+                avatar,
+                permissions,
+                gate,
+                public,
+                events_ttl,
+                now,
+            );
         }
 
         result
@@ -1247,6 +1259,7 @@ impl GroupChatCore {
         rules: &Option<AccessRules>,
         avatar: &OptionUpdate<Document>,
         permissions: &Option<OptionalGroupPermissions>,
+        public: &Option<bool>,
     ) -> UpdateResult {
         use UpdateResult::*;
 
@@ -1289,8 +1302,11 @@ impl GroupChatCore {
             let group_permissions = &self.permissions;
             if !member.role.can_update_group(group_permissions)
                 || (permissions.is_some() && !member.role.can_change_permissions(group_permissions))
+                || (public.is_some() && !member.role.can_change_group_visibility())
             {
                 NotAuthorized
+            } else if *public == Some(true) {
+                CannotMakePublic
             } else {
                 Success
             }
@@ -1308,6 +1324,7 @@ impl GroupChatCore {
         avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
         gate: OptionUpdate<AccessGate>,
+        public: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
     ) {
@@ -1416,8 +1433,23 @@ impl GroupChatCore {
                 );
             }
         }
+
+        if let Some(public) = public {
+            if self.is_public != public {
+                self.is_public = public;
+
+                let event = GroupVisibilityChanged {
+                    now_public: public,
+                    changed_by: user_id,
+                };
+
+                self.events
+                    .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
+            }
+        }
     }
 
+    // TODO: Delete this when FE starts using the new update method
     pub fn make_private(&mut self, user_id: UserId, now: TimestampMillis) -> MakePrivateResult {
         use MakePrivateResult::*;
 
@@ -1430,6 +1462,7 @@ impl GroupChatCore {
         result
     }
 
+    // TODO: Delete this when FE starts using the new update method
     pub fn can_make_private(&self, user_id: UserId) -> MakePrivateResult {
         use MakePrivateResult::*;
 
@@ -1448,6 +1481,7 @@ impl GroupChatCore {
         }
     }
 
+    // TODO: Delete this when FE starts using the new update method
     pub fn do_make_private(&mut self, user_id: UserId, now: TimestampMillis) {
         self.is_public = false;
 
@@ -1648,6 +1682,7 @@ pub enum UpdateResult {
     RulesTooShort(FieldTooShortResult),
     RulesTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
+    CannotMakePublic,
 }
 
 enum EventsReaderResult<'r> {

@@ -31,6 +31,7 @@ mod set_message_reminder_tests;
 mod setup;
 mod storage;
 mod suspend_user_tests;
+mod update_group_tests;
 mod utils;
 mod wasms;
 
