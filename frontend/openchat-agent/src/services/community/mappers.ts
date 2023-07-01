@@ -7,7 +7,6 @@ import {
     ChannelMembershipUpdates,
     ChannelMessageMatch,
     ChannelSummaryResponse,
-    CommonResponses,
     CommunityCanisterChannelSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
     CommunityDetailsResponse,
@@ -109,31 +108,31 @@ export function addMembersToChannelResponse(
         return addToChannelFailed(candid.Failed);
     }
     if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChat;
+        return { kind: "user_not_in_chat" };
     }
     if ("PartialSuccess" in candid) {
         return addToChannelPartialSuccess(candid.PartialSuccess);
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound;
+        return { kind: "chat_not_found" };
     }
     if ("UserLimitReached" in candid) {
-        return CommonResponses.userLimitReached;
+        return { kind: "user_limit_reached" };
     }
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return { kind: "not_authorized" };
     }
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return { kind: "success" };
     }
     if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
+        return { kind: "user_not_in_community" };
     }
     if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
+        return { kind: "user_suspended" };
     }
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return { kind: "community_frozen" };
     }
     throw new UnsupportedValueError(
         "Unexpected ApiAddMembersToChannelResponse type received",
@@ -196,28 +195,28 @@ function addToChannelPartialSuccess(
 
 export function blockUserResponse(candid: ApiBlockUserResponse): BlockCommunityUserResponse {
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return { kind: "not_authorized" };
     }
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return { kind: "success" };
     }
     if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
+        return { kind: "user_not_in_community" };
     }
     if ("CommunityNotPublic" in candid) {
-        return CommonResponses.communityNotPublic;
+        return { kind: "community_not_public" };
     }
     if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
+        return { kind: "user_suspended" };
     }
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return { kind: "community_frozen" };
     }
     if ("TargetUserNotInCommunity" in candid) {
-        return CommonResponses.targetUserNotInCommunity;
+        return { kind: "target_user_not_in_community" };
     }
     if ("InternalError" in candid) {
-        return CommonResponses.internalError;
+        return { kind: "internal_error" };
     }
     if ("CannotBlockSelf" in candid) {
         return { kind: "cannot_block_self" };
@@ -241,16 +240,16 @@ export function disableInviteCodeResponse(
     candid: ApiDisableInviteCodeResponse
 ): DisableCommunityInviteCodeResponse {
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return { kind: "not_authorized" };
     }
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return { kind: "success" };
     }
     if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
+        return { kind: "user_suspended" };
     }
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return { kind: "community_frozen" };
     }
     throw new UnsupportedValueError(
         "Unexpected ApiDisableInviteCodeResponse type received",
@@ -262,29 +261,29 @@ export function enableInviteCodeResponse(
     candid: ApiEnableInviteCodeResponse
 ): EnableCommunityInviteCodeResponse {
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return { kind: "not_authorized" };
     }
     if ("Success" in candid) {
         return { kind: "success", code: candid.Success.code };
     }
     if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
+        return { kind: "user_suspended" };
     }
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return { kind: "community_frozen" };
     }
     throw new UnsupportedValueError("Unexpected ApiEnableInviteCodeResponse type received", candid);
 }
 
 export function inviteCodeResponse(candid: ApiInviteCodeResponse): CommunityInviteCodeResponse {
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return { kind: "not_authorized" };
     }
     if ("Success" in candid) {
         return { kind: "success", code: optional(candid.Success.code, identity) };
     }
     if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
+        return { kind: "user_not_in_community" };
     }
     throw new UnsupportedValueError("Unexpected ApiEnableInviteCodeResponse type received", candid);
 }
@@ -303,28 +302,28 @@ export function joinChannelResponse(
         return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound;
+        return { kind: "chat_not_found" };
     }
     if ("UserLimitReached" in candid) {
-        return CommonResponses.userLimitReached;
+        return { kind: "user_limit_reached" };
     }
     if ("Success" in candid) {
         return { kind: "success", channel: communityChannelSummary(candid.Success, communityId) };
     }
     if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
+        return { kind: "user_not_in_community" };
     }
     if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
+        return { kind: "user_suspended" };
     }
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return { kind: "community_frozen" };
     }
     if ("InternalError" in candid) {
-        return CommonResponses.internalError;
+        return { kind: "internal_error" };
     }
     if ("UserBlocked" in candid) {
-        return CommonResponses.userBlocked;
+        return { kind: "user_blocked" };
     }
     throw new UnsupportedValueError("Unexpected ApiJoinChannelResponse type received", candid);
 }
@@ -337,25 +336,25 @@ export function makeCommunityPrivateResponse(
     candid: ApiMakePrivateResponse
 ): MakeCommunityPrivateResponse {
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return { kind: "not_authorized" };
     }
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return { kind: "success" };
     }
     if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
+        return { kind: "user_not_in_community" };
     }
     if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
+        return { kind: "user_suspended" };
     }
     if ("AlreadyPrivate" in candid) {
         return { kind: "community_already_private" };
     }
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return { kind: "community_frozen" };
     }
     if ("InternalError" in candid) {
-        return CommonResponses.internalError;
+        return { kind: "internal_error" };
     }
     throw new UnsupportedValueError("Unexpected ApiMakePrivateResponse type received", candid);
 }
@@ -410,10 +409,10 @@ export function removeMemberResponse(
     candid: ApiRemoveMemberResponse
 ): RemoveCommunityMemberResponse {
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return { kind: "success" };
     } else {
         console.warn("RemoveCommunityMember failed with", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -421,10 +420,10 @@ export function removeMemberFromChannelResponse(
     candid: ApiRemoveMemberFromChannelResponse
 ): RemoveChannelMemberResponse {
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return { kind: "success" };
     } else {
         console.warn("RemoveChannelMember failed with", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -436,7 +435,7 @@ export function searchChannelResponse(candid: ApiSearchChannelResponse): SearchC
         };
     } else {
         console.warn("SearchChannel failed with", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -487,7 +486,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
         return { kind: "chat_frozen" };
     }
 
-    return CommonResponses.failure;
+    return { kind: "failure" };
 }
 
 export function exploreChannelsResponse(
@@ -526,7 +525,7 @@ export function communityChannelSummaryResponse(
         return communityChannelSummary(candid.Success, communityId);
     } else {
         console.warn("CommunityChannelSummary failed with", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -535,7 +534,7 @@ export function summaryResponse(candid: ApiSummaryResponse): CommunitySummaryRes
         return communitySummary(candid.Success);
     } else {
         console.warn("CommunitySummary failed with", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -546,10 +545,10 @@ export function summaryUpdatesResponse(
         return communitySummaryUpdates(candid.Success);
     }
     if ("SuccessNoUpdates" in candid) {
-        return CommonResponses.successNoUpdates;
+        return { kind: "success_no_updates" };
     }
     if ("PrivateCommunity" in candid) {
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
     throw new UnsupportedValueError("invalid ApiSummaryUpdatesResponse recieved", candid);
 }
@@ -648,10 +647,10 @@ export function toggleMuteChannelNotificationsResponse(
     candid: ApiToggleMuteChannelNotificationsResponse
 ): ToggleMuteChannelNotificationsResponse {
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return { kind: "success" };
     } else {
         console.warn("ToggleMuteChannelNotifications failed with", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -659,19 +658,19 @@ export function toggleMuteNotificationsResponse(
     candid: ApiToggleMuteNotificationsResponse
 ): ToggleMuteCommunityNotificationsResponse {
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return { kind: "success" };
     } else {
         console.warn("ToggleMuteCommunityNotifications failed with", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
 export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockCommunityUserResponse {
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return { kind: "success" };
     } else {
         console.warn("UnblockCommunityUser failed with", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -679,10 +678,10 @@ export function updateCommunityResponse(
     candid: ApiUpdateCommunityResponse
 ): UpdateCommunityResponse {
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return { kind: "success" };
     } else {
         console.warn("UpdateCommunity failed with", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -793,6 +792,6 @@ export function communityDetailsUpdatesResponse(
         };
     } else {
         console.warn("Unexpected ApiSelectedUpdatesResponse type received", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }

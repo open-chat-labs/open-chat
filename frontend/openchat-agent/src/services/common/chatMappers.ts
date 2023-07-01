@@ -117,7 +117,6 @@ import {
     ChatIdentifier,
     chatIdentifiersEqual,
     AddRemoveReactionResponse,
-    CommonResponses,
     chatIdentifierToString,
     emptyChatMetrics,
     ChannelSummary,
@@ -745,14 +744,11 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
     };
 }
 
-function replySourceContext([chatId, maybeThreadRoot]: [
-    ApiChat,
-    [] | [number]
-]): MessageContext {
+function replySourceContext([chatId, maybeThreadRoot]: [ApiChat, [] | [number]]): MessageContext {
     if ("Direct" in chatId) {
         return {
             chatId: { kind: "direct_chat", userId: chatId.Direct.toString() },
-            threadRootMessageIndex: undefined
+            threadRootMessageIndex: undefined,
         };
     }
     if ("Group" in chatId) {
@@ -1521,12 +1517,12 @@ export function addRemoveReactionResponse(
         | ApiRemoveChannelReactionResponse
 ): AddRemoveReactionResponse {
     if ("Success" in candid || "SuccessV2" in candid) {
-        return CommonResponses.success;
+        return { kind: "success" };
     } else if ("NoChange" in candid) {
-        return CommonResponses.success;
+        return { kind: "success" };
     } else {
         console.warn("AddRemoveReaction failed with: ", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -1701,11 +1697,11 @@ export function createGroupResponse(
     }
 
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return { kind: "not_authorized" };
     }
 
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return { kind: "community_frozen" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
@@ -1732,10 +1728,10 @@ export function pinMessageResponse(
             timestamp: candid.Success.timestamp,
         };
     } else if ("NoChange" in candid) {
-        return CommonResponses.noChange;
+        return { kind: "no_change" };
     } else {
         console.warn("PinMessageResponse failed with: ", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -1804,7 +1800,7 @@ export function groupDetailsUpdatesResponse(
         };
     } else {
         console.warn("Unexpected ApiSelectedUpdatesResponse type received", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -1883,7 +1879,7 @@ export function deletedMessageResponse(
         };
     } else {
         console.warn("DeletedMessageResponse failed with: ", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -1892,7 +1888,7 @@ export function undeleteMessageResponse(
 ): UndeleteMessageResponse {
     if ("Success" in candid) {
         if (candid.Success.messages.length == 0) {
-            return CommonResponses.failure;
+            return { kind: "failure" };
         } else {
             return {
                 kind: "success",
@@ -1901,7 +1897,7 @@ export function undeleteMessageResponse(
         }
     } else {
         console.warn("UndeleteMessageResponse failed with: ", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 
@@ -1923,7 +1919,7 @@ export function threadPreviewsResponse(
         );
     }
     console.warn("ThreadPreviewsResponse failed with: ", candid);
-    return CommonResponses.failure;
+    return { kind: "failure" };
 }
 
 export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview): ThreadPreview {

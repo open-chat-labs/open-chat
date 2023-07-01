@@ -1168,7 +1168,6 @@ export class OpenChatAgent extends EventTarget {
         let numberOfAsyncCalls = 0;
 
         const current = await getCachedChats(this.db, this.principal);
-        console.log("xxx one", current);
 
         let directChats: DirectChatSummary[];
         let directChatUpdates: DirectChatSummaryUpdates[] = [];
@@ -1364,81 +1363,23 @@ export class OpenChatAgent extends EventTarget {
             `GetUpdates completed in ${duration}ms. Number of async calls: ${numberOfAsyncCalls}`
         );
 
-        console.log("xxx: state", state, anyErrors);
+        return await this.hydrateChatState(state).then((s) => {
+            if (!anyErrors) {
+                // setCachedChats(this.db, this.principal, s, updatedEvents);
+            }
 
-        try {
-            console.log("xxx: one");
-            structuredClone(state.blockedUsers);
-            console.log("xxx: two");
-            structuredClone(state.pinnedChats);
-            console.log("xxx: three");
-            structuredClone(state.communities);
-            console.log("xxx: four");
-            structuredClone(state.groupChats);
-            console.log("xxx: five");
-            const totalSize = state.directChats.reduce((size, dc) => {
-                const serialised = JSON.stringify(dc);
-                console.log("xxx: direct chat", serialised.length, serialised);
-                return size + serialised.length;
-            }, 0);
-            console.log("xxx: total size", totalSize);
-            structuredClone(state.avatarId);
-            console.log("xxx: seven");
-            structuredClone(state.latestActiveGroupsCheck);
-            console.log("xxx: eight");
-            structuredClone(state.latestUserCanisterUpdates);
-            console.log("xxx: 9");
-            structuredClone(state.directChats.slice(10, 27));
-            console.log("xxx: 10");
-            structuredClone(state.directChats.slice(10, 28));
-            console.log("xxx: 11");
-            structuredClone(state.directChats.slice(10, 29));
-            console.log("xxx: 12");
-            structuredClone(state.directChats.slice(10, 30));
-            console.log("xxx: 13");
-            structuredClone(state.directChats.slice(10, 31));
-            console.log("xxx: 14");
-            // structuredClone(state.directChats.slice(1, 18));
-            // console.log("xxx: 15");
-            // structuredClone(state.directChats.slice(2, 19));
-            // console.log("xxx: 16");
-            // structuredClone(state.directChats.slice(2, 20));
-            // console.log("xxx: 17");
-            // structuredClone(state.directChats.slice(1, 21));
-            // console.log("xxx: 18");
-            // structuredClone(state.directChats.slice(1, 22));
-            // console.log("xxx: 19");
-            structuredClone(state);
-            console.log("xxx: cloned state");
-            structuredClone(updatedEvents.toRecord());
-            console.log("xxx: cloned updated events");
-        } catch (err) {
-            console.log("xxx: err", err);
-        }
+            const end = Date.now();
+            const duration = end - start;
+            console.debug(
+                `GetUpdates completed in ${duration}ms. Number of async calls: ${numberOfAsyncCalls}`
+            );
 
-        return {
-            state,
-            updatedEvents: updatedEvents.toRecord(),
-            anyUpdates,
-        };
-
-        // return await this.hydrateChatState(state).then((s) => {
-        //     if (!anyErrors) {
-        //         setCachedChats(this.db, this.principal, s, updatedEvents);
-        //     }
-
-        //     const end = Date.now();
-        //     const duration = end - start;
-        //     console.debug(
-        //         `GetUpdates completed in ${duration}ms. Number of async calls: ${numberOfAsyncCalls}`
-        //     );
-
-        //     return {
-        //         state: s,
-        //         updatedEvents: updatedEvents.toRecord(),
-        //         anyUpdates,
-        //     };
-        // });
+            return {
+                state: s,
+                updatedEvents: updatedEvents.toRecord(),
+                anyUpdates,
+            };
+        });
     }
 
     async getCommunitySummary(communityId: string): Promise<CommunitySummaryResponse> {

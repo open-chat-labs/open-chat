@@ -1167,16 +1167,18 @@ export type GroupChatSummary = DataContent &
         dateReadPinned: bigint | undefined;
     };
 
-export const nullMembership: ChatMembership = {
-    joined: BigInt(0),
-    role: "none",
-    mentions: [],
-    latestThreads: [],
-    myMetrics: emptyChatMetrics(),
-    notificationsMuted: false,
-    readByMeUpTo: undefined,
-    archived: false,
-};
+export function nullMembership(): ChatMembership {
+    return {
+        joined: BigInt(0),
+        role: "none",
+        mentions: [],
+        latestThreads: [],
+        myMetrics: emptyChatMetrics(),
+        notificationsMuted: false,
+        readByMeUpTo: undefined,
+        archived: false,
+    };
+}
 
 export type ChatMembership = {
     joined: bigint;

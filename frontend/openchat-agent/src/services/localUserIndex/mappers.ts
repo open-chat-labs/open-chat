@@ -1,5 +1,4 @@
 import {
-    CommonResponses,
     InviteUsersResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
@@ -100,7 +99,7 @@ export function joinCommunityResponse(candid: ApiJoinCommunityResponse): JoinCom
         return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
     } else {
         console.warn("Join community failed with: ", candid);
-        return CommonResponses.failure;
+        return { kind: "failure" };
     }
 }
 

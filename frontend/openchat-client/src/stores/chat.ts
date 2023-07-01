@@ -539,7 +539,7 @@ export function createDirectChat(chatId: DirectChatIdentifier): void {
             dateCreated: BigInt(Date.now()),
             metrics: emptyChatMetrics(),
             membership: {
-                ...nullMembership,
+                ...nullMembership(),
                 role: "owner",
             },
         });
