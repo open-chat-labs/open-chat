@@ -303,44 +303,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.threadRootMessageIndex,
                         payload.latestClientMainEventIndex
                     )
-                    .then((response) => {
-                        try {
-                            if (response !== "events_failed") {
-                                console.log("xxx: 1", correlationId, response);
-                                response.events.forEach((e, i) => {
-                                    try {
-                                        console.error("xxx: cloning event", i);
-                                        structuredClone(e);
-                                    } catch (err) {
-                                        console.error("xxx: error cloning event", e, i);
-                                    }
-                                });
-                                structuredClone(response.events.slice(0, 10));
-                                console.log("xxx: 2");
-                                structuredClone(response.events.slice(0, 20));
-                                console.log("xxx: 3");
-                                structuredClone(response.events.slice(0, 22));
-                                console.log("xxx: 4");
-                                structuredClone(response.events.slice(0, 24));
-                                console.log("xxx: 5");
-                                structuredClone(response.events.slice(0, 26));
-                                console.log("xxx: 6");
-                                structuredClone(response.events.slice(0, 28));
-                                console.log("xxx: 7");
-                                structuredClone(response.events.slice(0, 30));
-                                console.log("xxx: 8");
-                                structuredClone(response.events.slice(0, 50));
-                                console.log("xxx: 9");
-                                structuredClone(response.events.slice(0, 60));
-                                console.log("xxx: 10");
-                            }
-                        } catch (e) {
-                            console.error("xxx: events ", e);
-                        }
-                        return sendResponse(correlationId, {
+                    .then((response) =>
+                        sendResponse(correlationId, {
                             response,
-                        });
-                    })
+                        })
+                    )
                     .catch(sendError(correlationId, payload));
                 break;
 

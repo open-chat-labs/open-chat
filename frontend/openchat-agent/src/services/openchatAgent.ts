@@ -6,7 +6,7 @@ import {
     initDb,
     loadFailedMessages,
     removeFailedMessage,
-    // setCachedChats,
+    setCachedChats,
     setCachedMessageIfNotExists,
 } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
@@ -850,7 +850,7 @@ export class OpenChatAgent extends EventTarget {
             ) {
                 result.insert(
                     ev.event.repliesTo.sourceContext ?? {
-                        chatId: defaultChatId,
+                        chatId: { ...defaultChatId },
                         threadRootMessageIndex,
                     },
                     ev.event.repliesTo.eventIndex
@@ -940,7 +940,7 @@ export class OpenChatAgent extends EventTarget {
             let rehydratedReplyContext = undefined;
             if (ev.event.repliesTo && ev.event.repliesTo.kind === "raw_reply_context") {
                 const messageContext = ev.event.repliesTo.sourceContext ?? {
-                    chatId: defaultChatId,
+                    chatId: { ...defaultChatId },
                     threadRootMessageIndex,
                 };
                 const messageEvents = missingReplies.lookup(messageContext);
@@ -957,14 +957,14 @@ export class OpenChatAgent extends EventTarget {
                         edited: msg.edited,
                         isThreadRoot: msg.thread !== undefined,
                         sourceContext: ev.event.repliesTo.sourceContext ?? {
-                            chatId: defaultChatId,
+                            chatId: { ...defaultChatId },
                         },
                     };
                 } else {
                     this._logger.log(
                         "Reply context not found, this should only happen if we failed to load the reply context message",
                         {
-                            chatId: defaultChatId,
+                            chatId: { ...defaultChatId },
                             messageContext,
                             messageEvents,
                             repliesTo: ev.event.repliesTo,
@@ -1365,7 +1365,7 @@ export class OpenChatAgent extends EventTarget {
 
         return await this.hydrateChatState(state).then((s) => {
             if (!anyErrors) {
-                // setCachedChats(this.db, this.principal, s, updatedEvents);
+                setCachedChats(this.db, this.principal, s, updatedEvents);
             }
 
             const end = Date.now();
