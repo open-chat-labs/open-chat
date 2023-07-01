@@ -210,7 +210,7 @@ export function undeleteMessageResponse(
 ): UndeleteMessageResponse {
     if ("Success" in candid) {
         if (candid.Success.messages.length == 0) {
-            return CommonResponses.failure;
+            return CommonResponses.failure();
         } else {
             return {
                 kind: "success",
@@ -219,7 +219,7 @@ export function undeleteMessageResponse(
         }
     } else {
         console.warn("Unexpected ApiUndeleteMessageResponse type received", candid);
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
 }
 
@@ -416,7 +416,7 @@ export function createCommunityResponse(
         return { kind: "name_taken" };
     } else {
         console.warn("CreateCommunit failed with", candid);
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
 }
 
@@ -839,7 +839,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
         dateCreated: candid.date_created,
         metrics: chatMetrics(candid.metrics),
         membership: {
-            ...nullMembership,
+            ...nullMembership(),
             role: "owner",
             myMetrics: chatMetrics(candid.my_metrics),
             notificationsMuted: candid.notifications_muted,

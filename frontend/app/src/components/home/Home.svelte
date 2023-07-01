@@ -867,7 +867,7 @@
             gate: { kind: "no_gate" },
             level,
             membership: {
-                ...nullMembership,
+                ...nullMembership(),
                 role: "owner",
             },
         };
