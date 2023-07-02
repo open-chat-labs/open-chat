@@ -229,4 +229,9 @@
             margin: 0 $sp3 $sp3 $sp3;
         }
     }
+
+    .user-list {
+        height: 100%;
+        @include nice-scrollbar();
+    }
 </style>
