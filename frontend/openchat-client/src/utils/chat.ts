@@ -693,7 +693,7 @@ export function groupChatFromCandidate(
         gate: candidate.gate,
         level: "group",
         membership: {
-            ...nullMembership,
+            ...nullMembership(),
             role: "owner",
         },
     } as MultiUserChat;
