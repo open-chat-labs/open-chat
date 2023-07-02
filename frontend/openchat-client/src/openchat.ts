@@ -3454,12 +3454,10 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     async threadPreviews(
-        chatId: ChatIdentifier | undefined,
+        _chatId: ChatIdentifier | undefined,
         threadsByChat: ChatMap<ThreadSyncDetails[]>,
         serverChatSummaries: ChatMap<ChatSummary>
     ): Promise<ThreadPreview[]> {
-        if (chatId === undefined) return [];
-
         const request: ChatMap<[ThreadSyncDetails[], number | undefined]> = threadsByChat
             .entries()
             .reduce((map, [chatId, threads]) => {
