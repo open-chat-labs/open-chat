@@ -18,6 +18,7 @@
     import MembersSelectionButton from "../MembersSelectionButton.svelte";
     import InvitedUser from "./InvitedUser.svelte";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
+    import { menuCloser } from "../../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -195,7 +196,7 @@
             on:openUserProfile={openUserProfile} />
     </VirtualList>
 {:else if view === "blocked"}
-    <div class="user-list">
+    <div use:menuCloser class="user-list">
         {#each blockedUsers as user}
             <BlockedUser
                 {user}
@@ -206,7 +207,7 @@
         {/each}
     </div>
 {:else if view === "invited"}
-    <div class="user-list">
+    <div use:menuCloser class="user-list">
         {#each invitedUsers as user}
             <InvitedUser
                 {user}
