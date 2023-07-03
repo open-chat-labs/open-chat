@@ -1,5 +1,5 @@
 {
-  "dfx": "0.14.0",
+  "dfx": "0.14.2",
   "canisters": {
     "user_index": {
       "type": "custom",
