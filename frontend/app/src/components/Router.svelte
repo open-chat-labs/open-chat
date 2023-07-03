@@ -18,7 +18,7 @@
         selectedChannelRoute,
         chatListRoute,
     } from "../routes";
-    import { communitiesEnabled } from "utils/features";
+    import { communitiesEnabled } from "../utils/features";
 
     let route: typeof SvelteComponent | undefined = undefined;
 
