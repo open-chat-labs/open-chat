@@ -1,12 +1,13 @@
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
+use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
 use proposals_bot_canister::post_upgrade::Args;
 use tracing::info;
+use types::CanisterId;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -25,4 +26,23 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    mutate_state(|state| {
+        let oc = CanisterId::from_text("2jvtu-yqaaa-aaaaq-aaama-cai").unwrap();
+        for proposal_id in 1..=213 {
+            state.data.finished_proposals_to_process.push_back((oc, proposal_id));
+        }
+
+        let sns1 = CanisterId::from_text("zqfso-syaaa-aaaaq-aaafq-cai").unwrap();
+        for proposal_id in 1..=93 {
+            state.data.finished_proposals_to_process.push_back((sns1, proposal_id));
+        }
+
+        let kinic = CanisterId::from_text("74ncn-fqaaa-aaaaq-aaasa-cai").unwrap();
+        for proposal_id in 1..=11 {
+            state.data.finished_proposals_to_process.push_back((kinic, proposal_id));
+        }
+
+        crate::jobs::update_finished_proposals::start_job_if_required(state);
+    });
 }
