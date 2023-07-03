@@ -125,10 +125,8 @@
     }
 
     function deleteDirectChat() {
-        if (chatSummary.id.kind === "direct_chat") {
-            dispatch("deleteDirectChat", chatSummary.id);
-            delOffset = -60;
-        }
+        dispatch("deleteDirectChat", chatSummary.id);
+        delOffset = -60;
     }
 
     $: chat = normaliseChatSummary($now, chatSummary, $typersByContext);

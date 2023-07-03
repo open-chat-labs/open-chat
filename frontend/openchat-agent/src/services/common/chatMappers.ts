@@ -1925,7 +1925,7 @@ export function threadPreviewsResponse(
 
 export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview): ThreadPreview {
     return {
-        chatId,
+        chatId: { ...chatId },
         latestReplies: candid.latest_replies
             .map(messageEvent)
             .sort((e1, e2) => e1.index - e2.index),

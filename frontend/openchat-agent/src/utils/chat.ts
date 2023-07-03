@@ -303,8 +303,7 @@ export function mergeDirectChatUpdates(
 
         return {
             kind: "direct_chat",
-            id: c.them,
-            chatId: c.them,
+            id: c.id,
             them: c.them,
             readByThemUpTo: u.readByThemUpTo ?? c.readByThemUpTo,
             dateCreated: c.dateCreated,

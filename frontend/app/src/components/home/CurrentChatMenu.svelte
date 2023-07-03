@@ -30,6 +30,7 @@
     import { communitiesEnabled } from "../../utils/features";
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
+    import { interpolateLevel } from "../../utils/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -202,7 +203,7 @@
 
     {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
         <span on:click={showGroupDetails}>
-            <HoverIcon title={$_("groupDetails")}>
+            <HoverIcon title={interpolateLevel("groupDetails", selectedChatSummary.level)}>
                 <FileDocument
                     size={$iconSize}
                     color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
@@ -287,7 +288,9 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("groupDetails")}</div>
+                            <div slot="text">
+                                {interpolateLevel("groupDetails", selectedChatSummary.level)}
+                            </div>
                         </MenuItem>
                         <MenuItem on:click={showGroupMembers}>
                             <AccountMultiple

@@ -569,7 +569,7 @@
         return Promise.resolve();
     }
 
-    function deleteDirectChat(ev: CustomEvent<DirectChatIdentifier>) {
+    function deleteDirectChat(ev: CustomEvent<ChatIdentifier>) {
         if ($pathParams.kind === "global_chat_selected_route" && ev.detail === $pathParams.chatId) {
             page("/");
         }

@@ -224,7 +224,7 @@
                         {#await groupSearchResults then resp}
                             {#if resp.kind === "success" && resp.matches.length > 0}
                                 <h3 class="search-subtitle">{$_("publicGroups")}</h3>
-                                {#each resp.matches as group, i (group.chatId)}
+                                {#each resp.matches as group, i (group.chatId.groupId)}
                                     <SearchResult
                                         index={i}
                                         avatarUrl={client.groupAvatarUrl(group)}
