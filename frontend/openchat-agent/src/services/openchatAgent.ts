@@ -1357,23 +1357,21 @@ export class OpenChatAgent extends EventTarget {
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
 
-        return await this.hydrateChatState(state).then((s) => {
-            if (!anyErrors) {
-                setCachedChats(this.db, this.principal, s, updatedEvents);
-            }
+        if (!anyErrors) {
+            setCachedChats(this.db, this.principal, state, updatedEvents);
+        }
 
-            const end = Date.now();
-            const duration = end - start;
-            console.debug(
-                `GetUpdates completed in ${duration}ms. Number of async calls: ${numberOfAsyncCalls}`
-            );
+        const end = Date.now();
+        const duration = end - start;
+        console.debug(
+            `GetUpdates completed in ${duration}ms. Number of async calls: ${numberOfAsyncCalls}`
+        );
 
-            return {
-                state: s,
-                updatedEvents: updatedEvents.toMap(),
-                anyUpdates,
-            };
-        });
+        return {
+            state: this.hydrateChatState(state),
+            updatedEvents: updatedEvents.toMap(),
+            anyUpdates,
+        };
     }
 
     async getCommunitySummary(communityId: string): Promise<CommunitySummaryResponse> {
@@ -1384,26 +1382,19 @@ export class OpenChatAgent extends EventTarget {
         return resp;
     }
 
-    async hydrateChatState(state: ChatStateFull): Promise<ChatStateFull> {
-        const directChatPromises = state.directChats.map((c) => this.hydrateChatSummary(c));
-        const groupChatPromises = state.groupChats.map((c) => this.hydrateChatSummary(c));
-        const communitiesPromise = state.communities.map((c) => this.hydrateCommunity(c));
-
-        const directChats = await Promise.all(directChatPromises);
-        const groupChats = await Promise.all(groupChatPromises);
-        const communities = await Promise.all(communitiesPromise);
+    hydrateChatState(state: ChatStateFull): ChatStateFull {
+        const groupChats = state.groupChats.map((c) => this.hydrateChatSummary(c));
+        const communities = state.communities.map((c) => this.hydrateCommunity(c));
 
         return {
             ...state,
-            directChats,
             groupChats,
             communities,
         };
     }
 
-    async hydrateCommunity(community: CommunitySummary): Promise<CommunitySummary> {
-        const channelPromises = community.channels.map((c) => this.hydrateChatSummary(c));
-        const channels = await Promise.all(channelPromises);
+    hydrateCommunity(community: CommunitySummary): CommunitySummary {
+        const channels = community.channels.map((c) => this.hydrateChatSummary(c));
         return {
             ...community,
             channels,
@@ -1416,25 +1407,12 @@ export class OpenChatAgent extends EventTarget {
         };
     }
 
-    async hydrateChatSummary<T extends ChatSummary>(chat: T): Promise<T> {
-        const latestMessage =
-            chat.latestMessage !== undefined
-                ? await this.rehydrateMessage(
-                      chat.id,
-                      chat.latestMessage,
-                      undefined,
-                      chat.latestEventIndex
-                  )
-                : undefined;
-
+    hydrateChatSummary<T extends ChatSummary>(chat: T): T {
         switch (chat.kind) {
             case "direct_chat":
-                return { ...chat, latestMessage };
+                return chat;
             default:
-                return {
-                    ...(this.rehydrateDataContent(chat, "avatar") as T),
-                    latestMessage,
-                };
+                return this.rehydrateDataContent(chat, "avatar") as T;
         }
     }
 
