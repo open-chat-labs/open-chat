@@ -1,6 +1,5 @@
 <script lang="ts">
     import { iconSize } from "../../../stores/iconSize";
-    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import Home from "svelte-material-icons/Home.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
@@ -21,10 +20,6 @@
     const dispatch = createEventDispatcher();
 
     $: canExtendDiamond = client.canExtendDiamond;
-
-    function newGroup() {
-        dispatch("newGroup");
-    }
 </script>
 
 <Menu>
@@ -36,12 +31,6 @@
         <span class="diamond-icon" slot="icon">💎</span>
         <span slot="text">{$canExtendDiamond ? $_("upgrade.extend") : $_("upgrade.diamond")}</span>
     </MenuItem>
-    {#if !client.isReadOnly()}
-        <MenuItem on:click={newGroup}>
-            <AccountMultiplePlus size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">{$_("newGroup")}</span>
-        </MenuItem>
-    {/if}
     <MenuItem separator />
     <MenuItem on:click={() => page("/home")}>
         <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />

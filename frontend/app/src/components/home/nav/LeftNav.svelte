@@ -85,7 +85,7 @@
                         </HoverIcon>
                     </span>
                     <span slot="menu">
-                        <MainMenu on:newGroup on:halloffame on:logout on:upgrade />
+                        <MainMenu on:halloffame on:logout on:upgrade />
                     </span>
                 </MenuIcon>
             </div>
