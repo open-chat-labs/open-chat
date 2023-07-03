@@ -288,7 +288,9 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("groupDetails")}</div>
+                            <div slot="text">
+                                {interpolateLevel("groupDetails", selectedChatSummary.level)}
+                            </div>
                         </MenuItem>
                         <MenuItem on:click={showGroupMembers}>
                             <AccountMultiple
