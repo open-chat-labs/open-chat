@@ -2,13 +2,15 @@ use crate::model::nervous_systems::NervousSystems;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::cell::RefCell;
-use std::collections::HashSet;
-use types::{CanisterId, Cycles, MultiUserChat, ProposalId, TimestampMillis, Timestamped, Version};
+use std::collections::{HashSet, VecDeque};
+use types::{CanisterId, Cycles, MessageId, MultiUserChat, ProposalId, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 
 mod governance_clients;
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -45,6 +47,7 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             nervous_systems: self.data.nervous_systems.metrics(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
+            finished_proposals_to_process: self.data.finished_proposals_to_process.iter().copied().collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -63,6 +66,8 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
+    #[serde(default)]
+    pub finished_proposals_to_process: VecDeque<(CanisterId, ProposalId)>,
     pub test_mode: bool,
 }
 
@@ -82,6 +87,7 @@ impl Data {
             group_index_canister_id,
             cycles_dispenser_canister_id,
             nns_governance_canister_id,
+            finished_proposals_to_process: VecDeque::new(),
             test_mode,
         }
     }
@@ -96,6 +102,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub nervous_systems: Vec<NervousSystemMetrics>,
     pub governance_principals: Vec<Principal>,
+    pub finished_proposals_to_process: Vec<(CanisterId, ProposalId)>,
     pub canister_ids: CanisterIds,
 }
 
@@ -118,4 +125,16 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub nns_governance: CanisterId,
+}
+
+// Deterministically generate each MessageId so that there is never any chance of a proposal
+// being sent twice
+fn generate_message_id(governance_canister_id: CanisterId, proposal_id: ProposalId) -> MessageId {
+    let mut hash = Sha256::new();
+    hash.update(b"proposals_bot");
+    hash.update(governance_canister_id.as_slice());
+    hash.update(proposal_id.to_ne_bytes());
+    let array32: [u8; 32] = hash.finalize().try_into().unwrap();
+    let array16: [u8; 16] = array32[..16].try_into().unwrap();
+    u128::from_ne_bytes(array16).into()
 }
