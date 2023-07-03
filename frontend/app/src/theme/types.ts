@@ -20,6 +20,7 @@ export interface Theme {
     accentDarker: string;
     disabledTxt: string;
     primary: string;
+    code: string;
 
     placeholder: string;
 

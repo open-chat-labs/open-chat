@@ -31,6 +31,7 @@ export function lightTheme(): Theme {
         disabledTxt: txtLight,
         placeholder: txtLight,
         primary,
+        code: orangeAccent,
 
         unread: {
             mute: "rgba(0,0,0,0.1",

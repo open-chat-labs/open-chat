@@ -42,6 +42,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         accent: "#ff2e2e",
         disabledTxt: txtLow,
         primary,
+        code: "#f36D28",
 
         unread: {
             mute: "rgba(255,255,255,0.3",
