@@ -145,7 +145,7 @@ import {
     notificationStatus,
     setSoftDisabled,
 } from "./stores/notifications";
-import { PinnedByScope, pinnedChatsStore } from "./stores/pinnedChats";
+import { pinnedChatsStore } from "./stores/pinnedChats";
 import { profileStore } from "./stores/profiling";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { proposalTallies } from "./stores/proposalTallies";
