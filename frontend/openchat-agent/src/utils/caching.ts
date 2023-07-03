@@ -26,7 +26,7 @@ import {
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
 
-const CACHE_VERSION = 71;
+const CACHE_VERSION = 72;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -212,7 +212,7 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
     messageIndex: number,
     threadRootMessageIndex?: number
 ): Promise<[EventsSuccessResult<T>, Set<number>, boolean]> {
-    console.log("cache: window: ", eventIndexRange, messageIndex);
+    console.debug("CACHE: window: ", eventIndexRange, messageIndex);
     const start = Date.now();
     const [events, missing, totalMiss] = await aggregateEventsWindow<T>(
         db,
@@ -223,7 +223,7 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
     );
 
     if (!totalMiss && missing.size === 0) {
-        console.log("cache hit: ", events.length, Date.now() - start);
+        console.debug("CACHE: hit: ", events.length, Date.now() - start);
     }
 
     return [{ events, latestEventIndex: undefined }, missing, totalMiss];
@@ -248,8 +248,8 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     const midpoint = middleEvent?.index;
 
     if (midpoint === undefined) {
-        console.log(
-            "cache total miss: could not even find the starting event index for the message window"
+        console.debug(
+            "CACHE: total miss: could not even find the starting event index for the message window"
         );
         return [[], new Set<number>(), true];
     }
@@ -265,7 +265,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     const lowerBound = Math.max(min, midpoint - half);
     const upperBound = Math.min(max, midpoint + half);
 
-    console.log("aggregate events window: events from ", lowerBound, " to ", upperBound);
+    console.debug("CACHE: aggregate events window: events from ", lowerBound, " to ", upperBound);
 
     const range = IDBKeyRange.bound(
         createCacheKey({ chatId, threadRootMessageIndex }, lowerBound),
@@ -431,7 +431,7 @@ export async function getCachedEvents<T extends ChatEvent>(
     ascending: boolean,
     threadRootMessageIndex?: number
 ): Promise<[EventsSuccessResult<T>, Set<number>]> {
-    console.log("cache: ", eventIndexRange, startIndex, ascending);
+    console.debug("CACHE: ", eventIndexRange, startIndex, ascending);
     const start = Date.now();
     const [events, missing] = await aggregateEvents<T>(
         db,
@@ -443,9 +443,9 @@ export async function getCachedEvents<T extends ChatEvent>(
     );
 
     if (missing.size === 0) {
-        console.log("cache hit: ", events.length, Date.now() - start);
+        console.debug("CACHE: hit: ", events.length, Date.now() - start);
     } else {
-        console.log("cache miss: ", missing);
+        console.debug("CACHE: miss: ", missing);
     }
 
     return [{ events, latestEventIndex: undefined }, missing];

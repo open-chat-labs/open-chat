@@ -46,17 +46,14 @@
     }
 
     function directChats() {
-        console.log("TODO - direct chats");
         page("/user");
     }
 
     function groupChats() {
-        console.log("TODO - group chats");
         page("/group");
     }
 
     function favouriteChats() {
-        console.log("TODO - favourite chats");
         page("/favourite");
     }
 
