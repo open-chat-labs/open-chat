@@ -66,7 +66,6 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
-    #[serde(default)]
     pub finished_proposals_to_process: VecDeque<(CanisterId, ProposalId)>,
     pub test_mode: bool,
 }
