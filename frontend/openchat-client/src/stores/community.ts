@@ -123,11 +123,6 @@ export const selectedCommunity = derived(
     }
 );
 
-export const selectedCommunityChannels = derived([selectedCommunity], ([$selectedCommunity]) => {
-    if ($selectedCommunity === undefined) return [];
-    return $selectedCommunity.channels;
-});
-
 export function setSelectedCommunity(id: CommunityIdentifier): void {
     chatListScopeStore.set({ kind: "community", id });
 }

@@ -495,7 +495,7 @@ function cachedGroupChatSummaries(candid: ApiCachedGroupChatSummaries): CachedGr
 function groupChatsInitial(candid: ApiGroupChatsInitial): GroupChatsInitial {
     return {
         summaries: candid.summaries.map(userCanisterGroupSummary),
-        pinned: candid.pinned.map((c) => c.toString()),
+        pinned: candid.pinned.map((c) => ({ kind: "group_chat", groupId: c.toString() })),
         cached: optional(candid.cached, cachedGroupChatSummaries),
     };
 }
@@ -503,7 +503,7 @@ function groupChatsInitial(candid: ApiGroupChatsInitial): GroupChatsInitial {
 function directChatsInitial(candid: ApiDirectChatsInitial): DirectChatsInitial {
     return {
         summaries: candid.summaries.map(directChatSummary),
-        pinned: candid.pinned.map((c) => c.toString()),
+        pinned: candid.pinned.map((c) => ({ kind: "direct_chat", userId: c.toString() })),
     };
 }
 
@@ -637,7 +637,9 @@ export function favouriteChatsUpdates(candid: ApiFavouriteChatsUpdates): Favouri
 export function groupChatsUpdates(candid: ApiGroupChatsUpdates): GroupChatsUpdates {
     return {
         added: candid.added.map(userCanisterGroupSummary),
-        pinned: optional(candid.pinned, (p) => p.map((p) => p.toString())),
+        pinned: optional(candid.pinned, (p) =>
+            p.map((p) => ({ kind: "group_chat", groupId: p.toString() }))
+        ),
         updated: candid.updated.map(userCanisterGroupSummaryUpdates),
         removed: candid.removed.map((c) => c.toString()),
     };
@@ -646,7 +648,9 @@ export function groupChatsUpdates(candid: ApiGroupChatsUpdates): GroupChatsUpdat
 export function directChatsUpdates(candid: ApiDirectChatsUpdates): DirectChatsUpdates {
     return {
         added: candid.added.map(directChatSummary),
-        pinned: optional(candid.pinned, (p) => p.map((p) => p.toString())),
+        pinned: optional(candid.pinned, (p) =>
+            p.map((p) => ({ kind: "direct_chat", userId: p.toString() }))
+        ),
         updated: candid.updated.map(directChatSummaryUpdates),
     };
 }

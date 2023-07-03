@@ -47,9 +47,7 @@
     $: numberOfThreadsStore = client.numberOfThreadsStore;
     $: chatsLoading = client.chatsLoading;
     $: selectedCommunity = client.selectedCommunity;
-    $: chatSummariesListStore = $selectedCommunity
-        ? client.selectedCommunityChannels
-        : client.chatSummariesListStore;
+    $: chatSummariesListStore = client.chatSummariesListStore;
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();

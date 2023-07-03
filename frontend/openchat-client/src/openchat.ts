@@ -324,6 +324,7 @@ import {
     ChannelMatch,
     communityRoles,
     ChatListScope,
+    ChatStateFull,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -341,7 +342,6 @@ import {
     currentCommunityMembers,
     currentCommunityRules,
     selectedCommunity,
-    selectedCommunityChannels,
 } from "./stores/community";
 import {
     globalStateStore,
@@ -830,24 +830,32 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    private pinLocally(chatId: ChatIdentifier): void {
+        pinnedChatsStore.pin(this._liveState.chatListScope.kind, chatId);
+    }
+
+    private unpinLocally(chatId: ChatIdentifier): void {
+        pinnedChatsStore.unpin(this._liveState.chatListScope.kind, chatId);
+    }
+
     pinChat(chatId: ChatIdentifier): Promise<boolean> {
-        pinnedChatsStore.pin(chatId);
+        this.pinLocally(chatId);
         return this.sendRequest({ kind: "pinChat", chatId, communitiesEnabled })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error pinning chat", err);
-                pinnedChatsStore.unpin(chatId);
+                this.unpinLocally(chatId);
                 return false;
             });
     }
 
     unpinChat(chatId: ChatIdentifier): Promise<boolean> {
-        pinnedChatsStore.unpin(chatId);
+        this.unpinLocally(chatId);
         return this.sendRequest({ kind: "unpinChat", chatId, communitiesEnabled })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error unpinning chat", err);
-                pinnedChatsStore.pin(chatId);
+                this.pinLocally(chatId);
                 return false;
             });
     }
@@ -3847,6 +3855,16 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    private updatePinnedChatStores(state: ChatStateFull): void {
+        pinnedChatsStore.set({
+            none: state.pinnedChats,
+            group_chat: state.pinnedGroupChats,
+            direct_chat: state.pinnedDirectChats,
+            favourite: state.pinnedFavouriteChats,
+            community: state.pinnedChannels,
+        });
+    }
+
     private async loadChats() {
         try {
             if (this.user === undefined) {
@@ -3858,7 +3876,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
             const chatsResponse = await this.sendRequest({
                 kind: "getUpdates",
-                communitiesEnabled,
             });
 
             if (!init || chatsResponse.anyUpdates) {
@@ -3884,9 +3901,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     blockedUsers.set(new Set(chatsResponse.state.blockedUsers));
                 }
 
-                if (chatsResponse.state.pinnedChats !== undefined) {
-                    pinnedChatsStore.set(chatsResponse.state.pinnedChats);
-                }
+                this.updatePinnedChatStores(chatsResponse.state);
 
                 // TODO - we need to sort out favourites here
                 setGlobalState(chatsResponse.state.communities, updatedChats, []);
@@ -4431,7 +4446,6 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedServerChatStore = selectedServerChatStore;
     pinnedChatsStore = pinnedChatsStore;
     chatSummariesListStore = chatSummariesListStore;
-    selectedCommunityChannels = selectedCommunityChannels;
     chatsLoading = chatsLoading;
     chatsInitialised = chatsInitialised;
     currentChatDraftMessage = currentChatDraftMessage;

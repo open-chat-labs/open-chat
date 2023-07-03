@@ -159,9 +159,10 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
 
 // This is annoying. If only the pinnedChatIndex was stored in the chatSummary...
 export const chatSummariesListStore = derived(
-    [chatSummariesStore, pinnedChatsStore],
-    ([summaries, pinnedChats]) => {
-        const pinned = pinnedChats.reduce<ChatSummary[]>((result, id) => {
+    [chatSummariesStore, pinnedChatsStore, chatListScopeStore],
+    ([summaries, pinnedChats, scope]) => {
+        const pinnedByScope = pinnedChats[scope.kind];
+        const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
             const summary = summaries.get(id);
             if (summary !== undefined) {
                 result.push(summary);
@@ -170,7 +171,9 @@ export const chatSummariesListStore = derived(
         }, []);
         const unpinned = summaries
             .values()
-            .filter((chat) => pinnedChats.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1)
+            .filter(
+                (chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1
+            )
             .sort(compareChats);
         return pinned.concat(unpinned);
     }

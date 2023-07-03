@@ -160,7 +160,6 @@ import {
     CommunityIdentifier,
     CommunitySummaryResponse,
     UpdatesSuccessResponse,
-    InitialStateResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1143,27 +1142,23 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
-    // TODO this will need rethinking for communities
-    private getMergedPinnedChats(
-        userResponse: UpdatesSuccessResponse | InitialStateResponse
-    ): ChatIdentifier[] | undefined {
-        if (userResponse.groupChats.pinned || userResponse.directChats.pinned) {
-            const groupIds =
-                userResponse.groupChats.pinned?.map<ChatIdentifier>((c) => ({
-                    kind: "group_chat",
-                    groupId: c,
-                })) ?? [];
-            const directIds =
-                userResponse.directChats.pinned?.map<ChatIdentifier>((c) => ({
-                    kind: "direct_chat",
-                    userId: c,
-                })) ?? [];
-            return [...groupIds, ...directIds];
+    private getUpdatedPinnedChannels(
+        userResponse: UpdatesSuccessResponse
+    ): ChannelIdentifier[] | undefined {
+        const addedChannels = userResponse.communities.added.flatMap((c) => c.pinned);
+        const updatedChannels = userResponse.communities.updated.reduce((pinned, c) => {
+            if (c.pinned !== undefined) {
+                return pinned.concat(c.pinned);
+            }
+            return pinned;
+        }, [] as ChannelIdentifier[]);
+        if (addedChannels.length > 0 || updatedChannels.length > 0) {
+            return [...addedChannels, ...updatedChannels];
         }
         return undefined;
     }
 
-    async getUpdates(communitiesEnabled: boolean): Promise<UpdatesResult> {
+    async getUpdates(): Promise<UpdatesResult> {
         const start = Date.now();
         let numberOfAsyncCalls = 0;
 
@@ -1187,6 +1182,10 @@ export class OpenChatAgent extends EventTarget {
         let avatarId: bigint | undefined;
         let blockedUsers: string[];
         let pinnedChats: ChatIdentifier[];
+        let pinnedGroupChats: GroupChatIdentifier[];
+        let pinnedDirectChats: DirectChatIdentifier[];
+        let pinnedFavouriteChats: ChatIdentifier[];
+        let pinnedChannels: ChannelIdentifier[];
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1207,9 +1206,11 @@ export class OpenChatAgent extends EventTarget {
 
             avatarId = userResponse.avatarId;
             blockedUsers = userResponse.blockedUsers;
-            pinnedChats = communitiesEnabled
-                ? this.getMergedPinnedChats(userResponse) ?? []
-                : userResponse.favouriteChats.chats;
+            pinnedChats = userResponse.favouriteChats.chats;
+            pinnedGroupChats = userResponse.groupChats.pinned;
+            pinnedDirectChats = userResponse.directChats.pinned;
+            pinnedFavouriteChats = userResponse.favouriteChats.pinned;
+            pinnedChannels = userResponse.communities.summaries.flatMap((c) => c.pinned);
             latestUserCanisterUpdates = userResponse.timestamp;
             anyUpdates = true;
         } else {
@@ -1221,11 +1222,16 @@ export class OpenChatAgent extends EventTarget {
             const userResponse = await this.userClient.getUpdates(
                 current.latestUserCanisterUpdates
             );
+
             numberOfAsyncCalls++;
 
             avatarId = current.avatarId;
             blockedUsers = current.blockedUsers;
             pinnedChats = current.pinnedChats;
+            pinnedGroupChats = current.pinnedGroupChats;
+            pinnedDirectChats = current.pinnedDirectChats;
+            pinnedFavouriteChats = current.pinnedFavouriteChats;
+            pinnedChannels = current.pinnedChannels;
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
 
             if (userResponse.kind === "success") {
@@ -1248,9 +1254,11 @@ export class OpenChatAgent extends EventTarget {
 
                 avatarId = applyOptionUpdate(avatarId, userResponse.avatarId);
                 blockedUsers = userResponse.blockedUsers ?? blockedUsers;
-                pinnedChats = communitiesEnabled
-                    ? this.getMergedPinnedChats(userResponse) ?? pinnedChats
-                    : userResponse.favouriteChats.chats ?? pinnedChats;
+                pinnedChats = userResponse.favouriteChats.chats ?? pinnedChats;
+                pinnedGroupChats = userResponse.groupChats.pinned ?? pinnedGroupChats;
+                pinnedDirectChats = userResponse.directChats.pinned ?? pinnedDirectChats;
+                pinnedFavouriteChats = userResponse.favouriteChats.pinned ?? pinnedFavouriteChats;
+                pinnedChannels = this.getUpdatedPinnedChannels(userResponse) ?? pinnedChannels;
                 latestUserCanisterUpdates = userResponse.timestamp;
                 anyUpdates = true;
             }
@@ -1353,6 +1361,10 @@ export class OpenChatAgent extends EventTarget {
             avatarId,
             blockedUsers,
             pinnedChats,
+            pinnedGroupChats,
+            pinnedDirectChats,
+            pinnedFavouriteChats,
+            pinnedChannels,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);

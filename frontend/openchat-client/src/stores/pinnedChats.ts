@@ -1,35 +1,50 @@
-import { chatIdentifiersEqual, type ChatIdentifier } from "openchat-shared";
-import { immutableStore } from "./immutable";
-import { get } from "svelte/store";
+import { chatIdentifiersEqual, type ChatIdentifier, ChatListScope } from "openchat-shared";
+import { Writable, get, writable } from "svelte/store";
 
-export const pinnedChatsStore = createStore();
+export type PinnedByScope = Record<ChatListScope["kind"], ChatIdentifier[]>;
 
-function createStore() {
-    const store = immutableStore<ChatIdentifier[]>([]);
+export const pinnedChatsStore = createStore(
+    writable<PinnedByScope>({
+        group_chat: [],
+        direct_chat: [],
+        favourite: [],
+        community: [],
+        none: [],
+    })
+);
+
+function createStore(store: Writable<PinnedByScope>) {
     return {
         subscribe: store.subscribe,
         set: store.set,
-        includes: (chatId: ChatIdentifier): boolean => {
-            return get(store).find((id) => chatIdentifiersEqual(id, chatId)) !== undefined;
+        pinned: (scope: ChatListScope["kind"], chatId: ChatIdentifier): boolean => {
+            return get(store)[scope].find((id) => chatIdentifiersEqual(id, chatId)) !== undefined;
         },
-        pin: (chatId: ChatIdentifier): void => {
-            store.update((ids) => {
+        pin: (scope: ChatListScope["kind"], chatId: ChatIdentifier): void => {
+            store.update((rec) => {
+                const ids = rec[scope];
                 if (!ids.find((id) => chatIdentifiersEqual(id, chatId))) {
-                    const ids_clone = [chatId, ...ids];
-                    return ids_clone;
+                    return {
+                        ...rec,
+                        [scope]: [chatId, ...ids],
+                    };
                 }
-                return ids;
+                return rec;
             });
         },
-        unpin: (chatId: ChatIdentifier): void => {
-            store.update((ids) => {
+        unpin: (scope: ChatListScope["kind"], chatId: ChatIdentifier): void => {
+            store.update((rec) => {
+                const ids = rec[scope];
                 const index = ids.findIndex((id) => chatIdentifiersEqual(id, chatId));
                 if (index >= 0) {
                     const ids_clone = [...ids];
                     ids_clone.splice(index, 1);
-                    return ids_clone;
+                    return {
+                        ...rec,
+                        [scope]: ids_clone,
+                    };
                 }
-                return ids;
+                return rec;
             });
         },
     };

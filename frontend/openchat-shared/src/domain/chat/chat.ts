@@ -777,6 +777,10 @@ export type ChatStateFull = {
     avatarId: bigint | undefined;
     blockedUsers: string[];
     pinnedChats: ChatIdentifier[];
+    pinnedGroupChats: GroupChatIdentifier[];
+    pinnedDirectChats: DirectChatIdentifier[];
+    pinnedFavouriteChats: ChatIdentifier[];
+    pinnedChannels: ChannelIdentifier[];
 };
 
 export type CurrentChatState = {
@@ -792,13 +796,13 @@ export type CachedGroupChatSummaries = {
 
 export type GroupChatsInitial = {
     summaries: UserCanisterGroupChatSummary[];
-    pinned: string[];
+    pinned: GroupChatIdentifier[];
     cached?: CachedGroupChatSummaries;
 };
 
 export type DirectChatsInitial = {
     summaries: DirectChatSummary[];
-    pinned: string[];
+    pinned: DirectChatIdentifier[];
 };
 
 export type ChatIdentifier = ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier;
@@ -942,13 +946,13 @@ export type UpdatesSuccessResponse = {
 
 export type DirectChatsUpdates = {
     added: DirectChatSummary[];
-    pinned?: string[];
+    pinned?: DirectChatIdentifier[];
     updated: DirectChatSummaryUpdates[];
 };
 
 export type GroupChatsUpdates = {
     added: UserCanisterGroupChatSummary[];
-    pinned?: string[];
+    pinned?: GroupChatIdentifier[];
     updated: UserCanisterGroupChatSummaryUpdates[];
     removed: string[];
 };
