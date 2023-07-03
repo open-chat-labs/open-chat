@@ -1,3 +1,4 @@
+use crate::generate_message_id;
 use crate::governance_clients;
 use crate::governance_clients::common::{RawProposal, REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE};
 use crate::governance_clients::nns::governance_response_types::ProposalInfo;
@@ -8,11 +9,10 @@ use crate::model::nervous_systems::{ProposalToPush, ProposalsToUpdate};
 use crate::{mutate_state, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::heartbeat;
-use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 use types::{
     CanisterId, ChannelId, ChatId, CommunityId, MessageContentInitial, MessageId, MultiUserChat, Proposal, ProposalContent,
-    ProposalId, ProposalUpdate,
+    ProposalUpdate,
 };
 
 #[heartbeat]
@@ -113,6 +113,14 @@ mod retrieve_proposals {
                     let mut no_longer_active: HashSet<_> = previous_active_proposals.into_iter().collect();
                     for id in proposals.iter().map(|p| p.id()) {
                         no_longer_active.remove(&id);
+                    }
+                    for id in no_longer_active.iter() {
+                        state
+                            .data
+                            .finished_proposals_to_process
+                            .push_back((*governance_canister_id, *id));
+
+                        crate::jobs::update_finished_proposals::start_job_if_required(state);
                     }
 
                     state.data.nervous_systems.process_proposals(
@@ -218,18 +226,6 @@ mod push_proposals {
             .is_err();
 
         mark_proposal_pushed(governance_canister_id, proposal, message_id, failed);
-    }
-
-    // Deterministically generate each MessageId so that there is never any chance of a proposal
-    // being sent twice
-    fn generate_message_id(governance_canister_id: CanisterId, proposal_id: ProposalId) -> MessageId {
-        let mut hash = Sha256::new();
-        hash.update(b"proposals_bot");
-        hash.update(governance_canister_id.as_slice());
-        hash.update(proposal_id.to_ne_bytes());
-        let array32: [u8; 32] = hash.finalize().try_into().unwrap();
-        let array16: [u8; 16] = array32[..16].try_into().unwrap();
-        u128::from_ne_bytes(array16).into()
     }
 
     fn mark_proposal_pushed(governance_canister_id: CanisterId, proposal: Proposal, message_id: MessageId, failed: bool) {

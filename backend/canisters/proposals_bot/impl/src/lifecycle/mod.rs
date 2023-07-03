@@ -23,6 +23,7 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: Version) {
     let now = env.now();
     let state = RuntimeState::new(env, data);
 
+    crate::jobs::start(&state);
     crate::init_state(state);
     WASM_VERSION.with(|v| *v.borrow_mut() = Timestamped::new(wasm_version, now));
 }
