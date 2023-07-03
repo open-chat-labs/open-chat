@@ -1149,7 +1149,7 @@ export class OpenChatAgent extends EventTarget {
         const addedChannels = userResponse.communities.added.flatMap((c) => c.pinned);
         const updatedChannels = userResponse.communities.updated.reduce((pinned, c) => {
             if (c.pinned !== undefined) {
-                pinned.concat(c.pinned);
+                return pinned.concat(c.pinned);
             }
             return pinned;
         }, [] as ChannelIdentifier[]);
@@ -1223,6 +1223,7 @@ export class OpenChatAgent extends EventTarget {
             const userResponse = await this.userClient.getUpdates(
                 current.latestUserCanisterUpdates
             );
+
             numberOfAsyncCalls++;
 
             avatarId = current.avatarId;

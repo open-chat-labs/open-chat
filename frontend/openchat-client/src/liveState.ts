@@ -15,6 +15,7 @@ import type {
     ThreadSyncDetails,
     UserLookup,
     MultiUserChat,
+    ChatListScope,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -45,11 +46,12 @@ import {
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
 import { userStore } from "./stores/user";
-import { pinnedChatsStore } from "./stores/pinnedChats";
+import { PinnedByScope, pinnedChatsStore } from "./stores/pinnedChats";
 import { blockedUsers } from "./stores/blockedUsers";
 import { diamondMembership, isDiamond } from "./stores/diamond";
 import type DRange from "drange";
 import { communities } from "./stores/community";
+import { chatListScopeStore } from "./stores/global";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -70,7 +72,7 @@ export class LiveState {
     uninitializedDirectChats!: ChatMap<DirectChatSummary>;
     groupPreviews!: ChatMap<MultiUserChat>;
     selectedChatId: ChatIdentifier | undefined;
-    pinnedChats!: ChatIdentifier[];
+    pinnedChats!: PinnedByScope;
     chatSummariesList!: ChatSummary[];
     threadsByChat!: ChatMap<ThreadSyncDetails[]>;
     focusMessageIndex: number | undefined;
@@ -88,6 +90,7 @@ export class LiveState {
     isDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
     communities!: CommunityMap<CommunitySummary>;
+    chatListScope!: ChatListScope;
 
     constructor() {
         confirmedThreadEventIndexesLoadedStore.subscribe(
@@ -126,5 +129,6 @@ export class LiveState {
         diamondMembership.subscribe((data) => (this.diamondMembership = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));
         communities.subscribe((data) => (this.communities = data));
+        chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
     }
 }

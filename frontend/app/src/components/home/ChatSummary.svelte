@@ -1,12 +1,6 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, chatIdentifiersEqual } from "openchat-client";
-    import type {
-        UserLookup,
-        ChatSummary,
-        TypersByKey,
-        ChatIdentifier,
-        ChatListScope,
-    } from "openchat-client";
+    import { AvatarSize, OpenChat } from "openchat-client";
+    import type { UserLookup, ChatSummary, TypersByKey } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
@@ -34,7 +28,6 @@
     import MenuItem from "../MenuItem.svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { communitiesEnabled } from "../../utils/features";
-    import type { Readable } from "svelte/store";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -45,10 +38,6 @@
 
     $: chatListScope = client.chatListScope;
     $: pinnedChatsStore = client.pinnedChatsStore;
-    $: pinnedGroupChatsStore = client.pinnedGroupChatsStore;
-    $: pinnedDirectChatsStore = client.pinnedDirectChatsStore;
-    $: pinnedFavouriteChatsStore = client.pinnedFavouriteChatsStore;
-    $: pinnedChannelsStore = client.pinnedChannelsStore;
     $: blockedUsers = client.blockedUsers;
     $: messagesRead = client.messagesRead;
     $: typersByContext = client.typersByContext;
@@ -228,25 +217,8 @@
     $: canDelete =
         (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
         (chatSummary.kind === "group_chat" && chatSummary.membership.role === "none");
-
-    $: pinnedStore = getPinnedStore($chatListScope);
-    $: pinned = $pinnedStore.find((id) => chatIdentifiersEqual(id, chatSummary.id)) !== undefined;
+    $: pinned = pinnedChatsStore.pinned($chatListScope.kind, chatSummary.id);
     $: muted = chatSummary.membership.notificationsMuted;
-
-    function getPinnedStore(scope: ChatListScope): Readable<ChatIdentifier[]> {
-        switch (scope.kind) {
-            case "group_chat":
-                return pinnedGroupChatsStore;
-            case "direct_chat":
-                return pinnedDirectChatsStore;
-            case "favourite":
-                return pinnedFavouriteChatsStore;
-            case "community":
-                return pinnedChannelsStore;
-            case "none":
-                return pinnedChatsStore;
-        }
-    }
 </script>
 
 {#if visible}

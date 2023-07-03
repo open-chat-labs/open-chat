@@ -145,13 +145,7 @@ import {
     notificationStatus,
     setSoftDisabled,
 } from "./stores/notifications";
-import {
-    pinnedChannelsStore,
-    pinnedChatsStore,
-    pinnedDirectChatsStore,
-    pinnedFavouriteChatsStore,
-    pinnedGroupChatsStore,
-} from "./stores/pinnedChats";
+import { PinnedByScope, pinnedChatsStore } from "./stores/pinnedChats";
 import { profileStore } from "./stores/profiling";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { proposalTallies } from "./stores/proposalTallies";
@@ -348,7 +342,6 @@ import {
     currentCommunityMembers,
     currentCommunityRules,
     selectedCommunity,
-    selectedCommunityChannels,
 } from "./stores/community";
 import {
     globalStateStore,
@@ -837,24 +830,32 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    private pinLocally(chatId: ChatIdentifier): void {
+        pinnedChatsStore.pin(this._liveState.chatListScope.kind, chatId);
+    }
+
+    private unpinLocally(chatId: ChatIdentifier): void {
+        pinnedChatsStore.unpin(this._liveState.chatListScope.kind, chatId);
+    }
+
     pinChat(chatId: ChatIdentifier): Promise<boolean> {
-        pinnedChatsStore.pin(chatId);
+        this.pinLocally(chatId);
         return this.sendRequest({ kind: "pinChat", chatId, communitiesEnabled })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error pinning chat", err);
-                pinnedChatsStore.unpin(chatId);
+                this.unpinLocally(chatId);
                 return false;
             });
     }
 
     unpinChat(chatId: ChatIdentifier): Promise<boolean> {
-        pinnedChatsStore.unpin(chatId);
+        this.unpinLocally(chatId);
         return this.sendRequest({ kind: "unpinChat", chatId, communitiesEnabled })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error unpinning chat", err);
-                pinnedChatsStore.pin(chatId);
+                this.pinLocally(chatId);
                 return false;
             });
     }
@@ -3855,21 +3856,13 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private updatePinnedChatStores(state: ChatStateFull): void {
-        if (state.pinnedChats !== undefined) {
-            pinnedChatsStore.set(state.pinnedChats);
-        }
-        if (state.pinnedGroupChats !== undefined) {
-            pinnedGroupChatsStore.set(state.pinnedGroupChats);
-        }
-        if (state.pinnedDirectChats !== undefined) {
-            pinnedDirectChatsStore.set(state.pinnedDirectChats);
-        }
-        if (state.pinnedFavouriteChats !== undefined) {
-            pinnedFavouriteChatsStore.set(state.pinnedFavouriteChats);
-        }
-        if (state.pinnedChannels !== undefined) {
-            pinnedChannelsStore.set(state.pinnedChannels);
-        }
+        pinnedChatsStore.set({
+            none: state.pinnedChats,
+            group_chat: state.pinnedGroupChats,
+            direct_chat: state.pinnedDirectChats,
+            favourite: state.pinnedFavouriteChats,
+            community: state.pinnedChannels,
+        });
     }
 
     private async loadChats() {
@@ -4452,12 +4445,7 @@ export class OpenChat extends OpenChatAgentWorker {
     cryptoBalance = cryptoBalance;
     selectedServerChatStore = selectedServerChatStore;
     pinnedChatsStore = pinnedChatsStore;
-    pinnedGroupChatsStore = pinnedGroupChatsStore;
-    pinnedDirectChatsStore = pinnedDirectChatsStore;
-    pinnedFavouriteChatsStore = pinnedFavouriteChatsStore;
-    pinnedChannelsStore = pinnedChannelsStore;
     chatSummariesListStore = chatSummariesListStore;
-    selectedCommunityChannels = selectedCommunityChannels;
     chatsLoading = chatsLoading;
     chatsInitialised = chatsInitialised;
     currentChatDraftMessage = currentChatDraftMessage;
