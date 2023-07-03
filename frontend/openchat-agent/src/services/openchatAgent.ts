@@ -160,7 +160,6 @@ import {
     CommunityIdentifier,
     CommunitySummaryResponse,
     UpdatesSuccessResponse,
-    ObjectSet,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
