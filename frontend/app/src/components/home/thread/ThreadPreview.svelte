@@ -25,6 +25,7 @@
     export let thread: ThreadPreview;
     export let observer: IntersectionObserver;
 
+    $: chatListScope = client.chatListScope;
     $: userStore = client.userStore;
     $: chatSummariesStore = client.chatSummariesStore;
     $: messagesRead = client.messagesRead;
@@ -84,7 +85,7 @@
 
     function selectThread() {
         page(
-            `${routeForChatIdentifier(thread.chatId)}/${
+            `${routeForChatIdentifier($chatListScope.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
             }?open=true`
         );

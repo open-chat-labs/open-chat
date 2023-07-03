@@ -135,12 +135,13 @@
     <div class="middle">
         {#each $communities as community, i}
             <LeftNavItem
-                selected={community === $selectedCommunity}
+                selected={community === $selectedCommunity && $chatListScope.kind !== "favourite"}
                 unread={0}
                 label={community.name}
                 on:click={() => selectCommunity(community)}>
                 <Avatar
-                    selected={community === $selectedCommunity}
+                    selected={community === $selectedCommunity &&
+                        $chatListScope.kind !== "favourite"}
                     url={client.communityAvatarUrl(community.avatar)}
                     size={avatarSize} />
                 <div slot="menu">

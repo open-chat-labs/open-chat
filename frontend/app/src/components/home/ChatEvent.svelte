@@ -63,6 +63,7 @@
 
     let userSummary: UserSummary | undefined = undefined;
 
+    $: chatListScope = client.chatListScope;
     $: levelType = (chatType === "channel" ? "channel" : "group") as Level;
     $: level = $_(`level.${levelType}`).toLowerCase();
     $: messageContext = { chatId, threadRootMessageIndex: threadRootMessage?.messageIndex };
@@ -102,7 +103,11 @@
     function initiateThread() {
         if (event.event.kind === "message") {
             if (event.event.thread !== undefined) {
-                page(`${routeForChatIdentifier(chatId)}/${event.event.messageIndex}`);
+                page(
+                    `${routeForChatIdentifier($chatListScope.kind, chatId)}/${
+                        event.event.messageIndex
+                    }`
+                );
             } else {
                 client.openThread(event as EventWrapper<Message>, true);
             }

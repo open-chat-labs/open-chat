@@ -136,7 +136,7 @@
         // selected community channel
         page(
             "/community/:communityId/channel/:channelId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(selectedChannelRoute),
+            parsePathParams(selectedChannelRoute(false)),
             track,
             () => (route = Home)
         );
@@ -163,8 +163,8 @@
         );
         // selected favourite channel
         page(
-            "/favourite/:communityId/channel/:channelId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(selectedChannelRoute),
+            "/favourite/community/:communityId/channel/:channelId/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(selectedChannelRoute(true)),
             track,
             () => (route = Home)
         );
