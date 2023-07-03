@@ -117,6 +117,12 @@ impl NervousSystems {
         }
     }
 
+    pub fn queue_proposal_to_update(&mut self, governance_canister_id: CanisterId, proposal: ProposalUpdate) {
+        if let Some(ns) = self.nervous_systems.get_mut(&governance_canister_id) {
+            ns.proposals_to_be_updated.pending.insert(proposal.message_id, proposal);
+        }
+    }
+
     pub fn active_proposals(&self, governance_canister_id: &CanisterId) -> Vec<ProposalId> {
         self.nervous_systems
             .get(governance_canister_id)
