@@ -25,6 +25,7 @@
     export let group: GroupChatSummary;
     export let joining: GroupChatSummary | undefined;
 
+    $: chatListScope = client.chatListScope;
     $: chatSummariesStore = client.chatSummariesStore;
     $: member = $chatSummariesStore.has(group.id);
 
@@ -33,7 +34,7 @@
     }
 
     function gotoGroup({ id }: GroupChatSummary) {
-        page(routeForChatIdentifier(id));
+        page(routeForChatIdentifier($chatListScope.kind, id));
     }
 
     function joinGroup(group: GroupChatSummary) {
