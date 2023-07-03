@@ -160,6 +160,7 @@ import {
     CommunityIdentifier,
     CommunitySummaryResponse,
     UpdatesSuccessResponse,
+    ObjectSet,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1186,6 +1187,7 @@ export class OpenChatAgent extends EventTarget {
         let pinnedDirectChats: DirectChatIdentifier[];
         let pinnedFavouriteChats: ChatIdentifier[];
         let pinnedChannels: ChannelIdentifier[];
+        let favouriteChats: ChatIdentifier[];
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1211,6 +1213,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedDirectChats = userResponse.directChats.pinned;
             pinnedFavouriteChats = userResponse.favouriteChats.pinned;
             pinnedChannels = userResponse.communities.summaries.flatMap((c) => c.pinned);
+            favouriteChats = userResponse.favouriteChats.chats;
             latestUserCanisterUpdates = userResponse.timestamp;
             anyUpdates = true;
         } else {
@@ -1232,9 +1235,11 @@ export class OpenChatAgent extends EventTarget {
             pinnedDirectChats = current.pinnedDirectChats;
             pinnedFavouriteChats = current.pinnedFavouriteChats;
             pinnedChannels = current.pinnedChannels;
+            favouriteChats = current.favouriteChats;
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
 
             if (userResponse.kind === "success") {
+                console.log("xxx: userResponse", userResponse);
                 directChats = userResponse.directChats.added.concat(
                     mergeDirectChatUpdates(directChats, userResponse.directChats.updated)
                 );
@@ -1259,6 +1264,7 @@ export class OpenChatAgent extends EventTarget {
                 pinnedDirectChats = userResponse.directChats.pinned ?? pinnedDirectChats;
                 pinnedFavouriteChats = userResponse.favouriteChats.pinned ?? pinnedFavouriteChats;
                 pinnedChannels = this.getUpdatedPinnedChannels(userResponse) ?? pinnedChannels;
+                favouriteChats = userResponse.favouriteChats.chats ?? favouriteChats;
                 latestUserCanisterUpdates = userResponse.timestamp;
                 anyUpdates = true;
             }
@@ -1365,6 +1371,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedDirectChats,
             pinnedFavouriteChats,
             pinnedChannels,
+            favouriteChats,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);

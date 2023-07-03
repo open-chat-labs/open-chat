@@ -781,6 +781,7 @@ export type ChatStateFull = {
     pinnedDirectChats: DirectChatIdentifier[];
     pinnedFavouriteChats: ChatIdentifier[];
     pinnedChannels: ChannelIdentifier[];
+    favouriteChats: ChatIdentifier[];
 };
 
 export type CurrentChatState = {
