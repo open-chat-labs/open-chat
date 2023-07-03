@@ -511,7 +511,7 @@ export function setSelectedChat(
     chatStateStore.setProp(
         clientChat.id,
         "userIds",
-        new Set<string>(clientChat.kind === "direct_chat" ? [clientChat.id.toString()] : [])
+        new Set<string>(clientChat.kind === "direct_chat" ? [clientChat.id.userId] : [])
     );
     resetFilteredProposalsStore(clientChat);
 }
