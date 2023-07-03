@@ -18,7 +18,7 @@ export function lightTheme(): Theme {
         label: "Light",
         burst: false,
         mode: "light",
-        warn: "#FAC5A9",
+        warn: "#f36D28",
 
         bg: "linear-gradient(#22A7F2, #5f2583)",
         // bg: "#ffffff",
@@ -31,6 +31,7 @@ export function lightTheme(): Theme {
         disabledTxt: txtLight,
         placeholder: txtLight,
         primary,
+        code: orangeAccent,
 
         unread: {
             mute: "rgba(0,0,0,0.1",
