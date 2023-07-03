@@ -183,7 +183,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "getUpdates":
                 agent
-                    .getUpdates(payload.communitiesEnabled)
+                    .getUpdates()
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

@@ -843,7 +843,6 @@ type CreateUserClient = {
 
 type GetUpdates = {
     kind: "getUpdates";
-    communitiesEnabled: boolean;
 };
 
 type GetDeletedGroupMessage = {

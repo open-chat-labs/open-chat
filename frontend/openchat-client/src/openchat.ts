@@ -145,7 +145,13 @@ import {
     notificationStatus,
     setSoftDisabled,
 } from "./stores/notifications";
-import { pinnedChatsStore } from "./stores/pinnedChats";
+import {
+    pinnedChannelsStore,
+    pinnedChatsStore,
+    pinnedDirectChatsStore,
+    pinnedFavouriteChatsStore,
+    pinnedGroupChatsStore,
+} from "./stores/pinnedChats";
 import { profileStore } from "./stores/profiling";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { proposalTallies } from "./stores/proposalTallies";
@@ -324,6 +330,7 @@ import {
     ChannelMatch,
     communityRoles,
     ChatListScope,
+    ChatStateFull,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3846,6 +3853,24 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    private updatePinnedChatStores(state: ChatStateFull): void {
+        if (state.pinnedChats !== undefined) {
+            pinnedChatsStore.set(state.pinnedChats);
+        }
+        if (state.pinnedGroupChats !== undefined) {
+            pinnedGroupChatsStore.set(state.pinnedGroupChats);
+        }
+        if (state.pinnedDirectChats !== undefined) {
+            pinnedDirectChatsStore.set(state.pinnedDirectChats);
+        }
+        if (state.pinnedFavouriteChats !== undefined) {
+            pinnedFavouriteChatsStore.set(state.pinnedFavouriteChats);
+        }
+        if (state.pinnedChannels !== undefined) {
+            pinnedChannelsStore.set(state.pinnedChannels);
+        }
+    }
+
     private async loadChats() {
         try {
             if (this.user === undefined) {
@@ -3857,7 +3882,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
             const chatsResponse = await this.sendRequest({
                 kind: "getUpdates",
-                communitiesEnabled,
             });
 
             if (!init || chatsResponse.anyUpdates) {
@@ -3883,9 +3907,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     blockedUsers.set(new Set(chatsResponse.state.blockedUsers));
                 }
 
-                if (chatsResponse.state.pinnedChats !== undefined) {
-                    pinnedChatsStore.set(chatsResponse.state.pinnedChats);
-                }
+                this.updatePinnedChatStores(chatsResponse.state);
 
                 // TODO - we need to sort out favourites here
                 setGlobalState(chatsResponse.state.communities, updatedChats, []);
@@ -4429,6 +4451,10 @@ export class OpenChat extends OpenChatAgentWorker {
     cryptoBalance = cryptoBalance;
     selectedServerChatStore = selectedServerChatStore;
     pinnedChatsStore = pinnedChatsStore;
+    pinnedGroupChatsStore = pinnedGroupChatsStore;
+    pinnedDirectChatsStore = pinnedDirectChatsStore;
+    pinnedFavouriteChatsStore = pinnedFavouriteChatsStore;
+    pinnedChannelsStore = pinnedChannelsStore;
     chatSummariesListStore = chatSummariesListStore;
     selectedCommunityChannels = selectedCommunityChannels;
     chatsLoading = chatsLoading;
