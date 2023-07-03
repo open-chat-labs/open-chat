@@ -76,7 +76,7 @@
         </SectionHeader>
 
         <div class="groups">
-            {#each hotGroups.data as group, _i (group.id)}
+            {#each hotGroups.data as group, _i (group.id.groupId)}
                 <RecommendedGroup
                     on:upgrade
                     on:dismissRecommendation={dismissRecommendation}

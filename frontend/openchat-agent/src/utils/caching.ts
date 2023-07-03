@@ -471,11 +471,11 @@ function makeSerialisable<T extends ChatEvent>(
     removeBlobs: boolean,
     threadRootMessageIndex?: number
 ): EnhancedWrapper<T> {
-    if (ev.event.kind !== "message") return { ...ev, chatId, messageKey: undefined };
+    if (ev.event.kind !== "message") return { ...ev, chatId: { ...chatId }, messageKey: undefined };
 
     return {
         ...ev,
-        chatId,
+        chatId: { ...chatId },
         messageKey: createCacheKey({ chatId, threadRootMessageIndex }, ev.event.messageIndex),
         event: {
             ...ev.event,

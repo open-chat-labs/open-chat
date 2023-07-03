@@ -3454,12 +3454,10 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     async threadPreviews(
-        chatId: ChatIdentifier | undefined,
+        _chatId: ChatIdentifier | undefined,
         threadsByChat: ChatMap<ThreadSyncDetails[]>,
         serverChatSummaries: ChatMap<ChatSummary>
     ): Promise<ThreadPreview[]> {
-        if (chatId === undefined) return [];
-
         const request: ChatMap<[ThreadSyncDetails[], number | undefined]> = threadsByChat
             .entries()
             .reduce((map, [chatId, threads]) => {
@@ -3497,7 +3495,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        const userGroups = users.userGroups.filter((g) => g.users.length > 0);
+        const userGroups = users.userGroups.filter(
+            (g) => g.users.filter((u) => u !== undefined).length > 0
+        );
         if (userGroups.length === 0) {
             return Promise.resolve({
                 users: [],

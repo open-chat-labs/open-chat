@@ -109,31 +109,31 @@ export function addMembersToChannelResponse(
         return addToChannelFailed(candid.Failed);
     }
     if ("UserNotInChannel" in candid) {
-        return CommonResponses.userNotInChat;
+        return CommonResponses.userNotInChat();
     }
     if ("PartialSuccess" in candid) {
         return addToChannelPartialSuccess(candid.PartialSuccess);
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound;
+        return CommonResponses.chatNotFound();
     }
     if ("UserLimitReached" in candid) {
-        return CommonResponses.userLimitReached;
+        return CommonResponses.userLimitReached();
     }
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return CommonResponses.notAuthorized();
     }
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return CommonResponses.success();
     }
     if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
+        return CommonResponses.userNotInCommunity();
     }
     if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
+        return CommonResponses.userSuspended();
     }
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return CommonResponses.communityFrozen();
     }
     throw new UnsupportedValueError(
         "Unexpected ApiAddMembersToChannelResponse type received",
@@ -196,28 +196,28 @@ function addToChannelPartialSuccess(
 
 export function blockUserResponse(candid: ApiBlockUserResponse): BlockCommunityUserResponse {
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return CommonResponses.notAuthorized();
     }
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return CommonResponses.success();
     }
     if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
+        return CommonResponses.userNotInCommunity();
     }
     if ("CommunityNotPublic" in candid) {
-        return CommonResponses.communityNotPublic;
+        return CommonResponses.communityNotPublic();
     }
     if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
+        return CommonResponses.userSuspended();
     }
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return CommonResponses.communityFrozen();
     }
     if ("TargetUserNotInCommunity" in candid) {
-        return CommonResponses.targetUserNotInCommunity;
+        return CommonResponses.targetUserNotInCommunity();
     }
     if ("InternalError" in candid) {
-        return CommonResponses.internalError;
+        return CommonResponses.internalError();
     }
     if ("CannotBlockSelf" in candid) {
         return { kind: "cannot_block_self" };
@@ -241,16 +241,16 @@ export function disableInviteCodeResponse(
     candid: ApiDisableInviteCodeResponse
 ): DisableCommunityInviteCodeResponse {
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return CommonResponses.notAuthorized();
     }
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return CommonResponses.success();
     }
     if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
+        return CommonResponses.userSuspended();
     }
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return CommonResponses.communityFrozen();
     }
     throw new UnsupportedValueError(
         "Unexpected ApiDisableInviteCodeResponse type received",
@@ -262,29 +262,29 @@ export function enableInviteCodeResponse(
     candid: ApiEnableInviteCodeResponse
 ): EnableCommunityInviteCodeResponse {
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return CommonResponses.notAuthorized();
     }
     if ("Success" in candid) {
         return { kind: "success", code: candid.Success.code };
     }
     if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
+        return CommonResponses.userSuspended();
     }
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return CommonResponses.communityFrozen();
     }
     throw new UnsupportedValueError("Unexpected ApiEnableInviteCodeResponse type received", candid);
 }
 
 export function inviteCodeResponse(candid: ApiInviteCodeResponse): CommunityInviteCodeResponse {
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return CommonResponses.notAuthorized();
     }
     if ("Success" in candid) {
         return { kind: "success", code: optional(candid.Success.code, identity) };
     }
     if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
+        return CommonResponses.userNotInCommunity();
     }
     throw new UnsupportedValueError("Unexpected ApiEnableInviteCodeResponse type received", candid);
 }
@@ -303,28 +303,28 @@ export function joinChannelResponse(
         return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
     }
     if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound;
+        return CommonResponses.chatNotFound();
     }
     if ("UserLimitReached" in candid) {
-        return CommonResponses.userLimitReached;
+        return CommonResponses.userLimitReached();
     }
     if ("Success" in candid) {
         return { kind: "success", channel: communityChannelSummary(candid.Success, communityId) };
     }
     if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
+        return CommonResponses.userNotInCommunity();
     }
     if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
+        return CommonResponses.userSuspended();
     }
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return CommonResponses.communityFrozen();
     }
     if ("InternalError" in candid) {
-        return CommonResponses.internalError;
+        return CommonResponses.internalError();
     }
     if ("UserBlocked" in candid) {
-        return CommonResponses.userBlocked;
+        return CommonResponses.userBlocked();
     }
     throw new UnsupportedValueError("Unexpected ApiJoinChannelResponse type received", candid);
 }
@@ -337,25 +337,25 @@ export function makeCommunityPrivateResponse(
     candid: ApiMakePrivateResponse
 ): MakeCommunityPrivateResponse {
     if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized;
+        return CommonResponses.notAuthorized();
     }
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return CommonResponses.success();
     }
     if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity;
+        return CommonResponses.userNotInCommunity();
     }
     if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended;
+        return CommonResponses.userSuspended();
     }
     if ("AlreadyPrivate" in candid) {
         return { kind: "community_already_private" };
     }
     if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen;
+        return CommonResponses.communityFrozen();
     }
     if ("InternalError" in candid) {
-        return CommonResponses.internalError;
+        return CommonResponses.internalError();
     }
     throw new UnsupportedValueError("Unexpected ApiMakePrivateResponse type received", candid);
 }
@@ -410,10 +410,10 @@ export function removeMemberResponse(
     candid: ApiRemoveMemberResponse
 ): RemoveCommunityMemberResponse {
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return CommonResponses.success();
     } else {
         console.warn("RemoveCommunityMember failed with", candid);
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
 }
 
@@ -421,10 +421,10 @@ export function removeMemberFromChannelResponse(
     candid: ApiRemoveMemberFromChannelResponse
 ): RemoveChannelMemberResponse {
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return CommonResponses.success();
     } else {
         console.warn("RemoveChannelMember failed with", candid);
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
 }
 
@@ -436,7 +436,7 @@ export function searchChannelResponse(candid: ApiSearchChannelResponse): SearchC
         };
     } else {
         console.warn("SearchChannel failed with", candid);
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
 }
 
@@ -487,7 +487,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
         return { kind: "chat_frozen" };
     }
 
-    return CommonResponses.failure;
+    return CommonResponses.failure();
 }
 
 export function exploreChannelsResponse(
@@ -526,7 +526,7 @@ export function communityChannelSummaryResponse(
         return communityChannelSummary(candid.Success, communityId);
     } else {
         console.warn("CommunityChannelSummary failed with", candid);
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
 }
 
@@ -535,7 +535,7 @@ export function summaryResponse(candid: ApiSummaryResponse): CommunitySummaryRes
         return communitySummary(candid.Success);
     } else {
         console.warn("CommunitySummary failed with", candid);
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
 }
 
@@ -546,10 +546,10 @@ export function summaryUpdatesResponse(
         return communitySummaryUpdates(candid.Success);
     }
     if ("SuccessNoUpdates" in candid) {
-        return CommonResponses.successNoUpdates;
+        return CommonResponses.successNoUpdates();
     }
     if ("PrivateCommunity" in candid) {
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
     throw new UnsupportedValueError("invalid ApiSummaryUpdatesResponse recieved", candid);
 }
@@ -648,10 +648,10 @@ export function toggleMuteChannelNotificationsResponse(
     candid: ApiToggleMuteChannelNotificationsResponse
 ): ToggleMuteChannelNotificationsResponse {
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return CommonResponses.success();
     } else {
         console.warn("ToggleMuteChannelNotifications failed with", candid);
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
 }
 
@@ -659,19 +659,19 @@ export function toggleMuteNotificationsResponse(
     candid: ApiToggleMuteNotificationsResponse
 ): ToggleMuteCommunityNotificationsResponse {
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return CommonResponses.success();
     } else {
         console.warn("ToggleMuteCommunityNotifications failed with", candid);
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
 }
 
 export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockCommunityUserResponse {
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return CommonResponses.success();
     } else {
         console.warn("UnblockCommunityUser failed with", candid);
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
 }
 
@@ -679,10 +679,10 @@ export function updateCommunityResponse(
     candid: ApiUpdateCommunityResponse
 ): UpdateCommunityResponse {
     if ("Success" in candid) {
-        return CommonResponses.success;
+        return CommonResponses.success();
     } else {
         console.warn("UpdateCommunity failed with", candid);
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
 }
 
@@ -793,6 +793,6 @@ export function communityDetailsUpdatesResponse(
         };
     } else {
         console.warn("Unexpected ApiSelectedUpdatesResponse type received", candid);
-        return CommonResponses.failure;
+        return CommonResponses.failure();
     }
 }
