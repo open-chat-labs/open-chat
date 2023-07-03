@@ -144,7 +144,7 @@
             }
 
             code {
-                color: var(--warn);
+                color: var(--code);
                 background-color: rgba(255, 255, 255, 0.1);
                 padding: 3px 5px;
                 border-radius: 4px;
