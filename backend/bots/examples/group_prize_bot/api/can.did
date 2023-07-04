@@ -2,139 +2,120 @@ type CanisterId = principal;
 type Cycles = nat;
 type UserId = principal;
 type TimestampMillis = nat64;
-type Cryptocurrency =
-    variant {
-        InternetComputer;
-        SNS1;
-        CKBTC;
-        CHAT;
-        KINIC;
-    };
+type Cryptocurrency = variant {
+    InternetComputer;
+    SNS1;
+    CKBTC;
+    CHAT;
+    KINIC;
+};
 
-type InitializeBotArgs =
-    record {
-        username: text;
-        token: Cryptocurrency;
-        ledger_canister_id: CanisterId;
-        prizes: vec vec nat64;
-        end_date: TimestampMillis;   
-        update_existing: bool;
-    };
+type InitializeBotArgs = record {
+    username : text;
+    token : Cryptocurrency;
+    ledger_canister_id : CanisterId;
+    prizes : vec vec nat64;
+    end_date : TimestampMillis;
+    update_existing : bool;
+};
 
-type InitializeBotResponse =
-    variant {
-        Success;
-        EndDateInPast;
-        AlreadyRegistered;
-        UserLimitReached;
-        UsernameTaken;
-        UsernameInvalid;
-        UsernameTooShort: nat16;
-        UsernameTooLong: nat16;
-        InsufficientCyclesProvided: Cycles;
-        InternalError: text;
-    };
+type InitializeBotResponse = variant {
+    Success;
+    EndDateInPast;
+    AlreadyRegistered;
+    UserLimitReached;
+    UsernameTaken;
+    UsernameInvalid;
+    UsernameTooShort : nat16;
+    UsernameTooLong : nat16;
+    InsufficientCyclesProvided : Cycles;
+    InternalError : text;
+};
 
-type Document =
-    record {
-        id: nat;
-        mime_type: text;
-        data: blob;
-    };
+type Document = record {
+    id : nat;
+    mime_type : text;
+    data : blob;
+};
 
-type FieldTooLongResult =
-    record {
-        length_provided: nat32;
-        max_length: nat32;
-    };
+type FieldTooLongResult = record {
+    length_provided : nat32;
+    max_length : nat32;
+};
 
-type SetAvatarArgs =
-    record {
-        avatar: opt Document;
-    };
+type SetAvatarArgs = record {
+    avatar : opt Document;
+};
 
-type SetAvatarResponse =
-    variant {
-        Success;
-        AvatarTooBig: FieldTooLongResult;
-    };
+type SetAvatarResponse = variant {
+    Success;
+    AvatarTooBig : FieldTooLongResult;
+};
 
-type JoinGroupsArgs =
-    record {
-        group: CanisterId;
-        add_only: bool;
-    };
+type JoinGroupsArgs = record {
+    group : CanisterId;
+    add_only : bool;
+};
 
-type JoinGroupsResponse =
-    variant {
-        Success;
-        AlreadyInGroup;
-        GroupNotFound;
-        GroupNotPublic;
-        ParticipantLimitReached;
-        Blocked;
-        UserSuspended;
-        ChatFrozen;
-        InternalError: text;
-    };
+type JoinGroupsResponse = variant {
+    Success;
+    AlreadyInGroup;
+    GroupNotFound;
+    GroupNotPublic;
+    ParticipantLimitReached;
+    Blocked;
+    UserSuspended;
+    ChatFrozen;
+    InternalError : text;
+};
 
-type LeaveGroupsArgs =
-    record {
-        group: CanisterId;
-        remove_only: bool;
-    };
+type LeaveGroupsArgs = record {
+    group : CanisterId;
+    remove_only : bool;
+};
 
-type LeaveGroupsResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        OwnerCannotLeave;
-        UserSuspended;
-        ChatFrozen;
-        InternalError: text;
-    };
+type LeaveGroupsResponse = variant {
+    Success;
+    CallerNotInGroup;
+    OwnerCannotLeave;
+    UserSuspended;
+    ChatFrozen;
+    InternalError : text;
+};
 
-type StartArgs =
-    record {
-    };
+type StartArgs = record {};
 
-type StartResponse =
-    variant {
-        Success;
-        NotInitialized;
-        NoGroupsJoined;
-        EndDateInPast;
-    };
+type StartResponse = variant {
+    Success;
+    NotInitialized;
+    NoGroupsJoined;
+    EndDateInPast;
+};
 
-type StopArgs =
-    record {
-    };
+type StopArgs = record {};
 
-type StopResponse =
-    variant {
-        Success;
-    };
+type StopResponse = variant {
+    Success;
+};
 
-type InitArgs =
-    record {
-        user_index_canister_id: CanisterId;
-        admins: vec principal;
-        wasm_version: Version;
-        test_mode: bool;
-    };
+type InitArgs = record {
+    user_index_canister_id : CanisterId;
+    admins : vec principal;
+    wasm_version : Version;
+    test_mode : bool;
+};
 
-type Version =
-    record {
-        major: nat32;
-        minor: nat32;
-        patch: nat32;
-    };
+type Version = record {
+    major : nat32;
+    minor : nat32;
+    patch : nat32;
+};
 
-service: (InitArgs) -> {
-    initialize_bot: (InitializeBotArgs) -> (InitializeBotResponse);
-    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
-    join_group: (JoinGroupsArgs) -> (JoinGroupsResponse);
-    leave_group: (LeaveGroupsArgs) -> (LeaveGroupsResponse);
-    start: (StartArgs) -> (StartResponse);
-    stop: (StopArgs) -> (StopResponse);
-}
+service : (InitArgs) -> {
+    initialize_bot : (InitializeBotArgs) -> (InitializeBotResponse);
+    set_avatar : (SetAvatarArgs) -> (SetAvatarResponse);
+    join_group : (JoinGroupsArgs) -> (JoinGroupsResponse);
+    leave_group : (LeaveGroupsArgs) -> (LeaveGroupsResponse);
+    start : (StartArgs) -> (StartResponse);
+    stop : (StopArgs) -> (StopResponse);
+};
