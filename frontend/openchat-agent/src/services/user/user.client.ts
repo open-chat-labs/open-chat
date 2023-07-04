@@ -932,17 +932,17 @@ export class UserClient extends CandidService {
     }
 
     setMessageReminder(
-        chatId: string,
+        chatId: ChatIdentifier,
         eventIndex: number,
         remindAt: number,
         notes?: string,
         threadRootMessageIndex?: number
     ): Promise<SetMessageReminderResponse> {
         return this.handleResponse(
-            this.userService.set_message_reminder({
+            this.userService.set_message_reminder_v2({
+                chat: apiChatIdentifier(chatId),
                 notes: apiOptional(identity, notes),
                 remind_at: BigInt(remindAt),
-                chat_id: Principal.fromText(chatId),
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 event_index: eventIndex,
             }),

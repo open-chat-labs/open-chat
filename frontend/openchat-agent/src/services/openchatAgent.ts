@@ -2195,11 +2195,8 @@ export class OpenChatAgent extends EventTarget {
         notes?: string,
         threadRootMessageIndex?: number
     ): Promise<SetMessageReminderResponse> {
-        if (chatId.kind === "channel") {
-            throw new Error("TODO - setMessageReminder not implemented for channel messages");
-        }
         return this.userClient.setMessageReminder(
-            chatIdentifierToString(chatId),
+            chatId,
             eventIndex,
             remindAt,
             notes,

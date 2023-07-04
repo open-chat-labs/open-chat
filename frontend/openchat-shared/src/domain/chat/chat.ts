@@ -528,11 +528,7 @@ export type GroupChatEvent =
     | GroupRulesChanged
     | UsersBlocked
     | UsersUnblocked
-    | MemberAssumesSuperAdmin
-    | MemberRelinquishesSuperAdmin
-    | MemberDismissedAsSuperAdmin
     | RoleChanged
-    | OwnershipTransferred
     | MessagePinned
     | MessageUnpinned
     | PermissionsChanged

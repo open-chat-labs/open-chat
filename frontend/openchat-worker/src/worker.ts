@@ -497,17 +497,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "makeGroupPrivate":
-                agent
-                    .makeGroupPrivate(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "deleteGroup":
                 agent
                     .deleteGroup(payload.chatId)

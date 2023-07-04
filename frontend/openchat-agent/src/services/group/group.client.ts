@@ -23,7 +23,6 @@ import type {
     UnpinMessageResponse,
     RegisterPollVoteResponse,
     ChatPermissions,
-    MakeGroupPrivateResponse,
     InviteCodeResponse,
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
@@ -100,7 +99,6 @@ import {
     pinMessageResponse,
     unpinMessageResponse,
     groupDetailsResponse,
-    makeGroupPrivateResponse,
     groupDetailsUpdatesResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";

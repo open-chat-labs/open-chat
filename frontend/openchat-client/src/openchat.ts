@@ -349,7 +349,6 @@ import {
     setGlobalState,
     updateSummaryWithConfirmedMessage,
     chatListScopeStore,
-    GlobalState,
     unreadGroupChats,
     unreadDirectChats,
     unreadFavouriteChats,

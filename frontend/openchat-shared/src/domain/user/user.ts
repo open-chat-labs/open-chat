@@ -196,11 +196,7 @@ export type PayForDiamondMembershipResponse =
 
 export type SetUserUpgradeConcurrencyResponse = "success";
 
-export type SetMessageReminderResponse =
-    | "notes_too_long"
-    | "success"
-    | "reminder_date_in_past"
-    | "user_suspended";
+export type SetMessageReminderResponse = "failure" | "success";
 
 export type ReferralLeaderboardRange = { year: number; month: number };
 
