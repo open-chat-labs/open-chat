@@ -1,1051 +1,924 @@
 import "../../../libraries/types/can.did";
 
-type SendMessageV2Args =
-    record {
-        recipient: UserId;
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        sender_name: text;
-        content: MessageContentInitial;
-        replies_to: opt ReplyContext;
-        forwarding: bool;
-        correlation_id: nat64;
-    };
-
-type SendMessageResponse =
-    variant {
-        Success: record {
-            chat_id: ChatId;
-            event_index: EventIndex;
-            message_index: MessageIndex;
-            timestamp: TimestampMillis;
-            expires_at: opt TimestampMillis;
-        };
-        TransferSuccessV2: record {
-            chat_id: ChatId;
-            event_index: EventIndex;
-            message_index: MessageIndex;
-            timestamp: TimestampMillis;
-            expires_at: opt TimestampMillis;
-            transfer: CompletedCryptoTransaction;
-        };
-        MessageEmpty;
-        TextTooLong: nat32;
-        RecipientBlocked;
-        RecipientNotFound;
-        InvalidPoll: InvalidPollReason;
-        InvalidRequest: text;
-        TransferFailed: text;
-        TransferCannotBeZero;
-        UserSuspended;
-        InternalError: text;
-    };
-
-type EditMessageV2Args =
-    record {
-        user_id: UserId;
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        content: MessageContentInitial;
-        correlation_id: nat64;
-    };
-
-type EditMessageResponse =
-    variant {
-        Success;
-        MessageNotFound;
-        ChatNotFound;
-        UserBlocked;
-        UserSuspended;
-    };
-
-type DeleteMessagesArgs =
-    record {
-        user_id: UserId;
-        thread_root_message_index: opt MessageIndex;
-        message_ids: vec MessageId;
-        correlation_id: nat64;
-    };
-
-type DeleteMessagesResponse =
-    variant {
-        Success;
-        ChatNotFound;
-        UserSuspended;
-    };
-
-type UndeleteMessagesArgs =
-    record {
-        user_id: UserId;
-        thread_root_message_index: opt MessageIndex;
-        message_ids: vec MessageId;
-        correlation_id: nat64;
-    };
-
-type UndeleteMessagesResponse =
-    variant {
-        Success: record {
-            messages: vec Message;
-        };
-        ChatNotFound;
-        UserSuspended;
-    };
-
-type AddReactionArgs =
-    record {
-        user_id: UserId;
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        reaction: text;
-        username: text;
-        correlation_id: nat64;
-    };
-
-type AddReactionResponse =
-    variant {
-        Success;
-        SuccessV2: PushEventResult;
-        NoChange;
-        InvalidReaction;
-        MessageNotFound;
-        ChatNotFound;
-        UserSuspended;
-    };
-
-type RemoveReactionArgs =
-    record {
-        user_id: UserId;
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        reaction: text;
-        correlation_id: nat64;
-    };
-
-type RemoveReactionResponse =
-    variant {
-        Success;
-        SuccessV2: PushEventResult;
-        NoChange;
-        MessageNotFound;
-        ChatNotFound;
-        UserSuspended;
-    };
-
-type MarkReadArgs =
-    record {
-        messages_read: vec ChatMessagesRead;
-        community_messages_read: vec CommunityMessagesRead;
-    };
-
-type MarkReadV2Args =
-    record {
-        messages_read: vec ChatMessagesRead;
-    };
-
-type ChatMessagesRead =
-    record {
-        chat_id: ChatId;
-        read_up_to: opt MessageIndex;
-        threads: vec ThreadRead;
-        date_read_pinned: opt TimestampMillis;
-    };
-
-type CommunityMessagesRead =
-    record {
-        community_id: CommunityId;
-        channels_read: vec ChannelMessagesRead;
-    };
-
-type ChannelMessagesRead =
-    record {
-        channel_id: ChannelId;
-        read_up_to: opt MessageIndex;
-        threads: vec ThreadRead;
-        date_read_pinned: opt TimestampMillis;
-    };
-
-type ThreadRead =
-    record {
-        root_message_index: MessageIndex;
-        read_up_to: MessageIndex;
-    };
-
-type MarkReadResponse =
-    variant {
-        Success;
-    };
-
-type BlockUserArgs =
-    record {
-        user_id: UserId;
-    };
-
-type BlockUserResponse =
-    variant {
-        Success;
-        UserSuspended;
-    };
-
-type UnblockUserArgs =
-    record {
-        user_id: UserId;
-    };
-
-type UnblockUserResponse =
-    variant {
-        Success;
-        UserSuspended;
-    };
-
-type CreateGroupArgs =
-    record {
-        is_public: bool;
-        name: text;
-        description: text;
-        avatar: opt Document;
-        history_visible_to_new_joiners: bool;
-        permissions: opt GroupPermissions;
-        rules: AccessRules;
-        gate: opt AccessGate
-    };
-
-type CreateGroupSuccessResult =
-    record {
-        chat_id: ChatId;
-    };
-
-type CreateGroupResponse =
-    variant {
-        Success: CreateGroupSuccessResult;
-        NameTooShort: FieldTooShortResult;
-        NameTooLong: FieldTooLongResult;
-        NameReserved;
-        DescriptionTooLong: FieldTooLongResult;
-        AvatarTooBig: FieldTooLongResult;
-        MaxGroupsCreated: nat32;
-        NameTaken;
-        Throttled;
-        InternalError;
-        RulesTooLong: FieldTooLongResult;
-        RulesTooShort: FieldTooShortResult;
-        UserSuspended;
-        UnauthorizedToCreatePublicGroup;
-    };
-
-type LeaveGroupArgs =
-    record {
-        chat_id: ChatId;
-        correlation_id: nat64;
-    };
-
-type LeaveGroupResponse =
-    variant {
-        Success;
-        GroupNotFound;
-        GroupNotPublic;
-        InternalError: text;
-        CallerNotInGroup;
-        OwnerCannotLeave;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type DeleteGroupArgs =
-    record {
-        chat_id: ChatId;
-    };
-
-type DeleteGroupResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-        InternalError: text;
-    };
-
-type CreateCommunityArgs =
-    record {
-        is_public: bool;
-        name: text;
-        description: text;
-        avatar: opt Document;
-        banner: opt Document;
-        history_visible_to_new_joiners: bool;
-        permissions: opt CommunityPermissions;
-        rules: AccessRules;
-        gate: opt AccessGate;
-        default_channels: vec text;
-    };
-
-type CreateCommunitySuccessResult =
-    record {
-        community_id: CommunityId;
-    };
-
-type CreateCommunityResponse =
-    variant {
-        Success: CreateCommunitySuccessResult;
-        NameTooShort: FieldTooShortResult;
-        NameTooLong: FieldTooLongResult;
-        NameReserved;
-        DescriptionTooLong: FieldTooLongResult;
-        AvatarTooBig: FieldTooLongResult;
-        BannerTooBig: FieldTooLongResult;
-        MaxCommunitiesCreated: nat32;
-        NameTaken;
-        Throttled;
-        InternalError: text;
-        RulesTooLong: FieldTooLongResult;
-        RulesTooShort: FieldTooShortResult;
-        UserSuspended;
-        Unauthorized;
-        DefaultChannelsInvalid;
-    };
-
-type LeaveCommunityArgs =
-    record {
-        community_id: CommunityId;
-    };
-
-type LeaveCommunityResponse =
-    variant {
-        Success;
-        CommunityNotFound;
-        CommunityNotPublic;
-        InternalError: text;
-        UserNotInCommunity;
-        LastOwnerCannotLeave;
-        UserSuspended;
-        CommunityFrozen;
-    };
-
-type DeleteCommunityArgs =
-    record {
-        community_id: CommunityId;
-    };
-
-type DeleteCommunityResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        UserSuspended;
-        CommunityFrozen;
-        InternalError: text;
-    };
-
-
-
-type SetAvatarArgs =
-    record {
-        avatar: opt Document;
-    };
-
-type SetAvatarResponse =
-    variant {
-        Success;
-        AvatarTooBig: FieldTooLongResult;
-        UserSuspended;
-    };
-
-type MuteNotificationsArgs =
-    record {
-        chat_id: ChatId;
-    };
-
-type MuteNotificationsResponse =
-    variant {
-        Success;
-        ChatNotFound;
-        InternalError: text;
-    };
-
-type UnmuteNotificationsArgs =
-    record {
-        chat_id: ChatId;
-    };
-
-type UnmuteNotificationsResponse =
-    variant {
-        Success;
-        ChatNotFound;
-        InternalError: text;
-    };
-
-type AddHotGroupExclusionsArgs =
-    record {
-        groups: vec ChatId;
-        duration: opt Milliseconds;
-    };
-
-type AddHotGroupExclusionsResponse =
-    variant {
-        Success;
-    };
-
-type SetBioArgs =
-    record {
-        text: text;
-    };
-
-type SetBioResponse =
-    variant {
-        Success;
-        TooLong: FieldTooLongResult;
-        UserSuspended;
-    };
-
-type SetContactArgs =
-    record {
-        contact: OptionalContact;
-    };
-
-type OptionalContact =
-    record {
-        user_id: UserId;
-        nickname: TextUpdate;
-    };
-
-type SetContactResponse =
-    variant {
-        Success;
-        NoChange;
-        NicknameTooLong: FieldTooLongResult;
-        NicknameTooShort: FieldTooShortResult;
-        UserSuspended;
-    };
-
-type SetMessageReminderArgs =
-    record {
-        chat_id: ChatId;
-        thread_root_message_index: opt MessageIndex;
-        event_index: EventIndex;
-        notes: opt text;
-        remind_at: TimestampMillis;
-    };
-
-type SetMessageReminderV2Args =
-    record {
-        chat: Chat;
-        thread_root_message_index: opt MessageIndex;
-        event_index: EventIndex;
-        notes: opt text;
-        remind_at: TimestampMillis;
-    };
-
-type SetMessageReminderResponse =
-    variant {
-        Success: nat64;
-        ReminderDateInThePast;
-        NotesTooLong: FieldTooLongResult;
-        UserSuspended;
-    };
-
-type CancelMessageReminderArgs =
-    record {
-        reminder_id: nat64;
-    };
-
-type CancelMessageReminderResponse =
-    variant {
-        Success;
-    };
-
-type SendMessageWithTransferToChannelArgs =
-    record {
-        community_id: CommunityId;
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        content: MessageContentInitial;
-        sender_name: text;
-        replies_to: opt GroupReplyContext;
-        mentioned: vec User;
-    };
-
-type SendMessageWithTransferToChannelResponse =
-    variant {
-        Success: record {
-            event_index: EventIndex;
-            message_index: MessageIndex;
-            timestamp: TimestampMillis;
-            expires_at: opt TimestampMillis;
-            transfer: CompletedCryptoTransaction;
-        };
-        TextTooLong: nat32;
-        RecipientBlocked;
-        UserNotInCommunity: opt CompletedCryptoTransaction;
-        UserNotInChannel: CompletedCryptoTransaction;
-        ChannelNotFound: CompletedCryptoTransaction;
-        CryptocurrencyNotSupported: Cryptocurrency;
-        InvalidRequest: text;
-        TransferFailed: text;
-        TransferCannotBeZero;
-        UserSuspended;
-        CommunityFrozen;
-        InternalError: record { text; CompletedCryptoTransaction; };
-    };
-
-type SendMessageWithTransferToGroupArgs =
-    record {
-        group_id: ChatId;
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        content: MessageContentInitial;
-        sender_name: text;
-        replies_to: opt GroupReplyContext;
-        mentioned: vec User;
-        correlation_id: nat64;
-    };
-
-type SendMessageWithTransferToGroupResponse =
-    variant {
-        Success: record {
-            event_index: EventIndex;
-            message_index: MessageIndex;
-            timestamp: TimestampMillis;
-            expires_at: opt TimestampMillis;
-            transfer: CompletedCryptoTransaction;
-        };
-        TextTooLong: nat32;
-        RecipientBlocked;
-        CallerNotInGroup: opt CompletedCryptoTransaction;
-        CryptocurrencyNotSupported: Cryptocurrency;
-        InvalidRequest: text;
-        TransferFailed: text;
-        TransferCannotBeZero;
-        UserSuspended;
-        ChatFrozen;
-        InternalError: record { text; CompletedCryptoTransaction; };
-    };
-
-type WithdrawCryptoArgs =
-    record {
-        withdrawal: PendingCryptoTransaction;
-    };
-
-type WithdrawCryptoResponse =
-    variant {
-        Success: CompletedCryptoTransaction;
-        TransactionFailed: FailedCryptoTransaction;
-        CurrencyNotSupported;
-    };
-
-type PinChatRequest =
-    record {
-        chat_id: ChatId;
-    };
-
-type PinChatResponse =
-    variant {
-        Success;
-        PinnedLimitReached: nat32;
-    };
-
-type UnpinChatRequest =
-    record {
-        chat_id: ChatId;
-    };
-
-type UnpinChatResponse =
-    variant {
-        Success;
-    };
-
-type PinChatV2Request =
-    record {
-        chat: ChatInList;
-    };
-
-type PinChatV2Response =
-    variant {
-        Success;
-        ChatNotFound;
-    };
-
-type UnpinChatV2Request =
-    record {
-        chat: ChatInList;
-    };
-
-type UnpinChatV2Response =
-    variant {
-        Success;
-        ChatNotFound;
-    };
-
-type ChatInList =
-    variant {
-        Direct: ChatId;
-        Group: ChatId;
-        Favourite: Chat;
-        Community: record { CommunityId; ChannelId; };
-    };
-
-type ArchiveChatArgs =
-    record {
-        chat_id: ChatId;
-    };
-
-type ArchiveChatResponse =
-    variant {
-        Success;
-        ChatNotFound;
-    };
-
-type UnArchiveChatArgs =
-    record {
-        chat_id: ChatId;
-    };
-
-type UnArchiveChatResponse =
-    variant {
-        Success;
-        ChatNotFound;
-    };
-
-type ManageFavouriteChatsArgs =
-    record {
-        to_add: vec Chat;
-        to_remove: vec Chat;
-    };
-
-type ManageFavouriteChatsResponse =
-    variant {
-        Success;
-        UserSuspended;
-    };
-
-type ArchiveUnarchiveChatsArgs =
-    record {
-        to_archive: vec Chat;
-        to_unarchive: vec Chat;
-    };
-
-type ArchiveUnarchiveChatsResponse =
-    variant {
-        Success;
-        PartialSuccess: record { chats_not_found: vec Chat; };
-        Failure;
-        UserSuspended;
-    };
-
-type InitUserPrincipalMigrationArgs =
-    record {
-        new_principal: principal;
-    };
-
-type InitUserPrincipalMigrationResponse =
-    variant {
-        Success;
-    };
-
-type MigrateUserPrincipalArgs =
-    record {
-    };
-
-type MigrateUserPrincipalResponse =
-    variant {
-        Success;
-        MigrationNotInitialized;
-        MigrationAlreadyInProgress;
-        PrincipalAlreadyInUse;
-        InternalError: text;
-    };
-
-type InitialStateArgs =
-    record {
-        disable_cache: opt bool;
-    };
-
-type InitialStateResponse =
-    variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            direct_chats: DirectChatsInitial;
-            group_chats: GroupChatsInitial;
-            favourite_chats: FavouriteChatsInitial;
-            communities: CommunitiesInitial;
-            avatar_id: opt nat;
-            blocked_users: vec UserId;
-        };
-    };
-
-type DirectChatsInitial =
-    record {
-        summaries: vec DirectChatSummary;
-        pinned: vec ChatId;
-    };
-
-type GroupChatsInitial =
-    record {
-        summaries: vec UserCanisterGroupChatSummary;
-        pinned: vec ChatId;
-        cached: opt CachedGroupChatSummaries;
-    };
-
-type CachedGroupChatSummaries =
-    record {
-        summaries: vec GroupChatSummary;
-        timestamp: TimestampMillis;
-    };
-
-type FavouriteChatsInitial =
-    record {
-        chats: vec Chat;
-        pinned: vec Chat;
-    };
-
-type CommunitiesInitial =
-    record {
-        summaries: vec UserCanisterCommunitySummary;
-    };
-
-type UpdatesArgs =
-    record {
-        updates_since: TimestampMillis;
-    };
-
-type UpdatesResponse =
-    variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            direct_chats: DirectChatsUpdates;
-            group_chats: GroupChatsUpdates;
-            favourite_chats: FavouriteChatsUpdates;
-            communities: CommunitiesUpdates;
-            avatar_id: DocumentIdUpdate;
-            blocked_users: opt vec UserId;
-        };
-        SuccessNoUpdates;
-    };
-
-type DirectChatsUpdates =
-    record {
-        added: vec DirectChatSummary;
-        updated: vec DirectChatSummaryUpdates;
-        pinned: opt vec ChatId;
-    };
-
-type GroupChatsUpdates =
-    record {
-        added: vec UserCanisterGroupChatSummary;
-        updated: vec UserCanisterGroupChatSummaryUpdates;
-        removed: vec ChatId;
-        pinned: opt vec ChatId;
-    };
-
-type CommunitiesUpdates = 
-    record {
-        added: vec UserCanisterCommunitySummary;
-        updated: vec UserCanisterCommunitySummaryUpdates;
-        removed: vec CommunityId;
-    };
-
-type FavouriteChatsUpdates = 
-    record {
-        chats: opt vec Chat;
-        pinned: opt vec Chat;
-    };
-
-type UserCanisterGroupChatSummary =
-    record {
-        chat_id: ChatId;
-        read_by_me_up_to: opt MessageIndex;
-        threads_read: vec record { MessageIndex; MessageIndex };
-        archived: bool;
-        date_read_pinned: opt TimestampMillis;
-    };
-
-type UserCanisterGroupChatSummaryUpdates =
-    record {
-        chat_id: ChatId;
-        read_by_me_up_to: opt MessageIndex;
-        threads_read: vec record { MessageIndex; MessageIndex };
-        archived: opt bool;
-        date_read_pinned: opt TimestampMillis;
-    };
-
-type UserCanisterCommunitySummary =
-    record {
-        community_id: CommunityId;
-        channels: vec UserCanisterChannelSummary;
-        archived: bool;
-        pinned: vec ChannelId;
-    };
-
-type UserCanisterCommunitySummaryUpdates =
-    record {
-        community_id: CommunityId;
-        channels: vec UserCanisterChannelSummaryUpdates;
-        archived: opt bool;
-        pinned: opt vec ChannelId;
-    };
-
-type InitialStateV2Args =
-    record {
-        disable_cache: opt bool;
-    };
-
-type InitialStateV2Response =
-    variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            direct_chats: vec DirectChatSummary;
-            group_chats: vec UserCanisterGroupChatSummary;
-            avatar_id: opt nat;
-            blocked_users: vec UserId;
-            pinned_chats: vec ChatId;
-            user_canister_wasm_version: Version;
-        };
-        SuccessCached: record {
-            timestamp: TimestampMillis;
-            direct_chats: vec DirectChatSummary;
-            cache_timestamp: TimestampMillis;
-            cached_group_chat_summaries: vec GroupChatSummary;
-            group_chats_added: vec UserCanisterGroupChatSummary;
-            avatar_id: opt nat;
-            blocked_users: vec UserId;
-            pinned_chats: vec ChatId;
-            user_canister_wasm_version: Version;
-        };
-    };
-
-type UpdatesV2Args =
-    record {
-        updates_since: TimestampMillis;
-    };
-
-type UpdatesV2Response =
-    variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            direct_chats_added: vec DirectChatSummary;
-            direct_chats_updated: vec DirectChatSummaryUpdates;
-            group_chats_added: vec UserCanisterGroupChatSummary;
-            group_chats_updated: vec UserCanisterGroupChatSummaryUpdates;
-            chats_removed: vec ChatId;
-            avatar_id: DocumentIdUpdate;
-            user_canister_wasm_version: opt Version;
-            blocked_users_v2: opt vec UserId;
-            pinned_chats: opt vec ChatId;
-        };
-        SuccessNoUpdates;
-    };
-
-type UserCanisterChannelSummary =
-    record {
-        channel_id: ChannelId;
-        read_by_me_up_to: opt MessageIndex;
-        threads_read: vec record { MessageIndex; MessageIndex };
-        archived: bool;
-        date_read_pinned: opt TimestampMillis;
-    };
-
-type UserCanisterChannelSummaryUpdates =
-    record {
-        channel_id: ChannelId;
-        read_by_me_up_to: opt MessageIndex;
-        threads_read: vec record { MessageIndex; MessageIndex };
-        archived: opt bool;
-        date_read_pinned: opt TimestampMillis;
-    };
-
-type EventsArgs =
-    record {
-        user_id: UserId;
-        thread_root_message_index: opt MessageIndex;
-        start_index: EventIndex;
-        ascending: bool;
-        max_messages: nat32;
-        max_events: nat32;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type EventsByIndexArgs =
-    record {
-        user_id: UserId;
-        thread_root_message_index: opt MessageIndex;
-        events: vec EventIndex;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type EventsWindowArgs =
-    record {
-        user_id: UserId;
-        thread_root_message_index: opt MessageIndex;
-        mid_point: MessageIndex;
-        max_messages: nat32;
-        max_events: nat32;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type EventsResponse =
-    variant {
-        Success: EventsSuccessResult;
-        ChatNotFound;
-        ReplicaNotUpToDate: EventIndex;
-    };
-
-type MessagesByMessageIndexArgs =
-    record {
-        user_id: UserId;
-        thread_root_message_index: opt MessageIndex;
-        messages: vec MessageIndex;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type MessagesByMessageIndexResponse =
-    variant {
-        Success: record {
-            messages: vec MessageEventWrapper;
-            latest_event_index: EventIndex;
-        };
-        ChatNotFound;
-        ReplicaNotUpToDate: EventIndex;
-    };
-
-type SearchMessagesArgs =
-    record {
-        user_id: UserId;
-        search_term: text;
-        max_results: nat8;
-    };
-
-type SearchMessagesResponse =
-    variant {
-        Success: SearchMessagesSuccessResult;
-        TermTooShort: nat8;
-        TermTooLong: nat8;
-        InvalidTerm;
-        ChatNotFound;
-    };
-
-type SearchMessagesSuccessResult =
-    record {
-        matches: vec MessageMatch;
-    };
+type SendMessageV2Args = record {
+    recipient : UserId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    sender_name : text;
+    content : MessageContentInitial;
+    replies_to : opt ReplyContext;
+    forwarding : bool;
+    correlation_id : nat64;
+};
+
+type SendMessageResponse = variant {
+    Success : record {
+        chat_id : ChatId;
+        event_index : EventIndex;
+        message_index : MessageIndex;
+        timestamp : TimestampMillis;
+        expires_at : opt TimestampMillis;
+    };
+    TransferSuccessV2 : record {
+        chat_id : ChatId;
+        event_index : EventIndex;
+        message_index : MessageIndex;
+        timestamp : TimestampMillis;
+        expires_at : opt TimestampMillis;
+        transfer : CompletedCryptoTransaction;
+    };
+    MessageEmpty;
+    TextTooLong : nat32;
+    RecipientBlocked;
+    RecipientNotFound;
+    InvalidPoll : InvalidPollReason;
+    InvalidRequest : text;
+    TransferFailed : text;
+    TransferCannotBeZero;
+    UserSuspended;
+    InternalError : text;
+};
+
+type EditMessageV2Args = record {
+    user_id : UserId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    content : MessageContentInitial;
+    correlation_id : nat64;
+};
+
+type EditMessageResponse = variant {
+    Success;
+    MessageNotFound;
+    ChatNotFound;
+    UserBlocked;
+    UserSuspended;
+};
+
+type DeleteMessagesArgs = record {
+    user_id : UserId;
+    thread_root_message_index : opt MessageIndex;
+    message_ids : vec MessageId;
+    correlation_id : nat64;
+};
+
+type DeleteMessagesResponse = variant {
+    Success;
+    ChatNotFound;
+    UserSuspended;
+};
+
+type UndeleteMessagesArgs = record {
+    user_id : UserId;
+    thread_root_message_index : opt MessageIndex;
+    message_ids : vec MessageId;
+    correlation_id : nat64;
+};
+
+type UndeleteMessagesResponse = variant {
+    Success : record {
+        messages : vec Message;
+    };
+    ChatNotFound;
+    UserSuspended;
+};
+
+type AddReactionArgs = record {
+    user_id : UserId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    reaction : text;
+    username : text;
+    correlation_id : nat64;
+};
+
+type AddReactionResponse = variant {
+    Success;
+    SuccessV2 : PushEventResult;
+    NoChange;
+    InvalidReaction;
+    MessageNotFound;
+    ChatNotFound;
+    UserSuspended;
+};
+
+type RemoveReactionArgs = record {
+    user_id : UserId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    reaction : text;
+    correlation_id : nat64;
+};
+
+type RemoveReactionResponse = variant {
+    Success;
+    SuccessV2 : PushEventResult;
+    NoChange;
+    MessageNotFound;
+    ChatNotFound;
+    UserSuspended;
+};
+
+type MarkReadArgs = record {
+    messages_read : vec ChatMessagesRead;
+    community_messages_read : vec CommunityMessagesRead;
+};
+
+type MarkReadV2Args = record {
+    messages_read : vec ChatMessagesRead;
+};
+
+type ChatMessagesRead = record {
+    chat_id : ChatId;
+    read_up_to : opt MessageIndex;
+    threads : vec ThreadRead;
+    date_read_pinned : opt TimestampMillis;
+};
+
+type CommunityMessagesRead = record {
+    community_id : CommunityId;
+    channels_read : vec ChannelMessagesRead;
+};
+
+type ChannelMessagesRead = record {
+    channel_id : ChannelId;
+    read_up_to : opt MessageIndex;
+    threads : vec ThreadRead;
+    date_read_pinned : opt TimestampMillis;
+};
+
+type ThreadRead = record {
+    root_message_index : MessageIndex;
+    read_up_to : MessageIndex;
+};
+
+type MarkReadResponse = variant {
+    Success;
+};
+
+type BlockUserArgs = record {
+    user_id : UserId;
+};
+
+type BlockUserResponse = variant {
+    Success;
+    UserSuspended;
+};
+
+type UnblockUserArgs = record {
+    user_id : UserId;
+};
+
+type UnblockUserResponse = variant {
+    Success;
+    UserSuspended;
+};
+
+type CreateGroupArgs = record {
+    is_public : bool;
+    name : text;
+    description : text;
+    avatar : opt Document;
+    history_visible_to_new_joiners : bool;
+    permissions : opt GroupPermissions;
+    rules : AccessRules;
+    gate : opt AccessGate;
+};
+
+type CreateGroupSuccessResult = record {
+    chat_id : ChatId;
+};
+
+type CreateGroupResponse = variant {
+    Success : CreateGroupSuccessResult;
+    NameTooShort : FieldTooShortResult;
+    NameTooLong : FieldTooLongResult;
+    NameReserved;
+    DescriptionTooLong : FieldTooLongResult;
+    AvatarTooBig : FieldTooLongResult;
+    MaxGroupsCreated : nat32;
+    NameTaken;
+    Throttled;
+    InternalError;
+    RulesTooLong : FieldTooLongResult;
+    RulesTooShort : FieldTooShortResult;
+    UserSuspended;
+    UnauthorizedToCreatePublicGroup;
+};
+
+type LeaveGroupArgs = record {
+    chat_id : ChatId;
+    correlation_id : nat64;
+};
+
+type LeaveGroupResponse = variant {
+    Success;
+    GroupNotFound;
+    GroupNotPublic;
+    InternalError : text;
+    CallerNotInGroup;
+    OwnerCannotLeave;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type DeleteGroupArgs = record {
+    chat_id : ChatId;
+};
+
+type DeleteGroupResponse = variant {
+    Success;
+    NotAuthorized;
+    UserSuspended;
+    ChatFrozen;
+    InternalError : text;
+};
+
+type CreateCommunityArgs = record {
+    is_public : bool;
+    name : text;
+    description : text;
+    avatar : opt Document;
+    banner : opt Document;
+    history_visible_to_new_joiners : bool;
+    permissions : opt CommunityPermissions;
+    rules : AccessRules;
+    gate : opt AccessGate;
+    default_channels : vec text;
+};
+
+type CreateCommunitySuccessResult = record {
+    community_id : CommunityId;
+};
+
+type CreateCommunityResponse = variant {
+    Success : CreateCommunitySuccessResult;
+    NameTooShort : FieldTooShortResult;
+    NameTooLong : FieldTooLongResult;
+    NameReserved;
+    DescriptionTooLong : FieldTooLongResult;
+    AvatarTooBig : FieldTooLongResult;
+    BannerTooBig : FieldTooLongResult;
+    MaxCommunitiesCreated : nat32;
+    NameTaken;
+    Throttled;
+    InternalError : text;
+    RulesTooLong : FieldTooLongResult;
+    RulesTooShort : FieldTooShortResult;
+    UserSuspended;
+    Unauthorized;
+    DefaultChannelsInvalid;
+};
+
+type LeaveCommunityArgs = record {
+    community_id : CommunityId;
+};
+
+type LeaveCommunityResponse = variant {
+    Success;
+    CommunityNotFound;
+    CommunityNotPublic;
+    InternalError : text;
+    UserNotInCommunity;
+    LastOwnerCannotLeave;
+    UserSuspended;
+    CommunityFrozen;
+};
+
+type DeleteCommunityArgs = record {
+    community_id : CommunityId;
+};
+
+type DeleteCommunityResponse = variant {
+    Success;
+    NotAuthorized;
+    UserSuspended;
+    CommunityFrozen;
+    InternalError : text;
+};
+
+type SetAvatarArgs = record {
+    avatar : opt Document;
+};
+
+type SetAvatarResponse = variant {
+    Success;
+    AvatarTooBig : FieldTooLongResult;
+    UserSuspended;
+};
+
+type MuteNotificationsArgs = record {
+    chat_id : ChatId;
+};
+
+type MuteNotificationsResponse = variant {
+    Success;
+    ChatNotFound;
+    InternalError : text;
+};
+
+type UnmuteNotificationsArgs = record {
+    chat_id : ChatId;
+};
+
+type UnmuteNotificationsResponse = variant {
+    Success;
+    ChatNotFound;
+    InternalError : text;
+};
+
+type AddHotGroupExclusionsArgs = record {
+    groups : vec ChatId;
+    duration : opt Milliseconds;
+};
+
+type AddHotGroupExclusionsResponse = variant {
+    Success;
+};
+
+type SetBioArgs = record {
+    text : text;
+};
+
+type SetBioResponse = variant {
+    Success;
+    TooLong : FieldTooLongResult;
+    UserSuspended;
+};
+
+type SetContactArgs = record {
+    contact : OptionalContact;
+};
+
+type OptionalContact = record {
+    user_id : UserId;
+    nickname : TextUpdate;
+};
+
+type SetContactResponse = variant {
+    Success;
+    NoChange;
+    NicknameTooLong : FieldTooLongResult;
+    NicknameTooShort : FieldTooShortResult;
+    UserSuspended;
+};
+
+type SetMessageReminderArgs = record {
+    chat_id : ChatId;
+    thread_root_message_index : opt MessageIndex;
+    event_index : EventIndex;
+    notes : opt text;
+    remind_at : TimestampMillis;
+};
+
+type SetMessageReminderV2Args = record {
+    chat : Chat;
+    thread_root_message_index : opt MessageIndex;
+    event_index : EventIndex;
+    notes : opt text;
+    remind_at : TimestampMillis;
+};
+
+type SetMessageReminderResponse = variant {
+    Success : nat64;
+    ReminderDateInThePast;
+    NotesTooLong : FieldTooLongResult;
+    UserSuspended;
+};
+
+type CancelMessageReminderArgs = record {
+    reminder_id : nat64;
+};
+
+type CancelMessageReminderResponse = variant {
+    Success;
+};
+
+type SendMessageWithTransferToChannelArgs = record {
+    community_id : CommunityId;
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    content : MessageContentInitial;
+    sender_name : text;
+    replies_to : opt GroupReplyContext;
+    mentioned : vec User;
+};
+
+type SendMessageWithTransferToChannelResponse = variant {
+    Success : record {
+        event_index : EventIndex;
+        message_index : MessageIndex;
+        timestamp : TimestampMillis;
+        expires_at : opt TimestampMillis;
+        transfer : CompletedCryptoTransaction;
+    };
+    TextTooLong : nat32;
+    RecipientBlocked;
+    UserNotInCommunity : opt CompletedCryptoTransaction;
+    UserNotInChannel : CompletedCryptoTransaction;
+    ChannelNotFound : CompletedCryptoTransaction;
+    CryptocurrencyNotSupported : Cryptocurrency;
+    InvalidRequest : text;
+    TransferFailed : text;
+    TransferCannotBeZero;
+    UserSuspended;
+    CommunityFrozen;
+    InternalError : record { text; CompletedCryptoTransaction };
+};
+
+type SendMessageWithTransferToGroupArgs = record {
+    group_id : ChatId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    content : MessageContentInitial;
+    sender_name : text;
+    replies_to : opt GroupReplyContext;
+    mentioned : vec User;
+    correlation_id : nat64;
+};
+
+type SendMessageWithTransferToGroupResponse = variant {
+    Success : record {
+        event_index : EventIndex;
+        message_index : MessageIndex;
+        timestamp : TimestampMillis;
+        expires_at : opt TimestampMillis;
+        transfer : CompletedCryptoTransaction;
+    };
+    TextTooLong : nat32;
+    RecipientBlocked;
+    CallerNotInGroup : opt CompletedCryptoTransaction;
+    CryptocurrencyNotSupported : Cryptocurrency;
+    InvalidRequest : text;
+    TransferFailed : text;
+    TransferCannotBeZero;
+    UserSuspended;
+    ChatFrozen;
+    InternalError : record { text; CompletedCryptoTransaction };
+};
+
+type WithdrawCryptoArgs = record {
+    withdrawal : PendingCryptoTransaction;
+};
+
+type WithdrawCryptoResponse = variant {
+    Success : CompletedCryptoTransaction;
+    TransactionFailed : FailedCryptoTransaction;
+    CurrencyNotSupported;
+};
+
+type PinChatRequest = record {
+    chat_id : ChatId;
+};
+
+type PinChatResponse = variant {
+    Success;
+    PinnedLimitReached : nat32;
+};
+
+type UnpinChatRequest = record {
+    chat_id : ChatId;
+};
+
+type UnpinChatResponse = variant {
+    Success;
+};
+
+type PinChatV2Request = record {
+    chat : ChatInList;
+};
+
+type PinChatV2Response = variant {
+    Success;
+    ChatNotFound;
+};
+
+type UnpinChatV2Request = record {
+    chat : ChatInList;
+};
+
+type UnpinChatV2Response = variant {
+    Success;
+    ChatNotFound;
+};
+
+type ChatInList = variant {
+    Direct : ChatId;
+    Group : ChatId;
+    Favourite : Chat;
+    Community : record { CommunityId; ChannelId };
+};
+
+type ArchiveChatArgs = record {
+    chat_id : ChatId;
+};
+
+type ArchiveChatResponse = variant {
+    Success;
+    ChatNotFound;
+};
+
+type UnArchiveChatArgs = record {
+    chat_id : ChatId;
+};
+
+type UnArchiveChatResponse = variant {
+    Success;
+    ChatNotFound;
+};
+
+type ManageFavouriteChatsArgs = record {
+    to_add : vec Chat;
+    to_remove : vec Chat;
+};
+
+type ManageFavouriteChatsResponse = variant {
+    Success;
+    UserSuspended;
+};
+
+type ArchiveUnarchiveChatsArgs = record {
+    to_archive : vec Chat;
+    to_unarchive : vec Chat;
+};
+
+type ArchiveUnarchiveChatsResponse = variant {
+    Success;
+    PartialSuccess : record { chats_not_found : vec Chat };
+    Failure;
+    UserSuspended;
+};
+
+type InitUserPrincipalMigrationArgs = record {
+    new_principal : principal;
+};
+
+type InitUserPrincipalMigrationResponse = variant {
+    Success;
+};
+
+type MigrateUserPrincipalArgs = record {};
+
+type MigrateUserPrincipalResponse = variant {
+    Success;
+    MigrationNotInitialized;
+    MigrationAlreadyInProgress;
+    PrincipalAlreadyInUse;
+    InternalError : text;
+};
+
+type InitialStateArgs = record {
+    disable_cache : opt bool;
+};
+
+type InitialStateResponse = variant {
+    Success : record {
+        timestamp : TimestampMillis;
+        direct_chats : DirectChatsInitial;
+        group_chats : GroupChatsInitial;
+        favourite_chats : FavouriteChatsInitial;
+        communities : CommunitiesInitial;
+        avatar_id : opt nat;
+        blocked_users : vec UserId;
+    };
+};
+
+type DirectChatsInitial = record {
+    summaries : vec DirectChatSummary;
+    pinned : vec ChatId;
+};
+
+type GroupChatsInitial = record {
+    summaries : vec UserCanisterGroupChatSummary;
+    pinned : vec ChatId;
+    cached : opt CachedGroupChatSummaries;
+};
+
+type CachedGroupChatSummaries = record {
+    summaries : vec GroupChatSummary;
+    timestamp : TimestampMillis;
+};
+
+type FavouriteChatsInitial = record {
+    chats : vec Chat;
+    pinned : vec Chat;
+};
+
+type CommunitiesInitial = record {
+    summaries : vec UserCanisterCommunitySummary;
+};
+
+type UpdatesArgs = record {
+    updates_since : TimestampMillis;
+};
+
+type UpdatesResponse = variant {
+    Success : record {
+        timestamp : TimestampMillis;
+        direct_chats : DirectChatsUpdates;
+        group_chats : GroupChatsUpdates;
+        favourite_chats : FavouriteChatsUpdates;
+        communities : CommunitiesUpdates;
+        avatar_id : DocumentIdUpdate;
+        blocked_users : opt vec UserId;
+    };
+    SuccessNoUpdates;
+};
+
+type DirectChatsUpdates = record {
+    added : vec DirectChatSummary;
+    updated : vec DirectChatSummaryUpdates;
+    pinned : opt vec ChatId;
+};
+
+type GroupChatsUpdates = record {
+    added : vec UserCanisterGroupChatSummary;
+    updated : vec UserCanisterGroupChatSummaryUpdates;
+    removed : vec ChatId;
+    pinned : opt vec ChatId;
+};
+
+type CommunitiesUpdates = record {
+    added : vec UserCanisterCommunitySummary;
+    updated : vec UserCanisterCommunitySummaryUpdates;
+    removed : vec CommunityId;
+};
+
+type FavouriteChatsUpdates = record {
+    chats : opt vec Chat;
+    pinned : opt vec Chat;
+};
+
+type UserCanisterGroupChatSummary = record {
+    chat_id : ChatId;
+    read_by_me_up_to : opt MessageIndex;
+    threads_read : vec record { MessageIndex; MessageIndex };
+    archived : bool;
+    date_read_pinned : opt TimestampMillis;
+};
+
+type UserCanisterGroupChatSummaryUpdates = record {
+    chat_id : ChatId;
+    read_by_me_up_to : opt MessageIndex;
+    threads_read : vec record { MessageIndex; MessageIndex };
+    archived : opt bool;
+    date_read_pinned : opt TimestampMillis;
+};
+
+type UserCanisterCommunitySummary = record {
+    community_id : CommunityId;
+    channels : vec UserCanisterChannelSummary;
+    archived : bool;
+    pinned : vec ChannelId;
+};
+
+type UserCanisterCommunitySummaryUpdates = record {
+    community_id : CommunityId;
+    channels : vec UserCanisterChannelSummaryUpdates;
+    archived : opt bool;
+    pinned : opt vec ChannelId;
+};
+
+type InitialStateV2Args = record {
+    disable_cache : opt bool;
+};
+
+type InitialStateV2Response = variant {
+    Success : record {
+        timestamp : TimestampMillis;
+        direct_chats : vec DirectChatSummary;
+        group_chats : vec UserCanisterGroupChatSummary;
+        avatar_id : opt nat;
+        blocked_users : vec UserId;
+        pinned_chats : vec ChatId;
+        user_canister_wasm_version : Version;
+    };
+    SuccessCached : record {
+        timestamp : TimestampMillis;
+        direct_chats : vec DirectChatSummary;
+        cache_timestamp : TimestampMillis;
+        cached_group_chat_summaries : vec GroupChatSummary;
+        group_chats_added : vec UserCanisterGroupChatSummary;
+        avatar_id : opt nat;
+        blocked_users : vec UserId;
+        pinned_chats : vec ChatId;
+        user_canister_wasm_version : Version;
+    };
+};
+
+type UpdatesV2Args = record {
+    updates_since : TimestampMillis;
+};
+
+type UpdatesV2Response = variant {
+    Success : record {
+        timestamp : TimestampMillis;
+        direct_chats_added : vec DirectChatSummary;
+        direct_chats_updated : vec DirectChatSummaryUpdates;
+        group_chats_added : vec UserCanisterGroupChatSummary;
+        group_chats_updated : vec UserCanisterGroupChatSummaryUpdates;
+        chats_removed : vec ChatId;
+        avatar_id : DocumentIdUpdate;
+        user_canister_wasm_version : opt Version;
+        blocked_users_v2 : opt vec UserId;
+        pinned_chats : opt vec ChatId;
+    };
+    SuccessNoUpdates;
+};
+
+type UserCanisterChannelSummary = record {
+    channel_id : ChannelId;
+    read_by_me_up_to : opt MessageIndex;
+    threads_read : vec record { MessageIndex; MessageIndex };
+    archived : bool;
+    date_read_pinned : opt TimestampMillis;
+};
+
+type UserCanisterChannelSummaryUpdates = record {
+    channel_id : ChannelId;
+    read_by_me_up_to : opt MessageIndex;
+    threads_read : vec record { MessageIndex; MessageIndex };
+    archived : opt bool;
+    date_read_pinned : opt TimestampMillis;
+};
+
+type EventsArgs = record {
+    user_id : UserId;
+    thread_root_message_index : opt MessageIndex;
+    start_index : EventIndex;
+    ascending : bool;
+    max_messages : nat32;
+    max_events : nat32;
+    latest_client_event_index : opt EventIndex;
+};
+
+type EventsByIndexArgs = record {
+    user_id : UserId;
+    thread_root_message_index : opt MessageIndex;
+    events : vec EventIndex;
+    latest_client_event_index : opt EventIndex;
+};
+
+type EventsWindowArgs = record {
+    user_id : UserId;
+    thread_root_message_index : opt MessageIndex;
+    mid_point : MessageIndex;
+    max_messages : nat32;
+    max_events : nat32;
+    latest_client_event_index : opt EventIndex;
+};
+
+type EventsResponse = variant {
+    Success : EventsSuccessResult;
+    ChatNotFound;
+    ReplicaNotUpToDate : EventIndex;
+};
+
+type MessagesByMessageIndexArgs = record {
+    user_id : UserId;
+    thread_root_message_index : opt MessageIndex;
+    messages : vec MessageIndex;
+    latest_client_event_index : opt EventIndex;
+};
+
+type MessagesByMessageIndexResponse = variant {
+    Success : record {
+        messages : vec MessageEventWrapper;
+        latest_event_index : EventIndex;
+    };
+    ChatNotFound;
+    ReplicaNotUpToDate : EventIndex;
+};
+
+type SearchMessagesArgs = record {
+    user_id : UserId;
+    search_term : text;
+    max_results : nat8;
+};
+
+type SearchMessagesResponse = variant {
+    Success : SearchMessagesSuccessResult;
+    TermTooShort : nat8;
+    TermTooLong : nat8;
+    InvalidTerm;
+    ChatNotFound;
+};
+
+type SearchMessagesSuccessResult = record {
+    matches : vec MessageMatch;
+};
 
 type BioArgs = record {};
 
-type BioResponse =
-    variant {
-        Success: text;
-    };
+type BioResponse = variant {
+    Success : text;
+};
 
 type ContactsArgs = record {};
 
-type ContactsResponse =
-    variant {
-        Success: record {
-            contacts: vec Contact;
-        };
+type ContactsResponse = variant {
+    Success : record {
+        contacts : vec Contact;
     };
+};
 
-type Contact =
-    record {
-        user_id: UserId;
-        nickname: opt text;
-    };
+type Contact = record {
+    user_id : UserId;
+    nickname : opt text;
+};
 
 type PublicProfileArgs = record {};
 
-type PublicProfileResponse =
-    variant {
-        Success: PublicProfile;
+type PublicProfileResponse = variant {
+    Success : PublicProfile;
+};
+
+type PublicProfile = record {
+    username : text;
+    avatar_id : opt nat;
+    bio : text;
+    is_premium : bool;
+    phone_is_verified : bool;
+    created : TimestampMillis;
+};
+
+type HotGroupExclusionsArgs = record {};
+
+type HotGroupExclusionsResponse = variant {
+    Success : vec ChatId;
+};
+
+type DeletedMessageArgs = record {
+    user_id : UserId;
+    message_id : MessageId;
+};
+
+type DeletedMessageResponse = variant {
+    Success : record {
+        content : MessageContent;
     };
+    ChatNotFound;
+    NotAuthorized;
+    MessageNotFound;
+    MessageNotDeleted;
+    MessageHardDeleted;
+};
 
-type PublicProfile =
-    record {
-        username: text;
-        avatar_id: opt nat;
-        bio: text;
-        is_premium: bool;
-        phone_is_verified: bool;
-        created: TimestampMillis;
-    };
+service : {
+    send_message_v2 : (SendMessageV2Args) -> (SendMessageResponse);
+    edit_message_v2 : (EditMessageV2Args) -> (EditMessageResponse);
+    delete_messages : (DeleteMessagesArgs) -> (DeleteMessagesResponse);
+    undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
+    add_reaction : (AddReactionArgs) -> (AddReactionResponse);
+    remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
+    mark_read : (MarkReadArgs) -> (MarkReadResponse);
+    mark_read_v2 : (MarkReadV2Args) -> (MarkReadResponse);
+    block_user : (BlockUserArgs) -> (BlockUserResponse);
+    unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
+    create_group : (CreateGroupArgs) -> (CreateGroupResponse);
+    leave_group : (LeaveGroupArgs) -> (LeaveGroupResponse);
+    delete_group : (DeleteGroupArgs) -> (DeleteGroupResponse);
+    create_community : (CreateCommunityArgs) -> (CreateCommunityResponse);
+    leave_community : (LeaveCommunityArgs) -> (LeaveCommunityResponse);
+    delete_community : (DeleteCommunityArgs) -> (DeleteCommunityResponse);
+    set_avatar : (SetAvatarArgs) -> (SetAvatarResponse);
+    mute_notifications : (MuteNotificationsArgs) -> (MuteNotificationsResponse);
+    unmute_notifications : (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
+    add_hot_group_exclusions : (AddHotGroupExclusionsArgs) -> (AddHotGroupExclusionsResponse);
+    set_bio : (SetBioArgs) -> (SetBioResponse);
+    set_contact : (SetContactArgs) -> (SetContactResponse);
+    set_message_reminder_v2 : (SetMessageReminderV2Args) -> (SetMessageReminderResponse);
+    set_message_reminder : (SetMessageReminderArgs) -> (SetMessageReminderResponse);
+    cancel_message_reminder : (CancelMessageReminderArgs) -> (CancelMessageReminderResponse);
+    send_message_with_transfer_to_channel : (SendMessageWithTransferToChannelArgs) -> (SendMessageWithTransferToChannelResponse);
+    send_message_with_transfer_to_group : (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
+    withdraw_crypto_v2 : (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
+    pin_chat : (PinChatRequest) -> (PinChatResponse);
+    unpin_chat : (UnpinChatRequest) -> (UnpinChatResponse);
+    pin_chat_v2 : (PinChatV2Request) -> (PinChatV2Response);
+    unpin_chat_v2 : (UnpinChatV2Request) -> (UnpinChatV2Response);
+    archive_chat : (ArchiveChatArgs) -> (ArchiveChatResponse);
+    unarchive_chat : (UnArchiveChatArgs) -> (UnArchiveChatResponse);
+    manage_favourite_chats : (ManageFavouriteChatsArgs) -> (ManageFavouriteChatsResponse);
+    archive_unarchive_chats : (ArchiveUnarchiveChatsArgs) -> (ArchiveUnarchiveChatsResponse);
 
-type HotGroupExclusionsArgs =
-    record {
-    };
+    init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
+    migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
 
-type HotGroupExclusionsResponse =
-    variant {
-        Success: vec ChatId;
-    };
+    events : (EventsArgs) -> (EventsResponse) query;
+    events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;
+    events_window : (EventsWindowArgs) -> (EventsResponse) query;
+    messages_by_message_index : (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
+    deleted_message : (DeletedMessageArgs) -> (DeletedMessageResponse) query;
 
-type DeletedMessageArgs =
-    record {
-        user_id: UserId;
-        message_id: MessageId;
-    };
-
-type DeletedMessageResponse =
-    variant {
-        Success: record {
-            content: MessageContent;
-        };
-        ChatNotFound;
-        NotAuthorized;
-        MessageNotFound;
-        MessageNotDeleted;
-        MessageHardDeleted;
-    };
-
-service: {
-    send_message_v2: (SendMessageV2Args) -> (SendMessageResponse);
-    edit_message_v2: (EditMessageV2Args) -> (EditMessageResponse);
-    delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
-    undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
-    add_reaction: (AddReactionArgs) -> (AddReactionResponse);
-    remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
-    mark_read: (MarkReadArgs) -> (MarkReadResponse);
-    mark_read_v2: (MarkReadV2Args) -> (MarkReadResponse);
-    block_user: (BlockUserArgs) -> (BlockUserResponse);
-    unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
-    create_group: (CreateGroupArgs) -> (CreateGroupResponse);
-    leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
-    delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
-    create_community: (CreateCommunityArgs) -> (CreateCommunityResponse);
-    leave_community: (LeaveCommunityArgs) -> (LeaveCommunityResponse);
-    delete_community: (DeleteCommunityArgs) -> (DeleteCommunityResponse);
-    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
-    mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);
-    unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
-    add_hot_group_exclusions: (AddHotGroupExclusionsArgs) -> (AddHotGroupExclusionsResponse);
-    set_bio: (SetBioArgs) -> (SetBioResponse);
-    set_contact: (SetContactArgs) -> (SetContactResponse);
-    set_message_reminder_v2: (SetMessageReminderV2Args) -> (SetMessageReminderResponse);
-    set_message_reminder: (SetMessageReminderArgs) -> (SetMessageReminderResponse);
-    cancel_message_reminder: (CancelMessageReminderArgs) -> (CancelMessageReminderResponse);
-    send_message_with_transfer_to_channel: (SendMessageWithTransferToChannelArgs) -> (SendMessageWithTransferToChannelResponse);
-    send_message_with_transfer_to_group: (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
-    withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
-    pin_chat: (PinChatRequest) -> (PinChatResponse);
-    unpin_chat: (UnpinChatRequest) -> (UnpinChatResponse);
-    pin_chat_v2: (PinChatV2Request) -> (PinChatV2Response);
-    unpin_chat_v2: (UnpinChatV2Request) -> (UnpinChatV2Response);
-    archive_chat: (ArchiveChatArgs) -> (ArchiveChatResponse);
-    unarchive_chat: (UnArchiveChatArgs) -> (UnArchiveChatResponse);
-    manage_favourite_chats: (ManageFavouriteChatsArgs) -> (ManageFavouriteChatsResponse);
-    archive_unarchive_chats: (ArchiveUnarchiveChatsArgs) -> (ArchiveUnarchiveChatsResponse);
-
-    init_user_principal_migration: (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
-    migrate_user_principal: (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
-
-    events: (EventsArgs) -> (EventsResponse) query;
-    events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
-    events_window: (EventsWindowArgs) -> (EventsResponse) query;
-    messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
-    deleted_message: (DeletedMessageArgs) -> (DeletedMessageResponse) query;
-
-    initial_state: (InitialStateArgs) -> (InitialStateResponse) query;
-    initial_state_v2: (InitialStateV2Args) -> (InitialStateV2Response) query;
-    updates_v2: (UpdatesV2Args) -> (UpdatesV2Response) query;
-    updates: (UpdatesArgs) -> (UpdatesResponse) query;
-    search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
-    bio: (BioArgs) -> (BioResponse) query;
-    contacts: (ContactsArgs) -> (ContactsResponse) query;
-    public_profile: (PublicProfileArgs) -> (PublicProfileResponse) query;
-    hot_group_exclusions: (HotGroupExclusionsArgs) -> (HotGroupExclusionsResponse) query;
-}
+    initial_state : (InitialStateArgs) -> (InitialStateResponse) query;
+    initial_state_v2 : (InitialStateV2Args) -> (InitialStateV2Response) query;
+    updates_v2 : (UpdatesV2Args) -> (UpdatesV2Response) query;
+    updates : (UpdatesArgs) -> (UpdatesResponse) query;
+    search_messages : (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
+    bio : (BioArgs) -> (BioResponse) query;
+    contacts : (ContactsArgs) -> (ContactsResponse) query;
+    public_profile : (PublicProfileArgs) -> (PublicProfileResponse) query;
+    hot_group_exclusions : (HotGroupExclusionsArgs) -> (HotGroupExclusionsResponse) query;
+};

@@ -1,28 +1,26 @@
 type ExchangeId = nat32;
 
-type UpdateConfigArgs =
-    record {
-        exchange_id: ExchangeId;
-        enabled: opt bool;
-        price_increment: opt nat64;
-        order_size: opt nat64;
-        min_order_size: opt nat64;
-        max_buy_price: opt nat64;
-        min_sell_price: opt nat64;
-        min_orders_per_direction: opt nat32;
-        max_orders_per_direction: opt nat32;
-        max_orders_to_make_per_iteration: opt nat32;
-        max_orders_to_cancel_per_iteration: opt nat32;
-    };
+type UpdateConfigArgs = record {
+    exchange_id : ExchangeId;
+    enabled : opt bool;
+    price_increment : opt nat64;
+    order_size : opt nat64;
+    min_order_size : opt nat64;
+    max_buy_price : opt nat64;
+    min_sell_price : opt nat64;
+    min_orders_per_direction : opt nat32;
+    max_orders_per_direction : opt nat32;
+    max_orders_to_make_per_iteration : opt nat32;
+    max_orders_to_cancel_per_iteration : opt nat32;
+};
 
-type UpdateConfigResponse =
-    variant {
-        Success;
-        ExchangeNotFound;
-        NotAuthorized;
-        InternalError: text;
-    };
+type UpdateConfigResponse = variant {
+    Success;
+    ExchangeNotFound;
+    NotAuthorized;
+    InternalError : text;
+};
 
-service: {
-    update_config: (UpdateConfigArgs) -> (UpdateConfigResponse);
-}
+service : {
+    update_config : (UpdateConfigArgs) -> (UpdateConfigResponse);
+};

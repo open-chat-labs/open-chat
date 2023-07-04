@@ -1,80 +1,70 @@
 type CanisterId = principal;
 type Cycles = nat;
 type TimestampMillis = nat64;
-type Tokens = record { e8s: nat64; };
+type Tokens = record { e8s : nat64 };
 
-type RegisterBotArgs =
-    record {
-        username: text;
-    };
+type RegisterBotArgs = record {
+    username : text;
+};
 
-type RegisterBotResponse =
-    variant {
-        Success;
-        AlreadyRegistered;
-        UserLimitReached;
-        UsernameTaken;
-        UsernameInvalid;
-        UsernameTooShort: nat16;
-        UsernameTooLong: nat16;
-        InsufficientCyclesProvided: Cycles;
-        InternalError: text;
-    };
+type RegisterBotResponse = variant {
+    Success;
+    AlreadyRegistered;
+    UserLimitReached;
+    UsernameTaken;
+    UsernameInvalid;
+    UsernameTooShort : nat16;
+    UsernameTooLong : nat16;
+    InsufficientCyclesProvided : Cycles;
+    InternalError : text;
+};
 
-type Document =
-    record {
-        id: nat;
-        mime_type: text;
-        data: blob;
-    };
+type Document = record {
+    id : nat;
+    mime_type : text;
+    data : blob;
+};
 
-type FieldTooLongResult =
-    record {
-        length_provided: nat32;
-        max_length: nat32;
-    };
+type FieldTooLongResult = record {
+    length_provided : nat32;
+    max_length : nat32;
+};
 
-type SetAvatarArgs =
-    record {
-        avatar: opt Document;
-    };
+type SetAvatarArgs = record {
+    avatar : opt Document;
+};
 
-type SetAvatarResponse =
-    variant {
-        Success;
-        AvatarTooBig: FieldTooLongResult;
-    };
+type SetAvatarResponse = variant {
+    Success;
+    AvatarTooBig : FieldTooLongResult;
+};
 
-type AddRewardCodesArgs =
-    record {
-        reward_amount: Tokens;
-        codes: vec text;
-        expiry: opt TimestampMillis;
-    };
+type AddRewardCodesArgs = record {
+    reward_amount : Tokens;
+    codes : vec text;
+    expiry : opt TimestampMillis;
+};
 
-type AddRewardCodesResponse =
-    variant {
-        Success;
-        InvalidCodes;
-    };
+type AddRewardCodesResponse = variant {
+    Success;
+    InvalidCodes;
+};
 
-type InitArgs =
-    record {
-        user_index_canister_id: CanisterId;
-        admins: vec principal;
-        wasm_version: Version;
-        test_mode: bool;
-    };
+type InitArgs = record {
+    user_index_canister_id : CanisterId;
+    admins : vec principal;
+    wasm_version : Version;
+    test_mode : bool;
+};
 
-type Version =
-    record {
-        major: nat32;
-        minor: nat32;
-        patch: nat32;
-    };
+type Version = record {
+    major : nat32;
+    minor : nat32;
+    patch : nat32;
+};
 
-service: (InitArgs) -> {
-    register_bot: (RegisterBotArgs) -> (RegisterBotResponse);
-    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
-    add_reward_codes: (AddRewardCodesArgs) -> (AddRewardCodesResponse);
-}
+service : (InitArgs) -> {
+    register_bot : (RegisterBotArgs) -> (RegisterBotResponse);
+    set_avatar : (SetAvatarArgs) -> (SetAvatarResponse);
+    add_reward_codes : (AddRewardCodesArgs) -> (AddRewardCodesResponse);
+};
