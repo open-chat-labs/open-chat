@@ -1,993 +1,883 @@
 import "../../../libraries/types/can.did";
 
-type DeletedMessageArgs =
-    record {
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-    };
-
-type DeletedMessageResponse =
-    variant {
-        Success: record {
-            content: MessageContent;
-        };
-        UserNotInCommunity;
-        ChannelNotFound;
-        UserNotInChannel;
-        NotAuthorized;
-        MessageNotFound;
-        MessageNotDeleted;
-        MessageHardDeleted;
-    };
-
-type EventsArgs =
-    record {
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        start_index: EventIndex;
-        ascending: bool;
-        max_messages: nat32;
-        max_events: nat32;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type EventsByIndexArgs =
-    record {
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        events: vec EventIndex;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type EventsWindowArgs =
-    record {
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        mid_point: MessageIndex;
-        max_messages: nat32;
-        max_events: nat32;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type EventsResponse =
-    variant {
-        Success: EventsSuccessResult;
-        UserNotInCommunity;
-        UserNotInChannel;
-        ChannelNotFound;
-        ThreadNotFound;
-        ReplicaNotUpToDate: EventIndex;
-    };
-
-type ExploreChannelsArgs =
-    record {
-        invite_code: opt nat64;
-        search_term: opt text;
-        page_index: nat32;
-        page_size: nat8;
-    };
-
-type ExploreChannelsResponse =
-    variant {
-        Success: record {
-            matches: vec ChannelMatch;
-        };
-        TermTooShort: nat8;
-        TermTooLong: nat8;
-        InvalidTerm;
-        PrivateCommunity;
-    };
-
-type InviteCodeResponse =
-    variant {
-        Success: record {
-            code: opt nat64;
-        };
-        UserNotInCommunity;
-        NotAuthorized;
-    };
-
-type LocalUserIndexResponse =
-    variant {
-        Success: CanisterId;
-    };
-
-type MessagesByMessageIndexArgs =
-    record {
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        messages: vec MessageIndex;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type MessagesByMessageIndexResponse =
-    variant {
-        Success: MessagesSuccessResult;
-        UserNotInCommunity;
-        UserNotInChannel;
-        ChannelNotFound;
-        ThreadNotFound;
-        ReplicaNotUpToDate: EventIndex;
-    };
-
-type SearchChannelArgs =
-    record {
-        channel_id: ChannelId;
-        search_term: text;
-        max_results: nat8;
-        users: opt vec UserId;
-    };
-
-type SearchChannelResponse =
-    variant {
-        Success: record {
-            matches: vec MessageMatch;
-        };
-        InvalidTerm;
-        TermTooLong: nat8;
-        TermTooShort: nat8;
-        TooManyUsers: nat8;
-        UserNotInCommunity;
-        ChannelNotFound;
-        UserNotInChannel;
-    };
-
-type SelectedChannelInitialArgs =
-    record {
-        channel_id: ChannelId;
-    };
-
-type SelectedChannelInitialResponse =
-    variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            latest_event_index: EventIndex;
-            members: vec Participant;
-            blocked_users: vec UserId;
-            invited_users: vec UserId;
-            pinned_messages: vec MessageIndex;
-            rules: AccessRules;
-        };
-        PrivateCommunity;
-        ChannelNotFound;
-        PrivateChannel;
-    };
-
-type SelectedChannelUpdatesArgs =
-    record {
-        channel_id: ChannelId;
-        updates_since: TimestampMillis;
-    };
-
-type SelectedChannelUpdatesResponse =
-    variant {
-        Success: SelectedGroupUpdates;
-        SuccessNoUpdates;
-        PrivateCommunity;
-        ChannelNotFound;
-        PrivateChannel;
-    };
-
-type SelectedInitialArgs =
-    record {
-        invite_code: opt nat64;
-    };
-
-type SelectedInitialResponse =
-    variant {
-        Success: SelectedInitialSuccess;
-        PrivateCommunity;
-    };
-
-type SelectedInitialSuccess = 
-    record {
-        timestamp: TimestampMillis;
-        latest_event_index: EventIndex;
-        members: vec CommunityMember;
-        blocked_users: vec UserId;
-        invited_users: vec UserId;
-        rules: AccessRules;
-    };
-
-type SelectedUpdatesArgs =
-    record {
-        invite_code: opt nat64;
-        updates_since: TimestampMillis;
-    };
-
-type SelectedUpdatesResponse =
-    variant {
-        Success: SelectedUpdatesSuccess;
-        SuccessNoUpdates;
-        PrivateCommunity;
-    };
-
-type SelectedUpdatesSuccess = 
-    record {
-        timestamp: TimestampMillis;
-        members_added_or_updated: vec CommunityMember;
-        members_removed: vec UserId;
-        blocked_users_added: vec UserId;
-        blocked_users_removed: vec UserId;
-        invited_users: opt vec UserId;
-        rules: opt AccessRules;
-    };
-
-type ChannelSummaryArgs =
-    record {
-        channel_id: ChannelId;
-    };
-
-type ChannelSummaryResponse =
-    variant {
-        Success: CommunityCanisterChannelSummary;
-        PrivateCommunity;
-        ChannelNotFound;
-        PrivateChannel;
-    };
-
-type SummaryArgs =
-    record {
-        invite_code: opt nat64;
-    };
-
-type SummaryResponse =
-    variant {
-        Success: CommunityCanisterCommunitySummary;
-        PrivateCommunity;
-    };
-
-type ChannelSummaryUpdatesArgs =
-    record {
-        channel_id: ChannelId;
-        updates_since: TimestampMillis;
-    };
-
-type ChannelSummaryUpdatesResponse =
-    variant {
-        SuccessAdded: CommunityCanisterChannelSummary;
-        SuccessUpdated: CommunityCanisterChannelSummaryUpdates;
-        SuccessNoUpdates;
-        PrivateCommunity;
-        ChannelNotFound;
-        PrivateChannel;
-    };
-
-type SummaryUpdatesArgs =
-    record {
-        invite_code: opt nat64;
-        updates_since: TimestampMillis;
-    };
-
-type SummaryUpdatesResponse =
-    variant {
-        Success: CommunityCanisterCommunitySummaryUpdates;
-        SuccessNoUpdates;
-        PrivateCommunity;
-    };
-
-type ThreadPreviewsArgs =
-    record {
-        channel_id: ChannelId;
-        threads: vec MessageIndex;
-        latest_client_thread_update: opt TimestampMillis;
-    };
-
-type ThreadPreviewsResponse =
-    variant {
-        Success: record {
-            threads: vec ThreadPreview;
-            timestamp: TimestampMillis;
-        };
-        UserNotInCommunity;
-        ChannelNotFound;
-        UserNotInChannel;
-        ReplicaNotUpToDate: TimestampMillis;
-    };
-
-type AddMembersToChannelArgs =
-    record {
-        channel_id: ChannelId;
-        user_ids: vec UserId;
-        added_by_name: text;
-    };
-
-type AddMembersToChannelResponse =
-    variant {
-        Success;
-        PartialSuccess: AddMembersToChannelPartialSuccess;
-        Failed: AddMembersToChannelFailed;
-        CommunityFrozen;
-        UserSuspended;
-        UserNotInCommunity;
-        UserNotInChannel;
-        ChannelNotFound;
-        UserLimitReached: nat32;
-        NotAuthorized;
-    };
-
-type AddMembersToChannelPartialSuccess =
-    record {
-        users_added: vec UserId;
-        users_already_in_channel: vec UserId;
-        users_limit_reached: vec UserId;
-        users_failed_gate_check: vec UserFailedGateCheck;
-        users_failed_with_error: vec UserFailedError;
-    };
-
-type AddMembersToChannelFailed =
-    record {
-        users_already_in_channel: vec UserId;
-        users_limit_reached: vec UserId;
-        users_failed_gate_check: vec UserFailedGateCheck;
-        users_failed_with_error: vec UserFailedError;
-    };
-
-type UserFailedGateCheck =
-    record {
-        user_id: UserId;
-        reason: GateCheckFailedReason;
-    };
-
-type UserFailedError =
-    record {
-        user_id: UserId;
-        error: text;
-    };
-
-type AddReactionArgs =
-    record {
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        reaction: text;
-        username: text;
-    };
-
-type AddReactionResponse =
-    variant {
-        Success;
-        NoChange;
-        InvalidReaction;
-        MessageNotFound;
-        ChannelNotFound;
-        NotAuthorized;
-        UserNotInCommunity;
-        UserNotInChannel;
-        UserSuspended;
-        CommunityFrozen;
-    };
-
-type BlockUserArgs =
-    record {
-        user_id: UserId;
-    };
-
-type BlockUserResponse =
-    variant {
-        Success;
-        UserNotInCommunity;
-        CannotBlockSelf;
-        CannotBlockUser;
-        CommunityNotPublic;
-        NotAuthorized;
-        TargetUserNotInCommunity;
-        UserSuspended;
-        CommunityFrozen;
-        InternalError: text;
-    };
-
-type ChangeChannelRoleArgs =
-    record {
-        channel_id: ChannelId;
-        user_id: UserId;
-        new_role: GroupRole;
-    };
-
-type ChangeChannelRoleResponse =
-    variant {
-        Success;
-        CommunityFrozen;
-        UserNotInCommunity;
-        UserSuspended;
-        ChannelNotFound;
-        UserNotInChannel;
-        TargetUserNotInChannel;
-        NotAuthorized;
-        Invalid;
-    };
-
-type ChangeRoleArgs =
-    record {
-        user_id: UserId;
-        new_role: CommunityRole;
-    };
-
-type ChangeRoleResponse =
-    variant {
-        Success;
-        UserNotInCommunity;
-        NotAuthorized;
-        TargetUserNotInCommunity;
-        UserSuspended;
-        Invalid;
-        CommunityFrozen;
-        InternalError: text;
-    };
-
-type ClaimPrizeArgs =
-    record {
-        channel_id: ChannelId;
-        message_id: MessageId;
-    };
-
-type ClaimPrizeResponse =
-    variant {
-        Success;
-        MessageNotFound;
-        UserNotInCommunity;
-        UserNotInChannel;
-        UserSuspended;
-        CommunityFrozen;
-        ChannelNotFound;
-        AlreadyClaimed;
-        PrizeFullyClaimed;
-        PrizeEnded;
-        TransferFailed: record { text; FailedCryptoTransaction; };
-        FailedAfterTransfer: record { text; CompletedCryptoTransaction; };
-    };
-
-type CreateChannelArgs =
-    record {
-        is_public: bool;
-        name: text;
-        description: text;
-        rules: AccessRules;
-        subtype: opt GroupSubtype;
-        avatar: opt Document;
-        history_visible_to_new_joiners: bool;
-        permissions: opt GroupPermissions;
-        events_ttl: opt Milliseconds;
-        gate: opt AccessGate;
-    };
-
-type CreateChannelResponse =
-    variant {
-        Success: record {
-            channel_id: ChannelId;
-        };
-        NameTooShort: FieldTooShortResult;
-        NameTooLong: FieldTooLongResult;
-        NameReserved;
-        DescriptionTooLong: FieldTooLongResult;
-        RulesTooShort: FieldTooShortResult;
-        RulesTooLong: FieldTooLongResult;
-        AvatarTooBig: FieldTooLongResult;
-        MaxChannelsCreated: nat32;
-        NameTaken;
-        UserSuspended;
-        NotAuthorized;
-        CommunityFrozen;
-    };
-
-type DeclineInvitationArgs =
-    record {
-        channel_id: opt ChannelId;
-    };
-
-type DeclineInvitationResponse =
-    variant {
-        Success;
-        NotInvited;
-        UserNotInCommunity;
-        ChannelNotFound;
-    };
-
-type DeleteChannelArgs =
-    record {
-        channel_id: ChannelId;
-    };
-
-type DeleteChannelResponse =
-    variant {
-        Success;
-        CommunityFrozen;
-        UserSuspended;
-        UserNotInCommunity;
-        ChannelNotFound;
-        UserNotInChannel;
-        NotAuthorized;
-    };
-
-type DeleteMessagesArgs =
-    record {
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        message_ids: vec MessageId;
-        as_platform_moderator: opt bool;
-    };
-
-type DeleteMessagesResponse =
-    variant {
-        Success;
-        MessageNotFound;
-        ChannelNotFound;
-        UserNotInCommunity;
-        UserNotInChannel;
-        UserSuspended;
-        CommunityFrozen;
-        NotPlatformModerator;
-        InternalError: text;
-    };
-
-type DisableInviteCodeResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        UserSuspended;
-        CommunityFrozen;
-    };
-
-type EditMessageArgs =
-    record {
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        content: MessageContentInitial;
-    };
-
-type EditMessageResponse =
-    variant {
-        Success;
-        MessageNotFound;
-        UserNotInCommunity;
-        UserNotInChannel;
-        UserSuspended;
-        CommunityFrozen;
-        ChannelNotFound;
-    };
-
-type EnableInviteCodeResponse =
-    variant {
-        Success: record {
-            code: nat64;
-        };
-        NotAuthorized;
-        UserSuspended;
-        CommunityFrozen;
-    };
-
-type ImportGroupArgs =
-    record {
-        group_id: ChatId;
-    };
-
-type ImportGroupResponse =
-    variant {
-        Success: record {
-            channel_id: ChannelId;
-            total_bytes: nat64;
-        };
-        UserNotInCommunity;
-        UserNotCommunityOwner;
-        UserNotInGroup;
-        UserNotGroupOwner;
-        UserSuspended;
-        GroupNotFound;
-        GroupAlreadyBeingImported;
-        GroupImportingToAnotherCommunity;
-        GroupFrozen;
-        InternalError: text;
-    };
-
-type JoinChannelArgs =
-    record {
-        channel_id: ChannelId;
-    };
-
-type JoinChannelResponse =
-    variant {
-        Success: CommunityCanisterChannelSummary;
-        AlreadyInChannel: CommunityCanisterChannelSummary;
-        GateCheckFailed: GateCheckFailedReason;
-        UserNotInCommunity;
-        ChannelNotFound;
-        UserSuspended;
-        UserBlocked;
-        UserLimitReached: nat32;
-        CommunityFrozen;
-        NotInvited;
-        InternalError: text;
-    };
-
-type LeaveChannelArgs =
-    record {
-        channel_id: ChannelId;
-    };
-
-type LeaveChannelResponse =
-    variant {
-        Success;
-        CommunityFrozen;
-        UserNotInCommunity;
-        UserSuspended;
-        ChannelNotFound;
-        UserNotInChannel;
-        LastOwnerCannotLeave;
-    };
-
-type ManageDefaultChannelsArgs =
-    record {
-        to_add: vec ChannelId;
-        to_remove: vec ChannelId;
-    };
-
-type ManageDefaultChannelsResponse =
-    variant {
-        Success;
-        PartialSucesss: FailedChannels;
-        Failed: FailedChannels;
-        CommunityFrozen;
-        UserNotInCommunity;
-        UserSuspended;
-        NotAuthorized;
-    };
-
-type FailedChannels =
-    record {
-        not_found: vec ChannelId;
-        private: vec ChannelId;
-    };
-
-type PinMessageArgs =
-    record {
-        channel_id: ChannelId;
-        message_index: MessageIndex;
-    };
-
-type PinMessageResponse =
-    variant {
-        Success: PushEventResult;
-        CommunityFrozen;
-        UserNotInCommunity;
-        UserSuspended;
-        ChannelNotFound;
-        UserNotInChannel;
-        MessageNotFound;
-        NotAuthorized;
-        NoChange;
-    };
-
-type RegisterPollVoteArgs =
-    record {
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        message_index: MessageIndex;
-        poll_option: nat32;
-        operation: VoteOperation;
-    };
-
-type RegisterPollVoteResponse =
-    variant {
-        Success: PollVotes;
-        CommunityFrozen;
-        UserNotInCommunity;
-        UserSuspended;
-        ChannelNotFound;
-        UserNotInChannel;
-        PollNotFound;
-        PollEnded;
-        OptionIndexOutOfRange;
-    };
-
-type RegisterProposalVoteArgs =
-    record {
-        channel_id: ChannelId;
-        message_index: MessageIndex;
-        adopt: bool;
-    };
-
-type RegisterProposalVoteResponse =
-    variant {
-        Success;
-        AlreadyVoted: bool;
-        CommunityFrozen;
-        UserNotInCommunity;
-        UserSuspended;
-        ChannelNotFound;
-        UserNotInChannel;
-        NoEligibleNeurons;
-        ProposalMessageNotFound;
-        ProposalNotFound;
-        ProposalNotAcceptingVotes;
-        InternalError: text;
-    };
-
-type RegisterProposalVoteV2Response =
-    variant {
-        Success;
-        CommunityFrozen;
-        UserNotInCommunity;
-        UserSuspended;
-        ChannelNotFound;
-        UserNotInChannel;
-        ProposalMessageNotFound;
-    };
-
-type RemoveMemberArgs =
-    record {
-        user_id: UserId;
-    };
-
-type RemoveMemberResponse =
-    variant {
-        Success;
-        UserNotInCommunity;
-        CannotRemoveSelf;
-        CannotRemoveUser;
-        NotAuthorized;
-        TargetUserNotInCommunity;
-        UserSuspended;
-        CommunityFrozen;
-        InternalError: text;
-    };
-
-type RemoveMemberFromChannelArgs =
-    record {
-        channel_id: ChannelId;
-        user_id: UserId;
-    };
-
-type RemoveMemberFromChannelResponse =
-    variant {
-        Success;
-        CommunityFrozen;
-        UserNotInCommunity;
-        TargetUserNotInCommunity;
-        UserSuspended;
-        ChannelNotFound;
-        UserNotInChannel;
-        TargetUserNotInChannel;
-        CannotRemoveSelf;
-        NotAuthorized;
-    };
-
-type RemoveReactionArgs =
-    record {
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        reaction: text;
-    };
-
-type RemoveReactionResponse =
-    variant {
-        Success;
-        NoChange;
-        MessageNotFound;
-        ChannelNotFound;
-        UserNotInCommunity;
-        UserNotInChannel;
-        NotAuthorized;
-        UserSuspended;
-        CommunityFrozen;
-    };
-
-type SendMessageArgs =
-    record {
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        content: MessageContentInitial;
-        sender_name: text;
-        replies_to: opt GroupReplyContext;
-        mentioned: vec User;
-        forwarding: bool;
-    };
-
-type SendMessageResponse =
-    variant {
-        Success: record {
-            event_index: EventIndex;
-            message_index: MessageIndex;
-            timestamp: TimestampMillis;
-            expires_at: opt TimestampMillis;
-        };
-        ChannelNotFound;
-        ThreadMessageNotFound;
-        MessageEmpty;
-        TextTooLong: nat32;
-        InvalidPoll: InvalidPollReason;
-        NotAuthorized;
-        UserNotInCommunity;
-        UserNotInChannel;
-        UserSuspended;
-        InvalidRequest: text;
-        CommunityFrozen;
-    };
-
-type ToggleMuteChannelNotificationsArgs =
-    record {
-        channel_id: ChannelId;
-        mute: bool;
-    };
-
-type ToggleMuteChannelNotificationsResponse =
-    variant {
-        Success;
-        CommunityFrozen;
-        UserNotInCommunity;
-        UserSuspended;
-        ChannelNotFound;
-        UserNotInChannel;
-    };
-
-type ToggleMuteNotificationsArgs =
-    record {
-        mute: bool;
-    };
-
-type ToggleMuteNotificationsResponse =
-    variant {
-        Success;
-        CommunityFrozen;
-        UserNotInCommunity;
-        UserSuspended;
-    };
-
-type UnblockUserArgs =
-    record {
-        user_id: UserId;
-    };
-
-type UnblockUserResponse =
-    variant {
-        Success;
-        UserNotInCommunity;
-        CannotUnblockSelf;
-        CommunityNotPublic;
-        NotAuthorized;
-        UserSuspended;
-        CommunityFrozen;
-    };
-
-type UndeleteMessagesArgs =
-    record {
-        channel_id: ChannelId;
-        thread_root_message_index: opt MessageIndex;
-        message_ids: vec MessageId;
-    };
-
-type UndeleteMessagesResponse =
-    variant {
-        Success: record {
-            messages: vec Message;
-        };
-        MessageNotFound;
-        GroupNotFound;
-        UserNotInCommunity;
-        UserNotInChannel;
-        UserSuspended;
-        CommunityFrozen;
-    };
-
-type UpdateChannelArgs =
-    record {
-        channel_id: ChannelId;
-        name: opt text;
-        description: opt text;
-        rules: opt AccessRules;
-        avatar: DocumentUpdate;
-        permissions: opt OptionalGroupPermissions;
-        gate: AccessGateUpdate;
-        public: opt bool;
-    };
-
-type UpdateChannelResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        UserNotInCommunity;
-        ChannelNotFound;
-        UserNotInChannel;
-        NameTooShort: FieldTooShortResult;
-        NameTooLong: FieldTooLongResult;
-        NameReserved;
-        DescriptionTooLong: FieldTooLongResult;
-        AvatarTooBig: FieldTooLongResult;
-        NameTaken;
-        RulesTooLong: FieldTooLongResult;
-        RulesTooShort: FieldTooShortResult;
-        UserSuspended;
-        CommunityFrozen;
-        CannotMakeChannelPublic;
-        CannotMakeDefaultChannelPrivate;
-    };
-
-type UpdateCommunityArgs =
-    record {
-        name: opt text;
-        description: opt text;
-        rules: opt AccessRules;
-        avatar: DocumentUpdate;
-        banner: DocumentUpdate;
-        permissions: opt OptionalCommunityPermissions;
-        gate: AccessGateUpdate;
-        public: opt bool;
-    };
-
-type UpdateCommunityResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        UserNotInCommunity;
-        NameTooShort: FieldTooShortResult;
-        NameTooLong: FieldTooLongResult;
-        NameReserved;
-        DescriptionTooLong: FieldTooLongResult;
-        AvatarTooBig: FieldTooLongResult;
-        BannerTooBig: FieldTooLongResult;
-        NameTaken;
-        InternalError;
-        RulesTooLong: FieldTooLongResult;
-        RulesTooShort: FieldTooShortResult;
-        UserSuspended;
-        CommunityFrozen;
-        CannotMakeCommunityPublic;
-    };
-
-service: {
-    channel_summary: (ChannelSummaryArgs) -> (ChannelSummaryResponse) query;
-    channel_summary_updates: (ChannelSummaryUpdatesArgs) -> (ChannelSummaryUpdatesResponse) query;
-    deleted_message: (DeletedMessageArgs) -> (DeletedMessageResponse) query;
-    events: (EventsArgs) -> (EventsResponse) query;
-    events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
-    events_window: (EventsWindowArgs) -> (EventsResponse) query;
-    explore_channels: (ExploreChannelsArgs) -> (ExploreChannelsResponse) query;
-    invite_code: (EmptyArgs) -> (InviteCodeResponse) query;
-    local_user_index: (EmptyArgs) -> (LocalUserIndexResponse) query;
-    messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
-    search_channel: (SearchChannelArgs) -> (SearchChannelResponse) query;
-    selected_channel_initial: (SelectedChannelInitialArgs) -> (SelectedChannelInitialResponse) query;
-    selected_channel_updates: (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesResponse) query;
-    selected_initial: (SelectedInitialArgs) -> (SelectedInitialResponse) query;
-    selected_updates: (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
-    summary: (SummaryArgs) -> (SummaryResponse) query;
-    summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
-    thread_previews: (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
-
-    add_members_to_channel: (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
-    add_reaction: (AddReactionArgs) -> (AddReactionResponse);
-    block_user: (BlockUserArgs) -> (BlockUserResponse);
-    change_channel_role: (ChangeChannelRoleArgs) -> (ChangeChannelRoleResponse);
-    change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
-    claim_prize: (ClaimPrizeArgs) -> (ClaimPrizeResponse);
-    create_channel: (CreateChannelArgs) -> (CreateChannelResponse);
-    decline_invitation: (DeclineInvitationArgs) -> (DeclineInvitationResponse);
-    delete_channel: (DeleteChannelArgs) -> (DeleteChannelResponse);
-    delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
-    disable_invite_code: (EmptyArgs) -> (DisableInviteCodeResponse);
-    edit_message: (EditMessageArgs) -> (EditMessageResponse);
-    enable_invite_code: (EmptyArgs) -> (EnableInviteCodeResponse);
-    import_group: (ImportGroupArgs) -> (ImportGroupResponse);
-    join_channel: (JoinChannelArgs) -> (JoinChannelResponse);
-    leave_channel: (LeaveChannelArgs) -> (LeaveChannelResponse);
-    manage_default_channels: (ManageDefaultChannelsArgs) -> (ManageDefaultChannelsResponse);
-    pin_message: (PinMessageArgs) -> (PinMessageResponse);
-    register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
-    register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
-    register_proposal_vote_v2: (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
-    remove_member: (RemoveMemberArgs) -> (RemoveMemberResponse);
-    remove_member_from_channel: (RemoveMemberFromChannelArgs) -> (RemoveMemberFromChannelResponse);
-    remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
-    reset_invite_code: (EmptyArgs) -> (EnableInviteCodeResponse);
-    send_message: (SendMessageArgs) -> (SendMessageResponse);
-    toggle_mute_channel_notifications: (ToggleMuteChannelNotificationsArgs) -> (ToggleMuteChannelNotificationsResponse);
-    toggle_mute_notifications: (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
-    unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
-    undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
-    unpin_message: (PinMessageArgs) -> (PinMessageResponse);
-    update_channel: (UpdateChannelArgs) -> (UpdateChannelResponse);
-    update_community: (UpdateCommunityArgs) -> (UpdateCommunityResponse);
-}
+type DeletedMessageArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+};
+
+type DeletedMessageResponse = variant {
+    Success : record {
+        content : MessageContent;
+    };
+    UserNotInCommunity;
+    ChannelNotFound;
+    UserNotInChannel;
+    NotAuthorized;
+    MessageNotFound;
+    MessageNotDeleted;
+    MessageHardDeleted;
+};
+
+type EventsArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    start_index : EventIndex;
+    ascending : bool;
+    max_messages : nat32;
+    max_events : nat32;
+    latest_client_event_index : opt EventIndex;
+};
+
+type EventsByIndexArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    events : vec EventIndex;
+    latest_client_event_index : opt EventIndex;
+};
+
+type EventsWindowArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    mid_point : MessageIndex;
+    max_messages : nat32;
+    max_events : nat32;
+    latest_client_event_index : opt EventIndex;
+};
+
+type EventsResponse = variant {
+    Success : EventsSuccessResult;
+    UserNotInCommunity;
+    UserNotInChannel;
+    ChannelNotFound;
+    ThreadNotFound;
+    ReplicaNotUpToDate : EventIndex;
+};
+
+type ExploreChannelsArgs = record {
+    invite_code : opt nat64;
+    search_term : opt text;
+    page_index : nat32;
+    page_size : nat8;
+};
+
+type ExploreChannelsResponse = variant {
+    Success : record {
+        matches : vec ChannelMatch;
+    };
+    TermTooShort : nat8;
+    TermTooLong : nat8;
+    InvalidTerm;
+    PrivateCommunity;
+};
+
+type InviteCodeResponse = variant {
+    Success : record {
+        code : opt nat64;
+    };
+    UserNotInCommunity;
+    NotAuthorized;
+};
+
+type LocalUserIndexResponse = variant {
+    Success : CanisterId;
+};
+
+type MessagesByMessageIndexArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    messages : vec MessageIndex;
+    latest_client_event_index : opt EventIndex;
+};
+
+type MessagesByMessageIndexResponse = variant {
+    Success : MessagesSuccessResult;
+    UserNotInCommunity;
+    UserNotInChannel;
+    ChannelNotFound;
+    ThreadNotFound;
+    ReplicaNotUpToDate : EventIndex;
+};
+
+type SearchChannelArgs = record {
+    channel_id : ChannelId;
+    search_term : text;
+    max_results : nat8;
+    users : opt vec UserId;
+};
+
+type SearchChannelResponse = variant {
+    Success : record {
+        matches : vec MessageMatch;
+    };
+    InvalidTerm;
+    TermTooLong : nat8;
+    TermTooShort : nat8;
+    TooManyUsers : nat8;
+    UserNotInCommunity;
+    ChannelNotFound;
+    UserNotInChannel;
+};
+
+type SelectedChannelInitialArgs = record {
+    channel_id : ChannelId;
+};
+
+type SelectedChannelInitialResponse = variant {
+    Success : record {
+        timestamp : TimestampMillis;
+        latest_event_index : EventIndex;
+        members : vec Participant;
+        blocked_users : vec UserId;
+        invited_users : vec UserId;
+        pinned_messages : vec MessageIndex;
+        rules : AccessRules;
+    };
+    PrivateCommunity;
+    ChannelNotFound;
+    PrivateChannel;
+};
+
+type SelectedChannelUpdatesArgs = record {
+    channel_id : ChannelId;
+    updates_since : TimestampMillis;
+};
+
+type SelectedChannelUpdatesResponse = variant {
+    Success : SelectedGroupUpdates;
+    SuccessNoUpdates;
+    PrivateCommunity;
+    ChannelNotFound;
+    PrivateChannel;
+};
+
+type SelectedInitialArgs = record {
+    invite_code : opt nat64;
+};
+
+type SelectedInitialResponse = variant {
+    Success : SelectedInitialSuccess;
+    PrivateCommunity;
+};
+
+type SelectedInitialSuccess = record {
+    timestamp : TimestampMillis;
+    latest_event_index : EventIndex;
+    members : vec CommunityMember;
+    blocked_users : vec UserId;
+    invited_users : vec UserId;
+    rules : AccessRules;
+};
+
+type SelectedUpdatesArgs = record {
+    invite_code : opt nat64;
+    updates_since : TimestampMillis;
+};
+
+type SelectedUpdatesResponse = variant {
+    Success : SelectedUpdatesSuccess;
+    SuccessNoUpdates;
+    PrivateCommunity;
+};
+
+type SelectedUpdatesSuccess = record {
+    timestamp : TimestampMillis;
+    members_added_or_updated : vec CommunityMember;
+    members_removed : vec UserId;
+    blocked_users_added : vec UserId;
+    blocked_users_removed : vec UserId;
+    invited_users : opt vec UserId;
+    rules : opt AccessRules;
+};
+
+type ChannelSummaryArgs = record {
+    channel_id : ChannelId;
+};
+
+type ChannelSummaryResponse = variant {
+    Success : CommunityCanisterChannelSummary;
+    PrivateCommunity;
+    ChannelNotFound;
+    PrivateChannel;
+};
+
+type SummaryArgs = record {
+    invite_code : opt nat64;
+};
+
+type SummaryResponse = variant {
+    Success : CommunityCanisterCommunitySummary;
+    PrivateCommunity;
+};
+
+type ChannelSummaryUpdatesArgs = record {
+    channel_id : ChannelId;
+    updates_since : TimestampMillis;
+};
+
+type ChannelSummaryUpdatesResponse = variant {
+    SuccessAdded : CommunityCanisterChannelSummary;
+    SuccessUpdated : CommunityCanisterChannelSummaryUpdates;
+    SuccessNoUpdates;
+    PrivateCommunity;
+    ChannelNotFound;
+    PrivateChannel;
+};
+
+type SummaryUpdatesArgs = record {
+    invite_code : opt nat64;
+    updates_since : TimestampMillis;
+};
+
+type SummaryUpdatesResponse = variant {
+    Success : CommunityCanisterCommunitySummaryUpdates;
+    SuccessNoUpdates;
+    PrivateCommunity;
+};
+
+type ThreadPreviewsArgs = record {
+    channel_id : ChannelId;
+    threads : vec MessageIndex;
+    latest_client_thread_update : opt TimestampMillis;
+};
+
+type ThreadPreviewsResponse = variant {
+    Success : record {
+        threads : vec ThreadPreview;
+        timestamp : TimestampMillis;
+    };
+    UserNotInCommunity;
+    ChannelNotFound;
+    UserNotInChannel;
+    ReplicaNotUpToDate : TimestampMillis;
+};
+
+type AddMembersToChannelArgs = record {
+    channel_id : ChannelId;
+    user_ids : vec UserId;
+    added_by_name : text;
+};
+
+type AddMembersToChannelResponse = variant {
+    Success;
+    PartialSuccess : AddMembersToChannelPartialSuccess;
+    Failed : AddMembersToChannelFailed;
+    CommunityFrozen;
+    UserSuspended;
+    UserNotInCommunity;
+    UserNotInChannel;
+    ChannelNotFound;
+    UserLimitReached : nat32;
+    NotAuthorized;
+};
+
+type AddMembersToChannelPartialSuccess = record {
+    users_added : vec UserId;
+    users_already_in_channel : vec UserId;
+    users_limit_reached : vec UserId;
+    users_failed_gate_check : vec UserFailedGateCheck;
+    users_failed_with_error : vec UserFailedError;
+};
+
+type AddMembersToChannelFailed = record {
+    users_already_in_channel : vec UserId;
+    users_limit_reached : vec UserId;
+    users_failed_gate_check : vec UserFailedGateCheck;
+    users_failed_with_error : vec UserFailedError;
+};
+
+type UserFailedGateCheck = record {
+    user_id : UserId;
+    reason : GateCheckFailedReason;
+};
+
+type UserFailedError = record {
+    user_id : UserId;
+    error : text;
+};
+
+type AddReactionArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    reaction : text;
+    username : text;
+};
+
+type AddReactionResponse = variant {
+    Success;
+    NoChange;
+    InvalidReaction;
+    MessageNotFound;
+    ChannelNotFound;
+    NotAuthorized;
+    UserNotInCommunity;
+    UserNotInChannel;
+    UserSuspended;
+    CommunityFrozen;
+};
+
+type BlockUserArgs = record {
+    user_id : UserId;
+};
+
+type BlockUserResponse = variant {
+    Success;
+    UserNotInCommunity;
+    CannotBlockSelf;
+    CannotBlockUser;
+    CommunityNotPublic;
+    NotAuthorized;
+    TargetUserNotInCommunity;
+    UserSuspended;
+    CommunityFrozen;
+    InternalError : text;
+};
+
+type ChangeChannelRoleArgs = record {
+    channel_id : ChannelId;
+    user_id : UserId;
+    new_role : GroupRole;
+};
+
+type ChangeChannelRoleResponse = variant {
+    Success;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
+    TargetUserNotInChannel;
+    NotAuthorized;
+    Invalid;
+};
+
+type ChangeRoleArgs = record {
+    user_id : UserId;
+    new_role : CommunityRole;
+};
+
+type ChangeRoleResponse = variant {
+    Success;
+    UserNotInCommunity;
+    NotAuthorized;
+    TargetUserNotInCommunity;
+    UserSuspended;
+    Invalid;
+    CommunityFrozen;
+    InternalError : text;
+};
+
+type ClaimPrizeArgs = record {
+    channel_id : ChannelId;
+    message_id : MessageId;
+};
+
+type ClaimPrizeResponse = variant {
+    Success;
+    MessageNotFound;
+    UserNotInCommunity;
+    UserNotInChannel;
+    UserSuspended;
+    CommunityFrozen;
+    ChannelNotFound;
+    AlreadyClaimed;
+    PrizeFullyClaimed;
+    PrizeEnded;
+    TransferFailed : record { text; FailedCryptoTransaction };
+    FailedAfterTransfer : record { text; CompletedCryptoTransaction };
+};
+
+type CreateChannelArgs = record {
+    is_public : bool;
+    name : text;
+    description : text;
+    rules : AccessRules;
+    subtype : opt GroupSubtype;
+    avatar : opt Document;
+    history_visible_to_new_joiners : bool;
+    permissions : opt GroupPermissions;
+    events_ttl : opt Milliseconds;
+    gate : opt AccessGate;
+};
+
+type CreateChannelResponse = variant {
+    Success : record {
+        channel_id : ChannelId;
+    };
+    NameTooShort : FieldTooShortResult;
+    NameTooLong : FieldTooLongResult;
+    NameReserved;
+    DescriptionTooLong : FieldTooLongResult;
+    RulesTooShort : FieldTooShortResult;
+    RulesTooLong : FieldTooLongResult;
+    AvatarTooBig : FieldTooLongResult;
+    MaxChannelsCreated : nat32;
+    NameTaken;
+    UserSuspended;
+    NotAuthorized;
+    CommunityFrozen;
+};
+
+type DeclineInvitationArgs = record {
+    channel_id : opt ChannelId;
+};
+
+type DeclineInvitationResponse = variant {
+    Success;
+    NotInvited;
+    UserNotInCommunity;
+    ChannelNotFound;
+};
+
+type DeleteChannelArgs = record {
+    channel_id : ChannelId;
+};
+
+type DeleteChannelResponse = variant {
+    Success;
+    CommunityFrozen;
+    UserSuspended;
+    UserNotInCommunity;
+    ChannelNotFound;
+    UserNotInChannel;
+    NotAuthorized;
+};
+
+type DeleteMessagesArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_ids : vec MessageId;
+    as_platform_moderator : opt bool;
+};
+
+type DeleteMessagesResponse = variant {
+    Success;
+    MessageNotFound;
+    ChannelNotFound;
+    UserNotInCommunity;
+    UserNotInChannel;
+    UserSuspended;
+    CommunityFrozen;
+    NotPlatformModerator;
+    InternalError : text;
+};
+
+type DisableInviteCodeResponse = variant {
+    Success;
+    NotAuthorized;
+    UserSuspended;
+    CommunityFrozen;
+};
+
+type EditMessageArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    content : MessageContentInitial;
+};
+
+type EditMessageResponse = variant {
+    Success;
+    MessageNotFound;
+    UserNotInCommunity;
+    UserNotInChannel;
+    UserSuspended;
+    CommunityFrozen;
+    ChannelNotFound;
+};
+
+type EnableInviteCodeResponse = variant {
+    Success : record {
+        code : nat64;
+    };
+    NotAuthorized;
+    UserSuspended;
+    CommunityFrozen;
+};
+
+type ImportGroupArgs = record {
+    group_id : ChatId;
+};
+
+type ImportGroupResponse = variant {
+    Success : record {
+        channel_id : ChannelId;
+        total_bytes : nat64;
+    };
+    UserNotInCommunity;
+    UserNotCommunityOwner;
+    UserNotInGroup;
+    UserNotGroupOwner;
+    UserSuspended;
+    GroupNotFound;
+    GroupAlreadyBeingImported;
+    GroupImportingToAnotherCommunity;
+    GroupFrozen;
+    InternalError : text;
+};
+
+type JoinChannelArgs = record {
+    channel_id : ChannelId;
+};
+
+type JoinChannelResponse = variant {
+    Success : CommunityCanisterChannelSummary;
+    AlreadyInChannel : CommunityCanisterChannelSummary;
+    GateCheckFailed : GateCheckFailedReason;
+    UserNotInCommunity;
+    ChannelNotFound;
+    UserSuspended;
+    UserBlocked;
+    UserLimitReached : nat32;
+    CommunityFrozen;
+    NotInvited;
+    InternalError : text;
+};
+
+type LeaveChannelArgs = record {
+    channel_id : ChannelId;
+};
+
+type LeaveChannelResponse = variant {
+    Success;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
+    LastOwnerCannotLeave;
+};
+
+type ManageDefaultChannelsArgs = record {
+    to_add : vec ChannelId;
+    to_remove : vec ChannelId;
+};
+
+type ManageDefaultChannelsResponse = variant {
+    Success;
+    PartialSucesss : FailedChannels;
+    Failed : FailedChannels;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    NotAuthorized;
+};
+
+type FailedChannels = record {
+    not_found : vec ChannelId;
+    private : vec ChannelId;
+};
+
+type PinMessageArgs = record {
+    channel_id : ChannelId;
+    message_index : MessageIndex;
+};
+
+type PinMessageResponse = variant {
+    Success : PushEventResult;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
+    MessageNotFound;
+    NotAuthorized;
+    NoChange;
+};
+
+type RegisterPollVoteArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    poll_option : nat32;
+    operation : VoteOperation;
+};
+
+type RegisterPollVoteResponse = variant {
+    Success : PollVotes;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
+    PollNotFound;
+    PollEnded;
+    OptionIndexOutOfRange;
+};
+
+type RegisterProposalVoteArgs = record {
+    channel_id : ChannelId;
+    message_index : MessageIndex;
+    adopt : bool;
+};
+
+type RegisterProposalVoteResponse = variant {
+    Success;
+    AlreadyVoted : bool;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
+    NoEligibleNeurons;
+    ProposalMessageNotFound;
+    ProposalNotFound;
+    ProposalNotAcceptingVotes;
+    InternalError : text;
+};
+
+type RegisterProposalVoteV2Response = variant {
+    Success;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
+    ProposalMessageNotFound;
+};
+
+type RemoveMemberArgs = record {
+    user_id : UserId;
+};
+
+type RemoveMemberResponse = variant {
+    Success;
+    UserNotInCommunity;
+    CannotRemoveSelf;
+    CannotRemoveUser;
+    NotAuthorized;
+    TargetUserNotInCommunity;
+    UserSuspended;
+    CommunityFrozen;
+    InternalError : text;
+};
+
+type RemoveMemberFromChannelArgs = record {
+    channel_id : ChannelId;
+    user_id : UserId;
+};
+
+type RemoveMemberFromChannelResponse = variant {
+    Success;
+    CommunityFrozen;
+    UserNotInCommunity;
+    TargetUserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
+    TargetUserNotInChannel;
+    CannotRemoveSelf;
+    NotAuthorized;
+};
+
+type RemoveReactionArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    reaction : text;
+};
+
+type RemoveReactionResponse = variant {
+    Success;
+    NoChange;
+    MessageNotFound;
+    ChannelNotFound;
+    UserNotInCommunity;
+    UserNotInChannel;
+    NotAuthorized;
+    UserSuspended;
+    CommunityFrozen;
+};
+
+type SendMessageArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    content : MessageContentInitial;
+    sender_name : text;
+    replies_to : opt GroupReplyContext;
+    mentioned : vec User;
+    forwarding : bool;
+};
+
+type SendMessageResponse = variant {
+    Success : record {
+        event_index : EventIndex;
+        message_index : MessageIndex;
+        timestamp : TimestampMillis;
+        expires_at : opt TimestampMillis;
+    };
+    ChannelNotFound;
+    ThreadMessageNotFound;
+    MessageEmpty;
+    TextTooLong : nat32;
+    InvalidPoll : InvalidPollReason;
+    NotAuthorized;
+    UserNotInCommunity;
+    UserNotInChannel;
+    UserSuspended;
+    InvalidRequest : text;
+    CommunityFrozen;
+};
+
+type ToggleMuteNotificationsArgs = record {
+    channel_id : opt ChannelId;
+    mute : bool;
+};
+
+type ToggleMuteNotificationsResponse = variant {
+    Success;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
+};
+
+type UnblockUserArgs = record {
+    user_id : UserId;
+};
+
+type UnblockUserResponse = variant {
+    Success;
+    UserNotInCommunity;
+    CannotUnblockSelf;
+    CommunityNotPublic;
+    NotAuthorized;
+    UserSuspended;
+    CommunityFrozen;
+};
+
+type UndeleteMessagesArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_ids : vec MessageId;
+};
+
+type UndeleteMessagesResponse = variant {
+    Success : record {
+        messages : vec Message;
+    };
+    MessageNotFound;
+    GroupNotFound;
+    UserNotInCommunity;
+    UserNotInChannel;
+    UserSuspended;
+    CommunityFrozen;
+};
+
+type UpdateChannelArgs = record {
+    channel_id : ChannelId;
+    name : opt text;
+    description : opt text;
+    rules : opt AccessRules;
+    avatar : DocumentUpdate;
+    permissions : opt OptionalGroupPermissions;
+    gate : AccessGateUpdate;
+    public : opt bool;
+};
+
+type UpdateChannelResponse = variant {
+    Success;
+    NotAuthorized;
+    UserNotInCommunity;
+    ChannelNotFound;
+    UserNotInChannel;
+    NameTooShort : FieldTooShortResult;
+    NameTooLong : FieldTooLongResult;
+    NameReserved;
+    DescriptionTooLong : FieldTooLongResult;
+    AvatarTooBig : FieldTooLongResult;
+    NameTaken;
+    RulesTooLong : FieldTooLongResult;
+    RulesTooShort : FieldTooShortResult;
+    UserSuspended;
+    CommunityFrozen;
+    CannotMakeChannelPublic;
+    CannotMakeDefaultChannelPrivate;
+};
+
+type UpdateCommunityArgs = record {
+    name : opt text;
+    description : opt text;
+    rules : opt AccessRules;
+    avatar : DocumentUpdate;
+    banner : DocumentUpdate;
+    permissions : opt OptionalCommunityPermissions;
+    gate : AccessGateUpdate;
+    public : opt bool;
+};
+
+type UpdateCommunityResponse = variant {
+    Success;
+    NotAuthorized;
+    UserNotInCommunity;
+    NameTooShort : FieldTooShortResult;
+    NameTooLong : FieldTooLongResult;
+    NameReserved;
+    DescriptionTooLong : FieldTooLongResult;
+    AvatarTooBig : FieldTooLongResult;
+    BannerTooBig : FieldTooLongResult;
+    NameTaken;
+    InternalError;
+    RulesTooLong : FieldTooLongResult;
+    RulesTooShort : FieldTooShortResult;
+    UserSuspended;
+    CommunityFrozen;
+    CannotMakeCommunityPublic;
+};
+
+service : {
+    channel_summary : (ChannelSummaryArgs) -> (ChannelSummaryResponse) query;
+    channel_summary_updates : (ChannelSummaryUpdatesArgs) -> (ChannelSummaryUpdatesResponse) query;
+    deleted_message : (DeletedMessageArgs) -> (DeletedMessageResponse) query;
+    events : (EventsArgs) -> (EventsResponse) query;
+    events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;
+    events_window : (EventsWindowArgs) -> (EventsResponse) query;
+    explore_channels : (ExploreChannelsArgs) -> (ExploreChannelsResponse) query;
+    invite_code : (EmptyArgs) -> (InviteCodeResponse) query;
+    local_user_index : (EmptyArgs) -> (LocalUserIndexResponse) query;
+    messages_by_message_index : (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
+    search_channel : (SearchChannelArgs) -> (SearchChannelResponse) query;
+    selected_channel_initial : (SelectedChannelInitialArgs) -> (SelectedChannelInitialResponse) query;
+    selected_channel_updates : (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesResponse) query;
+    selected_initial : (SelectedInitialArgs) -> (SelectedInitialResponse) query;
+    selected_updates : (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
+    summary : (SummaryArgs) -> (SummaryResponse) query;
+    summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
+    thread_previews : (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
+
+    add_members_to_channel : (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
+    add_reaction : (AddReactionArgs) -> (AddReactionResponse);
+    block_user : (BlockUserArgs) -> (BlockUserResponse);
+    change_channel_role : (ChangeChannelRoleArgs) -> (ChangeChannelRoleResponse);
+    change_role : (ChangeRoleArgs) -> (ChangeRoleResponse);
+    claim_prize : (ClaimPrizeArgs) -> (ClaimPrizeResponse);
+    create_channel : (CreateChannelArgs) -> (CreateChannelResponse);
+    decline_invitation : (DeclineInvitationArgs) -> (DeclineInvitationResponse);
+    delete_channel : (DeleteChannelArgs) -> (DeleteChannelResponse);
+    delete_messages : (DeleteMessagesArgs) -> (DeleteMessagesResponse);
+    disable_invite_code : (EmptyArgs) -> (DisableInviteCodeResponse);
+    edit_message : (EditMessageArgs) -> (EditMessageResponse);
+    enable_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
+    import_group : (ImportGroupArgs) -> (ImportGroupResponse);
+    join_channel : (JoinChannelArgs) -> (JoinChannelResponse);
+    leave_channel : (LeaveChannelArgs) -> (LeaveChannelResponse);
+    manage_default_channels : (ManageDefaultChannelsArgs) -> (ManageDefaultChannelsResponse);
+    pin_message : (PinMessageArgs) -> (PinMessageResponse);
+    register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
+    register_proposal_vote : (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
+    register_proposal_vote_v2 : (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
+    remove_member : (RemoveMemberArgs) -> (RemoveMemberResponse);
+    remove_member_from_channel : (RemoveMemberFromChannelArgs) -> (RemoveMemberFromChannelResponse);
+    remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
+    reset_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
+    send_message : (SendMessageArgs) -> (SendMessageResponse);
+    toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
+    unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
+    undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
+    unpin_message : (PinMessageArgs) -> (PinMessageResponse);
+    update_channel : (UpdateChannelArgs) -> (UpdateChannelResponse);
+    update_community : (UpdateCommunityArgs) -> (UpdateCommunityResponse);
+};
