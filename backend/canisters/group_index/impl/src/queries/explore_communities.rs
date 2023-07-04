@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{model::moderation_tags::ModerationTags, read_state, RuntimeState};
 use group_index_canister::explore_communities::{Response::*, *};
 use ic_cdk_macros::query;
 
@@ -21,10 +21,16 @@ fn explore_communities_impl(args: Args, state: &RuntimeState) -> Response {
         }
     }
 
-    let matches = state
-        .data
-        .public_communities
-        .search(args.search_term, args.page_index, args.page_size);
+    let exclude_moderation_tags = match ModerationTags::from_bits(args.exclude_moderation_tags.unwrap_or_default()) {
+        Some(tags) => tags,
+        None => return InvalidTags,
+    };
+
+    let matches =
+        state
+            .data
+            .public_communities
+            .search(args.search_term, exclude_moderation_tags, args.page_index, args.page_size);
 
     Success(SuccessResult { matches })
 }

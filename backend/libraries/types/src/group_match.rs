@@ -24,6 +24,7 @@ pub struct CommunityMatch {
     pub member_count: u32,
     pub channel_count: u32,
     pub gate: Option<AccessGate>,
+    pub moderation_tags: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

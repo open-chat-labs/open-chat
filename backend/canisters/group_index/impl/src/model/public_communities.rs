@@ -1,3 +1,4 @@
+use crate::model::moderation_tags::ModerationTags;
 use crate::model::private_communities::PrivateCommunityInfo;
 use crate::MARK_ACTIVE_DURATION;
 use search::{Document, Query};
@@ -40,12 +41,19 @@ impl PublicCommunities {
         );
     }
 
-    pub fn search(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> Vec<CommunityMatch> {
+    pub fn search(
+        &self,
+        search_term: Option<String>,
+        exclude_moderation_tags: ModerationTags,
+        page_index: u32,
+        page_size: u8,
+    ) -> Vec<CommunityMatch> {
         let query = search_term.map(Query::parse);
 
         let mut matches: Vec<_> = self
             .iter()
             .filter(|c| !c.is_frozen())
+            .filter(|c| !c.moderation_tags().intersects(exclude_moderation_tags))
             .map(|c| {
                 let score = if let Some(query) = &query {
                     let document: Document = c.into();
@@ -122,6 +130,8 @@ pub struct PublicCommunityInfo {
     activity: Option<PublicCommunityActivity>,
     hotness_score: u32,
     gate: Option<AccessGate>,
+    #[serde(default)]
+    moderation_tags: ModerationTags,
 }
 
 pub enum UpdateCommunityResult {
@@ -152,6 +162,7 @@ impl PublicCommunityInfo {
             activity: None,
             hotness_score: 0,
             frozen: None,
+            moderation_tags: ModerationTags::default(),
         }
     }
 
@@ -199,6 +210,14 @@ impl PublicCommunityInfo {
     pub fn set_hotness_score(&mut self, hotness_score: u32) {
         self.hotness_score = hotness_score;
     }
+
+    pub fn moderation_tags(&self) -> &ModerationTags {
+        &self.moderation_tags
+    }
+
+    pub fn set_moderation_tags(&mut self, tags: ModerationTags) {
+        self.moderation_tags = tags;
+    }
 }
 
 impl From<&PublicCommunityInfo> for CommunityMatch {
@@ -212,6 +231,7 @@ impl From<&PublicCommunityInfo> for CommunityMatch {
             member_count: community.activity.as_ref().map_or(0, |a| a.member_count),
             channel_count: community.activity.as_ref().map_or(0, |a| a.channel_count),
             gate: community.gate.clone(),
+            moderation_tags: community.moderation_tags.bits(),
         }
     }
 }

@@ -78,6 +78,7 @@ type ExploreCommunitiesArgs = record {
     search_term : opt text;
     page_index : nat32;
     page_size : nat8;
+    exclude_moderation_tags : opt nat32;
 };
 
 type ExploreCommunitiesResponse = variant {
@@ -85,6 +86,7 @@ type ExploreCommunitiesResponse = variant {
     TermTooShort : nat8;
     TermTooLong : nat8;
     InvalidTerm;
+    InvalidTags;
 };
 
 type ExploreCommunitiesSuccess = record {
@@ -108,20 +110,66 @@ type ExploreGroupsSuccess = record {
     matches : vec GroupMatch;
 };
 
+type FreezeCommunityArgs = record {
+    community_id : ChatId;
+    reason : opt text;
+    suspend_members : opt record {
+        duration : opt Milliseconds;
+        reason : text;
+    };
+};
+
+type FreezeCommunityResponse = variant {
+    Success : record {
+        index : EventIndex;
+        timestamp : TimestampMillis;
+        expires_at : opt TimestampMillis;
+        correlation_id : nat64;
+        event : GroupFrozen;
+    };
+    CommunityAlreadyFrozen;
+    CommunityNotFound;
+    NotAuthorized;
+    InternalError : text;
+};
+
 type FreezeGroupArgs = record {
     chat_id : ChatId;
     reason : opt text;
+    suspend_members : opt record {
+        duration : opt Milliseconds;
+        reason : text;
+    };
 };
 
 type FreezeGroupResponse = variant {
     Success : record {
         index : EventIndex;
         timestamp : TimestampMillis;
+        expires_at : opt TimestampMillis;
         correlation_id : nat64;
-        event : ChatFrozen;
+        event : GroupFrozen;
     };
     ChatAlreadyFrozen;
     ChatNotFound;
+    NotAuthorized;
+    InternalError : text;
+};
+
+type UnfreezeCommunityArgs = record {
+    community_id : ChatId;
+};
+
+type UnfreezeCommunityResponse = variant {
+    Success : record {
+        index : EventIndex;
+        timestamp : TimestampMillis;
+        expires_at : opt TimestampMillis;
+        correlation_id : nat64;
+        event : GroupUnfrozen;
+    };
+    CommunityNotFrozen;
+    CommunityNotFound;
     NotAuthorized;
     InternalError : text;
 };
@@ -134,8 +182,9 @@ type UnfreezeGroupResponse = variant {
     Success : record {
         index : EventIndex;
         timestamp : TimestampMillis;
+        expires_at : opt TimestampMillis;
         correlation_id : nat64;
-        event : ChatUnfrozen;
+        event : GroupUnfrozen;
     };
     ChatNotFrozen;
     ChatNotFound;
@@ -179,6 +228,20 @@ type RemoveHotGroupExclusionResponse = variant {
     InternalError : text;
 };
 
+type SetCommunityModerationTagsArgs = record {
+    community_id : CommunityId;
+    tags : nat32;
+};
+
+type SetCommunityModerationTagsResponse = variant {
+    Success;
+    Unchanged;
+    CommunityNotFound;
+    InvalidTags;
+    NotAuthorized;
+    InternalError : text;
+};
+
 type SetUpgradeConcurrencyArgs = record {
     value : nat32;
 };
@@ -198,11 +261,14 @@ service : {
     explore_groups : (ExploreGroupsArgs) -> (ExploreGroupsResponse) query;
 
     // Only callable by "platform moderators"
+    freeze_community : (FreezeCommunityArgs) -> (FreezeCommunityResponse);
     freeze_group : (FreezeGroupArgs) -> (FreezeGroupResponse);
+    unfreeze_community : (UnfreezeCommunityArgs) -> (UnfreezeCommunityResponse);
     unfreeze_group : (UnfreezeGroupArgs) -> (UnfreezeGroupResponse);
     delete_frozen_group : (DeleteFrozenGroupArgs) -> (DeleteFrozenGroupResponse);
     add_hot_group_exclusion : (AddHotGroupExclusionArgs) -> (AddHotGroupExclusionResponse);
     remove_hot_group_exclusion : (RemoveHotGroupExclusionArgs) -> (RemoveHotGroupExclusionResponse);
+    set_community_moderation_tags : (SetCommunityModerationTagsArgs) -> (SetCommunityModerationTagsResponse);
 
     // Only callable by "platform operators"
     set_group_upgrade_concurrency : (SetUpgradeConcurrencyArgs) -> (SetUpgradeConcurrencyResponse);
