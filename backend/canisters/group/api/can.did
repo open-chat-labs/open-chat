@@ -1,728 +1,643 @@
 import "../../../libraries/types/can.did";
 
-type SendMessageV2Args =
-    record {
-        message_id: MessageId;
-        thread_root_message_index: opt MessageIndex;
-        content: MessageContentInitial;
-        sender_name: text;
-        replies_to: opt GroupReplyContext;
-        mentioned: vec User;
-        forwarding: bool;
-        correlation_id: nat64;
-    };
-
-type SendMessageResponse =
-    variant {
-        Success: record {
-            message_index: MessageIndex;
-            event_index: EventIndex;
-            timestamp: TimestampMillis;
-            expires_at: opt TimestampMillis;
-        };
-        MessageEmpty;
-        TextTooLong: nat32;
-        InvalidPoll: InvalidPollReason;
-        NotAuthorized;
-        CallerNotInGroup;
-        InvalidRequest: text;
-        ThreadMessageNotFound;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type EditMessageV2Args =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        content: MessageContentInitial;
-        correlation_id: nat64;
-    };
-
-type EditMessageResponse =
-    variant {
-        Success;
-        MessageNotFound;
-        CallerNotInGroup;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type DeleteMessagesArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        message_ids: vec MessageId;
-        as_platform_moderator: opt bool;
-        correlation_id: nat64;
-    };
-
-type DeleteMessagesResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        MessageNotFound;
-        UserSuspended;
-        ChatFrozen;
-        NotPlatformModerator;
-        InternalError: text;
-    };
-
-type UndeleteMessagesArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        message_ids: vec MessageId;
-        correlation_id: nat64;
-    };
-
-type UndeleteMessagesResponse =
-    variant {
-        Success: record {
-            messages: vec Message;
-        };
-        CallerNotInGroup;
-        MessageNotFound;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type RegisterPollVoteArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        message_index: MessageIndex;
-        poll_option: nat32;
-        operation: VoteOperation;
-        correlation_id: nat64;
-    };
-
-type RegisterPollVoteResponse =
-    variant {
-        Success: PollVotes;
-        PollNotFound;
-        PollEnded;
-        OptionIndexOutOfRange;
-        CallerNotInGroup;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type AddReactionArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        reaction: text;
-        username: text;
-        correlation_id: nat64;
-    };
-
-type AddReactionResponse =
-    variant {
-        Success;
-        NoChange;
-        InvalidReaction;
-        MessageNotFound;
-        CallerNotInGroup;
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type RemoveReactionArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        reaction: text;
-        correlation_id: nat64;
-    };
-
-type RemoveReactionResponse =
-    variant {
-        Success;
-        NoChange;
-        MessageNotFound;
-        CallerNotInGroup;
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type BlockUserArgs =
-    record {
-        user_id: UserId;
-        correlation_id: nat64;
-    };
-
-type BlockUserResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        CannotBlockSelf;
-        CannotBlockUser;
-        GroupNotPublic;
-        InternalError: text;
-        NotAuthorized;
-        UserNotInGroup;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type UnblockUserArgs =
-    record {
-        user_id: UserId;
-        correlation_id: nat64;
-    };
-
-type UnblockUserResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        CannotUnblockSelf;
-        GroupNotPublic;
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type RemoveParticipantArgs =
-    record {
-        user_id: UserId;
-        correlation_id: nat64;
-    };
-
-type RemoveParticipantResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        CannotRemoveSelf;
-        CannotRemoveUser;
-        InternalError: text;
-        NotAuthorized;
-        UserNotInGroup;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type ChangeRoleArgs =
-    record {
-        user_id: UserId;
-        new_role: GroupRole;
-        correlation_id: nat64;
-    };
-
-type ChangeRoleResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        NotAuthorized;
-        UserNotInGroup;
-        Invalid;
-        UserSuspended;
-        ChatFrozen;
-        InternalError: text;
-    };
-
-type UpdateGroupV2Args =
-    record {
-        name: opt text;
-        description: opt text;
-        rules: opt AccessRules;
-        avatar: DocumentUpdate;
-        permissions: opt OptionalGroupPermissions;
-        events_ttl: EventsTimeToLiveUpdate;
-        gate: AccessGateUpdate;
-        public: opt bool;
-        correlation_id: nat64;
-    };
-
-type UpdateGroupV2Response =
-    variant {
-        Success;
-        NotAuthorized;
-        CallerNotInGroup;
-        NameTooShort: FieldTooShortResult;
-        NameTooLong: FieldTooLongResult;
-        NameReserved;
-        DescriptionTooLong: FieldTooLongResult;
-        AvatarTooBig: FieldTooLongResult;
-        NameTaken;
-        InternalError;
-        RulesTooLong: FieldTooLongResult;
-        RulesTooShort: FieldTooShortResult;
-        UserSuspended;
-        ChatFrozen;
-        CannotMakeGroupPublic;
-    };
-
-type PinMessageArgs =
-    record {
-        message_index: MessageIndex;
-        correlation_id: nat64;
-    };
-
-type PinMessageV2Response =
-    variant {
-        Success: PushEventResult;
-        NoChange;
-        MessageIndexOutOfRange;
-        NotAuthorized;
-        CallerNotInGroup;
-        MessageNotFound;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type UnpinMessageArgs =
-    record {
-        message_index: MessageIndex;
-        correlation_id: nat64;
-    };
-
-type UnpinMessageResponse =
-    variant {
-        SuccessV2: PushEventResult;
-        NoChange;
-        NotAuthorized;
-        CallerNotInGroup;
-        MessageNotFound;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type RegisterProposalVoteArgs =
-    record {
-        message_index: MessageIndex;
-        adopt: bool;
-    };
-
-type RegisterProposalVoteResponse =
-    variant {
-        Success;
-        AlreadyVoted: bool;
-        CallerNotInGroup;
-        NoEligibleNeurons;
-        ProposalMessageNotFound;
-        ProposalNotFound;
-        ProposalNotAcceptingVotes;
-        UserSuspended;
-        ChatFrozen;
-        InternalError: text;
-    };
-
-type RegisterProposalVoteV2Response =
-    variant {
-        Success;
-        CallerNotInGroup;
-        ProposalMessageNotFound;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type ClaimPrizeArgs =
-    record {
-        message_id: MessageId;
-        correlation_id: nat64;
-    };
-
-type ClaimPrizeResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        UserSuspended;
-        ChatFrozen;
-        MessageNotFound;
-        AlreadyClaimed;
-        PrizeFullyClaimed;
-        PrizeEnded;
-        TransferFailed: record { text; FailedCryptoTransaction; };
-        FailedAfterTransfer: record { text; CompletedCryptoTransaction; };
-    };
-
-type MakePrivateArgs =
-    record {
-        correlation_id: nat64;
-    };
-
-type MakePrivateResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        AlreadyPrivate;
-        UserSuspended;
-        ChatFrozen;
-        InternalError;
-    };
-
-type ConvertIntoCommunityArgs =
-    record {
-        rules: AccessRules;
-        permissions: opt CommunityPermissions;
-        history_visible_to_new_joiners: bool;
-    };
-
-type ConvertIntoCommunityResponse =
-    variant {
-        Success: CommunityId;
-        CallerNotInGroup;
-        AlreadyImportingToAnotherCommunity;
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-        InternalError: text;
-    };
-
-type SummaryArgs =
-    record {
-    };
-
-type SummaryResponse =
-    variant {
-        Success: record {
-            summary: GroupCanisterGroupChatSummary;
-        };
-        CallerNotInGroup;
-    };
-
-type SummaryUpdatesArgs =
-    record {
-        updates_since: TimestampMillis;
-    };
-
-type SummaryUpdatesResponse =
-    variant {
-        Success: record {
-            updates: GroupCanisterGroupChatSummaryUpdates;
-        };
-        SuccessNoUpdates;
-        CallerNotInGroup;
-    };
-
-type SelectedInitialArgs =
-    record {
-    };
-
-type SelectedInitialSuccess =
-    record {
-        timestamp: TimestampMillis;
-        latest_event_index: EventIndex;
-        participants: vec Participant;
-        blocked_users: vec UserId;
-        invited_users: vec UserId;
-        pinned_messages: vec MessageIndex;
-        rules: AccessRules;
-    };
-
-type SelectedInitialResponse =
-    variant {
-        Success: SelectedInitialSuccess;
-        CallerNotInGroup;
-    };
-
-type SelectedUpdatesArgs =
-    record {
-        updates_since: EventIndex;
-    };
-
-type SelectedUpdatesSuccess =
-    record {
-        timestamp: TimestampMillis;
-        latest_event_index: EventIndex;
-        participants_added_or_updated: vec Participant;
-        participants_removed: vec UserId;
-        blocked_users_added: vec UserId;
-        blocked_users_removed: vec UserId;
-        invited_users: opt vec UserId;
-        pinned_messages_added: vec MessageIndex;
-        pinned_messages_removed: vec MessageIndex;
-        rules: opt AccessRules;
-    };
-
-type SelectedUpdatesResponse =
-    variant {
-        Success: SelectedUpdatesSuccess;
-        SuccessNoUpdates: EventIndex;
-        CallerNotInGroup;
-    };
-
-type SelectedUpdatesV2Args =
-    record {
-        updates_since: TimestampMillis;
-    };
-
-type SelectedUpdatesV2Response =
-    variant {
-        Success: SelectedGroupUpdates;
-        SuccessNoUpdates: TimestampMillis;
-        CallerNotInGroup;
-    };
-
-type EventsArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        start_index: EventIndex;
-        ascending: bool;
-        max_messages: nat32;
-        max_events: nat32;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type EventsByIndexArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        events: vec EventIndex;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type EventsWindowArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        mid_point: MessageIndex;
-        max_messages: nat32;
-        max_events: nat32;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type EventsResponse =
-    variant {
-        Success: EventsSuccessResult;
-        CallerNotInGroup;
-        ThreadMessageNotFound;
-        ReplicaNotUpToDate: EventIndex;
-    };
-
-type LocalUserIndexArgs =
-    record {
-    };
-
-type LocalUserIndexResponse =
-    variant {
-        Success: CanisterId;
-    };
-
-type MessagesByMessageIndexArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        messages: vec MessageIndex;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type MessagesByMessageIndexResponse =
-    variant {
-        Success: record {
-            messages: vec MessageEventWrapper;
-            latest_event_index: EventIndex;
-        };
-        CallerNotInGroup;
-        ThreadMessageNotFound;
-        ReplicaNotUpToDate: EventIndex;
-    };
-
-type ThreadPreviewsArgs =
-    record {
-        threads: vec MessageIndex;
-        latest_client_thread_update: opt TimestampMillis;
-    };
-
-type ThreadPreviewsResponse =
-    variant {
-        Success: record {
-            threads: vec ThreadPreview;
-            timestamp: TimestampMillis;
-        };
-        CallerNotInGroup;
-        ReplicaNotUpToDate: TimestampMillis;
-    };
-
-type DeletedMessageArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-    };
-
-type DeletedMessageResponse =
-    variant {
-        Success: record {
-            content: MessageContent;
-        };
-        CallerNotInGroup;
-        NotAuthorized;
-        MessageNotFound;
-        MessageNotDeleted;
-        MessageHardDeleted;
-    };
-
-type SearchMessagesArgs =
-    record {
-        search_term: text;
-        max_results: nat8;
-        users: opt vec UserId;
-    };
-
-type SearchMessagesResponse =
-    variant {
-        Success: SearchMessagesSuccessResult;
-        TermTooShort: nat8;
-        TermTooLong: nat8;
-        TooManyUsers: nat8;
-        InvalidTerm;
-        CallerNotInGroup;
-    };
-
-type SearchMessagesSuccessResult =
-    record {
-        matches: vec MessageMatch;
-    };
-
-type PublicSummaryArgs =
-    record {
-        invite_code: opt nat64;
-    };    
-
-type PublicSummaryResponse =
-    variant {
-        Success: PublicSummarySuccess;
-        NotAuthorized;
-    };
-
-type PublicSummarySuccess =
-    record {
-        summary: PublicGroupSummary;
-    };
-
-type RulesArgs =
-    record {
-        invite_code: opt nat64;
-    };
-
-type RulesResponse =
-    variant {
-        Success: RulesSuccess;
-        NotAuthorized;
-    };
-
-type RulesSuccess =
-    record {
-        rules: opt text;
-    };
-
-type DeclineInvitationResponse =
-    variant {
-        Success;
-        NotInvited;
-    };
-
-type ToggleMuteNotificationsArgs =
-    record {
-        mute: bool;
-    };
-
-type ToggleMuteNotificationsResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-    };
-
-type InviteCodeArgs =
-    record {
-    };
-
-type InviteCodeResponse =
-    variant {
-        Success: record {
-            code: opt nat64;
-        };
-        NotAuthorized;
-    };
-
-type EnableInviteCodeArgs =
-    record {
-        correlation_id: nat64;
-    };
-
-type EnableInviteCodeResponse =
-    variant {
-        Success: record {
-            code: nat64;
-        };
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type DisableInviteCodeArgs =
-    record {
-        correlation_id: nat64;
-    };
-
-type DisableInviteCodeResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type ResetInviteCodeArgs =
-    record {
-        correlation_id: nat64;
-    };
-
-type ResetInviteCodeResponse =
-    variant {
-        Success: record {
-            code: nat64;
-        };
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-service: {
+type SendMessageV2Args = record {
+    message_id : MessageId;
+    thread_root_message_index : opt MessageIndex;
+    content : MessageContentInitial;
+    sender_name : text;
+    replies_to : opt GroupReplyContext;
+    mentioned : vec User;
+    forwarding : bool;
+    correlation_id : nat64;
+};
+
+type SendMessageResponse = variant {
+    Success : record {
+        message_index : MessageIndex;
+        event_index : EventIndex;
+        timestamp : TimestampMillis;
+        expires_at : opt TimestampMillis;
+    };
+    MessageEmpty;
+    TextTooLong : nat32;
+    InvalidPoll : InvalidPollReason;
+    NotAuthorized;
+    CallerNotInGroup;
+    InvalidRequest : text;
+    ThreadMessageNotFound;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type EditMessageV2Args = record {
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    content : MessageContentInitial;
+    correlation_id : nat64;
+};
+
+type EditMessageResponse = variant {
+    Success;
+    MessageNotFound;
+    CallerNotInGroup;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type DeleteMessagesArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    message_ids : vec MessageId;
+    as_platform_moderator : opt bool;
+    correlation_id : nat64;
+};
+
+type DeleteMessagesResponse = variant {
+    Success;
+    CallerNotInGroup;
+    MessageNotFound;
+    UserSuspended;
+    ChatFrozen;
+    NotPlatformModerator;
+    InternalError : text;
+};
+
+type UndeleteMessagesArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    message_ids : vec MessageId;
+    correlation_id : nat64;
+};
+
+type UndeleteMessagesResponse = variant {
+    Success : record {
+        messages : vec Message;
+    };
+    CallerNotInGroup;
+    MessageNotFound;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type RegisterPollVoteArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    poll_option : nat32;
+    operation : VoteOperation;
+    correlation_id : nat64;
+};
+
+type RegisterPollVoteResponse = variant {
+    Success : PollVotes;
+    PollNotFound;
+    PollEnded;
+    OptionIndexOutOfRange;
+    CallerNotInGroup;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type AddReactionArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    reaction : text;
+    username : text;
+    correlation_id : nat64;
+};
+
+type AddReactionResponse = variant {
+    Success;
+    NoChange;
+    InvalidReaction;
+    MessageNotFound;
+    CallerNotInGroup;
+    NotAuthorized;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type RemoveReactionArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    reaction : text;
+    correlation_id : nat64;
+};
+
+type RemoveReactionResponse = variant {
+    Success;
+    NoChange;
+    MessageNotFound;
+    CallerNotInGroup;
+    NotAuthorized;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type BlockUserArgs = record {
+    user_id : UserId;
+    correlation_id : nat64;
+};
+
+type BlockUserResponse = variant {
+    Success;
+    CallerNotInGroup;
+    CannotBlockSelf;
+    CannotBlockUser;
+    GroupNotPublic;
+    InternalError : text;
+    NotAuthorized;
+    UserNotInGroup;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type UnblockUserArgs = record {
+    user_id : UserId;
+    correlation_id : nat64;
+};
+
+type UnblockUserResponse = variant {
+    Success;
+    CallerNotInGroup;
+    CannotUnblockSelf;
+    GroupNotPublic;
+    NotAuthorized;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type RemoveParticipantArgs = record {
+    user_id : UserId;
+    correlation_id : nat64;
+};
+
+type RemoveParticipantResponse = variant {
+    Success;
+    CallerNotInGroup;
+    CannotRemoveSelf;
+    CannotRemoveUser;
+    InternalError : text;
+    NotAuthorized;
+    UserNotInGroup;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type ChangeRoleArgs = record {
+    user_id : UserId;
+    new_role : GroupRole;
+    correlation_id : nat64;
+};
+
+type ChangeRoleResponse = variant {
+    Success;
+    CallerNotInGroup;
+    NotAuthorized;
+    UserNotInGroup;
+    Invalid;
+    UserSuspended;
+    ChatFrozen;
+    InternalError : text;
+};
+
+type UpdateGroupV2Args = record {
+    name : opt text;
+    description : opt text;
+    rules : opt AccessRules;
+    avatar : DocumentUpdate;
+    permissions : opt OptionalGroupPermissions;
+    events_ttl : EventsTimeToLiveUpdate;
+    gate : AccessGateUpdate;
+    public : opt bool;
+    correlation_id : nat64;
+};
+
+type UpdateGroupV2Response = variant {
+    Success;
+    NotAuthorized;
+    CallerNotInGroup;
+    NameTooShort : FieldTooShortResult;
+    NameTooLong : FieldTooLongResult;
+    NameReserved;
+    DescriptionTooLong : FieldTooLongResult;
+    AvatarTooBig : FieldTooLongResult;
+    NameTaken;
+    InternalError;
+    RulesTooLong : FieldTooLongResult;
+    RulesTooShort : FieldTooShortResult;
+    UserSuspended;
+    ChatFrozen;
+    CannotMakeGroupPublic;
+};
+
+type PinMessageArgs = record {
+    message_index : MessageIndex;
+    correlation_id : nat64;
+};
+
+type PinMessageV2Response = variant {
+    Success : PushEventResult;
+    NoChange;
+    MessageIndexOutOfRange;
+    NotAuthorized;
+    CallerNotInGroup;
+    MessageNotFound;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type UnpinMessageArgs = record {
+    message_index : MessageIndex;
+    correlation_id : nat64;
+};
+
+type UnpinMessageResponse = variant {
+    SuccessV2 : PushEventResult;
+    NoChange;
+    NotAuthorized;
+    CallerNotInGroup;
+    MessageNotFound;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type RegisterProposalVoteArgs = record {
+    message_index : MessageIndex;
+    adopt : bool;
+};
+
+type RegisterProposalVoteResponse = variant {
+    Success;
+    AlreadyVoted : bool;
+    CallerNotInGroup;
+    NoEligibleNeurons;
+    ProposalMessageNotFound;
+    ProposalNotFound;
+    ProposalNotAcceptingVotes;
+    UserSuspended;
+    ChatFrozen;
+    InternalError : text;
+};
+
+type RegisterProposalVoteV2Response = variant {
+    Success;
+    CallerNotInGroup;
+    ProposalMessageNotFound;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type ClaimPrizeArgs = record {
+    message_id : MessageId;
+    correlation_id : nat64;
+};
+
+type ClaimPrizeResponse = variant {
+    Success;
+    CallerNotInGroup;
+    UserSuspended;
+    ChatFrozen;
+    MessageNotFound;
+    AlreadyClaimed;
+    PrizeFullyClaimed;
+    PrizeEnded;
+    TransferFailed : record { text; FailedCryptoTransaction };
+    FailedAfterTransfer : record { text; CompletedCryptoTransaction };
+};
+
+type MakePrivateArgs = record {
+    correlation_id : nat64;
+};
+
+type MakePrivateResponse = variant {
+    Success;
+    NotAuthorized;
+    AlreadyPrivate;
+    UserSuspended;
+    ChatFrozen;
+    InternalError;
+};
+
+type ConvertIntoCommunityArgs = record {
+    rules : AccessRules;
+    permissions : opt CommunityPermissions;
+    history_visible_to_new_joiners : bool;
+};
+
+type ConvertIntoCommunityResponse = variant {
+    Success : CommunityId;
+    CallerNotInGroup;
+    AlreadyImportingToAnotherCommunity;
+    NotAuthorized;
+    UserSuspended;
+    ChatFrozen;
+    InternalError : text;
+};
+
+type SummaryArgs = record {};
+
+type SummaryResponse = variant {
+    Success : record {
+        summary : GroupCanisterGroupChatSummary;
+    };
+    CallerNotInGroup;
+};
+
+type SummaryUpdatesArgs = record {
+    updates_since : TimestampMillis;
+};
+
+type SummaryUpdatesResponse = variant {
+    Success : record {
+        updates : GroupCanisterGroupChatSummaryUpdates;
+    };
+    SuccessNoUpdates;
+    CallerNotInGroup;
+};
+
+type SelectedInitialArgs = record {};
+
+type SelectedInitialSuccess = record {
+    timestamp : TimestampMillis;
+    latest_event_index : EventIndex;
+    participants : vec Participant;
+    blocked_users : vec UserId;
+    invited_users : vec UserId;
+    pinned_messages : vec MessageIndex;
+    rules : AccessRules;
+};
+
+type SelectedInitialResponse = variant {
+    Success : SelectedInitialSuccess;
+    CallerNotInGroup;
+};
+
+type SelectedUpdatesArgs = record {
+    updates_since : EventIndex;
+};
+
+type SelectedUpdatesSuccess = record {
+    timestamp : TimestampMillis;
+    latest_event_index : EventIndex;
+    participants_added_or_updated : vec Participant;
+    participants_removed : vec UserId;
+    blocked_users_added : vec UserId;
+    blocked_users_removed : vec UserId;
+    invited_users : opt vec UserId;
+    pinned_messages_added : vec MessageIndex;
+    pinned_messages_removed : vec MessageIndex;
+    rules : opt AccessRules;
+};
+
+type SelectedUpdatesResponse = variant {
+    Success : SelectedUpdatesSuccess;
+    SuccessNoUpdates : EventIndex;
+    CallerNotInGroup;
+};
+
+type SelectedUpdatesV2Args = record {
+    updates_since : TimestampMillis;
+};
+
+type SelectedUpdatesV2Response = variant {
+    Success : SelectedGroupUpdates;
+    SuccessNoUpdates : TimestampMillis;
+    CallerNotInGroup;
+};
+
+type EventsArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    start_index : EventIndex;
+    ascending : bool;
+    max_messages : nat32;
+    max_events : nat32;
+    latest_client_event_index : opt EventIndex;
+};
+
+type EventsByIndexArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    events : vec EventIndex;
+    latest_client_event_index : opt EventIndex;
+};
+
+type EventsWindowArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    mid_point : MessageIndex;
+    max_messages : nat32;
+    max_events : nat32;
+    latest_client_event_index : opt EventIndex;
+};
+
+type EventsResponse = variant {
+    Success : EventsSuccessResult;
+    CallerNotInGroup;
+    ThreadMessageNotFound;
+    ReplicaNotUpToDate : EventIndex;
+};
+
+type LocalUserIndexArgs = record {};
+
+type LocalUserIndexResponse = variant {
+    Success : CanisterId;
+};
+
+type MessagesByMessageIndexArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    messages : vec MessageIndex;
+    latest_client_event_index : opt EventIndex;
+};
+
+type MessagesByMessageIndexResponse = variant {
+    Success : record {
+        messages : vec MessageEventWrapper;
+        latest_event_index : EventIndex;
+    };
+    CallerNotInGroup;
+    ThreadMessageNotFound;
+    ReplicaNotUpToDate : EventIndex;
+};
+
+type ThreadPreviewsArgs = record {
+    threads : vec MessageIndex;
+    latest_client_thread_update : opt TimestampMillis;
+};
+
+type ThreadPreviewsResponse = variant {
+    Success : record {
+        threads : vec ThreadPreview;
+        timestamp : TimestampMillis;
+    };
+    CallerNotInGroup;
+    ReplicaNotUpToDate : TimestampMillis;
+};
+
+type DeletedMessageArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+};
+
+type DeletedMessageResponse = variant {
+    Success : record {
+        content : MessageContent;
+    };
+    CallerNotInGroup;
+    NotAuthorized;
+    MessageNotFound;
+    MessageNotDeleted;
+    MessageHardDeleted;
+};
+
+type SearchMessagesArgs = record {
+    search_term : text;
+    max_results : nat8;
+    users : opt vec UserId;
+};
+
+type SearchMessagesResponse = variant {
+    Success : SearchMessagesSuccessResult;
+    TermTooShort : nat8;
+    TermTooLong : nat8;
+    TooManyUsers : nat8;
+    InvalidTerm;
+    CallerNotInGroup;
+};
+
+type SearchMessagesSuccessResult = record {
+    matches : vec MessageMatch;
+};
+
+type PublicSummaryArgs = record {
+    invite_code : opt nat64;
+};
+
+type PublicSummaryResponse = variant {
+    Success : PublicSummarySuccess;
+    NotAuthorized;
+};
+
+type PublicSummarySuccess = record {
+    summary : PublicGroupSummary;
+};
+
+type RulesArgs = record {
+    invite_code : opt nat64;
+};
+
+type RulesResponse = variant {
+    Success : RulesSuccess;
+    NotAuthorized;
+};
+
+type RulesSuccess = record {
+    rules : opt text;
+};
+
+type DeclineInvitationResponse = variant {
+    Success;
+    NotInvited;
+};
+
+type ToggleMuteNotificationsArgs = record {
+    mute : bool;
+};
+
+type ToggleMuteNotificationsResponse = variant {
+    Success;
+    CallerNotInGroup;
+};
+
+type InviteCodeArgs = record {};
+
+type InviteCodeResponse = variant {
+    Success : record {
+        code : opt nat64;
+    };
+    NotAuthorized;
+};
+
+type EnableInviteCodeArgs = record {
+    correlation_id : nat64;
+};
+
+type EnableInviteCodeResponse = variant {
+    Success : record {
+        code : nat64;
+    };
+    NotAuthorized;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type DisableInviteCodeArgs = record {
+    correlation_id : nat64;
+};
+
+type DisableInviteCodeResponse = variant {
+    Success;
+    NotAuthorized;
+    UserSuspended;
+    ChatFrozen;
+};
+
+type ResetInviteCodeArgs = record {
+    correlation_id : nat64;
+};
+
+type ResetInviteCodeResponse = variant {
+    Success : record {
+        code : nat64;
+    };
+    NotAuthorized;
+    UserSuspended;
+    ChatFrozen;
+};
+
+service : {
     // Owner only
-    make_private: (MakePrivateArgs) -> (MakePrivateResponse);
-    convert_into_community: (ConvertIntoCommunityArgs) -> (ConvertIntoCommunityResponse);
+    make_private : (MakePrivateArgs) -> (MakePrivateResponse);
+    convert_into_community : (ConvertIntoCommunityArgs) -> (ConvertIntoCommunityResponse);
 
     // Admin only
-    block_user: (BlockUserArgs) -> (BlockUserResponse); // public only
-    unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
-    remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
-    update_group_v2: (UpdateGroupV2Args) -> (UpdateGroupV2Response);
-    pin_message_v2: (PinMessageArgs) -> (PinMessageV2Response);
-    unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
-    change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
-    invite_code: (InviteCodeArgs) -> (InviteCodeResponse) query;
-    enable_invite_code: (EnableInviteCodeArgs) -> (EnableInviteCodeResponse);
-    disable_invite_code: (DisableInviteCodeArgs) -> (DisableInviteCodeResponse);
-    reset_invite_code: (ResetInviteCodeArgs) -> (ResetInviteCodeResponse);
+    block_user : (BlockUserArgs) -> (BlockUserResponse); // public only
+    unblock_user : (UnblockUserArgs) -> (UnblockUserResponse); // public only
+    remove_participant : (RemoveParticipantArgs) -> (RemoveParticipantResponse);
+    update_group_v2 : (UpdateGroupV2Args) -> (UpdateGroupV2Response);
+    pin_message_v2 : (PinMessageArgs) -> (PinMessageV2Response);
+    unpin_message : (UnpinMessageArgs) -> (UnpinMessageResponse);
+    change_role : (ChangeRoleArgs) -> (ChangeRoleResponse);
+    invite_code : (InviteCodeArgs) -> (InviteCodeResponse) query;
+    enable_invite_code : (EnableInviteCodeArgs) -> (EnableInviteCodeResponse);
+    disable_invite_code : (DisableInviteCodeArgs) -> (DisableInviteCodeResponse);
+    reset_invite_code : (ResetInviteCodeArgs) -> (ResetInviteCodeResponse);
 
     // Regular users
-    send_message_v2: (SendMessageV2Args) -> (SendMessageResponse);
-    edit_message_v2: (EditMessageV2Args) -> (EditMessageResponse);
-    delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
-    undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
-    register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
-    add_reaction: (AddReactionArgs) -> (AddReactionResponse);
-    remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
-    register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
-    register_proposal_vote_v2: (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
-    claim_prize: (ClaimPrizeArgs) -> (ClaimPrizeResponse);
-    decline_invitation: (EmptyArgs) -> (DeclineInvitationResponse);
-    toggle_mute_notifications: (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
+    send_message_v2 : (SendMessageV2Args) -> (SendMessageResponse);
+    edit_message_v2 : (EditMessageV2Args) -> (EditMessageResponse);
+    delete_messages : (DeleteMessagesArgs) -> (DeleteMessagesResponse);
+    undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
+    register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
+    add_reaction : (AddReactionArgs) -> (AddReactionResponse);
+    remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
+    register_proposal_vote : (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
+    register_proposal_vote_v2 : (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
+    claim_prize : (ClaimPrizeArgs) -> (ClaimPrizeResponse);
+    decline_invitation : (EmptyArgs) -> (DeclineInvitationResponse);
+    toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
 
-    summary: (SummaryArgs) -> (SummaryResponse) query;
-    summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
-    selected_initial: (SelectedInitialArgs) -> (SelectedInitialResponse) query;
-    selected_updates: (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
-    selected_updates_v2: (SelectedUpdatesV2Args) -> (SelectedUpdatesV2Response) query;
+    summary : (SummaryArgs) -> (SummaryResponse) query;
+    summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
+    selected_initial : (SelectedInitialArgs) -> (SelectedInitialResponse) query;
+    selected_updates : (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
+    selected_updates_v2 : (SelectedUpdatesV2Args) -> (SelectedUpdatesV2Response) query;
 
-    events: (EventsArgs) -> (EventsResponse) query;
-    events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
-    events_window: (EventsWindowArgs) -> (EventsResponse) query;
-    local_user_index: (LocalUserIndexArgs) -> (LocalUserIndexResponse) query;
-    messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
-    thread_previews: (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
-    deleted_message: (DeletedMessageArgs) -> (DeletedMessageResponse) query;
+    events : (EventsArgs) -> (EventsResponse) query;
+    events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;
+    events_window : (EventsWindowArgs) -> (EventsResponse) query;
+    local_user_index : (LocalUserIndexArgs) -> (LocalUserIndexResponse) query;
+    messages_by_message_index : (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
+    thread_previews : (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
+    deleted_message : (DeletedMessageArgs) -> (DeletedMessageResponse) query;
 
-    search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
+    search_messages : (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
 
-    public_summary: (PublicSummaryArgs) -> (PublicSummaryResponse) query;
-    rules: (RulesArgs) -> (RulesResponse) query;
-}
+    public_summary : (PublicSummaryArgs) -> (PublicSummaryResponse) query;
+    rules : (RulesArgs) -> (RulesResponse) query;
+};

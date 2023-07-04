@@ -19,1528 +19,1360 @@ type ProposalId = nat64;
 type SnsNeuronId = blob;
 type TimestampMillis = nat64;
 type TimestampNanos = nat64;
-type Tokens = record { e8s: nat64; };
+type Tokens = record { e8s : nat64 };
 type TransactionHash = blob;
 type UserId = CanisterId;
 
-type Chat =
-    variant {
-        Direct: ChatId;
-        Group: ChatId;
-        Channel: record { CommunityId; ChannelId; };
-    };
-
-type MultiUserChat =
-    variant {
-        Group: ChatId;
-        Channel: record { CommunityId; ChannelId; };
-    };
-
-type AddedToGroupNotification =
-    record {
-        chat_id: ChatId;
-        group_name: text;
-        added_by: UserId;
-        added_by_name: text;
-        timestamp: TimestampMillis;
-    };
-
-type AudioContent =
-    record {
-        caption: opt text;
-        mime_type: text;
-        blob_reference: opt BlobReference;
-    };
-
-type Document =
-    record {
-        id: nat;
-        mime_type: text;
-        data: blob;
-    };
-
-type BlobReference =
-    record {
-        canister_id: CanisterId;
-        blob_id: nat;
-    };
-
-type CanisterUpgradeStatus =
-    variant {
-        InProgress;
-        NotRequired;
-    };
-
-type CanisterWasm =
-    record {
-        module: vec nat8;
-        version: Version;
-        compressed: bool;
-    };
-
-type ChatMetrics =
-    record {
-        text_messages: nat64;
-        image_messages: nat64;
-        video_messages: nat64;
-        audio_messages: nat64;
-        file_messages: nat64;
-        polls: nat64;
-        poll_votes: nat64;
-        icp_messages: nat64;
-        sns1_messages: nat64;
-        ckbtc_messages: nat64;
-        chat_messages: nat64;
-        kinic_messages: nat64;
-        deleted_messages: nat64;
-        giphy_messages: nat64;
-        prize_messages: nat64;
-        prize_winner_messages: nat64;
-        replies: nat64;
-        edits: nat64;
-        reactions: nat64;
-        proposals: nat64;
-        reported_messages: nat64;
-        message_reminders: nat64;
-        custom_type_messages: nat64;
-        last_active: TimestampMillis;
-    };
-
-type CryptoContent =
-    record {
-        recipient: UserId;
-        transfer: CryptoTransaction;
-        caption: opt text;
-    };
-
-type DeletedContent =
-    record {
-        deleted_by: UserId;
-        timestamp: TimestampMillis;
-    };
-
-type DirectChatCreated =
-    record {
-    };
-
-type DirectChatSummary =
-    record {
-        them: UserId;
-        latest_message: MessageEventWrapper;
-        latest_event_index: EventIndex;
-        date_created: TimestampMillis;
-        read_by_me_up_to: opt MessageIndex;
-        read_by_them_up_to: opt MessageIndex;
-        notifications_muted: bool;
-        metrics: ChatMetrics;
-        my_metrics: ChatMetrics;
-        archived: bool;
-        events_ttl: opt Milliseconds;
-        expired_messages: vec MessageIndexRange;
-    };
-
-type DirectChatSummaryUpdates =
-    record {
-        chat_id: ChatId;
-        latest_message: opt MessageEventWrapper;
-        latest_event_index: opt EventIndex;
-        read_by_me_up_to: opt MessageIndex;
-        read_by_them_up_to: opt MessageIndex;
-        notifications_muted: opt bool;
-        updated_events: vec record { nat32; nat64 };
-        metrics: opt ChatMetrics;
-        my_metrics: opt ChatMetrics;
-        archived: opt bool;
-        events_ttl: EventsTimeToLiveUpdate;
-        newly_expired_messages: vec MessageIndexRange;
-    };
-
-type DirectMessageNotification =
-    record {
-        sender: UserId;
-        thread_root_message_index: opt MessageIndex;
-        sender_name: text;
-        message: MessageEventWrapper;
-    };
-
-type DirectReactionAddedNotification =
-    record {
-        them: UserId;
-        username: text;
-        message: MessageEventWrapper;
-        reaction: text;
-        timestamp: TimestampMillis;
-    };
-
-type FieldTooShortResult =
-    record {
-        length_provided: nat32;
-        min_length: nat32;
-    };
-
-type FieldTooLongResult =
-    record {
-        length_provided: nat32;
-        max_length: nat32;
-    };
-
-type FileContent =
-    record {
-        name: text;
-        caption: opt text;
-        mime_type: text;
-        file_size: nat32;
-        blob_reference: opt BlobReference;
-    };
-
-type GroupChatCreated =
-    record {
-        name: text;
-        description: text;
-        created_by: UserId;
-    };
-
-type ChatEvent =
-    variant {
-        Empty;
-        Message: Message;
-        GroupChatCreated: GroupChatCreated;
-        DirectChatCreated: DirectChatCreated;
-        GroupNameChanged: GroupNameChanged;
-        GroupDescriptionChanged: GroupDescriptionChanged;
-        AvatarChanged: AvatarChanged;
-        ParticipantsAdded: ParticipantsAdded;
-        ParticipantsRemoved: ParticipantsRemoved;
-        ParticipantJoined: ParticipantJoined;
-        ParticipantLeft: ParticipantLeft;
-        RoleChanged: RoleChanged;
-        UsersBlocked: UsersBlocked;
-        UsersUnblocked: UsersUnblocked;
-        MessagePinned: MessagePinned;
-        MessageUnpinned: MessageUnpinned;
-        PermissionsChanged: PermissionsChanged;
-        GroupVisibilityChanged: GroupVisibilityChanged;
-        GroupInviteCodeChanged: GroupInviteCodeChanged;
-        GroupRulesChanged: GroupRulesChanged;
-        ChatFrozen: ChatFrozen;
-        ChatUnfrozen: ChatUnfrozen;
-        EventsTimeToLiveUpdated: EventsTimeToLiveUpdated;
-        GroupGateUpdated: GroupGateUpdated;
-        UsersInvited: UsersInvited;
-    };
-
-type ChatEventWrapper =
-    record {
-        index: EventIndex;
-        timestamp: TimestampMillis;
-        correlation_id: nat64;
-        expires_at: opt TimestampMillis;
-        event: ChatEvent;
-    };
-
-type GroupChatSummary =
-    record {
-        chat_id: ChatId;
-        last_updated: TimestampMillis;
-        name: text;
-        description: text;
-        subtype: opt GroupSubtype;
-        avatar_id: opt nat;
-        is_public: bool;
-        history_visible_to_new_joiners: bool;
-        min_visible_event_index: EventIndex;
-        min_visible_message_index: MessageIndex;
-        latest_message: opt MessageEventWrapper;
-        latest_event_index: EventIndex;
-        joined: TimestampMillis;
-        read_by_me_up_to: opt MessageIndex;
-        notifications_muted: bool;
-        participant_count: nat32;
-        role: GroupRole;
-        mentions: vec Mention;
-        permissions: GroupPermissions;
-        metrics: ChatMetrics;
-        my_metrics: ChatMetrics;
-        latest_threads: vec ThreadSyncDetails;
-        archived: bool;
-        frozen: opt FrozenGroupInfo;
-        wasm_version: Version;
-        date_last_pinned: opt TimestampMillis;
-        date_read_pinned: opt TimestampMillis;
-        events_ttl: opt Milliseconds;
-        expired_messages: vec MessageIndexRange;
-        next_message_expiry: opt TimestampMillis;
-        gate: opt AccessGate;
-    };
-
-type GroupCanisterGroupChatSummary =
-    record {
-        chat_id: ChatId;
-        last_updated: TimestampMillis;
-        name: text;
-        description: text;
-        subtype: opt GroupSubtype;
-        avatar_id: opt nat;
-        is_public: bool;
-        history_visible_to_new_joiners: bool;
-        min_visible_event_index: EventIndex;
-        min_visible_message_index: MessageIndex;
-        latest_message: opt MessageEventWrapper;
-        latest_event_index: EventIndex;
-        joined: TimestampMillis;
-        participant_count: nat32;
-        role: GroupRole;
-        mentions: vec Mention;
-        permissions: GroupPermissions;
-        notifications_muted: bool;
-        metrics: ChatMetrics;
-        my_metrics: ChatMetrics;
-        latest_threads: vec GroupCanisterThreadDetails;
-        frozen: opt FrozenGroupInfo;
-        wasm_version: Version;
-        date_last_pinned: opt TimestampMillis;
-        events_ttl: opt Milliseconds;
-        expired_messages: vec MessageIndexRange;
-        next_message_expiry: opt TimestampMillis;
-        gate: opt AccessGate;
-    };
-
-type GroupCanisterGroupChatSummaryUpdates =
-    record {
-        chat_id: ChatId;
-        last_updated: TimestampMillis;
-        name: opt text;
-        description: opt text;
-        subtype: GroupSubtypeUpdate;
-        avatar_id: DocumentIdUpdate;
-        latest_message: opt MessageEventWrapper;
-        latest_event_index: opt EventIndex;
-        participant_count: opt nat32;
-        role: opt GroupRole;
-        mentions: vec Mention;
-        permissions: opt GroupPermissions;
-        updated_events: vec record { opt nat32; nat32; nat64 };
-        metrics: opt ChatMetrics;
-        my_metrics: opt ChatMetrics;
-        is_public: opt bool;
-        latest_threads: vec GroupCanisterThreadDetails;
-        notifications_muted: opt bool;
-        frozen: FrozenGroupUpdate;
-        wasm_version: opt Version;
-        date_last_pinned: opt TimestampMillis;
-        events_ttl: EventsTimeToLiveUpdate;
-        newly_expired_messages: vec MessageIndexRange;
-        next_message_expiry: TimestampUpdate;
-        gate: AccessGateUpdate;
-    };
-
-type CommunityCanisterCommunitySummary =
-    record {
-        community_id: CommunityId;
-        name: text;
-        description: text;
-        avatar_id: opt nat;
-        banner_id: opt nat;
-        is_public: bool;
-        member_count: nat32;
-        permissions: CommunityPermissions;
-        frozen: opt FrozenGroupInfo;
-        gate: opt AccessGate;
-        last_updated: TimestampMillis;
-        latest_event_index: EventIndex;
-        channels: vec CommunityCanisterChannelSummary;
-        membership: opt CommunityMembership;
-        metrics: ChatMetrics;
-    };
-
-type CommunityMembership =
-    record {
-        joined: TimestampMillis;
-        role: CommunityRole;
-    };
-
-type CommunityCanisterChannelSummary =
-    record {
-        channel_id: ChannelId;
-        last_updated: TimestampMillis;
-        name: text;
-        description: text;
-        subtype: opt GroupSubtype;
-        avatar_id: opt nat;
-        banner_id: opt nat;
-        is_public: bool;
-        history_visible_to_new_joiners: bool;
-        min_visible_event_index: EventIndex;
-        min_visible_message_index: MessageIndex;
-        latest_message: opt MessageEventWrapper;
-        latest_event_index: EventIndex;
-        member_count: nat32;
-        permissions: GroupPermissions;
-        metrics: ChatMetrics;
-        date_last_pinned: opt TimestampMillis;
-        events_ttl: opt Milliseconds;
-        expired_messages: vec MessageIndexRange;
-        next_message_expiry: opt TimestampMillis;
-        gate: opt AccessGate;
-        membership: opt ChannelMembership;
-    };
-
-type ChannelMembership = 
-    record {
-        joined: TimestampMillis;
-        role: GroupRole;
-        mentions: vec Mention;
-        notifications_muted: bool;
-        my_metrics: ChatMetrics;
-        latest_threads: vec GroupCanisterThreadDetails;
-    };
-
-type CommunityCanisterCommunitySummaryUpdates =
-    record {
-        community_id: CommunityId;
-        last_updated: TimestampMillis;
-        name: opt text;
-        description: opt text;
-        avatar_id: DocumentIdUpdate;
-        banner_id: DocumentIdUpdate;
-        is_public: opt bool;
-        member_count: opt nat32;
-        permissions: opt CommunityPermissions;
-        frozen: FrozenGroupUpdate;
-        gate: AccessGateUpdate;
-        latest_event_index: opt EventIndex;
-        channels_added: vec CommunityCanisterChannelSummary;
-        channels_updated: vec CommunityCanisterChannelSummaryUpdates;
-        membership: opt CommunityMembershipUpdates;
-        metrics: opt ChatMetrics;
-    };
-
-type CommunityMembershipUpdates = 
-    record {
-        role: opt CommunityRole;
-        channels_removed: vec ChannelId;
-    };
-
-type CommunityCanisterChannelSummaryUpdates =
-    record {
-        channel_id: ChannelId;
-        last_updated: TimestampMillis;
-        name: opt text;
-        description: opt text;
-        subtype: GroupSubtypeUpdate;
-        avatar_id: DocumentIdUpdate;
-        is_public: opt bool;
-        latest_message: opt MessageEventWrapper;
-        latest_event_index: opt EventIndex;
-        member_count: opt nat32;
-        permissions: opt GroupPermissions;
-        updated_events: vec record { opt nat32; nat32; nat64 };
-        metrics: opt ChatMetrics;
-        date_last_pinned: opt TimestampMillis;
-        events_ttl: EventsTimeToLiveUpdate;
-        gate: AccessGateUpdate;
-        membership: opt ChannelMembershipUpdates;
-    };
-
-type ChannelMembershipUpdates =
-    record {
-        role: opt GroupRole;
-        mentions: vec Mention;
-        notifications_muted: opt bool;
-        my_metrics: opt ChatMetrics;
-        latest_threads: vec GroupCanisterThreadDetails;
-    };
-
-type SelectedGroupUpdates =
-    record {
-        timestamp: TimestampMillis;
-        latest_event_index: EventIndex;
-        members_added_or_updated: vec Participant;
-        members_removed: vec UserId;
-        blocked_users_added: vec UserId;
-        blocked_users_removed: vec UserId;
-        invited_users: opt vec UserId;
-        pinned_messages_added: vec MessageIndex;
-        pinned_messages_removed: vec MessageIndex;
-        rules: opt AccessRules;
-    };
-
-type GroupDescriptionChanged =
-    record {
-        new_description: text;
-        previous_description: text;
-        changed_by: UserId;
-    };
-
-type AvatarChanged =
-    record {
-        new_avatar: opt nat;
-        previous_avatar: opt nat;
-        changed_by: UserId;
-    };
-
-type BannerChanged =
-    record {
-        new_banner: opt nat;
-        previous_banner: opt nat;
-        changed_by: UserId;
-    };
-
-type DocumentUpdate =
-    variant {
-        NoChange;
-        SetToNone;
-        SetToSome: Document;
-    };
-
-type TextUpdate =
-    variant {
-        NoChange;
-        SetToNone;
-        SetToSome: text;
-    };
-
-type DocumentIdUpdate =
-    variant {
-        NoChange;
-        SetToNone;
-        SetToSome: nat;
-    };
-
-type TimestampUpdate =
-    variant {
-        NoChange;
-        SetToNone;
-        SetToSome: TimestampMillis;
-    };
-
-type Mention =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        message_index: MessageIndex;
-        event_index: EventIndex;
-        mentioned_by: UserId;
-    };
-
-type Message =
-    record {
-        message_index: MessageIndex;
-        message_id: MessageId;
-        sender: UserId;
-        content: MessageContent;
-        replies_to: opt ReplyContext;
-        reactions: vec record { text; vec UserId; };
-        thread_summary: opt ThreadSummary;
-        edited: bool;
-        forwarded: bool;
-        last_updated: opt TimestampMillis;
-    };
-
-type MessageEventWrapper =
-    record {
-        index: EventIndex;
-        timestamp: TimestampMillis;
-        correlation_id: nat64;
-        expires_at: opt TimestampMillis;
-        event: Message;
-    };
-
-type FrozenGroupInfo =
-    record {
-        timestamp: TimestampMillis;
-        frozen_by: UserId;
-        reason: opt text;
-    };
-
-type FrozenGroupUpdate =
-    variant {
-        NoChange;
-        SetToNone;
-        SetToSome: FrozenGroupInfo;
-    };
-
-type GroupMessageNotification =
-    record {
-        chat_id: ChatId;
-        thread_root_message_index: opt MessageIndex;
-        group_name: text;
-        sender: UserId;
-        sender_name: text;
-        message: MessageEventWrapper;
-        mentioned: vec User;
-        hide: bool;
-    };
-
-type GroupNameChanged =
-    record {
-        new_name: text;
-        previous_name: text;
-        changed_by: UserId;
-    };
-
-type GroupReactionAddedNotification =
-    record {
-        chat_id: ChatId;
-        thread_root_message_index: opt MessageIndex;
-        group_name: text;
-        added_by: UserId;
-        added_by_name: text;
-        message: MessageEventWrapper;
-        reaction: text;
-        timestamp: TimestampMillis;
-    };
-
-type GroupReplyContext =
-    record {
-        event_index: EventIndex;
-    };
-
-type GroupSubtype =
-    variant {
-        GovernanceProposals: GovernanceProposalsSubtype;
-    };
-
-type GroupSubtypeUpdate =
-    variant {
-        NoChange;
-        SetToNone;
-        SetToSome: GroupSubtype;
-    };
-
-type GovernanceProposalsSubtype =
-    record {
-        is_nns: bool;
-        governance_canister_id: CanisterId;
-    };
-
-type MessagePinned =
-    record {
-        message_index: MessageIndex;
-        pinned_by: UserId;
-    };
-
-type MessageUnpinned =
-    record {
-        message_index: MessageIndex;
-        unpinned_by: UserId;
-        due_to_message_deleted: bool;
-    };
-
-type PinnedMessageUpdate =
-    variant {
-        NoChange;
-        SetToNone;
-        SetToSome: MessageIndex;
-    };
-
-type PublicGroupSummary =
-    record {
-        chat_id: ChatId;
-        last_updated: TimestampMillis;
-        name: text;
-        description: text;
-        subtype: opt GroupSubtype;
-        history_visible_to_new_joiners: bool;
-        avatar_id: opt nat;
-        latest_message: opt MessageEventWrapper;
-        latest_event_index: EventIndex;
-        participant_count: nat32;
-        is_public: bool;
-        frozen: opt FrozenGroupInfo;
-        gate: opt AccessGate;
-        wasm_version: Version;
-    };
-
-type ReplyContext =
-    record {
-        event_list_if_other: opt record { ChatId; opt MessageIndex };
-        chat_if_other: opt record { Chat; opt MessageIndex };
-        event_index: EventIndex;
-    };
-
-type GiphyImageVariant =
-    record {
-        width: nat32;
-        height: nat32;
-        url: text;
-        mime_type: text;
-    };
-
-type GiphyContent =
-    record {
-        caption: opt text;
-        title: text;
-        desktop: GiphyImageVariant;
-        mobile: GiphyImageVariant;
-    };
-
-type ImageContent =
-    record {
-        width: nat32;
-        height: nat32;
-        thumbnail_data: text;
-        caption: opt text;
-        mime_type: text;
-        blob_reference: opt BlobReference;
-    };
-
-type IndexedNotification =
-    record {
-        index: nat64;
-        value: NotificationEnvelope;
-    };
-
-type InvalidPollReason =
-    variant {
-        TooFewOptions: nat32;
-        TooManyOptions: nat32;
-        OptionTooLong: nat32;
-        DuplicateOptions;
-        EndDateInThePast;
-        PollsNotValidForDirectChats;
-    };
-
-type MessageContentInitial =
-    variant {
-        Text: TextContent;
-        Image: ImageContent;
-        Video: VideoContent;
-        Audio: AudioContent;
-        File: FileContent;
-        Poll: PollContent;
-        Crypto: CryptoContent;
-        Deleted: DeletedContent;
-        Giphy: GiphyContent;
-        GovernanceProposal: ProposalContent;
-        Prize: PrizeContentInitial;
-        MessageReminderCreated: MessageReminderCreated;
-        MessageReminder: MessageReminder;
-        Custom: CustomMessageContent;
-    };
-
-type MessageContent =
-    variant {
-        Text: TextContent;
-        Image: ImageContent;
-        Video: VideoContent;
-        Audio: AudioContent;
-        File: FileContent;
-        Poll: PollContent;
-        Crypto: CryptoContent;
-        Deleted: DeletedContent;
-        Giphy: GiphyContent;
-        GovernanceProposal: ProposalContent;
-        Prize: PrizeContent;
-        PrizeWinner: PrizeWinnerContent;
-        MessageReminderCreated: MessageReminderCreated;
-        MessageReminder: MessageReminder;
-        Custom: CustomMessageContent;
-        ReportedMessage: ReportedMessage;
-    };
-
-type MessageMatch =
-    record {
-        message_index: MessageIndex;
-        content: MessageContent;
-        sender: UserId;
-        score: nat32;
-    };
-
-type Notification =
-    variant {
-        AddedToGroupNotification: AddedToGroupNotification;
-        DirectMessageNotification: DirectMessageNotification;
-        GroupMessageNotification: GroupMessageNotification;
-        DirectReactionAddedNotification: DirectReactionAddedNotification;
-        GroupReactionAddedNotification: GroupReactionAddedNotification;
-    };
-
-type NotificationEnvelope =
-    record {
-        recipients: vec UserId;
-        notification: Notification;
-    };
-
-type PartialUserSummary =
-    record {
-        user_id: UserId;
-        username: opt text;
-        avatar_id: opt nat;
-        is_bot: bool;
-        suspended: bool;
-        diamond_member: bool;
-    };
-
-type Participant =
-    record {
-        user_id: UserId;
-        date_added: TimestampMillis;
-        role: GroupRole;
-    };
-
-type ParticipantJoined =
-    record {
-        user_id: UserId;
-        invited_by: opt UserId;
-    };
-
-type ParticipantLeft =
-    record {
-        user_id: UserId;
-    };
-
-type ParticipantsAdded =
-    record {
-        user_ids: vec UserId;
-        added_by: UserId;
-        unblocked: vec UserId;
-    };
-
-type PermissionsChanged =
-    record {
-        old_permissions: GroupPermissions;
-        new_permissions: GroupPermissions;
-        changed_by: UserId;
-    };
-
-type GroupVisibilityChanged =
-    record {
-        now_public: bool;
-        changed_by: UserId;
-    };
-
-type GroupInviteCodeChanged =
-    record {
-        change: GroupInviteCodeChange;
-        changed_by: UserId;
-    };
-
-type GroupInviteCodeChange =
-    variant {
-        Enabled;
-        Disabled;
-        Reset;
-    };
-
-type PollConfig =
-    record {
-        text: opt text;
-        options: vec text;
-        end_date: opt TimestampMillis;
-        anonymous: bool;
-        show_votes_before_end_date: bool;
-        allow_multiple_votes_per_user: bool;
-    };
-
-type PollContent =
-    record {
-        config: PollConfig;
-        votes: PollVotes;
-        ended: bool;
-    };
-
-type PollVotes =
-    record {
-        total: TotalPollVotes;
-        user: vec nat32;
-    };
-
-type RoleChanged =
-    record {
-        user_ids: vec UserId;
-        changed_by: UserId;
-        old_role: GroupRole;
-        new_role: GroupRole;
-    };
-
-type ParticipantsRemoved =
-    record {
-        user_ids: vec UserId;
-        removed_by: UserId;
-    };
-
-type ProposalContent =
-    record {
-        governance_canister_id: CanisterId;
-        proposal: Proposal;
-        my_vote: opt bool;
-    };
-
-type Proposal =
-    variant {
-        NNS: NnsProposal;
-        SNS: SnsProposal;
-    };
-
-type NnsProposal =
-    record {
-        id: ProposalId;
-        topic: int32;
-        proposer: NnsNeuronId;
-        created: TimestampMillis;
-        title: text;
-        summary: text;
-        url: text;
-        status: ProposalDecisionStatus;
-        reward_status: ProposalRewardStatus;
-        tally: Tally;
-        deadline: TimestampMillis;
-        last_updated: TimestampMillis;
-    };
-
-type SnsProposal =
-    record {
-        id: ProposalId;
-        action: nat64;
-        proposer: SnsNeuronId;
-        created: TimestampMillis;
-        title: text;
-        summary: text;
-        url: text;
-        status: ProposalDecisionStatus;
-        reward_status: ProposalRewardStatus;
-        tally: Tally;
-        deadline: TimestampMillis;
-        payload_text_rendering: opt text;
-        last_updated: TimestampMillis;
-    };
-
-type ProposalDecisionStatus =
-    variant {
-        Unspecified;
-        Open;
-        Rejected;
-        Adopted;
-        Executed;
-        Failed;
-    };
-
-type ProposalRewardStatus =
-    variant {
-        Unspecified;
-        AcceptVotes;
-        ReadyToSettle;
-        Settled;
-    };
-
-type Tally =
-    record {
-        yes: nat64;
-        no: nat64;
-        total: nat64;
-        timestamp: TimestampMillis;
-    };
-
-type TotalPollVotes =
-    variant {
-        Visible: vec record { nat32; vec UserId };
-        Anonymous: vec record { nat32; nat32 };
-        Hidden: nat32;
-    };
-
-type UsersBlocked =
-    record {
-        user_ids: vec UserId;
-        blocked_by: UserId;
-    };
-
-type UsersUnblocked =
-    record {
-        user_ids: vec UserId;
-        unblocked_by: UserId;
-    };
-
-type VoteOperation =
-    variant {
-        RegisterVote;
-        DeleteVote;
-    };
-
-type RegistrationFee =
-    variant {
-        ICP: ICPRegistrationFee;
-        Cycles: CyclesRegistrationFee;
-    };
-
-type ICPRegistrationFee =
-    record {
-        amount: ICP;
-        recipient: AccountIdentifier;
-        valid_until: TimestampMillis;
-    };
-
-type CyclesRegistrationFee =
-    record {
-        amount: Cycles;
-        recipient: principal;
-        valid_until: TimestampMillis;
-    };
-
-type GroupRole =
-    variant {
-        Owner;
-        Admin;
-        Moderator;
-        Participant;
-    };
-
-type Subscription =
-    record {
-        value: SubscriptionInfo;
-        last_active: TimestampMillis;
-    };
-
-type SubscriptionInfo =
-    record {
-        endpoint: text;
-        keys: SubscriptionKeys;
-    };
-
-type SubscriptionKeys =
-    record {
-        p256dh: text;
-        auth: text;
-    };
-
-type TextContent =
-    record {
-        text: text;
-    };
-
-type UserSummary =
-    record {
-        user_id: UserId;
-        username: text;
-        avatar_id: opt nat;
-        is_bot: bool;
-        suspended: bool;
-        seconds_since_last_online: nat32;
-        diamond_member: bool;
-    };
-
-type Version =
-    record {
-        major: nat32;
-        minor: nat32;
-        patch: nat32;
-    };
-
-type Cryptocurrency =
-    variant {
-        InternetComputer;
-        SNS1;
-        CKBTC;
-        CHAT;
-        KINIC;
-    };
-
-type CryptoTransaction =
-    variant {
-        Pending: PendingCryptoTransaction;
-        Completed: CompletedCryptoTransaction;
-        Failed: FailedCryptoTransaction;
-    };
-
-type PendingCryptoTransaction =
-    variant {
-        NNS: NnsPendingCryptoTransaction;
-        SNS: SnsPendingCryptoTransaction;
-        ICRC1: Icrc1PendingCryptoTransaction;
-    };
-
-type CompletedCryptoTransaction =
-    variant {
-        NNS: NnsCompletedCryptoTransaction;
-        SNS: SnsCompletedCryptoTransaction;
-        ICRC1: Icrc1CompletedCryptoTransaction;
-    };
-
-type FailedCryptoTransaction =
-    variant {
-        NNS: NnsFailedCryptoTransaction;
-        SNS: SnsFailedCryptoTransaction;
-        ICRC1: Icrc1FailedCryptoTransaction;
-    };
-
-type NnsPendingCryptoTransaction =
-    record {
-        ledger: CanisterId;
-        token: Cryptocurrency;
-        amount: Tokens;
-        to: NnsUserOrAccount;
-        fee: opt Tokens;
-        memo: opt nat64;
-        created: TimestampNanos;
-    };
-
-type NnsCompletedCryptoTransaction =
-    record {
-        token: Cryptocurrency;
-        amount: Tokens;
-        fee: Tokens;
-        from: NnsCryptoAccount;
-        to: NnsCryptoAccount;
-        memo: nat64;
-        created: TimestampNanos;
-        transaction_hash: TransactionHash;
-        block_index: BlockIndex;
-    };
-
-type NnsFailedCryptoTransaction =
-    record {
-        token: Cryptocurrency;
-        amount: Tokens;
-        fee: Tokens;
-        from: NnsCryptoAccount;
-        to: NnsCryptoAccount;
-        memo: nat64;
-        created: TimestampNanos;
-        transaction_hash: TransactionHash;
-        error_message: text;
-    };
-
-type NnsUserOrAccount =
-    variant {
-        User: UserId;
-        Account: AccountIdentifier;
-    };
-
-type NnsCryptoAccount =
-    variant {
-        Mint;
-        Account: AccountIdentifier;
-    };
-
-type SnsPendingCryptoTransaction =
-    record {
-        ledger: CanisterId;
-        token: Cryptocurrency;
-        amount: Tokens;
-        to: Icrc1Account;
-        fee: Tokens;
-        memo: opt nat64;
-        created: TimestampNanos;
-    };
-
-type SnsCompletedCryptoTransaction =
-    record {
-        token: Cryptocurrency;
-        amount: Tokens;
-        fee: Tokens;
-        from: Icrc1AccountOrMint;
-        to: Icrc1AccountOrMint;
-        memo: opt nat64;
-        created: TimestampNanos;
-        transaction_hash: TransactionHash;
-        block_index: BlockIndex;
-    };
-
-type SnsFailedCryptoTransaction =
-    record {
-        token: Cryptocurrency;
-        amount: Tokens;
-        fee: Tokens;
-        from: Icrc1AccountOrMint;
-        to: Icrc1AccountOrMint;
-        memo: opt nat64;
-        created: TimestampNanos;
-        transaction_hash: TransactionHash;
-        error_message: text;
-    };
-
-type Icrc1AccountOrMint =
-    variant {
-        Mint;
-        Account: Icrc1Account;
-    };
-
-type Icrc1Account =
-    record {
-        owner: principal;
-        subaccount: opt blob;
-    };
-
-type Icrc1PendingCryptoTransaction =
-    record {
-        ledger: CanisterId;
-        token: Cryptocurrency;
-        amount: nat;
-        fee: nat;
-        to: Icrc1Account;
-        memo: opt Memo;
-        created: TimestampNanos;
-    };
-
-type Icrc1CompletedCryptoTransaction =
-    record {
-        token: Cryptocurrency;
-        amount: nat;
-        fee: nat;
-        from: Icrc1AccountOrMint;
-        to: Icrc1AccountOrMint;
-        memo: opt Memo;
-        created: TimestampNanos;
-        block_index: BlockIndex;
-    };
-
-type Icrc1FailedCryptoTransaction =
-    record {
-        token: Cryptocurrency;
-        amount: nat;
-        fee: nat;
-        from: Icrc1AccountOrMint;
-        to: Icrc1AccountOrMint;
-        memo: opt Memo;
-        created: TimestampNanos;
-        error_message: text;
-    };
-
-type VideoContent =
-    record {
-        width: nat32;
-        height: nat32;
-        thumbnail_data: text;
-        caption: opt text;
-        mime_type: text;
-        image_blob_reference: opt BlobReference;
-        video_blob_reference: opt BlobReference;
-    };
-
-type User =
-    record {
-        user_id: UserId;
-        username: text;
-    };
-
-type GroupPermissions =
-    record {
-        change_permissions: PermissionRole;
-        change_roles: PermissionRole;
-        add_members: PermissionRole;
-        remove_members: PermissionRole;
-        block_users: PermissionRole;
-        delete_messages: PermissionRole;
-        update_group: PermissionRole;
-        pin_messages: PermissionRole;
-        invite_users: PermissionRole;
-        create_polls: PermissionRole;
-        send_messages: PermissionRole;
-        react_to_messages: PermissionRole;
-        reply_in_thread: PermissionRole;
-    };
-
-
-type OptionalGroupPermissions =
-    record {
-        change_permissions: opt PermissionRole;
-        change_roles: opt PermissionRole;
-        remove_members: opt PermissionRole;
-        block_users: opt PermissionRole;
-        delete_messages: opt PermissionRole;
-        update_group: opt PermissionRole;
-        pin_messages: opt PermissionRole;
-        invite_users: opt PermissionRole;
-        create_polls: opt PermissionRole;
-        send_messages: opt PermissionRole;
-        react_to_messages: opt PermissionRole;
-        reply_in_thread: opt PermissionRole;
-    };
-
-type PermissionRole =
-    variant {
-        Owner;
-        Admins;
-        Moderators;
-        Members;
-    };
-
-type CommunityPermissions =
-    record {
-        change_permissions: CommunityPermissionRole;
-        change_roles: CommunityPermissionRole;
-        invite_users: CommunityPermissionRole;
-        remove_members: CommunityPermissionRole;
-        block_users: CommunityPermissionRole;
-        update_details: CommunityPermissionRole;
-        create_public_channel: CommunityPermissionRole;
-        create_private_channel: CommunityPermissionRole;
-    };
-
-type OptionalCommunityPermissions =
-    record {
-        change_permissions: opt CommunityPermissionRole;
-        change_roles: opt CommunityPermissionRole;
-        invite_users: opt CommunityPermissionRole;
-        remove_members: opt CommunityPermissionRole;
-        block_users: opt CommunityPermissionRole;
-        update_details: opt CommunityPermissionRole;
-        create_public_channel: opt CommunityPermissionRole;
-        create_private_channel: opt CommunityPermissionRole;
-    };
-
-type CommunityPermissionRole =
-    variant {
-        Owners;
-        Admins;
-        Members;
-    };
-
-type CommunityRole =
-    variant {
-        Owner;
-        Admin;
-        Member;
-    };
-
-type ThreadSummary =
-    record {
-        participant_ids: vec UserId;
-        reply_count: nat32;
-        latest_event_index: EventIndex;
-        latest_event_timestamp: TimestampMillis;
-    };
-
-type ThreadSyncDetails =
-    record {
-        root_message_index: MessageIndex;
-        latest_event: opt EventIndex;
-        latest_message: opt MessageIndex;
-        read_up_to: opt MessageIndex;
-        last_updated: TimestampMillis;
-    };
-
-type GroupCanisterThreadDetails =
-    record {
-        root_message_index: MessageIndex;
-        latest_event: EventIndex;
-        latest_message: MessageIndex;
-        last_updated: TimestampMillis;
-    };
-
-type AccessRules =
-    record {
-        text: text;
-        enabled: bool;
-    };
-
-type GroupRulesChanged =
-    record {
-        enabled: bool;
-        prev_enabled: bool;
-        changed_by: UserId;
-    };
-
-type ChatFrozen =
-    record {
-        frozen_by: UserId;
-        reason: opt text;
-    };
-
-type ChatUnfrozen =
-    record {
-        unfrozen_by: UserId;
-    };
-
-type EventsTimeToLiveUpdated =
-    record {
-        updated_by: UserId;
-        new_ttl: opt Milliseconds;
-    };
-
-type EventsTimeToLiveUpdate =
-    variant {
-        NoChange;
-        SetToNone;
-        SetToSome: Milliseconds;
-    };
-
-type PushEventResult =
-    record {
-        index: EventIndex;
-        timestamp: TimestampMillis;
-        expires_at: opt TimestampMillis;
-    };
-
-type EventsSuccessResult =
-    record {
-        events: vec ChatEventWrapper;
-        latest_event_index: nat32;
-        timestamp: TimestampMillis;
-    };
-
-type MessagesSuccessResult =
-    record {
-        messages: vec MessageEventWrapper;
-        latest_event_index: EventIndex;
-        timestamp: TimestampMillis;
-    };
-
-type MessageIndexRange =
-    record {
-        start: MessageIndex;
-        end: MessageIndex;
-    };
-
-type PrizeContentInitial =
-    record {
-        prizes: vec Tokens;
-        transfer: CryptoTransaction;
-        end_date: TimestampMillis;
-        caption: opt text;
-    };
-
-type PrizeContent =
-    record {
-        prizes_remaining: nat32;
-        prizes_pending: nat32;
-        winners: vec UserId;
-        token: Cryptocurrency;
-        end_date: TimestampMillis;
-        caption: opt text;
-    };
-
-type PrizeWinnerContent =
-    record {
-        winner: UserId;
-        transaction: CompletedCryptoTransaction;
-        prize_message: MessageIndex;
-    };
-
-type DiamondMembershipDetails =
-    record {
-        expires_at: TimestampMillis;
-        recurring: opt DiamondMembershipPlanDuration;
-    };
-
-type DiamondMembershipPlanDuration =
-    variant {
-        OneMonth;
-        ThreeMonths;
-        OneYear;
-    };
-
-type AccessGate =
-    variant {
-        DiamondMember;
-        SnsNeuron: SnsNeuronGate;
-    };
-
-type AccessGateUpdate =
-    variant {
-        NoChange;
-        SetToNone;
-        SetToSome: AccessGate;
-    };
-
-type GroupGateUpdated =
-    record {
-        updated_by: UserId;
-        new_gate: opt AccessGate;
-    };
-
-type SnsNeuronGate =
-    record {
-        governance_canister_id: CanisterId;
-        min_stake_e8s: opt nat64;
-        min_dissolve_delay: opt Milliseconds;
-    };
-
-type GateCheckFailedReason =
-    variant {
-        NotDiamondMember;
-        NoSnsNeuronsFound;
-        NoSnsNeuronsWithRequiredStakeFound;
-        NoSnsNeuronsWithRequiredDissolveDelayFound;
-    };
-
-type MessageReminderCreated =
-    record {
-        reminder_id: nat64;
-        remind_at: TimestampMillis;
-        notes: opt text;
-        hidden: bool;
-    };
-
-type MessageReminder =
-    record {
-        reminder_id: nat64;
-        notes: opt text;
-    };
-
-type CustomMessageContent =
-    record {
-        kind: text;
-        data: blob;
-    };
-
-type UsersInvited =
-    record {
-        user_ids: vec UserId;
-        invited_by: UserId;
-    };
-
-type ReportedMessage =
-    record {
-        reports: vec MessageReport;
-        count: nat32;
-    };
-
-type MessageReport =
-    record {
-        reported_by: UserId;
-        timestamp: TimestampMillis;
-        reason_code: nat32;
-        notes: opt text;
-    };
-
-type EmptyArgs =
-    record {
-    };
-
-type CommunityMatch =
-    record {
-        id: CommunityId;
-        name: text;
-        description: text;
-        avatar_id: opt nat;
-        banner_id: opt nat;
-        member_count: nat32;
-        channel_count: nat32;
-        gate: opt AccessGate;
-    };
-
-type GroupMatch =
-    record {
-        id: ChatId;
-        chat_id: ChatId;
-        name: text;
-        description: text;
-        avatar_id: opt nat;
-        member_count: nat32;
-        gate: opt AccessGate;
-    };
-
-type ChannelMatch =
-    record {
-        id: ChannelId;
-        name: text;
-        description: text;
-        avatar_id: opt nat;
-        member_count: nat32;
-        gate: opt AccessGate;
-    };
-
-type ThreadPreview =
-    record {
-        root_message: MessageEventWrapper;
-        latest_replies: vec MessageEventWrapper;
-        total_replies: nat32;
-    };
-
-type CommunityMember = 
-    record {
-        user_id: UserId;
-        date_added: TimestampMillis;
-        role: CommunityRole;
-    };
+type Chat = variant {
+    Direct : ChatId;
+    Group : ChatId;
+    Channel : record { CommunityId; ChannelId };
+};
+
+type MultiUserChat = variant {
+    Group : ChatId;
+    Channel : record { CommunityId; ChannelId };
+};
+
+type AddedToGroupNotification = record {
+    chat_id : ChatId;
+    group_name : text;
+    added_by : UserId;
+    added_by_name : text;
+    timestamp : TimestampMillis;
+};
+
+type AudioContent = record {
+    caption : opt text;
+    mime_type : text;
+    blob_reference : opt BlobReference;
+};
+
+type Document = record {
+    id : nat;
+    mime_type : text;
+    data : blob;
+};
+
+type BlobReference = record {
+    canister_id : CanisterId;
+    blob_id : nat;
+};
+
+type CanisterUpgradeStatus = variant {
+    InProgress;
+    NotRequired;
+};
+
+type CanisterWasm = record {
+    module : vec nat8;
+    version : Version;
+    compressed : bool;
+};
+
+type ChatMetrics = record {
+    text_messages : nat64;
+    image_messages : nat64;
+    video_messages : nat64;
+    audio_messages : nat64;
+    file_messages : nat64;
+    polls : nat64;
+    poll_votes : nat64;
+    icp_messages : nat64;
+    sns1_messages : nat64;
+    ckbtc_messages : nat64;
+    chat_messages : nat64;
+    kinic_messages : nat64;
+    deleted_messages : nat64;
+    giphy_messages : nat64;
+    prize_messages : nat64;
+    prize_winner_messages : nat64;
+    replies : nat64;
+    edits : nat64;
+    reactions : nat64;
+    proposals : nat64;
+    reported_messages : nat64;
+    message_reminders : nat64;
+    custom_type_messages : nat64;
+    last_active : TimestampMillis;
+};
+
+type CryptoContent = record {
+    recipient : UserId;
+    transfer : CryptoTransaction;
+    caption : opt text;
+};
+
+type DeletedContent = record {
+    deleted_by : UserId;
+    timestamp : TimestampMillis;
+};
+
+type DirectChatCreated = record {};
+
+type DirectChatSummary = record {
+    them : UserId;
+    latest_message : MessageEventWrapper;
+    latest_event_index : EventIndex;
+    date_created : TimestampMillis;
+    read_by_me_up_to : opt MessageIndex;
+    read_by_them_up_to : opt MessageIndex;
+    notifications_muted : bool;
+    metrics : ChatMetrics;
+    my_metrics : ChatMetrics;
+    archived : bool;
+    events_ttl : opt Milliseconds;
+    expired_messages : vec MessageIndexRange;
+};
+
+type DirectChatSummaryUpdates = record {
+    chat_id : ChatId;
+    latest_message : opt MessageEventWrapper;
+    latest_event_index : opt EventIndex;
+    read_by_me_up_to : opt MessageIndex;
+    read_by_them_up_to : opt MessageIndex;
+    notifications_muted : opt bool;
+    updated_events : vec record { nat32; nat64 };
+    metrics : opt ChatMetrics;
+    my_metrics : opt ChatMetrics;
+    archived : opt bool;
+    events_ttl : EventsTimeToLiveUpdate;
+    newly_expired_messages : vec MessageIndexRange;
+};
+
+type DirectMessageNotification = record {
+    sender : UserId;
+    thread_root_message_index : opt MessageIndex;
+    sender_name : text;
+    message : MessageEventWrapper;
+};
+
+type DirectReactionAddedNotification = record {
+    them : UserId;
+    username : text;
+    message : MessageEventWrapper;
+    reaction : text;
+    timestamp : TimestampMillis;
+};
+
+type FieldTooShortResult = record {
+    length_provided : nat32;
+    min_length : nat32;
+};
+
+type FieldTooLongResult = record {
+    length_provided : nat32;
+    max_length : nat32;
+};
+
+type FileContent = record {
+    name : text;
+    caption : opt text;
+    mime_type : text;
+    file_size : nat32;
+    blob_reference : opt BlobReference;
+};
+
+type GroupChatCreated = record {
+    name : text;
+    description : text;
+    created_by : UserId;
+};
+
+type ChatEvent = variant {
+    Empty;
+    Message : Message;
+    GroupChatCreated : GroupChatCreated;
+    DirectChatCreated : DirectChatCreated;
+    GroupNameChanged : GroupNameChanged;
+    GroupDescriptionChanged : GroupDescriptionChanged;
+    AvatarChanged : AvatarChanged;
+    ParticipantsAdded : ParticipantsAdded;
+    ParticipantsRemoved : ParticipantsRemoved;
+    ParticipantJoined : ParticipantJoined;
+    ParticipantLeft : ParticipantLeft;
+    RoleChanged : RoleChanged;
+    UsersBlocked : UsersBlocked;
+    UsersUnblocked : UsersUnblocked;
+    MessagePinned : MessagePinned;
+    MessageUnpinned : MessageUnpinned;
+    PermissionsChanged : PermissionsChanged;
+    GroupVisibilityChanged : GroupVisibilityChanged;
+    GroupInviteCodeChanged : GroupInviteCodeChanged;
+    GroupRulesChanged : GroupRulesChanged;
+    ChatFrozen : ChatFrozen;
+    ChatUnfrozen : ChatUnfrozen;
+    EventsTimeToLiveUpdated : EventsTimeToLiveUpdated;
+    GroupGateUpdated : GroupGateUpdated;
+    UsersInvited : UsersInvited;
+};
+
+type ChatEventWrapper = record {
+    index : EventIndex;
+    timestamp : TimestampMillis;
+    correlation_id : nat64;
+    expires_at : opt TimestampMillis;
+    event : ChatEvent;
+};
+
+type GroupChatSummary = record {
+    chat_id : ChatId;
+    last_updated : TimestampMillis;
+    name : text;
+    description : text;
+    subtype : opt GroupSubtype;
+    avatar_id : opt nat;
+    is_public : bool;
+    history_visible_to_new_joiners : bool;
+    min_visible_event_index : EventIndex;
+    min_visible_message_index : MessageIndex;
+    latest_message : opt MessageEventWrapper;
+    latest_event_index : EventIndex;
+    joined : TimestampMillis;
+    read_by_me_up_to : opt MessageIndex;
+    notifications_muted : bool;
+    participant_count : nat32;
+    role : GroupRole;
+    mentions : vec Mention;
+    permissions : GroupPermissions;
+    metrics : ChatMetrics;
+    my_metrics : ChatMetrics;
+    latest_threads : vec ThreadSyncDetails;
+    archived : bool;
+    frozen : opt FrozenGroupInfo;
+    wasm_version : Version;
+    date_last_pinned : opt TimestampMillis;
+    date_read_pinned : opt TimestampMillis;
+    events_ttl : opt Milliseconds;
+    expired_messages : vec MessageIndexRange;
+    next_message_expiry : opt TimestampMillis;
+    gate : opt AccessGate;
+};
+
+type GroupCanisterGroupChatSummary = record {
+    chat_id : ChatId;
+    last_updated : TimestampMillis;
+    name : text;
+    description : text;
+    subtype : opt GroupSubtype;
+    avatar_id : opt nat;
+    is_public : bool;
+    history_visible_to_new_joiners : bool;
+    min_visible_event_index : EventIndex;
+    min_visible_message_index : MessageIndex;
+    latest_message : opt MessageEventWrapper;
+    latest_event_index : EventIndex;
+    joined : TimestampMillis;
+    participant_count : nat32;
+    role : GroupRole;
+    mentions : vec Mention;
+    permissions : GroupPermissions;
+    notifications_muted : bool;
+    metrics : ChatMetrics;
+    my_metrics : ChatMetrics;
+    latest_threads : vec GroupCanisterThreadDetails;
+    frozen : opt FrozenGroupInfo;
+    wasm_version : Version;
+    date_last_pinned : opt TimestampMillis;
+    events_ttl : opt Milliseconds;
+    expired_messages : vec MessageIndexRange;
+    next_message_expiry : opt TimestampMillis;
+    gate : opt AccessGate;
+};
+
+type GroupCanisterGroupChatSummaryUpdates = record {
+    chat_id : ChatId;
+    last_updated : TimestampMillis;
+    name : opt text;
+    description : opt text;
+    subtype : GroupSubtypeUpdate;
+    avatar_id : DocumentIdUpdate;
+    latest_message : opt MessageEventWrapper;
+    latest_event_index : opt EventIndex;
+    participant_count : opt nat32;
+    role : opt GroupRole;
+    mentions : vec Mention;
+    permissions : opt GroupPermissions;
+    updated_events : vec record { opt nat32; nat32; nat64 };
+    metrics : opt ChatMetrics;
+    my_metrics : opt ChatMetrics;
+    is_public : opt bool;
+    latest_threads : vec GroupCanisterThreadDetails;
+    notifications_muted : opt bool;
+    frozen : FrozenGroupUpdate;
+    wasm_version : opt Version;
+    date_last_pinned : opt TimestampMillis;
+    events_ttl : EventsTimeToLiveUpdate;
+    newly_expired_messages : vec MessageIndexRange;
+    next_message_expiry : TimestampUpdate;
+    gate : AccessGateUpdate;
+};
+
+type CommunityCanisterCommunitySummary = record {
+    community_id : CommunityId;
+    name : text;
+    description : text;
+    avatar_id : opt nat;
+    banner_id : opt nat;
+    is_public : bool;
+    member_count : nat32;
+    permissions : CommunityPermissions;
+    frozen : opt FrozenGroupInfo;
+    gate : opt AccessGate;
+    last_updated : TimestampMillis;
+    latest_event_index : EventIndex;
+    channels : vec CommunityCanisterChannelSummary;
+    membership : opt CommunityMembership;
+    metrics : ChatMetrics;
+};
+
+type CommunityMembership = record {
+    joined : TimestampMillis;
+    role : CommunityRole;
+};
+
+type CommunityCanisterChannelSummary = record {
+    channel_id : ChannelId;
+    last_updated : TimestampMillis;
+    name : text;
+    description : text;
+    subtype : opt GroupSubtype;
+    avatar_id : opt nat;
+    banner_id : opt nat;
+    is_public : bool;
+    history_visible_to_new_joiners : bool;
+    min_visible_event_index : EventIndex;
+    min_visible_message_index : MessageIndex;
+    latest_message : opt MessageEventWrapper;
+    latest_event_index : EventIndex;
+    member_count : nat32;
+    permissions : GroupPermissions;
+    metrics : ChatMetrics;
+    date_last_pinned : opt TimestampMillis;
+    events_ttl : opt Milliseconds;
+    expired_messages : vec MessageIndexRange;
+    next_message_expiry : opt TimestampMillis;
+    gate : opt AccessGate;
+    membership : opt ChannelMembership;
+};
+
+type ChannelMembership = record {
+    joined : TimestampMillis;
+    role : GroupRole;
+    mentions : vec Mention;
+    notifications_muted : bool;
+    my_metrics : ChatMetrics;
+    latest_threads : vec GroupCanisterThreadDetails;
+};
+
+type CommunityCanisterCommunitySummaryUpdates = record {
+    community_id : CommunityId;
+    last_updated : TimestampMillis;
+    name : opt text;
+    description : opt text;
+    avatar_id : DocumentIdUpdate;
+    banner_id : DocumentIdUpdate;
+    is_public : opt bool;
+    member_count : opt nat32;
+    permissions : opt CommunityPermissions;
+    frozen : FrozenGroupUpdate;
+    gate : AccessGateUpdate;
+    latest_event_index : opt EventIndex;
+    channels_added : vec CommunityCanisterChannelSummary;
+    channels_updated : vec CommunityCanisterChannelSummaryUpdates;
+    membership : opt CommunityMembershipUpdates;
+    metrics : opt ChatMetrics;
+};
+
+type CommunityMembershipUpdates = record {
+    role : opt CommunityRole;
+    channels_removed : vec ChannelId;
+};
+
+type CommunityCanisterChannelSummaryUpdates = record {
+    channel_id : ChannelId;
+    last_updated : TimestampMillis;
+    name : opt text;
+    description : opt text;
+    subtype : GroupSubtypeUpdate;
+    avatar_id : DocumentIdUpdate;
+    is_public : opt bool;
+    latest_message : opt MessageEventWrapper;
+    latest_event_index : opt EventIndex;
+    member_count : opt nat32;
+    permissions : opt GroupPermissions;
+    updated_events : vec record { opt nat32; nat32; nat64 };
+    metrics : opt ChatMetrics;
+    date_last_pinned : opt TimestampMillis;
+    events_ttl : EventsTimeToLiveUpdate;
+    gate : AccessGateUpdate;
+    membership : opt ChannelMembershipUpdates;
+};
+
+type ChannelMembershipUpdates = record {
+    role : opt GroupRole;
+    mentions : vec Mention;
+    notifications_muted : opt bool;
+    my_metrics : opt ChatMetrics;
+    latest_threads : vec GroupCanisterThreadDetails;
+};
+
+type SelectedGroupUpdates = record {
+    timestamp : TimestampMillis;
+    latest_event_index : EventIndex;
+    members_added_or_updated : vec Participant;
+    members_removed : vec UserId;
+    blocked_users_added : vec UserId;
+    blocked_users_removed : vec UserId;
+    invited_users : opt vec UserId;
+    pinned_messages_added : vec MessageIndex;
+    pinned_messages_removed : vec MessageIndex;
+    rules : opt AccessRules;
+};
+
+type GroupDescriptionChanged = record {
+    new_description : text;
+    previous_description : text;
+    changed_by : UserId;
+};
+
+type AvatarChanged = record {
+    new_avatar : opt nat;
+    previous_avatar : opt nat;
+    changed_by : UserId;
+};
+
+type BannerChanged = record {
+    new_banner : opt nat;
+    previous_banner : opt nat;
+    changed_by : UserId;
+};
+
+type DocumentUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : Document;
+};
+
+type TextUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : text;
+};
+
+type DocumentIdUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : nat;
+};
+
+type TimestampUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : TimestampMillis;
+};
+
+type Mention = record {
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    message_index : MessageIndex;
+    event_index : EventIndex;
+    mentioned_by : UserId;
+};
+
+type Message = record {
+    message_index : MessageIndex;
+    message_id : MessageId;
+    sender : UserId;
+    content : MessageContent;
+    replies_to : opt ReplyContext;
+    reactions : vec record { text; vec UserId };
+    thread_summary : opt ThreadSummary;
+    edited : bool;
+    forwarded : bool;
+    last_updated : opt TimestampMillis;
+};
+
+type MessageEventWrapper = record {
+    index : EventIndex;
+    timestamp : TimestampMillis;
+    correlation_id : nat64;
+    expires_at : opt TimestampMillis;
+    event : Message;
+};
+
+type FrozenGroupInfo = record {
+    timestamp : TimestampMillis;
+    frozen_by : UserId;
+    reason : opt text;
+};
+
+type FrozenGroupUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : FrozenGroupInfo;
+};
+
+type GroupMessageNotification = record {
+    chat_id : ChatId;
+    thread_root_message_index : opt MessageIndex;
+    group_name : text;
+    sender : UserId;
+    sender_name : text;
+    message : MessageEventWrapper;
+    mentioned : vec User;
+    hide : bool;
+};
+
+type GroupNameChanged = record {
+    new_name : text;
+    previous_name : text;
+    changed_by : UserId;
+};
+
+type GroupReactionAddedNotification = record {
+    chat_id : ChatId;
+    thread_root_message_index : opt MessageIndex;
+    group_name : text;
+    added_by : UserId;
+    added_by_name : text;
+    message : MessageEventWrapper;
+    reaction : text;
+    timestamp : TimestampMillis;
+};
+
+type GroupReplyContext = record {
+    event_index : EventIndex;
+};
+
+type GroupSubtype = variant {
+    GovernanceProposals : GovernanceProposalsSubtype;
+};
+
+type GroupSubtypeUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : GroupSubtype;
+};
+
+type GovernanceProposalsSubtype = record {
+    is_nns : bool;
+    governance_canister_id : CanisterId;
+};
+
+type MessagePinned = record {
+    message_index : MessageIndex;
+    pinned_by : UserId;
+};
+
+type MessageUnpinned = record {
+    message_index : MessageIndex;
+    unpinned_by : UserId;
+    due_to_message_deleted : bool;
+};
+
+type PinnedMessageUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : MessageIndex;
+};
+
+type PublicGroupSummary = record {
+    chat_id : ChatId;
+    last_updated : TimestampMillis;
+    name : text;
+    description : text;
+    subtype : opt GroupSubtype;
+    history_visible_to_new_joiners : bool;
+    avatar_id : opt nat;
+    latest_message : opt MessageEventWrapper;
+    latest_event_index : EventIndex;
+    participant_count : nat32;
+    is_public : bool;
+    frozen : opt FrozenGroupInfo;
+    gate : opt AccessGate;
+    wasm_version : Version;
+};
+
+type ReplyContext = record {
+    event_list_if_other : opt record { ChatId; opt MessageIndex };
+    chat_if_other : opt record { Chat; opt MessageIndex };
+    event_index : EventIndex;
+};
+
+type GiphyImageVariant = record {
+    width : nat32;
+    height : nat32;
+    url : text;
+    mime_type : text;
+};
+
+type GiphyContent = record {
+    caption : opt text;
+    title : text;
+    desktop : GiphyImageVariant;
+    mobile : GiphyImageVariant;
+};
+
+type ImageContent = record {
+    width : nat32;
+    height : nat32;
+    thumbnail_data : text;
+    caption : opt text;
+    mime_type : text;
+    blob_reference : opt BlobReference;
+};
+
+type IndexedNotification = record {
+    index : nat64;
+    value : NotificationEnvelope;
+};
+
+type InvalidPollReason = variant {
+    TooFewOptions : nat32;
+    TooManyOptions : nat32;
+    OptionTooLong : nat32;
+    DuplicateOptions;
+    EndDateInThePast;
+    PollsNotValidForDirectChats;
+};
+
+type MessageContentInitial = variant {
+    Text : TextContent;
+    Image : ImageContent;
+    Video : VideoContent;
+    Audio : AudioContent;
+    File : FileContent;
+    Poll : PollContent;
+    Crypto : CryptoContent;
+    Deleted : DeletedContent;
+    Giphy : GiphyContent;
+    GovernanceProposal : ProposalContent;
+    Prize : PrizeContentInitial;
+    MessageReminderCreated : MessageReminderCreated;
+    MessageReminder : MessageReminder;
+    Custom : CustomMessageContent;
+};
+
+type MessageContent = variant {
+    Text : TextContent;
+    Image : ImageContent;
+    Video : VideoContent;
+    Audio : AudioContent;
+    File : FileContent;
+    Poll : PollContent;
+    Crypto : CryptoContent;
+    Deleted : DeletedContent;
+    Giphy : GiphyContent;
+    GovernanceProposal : ProposalContent;
+    Prize : PrizeContent;
+    PrizeWinner : PrizeWinnerContent;
+    MessageReminderCreated : MessageReminderCreated;
+    MessageReminder : MessageReminder;
+    Custom : CustomMessageContent;
+    ReportedMessage : ReportedMessage;
+};
+
+type MessageMatch = record {
+    message_index : MessageIndex;
+    content : MessageContent;
+    sender : UserId;
+    score : nat32;
+};
+
+type Notification = variant {
+    AddedToGroupNotification : AddedToGroupNotification;
+    DirectMessageNotification : DirectMessageNotification;
+    GroupMessageNotification : GroupMessageNotification;
+    DirectReactionAddedNotification : DirectReactionAddedNotification;
+    GroupReactionAddedNotification : GroupReactionAddedNotification;
+};
+
+type NotificationEnvelope = record {
+    recipients : vec UserId;
+    notification : Notification;
+};
+
+type PartialUserSummary = record {
+    user_id : UserId;
+    username : opt text;
+    avatar_id : opt nat;
+    is_bot : bool;
+    suspended : bool;
+    diamond_member : bool;
+};
+
+type Participant = record {
+    user_id : UserId;
+    date_added : TimestampMillis;
+    role : GroupRole;
+};
+
+type ParticipantJoined = record {
+    user_id : UserId;
+    invited_by : opt UserId;
+};
+
+type ParticipantLeft = record {
+    user_id : UserId;
+};
+
+type ParticipantsAdded = record {
+    user_ids : vec UserId;
+    added_by : UserId;
+    unblocked : vec UserId;
+};
+
+type PermissionsChanged = record {
+    old_permissions : GroupPermissions;
+    new_permissions : GroupPermissions;
+    changed_by : UserId;
+};
+
+type GroupVisibilityChanged = record {
+    now_public : bool;
+    changed_by : UserId;
+};
+
+type GroupInviteCodeChanged = record {
+    change : GroupInviteCodeChange;
+    changed_by : UserId;
+};
+
+type GroupInviteCodeChange = variant {
+    Enabled;
+    Disabled;
+    Reset;
+};
+
+type PollConfig = record {
+    text : opt text;
+    options : vec text;
+    end_date : opt TimestampMillis;
+    anonymous : bool;
+    show_votes_before_end_date : bool;
+    allow_multiple_votes_per_user : bool;
+};
+
+type PollContent = record {
+    config : PollConfig;
+    votes : PollVotes;
+    ended : bool;
+};
+
+type PollVotes = record {
+    total : TotalPollVotes;
+    user : vec nat32;
+};
+
+type RoleChanged = record {
+    user_ids : vec UserId;
+    changed_by : UserId;
+    old_role : GroupRole;
+    new_role : GroupRole;
+};
+
+type ParticipantsRemoved = record {
+    user_ids : vec UserId;
+    removed_by : UserId;
+};
+
+type ProposalContent = record {
+    governance_canister_id : CanisterId;
+    proposal : Proposal;
+    my_vote : opt bool;
+};
+
+type Proposal = variant {
+    NNS : NnsProposal;
+    SNS : SnsProposal;
+};
+
+type NnsProposal = record {
+    id : ProposalId;
+    topic : int32;
+    proposer : NnsNeuronId;
+    created : TimestampMillis;
+    title : text;
+    summary : text;
+    url : text;
+    status : ProposalDecisionStatus;
+    reward_status : ProposalRewardStatus;
+    tally : Tally;
+    deadline : TimestampMillis;
+    last_updated : TimestampMillis;
+};
+
+type SnsProposal = record {
+    id : ProposalId;
+    action : nat64;
+    proposer : SnsNeuronId;
+    created : TimestampMillis;
+    title : text;
+    summary : text;
+    url : text;
+    status : ProposalDecisionStatus;
+    reward_status : ProposalRewardStatus;
+    tally : Tally;
+    deadline : TimestampMillis;
+    payload_text_rendering : opt text;
+    last_updated : TimestampMillis;
+};
+
+type ProposalDecisionStatus = variant {
+    Unspecified;
+    Open;
+    Rejected;
+    Adopted;
+    Executed;
+    Failed;
+};
+
+type ProposalRewardStatus = variant {
+    Unspecified;
+    AcceptVotes;
+    ReadyToSettle;
+    Settled;
+};
+
+type Tally = record {
+    yes : nat64;
+    no : nat64;
+    total : nat64;
+    timestamp : TimestampMillis;
+};
+
+type TotalPollVotes = variant {
+    Visible : vec record { nat32; vec UserId };
+    Anonymous : vec record { nat32; nat32 };
+    Hidden : nat32;
+};
+
+type UsersBlocked = record {
+    user_ids : vec UserId;
+    blocked_by : UserId;
+};
+
+type UsersUnblocked = record {
+    user_ids : vec UserId;
+    unblocked_by : UserId;
+};
+
+type VoteOperation = variant {
+    RegisterVote;
+    DeleteVote;
+};
+
+type RegistrationFee = variant {
+    ICP : ICPRegistrationFee;
+    Cycles : CyclesRegistrationFee;
+};
+
+type ICPRegistrationFee = record {
+    amount : ICP;
+    recipient : AccountIdentifier;
+    valid_until : TimestampMillis;
+};
+
+type CyclesRegistrationFee = record {
+    amount : Cycles;
+    recipient : principal;
+    valid_until : TimestampMillis;
+};
+
+type GroupRole = variant {
+    Owner;
+    Admin;
+    Moderator;
+    Participant;
+};
+
+type Subscription = record {
+    value : SubscriptionInfo;
+    last_active : TimestampMillis;
+};
+
+type SubscriptionInfo = record {
+    endpoint : text;
+    keys : SubscriptionKeys;
+};
+
+type SubscriptionKeys = record {
+    p256dh : text;
+    auth : text;
+};
+
+type TextContent = record {
+    text : text;
+};
+
+type UserSummary = record {
+    user_id : UserId;
+    username : text;
+    avatar_id : opt nat;
+    is_bot : bool;
+    suspended : bool;
+    seconds_since_last_online : nat32;
+    diamond_member : bool;
+};
+
+type Version = record {
+    major : nat32;
+    minor : nat32;
+    patch : nat32;
+};
+
+type Cryptocurrency = variant {
+    InternetComputer;
+    SNS1;
+    CKBTC;
+    CHAT;
+    KINIC;
+};
+
+type CryptoTransaction = variant {
+    Pending : PendingCryptoTransaction;
+    Completed : CompletedCryptoTransaction;
+    Failed : FailedCryptoTransaction;
+};
+
+type PendingCryptoTransaction = variant {
+    NNS : NnsPendingCryptoTransaction;
+    SNS : SnsPendingCryptoTransaction;
+    ICRC1 : Icrc1PendingCryptoTransaction;
+};
+
+type CompletedCryptoTransaction = variant {
+    NNS : NnsCompletedCryptoTransaction;
+    SNS : SnsCompletedCryptoTransaction;
+    ICRC1 : Icrc1CompletedCryptoTransaction;
+};
+
+type FailedCryptoTransaction = variant {
+    NNS : NnsFailedCryptoTransaction;
+    SNS : SnsFailedCryptoTransaction;
+    ICRC1 : Icrc1FailedCryptoTransaction;
+};
+
+type NnsPendingCryptoTransaction = record {
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    amount : Tokens;
+    to : NnsUserOrAccount;
+    fee : opt Tokens;
+    memo : opt nat64;
+    created : TimestampNanos;
+};
+
+type NnsCompletedCryptoTransaction = record {
+    token : Cryptocurrency;
+    amount : Tokens;
+    fee : Tokens;
+    from : NnsCryptoAccount;
+    to : NnsCryptoAccount;
+    memo : nat64;
+    created : TimestampNanos;
+    transaction_hash : TransactionHash;
+    block_index : BlockIndex;
+};
+
+type NnsFailedCryptoTransaction = record {
+    token : Cryptocurrency;
+    amount : Tokens;
+    fee : Tokens;
+    from : NnsCryptoAccount;
+    to : NnsCryptoAccount;
+    memo : nat64;
+    created : TimestampNanos;
+    transaction_hash : TransactionHash;
+    error_message : text;
+};
+
+type NnsUserOrAccount = variant {
+    User : UserId;
+    Account : AccountIdentifier;
+};
+
+type NnsCryptoAccount = variant {
+    Mint;
+    Account : AccountIdentifier;
+};
+
+type SnsPendingCryptoTransaction = record {
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    amount : Tokens;
+    to : Icrc1Account;
+    fee : Tokens;
+    memo : opt nat64;
+    created : TimestampNanos;
+};
+
+type SnsCompletedCryptoTransaction = record {
+    token : Cryptocurrency;
+    amount : Tokens;
+    fee : Tokens;
+    from : Icrc1AccountOrMint;
+    to : Icrc1AccountOrMint;
+    memo : opt nat64;
+    created : TimestampNanos;
+    transaction_hash : TransactionHash;
+    block_index : BlockIndex;
+};
+
+type SnsFailedCryptoTransaction = record {
+    token : Cryptocurrency;
+    amount : Tokens;
+    fee : Tokens;
+    from : Icrc1AccountOrMint;
+    to : Icrc1AccountOrMint;
+    memo : opt nat64;
+    created : TimestampNanos;
+    transaction_hash : TransactionHash;
+    error_message : text;
+};
+
+type Icrc1AccountOrMint = variant {
+    Mint;
+    Account : Icrc1Account;
+};
+
+type Icrc1Account = record {
+    owner : principal;
+    subaccount : opt blob;
+};
+
+type Icrc1PendingCryptoTransaction = record {
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    amount : nat;
+    fee : nat;
+    to : Icrc1Account;
+    memo : opt Memo;
+    created : TimestampNanos;
+};
+
+type Icrc1CompletedCryptoTransaction = record {
+    token : Cryptocurrency;
+    amount : nat;
+    fee : nat;
+    from : Icrc1AccountOrMint;
+    to : Icrc1AccountOrMint;
+    memo : opt Memo;
+    created : TimestampNanos;
+    block_index : BlockIndex;
+};
+
+type Icrc1FailedCryptoTransaction = record {
+    token : Cryptocurrency;
+    amount : nat;
+    fee : nat;
+    from : Icrc1AccountOrMint;
+    to : Icrc1AccountOrMint;
+    memo : opt Memo;
+    created : TimestampNanos;
+    error_message : text;
+};
+
+type VideoContent = record {
+    width : nat32;
+    height : nat32;
+    thumbnail_data : text;
+    caption : opt text;
+    mime_type : text;
+    image_blob_reference : opt BlobReference;
+    video_blob_reference : opt BlobReference;
+};
+
+type User = record {
+    user_id : UserId;
+    username : text;
+};
+
+type GroupPermissions = record {
+    change_permissions : PermissionRole;
+    change_roles : PermissionRole;
+    add_members : PermissionRole;
+    remove_members : PermissionRole;
+    block_users : PermissionRole;
+    delete_messages : PermissionRole;
+    update_group : PermissionRole;
+    pin_messages : PermissionRole;
+    invite_users : PermissionRole;
+    create_polls : PermissionRole;
+    send_messages : PermissionRole;
+    react_to_messages : PermissionRole;
+    reply_in_thread : PermissionRole;
+};
+
+type OptionalGroupPermissions = record {
+    change_permissions : opt PermissionRole;
+    change_roles : opt PermissionRole;
+    remove_members : opt PermissionRole;
+    block_users : opt PermissionRole;
+    delete_messages : opt PermissionRole;
+    update_group : opt PermissionRole;
+    pin_messages : opt PermissionRole;
+    invite_users : opt PermissionRole;
+    create_polls : opt PermissionRole;
+    send_messages : opt PermissionRole;
+    react_to_messages : opt PermissionRole;
+    reply_in_thread : opt PermissionRole;
+};
+
+type PermissionRole = variant {
+    Owner;
+    Admins;
+    Moderators;
+    Members;
+};
+
+type CommunityPermissions = record {
+    change_permissions : CommunityPermissionRole;
+    change_roles : CommunityPermissionRole;
+    invite_users : CommunityPermissionRole;
+    remove_members : CommunityPermissionRole;
+    block_users : CommunityPermissionRole;
+    update_details : CommunityPermissionRole;
+    create_public_channel : CommunityPermissionRole;
+    create_private_channel : CommunityPermissionRole;
+};
+
+type OptionalCommunityPermissions = record {
+    change_permissions : opt CommunityPermissionRole;
+    change_roles : opt CommunityPermissionRole;
+    invite_users : opt CommunityPermissionRole;
+    remove_members : opt CommunityPermissionRole;
+    block_users : opt CommunityPermissionRole;
+    update_details : opt CommunityPermissionRole;
+    create_public_channel : opt CommunityPermissionRole;
+    create_private_channel : opt CommunityPermissionRole;
+};
+
+type CommunityPermissionRole = variant {
+    Owners;
+    Admins;
+    Members;
+};
+
+type CommunityRole = variant {
+    Owner;
+    Admin;
+    Member;
+};
+
+type ThreadSummary = record {
+    participant_ids : vec UserId;
+    reply_count : nat32;
+    latest_event_index : EventIndex;
+    latest_event_timestamp : TimestampMillis;
+};
+
+type ThreadSyncDetails = record {
+    root_message_index : MessageIndex;
+    latest_event : opt EventIndex;
+    latest_message : opt MessageIndex;
+    read_up_to : opt MessageIndex;
+    last_updated : TimestampMillis;
+};
+
+type GroupCanisterThreadDetails = record {
+    root_message_index : MessageIndex;
+    latest_event : EventIndex;
+    latest_message : MessageIndex;
+    last_updated : TimestampMillis;
+};
+
+type AccessRules = record {
+    text : text;
+    enabled : bool;
+};
+
+type GroupRulesChanged = record {
+    enabled : bool;
+    prev_enabled : bool;
+    changed_by : UserId;
+};
+
+type ChatFrozen = record {
+    frozen_by : UserId;
+    reason : opt text;
+};
+
+type ChatUnfrozen = record {
+    unfrozen_by : UserId;
+};
+
+type EventsTimeToLiveUpdated = record {
+    updated_by : UserId;
+    new_ttl : opt Milliseconds;
+};
+
+type EventsTimeToLiveUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : Milliseconds;
+};
+
+type PushEventResult = record {
+    index : EventIndex;
+    timestamp : TimestampMillis;
+    expires_at : opt TimestampMillis;
+};
+
+type EventsSuccessResult = record {
+    events : vec ChatEventWrapper;
+    latest_event_index : nat32;
+    timestamp : TimestampMillis;
+};
+
+type MessagesSuccessResult = record {
+    messages : vec MessageEventWrapper;
+    latest_event_index : EventIndex;
+    timestamp : TimestampMillis;
+};
+
+type MessageIndexRange = record {
+    start : MessageIndex;
+    end : MessageIndex;
+};
+
+type PrizeContentInitial = record {
+    prizes : vec Tokens;
+    transfer : CryptoTransaction;
+    end_date : TimestampMillis;
+    caption : opt text;
+};
+
+type PrizeContent = record {
+    prizes_remaining : nat32;
+    prizes_pending : nat32;
+    winners : vec UserId;
+    token : Cryptocurrency;
+    end_date : TimestampMillis;
+    caption : opt text;
+};
+
+type PrizeWinnerContent = record {
+    winner : UserId;
+    transaction : CompletedCryptoTransaction;
+    prize_message : MessageIndex;
+};
+
+type DiamondMembershipDetails = record {
+    expires_at : TimestampMillis;
+    recurring : opt DiamondMembershipPlanDuration;
+};
+
+type DiamondMembershipPlanDuration = variant {
+    OneMonth;
+    ThreeMonths;
+    OneYear;
+};
+
+type AccessGate = variant {
+    DiamondMember;
+    SnsNeuron : SnsNeuronGate;
+};
+
+type AccessGateUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : AccessGate;
+};
+
+type GroupGateUpdated = record {
+    updated_by : UserId;
+    new_gate : opt AccessGate;
+};
+
+type SnsNeuronGate = record {
+    governance_canister_id : CanisterId;
+    min_stake_e8s : opt nat64;
+    min_dissolve_delay : opt Milliseconds;
+};
+
+type GateCheckFailedReason = variant {
+    NotDiamondMember;
+    NoSnsNeuronsFound;
+    NoSnsNeuronsWithRequiredStakeFound;
+    NoSnsNeuronsWithRequiredDissolveDelayFound;
+};
+
+type MessageReminderCreated = record {
+    reminder_id : nat64;
+    remind_at : TimestampMillis;
+    notes : opt text;
+    hidden : bool;
+};
+
+type MessageReminder = record {
+    reminder_id : nat64;
+    notes : opt text;
+};
+
+type CustomMessageContent = record {
+    kind : text;
+    data : blob;
+};
+
+type UsersInvited = record {
+    user_ids : vec UserId;
+    invited_by : UserId;
+};
+
+type ReportedMessage = record {
+    reports : vec MessageReport;
+    count : nat32;
+};
+
+type MessageReport = record {
+    reported_by : UserId;
+    timestamp : TimestampMillis;
+    reason_code : nat32;
+    notes : opt text;
+};
+
+type EmptyArgs = record {};
+
+type CommunityMatch = record {
+    id : CommunityId;
+    name : text;
+    description : text;
+    avatar_id : opt nat;
+    banner_id : opt nat;
+    member_count : nat32;
+    channel_count : nat32;
+    gate : opt AccessGate;
+};
+
+type GroupMatch = record {
+    id : ChatId;
+    chat_id : ChatId;
+    name : text;
+    description : text;
+    avatar_id : opt nat;
+    member_count : nat32;
+    gate : opt AccessGate;
+};
+
+type ChannelMatch = record {
+    id : ChannelId;
+    name : text;
+    description : text;
+    avatar_id : opt nat;
+    member_count : nat32;
+    gate : opt AccessGate;
+};
+
+type ThreadPreview = record {
+    root_message : MessageEventWrapper;
+    latest_replies : vec MessageEventWrapper;
+    total_replies : nat32;
+};
+
+type CommunityMember = record {
+    user_id : UserId;
+    date_added : TimestampMillis;
+    role : CommunityRole;
+};

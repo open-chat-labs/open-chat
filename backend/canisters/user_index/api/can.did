@@ -1,382 +1,332 @@
 import "../../../libraries/types/can.did";
 
-type UserRegistrationCanisterResponse =
-    variant {
-        Success: CanisterId;
-        NewRegistrationsClosed;
+type UserRegistrationCanisterResponse = variant {
+    Success : CanisterId;
+    NewRegistrationsClosed;
+};
+
+type SetUsernameArgs = record {
+    username : text;
+};
+
+type SetUsernameResponse = variant {
+    Success;
+    UsernameTaken;
+    UserNotFound;
+    UsernameInvalid;
+    UsernameTooShort : nat16;
+    UsernameTooLong : nat16;
+};
+
+type CheckUsernameArgs = record {
+    username : text;
+};
+
+type CheckUsernameResponse = variant {
+    Success;
+    UsernameTaken;
+    UsernameInvalid;
+    UsernameTooShort : nat16;
+    UsernameTooLong : nat16;
+};
+
+type CurrentUserResponse = variant {
+    Success : record {
+        user_id : UserId;
+        username : text;
+        canister_upgrade_status : CanisterUpgradeStatus;
+        avatar_id : opt nat;
+        wasm_version : Version;
+        icp_account : AccountIdentifier;
+        referrals : vec UserId;
+        is_platform_moderator : bool;
+        suspension_details : opt SuspensionDetails;
+        is_suspected_bot : bool;
+        diamond_membership_details : opt DiamondMembershipDetails;
     };
+    UserNotFound;
+};
 
-type SetUsernameArgs =
-    record {
-        username: text;
+type SuspensionDetails = record {
+    reason : text;
+    action : SuspensionAction;
+    suspended_by : UserId;
+};
+
+type SuspensionAction = variant {
+    Unsuspend : TimestampMillis;
+    Delete : TimestampMillis;
+};
+
+type UserArgs = record {
+    user_id : opt UserId;
+    username : opt text;
+};
+
+type UserResponse = variant {
+    Success : UserSummary;
+    UserNotFound;
+};
+
+type UsersArgs = record {
+    user_groups : vec record {
+        users : vec UserId;
+        updated_since : TimestampMillis;
     };
+};
 
-type SetUsernameResponse =
-    variant {
-        Success;
-        UsernameTaken;
-        UserNotFound;
-        UsernameInvalid;
-        UsernameTooShort: nat16;
-        UsernameTooLong: nat16;
+type UsersResponse = variant {
+    Success : record {
+        users : vec PartialUserSummary;
+        timestamp : TimestampMillis;
     };
+};
 
-type CheckUsernameArgs =
-    record {
-        username: text;
+type SearchArgs = record {
+    search_term : text;
+    max_results : nat8;
+};
+
+type SearchResponse = variant {
+    Success : record {
+        users : vec UserSummary;
+        timestamp : TimestampMillis;
     };
+};
 
-type CheckUsernameResponse =
-    variant {
-        Success;
-        UsernameTaken;
-        UsernameInvalid;
-        UsernameTooShort: nat16;
-        UsernameTooLong: nat16;
+type AddPlatformModeratorArgs = record {
+    user_id : UserId;
+};
+
+type AddPlatformModeratorResponse = variant {
+    Success;
+    AlreadyPlatformModerator;
+    InternalError : text;
+};
+
+type RemovePlatformModeratorArgs = record {
+    user_id : UserId;
+};
+
+type RemovePlatformModeratorResponse = variant {
+    Success;
+    NotPlatformModerator;
+    InternalError : text;
+};
+
+type AddPlatformOperatorArgs = record {
+    user_id : UserId;
+};
+
+type AddPlatformOperatorResponse = variant {
+    Success;
+};
+
+type RemovePlatformOperatorArgs = record {
+    user_id : UserId;
+};
+
+type RemovePlatformOperatorResponse = variant {
+    Success;
+};
+
+type AssignPlatformModeratorsGroupArgs = record {
+    group_id : ChatId;
+};
+
+type AssignPlatformModeratorsGroupResponse = variant {
+    Success;
+};
+
+type PlatformModeratorsResponse = variant {
+    Success : record {
+        users : vec UserId;
     };
+};
 
-type CurrentUserResponse =
-    variant {
-        Success: record {
-            user_id: UserId;
-            username: text;
-            canister_upgrade_status: CanisterUpgradeStatus;
-            avatar_id: opt nat;
-            wasm_version: Version;
-            icp_account: AccountIdentifier;
-            referrals: vec UserId;
-            is_platform_moderator: bool;
-            suspension_details: opt SuspensionDetails;
-            is_suspected_bot: bool;
-            diamond_membership_details: opt DiamondMembershipDetails;
-        };
-        UserNotFound;
+type PlatformModeratorsGroupResponse = variant {
+    Success : ChatId;
+};
+
+type PlatformOperatorsArgs = record {};
+
+type PlatformOperatorsResponse = variant {
+    Success : record {
+        users : vec UserId;
     };
+};
 
-type SuspensionDetails =
-    record {
-        reason: text;
-        action: SuspensionAction;
-        suspended_by: UserId;
+type SuspectedBotsArgs = record {
+    after : opt UserId;
+    count : nat32;
+};
+
+type SuspectedBotsResponse = variant {
+    Success : record {
+        users : vec UserId;
     };
+};
 
-type SuspensionAction =
-    variant {
-        Unsuspend: TimestampMillis;
-        Delete: TimestampMillis;
+type SuspendUserArgs = record {
+    user_id : UserId;
+    duration : opt Milliseconds;
+    reason : text;
+};
+
+type SuspendUserResponse = variant {
+    Success;
+    UserAlreadySuspended;
+    UserNotFound;
+    InternalError : text;
+};
+
+type UnsuspendUserArgs = record {
+    user_id : UserId;
+};
+
+type UnsuspendUserResponse = variant {
+    Success;
+    UserNotSuspended;
+    UserNotFound;
+    InternalError : text;
+};
+
+type MarkSuspectedBotArgs = record {};
+
+type MarkSuspectedBotResponse = variant {
+    Success;
+};
+
+type PayForDiamondMembershipArgs = record {
+    duration : DiamondMembershipPlanDuration;
+    token : Cryptocurrency;
+    expected_price_e8s : nat64;
+    recurring : bool;
+};
+
+type PayForDiamondMembershipResponse = variant {
+    Success : DiamondMembershipDetails;
+    CannotExtend : record {
+        diamond_membership_expires_at : TimestampMillis;
+        can_extend_at : TimestampMillis;
     };
+    CurrencyNotSupported;
+    PriceMismatch;
+    PaymentAlreadyInProgress;
+    UserNotFound;
+    InsufficientFunds : nat64; // Returns the account balance in e8s
+    TransferFailed : text;
+    InternalError : text;
+};
 
-type UserArgs =
-    record {
-        user_id: opt UserId;
-        username: opt text;
+type ReferralMetricsResponse = variant {
+    Success : record {
+        users_who_referred : nat32;
+        users_who_referred_paid_diamond : nat32;
+        users_who_referred_unpaid_diamond : nat32;
+        users_who_referred_90_percent_unpaid_diamond : nat32;
+        referrals_of_paid_diamond : nat32;
+        referrals_of_unpaid_diamond : nat32;
+        referrals_other : nat32;
+        icp_raised_by_referrals_to_paid_diamond : nat32;
     };
+};
 
-type UserResponse =
-    variant {
-        Success: UserSummary;
-        UserNotFound;
+type ReferralLeaderboardArgs = record {
+    filter : opt variant {
+        Month : record { year : nat32; month : nat8 };
+        CurrentMonth;
     };
+    count : nat32;
+};
 
-type UsersArgs =
-    record {
-        user_groups: vec record {
-            users: vec UserId;
-            updated_since: TimestampMillis;
-        };
+type ReferralLeaderboardResponse = variant {
+    AllTime : vec ReferralStats;
+    Month : record {
+        year : nat32;
+        month : nat8;
+        results : vec ReferralStats;
     };
+};
 
-type UsersResponse =
-    variant {
-        Success: record {
-            users: vec PartialUserSummary;
-            timestamp: TimestampMillis;
-        }
-    };
+type ReferralStats = record {
+    user_id : UserId;
+    username : text;
+    total_rewards_e8s : nat64;
+    diamond_members : nat32;
+    total_users : nat32;
+};
 
-type SearchArgs =
-    record {
-        search_term: text;
-        max_results: nat8
-    };
+type SetUserUpgradeConcurrencyArgs = record {
+    value : nat32;
+};
 
-type SearchResponse =
-    variant {
-        Success: record {
-            users: vec UserSummary;
-            timestamp: TimestampMillis;
-        }
-    };
+type SetUserUpgradeConcurrencyResponse = variant {
+    Success;
+};
 
-type AddPlatformModeratorArgs =
-    record {
-        user_id: UserId;
-    };
+type AddReferralCodesArgs = record {
+    referral_type : ReferralType;
+    codes : vec text;
+};
 
-type AddPlatformModeratorResponse =
-    variant {
-        Success;
-        AlreadyPlatformModerator;
-        InternalError: text;
-    };
+type ReferralType = variant {
+    BtcMiami;
+    User;
+};
 
-type RemovePlatformModeratorArgs =
-    record {
-        user_id: UserId;
-    };
+type AddReferralCodesResponse = variant {
+    Success;
+};
 
-type RemovePlatformModeratorResponse =
-    variant {
-        Success;
-        NotPlatformModerator;
-        InternalError: text;
-    };
-
-type AddPlatformOperatorArgs =
-    record {
-        user_id: UserId;
-    };
-
-type AddPlatformOperatorResponse =
-    variant {
-        Success;
-    };
-
-type RemovePlatformOperatorArgs =
-    record {
-        user_id: UserId;
-    };
-
-type RemovePlatformOperatorResponse =
-    variant {
-        Success;
-    };
-
-type AssignPlatformModeratorsGroupArgs =
-    record {
-        group_id: ChatId;
-    };
-
-type AssignPlatformModeratorsGroupResponse =
-    variant {
-        Success;
-    };
-
-type PlatformModeratorsResponse =
-    variant {
-        Success: record {
-            users: vec UserId;
-        };
-    };
-
-type PlatformModeratorsGroupResponse =
-    variant {
-        Success: ChatId;
-    };
-
-type PlatformOperatorsArgs =
-    record {
-    };
-
-type PlatformOperatorsResponse =
-    variant {
-        Success: record {
-            users: vec UserId;
-        };
-    };
-
-type SuspectedBotsArgs =
-    record {
-        after: opt UserId;
-        count: nat32;
-    };
-
-type SuspectedBotsResponse =
-    variant {
-        Success: record {
-            users: vec UserId;
-        };
-    };
-
-type SuspendUserArgs =
-    record {
-        user_id: UserId;
-        duration: opt Milliseconds;
-        reason: text;
-    };
-
-type SuspendUserResponse =
-    variant {
-        Success;
-        UserAlreadySuspended;
-        UserNotFound;
-        InternalError: text;
-    };
-
-
-type UnsuspendUserArgs =
-    record {
-        user_id: UserId;
-    };
-
-type UnsuspendUserResponse =
-    variant {
-        Success;
-        UserNotSuspended;
-        UserNotFound;
-        InternalError: text;
-    };
-
-type MarkSuspectedBotArgs =
-    record {
-    };
-
-type MarkSuspectedBotResponse =
-    variant {
-        Success;
-    };
-
-type PayForDiamondMembershipArgs =
-    record {
-        duration: DiamondMembershipPlanDuration;
-        token: Cryptocurrency;
-        expected_price_e8s: nat64;
-        recurring: bool;
-    };
-
-type PayForDiamondMembershipResponse =
-    variant {
-        Success: DiamondMembershipDetails;
-        CannotExtend: record {
-            diamond_membership_expires_at: TimestampMillis;
-            can_extend_at: TimestampMillis;
-        };
-        CurrencyNotSupported;
-        PriceMismatch;
-        PaymentAlreadyInProgress;
-        UserNotFound;
-        InsufficientFunds: nat64; // Returns the account balance in e8s
-        TransferFailed: text;
-        InternalError: text;
-    };
-
-type ReferralMetricsResponse =
-    variant {
-        Success: record {
-            users_who_referred: nat32;
-            users_who_referred_paid_diamond: nat32;
-            users_who_referred_unpaid_diamond: nat32;
-            users_who_referred_90_percent_unpaid_diamond: nat32;
-            referrals_of_paid_diamond: nat32;
-            referrals_of_unpaid_diamond: nat32;
-            referrals_other: nat32;
-            icp_raised_by_referrals_to_paid_diamond: nat32;
-        };
-    };
-
-type ReferralLeaderboardArgs =
-    record {
-        filter: opt variant {
-            Month: record { year: nat32; month: nat8 };
-            CurrentMonth;
-        };
-        count: nat32;
-    };
-
-type ReferralLeaderboardResponse =
-    variant {
-        AllTime: vec ReferralStats;
-        Month: record {
-            year: nat32;
-            month: nat8;
-            results: vec ReferralStats;
-        };
-    };
-
-type ReferralStats =
-    record {
-        user_id: UserId;
-        username: text;
-        total_rewards_e8s: nat64;
-        diamond_members: nat32;
-        total_users: nat32;
-    };
-
-type SetUserUpgradeConcurrencyArgs =
-    record {
-        value: nat32;
-    };
-
-type SetUserUpgradeConcurrencyResponse =
-    variant {
-        Success;
-    };
-
-type AddReferralCodesArgs =
-    record {
-        referral_type: ReferralType;
-        codes: vec text;
-    };
-
-type ReferralType =
-    variant {
-        BtcMiami;
-        User;
-    };
-
-type AddReferralCodesResponse =
-    variant {
-        Success;
-    };
-
-service: {
-    user_registration_canister: (EmptyArgs) -> (UserRegistrationCanisterResponse) query;
+service : {
+    user_registration_canister : (EmptyArgs) -> (UserRegistrationCanisterResponse) query;
 
     // This is used to set the initial username and subsequently to change it
-    set_username: (SetUsernameArgs) -> (SetUsernameResponse);
+    set_username : (SetUsernameArgs) -> (SetUsernameResponse);
 
     // This is used to check whether the username already exists
-    check_username: (CheckUsernameArgs) -> (CheckUsernameResponse) query;
+    check_username : (CheckUsernameArgs) -> (CheckUsernameResponse) query;
 
     // Gets the user based on the caller principal. The user can be in a variety of states
-    current_user: (EmptyArgs) -> (CurrentUserResponse) query;
+    current_user : (EmptyArgs) -> (CurrentUserResponse) query;
 
     // Gets a user by id or username
-    user: (UserArgs) -> (UserResponse) query;
+    user : (UserArgs) -> (UserResponse) query;
 
     // Gets some users by id
-    users: (UsersArgs) -> (UsersResponse) query;
+    users : (UsersArgs) -> (UsersResponse) query;
 
     // Search for users matching some query
-    search: (SearchArgs) -> (SearchResponse) query;
+    search : (SearchArgs) -> (SearchResponse) query;
 
     // Mark the caller as a suspected bot
-    mark_suspected_bot: (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
+    mark_suspected_bot : (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
 
-    pay_for_diamond_membership: (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
-    referral_metrics: (EmptyArgs) -> (ReferralMetricsResponse) query;
-    referral_leaderboard: (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
+    pay_for_diamond_membership : (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
+    referral_metrics : (EmptyArgs) -> (ReferralMetricsResponse) query;
+    referral_leaderboard : (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
 
     // List the platform moderators/operators
-    platform_moderators: (EmptyArgs) -> (PlatformModeratorsResponse) query;
-    platform_moderators_group: (EmptyArgs) -> (PlatformModeratorsGroupResponse) query;
-    platform_operators: (PlatformOperatorsArgs) -> (PlatformOperatorsResponse) query;
+    platform_moderators : (EmptyArgs) -> (PlatformModeratorsResponse) query;
+    platform_moderators_group : (EmptyArgs) -> (PlatformModeratorsGroupResponse) query;
+    platform_operators : (PlatformOperatorsArgs) -> (PlatformOperatorsResponse) query;
 
     // Only callable by SNS governance canister
-    add_platform_moderator: (AddPlatformModeratorArgs) -> (AddPlatformModeratorResponse);
-    add_platform_operator: (AddPlatformOperatorArgs) -> (AddPlatformOperatorResponse);
-    remove_platform_moderator: (RemovePlatformModeratorArgs) -> (RemovePlatformModeratorResponse);
-    remove_platform_operator: (RemovePlatformOperatorArgs) -> (RemovePlatformOperatorResponse);
-    assign_platform_moderators_group: (AssignPlatformModeratorsGroupArgs) -> (AssignPlatformModeratorsGroupResponse);
+    add_platform_moderator : (AddPlatformModeratorArgs) -> (AddPlatformModeratorResponse);
+    add_platform_operator : (AddPlatformOperatorArgs) -> (AddPlatformOperatorResponse);
+    remove_platform_moderator : (RemovePlatformModeratorArgs) -> (RemovePlatformModeratorResponse);
+    remove_platform_operator : (RemovePlatformOperatorArgs) -> (RemovePlatformOperatorResponse);
+    assign_platform_moderators_group : (AssignPlatformModeratorsGroupArgs) -> (AssignPlatformModeratorsGroupResponse);
 
     // Only callable by "platform moderators"
-    suspend_user: (SuspendUserArgs) -> (SuspendUserResponse);
-    unsuspend_user: (UnsuspendUserArgs) -> (UnsuspendUserResponse);
-    suspected_bots: (SuspectedBotsArgs) -> (SuspectedBotsResponse) query;
+    suspend_user : (SuspendUserArgs) -> (SuspendUserResponse);
+    unsuspend_user : (UnsuspendUserArgs) -> (UnsuspendUserResponse);
+    suspected_bots : (SuspectedBotsArgs) -> (SuspectedBotsResponse) query;
 
     // Only callable by "platform operators"
-    set_user_upgrade_concurrency: (SetUserUpgradeConcurrencyArgs) -> (SetUserUpgradeConcurrencyResponse);
+    set_user_upgrade_concurrency : (SetUserUpgradeConcurrencyArgs) -> (SetUserUpgradeConcurrencyResponse);
 
     // Only callable by OC dev team dfx identity
-    add_referral_codes: (AddReferralCodesArgs) -> (AddReferralCodesResponse);
-}
+    add_referral_codes : (AddReferralCodesArgs) -> (AddReferralCodesResponse);
+};
