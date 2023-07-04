@@ -101,7 +101,11 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.events_ttl,
                 state.env.now(),
             );
-            state.data.channels.add(Channel { id: channel_id, chat });
+            state.data.channels.add(Channel {
+                id: channel_id,
+                chat,
+                is_default: args.is_default,
+            });
             member.channels.insert(channel_id);
             handle_activity_notification(state);
             Success(SuccessResult { channel_id })

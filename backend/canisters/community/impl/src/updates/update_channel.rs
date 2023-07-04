@@ -20,11 +20,11 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
         return CommunityFrozen;
     }
 
-    if args.public == Some(false) && state.data.channels.is_default_channel(&args.channel_id) {
-        return CannotMakeDefaultChannelPrivate;
-    }
-
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
+        if args.public == Some(false) && channel.is_default {
+            return CannotMakeDefaultChannelPrivate;
+        }
+
         let caller = state.env.caller();
 
         if let Some(member) = state.data.members.get(caller) {

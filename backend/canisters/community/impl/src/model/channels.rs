@@ -4,7 +4,7 @@ use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use types::{
     AccessRules, ChannelId, ChannelMatch, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
     CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissions, MessageIndex, TimestampMillis, UserId,
@@ -14,27 +14,23 @@ use types::{
 #[derive(Serialize, Deserialize, Default)]
 pub struct Channels {
     channels: HashMap<ChannelId, Channel>,
-    default_channels: HashSet<ChannelId>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Channel {
     pub id: ChannelId,
     pub chat: GroupChatCore,
+    pub is_default: bool,
 }
 
 impl Channels {
     pub fn new(created_by: UserId, default_channels: Vec<(ChannelId, String)>, now: TimestampMillis) -> Channels {
-        let default_channel_ids = default_channels.iter().map(|(channel_id, _)| *channel_id).collect();
         let channels = default_channels
             .into_iter()
-            .map(|(id, name)| (id, Channel::default(id, name, created_by, now)))
+            .map(|(id, name)| (id, Channel::default(id, name, created_by, true, now)))
             .collect();
 
-        Channels {
-            channels,
-            default_channels: default_channel_ids,
-        }
+        Channels { channels }
     }
 
     pub fn add(&mut self, channel: Channel) {
@@ -57,41 +53,16 @@ impl Channels {
     }
 
     pub fn default_channel_ids(&self) -> Vec<ChannelId> {
-        self.default_channels.iter().copied().collect()
+        self.channels
+            .iter()
+            .filter(|(_, c)| c.is_default)
+            .map(|(id, _)| id)
+            .copied()
+            .collect()
     }
 
     pub fn default_channels(&self) -> Vec<&Channel> {
-        self.default_channels.iter().filter_map(|id| self.channels.get(id)).collect()
-    }
-
-    pub fn add_default_channel(&mut self, channel_id: ChannelId) -> AddDefaultChannelResult {
-        if let Some(channel) = self.channels.get(&channel_id) {
-            if channel.chat.is_public {
-                if self.default_channels.insert(channel_id) {
-                    AddDefaultChannelResult::Added
-                } else {
-                    AddDefaultChannelResult::AlreadyDefault
-                }
-            } else {
-                AddDefaultChannelResult::Private
-            }
-        } else {
-            AddDefaultChannelResult::NotFound
-        }
-    }
-
-    pub fn remove_default_channel(&mut self, channel_id: &ChannelId) -> RemoveDefaultChannelResult {
-        if self.default_channels.remove(channel_id) {
-            RemoveDefaultChannelResult::Removed
-        } else if self.channels.contains_key(channel_id) {
-            RemoveDefaultChannelResult::NotDefault
-        } else {
-            RemoveDefaultChannelResult::NotFound
-        }
-    }
-
-    pub fn is_default_channel(&self, channel_id: &ChannelId) -> bool {
-        self.default_channels.contains(channel_id)
+        self.channels.iter().filter(|(_, c)| c.is_default).map(|(_, c)| c).collect()
     }
 
     pub fn remove_member(&mut self, user_id: UserId) -> HashMap<ChannelId, GroupMemberInternal> {
@@ -144,7 +115,7 @@ impl Channels {
 }
 
 impl Channel {
-    pub fn default(id: ChannelId, name: String, created_by: UserId, now: TimestampMillis) -> Channel {
+    pub fn default(id: ChannelId, name: String, created_by: UserId, is_default: bool, now: TimestampMillis) -> Channel {
         Channel {
             id,
             chat: GroupChatCore::new(
@@ -161,6 +132,7 @@ impl Channel {
                 None,
                 now,
             ),
+            is_default,
         }
     }
 
@@ -227,6 +199,7 @@ impl Channel {
             next_message_expiry: chat.events.next_message_expiry(now),
             gate: chat.gate.value.clone(),
             membership,
+            is_default: self.is_default,
         })
     }
 
@@ -292,6 +265,7 @@ impl From<&Channel> for ChannelMatch {
             avatar_id: types::Document::id(&channel.chat.avatar),
             member_count: channel.chat.members.len(),
             gate: channel.chat.gate.value.clone(),
+            is_default: channel.is_default,
         }
     }
 }
@@ -304,17 +278,4 @@ impl From<&Channel> for Document {
             .add_field(channel.chat.description.clone(), 1.0, true);
         document
     }
-}
-
-pub enum AddDefaultChannelResult {
-    Added,
-    AlreadyDefault,
-    NotFound,
-    Private,
-}
-
-pub enum RemoveDefaultChannelResult {
-    Removed,
-    NotDefault,
-    NotFound,
 }

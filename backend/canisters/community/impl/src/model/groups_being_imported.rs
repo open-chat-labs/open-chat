@@ -22,10 +22,11 @@ impl GroupsBeingImported {
         imported_by: UserId,
         total_bytes: u64,
         now: TimestampMillis,
+        is_default: bool,
     ) -> bool {
         match self.groups.entry(group_id) {
             Vacant(e) => {
-                e.insert(GroupBeingImported::new(channel_id, imported_by, total_bytes, now));
+                e.insert(GroupBeingImported::new(channel_id, imported_by, total_bytes, is_default, now));
                 true
             }
             _ => false,
@@ -96,10 +97,17 @@ pub struct GroupBeingImported {
     total_bytes: u64,
     bytes: Vec<u8>,
     error_message: Option<String>,
+    is_default: bool,
 }
 
 impl GroupBeingImported {
-    pub fn new(channel_id: ChannelId, imported_by: UserId, total_bytes: u64, now: TimestampMillis) -> GroupBeingImported {
+    pub fn new(
+        channel_id: ChannelId,
+        imported_by: UserId,
+        total_bytes: u64,
+        is_default: bool,
+        now: TimestampMillis,
+    ) -> GroupBeingImported {
         GroupBeingImported {
             channel_id,
             imported_by,
@@ -108,6 +116,7 @@ impl GroupBeingImported {
             total_bytes,
             bytes: Vec::with_capacity(total_bytes as usize),
             error_message: None,
+            is_default,
         }
     }
 
@@ -117,6 +126,10 @@ impl GroupBeingImported {
 
     pub fn bytes(&self) -> &[u8] {
         &self.bytes
+    }
+
+    pub fn is_default(&self) -> bool {
+        self.is_default
     }
 }
 

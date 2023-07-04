@@ -101,13 +101,9 @@ pub(crate) fn commit_group_to_import(
     if state
         .data
         .groups_being_imported
-        .add(group_id, channel_id, user_id, total_bytes, now)
+        .add(group_id, channel_id, user_id, total_bytes, now, make_default_channel)
     {
         crate::jobs::import_groups::start_job_if_required(state);
-
-        if make_default_channel {
-            state.data.channels.add_default_channel(channel_id);
-        }
 
         Success(SuccessResult { channel_id, total_bytes })
     } else {

@@ -89,7 +89,11 @@ fn deserialize_group(group_id: ChatId) {
             let channel_id = group.channel_id();
             let chat: GroupChatCore = msgpack::deserialize_then_unwrap(group.bytes());
 
-            state.data.channels.add(Channel { id: channel_id, chat });
+            state.data.channels.add(Channel {
+                id: channel_id,
+                chat,
+                is_default: group.is_default(),
+            });
 
             ic_cdk_timers::set_timer(Duration::ZERO, move || {
                 ic_cdk::spawn(process_channel_members(group_id, channel_id, 0))

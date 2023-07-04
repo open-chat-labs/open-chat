@@ -57,6 +57,7 @@ pub mod happy_path {
                 permissions: None,
                 events_ttl: None,
                 gate: None,
+                is_default: false,
             },
         );
 
