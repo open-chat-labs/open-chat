@@ -230,7 +230,7 @@ type RemoveHotGroupExclusionResponse = variant {
 
 type SetCommunityModerationFlagsArgs = record {
     community_id : CommunityId;
-    tags : nat32;
+    flags : nat32;
 };
 
 type SetCommunityModerationFlagsResponse = variant {
