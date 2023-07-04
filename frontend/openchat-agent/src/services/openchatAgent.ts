@@ -1207,12 +1207,12 @@ export class OpenChatAgent extends EventTarget {
 
             avatarId = userResponse.avatarId;
             blockedUsers = userResponse.blockedUsers;
-            pinnedChats = userResponse.favouriteChats.chats;
             pinnedGroupChats = userResponse.groupChats.pinned;
             pinnedDirectChats = userResponse.directChats.pinned;
             pinnedFavouriteChats = userResponse.favouriteChats.pinned;
             pinnedChannels = userResponse.communities.summaries.flatMap((c) => c.pinned);
             favouriteChats = userResponse.favouriteChats.chats;
+            pinnedChats = structuredClone(userResponse.favouriteChats.chats);
             latestUserCanisterUpdates = userResponse.timestamp;
             anyUpdates = true;
         } else {
@@ -1257,12 +1257,12 @@ export class OpenChatAgent extends EventTarget {
 
                 avatarId = applyOptionUpdate(avatarId, userResponse.avatarId);
                 blockedUsers = userResponse.blockedUsers ?? blockedUsers;
-                pinnedChats = userResponse.favouriteChats.chats ?? pinnedChats;
                 pinnedGroupChats = userResponse.groupChats.pinned ?? pinnedGroupChats;
                 pinnedDirectChats = userResponse.directChats.pinned ?? pinnedDirectChats;
                 pinnedFavouriteChats = userResponse.favouriteChats.pinned ?? pinnedFavouriteChats;
                 pinnedChannels = this.getUpdatedPinnedChannels(userResponse) ?? pinnedChannels;
                 favouriteChats = userResponse.favouriteChats.chats ?? favouriteChats;
+                pinnedChats = structuredClone(userResponse.favouriteChats.chats ?? pinnedChats);
                 latestUserCanisterUpdates = userResponse.timestamp;
                 anyUpdates = true;
             }
