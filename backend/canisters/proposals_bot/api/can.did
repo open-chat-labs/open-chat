@@ -1,47 +1,41 @@
 import "../../../libraries/types/can.did";
 
-type AddGovernanceCanisterArgs =
-    record {
-        governance_canister_id: CanisterId;
-        name: text;
-        description: opt text;
-        avatar: opt Document;
-    };
+type AddGovernanceCanisterArgs = record {
+    governance_canister_id : CanisterId;
+    name : text;
+    description : opt text;
+    avatar : opt Document;
+};
 
-type AddGovernanceCanisterResponse =
-    variant {
-        Success;
-        AlreadyAdded;
-        InternalError: text;
-    };
+type AddGovernanceCanisterResponse = variant {
+    Success;
+    AlreadyAdded;
+    InternalError : text;
+};
 
-type RemoveGovernanceCanisterArgs =
-    record {
-        governance_canister_id: CanisterId;
-        delete_group: bool;
-    };
+type RemoveGovernanceCanisterArgs = record {
+    governance_canister_id : CanisterId;
+    delete_group : bool;
+};
 
-type RemoveGovernanceCanisterResponse =
-    variant {
-        Success;
-        NotFound;
-        InternalError: text;
-    };
+type RemoveGovernanceCanisterResponse = variant {
+    Success;
+    NotFound;
+    InternalError : text;
+};
 
-type AppointAdminsArgs =
-    record {
-        governance_canister_id: CanisterId;
-        users: vec UserId;
-    };
+type AppointAdminsArgs = record {
+    governance_canister_id : CanisterId;
+    users : vec UserId;
+};
 
-type AppointAdminsResponse =
-    variant {
-        Success;
-        NotFound;
-    };
+type AppointAdminsResponse = variant {
+    Success;
+    NotFound;
+};
 
 service : {
-    add_governance_canister: (AddGovernanceCanisterArgs) -> (AddGovernanceCanisterResponse);
-    remove_governance_canister: (RemoveGovernanceCanisterArgs) -> (RemoveGovernanceCanisterResponse);
-    appoint_admins: (AppointAdminsArgs) -> (AppointAdminsResponse);
-}
+    add_governance_canister : (AddGovernanceCanisterArgs) -> (AddGovernanceCanisterResponse);
+    remove_governance_canister : (RemoveGovernanceCanisterArgs) -> (RemoveGovernanceCanisterResponse);
+    appoint_admins : (AppointAdminsArgs) -> (AppointAdminsResponse);
+};

@@ -1,239 +1,210 @@
 import "../../../libraries/types/can.did";
 
-type ActiveGroupsArgs =
-    record {
-        group_ids: vec ChatId;
-        community_ids: vec CommunityId;
-        active_since: opt TimestampMillis;
-    };
+type ActiveGroupsArgs = record {
+    group_ids : vec ChatId;
+    community_ids : vec CommunityId;
+    active_since : opt TimestampMillis;
+};
 
-type ActiveGroupsResponse =
-    variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            active_groups: vec ChatId;
-            active_communities: vec CommunityId;
-            deleted_groups: vec DeletedGroupInfo;
-            deleted_communities: vec DeletedCommunityInfo;
-        };
+type ActiveGroupsResponse = variant {
+    Success : record {
+        timestamp : TimestampMillis;
+        active_groups : vec ChatId;
+        active_communities : vec CommunityId;
+        deleted_groups : vec DeletedGroupInfo;
+        deleted_communities : vec DeletedCommunityInfo;
     };
+};
 
-type FilterGroupsArgs =
-    record {
-        chat_ids: vec ChatId;
-        active_since: opt TimestampMillis;
+type FilterGroupsArgs = record {
+    chat_ids : vec ChatId;
+    active_since : opt TimestampMillis;
+};
+
+type FilterGroupsResponse = variant {
+    Success : record {
+        timestamp : TimestampMillis;
+        active_groups : vec ChatId;
+        deleted_groups : vec DeletedGroupInfo;
+        upgrades_in_progress : vec ChatId;
     };
+};
 
-type FilterGroupsResponse =
-    variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            active_groups: vec ChatId;
-            deleted_groups: vec DeletedGroupInfo;
-            upgrades_in_progress: vec ChatId;
-        };
+type RecommendedGroupsArgs = record {
+    count : nat8;
+    exclusions : vec ChatId;
+};
+
+type RecommendedGroupsResponse = variant {
+    Success : record {
+        groups : vec PublicGroupSummary;
     };
+};
 
-type RecommendedGroupsArgs =
-    record {
-        count: nat8;
-        exclusions: vec ChatId;
+type DeletedCommunityInfo = record {
+    id : CommunityId;
+    timestamp : TimestampMillis;
+    deleted_by : UserId;
+    name : text;
+    public : bool;
+};
+
+type DeletedGroupInfo = record {
+    id : ChatId;
+    timestamp : TimestampMillis;
+    deleted_by : UserId;
+    group_name : text;
+    name : text;
+    public : bool;
+};
+
+type SearchArgs = record {
+    search_term : text;
+    max_results : nat8;
+};
+
+type SearchResponse = variant {
+    Success : SearchSuccessResult;
+    TermTooShort : nat8;
+    TermTooLong : nat8;
+    InvalidTerm;
+};
+
+type SearchSuccessResult = record {
+    matches : vec GroupMatch;
+};
+
+type ExploreCommunitiesArgs = record {
+    search_term : opt text;
+    page_index : nat32;
+    page_size : nat8;
+};
+
+type ExploreCommunitiesResponse = variant {
+    Success : ExploreCommunitiesSuccess;
+    TermTooShort : nat8;
+    TermTooLong : nat8;
+    InvalidTerm;
+};
+
+type ExploreCommunitiesSuccess = record {
+    matches : vec CommunityMatch;
+};
+
+type ExploreGroupsArgs = record {
+    search_term : opt text;
+    page_index : nat32;
+    page_size : nat8;
+};
+
+type ExploreGroupsResponse = variant {
+    Success : ExploreGroupsSuccess;
+    TermTooShort : nat8;
+    TermTooLong : nat8;
+    InvalidTerm;
+};
+
+type ExploreGroupsSuccess = record {
+    matches : vec GroupMatch;
+};
+
+type FreezeGroupArgs = record {
+    chat_id : ChatId;
+    reason : opt text;
+};
+
+type FreezeGroupResponse = variant {
+    Success : record {
+        index : EventIndex;
+        timestamp : TimestampMillis;
+        correlation_id : nat64;
+        event : ChatFrozen;
     };
+    ChatAlreadyFrozen;
+    ChatNotFound;
+    NotAuthorized;
+    InternalError : text;
+};
 
-type RecommendedGroupsResponse =
-    variant {
-        Success: record {
-            groups: vec PublicGroupSummary;
-        }
+type UnfreezeGroupArgs = record {
+    chat_id : ChatId;
+};
+
+type UnfreezeGroupResponse = variant {
+    Success : record {
+        index : EventIndex;
+        timestamp : TimestampMillis;
+        correlation_id : nat64;
+        event : ChatUnfrozen;
     };
+    ChatNotFrozen;
+    ChatNotFound;
+    NotAuthorized;
+    InternalError : text;
+};
 
-type DeletedCommunityInfo =
-    record {
-        id: CommunityId;
-        timestamp: TimestampMillis;
-        deleted_by: UserId;
-        name: text;
-        public: bool;
-    };
+type DeleteFrozenGroupArgs = record {
+    chat_id : ChatId;
+};
 
-type DeletedGroupInfo =
-    record {
-        id: ChatId;
-        timestamp: TimestampMillis;
-        deleted_by: UserId;
-        group_name: text;
-        name: text;
-        public: bool;
-    };
+type DeleteFrozenGroupResponse = variant {
+    Success;
+    ChatNotFrozen;
+    ChatNotFound;
+    NotAuthorized;
+    InternalError : text;
+};
 
-type SearchArgs =
-    record {
-        search_term: text;
-        max_results: nat8;
-    };
+type AddHotGroupExclusionArgs = record {
+    chat_id : ChatId;
+};
 
-type SearchResponse =
-    variant {
-        Success: SearchSuccessResult;
-        TermTooShort: nat8;
-        TermTooLong: nat8;
-        InvalidTerm;
-    };
+type AddHotGroupExclusionResponse = variant {
+    Success;
+    ChatAlreadyExcluded;
+    ChatNotFound;
+    NotAuthorized;
+    InternalError : text;
+};
 
-type SearchSuccessResult =
-    record {
-        matches: vec GroupMatch;
-    };
+type RemoveHotGroupExclusionArgs = record {
+    chat_id : ChatId;
+};
 
-type ExploreCommunitiesArgs =
-    record {
-        search_term: opt text;
-        page_index: nat32;
-        page_size: nat8;
-    };
+type RemoveHotGroupExclusionResponse = variant {
+    Success;
+    ChatNotExcluded;
+    ChatNotFound;
+    NotAuthorized;
+    InternalError : text;
+};
 
-type ExploreCommunitiesResponse =
-    variant {
-        Success: ExploreCommunitiesSuccess;
-        TermTooShort: nat8;
-        TermTooLong: nat8;
-        InvalidTerm;
-    };
+type SetUpgradeConcurrencyArgs = record {
+    value : nat32;
+};
 
-type ExploreCommunitiesSuccess =
-    record {
-        matches: vec CommunityMatch;
-    };
+type SetUpgradeConcurrencyResponse = variant {
+    Success;
+    NotAuthorized;
+    InternalError : text;
+};
 
-type ExploreGroupsArgs =
-    record {
-        search_term: opt text;
-        page_index: nat32;
-        page_size: nat8;
-    };
-
-type ExploreGroupsResponse =
-    variant {
-        Success: ExploreGroupsSuccess;
-        TermTooShort: nat8;
-        TermTooLong: nat8;
-        InvalidTerm;
-    };
-
-type ExploreGroupsSuccess =
-    record {
-        matches: vec GroupMatch;
-    };
-
-type FreezeGroupArgs =
-    record {
-        chat_id: ChatId;
-        reason: opt text;
-    };
-
-type FreezeGroupResponse =
-    variant {
-        Success: record {
-            index: EventIndex;
-            timestamp: TimestampMillis;
-            correlation_id: nat64;
-            event: ChatFrozen;
-        };
-        ChatAlreadyFrozen;
-        ChatNotFound;
-        NotAuthorized;
-        InternalError: text;
-    };
-
-type UnfreezeGroupArgs =
-    record {
-        chat_id: ChatId;
-    };
-
-type UnfreezeGroupResponse =
-    variant {
-        Success: record {
-            index: EventIndex;
-            timestamp: TimestampMillis;
-            correlation_id: nat64;
-            event: ChatUnfrozen;
-        };
-        ChatNotFrozen;
-        ChatNotFound;
-        NotAuthorized;
-        InternalError: text;
-    };
-
-type DeleteFrozenGroupArgs =
-    record {
-        chat_id: ChatId;
-    };
-
-type DeleteFrozenGroupResponse =
-    variant {
-        Success;
-        ChatNotFrozen;
-        ChatNotFound;
-        NotAuthorized;
-        InternalError: text;
-    };
-
-type AddHotGroupExclusionArgs =
-    record {
-        chat_id: ChatId;
-    };
-
-type AddHotGroupExclusionResponse =
-    variant {
-        Success;
-        ChatAlreadyExcluded;
-        ChatNotFound;
-        NotAuthorized;
-        InternalError: text;
-    };
-
-type RemoveHotGroupExclusionArgs =
-    record {
-        chat_id: ChatId;
-    };
-
-type RemoveHotGroupExclusionResponse =
-    variant {
-        Success;
-        ChatNotExcluded;
-        ChatNotFound;
-        NotAuthorized;
-        InternalError: text;
-    };
-
-type SetUpgradeConcurrencyArgs =
-    record {
-        value: nat32;
-    };
-
-type SetUpgradeConcurrencyResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        InternalError: text;
-    };
-
-service: {
-    active_groups: (ActiveGroupsArgs) -> (ActiveGroupsResponse) query;
-    filter_groups: (FilterGroupsArgs) -> (FilterGroupsResponse) query;
-    recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
-    search: (SearchArgs) -> (SearchResponse) query;
-    explore_communities: (ExploreCommunitiesArgs) -> (ExploreCommunitiesResponse) query;
-    explore_groups: (ExploreGroupsArgs) -> (ExploreGroupsResponse) query;
+service : {
+    active_groups : (ActiveGroupsArgs) -> (ActiveGroupsResponse) query;
+    filter_groups : (FilterGroupsArgs) -> (FilterGroupsResponse) query;
+    recommended_groups : (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
+    search : (SearchArgs) -> (SearchResponse) query;
+    explore_communities : (ExploreCommunitiesArgs) -> (ExploreCommunitiesResponse) query;
+    explore_groups : (ExploreGroupsArgs) -> (ExploreGroupsResponse) query;
 
     // Only callable by "platform moderators"
-    freeze_group: (FreezeGroupArgs) -> (FreezeGroupResponse);
-    unfreeze_group: (UnfreezeGroupArgs) -> (UnfreezeGroupResponse);
-    delete_frozen_group: (DeleteFrozenGroupArgs) -> (DeleteFrozenGroupResponse);
-    add_hot_group_exclusion: (AddHotGroupExclusionArgs) -> (AddHotGroupExclusionResponse);
-    remove_hot_group_exclusion: (RemoveHotGroupExclusionArgs) -> (RemoveHotGroupExclusionResponse);
+    freeze_group : (FreezeGroupArgs) -> (FreezeGroupResponse);
+    unfreeze_group : (UnfreezeGroupArgs) -> (UnfreezeGroupResponse);
+    delete_frozen_group : (DeleteFrozenGroupArgs) -> (DeleteFrozenGroupResponse);
+    add_hot_group_exclusion : (AddHotGroupExclusionArgs) -> (AddHotGroupExclusionResponse);
+    remove_hot_group_exclusion : (RemoveHotGroupExclusionArgs) -> (RemoveHotGroupExclusionResponse);
 
     // Only callable by "platform operators"
-    set_group_upgrade_concurrency: (SetUpgradeConcurrencyArgs) -> (SetUpgradeConcurrencyResponse);
-    set_community_upgrade_concurrency: (SetUpgradeConcurrencyArgs) -> (SetUpgradeConcurrencyResponse);
-}
+    set_group_upgrade_concurrency : (SetUpgradeConcurrencyArgs) -> (SetUpgradeConcurrencyResponse);
+    set_community_upgrade_concurrency : (SetUpgradeConcurrencyArgs) -> (SetUpgradeConcurrencyResponse);
+};

@@ -1,171 +1,156 @@
 import "../../../libraries/types/can.did";
 
-type JoinCommunityArgs =
-    record {
-        community_id: CommunityId;
-        invite_code: opt nat64;
-    };
+type JoinCommunityArgs = record {
+    community_id : CommunityId;
+    invite_code : opt nat64;
+};
 
-type JoinCommunityResponse =
-    variant {
-        Success: CommunityCanisterCommunitySummary;
-        AlreadyInCommunity: CommunityCanisterCommunitySummary;
-        GateCheckFailed: GateCheckFailedReason;
-        CommunityNotFound;
-        CommunityNotPublic;
-        NotInvited;
-        MemberLimitReached: nat32;
-        Blocked;
-        UserSuspended;
-        CommunityFrozen;
-        InternalError: text;
-    };
+type JoinCommunityResponse = variant {
+    Success : CommunityCanisterCommunitySummary;
+    AlreadyInCommunity : CommunityCanisterCommunitySummary;
+    GateCheckFailed : GateCheckFailedReason;
+    CommunityNotFound;
+    CommunityNotPublic;
+    NotInvited;
+    MemberLimitReached : nat32;
+    Blocked;
+    UserSuspended;
+    CommunityFrozen;
+    InternalError : text;
+};
 
-type JoinGroupArgs =
-    record {
-        chat_id: ChatId;
-        invite_code: opt nat64;
-        correlation_id: nat64;
-    };
+type JoinGroupArgs = record {
+    chat_id : ChatId;
+    invite_code : opt nat64;
+    correlation_id : nat64;
+};
 
-type JoinGroupResponse =
-    variant {
-        Success: GroupCanisterGroupChatSummary;
-        AlreadyInGroupV2: GroupCanisterGroupChatSummary;
-        AlreadyInGroup;
-        GateCheckFailed: GateCheckFailedReason;
-        GroupNotFound;
-        GroupNotPublic;
-        NotInvited;
-        ParticipantLimitReached: nat32;
-        Blocked;
-        UserSuspended;
-        ChatFrozen;
-        InternalError: text;
-    };
+type JoinGroupResponse = variant {
+    Success : GroupCanisterGroupChatSummary;
+    AlreadyInGroupV2 : GroupCanisterGroupChatSummary;
+    AlreadyInGroup;
+    GateCheckFailed : GateCheckFailedReason;
+    GroupNotFound;
+    GroupNotPublic;
+    NotInvited;
+    ParticipantLimitReached : nat32;
+    Blocked;
+    UserSuspended;
+    ChatFrozen;
+    InternalError : text;
+};
 
-type InviteUsersToChannelArgs =
-    record {
-        community_id: CommunityId;
-        channel_id: ChannelId;
-        user_ids: vec UserId;
-    };
+type InviteUsersToChannelArgs = record {
+    community_id : CommunityId;
+    channel_id : ChannelId;
+    user_ids : vec UserId;
+};
 
-type InviteUsersToChannelResponse =
-    variant {
-        Success;
-        PartialSuccess: InviteUsersToChannelPartialSuccess;
-        Failed: InviteUsersToChannelFailed;
-        CommunityFrozen;
-        UserNotInCommunity;
-        ChannelNotFound;
-        UserNotInChannel;
-        NotAuthorized;
-        UserSuspended;
-        TooManyInvites: nat32;
-        InternalError: text;
-    };
+type InviteUsersToChannelResponse = variant {
+    Success;
+    PartialSuccess : InviteUsersToChannelPartialSuccess;
+    Failed : InviteUsersToChannelFailed;
+    CommunityFrozen;
+    UserNotInCommunity;
+    ChannelNotFound;
+    UserNotInChannel;
+    NotAuthorized;
+    UserSuspended;
+    TooManyInvites : nat32;
+    InternalError : text;
+};
 
 type InviteUsersToChannelPartialSuccess = record {
-    users_not_in_community: vec UserId;
+    users_not_in_community : vec UserId;
 };
 
 type InviteUsersToChannelFailed = record {
-    users_not_in_community: vec UserId;
+    users_not_in_community : vec UserId;
 };
 
-type InviteUsersToCommunityArgs =
-    record {
-        community_id: CommunityId;
-        user_ids: vec UserId;
-    };
+type InviteUsersToCommunityArgs = record {
+    community_id : CommunityId;
+    user_ids : vec UserId;
+};
 
-type InviteUsersToCommunityResponse =
-    variant {
-        Success;
-        UserNotInCommunity;
-        NotAuthorized;
-        CommunityFrozen;
-        TooManyInvites: nat32;
-        UserSuspended;
-        InternalError: text;
-    };
+type InviteUsersToCommunityResponse = variant {
+    Success;
+    UserNotInCommunity;
+    NotAuthorized;
+    CommunityFrozen;
+    TooManyInvites : nat32;
+    UserSuspended;
+    InternalError : text;
+};
 
-type InviteUsersToGroupArgs =
-    record {
-        group_id: ChatId;
-        user_ids: vec UserId;
-        correlation_id: nat64;
-    };
+type InviteUsersToGroupArgs = record {
+    group_id : ChatId;
+    user_ids : vec UserId;
+    correlation_id : nat64;
+};
 
-type InviteUsersToGroupResponse =
-    variant {
-        Success;
-        GroupNotFound;
-        CallerNotInGroup;
-        NotAuthorized;
-        ChatFrozen;
-        TooManyInvites: nat32;
-        InternalError: text;
-    };
+type InviteUsersToGroupResponse = variant {
+    Success;
+    GroupNotFound;
+    CallerNotInGroup;
+    NotAuthorized;
+    ChatFrozen;
+    TooManyInvites : nat32;
+    InternalError : text;
+};
 
-type RegisterUserArgs =
-    record {
-        username: text;
-        referral_code: opt text;
-        public_key: blob;
-    };
+type RegisterUserArgs = record {
+    username : text;
+    referral_code : opt text;
+    public_key : blob;
+};
 
-type RegisterUserResponse =
-    variant {
-        Success: record {
-            user_id: UserId;
-            icp_account: AccountIdentifier;
-        };
-        AlreadyRegistered;
-        UserLimitReached;
-        UsernameInvalid;
-        UsernameTooShort: nat16;
-        UsernameTooLong: nat16;
-        CyclesBalanceTooLow;
-        InternalError: text;
-        PublicKeyInvalid: text;
-        ReferralCodeInvalid;
-        ReferralCodeAlreadyClaimed;
-        ReferralCodeExpired;
+type RegisterUserResponse = variant {
+    Success : record {
+        user_id : UserId;
+        icp_account : AccountIdentifier;
     };
+    AlreadyRegistered;
+    UserLimitReached;
+    UsernameInvalid;
+    UsernameTooShort : nat16;
+    UsernameTooLong : nat16;
+    CyclesBalanceTooLow;
+    InternalError : text;
+    PublicKeyInvalid : text;
+    ReferralCodeInvalid;
+    ReferralCodeAlreadyClaimed;
+    ReferralCodeExpired;
+};
 
-type ReportMessageArgs =
-    record {
-        chat_id: ChatId;
-        thread_root_message_index: opt MessageIndex;
-        event_index: EventIndex;
-        reason_code: nat32;
-        notes: opt text;
-    };
+type ReportMessageArgs = record {
+    chat_id : ChatId;
+    thread_root_message_index : opt MessageIndex;
+    event_index : EventIndex;
+    reason_code : nat32;
+    notes : opt text;
+};
 
-type ReportMessageV2Args =
-    record {
-        chat_id: MultiUserChat;
-        thread_root_message_index: opt MessageIndex;
-        event_index: EventIndex;
-        reason_code: nat32;
-        notes: opt text;
-    };
+type ReportMessageV2Args = record {
+    chat_id : MultiUserChat;
+    thread_root_message_index : opt MessageIndex;
+    event_index : EventIndex;
+    reason_code : nat32;
+    notes : opt text;
+};
 
-type ReportMessageResponse =
-    variant {
-        Success;
-        InternalError: text;
-    };
+type ReportMessageResponse = variant {
+    Success;
+    InternalError : text;
+};
 
-service: {
-    join_community: (JoinCommunityArgs) -> (JoinCommunityResponse);
-    join_group: (JoinGroupArgs) -> (JoinGroupResponse);
-    invite_users_to_channel: (InviteUsersToChannelArgs) -> (InviteUsersToChannelResponse);
-    invite_users_to_community: (InviteUsersToCommunityArgs) -> (InviteUsersToCommunityResponse);
-    invite_users_to_group: (InviteUsersToGroupArgs) -> (InviteUsersToGroupResponse);
-    register_user: (RegisterUserArgs) -> (RegisterUserResponse);
-    report_message_v2: (ReportMessageV2Args) -> (ReportMessageResponse);
-    report_message: (ReportMessageArgs) -> (ReportMessageResponse);
-}
+service : {
+    join_community : (JoinCommunityArgs) -> (JoinCommunityResponse);
+    join_group : (JoinGroupArgs) -> (JoinGroupResponse);
+    invite_users_to_channel : (InviteUsersToChannelArgs) -> (InviteUsersToChannelResponse);
+    invite_users_to_community : (InviteUsersToCommunityArgs) -> (InviteUsersToCommunityResponse);
+    invite_users_to_group : (InviteUsersToGroupArgs) -> (InviteUsersToGroupResponse);
+    register_user : (RegisterUserArgs) -> (RegisterUserResponse);
+    report_message_v2 : (ReportMessageV2Args) -> (ReportMessageResponse);
+    report_message : (ReportMessageArgs) -> (ReportMessageResponse);
+};
