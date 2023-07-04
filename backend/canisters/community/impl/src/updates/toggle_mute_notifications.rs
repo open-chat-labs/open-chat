@@ -26,7 +26,20 @@ fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> Respo
                 return UserSuspended;
             }
 
-            member.notifications_muted = Timestamped::new(args.mute, now);
+            if let Some(channel_id) = args.channel_id {
+                if let Some(channel) = state.data.channels.get_mut(&channel_id) {
+                    if let Some(channel_member) = channel.chat.members.get_mut(&member.user_id) {
+                        channel_member.notifications_muted = Timestamped::new(args.mute, now);
+                    } else {
+                        return UserNotInChannel;
+                    }
+                } else {
+                    return ChannelNotFound;
+                }
+            } else {
+                member.notifications_muted = Timestamped::new(args.mute, now);
+            }
+
             let user_canister_id = member.user_id.into();
             state.data.fire_and_forget_handler.send(
                 user_canister_id,

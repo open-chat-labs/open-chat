@@ -81,6 +81,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let membership = member.map(|m| CommunityMembershipUpdates {
         channels_removed,
         role: updates_from_events.role_changed.then_some(m.role),
+        notifications_muted: m.notifications_muted.if_set_after(args.updates_since).copied(),
     });
 
     Success(CommunityCanisterCommunitySummaryUpdates {

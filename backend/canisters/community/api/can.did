@@ -722,21 +722,8 @@ type SendMessageResponse = variant {
     CommunityFrozen;
 };
 
-type ToggleMuteChannelNotificationsArgs = record {
-    channel_id : ChannelId;
-    mute : bool;
-};
-
-type ToggleMuteChannelNotificationsResponse = variant {
-    Success;
-    CommunityFrozen;
-    UserNotInCommunity;
-    UserSuspended;
-    ChannelNotFound;
-    UserNotInChannel;
-};
-
 type ToggleMuteNotificationsArgs = record {
+    channel_id : opt ChannelId;
     mute : bool;
 };
 
@@ -745,6 +732,8 @@ type ToggleMuteNotificationsResponse = variant {
     CommunityFrozen;
     UserNotInCommunity;
     UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
 };
 
 type UnblockUserArgs = record {
@@ -886,7 +875,6 @@ service : {
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
     reset_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     send_message : (SendMessageArgs) -> (SendMessageResponse);
-    toggle_mute_channel_notifications : (ToggleMuteChannelNotificationsArgs) -> (ToggleMuteChannelNotificationsResponse);
     toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
