@@ -2985,7 +2985,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private handleConfirmedMessageSentByOther(
         serverChat: ChatSummary,
         messageEvent: EventWrapper<Message>,
-        threadRootMessageIndex: number | undefined,
+        threadRootMessageIndex: number | undefined
     ) {
         const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
 
@@ -4168,7 +4168,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     reportMessage(
-        chatId: ChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         eventIndex: number,
         reasonCode: number,
         notes: string | undefined,

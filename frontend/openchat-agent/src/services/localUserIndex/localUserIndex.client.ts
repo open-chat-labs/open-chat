@@ -5,6 +5,7 @@ import type {
     InviteUsersResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
+    MultiUserChatIdentifier,
     RegisterUserResponse,
     ReportMessageResponse,
 } from "openchat-shared";
@@ -17,7 +18,7 @@ import {
     reportMessageResponse,
 } from "./mappers";
 import type { AgentConfig } from "../../config";
-import { apiOptional } from "../common/chatMappers";
+import { apiMultiUserChat, apiOptional } from "../common/chatMappers";
 import { textToCode } from "openchat-shared";
 import { identity } from "../../utils/mapping";
 
@@ -81,15 +82,15 @@ export class LocalUserIndexClient extends CandidService {
     }
 
     reportMessage(
-        chatId: string,
+        chatId: MultiUserChatIdentifier,
         eventIndex: number,
         reasonCode: number,
         notes: string | undefined,
         threadRootMessageIndex: number | undefined
     ): Promise<ReportMessageResponse> {
         return this.handleResponse(
-            this.localUserIndexService.report_message({
-                chat_id: Principal.fromText(chatId),
+            this.localUserIndexService.report_message_v2({
+                chat_id: apiMultiUserChat(chatId),
                 event_index: eventIndex,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 notes: apiOptional(identity, notes),

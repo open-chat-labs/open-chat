@@ -2223,19 +2223,16 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async reportMessage(
-        chatId: ChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         eventIndex: number,
         reasonCode: number,
         notes: string | undefined,
         threadRootMessageIndex: number | undefined
     ): Promise<ReportMessageResponse> {
-        if (chatId.kind === "channel") {
-            throw new Error("TODO - reportMessage not implemented for channel messages");
-        }
         const modGroupId = await this._userIndexClient.getPlatformModeratorGroup();
         const localUserIndex = await this.getGroupClient(modGroupId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).reportMessage(
-            chatIdentifierToString(chatId),
+            chatId,
             eventIndex,
             reasonCode,
             notes,
