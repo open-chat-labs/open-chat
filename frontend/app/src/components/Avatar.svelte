@@ -72,6 +72,7 @@
         border-radius: 50%;
         position: relative;
         margin: 0 auto;
+        transition: box-shadow 200ms ease-in-out;
 
         &.tiny {
             width: toRem(20);
@@ -94,7 +95,7 @@
         }
 
         &.selected {
-            border: 3px solid var(--icon-selected);
+            box-shadow: 0 0 0 3px var(--icon-selected);
         }
 
         &.blocked::after {
