@@ -28,7 +28,6 @@ pub struct CommunityCanisterCommunitySummary {
 pub struct CommunityMembership {
     pub joined: TimestampMillis,
     pub role: CommunityRole,
-    pub notifications_muted: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -55,5 +54,4 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
 pub struct CommunityMembershipUpdates {
     pub role: Option<CommunityRole>,
     pub channels_removed: Vec<ChannelId>,
-    pub notifications_muted: Option<bool>,
 }

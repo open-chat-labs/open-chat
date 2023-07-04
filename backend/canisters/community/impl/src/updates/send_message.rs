@@ -6,7 +6,6 @@ use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageResult;
-use itertools::Itertools;
 use types::{
     ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis,
     UserId,
@@ -59,20 +58,11 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         &mut state.data.timer_jobs,
                     );
 
-                    // Filter the users to notify to remove those members that have the commumity muted
-                    // but always include mentions
+                    // Exclude suspended members from notification
                     let users_to_notify: Vec<UserId> = result
                         .users_to_notify
                         .into_iter()
-                        .filter(|u| {
-                            state
-                                .data
-                                .members
-                                .get_by_user_id(u)
-                                .map_or(false, |m| !m.notifications_muted.value && !m.suspended.value)
-                        })
-                        .chain(result.mentions)
-                        .unique()
+                        .filter(|u| state.data.members.get_by_user_id(u).map_or(false, |m| !m.suspended.value))
                         .collect();
 
                     let notification = Notification::ChannelMessageNotification(ChannelMessageNotification {

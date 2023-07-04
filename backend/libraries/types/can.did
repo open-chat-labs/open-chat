@@ -329,7 +329,6 @@ type CommunityCanisterCommunitySummary = record {
 type CommunityMembership = record {
     joined : TimestampMillis;
     role : CommunityRole;
-    notifications_muted : bool;
 };
 
 type CommunityCanisterChannelSummary = record {
@@ -389,7 +388,6 @@ type CommunityCanisterCommunitySummaryUpdates = record {
 type CommunityMembershipUpdates = record {
     role : opt CommunityRole;
     channels_removed : vec ChannelId;
-    notifications_muted : opt bool;
 };
 
 type CommunityCanisterChannelSummaryUpdates = record {
