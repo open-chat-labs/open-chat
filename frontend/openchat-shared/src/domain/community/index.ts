@@ -174,15 +174,6 @@ export type JoinChannelResponse =
     | InteralError
     | UserBlocked;
 
-export type MakeCommunityPrivateResponse =
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | { kind: "community_already_private" }
-    | CommunityFrozen
-    | InteralError;
-
 export type RemoveCommunityMemberResponse = Success | Failure;
 
 export type RemoveChannelMemberResponse = Success | Failure;

@@ -12,7 +12,6 @@ import {
     inviteCodeResponse,
     joinChannelResponse,
     localUserIndexResponse,
-    makeCommunityPrivateResponse,
     messagesByMessageIndexResponse,
     removeMemberResponse,
     removeMemberFromChannelResponse,
@@ -630,19 +629,6 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(this.service.local_user_index({}), localUserIndexResponse);
     }
 
-    makeChannelPrivate(chatId: ChannelIdentifier): Promise<MakeGroupPrivateResponse> {
-        return this.handleResponse(
-            this.service.make_channel_private({
-                channel_id: BigInt(chatId.channelId),
-            }),
-            makeGroupPrivateResponse
-        );
-    }
-
-    makePrivate(): Promise<MakeCommunityPrivateResponse> {
-        return this.handleResponse(this.service.make_private({}), makeCommunityPrivateResponse);
-    }
-
     messagesByMessageIndex(
         chatId: ChannelIdentifier,
         messageIndexes: number[],
@@ -771,7 +757,10 @@ export class CommunityClient extends CandidService {
 
     private getCommunityDetailsFromBackend(): Promise<CommunityDetailsResponse> {
         return this.handleQueryResponse(
-            () => this.service.selected_initial({}),
+            () =>
+                this.service.selected_initial({
+                    invite_code: [], //TODO - deal with invite code
+                }),
             communityDetailsResponse
         );
     }
@@ -794,6 +783,7 @@ export class CommunityClient extends CandidService {
             () =>
                 this.service.selected_updates({
                     updates_since: previous.lastUpdated,
+                    invite_code: [], //TODO - deal with invite code
                 }),
             communityDetailsUpdatesResponse
         );
@@ -996,6 +986,7 @@ export class CommunityClient extends CandidService {
             () =>
                 this.service.summary_updates({
                     updates_since: updatesSince,
+                    invite_code: [], // TODO: add invite code
                 }),
             summaryUpdatesResponse
         );
@@ -1070,7 +1061,8 @@ export class CommunityClient extends CandidService {
         rules?: AccessRules,
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
-        gate?: AccessGate
+        gate?: AccessGate,
+        isPublic?: boolean
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.service.update_channel({
@@ -1079,6 +1071,7 @@ export class CommunityClient extends CandidService {
                 description: apiOptional(identity, description),
                 permissions: apiOptional(apiOptionalGroupPermissions, permissions),
                 rules: apiOptional(apiGroupRules, rules),
+                public: apiOptional(identity, isPublic),
                 gate:
                     gate === undefined
                         ? { NoChange: null }
@@ -1107,7 +1100,8 @@ export class CommunityClient extends CandidService {
         permissions?: Partial<CommunityPermissions>,
         avatar?: Uint8Array,
         banner?: Uint8Array,
-        gate?: AccessGate
+        gate?: AccessGate,
+        isPublic?: boolean
     ): Promise<UpdateCommunityResponse> {
         return this.handleResponse(
             this.service.update_community({
@@ -1115,6 +1109,7 @@ export class CommunityClient extends CandidService {
                 description: apiOptional(identity, description),
                 permissions: apiOptional(apiOptionalCommunityPermissions, permissions),
                 rules: apiOptional(apiGroupRules, rules),
+                public: apiOptional(identity, isPublic),
                 gate:
                     gate === undefined
                         ? { NoChange: null }

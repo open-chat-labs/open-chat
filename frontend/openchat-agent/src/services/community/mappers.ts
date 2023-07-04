@@ -22,7 +22,6 @@ import {
     EventsResponse,
     GateCheckFailedReason,
     JoinChannelResponse,
-    MakeCommunityPrivateResponse,
     MemberRole,
     Message,
     RemoveChannelMemberResponse,
@@ -45,7 +44,6 @@ import type {
     ApiInviteCodeResponse,
     ApiJoinChannelResponse,
     ApiLocalUserIndexResponse,
-    ApiMakePrivateResponse,
     ApiMessagesByMessageIndexResponse,
     ApiRemoveMemberResponse,
     ApiRemoveMemberFromChannelResponse,
@@ -329,33 +327,6 @@ export function joinChannelResponse(
 
 export function localUserIndexResponse(candid: ApiLocalUserIndexResponse): string {
     return candid.Success.toString();
-}
-
-export function makeCommunityPrivateResponse(
-    candid: ApiMakePrivateResponse
-): MakeCommunityPrivateResponse {
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized();
-    }
-    if ("Success" in candid) {
-        return CommonResponses.success();
-    }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity();
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended();
-    }
-    if ("AlreadyPrivate" in candid) {
-        return { kind: "community_already_private" };
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen();
-    }
-    if ("InternalError" in candid) {
-        return CommonResponses.internalError();
-    }
-    throw new UnsupportedValueError("Unexpected ApiMakePrivateResponse type received", candid);
 }
 
 export async function messagesByMessageIndexResponse(

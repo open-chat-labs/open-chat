@@ -99,6 +99,13 @@ export const unreadCommunityChannels = derived(
     }
 );
 
+export const globalUnreadCount = derived(
+    [unreadGroupChats, unreadDirectChats, unreadCommunityChannels],
+    ([$groups, $directs, $communities]) => {
+        return $groups + $directs + $communities.values().reduce((sum, count) => sum + count, 0);
+    }
+);
+
 function updateLastMessage<T extends ChatSummary>(chat: T, message: EventWrapper<Message>): T {
     const latestEventIndex = Math.max(message.index, chat.latestEventIndex);
     const overwriteLatestMessage =

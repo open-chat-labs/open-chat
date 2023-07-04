@@ -354,6 +354,7 @@ import {
     unreadDirectChats,
     unreadFavouriteChats,
     unreadCommunityChannels,
+    globalUnreadCount,
 } from "./stores/global";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -909,25 +910,6 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((_resp) => true)
             .catch((err) => {
                 this._logger.error("Failed to update user's avatar", err);
-                return false;
-            });
-    }
-
-    makeGroupPrivate(chatId: MultiUserChatIdentifier): Promise<boolean> {
-        return this.sendRequest({ kind: "makeGroupPrivate", chatId })
-            .then((resp) => {
-                if (resp === "success") {
-                    localChatSummaryUpdates.markUpdated(chatId, {
-                        kind: "group_chat",
-                        public: false,
-                    });
-                    return true;
-                } else {
-                    return false;
-                }
-            })
-            .catch((err) => {
-                this._logger.error("Error making group private", err);
                 return false;
             });
     }
@@ -3628,7 +3610,8 @@ export class OpenChat extends OpenChatAgentWorker {
         rules?: AccessRules,
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
-        gate?: AccessGate
+        gate?: AccessGate,
+        isPublic?: boolean
     ): Promise<UpdateGroupResponse> {
         return this.sendRequest({
             kind: "updateGroup",
@@ -3639,6 +3622,7 @@ export class OpenChat extends OpenChatAgentWorker {
             permissions,
             avatar,
             gate,
+            isPublic,
         }).then((resp) => {
             if (resp === "success") {
                 localChatSummaryUpdates.markUpdated(chatId, {
@@ -4323,17 +4307,6 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    makeCommunityPrivate(id: CommunityIdentifier): Promise<boolean> {
-        return this.sendRequest({ kind: "makeCommunityPrivate", id })
-            .then((resp) => {
-                return resp.kind === "success" || resp.kind === "community_already_private";
-            })
-            .catch((err) => {
-                this._logger.error("Error making community private", err);
-                return false;
-            });
-    }
-
     private addToFavouritesLocally(chatId: ChatIdentifier): void {
         globalStateStore.update((state) => {
             state.favourites.add(chatId);
@@ -4391,6 +4364,7 @@ export class OpenChat extends OpenChatAgentWorker {
             avatar: community.avatar.blobData,
             banner: community.banner.blobData,
             gate: community.gate,
+            isPublic: community.public,
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -4496,4 +4470,5 @@ export class OpenChat extends OpenChatAgentWorker {
     unreadDirectChats = unreadDirectChats;
     unreadFavouriteChats = unreadFavouriteChats;
     unreadCommunityChannels = unreadCommunityChannels;
+    globalUnreadCount = globalUnreadCount;
 }

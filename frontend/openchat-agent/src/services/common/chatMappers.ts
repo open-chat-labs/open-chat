@@ -1945,17 +1945,6 @@ export function changeRoleResponse(
     }
 }
 
-export function makeGroupPrivateResponse(
-    candid: ApiMakePrivateResponse | ApiMakeChannelPrivateResponse
-): MakeGroupPrivateResponse {
-    if ("Success" in candid) {
-        return "success";
-    } else {
-        console.warn("MakeGroupPrivateResponse failed with: ", candid);
-        return "failure";
-    }
-}
-
 export function registerPollVoteResponse(
     candid: ApiRegisterPollVoteResponse | ApiRegisterChannelPollVoteResponse
 ): RegisterPollVoteResponse {

@@ -1512,8 +1512,6 @@ export type ChangeRoleResponse = "failure" | "success";
 
 export type DeleteGroupResponse = "success" | "failure";
 
-export type MakeGroupPrivateResponse = "failure" | "success";
-
 export type RemoveMemberResponse =
     | "user_not_in_group"
     | "caller_not_in_group"

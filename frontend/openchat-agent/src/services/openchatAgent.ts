@@ -73,7 +73,6 @@ import {
     JoinGroupResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
-    MakeGroupPrivateResponse,
     MarkReadRequest,
     MarkReadResponse,
     MemberRole,
@@ -416,7 +415,8 @@ export class OpenChatAgent extends EventTarget {
         rules?: AccessRules,
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
-        gate?: AccessGate
+        gate?: AccessGate,
+        isPublic?: boolean
     ): Promise<UpdateGroupResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -427,7 +427,8 @@ export class OpenChatAgent extends EventTarget {
                     permissions,
                     avatar,
                     undefined,
-                    gate
+                    gate,
+                    isPublic
                 );
             case "channel":
                 return this.communityClient(chatId.communityId).updateChannel(
@@ -437,7 +438,8 @@ export class OpenChatAgent extends EventTarget {
                     rules,
                     permissions,
                     avatar,
-                    gate
+                    gate,
+                    isPublic
                 );
         }
     }
@@ -1468,15 +1470,6 @@ export class OpenChatAgent extends EventTarget {
                 return this.userClient.deleteGroup(chatId.groupId);
             case "channel":
                 return this.communityClient(chatId.communityId).deleteChannel(chatId);
-        }
-    }
-
-    makeGroupPrivate(chatId: MultiUserChatIdentifier): Promise<MakeGroupPrivateResponse> {
-        switch (chatId.kind) {
-            case "group_chat":
-                return this.getGroupClient(chatId.groupId).makeGroupPrivate();
-            case "channel":
-                return this.communityClient(chatId.communityId).makeChannelPrivate(chatId);
         }
     }
 

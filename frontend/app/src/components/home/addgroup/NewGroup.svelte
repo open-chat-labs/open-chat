@@ -182,18 +182,29 @@
     function doMakeGroupPrivate(): Promise<void> {
         if (!editing) return Promise.resolve();
 
-        return client.makeGroupPrivate(candidateGroup.id).then((success) => {
-            if (success) {
-                originalGroup = {
-                    ...originalGroup,
-                    public: candidateGroup.public,
-                };
-            } else {
-                toastStore.showFailureToast(
-                    interpolateLevel("makeGroupPrivateFailed", candidateGroup.level, true)
-                );
-            }
-        });
+        return client
+            .updateGroup(
+                candidateGroup.id,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                false
+            )
+            .then((success) => {
+                if (success) {
+                    originalGroup = {
+                        ...originalGroup,
+                        public: candidateGroup.public,
+                    };
+                } else {
+                    toastStore.showFailureToast(
+                        interpolateLevel("makeGroupPrivateFailed", candidateGroup.level, true)
+                    );
+                }
+            });
     }
 
     function doUpdatePermissions(): Promise<void> {

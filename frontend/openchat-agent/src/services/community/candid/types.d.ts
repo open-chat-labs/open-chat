@@ -174,7 +174,6 @@ export type Chat = { 'Group' : ChatId } |
   { 'Direct' : ChatId };
 export type ChatEvent = { 'Empty' : null } |
   { 'ParticipantJoined' : ParticipantJoined } |
-  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'MessagePinned' : MessagePinned } |
@@ -182,7 +181,6 @@ export type ChatEvent = { 'Empty' : null } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
-  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
@@ -192,12 +190,10 @@ export type ChatEvent = { 'Empty' : null } |
   { 'ChatUnfrozen' : ChatUnfrozen } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
-  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'GroupGateUpdated' : GroupGateUpdated } |
   { 'RoleChanged' : RoleChanged } |
   { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
-  { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
@@ -604,6 +600,10 @@ export type ExploreChannelsResponse = { 'TermTooShort' : number } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null } |
   { 'PrivateCommunity' : null };
+export interface FailedChannels {
+  'not_found' : Array<ChannelId>,
+  'private' : Array<ChannelId>,
+}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction };
@@ -933,27 +933,13 @@ export type LeaveChannelResponse = { 'UserNotInChannel' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null };
 export type LocalUserIndexResponse = { 'Success' : CanisterId };
-export interface MakeChannelPrivateArgs { 'channel_id' : ChannelId }
-export type MakeChannelPrivateResponse = { 'UserNotInChannel' : null } |
-  { 'ChannelNotFound' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'UserNotInCommunity' : null } |
-  { 'UserSuspended' : null } |
-  { 'AlreadyPrivate' : null } |
-  { 'CommunityFrozen' : null };
-export type MakePrivateResponse = { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'UserNotInCommunity' : null } |
-  { 'UserSuspended' : null } |
-  { 'AlreadyPrivate' : null } |
-  { 'CommunityFrozen' : null } |
-  { 'InternalError' : null };
 export interface ManageDefaultChannelsArgs {
   'to_add' : Array<ChannelId>,
   'to_remove' : Array<ChannelId>,
 }
-export type ManageDefaultChannelsResponse = { 'NotAuthorized' : null } |
+export type ManageDefaultChannelsResponse = { 'Failed' : FailedChannels } |
+  { 'PartialSucesss' : FailedChannels } |
+  { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'UserNotInCommunity' : null } |
   { 'UserSuspended' : null } |
@@ -1157,10 +1143,6 @@ export interface OptionalGroupPermissions {
   'reply_in_thread' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
-export interface OwnershipTransferred {
-  'old_owner' : UserId,
-  'new_owner' : UserId,
-}
 export interface PartialUserSummary {
   'username' : [] | [string],
   'diamond_member' : boolean,
@@ -1174,14 +1156,11 @@ export interface Participant {
   'user_id' : UserId,
   'date_added' : TimestampMillis,
 }
-export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
-export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
 export interface ParticipantJoined {
   'user_id' : UserId,
   'invited_by' : [] | [UserId],
 }
 export interface ParticipantLeft { 'user_id' : UserId }
-export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
   'unblocked' : Array<UserId>,
@@ -1407,8 +1386,7 @@ export type SearchChannelResponse = { 'TermTooShort' : number } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
 export interface SelectedChannelInitialArgs { 'channel_id' : ChannelId }
-export type SelectedChannelInitialResponse = { 'UserNotInChannel' : null } |
-  { 'ChannelNotFound' : null } |
+export type SelectedChannelInitialResponse = { 'ChannelNotFound' : null } |
   {
     'Success' : {
       'members' : Array<Participant>,
@@ -1420,16 +1398,17 @@ export type SelectedChannelInitialResponse = { 'UserNotInChannel' : null } |
       'rules' : AccessRules,
     }
   } |
-  { 'UserNotInCommunity' : null };
+  { 'PrivateCommunity' : null } |
+  { 'PrivateChannel' : null };
 export interface SelectedChannelUpdatesArgs {
   'channel_id' : ChannelId,
   'updates_since' : TimestampMillis,
 }
-export type SelectedChannelUpdatesResponse = { 'UserNotInChannel' : null } |
-  { 'ChannelNotFound' : null } |
+export type SelectedChannelUpdatesResponse = { 'ChannelNotFound' : null } |
   { 'Success' : SelectedGroupUpdates } |
-  { 'UserNotInCommunity' : null } |
-  { 'SuccessNoUpdates' : null };
+  { 'SuccessNoUpdates' : null } |
+  { 'PrivateCommunity' : null } |
+  { 'PrivateChannel' : null };
 export interface SelectedGroupUpdates {
   'blocked_users_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],
@@ -1442,8 +1421,9 @@ export interface SelectedGroupUpdates {
   'rules' : [] | [AccessRules],
   'blocked_users_added' : Array<UserId>,
 }
+export interface SelectedInitialArgs { 'invite_code' : [] | [bigint] }
 export type SelectedInitialResponse = { 'Success' : SelectedInitialSuccess } |
-  { 'UserNotInCommunity' : null };
+  { 'PrivateCommunity' : null };
 export interface SelectedInitialSuccess {
   'members' : Array<CommunityMember>,
   'invited_users' : Array<UserId>,
@@ -1452,10 +1432,13 @@ export interface SelectedInitialSuccess {
   'latest_event_index' : EventIndex,
   'rules' : AccessRules,
 }
-export interface SelectedUpdatesArgs { 'updates_since' : TimestampMillis }
+export interface SelectedUpdatesArgs {
+  'updates_since' : TimestampMillis,
+  'invite_code' : [] | [bigint],
+}
 export type SelectedUpdatesResponse = { 'Success' : SelectedUpdatesSuccess } |
-  { 'UserNotInCommunity' : null } |
-  { 'SuccessNoUpdates' : null };
+  { 'SuccessNoUpdates' : null } |
+  { 'PrivateCommunity' : null };
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'invited_users' : [] | [Array<UserId>],
@@ -1556,10 +1539,14 @@ export interface SubscriptionInfo {
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface SummaryArgs { 'invite_code' : [] | [bigint] }
-export type SummaryResponse = { 'Invited' : CommunityMatch } |
-  { 'Success' : CommunityCanisterCommunitySummary } |
+export type SummaryResponse = {
+    'Success' : CommunityCanisterCommunitySummary
+  } |
   { 'PrivateCommunity' : null };
-export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
+export interface SummaryUpdatesArgs {
+  'updates_since' : TimestampMillis,
+  'invite_code' : [] | [bigint],
+}
 export type SummaryUpdatesResponse = {
     'Success' : CommunityCanisterCommunitySummaryUpdates
   } |
@@ -1661,12 +1648,15 @@ export interface UpdateChannelArgs {
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'description' : [] | [string],
+  'public' : [] | [boolean],
   'rules' : [] | [AccessRules],
   'avatar' : DocumentUpdate,
 }
-export type UpdateChannelResponse = { 'NameReserved' : null } |
+export type UpdateChannelResponse = { 'CannotMakeChannelPublic' : null } |
+  { 'NameReserved' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
+  { 'CannotMakeDefaultChannelPrivate' : null } |
   { 'NameTooShort' : FieldTooShortResult } |
   { 'UserNotInChannel' : null } |
   { 'ChannelNotFound' : null } |
@@ -1685,10 +1675,12 @@ export interface UpdateCommunityArgs {
   'name' : [] | [string],
   'banner' : DocumentUpdate,
   'description' : [] | [string],
+  'public' : [] | [boolean],
   'rules' : [] | [AccessRules],
   'avatar' : DocumentUpdate,
 }
 export type UpdateCommunityResponse = { 'NameReserved' : null } |
+  { 'CannotMakeCommunityPublic' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
@@ -1788,11 +1780,6 @@ export interface _SERVICE {
   'join_channel' : ActorMethod<[JoinChannelArgs], JoinChannelResponse>,
   'leave_channel' : ActorMethod<[LeaveChannelArgs], LeaveChannelResponse>,
   'local_user_index' : ActorMethod<[EmptyArgs], LocalUserIndexResponse>,
-  'make_channel_private' : ActorMethod<
-    [MakeChannelPrivateArgs],
-    MakeChannelPrivateResponse
-  >,
-  'make_private' : ActorMethod<[EmptyArgs], MakePrivateResponse>,
   'manage_default_channels' : ActorMethod<
     [ManageDefaultChannelsArgs],
     ManageDefaultChannelsResponse
@@ -1830,7 +1817,10 @@ export interface _SERVICE {
     [SelectedChannelUpdatesArgs],
     SelectedChannelUpdatesResponse
   >,
-  'selected_initial' : ActorMethod<[EmptyArgs], SelectedInitialResponse>,
+  'selected_initial' : ActorMethod<
+    [SelectedInitialArgs],
+    SelectedInitialResponse
+  >,
   'selected_updates' : ActorMethod<
     [SelectedUpdatesArgs],
     SelectedUpdatesResponse
