@@ -21,7 +21,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
     }
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        if args.public == Some(false) && channel.is_default {
+        if args.public == Some(false) && channel.is_default.value {
             return CannotMakeDefaultChannelPrivate;
         }
 

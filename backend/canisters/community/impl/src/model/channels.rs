@@ -7,7 +7,7 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{
     AccessRules, ChannelId, ChannelMatch, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
-    CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissions, MessageIndex, TimestampMillis, UserId,
+    CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissions, MessageIndex, TimestampMillis, Timestamped, UserId,
     MAX_THREADS_IN_SUMMARY,
 };
 
@@ -20,7 +20,7 @@ pub struct Channels {
 pub struct Channel {
     pub id: ChannelId,
     pub chat: GroupChatCore,
-    pub is_default: bool,
+    pub is_default: Timestamped<bool>,
 }
 
 impl Channels {
@@ -44,6 +44,36 @@ impl Channels {
         self.channels.remove(&channel_id)
     }
 
+    pub fn add_default_channel(&mut self, channel_id: ChannelId, now: TimestampMillis) -> AddDefaultChannelResult {
+        if let Some(channel) = self.channels.get_mut(&channel_id) {
+            if channel.chat.is_public {
+                if channel.is_default.value {
+                    AddDefaultChannelResult::AlreadyDefault
+                } else {
+                    channel.is_default = Timestamped::new(true, now);
+                    AddDefaultChannelResult::Added
+                }
+            } else {
+                AddDefaultChannelResult::Private
+            }
+        } else {
+            AddDefaultChannelResult::NotFound
+        }
+    }
+
+    pub fn remove_default_channel(&mut self, channel_id: &ChannelId, now: TimestampMillis) -> RemoveDefaultChannelResult {
+        if let Some(channel) = self.channels.get_mut(channel_id) {
+            if channel.is_default.value {
+                channel.is_default = Timestamped::new(false, now);
+                RemoveDefaultChannelResult::Removed
+            } else {
+                RemoveDefaultChannelResult::NotDefault
+            }
+        } else {
+            RemoveDefaultChannelResult::NotFound
+        }
+    }
+
     pub fn get(&self, channel_id: &ChannelId) -> Option<&Channel> {
         self.channels.get(channel_id)
     }
@@ -55,14 +85,18 @@ impl Channels {
     pub fn default_channel_ids(&self) -> Vec<ChannelId> {
         self.channels
             .iter()
-            .filter(|(_, c)| c.is_default)
+            .filter(|(_, c)| c.is_default.value)
             .map(|(id, _)| id)
             .copied()
             .collect()
     }
 
     pub fn default_channels(&self) -> Vec<&Channel> {
-        self.channels.iter().filter(|(_, c)| c.is_default).map(|(_, c)| c).collect()
+        self.channels
+            .iter()
+            .filter(|(_, c)| c.is_default.value)
+            .map(|(_, c)| c)
+            .collect()
     }
 
     pub fn remove_member(&mut self, user_id: UserId) -> HashMap<ChannelId, GroupMemberInternal> {
@@ -132,7 +166,7 @@ impl Channel {
                 None,
                 now,
             ),
-            is_default: true,
+            is_default: Timestamped::new(true, now),
         }
     }
 
@@ -199,8 +233,12 @@ impl Channel {
             next_message_expiry: chat.events.next_message_expiry(now),
             gate: chat.gate.value.clone(),
             membership,
-            is_default: self.is_default,
+            is_default: self.is_default.value,
         })
+    }
+
+    pub fn has_updates_since(&self, user_id: Option<UserId>, since: TimestampMillis) -> bool {
+        self.is_default.timestamp > since || self.chat.has_updates_since(user_id, since)
     }
 
     pub fn summary_updates(&self, user_id: Option<UserId>, since: TimestampMillis, now: TimestampMillis) -> ChannelUpdates {
@@ -213,11 +251,11 @@ impl Channel {
             }
         }
 
-        let updates_from_events = chat.summary_updates_from_events(since, user_id, now);
+        let chat_updates_from_events = chat.summary_updates_from_events(since, user_id, now);
 
         let membership = member.map(|m| ChannelMembershipUpdates {
-            role: updates_from_events.role_changed.then_some(m.role.into()),
-            mentions: updates_from_events.mentions,
+            role: chat_updates_from_events.role_changed.then_some(m.role.into()),
+            mentions: chat_updates_from_events.mentions,
             notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
             my_metrics: self.chat.events.user_metrics(&m.user_id, Some(since)).map(|m| m.hydrate()),
             latest_threads: self.chat.events.latest_threads(
@@ -232,21 +270,22 @@ impl Channel {
         ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {
             channel_id: self.id,
             last_updated: now,
-            name: updates_from_events.name,
-            description: updates_from_events.description,
-            subtype: updates_from_events.subtype,
-            avatar_id: updates_from_events.avatar_id,
-            is_public: updates_from_events.is_public,
-            latest_message: updates_from_events.latest_message,
-            latest_event_index: updates_from_events.latest_event_index,
-            member_count: updates_from_events.members_changed.then_some(self.chat.members.len()),
-            permissions: updates_from_events.permissions,
-            updated_events: updates_from_events.updated_events,
+            name: chat_updates_from_events.name,
+            description: chat_updates_from_events.description,
+            subtype: chat_updates_from_events.subtype,
+            avatar_id: chat_updates_from_events.avatar_id,
+            is_public: chat_updates_from_events.is_public,
+            latest_message: chat_updates_from_events.latest_message,
+            latest_event_index: chat_updates_from_events.latest_event_index,
+            member_count: chat_updates_from_events.members_changed.then_some(self.chat.members.len()),
+            permissions: chat_updates_from_events.permissions,
+            updated_events: chat_updates_from_events.updated_events,
             metrics: Some(self.chat.events.metrics().hydrate()),
-            date_last_pinned: updates_from_events.date_last_pinned,
-            events_ttl: updates_from_events.events_ttl,
-            gate: updates_from_events.gate,
+            date_last_pinned: chat_updates_from_events.date_last_pinned,
+            events_ttl: chat_updates_from_events.events_ttl,
+            gate: chat_updates_from_events.gate,
             membership,
+            is_default: self.is_default.if_set_after(since).copied(),
         })
     }
 }
@@ -265,7 +304,7 @@ impl From<&Channel> for ChannelMatch {
             avatar_id: types::Document::id(&channel.chat.avatar),
             member_count: channel.chat.members.len(),
             gate: channel.chat.gate.value.clone(),
-            is_default: channel.is_default,
+            is_default: channel.is_default.value,
         }
     }
 }
@@ -278,4 +317,17 @@ impl From<&Channel> for Document {
             .add_field(channel.chat.description.clone(), 1.0, true);
         document
     }
+}
+
+pub enum AddDefaultChannelResult {
+    Added,
+    AlreadyDefault,
+    NotFound,
+    Private,
+}
+
+pub enum RemoveDefaultChannelResult {
+    Removed,
+    NotDefault,
+    NotFound,
 }

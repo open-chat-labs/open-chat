@@ -1,6 +1,10 @@
 use crate::{
-    activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, run_regular_jobs,
-    RuntimeState,
+    activity_notifications::handle_activity_notification,
+    model::{
+        channels::{AddDefaultChannelResult, RemoveDefaultChannelResult},
+        events::CommunityEvent,
+    },
+    mutate_state, run_regular_jobs, RuntimeState,
 };
 use canister_tracing_macros::trace;
 use community_canister::manage_default_channels::{Response::*, *};
@@ -39,40 +43,28 @@ fn manage_default_channels_impl(args: Args, state: &mut RuntimeState) -> Respons
         let mut added = Vec::new();
         let mut removed = Vec::new();
 
+        let now = state.env.now();
+
         for channel_id in args.to_add.iter() {
-            match state.data.channels.get_mut(channel_id) {
-                Some(channel) if !channel.chat.is_public => {
-                    failed_channels.private.push(*channel_id);
-                }
-                Some(channel) if channel.is_default => {}
-                Some(channel) => {
-                    channel.is_default = true;
-                    added.push(*channel_id);
-                }
-                None => {
-                    failed_channels.not_found.push(*channel_id);
-                }
+            match state.data.channels.add_default_channel(*channel_id, now) {
+                AddDefaultChannelResult::Added => added.push(*channel_id),
+                AddDefaultChannelResult::AlreadyDefault => (),
+                AddDefaultChannelResult::Private => failed_channels.private.push(*channel_id),
+                AddDefaultChannelResult::NotFound => failed_channels.not_found.push(*channel_id),
             }
         }
 
         for channel_id in args.to_remove.iter() {
-            match state.data.channels.get_mut(channel_id) {
-                Some(channel) if channel.is_default => {
-                    channel.is_default = false;
-                    removed.push(*channel_id);
-                }
-                Some(_) => {}
-                None => {
-                    failed_channels.not_found.push(*channel_id);
-                }
+            match state.data.channels.remove_default_channel(channel_id, now) {
+                RemoveDefaultChannelResult::Removed => removed.push(*channel_id),
+                RemoveDefaultChannelResult::NotDefault => (),
+                RemoveDefaultChannelResult::NotFound => failed_channels.not_found.push(*channel_id),
             }
         }
 
         let changed = !added.is_empty() || !removed.is_empty();
 
         if changed {
-            let now = state.env.now();
-
             let event = DefaultChannelsChanged {
                 added,
                 removed,

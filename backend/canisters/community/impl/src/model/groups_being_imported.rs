@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use types::{ChannelId, ChatId, TimestampMillis, UserId};
+use types::{ChannelId, ChatId, TimestampMillis, Timestamped, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupsBeingImported {
@@ -97,7 +97,7 @@ pub struct GroupBeingImported {
     total_bytes: u64,
     bytes: Vec<u8>,
     error_message: Option<String>,
-    is_default: bool,
+    is_default: Timestamped<bool>,
 }
 
 impl GroupBeingImported {
@@ -116,7 +116,7 @@ impl GroupBeingImported {
             total_bytes,
             bytes: Vec::with_capacity(total_bytes as usize),
             error_message: None,
-            is_default,
+            is_default: Timestamped::new(is_default, now),
         }
     }
 
@@ -128,8 +128,8 @@ impl GroupBeingImported {
         &self.bytes
     }
 
-    pub fn is_default(&self) -> bool {
-        self.is_default
+    pub fn is_default(&self) -> Timestamped<bool> {
+        self.is_default.clone()
     }
 }
 

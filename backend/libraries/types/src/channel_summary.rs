@@ -60,6 +60,7 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
     pub membership: Option<ChannelMembershipUpdates>,
+    pub is_default: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
