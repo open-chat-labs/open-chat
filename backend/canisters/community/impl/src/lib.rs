@@ -91,6 +91,7 @@ impl RuntimeState {
             let membership = CommunityMembership {
                 joined: m.date_added,
                 role: m.role,
+                notifications_muted: m.notifications_muted.value,
             };
 
             // Return all the channels that the user is a member of
