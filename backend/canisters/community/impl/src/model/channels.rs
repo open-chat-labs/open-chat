@@ -251,11 +251,11 @@ impl Channel {
             }
         }
 
-        let chat_updates_from_events = chat.summary_updates_from_events(since, user_id, now);
+        let updates_from_events = chat.summary_updates_from_events(since, user_id, now);
 
         let membership = member.map(|m| ChannelMembershipUpdates {
-            role: chat_updates_from_events.role_changed.then_some(m.role.into()),
-            mentions: chat_updates_from_events.mentions,
+            role: updates_from_events.role_changed.then_some(m.role.into()),
+            mentions: updates_from_events.mentions,
             notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
             my_metrics: self.chat.events.user_metrics(&m.user_id, Some(since)).map(|m| m.hydrate()),
             latest_threads: self.chat.events.latest_threads(
@@ -270,20 +270,20 @@ impl Channel {
         ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {
             channel_id: self.id,
             last_updated: now,
-            name: chat_updates_from_events.name,
-            description: chat_updates_from_events.description,
-            subtype: chat_updates_from_events.subtype,
-            avatar_id: chat_updates_from_events.avatar_id,
-            is_public: chat_updates_from_events.is_public,
-            latest_message: chat_updates_from_events.latest_message,
-            latest_event_index: chat_updates_from_events.latest_event_index,
-            member_count: chat_updates_from_events.members_changed.then_some(self.chat.members.len()),
-            permissions: chat_updates_from_events.permissions,
-            updated_events: chat_updates_from_events.updated_events,
+            name: updates_from_events.name,
+            description: updates_from_events.description,
+            subtype: updates_from_events.subtype,
+            avatar_id: updates_from_events.avatar_id,
+            is_public: updates_from_events.is_public,
+            latest_message: updates_from_events.latest_message,
+            latest_event_index: updates_from_events.latest_event_index,
+            member_count: updates_from_events.members_changed.then_some(self.chat.members.len()),
+            permissions: updates_from_events.permissions,
+            updated_events: updates_from_events.updated_events,
             metrics: Some(self.chat.events.metrics().hydrate()),
-            date_last_pinned: chat_updates_from_events.date_last_pinned,
-            events_ttl: chat_updates_from_events.events_ttl,
-            gate: chat_updates_from_events.gate,
+            date_last_pinned: updates_from_events.date_last_pinned,
+            events_ttl: updates_from_events.events_ttl,
+            gate: updates_from_events.gate,
             membership,
             is_default: self.is_default.if_set_after(since).copied(),
         })
