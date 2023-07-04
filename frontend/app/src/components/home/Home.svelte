@@ -159,6 +159,11 @@
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
     $: chatListScope = client.chatListScope;
     $: currentCommunityRules = client.currentCommunityRules;
+    $: globalUnreadCount = client.globalUnreadCount;
+
+    $: {
+        document.title = $globalUnreadCount > 0 ? `OpenChat (${$globalUnreadCount})` : "OpenChat";
+    }
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));

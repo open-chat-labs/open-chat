@@ -528,11 +528,7 @@ export type GroupChatEvent =
     | GroupRulesChanged
     | UsersBlocked
     | UsersUnblocked
-    | MemberAssumesSuperAdmin
-    | MemberRelinquishesSuperAdmin
-    | MemberDismissedAsSuperAdmin
     | RoleChanged
-    | OwnershipTransferred
     | MessagePinned
     | MessageUnpinned
     | PermissionsChanged
@@ -1511,8 +1507,6 @@ export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" 
 export type ChangeRoleResponse = "failure" | "success";
 
 export type DeleteGroupResponse = "success" | "failure";
-
-export type MakeGroupPrivateResponse = "failure" | "success";
 
 export type RemoveMemberResponse =
     | "user_not_in_group"

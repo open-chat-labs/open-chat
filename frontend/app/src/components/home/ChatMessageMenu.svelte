@@ -30,7 +30,6 @@
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
     import { now } from "../../stores/time";
-    import { remindersEnabled, reportMessageEnabled } from "../../utils/features";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -62,13 +61,10 @@
     export let threadRootMessage: Message | undefined;
 
     $: canRemind =
-        remindersEnabled &&
         msg.content.kind !== "message_reminder_content" &&
         msg.content.kind !== "message_reminder_created_content";
     $: canCancelRemind =
-        remindersEnabled &&
-        msg.content.kind === "message_reminder_created_content" &&
-        msg.content.remindAt > $now;
+        msg.content.kind === "message_reminder_created_content" && msg.content.remindAt > $now;
     $: user = client.user;
     $: inThread = threadRootMessage !== undefined;
     $: translationStore = client.translationStore;
@@ -345,9 +341,7 @@
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <div slot="text">
-                            {#if !reportMessageEnabled}
-                                {me ? $_("deleteMessage") : $_("deleteMessageAndReport")}
-                            {:else if multiUserChat || me}
+                            {#if multiUserChat || me}
                                 {$_("deleteMessage")}
                             {:else}
                                 {$_("deleteMessageForMe")}
@@ -355,7 +349,7 @@
                         </div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && publicGroup && !me && !inert && reportMessageEnabled}
+                {#if confirmed && publicGroup && !me && !inert}
                     <MenuItem on:click={reportMessage}>
                         <Flag size={$iconSize} color={"var(--error)"} slot="icon" />
                         <div slot="text">

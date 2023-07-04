@@ -112,7 +112,6 @@ export type Chat = { 'Group' : ChatId } |
   { 'Direct' : ChatId };
 export type ChatEvent = { 'Empty' : null } |
   { 'ParticipantJoined' : ParticipantJoined } |
-  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'MessagePinned' : MessagePinned } |
@@ -120,7 +119,6 @@ export type ChatEvent = { 'Empty' : null } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
-  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
@@ -130,12 +128,10 @@ export type ChatEvent = { 'Empty' : null } |
   { 'ChatUnfrozen' : ChatUnfrozen } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
-  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'GroupGateUpdated' : GroupGateUpdated } |
   { 'RoleChanged' : RoleChanged } |
   { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
-  { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
@@ -1005,10 +1001,6 @@ export interface OptionalGroupPermissions {
   'reply_in_thread' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
-export interface OwnershipTransferred {
-  'old_owner' : UserId,
-  'new_owner' : UserId,
-}
 export interface PartialUserSummary {
   'username' : [] | [string],
   'diamond_member' : boolean,
@@ -1022,14 +1014,11 @@ export interface Participant {
   'user_id' : UserId,
   'date_added' : TimestampMillis,
 }
-export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
-export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
 export interface ParticipantJoined {
   'user_id' : UserId,
   'invited_by' : [] | [UserId],
 }
 export interface ParticipantLeft { 'user_id' : UserId }
-export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
   'unblocked' : Array<UserId>,
@@ -1476,6 +1465,7 @@ export interface UpdateGroupV2Args {
   'name' : [] | [string],
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
+  'public' : [] | [boolean],
   'correlation_id' : bigint,
   'rules' : [] | [AccessRules],
   'avatar' : DocumentUpdate,
@@ -1484,6 +1474,7 @@ export type UpdateGroupV2Response = { 'NameReserved' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
+  { 'CannotMakeGroupPublic' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |

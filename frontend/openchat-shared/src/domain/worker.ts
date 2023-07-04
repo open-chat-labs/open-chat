@@ -28,7 +28,6 @@ import type {
     JoinGroupResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
-    MakeGroupPrivateResponse,
     MarkReadRequest,
     MarkReadResponse,
     Message,
@@ -114,7 +113,6 @@ import type {
     EnableCommunityInviteCodeResponse,
     JoinChannelResponse,
     JoinCommunityResponse,
-    MakeCommunityPrivateResponse,
     RemoveChannelMemberResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
@@ -169,7 +167,6 @@ export type WorkerRequest =
     | JoinCommunity
     | LeaveGroup
     | DeleteGroup
-    | MakeGroupPrivate
     | SetUserAvatar
     | UnblockUserFromDirectChat
     | BlockUserFromDirectChat
@@ -252,7 +249,6 @@ export type WorkerRequest =
     | ChannelEventsWindow
     | CommunityInviteCode
     | JoinChannel
-    | MakeCommunityPrivate
     | ChannelMessagesByMessageIndex
     | RemoveCommunityMember
     | RemoveChannelMember
@@ -603,6 +599,7 @@ type UpdateGroup = {
     permissions?: Partial<ChatPermissions>;
     avatar?: Uint8Array;
     gate?: AccessGate;
+    isPublic?: boolean;
     kind: "updateGroup";
 };
 
@@ -624,11 +621,6 @@ type LeaveGroup = {
 type DeleteGroup = {
     chatId: MultiUserChatIdentifier;
     kind: "deleteGroup";
-};
-
-type MakeGroupPrivate = {
-    chatId: MultiUserChatIdentifier;
-    kind: "makeGroupPrivate";
 };
 
 type SetUserAvatar = {
@@ -907,7 +899,6 @@ export type WorkerResponse =
     | Response<JoinGroupResponse>
     | Response<DeleteGroupResponse>
     | Response<LeaveGroupResponse>
-    | Response<MakeGroupPrivateResponse>
     | Response<BlobReference>
     | Response<UnblockUserResponse>
     | Response<BlockUserResponse>
@@ -960,7 +951,6 @@ export type WorkerResponse =
     | Response<DisableCommunityInviteCode>
     | Response<CommunityInviteCodeResponse>
     | Response<JoinChannelResponse>
-    | Response<MakeCommunityPrivateResponse>
     | Response<RemoveCommunityMemberResponse>
     | Response<RemoveChannelMemberResponse>
     | Response<EnableCommunityInviteCodeResponse>
@@ -1058,7 +1048,7 @@ type CancelMessageReminder = {
 };
 
 type ReportMessage = {
-    chatId: ChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     eventIndex: number;
     reasonCode: number;
     notes: string | undefined;
@@ -1157,11 +1147,6 @@ type JoinChannel = {
     chatId: ChannelIdentifier;
 };
 
-type MakeCommunityPrivate = {
-    kind: "makeCommunityPrivate";
-    id: CommunityIdentifier;
-};
-
 type ChannelMessagesByMessageIndex = {
     kind: "channelMessagesByMessageIndex";
     chatId: ChannelIdentifier;
@@ -1228,6 +1213,7 @@ type UpdateCommunity = {
     avatar?: Uint8Array;
     banner?: Uint8Array;
     gate?: AccessGate;
+    isPublic?: boolean;
 };
 
 type CreateCommunity = {
@@ -1310,8 +1296,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? UnblockUserResponse
     : T extends SetUserAvatar
     ? BlobReference
-    : T extends MakeGroupPrivate
-    ? MakeGroupPrivateResponse
     : T extends DeleteGroup
     ? DeleteGroupResponse
     : T extends LeaveGroup
@@ -1466,8 +1450,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? CommunityInviteCodeResponse
     : T extends JoinChannel
     ? JoinChannelResponse
-    : T extends MakeCommunityPrivate
-    ? MakeCommunityPrivateResponse
     : T extends ChannelMessagesByMessageIndex
     ? EventsResponse<Message>
     : T extends RemoveCommunityMember

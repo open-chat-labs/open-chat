@@ -45,7 +45,7 @@ import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
 import type { OpenChat } from "../openchat";
-import { chatListScopeStore, globalStateStore } from "./global";
+import { allChats, chatListScopeStore, globalStateStore } from "./global";
 import { createDerivedPropStore } from "./derived";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
@@ -53,8 +53,8 @@ export const currentUserStore = immutableStore<CreatedUser | undefined>(undefine
 const communitiesEnabled = localStorage.getItem("openchat_communities_enabled") === "true";
 
 export const myServerChatSummariesStore = derived(
-    [globalStateStore, chatListScopeStore],
-    ([$allState, $chatListScope]) => {
+    [globalStateStore, chatListScopeStore, allChats],
+    ([$allState, $chatListScope, $allChats]) => {
         if (communitiesEnabled) {
             if ($chatListScope.kind === "community") {
                 const community = $allState.communities.get($chatListScope.id);
@@ -66,29 +66,10 @@ export const myServerChatSummariesStore = derived(
             } else if ($chatListScope.kind === "direct_chat") {
                 return $allState.directChats;
             } else if ($chatListScope.kind === "favourite") {
-                const allChannels = ChatMap.fromList(
-                    $allState.communities.values().flatMap((c) => c.channels)
-                );
                 return $allState.favourites.values().reduce((favs, chatId) => {
-                    switch (chatId.kind) {
-                        case "direct_chat":
-                            const directChat = $allState.directChats.get(chatId);
-                            if (directChat !== undefined) {
-                                favs.set(directChat.id, directChat);
-                            }
-                            break;
-                        case "group_chat":
-                            const groupChat = $allState.groupChats.get(chatId);
-                            if (groupChat !== undefined) {
-                                favs.set(groupChat.id, groupChat);
-                            }
-                            break;
-                        case "channel":
-                            const channel = allChannels.get(chatId);
-                            if (channel !== undefined) {
-                                favs.set(channel.id, channel);
-                            }
-                            break;
+                    const chat = $allChats.get(chatId);
+                    if (chat !== undefined) {
+                        favs.set(chat.id, chat);
                     }
                     return favs;
                 }, new ChatMap<ChatSummary>());
@@ -96,11 +77,7 @@ export const myServerChatSummariesStore = derived(
                 return new ChatMap<ChatSummary>();
             }
         } else {
-            const globalChats = [
-                ...$allState.directChats.values(),
-                ...$allState.groupChats.values(),
-            ];
-            return ChatMap.fromList(globalChats);
+            return $allChats;
         }
     }
 );

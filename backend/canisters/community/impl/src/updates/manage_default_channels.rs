@@ -82,7 +82,7 @@ fn manage_default_channels_impl(args: Args, state: &mut RuntimeState) -> Respons
         if failed_channels.not_found.is_empty() && failed_channels.private.is_empty() {
             Success
         } else if changed {
-            PartialSucesss(failed_channels)
+            PartialSuccess(failed_channels)
         } else {
             Failed(failed_channels)
         }

@@ -16,9 +16,10 @@ import {
 } from "openchat-shared";
 import { immutableStore } from "./immutable";
 import { derived, writable } from "svelte/store";
+import { messagesRead } from "./markRead";
 
 // This will contain all state.
-type GlobalState = {
+export type GlobalState = {
     communities: CommunityMap<CommunitySummary>;
     directChats: ChatMap<DirectChatSummary>;
     groupChats: ChatMap<GroupChatSummary>;
@@ -38,6 +39,64 @@ export const globalStateStore = immutableStore<GlobalState>({
 export const chatListScopeStore = writable<ChatListScope>({ kind: "none" });
 
 export const favouritesStore = derived(globalStateStore, (state) => state.favourites);
+
+function unreadCountForChatList(chats: (ChatSummary | undefined)[]): number {
+    return chats.reduce((num, chat) => {
+        if (chat === undefined || chat.membership.notificationsMuted) return num;
+        const unread = messagesRead.unreadMessageCount(
+            chat.id,
+            chat.latestMessage?.event.messageIndex
+        );
+        return unread > 0 ? num + 1 : num;
+    }, 0);
+}
+
+// the messagesRead store is used as part of the derivation so that it gets recomputed when messages are read
+export const unreadGroupChats = derived(
+    [globalStateStore, messagesRead],
+    ([$global, _$messagesRead]) => {
+        return unreadCountForChatList($global.groupChats.values());
+    }
+);
+
+export const unreadDirectChats = derived(
+    [globalStateStore, messagesRead],
+    ([$global, _$messagesRead]) => {
+        return unreadCountForChatList($global.directChats.values());
+    }
+);
+
+export const allChats = derived(globalStateStore, ($global) => {
+    const groupChats = $global.groupChats.values();
+    const directChats = $global.directChats.values();
+    const channels = $global.communities.values().flatMap((c) => c.channels);
+    return ChatMap.fromList([...groupChats, ...directChats, ...channels]);
+});
+
+export const unreadFavouriteChats = derived(
+    [globalStateStore, allChats, messagesRead],
+    ([$global, $allChats, _$messagesRead]) => {
+        const chats = $global.favourites.values().map((id) => $allChats.get(id));
+        return unreadCountForChatList(chats);
+    }
+);
+
+export const unreadCommunityChannels = derived(
+    [globalStateStore, messagesRead],
+    ([$global, _$messagesRead]) => {
+        return $global.communities.values().reduce((map, community) => {
+            map.set(community.id, unreadCountForChatList(community.channels));
+            return map;
+        }, new CommunityMap<number>());
+    }
+);
+
+export const globalUnreadCount = derived(
+    [unreadGroupChats, unreadDirectChats, unreadCommunityChannels],
+    ([$groups, $directs, $communities]) => {
+        return $groups + $directs + $communities.values().reduce((sum, count) => sum + count, 0);
+    }
+);
 
 function updateLastMessage<T extends ChatSummary>(chat: T, message: EventWrapper<Message>): T {
     const latestEventIndex = Math.max(message.index, chat.latestEventIndex);
