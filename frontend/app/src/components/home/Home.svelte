@@ -545,7 +545,7 @@
                 toastStore.showSuccessToast(interpolateLevel("deleteGroupSuccess", level));
             } else {
                 toastStore.showFailureToast(interpolateLevel("deleteGroupFailure", level, true));
-                page(routeForChatIdentifier(chatId));
+                page(routeForChatIdentifier($chatListScope.kind, chatId));
             }
         });
     }
@@ -562,7 +562,7 @@
                         interpolateLevel("failedToLeaveGroup", level, true)
                     );
                 }
-                page(routeForChatIdentifier(chatId));
+                page(routeForChatIdentifier($chatListScope.kind, chatId));
             }
         });
 
@@ -581,7 +581,7 @@
             return c.kind === "direct_chat" && c.them === ev.detail;
         });
         if (chat) {
-            page(routeForChatIdentifier(ev.detail));
+            page(routeForChatIdentifier($chatListScope.kind, ev.detail));
         } else {
             createDirectChat(ev.detail);
         }
@@ -591,7 +591,11 @@
         if (chatIdentifiersEqual(ev.detail.chatId, $selectedChatId)) {
             currentChatMessages?.externalGoToMessage(ev.detail.messageIndex);
         } else {
-            page(`${routeForChatIdentifier(ev.detail.chatId)}/${ev.detail.messageIndex}`);
+            page(
+                `${routeForChatIdentifier($chatListScope.kind, ev.detail.chatId)}/${
+                    ev.detail.messageIndex
+                }`
+            );
         }
     }
 
@@ -624,7 +628,7 @@
         currentChatDraftMessage.setTextContent(chatId, "");
         currentChatDraftMessage.setReplyingTo(chatId, ev.detail);
         if (chat) {
-            page(routeForChatIdentifier(chatId));
+            page(routeForChatIdentifier($chatListScope.kind, chatId));
         } else {
             createDirectChat(chatId as DirectChatIdentifier);
         }
@@ -647,7 +651,7 @@
 
     function showProfile() {
         if ($selectedChatId !== undefined) {
-            page.replace(routeForChatIdentifier($selectedChatId));
+            page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
         }
         rightPanelHistory.set([{ kind: "user_profile" }]);
     }
@@ -656,7 +660,7 @@
         if ($selectedChatId !== undefined) {
             if (ev.initiating) {
                 creatingThread = true;
-                page.replace(routeForChatIdentifier($selectedChatId));
+                page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
             }
 
             tick().then(() => {
@@ -681,7 +685,7 @@
 
     function showGroupDetails() {
         if ($selectedChatId !== undefined) {
-            page.replace(routeForChatIdentifier($selectedChatId));
+            page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "group_details",
@@ -692,7 +696,7 @@
 
     function showProposalFilters() {
         if ($selectedChatId !== undefined) {
-            page.replace(routeForChatIdentifier($selectedChatId));
+            page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
@@ -703,7 +707,7 @@
 
     function showPinned() {
         if ($selectedChatId !== undefined) {
-            page.replace(routeForChatIdentifier($selectedChatId));
+            page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "show_pinned",
@@ -751,7 +755,7 @@
                     joining = undefined;
                 } else if (select) {
                     joining = undefined;
-                    page(routeForChatIdentifier(group.id));
+                    page(routeForChatIdentifier($chatListScope.kind, group.id));
                 } else {
                     joining = undefined;
                 }
@@ -779,12 +783,12 @@
     }
 
     function forwardToChat(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier(chatId));
+        page(routeForChatIdentifier($chatListScope.kind, chatId));
         messageToForwardStore.set(messageToForward);
     }
 
     function shareWithChat(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier(chatId));
+        page(routeForChatIdentifier($chatListScope.kind, chatId));
 
         const shareText = share.text ?? "";
         const shareTitle = share.title ?? "";
@@ -927,7 +931,7 @@
             return false;
         }
 
-        page(routeForChatIdentifier(chatId));
+        page(routeForChatIdentifier($chatListScope.kind, chatId));
         return true;
     }
 

@@ -12,6 +12,7 @@ import {
     UnsupportedValueError,
     ChatIdentifier,
     MessageContext,
+    ChatListScope,
 } from "../domain";
 import type { MessageFormatter } from "./i18n";
 
@@ -231,25 +232,33 @@ export function compareRoles(a: MemberRole, b: MemberRole): number {
     return -1;
 }
 
-export function routeForMessage(ctx: MessageContext, messageIndex: number): string {
+export function routeForMessage(
+    scope: ChatListScope["kind"],
+    ctx: MessageContext,
+    messageIndex: number
+): string {
     return ctx.threadRootMessageIndex === undefined
-        ? `${routeForMessageContext(ctx)}/${messageIndex}`
-        : `${routeForMessageContext(ctx)}/${messageIndex}?open=true`;
+        ? `${routeForMessageContext(scope, ctx)}/${messageIndex}`
+        : `${routeForMessageContext(scope, ctx)}/${messageIndex}?open=true`;
 }
 
-export function routeForMessageContext({ chatId, threadRootMessageIndex }: MessageContext): string {
+export function routeForMessageContext(
+    scope: ChatListScope["kind"],
+    { chatId, threadRootMessageIndex }: MessageContext
+): string {
     return threadRootMessageIndex === undefined
-        ? routeForChatIdentifier(chatId)
-        : `${routeForChatIdentifier(chatId)}/${threadRootMessageIndex}`;
+        ? routeForChatIdentifier(scope, chatId)
+        : `${routeForChatIdentifier(scope, chatId)}/${threadRootMessageIndex}`;
 }
 
-export function routeForChatIdentifier(id: ChatIdentifier): string {
+export function routeForChatIdentifier(scope: ChatListScope["kind"], id: ChatIdentifier): string {
+    const prefix = scope === "favourite" ? "/favourite" : "";
     switch (id.kind) {
         case "direct_chat":
-            return `/user/${id.userId}`;
+            return `${prefix}/user/${id.userId}`;
         case "group_chat":
-            return `/group/${id.groupId}`;
+            return `${prefix}/group/${id.groupId}`;
         case "channel":
-            return `/community/${id.communityId}/channel/${id.channelId}`;
+            return `${prefix}/community/${id.communityId}/channel/${id.channelId}`;
     }
 }

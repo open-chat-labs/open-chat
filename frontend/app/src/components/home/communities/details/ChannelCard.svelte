@@ -10,10 +10,11 @@
 
     const client = getContext<OpenChat>("client");
     $: selectedCommunity = client.selectedCommunity;
+    $: chatListScope = client.chatListScope;
 
     function selectChannel(match: ChannelMatch) {
         if ($selectedCommunity === undefined) return;
-        page(routeForChatIdentifier(match.id));
+        page(routeForChatIdentifier($chatListScope.kind, match.id));
     }
 </script>
 

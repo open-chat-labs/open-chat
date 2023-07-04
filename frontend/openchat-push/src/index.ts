@@ -142,6 +142,7 @@ async function showNotification(notification: Notification, id: string): Promise
         body = `${notification.senderName}: ${content.text}`;
         icon = content.image ?? icon;
         path = routeForMessage(
+            "none",
             {
                 chatId: notification.chatId,
                 threadRootMessageIndex: notification.threadRootMessageIndex,
@@ -156,6 +157,7 @@ async function showNotification(notification: Notification, id: string): Promise
         title = notification.username;
         body = `${notification.username} reacted '${notification.reaction}' to your message`;
         path = routeForMessage(
+            "none",
             { chatId: notification.them },
             notification.message.event.messageIndex
         );
@@ -165,6 +167,7 @@ async function showNotification(notification: Notification, id: string): Promise
         title = notification.groupName;
         body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
         path = routeForMessage(
+            "none",
             {
                 chatId: notification.chatId,
                 threadRootMessageIndex: notification.threadRootMessageIndex,
@@ -177,7 +180,7 @@ async function showNotification(notification: Notification, id: string): Promise
         // TODO Multi language support
         title = notification.groupName;
         body = `${notification.addedByUsername} added you to the group "${notification.groupName}"`;
-        path = routeForChatIdentifier(notification.chatId);
+        path = routeForChatIdentifier("none", notification.chatId);
         tag = path;
         timestamp = Number(notification.timestamp);
     } else {

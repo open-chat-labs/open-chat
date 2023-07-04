@@ -69,6 +69,7 @@
     $: infoDirty = nameDirty || descDirty || avatarDirty;
     $: gateDirty = client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
+    $: chatListScope = client.chatListScope;
 
     function getSteps(editing: boolean) {
         let steps = [
@@ -325,7 +326,7 @@
     }
 
     function onGroupCreated(canisterId: MultiUserChatIdentifier) {
-        const url = routeForChatIdentifier(canisterId);
+        const url = routeForChatIdentifier($chatListScope.kind, canisterId);
         dispatch("groupCreated", {
             chatId: canisterId,
             public: candidateGroup.public,

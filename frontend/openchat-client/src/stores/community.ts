@@ -118,8 +118,13 @@ export const currentCommunityRules = createDerivedPropStore<CommunitySpecificSta
 export const selectedCommunity = derived(
     [communities, chatListScopeStore],
     ([$communities, $chatListScope]) => {
-        if ($chatListScope.kind !== "community") return undefined;
-        return $communities.get($chatListScope.id);
+        if ($chatListScope.kind === "community") {
+            return $communities.get($chatListScope.id);
+        } else if ($chatListScope.kind === "favourite" && $chatListScope.communityId) {
+            return $communities.get($chatListScope.communityId);
+        } else {
+            return undefined;
+        }
     }
 );
 

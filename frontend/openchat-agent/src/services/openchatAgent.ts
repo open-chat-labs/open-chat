@@ -1186,6 +1186,7 @@ export class OpenChatAgent extends EventTarget {
         let pinnedDirectChats: DirectChatIdentifier[];
         let pinnedFavouriteChats: ChatIdentifier[];
         let pinnedChannels: ChannelIdentifier[];
+        let favouriteChats: ChatIdentifier[];
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1211,6 +1212,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedDirectChats = userResponse.directChats.pinned;
             pinnedFavouriteChats = userResponse.favouriteChats.pinned;
             pinnedChannels = userResponse.communities.summaries.flatMap((c) => c.pinned);
+            favouriteChats = userResponse.favouriteChats.chats;
             latestUserCanisterUpdates = userResponse.timestamp;
             anyUpdates = true;
         } else {
@@ -1232,6 +1234,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedDirectChats = current.pinnedDirectChats;
             pinnedFavouriteChats = current.pinnedFavouriteChats;
             pinnedChannels = current.pinnedChannels;
+            favouriteChats = current.favouriteChats;
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
 
             if (userResponse.kind === "success") {
@@ -1259,6 +1262,7 @@ export class OpenChatAgent extends EventTarget {
                 pinnedDirectChats = userResponse.directChats.pinned ?? pinnedDirectChats;
                 pinnedFavouriteChats = userResponse.favouriteChats.pinned ?? pinnedFavouriteChats;
                 pinnedChannels = this.getUpdatedPinnedChannels(userResponse) ?? pinnedChannels;
+                favouriteChats = userResponse.favouriteChats.chats ?? favouriteChats;
                 latestUserCanisterUpdates = userResponse.timestamp;
                 anyUpdates = true;
             }
@@ -1365,6 +1369,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedDirectChats,
             pinnedFavouriteChats,
             pinnedChannels,
+            favouriteChats,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -1721,10 +1726,17 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChatIdentifier,
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse> {
-        if (chatId.kind === "channel") {
-            throw new Error("TODO - not implemented");
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.userClient.toggleMuteNotifications(chatId.groupId, muted);
+            case "direct_chat":
+                return this.userClient.toggleMuteNotifications(chatId.userId, muted);
+            case "channel":
+                return this.communityClient(chatId.communityId).toggleMuteChannelNotifications(
+                    chatId,
+                    muted
+                );
         }
-        return this.userClient.toggleMuteNotifications(chatIdentifierToString(chatId), muted);
     }
 
     getGroupDetails(

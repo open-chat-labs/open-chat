@@ -61,6 +61,7 @@
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: focusMessageIndex = client.focusMessageIndex;
     $: chatStateStore = client.chatStateStore;
+    $: chatListScope = client.chatListScope;
     $: userStore = client.userStore;
     $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
     $: selectedMessageContext = client.selectedMessageContext;
@@ -130,7 +131,7 @@
     }
 
     function doGoToMessageIndex(index: number): void {
-        page(routeForChatIdentifier(chat.id));
+        page(routeForChatIdentifier($chatListScope.kind, chat.id));
         chatEventList?.scrollToMessageIndex(chat.id, index, false);
     }
 
