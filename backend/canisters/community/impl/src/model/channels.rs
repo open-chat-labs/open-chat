@@ -27,7 +27,7 @@ impl Channels {
     pub fn new(created_by: UserId, default_channels: Vec<(ChannelId, String)>, now: TimestampMillis) -> Channels {
         let channels = default_channels
             .into_iter()
-            .map(|(id, name)| (id, Channel::default(id, name, created_by, true, now)))
+            .map(|(id, name)| (id, Channel::default(id, name, created_by, now)))
             .collect();
 
         Channels { channels }
@@ -115,7 +115,7 @@ impl Channels {
 }
 
 impl Channel {
-    pub fn default(id: ChannelId, name: String, created_by: UserId, is_default: bool, now: TimestampMillis) -> Channel {
+    pub fn default(id: ChannelId, name: String, created_by: UserId, now: TimestampMillis) -> Channel {
         Channel {
             id,
             chat: GroupChatCore::new(
@@ -132,7 +132,7 @@ impl Channel {
                 None,
                 now,
             ),
-            is_default,
+            is_default: true,
         }
     }
 
