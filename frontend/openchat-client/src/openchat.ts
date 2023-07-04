@@ -2978,10 +2978,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.addMissingUsersFromMessage(message).then(() => {
             updateSummaryWithConfirmedMessage(chatId, message);
-
-            if (chatIdentifiersEqual(this._liveState.selectedChatId, chatId)) {
-                this.handleConfirmedMessageSentByOther(serverChat, message, threadRootMessageIndex);
-            }
+            this.handleConfirmedMessageSentByOther(serverChat, message, threadRootMessageIndex);
         });
     }
 
