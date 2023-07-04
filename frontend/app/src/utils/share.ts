@@ -252,6 +252,7 @@ export function buildMessageUrl(
     threadRootMessageIndex?: number
 ): string {
     return `${window.location.origin}${routeForMessage(
+        "none",
         { chatId, threadRootMessageIndex },
         messageIndex
     )}`;

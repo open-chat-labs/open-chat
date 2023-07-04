@@ -103,6 +103,7 @@
     let showRemindMe = false;
     let showReport = false;
 
+    $: chatListScope = client.chatListScope;
     $: inThread = threadRootMessage !== undefined;
     $: threadRootMessageIndex =
         threadRootMessage?.messageId === msg.messageId
@@ -110,7 +111,6 @@
             : threadRootMessage?.messageIndex;
     $: translationStore = client.translationStore;
     $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll;
-    $: isBot = sender?.kind === "bot";
     $: username = sender?.username;
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
@@ -119,7 +119,7 @@
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
-    $: msgUrl = `${routeForMessage({ chatId }, msg.messageIndex)}?open=true`;
+    $: msgUrl = `${routeForMessage($chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
     $: isPrize = msg.content.kind === "prize_content";
     $: isPrizeWinner = msg.content.kind === "prize_winner_content";

@@ -200,8 +200,6 @@ export type UnblockCommunityUserResponse = Failure | Success;
 
 export type UpdateCommunityResponse = Failure | Success;
 
-export type ToggleMuteChannelNotificationsResponse = Failure | Success;
-
 export type ToggleMuteCommunityNotificationsResponse = Failure | Success;
 
 export type CreateCommunityResponse = Failure | (Success & { id: string }) | { kind: "name_taken" };
