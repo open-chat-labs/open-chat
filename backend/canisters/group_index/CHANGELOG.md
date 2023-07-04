@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Public community moderation flags ([#3911](https://github.com/open-chat-labs/open-chat/pull/3911))
+
 ### Changed
 
 - Fix `explore_groups` and `explore_communities` in edge case ([#3860](https://github.com/open-chat-labs/open-chat/pull/3860))
