@@ -928,7 +928,7 @@ export function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
     };
 }
 
-function apiMultiUserChat(chatId: ChatIdentifier): ApiMultiUserChat {
+export function apiMultiUserChat(chatId: ChatIdentifier): ApiMultiUserChat {
     switch (chatId.kind) {
         case "group_chat":
             return {

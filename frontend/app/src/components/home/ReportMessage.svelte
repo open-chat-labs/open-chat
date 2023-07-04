@@ -51,6 +51,8 @@
     }
 
     function report() {
+        if (chatId.kind === "direct_chat") return;
+
         client
             .reportMessage(
                 chatId,

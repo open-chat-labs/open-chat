@@ -1048,7 +1048,7 @@ type CancelMessageReminder = {
 };
 
 type ReportMessage = {
-    chatId: ChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     eventIndex: number;
     reasonCode: number;
     notes: string | undefined;
