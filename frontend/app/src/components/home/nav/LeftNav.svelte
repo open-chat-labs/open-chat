@@ -30,6 +30,9 @@
     $: communities = client.communitiesList;
     $: selectedCommunity = client.selectedCommunity;
     $: chatListScope = client.chatListScope;
+    $: unreadDirectChats = client.unreadDirectChats;
+    $: unreadGroupChats = client.unreadGroupChats;
+    $: unreadFavouriteChats = client.unreadFavouriteChats;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
@@ -106,6 +109,7 @@
         <LeftNavItem
             selected={$chatListScope.kind === "direct_chat"}
             label={$_("communities.directChats")}
+            unread={$unreadDirectChats}
             on:click={directChats}>
             <div class="hover direct">
                 <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -115,6 +119,7 @@
         <LeftNavItem
             selected={$chatListScope.kind === "group_chat"}
             label={$_("communities.groupChats")}
+            unread={$unreadGroupChats}
             on:click={groupChats}>
             <div class="hover direct">
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -125,6 +130,7 @@
             selected={$chatListScope.kind === "favourite"}
             separator
             label={$_("communities.favourites")}
+            unread={$unreadFavouriteChats}
             on:click={favouriteChats}>
             <div class="hover favs">
                 <HeartOutline size={iconSize} color={"var(--icon-txt)"} />

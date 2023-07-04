@@ -349,6 +349,10 @@ import {
     setGlobalState,
     updateSummaryWithConfirmedMessage,
     chatListScopeStore,
+    GlobalState,
+    unreadGroupChats,
+    unreadDirectChats,
+    unreadFavouriteChats,
 } from "./stores/global";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -4486,4 +4490,8 @@ export class OpenChat extends OpenChatAgentWorker {
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
     communityStateStore = communityStateStore;
     favouritesStore = favouritesStore;
+    globalStateStore = globalStateStore;
+    unreadGroupChats = unreadGroupChats;
+    unreadDirectChats = unreadDirectChats;
+    unreadFavouriteChats = unreadFavouriteChats;
 }
