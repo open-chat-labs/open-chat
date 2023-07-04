@@ -16,7 +16,6 @@
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
     import AccessGateIcon from "./AccessGateIcon.svelte";
-    import { gatedGroupsEnabled } from "../../utils/features";
     import page from "page";
 
     const client = getContext<OpenChat>("client");
@@ -75,11 +74,9 @@
         </div>
     </div>
     <Footer align="end">
-        {#if gatedGroupsEnabled}
-            <div class="gate">
-                <AccessGateIcon on:upgrade gate={group.gate} />
-            </div>
-        {/if}
+        <div class="gate">
+            <AccessGateIcon on:upgrade gate={group.gate} />
+        </div>
         {#if member}
             <Button tiny on:click={() => leaveGroup(group)}>{$_("leave")}</Button>
         {:else}

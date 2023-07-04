@@ -419,7 +419,8 @@
                         supportsEdit={true}
                         supportsReply={true}
                         threadRootMessage={undefined}
-                        publicGroup={chat.kind === "group_chat" && chat.public}
+                        publicGroup={(chat.kind === "group_chat" || chat.kind === "channel") &&
+                            chat.public}
                         pinned={isPinned($currentChatPinnedMessages, evt)}
                         editing={$currentChatEditingEvent === evt}
                         on:chatWith

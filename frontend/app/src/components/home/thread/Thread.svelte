@@ -333,7 +333,8 @@
                             canPin={client.canPinMessages(chat.id)}
                             canBlockUser={client.canBlockUsers(chat.id)}
                             canDelete={client.canDeleteOtherUsersMessages(chat.id)}
-                            publicGroup={chat.kind === "group_chat" && chat.public}
+                            publicGroup={(chat.kind === "group_chat" || chat.kind === "channel") &&
+                                chat.public}
                             editing={$editingEvent === evt}
                             {canSend}
                             {canReact}
