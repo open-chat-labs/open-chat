@@ -1,5 +1,4 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::model::members::CommunityMembers;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
@@ -39,7 +38,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                 now,
             ) {
                 AddRemoveReactionResult::Success => {
-                    if let Some(message) = should_push_notification(&args, user_id, &channel.chat, &state.data.members, now) {
+                    if let Some(message) = should_push_notification(&args, user_id, &channel.chat, now) {
                         push_notification(args, user_id, channel.chat.name.clone(), message, now, state);
                     }
                     handle_activity_notification(state);
@@ -64,7 +63,6 @@ fn should_push_notification(
     args: &Args,
     user_id: UserId,
     chat: &GroupChatCore,
-    members: &CommunityMembers,
     now: TimestampMillis,
 ) -> Option<EventWrapper<Message>> {
     let message = chat
@@ -77,16 +75,12 @@ fn should_push_notification(
     let sender = message.event.sender;
 
     if sender != user_id {
-        let notifications_muted_in_channel = chat
+        let notifications_muted = chat
             .members
             .get(&sender)
             .map_or(true, |m| m.notifications_muted.value || m.suspended.value);
 
-        let notifications_muted_in_community = members
-            .get_by_user_id(&sender)
-            .map_or(true, |m| m.notifications_muted.value || m.suspended.value);
-
-        if !(notifications_muted_in_channel || notifications_muted_in_community) {
+        if !notifications_muted {
             return Some(message);
         }
     }

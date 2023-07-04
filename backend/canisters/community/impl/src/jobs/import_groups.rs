@@ -133,7 +133,7 @@ async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attemp
                 let default_channel_ids = state.data.channels.default_channel_ids();
 
                 for (user_id, principal) in users {
-                    match state.data.members.add(user_id, principal, now, notifications_muted) {
+                    match state.data.members.add(user_id, principal, now) {
                         AddResult::Success(_) => {
                             state.data.invited_users.remove(&principal, now);
                             state.data.events.push_event(

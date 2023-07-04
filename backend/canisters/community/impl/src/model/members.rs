@@ -26,7 +26,6 @@ impl CommunityMembers {
             user_id: creator_user_id,
             date_added: now,
             role: CommunityRole::Owner,
-            notifications_muted: Timestamped::new(false, now),
             suspended: Timestamped::default(),
             channels: default_channels.into_iter().collect(),
             channels_removed: Vec::new(),
@@ -41,7 +40,7 @@ impl CommunityMembers {
         }
     }
 
-    pub fn add(&mut self, user_id: UserId, principal: Principal, now: TimestampMillis, notifications_muted: bool) -> AddResult {
+    pub fn add(&mut self, user_id: UserId, principal: Principal, now: TimestampMillis) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
         } else {
@@ -51,7 +50,6 @@ impl CommunityMembers {
                         user_id,
                         date_added: now,
                         role: CommunityRole::Member,
-                        notifications_muted: Timestamped::new(notifications_muted, now),
                         suspended: Timestamped::default(),
                         channels: HashSet::new(),
                         channels_removed: Vec::new(),
@@ -252,7 +250,6 @@ pub struct CommunityMemberInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
     pub role: CommunityRole,
-    pub notifications_muted: Timestamped<bool>,
     pub suspended: Timestamped<bool>,
     pub channels: HashSet<ChannelId>,
     pub channels_removed: Vec<Timestamped<ChannelId>>,

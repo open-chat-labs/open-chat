@@ -87,11 +87,7 @@ pub(crate) fn c2c_join_community_impl(args: &Args, state: &mut RuntimeState) -> 
             .push_event(CommunityEvent::UsersUnblocked(Box::new(event)), now);
     }
 
-    match state
-        .data
-        .members
-        .add(args.user_id, args.principal, now, state.data.is_public)
-    {
+    match state.data.members.add(args.user_id, args.principal, now) {
         AddResult::Success(_) => {
             let invitation = state.data.invited_users.remove(&args.principal, now);
 

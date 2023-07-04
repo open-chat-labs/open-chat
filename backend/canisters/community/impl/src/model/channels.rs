@@ -114,6 +114,10 @@ impl Channels {
         self.channels.values()
     }
 
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Channel> {
+        self.channels.values_mut()
+    }
+
     pub fn search(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> Vec<ChannelMatch> {
         let query = search_term.map(Query::parse);
 
@@ -288,6 +292,21 @@ impl Channel {
             is_default: self.is_default.if_set_after(since).copied(),
         })
     }
+
+    pub fn mute_notifications(&mut self, mute: bool, user_id: UserId, now: TimestampMillis) -> MuteChannelResult {
+        use MuteChannelResult::*;
+
+        if let Some(channel_member) = self.chat.members.get_mut(&user_id) {
+            if channel_member.notifications_muted.value != mute {
+                channel_member.notifications_muted = Timestamped::new(mute, now);
+                Success
+            } else {
+                Unchanged
+            }
+        } else {
+            UserNotFound
+        }
+    }
 }
 
 pub enum ChannelUpdates {
@@ -330,4 +349,10 @@ pub enum RemoveDefaultChannelResult {
     Removed,
     NotDefault,
     NotFound,
+}
+
+pub enum MuteChannelResult {
+    Success,
+    Unchanged,
+    UserNotFound,
 }
