@@ -40,32 +40,29 @@ export const chatListScopeStore = writable<ChatListScope>({ kind: "none" });
 
 export const favouritesStore = derived(globalStateStore, (state) => state.favourites);
 
+function unreadCountForChatList(chats: ChatSummary[]): number {
+    return chats.reduce((num, chat) => {
+        if (chat.membership.notificationsMuted) return num;
+        const unread = messagesRead.unreadMessageCount(
+            chat.id,
+            chat.latestMessage?.event.messageIndex
+        );
+        return unread > 0 ? num + 1 : num;
+    }, 0);
+}
+
 // the messagesRead store is used as part of the derivation so that it gets recomputed when messages are read
 export const unreadGroupChats = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
-        return $global.groupChats.values().reduce((num, chat) => {
-            if (chat.membership.notificationsMuted) return num;
-            const unread = messagesRead.unreadMessageCount(
-                chat.id,
-                chat.latestMessage?.event.messageIndex
-            );
-            return unread > 0 ? num + 1 : num;
-        }, 0);
+        return unreadCountForChatList($global.groupChats.values());
     }
 );
 
 export const unreadDirectChats = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
-        return $global.directChats.values().reduce((num, chat) => {
-            if (chat.membership.notificationsMuted) return num;
-            const unread = messagesRead.unreadMessageCount(
-                chat.id,
-                chat.latestMessage?.event.messageIndex
-            );
-            return unread > 0 ? num + 1 : num;
-        }, 0);
+        return unreadCountForChatList($global.directChats.values());
     }
 );
 
@@ -88,6 +85,17 @@ export const unreadFavouriteChats = derived(
             );
             return unread > 0 ? num + 1 : num;
         }, 0);
+    }
+);
+
+// CommunityMap<number>
+export const unreadCommunityChannels = derived(
+    [globalStateStore, messagesRead],
+    ([$global, _$messagesRead]) => {
+        return $global.communities.values().reduce((map, community) => {
+            map.set(community.id, unreadCountForChatList(community.channels));
+            return map;
+        }, new CommunityMap<number>());
     }
 );
 

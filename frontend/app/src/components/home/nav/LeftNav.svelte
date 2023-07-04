@@ -33,6 +33,7 @@
     $: unreadDirectChats = client.unreadDirectChats;
     $: unreadGroupChats = client.unreadGroupChats;
     $: unreadFavouriteChats = client.unreadFavouriteChats;
+    $: unreadCommunityChannels = client.unreadCommunityChannels;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
@@ -142,7 +143,7 @@
         {#each $communities as community, i}
             <LeftNavItem
                 selected={community === $selectedCommunity && $chatListScope.kind !== "favourite"}
-                unread={0}
+                unread={$unreadCommunityChannels.get(community.id) ?? 0}
                 label={community.name}
                 on:click={() => selectCommunity(community)}>
                 <Avatar

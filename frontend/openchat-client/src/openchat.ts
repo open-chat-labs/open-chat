@@ -353,6 +353,7 @@ import {
     unreadGroupChats,
     unreadDirectChats,
     unreadFavouriteChats,
+    unreadCommunityChannels,
 } from "./stores/global";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -4494,4 +4495,5 @@ export class OpenChat extends OpenChatAgentWorker {
     unreadGroupChats = unreadGroupChats;
     unreadDirectChats = unreadDirectChats;
     unreadFavouriteChats = unreadFavouriteChats;
+    unreadCommunityChannels = unreadCommunityChannels;
 }
