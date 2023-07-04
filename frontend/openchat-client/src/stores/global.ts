@@ -40,9 +40,9 @@ export const chatListScopeStore = writable<ChatListScope>({ kind: "none" });
 
 export const favouritesStore = derived(globalStateStore, (state) => state.favourites);
 
-function unreadCountForChatList(chats: ChatSummary[]): number {
+function unreadCountForChatList(chats: (ChatSummary | undefined)[]): number {
     return chats.reduce((num, chat) => {
-        if (chat.membership.notificationsMuted) return num;
+        if (chat === undefined || chat.membership.notificationsMuted) return num;
         const unread = messagesRead.unreadMessageCount(
             chat.id,
             chat.latestMessage?.event.messageIndex
@@ -76,19 +76,11 @@ export const allChats = derived(globalStateStore, ($global) => {
 export const unreadFavouriteChats = derived(
     [globalStateStore, allChats, messagesRead],
     ([$global, $allChats, _$messagesRead]) => {
-        return $global.favourites.values().reduce((num, chatId) => {
-            const chat = $allChats.get(chatId);
-            if (chat === undefined || chat.membership.notificationsMuted) return num;
-            const unread = messagesRead.unreadMessageCount(
-                chat.id,
-                chat.latestMessage?.event.messageIndex
-            );
-            return unread > 0 ? num + 1 : num;
-        }, 0);
+        const chats = $global.favourites.values().map((id) => $allChats.get(id));
+        return unreadCountForChatList(chats);
     }
 );
 
-// CommunityMap<number>
 export const unreadCommunityChannels = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
