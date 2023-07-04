@@ -35,7 +35,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .channels
             .iter()
             .filter_map(|c| state.data.channels.get(c))
-            .filter(|c| c.chat.has_updates_since(Some(m.user_id), args.updates_since))
+            .filter(|c| c.has_updates_since(Some(m.user_id), args.updates_since))
             .collect();
 
         let channels_removed = m.channels_removed_since(args.updates_since);
@@ -47,7 +47,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .channels
             .default_channels()
             .into_iter()
-            .filter(|c| c.chat.has_updates_since(None, args.updates_since))
+            .filter(|c| c.has_updates_since(None, args.updates_since))
             .collect();
 
         (channels_with_updates, Vec::new())
@@ -70,6 +70,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
     let mut channels_added = Vec::new();
     let mut channels_updated = Vec::new();
+
     for channel in channels_with_updates {
         match channel.summary_updates(member.map(|m| m.user_id), args.updates_since, now) {
             ChannelUpdates::Added(s) => channels_added.push(s),
@@ -80,6 +81,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let membership = member.map(|m| CommunityMembershipUpdates {
         channels_removed,
         role: updates_from_events.role_changed.then_some(m.role),
+        notifications_muted: m.notifications_muted.if_set_after(args.updates_since).copied(),
     });
 
     Success(CommunityCanisterCommunitySummaryUpdates {

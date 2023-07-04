@@ -431,22 +431,20 @@ export class OpenChat extends OpenChatAgentWorker {
         if (
             this._liveState.selectedChatId === undefined ||
             !chatIdentifiersEqual(chatId, this._liveState.selectedChatId)
-        )
+        ) {
             return;
-
-        const chat = this._liveState.selectedChat;
-        if (chat === undefined) return;
-        // The chat summary has been updated which means the latest message may be new
-        const latestMessage = chat.latestMessage;
-        if (latestMessage !== undefined && latestMessage.event.sender !== this.user.userId) {
-            this.handleMessageSentByOther(chat, latestMessage);
         }
 
         const serverChat = this._liveState.selectedServerChat;
-        if (serverChat !== undefined) {
-            this.refreshUpdatedEvents(serverChat, updatedEvents);
+        if (serverChat === undefined) return;
+        // The chat summary has been updated which means the latest message may be new
+        const latestMessage = serverChat.latestMessage;
+        if (latestMessage !== undefined && latestMessage.event.sender !== this.user.userId) {
+            this.handleConfirmedMessageSentByOther(serverChat, latestMessage, undefined);
         }
-        this.updateChatDetails(chat);
+
+        this.refreshUpdatedEvents(serverChat, updatedEvents);
+        this.updateChatDetails(serverChat);
         this.dispatchEvent(new ChatUpdated());
     }
 
@@ -2964,29 +2962,18 @@ export class OpenChat extends OpenChatAgentWorker {
             message,
         });
 
-        Promise.all([
-            this.sendRequest({
-                kind: "rehydrateMessage",
-                chatId,
-                message,
-                threadRootMessageIndex: undefined,
-                latestClientEventIndex: serverChat.latestEventIndex,
-            }),
-            this.addMissingUsersFromMessage(message),
-        ]).then(([m, _]) => {
-            updateSummaryWithConfirmedMessage(chatId, m);
-
-            if (chatIdentifiersEqual(this._liveState.selectedChatId, chatId)) {
-                this.handleMessageSentByOther(serverChat, m);
-            }
+        this.addMissingUsersFromMessage(message).then(() => {
+            updateSummaryWithConfirmedMessage(chatId, message);
+            this.handleConfirmedMessageSentByOther(serverChat, message, threadRootMessageIndex);
         });
     }
 
-    private async handleMessageSentByOther(
-        clientChat: ChatSummary,
-        messageEvent: EventWrapper<Message>
-    ): Promise<void> {
-        const confirmedLoaded = confirmedEventIndexesLoaded(clientChat.id);
+    private handleConfirmedMessageSentByOther(
+        serverChat: ChatSummary,
+        messageEvent: EventWrapper<Message>,
+        threadRootMessageIndex: number | undefined,
+    ) {
+        const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
 
         if (indexIsInRanges(messageEvent.index, confirmedLoaded)) {
             // We already have this confirmed message
@@ -3001,9 +2988,17 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
-        await this.handleEventsResponse(clientChat, {
-            events: [messageEvent],
-            latestEventIndex: undefined,
+        this.sendRequest({
+            kind: "rehydrateMessage",
+            chatId: serverChat.id,
+            message: messageEvent,
+            threadRootMessageIndex,
+            latestClientEventIndex: serverChat.latestEventIndex,
+        }).then((m) => {
+            this.handleEventsResponse(serverChat, {
+                events: [m],
+                latestEventIndex: undefined,
+            });
         });
     }
 

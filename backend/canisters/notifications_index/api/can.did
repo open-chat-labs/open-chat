@@ -1,51 +1,42 @@
 import "../../../libraries/types/can.did";
 
-type PushSubscriptionArgs =
-    record {
-        subscription: SubscriptionInfo;
-    };
+type PushSubscriptionArgs = record {
+    subscription : SubscriptionInfo;
+};
 
-type PushSubscriptionResponse =
-    variant {
-        Success;
-        InternalError: text;
-    };
+type PushSubscriptionResponse = variant {
+    Success;
+    InternalError : text;
+};
 
-type RemoveSubscriptionArgs = 
-    record {
-        p256dh_key: text;
-    };
+type RemoveSubscriptionArgs = record {
+    p256dh_key : text;
+};
 
-type RemoveSubscriptionResponse =
-    variant {
-        Success;
-    };
+type RemoveSubscriptionResponse = variant {
+    Success;
+};
 
-type RemoveSubscriptionsForUserArgs = 
-    record {
-    };
+type RemoveSubscriptionsForUserArgs = record {};
 
-type RemoveSubscriptionsForUserResponse =
-    variant {
-        Success;
-    };
+type RemoveSubscriptionsForUserResponse = variant {
+    Success;
+};
 
-type SubscriptionExistsArgs =
-    record {
-        p256dh_key: text;
-    };
+type SubscriptionExistsArgs = record {
+    p256dh_key : text;
+};
 
-type SubscriptionExistsResponse =
-    variant {
-        Yes;
-        No;
-    };
+type SubscriptionExistsResponse = variant {
+    Yes;
+    No;
+};
 
-service: {
-    push_subscription: (PushSubscriptionArgs) -> (PushSubscriptionResponse);
+service : {
+    push_subscription : (PushSubscriptionArgs) -> (PushSubscriptionResponse);
 
-    remove_subscription: (RemoveSubscriptionArgs) -> (RemoveSubscriptionResponse);
-    remove_subscriptions_for_user: (RemoveSubscriptionsForUserArgs) -> (RemoveSubscriptionsForUserResponse);
+    remove_subscription : (RemoveSubscriptionArgs) -> (RemoveSubscriptionResponse);
+    remove_subscriptions_for_user : (RemoveSubscriptionsForUserArgs) -> (RemoveSubscriptionsForUserResponse);
 
-    subscription_exists: (SubscriptionExistsArgs) -> (SubscriptionExistsResponse) query;
-}
+    subscription_exists : (SubscriptionExistsArgs) -> (SubscriptionExistsResponse) query;
+};

@@ -28,6 +28,7 @@ pub struct CommunityCanisterChannelSummary {
     pub next_message_expiry: Option<TimestampMillis>,
     pub gate: Option<AccessGate>,
     pub membership: Option<ChannelMembership>,
+    pub is_default: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -59,6 +60,7 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
     pub membership: Option<ChannelMembershipUpdates>,
+    pub is_default: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

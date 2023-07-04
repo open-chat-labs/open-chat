@@ -1401,7 +1401,7 @@ export class OpenChatAgent extends EventTarget {
         return resp;
     }
 
-    hydrateChatState(state: ChatStateFull): ChatStateFull {
+    private hydrateChatState(state: ChatStateFull): ChatStateFull {
         const groupChats = state.groupChats.map((c) => this.hydrateChatSummary(c));
         const communities = state.communities.map((c) => this.hydrateCommunity(c));
 

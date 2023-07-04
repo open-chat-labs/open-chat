@@ -46,7 +46,6 @@ fn main() {
     generate_candid_method!(community, remove_reaction, update);
     generate_candid_method!(community, reset_invite_code, update);
     generate_candid_method!(community, send_message, update);
-    generate_candid_method!(community, toggle_mute_channel_notifications, update);
     generate_candid_method!(community, toggle_mute_notifications, update);
     generate_candid_method!(community, unblock_user, update);
     generate_candid_method!(community, undelete_messages, update);

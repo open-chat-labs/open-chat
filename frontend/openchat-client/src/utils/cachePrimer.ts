@@ -28,7 +28,7 @@ export class CachePrimer {
             }
 
             if (this.runner === undefined) {
-                this.runner = new Poller(() => this.processNext(), 0);
+                this.runner = new Poller(() => this.processNext(), 100);
                 debug("runner started");
             }
         }
