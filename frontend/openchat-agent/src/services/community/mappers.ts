@@ -644,17 +644,6 @@ export function channelMembershipUpdates(
     };
 }
 
-export function toggleMuteChannelNotificationsResponse(
-    candid: ApiToggleMuteChannelNotificationsResponse
-): ToggleMuteChannelNotificationsResponse {
-    if ("Success" in candid) {
-        return CommonResponses.success();
-    } else {
-        console.warn("ToggleMuteChannelNotifications failed with", candid);
-        return CommonResponses.failure();
-    }
-}
-
 export function toggleMuteNotificationsResponse(
     candid: ApiToggleMuteNotificationsResponse
 ): ToggleMuteCommunityNotificationsResponse {

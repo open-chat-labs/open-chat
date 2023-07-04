@@ -1726,10 +1726,17 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChatIdentifier,
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse> {
-        if (chatId.kind === "channel") {
-            throw new Error("TODO - not implemented");
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.userClient.toggleMuteNotifications(chatId.groupId, muted);
+            case "direct_chat":
+                return this.userClient.toggleMuteNotifications(chatId.userId, muted);
+            case "channel":
+                return this.communityClient(chatId.communityId).toggleMuteChannelNotifications(
+                    chatId,
+                    muted
+                );
         }
-        return this.userClient.toggleMuteNotifications(chatIdentifierToString(chatId), muted);
     }
 
     getGroupDetails(

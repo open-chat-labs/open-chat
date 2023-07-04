@@ -24,23 +24,20 @@ import type {
     ApiGroupReactionAddedNotification,
     ApiDirectReactionAddedNotification,
 } from "./candid/idl";
+import type { ApiToggleMuteChannelNotificationsResponse } from "../community/candid/idl";
 
 export function muteNotificationsResponse(
-    candid: ApiMuteNotificationsResponse | ApiUnmuteNotificationsResponse
+    candid:
+        | ApiMuteNotificationsResponse
+        | ApiUnmuteNotificationsResponse
+        | ApiToggleMuteChannelNotificationsResponse
 ): ToggleMuteNotificationResponse {
     if ("Success" in candid) {
         return "success";
+    } else {
+        console.warn("MuteNotification failed with: ", candid);
+        return "failure";
     }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError(
-        `Unexpected ApiToggleMuteNotificationsResponse type received`,
-        candid
-    );
 }
 
 export function subscriptionExistsResponse(

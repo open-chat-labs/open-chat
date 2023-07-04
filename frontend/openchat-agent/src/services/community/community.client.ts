@@ -20,7 +20,6 @@ import {
     sendMessageResponse,
     summaryResponse,
     summaryUpdatesResponse,
-    toggleMuteChannelNotificationsResponse,
     toggleMuteNotificationsResponse,
     unblockUserResponse,
     updateCommunityResponse,
@@ -82,7 +81,6 @@ import type {
     RemoveChannelMemberResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
-    ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
     UpdateCommunityResponse,
@@ -117,6 +115,7 @@ import type {
     MakeGroupPrivateResponse,
     ChannelSummaryResponse,
     RegisterPollVoteResponse,
+    ToggleMuteNotificationResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -143,6 +142,7 @@ import {
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
+import { muteNotificationsResponse } from "../notifications/mappers";
 
 export class CommunityClient extends CandidService {
     private service: CommunityService;
@@ -1004,13 +1004,13 @@ export class CommunityClient extends CandidService {
     toggleMuteChannelNotifications(
         chatId: ChannelIdentifier,
         mute: boolean
-    ): Promise<ToggleMuteChannelNotificationsResponse> {
+    ): Promise<ToggleMuteNotificationResponse> {
         return this.handleResponse(
             this.service.toggle_mute_channel_notifications({
                 channel_id: BigInt(chatId.channelId),
                 mute,
             }),
-            toggleMuteChannelNotificationsResponse
+            muteNotificationsResponse
         );
     }
 
