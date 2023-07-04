@@ -56,6 +56,7 @@ import type {
     ApiManageFavouriteChatsResponse,
     ApiPinChatV2Response,
     ApiUnpinV2ChatResponse,
+    ApiLeaveCommunityResponse,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -112,6 +113,7 @@ import {
     DirectChatIdentifier,
     nullMembership,
     ManageFavouritesResponse,
+    LeaveCommunityResponse,
 } from "openchat-shared";
 import {
     bytesToBigint,
@@ -1025,6 +1027,15 @@ export function setMessageReminderResponse(
         return "success";
     } else {
         console.warn("SetMessageReminder failed with", candid);
+        return "failure";
+    }
+}
+
+export function leaveCommunityResponse(candid: ApiLeaveCommunityResponse): LeaveCommunityResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else {
+        console.warn("LeaveCommunity failed with", candid);
         return "failure";
     }
 }

@@ -903,7 +903,8 @@
             "failure": "Sorry we were unable to create your community",
             "saveFailed": "Sorry we were unable to save your updates",
             "inviteUsers": "Sorry we were unable to invite these users",
-            "joinFailed": "Sorry we were unable to join this community"
+            "joinFailed": "Sorry we were unable to join this community",
+            "leaveFailed": "Sorry we were unable to leave this community"
         },
         "memberCount": "member(s)",
         "channelCount": "channel(s)",
@@ -915,5 +916,7 @@
         "addToFavourites": "Add to favourites",
         "removeFromFavourites": "Remove from favourites"
     },
-    "unableToSaveUserProfile": "Unable to save user profile"
+    "unableToSaveUserProfile": "Unable to save user profile",
+    "noAccess": "No access",
+    "noAccessText": "Sorry, but you do not have access to the community, group or channel that you are trying to access."
 }

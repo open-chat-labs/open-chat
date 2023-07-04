@@ -67,6 +67,7 @@
     import type { Share } from "../../utils/share";
     import { themeStore } from "../../theme/themes";
     import SuspendedModal from "../SuspendedModal.svelte";
+    import NoAccess from "./NoAccess.svelte";
     import NewGroup from "./addgroup/NewGroup.svelte";
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "routes";
@@ -127,6 +128,7 @@
         None,
         SelectChat,
         Suspended,
+        NoAccess,
         NewGroup,
         Wallet,
         GateCheckFailed,
@@ -263,6 +265,14 @@
         }
     }
 
+    async function selectCommunity(id: CommunityIdentifier): Promise<boolean> {
+        const found = await client.setSelectedCommunity(id);
+        if (!found) {
+            modal = ModalType.NoAccess;
+        }
+        return found;
+    }
+
     // extracting to a function to try to control more tightly what this reacts to
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
@@ -278,11 +288,15 @@
                 client.clearSelectedChat();
                 rightPanelHistory.set([]);
             } else if (pathParams.kind === "selected_community_route") {
-                await client.setSelectedCommunity(pathParams.communityId);
+                await selectCommunity(pathParams.communityId);
             } else if (
                 pathParams.kind === "global_chat_selected_route" ||
                 pathParams.kind === "selected_channel_route"
             ) {
+                if (pathParams.kind === "selected_channel_route") {
+                    await selectCommunity(pathParams.communityId);
+                }
+
                 // first close any open thread
                 closeThread();
 
@@ -393,6 +407,11 @@
         candidateGroup = undefined;
         candidateCommunity = undefined;
         joining = undefined;
+    }
+
+    function closeNoAccess() {
+        closeModal();
+        page("/favourite");
     }
 
     async function performSearch(ev: CustomEvent<string>) {
@@ -521,7 +540,7 @@
             case "leave":
                 return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.level);
             case "leave_community":
-                return client.leaveCommunity(confirmActionEvent.communityId);
+                return leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
                 return client.deleteCommunity(confirmActionEvent.communityId).then((_) => {
                     rightPanelHistory.set([]);
@@ -553,6 +572,19 @@
                 page(routeForChatIdentifier($chatListScope.kind, chatId));
             }
         });
+    }
+
+    function leaveCommunity(id: CommunityIdentifier): Promise<void> {
+        page("/favourite");
+
+        client.leaveCommunity(id).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("communities.errors.leaveFailed");
+                page(`/community/${id.communityId}`);
+            }
+        });
+
+        return Promise.resolve();
     }
 
     function leaveGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
@@ -1103,6 +1135,8 @@
                 on:select={onSelectChat} />
         {:else if modal === ModalType.Suspended}
             <SuspendedModal on:close={closeModal} />
+        {:else if modal === ModalType.NoAccess}
+            <NoAccess on:close={closeNoAccess} />
         {:else if modal === ModalType.GateCheckFailed && joining !== undefined}
             <GateCheckFailed on:close={closeModal} gate={joining.gate} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}

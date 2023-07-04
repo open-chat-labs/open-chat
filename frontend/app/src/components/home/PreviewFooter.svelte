@@ -8,6 +8,7 @@
     import { toastStore } from "../../stores/toast";
     import { _ } from "svelte-i18n";
     import { interpolateLevel } from "utils/i18n";
+    import AreYouSure from "../AreYouSure.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -17,6 +18,7 @@
 
     $: isFrozen = client.isFrozen(chat.id);
     $: selectedCommunity = client.selectedCommunity;
+    $: currentCommunityRules = client.currentCommunityRules;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
     $: communityGate = $selectedCommunity?.gate;
 
@@ -24,6 +26,9 @@
     let freezingInProgress = false;
     let joiningCommunity = false;
     let gateCheckFailed = false;
+    let acceptingRules = false;
+
+    $: console.log("Rules: ", $currentCommunityRules);
 
     function joinGroup() {
         dispatch("joinGroup", {
@@ -32,22 +37,38 @@
         });
     }
 
-    function joinCommunity() {
-        // TODO - we need to deal with rules acceptance here
+    function joinCommunity(yes: boolean): Promise<void> {
         if (previewingCommunity && $selectedCommunity) {
-            joiningCommunity = true;
-            client
-                .joinCommunity($selectedCommunity.id)
-                .then((resp) => {
-                    if (resp === "gate_check_failed") {
-                        gateCheckFailed = true;
-                    } else if (resp === "failure") {
-                        toastStore.showFailureToast("communities.errors.joinFailed");
-                        joining = undefined;
-                    }
-                })
-                .finally(() => (joiningCommunity = false));
+            if (
+                $currentCommunityRules !== undefined &&
+                $currentCommunityRules.enabled &&
+                !acceptingRules &&
+                !yes
+            ) {
+                acceptingRules = true;
+                return Promise.resolve();
+            } else {
+                if (acceptingRules && !yes) {
+                    acceptingRules = false;
+                    return Promise.resolve();
+                }
+
+                acceptingRules = false;
+                joiningCommunity = true;
+                return client
+                    .joinCommunity($selectedCommunity.id)
+                    .then((resp) => {
+                        if (resp === "gate_check_failed") {
+                            gateCheckFailed = true;
+                        } else if (resp === "failure") {
+                            toastStore.showFailureToast("communities.errors.joinFailed");
+                            joining = undefined;
+                        }
+                    })
+                    .finally(() => (joiningCommunity = false));
+            }
         }
+        return Promise.resolve();
     }
 
     function cancelPreview() {
@@ -83,6 +104,15 @@
         });
     }
 </script>
+
+{#if acceptingRules}
+    <AreYouSure
+        title={interpolateLevel("rules.acceptTitle", "community")}
+        yesLabel={$_("rules.accept")}
+        noLabel={$_("rules.reject")}
+        message={$currentCommunityRules?.text ?? ""}
+        action={joinCommunity} />
+{/if}
 
 {#if communityGate !== undefined && gateCheckFailed}
     <Overlay dismissible on:close={() => (gateCheckFailed = false)}>
@@ -127,7 +157,7 @@
             loading={joiningCommunity}
             disabled={joiningCommunity}
             small={true}
-            on:click={joinCommunity}>
+            on:click={() => joinCommunity(false)}>
             {interpolateLevel("communities.joinCommunity", chat.level, true)}
         </Button>
     {:else}

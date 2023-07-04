@@ -57,6 +57,8 @@ import {
     type ThreadRead,
     type ManageFavouritesResponse,
     chatIdentifierToString,
+    CommunityIdentifier,
+    LeaveCommunityResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -83,6 +85,7 @@ import {
     setMessageReminderResponse,
     createCommunityResponse,
     manageFavouritesResponse,
+    leaveCommunityResponse,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -615,6 +618,15 @@ export class UserClient extends CandidService {
                 correlation_id: generateUint64(),
             }),
             leaveGroupResponse
+        );
+    }
+
+    leaveCommunity(id: CommunityIdentifier): Promise<LeaveCommunityResponse> {
+        return this.handleResponse(
+            this.userService.leave_community({
+                community_id: Principal.fromText(id.communityId),
+            }),
+            leaveCommunityResponse
         );
     }
 

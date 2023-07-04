@@ -4226,7 +4226,7 @@ export class OpenChat extends OpenChatAgentWorker {
     // **** Communities Stuff
 
     // TODO - this will almost certainly need to be more complicated
-    async setSelectedCommunity(id: CommunityIdentifier, clearChat = true): Promise<void> {
+    async setSelectedCommunity(id: CommunityIdentifier, clearChat = true): Promise<boolean> {
         let community = this._liveState.communities.get(id);
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
@@ -4240,6 +4240,10 @@ export class OpenChat extends OpenChatAgentWorker {
                     global.communities.set(resp.id, resp);
                     return global;
                 });
+            } else {
+                // if we get here it means we're not a member of the community and we can't look it up
+                // it may be private and we may not be invited.
+                return false;
             }
         }
 
@@ -4252,6 +4256,7 @@ export class OpenChat extends OpenChatAgentWorker {
         if (community !== undefined) {
             this.loadCommunityDetails(community);
         }
+        return true;
     }
 
     // clearSelectedCommunity(): void {
@@ -4281,8 +4286,15 @@ export class OpenChat extends OpenChatAgentWorker {
         throw new Error("Method not implemented.");
     }
 
-    leaveCommunity(_id: CommunityIdentifier): Promise<void> {
-        throw new Error("Method not implemented.");
+    leaveCommunity(id: CommunityIdentifier): Promise<boolean> {
+        return this.sendRequest({ kind: "leaveCommunity", id })
+            .then((resp) => {
+                return resp === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Error leaving community", err);
+                return false;
+            });
     }
 
     createCommunity(

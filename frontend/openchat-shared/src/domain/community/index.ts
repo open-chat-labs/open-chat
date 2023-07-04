@@ -297,3 +297,5 @@ export type CommunityDetailsUpdates = {
     lastUpdated: bigint;
 };
 export type ChannelSummaryResponse = Failure | ChannelSummary;
+
+export type LeaveCommunityResponse = "success" | "failure";
