@@ -23,7 +23,6 @@ import type {
     UnpinMessageResponse,
     RegisterPollVoteResponse,
     ChatPermissions,
-    MakeGroupPrivateResponse,
     InviteCodeResponse,
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
@@ -100,7 +99,6 @@ import {
     pinMessageResponse,
     unpinMessageResponse,
     groupDetailsResponse,
-    makeGroupPrivateResponse,
     groupDetailsUpdatesResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
@@ -459,12 +457,14 @@ export class GroupClient extends CandidService {
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
-        gate?: AccessGate
+        gate?: AccessGate,
+        isPublic?: boolean
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group_v2({
                 name: apiOptional(identity, name),
                 description: apiOptional(identity, description),
+                public: apiOptional(identity, isPublic),
                 avatar:
                     avatar === undefined
                         ? { NoChange: null }
@@ -630,15 +630,6 @@ export class GroupClient extends CandidService {
         }
 
         return mergeGroupChatDetails(previous, updatesResponse);
-    }
-
-    makeGroupPrivate(): Promise<MakeGroupPrivateResponse> {
-        return this.handleResponse(
-            this.groupService.make_private({
-                correlation_id: generateUint64(),
-            }),
-            makeGroupPrivateResponse
-        );
     }
 
     getPublicSummary(): Promise<GroupChatSummary | undefined> {

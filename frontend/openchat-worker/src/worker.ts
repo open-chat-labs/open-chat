@@ -497,17 +497,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "makeGroupPrivate":
-                agent
-                    .makeGroupPrivate(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "deleteGroup":
                 agent
                     .deleteGroup(payload.chatId)
@@ -561,7 +550,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.rules,
                         payload.permissions,
                         payload.avatar,
-                        payload.gate
+                        payload.gate,
+                        payload.isPublic
                     )
                     .then((response) =>
                         sendResponse(correlationId, {
@@ -1449,18 +1439,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "makeCommunityPrivate":
-                agent
-                    .communityClient(payload.id.communityId)
-                    .makePrivate()
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "channelMessagesByMessageIndex":
                 agent
                     .communityClient(payload.chatId.communityId)
@@ -1565,7 +1543,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.permissions,
                         payload.avatar,
                         payload.banner,
-                        payload.gate
+                        payload.gate,
+                        payload.isPublic
                     )
                     .then((response) =>
                         sendResponse(correlationId, {

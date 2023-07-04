@@ -1023,18 +1023,8 @@ export function setMessageReminderResponse(
 ): SetMessageReminderResponse {
     if ("Success" in candid) {
         return "success";
+    } else {
+        console.warn("SetMessageReminder failed with", candid);
+        return "failure";
     }
-    if ("NotesTooLong" in candid) {
-        return "notes_too_long";
-    }
-    if ("ReminderDateInThePast" in candid) {
-        return "reminder_date_in_past";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiSetMessageReminderResponse type received",
-        candid
-    );
 }

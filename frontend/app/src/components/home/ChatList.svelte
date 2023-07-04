@@ -63,6 +63,39 @@
         $chatListScope.kind === "community" &&
         groupSearchResults === undefined &&
         userSearchResults === undefined;
+    $: unreadDirectChats = client.unreadDirectChats;
+    $: unreadGroupChats = client.unreadGroupChats;
+    $: unreadFavouriteChats = client.unreadFavouriteChats;
+    $: unreadCommunityChannels = client.unreadCommunityChannels;
+    $: globalUnreadCount = client.globalUnreadCount;
+
+    let unread = 0;
+    $: {
+        if ($communitiesEnabled) {
+            switch ($chatListScope.kind) {
+                case "group_chat": {
+                    unread = $unreadGroupChats;
+                    break;
+                }
+                case "direct_chat": {
+                    unread = $unreadDirectChats;
+                    break;
+                }
+                case "favourite": {
+                    unread = $unreadFavouriteChats;
+                    break;
+                }
+                case "community": {
+                    unread = $unreadCommunityChannels.get($chatListScope.id) ?? 0;
+                    break;
+                }
+                default:
+                    unread = 0;
+            }
+        } else {
+            unread = $globalUnreadCount;
+        }
+    }
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
@@ -180,7 +213,7 @@
 
     {#if $numberOfThreadsStore > 0}
         <div class="section-selector">
-            <ChatsButton on:click={() => setView("chats")} selected={view === "chats"} />
+            <ChatsButton on:click={() => setView("chats")} {unread} selected={view === "chats"} />
             <ThreadsButton on:click={() => setView("threads")} selected={view === "threads"} />
         </div>
     {/if}

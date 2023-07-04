@@ -120,19 +120,15 @@
 
             confirming = false;
 
-            const privatePromise = makePrivate ? makeCommunityPrivate() : Promise.resolve(true);
-
-            return privatePromise
-                .then((success) => {
+            // TODO - this save *everything* whether it has changed or not - might be fine but could be optimised
+            return client
+                .saveCommunity(candidate, candidateRules)
+                .then((success: boolean) => {
                     if (success) {
-                        client.saveCommunity(candidate, candidateRules).then((success: boolean) => {
-                            if (success) {
-                                toastStore.showSuccessToast("communities.saved");
-                                dispatch("close");
-                            } else {
-                                toastStore.showFailureToast("communities.errors.saveFailed");
-                            }
-                        });
+                        toastStore.showSuccessToast("communities.saved");
+                        dispatch("close");
+                    } else {
+                        toastStore.showFailureToast("communities.errors.saveFailed");
                     }
                 })
                 .finally(() => (busy = false));
@@ -154,25 +150,6 @@
                 })
                 .finally(() => (busy = false));
         }
-    }
-
-    function makeCommunityPrivate(): Promise<boolean> {
-        if (!editing) return Promise.resolve(true);
-
-        return client.makeCommunityPrivate(candidate.id).then((success) => {
-            if (success) {
-                original = {
-                    ...original,
-                    public: candidate.public,
-                };
-                return true;
-            } else {
-                toastStore.showFailureToast(
-                    interpolateLevel("makeGroupPrivateFailed", candidate.level, true)
-                );
-                return false;
-            }
-        });
     }
 </script>
 

@@ -146,7 +146,6 @@ import {
     ThreadPreview,
     ThreadPreviewsResponse,
     ChangeRoleResponse,
-    MakeGroupPrivateResponse,
     RegisterPollVoteResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
@@ -171,7 +170,6 @@ import type {
     ApiThreadPreviewsResponse,
     ApiThreadPreview,
     ApiChangeRoleResponse,
-    ApiMakePrivateResponse,
     ApiRegisterPollVoteResponse,
 } from "../group/candid/idl";
 import type {
@@ -199,7 +197,6 @@ import type {
     ApiThreadPreviewsResponse as ApiChannelThreadPreviewsResponse,
     ApiRegisterPollVoteResponse as ApiRegisterChannelPollVoteResponse,
     ApiChangeChannelRoleResponse,
-    ApiMakeChannelPrivateResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 
@@ -1613,7 +1610,10 @@ export function updateGroupResponse(
         "UserNotInChannel" in candid ||
         "ChannelNotFound" in candid ||
         "UserNotInCommunity" in candid ||
-        "CommunityFrozen" in candid
+        "CommunityFrozen" in candid ||
+        "CannotMakeChannelPublic" in candid ||
+        "CannotMakeGroupPublic" in candid ||
+        "CannotMakeDefaultChannelPrivate" in candid
     ) {
         console.warn("UpdateGroupResponse failed with: ", candid);
         return "failure";
@@ -1754,6 +1754,8 @@ export function groupDetailsResponse(
         "CallerNotInGroup" in candid ||
         "UserNotInChannel" in candid ||
         "UserNotInCommunity" in candid ||
+        "PrivateCommunity" in candid ||
+        "PrivateChannel" in candid ||
         "ChannelNotFound" in candid
     ) {
         return "failure";
@@ -1941,17 +1943,6 @@ export function changeRoleResponse(
         return "success";
     } else {
         console.warn("ChangeRoleResponse failed with: ", candid);
-        return "failure";
-    }
-}
-
-export function makeGroupPrivateResponse(
-    candid: ApiMakePrivateResponse | ApiMakeChannelPrivateResponse
-): MakeGroupPrivateResponse {
-    if ("Success" in candid) {
-        return "success";
-    } else {
-        console.warn("MakeGroupPrivateResponse failed with: ", candid);
         return "failure";
     }
 }
