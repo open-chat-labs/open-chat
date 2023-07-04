@@ -36,12 +36,14 @@ fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> Respo
                 }
             } else {
                 // Mute (or unmute) all channels
-                state.data.channels.iter_mut().any(|channel| {
-                    matches!(
-                        channel.mute_notifications(args.mute, member.user_id, now),
-                        MuteChannelResult::Success
-                    )
-                })
+                let mut updated = false;
+                for channel in state.data.channels.iter_mut() {
+                    let result = channel.mute_notifications(args.mute, member.user_id, now);
+                    if matches!(result, MuteChannelResult::Success) {
+                        updated = true;
+                    }
+                }
+                updated
             };
 
             if updated {
