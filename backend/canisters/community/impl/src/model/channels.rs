@@ -44,6 +44,31 @@ impl Channels {
         self.channels.remove(&channel_id)
     }
 
+    pub fn get(&self, channel_id: &ChannelId) -> Option<&Channel> {
+        self.channels.get(channel_id)
+    }
+
+    pub fn get_mut(&mut self, channel_id: &ChannelId) -> Option<&mut Channel> {
+        self.channels.get_mut(channel_id)
+    }
+
+    pub fn default_channel_ids(&self) -> Vec<ChannelId> {
+        self.channels
+            .iter()
+            .filter(|(_, c)| c.is_default.value)
+            .map(|(id, _)| id)
+            .copied()
+            .collect()
+    }
+
+    pub fn default_channels(&self) -> Vec<&Channel> {
+        self.channels
+            .iter()
+            .filter(|(_, c)| c.is_default.value)
+            .map(|(_, c)| c)
+            .collect()
+    }
+
     pub fn add_default_channel(&mut self, channel_id: ChannelId, now: TimestampMillis) -> AddDefaultChannelResult {
         if let Some(channel) = self.channels.get_mut(&channel_id) {
             if channel.chat.is_public {
@@ -72,31 +97,6 @@ impl Channels {
         } else {
             RemoveDefaultChannelResult::NotFound
         }
-    }
-
-    pub fn get(&self, channel_id: &ChannelId) -> Option<&Channel> {
-        self.channels.get(channel_id)
-    }
-
-    pub fn get_mut(&mut self, channel_id: &ChannelId) -> Option<&mut Channel> {
-        self.channels.get_mut(channel_id)
-    }
-
-    pub fn default_channel_ids(&self) -> Vec<ChannelId> {
-        self.channels
-            .iter()
-            .filter(|(_, c)| c.is_default.value)
-            .map(|(id, _)| id)
-            .copied()
-            .collect()
-    }
-
-    pub fn default_channels(&self) -> Vec<&Channel> {
-        self.channels
-            .iter()
-            .filter(|(_, c)| c.is_default.value)
-            .map(|(_, c)| c)
-            .collect()
     }
 
     pub fn remove_member(&mut self, user_id: UserId) -> HashMap<ChannelId, GroupMemberInternal> {
