@@ -5,7 +5,7 @@ use types::CommunityId;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub community_id: CommunityId,
-    pub tags: u32,
+    pub flags: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -14,6 +14,6 @@ pub enum Response {
     Unchanged,
     CommunityNotFound,
     NotAuthorized,
-    InvalidTags,
+    InvalidFlags,
     InternalError(String),
 }

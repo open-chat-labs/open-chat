@@ -17,7 +17,7 @@ pub mod delete_frozen_group;
 pub mod freeze_community;
 pub mod freeze_group;
 pub mod mark_local_group_index_full;
-pub mod set_community_moderation_tags;
+pub mod set_community_moderation_flags;
 pub mod set_community_upgrade_concurrency;
 pub mod set_group_upgrade_concurrency;
 pub mod set_max_concurrent_community_canister_upgrades;

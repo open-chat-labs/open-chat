@@ -7,7 +7,7 @@ pub struct Args {
     pub search_term: Option<String>,
     pub page_index: u32,
     pub page_size: u8,
-    pub exclude_moderation_tags: Option<u32>,
+    pub exclude_moderation_flags: Option<u32>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -16,7 +16,7 @@ pub enum Response {
     TermTooShort(u8),
     TermTooLong(u8),
     InvalidTerm,
-    InvalidTags,
+    InvalidFlags,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

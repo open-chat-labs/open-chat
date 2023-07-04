@@ -78,7 +78,7 @@ type ExploreCommunitiesArgs = record {
     search_term : opt text;
     page_index : nat32;
     page_size : nat8;
-    exclude_moderation_tags : opt nat32;
+    exclude_moderation_flags : opt nat32;
 };
 
 type ExploreCommunitiesResponse = variant {
@@ -86,7 +86,7 @@ type ExploreCommunitiesResponse = variant {
     TermTooShort : nat8;
     TermTooLong : nat8;
     InvalidTerm;
-    InvalidTags;
+    InvalidFlags;
 };
 
 type ExploreCommunitiesSuccess = record {
@@ -228,16 +228,16 @@ type RemoveHotGroupExclusionResponse = variant {
     InternalError : text;
 };
 
-type SetCommunityModerationTagsArgs = record {
+type SetCommunityModerationFlagsArgs = record {
     community_id : CommunityId;
     tags : nat32;
 };
 
-type SetCommunityModerationTagsResponse = variant {
+type SetCommunityModerationFlagsResponse = variant {
     Success;
     Unchanged;
     CommunityNotFound;
-    InvalidTags;
+    InvalidFlags;
     NotAuthorized;
     InternalError : text;
 };
@@ -268,7 +268,7 @@ service : {
     delete_frozen_group : (DeleteFrozenGroupArgs) -> (DeleteFrozenGroupResponse);
     add_hot_group_exclusion : (AddHotGroupExclusionArgs) -> (AddHotGroupExclusionResponse);
     remove_hot_group_exclusion : (RemoveHotGroupExclusionArgs) -> (RemoveHotGroupExclusionResponse);
-    set_community_moderation_tags : (SetCommunityModerationTagsArgs) -> (SetCommunityModerationTagsResponse);
+    set_community_moderation_flags : (SetCommunityModerationFlagsArgs) -> (SetCommunityModerationFlagsResponse);
 
     // Only callable by "platform operators"
     set_group_upgrade_concurrency : (SetUpgradeConcurrencyArgs) -> (SetUpgradeConcurrencyResponse);
