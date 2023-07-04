@@ -10,7 +10,7 @@ use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
 use ic_cdk_macros::update;
 use rand::Rng;
-use types::ChannelId;
+use types::{ChannelId, Timestamped};
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
 use super::c2c_join_community::c2c_join_community_impl;
@@ -86,6 +86,7 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
                 RulesValidationError::TooLong(l) => RulesTooLong(l),
             }
         } else {
+            let now = state.env.now();
             let channel_id: ChannelId = state.env.rng().gen();
             let chat = GroupChatCore::new(
                 member.user_id,
@@ -99,9 +100,13 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.permissions.unwrap_or_default(),
                 args.gate,
                 args.events_ttl,
-                state.env.now(),
+                now,
             );
-            state.data.channels.add(Channel { id: channel_id, chat });
+            state.data.channels.add(Channel {
+                id: channel_id,
+                chat,
+                is_default: Timestamped::new(args.is_default, now),
+            });
             member.channels.insert(channel_id);
             handle_activity_notification(state);
             Success(SuccessResult { channel_id })

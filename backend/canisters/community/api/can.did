@@ -399,6 +399,7 @@ type CreateChannelArgs = record {
     permissions : opt GroupPermissions;
     events_ttl : opt Milliseconds;
     gate : opt AccessGate;
+    is_default : bool;
 };
 
 type CreateChannelResponse = variant {

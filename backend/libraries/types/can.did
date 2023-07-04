@@ -355,6 +355,7 @@ type CommunityCanisterChannelSummary = record {
     next_message_expiry : opt TimestampMillis;
     gate : opt AccessGate;
     membership : opt ChannelMembership;
+    is_default : bool;
 };
 
 type ChannelMembership = record {
@@ -409,6 +410,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
     membership : opt ChannelMembershipUpdates;
+    is_default : opt bool;
 };
 
 type ChannelMembershipUpdates = record {
@@ -1365,6 +1367,7 @@ type ChannelMatch = record {
     avatar_id : opt nat;
     member_count : nat32;
     gate : opt AccessGate;
+    is_default : bool;
 };
 
 type ThreadPreview = record {

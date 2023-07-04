@@ -43,8 +43,10 @@ fn manage_default_channels_impl(args: Args, state: &mut RuntimeState) -> Respons
         let mut added = Vec::new();
         let mut removed = Vec::new();
 
+        let now = state.env.now();
+
         for channel_id in args.to_add.iter() {
-            match state.data.channels.add_default_channel(*channel_id) {
+            match state.data.channels.add_default_channel(*channel_id, now) {
                 AddDefaultChannelResult::Added => added.push(*channel_id),
                 AddDefaultChannelResult::AlreadyDefault => (),
                 AddDefaultChannelResult::Private => failed_channels.private.push(*channel_id),
@@ -53,7 +55,7 @@ fn manage_default_channels_impl(args: Args, state: &mut RuntimeState) -> Respons
         }
 
         for channel_id in args.to_remove.iter() {
-            match state.data.channels.remove_default_channel(channel_id) {
+            match state.data.channels.remove_default_channel(channel_id, now) {
                 RemoveDefaultChannelResult::Removed => removed.push(*channel_id),
                 RemoveDefaultChannelResult::NotDefault => (),
                 RemoveDefaultChannelResult::NotFound => failed_channels.not_found.push(*channel_id),
@@ -63,8 +65,6 @@ fn manage_default_channels_impl(args: Args, state: &mut RuntimeState) -> Respons
         let changed = !added.is_empty() || !removed.is_empty();
 
         if changed {
-            let now = state.env.now();
-
             let event = DefaultChannelsChanged {
                 added,
                 removed,
