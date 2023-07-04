@@ -29,7 +29,6 @@ import {
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
     SendMessageResponse,
-    ToggleMuteChannelNotificationsResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
     UnsupportedValueError,
@@ -54,7 +53,6 @@ import type {
     ApiSendMessageResponse,
     ApiSummaryResponse,
     ApiSummaryUpdatesResponse,
-    ApiToggleMuteChannelNotificationsResponse,
     ApiToggleMuteNotificationsResponse,
     ApiUnblockUserResponse,
     ApiUpdateCommunityResponse,
@@ -642,17 +640,6 @@ export function channelMembershipUpdates(
             .map(mention),
         myMetrics: optional(candid.my_metrics, chatMetrics),
     };
-}
-
-export function toggleMuteChannelNotificationsResponse(
-    candid: ApiToggleMuteChannelNotificationsResponse
-): ToggleMuteChannelNotificationsResponse {
-    if ("Success" in candid) {
-        return CommonResponses.success();
-    } else {
-        console.warn("ToggleMuteChannelNotifications failed with", candid);
-        return CommonResponses.failure();
-    }
 }
 
 export function toggleMuteNotificationsResponse(

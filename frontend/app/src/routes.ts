@@ -114,22 +114,31 @@ export function selectedCommunityRoute(ctx: PageJS.Context): RouteParams {
     };
 }
 
-export function selectedChannelRoute(ctx: PageJS.Context): RouteParams {
-    const $qs = qs(ctx);
-    return {
-        kind: "selected_channel_route",
-        chatId: {
-            kind: "channel",
-            communityId: ctx.params["communityId"],
-            channelId: ctx.params["channelId"],
-        },
-        communityId: { kind: "community", communityId: ctx.params["communityId"] },
-        messageIndex: ctx.params["messageIndex"] ? Number(ctx.params["messageIndex"]) : undefined,
-        threadMessageIndex: ctx.params["threadMessageIndex"]
-            ? Number(ctx.params["threadMessageIndex"])
-            : undefined,
-        open: $qs.get("open") === "true",
-        scope: { kind: "community", id: createCommunityIdentifier(ctx.params["communityId"]) },
+export function selectedChannelRoute(fav: boolean) {
+    return (ctx: PageJS.Context): RouteParams => {
+        const $qs = qs(ctx);
+        return {
+            kind: "selected_channel_route",
+            chatId: {
+                kind: "channel",
+                communityId: ctx.params["communityId"],
+                channelId: ctx.params["channelId"],
+            },
+            communityId: { kind: "community", communityId: ctx.params["communityId"] },
+            messageIndex: ctx.params["messageIndex"]
+                ? Number(ctx.params["messageIndex"])
+                : undefined,
+            threadMessageIndex: ctx.params["threadMessageIndex"]
+                ? Number(ctx.params["threadMessageIndex"])
+                : undefined,
+            open: $qs.get("open") === "true",
+            scope: fav
+                ? {
+                      kind: "favourite",
+                      communityId: createCommunityIdentifier(ctx.params["communityId"]),
+                  }
+                : { kind: "community", id: createCommunityIdentifier(ctx.params["communityId"]) },
+        };
     };
 }
 

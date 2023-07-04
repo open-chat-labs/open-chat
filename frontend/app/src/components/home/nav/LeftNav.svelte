@@ -46,17 +46,14 @@
     }
 
     function directChats() {
-        console.log("TODO - direct chats");
         page("/user");
     }
 
     function groupChats() {
-        console.log("TODO - group chats");
         page("/group");
     }
 
     function favouriteChats() {
-        console.log("TODO - favourite chats");
         page("/favourite");
     }
 
@@ -88,7 +85,7 @@
                         </HoverIcon>
                     </span>
                     <span slot="menu">
-                        <MainMenu on:newGroup on:halloffame on:logout on:upgrade />
+                        <MainMenu on:halloffame on:logout on:upgrade />
                     </span>
                 </MenuIcon>
             </div>
@@ -138,12 +135,13 @@
     <div class="middle">
         {#each $communities as community, i}
             <LeftNavItem
-                selected={community === $selectedCommunity}
+                selected={community === $selectedCommunity && $chatListScope.kind !== "favourite"}
                 unread={0}
                 label={community.name}
                 on:click={() => selectCommunity(community)}>
                 <Avatar
-                    selected={community === $selectedCommunity}
+                    selected={community === $selectedCommunity &&
+                        $chatListScope.kind !== "favourite"}
                     url={client.communityAvatarUrl(community.avatar)}
                     size={avatarSize} />
                 <div slot="menu">

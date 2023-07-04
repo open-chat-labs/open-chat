@@ -29,9 +29,11 @@
     let loading = false;
     let confirmReset = false;
 
+    $: chatListScope = client.chatListScope;
     $: link =
-        `${window.location.origin}${routeForChatIdentifier(group.id)}/?ref=${client.user.userId}` +
-        (!group.public ? `&code=${code}` : "");
+        `${window.location.origin}${routeForChatIdentifier($chatListScope.kind, group.id)}/?ref=${
+            client.user.userId
+        }` + (!group.public ? `&code=${code}` : "");
 
     $: spinner = loading && code === undefined;
 

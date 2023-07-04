@@ -26,12 +26,13 @@
 
     let debug = false;
     $: userStore = client.userStore;
+    $: chatListScope = client.chatListScope;
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
 
     function getUrl() {
         const path = [
-            routeForChatIdentifier(repliesTo.sourceContext.chatId),
+            routeForChatIdentifier($chatListScope.kind, repliesTo.sourceContext.chatId),
             repliesTo.sourceContext.threadRootMessageIndex ?? repliesTo.messageIndex,
         ];
         if (repliesTo.sourceContext.threadRootMessageIndex !== undefined) {

@@ -3903,8 +3903,11 @@ export class OpenChat extends OpenChatAgentWorker {
 
                 this.updatePinnedChatStores(chatsResponse.state);
 
-                // TODO - we need to sort out favourites here
-                setGlobalState(chatsResponse.state.communities, updatedChats, []);
+                setGlobalState(
+                    chatsResponse.state.communities,
+                    updatedChats,
+                    chatsResponse.state.favouriteChats
+                );
 
                 if (this._liveState.uninitializedDirectChats.size > 0) {
                     for (const chat of updatedChats) {

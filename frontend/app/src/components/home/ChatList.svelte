@@ -28,6 +28,9 @@
     import { discoverHotGroupsDismissed } from "../../stores/settings";
     import { communitiesEnabled } from "../../utils/features";
     import { pushRightPanelHistory } from "../../stores/rightPanel";
+    import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
+    import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
+    import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -93,7 +96,7 @@
      * the routing will take care of the rest
      */
     function selectGroup({ chatId }: GroupMatch): void {
-        page(routeForChatIdentifier(chatId));
+        page(routeForChatIdentifier($chatListScope.kind, chatId));
         closeSearch();
     }
 
@@ -103,7 +106,7 @@
 
     function chatSelected(ev: CustomEvent<ChatSummaryType>): void {
         chatScrollTop = chatListElement.scrollTop;
-        const url = routeForChatIdentifier(ev.detail.id);
+        const url = routeForChatIdentifier($chatListScope.kind, ev.detail.id);
         page(url);
         closeSearch();
     }
@@ -144,14 +147,22 @@
 </script>
 
 {#if user}
-    {#if $communitiesEnabled && $selectedCommunity}
-        <SelectedCommunityHeader
-            community={$selectedCommunity}
-            on:leaveCommunity
-            on:deleteCommunity
-            on:editCommunity
-            on:communityDetails
-            on:newChannel />
+    {#if $communitiesEnabled}
+        {#if $chatListScope.kind === "favourite"}
+            <FavouriteChatsHeader />
+        {:else if $chatListScope.kind === "group_chat"}
+            <GroupChatsHeader on:newGroup />
+        {:else if $chatListScope.kind === "direct_chat"}
+            <DirectChatsHeader />
+        {:else if $selectedCommunity && $chatListScope.kind === "community"}
+            <SelectedCommunityHeader
+                community={$selectedCommunity}
+                on:leaveCommunity
+                on:deleteCommunity
+                on:editCommunity
+                on:communityDetails
+                on:newChannel />
+        {/if}
     {:else}
         <CurrentUser
             on:wallet

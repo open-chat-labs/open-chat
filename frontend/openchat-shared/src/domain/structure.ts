@@ -11,6 +11,6 @@ export type ChatListScope = GroupScope | DirectScope | FavouriteScope | Communit
 
 export type GroupScope = { kind: "group_chat" };
 export type DirectScope = { kind: "direct_chat" };
-export type FavouriteScope = { kind: "favourite" };
+export type FavouriteScope = { kind: "favourite"; communityId?: CommunityIdentifier };
 export type CommunityScope = { kind: "community"; id: CommunityIdentifier };
 export type NullScope = { kind: "none" };

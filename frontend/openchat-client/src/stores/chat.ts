@@ -45,7 +45,6 @@ import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
 import type { OpenChat } from "../openchat";
-import { selectedCommunity } from "./community";
 import { chatListScopeStore, globalStateStore } from "./global";
 import { createDerivedPropStore } from "./derived";
 
@@ -54,53 +53,54 @@ export const currentUserStore = immutableStore<CreatedUser | undefined>(undefine
 const communitiesEnabled = localStorage.getItem("openchat_communities_enabled") === "true";
 
 export const myServerChatSummariesStore = derived(
-    [globalStateStore, selectedCommunity, chatListScopeStore],
-    ([$allState, $selectedCommunity, $chatListScope]) => {
-        if ($selectedCommunity === undefined) {
-            if (communitiesEnabled) {
-                if ($chatListScope.kind === "group_chat") {
-                    return $allState.groupChats;
-                } else if ($chatListScope.kind === "direct_chat") {
-                    return $allState.directChats;
-                } else if ($chatListScope.kind === "favourite") {
-                    const allChannels = ChatMap.fromList(
-                        $allState.communities.values().flatMap((c) => c.channels)
-                    );
-                    return $allState.favourites.values().reduce((favs, chatId) => {
-                        switch (chatId.kind) {
-                            case "direct_chat":
-                                const directChat = $allState.directChats.get(chatId);
-                                if (directChat !== undefined) {
-                                    favs.set(directChat.id, directChat);
-                                }
-                                break;
-                            case "group_chat":
-                                const groupChat = $allState.groupChats.get(chatId);
-                                if (groupChat !== undefined) {
-                                    favs.set(groupChat.id, groupChat);
-                                }
-                                break;
-                            case "channel":
-                                const channel = allChannels.get(chatId);
-                                if (channel !== undefined) {
-                                    favs.set(channel.id, channel);
-                                }
-                                break;
-                        }
-                        return favs;
-                    }, new ChatMap<ChatSummary>());
-                } else {
-                    return new ChatMap<ChatSummary>();
-                }
+    [globalStateStore, chatListScopeStore],
+    ([$allState, $chatListScope]) => {
+        if (communitiesEnabled) {
+            if ($chatListScope.kind === "community") {
+                const community = $allState.communities.get($chatListScope.id);
+                return community
+                    ? ChatMap.fromList(community.channels)
+                    : new ChatMap<ChatSummary>();
+            } else if ($chatListScope.kind === "group_chat") {
+                return $allState.groupChats;
+            } else if ($chatListScope.kind === "direct_chat") {
+                return $allState.directChats;
+            } else if ($chatListScope.kind === "favourite") {
+                const allChannels = ChatMap.fromList(
+                    $allState.communities.values().flatMap((c) => c.channels)
+                );
+                return $allState.favourites.values().reduce((favs, chatId) => {
+                    switch (chatId.kind) {
+                        case "direct_chat":
+                            const directChat = $allState.directChats.get(chatId);
+                            if (directChat !== undefined) {
+                                favs.set(directChat.id, directChat);
+                            }
+                            break;
+                        case "group_chat":
+                            const groupChat = $allState.groupChats.get(chatId);
+                            if (groupChat !== undefined) {
+                                favs.set(groupChat.id, groupChat);
+                            }
+                            break;
+                        case "channel":
+                            const channel = allChannels.get(chatId);
+                            if (channel !== undefined) {
+                                favs.set(channel.id, channel);
+                            }
+                            break;
+                    }
+                    return favs;
+                }, new ChatMap<ChatSummary>());
             } else {
-                const globalChats = [
-                    ...$allState.directChats.values(),
-                    ...$allState.groupChats.values(),
-                ];
-                return ChatMap.fromList(globalChats);
+                return new ChatMap<ChatSummary>();
             }
         } else {
-            return ChatMap.fromList($selectedCommunity.channels);
+            const globalChats = [
+                ...$allState.directChats.values(),
+                ...$allState.groupChats.values(),
+            ];
+            return ChatMap.fromList(globalChats);
         }
     }
 );

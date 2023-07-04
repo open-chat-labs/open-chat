@@ -17,7 +17,6 @@
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import SuspendModal from "./SuspendModal.svelte";
-    import { defaultStrategy } from "@dfinity/agent/lib/cjs/polling";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
