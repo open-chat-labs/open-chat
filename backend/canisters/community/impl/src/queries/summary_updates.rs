@@ -57,9 +57,6 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         && channels_removed.is_empty()
         && state.data.events.latest_event_timestamp() <= args.updates_since
         && state.data.cached_chat_metrics.timestamp <= args.updates_since
-        && member
-            .map(|m| m.notifications_muted.timestamp <= args.updates_since)
-            .unwrap_or_default()
     {
         return SuccessNoUpdates;
     }
@@ -81,7 +78,6 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let membership = member.map(|m| CommunityMembershipUpdates {
         channels_removed,
         role: updates_from_events.role_changed.then_some(m.role),
-        notifications_muted: m.notifications_muted.if_set_after(args.updates_since).copied(),
     });
 
     Success(CommunityCanisterCommunitySummaryUpdates {
