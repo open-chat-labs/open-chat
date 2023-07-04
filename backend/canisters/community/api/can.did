@@ -557,7 +557,7 @@ type ManageDefaultChannelsArgs = record {
 
 type ManageDefaultChannelsResponse = variant {
     Success;
-    PartialSucesss : FailedChannels;
+    PartialSuccess : FailedChannels;
     Failed : FailedChannels;
     CommunityFrozen;
     UserNotInCommunity;
