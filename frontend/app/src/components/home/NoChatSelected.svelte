@@ -68,6 +68,9 @@
 {/if}
 
 <style lang="scss">
+    :global(.wrapper .card) {
+        min-width: toRem(280);
+    }
     .wrapper {
         display: flex;
         flex-direction: column;

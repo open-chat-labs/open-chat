@@ -895,6 +895,7 @@
         "mustHaveOneChannel": "You must create at least one default channel",
         "mustHaveUniqueChannels": "You cannot have duplicate default channel names",
         "noBlankChannels": "All default channels must have a name",
+        "noInvalidChannels": "All default channels must be between {min} and {max} characters",
         "created": "Your community has been created successfully",
         "saved": "Your community has been updated successfully",
         "usersInvited": "Users have been invited to your community",
