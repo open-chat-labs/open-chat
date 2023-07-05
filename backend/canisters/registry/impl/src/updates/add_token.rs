@@ -73,11 +73,13 @@ async fn get_logo<R: Runtime>(
 ) -> Result<Option<String>, (i32, String)> {
     let metadata = client.metadata().await?;
 
-    let logo = metadata
-        .into_iter()
-        .find(|(k, _)| k == "icrc1:logo")
-        .map(|(_, v)| if let MetadataValue::Text(t) = v { Some(t) } else { None })
-        .flatten();
+    let logo = metadata.into_iter().find(|(k, _)| k == "icrc1:logo").and_then(|(_, v)| {
+        if let MetadataValue::Text(t) = v {
+            Some(t)
+        } else {
+            None
+        }
+    });
 
     if logo.is_some() {
         return Ok(logo);
