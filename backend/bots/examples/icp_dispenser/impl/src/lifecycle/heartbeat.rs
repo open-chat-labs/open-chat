@@ -43,7 +43,7 @@ mod process_pending_actions {
                         recipient,
                         transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(
                             nns::CompletedCryptoTransaction {
-                                // ledger: Cryptocurrency::InternetComputer.ledger_canister_id(),
+                                ledger: Cryptocurrency::InternetComputer.ledger_canister_id(),
                                 token: Cryptocurrency::InternetComputer,
                                 amount: transfer_args.amount,
                                 fee: transfer_args.fee,

@@ -104,7 +104,7 @@ async fn process_action(action: Action) {
                                     recipient: user_id,
                                     transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::SNS(
                                         sns::CompletedCryptoTransaction {
-                                            // ledger: Cryptocurrency::CKBTC.ledger_canister_id(),
+                                            ledger: Cryptocurrency::CKBTC.ledger_canister_id(),
                                             token: Cryptocurrency::CKBTC,
                                             amount: Tokens::from_e8s(amount),
                                             fee: Tokens::from_e8s(10),
