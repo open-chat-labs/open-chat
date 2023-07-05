@@ -149,7 +149,6 @@ import {
     DirectChatIdentifier,
     GroupChatIdentifier,
     ChatMap,
-    chatIdentifierToString,
     MessageContext,
     chatIdentifiersEqual,
     CommunitySummary,
@@ -1928,17 +1927,11 @@ export class OpenChatAgent extends EventTarget {
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        if (chatId.kind === "channel") {
-            throw new Error("TODO - not implemented");
-        }
-        return this.userClient.archiveChat(chatIdentifierToString(chatId));
+        return this.userClient.archiveChat(chatId);
     }
 
     unarchiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        if (chatId.kind === "channel") {
-            throw new Error("TODO - not implemented");
-        }
-        return this.userClient.unarchiveChat(chatIdentifierToString(chatId));
+        return this.userClient.unarchiveChat(chatId);
     }
 
     registerProposalVote(

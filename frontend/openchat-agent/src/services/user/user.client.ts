@@ -910,19 +910,21 @@ export class UserClient extends CandidService {
         }
     }
 
-    archiveChat(chatId: string): Promise<ArchiveChatResponse> {
+    archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
         return this.handleResponse(
-            this.userService.archive_chat({
-                chat_id: Principal.fromText(chatId),
+            this.userService.archive_unarchive_chats({
+                to_archive: [apiChatIdentifier(chatId)],
+                to_unarchive: [],
             }),
             archiveChatResponse
         );
     }
 
-    unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
+    unarchiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
         return this.handleResponse(
-            this.userService.unarchive_chat({
-                chat_id: Principal.fromText(chatId),
+            this.userService.archive_unarchive_chats({
+                to_unarchive: [apiChatIdentifier(chatId)],
+                to_archive: [],
             }),
             archiveChatResponse
         );
