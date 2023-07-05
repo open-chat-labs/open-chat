@@ -65,10 +65,10 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
         Event::OpenChatBotMessage(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
-                LocalUserIndexEvent::OpenChatBotMessage(OpenChatBotMessage {
+                LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
                     user_id: ev.user_id,
                     message: ev.message,
-                }),
+                })),
             );
         }
     }
@@ -120,14 +120,14 @@ fn process_new_user(
         );
         state.push_event_to_local_user_index(
             user_id,
-            LocalUserIndexEvent::OpenChatBotMessage(OpenChatBotMessage {
+            LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
                 user_id,
                 message: MessageContent::Text(TextContent {
                     text: format!("Unfortunately the username \"{original_username}\" was taken so your username has been changed to \"{username}\".
 
 You can change your username at any time by clicking \"Profile settings\" from the main menu.")
                 }),
-            }),
+            })),
         );
     }
 
