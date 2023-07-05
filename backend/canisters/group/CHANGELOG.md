@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Refactored `claim_prize` ([#3854](https://github.com/open-chat-labs/open-chat/pull/3854))
 - Add `ledger` to pending crypto transactions ([#3866](https://github.com/open-chat-labs/open-chat/pull/3866))
 - Extended `update_group_v2` to set group visibility ([#3880](https://github.com/open-chat-labs/open-chat/pull/3880))
+- Add `ledger` field to completed crypto transactions ([#3912](https://github.com/open-chat-labs/open-chat/pull/3912))
 
 ### Removed
 

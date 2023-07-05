@@ -107,7 +107,7 @@ fn send_oc_bot_messages(
         MessageContent::Crypto(CryptoContent {
             recipient: user_id,
             transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::SNS(sns::CompletedCryptoTransaction {
-                // ledger: Cryptocurrency::CKBTC.ledger_canister_id(),
+                ledger: Cryptocurrency::CKBTC.ledger_canister_id(),
                 token: Cryptocurrency::CKBTC,
                 amount,
                 fee: Tokens::from_e8s(10),

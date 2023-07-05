@@ -1,3 +1,3 @@
-Website -> Group/User
+Group/User -> Website
 
-Website must go out before Group/User because the new `ledger` field has been added to pending crypto transactions.
+Group/User canisters must go out before the website because the new `ledger` field has been added to completed crypto transactions.
