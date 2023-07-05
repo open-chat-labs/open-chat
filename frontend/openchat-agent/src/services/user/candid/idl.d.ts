@@ -134,6 +134,7 @@ import {
     ManageFavouriteChatsResponse,
     LeaveCommunityResponse,
     DeleteCommunityResponse,
+    ArchiveUnarchiveChatsResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -270,6 +271,7 @@ export {
     ManageFavouriteChatsResponse as ApiManageFavouriteChatsResponse,
     LeaveCommunityResponse as ApiLeaveCommunityResponse,
     DeleteCommunityResponse as ApiDeleteCommunityResponse,
+    ArchiveUnarchiveChatsResponse as ApiArchiveUnarchiveChatsResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
