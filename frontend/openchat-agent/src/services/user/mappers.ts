@@ -33,7 +33,6 @@ import type {
     ApiSnsCompletedCryptoTransaction,
     ApiIcrc1FailedCryptoTransaction,
     ApiIcrc1CompletedCryptoTransaction,
-    ApiArchiveChatResponse,
     ApiIcrc1Account,
     ApiDirectChatSummaryUpdates,
     ApiDeletedDirectMessageResponse,
@@ -58,6 +57,7 @@ import type {
     ApiUnpinV2ChatResponse,
     ApiLeaveCommunityResponse,
     ApiDeleteCommunityResponse,
+    ApiArchiveUnarchiveChatsResponse,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -279,16 +279,13 @@ export function unpinChatResponse(
     }
 }
 
-export function archiveChatResponse(candid: ApiArchiveChatResponse): ArchiveChatResponse {
+export function archiveChatResponse(candid: ApiArchiveUnarchiveChatsResponse): ArchiveChatResponse {
     if ("Success" in candid) {
         return "success";
+    } else {
+        console.warn("Archive/Unarchive chat failed with ", candid);
+        return "failure";
     }
-
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiArchiveChatResponse type received", candid);
 }
 
 export function sendMessageWithTransferToGroupResponse(

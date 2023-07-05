@@ -158,7 +158,7 @@ export type PinChatResponse = "success" | "failure";
 
 export type UnpinChatResponse = "success" | "failure";
 
-export type ArchiveChatResponse = "chat_not_found" | "success";
+export type ArchiveChatResponse = "failure" | "success";
 
 export type ManageFavouritesResponse = "success" | "failure";
 

@@ -489,7 +489,7 @@
             }
         });
         if (ev.detail === $selectedChatId) {
-            page("/");
+            page(routeForScope($chatListScope));
         }
     }
 
