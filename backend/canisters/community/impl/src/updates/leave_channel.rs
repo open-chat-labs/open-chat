@@ -24,9 +24,11 @@ fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            match channel.chat.leave(member.user_id, state.env.now()) {
+            let now = state.env.now();
+
+            match channel.chat.leave(member.user_id, now) {
                 LeaveResult::Success => {
-                    member.channels.remove(&args.channel_id);
+                    member.leave(channel.id, now);
                     handle_activity_notification(state);
                     Success
                 }
