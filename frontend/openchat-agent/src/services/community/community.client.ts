@@ -72,7 +72,6 @@ import type {
     EventsResponse,
     GroupChatEvent,
     ChatPermissions,
-    JoinChannelResponse,
     MemberRole,
     Message,
     RemoveChannelMemberResponse,
@@ -112,6 +111,7 @@ import type {
     ChannelSummaryResponse,
     RegisterPollVoteResponse,
     ToggleMuteNotificationResponse,
+    JoinGroupResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -604,7 +604,7 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(this.service.invite_code({}), inviteCodeResponse);
     }
 
-    joinChannel(chatId: ChannelIdentifier): Promise<JoinChannelResponse> {
+    joinChannel(chatId: ChannelIdentifier): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.service.join_channel({
                 channel_id: BigInt(chatId.channelId),

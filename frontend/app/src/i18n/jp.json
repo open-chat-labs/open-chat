@@ -156,7 +156,6 @@
     "blocked": "ブロック",
     "previewing": "グループのプレビュー",
     "userIsBlocked": "メッセージ送信のブロックを解除する",
-    "leaveGroup": "グループから退会",
     "remove": "削除",
     "close": "閉じる",
     "save": "保存",
@@ -926,5 +925,6 @@
     "joinGroup": "{level}に参加する",
     "joinGroupFailed": "{level}に参加できません",
     "noAccess": "アクセスなし",
-    "noAccessText": "申し訳ありませんが、アクセスしようとしているコミュニティ、グループ、またはチャネルにアクセスすることができません。"
+    "noAccessText": "申し訳ありませんが、アクセスしようとしているコミュニティ、グループ、またはチャネルにアクセスすることができません。",
+    "leaveGroup": "{level}を離れる"
 }

@@ -8,13 +8,13 @@
         ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
-        GroupChatSummary,
         Member,
         Message,
         MessageAction,
         MessageContent,
         CreatedUser,
         OpenChat,
+        MultiUserChat,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
@@ -23,7 +23,7 @@
 
     export let blocked: boolean;
     export let preview: boolean;
-    export let joining: GroupChatSummary | undefined;
+    export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
     export let fileToAttach: MessageContent | undefined;
     export let editingEvent: EventWrapper<Message> | undefined;

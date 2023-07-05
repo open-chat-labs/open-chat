@@ -20,6 +20,7 @@ import type {
     Failure,
     CommunityFrozen,
     NoChange,
+    UserBlocked,
 } from "../response";
 import { emptyChatMetrics } from "../../utils";
 import type { CommunityIdentifier, CommunitySummary } from "../community";
@@ -1543,19 +1544,10 @@ export type UnblockUserResponse =
 export type LeaveGroupResponse = "success" | "owner_cannot_leave" | "failure";
 
 export type JoinGroupResponse =
-    | GroupChatSummary
-    | { kind: "blocked" }
-    | { kind: "group_not_found" }
-    | { kind: "not_invited" }
-    | { kind: "group_not_public" }
-    | { kind: "not_invited" }
-    | { kind: "already_in_group" }
-    | { kind: "not_super_admin" }
-    | { kind: "member_limit_reached" }
+    | (Success & { group: MultiUserChat })
     | GateCheckFailed
-    | UserSuspended
-    | ChatFrozen
-    | InternalError;
+    | UserBlocked
+    | Failure;
 
 export type InviteUsersResponse = "success" | "failure";
 

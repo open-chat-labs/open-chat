@@ -1511,13 +1511,18 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    async joinGroup(chatId: GroupChatIdentifier): Promise<JoinGroupResponse> {
-        const inviteCode = this.getProvidedInviteCode(chatId);
-        const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
-        return this.createLocalUserIndexClient(localUserIndex).joinGroup(
-            chatId.groupId,
-            inviteCode
-        );
+    async joinGroup(chatId: MultiUserChatIdentifier): Promise<JoinGroupResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                const inviteCode = this.getProvidedInviteCode(chatId);
+                const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
+                return this.createLocalUserIndexClient(localUserIndex).joinGroup(
+                    chatId.groupId,
+                    inviteCode
+                );
+            case "channel":
+                return this.communityClient(chatId.communityId).joinChannel(chatId);
+        }
     }
 
     async joinCommunity(id: CommunityIdentifier): Promise<JoinCommunityResponse> {
@@ -1766,7 +1771,8 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId.groupId).getPublicSummary();
     }
 
-    getGroupRules(chatId: GroupChatIdentifier): Promise<AccessRules | undefined> {
+    getGroupRules(chatId: MultiUserChatIdentifier): Promise<AccessRules | undefined> {
+        if (chatId.kind === "channel") return Promise.resolve({ enabled: false, text: "" }); //TODO sort this out
         return this.getGroupClient(chatId.groupId).getRules();
     }
 

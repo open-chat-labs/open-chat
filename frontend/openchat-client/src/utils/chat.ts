@@ -395,7 +395,7 @@ export function mergeLocalSummaryUpdates(
                 chat !== undefined &&
                 ((chat.kind === "direct_chat" &&
                     chat.dateCreated < localUpdate.removedAtTimestamp) ||
-                    (chat.kind === "group_chat" &&
+                    ((chat.kind === "group_chat" || chat.kind === "channel") &&
                         (chat.membership?.joined ?? BigInt(0)) < localUpdate.removedAtTimestamp))
             ) {
                 merged.delete(chatId);

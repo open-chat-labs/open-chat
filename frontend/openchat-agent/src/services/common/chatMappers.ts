@@ -147,6 +147,7 @@ import {
     ThreadPreviewsResponse,
     ChangeRoleResponse,
     RegisterPollVoteResponse,
+    JoinGroupResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -175,6 +176,7 @@ import type {
 import type {
     ApiGateCheckFailedReason,
     ApiCommunityCanisterCommunitySummary,
+    ApiJoinGroupResponse,
 } from "../localUserIndex/candid/idl";
 import type {
     ApiCommunityPermissionRole,
@@ -1966,5 +1968,20 @@ export function apiChatIdentifier(chatId: ChatIdentifier): ApiChat {
             return { Direct: Principal.fromText(chatId.userId) };
         case "channel":
             return { Channel: [Principal.fromText(chatId.communityId), BigInt(chatId.channelId)] };
+    }
+}
+
+export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {
+    if ("Success" in candid) {
+        return { kind: "success", group: groupChatSummary(candid.Success) };
+    } else if ("AlreadyInGroupV2" in candid) {
+        return { kind: "success", group: groupChatSummary(candid.AlreadyInGroupV2) };
+    } else if ("Blocked" in candid) {
+        return CommonResponses.userBlocked();
+    } else if ("GateCheckFailed" in candid) {
+        return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
+    } else {
+        console.warn("Join group failed with: ", candid);
+        return CommonResponses.failure();
     }
 }

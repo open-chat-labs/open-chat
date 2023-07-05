@@ -3,6 +3,7 @@
     import {
         AvatarSize,
         GroupChatSummary,
+        MultiUserChat,
         OpenChat,
         routeForChatIdentifier,
     } from "openchat-client";
@@ -22,7 +23,7 @@
     const dispatch = createEventDispatcher();
 
     export let group: GroupChatSummary;
-    export let joining: GroupChatSummary | undefined;
+    export let joining: MultiUserChat | undefined;
 
     $: chatListScope = client.chatListScope;
     $: chatSummariesStore = client.chatSummariesStore;

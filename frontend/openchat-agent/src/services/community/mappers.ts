@@ -21,7 +21,7 @@ import {
     EnableCommunityInviteCodeResponse,
     EventsResponse,
     GateCheckFailedReason,
-    JoinChannelResponse,
+    JoinGroupResponse,
     MemberRole,
     Message,
     RemoveChannelMemberResponse,
@@ -288,41 +288,22 @@ export function inviteCodeResponse(candid: ApiInviteCodeResponse): CommunityInvi
 export function joinChannelResponse(
     candid: ApiJoinChannelResponse,
     communityId: string
-): JoinChannelResponse {
-    if ("NotInvited" in candid) {
-        return { kind: "not_invited" };
-    }
-    if ("AlreadyInChannel" in candid) {
-        return { kind: "already_in_channel" };
-    }
-    if ("GateCheckFailed" in candid) {
-        return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
-    }
-    if ("ChannelNotFound" in candid) {
-        return CommonResponses.chatNotFound();
-    }
-    if ("UserLimitReached" in candid) {
-        return CommonResponses.userLimitReached();
-    }
+): JoinGroupResponse {
     if ("Success" in candid) {
-        return { kind: "success", channel: communityChannelSummary(candid.Success, communityId) };
-    }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity();
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended();
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen();
-    }
-    if ("InternalError" in candid) {
-        return CommonResponses.internalError();
-    }
-    if ("UserBlocked" in candid) {
+        return { kind: "success", group: communityChannelSummary(candid.Success, communityId) };
+    } else if ("AlreadyInChannel" in candid) {
+        return {
+            kind: "success",
+            group: communityChannelSummary(candid.AlreadyInChannel, communityId),
+        };
+    } else if ("UserBlocked" in candid) {
         return CommonResponses.userBlocked();
+    } else if ("GateCheckFailed" in candid) {
+        return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
+    } else {
+        console.warn("Join group failed with: ", candid);
+        return CommonResponses.failure();
     }
-    throw new UnsupportedValueError("Unexpected ApiJoinChannelResponse type received", candid);
 }
 
 export function localUserIndexResponse(candid: ApiLocalUserIndexResponse): string {

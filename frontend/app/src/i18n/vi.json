@@ -152,7 +152,6 @@
     "blocked": "Đã chặn",
     "previewing": "Xem qua nhóm",
     "userIsBlocked": "Bỏ chặn người dùng trước khi gửi tin nhắn",
-    "leaveGroup": "Rời nhóm",
     "remove": "Xóa",
     "close": "Đóng",
     "save": "Lưu",
@@ -926,5 +925,6 @@
     "joinGroup": "Tham gia {level}",
     "joinGroupFailed": "Không thể tham gia {level}",
     "noAccess": "Không truy cập",
-    "noAccessText": "Rất tiếc, nhưng bạn không có quyền truy cập vào cộng đồng, nhóm hoặc kênh mà bạn đang cố truy cập."
+    "noAccessText": "Rất tiếc, nhưng bạn không có quyền truy cập vào cộng đồng, nhóm hoặc kênh mà bạn đang cố truy cập.",
+    "leaveGroup": "Rời khỏi {level}"
 }
