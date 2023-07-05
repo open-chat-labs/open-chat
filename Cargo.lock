@@ -5916,9 +5916,13 @@ dependencies = [
  "ic-icrc1-client",
  "ic-icrc1-client-cdk",
  "ic-stable-structures",
+ "icrc-ledger-types",
  "registry_canister",
  "serde",
  "serializer",
+ "sns_governance_canister_c2c_client",
+ "sns_wasm_canister",
+ "sns_wasm_canister_c2c_client",
  "tracing",
  "types",
  "utils",
@@ -6717,6 +6721,27 @@ dependencies = [
  "canister_client",
  "ic-cdk 0.8.1",
  "sns_governance_canister",
+ "types",
+]
+
+[[package]]
+name = "sns_wasm_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "sns_wasm_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.8.1",
+ "sns_wasm_canister",
  "types",
 ]
 
