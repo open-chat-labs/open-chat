@@ -114,6 +114,21 @@ export function selectedCommunityRoute(ctx: PageJS.Context): RouteParams {
     };
 }
 
+export function routeForScope(scope: ChatListScope): string {
+    switch (scope.kind) {
+        case "community":
+            return `/community/${scope.id.communityId}`;
+        case "direct_chat":
+            return "/user";
+        case "group_chat":
+            return "/group";
+        case "favourite":
+            return "/favourite";
+        default:
+            return "/";
+    }
+}
+
 export function selectedChannelRoute(fav: boolean) {
     return (ctx: PageJS.Context): RouteParams => {
         const $qs = qs(ctx);

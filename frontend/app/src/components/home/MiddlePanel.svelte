@@ -7,14 +7,14 @@
     import ExploreCommunities from "./communities/explore/Explore.svelte";
     import type CurrentChatMessages from "./CurrentChatMessages.svelte";
     import CurrentChat from "./CurrentChat.svelte";
-    import type { GroupChatSummary, OpenChat } from "openchat-client";
+    import type { MultiUserChat, OpenChat } from "openchat-client";
     import { pathParams } from "../../routes";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
 
     export let loadingChats: boolean = false;
-    export let joining: GroupChatSummary | undefined;
+    export let joining: MultiUserChat | undefined;
     export let currentChatMessages: CurrentChatMessages | undefined;
 
     $: selectedChatStore = client.selectedChatStore;

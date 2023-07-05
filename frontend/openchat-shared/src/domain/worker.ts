@@ -111,7 +111,6 @@ import type {
     CreateCommunityResponse,
     DisableCommunityInviteCodeResponse,
     EnableCommunityInviteCodeResponse,
-    JoinChannelResponse,
     JoinCommunityResponse,
     RemoveChannelMemberResponse,
     RemoveCommunityMemberResponse,
@@ -250,7 +249,6 @@ export type WorkerRequest =
     | ChannelEventsByIndex
     | ChannelEventsWindow
     | CommunityInviteCode
-    | JoinChannel
     | ChannelMessagesByMessageIndex
     | RemoveCommunityMember
     | RemoveChannelMember
@@ -450,7 +448,7 @@ type SearchGroups = {
 };
 
 type GetGroupRules = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     kind: "getGroupRules";
 };
 
@@ -618,7 +616,7 @@ type UpdateGroup = {
 };
 
 type JoinGroup = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     kind: "joinGroup";
 };
 
@@ -964,7 +962,6 @@ export type WorkerResponse =
     | Response<ChangeCommunityRoleResponse>
     | Response<DisableCommunityInviteCode>
     | Response<CommunityInviteCodeResponse>
-    | Response<JoinChannelResponse>
     | Response<RemoveCommunityMemberResponse>
     | Response<RemoveChannelMemberResponse>
     | Response<EnableCommunityInviteCodeResponse>
@@ -1156,11 +1153,6 @@ type ChannelEventsWindow = {
 type CommunityInviteCode = {
     kind: "communityInviteCode";
     communityId: string;
-};
-
-type JoinChannel = {
-    kind: "joinChannel";
-    chatId: ChannelIdentifier;
 };
 
 type ChannelMessagesByMessageIndex = {
@@ -1464,8 +1456,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? EventsResponse<GroupChatEvent>
     : T extends CommunityInviteCode
     ? CommunityInviteCodeResponse
-    : T extends JoinChannel
-    ? JoinChannelResponse
     : T extends ChannelMessagesByMessageIndex
     ? EventsResponse<Message>
     : T extends RemoveCommunityMember

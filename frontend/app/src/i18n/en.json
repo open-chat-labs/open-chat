@@ -201,7 +201,7 @@
     "userIsBlocked": "Unblock user to send messages",
     "members": "Members",
     "invited": "Invited",
-    "leaveGroup": "Leave group",
+    "leaveGroup": "Leave {level}",
     "remove": "Remove",
     "close": "Close",
     "save": "Save",

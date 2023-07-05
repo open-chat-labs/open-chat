@@ -2,7 +2,6 @@ import {
     CommonResponses,
     InviteUsersResponse,
     JoinCommunityResponse,
-    JoinGroupResponse,
     RegisterUserResponse,
     ReportMessageResponse,
     UnsupportedValueError,
@@ -11,12 +10,11 @@ import type {
     ApiInviteUsersResponse,
     ApiInviteUsersToChannelResponse,
     ApiJoinCommunityResponse,
-    ApiJoinGroupResponse,
     ApiRegisterUserResponse,
     ApiReportMessageResponse,
 } from "./candid/idl";
 import { bytesToHexString } from "../../utils/mapping";
-import { communitySummary, gateCheckFailedReason, groupChatSummary } from "../common/chatMappers";
+import { communitySummary, gateCheckFailedReason } from "../common/chatMappers";
 
 export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterUserResponse {
     if ("Success" in candid) {
@@ -102,45 +100,4 @@ export function joinCommunityResponse(candid: ApiJoinCommunityResponse): JoinCom
         console.warn("Join community failed with: ", candid);
         return CommonResponses.failure();
     }
-}
-
-export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {
-    if ("Success" in candid) {
-        return groupChatSummary(candid.Success);
-    }
-    if ("AlreadyInGroupV2" in candid) {
-        return groupChatSummary(candid.AlreadyInGroupV2);
-    }
-    if ("Blocked" in candid) {
-        return { kind: "blocked" };
-    }
-    if ("AlreadyInGroup" in candid) {
-        return { kind: "already_in_group" };
-    }
-    if ("GroupNotPublic" in candid) {
-        return { kind: "group_not_public" };
-    }
-    if ("NotInvited" in candid) {
-        return { kind: "not_invited" };
-    }
-    if ("InternalError" in candid) {
-        return { kind: "internal_error" };
-    }
-    if ("ParticipantLimitReached" in candid) {
-        // todo - check if we need to deal with this in the UI
-        return { kind: "member_limit_reached" };
-    }
-    if ("GroupNotFound" in candid) {
-        return { kind: "group_not_found" };
-    }
-    if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    if ("GateCheckFailed" in candid) {
-        return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
-    }
-    throw new UnsupportedValueError("Unexpected ApiJoinGroupResponse type received", candid);
 }

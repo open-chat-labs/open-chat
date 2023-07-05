@@ -2,6 +2,7 @@
     import {
         GroupChatIdentifier,
         GroupChatSummary,
+        MultiUserChat,
         OpenChat,
         chatIdentifiersEqual,
     } from "openchat-client";
@@ -21,7 +22,7 @@
     import { RemoteData, mapRemoteData } from "../../utils/remoteData";
     import page from "page";
 
-    export let joining: GroupChatSummary | undefined;
+    export let joining: MultiUserChat | undefined;
 
     const client = getContext<OpenChat>("client");
 

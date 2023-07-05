@@ -199,7 +199,9 @@
     );
 
     $: privatePreview =
-        chat.kind === "group_chat" && chat.membership.role === "none" && !chat.public;
+        (chat.kind === "group_chat" || chat.kind === "channel") &&
+        chat.membership.role === "none" &&
+        !chat.public;
     $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
 
     $: {

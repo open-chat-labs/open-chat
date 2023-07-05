@@ -13,7 +13,6 @@
         UserSummary,
         ChatSummary,
         EnhancedReplyContext,
-        GroupChatSummary,
         AccessRules,
         Message,
         OpenChat,
@@ -45,7 +44,7 @@
     import { rtlStore } from "../../stores/rtl";
     import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import page from "page";
-    import { pathParams } from "../../routes";
+    import { pathParams, routeForScope } from "../../routes";
     import type { RouteParams } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import {
@@ -119,7 +118,7 @@
 
     type ConfirmRulesEvent = {
         kind: "rules";
-        group: GroupChatSummary;
+        group: MultiUserChat;
         select: boolean;
         rules: string;
     };
@@ -143,7 +142,7 @@
     let searching: boolean = false;
     let searchResultsAvailable: boolean = false;
     let confirmActionEvent: ConfirmActionEvent | undefined;
-    let joining: GroupChatSummary | undefined = undefined;
+    let joining: MultiUserChat | undefined = undefined;
     let showUpgrade: boolean = false;
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
@@ -161,6 +160,7 @@
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
     $: chatListScope = client.chatListScope;
     $: currentCommunityRules = client.currentCommunityRules;
+    $: currentChatRules = client.currentChatRules;
     $: globalUnreadCount = client.globalUnreadCount;
 
     $: {
@@ -601,7 +601,7 @@
     }
 
     function leaveGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
-        page("/");
+        page(routeForScope($chatListScope));
 
         client.leaveGroup(chatId).then((resp) => {
             if (resp !== "success") {
@@ -766,15 +766,26 @@
         }
     }
 
+    function getRules(group: MultiUserChat): Promise<AccessRules | undefined> {
+        switch (group.kind) {
+            case "channel":
+                return Promise.resolve($currentChatRules);
+            case "group_chat":
+                return client.getGroupRules(group.id);
+        }
+    }
+
     async function joinGroup(
-        ev: CustomEvent<{ group: GroupChatSummary; select: boolean }>
+        ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
     ): Promise<void> {
         const { group, select } = ev.detail;
 
-        const rules = await client.getGroupRules(group.id);
+        const rules = await getRules(group);
 
         if (rules === undefined) {
-            toastStore.showFailureToast("group.getRulesFailed");
+            toastStore.showFailureToast(
+                interpolateLevel("group.getRulesFailed", group.level, true)
+            );
             return;
         }
 
@@ -790,7 +801,7 @@
         }
     }
 
-    async function doJoinGroup(group: GroupChatSummary, select: boolean): Promise<void> {
+    async function doJoinGroup(group: MultiUserChat, select: boolean): Promise<void> {
         joining = group;
         return client
             .joinGroup(group)

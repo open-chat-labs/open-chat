@@ -13,12 +13,11 @@ import { CandidService } from "../candidService";
 import {
     inviteUsersResponse,
     joinCommunityResponse,
-    joinGroupResponse,
     registerUserResponse,
     reportMessageResponse,
 } from "./mappers";
 import type { AgentConfig } from "../../config";
-import { apiMultiUserChat, apiOptional } from "../common/chatMappers";
+import { joinGroupResponse, apiMultiUserChat, apiOptional } from "../common/chatMappers";
 import { textToCode } from "openchat-shared";
 import { identity } from "../../utils/mapping";
 
