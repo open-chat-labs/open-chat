@@ -25,8 +25,12 @@ ic-icrc1 = { workspace = true }
 ic-icrc1-client = { workspace = true }
 ic-icrc1-client-cdk = { workspace = true }
 ic-stable-structures = { workspace = true, features = ["candid"] }
+icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
+sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
+sns_wasm_canister = { path = "../../../external_canisters/sns_wasm/api" }
+sns_wasm_canister_c2c_client = { path = "../../../external_canisters/sns_wasm/c2c_client" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 registry_canister = { path = "../api" }

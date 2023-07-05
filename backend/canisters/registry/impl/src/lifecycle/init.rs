@@ -15,6 +15,7 @@ fn init(args: Args) {
     let env = init_env();
     let data = Data::new(
         args.governance_principals.into_iter().collect(),
+        args.sns_wasm_canister_id,
         args.cycles_dispenser_canister_id,
         args.test_mode,
     );

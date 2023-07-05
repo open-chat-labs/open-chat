@@ -55,15 +55,27 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     governance_principals: HashSet<Principal>,
+    #[serde(default = "sns_wasm_canister_id")]
+    sns_wasm_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
     tokens: Tokens,
     test_mode: bool,
 }
 
+fn sns_wasm_canister_id() -> CanisterId {
+    CanisterId::from_text("qaa6y-5yaaa-aaaaa-aaafa-cai").unwrap()
+}
+
 impl Data {
-    pub fn new(governance_principals: HashSet<Principal>, cycles_dispenser_canister_id: CanisterId, test_mode: bool) -> Data {
+    pub fn new(
+        governance_principals: HashSet<Principal>,
+        sns_wasm_canister_id: CanisterId,
+        cycles_dispenser_canister_id: CanisterId,
+        test_mode: bool,
+    ) -> Data {
         Data {
             governance_principals,
+            sns_wasm_canister_id,
             cycles_dispenser_canister_id,
             tokens: Tokens::default(),
             test_mode,
