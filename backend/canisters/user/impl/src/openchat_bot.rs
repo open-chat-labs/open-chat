@@ -8,6 +8,13 @@ use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 use utils::format::format_to_decimal_places;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
+pub(crate) fn send_community_deleted_message(deleted_by: UserId, name: String, public: bool, state: &mut RuntimeState) {
+    let visibility = if public { "public" } else { "private" };
+    let text = format!("The {visibility} community \"{name}\" was deleted by @UserId({deleted_by})");
+
+    send_text_message(text, false, state);
+}
+
 pub(crate) fn send_group_deleted_message(deleted_by: UserId, group_name: String, public: bool, state: &mut RuntimeState) {
     let visibility = if public { "public" } else { "private" };
     let text = format!("The {visibility} group \"{group_name}\" was deleted by @UserId({deleted_by})");
