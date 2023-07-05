@@ -149,7 +149,6 @@ import {
     DirectChatIdentifier,
     GroupChatIdentifier,
     ChatMap,
-    chatIdentifierToString,
     MessageContext,
     chatIdentifiersEqual,
     CommunitySummary,

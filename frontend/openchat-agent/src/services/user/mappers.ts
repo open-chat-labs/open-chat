@@ -33,7 +33,6 @@ import type {
     ApiSnsCompletedCryptoTransaction,
     ApiIcrc1FailedCryptoTransaction,
     ApiIcrc1CompletedCryptoTransaction,
-    ApiArchiveChatResponse,
     ApiIcrc1Account,
     ApiDirectChatSummaryUpdates,
     ApiDeletedDirectMessageResponse,
