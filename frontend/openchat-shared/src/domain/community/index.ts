@@ -299,3 +299,9 @@ export type CommunityDetailsUpdates = {
 export type ChannelSummaryResponse = Failure | ChannelSummary;
 
 export type LeaveCommunityResponse = "success" | "failure";
+
+export type LocalCommunitySummaryUpdates = {
+    added?: CommunitySummary;
+    removedAtTimestamp?: bigint;
+    lastUpdated: number;
+};

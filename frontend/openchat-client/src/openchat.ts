@@ -355,6 +355,7 @@ import {
     unreadCommunityChannels,
     globalUnreadCount,
 } from "./stores/global";
+import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1924,6 +1925,9 @@ export class OpenChat extends OpenChatAgentWorker {
             state.communities.delete(id);
             return state;
         });
+        if (this._liveState.communities.has(id)) {
+            localCommunitySummaryUpdates.markRemoved(id);
+        }
     }
 
     clearSelectedChat = clearSelectedChat;
@@ -4259,14 +4263,11 @@ export class OpenChat extends OpenChatAgentWorker {
         return true;
     }
 
-    // clearSelectedCommunity(): void {
-    //     selectedCommunityId.set(undefined);
-    // }
-
     joinCommunity(id: CommunityIdentifier): Promise<"success" | "failure" | "gate_check_failed"> {
         return this.sendRequest({ kind: "joinCommunity", id })
             .then((resp) => {
                 if (resp.kind === "success") {
+                    localCommunitySummaryUpdates.markAdded(resp.community);
                     this.loadCommunityDetails(resp.community);
                 } else {
                     if (resp.kind === "gate_check_failed") {
@@ -4287,8 +4288,15 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     leaveCommunity(id: CommunityIdentifier): Promise<boolean> {
+        localCommunitySummaryUpdates.markRemoved(id);
         return this.sendRequest({ kind: "leaveCommunity", id })
             .then((resp) => {
+                if (resp !== "success") {
+                    const community = this._liveState.communities.get(id);
+                    if (community) {
+                        localCommunitySummaryUpdates.markAdded(community);
+                    }
+                }
                 return resp === "success";
             })
             .catch((err) => {

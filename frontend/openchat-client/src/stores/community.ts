@@ -1,83 +1,19 @@
-import { derived, writable } from "svelte/store";
+import { derived } from "svelte/store";
 import { setsAreEqual } from "../utils/set";
-import {
-    CommunitySummary,
-    CommunityPermissions,
-    CommunitySpecificState,
-    CommunityIdentifier,
-    defaultAccessRules,
-} from "openchat-shared";
+import { CommunitySpecificState, CommunityIdentifier, defaultAccessRules } from "openchat-shared";
 import { createCommunitySpecificObjectStore } from "./dataByCommunityFactory";
 import { createDerivedPropStore } from "./derived";
 import { chatListScopeStore, globalStateStore } from "./global";
-
-const defaultPermissions: CommunityPermissions = {
-    changePermissions: "owner",
-    changeRoles: "owner",
-    inviteUsers: "owner",
-    removeMembers: "owner",
-    blockUsers: "owner",
-    updateDetails: "owner",
-    createPublicChannel: "owner",
-    createPrivateChannel: "owner",
-};
-
-function createDummyCommunity(
-    id: string,
-    name = `Community name ${id}`,
-    url = "../assets/unknownUserAvatar.svg",
-    memberCount = 2000
-): CommunitySummary {
-    return {
-        name,
-        id: { kind: "community", communityId: id },
-        description:
-            "This is an awsome community with lots of interesting things to see and do. Blah blah blah, it _even supports markdown_. Not financial advice. HODL.",
-        memberCount,
-        avatar: { blobUrl: url },
-        banner: {},
-        gate: { kind: "no_gate" },
-        public: true,
-        permissions: defaultPermissions,
-        historyVisible: true,
-        frozen: false,
-        level: "community",
-        lastUpdated: BigInt(0),
-        latestEventIndex: 0,
-        channels: [],
-        membership: {
-            role: "owner",
-            joined: BigInt(0),
-            archived: false,
-            pinned: [],
-        },
-    };
-}
-
-const testCommunities: CommunitySummary[] = [
-    createDummyCommunity("1", "OpenChat community", "../assets/evil-robot.svg", 30515),
-    createDummyCommunity("2", "SNS1 fans", "../assets/sns1_medium.png"),
-    createDummyCommunity("3", "ckBTC Enthusiasts", "../assets/ckbtc_nobackground.png", 1286),
-    createDummyCommunity("4", "8Year Gang"),
-    createDummyCommunity("5", "/biz Community"),
-    createDummyCommunity("6"),
-    createDummyCommunity("7"),
-    createDummyCommunity("8"),
-    createDummyCommunity("9"),
-    createDummyCommunity("10"),
-    createDummyCommunity("11"),
-    createDummyCommunity("12"),
-    createDummyCommunity("13"),
-    createDummyCommunity("14"),
-];
-
-// these are all the communities that exist (this would come from the back end during explore)
-export const allCommunities = writable<CommunitySummary[]>(testCommunities);
+import { localCommunitySummaryUpdates } from "./localCommunitySummaryUpdates";
+import { mergeLocalUpdates } from "../utils/community";
 
 // these are the communities I am in
-export const communities = derived([globalStateStore], ([$globalStateStore]) => {
-    return $globalStateStore.communities;
-});
+export const communities = derived(
+    [globalStateStore, localCommunitySummaryUpdates],
+    ([$globalStateStore, $localUpdates]) => {
+        return mergeLocalUpdates($globalStateStore.communities, $localUpdates);
+    }
+);
 
 export const communitiesList = derived(communities, ($communities) => {
     return $communities.values();
