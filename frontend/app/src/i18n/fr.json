@@ -924,5 +924,6 @@
     "joinGroup": "Rejoindre {level}",
     "joinGroupFailed": "Impossible de rejoindre {level}",
     "noAccess": "Pas d'accès",
-    "noAccessText": "Désolé, mais vous n'avez pas accès à la communauté, au groupe ou au canal auquel vous essayez d'accéder."
+    "noAccessText": "Désolé, mais vous n'avez pas accès à la communauté, au groupe ou au canal auquel vous essayez d'accéder.",
+    "leaveGroup": "Quitter {level}"
 }
