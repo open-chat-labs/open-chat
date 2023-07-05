@@ -910,7 +910,8 @@
         "groupChats": "Trò chuyện nhóm",
         "favourites": "yêu thích",
         "addToFavourites": "Thêm vào mục ưa thích",
-        "removeFromFavourites": "Loại bỏ khỏi mục ưa thích"
+        "removeFromFavourites": "Loại bỏ khỏi mục ưa thích",
+        "noInvalidChannels": "Tất cả các kênh mặc định phải nằm trong khoảng từ {min} đến {max} ký tự"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",

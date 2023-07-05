@@ -910,7 +910,8 @@
         "groupChats": "グループチャット",
         "favourites": "お気に入り",
         "addToFavourites": "お気に入りに追加",
-        "removeFromFavourites": "お気に入りから削除"
+        "removeFromFavourites": "お気に入りから削除",
+        "noInvalidChannels": "すべてのデフォルト チャネルは、{min} 文字と {max} 文字の間にある必要があります"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",
