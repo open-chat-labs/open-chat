@@ -907,7 +907,8 @@
         "groupChats": "צ'אטים קבוצתיים",
         "favourites": "מועדפים",
         "addToFavourites": "הוסף למועדפים",
-        "removeFromFavourites": "הסר ממועדפים"
+        "removeFromFavourites": "הסר ממועדפים",
+        "noInvalidChannels": "כל ערוצי ברירת המחדל חייבים להיות בין התווים {min} ל-{max}"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",

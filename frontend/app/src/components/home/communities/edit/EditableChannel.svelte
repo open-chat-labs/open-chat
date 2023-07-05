@@ -10,8 +10,8 @@
 
     const dispatch = createEventDispatcher();
 
-    const MAX_CHANNEL_LENGTH = 25;
-
+    export let min: number;
+    export let max: number;
     export let channel: DefaultChannel;
 
     let editingChannel = channel;
@@ -33,10 +33,10 @@
     <div class="channel-name">
         <Input
             bind:value={editingChannel.name}
-            minlength={1}
-            maxlength={MAX_CHANNEL_LENGTH}
+            minlength={min}
+            maxlength={max}
             countdown={true}
-            invalid={editingChannel.name.length < 1}
+            invalid={editingChannel.name.length < min || editingChannel.name.length > max}
             on:blur={stopEditing}
             on:enter={stopEditing}
             placeholder={$_("communities.updateChannelPlaceholder")}>

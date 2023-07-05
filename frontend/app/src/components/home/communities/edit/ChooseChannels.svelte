@@ -8,6 +8,7 @@
     import EditableChannel from "./EditableChannel.svelte";
     import ErrorMessage from "../../../ErrorMessage.svelte";
 
+    const MIN_CHANNEL_LENGTH = 4;
     const MAX_CHANNEL_LENGTH = 25;
 
     export let channels: DefaultChannel[];
@@ -24,10 +25,23 @@
             error = $_("communities.mustHaveUniqueChannels");
         } else if (containsBlanks(channels)) {
             error = $_("communities.noBlankChannels");
+        } else if (containsInvalid(channels)) {
+            error = $_("communities.noInvalidChannels", {
+                values: {
+                    min: MIN_CHANNEL_LENGTH,
+                    max: MAX_CHANNEL_LENGTH,
+                },
+            });
         } else {
             error = undefined;
         }
         valid = error === undefined;
+    }
+
+    function containsInvalid(channels: DefaultChannel[]): boolean {
+        return channels
+            .map((c) => c.name)
+            .some((name) => name.length < MIN_CHANNEL_LENGTH || name.length > MAX_CHANNEL_LENGTH);
     }
 
     function containsBlanks(channels: DefaultChannel[]): boolean {
@@ -57,13 +71,17 @@
     {$_("communities.channelsInfo")}
 </p>
 {#each channels as channel, i (channel.createdAt)}
-    <EditableChannel on:deleteChannel={() => deleteChannel(channel.createdAt)} bind:channel />
+    <EditableChannel
+        min={MIN_CHANNEL_LENGTH}
+        max={MAX_CHANNEL_LENGTH}
+        on:deleteChannel={() => deleteChannel(channel.createdAt)}
+        bind:channel />
 {/each}
 <div class="next">
     <div class="next-txt">
         <Input
             bind:value={nextChannelName}
-            minlength={1}
+            minlength={MIN_CHANNEL_LENGTH}
             maxlength={MAX_CHANNEL_LENGTH}
             countdown={true}
             on:enter={addChannel}
