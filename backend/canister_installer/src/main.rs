@@ -24,6 +24,7 @@ async fn main() {
         nns_internet_identity: opts.nns_internet_identity,
         nns_ledger: opts.nns_ledger,
         nns_cmc: opts.nns_cmc,
+        nns_sns_wasm: opts.nns_sns_wasm,
     };
 
     let identity = get_dfx_identity(&opts.controller);
@@ -89,4 +90,7 @@ struct Opts {
 
     #[arg(long)]
     nns_cmc: CanisterId,
+
+    #[arg(long)]
+    nns_sns_wasm: CanisterId,
 }
