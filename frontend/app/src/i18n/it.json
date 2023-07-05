@@ -896,7 +896,8 @@
             "failure": "Spiacenti, non siamo riusciti a creare la tua community",
             "saveFailed": "Spiacenti, non siamo riusciti a salvare i tuoi aggiornamenti",
             "inviteUsers": "Spiacenti, non siamo riusciti a invitare questi utenti",
-            "joinFailed": "Spiacenti, non siamo riusciti a unirci a questa community"
+            "joinFailed": "Spiacenti, non siamo riusciti a unirci a questa community",
+            "leaveFailed": "Spiacenti, non siamo riusciti a lasciare questa community"
         },
         "memberCount": "membri)",
         "channelCount": "canale(i)",
@@ -921,5 +922,7 @@
     "thisIsPrivateGroupWithN": "Questo è un {level} privato con {number} membri",
     "unableToSaveUserProfile": "Impossibile salvare il profilo utente",
     "joinGroup": "Unisciti a {level}",
-    "joinGroupFailed": "Impossibile partecipare a {level}"
+    "joinGroupFailed": "Impossibile partecipare a {level}",
+    "noAccess": "Nessun accesso",
+    "noAccessText": "Siamo spiacenti, ma non hai accesso alla community, al gruppo o al canale a cui stai tentando di accedere."
 }

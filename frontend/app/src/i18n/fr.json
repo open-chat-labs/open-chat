@@ -896,7 +896,8 @@
             "failure": "Désolé, nous n'avons pas pu créer votre communauté",
             "saveFailed": "Désolé, nous n'avons pas pu enregistrer vos mises à jour",
             "inviteUsers": "Désolé, nous n'avons pas pu inviter ces utilisateurs",
-            "joinFailed": "Désolé, nous n'avons pas pu rejoindre cette communauté"
+            "joinFailed": "Désolé, nous n'avons pas pu rejoindre cette communauté",
+            "leaveFailed": "Désolé, nous n'avons pas pu quitter cette communauté"
         },
         "memberCount": "membres)",
         "channelCount": "chaîne(s)",
@@ -921,5 +922,7 @@
     "thisIsPrivateGroupWithN": "Ceci est un {level} privé avec {number} membres",
     "unableToSaveUserProfile": "Impossible d'enregistrer le profil utilisateur",
     "joinGroup": "Rejoindre {level}",
-    "joinGroupFailed": "Impossible de rejoindre {level}"
+    "joinGroupFailed": "Impossible de rejoindre {level}",
+    "noAccess": "Pas d'accès",
+    "noAccessText": "Désolé, mais vous n'avez pas accès à la communauté, au groupe ou au canal auquel vous essayez d'accéder."
 }

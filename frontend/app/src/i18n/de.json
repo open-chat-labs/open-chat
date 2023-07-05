@@ -898,7 +898,8 @@
             "failure": "Es tut uns leid, dass wir Ihre Community nicht erstellen konnten",
             "saveFailed": "Leider konnten wir Ihre Aktualisierungen nicht speichern",
             "inviteUsers": "Leider konnten wir diese Benutzer nicht einladen",
-            "joinFailed": "Es tut uns leid, dass wir dieser Community nicht beitreten konnten"
+            "joinFailed": "Es tut uns leid, dass wir dieser Community nicht beitreten konnten",
+            "leaveFailed": "Es tut uns leid, dass wir diese Community nicht verlassen konnten"
         },
         "memberCount": "Mitglied(er)",
         "channelCount": "Kanal(e)",
@@ -923,5 +924,7 @@
     "thisIsPrivateGroupWithN": "Dies ist ein privates {level} mit {number}-Mitgliedern",
     "unableToSaveUserProfile": "Benutzerprofil konnte nicht gespeichert werden",
     "joinGroup": "Treten Sie {level} bei",
-    "joinGroupFailed": "Beitritt zu {level} nicht möglich"
+    "joinGroupFailed": "Beitritt zu {level} nicht möglich",
+    "noAccess": "Kein Zugang",
+    "noAccessText": "Leider haben Sie keinen Zugriff auf die Community, Gruppe oder den Kanal, auf die Sie zugreifen möchten."
 }

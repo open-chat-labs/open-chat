@@ -896,7 +896,8 @@
             "failure": "抱歉，我们无法创建您的社区",
             "saveFailed": "抱歉，我们无法保存您的更新",
             "inviteUsers": "抱歉，我们无法邀请这些用户",
-            "joinFailed": "抱歉，我们无法加入此社区"
+            "joinFailed": "抱歉，我们无法加入此社区",
+            "leaveFailed": "抱歉我们无法离开这个社区"
         },
         "memberCount": "会员",
         "channelCount": "频道",
@@ -922,5 +923,7 @@
     "unableToSaveUserProfile": "无法保存用户个人资料",
     "joinGroup": "加入{level}",
     "joinGroupFailed": "无法加入{level}",
-    "confirmLeaveGroup": "你真的想离开这个{level}吗？"
+    "confirmLeaveGroup": "你真的想离开这个{level}吗？",
+    "noAccess": "无法访问",
+    "noAccessText": "抱歉，您无权访问您尝试访问的社区、群组或频道。"
 }
