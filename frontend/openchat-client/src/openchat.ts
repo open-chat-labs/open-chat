@@ -4283,8 +4283,22 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    deleteCommunity(_id: CommunityIdentifier): Promise<void> {
-        throw new Error("Method not implemented.");
+    deleteCommunity(id: CommunityIdentifier): Promise<boolean> {
+        localCommunitySummaryUpdates.markRemoved(id);
+        return this.sendRequest({ kind: "deleteCommunity", id })
+            .then((resp) => {
+                if (resp !== "success") {
+                    const community = this._liveState.communities.get(id);
+                    if (community) {
+                        localCommunitySummaryUpdates.markAdded(community);
+                    }
+                }
+                return resp === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Error deleting community", err);
+                return false;
+            });
     }
 
     leaveCommunity(id: CommunityIdentifier): Promise<boolean> {

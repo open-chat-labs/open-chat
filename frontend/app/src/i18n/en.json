@@ -904,6 +904,7 @@
             "saveFailed": "Sorry we were unable to save your updates",
             "inviteUsers": "Sorry we were unable to invite these users",
             "joinFailed": "Sorry we were unable to join this community",
+            "deleteFailed": "Sorry we were unable to delete this community",
             "leaveFailed": "Sorry we were unable to leave this community"
         },
         "memberCount": "member(s)",

@@ -897,7 +897,8 @@
             "saveFailed": "抱歉，我们无法保存您的更新",
             "inviteUsers": "抱歉，我们无法邀请这些用户",
             "joinFailed": "抱歉，我们无法加入此社区",
-            "leaveFailed": "抱歉我们无法离开这个社区"
+            "leaveFailed": "抱歉我们无法离开这个社区",
+            "deleteFailed": "抱歉，我们无法删除此社区"
         },
         "memberCount": "会员",
         "channelCount": "频道",

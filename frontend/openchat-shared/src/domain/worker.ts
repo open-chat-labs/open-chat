@@ -126,6 +126,7 @@ import type {
     CommunityDetails,
     ChannelSummaryResponse,
     LeaveCommunityResponse,
+    DeleteCommunityResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -270,7 +271,13 @@ export type WorkerRequest =
     | AddToFavourites
     | RemoveFromFavourites
     | LeaveCommunity
+    | DeleteCommunity
     | ChangeCommunityRole;
+
+type DeleteCommunity = {
+    kind: "deleteCommunity";
+    id: CommunityIdentifier;
+};
 
 type LeaveCommunity = {
     kind: "leaveCommunity";
@@ -974,6 +981,7 @@ export type WorkerResponse =
     | Response<ChannelSummaryResponse>
     | Response<ManageFavouritesResponse>
     | Response<LeaveCommunityResponse>
+    | Response<DeleteCommunityResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1496,4 +1504,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? ManageFavouritesResponse
     : T extends LeaveCommunity
     ? LeaveCommunityResponse
+    : T extends DeleteCommunity
+    ? DeleteCommunityResponse
     : never;

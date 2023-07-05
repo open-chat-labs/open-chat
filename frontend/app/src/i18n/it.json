@@ -897,7 +897,8 @@
             "saveFailed": "Spiacenti, non siamo riusciti a salvare i tuoi aggiornamenti",
             "inviteUsers": "Spiacenti, non siamo riusciti a invitare questi utenti",
             "joinFailed": "Spiacenti, non siamo riusciti a unirci a questa community",
-            "leaveFailed": "Spiacenti, non siamo riusciti a lasciare questa community"
+            "leaveFailed": "Spiacenti, non siamo riusciti a lasciare questa community",
+            "deleteFailed": "Spiacenti, non siamo riusciti a eliminare questa community"
         },
         "memberCount": "membri)",
         "channelCount": "canale(i)",

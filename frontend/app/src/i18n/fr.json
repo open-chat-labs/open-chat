@@ -897,7 +897,8 @@
             "saveFailed": "Désolé, nous n'avons pas pu enregistrer vos mises à jour",
             "inviteUsers": "Désolé, nous n'avons pas pu inviter ces utilisateurs",
             "joinFailed": "Désolé, nous n'avons pas pu rejoindre cette communauté",
-            "leaveFailed": "Désolé, nous n'avons pas pu quitter cette communauté"
+            "leaveFailed": "Désolé, nous n'avons pas pu quitter cette communauté",
+            "deleteFailed": "Désolé, nous n'avons pas pu supprimer cette communauté"
         },
         "memberCount": "membres)",
         "channelCount": "chaîne(s)",

@@ -542,7 +542,7 @@
             case "leave_community":
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
-                return client.deleteCommunity(confirmActionEvent.communityId).then((_) => {
+                return deleteCommunity(confirmActionEvent.communityId).then((_) => {
                     rightPanelHistory.set([]);
                 });
             case "delete":
@@ -572,6 +572,19 @@
                 page(routeForChatIdentifier($chatListScope.kind, chatId));
             }
         });
+    }
+
+    function deleteCommunity(id: CommunityIdentifier): Promise<void> {
+        page("/favourite");
+
+        client.deleteCommunity(id).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("communities.errors.deleteFailed");
+                page(`/community/${id.communityId}`);
+            }
+        });
+
+        return Promise.resolve();
     }
 
     function leaveCommunity(id: CommunityIdentifier): Promise<void> {

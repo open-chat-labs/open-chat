@@ -899,7 +899,8 @@
             "saveFailed": "Leider konnten wir Ihre Aktualisierungen nicht speichern",
             "inviteUsers": "Leider konnten wir diese Benutzer nicht einladen",
             "joinFailed": "Es tut uns leid, dass wir dieser Community nicht beitreten konnten",
-            "leaveFailed": "Es tut uns leid, dass wir diese Community nicht verlassen konnten"
+            "leaveFailed": "Es tut uns leid, dass wir diese Community nicht verlassen konnten",
+            "deleteFailed": "Leider konnten wir diese Community nicht löschen"
         },
         "memberCount": "Mitglied(er)",
         "channelCount": "Kanal(e)",
