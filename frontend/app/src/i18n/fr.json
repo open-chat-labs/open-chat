@@ -909,7 +909,8 @@
         "groupChats": "Discussions de groupe",
         "favourites": "Favoris",
         "addToFavourites": "Ajouter aux Favoris",
-        "removeFromFavourites": "Supprimer des favoris"
+        "removeFromFavourites": "Supprimer des favoris",
+        "noInvalidChannels": "Tous les critères par défaut doivent contenir entre {min} et {max} caractères"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",

@@ -911,7 +911,8 @@
         "groupChats": "Gruppenchats",
         "favourites": "Favoriten",
         "addToFavourites": "Zu Favoriten hinzufügen",
-        "removeFromFavourites": "Von den Favoriten entfernen"
+        "removeFromFavourites": "Von den Favoriten entfernen",
+        "noInvalidChannels": "Alle Standardkanäle müssen zwischen {min} und {max} Zeichen lang sein"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",

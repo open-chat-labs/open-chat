@@ -909,7 +909,8 @@
         "groupChats": "Chat di gruppo",
         "favourites": "Preferiti",
         "addToFavourites": "Aggiungi ai preferiti",
-        "removeFromFavourites": "Rimuovi dai preferiti"
+        "removeFromFavourites": "Rimuovi dai preferiti",
+        "noInvalidChannels": "Tutti i canali predefiniti devono essere compresi tra {min} e {max} caratteri"
     },
     "groupCreatedBy": "{username} ha creato {level}",
     "groupName": "{level} nome",
