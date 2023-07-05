@@ -16,7 +16,6 @@
 
     let searchTerm = "";
     let searching = false;
-    let canCreate = true; //TODO - permissions?
     let searchResults: CommunityMatch[] = [];
 
     $: isDiamond = client.isDiamond;
@@ -64,12 +63,9 @@
                         on:searchEntered={search}
                         placeholder={$_("communities.search")} />
                 </div>
-                {#if canCreate}
-                    <div class="create">
-                        <Button on:click={createCommunity} hollow
-                            >{$_("communities.create")}</Button>
-                    </div>
-                {/if}
+                <div class="create">
+                    <Button on:click={createCommunity} hollow>{$_("communities.create")}</Button>
+                </div>
             {/if}
         </div>
         <div class="subtitle-row">

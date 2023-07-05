@@ -893,7 +893,6 @@
     }
 
     function newChannel() {
-        // TODO - come back to this
         newGroup("channel");
     }
 

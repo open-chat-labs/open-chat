@@ -45,7 +45,7 @@
     let detailsValid = true;
     let rulesValid = true;
     $: steps = getSteps(editing, detailsValid, channelsValid, rulesValid);
-    $: canEditPermissions = true; // TODO - this is a whole can of refactor worms which I don't want to open yet
+    $: canEditPermissions = editing && client.canChangeCommunityPermissions(candidate.id);
     $: permissionsDirty = client.havePermissionsChanged(
         original.permissions,
         candidate.permissions

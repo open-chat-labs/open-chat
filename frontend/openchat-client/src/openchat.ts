@@ -9,6 +9,11 @@ import {
     canUnblockUsers as canUnblockCommunityUsers,
     canInviteUsers as canInviteCommunityUsers,
     canRemoveMembers as canRemoveCommunityMembers,
+    canDeleteCommunity,
+    canEditCommunity,
+    canChangeCommunityPermissions,
+    canCreatePublicChannel,
+    canCreatePrivateChannel,
 } from "./utils/community";
 import {
     buildUserAvatarUrl,
@@ -1166,6 +1171,26 @@ export class OpenChat extends OpenChatAgentWorker {
             default:
                 return this.chatPredicate(id, canInviteUsers);
         }
+    }
+
+    canCreatePublicChannel(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canCreatePublicChannel);
+    }
+
+    canCreatePrivateChannel(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canCreatePrivateChannel);
+    }
+
+    canChangeCommunityPermissions(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canChangeCommunityPermissions);
+    }
+
+    canEditCommunity(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canEditCommunity);
+    }
+
+    canDeleteCommunity(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canDeleteCommunity);
     }
 
     canDeleteGroup(chatId: MultiUserChatIdentifier): boolean {
