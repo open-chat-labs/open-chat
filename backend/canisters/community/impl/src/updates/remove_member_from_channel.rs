@@ -33,7 +33,7 @@ fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> Resp
             let now = state.env.now();
             match channel.chat.remove_member(member.user_id, args.user_id, false, now) {
                 RemoveMemberResult::Success => {
-                    member.channels.remove(&args.channel_id);
+                    member.leave(channel.id, now);
                     handle_activity_notification(state);
                     Success
                 }
