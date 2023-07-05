@@ -1,4 +1,9 @@
-import type { CommunitySummary, MemberRole } from "openchat-shared";
+import type {
+    CommunityMap,
+    CommunitySummary,
+    LocalCommunitySummaryUpdates,
+    MemberRole,
+} from "openchat-shared";
 import { hasOwnerRights, isPermitted } from "./permissions";
 
 export function canChangeRoles(
@@ -32,4 +37,33 @@ export function canInviteUsers({ membership, permissions }: CommunitySummary): b
 
 export function canRemoveMembers({ membership, permissions }: CommunitySummary): boolean {
     return isPermitted(membership.role, permissions.removeMembers);
+}
+
+export function mergeLocalUpdates(
+    server: CommunityMap<CommunitySummary>,
+    localUpdates: CommunityMap<LocalCommunitySummaryUpdates>
+): CommunityMap<CommunitySummary> {
+    if (Object.keys(localUpdates).length === 0) return server;
+
+    const merged = server.clone();
+
+    for (const [chatId, localUpdate] of localUpdates.entries()) {
+        if (localUpdate.added !== undefined) {
+            const current = merged.get(chatId);
+            if (current === undefined || current.membership.role === "none") {
+                merged.set(chatId, localUpdate.added);
+            }
+        }
+        if (localUpdate.removedAtTimestamp) {
+            const community = merged.get(chatId);
+            if (
+                community !== undefined &&
+                community.membership.joined < localUpdate.removedAtTimestamp
+            ) {
+                merged.delete(chatId);
+            }
+        }
+    }
+
+    return merged;
 }

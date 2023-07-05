@@ -355,6 +355,7 @@ import {
     unreadCommunityChannels,
     globalUnreadCount,
 } from "./stores/global";
+import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1924,6 +1925,9 @@ export class OpenChat extends OpenChatAgentWorker {
             state.communities.delete(id);
             return state;
         });
+        if (this._liveState.communities.has(id)) {
+            localCommunitySummaryUpdates.markRemoved(id);
+        }
     }
 
     clearSelectedChat = clearSelectedChat;
@@ -4226,7 +4230,7 @@ export class OpenChat extends OpenChatAgentWorker {
     // **** Communities Stuff
 
     // TODO - this will almost certainly need to be more complicated
-    async setSelectedCommunity(id: CommunityIdentifier, clearChat = true): Promise<void> {
+    async setSelectedCommunity(id: CommunityIdentifier, clearChat = true): Promise<boolean> {
         let community = this._liveState.communities.get(id);
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
@@ -4240,6 +4244,10 @@ export class OpenChat extends OpenChatAgentWorker {
                     global.communities.set(resp.id, resp);
                     return global;
                 });
+            } else {
+                // if we get here it means we're not a member of the community and we can't look it up
+                // it may be private and we may not be invited.
+                return false;
             }
         }
 
@@ -4252,16 +4260,14 @@ export class OpenChat extends OpenChatAgentWorker {
         if (community !== undefined) {
             this.loadCommunityDetails(community);
         }
+        return true;
     }
-
-    // clearSelectedCommunity(): void {
-    //     selectedCommunityId.set(undefined);
-    // }
 
     joinCommunity(id: CommunityIdentifier): Promise<"success" | "failure" | "gate_check_failed"> {
         return this.sendRequest({ kind: "joinCommunity", id })
             .then((resp) => {
                 if (resp.kind === "success") {
+                    localCommunitySummaryUpdates.markAdded(resp.community);
                     this.loadCommunityDetails(resp.community);
                 } else {
                     if (resp.kind === "gate_check_failed") {
@@ -4277,12 +4283,40 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    deleteCommunity(_id: CommunityIdentifier): Promise<void> {
-        throw new Error("Method not implemented.");
+    deleteCommunity(id: CommunityIdentifier): Promise<boolean> {
+        localCommunitySummaryUpdates.markRemoved(id);
+        return this.sendRequest({ kind: "deleteCommunity", id })
+            .then((resp) => {
+                if (resp !== "success") {
+                    const community = this._liveState.communities.get(id);
+                    if (community) {
+                        localCommunitySummaryUpdates.markAdded(community);
+                    }
+                }
+                return resp === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Error deleting community", err);
+                return false;
+            });
     }
 
-    leaveCommunity(_id: CommunityIdentifier): Promise<void> {
-        throw new Error("Method not implemented.");
+    leaveCommunity(id: CommunityIdentifier): Promise<boolean> {
+        localCommunitySummaryUpdates.markRemoved(id);
+        return this.sendRequest({ kind: "leaveCommunity", id })
+            .then((resp) => {
+                if (resp !== "success") {
+                    const community = this._liveState.communities.get(id);
+                    if (community) {
+                        localCommunitySummaryUpdates.markAdded(community);
+                    }
+                }
+                return resp === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Error leaving community", err);
+                return false;
+            });
     }
 
     createCommunity(

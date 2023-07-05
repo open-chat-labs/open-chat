@@ -897,7 +897,9 @@
             "failure": "Xin lỗi, chúng tôi không thể tạo cộng đồng của bạn",
             "saveFailed": "Xin lỗi, chúng tôi không thể lưu cập nhật của bạn",
             "inviteUsers": "Rất tiếc, chúng tôi không thể mời những người dùng này",
-            "joinFailed": "Xin lỗi chúng tôi không thể tham gia cộng đồng này"
+            "joinFailed": "Xin lỗi chúng tôi không thể tham gia cộng đồng này",
+            "leaveFailed": "Xin lỗi, chúng tôi không thể rời khỏi cộng đồng này",
+            "deleteFailed": "Xin lỗi, chúng tôi không thể xóa cộng đồng này"
         },
         "memberCount": "các thành viên)",
         "channelCount": "kênh truyền hình)",
@@ -922,5 +924,7 @@
     "thisIsPrivateGroupWithN": "Đây là {level} riêng tư với {number} thành viên",
     "unableToSaveUserProfile": "Không thể lưu hồ sơ người dùng",
     "joinGroup": "Tham gia {level}",
-    "joinGroupFailed": "Không thể tham gia {level}"
+    "joinGroupFailed": "Không thể tham gia {level}",
+    "noAccess": "Không truy cập",
+    "noAccessText": "Rất tiếc, nhưng bạn không có quyền truy cập vào cộng đồng, nhóm hoặc kênh mà bạn đang cố truy cập."
 }

@@ -57,6 +57,9 @@ import {
     type ThreadRead,
     type ManageFavouritesResponse,
     chatIdentifierToString,
+    CommunityIdentifier,
+    LeaveCommunityResponse,
+    DeleteCommunityResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -83,6 +86,8 @@ import {
     setMessageReminderResponse,
     createCommunityResponse,
     manageFavouritesResponse,
+    leaveCommunityResponse,
+    deleteCommunityResponse,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -285,6 +290,15 @@ export class UserClient extends CandidService {
                 chat_id: Principal.fromText(chatId),
             }),
             deleteGroupResponse
+        );
+    }
+
+    deleteCommunity(id: CommunityIdentifier): Promise<DeleteCommunityResponse> {
+        return this.handleResponse(
+            this.userService.delete_community({
+                community_id: Principal.fromText(id.communityId),
+            }),
+            deleteCommunityResponse
         );
     }
 
@@ -615,6 +629,15 @@ export class UserClient extends CandidService {
                 correlation_id: generateUint64(),
             }),
             leaveGroupResponse
+        );
+    }
+
+    leaveCommunity(id: CommunityIdentifier): Promise<LeaveCommunityResponse> {
+        return this.handleResponse(
+            this.userService.leave_community({
+                community_id: Principal.fromText(id.communityId),
+            }),
+            leaveCommunityResponse
         );
     }
 

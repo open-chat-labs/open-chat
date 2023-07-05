@@ -898,7 +898,9 @@
             "failure": "Lo sentimos, no pudimos crear tu comunidad.",
             "saveFailed": "Lo sentimos, no pudimos guardar sus actualizaciones.",
             "inviteUsers": "Lo sentimos, no pudimos invitar a estos usuarios.",
-            "joinFailed": "Lo sentimos, no pudimos unirnos a esta comunidad."
+            "joinFailed": "Lo sentimos, no pudimos unirnos a esta comunidad.",
+            "leaveFailed": "Lo sentimos, no pudimos salir de esta comunidad.",
+            "deleteFailed": "Lo sentimos, no pudimos eliminar esta comunidad."
         },
         "memberCount": "miembro(s)",
         "channelCount": "canales",
@@ -923,5 +925,7 @@
     "thisIsPrivateGroupWithN": "Este es un {level} privado con {number} miembros",
     "unableToSaveUserProfile": "No se puede guardar el perfil de usuario",
     "joinGroup": "Únete a {level}",
-    "joinGroupFailed": "No se puede unir a {level}"
+    "joinGroupFailed": "No se puede unir a {level}",
+    "noAccess": "Sin acceso",
+    "noAccessText": "Lo sentimos, pero no tienes acceso a la comunidad, grupo o canal al que intentas acceder."
 }
