@@ -162,9 +162,7 @@ impl CommunityMembers {
 
     pub fn mark_member_left_channel(&mut self, user_id: &UserId, channel_id: ChannelId, now: TimestampMillis) {
         if let Some(member) = self.members.get_mut(user_id) {
-            if member.channels.remove(&channel_id) {
-                member.channels_removed.push(Timestamped::new(channel_id, now));
-            }
+            member.leave(channel_id, now);
         }
     }
 
@@ -263,6 +261,12 @@ impl CommunityMemberInternal {
             .take_while(|t| t.timestamp > since)
             .map(|t| t.value)
             .collect()
+    }
+
+    pub fn leave(&mut self, channel_id: ChannelId, now: TimestampMillis) {
+        if self.channels.remove(&channel_id) {
+            self.channels_removed.push(Timestamped::new(channel_id, now));
+        }
     }
 }
 
