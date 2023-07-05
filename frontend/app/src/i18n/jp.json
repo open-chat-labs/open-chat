@@ -897,7 +897,9 @@
             "failure": "申し訳ありませんが、コミュニティを作成できませんでした",
             "saveFailed": "申し訳ありませんが、更新を保存できませんでした",
             "inviteUsers": "申し訳ありませんが、これらのユーザーを招待できませんでした",
-            "joinFailed": "申し訳ありませんが、このコミュニティに参加できませんでした"
+            "joinFailed": "申し訳ありませんが、このコミュニティに参加できませんでした",
+            "leaveFailed": "申し訳ありませんが、このコミュニティを離れることができませんでした",
+            "deleteFailed": "申し訳ありませんが、このコミュニティを削除できませんでした"
         },
         "memberCount": "メンバー",
         "channelCount": "チャンネル",
@@ -922,5 +924,7 @@
     "thisIsPrivateGroupWithN": "これは、{level} メンバーがいるプライベート {number} です",
     "unableToSaveUserProfile": "ユーザープロファイルを保存できません",
     "joinGroup": "{level}に参加する",
-    "joinGroupFailed": "{level}に参加できません"
+    "joinGroupFailed": "{level}に参加できません",
+    "noAccess": "アクセスなし",
+    "noAccessText": "申し訳ありませんが、アクセスしようとしているコミュニティ、グループ、またはチャネルにアクセスすることができません。"
 }

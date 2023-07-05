@@ -1434,8 +1434,8 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         membership: {
             joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
             role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
-            archived: false, // TODO not sure what to do about this
-            pinned: [], // TODO also not sure about this - comes from the user canister
+            archived: false,
+            pinned: [],
         },
         channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
     };

@@ -1646,6 +1646,28 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
+            case "leaveCommunity":
+                agent.userClient
+                    .leaveCommunity(payload.id)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "deleteCommunity":
+                agent.userClient
+                    .deleteCommunity(payload.id)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

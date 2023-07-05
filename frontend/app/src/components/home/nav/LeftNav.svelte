@@ -185,6 +185,10 @@
         transition: fill 250ms ease-in-out;
     }
 
+    :global(.left-nav-item .avatar:not(.selected):hover) {
+        box-shadow: 0 0 0 1px var(--icon-selected);
+    }
+
     :global(.left-nav-item:hover .hover svg path) {
         fill: var(--icon-selected);
     }

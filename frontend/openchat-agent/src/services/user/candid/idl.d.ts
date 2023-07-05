@@ -132,6 +132,8 @@ import {
     MultiUserChat,
     ChatInList,
     ManageFavouriteChatsResponse,
+    LeaveCommunityResponse,
+    DeleteCommunityResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -266,6 +268,8 @@ export {
     MultiUserChat as ApiMultiUserChat,
     ChatInList as ApiChatInList,
     ManageFavouriteChatsResponse as ApiManageFavouriteChatsResponse,
+    LeaveCommunityResponse as ApiLeaveCommunityResponse,
+    DeleteCommunityResponse as ApiDeleteCommunityResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
