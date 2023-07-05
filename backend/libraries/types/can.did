@@ -200,8 +200,8 @@ type ChatEvent = variant {
     GroupVisibilityChanged : GroupVisibilityChanged;
     GroupInviteCodeChanged : GroupInviteCodeChanged;
     GroupRulesChanged : GroupRulesChanged;
-    ChatFrozen : ChatFrozen;
-    ChatUnfrozen : ChatUnfrozen;
+    ChatFrozen : GroupFrozen;
+    ChatUnfrozen : GroupUnfrozen;
     EventsTimeToLiveUpdated : EventsTimeToLiveUpdated;
     GroupGateUpdated : GroupGateUpdated;
     UsersInvited : UsersInvited;
@@ -329,7 +329,6 @@ type CommunityCanisterCommunitySummary = record {
 type CommunityMembership = record {
     joined : TimestampMillis;
     role : CommunityRole;
-    notifications_muted : bool;
 };
 
 type CommunityCanisterChannelSummary = record {
@@ -389,7 +388,6 @@ type CommunityCanisterCommunitySummaryUpdates = record {
 type CommunityMembershipUpdates = record {
     role : opt CommunityRole;
     channels_removed : vec ChannelId;
-    notifications_muted : opt bool;
 };
 
 type CommunityCanisterChannelSummaryUpdates = record {
@@ -1198,12 +1196,12 @@ type GroupRulesChanged = record {
     changed_by : UserId;
 };
 
-type ChatFrozen = record {
+type GroupFrozen = record {
     frozen_by : UserId;
     reason : opt text;
 };
 
-type ChatUnfrozen = record {
+type GroupUnfrozen = record {
     unfrozen_by : UserId;
 };
 
@@ -1348,6 +1346,7 @@ type CommunityMatch = record {
     member_count : nat32;
     channel_count : nat32;
     gate : opt AccessGate;
+    moderation_flags : nat32;
 };
 
 type GroupMatch = record {

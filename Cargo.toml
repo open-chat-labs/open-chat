@@ -111,6 +111,7 @@ aws-config = "0.55.3"
 aws-sdk-dynamodb = "0.28.0"
 aws-types = "0.55.3"
 base64 = "0.21.2"
+bitflags = { version = "2.3.3", features = ["serde"] }
 candid = "0.8.4"
 ciborium = { git = "https://github.com/enarx/ciborium", rev = "e719537c99b564c3674a56defe53713c702c6f46" }
 clap = "4.3.4"
