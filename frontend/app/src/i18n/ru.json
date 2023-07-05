@@ -909,7 +909,8 @@
         "groupChats": "Групповые чаты",
         "favourites": "Избранное",
         "addToFavourites": "Добавить в избранное",
-        "removeFromFavourites": "Удалить из избранного"
+        "removeFromFavourites": "Удалить из избранного",
+        "noInvalidChannels": "Все каналы по умолчанию должны быть между символами {min} и {max}."
     },
     "groupCreatedBy": "{username} создал {level}",
     "groupName": "{level} имя",
