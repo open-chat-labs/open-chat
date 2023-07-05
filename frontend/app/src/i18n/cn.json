@@ -133,7 +133,6 @@
     "blocked": "加入黑名单",
     "previewing": "预览群聊",
     "userIsBlocked": "将该用户移出黑名单以便发送消息",
-    "leaveGroup": "退出群聊",
     "remove": "删除",
     "close": "关闭",
     "save": "保存",
@@ -926,5 +925,6 @@
     "joinGroupFailed": "无法加入{level}",
     "confirmLeaveGroup": "你真的想离开这个{level}吗？",
     "noAccess": "无法访问",
-    "noAccessText": "抱歉，您无权访问您尝试访问的社区、群组或频道。"
+    "noAccessText": "抱歉，您无权访问您尝试访问的社区、群组或频道。",
+    "leaveGroup": "离开{level}"
 }

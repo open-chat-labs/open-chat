@@ -956,27 +956,21 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     async joinGroup(
-        chat: GroupChatSummary
+        chat: MultiUserChat
     ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
         return this.sendRequest({ kind: "joinGroup", chatId: chat.id })
             .then((resp) => {
-                if (resp.kind === "group_chat") {
-                    localChatSummaryUpdates.markAdded(resp);
-                    this.loadChatDetails(resp);
+                if (resp.kind === "success") {
+                    localChatSummaryUpdates.markAdded(resp.group);
+                    this.loadChatDetails(resp.group);
                     messagesRead.syncWithServer(
-                        resp.id,
-                        resp.membership?.readByMeUpTo,
+                        resp.group.id,
+                        resp.group.membership?.readByMeUpTo,
                         [],
                         undefined
                     );
-                } else if (resp.kind === "already_in_group") {
-                    localChatSummaryUpdates.markAdded({
-                        ...chat,
-                        // TODO - not sure what to do about this
-                        // myRole: "participant" as MemberRole,
-                    });
                 } else {
-                    if (resp.kind === "blocked") {
+                    if (resp.kind === "user_blocked") {
                         return "blocked";
                     } else if (resp.kind === "gate_check_failed") {
                         return "gate_check_failed";
@@ -3374,7 +3368,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "getRecommendedGroups", exclusions: [...exclusions] });
     }
 
-    getGroupRules(chatId: GroupChatIdentifier): Promise<AccessRules | undefined> {
+    getGroupRules(chatId: MultiUserChatIdentifier): Promise<AccessRules | undefined> {
         return this.sendRequest({ kind: "getGroupRules", chatId });
     }
 

@@ -1427,18 +1427,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "joinChannel":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .joinChannel(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "channelMessagesByMessageIndex":
                 agent
                     .communityClient(payload.chatId.communityId)

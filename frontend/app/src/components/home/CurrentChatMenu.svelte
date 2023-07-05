@@ -357,7 +357,9 @@
                     {#if client.canLeaveGroup(selectedChatSummary.id)}
                         <MenuItem warning on:click={leaveGroup}>
                             <LocationExit size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                            <div slot="text">{$_("leaveGroup")}</div>
+                            <div slot="text">
+                                {interpolateLevel("leaveGroup", selectedChatSummary.level, true)}
+                            </div>
                         </MenuItem>
                     {/if}
                     {#if $communitiesEnabled && selectedChatSummary.kind === "group_chat"}

@@ -33,7 +33,6 @@ import type {
     Success,
     SuccessNoUpdates,
     TargetUserNotInCommunity,
-    UserBlocked,
     UserLimitReached,
     UserNotInChat,
     UserNotInCommunity,
@@ -160,19 +159,6 @@ export type CommunityInviteCodeResponse =
     | NotAuthorised
     | (Success & { code?: bigint })
     | UserNotInCommunity;
-
-export type JoinChannelResponse =
-    | { kind: "not_invited" }
-    | { kind: "already_in_channel" }
-    | GateCheckFailed
-    | ChatNotFound
-    | UserLimitReached
-    | (Success & { channel: ChannelSummary })
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen
-    | InteralError
-    | UserBlocked;
 
 export type RemoveCommunityMemberResponse = Success | Failure;
 

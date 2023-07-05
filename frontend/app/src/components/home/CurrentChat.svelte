@@ -9,7 +9,6 @@
         ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
-        GroupChatSummary,
         Mention,
         Message,
         MessageContent,
@@ -19,6 +18,7 @@
         User,
         ChatIdentifier,
         chatIdentifiersEqual,
+        MultiUserChat,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -27,7 +27,7 @@
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { toastStore } from "stores/toast";
 
-    export let joining: GroupChatSummary | undefined;
+    export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
     export let currentChatMessages: CurrentChatMessages | undefined;
     export let events: EventWrapper<ChatEvent>[];
