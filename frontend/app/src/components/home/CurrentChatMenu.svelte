@@ -20,7 +20,7 @@
     import MenuItem from "../MenuItem.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { _ } from "svelte-i18n";
-    import type { ChatSummary, OpenChat } from "openchat-client";
+    import type { ChatSummary, GroupChatSummary, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
@@ -31,6 +31,7 @@
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
     import { interpolateLevel } from "../../utils/i18n";
+    import Convert from "./communities/Convert.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -56,6 +57,7 @@
     $: desktop = !$mobileWidth;
 
     let hasUnreadPinned = false;
+    let convertGroup: GroupChatSummary | undefined;
 
     $: {
         setUnreadPinned(hasPinned, selectedChatSummary);
@@ -134,7 +136,9 @@
     }
 
     function convertToCommunity() {
-        dispatch("convertToCommunity", { chatId: selectedChatSummary.id });
+        if (selectedChatSummary.kind === "group_chat" && selectedChatSummary.public) {
+            convertGroup = selectedChatSummary;
+        }
     }
 
     function freezeGroup() {
@@ -171,6 +175,8 @@
         });
     }
 </script>
+
+<Convert bind:group={convertGroup} />
 
 {#if desktop}
     {#if $isProposalGroup}
@@ -362,7 +368,7 @@
                             </div>
                         </MenuItem>
                     {/if}
-                    {#if $communitiesEnabled && selectedChatSummary.kind === "group_chat"}
+                    {#if $communitiesEnabled && selectedChatSummary.kind === "group_chat" && selectedChatSummary.public}
                         <MenuItem warning on:click={convertToCommunity}>
                             <ConvertToCommunity
                                 size={$iconSize}

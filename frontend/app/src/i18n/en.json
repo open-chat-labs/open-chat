@@ -887,6 +887,7 @@
         "browseChannels": "Browse channels",
         "createChannel": "New channel",
         "convert": "Convert to community",
+        "convertButton": "Convert",
         "channels": "Channels",
         "channelPlaceholder": "Enter a default channel",
         "channelsInfo": "You must create one or more public default channels. Any user who joins your community will be automatically enrolled in these default channels. You can always change this later.",
