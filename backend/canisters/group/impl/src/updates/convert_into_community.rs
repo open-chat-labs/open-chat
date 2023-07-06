@@ -3,6 +3,7 @@ use crate::{mutate_state, run_regular_jobs, CommunityBeingImportedInto, RuntimeS
 use canister_tracing_macros::trace;
 use group_canister::convert_into_community::{Response::*, *};
 use ic_cdk_macros::update;
+use rand::Rng;
 use types::CanisterId;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
@@ -24,7 +25,10 @@ async fn convert_into_community(args: Args) -> Response {
             mutate_state(|state| {
                 state.data.community_being_imported_into = Some(CommunityBeingImportedInto::Existing(community_id))
             });
-            Success(community_id)
+            Success(SuccessResult {
+                community_id,
+                channel_id: c2c_args.channel_id,
+            })
         }
         Ok(group_index_canister::c2c_convert_group_into_community::Response::InternalError(error)) => InternalError(error),
         Err(error) => {
@@ -53,6 +57,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Respon
                 StartImportIntoCommunityResult::Success(total_bytes) => Ok(PrepareResult {
                     group_index_canister_id: state.data.group_index_canister_id,
                     c2c_args: group_index_canister::c2c_convert_group_into_community::Args {
+                        channel_id: state.env.rng().gen(),
                         user_id,
                         user_principal: caller,
                         name: state.data.chat.name.clone(),
@@ -60,9 +65,9 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Respon
                         rules: args.rules,
                         permissions: args.permissions,
                         gate: state.data.chat.gate.value.clone(),
+                        primary_language: args.primary_language.unwrap_or_else(|| "en".to_string()),
                         history_visible_to_new_joiners: args.history_visible_to_new_joiners,
                         total_bytes,
-                        primary_language: args.primary_language.unwrap_or_else(|| "en".to_string()),
                     },
                 }),
                 StartImportIntoCommunityResult::AlreadyImportingToAnotherCommunity => Err(AlreadyImportingToAnotherCommunity),

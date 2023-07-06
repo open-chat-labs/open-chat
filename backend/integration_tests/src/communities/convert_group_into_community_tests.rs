@@ -42,18 +42,18 @@ fn convert_into_community_succeeds() {
         },
     );
 
-    if let group_canister::convert_into_community::Response::Success(community_id) = convert_into_community_response {
+    if let group_canister::convert_into_community::Response::Success(result) = convert_into_community_response {
         tick_many(env, 20);
 
         let expected_channel_names = vec![group_name];
 
-        let summary1 = client::community::happy_path::summary(env, &user1, community_id);
+        let summary1 = client::community::happy_path::summary(env, &user1, result.community_id);
         assert_eq!(
             summary1.channels.into_iter().map(|c| c.name).collect_vec(),
             expected_channel_names
         );
 
-        let summary2 = client::community::happy_path::summary(env, &user2, community_id);
+        let summary2 = client::community::happy_path::summary(env, &user2, result.community_id);
         assert_eq!(
             summary2.channels.into_iter().map(|c| c.name).collect_vec(),
             expected_channel_names
