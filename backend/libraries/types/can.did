@@ -1138,7 +1138,6 @@ type PermissionRole = variant {
 };
 
 type CommunityPermissions = record {
-    change_permissions : CommunityPermissionRole;
     change_roles : CommunityPermissionRole;
     invite_users : CommunityPermissionRole;
     remove_members : CommunityPermissionRole;
@@ -1149,7 +1148,6 @@ type CommunityPermissions = record {
 };
 
 type OptionalCommunityPermissions = record {
-    change_permissions : opt CommunityPermissionRole;
     change_roles : opt CommunityPermissionRole;
     invite_users : opt CommunityPermissionRole;
     remove_members : opt CommunityPermissionRole;
