@@ -49,8 +49,8 @@ impl GroupRoleInternal {
         matches!(self, GroupRoleInternal::Moderator)
     }
 
-    pub fn can_change_permissions(&self, permissions: &GroupPermissions) -> bool {
-        self.is_permitted(permissions.change_permissions)
+    pub fn can_change_permissions(&self) -> bool {
+        self.is_owner()
     }
 
     pub fn can_change_roles(&self, new_role: GroupRoleInternal, permissions: &GroupPermissions) -> bool {
@@ -70,15 +70,15 @@ impl GroupRoleInternal {
     }
 
     pub fn can_block_users(&self, permissions: &GroupPermissions) -> bool {
-        self.is_permitted(permissions.block_users)
+        self.is_permitted(permissions.remove_members)
     }
 
     pub fn can_block_users_with_role(&self, user_role: GroupRoleInternal, permissions: &GroupPermissions) -> bool {
-        self.is_same_or_senior(user_role) && self.is_permitted(permissions.block_users)
+        self.is_same_or_senior(user_role) && self.is_permitted(permissions.remove_members)
     }
 
     pub fn can_unblock_users(&self, permissions: &GroupPermissions) -> bool {
-        self.is_permitted(permissions.block_users)
+        self.is_permitted(permissions.remove_members)
     }
 
     pub fn can_delete_messages(&self, permissions: &GroupPermissions) -> bool {
@@ -110,15 +110,15 @@ impl GroupRoleInternal {
     }
 
     pub fn can_delete_group(&self) -> bool {
-        self.has_owner_rights()
+        self.is_owner()
     }
 
     pub fn can_change_group_visibility(&self) -> bool {
-        self.has_owner_rights()
+        self.is_owner()
     }
 
     pub fn can_view_full_message_history(&self) -> bool {
-        self.has_owner_rights()
+        self.is_owner()
     }
 
     pub fn can_invite_users(&self, permissions: &GroupPermissions) -> bool {
@@ -127,7 +127,7 @@ impl GroupRoleInternal {
 
     pub fn is_permitted(&self, permission_role: GroupPermissionRole) -> bool {
         match permission_role {
-            GroupPermissionRole::Owner => self.has_owner_rights(),
+            GroupPermissionRole::Owner => self.is_owner(),
             GroupPermissionRole::Admins => self.has_admin_rights(),
             GroupPermissionRole::Moderators => self.has_moderator_rights(),
             GroupPermissionRole::Members => true,
@@ -136,7 +136,7 @@ impl GroupRoleInternal {
 
     pub fn is_same_or_senior(&self, role: GroupRoleInternal) -> bool {
         match role {
-            GroupRoleInternal::Owner => self.has_owner_rights(),
+            GroupRoleInternal::Owner => self.is_owner(),
             GroupRoleInternal::Admin => self.has_admin_rights(),
             GroupRoleInternal::Moderator => self.has_moderator_rights(),
             GroupRoleInternal::Member => true,
@@ -148,10 +148,6 @@ impl GroupRoleInternal {
     }
 
     fn has_admin_rights(&self) -> bool {
-        self.is_admin() || self.has_owner_rights()
-    }
-
-    fn has_owner_rights(&self) -> bool {
-        self.is_owner()
+        self.is_admin() || self.is_owner()
     }
 }
