@@ -9,6 +9,11 @@ import {
     canUnblockUsers as canUnblockCommunityUsers,
     canInviteUsers as canInviteCommunityUsers,
     canRemoveMembers as canRemoveCommunityMembers,
+    canDeleteCommunity,
+    canEditCommunity,
+    canChangeCommunityPermissions,
+    canCreatePublicChannel,
+    canCreatePrivateChannel,
 } from "./utils/community";
 import {
     buildUserAvatarUrl,
@@ -1168,6 +1173,26 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    canCreatePublicChannel(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canCreatePublicChannel);
+    }
+
+    canCreatePrivateChannel(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canCreatePrivateChannel);
+    }
+
+    canChangeCommunityPermissions(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canChangeCommunityPermissions);
+    }
+
+    canEditCommunity(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canEditCommunity);
+    }
+
+    canDeleteCommunity(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canDeleteCommunity);
+    }
+
     canDeleteGroup(chatId: MultiUserChatIdentifier): boolean {
         return this.multiUserChatPredicate(chatId, canDeleteGroup);
     }
@@ -1176,6 +1201,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     canMakeGroupPrivate(chatId: MultiUserChatIdentifier): boolean {
         return this.multiUserChatPredicate(chatId, canMakePrivate);
+    }
+
+    canMakeCommunityPrivate(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canMakePrivate);
     }
 
     canLeaveGroup(chatId: MultiUserChatIdentifier): boolean {
@@ -4375,18 +4404,28 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    saveCommunity(community: CommunitySummary, rules: AccessRules): Promise<boolean> {
+    saveCommunity(
+        community: CommunitySummary,
+        name: string | undefined,
+        description: string | undefined,
+        rules: AccessRules | undefined,
+        permissions: CommunityPermissions | undefined,
+        avatar: Uint8Array | undefined,
+        banner: Uint8Array | undefined,
+        gate: AccessGate | undefined,
+        isPublic: boolean | undefined
+    ): Promise<boolean> {
         return this.sendRequest({
             kind: "updateCommunity",
             communityId: community.id.communityId,
-            name: community.name,
-            description: community.description,
-            rules: rules,
-            permissions: community.permissions,
-            avatar: community.avatar.blobData,
-            banner: community.banner.blobData,
-            gate: community.gate,
-            isPublic: community.public,
+            name,
+            description,
+            rules,
+            permissions,
+            avatar,
+            banner,
+            gate,
+            isPublic,
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -4394,6 +4433,9 @@ export class OpenChat extends OpenChatAgentWorker {
                         g.communities.set(community.id, community);
                         return g;
                     });
+                    if (rules) {
+                        communityStateStore.setProp(community.id, "rules", rules);
+                    }
                     return true;
                 }
                 return false;

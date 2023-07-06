@@ -36,7 +36,6 @@ export type ChatPermissions = {
 };
 
 export type CommunityPermissions = {
-    changePermissions: CommunityPermissionRole;
     changeRoles: CommunityPermissionRole;
     inviteUsers: CommunityPermissionRole;
     removeMembers: CommunityPermissionRole;

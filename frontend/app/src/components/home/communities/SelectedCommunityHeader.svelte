@@ -8,14 +8,19 @@
     import { getContext } from "svelte";
     import type { CommunitySummary } from "openchat-shared";
     import VisibilityLabel from "../VisibilityLabel.svelte";
+    import { pushRightPanelHistory } from "../../../stores/rightPanel";
 
     const client = getContext<OpenChat>("client");
 
     export let community: CommunitySummary;
+
+    function showCommunityMembers() {
+        pushRightPanelHistory({ kind: "show_community_members" });
+    }
 </script>
 
 <SectionHeader border={false}>
-    <div class="current-selection" class:rtl={$rtlStore}>
+    <div on:click={showCommunityMembers} class="current-selection" class:rtl={$rtlStore}>
         <div class="avatar">
             <Avatar
                 url={client.communityAvatarUrl(community.avatar)}
