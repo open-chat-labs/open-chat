@@ -46,6 +46,7 @@
 
     function close() {
         group = undefined;
+        state = "idle";
     }
 </script>
 
