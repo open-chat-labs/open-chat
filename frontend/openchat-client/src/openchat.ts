@@ -331,6 +331,7 @@ import {
     communityRoles,
     ChatListScope,
     ChatStateFull,
+    ChannelIdentifier,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -4456,7 +4457,7 @@ export class OpenChat extends OpenChatAgentWorker {
     convertGroupToCommunity(
         group: GroupChatSummary,
         rules: AccessRules
-    ): Promise<CommunityIdentifier | undefined> {
+    ): Promise<ChannelIdentifier | undefined> {
         return this.sendRequest({
             kind: "convertGroupToCommunity",
             chatId: group.id,

@@ -297,4 +297,4 @@ export type LocalCommunitySummaryUpdates = {
     lastUpdated: number;
 };
 
-export type ConvertToCommunityResponse = (Success & { id: CommunityIdentifier }) | Failure;
+export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | Failure;

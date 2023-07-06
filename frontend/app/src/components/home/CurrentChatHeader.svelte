@@ -170,6 +170,7 @@
             on:markAllRead
             on:blockUser
             on:unblockUser
+            on:upgrade
             on:showInviteGroupUsers
             on:leaveGroup />
     {/if}

@@ -41,6 +41,7 @@
     export let hasPinned: boolean;
     export let unreadMessages: number;
 
+    $: isDiamond = client.isDiamond;
     $: favouritesStore = client.favouritesStore;
     $: messagesRead = client.messagesRead;
     $: isProposalGroup = client.isProposalGroup;
@@ -137,8 +138,12 @@
     }
 
     function convertToCommunity() {
-        if (selectedChatSummary.kind === "group_chat") {
-            dispatch("convertGroupToCommunity", selectedChatSummary);
+        if (!$isDiamond) {
+            dispatch("upgrade");
+        } else {
+            if (selectedChatSummary.kind === "group_chat") {
+                dispatch("convertGroupToCommunity", selectedChatSummary);
+            }
         }
     }
 

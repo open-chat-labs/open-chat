@@ -198,13 +198,17 @@ export const idlFactory = ({ IDL }) => {
     'history_visible_to_new_joiners' : IDL.Bool,
     'rules' : AccessRules,
   });
+  const ChannelId = IDL.Nat;
   const CommunityId = CanisterId;
   const ConvertIntoCommunityResponse = IDL.Variant({
     'AlreadyImportingToAnotherCommunity' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,
-    'Success' : CommunityId,
+    'Success' : IDL.Record({
+      'channel_id' : ChannelId,
+      'community_id' : CommunityId,
+    }),
     'UserSuspended' : IDL.Null,
     'InternalError' : IDL.Text,
   });
@@ -576,7 +580,6 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
   });
   const ChatId = CanisterId;
-  const ChannelId = IDL.Nat;
   const Chat = IDL.Variant({
     'Group' : ChatId,
     'Channel' : IDL.Tuple(CommunityId, ChannelId),

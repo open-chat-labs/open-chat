@@ -1,9 +1,10 @@
 <script lang="ts">
-    import type {
-        AccessRules,
-        CommunityIdentifier,
-        GroupChatSummary,
-        OpenChat,
+    import {
+        routeForChatIdentifier,
+        type AccessRules,
+        type ChannelIdentifier,
+        type GroupChatSummary,
+        type OpenChat,
     } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
@@ -21,8 +22,10 @@
     export let group: GroupChatSummary | undefined;
     export let rules: AccessRules | undefined;
 
+    $: chatListScope = client.chatListScope;
+
     let state: "idle" | "converting" | "converted" | "error" = "idle";
-    let communityId: CommunityIdentifier | undefined;
+    let channelId: ChannelIdentifier | undefined;
 
     function convert() {
         if (group === undefined) return;
@@ -30,14 +33,14 @@
         state = "converting";
         client.convertGroupToCommunity(group, rules ?? { enabled: false, text: "" }).then((id) => {
             state = id ? "converted" : "error";
-            communityId = id;
+            channelId = id;
         });
     }
 
     function go() {
-        if (communityId !== undefined) {
+        if (channelId !== undefined) {
             close();
-            page(`/community/${communityId.communityId}`);
+            page(routeForChatIdentifier($chatListScope.kind, channelId));
         }
     }
 

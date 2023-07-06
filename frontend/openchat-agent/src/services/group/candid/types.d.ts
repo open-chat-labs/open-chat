@@ -320,7 +320,7 @@ export type ConvertIntoCommunityResponse = {
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : CommunityId } |
+  { 'Success' : { 'channel_id' : ChannelId, 'community_id' : CommunityId } } |
   { 'UserSuspended' : null } |
   { 'InternalError' : string };
 export interface CryptoContent {

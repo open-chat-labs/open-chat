@@ -882,7 +882,11 @@ export function convertToCommunityReponse(
     if ("Success" in candid) {
         return {
             kind: "success",
-            id: { kind: "community", communityId: candid.Success.toString() },
+            id: {
+                kind: "channel",
+                communityId: candid.Success.community_id.toString(),
+                channelId: candid.Success.channel_id.toString(),
+            },
         };
     } else {
         console.warn("ConvertToCommunity failed with ", candid);

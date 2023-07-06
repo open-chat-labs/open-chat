@@ -1240,7 +1240,6 @@ export class OpenChatAgent extends EventTarget {
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
 
             if (userResponse.kind === "success") {
-                console.log("xxx userresponse", userResponse);
                 directChats = userResponse.directChats.added.concat(
                     mergeDirectChatUpdates(directChats, userResponse.directChats.updated)
                 );
