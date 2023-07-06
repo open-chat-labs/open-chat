@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Extended `update_group_v2` to set group visibility ([#3880](https://github.com/open-chat-labs/open-chat/pull/3880))
 - Add `ledger` field to completed crypto transactions ([#3912](https://github.com/open-chat-labs/open-chat/pull/3912))
 - Deprecate the `block_users` and `change_permissions` permissions ([#3922](https://github.com/open-chat-labs/open-chat/pull/3922))
+- Return `channel_id` from `convert_into_community` ([#3929](https://github.com/open-chat-labs/open-chat/pull/3929))
 
 ### Removed
 
