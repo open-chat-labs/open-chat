@@ -92,6 +92,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         permissions: updates_from_events.permissions,
         frozen: updates_from_events.frozen,
         gate: updates_from_events.gate,
+        primary_language: updates_from_events.primary_language,
         latest_event_index: updates_from_events.latest_event_index,
         channels_added,
         channels_updated,
@@ -113,6 +114,7 @@ struct UpdatesFromEvents {
     is_public: Option<bool>,
     frozen: OptionUpdate<FrozenGroupInfo>,
     gate: OptionUpdate<AccessGate>,
+    primary_language: Option<String>,
 }
 
 fn process_events(since: TimestampMillis, member: Option<&CommunityMemberInternal>, data: &Data) -> UpdatesFromEvents {
@@ -172,6 +174,11 @@ fn process_events(since: TimestampMillis, member: Option<&CommunityMemberInterna
             }
             CommunityEvent::VisibilityChanged(v) => {
                 updates.is_public = Some(v.now_public);
+            }
+            CommunityEvent::PrimaryLanguageChanged(l) => {
+                if updates.primary_language.is_none() {
+                    updates.primary_language = Some(l.new.clone());
+                }
             }
             _ => {}
         }

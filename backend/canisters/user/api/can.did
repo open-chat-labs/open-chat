@@ -245,6 +245,7 @@ type CreateCommunityArgs = record {
     rules : AccessRules;
     gate : opt AccessGate;
     default_channels : vec text;
+    primary_language : text;
 };
 
 type CreateCommunitySuccessResult = record {

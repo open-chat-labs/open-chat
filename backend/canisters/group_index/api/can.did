@@ -76,6 +76,7 @@ type SearchSuccessResult = record {
 
 type ExploreCommunitiesArgs = record {
     search_term : opt text;
+    languages : vec text;
     page_index : nat32;
     page_size : nat8;
     exclude_moderation_flags : opt nat32;
