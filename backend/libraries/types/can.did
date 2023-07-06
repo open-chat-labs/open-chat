@@ -319,6 +319,7 @@ type CommunityCanisterCommunitySummary = record {
     permissions : CommunityPermissions;
     frozen : opt FrozenGroupInfo;
     gate : opt AccessGate;
+    primary_language : text;
     last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     channels : vec CommunityCanisterChannelSummary;
@@ -378,6 +379,7 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     permissions : opt CommunityPermissions;
     frozen : FrozenGroupUpdate;
     gate : AccessGateUpdate;
+    primary_language : opt text;
     latest_event_index : opt EventIndex;
     channels_added : vec CommunityCanisterChannelSummary;
     channels_updated : vec CommunityCanisterChannelSummaryUpdates;

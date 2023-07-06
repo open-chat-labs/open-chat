@@ -26,11 +26,13 @@ fn explore_communities_impl(args: Args, state: &RuntimeState) -> Response {
         None => return InvalidFlags,
     };
 
-    let matches =
-        state
-            .data
-            .public_communities
-            .search(args.search_term, exclude_moderation_flags, args.page_index, args.page_size);
+    let matches = state.data.public_communities.search(
+        args.search_term,
+        exclude_moderation_flags,
+        args.languages,
+        args.page_index,
+        args.page_size,
+    );
 
     Success(SuccessResult { matches })
 }

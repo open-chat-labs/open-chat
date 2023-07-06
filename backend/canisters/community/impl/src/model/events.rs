@@ -5,7 +5,7 @@ use types::{
     AvatarChanged, BannerChanged, ChannelDeleted, CommunityPermissionsChanged, CommunityRoleChanged, DefaultChannelsChanged,
     EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
     GroupNameChanged, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersRemoved,
-    TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    PrimaryLanguageChanged, TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -38,6 +38,7 @@ pub enum CommunityEvent {
     GateUpdated(Box<GroupGateUpdated>),
     ChannelDeleted(Box<ChannelDeleted>),
     DefaultChannelsChanged(Box<DefaultChannelsChanged>),
+    PrimaryLanguageChanged(Box<PrimaryLanguageChanged>),
 }
 
 impl CommunityEvents {

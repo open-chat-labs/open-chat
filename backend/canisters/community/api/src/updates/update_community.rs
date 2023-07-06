@@ -14,6 +14,7 @@ pub struct Args {
     pub permissions: Option<OptionalCommunityPermissions>,
     pub gate: OptionUpdate<AccessGate>,
     pub public: Option<bool>,
+    pub primary_language: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -34,4 +35,5 @@ pub enum Response {
     UserSuspended,
     CommunityFrozen,
     CannotMakeCommunityPublic,
+    InvalidLanguage,
 }

@@ -35,6 +35,7 @@ async fn c2c_create_community(args: Args) -> Response {
         gate: args.gate.clone(),
         default_channels: args.default_channels,
         source_group: None,
+        primary_language: args.primary_language.clone(),
     };
 
     match create_community_impl(c2c_create_community_args, local_group_index_canister).await {
@@ -61,6 +62,7 @@ pub(crate) async fn create_community_impl(
                     avatar_id,
                     banner_id,
                     args.gate,
+                    args.primary_language,
                     local_group_index_canister,
                     state,
                 )
@@ -124,6 +126,7 @@ fn commit(
     avatar_id: Option<u128>,
     banner_id: Option<u128>,
     gate: Option<AccessGate>,
+    primary_language: String,
     local_group_index_canister: CanisterId,
     state: &mut RuntimeState,
 ) {
@@ -137,6 +140,7 @@ fn commit(
             avatar_id,
             banner_id,
             gate,
+            primary_language,
             now,
         );
     } else {

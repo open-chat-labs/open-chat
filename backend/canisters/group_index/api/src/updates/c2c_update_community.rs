@@ -9,6 +9,7 @@ pub struct Args {
     pub avatar_id: Option<u128>,
     pub banner_id: Option<u128>,
     pub gate: Option<AccessGate>,
+    pub primary_language: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

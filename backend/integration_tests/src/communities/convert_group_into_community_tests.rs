@@ -37,6 +37,7 @@ fn convert_into_community_succeeds() {
         &group_canister::convert_into_community::Args {
             rules: AccessRules::default(),
             permissions: None,
+            primary_language: None,
             history_visible_to_new_joiners: true,
         },
     );
@@ -86,6 +87,7 @@ fn not_group_owner_returns_unauthorized() {
             rules: AccessRules::default(),
             permissions: None,
             history_visible_to_new_joiners: true,
+            primary_language: None,
         },
     );
 

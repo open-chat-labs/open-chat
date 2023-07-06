@@ -33,11 +33,21 @@ impl PublicCommunities {
         avatar_id: Option<u128>,
         banner_id: Option<u128>,
         gate: Option<AccessGate>,
+        primary_language: String,
         now: TimestampMillis,
     ) {
         self.communities.insert(
             community_id,
-            PublicCommunityInfo::new(community_id, name, description, avatar_id, banner_id, gate, now),
+            PublicCommunityInfo::new(
+                community_id,
+                name,
+                description,
+                avatar_id,
+                banner_id,
+                gate,
+                primary_language,
+                now,
+            ),
         );
     }
 
@@ -45,6 +55,7 @@ impl PublicCommunities {
         &self,
         search_term: Option<String>,
         exclude_moderation_flags: ModerationFlags,
+        languages: Vec<String>,
         page_index: u32,
         page_size: u8,
     ) -> Vec<CommunityMatch> {
@@ -54,6 +65,7 @@ impl PublicCommunities {
             .iter()
             .filter(|c| !c.is_frozen())
             .filter(|c| !c.moderation_flags().intersects(exclude_moderation_flags))
+            .filter(|c| languages.is_empty() || languages.contains(&c.primary_language))
             .map(|c| {
                 let score = if let Some(query) = &query {
                     let document: Document = c.into();
@@ -132,6 +144,7 @@ pub struct PublicCommunityInfo {
     gate: Option<AccessGate>,
     #[serde(default)]
     moderation_flags: ModerationFlags,
+    primary_language: String,
 }
 
 pub enum UpdateCommunityResult {
@@ -148,6 +161,7 @@ impl PublicCommunityInfo {
         avatar_id: Option<u128>,
         banner_id: Option<u128>,
         gate: Option<AccessGate>,
+        primary_language: String,
         now: TimestampMillis,
     ) -> PublicCommunityInfo {
         PublicCommunityInfo {
@@ -163,6 +177,7 @@ impl PublicCommunityInfo {
             hotness_score: 0,
             frozen: None,
             moderation_flags: ModerationFlags::default(),
+            primary_language,
         }
     }
 
