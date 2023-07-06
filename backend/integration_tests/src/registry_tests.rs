@@ -18,6 +18,7 @@ fn add_token_succeeds() {
     let info_url = "info".to_string();
     let how_to_buy_url = "how to buy".to_string();
     let transaction_url_format = "transaction format".to_string();
+    let logo = "logo".to_string();
 
     env.advance_time(Duration::from_secs(1));
 
@@ -31,6 +32,7 @@ fn add_token_succeeds() {
             info_url: Some(info_url.clone()),
             how_to_buy_url: Some(how_to_buy_url.clone()),
             transaction_url_format: Some(transaction_url_format.clone()),
+            logo: Some(logo.clone()),
         },
     );
 
@@ -57,6 +59,7 @@ fn add_token_succeeds() {
         assert_eq!(token.info_url, Some(info_url));
         assert_eq!(token.how_to_buy_url, Some(how_to_buy_url));
         assert_eq!(token.transaction_url_format, Some(transaction_url_format));
+        assert_eq!(token.logo, Some(logo));
         assert_eq!(token.last_updated, now);
     } else {
         panic!()
