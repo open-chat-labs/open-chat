@@ -10,7 +10,6 @@ pub enum CommunityRole {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityPermissions {
-    pub change_permissions: CommunityPermissionRole,
     pub change_roles: CommunityPermissionRole,
     pub invite_users: CommunityPermissionRole,
     pub remove_members: CommunityPermissionRole,
@@ -22,7 +21,6 @@ pub struct CommunityPermissions {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct OptionalCommunityPermissions {
-    pub change_permissions: Option<CommunityPermissionRole>,
     pub change_roles: Option<CommunityPermissionRole>,
     pub invite_users: Option<CommunityPermissionRole>,
     pub remove_members: Option<CommunityPermissionRole>,
@@ -35,7 +33,6 @@ pub struct OptionalCommunityPermissions {
 impl Default for CommunityPermissions {
     fn default() -> Self {
         CommunityPermissions {
-            change_permissions: CommunityPermissionRole::Admins,
             change_roles: CommunityPermissionRole::Admins,
             invite_users: CommunityPermissionRole::Admins,
             remove_members: CommunityPermissionRole::Admins,
@@ -63,8 +60,8 @@ impl CommunityRole {
         matches!(self, CommunityRole::Admin)
     }
 
-    pub fn can_change_permissions(&self, permissions: &CommunityPermissions) -> bool {
-        self.is_permitted(permissions.change_permissions)
+    pub fn can_change_permissions(&self) -> bool {
+        self.is_owner()
     }
 
     pub fn can_change_roles(&self, new_role: CommunityRole, permissions: &CommunityPermissions) -> bool {

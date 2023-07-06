@@ -153,11 +153,11 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
         let permissions = &state.data.permissions;
         if !member.role.can_update_details(permissions)
-            || (args.permissions.is_some() && !member.role.can_change_permissions(permissions))
+            || (args.permissions.is_some() && !member.role.can_change_permissions())
             || (args.public.is_some() && !member.role.can_change_community_visibility())
         {
             Err(NotAuthorized)
-        } else if args.public.unwrap_or_default() {
+        } else if args.public == Some(true) && !state.data.is_public {
             Err(CannotMakeCommunityPublic)
         } else {
             Ok(PrepareResult {
@@ -331,7 +331,6 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
 
 fn merge_permissions(new: OptionalCommunityPermissions, old: &CommunityPermissions) -> CommunityPermissions {
     CommunityPermissions {
-        change_permissions: new.change_permissions.unwrap_or(old.change_permissions),
         change_roles: new.change_roles.unwrap_or(old.change_roles),
         invite_users: new.invite_users.unwrap_or(old.invite_users),
         remove_members: new.remove_members.unwrap_or(old.remove_members),
