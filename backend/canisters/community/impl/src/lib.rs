@@ -128,6 +128,7 @@ impl RuntimeState {
             permissions: data.permissions.clone(),
             frozen: data.frozen.value.clone(),
             gate: data.gate.value.clone(),
+            primary_language: data.primary_language.clone(),
             channels,
             membership,
             metrics: data.cached_chat_metrics.value.clone(),
