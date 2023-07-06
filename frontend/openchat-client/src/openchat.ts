@@ -52,6 +52,7 @@ import {
     buildCryptoTransferText,
     mergeSendMessageResponse,
     serialiseMessageForRtc,
+    canConvertToCommunity,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -1176,6 +1177,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     canMakeGroupPrivate(chatId: MultiUserChatIdentifier): boolean {
         return this.multiUserChatPredicate(chatId, canMakePrivate);
+    }
+
+    canConvertGroupToCommunity(chatId: GroupChatIdentifier): boolean {
+        return this.multiUserChatPredicate(chatId, canConvertToCommunity);
     }
 
     canLeaveGroup(chatId: MultiUserChatIdentifier): boolean {
@@ -4401,6 +4406,23 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch((err) => {
                 this._logger.error("Error creating community", err);
                 return false;
+            });
+    }
+
+    convertGroupToCommunity(
+        group: GroupChatSummary,
+        rules: AccessRules
+    ): Promise<CommunityIdentifier | undefined> {
+        return this.sendRequest({
+            kind: "convertGroupToCommunity",
+            chatId: group.id,
+            historyVisible: group.historyVisible,
+            rules,
+        })
+            .then((resp) => (resp.kind === "success" ? resp.id : undefined))
+            .catch((err) => {
+                this._logger.error("Error converting group to community", err);
+                return undefined;
             });
     }
 

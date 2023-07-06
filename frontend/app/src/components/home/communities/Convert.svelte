@@ -1,17 +1,42 @@
 <script lang="ts">
-    import type { GroupChatSummary } from "openchat-client";
+    import type {
+        AccessRules,
+        CommunityIdentifier,
+        GroupChatSummary,
+        OpenChat,
+    } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
     import { _ } from "svelte-i18n";
+    import FancyLoader from "../../icons/FancyLoader.svelte";
+    import Congratulations from "../upgrade/Congratulations.svelte";
+    import { createEventDispatcher, getContext } from "svelte";
+
+    const dispatch = createEventDispatcher();
+    const client = getContext<OpenChat>("client");
 
     export let group: GroupChatSummary | undefined;
+    export let rules: AccessRules | undefined;
 
-    let converting = false;
+    let state: "idle" | "converting" | "converted" | "error" = "idle";
+    let communityId: CommunityIdentifier | undefined;
 
     function convert() {
         if (group === undefined) return;
+
+        state = "converting";
+        client.convertGroupToCommunity(group, rules ?? { enabled: false, text: "" }).then((id) => {
+            state = id ? "converted" : "error";
+            communityId = id;
+        });
+    }
+
+    function go() {
+        if (communityId !== undefined) {
+            dispatch("selectCommunity", communityId);
+        }
     }
 
     function close() {
@@ -21,14 +46,64 @@
 
 {#if group !== undefined}
     <Overlay dismissible on:close={close}>
-        <ModalContent on:close={close}>
+        <ModalContent closeIcon on:close={close}>
             <div slot="header">{$_("communities.convert")}</div>
-            <div slot="body">explain what will happen etc</div>
+            <div
+                class="body"
+                class:error={state === "error"}
+                class:loading={state === "converting" || state === "converted"}
+                slot="body">
+                {#if state === "converting"}
+                    <div class="spinner">
+                        <FancyLoader />
+                    </div>
+                    <p class="para">{$_("communities.pleaseWait")}</p>
+                {:else if state === "idle"}
+                    <p class="para">
+                        We can take care of converting your public group to a community.
+                    </p>
+                    <p class="para">This is an irreversible process and will do the following:</p>
+
+                    <ul class="list">
+                        <li>freeze the existing public group</li>
+                        <li>create a new community with the same name as the group</li>
+                        <li>
+                            add a default channel to the community with the same name as the group
+                        </li>
+                        <li>add all members of the group as members of the community</li>
+                        <li>
+                            copy the full message history from the group into the default channel
+                        </li>
+                        <li>delete the existing group</li>
+                        <li>
+                            inform all members of the group that it has been converted to a
+                            community
+                        </li>
+                    </ul>
+
+                    <p class="para">
+                        This process might take a few minutes depending on the size of the group so
+                        please be patient.
+                    </p>
+                {:else if state === "converted"}
+                    <Congratulations para={$_("communities.converted")} />
+                {:else if state === "error"}
+                    <div class="error-img" />
+                    <p class="para">{$_("communities.errors.convertFailed")}</p>
+                {/if}
+            </div>
             <div slot="footer">
                 <ButtonGroup>
-                    <Button secondary on:click={close}>{$_("cancel")}</Button>
-                    <Button disabled={converting} loading={converting} on:click={convert}
-                        >{$_("communities.convertButton")}</Button>
+                    {#if state === "converted"}
+                        <Button secondary on:click={close}>{$_("close")}</Button>
+                        <Button on:click={go}>{$_("communities.goto")}</Button>
+                    {:else if state !== "error"}
+                        <Button secondary on:click={close}>{$_("cancel")}</Button>
+                        <Button
+                            disabled={state === "converting"}
+                            loading={state === "converting"}
+                            on:click={convert}>{$_("communities.convertButton")}</Button>
+                    {/if}
                 </ButtonGroup>
             </div>
         </ModalContent>
@@ -36,4 +111,37 @@
 {/if}
 
 <style lang="scss">
+    .body {
+        min-height: 300px;
+
+        &.loading,
+        &.error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+    .spinner {
+        width: 150px;
+        margin: 30px auto;
+    }
+
+    .list {
+        @include bullet_list();
+        @include font(book, normal, fs-90);
+        color: var(--txt-light);
+    }
+
+    .error-img {
+        background-image: url("/assets/dead-bot.svg");
+        background-repeat: no-repeat;
+        width: 150px;
+        height: 150px;
+        margin: 30px auto;
+    }
+
+    .para {
+        margin-bottom: $sp3;
+    }
 </style>

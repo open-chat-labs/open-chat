@@ -86,6 +86,7 @@ export const idlFactory = ({ IDL }) => {
     'block_index' : BlockIndex,
     'from' : NnsCryptoAccount,
     'memo' : IDL.Nat64,
+    'ledger' : CanisterId,
     'amount' : Tokens,
   });
   const Icrc1Account = IDL.Record({
@@ -105,6 +106,7 @@ export const idlFactory = ({ IDL }) => {
     'block_index' : BlockIndex,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(IDL.Nat64),
+    'ledger' : CanisterId,
     'amount' : Tokens,
   });
   const Memo = IDL.Vec(IDL.Nat8);
@@ -116,6 +118,7 @@ export const idlFactory = ({ IDL }) => {
     'block_index' : BlockIndex,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
+    'ledger' : CanisterId,
     'amount' : IDL.Nat,
   });
   const CompletedCryptoTransaction = IDL.Variant({
@@ -132,6 +135,7 @@ export const idlFactory = ({ IDL }) => {
     'from' : NnsCryptoAccount,
     'memo' : IDL.Nat64,
     'error_message' : IDL.Text,
+    'ledger' : CanisterId,
     'amount' : Tokens,
   });
   const SnsFailedCryptoTransaction = IDL.Record({
@@ -143,6 +147,7 @@ export const idlFactory = ({ IDL }) => {
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(IDL.Nat64),
     'error_message' : IDL.Text,
+    'ledger' : CanisterId,
     'amount' : Tokens,
   });
   const Icrc1FailedCryptoTransaction = IDL.Record({
@@ -153,6 +158,7 @@ export const idlFactory = ({ IDL }) => {
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
     'error_message' : IDL.Text,
+    'ledger' : CanisterId,
     'amount' : IDL.Nat,
   });
   const FailedCryptoTransaction = IDL.Variant({
@@ -620,7 +626,7 @@ export const idlFactory = ({ IDL }) => {
     'old_permissions' : GroupPermissions,
     'new_permissions' : GroupPermissions,
   });
-  const ChatFrozen = IDL.Record({
+  const GroupFrozen = IDL.Record({
     'frozen_by' : UserId,
     'reason' : IDL.Opt(IDL.Text),
   });
@@ -637,7 +643,7 @@ export const idlFactory = ({ IDL }) => {
     'user_ids' : IDL.Vec(UserId),
     'unblocked_by' : UserId,
   });
-  const ChatUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
+  const GroupUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupRulesChanged = IDL.Record({
     'changed_by' : UserId,
@@ -697,10 +703,10 @@ export const idlFactory = ({ IDL }) => {
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
-    'ChatFrozen' : ChatFrozen,
+    'ChatFrozen' : GroupFrozen,
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
-    'ChatUnfrozen' : ChatUnfrozen,
+    'ChatUnfrozen' : GroupUnfrozen,
     'ParticipantLeft' : ParticipantLeft,
     'GroupRulesChanged' : GroupRulesChanged,
     'GroupNameChanged' : GroupNameChanged,

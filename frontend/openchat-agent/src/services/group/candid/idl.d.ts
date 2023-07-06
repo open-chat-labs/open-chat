@@ -64,6 +64,7 @@ import {
     ClaimPrizeResponse,
     GroupGateUpdate,
     DeclineInvitationResponse,
+    ConvertIntoCommunityResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -130,6 +131,7 @@ export {
     ClaimPrizeResponse as ApiClaimPrizeResponse,
     GroupGateUpdate as ApiGroupGateUpdate,
     DeclineInvitationResponse as ApiDeclineInvitationResponse,
+    ConvertIntoCommunityResponse as ApiConvertIntoCommunityResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -65,6 +65,7 @@ export interface ChannelMatch {
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
+  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'member_count' : number,
 }
@@ -98,10 +99,10 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
-  { 'ChatFrozen' : ChatFrozen } |
+  { 'ChatFrozen' : GroupFrozen } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'UsersUnblocked' : UsersUnblocked } |
-  { 'ChatUnfrozen' : ChatUnfrozen } |
+  { 'ChatUnfrozen' : GroupUnfrozen } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'GroupNameChanged' : GroupNameChanged } |
@@ -118,7 +119,6 @@ export interface ChatEventWrapper {
   'correlation_id' : bigint,
   'expires_at' : [] | [TimestampMillis],
 }
-export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export interface ChatMetrics {
   'prize_winner_messages' : bigint,
@@ -146,7 +146,6 @@ export interface ChatMetrics {
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
-export interface ChatUnfrozen { 'unfrozen_by' : UserId }
 export interface CheckUsernameArgs { 'username' : string }
 export type CheckUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
@@ -166,6 +165,7 @@ export interface CommunityCanisterChannelSummary {
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
+  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'next_message_expiry' : [] | [TimestampMillis],
   'membership' : [] | [ChannelMembership],
@@ -189,6 +189,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
+  'is_default' : [] | [boolean],
   'avatar_id' : DocumentIdUpdate,
   'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
@@ -238,6 +239,7 @@ export interface CommunityMatch {
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
+  'moderation_flags' : number,
   'avatar_id' : [] | [bigint],
   'banner_id' : [] | [bigint],
   'member_count' : number,
@@ -546,6 +548,7 @@ export interface GroupDescriptionChanged {
   'previous_description' : string,
   'changed_by' : UserId,
 }
+export interface GroupFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export interface GroupGateUpdated {
   'updated_by' : UserId,
   'new_gate' : [] | [AccessGate],
@@ -622,6 +625,7 @@ export type GroupSubtype = {
 export type GroupSubtypeUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : GroupSubtype };
+export interface GroupUnfrozen { 'unfrozen_by' : UserId }
 export interface GroupVisibilityChanged {
   'changed_by' : UserId,
   'now_public' : boolean,
@@ -647,6 +651,7 @@ export interface Icrc1CompletedCryptoTransaction {
   'block_index' : BlockIndex,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
+  'ledger' : CanisterId,
   'amount' : bigint,
 }
 export interface Icrc1FailedCryptoTransaction {
@@ -657,6 +662,7 @@ export interface Icrc1FailedCryptoTransaction {
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
   'error_message' : string,
+  'ledger' : CanisterId,
   'amount' : bigint,
 }
 export interface Icrc1PendingCryptoTransaction {
@@ -799,6 +805,7 @@ export interface NnsCompletedCryptoTransaction {
   'block_index' : BlockIndex,
   'from' : NnsCryptoAccount,
   'memo' : bigint,
+  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export type NnsCryptoAccount = { 'Mint' : null } |
@@ -812,6 +819,7 @@ export interface NnsFailedCryptoTransaction {
   'from' : NnsCryptoAccount,
   'memo' : bigint,
   'error_message' : string,
+  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export type NnsNeuronId = bigint;
@@ -1115,6 +1123,7 @@ export interface SnsCompletedCryptoTransaction {
   'block_index' : BlockIndex,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [bigint],
+  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export interface SnsFailedCryptoTransaction {
@@ -1126,6 +1135,7 @@ export interface SnsFailedCryptoTransaction {
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [bigint],
   'error_message' : string,
+  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export interface SnsNeuronGate {

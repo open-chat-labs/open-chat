@@ -293,3 +293,5 @@ export type LocalCommunitySummaryUpdates = {
     removedAtTimestamp?: bigint;
     lastUpdated: number;
 };
+
+export type ConvertToCommunityResponse = (Success & { id: CommunityIdentifier }) | Failure;

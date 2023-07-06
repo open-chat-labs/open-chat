@@ -20,7 +20,13 @@
     import MenuItem from "../MenuItem.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { _ } from "svelte-i18n";
-    import type { ChatSummary, GroupChatSummary, OpenChat } from "openchat-client";
+    import type {
+        AccessRules,
+        ChatSummary,
+        CommunityIdentifier,
+        GroupChatSummary,
+        OpenChat,
+    } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
@@ -32,6 +38,7 @@
     import HeartPlus from "../icons/HeartPlus.svelte";
     import { interpolateLevel } from "../../utils/i18n";
     import Convert from "./communities/Convert.svelte";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -41,6 +48,7 @@
     export let showSuspendUserModal = false;
     export let hasPinned: boolean;
     export let unreadMessages: number;
+    export let rules: AccessRules | undefined;
 
     $: favouritesStore = client.favouritesStore;
     $: messagesRead = client.messagesRead;
@@ -55,6 +63,9 @@
     $: membersSelected = lastState.kind === "show_group_members";
     $: inviteMembersSelected = lastState.kind === "invite_group_users";
     $: desktop = !$mobileWidth;
+    $: canConvert =
+        selectedChatSummary.kind === "group_chat" &&
+        client.canConvertGroupToCommunity(selectedChatSummary.id);
 
     let hasUnreadPinned = false;
     let convertGroup: GroupChatSummary | undefined;
@@ -174,9 +185,14 @@
             }
         });
     }
+
+    function selectCommunity(ev: CustomEvent<CommunityIdentifier>) {
+        convertGroup = undefined;
+        page(`/community/${ev.detail.communityId}`);
+    }
 </script>
 
-<Convert bind:group={convertGroup} />
+<Convert on:selectCommunity={selectCommunity} bind:group={convertGroup} {rules} />
 
 {#if desktop}
     {#if $isProposalGroup}
@@ -368,7 +384,7 @@
                             </div>
                         </MenuItem>
                     {/if}
-                    {#if $communitiesEnabled && selectedChatSummary.kind === "group_chat" && selectedChatSummary.public}
+                    {#if $communitiesEnabled && canConvert}
                         <MenuItem warning on:click={convertToCommunity}>
                             <ConvertToCommunity
                                 size={$iconSize}

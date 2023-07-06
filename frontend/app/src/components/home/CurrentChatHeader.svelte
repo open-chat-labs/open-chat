@@ -11,7 +11,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary } from "openchat-client";
+    import type { AccessRules, ChatSummary } from "openchat-client";
     import Typing from "../Typing.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
@@ -26,6 +26,7 @@
     export let readonly: boolean;
     export let unreadMessages: number;
     export let hasPinned: boolean;
+    export let rules: AccessRules | undefined;
 
     let viewProfile = false;
     let showSuspendUserModal = false;
@@ -158,6 +159,7 @@
             {hasPinned}
             {unreadMessages}
             {selectedChatSummary}
+            {rules}
             {blocked}
             on:toggleMuteNotifications
             on:showGroupDetails
