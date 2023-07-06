@@ -21,6 +21,7 @@ type TokenDetails = record {
     info_url : opt text;
     how_to_buy_url : opt text;
     transaction_url_format : opt text;
+    logo : opt text;
     last_updated : TimestampMillis;
 };
 
