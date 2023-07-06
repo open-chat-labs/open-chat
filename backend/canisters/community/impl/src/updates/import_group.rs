@@ -49,9 +49,10 @@ async fn import_group_impl(group_id: ChatId, user_id: UserId, group_index_canist
     )
     .await
     {
-        Ok(C2cResponse::Success(total_bytes)) => {
-            mutate_state(|state| commit_group_to_import(user_id, group_id, total_bytes, false, state))
-        }
+        Ok(C2cResponse::Success(total_bytes)) => mutate_state(|state| {
+            let channel_id = state.env.rng().gen();
+            commit_group_to_import(user_id, group_id, channel_id, total_bytes, false, state)
+        }),
         Ok(C2cResponse::UserNotInGroup) => UserNotInGroup,
         Ok(C2cResponse::NotAuthorized) => UserNotGroupOwner,
         Ok(C2cResponse::UserSuspended) => UserSuspended,
@@ -91,12 +92,12 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 pub(crate) fn commit_group_to_import(
     user_id: UserId,
     group_id: ChatId,
+    channel_id: ChannelId,
     total_bytes: u64,
     make_default_channel: bool,
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
-    let channel_id: ChannelId = state.env.rng().gen();
 
     if state
         .data

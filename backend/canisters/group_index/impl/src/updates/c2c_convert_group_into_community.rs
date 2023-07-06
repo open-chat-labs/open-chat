@@ -64,6 +64,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Respon
         default_channels: Vec::new(),
         source_group: Some(SourceGroup {
             group_id: caller,
+            channel_id: args.channel_id,
             total_bytes: args.total_bytes,
         }),
         primary_language: args.primary_language,

@@ -51,7 +51,14 @@ fn init(args: Args) {
 
     if let Some(group) = args.source_group {
         mutate_state(|state| {
-            commit_group_to_import(args.created_by_user_id, group.group_id, group.total_bytes, true, state);
+            commit_group_to_import(
+                args.created_by_user_id,
+                group.group_id,
+                group.channel_id,
+                group.total_bytes,
+                true,
+                state,
+            );
         });
     }
 }

@@ -1,9 +1,10 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{AccessGate, AccessRules, CommunityId, CommunityPermissions, UserId};
+use types::{AccessGate, AccessRules, ChannelId, CommunityId, CommunityPermissions, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub channel_id: ChannelId,
     pub user_id: UserId,
     pub user_principal: Principal,
     pub name: String,

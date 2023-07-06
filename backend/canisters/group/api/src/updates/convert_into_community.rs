@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{AccessRules, CommunityId, CommunityPermissions};
+use types::{AccessRules, ChannelId, CommunityId, CommunityPermissions};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -12,11 +12,17 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(CommunityId),
+    Success(SuccessResult),
     CallerNotInGroup,
     AlreadyImportingToAnotherCommunity,
     NotAuthorized,
     UserSuspended,
     ChatFrozen,
     InternalError(String),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct SuccessResult {
+    pub community_id: CommunityId,
+    pub channel_id: ChannelId,
 }
