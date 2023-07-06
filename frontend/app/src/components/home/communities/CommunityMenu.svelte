@@ -14,20 +14,25 @@
     import Menu from "../../Menu.svelte";
     import { _ } from "svelte-i18n";
     import MenuItem from "../../MenuItem.svelte";
-    import type { CommunitySummary } from "openchat-client";
-    import { createEventDispatcher } from "svelte";
+    import type { CommunitySummary, OpenChat } from "openchat-client";
+    import { createEventDispatcher, getContext } from "svelte";
     import { pushRightPanelHistory } from "../../../stores/rightPanel";
+
+    const client = getContext<OpenChat>("client");
 
     export let community: CommunitySummary;
 
     const dispatch = createEventDispatcher();
 
     $: member = community.membership.role !== "none";
-    $: canLeave = member && true; //TODO this need to be based on permissions
-    $: canDelete = member && true; //TODO this need to be based on permissions
-    $: canEdit = member && true; //TODO this need to be based on permissions
-    $: canInvite = member && true; //TODO this need to be based on permissions
-    $: canCreateChannel = member && true; //TODO this need to be based on permissions
+    $: canLeave = member;
+    $: canDelete = member && client.canDeleteCommunity(community.id);
+    $: canEdit = member && client.canEditCommunity(community.id);
+    $: canInvite = member && client.canInviteUsers(community.id);
+    $: canCreateChannel =
+        member &&
+        (client.canCreatePrivateChannel(community.id) ||
+            client.canCreatePublicChannel(community.id));
 
     function leaveCommunity() {
         dispatch("leaveCommunity", {

@@ -664,7 +664,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private channelEvents(
-        eventIndexRange: IndexRange, // TODO this is used for caching which still needs doing
+        eventIndexRange: IndexRange,
         chatId: ChannelIdentifier,
         startIndex: number,
         ascending: boolean,
@@ -1773,7 +1773,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getGroupRules(chatId: MultiUserChatIdentifier): Promise<AccessRules | undefined> {
-        if (chatId.kind === "channel") return Promise.resolve({ enabled: false, text: "" }); //TODO sort this out
+        if (chatId.kind === "channel") return Promise.resolve({ enabled: false, text: "" });
         return this.getGroupClient(chatId.groupId).getRules();
     }
 

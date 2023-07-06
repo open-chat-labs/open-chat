@@ -808,6 +808,7 @@ type UpdateCommunityArgs = record {
     permissions : opt OptionalCommunityPermissions;
     gate : AccessGateUpdate;
     public : opt bool;
+    primary_language : opt text;
 };
 
 type UpdateCommunityResponse = variant {
@@ -827,6 +828,7 @@ type UpdateCommunityResponse = variant {
     UserSuspended;
     CommunityFrozen;
     CannotMakeCommunityPublic;
+    InvalidLanguage;
 };
 
 service : {

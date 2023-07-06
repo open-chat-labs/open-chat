@@ -11,6 +11,7 @@ pub struct Args {
     pub rules: AccessRules,
     pub permissions: Option<CommunityPermissions>,
     pub gate: Option<AccessGate>,
+    pub primary_language: String,
     pub history_visible_to_new_joiners: bool,
     pub total_bytes: u64,
 }

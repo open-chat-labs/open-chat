@@ -101,6 +101,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             permissions: args.permissions,
             gate: args.gate,
             default_channels: args.default_channels,
+            primary_language: args.primary_language,
         };
         Ok(PrepareResult {
             group_index_canister_id: state.data.group_index_canister_id,

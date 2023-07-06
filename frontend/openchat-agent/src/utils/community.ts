@@ -83,7 +83,7 @@ export function mergeCommunityUpdates(
         }));
 
         const channelsRemoved = new Set(
-            (c?.membership?.channelsRemoved ?? []).map((c) => c.channelId)
+            (c?.channelsRemoved ?? []).map((c) => c.channelId)
         );
 
         const channelsAdded = c?.channelsAdded ?? [];

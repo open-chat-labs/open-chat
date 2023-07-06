@@ -120,6 +120,7 @@ pub mod happy_path {
                 rules: AccessRules::default(),
                 gate: None,
                 default_channels,
+                primary_language: "en".to_string(),
             },
         );
 

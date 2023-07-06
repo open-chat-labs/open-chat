@@ -17,6 +17,7 @@ pub struct Args {
     pub gate: Option<AccessGate>,
     pub default_channels: Vec<String>,
     pub source_group: Option<SourceGroup>,
+    pub primary_language: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

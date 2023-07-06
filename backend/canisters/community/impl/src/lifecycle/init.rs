@@ -31,6 +31,7 @@ fn init(args: Args) {
         args.avatar,
         args.banner,
         args.permissions,
+        args.primary_language,
         args.user_index_canister_id,
         args.local_user_index_canister_id,
         args.group_index_canister_id,

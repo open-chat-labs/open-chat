@@ -23,6 +23,30 @@ export function canChangeRoles(
     }
 }
 
+export function canEditCommunity({ membership, permissions }: CommunitySummary): boolean {
+    return isPermitted(membership.role, permissions.updateDetails);
+}
+
+export function canCreatePublicChannel({ membership, permissions }: CommunitySummary): boolean {
+    return isPermitted(membership.role, permissions.createPublicChannel);
+}
+
+export function canCreatePrivateChannel({ membership, permissions }: CommunitySummary): boolean {
+    return isPermitted(membership.role, permissions.createPrivateChannel);
+}
+
+export function canChangeCommunityRoles({ membership, permissions }: CommunitySummary): boolean {
+    return isPermitted(membership.role, permissions.changeRoles);
+}
+
+export function canChangeCommunityPermissions({ membership }: CommunitySummary): boolean {
+    return hasOwnerRights(membership.role);
+}
+
+export function canDeleteCommunity({ membership }: CommunitySummary): boolean {
+    return hasOwnerRights(membership.role);
+}
+
 export function canBlockUsers({ membership, permissions }: CommunitySummary): boolean {
     return isPermitted(membership.role, permissions.blockUsers);
 }

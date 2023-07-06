@@ -203,6 +203,7 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     name: string | undefined;
     description: string | undefined;
     lastUpdated: bigint;
+    channelsRemoved: ChannelIdentifier[];
     avatarId: OptionUpdate<bigint>;
     channelsAdded: ChannelSummary[];
     membership: CommunityMembershipUpdates | undefined;
@@ -233,7 +234,6 @@ export type CommunityCanisterChannelSummaryUpdates = {
 
 export type CommunityMembershipUpdates = {
     role: MemberRole | undefined;
-    channelsRemoved: ChannelIdentifier[];
 };
 
 export type ChannelMembershipUpdates = {

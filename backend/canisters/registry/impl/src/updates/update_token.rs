@@ -24,6 +24,7 @@ fn update_token_impl(args: Args, state: &mut RuntimeState) -> Response {
         if let Some(logo) = args.logo {
             token.logo = Some(logo);
         }
+        token.last_updated = state.env.now();
         Success
     } else {
         TokenNotFound

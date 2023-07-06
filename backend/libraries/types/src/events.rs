@@ -254,3 +254,10 @@ pub struct DefaultChannelsChanged {
     pub removed: Vec<ChannelId>,
     pub changed_by: UserId,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PrimaryLanguageChanged {
+    pub previous: String,
+    pub new: String,
+    pub changed_by: UserId,
+}
