@@ -48,6 +48,7 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub latest_event_index: Option<EventIndex>,
     pub channels_added: Vec<CommunityCanisterChannelSummary>,
     pub channels_updated: Vec<CommunityCanisterChannelSummaryUpdates>,
+    pub channels_removed: Vec<ChannelId>,
     pub membership: Option<CommunityMembershipUpdates>,
     pub metrics: Option<ChatMetrics>,
 }
@@ -55,5 +56,4 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityMembershipUpdates {
     pub role: Option<CommunityRole>,
-    pub channels_removed: Vec<ChannelId>,
 }

@@ -383,13 +383,13 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     latest_event_index : opt EventIndex;
     channels_added : vec CommunityCanisterChannelSummary;
     channels_updated : vec CommunityCanisterChannelSummaryUpdates;
+    channels_removed : vec ChannelId;
     membership : opt CommunityMembershipUpdates;
     metrics : opt ChatMetrics;
 };
 
 type CommunityMembershipUpdates = record {
     role : opt CommunityRole;
-    channels_removed : vec ChannelId;
 };
 
 type CommunityCanisterChannelSummaryUpdates = record {
