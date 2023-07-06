@@ -25,7 +25,7 @@ async fn add_token(args: Args) -> Response {
         client.symbol(),
         client.decimals(),
         client.fee(),
-        get_logo(args.ledger_canister_id, &client, sns_wasm_canister_id),
+        get_logo(args.logo, args.ledger_canister_id, &client, sns_wasm_canister_id),
     )
     .await
     {
@@ -67,10 +67,15 @@ fn prepare(ledger_canister_id: CanisterId, state: &RuntimeState) -> Result<Prepa
 }
 
 async fn get_logo<R: Runtime>(
+    logo: Option<String>,
     ledger_canister_id: CanisterId,
     client: &ic_icrc1_client::ICRC1Client<R>,
     sns_wasm_canister_id: CanisterId,
 ) -> Result<Option<String>, (i32, String)> {
+    if logo.is_some() {
+        return Ok(logo);
+    }
+
     let metadata = client.metadata().await?;
 
     let logo = metadata.into_iter().find(|(k, _)| k == "icrc1:logo").and_then(|(_, v)| {
