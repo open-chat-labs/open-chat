@@ -20,7 +20,7 @@
     import MenuItem from "../MenuItem.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { _ } from "svelte-i18n";
-    import type { AccessRules, ChatSummary, GroupChatSummary, OpenChat } from "openchat-client";
+    import type { ChatSummary, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
@@ -137,7 +137,7 @@
     }
 
     function convertToCommunity() {
-        if (selectedChatSummary.kind === "group_chat" && selectedChatSummary.public) {
+        if (selectedChatSummary.kind === "group_chat") {
             dispatch("convertGroupToCommunity", selectedChatSummary);
         }
     }

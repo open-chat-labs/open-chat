@@ -212,6 +212,7 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     latestEventIndex: number | undefined;
     bannerId: OptionUpdate<bigint>;
     memberCount: number | undefined;
+    primaryLanguage: string | undefined;
 };
 
 export type CommunityCanisterChannelSummaryUpdates = {
@@ -231,6 +232,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     memberCount: number | undefined;
     latestMessage: EventWrapper<Message> | undefined;
     updatedEvents: UpdatedEvent[];
+    isDefault: boolean | undefined;
 };
 
 export type CommunityMembershipUpdates = {

@@ -951,7 +951,7 @@ export function canDeleteGroup(thing: AccessControlled & HasMembershipRole): boo
 
 export function canConvertToCommunity(thing: AccessControlled & HasMembershipRole): boolean {
     if (!thing.frozen) {
-        return thing.public && hasOwnerRights(thing.membership.role);
+        return hasOwnerRights(thing.membership.role);
     } else {
         return false;
     }

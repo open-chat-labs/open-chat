@@ -386,6 +386,7 @@ export function mergeGroupChatUpdates(
                 myMetrics: g?.myMetrics ?? c.membership.myMetrics,
                 archived: u?.archived ?? c.membership.archived,
             },
+            isDefault: false,
         };
     });
 }
@@ -435,6 +436,7 @@ export function mergeGroupChats(
                 readByMeUpTo: u?.readByMeUpTo,
                 archived: u?.archived ?? false,
             },
+            isDefault: false,
         };
     });
 }

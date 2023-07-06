@@ -918,7 +918,7 @@
         "converted": "Su grupo se ha convertido en una comunidad.",
         "pleaseWait": "Por favor espere, esto puede tomar un poco de tiempo",
         "goto": "ir a la comunidad",
-        "convertInfo": "Podemos encargarnos de convertir su grupo público en una comunidad.\n\n Este es un proceso irreversible y hará lo siguiente:\n\n* congelar el grupo público existente\n* crear una nueva comunidad con el mismo nombre que el grupo\n* agregue un canal predeterminado a la comunidad con el mismo nombre que el grupo\n* agregar a todos los miembros del grupo como miembros de la comunidad\n* copiar el historial de mensajes completo del grupo en el canal predeterminado\n* eliminar el grupo existente\n* informar a todos los miembros del grupo que se ha convertido en una comunidad\n\nEste proceso puede tardar unos minutos dependiendo del tamaño del grupo, así que tenga paciencia."
+        "convertInfo": "Podemos encargarnos de convertir tu grupo en una comunidad.\n\n Este es un proceso irreversible y hará lo siguiente:\n\n* congelar el grupo existente\n* crear una nueva comunidad con el mismo nombre que el grupo\n* agregue un canal predeterminado a la comunidad con el mismo nombre que el grupo\n* agregar a todos los miembros del grupo como miembros de la comunidad\n* copiar el historial de mensajes completo del grupo en el canal predeterminado\n* eliminar el grupo existente\n* informar a todos los miembros del grupo que se ha convertido en una comunidad\n\nEste proceso puede tardar unos minutos dependiendo del tamaño del grupo, así que tenga paciencia."
     },
     "groupCreatedBy": "{username} creó el {level}",
     "groupName": "{level} nombre",
