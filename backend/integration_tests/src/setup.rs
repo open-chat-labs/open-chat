@@ -24,9 +24,10 @@ pub fn setup_new_env() -> TestEnv {
 }
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
-    let nns_canister_ids: Vec<_> = (0..10).map(|_| create_canister(env, controller)).collect();
+    let nns_canister_ids: Vec<_> = (0..11).map(|_| create_canister(env, controller)).collect();
     let icp_ledger_canister_id = nns_canister_ids[2];
     let cycles_minting_canister_id = nns_canister_ids[4];
+    let sns_wasm_canister_id = nns_canister_ids[10];
 
     let user_index_canister_id = create_canister(env, controller);
     let group_index_canister_id = create_canister(env, controller);
@@ -54,6 +55,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let online_users_canister_wasm = wasms::ONLINE_USERS.clone();
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
     let registry_canister_wasm = wasms::REGISTRY.clone();
+    let sns_wasm_canister_wasm = wasms::SNS_WASM.clone();
     let storage_bucket_canister_wasm = wasms::STORAGE_BUCKET.clone();
     let storage_index_canister_wasm = wasms::STORAGE_INDEX.clone();
     let user_canister_wasm = wasms::USER.clone();
@@ -199,6 +201,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
 
     let registry_init_args = registry_canister::init::Args {
         governance_principals: vec![controller],
+        sns_wasm_canister_id,
         cycles_dispenser_canister_id,
         wasm_version: Version::min(),
         test_mode: true,
@@ -293,6 +296,15 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         cycles_minting_canister_init_args,
     );
 
+    let sns_wasm_canister_init_args = SnsWasmCanisterInitPayload::default();
+    install_canister(
+        env,
+        controller,
+        sns_wasm_canister_id,
+        sns_wasm_canister_wasm,
+        sns_wasm_canister_init_args,
+    );
+
     // Tick a load of times so that all of the child canisters have time to get installed
     tick_many(env, 30);
 
@@ -327,4 +339,11 @@ struct CyclesMintingCanisterInitPayload {
     governance_canister_id: CanisterId,
     minting_account_id: Option<String>,
     last_purged_notification: Option<BlockIndex>,
+}
+
+#[derive(CandidType, Default)]
+struct SnsWasmCanisterInitPayload {
+    allowed_principals: Vec<Principal>,
+    access_controls_enabled: bool,
+    sns_subnet_ids: Vec<Principal>,
 }

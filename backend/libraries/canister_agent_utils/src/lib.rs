@@ -100,6 +100,7 @@ pub struct CanisterIds {
     pub nns_internet_identity: CanisterId,
     pub nns_ledger: CanisterId,
     pub nns_cmc: CanisterId,
+    pub nns_sns_wasm: CanisterId,
 }
 
 pub fn get_dfx_identity(name: &str) -> BasicIdentity {

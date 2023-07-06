@@ -21,6 +21,7 @@ pub struct TokenDetails {
     pub symbol: String,
     pub decimals: u8,
     pub fee: u128,
+    pub logo: Option<String>,
     pub info_url: Option<String>,
     pub how_to_buy_url: Option<String>,
     pub transaction_url_format: Option<String>,
