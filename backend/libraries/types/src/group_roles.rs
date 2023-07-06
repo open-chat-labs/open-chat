@@ -12,10 +12,14 @@ pub enum GroupRole {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupPermissions {
+    #[deprecated]
+    #[serde(default = "group_permission_role_owner")]
     pub change_permissions: GroupPermissionRole,
     pub change_roles: GroupPermissionRole,
     pub add_members: GroupPermissionRole,
     pub remove_members: GroupPermissionRole,
+    #[deprecated]
+    #[serde(default = "group_permission_role_owner")]
     pub block_users: GroupPermissionRole,
     pub delete_messages: GroupPermissionRole,
     pub update_group: GroupPermissionRole,
@@ -29,9 +33,13 @@ pub struct GroupPermissions {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct OptionalGroupPermissions {
+    #[deprecated]
+    #[serde(default)]
     pub change_permissions: Option<GroupPermissionRole>,
     pub change_roles: Option<GroupPermissionRole>,
     pub remove_members: Option<GroupPermissionRole>,
+    #[deprecated]
+    #[serde(default)]
     pub block_users: Option<GroupPermissionRole>,
     pub delete_messages: Option<GroupPermissionRole>,
     pub update_group: Option<GroupPermissionRole>,
@@ -44,6 +52,7 @@ pub struct OptionalGroupPermissions {
 }
 
 impl Default for GroupPermissions {
+    #[allow(deprecated)]
     fn default() -> Self {
         GroupPermissions {
             change_permissions: GroupPermissionRole::Admins,
@@ -69,4 +78,8 @@ pub enum GroupPermissionRole {
     Admins,
     Moderators,
     Members,
+}
+
+fn group_permission_role_owner() -> GroupPermissionRole {
+    GroupPermissionRole::Owner
 }

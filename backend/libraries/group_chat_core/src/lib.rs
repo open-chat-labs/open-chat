@@ -1301,7 +1301,7 @@ impl GroupChatCore {
 
             let group_permissions = &self.permissions;
             if !member.role.can_update_group(group_permissions)
-                || (permissions.is_some() && !member.role.can_change_permissions(group_permissions))
+                || (permissions.is_some() && !member.role.can_change_permissions())
                 || (public.is_some() && !member.role.can_change_group_visibility())
             {
                 NotAuthorized
@@ -1533,6 +1533,7 @@ impl GroupChatCore {
     }
 
     fn merge_permissions(new: OptionalGroupPermissions, old: &GroupPermissions) -> GroupPermissions {
+        #[allow(deprecated)]
         GroupPermissions {
             change_permissions: new.change_permissions.unwrap_or(old.change_permissions),
             change_roles: new.change_roles.unwrap_or(old.change_roles),
