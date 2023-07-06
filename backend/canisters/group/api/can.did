@@ -323,7 +323,10 @@ type ConvertIntoCommunityArgs = record {
 };
 
 type ConvertIntoCommunityResponse = variant {
-    Success : CommunityId;
+    Success : record {
+        community_id : CommunityId;
+        channel_id : ChannelId;
+    };
     CallerNotInGroup;
     AlreadyImportingToAnotherCommunity;
     NotAuthorized;
