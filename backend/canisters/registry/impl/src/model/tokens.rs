@@ -44,6 +44,10 @@ impl Tokens {
         }
     }
 
+    pub fn get_mut(&mut self, ledger_canister_id: CanisterId) -> Option<&mut TokenDetails> {
+        self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id)
+    }
+
     pub fn last_updated(&self) -> TimestampMillis {
         self.last_updated
     }
