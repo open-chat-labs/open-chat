@@ -1232,6 +1232,7 @@ type UpdateCommunity = {
     banner?: Uint8Array;
     gate?: AccessGate;
     isPublic?: boolean;
+    primaryLanguage?: string;
 };
 
 type CreateCommunity = {

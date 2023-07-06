@@ -4418,7 +4418,8 @@ export class OpenChat extends OpenChatAgentWorker {
         avatar: Uint8Array | undefined,
         banner: Uint8Array | undefined,
         gate: AccessGate | undefined,
-        isPublic: boolean | undefined
+        isPublic: boolean | undefined,
+        primaryLanguage: string | undefined
     ): Promise<boolean> {
         return this.sendRequest({
             kind: "updateCommunity",
@@ -4431,6 +4432,7 @@ export class OpenChat extends OpenChatAgentWorker {
             banner,
             gate,
             isPublic,
+            primaryLanguage,
         })
             .then((resp) => {
                 if (resp.kind === "success") {

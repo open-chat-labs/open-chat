@@ -898,7 +898,8 @@
             "inviteUsers": "Rất tiếc, chúng tôi không thể mời những người dùng này",
             "joinFailed": "Xin lỗi chúng tôi không thể tham gia cộng đồng này",
             "leaveFailed": "Xin lỗi, chúng tôi không thể rời khỏi cộng đồng này",
-            "deleteFailed": "Xin lỗi, chúng tôi không thể xóa cộng đồng này"
+            "deleteFailed": "Xin lỗi, chúng tôi không thể xóa cộng đồng này",
+            "convertFailed": "Xin lỗi nhưng chúng tôi không thể chuyển đổi nhóm của bạn thành cộng đồng"
         },
         "memberCount": "các thành viên)",
         "channelCount": "kênh truyền hình)",
@@ -911,7 +912,12 @@
         "favourites": "yêu thích",
         "addToFavourites": "Thêm vào mục ưa thích",
         "removeFromFavourites": "Loại bỏ khỏi mục ưa thích",
-        "noInvalidChannels": "Tất cả các kênh mặc định phải nằm trong khoảng từ {min} đến {max} ký tự"
+        "noInvalidChannels": "Tất cả các kênh mặc định phải nằm trong khoảng từ {min} đến {max} ký tự",
+        "convertButton": "Chuyển thành",
+        "converted": "Nhóm của bạn đã được chuyển đổi thành một cộng đồng.",
+        "pleaseWait": "Vui lòng đợi - quá trình này có thể mất chút thời gian",
+        "goto": "Đi đến cộng đồng",
+        "convertInfo": "Chúng tôi có thể đảm nhận việc chuyển đổi nhóm công khai của bạn thành cộng đồng.\n\n Đây là một quá trình không thể đảo ngược và sẽ làm như sau:\n\n* đóng băng nhóm công khai hiện có\n* tạo một cộng đồng mới có cùng tên với nhóm\n* thêm kênh mặc định vào cộng đồng có cùng tên với nhóm\n* thêm tất cả các thành viên của nhóm làm thành viên của cộng đồng\n* copy toàn bộ lịch sử tin nhắn từ nhóm vào kênh mặc định\n* xóa nhóm hiện có\n* thông báo cho tất cả các thành viên của nhóm rằng nó đã được chuyển đổi thành cộng đồng\n\nQuá trình này có thể mất vài phút tùy thuộc vào quy mô của nhóm, vì vậy hãy kiên nhẫn."
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",

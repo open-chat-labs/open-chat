@@ -8,13 +8,14 @@
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
+    import Markdown from "../Markdown.svelte";
     import Button from "../../Button.svelte";
     import { _ } from "svelte-i18n";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Congratulations from "../upgrade/Congratulations.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
+    import page from "page";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     export let group: GroupChatSummary | undefined;
@@ -35,7 +36,8 @@
 
     function go() {
         if (communityId !== undefined) {
-            dispatch("selectCommunity", communityId);
+            close();
+            page(`/community/${communityId.communityId}`);
         }
     }
 
@@ -49,7 +51,7 @@
         <ModalContent closeIcon on:close={close}>
             <div slot="header">{$_("communities.convert")}</div>
             <div
-                class="body"
+                class="body convert-to-community"
                 class:error={state === "error"}
                 class:loading={state === "converting" || state === "converted"}
                 slot="body">
@@ -59,7 +61,8 @@
                     </div>
                     <p class="para">{$_("communities.pleaseWait")}</p>
                 {:else if state === "idle"}
-                    <p class="para">
+                    <Markdown inline={false} text={$_("communities.convertInfo")} />
+                    <!-- <p class="para">
                         We can take care of converting your public group to a community.
                     </p>
                     <p class="para">This is an irreversible process and will do the following:</p>
@@ -84,7 +87,7 @@
                     <p class="para">
                         This process might take a few minutes depending on the size of the group so
                         please be patient.
-                    </p>
+                    </p> -->
                 {:else if state === "converted"}
                     <Congratulations para={$_("communities.converted")} />
                 {:else if state === "error"}
@@ -111,6 +114,12 @@
 {/if}
 
 <style lang="scss">
+    :global(.convert-to-community .markdown-wrapper ul) {
+        @include bullet_list();
+        @include font(book, normal, fs-90);
+        color: var(--txt-light);
+    }
+
     .body {
         min-height: 300px;
 
@@ -125,12 +134,6 @@
     .spinner {
         width: 150px;
         margin: 30px auto;
-    }
-
-    .list {
-        @include bullet_list();
-        @include font(book, normal, fs-90);
-        color: var(--txt-light);
     }
 
     .error-img {

@@ -257,6 +257,7 @@ export class UserClient extends CandidService {
                 rules: apiGroupRules(rules),
                 gate: apiMaybeAccessGate(community.gate),
                 default_channels: defaultChannels,
+                primary_language: community.primaryLanguage,
             }),
             createCommunityResponse
         );

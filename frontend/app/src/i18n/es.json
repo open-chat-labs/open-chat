@@ -899,7 +899,8 @@
             "inviteUsers": "Lo sentimos, no pudimos invitar a estos usuarios.",
             "joinFailed": "Lo sentimos, no pudimos unirnos a esta comunidad.",
             "leaveFailed": "Lo sentimos, no pudimos salir de esta comunidad.",
-            "deleteFailed": "Lo sentimos, no pudimos eliminar esta comunidad."
+            "deleteFailed": "Lo sentimos, no pudimos eliminar esta comunidad.",
+            "convertFailed": "Lo sentimos, pero no pudimos convertir sus grupos en una comunidad."
         },
         "memberCount": "miembro(s)",
         "channelCount": "canales",
@@ -912,7 +913,12 @@
         "favourites": "Favoritos",
         "addToFavourites": "Agregar a favoritos",
         "removeFromFavourites": "Quitar de favoritos",
-        "noInvalidChannels": "Todos los canales predeterminados deben tener entre {min} y {max} caracteres"
+        "noInvalidChannels": "Todos los canales predeterminados deben tener entre {min} y {max} caracteres",
+        "convertButton": "Convertir",
+        "converted": "Su grupo se ha convertido en una comunidad.",
+        "pleaseWait": "Por favor espere, esto puede tomar un poco de tiempo",
+        "goto": "ir a la comunidad",
+        "convertInfo": "Podemos encargarnos de convertir su grupo público en una comunidad.\n\n Este es un proceso irreversible y hará lo siguiente:\n\n* congelar el grupo público existente\n* crear una nueva comunidad con el mismo nombre que el grupo\n* agregue un canal predeterminado a la comunidad con el mismo nombre que el grupo\n* agregar a todos los miembros del grupo como miembros de la comunidad\n* copiar el historial de mensajes completo del grupo en el canal predeterminado\n* eliminar el grupo existente\n* informar a todos los miembros del grupo que se ha convertido en una comunidad\n\nEste proceso puede tardar unos minutos dependiendo del tamaño del grupo, así que tenga paciencia."
     },
     "groupCreatedBy": "{username} creó el {level}",
     "groupName": "{level} nombre",

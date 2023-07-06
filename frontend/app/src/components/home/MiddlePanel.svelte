@@ -59,6 +59,7 @@
             on:showPinned
             on:toggleMuteNotifications
             on:goToMessageIndex
+            on:convertGroupToCommunity
             on:forward />
     {/if}
 </Panel>

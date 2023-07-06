@@ -309,6 +309,7 @@ export interface CommunityCanisterCommunitySummary {
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
   'member_count' : number,
+  'primary_language' : string,
 }
 export interface CommunityCanisterCommunitySummaryUpdates {
   'is_public' : [] | [boolean],
@@ -328,6 +329,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'latest_event_index' : [] | [EventIndex],
   'banner_id' : DocumentIdUpdate,
   'member_count' : [] | [number],
+  'primary_language' : [] | [string],
 }
 export type CommunityId = CanisterId;
 export interface CommunityMatch {
@@ -357,7 +359,6 @@ export type CommunityPermissionRole = { 'Owners' : null } |
 export interface CommunityPermissions {
   'create_public_channel' : CommunityPermissionRole,
   'block_users' : CommunityPermissionRole,
-  'change_permissions' : CommunityPermissionRole,
   'update_details' : CommunityPermissionRole,
   'remove_members' : CommunityPermissionRole,
   'invite_users' : CommunityPermissionRole,
@@ -1129,7 +1130,6 @@ export interface NotificationEnvelope {
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
   'block_users' : [] | [CommunityPermissionRole],
-  'change_permissions' : [] | [CommunityPermissionRole],
   'update_details' : [] | [CommunityPermissionRole],
   'remove_members' : [] | [CommunityPermissionRole],
   'invite_users' : [] | [CommunityPermissionRole],
@@ -1680,11 +1680,13 @@ export interface UpdateCommunityArgs {
   'public' : [] | [boolean],
   'rules' : [] | [AccessRules],
   'avatar' : DocumentUpdate,
+  'primary_language' : [] | [string],
 }
 export type UpdateCommunityResponse = { 'NameReserved' : null } |
   { 'CannotMakeCommunityPublic' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
+  { 'InvalidLanguage' : null } |
   { 'NameTooShort' : FieldTooShortResult } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |

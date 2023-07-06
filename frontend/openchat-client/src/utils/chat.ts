@@ -43,6 +43,7 @@ import {
     MessageMap,
     MultiUserChatIdentifier,
     MultiUserChat,
+    ChatListScope,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -336,7 +337,23 @@ export function mergeUnconfirmedThreadsIntoSummary(
     };
 }
 
+function scopeMatchesChat(scope: ChatListScope, chat: ChatSummary): boolean {
+    switch (scope.kind) {
+        case "community":
+            return chat.kind === "channel" && chat.id.communityId === scope.id.communityId;
+        case "group_chat":
+            return chat.kind === "group_chat";
+        case "direct_chat":
+            return chat.kind === "direct_chat";
+        case "favourite":
+            return false;
+        default:
+            return true;
+    }
+}
+
 export function mergeLocalSummaryUpdates(
+    scope: ChatListScope,
     server: ChatMap<ChatSummary>,
     localUpdates: ChatMap<LocalChatSummaryUpdates>
 ): ChatMap<ChatSummary> {
@@ -345,7 +362,7 @@ export function mergeLocalSummaryUpdates(
     const merged = server.clone();
 
     for (const [chatId, localUpdate] of localUpdates.entries()) {
-        if (localUpdate.added !== undefined) {
+        if (localUpdate.added !== undefined && scopeMatchesChat(scope, localUpdate.added)) {
             const current = merged.get(chatId);
             if (current === undefined || (current.kind === "group_chat" && isPreviewing(current))) {
                 merged.set(chatId, localUpdate.added);

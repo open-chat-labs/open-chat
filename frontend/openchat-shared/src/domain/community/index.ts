@@ -66,6 +66,7 @@ export type CommunitySummary = AccessControlled &
         banner: DataContent;
         membership?: CommunityMembership;
         channels: ChannelSummary[]; // TODO - this might be better as a ChatMap - but that would have some serialisation complications
+        primaryLanguage: string;
     };
 
 // TODO - not sure if this really needs to be a thing yet

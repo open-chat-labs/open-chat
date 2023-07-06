@@ -20,13 +20,7 @@
     import MenuItem from "../MenuItem.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { _ } from "svelte-i18n";
-    import type {
-        AccessRules,
-        ChatSummary,
-        CommunityIdentifier,
-        GroupChatSummary,
-        OpenChat,
-    } from "openchat-client";
+    import type { AccessRules, ChatSummary, GroupChatSummary, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
@@ -37,8 +31,6 @@
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
     import { interpolateLevel } from "../../utils/i18n";
-    import Convert from "./communities/Convert.svelte";
-    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -48,7 +40,6 @@
     export let showSuspendUserModal = false;
     export let hasPinned: boolean;
     export let unreadMessages: number;
-    export let rules: AccessRules | undefined;
 
     $: favouritesStore = client.favouritesStore;
     $: messagesRead = client.messagesRead;
@@ -68,7 +59,6 @@
         client.canConvertGroupToCommunity(selectedChatSummary.id);
 
     let hasUnreadPinned = false;
-    let convertGroup: GroupChatSummary | undefined;
 
     $: {
         setUnreadPinned(hasPinned, selectedChatSummary);
@@ -148,7 +138,7 @@
 
     function convertToCommunity() {
         if (selectedChatSummary.kind === "group_chat" && selectedChatSummary.public) {
-            convertGroup = selectedChatSummary;
+            dispatch("convertGroupToCommunity", selectedChatSummary);
         }
     }
 
@@ -185,14 +175,7 @@
             }
         });
     }
-
-    function selectCommunity(ev: CustomEvent<CommunityIdentifier>) {
-        convertGroup = undefined;
-        page(`/community/${ev.detail.communityId}`);
-    }
 </script>
-
-<Convert on:selectCommunity={selectCommunity} bind:group={convertGroup} {rules} />
 
 {#if desktop}
     {#if $isProposalGroup}

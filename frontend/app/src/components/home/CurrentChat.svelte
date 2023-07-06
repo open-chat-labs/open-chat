@@ -265,11 +265,11 @@
             on:showPinned
             on:createPoll={createPoll}
             on:searchChat={searchChat}
+            on:convertGroupToCommunity
             {blocked}
             {readonly}
             {unreadMessages}
             selectedChatSummary={chat}
-            rules={$currentChatRules}
             hasPinned={$currentChatPinnedMessages.size > 0} />
     {/if}
     <CurrentChatMessages

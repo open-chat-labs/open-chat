@@ -536,7 +536,7 @@ export function communitySummaryUpdates(
 }
 
 export function communityMembershipUpdates(
-    candid: ApiCommunityMembershipUpdates,
+    candid: ApiCommunityMembershipUpdates
 ): CommunityMembershipUpdates {
     return {
         role: optional(candid.role, memberRole),
@@ -670,7 +670,6 @@ export function apiOptionalCommunityPermissions(
             permissions.createPublicChannel
         ),
         block_users: apiOptional(apiCommunityPermissionRole, permissions.blockUsers),
-        change_permissions: apiOptional(apiCommunityPermissionRole, "owner"),
         update_details: apiOptional(apiCommunityPermissionRole, permissions.updateDetails),
         remove_members: apiOptional(apiCommunityPermissionRole, permissions.removeMembers),
         invite_users: apiOptional(apiCommunityPermissionRole, permissions.inviteUsers),

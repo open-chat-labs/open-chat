@@ -1378,7 +1378,6 @@ export const idlFactory = ({ IDL }) => {
   const CommunityPermissions = IDL.Record({
     'create_public_channel' : CommunityPermissionRole,
     'block_users' : CommunityPermissionRole,
-    'change_permissions' : CommunityPermissionRole,
     'update_details' : CommunityPermissionRole,
     'remove_members' : CommunityPermissionRole,
     'invite_users' : CommunityPermissionRole,
@@ -1410,6 +1409,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
     'banner_id' : IDL.Opt(IDL.Nat),
     'member_count' : IDL.Nat32,
+    'primary_language' : IDL.Text,
   });
   const SummaryResponse = IDL.Variant({
     'Success' : CommunityCanisterCommunitySummary,
@@ -1445,6 +1445,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : IDL.Opt(EventIndex),
     'banner_id' : DocumentIdUpdate,
     'member_count' : IDL.Opt(IDL.Nat32),
+    'primary_language' : IDL.Opt(IDL.Text),
   });
   const SummaryUpdatesResponse = IDL.Variant({
     'Success' : CommunityCanisterCommunitySummaryUpdates,
@@ -1558,7 +1559,6 @@ export const idlFactory = ({ IDL }) => {
   const OptionalCommunityPermissions = IDL.Record({
     'create_public_channel' : IDL.Opt(CommunityPermissionRole),
     'block_users' : IDL.Opt(CommunityPermissionRole),
-    'change_permissions' : IDL.Opt(CommunityPermissionRole),
     'update_details' : IDL.Opt(CommunityPermissionRole),
     'remove_members' : IDL.Opt(CommunityPermissionRole),
     'invite_users' : IDL.Opt(CommunityPermissionRole),
@@ -1574,12 +1574,14 @@ export const idlFactory = ({ IDL }) => {
     'public' : IDL.Opt(IDL.Bool),
     'rules' : IDL.Opt(AccessRules),
     'avatar' : DocumentUpdate,
+    'primary_language' : IDL.Opt(IDL.Text),
   });
   const UpdateCommunityResponse = IDL.Variant({
     'NameReserved' : IDL.Null,
     'CannotMakeCommunityPublic' : IDL.Null,
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
+    'InvalidLanguage' : IDL.Null,
     'NameTooShort' : FieldTooShortResult,
     'NotAuthorized' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,

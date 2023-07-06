@@ -921,7 +921,8 @@
         "groupChats": "Group chats",
         "favourites": "Favourites",
         "addToFavourites": "Add to favourites",
-        "removeFromFavourites": "Remove from favourites"
+        "removeFromFavourites": "Remove from favourites",
+        "convertInfo": "We can take care of converting your public group to a community.\n\n This is an irreversible process and will do the following:\n\n* freeze the existing public group\n* create a new community with the same name as the group\n* add a default channel to the community with the same name as the group\n* add all members of the group as members of the community\n* copy the full message history from the group into the default channe\n* delete the existing group\n* inform all members of the group that it has been converted to a community\n\nThis process might take a few minutes depending on the size of the group so please be patient."
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",

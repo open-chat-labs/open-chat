@@ -109,7 +109,10 @@ export class GroupIndexClient extends CandidService {
         pageIndex: number,
         pageSize: number
     ): Promise<ExploreCommunitiesResponse> {
+        // TODO - languages and moderation flags
         const args = {
+            languages: [],
+            exclude_moderation_flags: [] as [] | [number],
             page_size: pageSize,
             page_index: pageIndex,
             search_term: apiOptional(identity, searchTerm),
@@ -124,6 +127,7 @@ export class GroupIndexClient extends CandidService {
     freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
         return this.handleResponse(
             this.groupIndexService.freeze_group({
+                suspend_members: [],
                 chat_id: Principal.fromText(chatId),
                 reason: apiOptional(identity, reason),
             }),

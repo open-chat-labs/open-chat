@@ -1532,7 +1532,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.avatar,
                         payload.banner,
                         payload.gate,
-                        payload.isPublic
+                        payload.isPublic,
+                        payload.primaryLanguage
                     )
                     .then((response) =>
                         sendResponse(correlationId, {

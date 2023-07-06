@@ -821,7 +821,6 @@ export function apiCommunityPermissions(
     return {
         create_public_channel: apiCommunityPermissionRole(permissions.createPublicChannel),
         block_users: apiCommunityPermissionRole(permissions.blockUsers),
-        change_permissions: apiCommunityPermissionRole("owner"),
         update_details: apiCommunityPermissionRole(permissions.updateDetails),
         remove_members: apiCommunityPermissionRole(permissions.removeMembers),
         invite_users: apiCommunityPermissionRole(permissions.inviteUsers),
@@ -1402,6 +1401,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
             readByMeUpTo: latestMessage?.event.messageIndex,
             archived: false,
         },
+        isDefault: false,
     };
 }
 
@@ -1439,6 +1439,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
             pinned: [],
         },
         channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
+        primaryLanguage: candid.primary_language,
     };
 }
 
@@ -1487,6 +1488,7 @@ export function communityChannelSummary(
             mentions: [],
             archived: false,
         },
+        isDefault: candid.is_default,
     };
 }
 

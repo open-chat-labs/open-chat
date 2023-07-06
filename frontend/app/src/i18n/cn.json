@@ -897,7 +897,8 @@
             "inviteUsers": "抱歉，我们无法邀请这些用户",
             "joinFailed": "抱歉，我们无法加入此社区",
             "leaveFailed": "抱歉我们无法离开这个社区",
-            "deleteFailed": "抱歉，我们无法删除此社区"
+            "deleteFailed": "抱歉，我们无法删除此社区",
+            "convertFailed": "抱歉，我们无法将您的群组转换为社区"
         },
         "memberCount": "会员",
         "channelCount": "频道",
@@ -910,7 +911,12 @@
         "favourites": "收藏夹",
         "addToFavourites": "加入“最喜欢的",
         "removeFromFavourites": "从收藏夹中删除",
-        "noInvalidChannels": "所有默认通道必须位于 {min} 和 {max} 字符之间"
+        "noInvalidChannels": "所有默认通道必须位于 {min} 和 {max} 字符之间",
+        "convertButton": "转变",
+        "converted": "您的群组已转换为社区。",
+        "pleaseWait": "请稍候 - 这可能需要一些时间",
+        "goto": "前往社区",
+        "convertInfo": "我们可以负责将您的公共团体转变为社区。\n\n 这是一个不可逆的过程，将执行以下操作：\n\n* 冻结现有的公共组\n* 创建一个与组同名的新社区\n* 为社区添加一个与群组同名的默认频道\n* 将群组所有成员添加为社区成员\n* 将群组中的完整消息历史记录复制到默认频道中\n* 删除现有组\n* 通知群组所有成员已转为社区\n\n此过程可能需要几分钟，具体取决于团体的规模，因此请耐心等待。"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",
