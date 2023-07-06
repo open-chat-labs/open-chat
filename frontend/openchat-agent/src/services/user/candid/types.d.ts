@@ -270,6 +270,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'name' : [] | [string],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
+  'channels_removed' : Array<ChannelId>,
   'avatar_id' : DocumentIdUpdate,
   'channels_added' : Array<CommunityCanisterChannelSummary>,
   'membership' : [] | [CommunityMembershipUpdates],
@@ -298,10 +299,7 @@ export interface CommunityMembership {
   'role' : CommunityRole,
   'joined' : TimestampMillis,
 }
-export interface CommunityMembershipUpdates {
-  'role' : [] | [CommunityRole],
-  'channels_removed' : Array<ChannelId>,
-}
+export interface CommunityMembershipUpdates { 'role' : [] | [CommunityRole] }
 export interface CommunityMessagesRead {
   'community_id' : CommunityId,
   'channels_read' : Array<ChannelMessagesRead>,

@@ -1411,7 +1411,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const CommunityMembershipUpdates = IDL.Record({
     'role' : IDL.Opt(CommunityRole),
-    'channels_removed' : IDL.Vec(ChannelId),
   });
   const FrozenGroupUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
@@ -1428,6 +1427,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
+    'channels_removed' : IDL.Vec(ChannelId),
     'avatar_id' : DocumentIdUpdate,
     'channels_added' : IDL.Vec(CommunityCanisterChannelSummary),
     'membership' : IDL.Opt(CommunityMembershipUpdates),

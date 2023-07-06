@@ -520,9 +520,14 @@ export function communitySummaryUpdates(
         name: optional(candid.name, identity),
         description: optional(candid.description, identity),
         lastUpdated: candid.last_updated,
+        channelsRemoved: candid.channels_removed.map((c) => ({
+            kind: "channel",
+            communityId,
+            channelId: c.toString(),
+        })),
         avatarId: optionUpdate(candid.avatar_id, identity),
         channelsAdded: candid.channels_added.map((c) => communityChannelSummary(c, communityId)),
-        membership: optional(candid.membership, (m) => communityMembershipUpdates(m, communityId)),
+        membership: optional(candid.membership, communityMembershipUpdates),
         frozen: optionUpdate(candid.frozen, (_) => true),
         latestEventIndex: optional(candid.latest_event_index, identity),
         bannerId: optionUpdate(candid.avatar_id, identity),
@@ -532,15 +537,9 @@ export function communitySummaryUpdates(
 
 export function communityMembershipUpdates(
     candid: ApiCommunityMembershipUpdates,
-    communityId: string
 ): CommunityMembershipUpdates {
     return {
         role: optional(candid.role, memberRole),
-        channelsRemoved: candid.channels_removed.map((c) => ({
-            kind: "channel",
-            communityId,
-            channelId: c.toString(),
-        })),
     };
 }
 

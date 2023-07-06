@@ -76,7 +76,6 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     let membership = member.map(|m| CommunityMembershipUpdates {
-        channels_removed,
         role: updates_from_events.role_changed.then_some(m.role),
     });
 
@@ -96,6 +95,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         latest_event_index: updates_from_events.latest_event_index,
         channels_added,
         channels_updated,
+        channels_removed,
         membership,
         metrics: state.data.cached_chat_metrics.if_set_after(args.updates_since).cloned(),
     })
