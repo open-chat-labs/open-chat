@@ -62,32 +62,6 @@
                     <p class="para">{$_("communities.pleaseWait")}</p>
                 {:else if state === "idle"}
                     <Markdown inline={false} text={$_("communities.convertInfo")} />
-                    <!-- <p class="para">
-                        We can take care of converting your public group to a community.
-                    </p>
-                    <p class="para">This is an irreversible process and will do the following:</p>
-
-                    <ul class="list">
-                        <li>freeze the existing public group</li>
-                        <li>create a new community with the same name as the group</li>
-                        <li>
-                            add a default channel to the community with the same name as the group
-                        </li>
-                        <li>add all members of the group as members of the community</li>
-                        <li>
-                            copy the full message history from the group into the default channel
-                        </li>
-                        <li>delete the existing group</li>
-                        <li>
-                            inform all members of the group that it has been converted to a
-                            community
-                        </li>
-                    </ul>
-
-                    <p class="para">
-                        This process might take a few minutes depending on the size of the group so
-                        please be patient.
-                    </p> -->
                 {:else if state === "converted"}
                     <Congratulations para={$_("communities.converted")} />
                 {:else if state === "error"}
