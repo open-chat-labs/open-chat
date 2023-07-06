@@ -33,7 +33,7 @@ fn accept_if_valid(state: &RuntimeState) {
             "unblock_user" => role.can_unblock_users(permissions),
             "unpin_message" => role.can_pin_messages(permissions),
             "update_group_v2" => role.can_update_group(permissions),
-            "update_permissions" => role.can_change_permissions(permissions),
+            "update_permissions" => role.can_change_permissions(),
             "delete_messages"
             | "undelete_messages"
             | "change_role"
