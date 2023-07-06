@@ -62,7 +62,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Respon
                         gate: state.data.chat.gate.value.clone(),
                         history_visible_to_new_joiners: args.history_visible_to_new_joiners,
                         total_bytes,
-                        primary_language: args.primary_language.unwrap_or_else(|| "en".to_string()),
+                        primary_language: args.primary_language,
                     },
                 }),
                 StartImportIntoCommunityResult::AlreadyImportingToAnotherCommunity => Err(AlreadyImportingToAnotherCommunity),
