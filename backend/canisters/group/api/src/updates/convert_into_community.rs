@@ -4,9 +4,9 @@ use types::{AccessRules, CommunityId, CommunityPermissions};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub primary_language: String,
     pub rules: AccessRules,
     pub permissions: Option<CommunityPermissions>,
+    pub primary_language: Option<String>,
     pub history_visible_to_new_joiners: bool,
 }
 
