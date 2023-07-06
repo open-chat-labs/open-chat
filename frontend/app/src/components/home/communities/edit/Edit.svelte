@@ -45,7 +45,7 @@
     let detailsValid = true;
     let rulesValid = true;
     $: steps = getSteps(editing, detailsValid, channelsValid, rulesValid);
-    $: canEditPermissions = true; // TODO - this is a whole can of refactor worms which I don't want to open yet
+    $: canEditPermissions = !editing || client.canChangeCommunityPermissions(candidate.id);
     $: permissionsDirty = client.havePermissionsChanged(
         original.permissions,
         candidate.permissions
@@ -120,9 +120,20 @@
 
             confirming = false;
 
-            // TODO - this save *everything* whether it has changed or not - might be fine but could be optimised
             return client
-                .saveCommunity(candidate, candidateRules)
+                .saveCommunity(
+                    candidate,
+                    candidate.name !== original.name ? candidate.name : undefined,
+                    candidate.description !== original.description
+                        ? candidate.description
+                        : undefined,
+                    rulesDirty ? candidateRules : undefined,
+                    permissionsDirty ? candidate.permissions : undefined,
+                    avatarDirty ? candidate.avatar.blobData : undefined,
+                    bannerDirty ? candidate.banner.blobData : undefined,
+                    gateDirty ? candidate.gate : undefined,
+                    candidate.public !== original.public ? candidate.public : undefined
+                )
                 .then((success: boolean) => {
                     if (success) {
                         toastStore.showSuccessToast("communities.saved");
@@ -181,7 +192,7 @@
                 </div>
                 <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}
-                        <PermissionsEditor permissions={candidate.permissions} />
+                        <PermissionsEditor bind:permissions={candidate.permissions} />
                     {:else}
                         <PermissionsViewer permissions={candidate.permissions} />
                     {/if}

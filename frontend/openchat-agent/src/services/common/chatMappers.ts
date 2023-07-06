@@ -797,7 +797,6 @@ export function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
 
 export function communityPermissions(candid: ApiCommunityPermissions): CommunityPermissions {
     return {
-        changePermissions: communityPermissionRole(candid.change_permissions),
         changeRoles: communityPermissionRole(candid.change_roles),
         inviteUsers: communityPermissionRole(candid.invite_users),
         removeMembers: communityPermissionRole(candid.remove_members),
@@ -822,7 +821,7 @@ export function apiCommunityPermissions(
     return {
         create_public_channel: apiCommunityPermissionRole(permissions.createPublicChannel),
         block_users: apiCommunityPermissionRole(permissions.blockUsers),
-        change_permissions: apiCommunityPermissionRole(permissions.changePermissions),
+        change_permissions: apiCommunityPermissionRole("owner"),
         update_details: apiCommunityPermissionRole(permissions.updateDetails),
         remove_members: apiCommunityPermissionRole(permissions.removeMembers),
         invite_users: apiCommunityPermissionRole(permissions.inviteUsers),
