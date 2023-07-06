@@ -39,11 +39,8 @@ export function canChangeCommunityRoles({ membership, permissions }: CommunitySu
     return isPermitted(membership.role, permissions.changeRoles);
 }
 
-export function canChangeCommunityPermissions({
-    membership,
-    permissions,
-}: CommunitySummary): boolean {
-    return isPermitted(membership.role, permissions.changePermissions);
+export function canChangeCommunityPermissions({ membership }: CommunitySummary): boolean {
+    return hasOwnerRights(membership.role);
 }
 
 export function canDeleteCommunity({ membership }: CommunitySummary): boolean {

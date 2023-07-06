@@ -13,10 +13,10 @@
     $: currentCommunityRules = client.currentCommunityRules;
     $: rules = $currentCommunityRules ?? defaultAccessRules;
 
-    let canDelete =
+    $: canDelete =
         $selectedCommunity !== undefined && client.canDeleteCommunity($selectedCommunity.id);
-    let canEdit =
-        $selectedCommunity !== undefined && client.canEditCommunity($selectedCommunity.id);
+    $: canEdit = $selectedCommunity !== undefined && client.canEditCommunity($selectedCommunity.id);
+
     let metrics = emptyChatMetrics(); //TODO where does this come from
 
     function showChannels() {

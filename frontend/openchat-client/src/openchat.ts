@@ -1203,6 +1203,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.multiUserChatPredicate(chatId, canMakePrivate);
     }
 
+    canMakeCommunityPrivate(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canMakePrivate);
+    }
+
     canLeaveGroup(chatId: MultiUserChatIdentifier): boolean {
         return this.multiUserChatPredicate(chatId, canLeaveGroup);
     }
@@ -4400,18 +4404,28 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    saveCommunity(community: CommunitySummary, rules: AccessRules): Promise<boolean> {
+    saveCommunity(
+        community: CommunitySummary,
+        name: string | undefined,
+        description: string | undefined,
+        rules: AccessRules | undefined,
+        permissions: CommunityPermissions | undefined,
+        avatar: Uint8Array | undefined,
+        banner: Uint8Array | undefined,
+        gate: AccessGate | undefined,
+        isPublic: boolean | undefined
+    ): Promise<boolean> {
         return this.sendRequest({
             kind: "updateCommunity",
             communityId: community.id.communityId,
-            name: community.name,
-            description: community.description,
-            rules: rules,
-            permissions: community.permissions,
-            avatar: community.avatar.blobData,
-            banner: community.banner.blobData,
-            gate: community.gate,
-            isPublic: community.public,
+            name,
+            description,
+            rules,
+            permissions,
+            avatar,
+            banner,
+            gate,
+            isPublic,
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -4419,6 +4433,9 @@ export class OpenChat extends OpenChatAgentWorker {
                         g.communities.set(community.id, community);
                         return g;
                     });
+                    if (rules) {
+                        communityStateStore.setProp(community.id, "rules", rules);
+                    }
                     return true;
                 }
                 return false;
