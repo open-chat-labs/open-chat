@@ -9,7 +9,7 @@ use tracing::error;
 use types::{
     AccessGate, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged,
     Document, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged, GroupVisibilityChanged,
-    OptionalCommunityPermissions, Timestamped, UserId,
+    OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
 };
 use utils::document_validation::{validate_avatar, validate_banner};
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -46,13 +46,16 @@ async fn update_community(mut args: Args) -> Response {
             },
             Err(_) => return InternalError,
         }
-    } else if prepare_result.is_public && (args.name.is_some() || args.description.is_some() || args.avatar.has_update()) {
+    } else if prepare_result.is_public
+        && (args.name.is_some() || args.description.is_some() || args.avatar.has_update() || args.primary_language.is_some())
+    {
         let c2c_update_community_args = c2c_update_community::Args {
             name: prepare_result.name,
             description: prepare_result.description,
             avatar_id: prepare_result.avatar_id,
             banner_id: prepare_result.banner_id,
             gate: prepare_result.gate,
+            primary_language: prepare_result.primary_language,
         };
 
         match group_index_canister_c2c_client::c2c_update_community(group_index_canister_id, &c2c_update_community_args).await {
@@ -91,6 +94,7 @@ struct PrepareResult {
     avatar_id: Option<u128>,
     banner_id: Option<u128>,
     gate: Option<AccessGate>,
+    primary_language: String,
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -136,6 +140,12 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         return Err(BannerTooBig(error));
     }
 
+    if let Some(lang) = &args.primary_language {
+        if lang.len() != 2 {
+            return Err(InvalidLanguage);
+        }
+    }
+
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return Err(UserSuspended);
@@ -160,6 +170,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 avatar_id: avatar_update.map_or(Document::id(&state.data.avatar), |avatar| avatar.map(|a| a.id)),
                 banner_id: banner_update.map_or(Document::id(&state.data.banner), |banner| banner.map(|a| a.id)),
                 gate: gate.cloned(),
+                primary_language: args.primary_language.as_ref().unwrap_or(&state.data.primary_language).clone(),
             })
         }
     } else {
@@ -294,6 +305,24 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
                 .data
                 .events
                 .push_event(CommunityEvent::VisibilityChanged(Box::new(event)), now);
+        }
+    }
+    if let Some(new) = args.primary_language {
+        let previous = state.data.primary_language.clone();
+
+        if previous != new {
+            state.data.primary_language = new.clone();
+
+            let event = PrimaryLanguageChanged {
+                previous,
+                new,
+                changed_by: my_user_id,
+            };
+
+            state
+                .data
+                .events
+                .push_event(CommunityEvent::PrimaryLanguageChanged(Box::new(event)), now);
         }
     }
 

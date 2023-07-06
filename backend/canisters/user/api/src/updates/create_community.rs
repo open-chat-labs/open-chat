@@ -14,6 +14,7 @@ pub struct Args {
     pub permissions: Option<CommunityPermissions>,
     pub gate: Option<AccessGate>,
     pub default_channels: Vec<String>,
+    pub primary_language: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

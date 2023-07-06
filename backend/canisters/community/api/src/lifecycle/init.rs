@@ -11,6 +11,7 @@ pub struct Args {
     pub avatar: Option<Document>,
     pub banner: Option<Document>,
     pub permissions: CommunityPermissions,
+    pub primary_language: String,
     pub created_by_principal: Principal,
     pub created_by_user_id: UserId,
     pub mark_active_duration: Milliseconds,
