@@ -30,7 +30,7 @@ pub async fn process_transaction(
 
     match ic_ledger_types::transfer(transaction.ledger, transfer_args).await {
         Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::NNS(types::nns::CompletedCryptoTransaction {
-            ledger: transaction.ledger,
+            // ledger: transaction.ledger,
             token: transaction.token,
             amount: transaction.amount,
             fee,
@@ -52,7 +52,7 @@ pub async fn process_transaction(
     }
     .map_err(|error| {
         FailedCryptoTransaction::NNS(types::nns::FailedCryptoTransaction {
-            ledger: transaction.ledger,
+            // ledger: transaction.ledger,
             token: transaction.token,
             amount: transaction.amount,
             fee,

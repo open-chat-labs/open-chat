@@ -27,7 +27,7 @@ pub async fn process_transaction(
 
     match client.transfer(args).await {
         Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::SNS(types::sns::CompletedCryptoTransaction {
-            ledger: transaction.ledger,
+            // ledger: transaction.ledger,
             token: transaction.token,
             amount: transaction.amount,
             fee: transaction.fee,
@@ -49,7 +49,7 @@ pub async fn process_transaction(
     }
     .map_err(|error| {
         FailedCryptoTransaction::SNS(types::sns::FailedCryptoTransaction {
-            ledger: transaction.ledger,
+            // ledger: transaction.ledger,
             token: transaction.token,
             amount: transaction.amount,
             fee: transaction.fee,

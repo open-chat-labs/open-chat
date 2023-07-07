@@ -24,7 +24,7 @@ pub async fn process_transaction(
 
     match client.transfer(args).await {
         Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::ICRC1(types::icrc1::CompletedCryptoTransaction {
-            ledger: transaction.ledger,
+            // ledger: transaction.ledger,
             token: transaction.token,
             amount: transaction.amount,
             fee: transaction.fee,
@@ -45,7 +45,7 @@ pub async fn process_transaction(
     }
     .map_err(|error| {
         FailedCryptoTransaction::ICRC1(types::icrc1::FailedCryptoTransaction {
-            ledger: transaction.ledger,
+            // ledger: transaction.ledger,
             token: transaction.token,
             amount: transaction.amount,
             fee: transaction.fee,

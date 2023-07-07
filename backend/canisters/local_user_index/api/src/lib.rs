@@ -28,7 +28,7 @@ pub enum Event {
     UserJoinedGroup(UserJoinedGroup),
     UserJoinedCommunity(UserJoinedCommunity),
     DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived),
-    OpenChatBotMessage(Box<OpenChatBotMessage>),
+    OpenChatBotMessage(OpenChatBotMessage),
     ReferralCodeAdded(ReferralCodeAdded),
 }
 
