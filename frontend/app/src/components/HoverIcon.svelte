@@ -2,9 +2,10 @@
     export let compact: boolean = false;
     export let title: string | undefined = undefined;
     export let disabled: boolean = false;
+    export let tabindex = 0;
 </script>
 
-<div class="wrapper" class:compact class:disabled role="button" {title}>
+<div on:click {tabindex} class="wrapper" class:compact class:disabled role="button" {title}>
     <slot />
 </div>
 

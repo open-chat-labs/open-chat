@@ -107,12 +107,13 @@ export class GroupIndexClient extends CandidService {
     exploreCommunities(
         searchTerm: string | undefined,
         pageIndex: number,
-        pageSize: number
+        pageSize: number,
+        flags: number,
+        languages: string[]
     ): Promise<ExploreCommunitiesResponse> {
-        // TODO - languages and moderation flags
         const args = {
-            languages: [],
-            exclude_moderation_flags: [] as [] | [number],
+            languages,
+            exclude_moderation_flags: apiOptional(identity, flags),
             page_size: pageSize,
             page_index: pageIndex,
             search_term: apiOptional(identity, searchTerm),

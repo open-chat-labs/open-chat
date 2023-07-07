@@ -863,7 +863,13 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "exploreCommunities":
                 agent
-                    .exploreCommunities(payload.searchTerm, payload.pageIndex, payload.pageSize)
+                    .exploreCommunities(
+                        payload.searchTerm,
+                        payload.pageIndex,
+                        payload.pageSize,
+                        payload.flags,
+                        payload.languages
+                    )
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

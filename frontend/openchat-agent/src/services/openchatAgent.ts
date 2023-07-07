@@ -1069,10 +1069,12 @@ export class OpenChatAgent extends EventTarget {
     exploreCommunities(
         searchTerm: string | undefined,
         pageIndex: number,
-        pageSize = 10
+        pageSize = 10,
+        flags: number,
+        languages: string[]
     ): Promise<ExploreCommunitiesResponse> {
         return this._groupIndexClient
-            .exploreCommunities(searchTerm, pageIndex, pageSize)
+            .exploreCommunities(searchTerm, pageIndex, pageSize, flags, languages)
             .then((res) => {
                 if (res.kind === "success") {
                     return {
@@ -2148,9 +2150,6 @@ export class OpenChatAgent extends EventTarget {
         messageId: bigint,
         threadRootMessageIndex?: number
     ): Promise<void> {
-        if (chatId.kind === "channel") {
-            throw new Error("TODO - deleteFailedMessage not implemented for channel messages");
-        }
         return removeFailedMessage(this.db, chatId, messageId, threadRootMessageIndex);
     }
 

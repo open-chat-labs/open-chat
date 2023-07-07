@@ -447,6 +447,8 @@ type ExploreCommunities = {
     searchTerm: string | undefined;
     pageIndex: number;
     pageSize: number;
+    flags: number;
+    languages: string[];
     kind: "exploreCommunities";
 };
 

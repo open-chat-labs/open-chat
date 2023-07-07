@@ -3,7 +3,9 @@
     import EditableAvatar from "../../../EditableAvatar.svelte";
     import Input from "../../../Input.svelte";
     import TextArea from "../../../TextArea.svelte";
+    import Select from "../../../Select.svelte";
     import Legend from "../../../Legend.svelte";
+    import { supportedLanguages } from "../../../../i18n/i18n";
     import type { CommunitySummary } from "openchat-client";
 
     const MIN_LENGTH = 3;
@@ -76,6 +78,14 @@
         maxlength={MAX_DESC_LENGTH}
         placeholder={$_("communities.descriptionPlaceholder")} />
 </section>
+<section>
+    <Legend label={$_("communities.primaryLanguage")} />
+    <Select bind:value={candidate.primaryLanguage}>
+        {#each supportedLanguages as lang}
+            <option value={lang.code}>{lang.name}</option>
+        {/each}
+    </Select>
+</section>
 
 <style lang="scss">
     .avatar {
@@ -87,7 +97,7 @@
     }
 
     section {
-        margin-bottom: $sp5;
+        margin-bottom: $sp4;
 
         &.images-section {
             margin-bottom: $sp7;
