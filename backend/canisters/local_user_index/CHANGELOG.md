@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Set up name change from 'SuperAdmin' to 'PlatformModerator' ([#3863](https://github.com/open-chat-labs/open-chat/pull/3863))
 
+### Fixed
+
+- Fix group URLs in the OpenChatBot messages for new users ([#3941](https://github.com/open-chat-labs/open-chat/pull/3941))
+
 ## [[2.0.731](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.731-local_user_index)] - 2023-06-27
 
 ### Added
