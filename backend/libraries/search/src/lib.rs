@@ -128,11 +128,11 @@ fn score_field_for_token(search_token: &Token, field: &Field) -> f32 {
 
 fn score_token_match(search_token: &Token, field_token: &Token) -> f32 {
     if field_token.value.starts_with(&search_token.value) {
-        5.0
-    } else if field_token.value_lower.starts_with(&search_token.value_lower) {
-        3.0
-    } else if field_token.value.contains(&search_token.value) {
         2.0
+    } else if field_token.value_lower.starts_with(&search_token.value_lower) {
+        1.5
+    } else if field_token.value.contains(&search_token.value) {
+        1.5
     } else if field_token.value_lower.contains(&search_token.value_lower) {
         1.0
     } else {
@@ -141,7 +141,7 @@ fn score_token_match(search_token: &Token, field_token: &Token) -> f32 {
 }
 
 fn calculate_length_boost(x: f32) -> f32 {
-    1.0 + (-x / 20.0).exp()
+    1.0 + 0.5 * (-x / 20.0).exp()
 }
 
 fn calculate_age_boost(age: Milliseconds) -> f32 {
@@ -151,4 +151,22 @@ fn calculate_age_boost(age: Milliseconds) -> f32 {
 
 fn parse_tokens(text: String) -> Vec<Token> {
     text.split_whitespace().map(|word| Token::new(word.to_string())).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_matching_two_words_in_long_text_better_than_one_word_in_short_text() {
+        let mut doc1 = Document::default();
+        doc1.add_field("The quick brown fox jumps over the lazy dog.".to_string(), 1.0, false);
+
+        let mut doc2 = Document::default();
+        doc2.add_field("fox".to_string(), 1.0, false);
+
+        let query = Query::parse("lazy fox".to_string());
+
+        assert!(doc1.calculate_score(&query) > doc2.calculate_score(&query));
+    }
 }
