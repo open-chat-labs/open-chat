@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add language field to community ([#3923](https://github.com/open-chat-labs/open-chat/pull/3923))
+  
 ### Changed
 
 - Refactored `claim_prize` ([#3854](https://github.com/open-chat-labs/open-chat/pull/3854))
