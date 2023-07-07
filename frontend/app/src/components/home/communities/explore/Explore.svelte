@@ -6,7 +6,7 @@
     import page from "page";
     import CommunityCard from "./CommunityCard.svelte";
     import Search from "../../..//Search.svelte";
-    import { mobileWidth } from "../../../../stores/screenDimensions";
+    import { mobileWidth, screenWidth, ScreenWidth } from "../../../../stores/screenDimensions";
     import { iconSize } from "../../../../stores/iconSize";
     import type { CommunityMatch, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
@@ -20,8 +20,24 @@
     let searchTerm = "";
     let searching = false;
     let searchResults: CommunityMatch[] = [];
+    let total = 0;
+    let pageIndex = 0;
 
+    $: pageSize = calculatePageSize($screenWidth);
+    $: more = total > searchResults.length;
     $: isDiamond = client.isDiamond;
+    $: loading = searching && searchResults.length === 0;
+
+    function calculatePageSize(width: ScreenWidth): number {
+        // make sure we get even rows of results
+        switch (width) {
+            case ScreenWidth.Large:
+            case ScreenWidth.ExtraLarge:
+                return 30;
+            default:
+                return 32;
+        }
+    }
 
     function createCommunity() {
         if (!$isDiamond) {
@@ -35,20 +51,30 @@
         page(`/community/${community.id.communityId}`);
     }
 
-    function search() {
+    function search(reset = false) {
         searching = true;
+        if (reset) {
+            pageIndex = 0;
+        } else {
+            pageIndex += 1;
+        }
         client
             .exploreCommunities(
                 searchTerm === "" ? undefined : searchTerm,
-                0,
-                10,
+                pageIndex,
+                pageSize,
                 $communityFiltersStore.flags,
                 Array.from($communityFiltersStore.languages)
             )
             .then((results) => {
                 console.log("SearchResults: ", results);
                 if (results.kind === "success") {
-                    searchResults = results.matches;
+                    if (reset) {
+                        searchResults = results.matches;
+                    } else {
+                        searchResults = [...searchResults, ...results.matches];
+                    }
+                    total = results.total;
                 }
             })
             .finally(() => (searching = false));
@@ -59,7 +85,7 @@
     }
 
     onMount(() => {
-        const sub = communityFiltersStore.subscribe((_) => search());
+        const sub = communityFiltersStore.subscribe((_) => search(true));
         return sub;
     });
 </script>
@@ -76,7 +102,7 @@
                         fill
                         bind:searchTerm
                         searching={false}
-                        on:searchEntered={search}
+                        on:searchEntered={() => search(true)}
                         placeholder={$_("communities.search")} />
                 </div>
                 <div class="create">
@@ -100,30 +126,38 @@
         </div>
     </div>
 
-    <div class="communities" class:loading={searching} class:empty={searchResults.length === 0}>
-        {#if searching}
-            <div class="loading">
-                <FancyLoader />
+    <div class="communities-wrapper">
+        <div class="communities" class:loading class:empty={searchResults.length === 0}>
+            {#if loading}
+                <div class="loading">
+                    <FancyLoader />
+                </div>
+            {:else if searchResults.length === 0}
+                <div class="robot">
+                    <h4 class="header">No matching communities found</h4>
+                    <p class="sub-header">try refining your search</p>
+                </div>
+            {:else}
+                {#each searchResults as community, i (community.id.communityId)}
+                    <CommunityCard
+                        name={community.name}
+                        description={community.description}
+                        avatar={community.avatar}
+                        banner={community.banner}
+                        memberCount={community.memberCount}
+                        channelCount={community.channelCount}
+                        gate={community.gate}
+                        language={community.primaryLanguage}
+                        flags={community.flags}
+                        on:click={() => selectCommunity(community)} />
+                {/each}
+            {/if}
+        </div>
+        {#if more}
+            <div class="more">
+                <Button disabled={searching} loading={searching} on:click={() => search(false)}
+                    >{$_("communities.loadMore")}</Button>
             </div>
-        {:else if searchResults.length === 0}
-            <div class="robot">
-                <h4 class="header">No matching communities found</h4>
-                <p class="sub-header">try refining your search</p>
-            </div>
-        {:else}
-            {#each searchResults as community}
-                <CommunityCard
-                    name={community.name}
-                    description={community.description}
-                    avatar={community.avatar}
-                    banner={community.banner}
-                    memberCount={community.memberCount}
-                    channelCount={community.channelCount}
-                    gate={community.gate}
-                    language={community.primaryLanguage}
-                    flags={community.flags}
-                    on:click={() => selectCommunity(community)} />
-            {/each}
         {/if}
     </div>
 </div>
@@ -177,11 +211,15 @@
         }
     }
 
+    .communities-wrapper {
+        @include nice-scrollbar();
+    }
+
     .communities {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         grid-gap: $sp5;
-        @include nice-scrollbar();
+        margin-bottom: $sp5;
 
         @include size-below(xxl) {
             grid-gap: $sp4;
@@ -204,6 +242,10 @@
             height: 100%;
             grid-template-columns: repeat(1, 1fr);
         }
+    }
+
+    .more {
+        text-align: center;
     }
 
     $size: 200px;

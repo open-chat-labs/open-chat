@@ -88,6 +88,7 @@ export function exploreCommunitiesResponse(
         return {
             kind: "success",
             matches: candid.Success.matches.map(communityMatch),
+            total: candid.Success.total,
         };
     }
     if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
@@ -101,6 +102,7 @@ export function searchGroupsResponse(candid: ApiSearchResponse): GroupSearchResp
         return {
             kind: "success",
             matches: candid.Success.matches.map(groupMatch),
+            total: candid.Success.total,
         };
     }
     if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
