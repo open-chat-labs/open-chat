@@ -1,15 +1,18 @@
 <script lang="ts">
+    import Tune from "svelte-material-icons/Tune.svelte";
     import { _ } from "svelte-i18n";
     import Button from "../../../Button.svelte";
-    import Select from "../../../Select.svelte";
+    import HoverIcon from "../../../HoverIcon.svelte";
     import page from "page";
     import CommunityCard from "./CommunityCard.svelte";
     import Search from "../../..//Search.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
-    import Filters from "./Filters.svelte";
+    import { iconSize } from "../../../../stores/iconSize";
     import type { CommunityMatch, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
+    import { pushRightPanelHistory } from "../../../../stores/rightPanel";
+    import { communityFiltersStore } from "../../../../stores/communityFilters";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -35,7 +38,13 @@
     function search() {
         searching = true;
         client
-            .exploreCommunities(searchTerm === "" ? undefined : searchTerm, 0, 10)
+            .exploreCommunities(
+                searchTerm === "" ? undefined : searchTerm,
+                0,
+                10,
+                $communityFiltersStore.flags,
+                Array.from($communityFiltersStore.languages)
+            )
             .then((results) => {
                 console.log("SearchResults: ", results);
                 if (results.kind === "success") {
@@ -45,7 +54,14 @@
             .finally(() => (searching = false));
     }
 
-    onMount(search);
+    function showFilters() {
+        pushRightPanelHistory({ kind: "community_filters" });
+    }
+
+    onMount(() => {
+        const sub = communityFiltersStore.subscribe((_) => search());
+        return sub;
+    });
 </script>
 
 <div class="explore">
@@ -67,9 +83,11 @@
                     <Button on:click={createCommunity} hollow>{$_("communities.create")}</Button>
                 </div>
             {/if}
+            <HoverIcon on:click={showFilters}>
+                <Tune size={$iconSize} color={"var(--icon-txt)"} />
+            </HoverIcon>
         </div>
         <div class="subtitle-row">
-            <Filters />
             {#if $mobileWidth}
                 <div class="search">
                     <Search
@@ -77,17 +95,6 @@
                         fill
                         bind:searchTerm
                         placeholder={$_("communities.search")} />
-                </div>
-            {:else}
-                <div class="sort">
-                    <Select>
-                        <option value={""} selected={true} disabled={true}>Sort by</option>
-                        <option value={""}>{"Newest"}</option>
-                        <option value={""}>{"Member count: Low to high"}</option>
-                        <option value={""}>{"Member count: High to low"}</option>
-                        <option value={""}>{"Alphabetical: A-Z"}</option>
-                        <option value={""}>{"Alphabetical: Z-A"}</option>
-                    </Select>
                 </div>
             {/if}
         </div>
@@ -113,6 +120,8 @@
                     memberCount={community.memberCount}
                     channelCount={community.channelCount}
                     gate={community.gate}
+                    language={community.primaryLanguage}
+                    flags={community.flags}
                     on:click={() => selectCommunity(community)} />
             {/each}
         {/if}

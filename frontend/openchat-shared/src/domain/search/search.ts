@@ -24,6 +24,8 @@ export interface CommunityMatch {
     memberCount: number;
     channelCount: number;
     gate: AccessGate;
+    flags: number;
+    primaryLanguage: string;
 }
 
 export type MessageMatch = {

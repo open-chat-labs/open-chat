@@ -3414,9 +3414,18 @@ export class OpenChat extends OpenChatAgentWorker {
     exploreCommunities(
         searchTerm: string | undefined,
         pageIndex: number,
-        pageSize: number
+        pageSize: number,
+        flags: number,
+        languages: string[]
     ): Promise<ExploreCommunitiesResponse> {
-        return this.sendRequest({ kind: "exploreCommunities", searchTerm, pageIndex, pageSize });
+        return this.sendRequest({
+            kind: "exploreCommunities",
+            searchTerm,
+            pageIndex,
+            pageSize,
+            flags,
+            languages,
+        });
     }
 
     exploreChannels(

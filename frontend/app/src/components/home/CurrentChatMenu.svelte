@@ -7,7 +7,7 @@
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import ConvertToCommunity from "../icons/ConvertToCommunity.svelte";
-    import FilterOutline from "svelte-material-icons/FilterOutline.svelte";
+    import Tune from "svelte-material-icons/Tune.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import Magnify from "svelte-material-icons/Magnify.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -186,7 +186,7 @@
     {#if $isProposalGroup}
         <span on:click={showProposalFilters}>
             <HoverIcon>
-                <FilterOutline size={$iconSize} color={"var(--icon-txt)"} />
+                <Tune size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}
@@ -268,10 +268,7 @@
                 {#if $mobileWidth}
                     {#if $isProposalGroup}
                         <MenuItem on:click={showProposalFilters}>
-                            <FilterOutline
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
+                            <Tune size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                             <div slot="text">{$_("proposal.filter")}</div>
                         </MenuItem>
                     {/if}

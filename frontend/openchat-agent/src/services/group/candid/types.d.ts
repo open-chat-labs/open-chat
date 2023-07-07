@@ -278,6 +278,7 @@ export interface CommunityMatch {
   'avatar_id' : [] | [bigint],
   'banner_id' : [] | [bigint],
   'member_count' : number,
+  'primary_language' : string,
 }
 export interface CommunityMember {
   'role' : CommunityRole,

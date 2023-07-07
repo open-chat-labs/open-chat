@@ -39,6 +39,8 @@
                 banner={$selectedCommunity.banner}
                 memberCount={0}
                 channelCount={0}
+                language={$selectedCommunity.primaryLanguage}
+                flags={0}
                 header
                 gate={$selectedCommunity.gate}
                 avatar={$selectedCommunity.avatar} />

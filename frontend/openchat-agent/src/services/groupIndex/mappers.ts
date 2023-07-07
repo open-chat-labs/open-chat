@@ -287,5 +287,7 @@ function communityMatch(candid: ApiCommunityMatch): CommunityMatch {
         memberCount: candid.member_count,
         channelCount: candid.channel_count,
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        flags: candid.moderation_flags,
+        primaryLanguage: candid.primary_language === "" ? "en" : candid.primary_language,
     };
 }

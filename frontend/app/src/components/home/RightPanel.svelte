@@ -3,6 +3,7 @@
     import UserProfile from "./profile/UserProfile.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
+    import CommunityFilters from "./communities/explore/Filters.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import { popRightPanelHistory, rightPanelHistory } from "../../stores/rightPanel";
@@ -364,5 +365,7 @@
         <CommunityChannels />
     {:else if lastState.kind === "community_details"}
         <CommunityDetails on:deleteCommunity on:editCommunity />
+    {:else if lastState.kind === "community_filters"}
+        <CommunityFilters on:close={popRightPanelHistory} />
     {/if}
 </Panel>

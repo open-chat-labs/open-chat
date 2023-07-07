@@ -6,9 +6,11 @@
     import { _ } from "svelte-i18n";
     import Markdown from "../../Markdown.svelte";
     import { AvatarSize } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
     import AccessGateIcon from "../../AccessGateIcon.svelte";
+    import { Flags, hasFlag } from "stores/communityFilters";
+    import { supportedLanguagesByCode } from "../../../../i18n/i18n";
 
     export let name: string;
     export let description: string;
@@ -18,6 +20,21 @@
     export let channelCount: number;
     export let header = false;
     export let gate: AccessGate;
+    export let language: string;
+    export let flags: number;
+
+    $: flagString = serialiseFlags(flags);
+
+    function serialiseFlags(flags: number) {
+        const f: string[] = [];
+        if (hasFlag(flags, Flags.Adult)) {
+            f.push(`#${$_("communities.adult")}`);
+        }
+        if (hasFlag(flags, Flags.Offensive)) {
+            f.push(`#${$_("communities.offensive")}`);
+        }
+        return f.join(", ");
+    }
 
     const client = getContext<OpenChat>("client");
 </script>
@@ -43,14 +60,23 @@
         </div>
         {#if !header}
             <div class="footer">
-                <div class="members">
-                    <span class="number">{memberCount.toLocaleString()}</span>
-                    <span class="label">{$_("communities.memberCount")}</span>
+                <div class="footer-row">
+                    <div class="members">
+                        <span class="number">{memberCount.toLocaleString()}</span>
+                        <span class="label">{$_("communities.memberCount")}</span>
+                    </div>
+                    <div class="channels">
+                        <span class="number">{channelCount.toLocaleString()}</span>
+                        <span class="label">{$_("communities.channelCount")}</span>
+                    </div>
                 </div>
-
-                <div class="channels">
-                    <span class="number">{channelCount.toLocaleString()}</span>
-                    <span class="label">{$_("communities.channelCount")}</span>
+                <div class="footer-row">
+                    <div class="lang">
+                        {supportedLanguagesByCode[language]?.name}
+                    </div>
+                    <div class="flags">
+                        {flagString}
+                    </div>
                 </div>
             </div>
         {/if}
@@ -108,19 +134,33 @@
                 border-top: 1px solid var(--bd);
                 padding-top: $sp4;
                 margin-top: $sp4;
-                display: flex;
-                justify-content: space-between;
-                gap: $sp3;
 
-                .members,
-                .channels {
-                    .number {
-                        font-weight: 500;
-                    }
-                    .label {
-                        color: var(--txt-light);
+                .footer-row {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: $sp3;
+                    margin-bottom: $sp3;
+                    .members,
+                    .channels {
+                        .number {
+                            font-weight: 500;
+                        }
+                        .label {
+                            color: var(--txt-light);
+                        }
                     }
                 }
+            }
+
+            .lang,
+            .flags {
+                @include font(book, normal, fs-80);
+            }
+
+            .flags {
+                display: flex;
+                gap: $sp2;
+                color: var(--accent);
             }
         }
     }

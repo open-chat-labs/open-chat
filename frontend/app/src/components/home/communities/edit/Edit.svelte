@@ -56,10 +56,11 @@
             candidateRules.text !== originalRules.text);
     $: nameDirty = editing && candidate.name !== original.name;
     $: descDirty = editing && candidate.description !== original.description;
+    $: languageDirty = editing && candidate.primaryLanguage !== original.primaryLanguage;
     $: avatarDirty = editing && candidate.avatar?.blobUrl !== original.avatar?.blobUrl;
     $: bannerDirty = editing && candidate.banner.blobUrl !== original.banner.blobUrl;
     $: visDirty = editing && candidate.public !== original.public;
-    $: infoDirty = nameDirty || descDirty || avatarDirty || bannerDirty;
+    $: infoDirty = nameDirty || descDirty || avatarDirty || bannerDirty || languageDirty;
     $: gateDirty = client.hasAccessGateChanged(candidate.gate, original.gate);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
@@ -133,9 +134,7 @@
                     bannerDirty ? candidate.banner.blobData : undefined,
                     gateDirty ? candidate.gate : undefined,
                     candidate.public !== original.public ? candidate.public : undefined,
-                    candidate.primaryLanguage !== original.primaryLanguage
-                        ? candidate.primaryLanguage
-                        : undefined
+                    languageDirty ? candidate.primaryLanguage : undefined
                 )
                 .then((success: boolean) => {
                     if (success) {

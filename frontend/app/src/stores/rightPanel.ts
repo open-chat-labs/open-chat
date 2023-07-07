@@ -13,6 +13,7 @@ export type RightPanelState =
     | UserProfilePanel
     | MessageThreadPanel
     | ProposalFilterPanel
+    | CommunityFilters
     | CommunityDetails
     | NoPanel;
 
@@ -64,6 +65,10 @@ export type ShowPinnedPanel = {
 
 export type ProposalFilterPanel = {
     kind: "proposal_filters";
+};
+
+export type CommunityFilters = {
+    kind: "community_filters";
 };
 
 export type UpdatedAvatar = {
