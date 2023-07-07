@@ -1,9 +1,11 @@
+/* eslint-disable no-case-declarations */
 import {
     chatIdentifiersEqual,
     type ChatIdentifier,
     type ChatSummary,
     type MessageContent,
     type WebRtcMessage,
+    CommunityIdentifier,
 } from "openchat-shared";
 import { selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
@@ -21,10 +23,19 @@ export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
 
 function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
     const state = get(globalStateStore);
-    if (msg.id.kind === "direct_chat") {
-        return state.directChats.get({ kind: "direct_chat", userId: msg.userId });
-    } else {
-        return state.groupChats.get(msg.id);
+    switch (msg.id.kind) {
+        case "direct_chat":
+            return state.directChats.get({ kind: "direct_chat", userId: msg.userId });
+        case "group_chat":
+            return state.groupChats.get(msg.id);
+        case "channel":
+            const communityId: CommunityIdentifier = {
+                kind: "community",
+                communityId: msg.id.communityId,
+            };
+            const channels = state.communities.get(communityId)?.channels ?? [];
+            const channelId = msg.id.channelId;
+            return channels.find((c) => c.id.channelId === channelId);
     }
 }
 
