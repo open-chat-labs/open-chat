@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `ledger` field to completed crypto transactions ([#3912](https://github.com/open-chat-labs/open-chat/pull/3912))
 - Deprecate the `block_users` and `change_permissions` permissions ([#3922](https://github.com/open-chat-labs/open-chat/pull/3922))
 - Add `channel_id` to `convert_into_community` response ([#3929](https://github.com/open-chat-labs/open-chat/pull/3929))
+- Check user is Diamond before converting group into community ([#3932](https://github.com/open-chat-labs/open-chat/pull/3932))
 
 ### Removed
 
