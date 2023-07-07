@@ -918,7 +918,12 @@
         "converted": "Ihre Gruppe wurde in eine Community umgewandelt.",
         "pleaseWait": "Bitte warten Sie – dies kann eine Weile dauern",
         "goto": "Gehe zur Gemeinschaft",
-        "convertInfo": "Wir können uns darum kümmern, Ihre Gruppe in eine Gemeinschaft umzuwandeln.\n\n Dies ist ein irreversibler Prozess und bewirkt Folgendes:\n\n* Die bestehende Gruppe einfrieren\n* Erstellen Sie eine neue Community mit demselben Namen wie die Gruppe\n* Fügen Sie der Community einen Standardkanal mit demselben Namen wie die Gruppe hinzu\n* Fügen Sie alle Mitglieder der Gruppe als Mitglieder der Community hinzu\n* Kopieren Sie den vollständigen Nachrichtenverlauf aus der Gruppe in den Standardkanal\n* Löschen Sie die vorhandene Gruppe\n* Informieren Sie alle Mitglieder der Gruppe darüber, dass sie in eine Community umgewandelt wurde\n\nDieser Vorgang kann je nach Gruppengröße einige Minuten dauern. Bitte haben Sie etwas Geduld."
+        "convertInfo": "Wir können uns darum kümmern, Ihre Gruppe in eine Gemeinschaft umzuwandeln.\n\n Dies ist ein irreversibler Prozess und bewirkt Folgendes:\n\n* Die bestehende Gruppe einfrieren\n* Erstellen Sie eine neue Community mit demselben Namen wie die Gruppe\n* Fügen Sie der Community einen Standardkanal mit demselben Namen wie die Gruppe hinzu\n* Fügen Sie alle Mitglieder der Gruppe als Mitglieder der Community hinzu\n* Kopieren Sie den vollständigen Nachrichtenverlauf aus der Gruppe in den Standardkanal\n* Löschen Sie die vorhandene Gruppe\n* Informieren Sie alle Mitglieder der Gruppe darüber, dass sie in eine Community umgewandelt wurde\n\nDieser Vorgang kann je nach Gruppengröße einige Minuten dauern. Bitte haben Sie etwas Geduld.",
+        "primaryLanguage": "Muttersprache",
+        "filters": "Community-Filter",
+        "flags": "Flaggen",
+        "offensive": "Beleidigend",
+        "adult": "Erwachsene"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",
