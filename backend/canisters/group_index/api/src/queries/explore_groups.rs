@@ -20,4 +20,5 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub matches: Vec<GroupMatch>,
+    pub total: u32,
 }

@@ -58,7 +58,7 @@ impl PublicCommunities {
         languages: Vec<String>,
         page_index: u32,
         page_size: u8,
-    ) -> Vec<CommunityMatch> {
+    ) -> (Vec<CommunityMatch>, u32) {
         let query = search_term.map(Query::parse);
 
         let mut matches: Vec<_> = self
@@ -80,15 +80,19 @@ impl PublicCommunities {
             .filter(|(score, _)| *score > 0)
             .collect();
 
+        let total = matches.len() as u32;
+
         matches.sort_by_key(|(score, _)| *score);
 
-        matches
+        let matches = matches
             .into_iter()
             .rev()
             .map(|(_, c)| c.into())
             .skip(page_index as usize * page_size as usize)
             .take(page_size as usize)
-            .collect()
+            .collect();
+
+        (matches, total)
     }
 
     pub fn update_community(

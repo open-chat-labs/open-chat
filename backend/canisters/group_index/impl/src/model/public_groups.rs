@@ -48,7 +48,7 @@ impl PublicGroups {
         );
     }
 
-    pub fn search(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> Vec<GroupMatch> {
+    pub fn search(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> (Vec<GroupMatch>, u32) {
         let query = search_term.map(Query::parse);
 
         let mut matches: Vec<_> = self
@@ -68,15 +68,19 @@ impl PublicGroups {
             .filter(|(score, _)| *score > 0)
             .collect();
 
+        let total = matches.len() as u32;
+
         matches.sort_by_key(|(score, _)| *score);
 
-        matches
+        let matches = matches
             .into_iter()
             .rev()
             .map(|(_, c)| c.into())
             .skip(page_index as usize * page_size as usize)
             .take(page_size as usize)
-            .collect()
+            .collect();
+
+        (matches, total)
     }
 
     pub fn hydrate_cached_summary(&self, summary: CachedPublicGroupSummary) -> Option<PublicGroupSummary> {

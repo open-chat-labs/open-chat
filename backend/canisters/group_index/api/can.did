@@ -72,6 +72,7 @@ type SearchResponse = variant {
 
 type SearchSuccessResult = record {
     matches : vec GroupMatch;
+    total : nat32;
 };
 
 type ExploreCommunitiesArgs = record {
@@ -92,6 +93,7 @@ type ExploreCommunitiesResponse = variant {
 
 type ExploreCommunitiesSuccess = record {
     matches : vec CommunityMatch;
+    total : nat32;
 };
 
 type ExploreGroupsArgs = record {
@@ -109,6 +111,7 @@ type ExploreGroupsResponse = variant {
 
 type ExploreGroupsSuccess = record {
     matches : vec GroupMatch;
+    total : nat32;
 };
 
 type FreezeCommunityArgs = record {
