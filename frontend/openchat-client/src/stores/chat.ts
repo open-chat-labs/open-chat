@@ -47,6 +47,7 @@ import { proposalTallies } from "./proposalTallies";
 import type { OpenChat } from "../openchat";
 import { allChats, chatListScopeStore, globalStateStore } from "./global";
 import { createDerivedPropStore } from "./derived";
+import { messagesRead } from "./markRead";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
@@ -258,6 +259,13 @@ export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]
         return result;
     }, new ChatMap<ThreadSyncDetails[]>());
 });
+
+export const staleThreadsCount = derived(
+    [threadsByChatStore, messagesRead],
+    ([$threadsByChat, _messagesRead]) => {
+        return messagesRead.staleThreadsCount($threadsByChat);
+    }
+);
 
 export const threadsFollowedByMeStore = derived([threadsByChatStore], ([threadsByChat]) => {
     return threadsByChat.entries().reduce<ChatMap<Set<number>>>((result, [chatId, threads]) => {
