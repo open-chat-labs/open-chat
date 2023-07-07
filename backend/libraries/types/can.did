@@ -1347,6 +1347,7 @@ type CommunityMatch = record {
     channel_count : nat32;
     gate : opt AccessGate;
     moderation_flags : nat32;
+    primary_language : text;
 };
 
 type GroupMatch = record {
