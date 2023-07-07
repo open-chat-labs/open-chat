@@ -26,7 +26,7 @@ fn explore_communities_impl(args: Args, state: &RuntimeState) -> Response {
         None => return InvalidFlags,
     };
 
-    let matches = state.data.public_communities.search(
+    let (matches, total) = state.data.public_communities.search(
         args.search_term,
         exclude_moderation_flags,
         args.languages,
@@ -34,5 +34,5 @@ fn explore_communities_impl(args: Args, state: &RuntimeState) -> Response {
         args.page_size,
     );
 
-    Success(SuccessResult { matches })
+    Success(SuccessResult { matches, total })
 }

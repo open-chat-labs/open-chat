@@ -21,10 +21,10 @@ fn explore_groups_impl(args: Args, state: &RuntimeState) -> Response {
         }
     }
 
-    let matches = state
+    let (matches, total) = state
         .data
         .public_groups
         .search(args.search_term, args.page_index, args.page_size);
 
-    Success(SuccessResult { matches })
+    Success(SuccessResult { matches, total })
 }

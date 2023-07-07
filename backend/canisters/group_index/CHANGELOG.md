@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Public community moderation flags ([#3911](https://github.com/open-chat-labs/open-chat/pull/3911))
 - Explore communities with language filter ([#3923](https://github.com/open-chat-labs/open-chat/pull/3923))
 - Return language with community match ([#3937](https://github.com/open-chat-labs/open-chat/pull/3937))
+- Add `total` to search results ([#3940](https://github.com/open-chat-labs/open-chat/pull/3940))
 
 ### Changed
 
