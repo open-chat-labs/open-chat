@@ -247,6 +247,7 @@ impl From<&PublicCommunityInfo> for CommunityMatch {
             channel_count: community.activity.as_ref().map_or(0, |a| a.channel_count),
             gate: community.gate.clone(),
             moderation_flags: community.moderation_flags.bits(),
+            primary_language: community.primary_language.clone(),
         }
     }
 }

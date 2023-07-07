@@ -25,6 +25,7 @@ pub struct CommunityMatch {
     pub channel_count: u32,
     pub gate: Option<AccessGate>,
     pub moderation_flags: u32,
+    pub primary_language: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
