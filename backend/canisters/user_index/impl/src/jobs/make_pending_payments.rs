@@ -119,7 +119,7 @@ fn inform_referrer(
     for message in messages {
         state.push_event_to_local_user_index(
             user_id,
-            LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage { user_id, message })),
+            LocalUserIndexEvent::OpenChatBotMessage(OpenChatBotMessage { user_id, message }),
         );
     }
 }

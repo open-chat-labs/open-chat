@@ -39,7 +39,7 @@ pub async fn process_new_joiner_reward(
                 send_reward_transferred_message(
                     user_id,
                     nns::CompletedCryptoTransaction {
-                        ledger: Cryptocurrency::InternetComputer.ledger_canister_id(),
+                        // ledger: Cryptocurrency::InternetComputer.ledger_canister_id(),
                         token: Cryptocurrency::InternetComputer,
                         amount,
                         fee: DEFAULT_FEE,

@@ -95,7 +95,7 @@ impl Job for RecurringDiamondMembershipPayment {
                     mutate_state(|state| {
                         state.push_event_to_local_user_index(
                             user_id,
-                            LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+                            LocalUserIndexEvent::OpenChatBotMessage(OpenChatBotMessage {
                                 user_id,
                                 message: MessageContent::Text(TextContent {
                                     text: format!(
@@ -108,7 +108,7 @@ If you would like to extend your Diamond membership you will need to top up your
                                         Tokens::from_e8s(balance)
                                     ),
                                 }),
-                            })),
+                            }),
                         );
                         state
                             .data
