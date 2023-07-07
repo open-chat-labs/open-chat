@@ -130,7 +130,7 @@ fn score_token_match(search_token: &Token, field_token: &Token) -> f32 {
     if field_token.value.starts_with(&search_token.value) {
         2.0
     } else if field_token.value_lower.starts_with(&search_token.value_lower) {
-        1.5
+        1.6
     } else if field_token.value.contains(&search_token.value) {
         1.5
     } else if field_token.value_lower.contains(&search_token.value_lower) {
