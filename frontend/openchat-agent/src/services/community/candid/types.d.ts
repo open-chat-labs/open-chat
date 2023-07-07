@@ -862,7 +862,6 @@ export interface Icrc1CompletedCryptoTransaction {
   'block_index' : BlockIndex,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
-  'ledger' : CanisterId,
   'amount' : bigint,
 }
 export interface Icrc1FailedCryptoTransaction {
@@ -873,7 +872,6 @@ export interface Icrc1FailedCryptoTransaction {
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
   'error_message' : string,
-  'ledger' : CanisterId,
   'amount' : bigint,
 }
 export interface Icrc1PendingCryptoTransaction {
@@ -1073,7 +1071,6 @@ export interface NnsCompletedCryptoTransaction {
   'block_index' : BlockIndex,
   'from' : NnsCryptoAccount,
   'memo' : bigint,
-  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export type NnsCryptoAccount = { 'Mint' : null } |
@@ -1087,7 +1084,6 @@ export interface NnsFailedCryptoTransaction {
   'from' : NnsCryptoAccount,
   'memo' : bigint,
   'error_message' : string,
-  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export type NnsNeuronId = bigint;
@@ -1493,7 +1489,6 @@ export interface SnsCompletedCryptoTransaction {
   'block_index' : BlockIndex,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [bigint],
-  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export interface SnsFailedCryptoTransaction {
@@ -1505,7 +1500,6 @@ export interface SnsFailedCryptoTransaction {
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [bigint],
   'error_message' : string,
-  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export interface SnsNeuronGate {
