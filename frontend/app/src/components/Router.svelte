@@ -181,6 +181,17 @@
             track,
             () => (route = Home)
         );
+        // legacy route
+        page(
+            "/:chatId/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(
+                globalGroupChatSelectedRoute(
+                    $communitiesEnabled ? { kind: "group_chat" } : { kind: "none" }
+                )
+            ),
+            track,
+            () => (route = Home)
+        );
         page(
             "*",
             parsePathParams(() => ({ kind: "not_found_route" })),
