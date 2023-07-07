@@ -1,11 +1,11 @@
 <script lang="ts">
     import {
         ThreadPreview,
-        GroupChatSummary,
         EventWrapper,
         Message,
         OpenChat,
         routeForChatIdentifier,
+        MultiUserChat,
     } from "openchat-client";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
@@ -31,7 +31,7 @@
     $: messagesRead = client.messagesRead;
     $: missingMessages = thread.totalReplies - thread.latestReplies.length;
     $: threadRootMessageIndex = thread.rootMessage.event.messageIndex;
-    $: chat = $chatSummariesStore.get(thread.chatId) as GroupChatSummary;
+    $: chat = $chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined;
     $: syncDetails = chat?.membership?.latestThreads?.find(
         (t) => t.threadRootMessageIndex === threadRootMessageIndex
     );
@@ -43,7 +43,7 @@
           )
         : 0;
     $: chatData = {
-        name: chat.name,
+        name: chat?.name,
         avatarUrl: client.groupAvatarUrl(chat),
     };
 
@@ -65,7 +65,7 @@
         // if we can see *all* of the unread messages in this thread, then mark it as read.
         if (unreadCount > 0 && unreadCount < thread.latestReplies.length + 1) {
             const lastMsgIdx = lastMessageIndex(thread.latestReplies);
-            if (lastMsgIdx !== undefined) {
+            if (lastMsgIdx !== undefined && chat !== undefined) {
                 client.markThreadRead(chat.id, threadRootMessageIndex, lastMsgIdx);
             }
         }
@@ -92,79 +92,40 @@
     }
 </script>
 
-<div class="wrapper">
-    <CollapsibleCard on:toggle={() => (open = !open)} {open} headerText={$_("userInfoHeader")}>
-        <div slot="titleSlot" class="header">
-            <div class="avatar">
-                <Avatar url={chatData.avatarUrl} size={AvatarSize.Default} />
-            </div>
-            <div class="details">
-                <h4 class="title">
-                    {(chat.kind === "group_chat" || chat.kind === "channel") && chat.name}
-                </h4>
-                <div class="root-msg">
-                    <Markdown
-                        text={client.getContentAsText($_, thread.rootMessage.event.content)}
-                        oneLine={true}
-                        suppressLinks={true} />
+{#if chat !== undefined}
+    <div class="wrapper">
+        <CollapsibleCard on:toggle={() => (open = !open)} {open} headerText={$_("userInfoHeader")}>
+            <div slot="titleSlot" class="header">
+                <div class="avatar">
+                    <Avatar url={chatData.avatarUrl} size={AvatarSize.Default} />
                 </div>
-            </div>
-            {#if unreadCount > 0}
-                <div
-                    in:pop={{ duration: 1500 }}
-                    title={$_("chatSummary.unread", { values: { count: unreadCount.toString() } })}
-                    class="unread">
-                    {unreadCount > 999 ? "999+" : unreadCount}
+                <div class="details">
+                    <h4 class="title">
+                        {(chat.kind === "group_chat" || chat.kind === "channel") && chat.name}
+                    </h4>
+                    <div class="root-msg">
+                        <Markdown
+                            text={client.getContentAsText($_, thread.rootMessage.event.content)}
+                            oneLine={true}
+                            suppressLinks={true} />
+                    </div>
                 </div>
-            {/if}
-        </div>
-        <IntersectionObserverComponent on:intersecting={isIntersecting}>
-            <div class="body">
-                <div class="root-msg">
-                    <ChatMessage
-                        sender={$userStore[thread.rootMessage.event.sender]}
-                        focused={false}
-                        {observer}
-                        confirmed={true}
-                        failed={false}
-                        senderTyping={false}
-                        readByMe={true}
-                        readByThem={true}
-                        chatId={thread.chatId}
-                        chatType={chat.kind}
-                        {user}
-                        me={thread.rootMessage.event.sender === user.userId}
-                        first={true}
-                        last={true}
-                        readonly={true}
-                        threadRootMessage={thread.rootMessage.event}
-                        pinned={false}
-                        supportsEdit={false}
-                        supportsReply={false}
-                        canPin={false}
-                        canBlockUser={false}
-                        canDelete={false}
-                        canQuoteReply={false}
-                        canReact={false}
-                        canStartThread={false}
-                        publicGroup={chat.kind === "group_chat" && chat.public}
-                        editing={false}
-                        eventIndex={thread.rootMessage.index}
-                        timestamp={thread.rootMessage.timestamp}
-                        dateFormatter={client.toDatetimeString}
-                        msg={thread.rootMessage.event} />
-                </div>
-                {#if missingMessages > 0}
-                    <div class="separator">
-                        {$_("thread.moreMessages", {
-                            values: { number: missingMessages.toString() },
+                {#if unreadCount > 0}
+                    <div
+                        in:pop={{ duration: 1500 }}
+                        title={$_("chatSummary.unread", {
+                            values: { count: unreadCount.toString() },
                         })}
+                        class="unread">
+                        {unreadCount > 999 ? "999+" : unreadCount}
                     </div>
                 {/if}
-                {#each grouped as userGroup}
-                    {#each userGroup as evt, i (evt.event.messageId)}
+            </div>
+            <IntersectionObserverComponent on:intersecting={isIntersecting}>
+                <div class="body">
+                    <div class="root-msg">
                         <ChatMessage
-                            sender={$userStore[evt.event.sender]}
+                            sender={$userStore[thread.rootMessage.event.sender]}
                             focused={false}
                             {observer}
                             confirmed={true}
@@ -175,9 +136,9 @@
                             chatId={thread.chatId}
                             chatType={chat.kind}
                             {user}
-                            me={evt.event.sender === user.userId}
-                            first={i === 0}
-                            last={i === userGroup.length - 1}
+                            me={thread.rootMessage.event.sender === user.userId}
+                            first={true}
+                            last={true}
                             readonly={true}
                             threadRootMessage={thread.rootMessage.event}
                             pinned={false}
@@ -191,18 +152,61 @@
                             canStartThread={false}
                             publicGroup={chat.kind === "group_chat" && chat.public}
                             editing={false}
-                            eventIndex={evt.index}
-                            timestamp={evt.timestamp}
+                            eventIndex={thread.rootMessage.index}
+                            timestamp={thread.rootMessage.timestamp}
                             dateFormatter={client.toDatetimeString}
-                            msg={evt.event} />
+                            msg={thread.rootMessage.event} />
+                    </div>
+                    {#if missingMessages > 0}
+                        <div class="separator">
+                            {$_("thread.moreMessages", {
+                                values: { number: missingMessages.toString() },
+                            })}
+                        </div>
+                    {/if}
+                    {#each grouped as userGroup}
+                        {#each userGroup as evt, i (evt.event.messageId)}
+                            <ChatMessage
+                                sender={$userStore[evt.event.sender]}
+                                focused={false}
+                                {observer}
+                                confirmed={true}
+                                failed={false}
+                                senderTyping={false}
+                                readByMe={true}
+                                readByThem={true}
+                                chatId={thread.chatId}
+                                chatType={chat.kind}
+                                {user}
+                                me={evt.event.sender === user.userId}
+                                first={i === 0}
+                                last={i === userGroup.length - 1}
+                                readonly={true}
+                                threadRootMessage={thread.rootMessage.event}
+                                pinned={false}
+                                supportsEdit={false}
+                                supportsReply={false}
+                                canPin={false}
+                                canBlockUser={false}
+                                canDelete={false}
+                                canQuoteReply={false}
+                                canReact={false}
+                                canStartThread={false}
+                                publicGroup={chat.kind === "group_chat" && chat.public}
+                                editing={false}
+                                eventIndex={evt.index}
+                                timestamp={evt.timestamp}
+                                dateFormatter={client.toDatetimeString}
+                                msg={evt.event} />
+                        {/each}
                     {/each}
-                {/each}
-                <LinkButton underline="hover" on:click={selectThread}
-                    >{$_("thread.openThread")}&#8594;</LinkButton>
-            </div>
-        </IntersectionObserverComponent>
-    </CollapsibleCard>
-</div>
+                    <LinkButton underline="hover" on:click={selectThread}
+                        >{$_("thread.openThread")}&#8594;</LinkButton>
+                </div>
+            </IntersectionObserverComponent>
+        </CollapsibleCard>
+    </div>
+{/if}
 
 <style lang="scss">
     :global(.threads .link-button) {
