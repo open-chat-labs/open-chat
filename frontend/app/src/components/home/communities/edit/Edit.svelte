@@ -102,6 +102,22 @@
         step = ev.detail;
     }
 
+    function optionallyInviteUsers(communityId: string): Promise<void> {
+        if (members.length === 0) {
+            return Promise.resolve();
+        }
+        return client
+            .inviteUsersToCommunity(
+                { kind: "community", communityId },
+                members.map((m) => m.user.userId)
+            )
+            .then((resp) => {
+                if (resp !== "success") {
+                    Promise.reject("Unable to invite users to the new community");
+                }
+            });
+    }
+
     function save(yes: boolean = true): Promise<void> {
         busy = true;
         if (editing) {
@@ -154,9 +170,16 @@
                 )
                 .then((response) => {
                     if (response.kind === "success") {
-                        toastStore.showSuccessToast("communities.created");
-                        dispatch("close");
-                        page(`/community/${response.id}`);
+                        return optionallyInviteUsers(response.id)
+                            .then(() => {
+                                toastStore.showSuccessToast("communities.created");
+                                dispatch("close");
+                                page(`/community/${response.id}`);
+                            })
+                            .catch((_err) => {
+                                toastStore.showFailureToast("inviteUsersFailed");
+                                step = 0;
+                            });
                     } else {
                         toastStore.showFailureToast(`communities.errors.${response.kind}`);
                     }
