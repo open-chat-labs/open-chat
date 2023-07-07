@@ -887,6 +887,7 @@
         "browseChannels": "Browse channels",
         "createChannel": "New channel",
         "convert": "Convert to community",
+        "convertButton": "Convert",
         "channels": "Channels",
         "channelPlaceholder": "Enter a default channel",
         "channelsInfo": "You must create one or more public default channels. Any user who joins your community will be automatically enrolled in these default channels. You can always change this later.",
@@ -898,6 +899,9 @@
         "noInvalidChannels": "All default channels must be between {min} and {max} characters",
         "created": "Your community has been created successfully",
         "saved": "Your community has been updated successfully",
+        "converted": "You group has been converted to a community.",
+        "pleaseWait": "Please wait - this might take a little while",
+        "goto": "Go to community",
         "usersInvited": "Users have been invited to your community",
         "errors": {
             "name_taken": "Sorry - there is already a community with this name",
@@ -906,7 +910,8 @@
             "inviteUsers": "Sorry we were unable to invite these users",
             "joinFailed": "Sorry we were unable to join this community",
             "deleteFailed": "Sorry we were unable to delete this community",
-            "leaveFailed": "Sorry we were unable to leave this community"
+            "leaveFailed": "Sorry we were unable to leave this community",
+            "convertFailed": "Sorry but we were unable to convert your groups to a community"
         },
         "memberCount": "member(s)",
         "channelCount": "channel(s)",
@@ -916,7 +921,8 @@
         "groupChats": "Group chats",
         "favourites": "Favourites",
         "addToFavourites": "Add to favourites",
-        "removeFromFavourites": "Remove from favourites"
+        "removeFromFavourites": "Remove from favourites",
+        "convertInfo": "We can take care of converting your group to a community.\n\n This is an irreversible process and will do the following:\n\n* freeze the existing group\n* create a new community with the same name as the group\n* add a default channel to the community with the same name as the group\n* add all members of the group as members of the community\n* copy the full message history from the group into the default channe\n* delete the existing group\n* inform all members of the group that it has been converted to a community\n\nThis process might take a few minutes depending on the size of the group so please be patient."
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",

@@ -250,6 +250,7 @@ export class CommunityClient extends CandidService {
                 permissions: [apiGroupPermissions(channel.permissions)],
                 rules: apiGroupRules(channel.rules),
                 gate: apiMaybeAccessGate(channel.gate),
+                is_default: channel.isDefault,
             }),
             (resp) => createGroupResponse(resp, channel.id)
         );
@@ -994,8 +995,8 @@ export class CommunityClient extends CandidService {
         mute: boolean
     ): Promise<ToggleMuteNotificationResponse> {
         return this.handleResponse(
-            this.service.toggle_mute_channel_notifications({
-                channel_id: BigInt(chatId.channelId),
+            this.service.toggle_mute_notifications({
+                channel_id: [BigInt(chatId.channelId)],
                 mute,
             }),
             muteNotificationsResponse
@@ -1005,6 +1006,7 @@ export class CommunityClient extends CandidService {
     toggleMuteNotifications(mute: boolean): Promise<ToggleMuteCommunityNotificationsResponse> {
         return this.handleResponse(
             this.service.toggle_mute_notifications({
+                channel_id: [],
                 mute,
             }),
             toggleMuteNotificationsResponse
@@ -1098,8 +1100,20 @@ export class CommunityClient extends CandidService {
         avatar?: Uint8Array,
         banner?: Uint8Array,
         gate?: AccessGate,
-        isPublic?: boolean
+        isPublic?: boolean,
+        primaryLanguage?: string
     ): Promise<UpdateCommunityResponse> {
+        console.log(
+            "updating community: ",
+            name,
+            description,
+            rules,
+            permissions,
+            avatar,
+            banner,
+            gate,
+            isPublic
+        );
         return this.handleResponse(
             this.service.update_community({
                 name: apiOptional(identity, name),
@@ -1107,6 +1121,7 @@ export class CommunityClient extends CandidService {
                 permissions: apiOptional(apiOptionalCommunityPermissions, permissions),
                 rules: apiOptional(apiGroupRules, rules),
                 public: apiOptional(identity, isPublic),
+                primary_language: apiOptional(identity, primaryLanguage),
                 gate:
                     gate === undefined
                         ? { NoChange: null }

@@ -126,6 +126,7 @@ import type {
     ChannelSummaryResponse,
     LeaveCommunityResponse,
     DeleteCommunityResponse,
+    ConvertToCommunityResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -270,7 +271,15 @@ export type WorkerRequest =
     | RemoveFromFavourites
     | LeaveCommunity
     | DeleteCommunity
+    | ConvertGroupToCommunity
     | ChangeCommunityRole;
+
+type ConvertGroupToCommunity = {
+    kind: "convertGroupToCommunity";
+    chatId: GroupChatIdentifier;
+    historyVisible: boolean;
+    rules: AccessRules;
+};
 
 type DeleteCommunity = {
     kind: "deleteCommunity";
@@ -979,6 +988,7 @@ export type WorkerResponse =
     | Response<ManageFavouritesResponse>
     | Response<LeaveCommunityResponse>
     | Response<DeleteCommunityResponse>
+    | Response<ConvertToCommunityResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1222,6 +1232,7 @@ type UpdateCommunity = {
     banner?: Uint8Array;
     gate?: AccessGate;
     isPublic?: boolean;
+    primaryLanguage?: string;
 };
 
 type CreateCommunity = {
@@ -1496,4 +1507,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? LeaveCommunityResponse
     : T extends DeleteCommunity
     ? DeleteCommunityResponse
+    : T extends ConvertGroupToCommunity
+    ? ConvertToCommunityResponse
     : never;

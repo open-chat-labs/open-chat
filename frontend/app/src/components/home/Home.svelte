@@ -38,6 +38,7 @@
         routeForChatIdentifier,
         MultiUserChat,
         MultiUserChatIdentifier,
+        GroupChatSummary,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -76,12 +77,14 @@
     import LeftNav from "./nav/LeftNav.svelte";
     import { createCandidateCommunity } from "../../stores/community";
     import { interpolateLevel } from "../../utils/i18n";
+    import Convert from "./communities/Convert.svelte";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
     let candidateCommunityRules: AccessRules = defaultAccessRules;
+    let convertGroup: GroupChatSummary | undefined = undefined;
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -934,6 +937,7 @@
                 ...nullMembership(),
                 role: "owner",
             },
+            isDefault: false,
         };
     }
 
@@ -957,6 +961,7 @@
             gate: chat.gate,
             level: chat.id.kind === "group_chat" ? "group" : "channel",
             membership: chat.membership,
+            isDefault: chat.isDefault,
         };
     }
 
@@ -1012,6 +1017,10 @@
         candidateCommunity = ev.detail;
         candidateCommunityRules = $currentCommunityRules ?? defaultAccessRules;
         modal = ModalType.EditCommunity;
+    }
+
+    function convertGroupToCommunity(ev: CustomEvent<GroupChatSummary>) {
+        convertGroup = ev.detail;
     }
 
     $: bgHeight = $dimensions.height * 0.9;
@@ -1084,6 +1093,7 @@
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage}
+            on:convertGroupToCommunity={convertGroupToCommunity}
             on:createCommunity={createCommunity} />
     {/if}
     {#if $layoutStore.rightPanel === "inline"}
@@ -1186,6 +1196,8 @@
         skew={"5deg"}
         viewBox={`0 0 361 ${bgClip}`} />
 {/if}
+
+<Convert bind:group={convertGroup} rules={$currentChatRules} />
 
 <style lang="scss">
     :global(.edited-msg) {

@@ -21,6 +21,7 @@ import type {
     ApiGroupCanisterSummaryUpdatesResponse,
     ApiClaimPrizeResponse,
     ApiGroupGateUpdate,
+    ApiConvertIntoCommunityResponse,
 } from "./candid/idl";
 import type {
     ApiEventsResponse as ApiCommunityEventsResponse,
@@ -56,6 +57,8 @@ import {
     GroupChatIdentifier,
     ChatIdentifier,
     MultiUserChatIdentifier,
+    ConvertToCommunityResponse,
+    CommonResponses,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
@@ -871,5 +874,22 @@ export function rulesResponse(candid: ApiRulesResponse): AccessRules | undefined
             text: rules ?? "",
             enabled: rules !== undefined,
         };
+    }
+}
+export function convertToCommunityReponse(
+    candid: ApiConvertIntoCommunityResponse
+): ConvertToCommunityResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            id: {
+                kind: "channel",
+                communityId: candid.Success.community_id.toString(),
+                channelId: candid.Success.channel_id.toString(),
+            },
+        };
+    } else {
+        console.warn("ConvertToCommunity failed with ", candid);
+        return CommonResponses.failure();
     }
 }

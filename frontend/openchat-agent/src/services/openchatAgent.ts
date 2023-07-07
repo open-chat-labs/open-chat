@@ -158,6 +158,7 @@ import {
     CommunityIdentifier,
     CommunitySummaryResponse,
     UpdatesSuccessResponse,
+    ConvertToCommunityResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -2235,5 +2236,13 @@ export class OpenChatAgent extends EventTarget {
             case "channel":
                 return this.communityClient(chatId.communityId).declineInvitation(chatId);
         }
+    }
+
+    convertGroupToCommunity(
+        chatId: GroupChatIdentifier,
+        historyVisible: boolean,
+        rules: AccessRules
+    ): Promise<ConvertToCommunityResponse> {
+        return this.getGroupClient(chatId.groupId).convertToCommunity(historyVisible, rules);
     }
 }

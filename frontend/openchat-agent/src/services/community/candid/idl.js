@@ -593,6 +593,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
+    'is_default' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'next_message_expiry' : IDL.Opt(TimestampMillis),
     'membership' : IDL.Opt(ChannelMembership),
@@ -653,6 +654,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'events_ttl' : EventsTimeToLiveUpdate,
     'last_updated' : TimestampMillis,
+    'is_default' : IDL.Opt(IDL.Bool),
     'avatar_id' : DocumentIdUpdate,
     'membership' : IDL.Opt(ChannelMembershipUpdates),
     'latest_event_index' : IDL.Opt(EventIndex),
@@ -702,6 +704,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
+    'is_default' : IDL.Bool,
     'history_visible_to_new_joiners' : IDL.Bool,
     'rules' : AccessRules,
     'avatar' : IDL.Opt(Document),
@@ -883,7 +886,7 @@ export const idlFactory = ({ IDL }) => {
     'old_permissions' : GroupPermissions,
     'new_permissions' : GroupPermissions,
   });
-  const ChatFrozen = IDL.Record({
+  const GroupFrozen = IDL.Record({
     'frozen_by' : UserId,
     'reason' : IDL.Opt(IDL.Text),
   });
@@ -900,7 +903,7 @@ export const idlFactory = ({ IDL }) => {
     'user_ids' : IDL.Vec(UserId),
     'unblocked_by' : UserId,
   });
-  const ChatUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
+  const GroupUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupRulesChanged = IDL.Record({
     'changed_by' : UserId,
@@ -950,10 +953,10 @@ export const idlFactory = ({ IDL }) => {
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
-    'ChatFrozen' : ChatFrozen,
+    'ChatFrozen' : GroupFrozen,
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
-    'ChatUnfrozen' : ChatUnfrozen,
+    'ChatUnfrozen' : GroupUnfrozen,
     'ParticipantLeft' : ParticipantLeft,
     'GroupRulesChanged' : GroupRulesChanged,
     'GroupNameChanged' : GroupNameChanged,
@@ -1009,6 +1012,7 @@ export const idlFactory = ({ IDL }) => {
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'is_default' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'member_count' : IDL.Nat32,
   });
@@ -1076,7 +1080,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ManageDefaultChannelsResponse = IDL.Variant({
     'Failed' : FailedChannels,
-    'PartialSucesss' : FailedChannels,
+    'PartialSuccess' : FailedChannels,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'UserNotInCommunity' : IDL.Null,
@@ -1368,7 +1372,6 @@ export const idlFactory = ({ IDL }) => {
   const CommunityPermissions = IDL.Record({
     'create_public_channel' : CommunityPermissionRole,
     'block_users' : CommunityPermissionRole,
-    'change_permissions' : CommunityPermissionRole,
     'update_details' : CommunityPermissionRole,
     'remove_members' : CommunityPermissionRole,
     'invite_users' : CommunityPermissionRole,
@@ -1400,6 +1403,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
     'banner_id' : IDL.Opt(IDL.Nat),
     'member_count' : IDL.Nat32,
+    'primary_language' : IDL.Text,
   });
   const SummaryResponse = IDL.Variant({
     'Success' : CommunityCanisterCommunitySummary,
@@ -1435,6 +1439,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : IDL.Opt(EventIndex),
     'banner_id' : DocumentIdUpdate,
     'member_count' : IDL.Opt(IDL.Nat32),
+    'primary_language' : IDL.Opt(IDL.Text),
   });
   const SummaryUpdatesResponse = IDL.Variant({
     'Success' : CommunityCanisterCommunitySummaryUpdates,
@@ -1461,20 +1466,13 @@ export const idlFactory = ({ IDL }) => {
     }),
     'UserNotInCommunity' : IDL.Null,
   });
-  const ToggleMuteChannelNotificationsArgs = IDL.Record({
-    'channel_id' : ChannelId,
+  const ToggleMuteNotificationsArgs = IDL.Record({
+    'channel_id' : IDL.Opt(ChannelId),
     'mute' : IDL.Bool,
   });
-  const ToggleMuteChannelNotificationsResponse = IDL.Variant({
+  const ToggleMuteNotificationsResponse = IDL.Variant({
     'UserNotInChannel' : IDL.Null,
     'ChannelNotFound' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserNotInCommunity' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-    'CommunityFrozen' : IDL.Null,
-  });
-  const ToggleMuteNotificationsArgs = IDL.Record({ 'mute' : IDL.Bool });
-  const ToggleMuteNotificationsResponse = IDL.Variant({
     'Success' : IDL.Null,
     'UserNotInCommunity' : IDL.Null,
     'UserSuspended' : IDL.Null,
@@ -1555,7 +1553,6 @@ export const idlFactory = ({ IDL }) => {
   const OptionalCommunityPermissions = IDL.Record({
     'create_public_channel' : IDL.Opt(CommunityPermissionRole),
     'block_users' : IDL.Opt(CommunityPermissionRole),
-    'change_permissions' : IDL.Opt(CommunityPermissionRole),
     'update_details' : IDL.Opt(CommunityPermissionRole),
     'remove_members' : IDL.Opt(CommunityPermissionRole),
     'invite_users' : IDL.Opt(CommunityPermissionRole),
@@ -1571,12 +1568,14 @@ export const idlFactory = ({ IDL }) => {
     'public' : IDL.Opt(IDL.Bool),
     'rules' : IDL.Opt(AccessRules),
     'avatar' : DocumentUpdate,
+    'primary_language' : IDL.Opt(IDL.Text),
   });
   const UpdateCommunityResponse = IDL.Variant({
     'NameReserved' : IDL.Null,
     'CannotMakeCommunityPublic' : IDL.Null,
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
+    'InvalidLanguage' : IDL.Null,
     'NameTooShort' : FieldTooShortResult,
     'NotAuthorized' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
@@ -1746,11 +1745,6 @@ export const idlFactory = ({ IDL }) => {
         [ThreadPreviewsArgs],
         [ThreadPreviewsResponse],
         ['query'],
-      ),
-    'toggle_mute_channel_notifications' : IDL.Func(
-        [ToggleMuteChannelNotificationsArgs],
-        [ToggleMuteChannelNotificationsResponse],
-        [],
       ),
     'toggle_mute_notifications' : IDL.Func(
         [ToggleMuteNotificationsArgs],

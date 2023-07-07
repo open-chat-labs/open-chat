@@ -159,6 +159,7 @@
             {unreadMessages}
             {selectedChatSummary}
             {blocked}
+            on:convertGroupToCommunity
             on:toggleMuteNotifications
             on:showGroupDetails
             on:showPinned
@@ -169,6 +170,7 @@
             on:markAllRead
             on:blockUser
             on:unblockUser
+            on:upgrade
             on:showInviteGroupUsers
             on:leaveGroup />
     {/if}

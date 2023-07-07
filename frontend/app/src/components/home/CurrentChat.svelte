@@ -262,8 +262,10 @@
             on:showGroupMembers
             on:leaveGroup
             on:showPinned
+            on:upgrade
             on:createPoll={createPoll}
             on:searchChat={searchChat}
+            on:convertGroupToCommunity
             {blocked}
             {readonly}
             {unreadMessages}

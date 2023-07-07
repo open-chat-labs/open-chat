@@ -18,7 +18,7 @@
     import PermissionsViewer from "../PermissionsViewer.svelte";
     import Rules from "../../Rules.svelte";
     import Details from "./Details.svelte";
-    import { createCandidateCommunity } from "stores/community";
+    import { createCandidateCommunity } from "../../../../stores/community";
     import VisibilityControl from "../../VisibilityControl.svelte";
     import ChooseChannels from "./ChooseChannels.svelte";
     import { toastStore } from "stores/toast";
@@ -132,7 +132,10 @@
                     avatarDirty ? candidate.avatar.blobData : undefined,
                     bannerDirty ? candidate.banner.blobData : undefined,
                     gateDirty ? candidate.gate : undefined,
-                    candidate.public !== original.public ? candidate.public : undefined
+                    candidate.public !== original.public ? candidate.public : undefined,
+                    candidate.primaryLanguage !== original.primaryLanguage
+                        ? candidate.primaryLanguage
+                        : undefined
                 )
                 .then((success: boolean) => {
                     if (success) {

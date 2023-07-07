@@ -94,6 +94,7 @@ export interface ChannelMatch {
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
+  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'member_count' : number,
 }
@@ -133,10 +134,10 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
-  { 'ChatFrozen' : ChatFrozen } |
+  { 'ChatFrozen' : GroupFrozen } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'UsersUnblocked' : UsersUnblocked } |
-  { 'ChatUnfrozen' : ChatUnfrozen } |
+  { 'ChatUnfrozen' : GroupUnfrozen } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'GroupNameChanged' : GroupNameChanged } |
@@ -153,7 +154,6 @@ export interface ChatEventWrapper {
   'correlation_id' : bigint,
   'expires_at' : [] | [TimestampMillis],
 }
-export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export type ChatInList = { 'Group' : ChatId } |
   { 'Favourite' : Chat } |
@@ -191,7 +191,6 @@ export interface ChatMetrics {
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
-export interface ChatUnfrozen { 'unfrozen_by' : UserId }
 export interface CommunitiesInitial {
   'summaries' : Array<UserCanisterCommunitySummary>,
 }
@@ -213,6 +212,7 @@ export interface CommunityCanisterChannelSummary {
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
+  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'next_message_expiry' : [] | [TimestampMillis],
   'membership' : [] | [ChannelMembership],
@@ -236,6 +236,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
+  'is_default' : [] | [boolean],
   'avatar_id' : DocumentIdUpdate,
   'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
@@ -259,6 +260,7 @@ export interface CommunityCanisterCommunitySummary {
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
   'member_count' : number,
+  'primary_language' : string,
 }
 export interface CommunityCanisterCommunitySummaryUpdates {
   'is_public' : [] | [boolean],
@@ -278,6 +280,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'latest_event_index' : [] | [EventIndex],
   'banner_id' : DocumentIdUpdate,
   'member_count' : [] | [number],
+  'primary_language' : [] | [string],
 }
 export type CommunityId = CanisterId;
 export interface CommunityMatch {
@@ -286,6 +289,7 @@ export interface CommunityMatch {
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
+  'moderation_flags' : number,
   'avatar_id' : [] | [bigint],
   'banner_id' : [] | [bigint],
   'member_count' : number,
@@ -310,7 +314,6 @@ export type CommunityPermissionRole = { 'Owners' : null } |
 export interface CommunityPermissions {
   'create_public_channel' : CommunityPermissionRole,
   'block_users' : CommunityPermissionRole,
-  'change_permissions' : CommunityPermissionRole,
   'update_details' : CommunityPermissionRole,
   'remove_members' : CommunityPermissionRole,
   'invite_users' : CommunityPermissionRole,
@@ -339,6 +342,7 @@ export interface CreateCommunityArgs {
   'default_channels' : Array<string>,
   'rules' : AccessRules,
   'avatar' : [] | [Document],
+  'primary_language' : string,
 }
 export type CreateCommunityResponse = { 'DefaultChannelsInvalid' : null } |
   { 'NameReserved' : null } |
@@ -733,6 +737,7 @@ export interface GroupDescriptionChanged {
   'previous_description' : string,
   'changed_by' : UserId,
 }
+export interface GroupFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export interface GroupGateUpdated {
   'updated_by' : UserId,
   'new_gate' : [] | [AccessGate],
@@ -809,6 +814,7 @@ export type GroupSubtype = {
 export type GroupSubtypeUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : GroupSubtype };
+export interface GroupUnfrozen { 'unfrozen_by' : UserId }
 export interface GroupVisibilityChanged {
   'changed_by' : UserId,
   'now_public' : boolean,
@@ -1139,7 +1145,6 @@ export interface NotificationEnvelope {
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
   'block_users' : [] | [CommunityPermissionRole],
-  'change_permissions' : [] | [CommunityPermissionRole],
   'update_details' : [] | [CommunityPermissionRole],
   'remove_members' : [] | [CommunityPermissionRole],
   'invite_users' : [] | [CommunityPermissionRole],

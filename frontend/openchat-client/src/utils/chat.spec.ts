@@ -75,6 +75,7 @@ const defaultGroupChat: GroupChatSummary = {
             },
         ],
     },
+    isDefault: false,
 };
 
 function createUser(userId: string, username: string): PartialUserSummary {

@@ -1532,7 +1532,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.avatar,
                         payload.banner,
                         payload.gate,
-                        payload.isPublic
+                        payload.isPublic,
+                        payload.primaryLanguage
                     )
                     .then((response) =>
                         sendResponse(correlationId, {
@@ -1648,6 +1649,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "deleteCommunity":
                 agent.userClient
                     .deleteCommunity(payload.id)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "convertGroupToCommunity":
+                agent
+                    .convertGroupToCommunity(payload.chatId, payload.historyVisible, payload.rules)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

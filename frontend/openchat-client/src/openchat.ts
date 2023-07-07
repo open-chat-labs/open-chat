@@ -57,6 +57,7 @@ import {
     buildCryptoTransferText,
     mergeSendMessageResponse,
     serialiseMessageForRtc,
+    canConvertToCommunity,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -330,6 +331,7 @@ import {
     communityRoles,
     ChatListScope,
     ChatStateFull,
+    ChannelIdentifier,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -1201,6 +1203,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     canMakeGroupPrivate(chatId: MultiUserChatIdentifier): boolean {
         return this.multiUserChatPredicate(chatId, canMakePrivate);
+    }
+
+    canConvertGroupToCommunity(chatId: GroupChatIdentifier): boolean {
+        return this.multiUserChatPredicate(chatId, canConvertToCommunity);
     }
 
     canMakeCommunityPrivate(id: CommunityIdentifier): boolean {
@@ -4413,7 +4419,8 @@ export class OpenChat extends OpenChatAgentWorker {
         avatar: Uint8Array | undefined,
         banner: Uint8Array | undefined,
         gate: AccessGate | undefined,
-        isPublic: boolean | undefined
+        isPublic: boolean | undefined,
+        primaryLanguage: string | undefined
     ): Promise<boolean> {
         return this.sendRequest({
             kind: "updateCommunity",
@@ -4426,6 +4433,7 @@ export class OpenChat extends OpenChatAgentWorker {
             banner,
             gate,
             isPublic,
+            primaryLanguage,
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -4443,6 +4451,23 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch((err) => {
                 this._logger.error("Error creating community", err);
                 return false;
+            });
+    }
+
+    convertGroupToCommunity(
+        group: GroupChatSummary,
+        rules: AccessRules
+    ): Promise<ChannelIdentifier | undefined> {
+        return this.sendRequest({
+            kind: "convertGroupToCommunity",
+            chatId: group.id,
+            historyVisible: group.historyVisible,
+            rules,
+        })
+            .then((resp) => (resp.kind === "success" ? resp.id : undefined))
+            .catch((err) => {
+                this._logger.error("Error converting group to community", err);
+                return undefined;
             });
     }
 

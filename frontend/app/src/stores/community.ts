@@ -33,5 +33,6 @@ export function createCandidateCommunity(id: string): CommunitySummary {
             archived: false,
             pinned: [],
         },
+        primaryLanguage: "en",
     };
 }

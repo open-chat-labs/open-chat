@@ -82,9 +82,7 @@ export function mergeCommunityUpdates(
             canisterId: community.id.communityId,
         }));
 
-        const channelsRemoved = new Set(
-            (c?.channelsRemoved ?? []).map((c) => c.channelId)
-        );
+        const channelsRemoved = new Set((c?.channelsRemoved ?? []).map((c) => c.channelId));
 
         const channelsAdded = c?.channelsAdded ?? [];
 
@@ -124,6 +122,7 @@ export function mergeCommunityUpdates(
             frozen: applyOptionUpdate(community.frozen, c?.frozen) ?? false,
             historyVisible: community.historyVisible,
             permissions: c?.permissions ?? community.permissions,
+            primaryLanguage: c?.primaryLanguage ?? community.primaryLanguage,
         };
     });
 }
@@ -172,6 +171,7 @@ export function mergeChannelUpdates(
             dateLastPinned: c?.dateLastPinned ?? channel.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? channel.dateReadPinned,
             gate: applyOptionUpdate(channel.gate, c?.gate) ?? { kind: "no_gate" },
+            isDefault: c?.isDefault ?? channel.isDefault,
             level: "channel",
             membership: {
                 ...channel.membership,

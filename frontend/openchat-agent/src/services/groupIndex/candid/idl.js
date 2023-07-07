@@ -52,6 +52,8 @@ export const idlFactory = ({ IDL }) => {
   const ExploreCommunitiesArgs = IDL.Record({
     'page_size' : IDL.Nat8,
     'page_index' : IDL.Nat32,
+    'languages' : IDL.Vec(IDL.Text),
+    'exclude_moderation_flags' : IDL.Opt(IDL.Nat32),
     'search_term' : IDL.Opt(IDL.Text),
   });
   const Milliseconds = IDL.Nat64;
@@ -70,6 +72,7 @@ export const idlFactory = ({ IDL }) => {
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'moderation_flags' : IDL.Nat32,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'banner_id' : IDL.Opt(IDL.Nat),
     'member_count' : IDL.Nat32,
@@ -79,6 +82,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ExploreCommunitiesResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
+    'InvalidFlags' : IDL.Null,
     'Success' : ExploreCommunitiesSuccess,
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
@@ -116,24 +120,48 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
     }),
   });
-  const FreezeGroupArgs = IDL.Record({
-    'chat_id' : ChatId,
+  const FreezeCommunityArgs = IDL.Record({
+    'community_id' : ChatId,
+    'suspend_members' : IDL.Opt(
+      IDL.Record({ 'duration' : IDL.Opt(Milliseconds), 'reason' : IDL.Text })
+    ),
     'reason' : IDL.Opt(IDL.Text),
   });
-  const ChatFrozen = IDL.Record({
+  const GroupFrozen = IDL.Record({
     'frozen_by' : UserId,
     'reason' : IDL.Opt(IDL.Text),
   });
   const EventIndex = IDL.Nat32;
+  const FreezeCommunityResponse = IDL.Variant({
+    'CommunityNotFound' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Record({
+      'event' : GroupFrozen,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+      'correlation_id' : IDL.Nat64,
+      'expires_at' : IDL.Opt(TimestampMillis),
+    }),
+    'CommunityAlreadyFrozen' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
+  const FreezeGroupArgs = IDL.Record({
+    'suspend_members' : IDL.Opt(
+      IDL.Record({ 'duration' : IDL.Opt(Milliseconds), 'reason' : IDL.Text })
+    ),
+    'chat_id' : ChatId,
+    'reason' : IDL.Opt(IDL.Text),
+  });
   const FreezeGroupResponse = IDL.Variant({
     'ChatAlreadyFrozen' : IDL.Null,
     'ChatNotFound' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({
-      'event' : ChatFrozen,
+      'event' : GroupFrozen,
       'timestamp' : TimestampMillis,
       'index' : EventIndex,
       'correlation_id' : IDL.Nat64,
+      'expires_at' : IDL.Opt(TimestampMillis),
     }),
     'InternalError' : IDL.Text,
   });
@@ -564,22 +592,49 @@ export const idlFactory = ({ IDL }) => {
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
+  const SetCommunityModerationFlagsArgs = IDL.Record({
+    'flags' : IDL.Nat32,
+    'community_id' : CommunityId,
+  });
+  const SetCommunityModerationFlagsResponse = IDL.Variant({
+    'CommunityNotFound' : IDL.Null,
+    'Unchanged' : IDL.Null,
+    'InvalidFlags' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const SetUpgradeConcurrencyArgs = IDL.Record({ 'value' : IDL.Nat32 });
   const SetUpgradeConcurrencyResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const UnfreezeCommunityArgs = IDL.Record({ 'community_id' : ChatId });
+  const GroupUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
+  const UnfreezeCommunityResponse = IDL.Variant({
+    'CommunityNotFound' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Record({
+      'event' : GroupUnfrozen,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+      'correlation_id' : IDL.Nat64,
+      'expires_at' : IDL.Opt(TimestampMillis),
+    }),
+    'CommunityNotFrozen' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const UnfreezeGroupArgs = IDL.Record({ 'chat_id' : ChatId });
-  const ChatUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
   const UnfreezeGroupResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({
-      'event' : ChatUnfrozen,
+      'event' : GroupUnfrozen,
       'timestamp' : TimestampMillis,
       'index' : EventIndex,
       'correlation_id' : IDL.Nat64,
+      'expires_at' : IDL.Opt(TimestampMillis),
     }),
     'ChatNotFrozen' : IDL.Null,
     'InternalError' : IDL.Text,
@@ -615,6 +670,11 @@ export const idlFactory = ({ IDL }) => {
         [FilterGroupsResponse],
         ['query'],
       ),
+    'freeze_community' : IDL.Func(
+        [FreezeCommunityArgs],
+        [FreezeCommunityResponse],
+        [],
+      ),
     'freeze_group' : IDL.Func([FreezeGroupArgs], [FreezeGroupResponse], []),
     'recommended_groups' : IDL.Func(
         [RecommendedGroupsArgs],
@@ -627,6 +687,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'set_community_moderation_flags' : IDL.Func(
+        [SetCommunityModerationFlagsArgs],
+        [SetCommunityModerationFlagsResponse],
+        [],
+      ),
     'set_community_upgrade_concurrency' : IDL.Func(
         [SetUpgradeConcurrencyArgs],
         [SetUpgradeConcurrencyResponse],
@@ -635,6 +700,11 @@ export const idlFactory = ({ IDL }) => {
     'set_group_upgrade_concurrency' : IDL.Func(
         [SetUpgradeConcurrencyArgs],
         [SetUpgradeConcurrencyResponse],
+        [],
+      ),
+    'unfreeze_community' : IDL.Func(
+        [UnfreezeCommunityArgs],
+        [UnfreezeCommunityResponse],
         [],
       ),
     'unfreeze_group' : IDL.Func(

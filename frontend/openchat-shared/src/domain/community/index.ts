@@ -66,6 +66,7 @@ export type CommunitySummary = AccessControlled &
         banner: DataContent;
         membership?: CommunityMembership;
         channels: ChannelSummary[]; // TODO - this might be better as a ChatMap - but that would have some serialisation complications
+        primaryLanguage: string;
     };
 
 // TODO - not sure if this really needs to be a thing yet
@@ -211,6 +212,7 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     latestEventIndex: number | undefined;
     bannerId: OptionUpdate<bigint>;
     memberCount: number | undefined;
+    primaryLanguage: string | undefined;
 };
 
 export type CommunityCanisterChannelSummaryUpdates = {
@@ -230,6 +232,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     memberCount: number | undefined;
     latestMessage: EventWrapper<Message> | undefined;
     updatedEvents: UpdatedEvent[];
+    isDefault: boolean | undefined;
 };
 
 export type CommunityMembershipUpdates = {
@@ -293,3 +296,5 @@ export type LocalCommunitySummaryUpdates = {
     removedAtTimestamp?: bigint;
     lastUpdated: number;
 };
+
+export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | Failure;

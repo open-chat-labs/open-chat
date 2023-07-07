@@ -41,6 +41,7 @@
     export let hasPinned: boolean;
     export let unreadMessages: number;
 
+    $: isDiamond = client.isDiamond;
     $: favouritesStore = client.favouritesStore;
     $: messagesRead = client.messagesRead;
     $: isProposalGroup = client.isProposalGroup;
@@ -54,6 +55,9 @@
     $: membersSelected = lastState.kind === "show_group_members";
     $: inviteMembersSelected = lastState.kind === "invite_group_users";
     $: desktop = !$mobileWidth;
+    $: canConvert =
+        selectedChatSummary.kind === "group_chat" &&
+        client.canConvertGroupToCommunity(selectedChatSummary.id);
 
     let hasUnreadPinned = false;
 
@@ -134,7 +138,13 @@
     }
 
     function convertToCommunity() {
-        dispatch("convertToCommunity", { chatId: selectedChatSummary.id });
+        if (!$isDiamond) {
+            dispatch("upgrade");
+        } else {
+            if (selectedChatSummary.kind === "group_chat") {
+                dispatch("convertGroupToCommunity", selectedChatSummary);
+            }
+        }
     }
 
     function freezeGroup() {
@@ -362,7 +372,7 @@
                             </div>
                         </MenuItem>
                     {/if}
-                    {#if $communitiesEnabled && selectedChatSummary.kind === "group_chat"}
+                    {#if $communitiesEnabled && canConvert}
                         <MenuItem warning on:click={convertToCommunity}>
                             <ConvertToCommunity
                                 size={$iconSize}

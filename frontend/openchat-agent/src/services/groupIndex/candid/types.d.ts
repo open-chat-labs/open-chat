@@ -70,6 +70,7 @@ export interface ChannelMatch {
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
+  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'member_count' : number,
 }
@@ -103,10 +104,10 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
-  { 'ChatFrozen' : ChatFrozen } |
+  { 'ChatFrozen' : GroupFrozen } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'UsersUnblocked' : UsersUnblocked } |
-  { 'ChatUnfrozen' : ChatUnfrozen } |
+  { 'ChatUnfrozen' : GroupUnfrozen } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'GroupNameChanged' : GroupNameChanged } |
@@ -123,7 +124,6 @@ export interface ChatEventWrapper {
   'correlation_id' : bigint,
   'expires_at' : [] | [TimestampMillis],
 }
-export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export interface ChatMetrics {
   'prize_winner_messages' : bigint,
@@ -151,7 +151,6 @@ export interface ChatMetrics {
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
-export interface ChatUnfrozen { 'unfrozen_by' : UserId }
 export interface CommunityCanisterChannelSummary {
   'channel_id' : ChannelId,
   'is_public' : boolean,
@@ -165,6 +164,7 @@ export interface CommunityCanisterChannelSummary {
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
+  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'next_message_expiry' : [] | [TimestampMillis],
   'membership' : [] | [ChannelMembership],
@@ -188,6 +188,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
+  'is_default' : [] | [boolean],
   'avatar_id' : DocumentIdUpdate,
   'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
@@ -211,6 +212,7 @@ export interface CommunityCanisterCommunitySummary {
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
   'member_count' : number,
+  'primary_language' : string,
 }
 export interface CommunityCanisterCommunitySummaryUpdates {
   'is_public' : [] | [boolean],
@@ -230,6 +232,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'latest_event_index' : [] | [EventIndex],
   'banner_id' : DocumentIdUpdate,
   'member_count' : [] | [number],
+  'primary_language' : [] | [string],
 }
 export type CommunityId = CanisterId;
 export interface CommunityMatch {
@@ -238,6 +241,7 @@ export interface CommunityMatch {
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
+  'moderation_flags' : number,
   'avatar_id' : [] | [bigint],
   'banner_id' : [] | [bigint],
   'member_count' : number,
@@ -258,7 +262,6 @@ export type CommunityPermissionRole = { 'Owners' : null } |
 export interface CommunityPermissions {
   'create_public_channel' : CommunityPermissionRole,
   'block_users' : CommunityPermissionRole,
-  'change_permissions' : CommunityPermissionRole,
   'update_details' : CommunityPermissionRole,
   'remove_members' : CommunityPermissionRole,
   'invite_users' : CommunityPermissionRole,
@@ -398,9 +401,12 @@ export interface EventsTimeToLiveUpdated {
 export interface ExploreCommunitiesArgs {
   'page_size' : number,
   'page_index' : number,
+  'languages' : Array<string>,
+  'exclude_moderation_flags' : [] | [number],
   'search_term' : [] | [string],
 }
 export type ExploreCommunitiesResponse = { 'TermTooShort' : number } |
+  { 'InvalidFlags' : null } |
   { 'Success' : ExploreCommunitiesSuccess } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
@@ -446,7 +452,30 @@ export type FilterGroupsResponse = {
       'timestamp' : TimestampMillis,
     }
   };
+export interface FreezeCommunityArgs {
+  'community_id' : ChatId,
+  'suspend_members' : [] | [
+    { 'duration' : [] | [Milliseconds], 'reason' : string }
+  ],
+  'reason' : [] | [string],
+}
+export type FreezeCommunityResponse = { 'CommunityNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  {
+    'Success' : {
+      'event' : GroupFrozen,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+      'correlation_id' : bigint,
+      'expires_at' : [] | [TimestampMillis],
+    }
+  } |
+  { 'CommunityAlreadyFrozen' : null } |
+  { 'InternalError' : string };
 export interface FreezeGroupArgs {
+  'suspend_members' : [] | [
+    { 'duration' : [] | [Milliseconds], 'reason' : string }
+  ],
   'chat_id' : ChatId,
   'reason' : [] | [string],
 }
@@ -455,10 +484,11 @@ export type FreezeGroupResponse = { 'ChatAlreadyFrozen' : null } |
   { 'NotAuthorized' : null } |
   {
     'Success' : {
-      'event' : ChatFrozen,
+      'event' : GroupFrozen,
       'timestamp' : TimestampMillis,
       'index' : EventIndex,
       'correlation_id' : bigint,
+      'expires_at' : [] | [TimestampMillis],
     }
   } |
   { 'InternalError' : string };
@@ -596,6 +626,7 @@ export interface GroupDescriptionChanged {
   'previous_description' : string,
   'changed_by' : UserId,
 }
+export interface GroupFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export interface GroupGateUpdated {
   'updated_by' : UserId,
   'new_gate' : [] | [AccessGate],
@@ -672,6 +703,7 @@ export type GroupSubtype = {
 export type GroupSubtypeUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : GroupSubtype };
+export interface GroupUnfrozen { 'unfrozen_by' : UserId }
 export interface GroupVisibilityChanged {
   'changed_by' : UserId,
   'now_public' : boolean,
@@ -902,7 +934,6 @@ export interface NotificationEnvelope {
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
   'block_users' : [] | [CommunityPermissionRole],
-  'change_permissions' : [] | [CommunityPermissionRole],
   'update_details' : [] | [CommunityPermissionRole],
   'remove_members' : [] | [CommunityPermissionRole],
   'invite_users' : [] | [CommunityPermissionRole],
@@ -1088,6 +1119,18 @@ export interface SelectedGroupUpdates {
   'rules' : [] | [AccessRules],
   'blocked_users_added' : Array<UserId>,
 }
+export interface SetCommunityModerationFlagsArgs {
+  'flags' : number,
+  'community_id' : CommunityId,
+}
+export type SetCommunityModerationFlagsResponse = {
+    'CommunityNotFound' : null
+  } |
+  { 'Unchanged' : null } |
+  { 'InvalidFlags' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface SetUpgradeConcurrencyArgs { 'value' : number }
 export type SetUpgradeConcurrencyResponse = { 'NotAuthorized' : null } |
   { 'Success' : null } |
@@ -1191,15 +1234,30 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
+export interface UnfreezeCommunityArgs { 'community_id' : ChatId }
+export type UnfreezeCommunityResponse = { 'CommunityNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  {
+    'Success' : {
+      'event' : GroupUnfrozen,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+      'correlation_id' : bigint,
+      'expires_at' : [] | [TimestampMillis],
+    }
+  } |
+  { 'CommunityNotFrozen' : null } |
+  { 'InternalError' : string };
 export interface UnfreezeGroupArgs { 'chat_id' : ChatId }
 export type UnfreezeGroupResponse = { 'ChatNotFound' : null } |
   { 'NotAuthorized' : null } |
   {
     'Success' : {
-      'event' : ChatUnfrozen,
+      'event' : GroupUnfrozen,
       'timestamp' : TimestampMillis,
       'index' : EventIndex,
       'correlation_id' : bigint,
+      'expires_at' : [] | [TimestampMillis],
     }
   } |
   { 'ChatNotFrozen' : null } |
@@ -1259,6 +1317,10 @@ export interface _SERVICE {
   >,
   'explore_groups' : ActorMethod<[ExploreGroupsArgs], ExploreGroupsResponse>,
   'filter_groups' : ActorMethod<[FilterGroupsArgs], FilterGroupsResponse>,
+  'freeze_community' : ActorMethod<
+    [FreezeCommunityArgs],
+    FreezeCommunityResponse
+  >,
   'freeze_group' : ActorMethod<[FreezeGroupArgs], FreezeGroupResponse>,
   'recommended_groups' : ActorMethod<
     [RecommendedGroupsArgs],
@@ -1269,6 +1331,10 @@ export interface _SERVICE {
     RemoveHotGroupExclusionResponse
   >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
+  'set_community_moderation_flags' : ActorMethod<
+    [SetCommunityModerationFlagsArgs],
+    SetCommunityModerationFlagsResponse
+  >,
   'set_community_upgrade_concurrency' : ActorMethod<
     [SetUpgradeConcurrencyArgs],
     SetUpgradeConcurrencyResponse
@@ -1276,6 +1342,10 @@ export interface _SERVICE {
   'set_group_upgrade_concurrency' : ActorMethod<
     [SetUpgradeConcurrencyArgs],
     SetUpgradeConcurrencyResponse
+  >,
+  'unfreeze_community' : ActorMethod<
+    [UnfreezeCommunityArgs],
+    UnfreezeCommunityResponse
   >,
   'unfreeze_group' : ActorMethod<[UnfreezeGroupArgs], UnfreezeGroupResponse>,
 }

@@ -180,7 +180,6 @@ export const idlFactory = ({ IDL }) => {
   const CommunityPermissions = IDL.Record({
     'create_public_channel' : CommunityPermissionRole,
     'block_users' : CommunityPermissionRole,
-    'change_permissions' : CommunityPermissionRole,
     'update_details' : CommunityPermissionRole,
     'remove_members' : CommunityPermissionRole,
     'invite_users' : CommunityPermissionRole,
@@ -193,13 +192,17 @@ export const idlFactory = ({ IDL }) => {
     'history_visible_to_new_joiners' : IDL.Bool,
     'rules' : AccessRules,
   });
+  const ChannelId = IDL.Nat;
   const CommunityId = CanisterId;
   const ConvertIntoCommunityResponse = IDL.Variant({
     'AlreadyImportingToAnotherCommunity' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,
-    'Success' : CommunityId,
+    'Success' : IDL.Record({
+      'channel_id' : ChannelId,
+      'community_id' : CommunityId,
+    }),
     'UserSuspended' : IDL.Null,
     'InternalError' : IDL.Text,
   });
@@ -571,7 +574,6 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
   });
   const ChatId = CanisterId;
-  const ChannelId = IDL.Nat;
   const Chat = IDL.Variant({
     'Group' : ChatId,
     'Channel' : IDL.Tuple(CommunityId, ChannelId),
@@ -620,7 +622,7 @@ export const idlFactory = ({ IDL }) => {
     'old_permissions' : GroupPermissions,
     'new_permissions' : GroupPermissions,
   });
-  const ChatFrozen = IDL.Record({
+  const GroupFrozen = IDL.Record({
     'frozen_by' : UserId,
     'reason' : IDL.Opt(IDL.Text),
   });
@@ -637,7 +639,7 @@ export const idlFactory = ({ IDL }) => {
     'user_ids' : IDL.Vec(UserId),
     'unblocked_by' : UserId,
   });
-  const ChatUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
+  const GroupUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupRulesChanged = IDL.Record({
     'changed_by' : UserId,
@@ -697,10 +699,10 @@ export const idlFactory = ({ IDL }) => {
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
-    'ChatFrozen' : ChatFrozen,
+    'ChatFrozen' : GroupFrozen,
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
-    'ChatUnfrozen' : ChatUnfrozen,
+    'ChatUnfrozen' : GroupUnfrozen,
     'ParticipantLeft' : ParticipantLeft,
     'GroupRulesChanged' : GroupRulesChanged,
     'GroupNameChanged' : GroupNameChanged,

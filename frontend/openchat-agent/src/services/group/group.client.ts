@@ -43,6 +43,7 @@ import type {
     EventsSuccessResult,
     ChatEvent,
     GroupChatIdentifier,
+    ConvertToCommunityResponse,
 } from "openchat-shared";
 import { textToCode } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -66,6 +67,7 @@ import {
     summaryResponse,
     summaryUpdatesResponse,
     claimPrizeResponse,
+    convertToCommunityReponse,
 } from "./mappers";
 import {
     Database,
@@ -871,6 +873,20 @@ export class GroupClient extends CandidService {
         return this.handleResponse(
             this.groupService.toggle_mute_notifications({ mute }),
             (_) => undefined
+        );
+    }
+
+    convertToCommunity(
+        historyVisible: boolean,
+        rules: AccessRules
+    ): Promise<ConvertToCommunityResponse> {
+        return this.handleResponse(
+            this.groupService.convert_into_community({
+                history_visible_to_new_joiners: historyVisible,
+                permissions: [],
+                rules: apiGroupRules(rules),
+            }),
+            convertToCommunityReponse
         );
     }
 }

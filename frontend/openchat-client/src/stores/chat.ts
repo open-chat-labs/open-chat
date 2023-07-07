@@ -54,18 +54,18 @@ const communitiesEnabled = localStorage.getItem("openchat_communities_enabled") 
 
 export const myServerChatSummariesStore = derived(
     [globalStateStore, chatListScopeStore, allChats],
-    ([$allState, $chatListScope, $allChats]) => {
+    ([$allState, $scope, $allChats]) => {
         if (communitiesEnabled) {
-            if ($chatListScope.kind === "community") {
-                const community = $allState.communities.get($chatListScope.id);
+            if ($scope.kind === "community") {
+                const community = $allState.communities.get($scope.id);
                 return community
                     ? ChatMap.fromList(community.channels)
                     : new ChatMap<ChatSummary>();
-            } else if ($chatListScope.kind === "group_chat") {
+            } else if ($scope.kind === "group_chat") {
                 return $allState.groupChats;
-            } else if ($chatListScope.kind === "direct_chat") {
+            } else if ($scope.kind === "direct_chat") {
                 return $allState.directChats;
-            } else if ($chatListScope.kind === "favourite") {
+            } else if ($scope.kind === "favourite") {
                 return $allState.favourites.values().reduce((favs, chatId) => {
                     const chat = $allChats.get(chatId);
                     if (chat !== undefined) {
@@ -92,11 +92,16 @@ export const groupPreviewsStore: Writable<ChatMap<MultiUserChat>> = immutableSto
 );
 
 export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
-    [myServerChatSummariesStore, uninitializedDirectChats, groupPreviewsStore],
-    ([summaries, directChats, previews]) => {
-        return [...directChats.entries(), ...previews.entries(), ...summaries.entries()].reduce<
-            ChatMap<ChatSummary>
-        >((result, [chatId, summary]) => {
+    [myServerChatSummariesStore, uninitializedDirectChats, groupPreviewsStore, chatListScopeStore],
+    ([summaries, directChats, previews, $scope]) => {
+        let all = [...summaries.entries()];
+        if ($scope.kind === "none" || $scope.kind === "direct_chat") {
+            all = all.concat([...directChats.entries()]);
+        }
+        if ($scope.kind === "none" || $scope.kind === "group_chat") {
+            all = all.concat([...previews.entries()]);
+        }
+        return all.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
             result.set(chatId, summary);
             return result;
         }, new ChatMap<ChatSummary>());
@@ -110,9 +115,10 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         unconfirmed,
         currentUserStore,
         localMessageUpdates,
+        chatListScopeStore,
     ],
-    ([summaries, localSummaryUpdates, unconfirmed, currentUser, localUpdates]) => {
-        const mergedSummaries = mergeLocalSummaryUpdates(summaries, localSummaryUpdates);
+    ([summaries, localSummaryUpdates, unconfirmed, currentUser, localUpdates, scope]) => {
+        const mergedSummaries = mergeLocalSummaryUpdates(scope, summaries, localSummaryUpdates);
 
         return mergedSummaries
             .entries()
