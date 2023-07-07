@@ -21,13 +21,14 @@ pub enum LookupUserError {
     InternalError(String),
 }
 
-pub async fn lookup_user(caller: Principal, user_index_canister_id: CanisterId) -> Result<UserDetails, LookupUserError> {
-    let args = user_index_canister::c2c_lookup_user::Args {
-        user_id_or_principal: caller,
-    };
+pub async fn lookup_user(
+    user_id_or_principal: Principal,
+    user_index_canister_id: CanisterId,
+) -> Result<UserDetails, LookupUserError> {
+    let args = c2c_lookup_user::Args { user_id_or_principal };
 
     match crate::c2c_lookup_user(user_index_canister_id, &args).await {
-        Ok(user_index_canister::c2c_lookup_user::Response::Success(user)) => Ok(user),
+        Ok(c2c_lookup_user::Response::Success(user)) => Ok(user),
         Ok(_) => Err(LookupUserError::UserNotFound),
         Err(error) => Err(LookupUserError::InternalError(format!("{error:?}"))),
     }
