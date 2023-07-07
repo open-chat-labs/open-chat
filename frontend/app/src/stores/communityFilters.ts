@@ -66,5 +66,9 @@ export const communityFiltersStore = {
     },
 };
 
-export const adultEnabled = derived(store, (store) => (store.flags & Flags.Adult) !== 0);
-export const offensiveEnabled = derived(store, (store) => (store.flags & Flags.Offensive) !== 0);
+export function hasFlag(mask: number, flag: Flag): boolean {
+    return (mask & flag) !== 0;
+}
+
+export const adultEnabled = derived(store, (store) => hasFlag(store.flags, Flags.Adult));
+export const offensiveEnabled = derived(store, (store) => hasFlag(store.flags, Flags.Offensive));

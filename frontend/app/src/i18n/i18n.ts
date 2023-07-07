@@ -79,6 +79,11 @@ export const supportedLanguages = [
     },
 ];
 
+export const supportedLanguagesByCode = supportedLanguages.reduce((rec, lang) => {
+    rec[lang.code] = lang;
+    return rec;
+}, {} as Record<string, { name: string; code: string; json: unknown }>);
+
 supportedLanguages.forEach(({ code, json }) => {
     addMessages(code, json);
 });

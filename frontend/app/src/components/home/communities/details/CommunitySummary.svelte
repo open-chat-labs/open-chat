@@ -43,6 +43,8 @@
             avatar={$selectedCommunity.avatar}
             memberCount={$selectedCommunity.memberCount}
             gate={$selectedCommunity.gate}
+            language={$selectedCommunity.primaryLanguage}
+            flags={0}
             channelCount={0}
             header />
         <CommunityDetails

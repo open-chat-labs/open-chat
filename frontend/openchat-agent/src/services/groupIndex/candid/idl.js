@@ -76,6 +76,7 @@ export const idlFactory = ({ IDL }) => {
     'avatar_id' : IDL.Opt(IDL.Nat),
     'banner_id' : IDL.Opt(IDL.Nat),
     'member_count' : IDL.Nat32,
+    'primary_language' : IDL.Text,
   });
   const ExploreCommunitiesSuccess = IDL.Record({
     'matches' : IDL.Vec(CommunityMatch),

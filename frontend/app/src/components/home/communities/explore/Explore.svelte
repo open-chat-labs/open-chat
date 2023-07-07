@@ -120,6 +120,8 @@
                     memberCount={community.memberCount}
                     channelCount={community.channelCount}
                     gate={community.gate}
+                    language={community.primaryLanguage}
+                    flags={community.flags}
                     on:click={() => selectCommunity(community)} />
             {/each}
         {/if}
