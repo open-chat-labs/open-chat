@@ -131,6 +131,7 @@ import {
     isContiguousInThread,
     focusThreadMessageIndex,
     selectedMessageContext,
+    staleThreadsCount,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -727,10 +728,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
     unreadMessageCount(chatId: ChatIdentifier, latestMessageIndex: number | undefined): number {
         return this.messagesRead.unreadMessageCount(chatId, latestMessageIndex);
-    }
-
-    staleThreadsCount(): number {
-        return this.messagesRead.staleThreadsCount(this._liveState.threadsByChat);
     }
 
     unreadPinned(chatId: MultiUserChatIdentifier, dateLastPinned: bigint | undefined): boolean {
@@ -4569,4 +4566,5 @@ export class OpenChat extends OpenChatAgentWorker {
     unreadFavouriteChats = unreadFavouriteChats;
     unreadCommunityChannels = unreadCommunityChannels;
     globalUnreadCount = globalUnreadCount;
+    staleThreadsCount = staleThreadsCount;
 }
