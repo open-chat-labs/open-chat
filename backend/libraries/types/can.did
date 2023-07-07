@@ -969,7 +969,6 @@ type NnsPendingCryptoTransaction = record {
 };
 
 type NnsCompletedCryptoTransaction = record {
-    ledger : CanisterId;
     token : Cryptocurrency;
     amount : Tokens;
     fee : Tokens;
@@ -982,7 +981,6 @@ type NnsCompletedCryptoTransaction = record {
 };
 
 type NnsFailedCryptoTransaction = record {
-    ledger : CanisterId;
     token : Cryptocurrency;
     amount : Tokens;
     fee : Tokens;
@@ -1015,7 +1013,6 @@ type SnsPendingCryptoTransaction = record {
 };
 
 type SnsCompletedCryptoTransaction = record {
-    ledger : CanisterId;
     token : Cryptocurrency;
     amount : Tokens;
     fee : Tokens;
@@ -1028,7 +1025,6 @@ type SnsCompletedCryptoTransaction = record {
 };
 
 type SnsFailedCryptoTransaction = record {
-    ledger : CanisterId;
     token : Cryptocurrency;
     amount : Tokens;
     fee : Tokens;
@@ -1061,7 +1057,6 @@ type Icrc1PendingCryptoTransaction = record {
 };
 
 type Icrc1CompletedCryptoTransaction = record {
-    ledger : CanisterId;
     token : Cryptocurrency;
     amount : nat;
     fee : nat;
@@ -1073,7 +1068,6 @@ type Icrc1CompletedCryptoTransaction = record {
 };
 
 type Icrc1FailedCryptoTransaction = record {
-    ledger : CanisterId;
     token : Cryptocurrency;
     amount : nat;
     fee : nat;
