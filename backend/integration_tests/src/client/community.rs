@@ -8,6 +8,7 @@ generate_query_call!(search_channel);
 generate_query_call!(selected_initial);
 generate_query_call!(selected_updates);
 generate_query_call!(summary);
+generate_query_call!(summary_updates);
 
 // Updates
 generate_update_call!(add_reaction);
@@ -24,6 +25,7 @@ generate_update_call!(remove_reaction);
 generate_update_call!(send_message);
 generate_update_call!(unblock_user);
 generate_update_call!(undelete_messages);
+generate_update_call!(update_community);
 
 pub mod happy_path {
     use crate::rng::random_message_id;
@@ -31,8 +33,8 @@ pub mod happy_path {
     use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
     use types::{
-        AccessRules, ChannelId, CommunityCanisterCommunitySummary, CommunityId, EventIndex, EventsResponse,
-        MessageContentInitial, MessageId, MessageIndex, TextContent,
+        AccessRules, ChannelId, CommunityCanisterCommunitySummary, CommunityCanisterCommunitySummaryUpdates, CommunityId,
+        EventIndex, EventsResponse, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis,
     };
 
     pub fn create_channel(
@@ -112,6 +114,20 @@ pub mod happy_path {
         }
     }
 
+    pub fn update_community(
+        env: &mut StateMachine,
+        sender: &User,
+        community_id: CommunityId,
+        args: &community_canister::update_community::Args,
+    ) {
+        let response = super::update_community(env, sender.principal, community_id.into(), args);
+
+        match response {
+            community_canister::update_community::Response::Success => {}
+            response => panic!("'update_community' error: {response:?}"),
+        }
+    }
+
     pub fn events_by_index(
         env: &StateMachine,
         sender: &User,
@@ -148,6 +164,27 @@ pub mod happy_path {
         match response {
             community_canister::summary::Response::Success(result) => result,
             response => panic!("'summary' error: {response:?}"),
+        }
+    }
+
+    pub fn summary_updates(
+        env: &StateMachine,
+        sender: &User,
+        community_id: CommunityId,
+        updates_since: TimestampMillis,
+    ) -> Option<CommunityCanisterCommunitySummaryUpdates> {
+        match super::summary_updates(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::summary_updates::Args {
+                invite_code: None,
+                updates_since,
+            },
+        ) {
+            community_canister::summary_updates::Response::Success(result) => Some(result),
+            community_canister::summary_updates::Response::SuccessNoUpdates => None,
+            response => panic!("'summary_updates' error: {response:?}"),
         }
     }
 
