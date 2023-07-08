@@ -464,6 +464,7 @@ export function channelMatch(candid: ApiChannelMatch, communityId: string): Chan
         name: candid.name,
         description: candid.description,
         memberCount: candid.member_count,
+        isDefault: candid.is_default,
         avatar: {
             blobReference: optional(candid.avatar_id, (blobId) => ({
                 blobId,

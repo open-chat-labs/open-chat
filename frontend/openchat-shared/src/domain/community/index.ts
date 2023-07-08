@@ -254,6 +254,7 @@ export type ChannelMatch = {
     description: string;
     avatar: DataContent;
     memberCount: number;
+    isDefault: boolean;
 };
 
 export type CommunityDetailsResponse = "failure" | CommunityDetails;

@@ -928,7 +928,8 @@
         "flags": "Flags",
         "offensive": "Offensive",
         "adult": "Adult",
-        "loadMore": "Load more..."
+        "loadMore": "Load more...",
+        "default": "default"
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",

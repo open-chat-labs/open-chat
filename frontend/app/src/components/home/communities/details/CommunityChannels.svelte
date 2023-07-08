@@ -56,7 +56,7 @@
             .finally(() => (searching = false));
     }
 
-    onMount(search);
+    onMount(() => search(true));
 </script>
 
 <SectionHeader border={false} flush shadow>
