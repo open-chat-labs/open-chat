@@ -122,11 +122,11 @@
                 @include font(book, normal, fs-100, 28);
                 color: var(--txt-light);
                 margin-bottom: $sp4;
-                max-height: toRem(150);
+                max-height: toRem(130);
                 @include nice-scrollbar();
 
                 &.fixed {
-                    height: toRem(150);
+                    height: toRem(130);
                 }
             }
 

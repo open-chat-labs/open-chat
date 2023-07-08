@@ -411,7 +411,10 @@ export type ExploreCommunitiesResponse = { 'TermTooShort' : number } |
   { 'Success' : ExploreCommunitiesSuccess } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
-export interface ExploreCommunitiesSuccess { 'matches' : Array<CommunityMatch> }
+export interface ExploreCommunitiesSuccess {
+  'total' : number,
+  'matches' : Array<CommunityMatch>,
+}
 export interface ExploreGroupsArgs {
   'page_size' : number,
   'page_index' : number,
@@ -421,7 +424,10 @@ export type ExploreGroupsResponse = { 'TermTooShort' : number } |
   { 'Success' : ExploreGroupsSuccess } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
-export interface ExploreGroupsSuccess { 'matches' : Array<GroupMatch> }
+export interface ExploreGroupsSuccess {
+  'total' : number,
+  'matches' : Array<GroupMatch>,
+}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction };
@@ -1107,7 +1113,10 @@ export type SearchResponse = { 'TermTooShort' : number } |
   { 'Success' : SearchSuccessResult } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
-export interface SearchSuccessResult { 'matches' : Array<GroupMatch> }
+export interface SearchSuccessResult {
+  'total' : number,
+  'matches' : Array<GroupMatch>,
+}
 export interface SelectedGroupUpdates {
   'blocked_users_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],

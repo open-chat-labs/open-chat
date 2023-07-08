@@ -927,7 +927,8 @@
         "filters": "Community filters",
         "flags": "Flags",
         "offensive": "Offensive",
-        "adult": "Adult"
+        "adult": "Adult",
+        "loadMore": "Load more..."
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",

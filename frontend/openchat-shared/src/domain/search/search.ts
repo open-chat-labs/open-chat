@@ -50,11 +50,13 @@ export type TermInvalid = {
 export type GroupSearchSuccess = {
     kind: "success";
     matches: GroupMatch[];
+    total: number;
 };
 
 export type ExploreSuccess = {
     kind: "success";
     matches: CommunityMatch[];
+    total: number;
 };
 
 export type SearchSuccess = {
