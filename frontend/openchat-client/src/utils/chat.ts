@@ -706,6 +706,7 @@ export function groupChatFromCandidate(
         level: "group",
         membership: {
             ...nullMembership(),
+            joined: BigInt(Date.now()),
             role: "owner",
         },
     } as MultiUserChat;

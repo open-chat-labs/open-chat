@@ -599,7 +599,7 @@ export interface ExploreChannelsArgs {
   'search_term' : [] | [string],
 }
 export type ExploreChannelsResponse = { 'TermTooShort' : number } |
-  { 'Success' : { 'matches' : Array<ChannelMatch> } } |
+  { 'Success' : { 'total' : number, 'matches' : Array<ChannelMatch> } } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null } |
   { 'PrivateCommunity' : null };

@@ -913,7 +913,7 @@
             name: "",
             description: "",
             historyVisible: true,
-            public: false,
+            public: true,
             frozen: false,
             members: [],
             permissions: {

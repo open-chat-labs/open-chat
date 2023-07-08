@@ -328,11 +328,11 @@ import {
     ExploreCommunitiesResponse,
     MultiUserChatIdentifier,
     MultiUserChat,
-    ChannelMatch,
     communityRoles,
     ChatListScope,
     ChatStateFull,
     ChannelIdentifier,
+    ExploreChannelsResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3430,7 +3430,7 @@ export class OpenChat extends OpenChatAgentWorker {
         searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number
-    ): Promise<ChannelMatch[]> {
+    ): Promise<ExploreChannelsResponse> {
         return this.sendRequest({ kind: "exploreChannels", id, searchTerm, pageIndex, pageSize });
     }
 

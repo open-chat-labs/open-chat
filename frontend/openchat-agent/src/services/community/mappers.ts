@@ -20,6 +20,7 @@ import {
     DisableCommunityInviteCodeResponse,
     EnableCommunityInviteCodeResponse,
     EventsResponse,
+    ExploreChannelsResponse,
     GateCheckFailedReason,
     JoinGroupResponse,
     MemberRole,
@@ -443,12 +444,16 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
 export function exploreChannelsResponse(
     candid: ApiExploreChannelsResponse,
     communityId: string
-): ChannelMatch[] {
+): ExploreChannelsResponse {
     if ("Success" in candid) {
-        return candid.Success.matches.map((m) => channelMatch(m, communityId));
+        return {
+            kind: "success",
+            matches: candid.Success.matches.map((m) => channelMatch(m, communityId)),
+            total: candid.Success.total,
+        };
     } else {
         console.warn("ExploreChannels failed with", candid);
-        return [];
+        return CommonResponses.failure();
     }
 }
 

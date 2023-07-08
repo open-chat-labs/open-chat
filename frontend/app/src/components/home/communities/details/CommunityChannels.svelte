@@ -5,6 +5,7 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../../HoverIcon.svelte";
+    import Button from "../../../Button.svelte";
     import Search from "../../../Search.svelte";
     import { iconSize } from "../../../../stores/iconSize";
     import { popRightPanelHistory, rightPanelHistory } from "../../../../stores/rightPanel";
@@ -20,14 +21,21 @@
     let pageIndex = 0;
     let pageSize = 20;
     let searchResults: ChannelMatch[] = [];
+    let total = 0;
+    $: more = total > searchResults.length;
 
     function close() {
         popRightPanelHistory();
     }
 
-    function search() {
+    function search(reset = false) {
         if ($selectedCommunity === undefined) return;
         searching = true;
+        if (reset) {
+            pageIndex = 0;
+        } else {
+            pageIndex += 1;
+        }
         client
             .exploreChannels(
                 $selectedCommunity.id,
@@ -36,7 +44,14 @@
                 pageSize
             )
             .then((results) => {
-                searchResults = results;
+                if (results.kind === "success") {
+                    if (reset) {
+                        searchResults = results.matches;
+                    } else {
+                        searchResults = [...searchResults, ...results.matches];
+                    }
+                    total = results.total;
+                }
             })
             .finally(() => (searching = false));
     }
@@ -59,7 +74,7 @@
 
 <div class="search">
     <Search
-        on:searchEntered={search}
+        on:searchEntered={() => search(true)}
         fill
         bind:searchTerm
         bind:searching
@@ -70,6 +85,12 @@
     {#each searchResults as channel}
         <ChannelCard {channel} />
     {/each}
+    {#if more}
+        <div class="more">
+            <Button disabled={searching} loading={searching} on:click={() => search(false)}
+                >{$_("communities.loadMore")}</Button>
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -102,5 +123,8 @@
     }
     .back {
         flex: 0 0 30px;
+    }
+    .more {
+        text-align: center;
     }
 </style>

@@ -810,7 +810,7 @@ export function communityPermissions(candid: ApiCommunityPermissions): Community
 export function communityPermissionRole(
     candid: ApiCommunityPermissionRole | ApiCommunityRole
 ): CommunityPermissionRole {
-    if ("Owner" in candid) return "owner";
+    if ("Owners" in candid) return "owner";
     if ("Admins" in candid) return "admin";
     return "member";
 }
