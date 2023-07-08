@@ -19,7 +19,7 @@
     let searchTerm = "";
     let searching = false;
     let pageIndex = 0;
-    let pageSize = 3;
+    let pageSize = 20;
     let searchResults: ChannelMatch[] = [];
     let total = 0;
     $: more = total > searchResults.length;
