@@ -98,7 +98,6 @@ import type {
     EventsSuccessResult,
     EditMessageResponse,
     DeclineInvitationResponse,
-    ChannelMatch,
     CommunityIdentifier,
     CommunityDetailsResponse,
     CommunityDetails,
@@ -112,6 +111,7 @@ import type {
     RegisterPollVoteResponse,
     ToggleMuteNotificationResponse,
     JoinGroupResponse,
+    ExploreChannelsResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -966,7 +966,7 @@ export class CommunityClient extends CandidService {
         searchTerm: string | undefined,
         pageSize: number,
         pageIndex: number
-    ): Promise<ChannelMatch[]> {
+    ): Promise<ExploreChannelsResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.explore_channels({

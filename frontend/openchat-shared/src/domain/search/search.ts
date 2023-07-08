@@ -5,9 +5,9 @@ import type {
     GroupChatIdentifier,
     MessageContent,
 } from "../chat/chat";
-import type { CommunityIdentifier } from "../community";
+import type { ChannelMatch, CommunityIdentifier } from "../community";
 import type { DataContent } from "../data/data";
-import type { ChatNotFound } from "../response";
+import type { ChatNotFound, Failure } from "../response";
 
 export type GroupMatch = DataContent & {
     chatId: GroupChatIdentifier;
@@ -38,6 +38,7 @@ export type MessageMatch = {
 
 export type ExploreCommunitiesResponse = TermInvalid | ExploreSuccess;
 export type GroupSearchResponse = TermInvalid | GroupSearchSuccess;
+export type ExploreChannelsResponse = Failure | ExploreChannelsSuccess;
 
 export type TooManyUsers = {
     kind: "too_many_users";
@@ -45,6 +46,12 @@ export type TooManyUsers = {
 
 export type TermInvalid = {
     kind: "term_invalid";
+};
+
+export type ExploreChannelsSuccess = {
+    kind: "success";
+    matches: ChannelMatch[];
+    total: number;
 };
 
 export type GroupSearchSuccess = {
