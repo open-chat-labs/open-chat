@@ -14,6 +14,17 @@ export class SafeMap<K, V> {
         protected _map: Map<string, V> = new Map<string, V>()
     ) {}
 
+    filter(fn: (value: V, key: K) => boolean): SafeMap<K, V> {
+        return this.entries()
+            .filter(([k, v]) => {
+                return fn(v, k);
+            })
+            .reduce((agg, [k, v]) => {
+                agg.set(k, v);
+                return agg;
+            }, new SafeMap<K, V>(this.toString, this.fromString));
+    }
+
     clone(): SafeMap<K, V> {
         const clone = new SafeMap<K, V>(this.toString, this.fromString, new Map(this._map));
         return clone;

@@ -929,7 +929,9 @@
         "offensive": "Offensive",
         "adult": "Adult",
         "loadMore": "Load more...",
-        "default": "default"
+        "default": "default",
+        "import": "Import to community",
+        "noOwned": "You are not the owner of any communities"
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",

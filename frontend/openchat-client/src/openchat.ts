@@ -58,6 +58,7 @@ import {
     mergeSendMessageResponse,
     serialiseMessageForRtc,
     canConvertToCommunity,
+    canImportToCommunity,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -1157,6 +1158,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     canEditGroupDetails(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canEditGroupDetails);
+    }
+
+    canImportToCommunity(chatId: ChatIdentifier): boolean {
+        return this.chatPredicate(chatId, canImportToCommunity);
     }
 
     canChangePermissions(chatId: ChatIdentifier): boolean {

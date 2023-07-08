@@ -19,6 +19,7 @@
         ChatIdentifier,
         chatIdentifiersEqual,
         MultiUserChat,
+        GroupChatSummary,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -60,6 +61,7 @@
     $: directlyBlockedUsers = client.blockedUsers;
     $: showFooter = !showSearchHeader && !client.isReadOnly();
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
+    $: communities = client.communities;
 
     $: canSend = client.canSendMessages(chat.id);
     $: preview = client.isPreviewing(chat.id);
@@ -93,6 +95,16 @@
             firstUnreadMention = client.getFirstUnreadMention(chat);
         });
     });
+
+    function importToCommunity(ev: CustomEvent<GroupChatSummary>) {
+        console.log("import to community");
+        const owned = $communities.filter((c) => c.membership.role === "owner");
+        if (owned.size === 0) {
+            toastStore.showFailureToast("communities.noOwned");
+        } else {
+            console.log("Owned communities", owned);
+        }
+    }
 
     function getUnreadMessageCount(chat: ChatSummary): number {
         if (client.isPreviewing(chat.id)) return 0;
@@ -266,6 +278,7 @@
             on:createPoll={createPoll}
             on:searchChat={searchChat}
             on:convertGroupToCommunity
+            on:importToCommunity={importToCommunity}
             {blocked}
             {readonly}
             {unreadMessages}
