@@ -79,6 +79,7 @@ export const idlFactory = ({ IDL }) => {
     'primary_language' : IDL.Text,
   });
   const ExploreCommunitiesSuccess = IDL.Record({
+    'total' : IDL.Nat32,
     'matches' : IDL.Vec(CommunityMatch),
   });
   const ExploreCommunitiesResponse = IDL.Variant({
@@ -102,7 +103,10 @@ export const idlFactory = ({ IDL }) => {
     'chat_id' : ChatId,
     'member_count' : IDL.Nat32,
   });
-  const ExploreGroupsSuccess = IDL.Record({ 'matches' : IDL.Vec(GroupMatch) });
+  const ExploreGroupsSuccess = IDL.Record({
+    'total' : IDL.Nat32,
+    'matches' : IDL.Vec(GroupMatch),
+  });
   const ExploreGroupsResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
     'Success' : ExploreGroupsSuccess,
@@ -586,7 +590,10 @@ export const idlFactory = ({ IDL }) => {
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
-  const SearchSuccessResult = IDL.Record({ 'matches' : IDL.Vec(GroupMatch) });
+  const SearchSuccessResult = IDL.Record({
+    'total' : IDL.Nat32,
+    'matches' : IDL.Vec(GroupMatch),
+  });
   const SearchResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
     'Success' : SearchSuccessResult,
