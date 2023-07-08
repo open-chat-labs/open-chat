@@ -151,7 +151,7 @@ impl Channels {
             .skip(page_index as usize * page_size as usize)
             .take(page_size as usize)
             .collect();
-        
+
         (matches, total)
     }
 }
