@@ -32,7 +32,6 @@ import {
     LocalPollVote,
     CryptocurrencyTransfer,
     Tally,
-    UnsupportedValueError,
     getContentAsText,
     eventIsVisible,
     AccessControlled,
@@ -185,7 +184,8 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "empty":
             return undefined;
         default:
-            throw new UnsupportedValueError("Unexpected ChatEvent type received", event);
+            console.warn("Unexpected ChatEvent type received", event);
+            return undefined;
     }
 }
 
