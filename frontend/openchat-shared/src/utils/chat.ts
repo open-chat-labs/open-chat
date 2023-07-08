@@ -88,7 +88,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "users_invited":
                 break;
             default:
-                throw new UnsupportedValueError("Unexpected ChatEvent type received", e.event);
+                console.warn("Unexpected ChatEvent type received", e.event);
         }
         return userIds;
     }, new Set<string>());
