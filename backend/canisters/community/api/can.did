@@ -64,6 +64,7 @@ type ExploreChannelsArgs = record {
 type ExploreChannelsResponse = variant {
     Success : record {
         matches : vec ChannelMatch;
+        total: nat32;
     };
     TermTooShort : nat8;
     TermTooLong : nat8;

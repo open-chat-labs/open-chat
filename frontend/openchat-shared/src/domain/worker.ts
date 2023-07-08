@@ -97,6 +97,7 @@ import type {
     SearchGroupChatResponse,
     GroupSearchResponse,
     ExploreCommunitiesResponse,
+    ExploreChannelsResponse,
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
 import type { GroupInvite } from "./inviteCodes";
@@ -991,6 +992,7 @@ export type WorkerResponse =
     | Response<LeaveCommunityResponse>
     | Response<DeleteCommunityResponse>
     | Response<ConvertToCommunityResponse>
+    | Response<ExploreChannelsResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1494,7 +1496,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends GetCommunitySummary
     ? CommunitySummaryResponse
     : T extends ExploreChannels
-    ? ChannelMatch[]
+    ? ExploreChannelsResponse
     : T extends GetCommunityDetails
     ? CommunityDetailsResponse
     : T extends GetCommunityDetailsUpdates

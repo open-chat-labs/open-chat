@@ -1018,7 +1018,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const ExploreChannelsResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
-    'Success' : IDL.Record({ 'matches' : IDL.Vec(ChannelMatch) }),
+    'Success' : IDL.Record({
+      'total' : IDL.Nat32,
+      'matches' : IDL.Vec(ChannelMatch),
+    }),
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
     'PrivateCommunity' : IDL.Null,

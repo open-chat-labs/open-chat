@@ -28,7 +28,7 @@ fn explore_channels_impl(args: Args, state: &RuntimeState) -> Response {
         return PrivateCommunity;
     }
 
-    let matches = state.data.channels.search(args.search_term, args.page_index, args.page_size);
+    let (matches, total) = state.data.channels.search(args.search_term, args.page_index, args.page_size);
 
-    Success(SuccessResult { matches })
+    Success(SuccessResult { matches, total })
 }

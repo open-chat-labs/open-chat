@@ -110,6 +110,7 @@
     }
 
     function groupCreationErrorMessage(resp: CreateGroupResponse): string | undefined {
+        console.log(resp);
         if (resp.kind === "success") return undefined;
         if (resp.kind === "internal_error") return "groupCreationFailed";
         if (resp.kind === "name_too_short") return "groupNameTooShort";
@@ -125,7 +126,7 @@
         if (resp.kind === "user_suspended") return "userSuspended";
         if (resp.kind === "unauthorized_to_create_public_group")
             return "unauthorizedToCreatePublicGroup";
-        return "failure";
+        return "groupCreationFailed";
     }
 
     function optionallyInviteUsers(chatId: MultiUserChatIdentifier): Promise<void> {
