@@ -898,7 +898,8 @@
             "joinFailed": "Spiacenti, non siamo riusciti a unirci a questa community",
             "leaveFailed": "Spiacenti, non siamo riusciti a lasciare questa community",
             "deleteFailed": "Spiacenti, non siamo riusciti a eliminare questa community",
-            "convertFailed": "Siamo spiacenti ma non siamo riusciti a convertire i tuoi gruppi in una community"
+            "convertFailed": "Siamo spiacenti ma non siamo riusciti a convertire i tuoi gruppi in una community",
+            "importFailed": "Spiacenti, non siamo riusciti a importare il tuo gruppo"
         },
         "memberCount": "membri)",
         "channelCount": "canale(i)",
@@ -921,7 +922,13 @@
         "filters": "Filtri della comunità",
         "flags": "Bandiere",
         "offensive": "Offensivo",
-        "adult": "Adulto"
+        "adult": "Adulto",
+        "loadMore": "Carica altro...",
+        "default": "predefinito",
+        "import": "Importa nella comunità",
+        "importBtn": "Importare",
+        "noOwned": "Non sei il proprietario di alcuna comunità",
+        "chooseCommunity": "Scegli una comunità"
     },
     "groupCreatedBy": "{username} ha creato {level}",
     "groupName": "{level} nome",

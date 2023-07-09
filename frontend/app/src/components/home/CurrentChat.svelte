@@ -20,6 +20,8 @@
         chatIdentifiersEqual,
         MultiUserChat,
         GroupChatSummary,
+        CommunityMap,
+        CommunitySummary,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -27,6 +29,7 @@
     import GiphySelector from "./GiphySelector.svelte";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { toastStore } from "stores/toast";
+    import ImportToCommunity from "./communities/Import.svelte";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -47,6 +50,7 @@
     let giphySelector: GiphySelector;
     let showSearchHeader = false;
     let searchTerm = "";
+    let importToCommunities: CommunityMap<CommunitySummary> | undefined;
 
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: currentChatMembers = client.currentChatMembers;
@@ -97,12 +101,10 @@
     });
 
     function importToCommunity(ev: CustomEvent<GroupChatSummary>) {
-        console.log("import to community");
-        const owned = $communities.filter((c) => c.membership.role === "owner");
-        if (owned.size === 0) {
+        importToCommunities = $communities.filter((c) => c.membership.role === "owner");
+        if (importToCommunities.size === 0) {
             toastStore.showFailureToast("communities.noOwned");
-        } else {
-            console.log("Owned communities", owned);
+            importToCommunities = undefined;
         }
     }
 
@@ -232,6 +234,14 @@
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
+
+{#if importToCommunities !== undefined}
+    <ImportToCommunity
+        on:successfulImport
+        groupId={chat.id}
+        on:cancel={() => (importToCommunities = undefined)}
+        ownedCommunities={importToCommunities} />
+{/if}
 
 <PollBuilder
     bind:this={pollBuilder}

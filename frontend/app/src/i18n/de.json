@@ -900,7 +900,8 @@
             "joinFailed": "Es tut uns leid, dass wir dieser Community nicht beitreten konnten",
             "leaveFailed": "Es tut uns leid, dass wir diese Community nicht verlassen konnten",
             "deleteFailed": "Leider konnten wir diese Community nicht löschen",
-            "convertFailed": "Leider konnten wir Ihre Gruppen nicht in eine Community umwandeln"
+            "convertFailed": "Leider konnten wir Ihre Gruppen nicht in eine Community umwandeln",
+            "importFailed": "Leider konnten wir Ihre Gruppe nicht importieren"
         },
         "memberCount": "Mitglied(er)",
         "channelCount": "Kanal(e)",
@@ -923,7 +924,13 @@
         "filters": "Community-Filter",
         "flags": "Flaggen",
         "offensive": "Beleidigend",
-        "adult": "Erwachsene"
+        "adult": "Erwachsene",
+        "loadMore": "Mehr laden...",
+        "default": "Standard",
+        "import": "In die Community importieren",
+        "importBtn": "Importieren",
+        "noOwned": "Sie sind nicht Eigentümer einer Community",
+        "chooseCommunity": "Wählen Sie eine Community"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",

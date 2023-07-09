@@ -4303,6 +4303,24 @@ export class OpenChat extends OpenChatAgentWorker {
         return true;
     }
 
+    importToCommunity(
+        groupId: GroupChatIdentifier,
+        communityId: CommunityIdentifier
+    ): Promise<ChannelIdentifier | undefined> {
+        return this.sendRequest({
+            kind: "importGroupToCommunity",
+            groupId,
+            communityId,
+        })
+            .then((resp) => {
+                return resp.kind === "success" ? resp.channelId : undefined;
+            })
+            .catch((err) => {
+                this._logger.error("Unable to import group to community", err);
+                return undefined;
+            });
+    }
+
     joinCommunity(id: CommunityIdentifier): Promise<"success" | "failure" | "gate_check_failed"> {
         return this.sendRequest({ kind: "joinCommunity", id })
             .then((resp) => {

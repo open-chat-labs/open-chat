@@ -899,7 +899,8 @@
             "joinFailed": "Xin lỗi chúng tôi không thể tham gia cộng đồng này",
             "leaveFailed": "Xin lỗi, chúng tôi không thể rời khỏi cộng đồng này",
             "deleteFailed": "Xin lỗi, chúng tôi không thể xóa cộng đồng này",
-            "convertFailed": "Xin lỗi nhưng chúng tôi không thể chuyển đổi nhóm của bạn thành cộng đồng"
+            "convertFailed": "Xin lỗi nhưng chúng tôi không thể chuyển đổi nhóm của bạn thành cộng đồng",
+            "importFailed": "Xin lỗi, chúng tôi không thể nhập nhóm của bạn"
         },
         "memberCount": "các thành viên)",
         "channelCount": "kênh truyền hình)",
@@ -922,7 +923,13 @@
         "filters": "Bộ lọc cộng đồng",
         "flags": "cờ",
         "offensive": "Phản cảm",
-        "adult": "người lớn"
+        "adult": "người lớn",
+        "loadMore": "Tải thêm...",
+        "default": "mặc định",
+        "import": "Nhập vào cộng đồng",
+        "importBtn": "Nhập khẩu",
+        "noOwned": "Bạn không phải là chủ sở hữu của bất kỳ cộng đồng nào",
+        "chooseCommunity": "Chọn một cộng đồng"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",

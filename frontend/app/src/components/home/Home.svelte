@@ -39,6 +39,7 @@
         MultiUserChat,
         MultiUserChatIdentifier,
         GroupChatSummary,
+        ChannelIdentifier,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -1023,6 +1024,13 @@
         convertGroup = ev.detail;
     }
 
+    function successfulImport(ev: CustomEvent<ChannelIdentifier>) {
+        // TODO there is a problem here - the newly created channel
+        // will not exist in our list yet
+        // what do we do about that?
+        page(routeForChatIdentifier("community", ev.detail));
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -1077,6 +1085,7 @@
             {joining}
             bind:currentChatMessages
             loadingChats={$chatsLoading}
+            on:successfulImport={successfulImport}
             on:clearSelection={() => page("/")}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}

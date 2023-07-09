@@ -128,6 +128,7 @@ import type {
     LeaveCommunityResponse,
     DeleteCommunityResponse,
     ConvertToCommunityResponse,
+    ImportGroupResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -273,7 +274,14 @@ export type WorkerRequest =
     | LeaveCommunity
     | DeleteCommunity
     | ConvertGroupToCommunity
+    | ImportGroupToCommunity
     | ChangeCommunityRole;
+
+type ImportGroupToCommunity = {
+    kind: "importGroupToCommunity";
+    groupId: GroupChatIdentifier;
+    communityId: CommunityIdentifier;
+};
 
 type ConvertGroupToCommunity = {
     kind: "convertGroupToCommunity";
@@ -993,6 +1001,7 @@ export type WorkerResponse =
     | Response<DeleteCommunityResponse>
     | Response<ConvertToCommunityResponse>
     | Response<ExploreChannelsResponse>
+    | Response<ImportGroupResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1513,4 +1522,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? DeleteCommunityResponse
     : T extends ConvertGroupToCommunity
     ? ConvertToCommunityResponse
+    : T extends ImportGroupToCommunity
+    ? ImportGroupResponse
     : never;

@@ -30,6 +30,7 @@ import {
     communityDetailsUpdatesResponse,
     changeRoleResponse,
     communityChannelSummaryResponse,
+    importGroupResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -112,6 +113,8 @@ import type {
     ToggleMuteNotificationResponse,
     JoinGroupResponse,
     ExploreChannelsResponse,
+    GroupChatIdentifier,
+    ImportGroupResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -949,6 +952,15 @@ export class CommunityClient extends CandidService {
                     channel_id: BigInt(chatId.channelId),
                 }),
             (resp) => communityChannelSummaryResponse(resp, this.communityId)
+        );
+    }
+
+    importGroup(id: GroupChatIdentifier): Promise<ImportGroupResponse> {
+        return this.handleResponse(
+            this.service.import_group({
+                group_id: Principal.fromText(id.groupId),
+            }),
+            (resp) => importGroupResponse(this.communityId, resp)
         );
     }
 

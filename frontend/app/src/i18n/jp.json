@@ -899,7 +899,8 @@
             "joinFailed": "申し訳ありませんが、このコミュニティに参加できませんでした",
             "leaveFailed": "申し訳ありませんが、このコミュニティを離れることができませんでした",
             "deleteFailed": "申し訳ありませんが、このコミュニティを削除できませんでした",
-            "convertFailed": "申し訳ありませんが、グループをコミュニティに変換できませんでした"
+            "convertFailed": "申し訳ありませんが、グループをコミュニティに変換できませんでした",
+            "importFailed": "申し訳ありませんが、グループをインポートできませんでした"
         },
         "memberCount": "メンバー",
         "channelCount": "チャンネル",
@@ -922,7 +923,13 @@
         "filters": "コミュニティフィルター",
         "flags": "フラグ",
         "offensive": "攻撃",
-        "adult": "アダルト"
+        "adult": "アダルト",
+        "loadMore": "もっと読み込む...",
+        "default": "デフォルト",
+        "import": "コミュニティにインポートする",
+        "importBtn": "輸入",
+        "noOwned": "あなたはどのコミュニティの所有者でもありません",
+        "chooseCommunity": "コミュニティを選択してください"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",

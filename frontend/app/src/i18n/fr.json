@@ -898,7 +898,8 @@
             "joinFailed": "Désolé, nous n'avons pas pu rejoindre cette communauté",
             "leaveFailed": "Désolé, nous n'avons pas pu quitter cette communauté",
             "deleteFailed": "Désolé, nous n'avons pas pu supprimer cette communauté",
-            "convertFailed": "Désolé, mais nous n'avons pas pu convertir vos groupes en communauté"
+            "convertFailed": "Désolé, mais nous n'avons pas pu convertir vos groupes en communauté",
+            "importFailed": "Désolé, nous n'avons pas pu importer votre groupe"
         },
         "memberCount": "membres)",
         "channelCount": "chaîne(s)",
@@ -921,7 +922,13 @@
         "filters": "Filtres communautaires",
         "flags": "Drapeaux",
         "offensive": "Attaque",
-        "adult": "Adulte"
+        "adult": "Adulte",
+        "loadMore": "Charger plus...",
+        "default": "défaut",
+        "import": "Importer dans la communauté",
+        "importBtn": "Importer",
+        "noOwned": "Vous n'êtes propriétaire d'aucune communauté",
+        "chooseCommunity": "Choisissez une communauté"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",

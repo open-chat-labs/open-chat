@@ -898,7 +898,8 @@
             "joinFailed": "抱歉，我们无法加入此社区",
             "leaveFailed": "抱歉我们无法离开这个社区",
             "deleteFailed": "抱歉，我们无法删除此社区",
-            "convertFailed": "抱歉，我们无法将您的群组转换为社区"
+            "convertFailed": "抱歉，我们无法将您的群组转换为社区",
+            "importFailed": "抱歉，我们无法导入您的群组"
         },
         "memberCount": "会员",
         "channelCount": "频道",
@@ -921,7 +922,13 @@
         "filters": "社区过滤器",
         "flags": "旗帜",
         "offensive": "进攻",
-        "adult": "成人"
+        "adult": "成人",
+        "loadMore": "装载更多...",
+        "default": "默认",
+        "import": "导入社区",
+        "importBtn": "进口",
+        "noOwned": "您不是任何社区的所有者",
+        "chooseCommunity": "选择一个社区"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",

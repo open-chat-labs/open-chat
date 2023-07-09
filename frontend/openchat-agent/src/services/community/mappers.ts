@@ -22,6 +22,7 @@ import {
     EventsResponse,
     ExploreChannelsResponse,
     GateCheckFailedReason,
+    ImportGroupResponse,
     JoinGroupResponse,
     MemberRole,
     Message,
@@ -73,6 +74,7 @@ import type {
     ApiSelectedInitialResponse,
     ApiSelectedUpdatesResponse,
     ApiChannelSummaryResponse,
+    ApiImportGroupResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -482,6 +484,25 @@ export function communityChannelSummaryResponse(
         return communityChannelSummary(candid.Success, communityId);
     } else {
         console.warn("CommunityChannelSummary failed with", candid);
+        return CommonResponses.failure();
+    }
+}
+
+export function importGroupResponse(
+    communityId: string,
+    candid: ApiImportGroupResponse
+): ImportGroupResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            channelId: {
+                kind: "channel",
+                communityId,
+                channelId: candid.Success.channel_id.toString(),
+            },
+        };
+    } else {
+        console.warn("ImportGroup failed with", candid);
         return CommonResponses.failure();
     }
 }
