@@ -1,6 +1,6 @@
 <script lang="ts">
     import Avatar from "../../../Avatar.svelte";
-    import Markdown from "../../Markdown.svelte";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import { AvatarSize, ChannelMatch, OpenChat, routeForChatIdentifier } from "openchat-client";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { _ } from "svelte-i18n";
@@ -20,45 +20,42 @@
     }
 </script>
 
-<div class="channel" on:click={() => selectChannel(channel)}>
-    <div class="details">
-        <div class="avatar">
-            <Avatar
-                url={client.groupAvatarUrl(channel.avatar)}
-                size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
-        </div>
-        <div class="channel-text">
-            <h3 class="channel-name">
-                {channel.name}
-                {#if channel.isDefault}
-                    <span class="is-default">({$_("communities.default")})</span>
-                {/if}
-            </h3>
-            <div class="channel-desc">
-                <Markdown oneLine suppressLinks text={channel.description} />
+<div class="details" on:click={() => selectChannel(channel)}>
+    <div class="avatar">
+        <Avatar
+            url={client.groupAvatarUrl(channel.avatar)}
+            size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
+    </div>
+    <div class="channel-text">
+        <h3 class="channel-name">
+            {channel.name}
+            {#if channel.isDefault}
+                <span class="is-default">({$_("communities.default")})</span>
+            {/if}
+        </h3>
+        <div class="meta">
+            <div class="members">
+                <span class="label"><AccountMultiple viewBox="0 -4 24 24" size={"1.2em"} /></span>
+                <span class="number">{channel.memberCount.toLocaleString()}</span>
             </div>
-            <div class="meta">
-                <div class="gate">
-                    <AccessGateIcon
-                        position={"top"}
-                        align={"start"}
-                        on:upgrade
-                        gate={channel.gate} />
-                </div>
-                <div class="members">
-                    <span class="number">{channel.memberCount.toLocaleString()}</span>
-                    <span class="label">{$_("communities.memberCount")}</span>
-                </div>
+            <div class="gate">
+                <AccessGateIcon
+                    small
+                    position={"right"}
+                    align={"center"}
+                    on:upgrade
+                    gate={channel.gate} />
             </div>
         </div>
     </div>
 </div>
 
 <style lang="scss">
-    .channel {
+    .details {
+        display: flex;
+        align-items: center;
+        gap: $sp4;
         padding: $sp4;
-        // background-color: var(--accent);
-        // background-color: var(--recommended-bg);
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         cursor: pointer;
 
@@ -66,44 +63,38 @@
             background-color: var(--chatSummary-hv);
         }
 
-        .details {
+        .is-default {
+            margin-left: $sp3;
+            @include font(light, normal, fs-70);
+            color: var(--txt-light);
+        }
+
+        .meta {
             display: flex;
-            gap: $sp4;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 6px;
 
-            .is-default {
-                margin-left: $sp3;
-                @include font(light, normal, fs-70);
-                color: var(--txt-light);
-            }
-
-            .meta {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-
-                .members {
-                    .number {
-                        font-weight: 500;
-                    }
-                    .label {
-                        color: var(--txt-light);
-                    }
+            .members {
+                background-color: var(--input-bg);
+                padding: $sp1 $sp3;
+                border-radius: $sp2;
+                .number {
+                    font-weight: 500;
+                }
+                .label {
+                    color: var(--txt-light);
                 }
             }
+        }
 
-            .channel-text {
-                overflow: hidden;
-                width: 100%;
-            }
+        .channel-text {
+            overflow: hidden;
+            width: 100%;
+        }
 
-            .channel-name {
-                margin-bottom: $sp3;
-            }
-
-            .channel-desc {
-                color: var(--txt-light);
-                @include ellipsis();
-            }
+        .channel-name {
+            margin-bottom: $sp2;
         }
     }
 </style>

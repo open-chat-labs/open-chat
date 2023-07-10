@@ -159,6 +159,7 @@ import {
     CommunitySummaryResponse,
     UpdatesSuccessResponse,
     ConvertToCommunityResponse,
+    ExploreChannelsResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1064,6 +1065,28 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient
             .searchUsers(searchTerm, maxResults)
             .then((users) => users.map((u) => this.rehydrateUserSummary(u)));
+    }
+
+    exploreChannels(
+        id: CommunityIdentifier,
+        searchTerm: string | undefined,
+        pageIndex: number,
+        pageSize = 10
+    ): Promise<ExploreChannelsResponse> {
+        return this.communityClient(id.communityId)
+            .exploreChannels(searchTerm, pageIndex, pageSize)
+            .then((res) => {
+                if (res.kind === "success") {
+                    return {
+                        ...res,
+                        matches: res.matches.map((match) => ({
+                            ...match,
+                            avatar: this.rehydrateDataContent(match.avatar, "avatar"),
+                        })),
+                    };
+                }
+                return res;
+            });
     }
 
     exploreCommunities(

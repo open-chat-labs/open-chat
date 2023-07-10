@@ -1,12 +1,14 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 
 <script lang="ts">
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import Pound from "svelte-material-icons/Pound.svelte";
     import type { AccessGate, DataContent, OpenChat } from "openchat-client";
     import Avatar from "../../../Avatar.svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "../../Markdown.svelte";
     import { AvatarSize } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
     import AccessGateIcon from "../../AccessGateIcon.svelte";
     import { Flags, hasFlag } from "stores/communityFilters";
@@ -23,17 +25,17 @@
     export let language: string;
     export let flags: number;
 
-    $: flagString = serialiseFlags(flags);
+    $: flagsArray = serialiseFlags(flags);
 
     function serialiseFlags(flags: number) {
-        const f: string[] = [];
+        const f: string[] = [supportedLanguagesByCode[language]?.name];
         if (hasFlag(flags, Flags.Adult)) {
-            f.push(`#${$_("communities.adult")}`);
+            f.push(`${$_("communities.adult")}`);
         }
         if (hasFlag(flags, Flags.Offensive)) {
-            f.push(`#${$_("communities.offensive")}`);
+            f.push(`${$_("communities.offensive")}`);
         }
-        return f.join(", ");
+        return f;
     }
 
     const client = getContext<OpenChat>("client");
@@ -62,21 +64,19 @@
             <div class="footer">
                 <div class="footer-row">
                     <div class="members">
+                        <span class="label"
+                            ><AccountMultiple viewBox="0 -4 24 24" size={"1.2em"} /></span>
                         <span class="number">{memberCount.toLocaleString()}</span>
-                        <span class="label">{$_("communities.memberCount")}</span>
                     </div>
                     <div class="channels">
+                        <span class="label"><Pound viewBox="0 -3 24 24" size={"1.2em"} /></span>
                         <span class="number">{channelCount.toLocaleString()}</span>
-                        <span class="label">{$_("communities.channelCount")}</span>
                     </div>
                 </div>
-                <div class="footer-row">
-                    <div class="lang">
-                        {supportedLanguagesByCode[language]?.name}
-                    </div>
-                    <div class="flags">
-                        {flagString}
-                    </div>
+                <div class="footer-row flags">
+                    {#each flagsArray as flag}
+                        <div class="flag">{flag}</div>
+                    {/each}
                 </div>
             </div>
         {/if}
@@ -139,9 +139,12 @@
                     display: flex;
                     justify-content: space-between;
                     gap: $sp3;
-                    margin-bottom: $sp3;
+                    margin-bottom: 12px;
                     .members,
                     .channels {
+                        background-color: var(--input-bg);
+                        padding: $sp1 $sp3;
+                        border-radius: $sp2;
                         .number {
                             font-weight: 500;
                         }
@@ -152,15 +155,19 @@
                 }
             }
 
-            .lang,
             .flags {
                 @include font(book, normal, fs-80);
-            }
-
-            .flags {
+                justify-content: flex-start !important;
+                margin-bottom: 0 !important;
                 display: flex;
                 gap: $sp2;
-                color: var(--accent);
+                flex-wrap: wrap;
+
+                .flag {
+                    background-color: var(--primary);
+                    padding: $sp1 $sp3;
+                    border-radius: $sp2;
+                }
             }
         }
     }

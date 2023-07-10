@@ -213,6 +213,7 @@
 
     .communities-wrapper {
         @include nice-scrollbar();
+        flex: auto;
     }
 
     .communities {
@@ -241,6 +242,7 @@
         &.empty {
             height: 100%;
             grid-template-columns: repeat(1, 1fr);
+            margin-bottom: 0;
         }
     }
 

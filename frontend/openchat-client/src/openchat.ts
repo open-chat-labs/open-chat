@@ -334,6 +334,7 @@ import {
     ChatStateFull,
     ChannelIdentifier,
     ExploreChannelsResponse,
+    Metrics,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {

@@ -1585,8 +1585,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "exploreChannels":
                 agent
-                    .communityClient(payload.id.communityId)
-                    .exploreChannels(payload.searchTerm, payload.pageSize, payload.pageIndex)
+                    .exploreChannels(
+                        payload.id,
+                        payload.searchTerm,
+                        payload.pageSize,
+                        payload.pageIndex
+                    )
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
