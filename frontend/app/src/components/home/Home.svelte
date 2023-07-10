@@ -1025,10 +1025,7 @@
     }
 
     function successfulImport(ev: CustomEvent<ChannelIdentifier>) {
-        // TODO there is a problem here - the newly created channel
-        // will not exist in our list yet
-        // what do we do about that?
-        page(routeForChatIdentifier("community", ev.detail));
+        page(`/community/${ev.detail.communityId}`);
     }
 
     $: bgHeight = $dimensions.height * 0.9;
