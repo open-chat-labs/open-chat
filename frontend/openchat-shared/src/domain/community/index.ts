@@ -26,13 +26,10 @@ import type {
 import type {
     ChatNotFound,
     CommunityFrozen,
-    CommunityNotPublic,
     Failure,
-    InteralError,
     NotAuthorised,
     Success,
     SuccessNoUpdates,
-    TargetUserNotInCommunity,
     UserLimitReached,
     UserNotInChat,
     UserNotInCommunity,
