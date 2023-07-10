@@ -301,3 +301,5 @@ export type LocalCommunitySummaryUpdates = {
 export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | Failure;
 
 export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | Failure;
+
+export type ManageDefaultChannelsResponse = Success | Failure;

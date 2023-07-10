@@ -24,6 +24,7 @@ import {
     GateCheckFailedReason,
     ImportGroupResponse,
     JoinGroupResponse,
+    ManageDefaultChannelsResponse,
     MemberRole,
     Message,
     RemoveChannelMemberResponse,
@@ -75,6 +76,7 @@ import type {
     ApiSelectedUpdatesResponse,
     ApiChannelSummaryResponse,
     ApiImportGroupResponse,
+    ApiManageDefaultChannelsResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -100,6 +102,17 @@ import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
 import { messageWrapper } from "../group/mappers";
 import { ReplicaNotUpToDateError } from "../error";
+
+export function manageDefaultChannelsResponse(
+    candid: ApiManageDefaultChannelsResponse
+): ManageDefaultChannelsResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    } else {
+        console.warn("ManageDefaultChannels failed with ", candid);
+        return CommonResponses.failure();
+    }
+}
 
 export function addMembersToChannelResponse(
     candid: ApiAddMembersToChannelResponse

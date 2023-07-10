@@ -4322,6 +4322,24 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    manageDefaultChannels(
+        id: CommunityIdentifier,
+        toAdd: Set<string>,
+        toRemove: Set<string>
+    ): Promise<boolean> {
+        return this.sendRequest({
+            kind: "manageDefaultChannels",
+            id,
+            toAdd,
+            toRemove,
+        })
+            .then((resp) => resp.kind === "success")
+            .catch((err) => {
+                this._logger.error("Unable to update default channels", err);
+                return false;
+            });
+    }
+
     joinCommunity(id: CommunityIdentifier): Promise<"success" | "failure" | "gate_check_failed"> {
         return this.sendRequest({ kind: "joinCommunity", id })
             .then((resp) => {

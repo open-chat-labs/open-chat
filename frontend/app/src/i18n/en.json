@@ -912,7 +912,8 @@
             "deleteFailed": "Sorry we were unable to delete this community",
             "importFailed": "Sorry we were unable to import your group",
             "leaveFailed": "Sorry we were unable to leave this community",
-            "convertFailed": "Sorry but we were unable to convert your groups to a community"
+            "convertFailed": "Sorry but we were unable to convert your groups to a community",
+            "manageDefaultChannels": "Sorry but we were unable to update the default channels"
         },
         "memberCount": "member(s)",
         "channelCount": "channel(s)",
@@ -931,10 +932,13 @@
         "adult": "Adult",
         "loadMore": "Load more...",
         "default": "default",
+        "defaultChannel": "Default channel",
+        "defaultInfo": "Users joining this community will automatically be added to all default channels",
         "import": "Import to community",
         "importBtn": "Import",
         "noOwned": "You are not the owner of any communities",
-        "chooseCommunity": "Choose a community"
+        "chooseCommunity": "Choose a community",
+        "saveChanges": "Save changes"
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",

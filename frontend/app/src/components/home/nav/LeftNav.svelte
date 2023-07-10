@@ -5,7 +5,6 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
-    import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
@@ -61,10 +60,6 @@
         page("/favourite");
     }
 
-    function openWallet() {
-        dispatch("wallet");
-    }
-
     function selectCommunity(community: CommunitySummary) {
         page(`/community/${community.id.communityId}`);
     }
@@ -89,7 +84,7 @@
                         </HoverIcon>
                     </span>
                     <span slot="menu">
-                        <MainMenu on:halloffame on:logout on:upgrade />
+                        <MainMenu on:wallet on:halloffame on:logout on:upgrade />
                     </span>
                 </MenuIcon>
             </div>
@@ -100,12 +95,6 @@
                 <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
             </LeftNavItem>
         {/if}
-
-        <LeftNavItem label={$_("wallet")} on:click={openWallet}>
-            <div class="hover wallet">
-                <Wallet size={iconSize} color={"var(--icon-txt)"} />
-            </div>
-        </LeftNavItem>
 
         <LeftNavItem
             selected={$chatListScope.kind === "direct_chat"}

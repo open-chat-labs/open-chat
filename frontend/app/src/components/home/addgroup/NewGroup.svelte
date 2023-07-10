@@ -374,7 +374,7 @@
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details" class:visible={step === 0}>
-                    <GroupDetails {busy} bind:candidateGroup />
+                    <GroupDetails {editing} {busy} bind:candidateGroup />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
                     <VisibilityControl

@@ -31,6 +31,7 @@ import {
     changeRoleResponse,
     communityChannelSummaryResponse,
     importGroupResponse,
+    manageDefaultChannelsResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -115,6 +116,7 @@ import type {
     ExploreChannelsResponse,
     GroupChatIdentifier,
     ImportGroupResponse,
+    ManageDefaultChannelsResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -164,6 +166,19 @@ export class CommunityClient extends CandidService {
         db: Database
     ): CommunityClient {
         return new CommunityClient(communityId, identity, config, db);
+    }
+
+    manageDefaultChannels(
+        add: Set<string>,
+        remove: Set<string>
+    ): Promise<ManageDefaultChannelsResponse> {
+        return this.handleResponse(
+            this.service.manage_default_channels({
+                to_add: Array.from(add).map((id) => BigInt(id)),
+                to_remove: Array.from(remove).map((id) => BigInt(id)),
+            }),
+            manageDefaultChannelsResponse
+        );
     }
 
     addMembersToChannel(

@@ -129,6 +129,7 @@ import type {
     DeleteCommunityResponse,
     ConvertToCommunityResponse,
     ImportGroupResponse,
+    ManageDefaultChannelsResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -275,7 +276,15 @@ export type WorkerRequest =
     | DeleteCommunity
     | ConvertGroupToCommunity
     | ImportGroupToCommunity
+    | ManageDefaultChannels
     | ChangeCommunityRole;
+
+type ManageDefaultChannels = {
+    kind: "manageDefaultChannels";
+    id: CommunityIdentifier;
+    toAdd: Set<string>;
+    toRemove: Set<string>;
+};
 
 type ImportGroupToCommunity = {
     kind: "importGroupToCommunity";
@@ -1002,6 +1011,7 @@ export type WorkerResponse =
     | Response<ConvertToCommunityResponse>
     | Response<ExploreChannelsResponse>
     | Response<ImportGroupResponse>
+    | Response<ManageDefaultChannelsResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1524,4 +1534,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? ConvertToCommunityResponse
     : T extends ImportGroupToCommunity
     ? ImportGroupResponse
+    : T extends ManageDefaultChannels
+    ? ManageDefaultChannelsResponse
     : never;
