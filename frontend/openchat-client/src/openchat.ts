@@ -789,6 +789,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (resp.kind === "failure") {
                         return false;
                     }
+                    console.log("Are we getting here: ", resp);
                     addGroupPreview(resp);
                     return true;
                 });
@@ -1683,6 +1684,31 @@ export class OpenChat extends OpenChatAgentWorker {
     compareIsNotYouThenUsername = compareIsNotYouThenUsername;
     compareUsername = compareUsername;
 
+    private blockCommunityUserLocally(id: CommunityIdentifier, userId: string): void {
+        communityStateStore.updateProp(id, "blockedUsers", (b) => new Set([...b, userId]));
+        communityStateStore.updateProp(id, "members", (p) => p.filter((p) => p.userId !== userId));
+    }
+
+    private unblockCommunityUserLocally(
+        id: CommunityIdentifier,
+        userId: string,
+        addToMembers: boolean
+    ): void {
+        communityStateStore.updateProp(id, "blockedUsers", (b) => {
+            return new Set([...b].filter((u) => u !== userId));
+        });
+        if (addToMembers) {
+            communityStateStore.updateProp(id, "members", (p) => [
+                ...p,
+                {
+                    role: "member",
+                    userId,
+                    username: this._liveState.userStore[userId]?.username ?? "unknown",
+                },
+            ]);
+        }
+    }
+
     private blockUserLocally(chatId: ChatIdentifier, userId: string): void {
         chatStateStore.updateProp(chatId, "blockedUsers", (b) => new Set([...b, userId]));
         chatStateStore.updateProp(chatId, "members", (p) => p.filter((p) => p.userId !== userId));
@@ -1707,8 +1733,42 @@ export class OpenChat extends OpenChatAgentWorker {
             ]);
         }
     }
+    blockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
+        this.blockCommunityUserLocally(id, userId);
+        return this.sendRequest({ kind: "blockCommunityUser", id, userId })
+            .then((resp) => {
+                console.log("blockUser result", resp);
+                if (resp.kind !== "success") {
+                    this.unblockCommunityUserLocally(id, userId, true);
+                    return false;
+                }
+                return true;
+            })
+            .catch((err) => {
+                this._logger.error("Error blocking community user", err);
+                this.unblockCommunityUserLocally(id, userId, true);
+                return false;
+            });
+    }
 
-    blockUser(chatId: GroupChatIdentifier, userId: string): Promise<boolean> {
+    unblockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
+        this.unblockCommunityUserLocally(id, userId, false);
+        return this.sendRequest({ kind: "unblockCommunityUser", id, userId })
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    this.blockCommunityUserLocally(id, userId);
+                    return false;
+                }
+                return true;
+            })
+            .catch((err) => {
+                this._logger.error("Error blocking community user", err);
+                this.blockCommunityUserLocally(id, userId);
+                return false;
+            });
+    }
+
+    blockUser(chatId: MultiUserChatIdentifier, userId: string): Promise<boolean> {
         this.blockUserLocally(chatId, userId);
         return this.sendRequest({ kind: "blockUserFromGroupChat", chatId, userId })
             .then((resp) => {
@@ -1726,7 +1786,7 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    unblockUser(chatId: GroupChatIdentifier, userId: string): Promise<boolean> {
+    unblockUser(chatId: MultiUserChatIdentifier, userId: string): Promise<boolean> {
         this.unblockUserLocally(chatId, userId, false);
         return this.sendRequest({ kind: "unblockUserFromGroupChat", chatId, userId })
             .then((resp) => {
@@ -3302,7 +3362,15 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    removeMember(chatId: GroupChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
+    removeCommunityMember(id: CommunityIdentifier, userId: string): Promise<RemoveMemberResponse> {
+        communityStateStore.updateProp(id, "members", (ps) =>
+            ps.filter((p) => p.userId !== userId)
+        );
+        return this.sendRequest({ kind: "removeCommunityMember", id, userId });
+    }
+
+    removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
+        chatStateStore.updateProp(chatId, "members", (ps) => ps.filter((p) => p.userId !== userId));
         return this.sendRequest({ kind: "removeMember", chatId, userId });
     }
 

@@ -1498,8 +1498,16 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    removeMember(chatId: GroupChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
-        return this.getGroupClient(chatId.groupId).removeMember(userId);
+    removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).removeMember(userId);
+            case "channel":
+                return this.communityClient(chatId.communityId).removeMemberFromChannel(
+                    chatId,
+                    userId
+                );
+        }
     }
 
     blockUserFromDirectChat(userId: string): Promise<BlockUserResponse> {
@@ -1507,16 +1515,20 @@ export class OpenChatAgent extends EventTarget {
     }
 
     blockUserFromGroupChat(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         userId: string
     ): Promise<BlockUserResponse> {
+        if (chatId.kind === "channel")
+            throw new Error("TODO - blockUserFromChannel not implemented");
         return this.getGroupClient(chatId.groupId).blockUser(userId);
     }
 
     unblockUserFromGroupChat(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         userId: string
     ): Promise<UnblockUserResponse> {
+        if (chatId.kind === "channel")
+            throw new Error("TODO - unblockUserFromChannel not implemented");
         return this.getGroupClient(chatId.groupId).unblockUser(userId);
     }
 

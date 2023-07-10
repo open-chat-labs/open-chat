@@ -1512,16 +1512,7 @@ export type ChangeRoleResponse = "failure" | "success";
 
 export type DeleteGroupResponse = "success" | "failure";
 
-export type RemoveMemberResponse =
-    | "user_not_in_group"
-    | "caller_not_in_group"
-    | "not_authorized"
-    | "success"
-    | "cannot_remove_self"
-    | "cannot_remove_user"
-    | "user_suspended"
-    | "chat_frozen"
-    | "internal_error";
+export type RemoveMemberResponse = "success" | "failure";
 
 export type BlockUserResponse =
     | "success"

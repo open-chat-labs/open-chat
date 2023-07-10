@@ -113,8 +113,6 @@ import type {
     DisableCommunityInviteCodeResponse,
     EnableCommunityInviteCodeResponse,
     JoinCommunityResponse,
-    RemoveChannelMemberResponse,
-    RemoveCommunityMemberResponse,
     SearchChannelResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
@@ -255,7 +253,6 @@ export type WorkerRequest =
     | CommunityInviteCode
     | ChannelMessagesByMessageIndex
     | RemoveCommunityMember
-    | RemoveChannelMember
     | ResetCommunityInviteCode
     | SearchChannel
     | SelectedChannelInitial
@@ -501,7 +498,7 @@ type ChangeRole = {
 };
 
 type RemoveMember = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     userId: string;
     kind: "removeMember";
 };
@@ -580,13 +577,13 @@ type ListNervousSystemFunctions = {
 };
 
 type BlockUserFromGroup = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     userId: string;
     kind: "blockUserFromGroupChat";
 };
 
 type UnblockUserFromGroup = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     userId: string;
     kind: "unblockUserFromGroupChat";
 };
@@ -991,8 +988,6 @@ export type WorkerResponse =
     | Response<ChangeCommunityRoleResponse>
     | Response<DisableCommunityInviteCode>
     | Response<CommunityInviteCodeResponse>
-    | Response<RemoveCommunityMemberResponse>
-    | Response<RemoveChannelMemberResponse>
     | Response<EnableCommunityInviteCodeResponse>
     | Response<SearchChannelResponse>
     | Response<ToggleMuteCommunityNotificationsResponse>
@@ -1116,7 +1111,7 @@ type AddMembersToChannel = {
 
 type BlockCommunityUser = {
     kind: "blockCommunityUser";
-    communityId: string;
+    id: CommunityIdentifier;
     userId: string;
 };
 
@@ -1198,13 +1193,7 @@ type ChannelMessagesByMessageIndex = {
 
 type RemoveCommunityMember = {
     kind: "removeCommunityMember";
-    communityId: string;
-    userId: string;
-};
-
-type RemoveChannelMember = {
-    kind: "removeChannelMember";
-    chatId: ChannelIdentifier;
+    id: CommunityIdentifier;
     userId: string;
 };
 
@@ -1240,7 +1229,7 @@ type ToggleMuteCommunityNotifications = {
 
 type UnblockCommunityUser = {
     kind: "unblockCommunityUser";
-    communityId: string;
+    id: CommunityIdentifier;
     userId: string;
 };
 
@@ -1493,9 +1482,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends ChannelMessagesByMessageIndex
     ? EventsResponse<Message>
     : T extends RemoveCommunityMember
-    ? RemoveCommunityMemberResponse
-    : T extends RemoveChannelMember
-    ? RemoveChannelMemberResponse
+    ? RemoveMemberResponse
     : T extends ResetCommunityInviteCode
     ? EnableCommunityInviteCodeResponse
     : T extends SearchChannel

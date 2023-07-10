@@ -99,8 +99,14 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         if ($scope.kind === "none" || $scope.kind === "direct_chat") {
             all = all.concat([...directChats.entries()]);
         }
-        if ($scope.kind === "none" || $scope.kind === "group_chat") {
+        if ($scope.kind === "none") {
             all = all.concat([...previews.entries()]);
+        }
+        if ($scope.kind === "group_chat") {
+            all = all.concat([...previews.filter((c) => c.kind === "group_chat").entries()]);
+        }
+        if ($scope.kind === "community") {
+            all = all.concat([...previews.filter((c) => c.kind === "channel").entries()]);
         }
         return all.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
             result.set(chatId, summary);

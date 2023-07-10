@@ -369,35 +369,10 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
 export function removeMemberResponse(candid: ApiRemoveParticipantResponse): RemoveMemberResponse {
     if ("Success" in candid) {
         return "success";
+    } else {
+        console.warn("RemoveMember failed with ", candid);
+        return "failure";
     }
-    if ("UserNotInGroup" in candid) {
-        return "user_not_in_group";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("CannotRemoveSelf" in candid) {
-        return "cannot_remove_self";
-    }
-    if ("CannotRemoveUser" in candid) {
-        return "cannot_remove_user";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiRemoveParticipantResponse type received",
-        candid
-    );
 }
 
 export async function getMessagesByMessageIndexResponse(

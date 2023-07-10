@@ -121,17 +121,7 @@ export type AddMembersToChannelResponse =
     | UserSuspended
     | CommunityFrozen;
 
-export type BlockCommunityUserResponse =
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | CommunityNotPublic
-    | UserSuspended
-    | CommunityFrozen
-    | TargetUserNotInCommunity
-    | InteralError
-    | { kind: "cannot_block_self" }
-    | { kind: "cannot_block_user" };
+export type BlockCommunityUserResponse = Success | Failure;
 
 export type ChangeCommunityRoleResponse = "success" | "failure";
 
@@ -160,10 +150,6 @@ export type CommunityInviteCodeResponse =
     | NotAuthorised
     | (Success & { code?: bigint })
     | UserNotInCommunity;
-
-export type RemoveCommunityMemberResponse = Success | Failure;
-
-export type RemoveChannelMemberResponse = Success | Failure;
 
 export type ChannelMessageMatch = {
     content: MessageContent;

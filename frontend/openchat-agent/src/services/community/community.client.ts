@@ -76,8 +76,6 @@ import type {
     ChatPermissions,
     MemberRole,
     Message,
-    RemoveChannelMemberResponse,
-    RemoveCommunityMemberResponse,
     SearchChannelResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
@@ -117,6 +115,7 @@ import type {
     GroupChatIdentifier,
     ImportGroupResponse,
     ManageDefaultChannelsResponse,
+    RemoveMemberResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -690,7 +689,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    removeMember(userId: string): Promise<RemoveCommunityMemberResponse> {
+    removeMember(userId: string): Promise<RemoveMemberResponse> {
         return this.handleResponse(
             this.service.remove_member({
                 user_id: Principal.fromText(userId),
@@ -702,7 +701,7 @@ export class CommunityClient extends CandidService {
     removeMemberFromChannel(
         chatId: ChannelIdentifier,
         userId: string
-    ): Promise<RemoveChannelMemberResponse> {
+    ): Promise<RemoveMemberResponse> {
         return this.handleResponse(
             this.service.remove_member_from_channel({
                 channel_id: BigInt(chatId.channelId),

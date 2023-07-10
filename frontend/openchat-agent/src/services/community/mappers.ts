@@ -27,8 +27,7 @@ import {
     ManageDefaultChannelsResponse,
     MemberRole,
     Message,
-    RemoveChannelMemberResponse,
-    RemoveCommunityMemberResponse,
+    RemoveMemberResponse,
     SearchChannelResponse,
     SendMessageResponse,
     ToggleMuteCommunityNotificationsResponse,
@@ -207,37 +206,12 @@ function addToChannelPartialSuccess(
 }
 
 export function blockUserResponse(candid: ApiBlockUserResponse): BlockCommunityUserResponse {
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized();
-    }
     if ("Success" in candid) {
         return CommonResponses.success();
+    } else {
+        console.warn("BlockCommunityUser failed with ", candid);
+        return CommonResponses.failure();
     }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity();
-    }
-    if ("CommunityNotPublic" in candid) {
-        return CommonResponses.communityNotPublic();
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended();
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen();
-    }
-    if ("TargetUserNotInCommunity" in candid) {
-        return CommonResponses.targetUserNotInCommunity();
-    }
-    if ("InternalError" in candid) {
-        return CommonResponses.internalError();
-    }
-    if ("CannotBlockSelf" in candid) {
-        return { kind: "cannot_block_self" };
-    }
-    if ("CannotBlockUser" in candid) {
-        return { kind: "cannot_block_user" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiBlockUserResponse type received", candid);
 }
 
 export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommunityRoleResponse {
@@ -372,25 +346,23 @@ export async function messagesByMessageIndexResponse(
     );
 }
 
-export function removeMemberResponse(
-    candid: ApiRemoveMemberResponse
-): RemoveCommunityMemberResponse {
+export function removeMemberResponse(candid: ApiRemoveMemberResponse): RemoveMemberResponse {
     if ("Success" in candid) {
-        return CommonResponses.success();
+        return "success";
     } else {
         console.warn("RemoveCommunityMember failed with", candid);
-        return CommonResponses.failure();
+        return "failure";
     }
 }
 
 export function removeMemberFromChannelResponse(
     candid: ApiRemoveMemberFromChannelResponse
-): RemoveChannelMemberResponse {
+): RemoveMemberResponse {
     if ("Success" in candid) {
-        return CommonResponses.success();
+        return "success";
     } else {
         console.warn("RemoveChannelMember failed with", candid);
-        return CommonResponses.failure();
+        return "failure";
     }
 }
 

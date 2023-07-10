@@ -47,20 +47,27 @@ export function canDeleteCommunity({ membership }: CommunitySummary): boolean {
     return hasOwnerRights(membership.role);
 }
 
-export function canBlockUsers({ membership, permissions }: CommunitySummary): boolean {
-    return isPermitted(membership.role, permissions.blockUsers);
+export function canBlockUsers(community: CommunitySummary): boolean {
+    return (
+        community.public && isPermitted(community.membership.role, community.permissions.blockUsers)
+    );
 }
 
-export function canUnblockUsers({ membership, permissions }: CommunitySummary): boolean {
-    return isPermitted(membership.role, permissions.blockUsers);
+export function canUnblockUsers(community: CommunitySummary): boolean {
+    return (
+        community.public && isPermitted(community.membership.role, community.permissions.blockUsers)
+    );
 }
 
 export function canInviteUsers({ membership, permissions }: CommunitySummary): boolean {
     return isPermitted(membership.role, permissions.inviteUsers);
 }
 
-export function canRemoveMembers({ membership, permissions }: CommunitySummary): boolean {
-    return isPermitted(membership.role, permissions.removeMembers);
+export function canRemoveMembers(community: CommunitySummary): boolean {
+    return (
+        !community.public &&
+        isPermitted(community.membership.role, community.permissions.removeMembers)
+    );
 }
 
 export function mergeLocalUpdates(

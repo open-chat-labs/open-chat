@@ -225,7 +225,6 @@
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
-            // TODO - deal with channels
             if (chatId.kind === "direct_chat") {
                 await createDirectChat(chatId);
             } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {

@@ -1363,7 +1363,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "blockCommunityUser":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.id.communityId)
                     .blockUser(payload.userId)
                     .then((response) =>
                         sendResponse(correlationId, {
@@ -1452,20 +1452,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "removeCommunityMember":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.id.communityId)
                     .removeMember(payload.userId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "removeChannelMember":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .removeMemberFromChannel(payload.chatId, payload.userId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1517,7 +1505,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "unblockCommunityUser":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.id.communityId)
                     .unblockUser(payload.userId)
                     .then((response) =>
                         sendResponse(correlationId, {
