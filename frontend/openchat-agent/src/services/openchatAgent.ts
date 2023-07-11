@@ -160,6 +160,7 @@ import {
     UpdatesSuccessResponse,
     ConvertToCommunityResponse,
     ExploreChannelsResponse,
+    CommunityInvite,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -184,6 +185,7 @@ export class OpenChatAgent extends EventTarget {
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
     private _groupInvite: GroupInvite | undefined;
+    private _communityInvite: CommunityInvite | undefined;
     private db: Database;
     private _logger: Logger;
 
@@ -229,6 +231,10 @@ export class OpenChatAgent extends EventTarget {
         this._groupInvite = value;
     }
 
+    public set communityInvite(value: CommunityInvite) {
+        this._communityInvite = value;
+    }
+
     createUserClient(userId: string): OpenChatAgent {
         this._userClient = UserClient.create(userId, this.identity, this.config, this.db);
         return this;
@@ -236,11 +242,13 @@ export class OpenChatAgent extends EventTarget {
 
     communityClient(communityId: string): CommunityClient {
         if (!this._communityClients[communityId]) {
+            const inviteCode = this.getProvidedCommunityInviteCode(communityId);
             this._communityClients[communityId] = CommunityClient.create(
                 communityId,
                 this.identity,
                 this.config,
-                this.db
+                this.db,
+                inviteCode
             );
         }
         return this._communityClients[communityId];
@@ -248,7 +256,10 @@ export class OpenChatAgent extends EventTarget {
 
     getGroupClient(chatId: string): GroupClient {
         if (!this._groupClients[chatId]) {
-            const inviteCode = this.getProvidedInviteCode({ kind: "group_chat", groupId: chatId });
+            const inviteCode = this.getProvidedGroupInviteCode({
+                kind: "group_chat",
+                groupId: chatId,
+            });
             this._groupClients[chatId] = GroupClient.create(
                 { kind: "group_chat", groupId: chatId },
                 this.identity,
@@ -271,10 +282,17 @@ export class OpenChatAgent extends EventTarget {
         return LocalUserIndexClient.create(this.identity, this.config, canisterId);
     }
 
-    private getProvidedInviteCode(chatId: MultiUserChatIdentifier): string | undefined {
+    private getProvidedGroupInviteCode(chatId: MultiUserChatIdentifier): string | undefined {
         if (this._groupInvite === undefined) return undefined;
         return chatIdentifiersEqual(this._groupInvite.chatId, chatId)
             ? this._groupInvite.code
+            : undefined;
+    }
+
+    private getProvidedCommunityInviteCode(communityId: string): string | undefined {
+        if (this._communityInvite === undefined) return undefined;
+        return this._communityInvite.id.communityId === communityId
+            ? this._communityInvite.code
             : undefined;
     }
 
@@ -1565,7 +1583,7 @@ export class OpenChatAgent extends EventTarget {
     async joinGroup(chatId: MultiUserChatIdentifier): Promise<JoinGroupResponse> {
         switch (chatId.kind) {
             case "group_chat":
-                const inviteCode = this.getProvidedInviteCode(chatId);
+                const inviteCode = this.getProvidedGroupInviteCode(chatId);
                 const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
                 return this.createLocalUserIndexClient(localUserIndex).joinGroup(
                     chatId.groupId,
@@ -1577,12 +1595,11 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async joinCommunity(id: CommunityIdentifier): Promise<JoinCommunityResponse> {
-        // TODO - we need to capture invide code somehow here, but it doesn't really fit at the moment
-        // const inviteCode = this.getProvidedInviteCode(chatId);
+        const inviteCode = this.getProvidedCommunityInviteCode(id.communityId);
         const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).joinCommunity(
             id.communityId,
-            undefined
+            inviteCode
         );
     }
 
@@ -1954,20 +1971,46 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.withdrawCryptocurrency(domain);
     }
 
-    getInviteCode(chatId: GroupChatIdentifier): Promise<InviteCodeResponse> {
-        return this.getGroupClient(chatId.groupId).getInviteCode();
+    getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
+        switch (id.kind) {
+            case "community":
+                return this.communityClient(id.communityId).getInviteCode();
+            case "group_chat":
+                return this.getGroupClient(id.groupId).getInviteCode();
+        }
     }
 
-    enableInviteCode(chatId: GroupChatIdentifier): Promise<EnableInviteCodeResponse> {
-        return this.getGroupClient(chatId.groupId).enableInviteCode();
+    enableInviteCode(
+        id: GroupChatIdentifier | CommunityIdentifier
+    ): Promise<EnableInviteCodeResponse> {
+        switch (id.kind) {
+            case "community":
+                return this.communityClient(id.communityId).enableInviteCode();
+            case "group_chat":
+                return this.getGroupClient(id.groupId).enableInviteCode();
+        }
     }
 
-    disableInviteCode(chatId: GroupChatIdentifier): Promise<DisableInviteCodeResponse> {
-        return this.getGroupClient(chatId.groupId).disableInviteCode();
+    disableInviteCode(
+        id: GroupChatIdentifier | CommunityIdentifier
+    ): Promise<DisableInviteCodeResponse> {
+        switch (id.kind) {
+            case "community":
+                return this.communityClient(id.communityId).disableInviteCode();
+            case "group_chat":
+                return this.getGroupClient(id.groupId).disableInviteCode();
+        }
     }
 
-    resetInviteCode(chatId: GroupChatIdentifier): Promise<ResetInviteCodeResponse> {
-        return this.getGroupClient(chatId.groupId).resetInviteCode();
+    resetInviteCode(
+        id: GroupChatIdentifier | CommunityIdentifier
+    ): Promise<ResetInviteCodeResponse> {
+        switch (id.kind) {
+            case "community":
+                return this.communityClient(id.communityId).resetInviteCode();
+            case "group_chat":
+                return this.getGroupClient(id.groupId).resetInviteCode();
+        }
     }
 
     pinChat(chatId: ChatIdentifier, communitiesEnabled: boolean): Promise<PinChatResponse> {

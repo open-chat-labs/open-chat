@@ -900,6 +900,13 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
+            case "communityInvite":
+                agent.communityInvite = payload.value;
+                sendResponse(correlationId, {
+                    response: undefined,
+                });
+                break;
+
             case "groupInvite":
                 agent.groupInvite = payload.value;
                 sendResponse(correlationId, {
@@ -1039,7 +1046,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "getInviteCode":
                 agent
-                    .getInviteCode(payload.chatId)
+                    .getInviteCode(payload.id)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1050,7 +1057,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "enableInviteCode":
                 agent
-                    .enableInviteCode(payload.chatId)
+                    .enableInviteCode(payload.id)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1061,7 +1068,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "disableInviteCode":
                 agent
-                    .disableInviteCode(payload.chatId)
+                    .disableInviteCode(payload.id)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1072,7 +1079,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "resetInviteCode":
                 agent
-                    .resetInviteCode(payload.chatId)
+                    .resetInviteCode(payload.id)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1409,30 +1416,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "disableCommunityInviteCode":
-                agent
-                    .communityClient(payload.communityId)
-                    .disableInviteCode()
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "communityInviteCode":
-                agent
-                    .communityClient(payload.communityId)
-                    .inviteCode()
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "channelMessagesByMessageIndex":
                 agent
                     .communityClient(payload.chatId.communityId)
@@ -1454,18 +1437,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 agent
                     .communityClient(payload.id.communityId)
                     .removeMember(payload.userId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "resetCommunityInviteCode":
-                agent
-                    .communityClient(payload.communityId)
-                    .resetInviteCode()
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

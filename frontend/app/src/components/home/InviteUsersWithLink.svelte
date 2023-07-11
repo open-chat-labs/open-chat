@@ -5,17 +5,26 @@
     import QR from "svelte-qr";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { _ } from "svelte-i18n";
-    import ErrorMessage from "../../ErrorMessage.svelte";
-    import Toggle from "../../Toggle.svelte";
-    import Link from "../../Link.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import AreYouSure from "../../AreYouSure.svelte";
-    import { toastStore } from "../../../stores/toast";
-    import { OpenChat, GroupChatSummary, routeForChatIdentifier } from "openchat-client";
-    import { canShare, shareLink } from "../../../utils/share";
-    import Markdown from "../Markdown.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
+    import Toggle from "../Toggle.svelte";
+    import Link from "../Link.svelte";
+    import { iconSize } from "../../stores/iconSize";
+    import AreYouSure from "../AreYouSure.svelte";
+    import { toastStore } from "../../stores/toast";
+    import {
+        OpenChat,
+        GroupChatSummary,
+        routeForChatIdentifier,
+        CommunitySummary,
+        CommunityIdentifier,
+        GroupChatIdentifier,
+        ChatListScope,
+    } from "openchat-client";
+    import { canShare, shareLink } from "../../utils/share";
+    import Markdown from "./Markdown.svelte";
+    import { interpolateLevel } from "../../utils/i18n";
 
-    export let group: GroupChatSummary;
+    export let container: GroupChatSummary | CommunitySummary;
 
     const client = getContext<OpenChat>("client");
     const unauthorized = $_("permissions.notPermitted", {
@@ -30,34 +39,46 @@
     let confirmReset = false;
 
     $: chatListScope = client.chatListScope;
-    $: link =
-        `${window.location.origin}${routeForChatIdentifier($chatListScope.kind, group.id)}/?ref=${
-            client.user.userId
-        }` + (!group.public ? `&code=${code}` : "");
-
+    $: link = getLink($chatListScope.kind, container.id, code);
     $: spinner = loading && code === undefined;
 
-    export function init(group: GroupChatSummary) {
+    function getLink(
+        scope: ChatListScope["kind"],
+        id: CommunityIdentifier | GroupChatIdentifier,
+        code: string | undefined
+    ) {
+        const qs = `/?ref=${client.user.userId}` + (!container.public ? `&code=${code}` : "");
+        switch (id.kind) {
+            case "community":
+                return `${window.location.origin}/community/${id.communityId}${qs}`;
+            case "group_chat":
+                return `${window.location.origin}${routeForChatIdentifier(scope, id)}${qs}`;
+        }
+    }
+
+    export function init(container: GroupChatSummary | CommunitySummary) {
         ready = false;
-        if (group.public) {
+        if (container.public) {
             ready = true;
             return;
         }
         loading = true;
         client
-            .getInviteCode(group.id)
+            .getInviteCode(container.id)
             .then((resp) => {
                 if (resp.kind === "success") {
                     ready = true;
                     checked = resp.code !== undefined;
                     code = resp.code;
-                } else {
+                } else if (resp.kind === "not_authorized") {
                     error = unauthorized;
                     client.logMessage("Unauthorized response calling getInviteCode");
+                } else {
+                    error = $_("invite.errorGettingLink");
                 }
             })
             .catch((err) => {
-                error = $_("group.invite.errorGettingLink");
+                error = $_("invite.errorGettingLink");
                 client.logError("Unable to get invite code: ", err);
             })
             .finally(() => {
@@ -69,14 +90,14 @@
        you would think we could do that in a $: block, but that seems to cause it 
        to run twice on initial mount (grrrr)
     */
-    onMount(() => init(group));
+    onMount(() => init(container));
 
     function toggleLink() {
         if (loading) return;
         loading = true;
         if (checked) {
             client
-                .enableInviteCode(group.id)
+                .enableInviteCode(container.id)
                 .then((resp) => {
                     if (resp.kind === "success") {
                         code = resp.code;
@@ -88,7 +109,7 @@
                 })
                 .catch((err) => {
                     checked = false;
-                    error = $_("group.invite.errorEnablingLink");
+                    error = $_("invite.errorEnablingLink");
                     client.logError("Unable to enable invite code: ", err);
                 })
                 .finally(() => {
@@ -96,11 +117,11 @@
                 });
         } else {
             client
-                .disableInviteCode(group.id)
+                .disableInviteCode(container.id)
                 .catch((err) => {
                     code = undefined;
                     checked = true;
-                    error = $_("group.invite.errorDisablingLink");
+                    error = $_("invite.errorDisablingLink");
                     client.logError("Unable to disable invite code: ", err);
                 })
                 .finally(() => {
@@ -111,7 +132,7 @@
 
     function resetLink(): Promise<void> {
         return client
-            .resetInviteCode(group.id)
+            .resetInviteCode(container.id)
             .then((resp) => {
                 if (resp.kind === "success") {
                     code = resp.code;
@@ -121,7 +142,7 @@
                 }
             })
             .catch((err) => {
-                error = $_("group.invite.errorResettingLink");
+                error = $_("invite.errorResettingLink");
                 client.logError("Unable to reset invite code: ", err);
             });
     }
@@ -150,7 +171,7 @@
     }
 </script>
 
-{#if !group.public}
+{#if !container.public}
     <div class="toggle-row">
         <Toggle
             id="enable-invite-link"
@@ -158,14 +179,14 @@
             on:change={toggleLink}
             disabled={loading}
             waiting={loading}
-            label={$_("group.invite.enableLink")}
+            label={$_("invite.enableLink")}
             bind:checked />
 
         <div class:spinner />
     </div>
 {/if}
 {#if ready}
-    {#if group.public || (code !== undefined && checked)}
+    {#if container.public || (code !== undefined && checked)}
         <div class="link-enabled">
             <div class="link">{link}</div>
             <div class="qr-wrapper">
@@ -175,8 +196,8 @@
             </div>
             <div class="message">
                 <Markdown
-                    text={$_("group.invite.shareMessage") +
-                        (group.public ? "" : $_("group.invite.shareMessageTrust"))} />
+                    text={interpolateLevel("invite.shareMessage", container.level, true) +
+                        (container.public ? "" : $_("invite.shareMessageTrust"))} />
             </div>
             <div class="action">
                 <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
@@ -192,14 +213,14 @@
                     </Link>
                 </div>
             {/if}
-            {#if !group.public}
+            {#if !container.public}
                 <div class="action">
                     <RefreshIcon size={$iconSize} color={"var(--icon-txt)"} />
                     <Link
                         on:click={() => {
                             confirmReset = true;
                         }}>
-                        {$_("group.invite.resetLink")}
+                        {$_("invite.resetLink")}
                     </Link>
                 </div>
             {/if}
@@ -208,7 +229,9 @@
 {/if}
 
 {#if confirmReset}
-    <AreYouSure message={$_("group.invite.confirmReset")} action={onConfirmReset} />
+    <AreYouSure
+        message={interpolateLevel("invite.confirmReset", container.level, true)}
+        action={onConfirmReset} />
 {/if}
 
 {#if error !== undefined}

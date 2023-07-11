@@ -269,7 +269,7 @@
     }
 
     async function selectCommunity(id: CommunityIdentifier): Promise<boolean> {
-        const found = await client.setSelectedCommunity(id);
+        const found = await client.setSelectedCommunity(id, $querystring.get("code"));
         if (!found) {
             modal = ModalType.NoAccess;
         }

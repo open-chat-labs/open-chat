@@ -16,6 +16,7 @@
     $: canDelete =
         $selectedCommunity !== undefined && client.canDeleteCommunity($selectedCommunity.id);
     $: canEdit = $selectedCommunity !== undefined && client.canEditCommunity($selectedCommunity.id);
+    $: canInvite = $selectedCommunity !== undefined && client.canInviteUsers($selectedCommunity.id);
 
     let metrics = emptyChatMetrics(); //TODO where does this come from
 
@@ -50,6 +51,7 @@
         <CommunityDetails
             on:deleteCommunity
             {canDelete}
+            {canInvite}
             {rules}
             {metrics}
             community={$selectedCommunity} />

@@ -334,6 +334,7 @@ import {
     ChatStateFull,
     ChannelIdentifier,
     ExploreChannelsResponse,
+    CommunityInvite,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3519,27 +3520,36 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    setCommunityInvite(value: CommunityInvite): Promise<void> {
+        return this.sendRequest({
+            kind: "communityInvite",
+            value,
+        });
+    }
+
     searchChat(
         chatId: ChatIdentifier,
         searchTerm: string,
         userIds: string[],
         maxResults = 10
     ): Promise<SearchDirectChatResponse | SearchGroupChatResponse> {
-        if (chatId.kind === "group_chat" || chatId.kind == "channel") {
-            return this.sendRequest({
-                kind: "searchGroupChat",
-                chatId,
-                searchTerm,
-                userIds,
-                maxResults,
-            });
-        } else if (chatId.kind === "direct_chat") {
-            return this.sendRequest({
-                kind: "searchDirectChat",
-                chatId,
-                searchTerm,
-                maxResults,
-            });
+        switch (chatId.kind) {
+            case "channel":
+            case "group_chat":
+                return this.sendRequest({
+                    kind: "searchGroupChat",
+                    chatId,
+                    searchTerm,
+                    userIds,
+                    maxResults,
+                });
+            case "direct_chat":
+                return this.sendRequest({
+                    kind: "searchDirectChat",
+                    chatId,
+                    searchTerm,
+                    maxResults,
+                });
         }
     }
 
@@ -3691,20 +3701,26 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getInviteCode(chatId: GroupChatIdentifier): Promise<InviteCodeResponse> {
-        return this.sendRequest({ kind: "getInviteCode", chatId });
+    getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
+        return this.sendRequest({ kind: "getInviteCode", id });
     }
 
-    enableInviteCode(chatId: GroupChatIdentifier): Promise<EnableInviteCodeResponse> {
-        return this.sendRequest({ kind: "enableInviteCode", chatId });
+    enableInviteCode(
+        id: GroupChatIdentifier | CommunityIdentifier
+    ): Promise<EnableInviteCodeResponse> {
+        return this.sendRequest({ kind: "enableInviteCode", id });
     }
 
-    disableInviteCode(chatId: GroupChatIdentifier): Promise<DisableInviteCodeResponse> {
-        return this.sendRequest({ kind: "disableInviteCode", chatId });
+    disableInviteCode(
+        id: GroupChatIdentifier | CommunityIdentifier
+    ): Promise<DisableInviteCodeResponse> {
+        return this.sendRequest({ kind: "disableInviteCode", id });
     }
 
-    resetInviteCode(chatId: GroupChatIdentifier): Promise<ResetInviteCodeResponse> {
-        return this.sendRequest({ kind: "resetInviteCode", chatId });
+    resetInviteCode(
+        id: GroupChatIdentifier | CommunityIdentifier
+    ): Promise<ResetInviteCodeResponse> {
+        return this.sendRequest({ kind: "resetInviteCode", id });
     }
 
     updateGroup(
@@ -4336,10 +4352,18 @@ export class OpenChat extends OpenChatAgentWorker {
     // **** Communities Stuff
 
     // TODO - this will almost certainly need to be more complicated
-    async setSelectedCommunity(id: CommunityIdentifier, clearChat = true): Promise<boolean> {
+    async setSelectedCommunity(
+        id: CommunityIdentifier,
+        inviteCode: string | null,
+        clearChat = true
+    ): Promise<boolean> {
         let community = this._liveState.communities.get(id);
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
+            if (inviteCode) {
+                await this.setCommunityInvite({ id, code: inviteCode });
+            }
+
             const resp = await this.sendRequest({
                 kind: "getCommunitySummary",
                 communityId: id.communityId,

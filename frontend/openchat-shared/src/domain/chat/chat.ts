@@ -1626,35 +1626,23 @@ export type DeletedDirectMessageResponse =
 
 export type RegisterPollVoteResponse = "success" | "failure";
 
-export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised;
+export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised | Failure;
 
 export type InviteCodeSuccess = {
     kind: "success";
     code?: string;
 };
 
-export type EnableInviteCodeResponse =
-    | EnableInviteCodeSuccess
-    | NotAuthorised
-    | UserSuspended
-    | ChatFrozen;
+export type EnableInviteCodeResponse = EnableInviteCodeSuccess | NotAuthorised | Failure;
 
 export type EnableInviteCodeSuccess = {
     kind: "success";
     code: string;
 };
 
-export type DisableInviteCodeResponse =
-    | "not_authorized"
-    | "user_suspended"
-    | "chat_frozen"
-    | "success";
+export type DisableInviteCodeResponse = "not_authorized" | "failure" | "success";
 
-export type ResetInviteCodeResponse =
-    | ResetInviteCodeSuccess
-    | NotAuthorised
-    | UserSuspended
-    | ChatFrozen;
+export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised | Failure;
 
 export type ResetInviteCodeSuccess = {
     kind: "success";

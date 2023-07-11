@@ -131,23 +131,6 @@ export type DeleteChannelResponse =
     | UserSuspended
     | CommunityFrozen;
 
-export type DisableCommunityInviteCodeResponse =
-    | NotAuthorised
-    | Success
-    | UserSuspended
-    | CommunityFrozen;
-
-export type EnableCommunityInviteCodeResponse =
-    | NotAuthorised
-    | (Success & { code: bigint })
-    | UserSuspended
-    | CommunityFrozen;
-
-export type CommunityInviteCodeResponse =
-    | NotAuthorised
-    | (Success & { code?: bigint })
-    | UserNotInCommunity;
-
 export type ChannelMessageMatch = {
     content: MessageContent;
     sender: string;

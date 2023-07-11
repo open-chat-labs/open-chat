@@ -80,7 +80,7 @@
         ];
 
         if (!editing) {
-            steps.push({ labelKey: "group.invite.invite", valid: true });
+            steps.push({ labelKey: "invite.invite", valid: true });
         }
         return steps;
     }

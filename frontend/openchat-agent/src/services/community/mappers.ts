@@ -12,13 +12,10 @@ import {
     CommunityCanisterCommunitySummaryUpdates,
     CommunityDetailsResponse,
     CommunityDetailsUpdatesResponse,
-    CommunityInviteCodeResponse,
     CommunityMembershipUpdates,
     CommunityPermissions,
     CommunitySummaryResponse,
     CommunitySummaryUpdatesResponse,
-    DisableCommunityInviteCodeResponse,
-    EnableCommunityInviteCodeResponse,
     EventsResponse,
     ExploreChannelsResponse,
     GateCheckFailedReason,
@@ -41,8 +38,6 @@ import type {
     ApiAddMembersToChannelResponse,
     ApiBlockUserResponse,
     ApiChangeRoleResponse,
-    ApiDisableInviteCodeResponse,
-    ApiInviteCodeResponse,
     ApiJoinChannelResponse,
     ApiLocalUserIndexResponse,
     ApiMessagesByMessageIndexResponse,
@@ -62,7 +57,6 @@ import type {
     ApiUserFailedGateCheck,
     ApiUserFailedError,
     ApiMessageMatch,
-    ApiEnableInviteCodeResponse,
     ApiCommunityCanisterCommunitySummaryUpdates,
     ApiCommunityCanisterChannelSummaryUpdates,
     ApiChannelMembershipUpdates,
@@ -219,58 +213,6 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommuni
         console.warn("Unexpected ApiChangeRoleResponse type received", candid);
         return "failure";
     }
-}
-
-export function disableInviteCodeResponse(
-    candid: ApiDisableInviteCodeResponse
-): DisableCommunityInviteCodeResponse {
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized();
-    }
-    if ("Success" in candid) {
-        return CommonResponses.success();
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended();
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen();
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiDisableInviteCodeResponse type received",
-        candid
-    );
-}
-
-export function enableInviteCodeResponse(
-    candid: ApiEnableInviteCodeResponse
-): EnableCommunityInviteCodeResponse {
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized();
-    }
-    if ("Success" in candid) {
-        return { kind: "success", code: candid.Success.code };
-    }
-    if ("UserSuspended" in candid) {
-        return CommonResponses.userSuspended();
-    }
-    if ("CommunityFrozen" in candid) {
-        return CommonResponses.communityFrozen();
-    }
-    throw new UnsupportedValueError("Unexpected ApiEnableInviteCodeResponse type received", candid);
-}
-
-export function inviteCodeResponse(candid: ApiInviteCodeResponse): CommunityInviteCodeResponse {
-    if ("NotAuthorized" in candid) {
-        return CommonResponses.notAuthorized();
-    }
-    if ("Success" in candid) {
-        return { kind: "success", code: optional(candid.Success.code, identity) };
-    }
-    if ("UserNotInCommunity" in candid) {
-        return CommonResponses.userNotInCommunity();
-    }
-    throw new UnsupportedValueError("Unexpected ApiEnableInviteCodeResponse type received", candid);
 }
 
 export function joinChannelResponse(
