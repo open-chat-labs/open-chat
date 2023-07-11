@@ -3525,7 +3525,7 @@ export class OpenChat extends OpenChatAgentWorker {
         userIds: string[],
         maxResults = 10
     ): Promise<SearchDirectChatResponse | SearchGroupChatResponse> {
-        if (chatId.kind === "group_chat") {
+        if (chatId.kind === "group_chat" || chatId.kind == "channel") {
             return this.sendRequest({
                 kind: "searchGroupChat",
                 chatId,
@@ -3540,8 +3540,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 searchTerm,
                 maxResults,
             });
-        } else {
-            throw new Error("TODO - search chat not implemented for channels");
         }
     }
 

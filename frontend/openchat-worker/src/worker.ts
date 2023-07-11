@@ -1474,23 +1474,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "searchChannel":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .searchChannel(
-                        payload.chatId,
-                        payload.maxResults,
-                        payload.users,
-                        payload.searchTerm
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "toggleMuteCommunityNotifications":
                 agent
                     .communityClient(payload.communityId)

@@ -71,11 +71,7 @@ export type SearchSuccess = {
     matches: GroupMatch[];
 };
 
-export type SearchGroupChatResponse =
-    | SearchMessagesSuccess
-    | TooManyUsers
-    | TermInvalid
-    | CallerNotInGroup;
+export type SearchGroupChatResponse = SearchMessagesSuccess | Failure;
 
 export type SearchDirectChatResponse = SearchMessagesSuccess | ChatNotFound | TermInvalid;
 

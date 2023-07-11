@@ -55,7 +55,6 @@ import {
     blockUserResponse,
     unblockUserResponse,
     getMessagesByMessageIndexResponse,
-    searchGroupChatResponse,
     inviteCodeResponse,
     enableInviteCodeResponse,
     disableInviteCodeResponse,
@@ -86,6 +85,7 @@ import { Principal } from "@dfinity/principal";
 import {
     addRemoveReactionResponse,
     apiAccessGate,
+    searchGroupChatResponse,
     declineInvitationResponse,
     threadPreviewsResponse,
     apiMessageContent,

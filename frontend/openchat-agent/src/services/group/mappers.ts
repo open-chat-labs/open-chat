@@ -7,7 +7,6 @@ import type {
     ApiRole,
     ApiMessagesByMessageIndexResponse,
     ApiMessageEventWrapper,
-    ApiSearchGroupChatResponse,
     ApiInviteCodeResponse,
     ApiEnableInviteCodeResponse,
     ApiDisableInviteCodeResponse,
@@ -45,7 +44,6 @@ import {
     RegisterProposalVoteResponse,
     AccessRules,
     ChatPermissions,
-    SearchGroupChatResponse,
     codeToText,
     UnsupportedValueError,
     GroupCanisterGroupChatSummary,
@@ -54,7 +52,6 @@ import {
     GroupCanisterSummaryUpdatesResponse,
     ClaimPrizeResponse,
     UpdatedEvent,
-    GroupChatIdentifier,
     ChatIdentifier,
     MultiUserChatIdentifier,
     ConvertToCommunityResponse,
@@ -76,7 +73,6 @@ import {
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
-import { messageMatch } from "../user/mappers";
 import { identity, optional, optionUpdate } from "../../utils/mapping";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
@@ -481,37 +477,6 @@ export async function getEventsResponse(
         return "events_failed";
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
-}
-
-export function searchGroupChatResponse(
-    candid: ApiSearchGroupChatResponse,
-    chatId: GroupChatIdentifier
-): SearchGroupChatResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            matches: candid.Success.matches.map((m) => messageMatch(m, chatId)),
-        };
-    }
-    if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
-        return {
-            kind: "term_invalid",
-        };
-    }
-    if ("TooManyUsers" in candid) {
-        return {
-            kind: "too_many_users",
-        };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return {
-            kind: "caller_not_in_group",
-        };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected UserIndex.ApiSearchMessagesResponse type received",
-        candid
-    );
 }
 
 export function inviteCodeResponse(candid: ApiInviteCodeResponse): InviteCodeResponse {

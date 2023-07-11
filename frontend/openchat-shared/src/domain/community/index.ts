@@ -155,8 +155,6 @@ export type ChannelMessageMatch = {
     messageIndex: number;
 };
 
-export type SearchChannelResponse = Failure | (Success & { matches: ChannelMessageMatch[] });
-
 export type UnblockCommunityUserResponse = Failure | Success;
 
 export type UpdateCommunityResponse = Failure | Success;

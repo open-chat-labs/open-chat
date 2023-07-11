@@ -28,7 +28,6 @@ import {
     MemberRole,
     Message,
     RemoveMemberResponse,
-    SearchChannelResponse,
     SendMessageResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
@@ -49,7 +48,6 @@ import type {
     ApiMessagesByMessageIndexResponse,
     ApiRemoveMemberResponse,
     ApiRemoveMemberFromChannelResponse,
-    ApiSearchChannelResponse,
     ApiSendMessageResponse,
     ApiSummaryResponse,
     ApiSummaryUpdatesResponse,
@@ -363,18 +361,6 @@ export function removeMemberFromChannelResponse(
     } else {
         console.warn("RemoveChannelMember failed with", candid);
         return "failure";
-    }
-}
-
-export function searchChannelResponse(candid: ApiSearchChannelResponse): SearchChannelResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            matches: candid.Success.matches.map(messageMatch),
-        };
-    } else {
-        console.warn("SearchChannel failed with", candid);
-        return CommonResponses.failure();
     }
 }
 

@@ -1126,12 +1126,26 @@ export class OpenChatAgent extends EventTarget {
     }
 
     searchGroupChat(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         searchTerm: string,
         userIds: string[],
         maxResults = 10
     ): Promise<SearchGroupChatResponse> {
-        return this.getGroupClient(chatId.groupId).searchGroupChat(searchTerm, userIds, maxResults);
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).searchGroupChat(
+                    searchTerm,
+                    userIds,
+                    maxResults
+                );
+            case "channel":
+                return this.communityClient(chatId.communityId).searchChannel(
+                    chatId,
+                    maxResults,
+                    userIds,
+                    searchTerm
+                );
+        }
     }
 
     searchDirectChat(

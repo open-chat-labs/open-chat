@@ -113,7 +113,6 @@ import type {
     DisableCommunityInviteCodeResponse,
     EnableCommunityInviteCodeResponse,
     JoinCommunityResponse,
-    SearchChannelResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
     UpdateCommunityResponse,
@@ -254,7 +253,6 @@ export type WorkerRequest =
     | ChannelMessagesByMessageIndex
     | RemoveCommunityMember
     | ResetCommunityInviteCode
-    | SearchChannel
     | SelectedChannelInitial
     | SelectedChannelUpdates
     | ToggleMuteCommunityNotifications
@@ -441,7 +439,7 @@ type SearchDirectChat = {
 };
 
 type SearchGroupChat = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     searchTerm: string;
     userIds: string[];
     maxResults: number;
@@ -989,7 +987,6 @@ export type WorkerResponse =
     | Response<DisableCommunityInviteCode>
     | Response<CommunityInviteCodeResponse>
     | Response<EnableCommunityInviteCodeResponse>
-    | Response<SearchChannelResponse>
     | Response<ToggleMuteCommunityNotificationsResponse>
     | Response<UnblockCommunityUserResponse>
     | Response<UpdateCommunityResponse>
@@ -1200,14 +1197,6 @@ type RemoveCommunityMember = {
 type ResetCommunityInviteCode = {
     kind: "resetCommunityInviteCode";
     communityId: string;
-};
-
-type SearchChannel = {
-    kind: "searchChannel";
-    chatId: ChannelIdentifier;
-    maxResults: number;
-    users: string[];
-    searchTerm: string;
 };
 
 type SelectedChannelInitial = {
@@ -1485,8 +1474,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? RemoveMemberResponse
     : T extends ResetCommunityInviteCode
     ? EnableCommunityInviteCodeResponse
-    : T extends SearchChannel
-    ? SearchChannelResponse
     : T extends ToggleMuteCommunityNotifications
     ? ToggleMuteCommunityNotificationsResponse
     : T extends UnblockCommunityUser

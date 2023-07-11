@@ -148,6 +148,7 @@ import {
     ChangeRoleResponse,
     RegisterPollVoteResponse,
     JoinGroupResponse,
+    SearchGroupChatResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -172,6 +173,7 @@ import type {
     ApiThreadPreview,
     ApiChangeRoleResponse,
     ApiRegisterPollVoteResponse,
+    ApiSearchGroupChatResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -199,8 +201,10 @@ import type {
     ApiThreadPreviewsResponse as ApiChannelThreadPreviewsResponse,
     ApiRegisterPollVoteResponse as ApiRegisterChannelPollVoteResponse,
     ApiChangeChannelRoleResponse,
+    ApiSearchChannelResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
+import { messageMatch } from "../user/mappers";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -1983,6 +1987,21 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
         return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
     } else {
         console.warn("Join group failed with: ", candid);
+        return CommonResponses.failure();
+    }
+}
+
+export function searchGroupChatResponse(
+    candid: ApiSearchGroupChatResponse | ApiSearchChannelResponse,
+    chatId: MultiUserChatIdentifier
+): SearchGroupChatResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            matches: candid.Success.matches.map((m) => messageMatch(m, chatId)),
+        };
+    } else {
+        console.warn("SearchChat failed with ", candid);
         return CommonResponses.failure();
     }
 }

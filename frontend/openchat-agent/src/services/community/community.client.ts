@@ -15,7 +15,6 @@ import {
     messagesByMessageIndexResponse,
     removeMemberResponse,
     removeMemberFromChannelResponse,
-    searchChannelResponse,
     sendMessageResponse,
     summaryResponse,
     summaryUpdatesResponse,
@@ -58,6 +57,7 @@ import {
     threadPreviewsResponse,
     changeRoleResponse as changeChannelRoleResponse,
     registerPollVoteResponse,
+    searchGroupChatResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -76,7 +76,6 @@ import type {
     ChatPermissions,
     MemberRole,
     Message,
-    SearchChannelResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
     UpdateCommunityResponse,
@@ -116,6 +115,7 @@ import type {
     ImportGroupResponse,
     ManageDefaultChannelsResponse,
     RemoveMemberResponse,
+    SearchGroupChatResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -737,7 +737,7 @@ export class CommunityClient extends CandidService {
         maxResults: number,
         users: string[],
         searchTerm: string
-    ): Promise<SearchChannelResponse> {
+    ): Promise<SearchGroupChatResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.search_channel({
@@ -746,7 +746,7 @@ export class CommunityClient extends CandidService {
                     users: users.length > 0 ? [users.map((u) => Principal.fromText(u))] : [],
                     search_term: searchTerm,
                 }),
-            searchChannelResponse
+            (resp) => searchGroupChatResponse(resp, chatId)
         );
     }
 
