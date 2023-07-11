@@ -6,8 +6,9 @@
     import type { MultiUserChat, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { _ } from "svelte-i18n";
-    import { interpolateLevel } from "utils/i18n";
+    import { interpolateLevel } from "../../utils/i18n";
     import page from "page";
+    import { routeForScope } from "../../routes";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -32,7 +33,7 @@
     function cancelPreview() {
         if (previewingCommunity && $selectedCommunity) {
             client.removeCommunity($selectedCommunity.id);
-            page("/favourite");
+            page(routeForScope(client.getDefaultScope()));
         } else {
             client.removeChat(chat.id);
             if (!chat.public) {

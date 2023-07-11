@@ -7,6 +7,7 @@
     import { pushRightPanelHistory } from "../../stores/rightPanel";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
+    import { routeForScope } from "../../routes";
 
     const client = getContext<OpenChat>("client");
 
@@ -17,7 +18,7 @@
     function cancelPreview() {
         if ($selectedCommunity) {
             client.removeCommunity($selectedCommunity.id);
-            page("/favourite");
+            page(routeForScope(client.getDefaultScope()));
         }
     }
 

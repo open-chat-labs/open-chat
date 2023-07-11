@@ -51,7 +51,7 @@ import { blockedUsers } from "./stores/blockedUsers";
 import { diamondMembership, isDiamond } from "./stores/diamond";
 import type DRange from "drange";
 import { communities } from "./stores/community";
-import { chatListScopeStore } from "./stores/global";
+import { GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -91,6 +91,7 @@ export class LiveState {
     confirmedThreadEventIndexesLoaded!: DRange;
     communities!: CommunityMap<CommunitySummary>;
     chatListScope!: ChatListScope;
+    globalState!: GlobalState;
 
     constructor() {
         confirmedThreadEventIndexesLoadedStore.subscribe(
@@ -130,5 +131,6 @@ export class LiveState {
         isDiamond.subscribe((data) => (this.isDiamond = data));
         communities.subscribe((data) => (this.communities = data));
         chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
+        globalStateStore.subscribe((data) => (this.globalState = data));
     }
 }

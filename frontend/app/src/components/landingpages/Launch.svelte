@@ -2,12 +2,13 @@
     import type { OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import page from "page";
-
-    export let rootPath = "/";
-    export let text = "Launch app";
+    import { routeForScope } from "../../routes";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
+
+    export let rootPath = routeForScope(client.getDefaultScope());
+    export let text = "Launch app";
 
     $: identityState = client.identityState;
     $: txt = $identityState === "logging_in" ? "Logging in..." : text;

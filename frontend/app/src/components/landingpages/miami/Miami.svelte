@@ -38,7 +38,7 @@
                                     <div class="launch-wrapper">
                                         <Launch
                                             text="Let's go!"
-                                            rootPath={`/${OPENCHAT_BOT_USER_ID}`}
+                                            rootPath={`/user/${OPENCHAT_BOT_USER_ID}`}
                                             on:login />
                                     </div>
                                 {/if}
@@ -49,7 +49,7 @@
             </Content>
             {#if $mobileWidth}
                 <div class="launch-wrapper">
-                    <Launch text="Let's go!" rootPath={`/${OPENCHAT_BOT_USER_ID}`} on:login />
+                    <Launch text="Let's go!" rootPath={`/user/${OPENCHAT_BOT_USER_ID}`} on:login />
                 </div>
             {/if}
         </div>

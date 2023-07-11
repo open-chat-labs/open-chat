@@ -414,7 +414,7 @@
 
     function closeNoAccess() {
         closeModal();
-        page("/favourite");
+        page(routeForScope(client.getDefaultScope()));
     }
 
     function clearSearch() {
@@ -553,7 +553,7 @@
     }
 
     function deleteCommunity(id: CommunityIdentifier): Promise<void> {
-        page("/favourite");
+        page(routeForScope(client.getDefaultScope()));
 
         client.deleteCommunity(id).then((success) => {
             if (!success) {
@@ -566,7 +566,7 @@
     }
 
     function leaveCommunity(id: CommunityIdentifier): Promise<void> {
-        page("/favourite");
+        page(routeForScope(client.getDefaultScope()));
 
         client.leaveCommunity(id).then((success) => {
             if (!success) {

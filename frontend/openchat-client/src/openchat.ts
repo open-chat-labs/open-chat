@@ -4612,6 +4612,18 @@ export class OpenChat extends OpenChatAgentWorker {
         chatListScopeStore.set(scope);
     }
 
+    getDefaultScope(): ChatListScope {
+        // sometimes we have to re-direct the user to home route "/"
+        // However, with communities enabled it is not clear what this means
+        // we actually need to direct the user to one of the global scopes "direct", "group" or "favourites"
+        // which one we choose is kind of unclear and probably depends on the state
+        const global = this._liveState.globalState;
+        if (!communitiesEnabled) return { kind: "none" };
+        if (global.favourites.size > 0) return { kind: "favourite" };
+        if (global.groupChats.size > 0) return { kind: "group_chat" };
+        return { kind: "direct_chat" };
+    }
+
     // **** End of Communities stuff
 
     diamondDurationToMs = diamondDurationToMs;
