@@ -46,7 +46,6 @@ import {
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
 import { userStore } from "./stores/user";
-import { PinnedByScope, pinnedChatsStore } from "./stores/pinnedChats";
 import { blockedUsers } from "./stores/blockedUsers";
 import { diamondMembership, isDiamond } from "./stores/diamond";
 import type DRange from "drange";
@@ -72,7 +71,6 @@ export class LiveState {
     uninitializedDirectChats!: ChatMap<DirectChatSummary>;
     groupPreviews!: ChatMap<MultiUserChat>;
     selectedChatId: ChatIdentifier | undefined;
-    pinnedChats!: PinnedByScope;
     chatSummariesList!: ChatSummary[];
     threadsByChat!: ChatMap<ThreadSyncDetails[]>;
     focusMessageIndex: number | undefined;
@@ -111,7 +109,6 @@ export class LiveState {
         selectedChatStore.subscribe((data) => (this.selectedChat = data));
         selectedServerChatStore.subscribe((data) => (this.selectedServerChat = data));
         currentChatReplyingTo.subscribe((data) => (this.currentChatReplyingTo = data));
-        pinnedChatsStore.subscribe((data) => (this.pinnedChats = data));
         chatSummariesListStore.subscribe((data) => (this.chatSummariesList = data));
         threadsByChatStore.subscribe((data) => (this.threadsByChat = data));
         focusMessageIndex.subscribe((data) => (this.focusMessageIndex = data));

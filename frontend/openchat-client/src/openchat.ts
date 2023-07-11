@@ -153,7 +153,6 @@ import {
     notificationStatus,
     setSoftDisabled,
 } from "./stores/notifications";
-import { pinnedChatsStore } from "./stores/pinnedChats";
 import { profileStore } from "./stores/profiling";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { proposalTallies } from "./stores/proposalTallies";
@@ -331,10 +330,10 @@ import {
     MultiUserChat,
     communityRoles,
     ChatListScope,
-    ChatStateFull,
     ChannelIdentifier,
     ExploreChannelsResponse,
     CommunityInvite,
+    chatScopesEqual,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -842,11 +841,45 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private pinLocally(chatId: ChatIdentifier): void {
-        pinnedChatsStore.pin(this._liveState.chatListScope.kind, chatId);
+        const scope = this._liveState.chatListScope.kind;
+        globalStateStore.update((state) => {
+            const ids = state.pinnedChats[scope];
+            if (!ids.find((id) => chatIdentifiersEqual(id, chatId))) {
+                return {
+                    ...state,
+                    pinnedChats: {
+                        ...state.pinnedChats,
+                        [scope]: [chatId, ...ids],
+                    },
+                };
+            }
+            return state;
+        });
     }
 
     private unpinLocally(chatId: ChatIdentifier): void {
-        pinnedChatsStore.unpin(this._liveState.chatListScope.kind, chatId);
+        const scope = this._liveState.chatListScope.kind;
+        globalStateStore.update((state) => {
+            const ids = state.pinnedChats[scope];
+            const index = ids.findIndex((id) => chatIdentifiersEqual(id, chatId));
+            if (index >= 0) {
+                const ids_clone = [...ids];
+                ids_clone.splice(index, 1);
+                return {
+                    ...state,
+                    pinnedChats: {
+                        ...state.pinnedChats,
+                        [scope]: ids_clone,
+                    },
+                };
+            }
+            return state;
+        });
+    }
+
+    pinned(scope: ChatListScope["kind"], chatId: ChatIdentifier): boolean {
+        const pinned = this._liveState.globalState.pinnedChats;
+        return pinned[scope].find((id) => chatIdentifiersEqual(id, chatId)) !== undefined;
     }
 
     pinChat(chatId: ChatIdentifier): Promise<boolean> {
@@ -3964,16 +3997,6 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private updatePinnedChatStores(state: ChatStateFull): void {
-        pinnedChatsStore.set({
-            none: state.pinnedChats,
-            group_chat: state.pinnedGroupChats,
-            direct_chat: state.pinnedDirectChats,
-            favourite: state.pinnedFavouriteChats,
-            community: state.pinnedChannels,
-        });
-    }
-
     private async loadChats() {
         try {
             if (this.user === undefined) {
@@ -4010,12 +4033,17 @@ export class OpenChat extends OpenChatAgentWorker {
                     blockedUsers.set(new Set(chatsResponse.state.blockedUsers));
                 }
 
-                this.updatePinnedChatStores(chatsResponse.state);
-
                 setGlobalState(
                     chatsResponse.state.communities,
                     updatedChats,
-                    chatsResponse.state.favouriteChats
+                    chatsResponse.state.favouriteChats,
+                    {
+                        none: chatsResponse.state.pinnedChats,
+                        group_chat: chatsResponse.state.pinnedGroupChats,
+                        direct_chat: chatsResponse.state.pinnedDirectChats,
+                        favourite: chatsResponse.state.pinnedFavouriteChats,
+                        community: chatsResponse.state.pinnedChannels,
+                    }
                 );
 
                 if (this._liveState.uninitializedDirectChats.size > 0) {
@@ -4122,31 +4150,38 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private updateReadUpToStore(chatSummaries: ChatSummary[]): void {
-        for (const chat of chatSummaries) {
-            if (chat.kind === "group_chat" || chat.kind === "channel") {
-                const threads: ThreadRead[] = (chat.membership?.latestThreads ?? []).reduce(
-                    (res, next) => {
-                        if (next.readUpTo !== undefined) {
-                            res.push({
-                                threadRootMessageIndex: next.threadRootMessageIndex,
-                                readUpTo: next.readUpTo,
-                            });
-                        }
-                        return res;
-                    },
-                    [] as ThreadRead[]
-                );
+        messagesRead.batchUpdate(() => {
+            for (const chat of chatSummaries) {
+                if (chat.kind === "group_chat" || chat.kind === "channel") {
+                    const threads: ThreadRead[] = (chat.membership?.latestThreads ?? []).reduce(
+                        (res, next) => {
+                            if (next.readUpTo !== undefined) {
+                                res.push({
+                                    threadRootMessageIndex: next.threadRootMessageIndex,
+                                    readUpTo: next.readUpTo,
+                                });
+                            }
+                            return res;
+                        },
+                        [] as ThreadRead[]
+                    );
 
-                messagesRead.syncWithServer(
-                    chat.id,
-                    chat.membership?.readByMeUpTo,
-                    threads,
-                    chat.dateReadPinned
-                );
-            } else {
-                messagesRead.syncWithServer(chat.id, chat.membership.readByMeUpTo, [], undefined);
+                    messagesRead.syncWithServer(
+                        chat.id,
+                        chat.membership?.readByMeUpTo,
+                        threads,
+                        chat.dateReadPinned
+                    );
+                } else {
+                    messagesRead.syncWithServer(
+                        chat.id,
+                        chat.membership.readByMeUpTo,
+                        [],
+                        undefined
+                    );
+                }
             }
-        }
+        });
     }
 
     claimPrize(chatId: GroupChatIdentifier, messageId: bigint): Promise<boolean> {
@@ -4351,7 +4386,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
     // **** Communities Stuff
 
-    // TODO - this will almost certainly need to be more complicated
     async setSelectedCommunity(
         id: CommunityIdentifier,
         inviteCode: string | null,
@@ -4609,7 +4643,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setChatListScope(scope: ChatListScope): void {
-        chatListScopeStore.set(scope);
+        if (!chatScopesEqual(scope, this._liveState.chatListScope)) {
+            chatListScopeStore.set(scope);
+        }
     }
 
     getDefaultScope(): ChatListScope {
@@ -4664,7 +4700,6 @@ export class OpenChat extends OpenChatAgentWorker {
     filteredProposalsStore = filteredProposalsStore;
     cryptoBalance = cryptoBalance;
     selectedServerChatStore = selectedServerChatStore;
-    pinnedChatsStore = pinnedChatsStore;
     chatSummariesListStore = chatSummariesListStore;
     chatsLoading = chatsLoading;
     chatsInitialised = chatsInitialised;

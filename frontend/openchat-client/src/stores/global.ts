@@ -18,12 +18,15 @@ import { immutableStore } from "./immutable";
 import { derived, writable } from "svelte/store";
 import { messagesRead } from "./markRead";
 
+export type PinnedByScope = Record<ChatListScope["kind"], ChatIdentifier[]>;
+
 // This will contain all state.
 export type GlobalState = {
     communities: CommunityMap<CommunitySummary>;
     directChats: ChatMap<DirectChatSummary>;
     groupChats: ChatMap<GroupChatSummary>;
     favourites: ObjectSet<ChatIdentifier>;
+    pinnedChats: PinnedByScope;
 };
 
 /**
@@ -34,7 +37,16 @@ export const globalStateStore = immutableStore<GlobalState>({
     directChats: new ChatMap<DirectChatSummary>(),
     groupChats: new ChatMap<GroupChatSummary>(),
     favourites: new ObjectSet<ChatIdentifier>(),
+    pinnedChats: {
+        group_chat: [],
+        direct_chat: [],
+        favourite: [],
+        community: [],
+        none: [],
+    },
 });
+
+export const pinnedChatsStore = derived(globalStateStore, ($global) => $global.pinnedChats);
 
 export const chatListScopeStore = writable<ChatListScope>({ kind: "none" });
 
@@ -66,11 +78,15 @@ export const unreadDirectChats = derived(
     }
 );
 
-export const allChats = derived(globalStateStore, ($global) => {
-    const groupChats = $global.groupChats.values();
-    const directChats = $global.directChats.values();
-    const channels = $global.communities.values().flatMap((c) => c.channels);
+export function getAllChats(global: GlobalState): ChatMap<ChatSummary> {
+    const groupChats = global.groupChats.values();
+    const directChats = global.directChats.values();
+    const channels = global.communities.values().flatMap((c) => c.channels);
     return ChatMap.fromList([...groupChats, ...directChats, ...channels]);
+}
+
+export const allChats = derived(globalStateStore, ($global) => {
+    return getAllChats($global);
 });
 
 export const unreadFavouriteChats = derived(
@@ -157,7 +173,8 @@ export function updateSummaryWithConfirmedMessage(
 export function setGlobalState(
     communities: CommunitySummary[],
     allChats: ChatSummary[],
-    favourites: ChatIdentifier[]
+    favourites: ChatIdentifier[],
+    pinnedChats: PinnedByScope
 ): void {
     const [channels, directChats, groupChats] = partitionChats(allChats);
 
@@ -166,6 +183,7 @@ export function setGlobalState(
         directChats: ChatMap.fromList(directChats),
         groupChats: ChatMap.fromList(groupChats),
         favourites: ObjectSet.fromList(favourites),
+        pinnedChats,
     };
     Object.entries(channels).forEach(([communityId, channels]) => {
         const id: CommunityIdentifier = { kind: "community", communityId };

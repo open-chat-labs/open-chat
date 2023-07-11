@@ -37,7 +37,6 @@
     export let visible: boolean;
 
     $: chatListScope = client.chatListScope;
-    $: pinnedChatsStore = client.pinnedChatsStore;
     $: blockedUsers = client.blockedUsers;
     $: messagesRead = client.messagesRead;
     $: typersByContext = client.typersByContext;
@@ -218,7 +217,7 @@
         (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
         ((chatSummary.kind === "group_chat" || chatSummary.kind === "channel") &&
             chatSummary.membership.role === "none");
-    $: pinned = pinnedChatsStore.pinned($chatListScope.kind, chatSummary.id);
+    $: pinned = client.pinned($chatListScope.kind, chatSummary.id);
     $: muted = chatSummary.membership.notificationsMuted;
 </script>
 

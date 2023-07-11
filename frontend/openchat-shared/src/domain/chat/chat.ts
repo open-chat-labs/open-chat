@@ -10,7 +10,7 @@ import type {
     MemberRole,
     Permissioned,
 } from "../permission";
-import type { HasLevel } from "../structure";
+import type { ChatListScope, HasLevel } from "../structure";
 import type {
     NotAuthorised,
     Success,
@@ -847,6 +847,12 @@ export function chatIdentifierUnset(id: ChatIdentifier | undefined): boolean {
         case "group_chat":
             return id.groupId === "";
     }
+}
+
+export function chatScopesEqual(a: ChatListScope, b: ChatListScope): boolean {
+    if (a.kind === "community" && b.kind === "community")
+        return a.id.communityId === b.id.communityId;
+    return a.kind === b.kind;
 }
 
 export function chatIdentifiersEqual(

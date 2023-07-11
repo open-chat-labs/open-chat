@@ -33,7 +33,6 @@ import {
     mergeLocalSummaryUpdates,
 } from "../utils/chat";
 import { userStore } from "./user";
-import { pinnedChatsStore } from "./pinnedChats";
 import DRange from "drange";
 import { snsFunctions } from "./snsFunctions";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
@@ -45,7 +44,7 @@ import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
 import type { OpenChat } from "../openchat";
-import { allChats, chatListScopeStore, globalStateStore } from "./global";
+import { chatListScopeStore, getAllChats, globalStateStore, pinnedChatsStore } from "./global";
 import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
 
@@ -54,8 +53,9 @@ export const currentUserStore = immutableStore<CreatedUser | undefined>(undefine
 const communitiesEnabled = localStorage.getItem("openchat_communities_enabled") === "true";
 
 export const myServerChatSummariesStore = derived(
-    [globalStateStore, chatListScopeStore, allChats],
-    ([$allState, $scope, $allChats]) => {
+    [globalStateStore, chatListScopeStore],
+    ([$allState, $scope]) => {
+        const allChats = getAllChats($allState);
         if (communitiesEnabled) {
             if ($scope.kind === "community") {
                 const community = $allState.communities.get($scope.id);
@@ -68,7 +68,7 @@ export const myServerChatSummariesStore = derived(
                 return $allState.directChats;
             } else if ($scope.kind === "favourite") {
                 return $allState.favourites.values().reduce((favs, chatId) => {
-                    const chat = $allChats.get(chatId);
+                    const chat = allChats.get(chatId);
                     if (chat !== undefined) {
                         favs.set(chat.id, chat);
                     }
@@ -78,7 +78,7 @@ export const myServerChatSummariesStore = derived(
                 return new ChatMap<ChatSummary>();
             }
         } else {
-            return $allChats;
+            return allChats;
         }
     }
 );
@@ -149,8 +149,9 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
 
 // This is annoying. If only the pinnedChatIndex was stored in the chatSummary...
 export const chatSummariesListStore = derived(
-    [chatSummariesStore, pinnedChatsStore, chatListScopeStore],
-    ([summaries, pinnedChats, scope]) => {
+    [chatSummariesStore, chatListScopeStore],
+    ([summaries, scope]) => {
+        const pinnedChats = get(pinnedChatsStore);
         const pinnedByScope = pinnedChats[scope.kind];
         const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
             const summary = summaries.get(id);
@@ -169,6 +170,7 @@ export const chatSummariesListStore = derived(
     }
 );
 
+// TODO - this might not be right now that we have multiple chat lists - should probably be derived from global scope
 export const userMetrics = derived([chatSummariesListStore], ([$chats]) => {
     return $chats
         .map((c) => c.membership?.myMetrics ?? emptyChatMetrics())
