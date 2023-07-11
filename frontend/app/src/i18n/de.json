@@ -404,7 +404,10 @@
         "enabled": "ermöglicht",
         "disabled": "Behinderte",
         "reset": "zurücksetzen",
-        "invite": "Einladen"
+        "invite": "Einladen",
+        "inviteWithLink": "Per Link zu {level} einladen",
+        "confirmReset": "Sind Sie sicher, dass Sie den Link {level} zurücksetzen möchten? Personen können der {level} nicht mehr über den aktuellen Link beitreten.",
+        "shareMessage": "Jeder, der über diesen Link verfügt, kann eine Vorschau anzeigen und dem {level} beitreten. Als Diamond-Mitglied können Sie auch [Empfehlungsprämien](?faq=referral_rewards) verdienen."
     },
     "updateNow": "jetzt neu laden",
     "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s",

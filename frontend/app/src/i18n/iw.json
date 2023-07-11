@@ -412,7 +412,10 @@
         "enabled": "מופעל",
         "disabled": "נָכֶה",
         "reset": "אִתחוּל",
-        "invite": "להזמין"
+        "invite": "להזמין",
+        "inviteWithLink": "הזמן אל {level} באמצעות קישור",
+        "confirmReset": "האם אתה בטוח שברצונך לאפס את הקישור {level}? אנשים לא יוכלו עוד להצטרף ל-{level} באמצעות הקישור הנוכחי.",
+        "shareMessage": "כל מי שיש לו קישור זה יכול לצפות בתצוגה מקדימה ולהצטרף ל-{level}. כחבר ב-Diamond אתה יכול גם לזכות ב[הפניה תגמולים](?faq=referral_rewards)."
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",

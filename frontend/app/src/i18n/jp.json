@@ -402,7 +402,10 @@
         "enabled": "有効",
         "disabled": "無効",
         "reset": "リセット",
-        "invite": "招待"
+        "invite": "招待",
+        "inviteWithLink": "リンク経由で {level} に招待します",
+        "confirmReset": "{level} リンクをリセットしてもよろしいですか?ユーザーは現在のリンクを使用して {level} に参加できなくなります。",
+        "shareMessage": "このリンクを知っている人は誰でも、{level} をプレビューして参加できます。ダイヤモンド メンバーは、[紹介報酬](?faq=referral_rewards) を獲得することもできます。"
     },
     "updateNow": "今すぐリロード",
     "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード",

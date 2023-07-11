@@ -403,7 +403,10 @@
         "enabled": "activado",
         "disabled": "desactivado",
         "reset": "reiniciar",
-        "invite": "Invitar"
+        "invite": "Invitar",
+        "inviteWithLink": "Invitar a {level} a través de un enlace",
+        "confirmReset": "¿Está seguro de que desea restablecer el enlace {level}? Las personas ya no podrán unirse a {level} usando el enlace actual.",
+        "shareMessage": "Cualquier persona con este enlace puede obtener una vista previa y unirse a {level}. Como miembro Diamante, también puede ganar [recompensas por recomendación](?faq=referral_rewards)."
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",

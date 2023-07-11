@@ -401,7 +401,10 @@
         "enabled": "启用",
         "disabled": "禁用",
         "reset": "重置",
-        "invite": "邀请"
+        "invite": "邀请",
+        "inviteWithLink": "通过链接邀请加入 {level}",
+        "confirmReset": "您确定要重置 {level} 链接吗？人们将无法再使用当前链接加入 {level}。",
+        "shareMessage": "知道此链接的任何人都可以预览并加入 {level}。作为钻石会员，您还可以获得[推荐奖励](?faq=referral_rewards)。"
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",

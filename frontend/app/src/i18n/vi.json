@@ -403,7 +403,10 @@
         "enabled": "kích hoạt",
         "disabled": "tàn tật",
         "reset": "cài lại",
-        "invite": "Mời"
+        "invite": "Mời",
+        "inviteWithLink": "Mời {level} qua liên kết",
+        "confirmReset": "Bạn có chắc chắn muốn đặt lại liên kết {level} không? Mọi người sẽ không thể tham gia {level} bằng liên kết hiện tại nữa.",
+        "shareMessage": "Bất kỳ ai có liên kết này đều có thể xem trước và tham gia {level}. Là thành viên Kim cương, bạn cũng có thể kiếm được [phần thưởng giới thiệu](?faq=referral_rewards)."
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
