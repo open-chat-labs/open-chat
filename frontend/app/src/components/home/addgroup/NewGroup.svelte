@@ -219,7 +219,6 @@
             )
             .then((success) => {
                 if (success) {
-                    // TODO this doesn't seem to update properly
                     originalGroup = {
                         ...originalGroup,
                         permissions: { ...candidateGroup.permissions },

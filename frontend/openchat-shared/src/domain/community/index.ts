@@ -66,7 +66,6 @@ export type CommunitySummary = AccessControlled &
         primaryLanguage: string;
     };
 
-// TODO - not sure if this really needs to be a thing yet
 export type DefaultChannel = {
     name: string;
     createdAt: number;

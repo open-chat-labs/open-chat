@@ -10,6 +10,7 @@ import {
     UnsupportedValueError,
     routeForMessage,
     routeForChatIdentifier,
+    DirectChatIdentifier,
 } from "openchat-shared";
 
 declare const self: ServiceWorkerGlobalScope;
@@ -121,6 +122,10 @@ async function showNotification(notification: Notification, id: string): Promise
     // notification will be silent
     let closeExistingNotifications = false;
     if (notification.kind === "direct_notification") {
+        const chatId: DirectChatIdentifier = {
+            kind: "direct_chat",
+            userId: notification.sender.userId,
+        };
         const content = extractMessageContent(
             notification.message.event.content,
             notification.senderName
@@ -128,7 +133,7 @@ async function showNotification(notification: Notification, id: string): Promise
         title = notification.senderName;
         body = content.text;
         icon = content.image ?? icon;
-        path = `user/${notification.sender.userId}/${notification.message.event.messageIndex}`;
+        path = routeForMessage("direct_chat", { chatId }, notification.message.event.messageIndex);
         tag = notification.sender.userId;
         timestamp = Number(notification.message.timestamp);
         closeExistingNotifications = true;
@@ -142,7 +147,7 @@ async function showNotification(notification: Notification, id: string): Promise
         body = `${notification.senderName}: ${content.text}`;
         icon = content.image ?? icon;
         path = routeForMessage(
-            "none",
+            "group_chat",
             {
                 chatId: notification.chatId,
                 threadRootMessageIndex: notification.threadRootMessageIndex,
@@ -157,7 +162,7 @@ async function showNotification(notification: Notification, id: string): Promise
         title = notification.username;
         body = `${notification.username} reacted '${notification.reaction}' to your message`;
         path = routeForMessage(
-            "none",
+            "direct_chat",
             { chatId: notification.them },
             notification.message.event.messageIndex
         );
@@ -167,7 +172,7 @@ async function showNotification(notification: Notification, id: string): Promise
         title = notification.groupName;
         body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
         path = routeForMessage(
-            "none",
+            "group_chat",
             {
                 chatId: notification.chatId,
                 threadRootMessageIndex: notification.threadRootMessageIndex,
