@@ -960,9 +960,6 @@ export function apiMultiUserChat(chatId: ChatIdentifier): ApiMultiUserChat {
 }
 
 export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext): ApiReplyContext {
-    if (domain.sourceContext?.chatId.kind === "channel") {
-        throw new Error("TODO channel reply contexts not yet supported");
-    }
     if (
         domain.sourceContext !== undefined &&
         !chatIdentifiersEqual(chatId, domain.sourceContext.chatId)
@@ -974,12 +971,7 @@ export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext
                     apiOptional(identity, domain.sourceContext.threadRootMessageIndex),
                 ],
             ],
-            event_list_if_other: [
-                [
-                    Principal.fromText(chatIdentifierToString(domain.sourceContext.chatId)),
-                    apiOptional(identity, domain.sourceContext.threadRootMessageIndex),
-                ],
-            ],
+            event_list_if_other: [],
             event_index: domain.eventIndex,
         };
     } else {

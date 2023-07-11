@@ -115,8 +115,6 @@ async function showNotification(notification: Notification, id: string): Promise
     let tag: string;
     let timestamp: number;
 
-    //TODO - all this url stuff sucks - we should probably be using MessageContext with some utils
-
     // If true, we close existing notifications where the `path` matches, this ensures this new notification will
     // trigger an alert. If false, and there is already at least one notification with a matching path, then this new
     // notification will be silent
