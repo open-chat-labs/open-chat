@@ -118,7 +118,6 @@ import {
     chatIdentifiersEqual,
     AddRemoveReactionResponse,
     CommonResponses,
-    chatIdentifierToString,
     emptyChatMetrics,
     ChannelSummary,
     CommunitySummary,

@@ -1,10 +1,5 @@
 import type { AccessGate } from "../access";
-import type {
-    CallerNotInGroup,
-    ChatIdentifier,
-    GroupChatIdentifier,
-    MessageContent,
-} from "../chat/chat";
+import type { ChatIdentifier, GroupChatIdentifier, MessageContent } from "../chat/chat";
 import type { ChannelMatch, CommunityIdentifier } from "../community";
 import type { DataContent } from "../data/data";
 import type { ChatNotFound, Failure } from "../response";
