@@ -900,7 +900,8 @@
             "leaveFailed": "申し訳ありませんが、このコミュニティを離れることができませんでした",
             "deleteFailed": "申し訳ありませんが、このコミュニティを削除できませんでした",
             "convertFailed": "申し訳ありませんが、グループをコミュニティに変換できませんでした",
-            "importFailed": "申し訳ありませんが、グループをインポートできませんでした"
+            "importFailed": "申し訳ありませんが、グループをインポートできませんでした",
+            "manageDefaultChannels": "申し訳ありませんが、デフォルトのチャンネルを更新できませんでした"
         },
         "memberCount": "メンバー",
         "channelCount": "チャンネル",
@@ -929,7 +930,11 @@
         "import": "コミュニティにインポートする",
         "importBtn": "輸入",
         "noOwned": "あなたはどのコミュニティの所有者でもありません",
-        "chooseCommunity": "コミュニティを選択してください"
+        "chooseCommunity": "コミュニティを選択してください",
+        "otherChannels": "その他のチャンネル",
+        "defaultChannel": "デフォルトチャンネル",
+        "defaultInfo": "このコミュニティに参加しているユーザーは、すべてのデフォルト チャネルに自動的に追加されます",
+        "saveChanges": "変更内容を保存"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",
@@ -945,5 +950,9 @@
     "joinGroupFailed": "{level}に参加できません",
     "noAccess": "アクセスなし",
     "noAccessText": "申し訳ありませんが、アクセスしようとしているコミュニティ、グループ、またはチャネルにアクセスすることができません。",
-    "leaveGroup": "{level}を離れる"
+    "leaveGroup": "{level}を離れる",
+    "searchGroupsPlaceholder": "グループを検索...",
+    "searchUsersPlaceholder": "ユーザーを検索...",
+    "searchChannelsPlaceholder": "チャンネルを検索...",
+    "searchFavouritesPlaceholder": "お気に入りを検索してください..."
 }

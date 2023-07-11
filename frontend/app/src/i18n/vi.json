@@ -900,7 +900,8 @@
             "leaveFailed": "Xin lỗi, chúng tôi không thể rời khỏi cộng đồng này",
             "deleteFailed": "Xin lỗi, chúng tôi không thể xóa cộng đồng này",
             "convertFailed": "Xin lỗi nhưng chúng tôi không thể chuyển đổi nhóm của bạn thành cộng đồng",
-            "importFailed": "Xin lỗi, chúng tôi không thể nhập nhóm của bạn"
+            "importFailed": "Xin lỗi, chúng tôi không thể nhập nhóm của bạn",
+            "manageDefaultChannels": "Xin lỗi nhưng chúng tôi không thể cập nhật các kênh mặc định"
         },
         "memberCount": "các thành viên)",
         "channelCount": "kênh truyền hình)",
@@ -929,7 +930,11 @@
         "import": "Nhập vào cộng đồng",
         "importBtn": "Nhập khẩu",
         "noOwned": "Bạn không phải là chủ sở hữu của bất kỳ cộng đồng nào",
-        "chooseCommunity": "Chọn một cộng đồng"
+        "chooseCommunity": "Chọn một cộng đồng",
+        "otherChannels": "Các kênh khác",
+        "defaultChannel": "Kênh mặc định",
+        "defaultInfo": "Người dùng tham gia cộng đồng này sẽ tự động được thêm vào tất cả các kênh mặc định",
+        "saveChanges": "Lưu thay đổi"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",
@@ -945,5 +950,9 @@
     "joinGroupFailed": "Không thể tham gia {level}",
     "noAccess": "Không truy cập",
     "noAccessText": "Rất tiếc, nhưng bạn không có quyền truy cập vào cộng đồng, nhóm hoặc kênh mà bạn đang cố truy cập.",
-    "leaveGroup": "Rời khỏi {level}"
+    "leaveGroup": "Rời khỏi {level}",
+    "searchGroupsPlaceholder": "Tìm kiếm các nhóm...",
+    "searchUsersPlaceholder": "Tìm kiếm người dùng...",
+    "searchChannelsPlaceholder": "Tìm kiếm các kênh...",
+    "searchFavouritesPlaceholder": "Tìm kiếm mục yêu thích của bạn..."
 }

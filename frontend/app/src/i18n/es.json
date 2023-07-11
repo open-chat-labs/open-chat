@@ -901,7 +901,8 @@
             "leaveFailed": "Lo sentimos, no pudimos salir de esta comunidad.",
             "deleteFailed": "Lo sentimos, no pudimos eliminar esta comunidad.",
             "convertFailed": "Lo sentimos, pero no pudimos convertir sus grupos en una comunidad.",
-            "importFailed": "Lo sentimos, no pudimos importar tu grupo."
+            "importFailed": "Lo sentimos, no pudimos importar tu grupo.",
+            "manageDefaultChannels": "Lo sentimos, pero no pudimos actualizar los canales predeterminados."
         },
         "memberCount": "miembro(s)",
         "channelCount": "canales",
@@ -930,7 +931,11 @@
         "import": "Importar a la comunidad",
         "importBtn": "Importar",
         "noOwned": "No eres el propietario de ninguna comunidad.",
-        "chooseCommunity": "Elige una comunidad"
+        "chooseCommunity": "Elige una comunidad",
+        "otherChannels": "Otros canales",
+        "defaultChannel": "Canal por defecto",
+        "defaultInfo": "Los usuarios que se unan a esta comunidad se agregarán automáticamente a todos los canales predeterminados",
+        "saveChanges": "Guardar cambios"
     },
     "groupCreatedBy": "{username} creó el {level}",
     "groupName": "{level} nombre",
@@ -946,5 +951,9 @@
     "joinGroupFailed": "No se puede unir a {level}",
     "noAccess": "Sin acceso",
     "noAccessText": "Lo sentimos, pero no tienes acceso a la comunidad, grupo o canal al que intentas acceder.",
-    "leaveGroup": "Dejar {level}"
+    "leaveGroup": "Dejar {level}",
+    "searchGroupsPlaceholder": "Buscar grupos...",
+    "searchUsersPlaceholder": "Buscar usuarios...",
+    "searchChannelsPlaceholder": "Buscar canales...",
+    "searchFavouritesPlaceholder": "Busca tus favoritos..."
 }

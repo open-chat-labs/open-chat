@@ -897,7 +897,8 @@
             "leaveFailed": "מצטערים שלא הצלחנו לעזוב את הקהילה הזו",
             "deleteFailed": "מצטערים שלא הצלחנו למחוק את הקהילה הזו",
             "convertFailed": "מצטערים אבל לא הצלחנו להמיר את הקבוצות שלך לקהילה",
-            "importFailed": "מצטערים שלא הצלחנו לייבא את הקבוצה שלך"
+            "importFailed": "מצטערים שלא הצלחנו לייבא את הקבוצה שלך",
+            "manageDefaultChannels": "מצטערים אבל לא הצלחנו לעדכן את ערוצי ברירת המחדל"
         },
         "memberCount": "חבר/ים",
         "channelCount": "ערוץ(ים)",
@@ -926,7 +927,11 @@
         "import": "ייבוא לקהילה",
         "importBtn": "יְבוּא",
         "noOwned": "אינך הבעלים של אף קהילות",
-        "chooseCommunity": "בחר קהילה"
+        "chooseCommunity": "בחר קהילה",
+        "otherChannels": "ערוצים אחרים",
+        "defaultChannel": "ערוץ ברירת מחדל",
+        "defaultInfo": "משתמשים המצטרפים לקהילה זו יתווספו אוטומטית לכל ערוצי ברירת המחדל",
+        "saveChanges": "שמור שינויים"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",
@@ -942,5 +947,9 @@
     "joinGroupFailed": "לא ניתן להצטרף ל-{level}",
     "noAccess": "אין גישה",
     "noAccessText": "מצטערים, אבל אין לך גישה לקהילה, לקבוצה או לערוץ שאתה מנסה לגשת אליהם.",
-    "leaveGroup": "עזוב את {level}"
+    "leaveGroup": "עזוב את {level}",
+    "searchGroupsPlaceholder": "חפש קבוצות...",
+    "searchUsersPlaceholder": "חפש משתמשים...",
+    "searchChannelsPlaceholder": "חפש ערוצים...",
+    "searchFavouritesPlaceholder": "חפש את המועדפים שלך..."
 }

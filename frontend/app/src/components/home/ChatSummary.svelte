@@ -216,7 +216,8 @@
     $: readonly = client.isChatReadOnly(chatSummary.id);
     $: canDelete =
         (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
-        (chatSummary.kind === "group_chat" && chatSummary.membership.role === "none");
+        ((chatSummary.kind === "group_chat" || chatSummary.kind === "channel") &&
+            chatSummary.membership.role === "none");
     $: pinned = pinnedChatsStore.pinned($chatListScope.kind, chatSummary.id);
     $: muted = chatSummary.membership.notificationsMuted;
 </script>

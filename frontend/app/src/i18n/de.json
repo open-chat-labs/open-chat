@@ -901,7 +901,8 @@
             "leaveFailed": "Es tut uns leid, dass wir diese Community nicht verlassen konnten",
             "deleteFailed": "Leider konnten wir diese Community nicht löschen",
             "convertFailed": "Leider konnten wir Ihre Gruppen nicht in eine Community umwandeln",
-            "importFailed": "Leider konnten wir Ihre Gruppe nicht importieren"
+            "importFailed": "Leider konnten wir Ihre Gruppe nicht importieren",
+            "manageDefaultChannels": "Leider konnten wir die Standardkanäle nicht aktualisieren"
         },
         "memberCount": "Mitglied(er)",
         "channelCount": "Kanal(e)",
@@ -930,7 +931,11 @@
         "import": "In die Community importieren",
         "importBtn": "Importieren",
         "noOwned": "Sie sind nicht Eigentümer einer Community",
-        "chooseCommunity": "Wählen Sie eine Community"
+        "chooseCommunity": "Wählen Sie eine Community",
+        "otherChannels": "Andere Kanäle",
+        "defaultChannel": "Standardkanal",
+        "defaultInfo": "Benutzer, die dieser Community beitreten, werden automatisch allen Standardkanälen hinzugefügt",
+        "saveChanges": "Änderungen speichern"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",
@@ -946,5 +951,9 @@
     "joinGroupFailed": "Beitritt zu {level} nicht möglich",
     "noAccess": "Kein Zugang",
     "noAccessText": "Leider haben Sie keinen Zugriff auf die Community, Gruppe oder den Kanal, auf die Sie zugreifen möchten.",
-    "leaveGroup": "Verlasse {level}"
+    "leaveGroup": "Verlasse {level}",
+    "searchGroupsPlaceholder": "Nach Gruppen suchen...",
+    "searchUsersPlaceholder": "Nach Benutzern suchen...",
+    "searchChannelsPlaceholder": "Nach Kanälen suchen...",
+    "searchFavouritesPlaceholder": "Suchen Sie Ihre Favoriten..."
 }

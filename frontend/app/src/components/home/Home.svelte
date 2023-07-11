@@ -417,31 +417,6 @@
         page("/favourite");
     }
 
-    async function performSearch(ev: CustomEvent<string>) {
-        searchResultsAvailable = false;
-        searchTerm = ev.detail;
-        if (searchTerm !== "") {
-            searching = true;
-            const lowercase = searchTerm.toLowerCase();
-            groupSearchResults = client.searchGroups(lowercase, 10);
-            userSearchResults = client.searchUsers(lowercase, 10);
-            try {
-                await Promise.all([groupSearchResults, userSearchResults]).then(() => {
-                    if (searchTerm !== "") {
-                        searchResultsAvailable = true;
-                        searching = false;
-                    } else {
-                        clearSearch();
-                    }
-                });
-            } catch (_err) {
-                searching = false;
-            }
-        } else {
-            clearSearch();
-        }
-    }
-
     function clearSearch() {
         groupSearchResults = userSearchResults = undefined;
         searchTerm = "";
@@ -1049,13 +1024,7 @@
 
     {#if $layoutStore.showLeft}
         <LeftPanel
-            {groupSearchResults}
-            {userSearchResults}
-            {searchTerm}
-            {searchResultsAvailable}
-            {searching}
             on:showHomePage={showLandingPageRoute("/home")}
-            on:searchEntered={performSearch}
             on:chatWith={chatWith}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:newGroup={() => newGroup("group")}

@@ -2,7 +2,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import CurrentUser from "./CurrentUser.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
-    import Search from "../Search.svelte";
+    import ChatListSearch from "./ChatListSearch.svelte";
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
     import { _ } from "svelte-i18n";
@@ -14,6 +14,7 @@
         GroupSearchResponse,
         routeForChatIdentifier,
         chatIdentifiersEqual,
+        ChannelMatch,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
@@ -35,11 +36,11 @@
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
 
-    export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
-    export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
-    export let searchTerm: string = "";
-    export let searching: boolean = false;
-    export let searchResultsAvailable: boolean = false;
+    let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
+    let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
+    let channelSearchResults: Promise<ChannelMatch[]> | undefined = undefined;
+    let searchTerm: string = "";
+    let searchResultsAvailable: boolean = false;
 
     const dispatch = createEventDispatcher();
 
@@ -55,14 +56,8 @@
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
     $: showWhatsHot =
-        $chatListScope.kind !== "community" &&
-        !$discoverHotGroupsDismissed &&
-        groupSearchResults === undefined &&
-        userSearchResults === undefined;
-    $: showBrowseChannnels =
-        $chatListScope.kind === "community" &&
-        groupSearchResults === undefined &&
-        userSearchResults === undefined;
+        $chatListScope.kind === "none" && !$discoverHotGroupsDismissed && !searchResultsAvailable;
+    $: showBrowseChannnels = $chatListScope.kind === "community" && !searchResultsAvailable;
     $: unreadDirectChats = client.unreadDirectChats;
     $: unreadGroupChats = client.unreadGroupChats;
     $: unreadFavouriteChats = client.unreadFavouriteChats;
@@ -98,7 +93,7 @@
     }
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
-        if (chat.kind === "group_chat") {
+        if (chat.kind === "group_chat" || chat.kind === "channel") {
             return (
                 chat.name.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
                 chat.description.toLowerCase().indexOf(lowercaseSearch) >= 0
@@ -130,6 +125,11 @@
      */
     function selectGroup({ chatId }: GroupMatch): void {
         page(routeForChatIdentifier($chatListScope.kind, chatId));
+        closeSearch();
+    }
+
+    function selectChannel({ id }: ChannelMatch): void {
+        page(routeForChatIdentifier($chatListScope.kind, id));
         closeSearch();
     }
 
@@ -209,7 +209,13 @@
             on:newGroup />
     {/if}
 
-    <Search {searching} {searchTerm} on:searchEntered={onSearchEntered} />
+    <ChatListSearch
+        bind:userSearchResults
+        bind:groupSearchResults
+        bind:channelSearchResults
+        bind:searchResultsAvailable
+        bind:searchTerm
+        on:searchEntered={onSearchEntered} />
 
     {#if $numberOfThreadsStore > 0}
         <div class="section-selector">
@@ -241,6 +247,29 @@
                         on:toggleMuteNotifications
                         on:deleteDirectChat />
                 {/each}
+
+                {#if channelSearchResults !== undefined}
+                    <div class="search-matches">
+                        {#await channelSearchResults then resp}
+                            {#if resp.length > 0}
+                                <h3 class="search-subtitle">{$_("communities.otherChannels")}</h3>
+                                {#each resp as channel, i (channel.id.channelId)}
+                                    <SearchResult
+                                        index={i}
+                                        avatarUrl={client.groupAvatarUrl(channel.avatar)}
+                                        on:click={() => selectChannel(channel)}>
+                                        <h4 class="search-item-title">
+                                            {channel.name}
+                                        </h4>
+                                        <p title={channel.description} class="search-item-desc">
+                                            {channel.description}
+                                        </p>
+                                    </SearchResult>
+                                {/each}
+                            {/if}
+                        {/await}
+                    </div>
+                {/if}
 
                 {#if userSearchResults !== undefined}
                     <div class="search-matches">

@@ -899,7 +899,8 @@
             "leaveFailed": "抱歉我们无法离开这个社区",
             "deleteFailed": "抱歉，我们无法删除此社区",
             "convertFailed": "抱歉，我们无法将您的群组转换为社区",
-            "importFailed": "抱歉，我们无法导入您的群组"
+            "importFailed": "抱歉，我们无法导入您的群组",
+            "manageDefaultChannels": "抱歉，我们无法更新默认频道"
         },
         "memberCount": "会员",
         "channelCount": "频道",
@@ -928,7 +929,11 @@
         "import": "导入社区",
         "importBtn": "进口",
         "noOwned": "您不是任何社区的所有者",
-        "chooseCommunity": "选择一个社区"
+        "chooseCommunity": "选择一个社区",
+        "otherChannels": "其他渠道",
+        "defaultChannel": "默认频道",
+        "defaultInfo": "加入此社区的用户将自动添加到所有默认频道",
+        "saveChanges": "保存更改"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",
@@ -945,5 +950,9 @@
     "confirmLeaveGroup": "你真的想离开这个{level}吗？",
     "noAccess": "无法访问",
     "noAccessText": "抱歉，您无权访问您尝试访问的社区、群组或频道。",
-    "leaveGroup": "离开{level}"
+    "leaveGroup": "离开{level}",
+    "searchGroupsPlaceholder": "搜索群组...",
+    "searchUsersPlaceholder": "搜索用户...",
+    "searchChannelsPlaceholder": "搜索频道...",
+    "searchFavouritesPlaceholder": "搜索您的最爱..."
 }
