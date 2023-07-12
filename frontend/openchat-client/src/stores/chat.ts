@@ -102,7 +102,6 @@ export const groupPreviewsStore: Writable<ChatMap<MultiUserChat>> = immutableSto
 export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
     [myServerChatSummariesStore, uninitializedDirectChats, groupPreviewsStore, chatListScopeStore],
     ([summaries, directChats, previews, $scope]) => {
-        console.log("UI: STORE: serverChatSummariesStore");
         let all = [...summaries.entries()];
         if ($scope.kind === "none" || $scope.kind === "direct_chat") {
             all = all.concat([...directChats.entries()]);

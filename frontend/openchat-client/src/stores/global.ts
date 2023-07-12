@@ -69,7 +69,6 @@ function unreadCountForChatList(chats: (ChatSummary | undefined)[]): number {
 export const unreadGroupChats = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
-        console.log("UI: STORE: unreadGroupChats");
         return unreadCountForChatList($global.groupChats.values());
     }
 );

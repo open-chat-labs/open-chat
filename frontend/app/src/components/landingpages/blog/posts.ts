@@ -1,5 +1,6 @@
 import type { SvelteComponent } from "svelte";
 import Communities from "./Communities.svelte";
+import CommunitiesReleased from "./CommunitiesReleased.svelte";
 import Governance from "./Governance.svelte";
 import WebsiteReleases from "./WebsiteReleases.svelte";
 
@@ -34,3 +35,13 @@ export const postsBySlug: Record<string, BlogPostInfo> = {
         component: WebsiteReleases,
     },
 };
+
+if (localStorage.getItem("openchat_communities_enabled") === "true") {
+    postsBySlug["communities_released"] = {
+        slug: "communities_released",
+        title: "Communities released!",
+        author: "@julian_jelfs",
+        date: new Date(2023, 6, 28),
+        component: CommunitiesReleased,
+    };
+}

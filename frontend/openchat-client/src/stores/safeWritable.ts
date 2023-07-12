@@ -31,7 +31,7 @@ export function safeWritable<T>(
             store.set(proposed);
         } else {
             console.debug(
-                "UI: STORE: ignoring store update because currentValue is 'equal' to proposed value",
+                "UI: STORE: ignorin  store update because currentValue is 'equal' to proposed value",
                 currentValue,
                 proposed
             );
