@@ -9,6 +9,7 @@
     export let gate: AccessGate;
     export let position: Position = "top";
     export let align: Alignment = "start";
+    export let small = false;
 
     const dispatch = createEventDispatcher();
 
@@ -46,7 +47,7 @@
         </TooltipWrapper>
     {:else if gate.kind === "openchat_gate"}
         <TooltipWrapper {position} {align}>
-            <div slot="target" class="icon oc" />
+            <div slot="target" class="icon oc" class:small />
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
                     <p>{`${$_("access.chatHolderInfo")}`}</p>
@@ -56,7 +57,7 @@
         </TooltipWrapper>
     {:else if gate.kind === "sns1_gate"}
         <TooltipWrapper {position} {align}>
-            <div slot="target" class="icon sns1" />
+            <div slot="target" class="icon sns1" class:small />
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
                     <p>{`${$_("access.sns1HolderInfo")}`}</p>
@@ -77,6 +78,11 @@
         background-position: top;
         background-size: contain;
         position: relative;
+
+        &.small {
+            height: 26px;
+            width: 26px;
+        }
     }
     .diamond {
         cursor: pointer;

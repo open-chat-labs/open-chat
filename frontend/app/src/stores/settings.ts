@@ -36,3 +36,7 @@ export const communityPermissionsOpen = createLsBoolStore(
 );
 export const communityStatsOpen = createLsBoolStore(configKeys.communityStatsSection, false);
 export const communityAdvancedOpen = createLsBoolStore(configKeys.communityAdvancedSection, false);
+export const communityInviteUsersOpen = createLsBoolStore(
+    configKeys.communityInviteUsersSections,
+    false
+);

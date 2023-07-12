@@ -100,7 +100,7 @@ import type {
     ExploreChannelsResponse,
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
-import type { GroupInvite } from "./inviteCodes";
+import type { GroupInvite, CommunityInvite } from "./inviteCodes";
 import type { CommunityPermissions, MemberRole } from "./permission";
 import type { AccessGate, AccessRules } from "./access";
 import type {
@@ -108,14 +108,8 @@ import type {
     BlockCommunityUserResponse,
     ChangeCommunityRoleResponse,
     CommunitySummary,
-    CommunityInviteCodeResponse,
     CreateCommunityResponse,
-    DisableCommunityInviteCodeResponse,
-    EnableCommunityInviteCodeResponse,
     JoinCommunityResponse,
-    RemoveChannelMemberResponse,
-    RemoveCommunityMemberResponse,
-    SearchChannelResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
     UpdateCommunityResponse,
@@ -128,6 +122,8 @@ import type {
     LeaveCommunityResponse,
     DeleteCommunityResponse,
     ConvertToCommunityResponse,
+    ImportGroupResponse,
+    ManageDefaultChannelsResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -199,6 +195,7 @@ export type WorkerRequest =
     | Init
     | CurrentUser
     | SetGroupInvite
+    | SetCommunityInvite
     | SearchGroupChat
     | SearchDirectChat
     | RefreshAccountBalance
@@ -243,19 +240,11 @@ export type WorkerRequest =
     | BlockCommunityUser
     | ChangeChannelRole
     | DeclineChannelInvitation
-    | DeleteChannelMessages
-    | DeleteChannelMessage
-    | DisableCommunityInviteCode
-    | EnableCommunityInviteCode
     | ChannelEvents
     | ChannelEventsByIndex
     | ChannelEventsWindow
-    | CommunityInviteCode
     | ChannelMessagesByMessageIndex
     | RemoveCommunityMember
-    | RemoveChannelMember
-    | ResetCommunityInviteCode
-    | SearchChannel
     | SelectedChannelInitial
     | SelectedChannelUpdates
     | ToggleMuteCommunityNotifications
@@ -273,7 +262,22 @@ export type WorkerRequest =
     | LeaveCommunity
     | DeleteCommunity
     | ConvertGroupToCommunity
+    | ImportGroupToCommunity
+    | ManageDefaultChannels
     | ChangeCommunityRole;
+
+type ManageDefaultChannels = {
+    kind: "manageDefaultChannels";
+    id: CommunityIdentifier;
+    toAdd: Set<string>;
+    toRemove: Set<string>;
+};
+
+type ImportGroupToCommunity = {
+    kind: "importGroupToCommunity";
+    groupId: GroupChatIdentifier;
+    communityId: CommunityIdentifier;
+};
 
 type ConvertGroupToCommunity = {
     kind: "convertGroupToCommunity";
@@ -350,22 +354,22 @@ type CreateGroupChat = {
 };
 
 type DisableInviteCode = {
-    chatId: GroupChatIdentifier;
+    id: GroupChatIdentifier | CommunityIdentifier;
     kind: "disableInviteCode";
 };
 
 type EnableInviteCode = {
-    chatId: GroupChatIdentifier;
+    id: GroupChatIdentifier | CommunityIdentifier;
     kind: "enableInviteCode";
 };
 
 type ResetInviteCode = {
-    chatId: GroupChatIdentifier;
+    id: GroupChatIdentifier | CommunityIdentifier;
     kind: "resetInviteCode";
 };
 
 type GetInviteCode = {
-    chatId: GroupChatIdentifier;
+    id: GroupChatIdentifier | CommunityIdentifier;
     kind: "getInviteCode";
 };
 
@@ -427,7 +431,7 @@ type SearchDirectChat = {
 };
 
 type SearchGroupChat = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     searchTerm: string;
     userIds: string[];
     maxResults: number;
@@ -437,6 +441,11 @@ type SearchGroupChat = {
 type SetGroupInvite = {
     value: GroupInvite;
     kind: "groupInvite";
+};
+
+type SetCommunityInvite = {
+    value: CommunityInvite;
+    kind: "communityInvite";
 };
 
 type DismissRecommendations = {
@@ -484,7 +493,7 @@ type ChangeRole = {
 };
 
 type RemoveMember = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     userId: string;
     kind: "removeMember";
 };
@@ -563,13 +572,13 @@ type ListNervousSystemFunctions = {
 };
 
 type BlockUserFromGroup = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     userId: string;
     kind: "blockUserFromGroupChat";
 };
 
 type UnblockUserFromGroup = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     userId: string;
     kind: "unblockUserFromGroupChat";
 };
@@ -972,12 +981,6 @@ export type WorkerResponse =
     | Response<ReportMessageResponse>
     | Response<BlockCommunityUserResponse>
     | Response<ChangeCommunityRoleResponse>
-    | Response<DisableCommunityInviteCode>
-    | Response<CommunityInviteCodeResponse>
-    | Response<RemoveCommunityMemberResponse>
-    | Response<RemoveChannelMemberResponse>
-    | Response<EnableCommunityInviteCodeResponse>
-    | Response<SearchChannelResponse>
     | Response<ToggleMuteCommunityNotificationsResponse>
     | Response<UnblockCommunityUserResponse>
     | Response<UpdateCommunityResponse>
@@ -993,6 +996,8 @@ export type WorkerResponse =
     | Response<DeleteCommunityResponse>
     | Response<ConvertToCommunityResponse>
     | Response<ExploreChannelsResponse>
+    | Response<ImportGroupResponse>
+    | Response<ManageDefaultChannelsResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1097,7 +1102,7 @@ type AddMembersToChannel = {
 
 type BlockCommunityUser = {
     kind: "blockCommunityUser";
-    communityId: string;
+    id: CommunityIdentifier;
     userId: string;
 };
 
@@ -1111,32 +1116,6 @@ type ChangeChannelRole = {
 type DeclineChannelInvitation = {
     kind: "declineChannelInvitation";
     chatId: ChannelIdentifier;
-};
-
-type DeleteChannelMessages = {
-    kind: "deleteChannelMessages";
-    chatId: ChannelIdentifier;
-    messageIds: bigint[];
-    threadRootMessageIndex: number | undefined;
-    asPlatformModerator: boolean | undefined;
-};
-
-type DeleteChannelMessage = {
-    kind: "deleteChannelMessage";
-    chatId: ChannelIdentifier;
-    messageId: bigint;
-    sender: string;
-    threadRootMessageIndex: number | undefined;
-};
-
-type DisableCommunityInviteCode = {
-    kind: "disableCommunityInviteCode";
-    communityId: string;
-};
-
-type EnableCommunityInviteCode = {
-    kind: "enableCommunityInviteCode";
-    communityId: string;
 };
 
 type ChannelEvents = {
@@ -1164,11 +1143,6 @@ type ChannelEventsWindow = {
     latestClientEventIndex: number | undefined;
 };
 
-type CommunityInviteCode = {
-    kind: "communityInviteCode";
-    communityId: string;
-};
-
 type ChannelMessagesByMessageIndex = {
     kind: "channelMessagesByMessageIndex";
     chatId: ChannelIdentifier;
@@ -1179,27 +1153,8 @@ type ChannelMessagesByMessageIndex = {
 
 type RemoveCommunityMember = {
     kind: "removeCommunityMember";
-    communityId: string;
+    id: CommunityIdentifier;
     userId: string;
-};
-
-type RemoveChannelMember = {
-    kind: "removeChannelMember";
-    chatId: ChannelIdentifier;
-    userId: string;
-};
-
-type ResetCommunityInviteCode = {
-    kind: "resetCommunityInviteCode";
-    communityId: string;
-};
-
-type SearchChannel = {
-    kind: "searchChannel";
-    chatId: ChannelIdentifier;
-    maxResults: number;
-    users: string[];
-    searchTerm: string;
 };
 
 type SelectedChannelInitial = {
@@ -1221,7 +1176,7 @@ type ToggleMuteCommunityNotifications = {
 
 type UnblockCommunityUser = {
     kind: "unblockCommunityUser";
-    communityId: string;
+    id: CommunityIdentifier;
     userId: string;
 };
 
@@ -1377,6 +1332,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? void
     : T extends GroupInvite
     ? void
+    : T extends CommunityInvite
+    ? void
     : T extends SearchGroupChat
     ? SearchGroupChatResponse
     : T extends SearchDirectChat
@@ -1461,26 +1418,16 @@ export type WorkerResult<T> = T extends PinMessage
     ? ChangeCommunityRoleResponse
     : T extends DeclineChannelInvitation
     ? DeclineInvitationResponse
-    : T extends DeleteChannelMessages
-    ? DisableCommunityInviteCodeResponse
     : T extends ChannelEvents
     ? EventsResponse<GroupChatEvent>
     : T extends ChannelEventsByIndex
     ? EventsResponse<GroupChatEvent>
     : T extends ChannelEventsWindow
     ? EventsResponse<GroupChatEvent>
-    : T extends CommunityInviteCode
-    ? CommunityInviteCodeResponse
     : T extends ChannelMessagesByMessageIndex
     ? EventsResponse<Message>
     : T extends RemoveCommunityMember
-    ? RemoveCommunityMemberResponse
-    : T extends RemoveChannelMember
-    ? RemoveChannelMemberResponse
-    : T extends ResetCommunityInviteCode
-    ? EnableCommunityInviteCodeResponse
-    : T extends SearchChannel
-    ? SearchChannelResponse
+    ? RemoveMemberResponse
     : T extends ToggleMuteCommunityNotifications
     ? ToggleMuteCommunityNotificationsResponse
     : T extends UnblockCommunityUser
@@ -1513,4 +1460,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? DeleteCommunityResponse
     : T extends ConvertGroupToCommunity
     ? ConvertToCommunityResponse
+    : T extends ImportGroupToCommunity
+    ? ImportGroupResponse
+    : T extends ManageDefaultChannels
+    ? ManageDefaultChannelsResponse
     : never;

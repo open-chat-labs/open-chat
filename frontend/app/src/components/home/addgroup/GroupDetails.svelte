@@ -4,6 +4,7 @@
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
+    import Checkbox from "../../Checkbox.svelte";
     import Legend from "../../Legend.svelte";
     import { interpolateLevel } from "../../../utils/i18n";
 
@@ -11,6 +12,7 @@
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
 
+    export let editing: boolean;
     export let busy: boolean;
     export let candidateGroup: CandidateGroupChat;
 
@@ -54,6 +56,19 @@
         placeholder={interpolateLevel("newGroupDesc", candidateGroup.level, true)} />
 </section>
 
+{#if !editing && candidateGroup.level === "channel"}
+    <section class="default">
+        <Checkbox
+            id={`default_channel`}
+            label={$_("communities.defaultChannel")}
+            align={"start"}
+            bind:checked={candidateGroup.isDefault}>
+            <div class="section-title">{$_("communities.defaultChannel")}</div>
+            <p class="default-info">{$_("communities.defaultInfo")}</p>
+        </Checkbox>
+    </section>
+{/if}
+
 <style lang="scss">
     .photo {
         text-align: center;
@@ -63,5 +78,13 @@
 
     section {
         margin-bottom: $sp5;
+    }
+
+    .default {
+        @include font(book, normal, fs-80);
+
+        .default-info {
+            color: var(--txt-light);
+        }
     }
 </style>

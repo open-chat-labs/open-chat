@@ -64,6 +64,8 @@ import {
     ThreadPreviewsResponse,
     ChannelSummaryResponse,
     RegisterPollVoteResponse,
+    ImportGroupResponse,
+    ManageDefaultChannelsResponse,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -130,6 +132,8 @@ export {
     ThreadPreviewsResponse as ApiThreadPreviewsResponse,
     ChannelSummaryResponse as ApiChannelSummaryResponse,
     RegisterPollVoteResponse as ApiRegisterPollVoteResponse,
+    ImportGroupResponse as ApiImportGroupResponse,
+    ManageDefaultChannelsResponse as ApiManageDefaultChannelsResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

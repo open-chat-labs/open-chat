@@ -2,7 +2,7 @@ import { Readable, derived, writable } from "svelte/store";
 import { ScreenWidth, screenWidth } from "./screenDimensions";
 import { mobileWidth } from "./screenDimensions";
 import { rightPanelHistory } from "./rightPanel";
-import { pathParams } from "../routes";
+import { RouteParams, pathParams } from "../routes";
 import { communitiesEnabled } from "../utils/features";
 
 export const navOpen = writable<boolean>(false);
@@ -20,9 +20,12 @@ type Layout = {
     rightPanel: RightPanelState;
 };
 
-function debug<T>(label: string, obj: T): T {
-    console.log(label, obj);
-    return obj;
+function someHomeRoute(route: RouteParams["kind"]): boolean {
+    return (
+        route === "home_route" ||
+        route === "chat_list_route" ||
+        route === "selected_community_route"
+    );
 }
 
 // TODO - we really need some tests around this and now that it's out of the Home component we can do that easily
@@ -31,21 +34,20 @@ export const layoutStore: Readable<Layout> = derived(
     ([$numberOfColumns, $rightPanelHistory, $mobileWidth, $pathParams, $communitiesEnabled]) => {
         if ($mobileWidth) {
             const showRight = $rightPanelHistory.length > 0;
-            const showMiddle = $pathParams.kind !== "home_route" && !showRight;
+            const showMiddle = !someHomeRoute($pathParams.kind) && !showRight;
             const showLeft = !showMiddle && !showRight;
             const showNav =
-                $communitiesEnabled && (showLeft || $pathParams.kind === "communities_route");
-            return debug("Layout: ", {
+                $communitiesEnabled &&
+                (showLeft || ($pathParams.kind === "communities_route" && !showRight));
+            return {
                 showNav,
                 showMiddle,
                 showLeft,
                 rightPanel: (showRight ? "inline" : "hidden") as RightPanelState,
-            });
+                $pathParams,
+            };
         } else {
             const showRight = $rightPanelHistory.length > 0 || $numberOfColumns === 3;
-            // const showRight =
-            //     $pathParams.kind !== "communities_route" &&
-            //     ($rightPanelHistory.length > 0 || $numberOfColumns === 3);
             const floatRight = $numberOfColumns < 3;
             const showLeft = $pathParams.kind !== "communities_route";
 

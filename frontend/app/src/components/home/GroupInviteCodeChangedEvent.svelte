@@ -16,7 +16,7 @@
     $: userStore = client.userStore;
     $: me = changedBy === user?.userId;
     $: changedByStr = me ? $_("you") : $userStore[changedBy]?.username ?? $_("unknownUser");
-    $: changedStr = $_(`group.invite.${change}`);
+    $: changedStr = $_(`invite.${change}`);
     $: text = $_("groupInviteChangedBy", {
         values: {
             changedBy: changedByStr,

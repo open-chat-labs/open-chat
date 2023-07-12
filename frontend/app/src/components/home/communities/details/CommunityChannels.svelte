@@ -11,21 +11,43 @@
     import { popRightPanelHistory, rightPanelHistory } from "../../../../stores/rightPanel";
     import { getContext, onMount } from "svelte";
     import ChannelCard from "./ChannelCard.svelte";
+    import { toastStore } from "stores/toast";
 
     const client = getContext<OpenChat>("client");
 
     $: selectedCommunity = client.selectedCommunity;
 
+    let saving = false;
     let searchTerm = "";
     let searching = false;
     let pageIndex = 0;
     let pageSize = 20;
     let searchResults: ChannelMatch[] = [];
     let total = 0;
+    let addDefault = new Set<string>();
+    let removeDefault = new Set<string>();
     $: more = total > searchResults.length;
 
     function close() {
         popRightPanelHistory();
+    }
+
+    function saveChanges() {
+        if ($selectedCommunity === undefined) return;
+        if (addDefault.size === 0 && removeDefault.size === 0) return;
+
+        saving = true;
+        client
+            .manageDefaultChannels($selectedCommunity.id, addDefault, removeDefault)
+            .then((success) => {
+                if (success) {
+                    addDefault = new Set<string>();
+                    removeDefault = new Set<string>();
+                } else {
+                    toastStore.showFailureToast("communities.errors.manageDefaultChannels");
+                }
+            })
+            .finally(() => (saving = false));
     }
 
     function search(reset = false) {
@@ -56,7 +78,24 @@
             .finally(() => (searching = false));
     }
 
-    onMount(search);
+    function toggleDefaultChannel(ev: CustomEvent<ChannelMatch>) {
+        if (ev.detail.isDefault) {
+            const removed = addDefault.delete(ev.detail.id.channelId);
+            if (!removed) {
+                removeDefault.add(ev.detail.id.channelId);
+            }
+        } else {
+            const removed = removeDefault.delete(ev.detail.id.channelId);
+            if (!removed) {
+                addDefault.add(ev.detail.id.channelId);
+            }
+        }
+        addDefault = addDefault;
+        removeDefault = removeDefault;
+        ev.detail.isDefault = !ev.detail.isDefault;
+    }
+
+    onMount(() => search(true));
 </script>
 
 <SectionHeader border={false} flush shadow>
@@ -83,13 +122,20 @@
 
 <div class="channels">
     {#each searchResults as channel}
-        <ChannelCard {channel} />
+        <ChannelCard on:toggleDefaultChannel={toggleDefaultChannel} {channel} />
     {/each}
     {#if more}
         <div class="more">
             <Button disabled={searching} loading={searching} on:click={() => search(false)}
                 >{$_("communities.loadMore")}</Button>
         </div>
+    {/if}
+</div>
+
+<div class="apply">
+    {#if addDefault.size > 0 || removeDefault.size > 0}
+        <Button fill square disabled={saving} loading={saving} on:click={() => saveChanges()}
+            >{$_("communities.saveChanges")}</Button>
     {/if}
 </div>
 
@@ -110,6 +156,7 @@
 
     .channels {
         @include nice-scrollbar();
+        flex: auto;
 
         @include mobile() {
             gap: $sp3;
@@ -126,5 +173,9 @@
     }
     .more {
         text-align: center;
+    }
+
+    .apply {
+        flex: 0 0 toRem(60);
     }
 </style>

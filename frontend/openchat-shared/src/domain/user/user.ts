@@ -21,7 +21,6 @@ export type UserSummary = UserCommon & {
     username: string;
 };
 
-// todo - remember why this exists
 export type PartialUserSummary = UserCommon & {
     username?: string;
 };

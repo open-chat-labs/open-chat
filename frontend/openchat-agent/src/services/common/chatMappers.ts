@@ -118,7 +118,6 @@ import {
     chatIdentifiersEqual,
     AddRemoveReactionResponse,
     CommonResponses,
-    chatIdentifierToString,
     emptyChatMetrics,
     ChannelSummary,
     CommunitySummary,
@@ -148,6 +147,12 @@ import {
     ChangeRoleResponse,
     RegisterPollVoteResponse,
     JoinGroupResponse,
+    SearchGroupChatResponse,
+    InviteCodeResponse,
+    codeToText,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -172,6 +177,11 @@ import type {
     ApiThreadPreview,
     ApiChangeRoleResponse,
     ApiRegisterPollVoteResponse,
+    ApiSearchGroupChatResponse,
+    ApiInviteCodeResponse,
+    ApiEnableInviteCodeResponse,
+    ApiDisableInviteCodeResponse,
+    ApiResetInviteCodeResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -199,8 +209,13 @@ import type {
     ApiThreadPreviewsResponse as ApiChannelThreadPreviewsResponse,
     ApiRegisterPollVoteResponse as ApiRegisterChannelPollVoteResponse,
     ApiChangeChannelRoleResponse,
+    ApiSearchChannelResponse,
+    ApiInviteCodeResponse as ApiCommunityInviteCodeResponse,
+    ApiDisableInviteCodeResponse as ApiCommunityDisableInviteCodeResponse,
+    ApiEnableInviteCodeResponse as ApiCommunityEnableInviteCodeResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
+import { messageMatch } from "../user/mappers";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -944,9 +959,6 @@ export function apiMultiUserChat(chatId: ChatIdentifier): ApiMultiUserChat {
 }
 
 export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext): ApiReplyContext {
-    if (domain.sourceContext?.chatId.kind === "channel") {
-        throw new Error("TODO channel reply contexts not yet supported");
-    }
     if (
         domain.sourceContext !== undefined &&
         !chatIdentifiersEqual(chatId, domain.sourceContext.chatId)
@@ -958,12 +970,7 @@ export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext
                     apiOptional(identity, domain.sourceContext.threadRootMessageIndex),
                 ],
             ],
-            event_list_if_other: [
-                [
-                    Principal.fromText(chatIdentifierToString(domain.sourceContext.chatId)),
-                    apiOptional(identity, domain.sourceContext.threadRootMessageIndex),
-                ],
-            ],
+            event_list_if_other: [],
             event_index: domain.eventIndex,
         };
     } else {
@@ -1983,6 +1990,88 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
         return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
     } else {
         console.warn("Join group failed with: ", candid);
+        return CommonResponses.failure();
+    }
+}
+
+export function searchGroupChatResponse(
+    candid: ApiSearchGroupChatResponse | ApiSearchChannelResponse,
+    chatId: MultiUserChatIdentifier
+): SearchGroupChatResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            matches: candid.Success.matches.map((m) => messageMatch(m, chatId)),
+        };
+    } else {
+        console.warn("SearchChat failed with ", candid);
+        return CommonResponses.failure();
+    }
+}
+
+export function inviteCodeResponse(
+    candid: ApiInviteCodeResponse | ApiCommunityInviteCodeResponse
+): InviteCodeResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            code: optional(candid.Success.code, codeToText),
+        };
+    } else if ("NotAuthorized" in candid) {
+        return {
+            kind: "not_authorized",
+        };
+    } else {
+        console.warn("InviteCode failed with ", candid);
+        return CommonResponses.failure();
+    }
+}
+
+export function enableInviteCodeResponse(
+    candid: ApiEnableInviteCodeResponse | ApiCommunityEnableInviteCodeResponse
+): EnableInviteCodeResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            code: codeToText(candid.Success.code),
+        };
+    } else if ("NotAuthorized" in candid) {
+        return {
+            kind: "not_authorized",
+        };
+    } else {
+        console.warn("EnableInviteCode failed with");
+        return CommonResponses.failure();
+    }
+}
+
+export function disableInviteCodeResponse(
+    candid: ApiDisableInviteCodeResponse | ApiCommunityDisableInviteCodeResponse
+): DisableInviteCodeResponse {
+    if ("Success" in candid) {
+        return "success";
+    } else if ("NotAuthorized" in candid) {
+        return "not_authorized";
+    } else {
+        console.warn("DisableInviteCode failed with ", candid);
+        return "failure";
+    }
+}
+
+export function resetInviteCodeResponse(
+    candid: ApiResetInviteCodeResponse | ApiCommunityEnableInviteCodeResponse
+): ResetInviteCodeResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            code: codeToText(candid.Success.code),
+        };
+    } else if ("NotAuthorized" in candid) {
+        return {
+            kind: "not_authorized",
+        };
+    } else {
+        console.warn("ResetInviteCode failed with ", candid);
         return CommonResponses.failure();
     }
 }

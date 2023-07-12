@@ -16,10 +16,8 @@ export const cryptoBalance = {
     subscribe: cryptoBalanceStore.subscribe,
     set: (crypto: Cryptocurrency, balance: Tokens): void => {
         cryptoBalanceStore.update((record) => {
-            return {
-                ...record,
-                [crypto]: balance.e8s,
-            };
+            record[crypto] = balance.e8s;
+            return record;
         });
     },
 };

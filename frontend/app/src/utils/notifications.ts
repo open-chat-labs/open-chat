@@ -2,7 +2,7 @@ import {
     type Notification,
     type OpenChat,
     type ChatIdentifier,
-    chatIdentifierToString,
+    routeForChatIdentifier,
 } from "openchat-client";
 import page from "page";
 
@@ -78,8 +78,8 @@ export async function closeNotificationsForChat(chatId: ChatIdentifier): Promise
     if (registration !== undefined) {
         const notifications = await registration.getNotifications();
         for (const notification of notifications) {
-            // TODO - this won't work with channels at the moment
-            if (notification.data?.path.startsWith(chatIdentifierToString(chatId))) {
+            const url = routeForChatIdentifier("none", chatId);
+            if (notification.data?.path.startsWith(url)) {
                 notification.close();
             }
         }

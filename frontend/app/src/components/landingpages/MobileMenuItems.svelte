@@ -3,7 +3,7 @@
     import { AuthProvider, OpenChat } from "openchat-client";
     import MenuItem from "../MenuItem.svelte";
     import Menu from "../Menu.svelte";
-    import { location } from "../../routes";
+    import { location, routeForScope } from "../../routes";
     import page from "page";
 
     const dispatch = createEventDispatcher();
@@ -12,6 +12,7 @@
     export let showBlog: boolean;
 
     $: identityState = client.identityState;
+    $: chatListScope = client.chatListScope;
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
     $: path = $location;
 
@@ -23,7 +24,7 @@
 
     function launch() {
         if ($identityState === "logged_in") {
-            page("/");
+            page(routeForScope($chatListScope));
         } else {
             dispatch("login");
         }

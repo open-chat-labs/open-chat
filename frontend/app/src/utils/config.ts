@@ -33,4 +33,5 @@ export const configKeys = {
     communityPermissionSection: "openchat_community_permission_section",
     communityStatsSection: "openchat_community_stats_section",
     communityAdvancedSection: "openchat_community_advanced_section",
+    communityInviteUsersSections: "openchat_community_invite_users_section",
 };

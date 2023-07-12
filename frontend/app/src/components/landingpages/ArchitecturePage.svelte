@@ -162,7 +162,6 @@
                 provides a searchable index of public groups and maintains a list of hot groups.
             </p>
 
-            <!-- TODO possibly openstorage is 2-2 rather than 2-1-5 -->
             <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-5">OpenStorage</HashLinkTarget>
 
             <p>

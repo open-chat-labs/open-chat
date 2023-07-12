@@ -83,16 +83,18 @@
     }
 
     function onRemoveGroupMember(ev: CustomEvent<string>): void {
-        if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
-            chatStateStore.updateProp($selectedChatId, "members", (ps) =>
-                ps.filter((p) => p.userId !== ev.detail)
-            );
+        if (
+            $selectedChatId !== undefined &&
+            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+        ) {
             removeGroupMember($selectedChatId, ev.detail);
         }
     }
 
     function onRemoveCommunityMember(ev: CustomEvent<string>): void {
-        toastStore.showSuccessToast("TODO - remove community member");
+        if ($selectedCommunity !== undefined) {
+            removeCommunityMember($selectedCommunity.id, ev.detail);
+        }
     }
 
     async function inviteCommunityUsers(ev: CustomEvent<UserSummary[]>) {
@@ -220,7 +222,21 @@
         });
     }
 
-    function removeGroupMember(chatId: GroupChatIdentifier, userId: string): Promise<void> {
+    function removeCommunityMember(id: CommunityIdentifier, userId: string): Promise<void> {
+        return client
+            .removeCommunityMember(id, userId)
+            .then((resp) => {
+                if (resp !== "success") {
+                    toastStore.showFailureToast("removeMemberFailed");
+                }
+            })
+            .catch((err) => {
+                client.logError("Unable to remove member", err);
+                toastStore.showFailureToast("removeMemberFailed");
+            });
+    }
+
+    function removeGroupMember(chatId: MultiUserChatIdentifier, userId: string): Promise<void> {
         return client
             .removeMember(chatId, userId)
             .then((resp) => {
@@ -235,7 +251,10 @@
     }
 
     async function onBlockGroupUser(ev: CustomEvent<{ userId: string }>) {
-        if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
+        if (
+            $selectedChatId !== undefined &&
+            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+        ) {
             const success = await client.blockUser($selectedChatId, ev.detail.userId);
             if (success) {
                 toastStore.showSuccessToast("blockUserSucceeded");
@@ -246,11 +265,24 @@
     }
 
     async function onBlockCommunityUser(ev: CustomEvent<{ userId: string }>) {
-        toastStore.showSuccessToast("TODO - block community user");
+        if ($selectedCommunity !== undefined) {
+            const success = await client.blockCommunityUser(
+                $selectedCommunity.id,
+                ev.detail.userId
+            );
+            if (success) {
+                toastStore.showSuccessToast("blockUserSucceeded");
+            } else {
+                toastStore.showFailureToast("blockUserFailed");
+            }
+        }
     }
 
     async function onUnblockGroupUser(ev: CustomEvent<UserSummary>) {
-        if ($selectedChatId !== undefined && $selectedChatId.kind === "group_chat") {
+        if (
+            $selectedChatId !== undefined &&
+            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+        ) {
             const success = await client.unblockUser($selectedChatId, ev.detail.userId);
             if (success) {
                 toastStore.showSuccessToast("unblockUserSucceeded");
@@ -261,7 +293,17 @@
     }
 
     async function onUnblockCommnityUser(ev: CustomEvent<UserSummary>) {
-        toastStore.showSuccessToast("TODO - unblock community user");
+        if ($selectedCommunity !== undefined) {
+            const success = await client.unblockCommunityUser(
+                $selectedCommunity.id,
+                ev.detail.userId
+            );
+            if (success) {
+                toastStore.showSuccessToast("unblockUserSucceeded");
+            } else {
+                toastStore.showFailureToast("unblockUserFailed");
+            }
+        }
     }
 
     function showInviteGroupUsers(ev: CustomEvent<boolean>) {

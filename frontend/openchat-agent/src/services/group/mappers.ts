@@ -7,11 +7,6 @@ import type {
     ApiRole,
     ApiMessagesByMessageIndexResponse,
     ApiMessageEventWrapper,
-    ApiSearchGroupChatResponse,
-    ApiInviteCodeResponse,
-    ApiEnableInviteCodeResponse,
-    ApiDisableInviteCodeResponse,
-    ApiResetInviteCodeResponse,
     ApiRegisterProposalVoteResponse,
     ApiGroupRules,
     ApiRulesResponse,
@@ -37,16 +32,10 @@ import {
     UnblockUserResponse,
     MemberRole,
     Message,
-    InviteCodeResponse,
-    EnableInviteCodeResponse,
-    DisableInviteCodeResponse,
-    ResetInviteCodeResponse,
     GroupInviteCodeChange,
     RegisterProposalVoteResponse,
     AccessRules,
     ChatPermissions,
-    SearchGroupChatResponse,
-    codeToText,
     UnsupportedValueError,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
@@ -54,7 +43,6 @@ import {
     GroupCanisterSummaryUpdatesResponse,
     ClaimPrizeResponse,
     UpdatedEvent,
-    GroupChatIdentifier,
     ChatIdentifier,
     MultiUserChatIdentifier,
     ConvertToCommunityResponse,
@@ -76,7 +64,6 @@ import {
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
-import { messageMatch } from "../user/mappers";
 import { identity, optional, optionUpdate } from "../../utils/mapping";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
@@ -369,35 +356,10 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
 export function removeMemberResponse(candid: ApiRemoveParticipantResponse): RemoveMemberResponse {
     if ("Success" in candid) {
         return "success";
+    } else {
+        console.warn("RemoveMember failed with ", candid);
+        return "failure";
     }
-    if ("UserNotInGroup" in candid) {
-        return "user_not_in_group";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("CannotRemoveSelf" in candid) {
-        return "cannot_remove_self";
-    }
-    if ("CannotRemoveUser" in candid) {
-        return "cannot_remove_user";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiRemoveParticipantResponse type received",
-        candid
-    );
 }
 
 export async function getMessagesByMessageIndexResponse(
@@ -506,129 +468,6 @@ export async function getEventsResponse(
         return "events_failed";
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
-}
-
-export function searchGroupChatResponse(
-    candid: ApiSearchGroupChatResponse,
-    chatId: GroupChatIdentifier
-): SearchGroupChatResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            matches: candid.Success.matches.map((m) => messageMatch(m, chatId)),
-        };
-    }
-    if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
-        return {
-            kind: "term_invalid",
-        };
-    }
-    if ("TooManyUsers" in candid) {
-        return {
-            kind: "too_many_users",
-        };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return {
-            kind: "caller_not_in_group",
-        };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected UserIndex.ApiSearchMessagesResponse type received",
-        candid
-    );
-}
-
-export function inviteCodeResponse(candid: ApiInviteCodeResponse): InviteCodeResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            code: optional(candid.Success.code, codeToText),
-        };
-    }
-    if ("NotAuthorized" in candid) {
-        return {
-            kind: "not_authorized",
-        };
-    }
-    throw new UnsupportedValueError("Unexpected Group.ApiInviteCodeResponse type received", candid);
-}
-
-export function enableInviteCodeResponse(
-    candid: ApiEnableInviteCodeResponse
-): EnableInviteCodeResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            code: codeToText(candid.Success.code),
-        };
-    }
-    if ("NotAuthorized" in candid) {
-        return {
-            kind: "not_authorized",
-        };
-    }
-    if ("UserSuspended" in candid) {
-        return {
-            kind: "user_suspended",
-        };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected Group.ApiEnableInviteCodeResponse type received",
-        candid
-    );
-}
-
-export function disableInviteCodeResponse(
-    candid: ApiDisableInviteCodeResponse
-): DisableInviteCodeResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiDisableInviteCodeResponse type received",
-        candid
-    );
-}
-
-export function resetInviteCodeResponse(
-    candid: ApiResetInviteCodeResponse
-): ResetInviteCodeResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            code: codeToText(candid.Success.code),
-        };
-    }
-    if ("NotAuthorized" in candid) {
-        return {
-            kind: "not_authorized",
-        };
-    }
-    if ("UserSuspended" in candid) {
-        return {
-            kind: "user_suspended",
-        };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected Group.ApiResetInviteCodeResponse type received",
-        candid
-    );
 }
 
 function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {

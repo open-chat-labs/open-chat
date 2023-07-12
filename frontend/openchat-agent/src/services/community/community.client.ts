@@ -7,15 +7,11 @@ import type { AgentConfig } from "../../config";
 import {
     addMembersToChannelResponse,
     blockUserResponse,
-    disableInviteCodeResponse,
-    enableInviteCodeResponse,
-    inviteCodeResponse,
     joinChannelResponse,
     localUserIndexResponse,
     messagesByMessageIndexResponse,
     removeMemberResponse,
     removeMemberFromChannelResponse,
-    searchChannelResponse,
     sendMessageResponse,
     summaryResponse,
     summaryUpdatesResponse,
@@ -30,6 +26,8 @@ import {
     communityDetailsUpdatesResponse,
     changeRoleResponse,
     communityChannelSummaryResponse,
+    importGroupResponse,
+    manageDefaultChannelsResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -46,6 +44,7 @@ import {
     declineInvitationResponse,
     deleteMessageResponse,
     editMessageResponse,
+    inviteCodeResponse,
     deleteGroupResponse,
     unpinMessageResponse,
     groupDetailsResponse,
@@ -56,62 +55,69 @@ import {
     threadPreviewsResponse,
     changeRoleResponse as changeChannelRoleResponse,
     registerPollVoteResponse,
+    searchGroupChatResponse,
+    disableInviteCodeResponse,
+    enableInviteCodeResponse,
 } from "../common/chatMappers";
-import type {
-    AccessGate,
-    AccessRules,
-    AddMembersToChannelResponse,
-    BlockCommunityUserResponse,
-    CandidateChannel,
-    ChangeCommunityRoleResponse,
-    CommunityInviteCodeResponse,
-    CommunityPermissions,
-    DisableCommunityInviteCodeResponse,
-    EnableCommunityInviteCodeResponse,
-    EventWrapper,
-    EventsResponse,
-    GroupChatEvent,
-    ChatPermissions,
-    MemberRole,
-    Message,
-    RemoveChannelMemberResponse,
-    RemoveCommunityMemberResponse,
-    SearchChannelResponse,
-    ToggleMuteCommunityNotificationsResponse,
-    UnblockCommunityUserResponse,
-    UpdateCommunityResponse,
-    User,
-    ChannelIdentifier,
-    AddRemoveReactionResponse,
-    CommunitySummaryResponse,
-    CommunitySummaryUpdatesResponse,
-    SendMessageResponse,
-    UpdateGroupResponse,
-    CreateGroupResponse,
-    DeleteGroupResponse,
-    PinMessageResponse,
-    UnpinMessageResponse,
-    GroupChatDetailsResponse,
-    GroupChatDetails,
-    IndexRange,
-    ChatEvent,
-    EventsSuccessResult,
-    EditMessageResponse,
-    DeclineInvitationResponse,
-    CommunityIdentifier,
-    CommunityDetailsResponse,
-    CommunityDetails,
-    LeaveGroupResponse,
-    DeleteMessageResponse,
-    DeletedGroupMessageResponse,
-    UndeleteMessageResponse,
-    ThreadPreviewsResponse,
-    ChangeRoleResponse,
-    ChannelSummaryResponse,
-    RegisterPollVoteResponse,
-    ToggleMuteNotificationResponse,
-    JoinGroupResponse,
-    ExploreChannelsResponse,
+import {
+    type AccessGate,
+    type AccessRules,
+    type AddMembersToChannelResponse,
+    type BlockCommunityUserResponse,
+    type CandidateChannel,
+    type ChangeCommunityRoleResponse,
+    type CommunityPermissions,
+    type EventWrapper,
+    type EventsResponse,
+    type GroupChatEvent,
+    type ChatPermissions,
+    type MemberRole,
+    type Message,
+    type ToggleMuteCommunityNotificationsResponse,
+    type UnblockCommunityUserResponse,
+    type UpdateCommunityResponse,
+    type User,
+    type ChannelIdentifier,
+    type AddRemoveReactionResponse,
+    type CommunitySummaryResponse,
+    type CommunitySummaryUpdatesResponse,
+    type SendMessageResponse,
+    type UpdateGroupResponse,
+    type CreateGroupResponse,
+    type DeleteGroupResponse,
+    type PinMessageResponse,
+    type UnpinMessageResponse,
+    type GroupChatDetailsResponse,
+    type GroupChatDetails,
+    type IndexRange,
+    type ChatEvent,
+    type EventsSuccessResult,
+    type EditMessageResponse,
+    type DeclineInvitationResponse,
+    type CommunityIdentifier,
+    type CommunityDetailsResponse,
+    type CommunityDetails,
+    type LeaveGroupResponse,
+    type DeleteMessageResponse,
+    type DeletedGroupMessageResponse,
+    type UndeleteMessageResponse,
+    type ThreadPreviewsResponse,
+    type ChangeRoleResponse,
+    type ChannelSummaryResponse,
+    type RegisterPollVoteResponse,
+    type ToggleMuteNotificationResponse,
+    type JoinGroupResponse,
+    type ExploreChannelsResponse,
+    type GroupChatIdentifier,
+    type ImportGroupResponse,
+    type ManageDefaultChannelsResponse,
+    type RemoveMemberResponse,
+    type SearchGroupChatResponse,
+    textToCode,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -147,7 +153,8 @@ export class CommunityClient extends CandidService {
         private communityId: string,
         identity: Identity,
         private config: AgentConfig,
-        private db: Database
+        private db: Database,
+        private inviteCode: string | undefined
     ) {
         super(identity);
 
@@ -158,9 +165,23 @@ export class CommunityClient extends CandidService {
         communityId: string,
         identity: Identity,
         config: AgentConfig,
-        db: Database
+        db: Database,
+        inviteCode: string | undefined
     ): CommunityClient {
-        return new CommunityClient(communityId, identity, config, db);
+        return new CommunityClient(communityId, identity, config, db, inviteCode);
+    }
+
+    manageDefaultChannels(
+        add: Set<string>,
+        remove: Set<string>
+    ): Promise<ManageDefaultChannelsResponse> {
+        return this.handleResponse(
+            this.service.manage_default_channels({
+                to_add: Array.from(add).map((id) => BigInt(id)),
+                to_remove: Array.from(remove).map((id) => BigInt(id)),
+            }),
+            manageDefaultChannelsResponse
+        );
     }
 
     addMembersToChannel(
@@ -237,7 +258,7 @@ export class CommunityClient extends CandidService {
                 is_public: channel.public,
                 name: channel.name,
                 subtype: [],
-                events_ttl: [], // TODO - not sure what this is for
+                events_ttl: [],
                 description: channel.description,
                 history_visible_to_new_joiners: channel.historyVisible,
                 avatar: apiOptional((data) => {
@@ -306,7 +327,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    disableInviteCode(): Promise<DisableCommunityInviteCodeResponse> {
+    disableInviteCode(): Promise<DisableInviteCodeResponse> {
         return this.handleResponse(this.service.disable_invite_code({}), disableInviteCodeResponse);
     }
 
@@ -330,7 +351,7 @@ export class CommunityClient extends CandidService {
             });
     }
 
-    enableInviteCode(): Promise<EnableCommunityInviteCodeResponse> {
+    enableInviteCode(): Promise<EnableInviteCodeResponse> {
         return this.handleResponse(this.service.enable_invite_code({}), enableInviteCodeResponse);
     }
 
@@ -543,12 +564,11 @@ export class CommunityClient extends CandidService {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<Message>> {
         const thread_root_message_index: [] = [];
-        const invite_code: [] = [];
         const args = {
             channel_id: BigInt(chatId.channelId),
             thread_root_message_index,
             messages: new Uint32Array(messageIndexes),
-            invite_code,
+            invite_code: apiOptional(textToCode, this.inviteCode),
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
@@ -601,7 +621,7 @@ export class CommunityClient extends CandidService {
         return resp;
     }
 
-    inviteCode(): Promise<CommunityInviteCodeResponse> {
+    getInviteCode(): Promise<InviteCodeResponse> {
         return this.handleResponse(this.service.invite_code({}), inviteCodeResponse);
     }
 
@@ -672,7 +692,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    removeMember(userId: string): Promise<RemoveCommunityMemberResponse> {
+    removeMember(userId: string): Promise<RemoveMemberResponse> {
         return this.handleResponse(
             this.service.remove_member({
                 user_id: Principal.fromText(userId),
@@ -684,7 +704,7 @@ export class CommunityClient extends CandidService {
     removeMemberFromChannel(
         chatId: ChannelIdentifier,
         userId: string
-    ): Promise<RemoveChannelMemberResponse> {
+    ): Promise<RemoveMemberResponse> {
         return this.handleResponse(
             this.service.remove_member_from_channel({
                 channel_id: BigInt(chatId.channelId),
@@ -711,7 +731,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    resetInviteCode(): Promise<EnableCommunityInviteCodeResponse> {
+    resetInviteCode(): Promise<ResetInviteCodeResponse> {
         return this.handleResponse(this.service.reset_invite_code({}), enableInviteCodeResponse);
     }
 
@@ -720,7 +740,7 @@ export class CommunityClient extends CandidService {
         maxResults: number,
         users: string[],
         searchTerm: string
-    ): Promise<SearchChannelResponse> {
+    ): Promise<SearchGroupChatResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.search_channel({
@@ -729,7 +749,7 @@ export class CommunityClient extends CandidService {
                     users: users.length > 0 ? [users.map((u) => Principal.fromText(u))] : [],
                     search_term: searchTerm,
                 }),
-            searchChannelResponse
+            (resp) => searchGroupChatResponse(resp, chatId)
         );
     }
 
@@ -757,7 +777,7 @@ export class CommunityClient extends CandidService {
         return this.handleQueryResponse(
             () =>
                 this.service.selected_initial({
-                    invite_code: [], //TODO - deal with invite code
+                    invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
             communityDetailsResponse
         );
@@ -781,7 +801,7 @@ export class CommunityClient extends CandidService {
             () =>
                 this.service.selected_updates({
                     updates_since: previous.lastUpdated,
-                    invite_code: [], //TODO - deal with invite code
+                    invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
             communityDetailsUpdatesResponse
         );
@@ -952,11 +972,20 @@ export class CommunityClient extends CandidService {
         );
     }
 
+    importGroup(id: GroupChatIdentifier): Promise<ImportGroupResponse> {
+        return this.handleResponse(
+            this.service.import_group({
+                group_id: Principal.fromText(id.groupId),
+            }),
+            (resp) => importGroupResponse(this.communityId, resp)
+        );
+    }
+
     summary(): Promise<CommunitySummaryResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.summary({
-                    invite_code: [], // TODO: add invite code
+                    invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
             summaryResponse
         );
@@ -973,7 +1002,7 @@ export class CommunityClient extends CandidService {
                     page_size: pageSize,
                     page_index: pageIndex,
                     search_term: apiOptional(identity, searchTerm),
-                    invite_code: [], // TODO: add invite code
+                    invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
             (resp) => exploreChannelsResponse(resp, this.communityId)
         );
@@ -984,7 +1013,7 @@ export class CommunityClient extends CandidService {
             () =>
                 this.service.summary_updates({
                     updates_since: updatesSince,
-                    invite_code: [], // TODO: add invite code
+                    invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
             summaryUpdatesResponse
         );

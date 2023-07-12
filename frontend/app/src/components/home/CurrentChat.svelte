@@ -19,6 +19,9 @@
         ChatIdentifier,
         chatIdentifiersEqual,
         MultiUserChat,
+        GroupChatSummary,
+        CommunityMap,
+        CommunitySummary,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -26,6 +29,7 @@
     import GiphySelector from "./GiphySelector.svelte";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { toastStore } from "stores/toast";
+    import ImportToCommunity from "./communities/Import.svelte";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -46,6 +50,7 @@
     let giphySelector: GiphySelector;
     let showSearchHeader = false;
     let searchTerm = "";
+    let importToCommunities: CommunityMap<CommunitySummary> | undefined;
 
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: currentChatMembers = client.currentChatMembers;
@@ -60,6 +65,7 @@
     $: directlyBlockedUsers = client.blockedUsers;
     $: showFooter = !showSearchHeader && !client.isReadOnly();
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
+    $: communities = client.communities;
 
     $: canSend = client.canSendMessages(chat.id);
     $: preview = client.isPreviewing(chat.id);
@@ -93,6 +99,14 @@
             firstUnreadMention = client.getFirstUnreadMention(chat);
         });
     });
+
+    function importToCommunity(ev: CustomEvent<GroupChatSummary>) {
+        importToCommunities = $communities.filter((c) => c.membership.role === "owner");
+        if (importToCommunities.size === 0) {
+            toastStore.showFailureToast("communities.noOwned");
+            importToCommunities = undefined;
+        }
+    }
 
     function getUnreadMessageCount(chat: ChatSummary): number {
         if (client.isPreviewing(chat.id)) return 0;
@@ -221,6 +235,14 @@
 
 <svelte:window on:focus={onWindowFocus} />
 
+{#if importToCommunities !== undefined}
+    <ImportToCommunity
+        on:successfulImport
+        groupId={chat.id}
+        on:cancel={() => (importToCommunities = undefined)}
+        ownedCommunities={importToCommunities} />
+{/if}
+
 <PollBuilder
     bind:this={pollBuilder}
     on:sendPoll={sendMessageWithContent}
@@ -266,6 +288,7 @@
             on:createPoll={createPoll}
             on:searchChat={searchChat}
             on:convertGroupToCommunity
+            on:importToCommunity={importToCommunity}
             {blocked}
             {readonly}
             {unreadMessages}

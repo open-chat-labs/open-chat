@@ -83,6 +83,8 @@ export class MessageReadTracker {
     public waiting: ChatMap<Map<bigint, number>> = new ChatMap<Map<bigint, number>>(); // The map is messageId -> (unconfirmed) messageIndex
     public state: MessagesReadByChat = new ChatMap<MessagesRead>();
     private subscribers: Subscriber<MessageReadState>[] = [];
+    private executingBatch = false;
+    private publishRequired = false;
 
     public subscribe(sub: Subscriber<MessageReadState>): Unsubscriber {
         this.subscribers.push(sub);
@@ -141,6 +143,10 @@ export class MessageReadTracker {
 
     /** this will notify all subscribers that something that affects the unread message count has changed */
     public publish(): void {
+        if (this.executingBatch) {
+            this.publishRequired = true;
+            return;
+        }
         this.subscribers.forEach((sub) => {
             sub({
                 serverState: this.serverState,
@@ -148,6 +154,7 @@ export class MessageReadTracker {
                 state: this.state,
             });
         });
+        this.publishRequired = false;
     }
 
     private stateForId(chatId: ChatIdentifier): MessagesRead {
@@ -292,6 +299,20 @@ export class MessageReadTracker {
             }
         }
         return undefined;
+    }
+
+    // some operations can be called in a loop. We only want to publish at the end of the
+    // loop so that downstream derived stores are not re-computed unnecessarily
+    batchUpdate(fn: () => void): void {
+        this.executingBatch = true;
+        try {
+            fn();
+        } finally {
+            this.executingBatch = false;
+            if (this.publishRequired) {
+                this.publish();
+            }
+        }
     }
 
     syncWithServer(

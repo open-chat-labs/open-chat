@@ -900,6 +900,13 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
+            case "communityInvite":
+                agent.communityInvite = payload.value;
+                sendResponse(correlationId, {
+                    response: undefined,
+                });
+                break;
+
             case "groupInvite":
                 agent.groupInvite = payload.value;
                 sendResponse(correlationId, {
@@ -1039,7 +1046,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "getInviteCode":
                 agent
-                    .getInviteCode(payload.chatId)
+                    .getInviteCode(payload.id)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1050,7 +1057,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "enableInviteCode":
                 agent
-                    .enableInviteCode(payload.chatId)
+                    .enableInviteCode(payload.id)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1061,7 +1068,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "disableInviteCode":
                 agent
-                    .disableInviteCode(payload.chatId)
+                    .disableInviteCode(payload.id)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1072,7 +1079,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "resetInviteCode":
                 agent
-                    .resetInviteCode(payload.chatId)
+                    .resetInviteCode(payload.id)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1363,7 +1370,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "blockCommunityUser":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.id.communityId)
                     .blockUser(payload.userId)
                     .then((response) =>
                         sendResponse(correlationId, {
@@ -1409,30 +1416,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "disableCommunityInviteCode":
-                agent
-                    .communityClient(payload.communityId)
-                    .disableInviteCode()
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "communityInviteCode":
-                agent
-                    .communityClient(payload.communityId)
-                    .inviteCode()
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "channelMessagesByMessageIndex":
                 agent
                     .communityClient(payload.chatId.communityId)
@@ -1452,49 +1435,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "removeCommunityMember":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.id.communityId)
                     .removeMember(payload.userId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "removeChannelMember":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .removeMemberFromChannel(payload.chatId, payload.userId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "resetCommunityInviteCode":
-                agent
-                    .communityClient(payload.communityId)
-                    .resetInviteCode()
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "searchChannel":
-                agent
-                    .communityClient(payload.chatId.communityId)
-                    .searchChannel(
-                        payload.chatId,
-                        payload.maxResults,
-                        payload.users,
-                        payload.searchTerm
-                    )
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1517,7 +1459,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "unblockCommunityUser":
                 agent
-                    .communityClient(payload.communityId)
+                    .communityClient(payload.id.communityId)
                     .unblockUser(payload.userId)
                     .then((response) =>
                         sendResponse(correlationId, {
@@ -1585,8 +1527,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "exploreChannels":
                 agent
-                    .communityClient(payload.id.communityId)
-                    .exploreChannels(payload.searchTerm, payload.pageSize, payload.pageIndex)
+                    .exploreChannels(
+                        payload.id,
+                        payload.searchTerm,
+                        payload.pageSize,
+                        payload.pageIndex
+                    )
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1666,6 +1612,30 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "convertGroupToCommunity":
                 agent
                     .convertGroupToCommunity(payload.chatId, payload.historyVisible, payload.rules)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "importGroupToCommunity":
+                agent
+                    .communityClient(payload.communityId.communityId)
+                    .importGroup(payload.groupId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "manageDefaultChannels":
+                agent
+                    .communityClient(payload.id.communityId)
+                    .manageDefaultChannels(payload.toAdd, payload.toRemove)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

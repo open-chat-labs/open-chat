@@ -44,6 +44,7 @@
             chat={$selectedChatStore}
             events={$eventsStore}
             filteredProposals={$filteredProposalsStore}
+            on:successfulImport
             on:unblockUser
             on:clearSelection
             on:blockUser

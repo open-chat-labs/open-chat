@@ -793,6 +793,10 @@ export function removeVoteFromPoll(userId: string, answerIdx: number, votes: Pol
     return votes;
 }
 
+export function canImportToCommunity(chat: ChatSummary): boolean {
+    return chat.kind === "group_chat" && !chat.frozen && hasOwnerRights(chat.membership.role);
+}
+
 export function canChangePermissions(chat: ChatSummary): boolean {
     return (
         (chat.kind === "group_chat" || chat.kind === "channel") &&

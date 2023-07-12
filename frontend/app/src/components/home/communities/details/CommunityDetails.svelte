@@ -2,6 +2,7 @@
     import type { AccessRules, Metrics, CommunitySummary } from "openchat-client";
     import {
         communityAdvancedOpen,
+        communityInviteUsersOpen,
         communityPermissionsOpen,
         communityRulesOpen,
         communityStatsOpen,
@@ -15,11 +16,13 @@
     import AdvancedSection from "./AdvancedSection.svelte";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import Stats from "../../Stats.svelte";
+    import InviteUsersWithLink from "../../InviteUsersWithLink.svelte";
 
     export let community: CommunitySummary;
     export let rules: AccessRules | undefined;
     export let metrics: Metrics;
     export let canDelete: boolean;
+    export let canInvite: boolean;
 </script>
 
 <div class="details">
@@ -54,6 +57,14 @@
             open={$communityRulesOpen}
             headerText={interpolateLevel("rules.rules", community.level)}>
             <Markdown inline={false} text={rules.text} />
+        </CollapsibleCard>
+    {/if}
+    {#if canInvite}
+        <CollapsibleCard
+            on:toggle={communityInviteUsersOpen.toggle}
+            open={$communityInviteUsersOpen}
+            headerText={interpolateLevel("invite.inviteWithLink", community.level, true)}>
+            <InviteUsersWithLink container={community} />
         </CollapsibleCard>
     {/if}
     <CollapsibleCard

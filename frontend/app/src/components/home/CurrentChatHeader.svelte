@@ -160,6 +160,7 @@
             {selectedChatSummary}
             {blocked}
             on:convertGroupToCommunity
+            on:importToCommunity
             on:toggleMuteNotifications
             on:showGroupDetails
             on:showPinned

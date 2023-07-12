@@ -39,6 +39,7 @@
         MultiUserChat,
         MultiUserChatIdentifier,
         GroupChatSummary,
+        ChannelIdentifier,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -224,7 +225,6 @@
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
-            // TODO - deal with channels
             if (chatId.kind === "direct_chat") {
                 await createDirectChat(chatId);
             } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
@@ -269,7 +269,7 @@
     }
 
     async function selectCommunity(id: CommunityIdentifier): Promise<boolean> {
-        const found = await client.setSelectedCommunity(id);
+        const found = await client.setSelectedCommunity(id, $querystring.get("code"));
         if (!found) {
             modal = ModalType.NoAccess;
         }
@@ -414,32 +414,7 @@
 
     function closeNoAccess() {
         closeModal();
-        page("/favourite");
-    }
-
-    async function performSearch(ev: CustomEvent<string>) {
-        searchResultsAvailable = false;
-        searchTerm = ev.detail;
-        if (searchTerm !== "") {
-            searching = true;
-            const lowercase = searchTerm.toLowerCase();
-            groupSearchResults = client.searchGroups(lowercase, 10);
-            userSearchResults = client.searchUsers(lowercase, 10);
-            try {
-                await Promise.all([groupSearchResults, userSearchResults]).then(() => {
-                    if (searchTerm !== "") {
-                        searchResultsAvailable = true;
-                        searching = false;
-                    } else {
-                        clearSearch();
-                    }
-                });
-            } catch (_err) {
-                searching = false;
-            }
-        } else {
-            clearSearch();
-        }
+        page(routeForScope(client.getDefaultScope()));
     }
 
     function clearSearch() {
@@ -565,7 +540,7 @@
         if (chatId.kind === "channel") {
             page(`/community/${chatId.communityId}`);
         } else {
-            page("/");
+            page(routeForScope($chatListScope));
         }
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
@@ -578,7 +553,7 @@
     }
 
     function deleteCommunity(id: CommunityIdentifier): Promise<void> {
-        page("/favourite");
+        page(routeForScope(client.getDefaultScope()));
 
         client.deleteCommunity(id).then((success) => {
             if (!success) {
@@ -591,7 +566,7 @@
     }
 
     function leaveCommunity(id: CommunityIdentifier): Promise<void> {
-        page("/favourite");
+        page(routeForScope(client.getDefaultScope()));
 
         client.leaveCommunity(id).then((success) => {
             if (!success) {
@@ -624,7 +599,7 @@
 
     function deleteDirectChat(ev: CustomEvent<ChatIdentifier>) {
         if ($pathParams.kind === "global_chat_selected_route" && ev.detail === $pathParams.chatId) {
-            page("/");
+            page(routeForScope($chatListScope));
         }
         tick().then(() => client.removeChat(ev.detail));
     }
@@ -1023,6 +998,10 @@
         convertGroup = ev.detail;
     }
 
+    function successfulImport(ev: CustomEvent<ChannelIdentifier>) {
+        page(`/community/${ev.detail.communityId}`);
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -1045,13 +1024,7 @@
 
     {#if $layoutStore.showLeft}
         <LeftPanel
-            {groupSearchResults}
-            {userSearchResults}
-            {searchTerm}
-            {searchResultsAvailable}
-            {searching}
             on:showHomePage={showLandingPageRoute("/home")}
-            on:searchEntered={performSearch}
             on:chatWith={chatWith}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:newGroup={() => newGroup("group")}
@@ -1077,7 +1050,8 @@
             {joining}
             bind:currentChatMessages
             loadingChats={$chatsLoading}
-            on:clearSelection={() => page("/")}
+            on:successfulImport={successfulImport}
+            on:clearSelection={() => page(routeForScope($chatListScope))}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
             on:leaveGroup={triggerConfirm}

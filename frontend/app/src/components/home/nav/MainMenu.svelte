@@ -1,6 +1,7 @@
 <script lang="ts">
     import { iconSize } from "../../../stores/iconSize";
     import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
+    import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import Home from "svelte-material-icons/Home.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
     import Note from "svelte-material-icons/NoteTextOutline.svelte";
@@ -30,6 +31,10 @@
     <MenuItem on:click={() => dispatch("upgrade")}>
         <span class="diamond-icon" slot="icon">💎</span>
         <span slot="text">{$canExtendDiamond ? $_("upgrade.extend") : $_("upgrade.diamond")}</span>
+    </MenuItem>
+    <MenuItem on:click={() => dispatch("wallet")}>
+        <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+        <span slot="text">{$_("wallet")}</span>
     </MenuItem>
     <MenuItem separator />
     <MenuItem on:click={() => page("/home")}>

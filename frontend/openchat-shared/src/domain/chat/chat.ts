@@ -10,7 +10,7 @@ import type {
     MemberRole,
     Permissioned,
 } from "../permission";
-import type { HasLevel } from "../structure";
+import type { ChatListScope, HasLevel } from "../structure";
 import type {
     NotAuthorised,
     Success,
@@ -849,6 +849,12 @@ export function chatIdentifierUnset(id: ChatIdentifier | undefined): boolean {
     }
 }
 
+export function chatScopesEqual(a: ChatListScope, b: ChatListScope): boolean {
+    if (a.kind === "community" && b.kind === "community")
+        return a.id.communityId === b.id.communityId;
+    return a.kind === b.kind;
+}
+
 export function chatIdentifiersEqual(
     a: ChatIdentifier | undefined,
     b: ChatIdentifier | undefined
@@ -1512,16 +1518,7 @@ export type ChangeRoleResponse = "failure" | "success";
 
 export type DeleteGroupResponse = "success" | "failure";
 
-export type RemoveMemberResponse =
-    | "user_not_in_group"
-    | "caller_not_in_group"
-    | "not_authorized"
-    | "success"
-    | "cannot_remove_self"
-    | "cannot_remove_user"
-    | "user_suspended"
-    | "chat_frozen"
-    | "internal_error";
+export type RemoveMemberResponse = "success" | "failure";
 
 export type BlockUserResponse =
     | "success"
@@ -1635,35 +1632,23 @@ export type DeletedDirectMessageResponse =
 
 export type RegisterPollVoteResponse = "success" | "failure";
 
-export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised;
+export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised | Failure;
 
 export type InviteCodeSuccess = {
     kind: "success";
     code?: string;
 };
 
-export type EnableInviteCodeResponse =
-    | EnableInviteCodeSuccess
-    | NotAuthorised
-    | UserSuspended
-    | ChatFrozen;
+export type EnableInviteCodeResponse = EnableInviteCodeSuccess | NotAuthorised | Failure;
 
 export type EnableInviteCodeSuccess = {
     kind: "success";
     code: string;
 };
 
-export type DisableInviteCodeResponse =
-    | "not_authorized"
-    | "user_suspended"
-    | "chat_frozen"
-    | "success";
+export type DisableInviteCodeResponse = "not_authorized" | "failure" | "success";
 
-export type ResetInviteCodeResponse =
-    | ResetInviteCodeSuccess
-    | NotAuthorised
-    | UserSuspended
-    | ChatFrozen;
+export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised | Failure;
 
 export type ResetInviteCodeSuccess = {
     kind: "success";

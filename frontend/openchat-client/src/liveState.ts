@@ -46,12 +46,11 @@ import {
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
 import { userStore } from "./stores/user";
-import { PinnedByScope, pinnedChatsStore } from "./stores/pinnedChats";
 import { blockedUsers } from "./stores/blockedUsers";
 import { diamondMembership, isDiamond } from "./stores/diamond";
 import type DRange from "drange";
 import { communities } from "./stores/community";
-import { chatListScopeStore } from "./stores/global";
+import { GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -72,7 +71,6 @@ export class LiveState {
     uninitializedDirectChats!: ChatMap<DirectChatSummary>;
     groupPreviews!: ChatMap<MultiUserChat>;
     selectedChatId: ChatIdentifier | undefined;
-    pinnedChats!: PinnedByScope;
     chatSummariesList!: ChatSummary[];
     threadsByChat!: ChatMap<ThreadSyncDetails[]>;
     focusMessageIndex: number | undefined;
@@ -91,6 +89,7 @@ export class LiveState {
     confirmedThreadEventIndexesLoaded!: DRange;
     communities!: CommunityMap<CommunitySummary>;
     chatListScope!: ChatListScope;
+    globalState!: GlobalState;
 
     constructor() {
         confirmedThreadEventIndexesLoadedStore.subscribe(
@@ -110,7 +109,6 @@ export class LiveState {
         selectedChatStore.subscribe((data) => (this.selectedChat = data));
         selectedServerChatStore.subscribe((data) => (this.selectedServerChat = data));
         currentChatReplyingTo.subscribe((data) => (this.currentChatReplyingTo = data));
-        pinnedChatsStore.subscribe((data) => (this.pinnedChats = data));
         chatSummariesListStore.subscribe((data) => (this.chatSummariesList = data));
         threadsByChatStore.subscribe((data) => (this.threadsByChat = data));
         focusMessageIndex.subscribe((data) => (this.focusMessageIndex = data));
@@ -130,5 +128,6 @@ export class LiveState {
         isDiamond.subscribe((data) => (this.isDiamond = data));
         communities.subscribe((data) => (this.communities = data));
         chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
+        globalStateStore.subscribe((data) => (this.globalState = data));
     }
 }

@@ -5,14 +5,12 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
-    import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import { AvatarSize, CommunitySummary, OpenChat } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import CommunityMenu from "../communities/CommunityMenu.svelte";
     import { _ } from "svelte-i18n";
     import { pathParams } from "../../../routes";
     import page from "page";
@@ -61,10 +59,6 @@
         page("/favourite");
     }
 
-    function openWallet() {
-        dispatch("wallet");
-    }
-
     function selectCommunity(community: CommunitySummary) {
         page(`/community/${community.id.communityId}`);
     }
@@ -89,7 +83,7 @@
                         </HoverIcon>
                     </span>
                     <span slot="menu">
-                        <MainMenu on:halloffame on:logout on:upgrade />
+                        <MainMenu on:wallet on:halloffame on:logout on:upgrade />
                     </span>
                 </MenuIcon>
             </div>
@@ -100,12 +94,6 @@
                 <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
             </LeftNavItem>
         {/if}
-
-        <LeftNavItem label={$_("wallet")} on:click={openWallet}>
-            <div class="hover wallet">
-                <Wallet size={iconSize} color={"var(--icon-txt)"} />
-            </div>
-        </LeftNavItem>
 
         <LeftNavItem
             selected={$chatListScope.kind === "direct_chat"}
@@ -151,14 +139,6 @@
                         $chatListScope.kind !== "favourite"}
                     url={client.communityAvatarUrl(community.avatar)}
                     size={avatarSize} />
-                <div slot="menu">
-                    <CommunityMenu
-                        on:deleteCommunity
-                        on:leaveCommunity
-                        on:communityDetails
-                        on:newChannel
-                        {community} />
-                </div>
             </LeftNavItem>
         {/each}
     </div>
@@ -207,6 +187,9 @@
         }
     }
 
+    $size: toRem(48);
+    $mobile-size: toRem(40);
+
     .top,
     .bottom,
     .middle {
@@ -217,13 +200,13 @@
         gap: $sp3;
     }
     .logo {
-        width: toRem(48);
-        height: toRem(48);
+        width: $size;
+        height: $size;
         margin: auto;
 
         @include mobile() {
-            width: toRem(35);
-            height: toRem(35);
+            width: $mobile-size;
+            height: $mobile-size;
         }
     }
 
@@ -234,8 +217,8 @@
     }
 
     .hover {
-        width: toRem(48);
-        height: toRem(48);
+        width: $size;
+        height: $size;
         border: 1px solid transparent;
         border-radius: 50%;
         background: var(--icon-hv);
@@ -245,8 +228,8 @@
         transition: border-color 250ms ease-in-out;
 
         @include mobile() {
-            width: toRem(35);
-            height: toRem(35);
+            width: $mobile-size;
+            height: $mobile-size;
         }
     }
 

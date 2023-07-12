@@ -21,6 +21,10 @@
         right: toRem(-9);
         bottom: 0;
     }
+
+    $size: toRem(48);
+    $mobile-size: toRem(40);
+
     .left-nav-item {
         display: flex;
         align-items: center;
@@ -45,18 +49,18 @@
         }
 
         .icon {
-            flex: 0 0 toRem(48);
-            width: toRem(48);
-            height: toRem(48);
+            flex: 0 0 $size;
+            width: $size;
+            height: $size;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
 
             @include mobile() {
-                flex: 0 0 toRem(35);
-                width: toRem(35);
-                height: toRem(35);
+                flex: 0 0 $mobile-size;
+                width: $mobile-size;
+                height: $mobile-size;
             }
         }
 

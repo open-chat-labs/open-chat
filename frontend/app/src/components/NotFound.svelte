@@ -3,6 +3,12 @@
     import ModalPage from "./ModalPage.svelte";
     import { _ } from "svelte-i18n";
     import page from "page";
+    import { getContext } from "svelte";
+    import type { OpenChat } from "openchat-client";
+    import { routeForScope } from "../routes";
+
+    const client = getContext<OpenChat>("client");
+    $: chatListScope = client.chatListScope;
 </script>
 
 <ModalPage bgClass="none" minHeight="200px">
@@ -10,7 +16,8 @@
     <div class="content">
         <div>
             <h1 class="msg">404</h1>
-            <Link underline={"always"} on:click={() => page("/")}>{$_("home")}</Link>
+            <Link underline={"always"} on:click={() => page(routeForScope($chatListScope))}
+                >{$_("home")}</Link>
         </div>
     </div>
 </ModalPage>

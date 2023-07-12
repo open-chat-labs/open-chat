@@ -26,13 +26,10 @@ import type {
 import type {
     ChatNotFound,
     CommunityFrozen,
-    CommunityNotPublic,
     Failure,
-    InteralError,
     NotAuthorised,
     Success,
     SuccessNoUpdates,
-    TargetUserNotInCommunity,
     UserLimitReached,
     UserNotInChat,
     UserNotInCommunity,
@@ -69,7 +66,6 @@ export type CommunitySummary = AccessControlled &
         primaryLanguage: string;
     };
 
-// TODO - not sure if this really needs to be a thing yet
 export type DefaultChannel = {
     name: string;
     createdAt: number;
@@ -121,17 +117,7 @@ export type AddMembersToChannelResponse =
     | UserSuspended
     | CommunityFrozen;
 
-export type BlockCommunityUserResponse =
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | CommunityNotPublic
-    | UserSuspended
-    | CommunityFrozen
-    | TargetUserNotInCommunity
-    | InteralError
-    | { kind: "cannot_block_self" }
-    | { kind: "cannot_block_user" };
+export type BlockCommunityUserResponse = Success | Failure;
 
 export type ChangeCommunityRoleResponse = "success" | "failure";
 
@@ -144,35 +130,12 @@ export type DeleteChannelResponse =
     | UserSuspended
     | CommunityFrozen;
 
-export type DisableCommunityInviteCodeResponse =
-    | NotAuthorised
-    | Success
-    | UserSuspended
-    | CommunityFrozen;
-
-export type EnableCommunityInviteCodeResponse =
-    | NotAuthorised
-    | (Success & { code: bigint })
-    | UserSuspended
-    | CommunityFrozen;
-
-export type CommunityInviteCodeResponse =
-    | NotAuthorised
-    | (Success & { code?: bigint })
-    | UserNotInCommunity;
-
-export type RemoveCommunityMemberResponse = Success | Failure;
-
-export type RemoveChannelMemberResponse = Success | Failure;
-
 export type ChannelMessageMatch = {
     content: MessageContent;
     sender: string;
     score: number;
     messageIndex: number;
 };
-
-export type SearchChannelResponse = Failure | (Success & { matches: ChannelMessageMatch[] });
 
 export type UnblockCommunityUserResponse = Failure | Success;
 
@@ -254,6 +217,7 @@ export type ChannelMatch = {
     description: string;
     avatar: DataContent;
     memberCount: number;
+    isDefault: boolean;
 };
 
 export type CommunityDetailsResponse = "failure" | CommunityDetails;
@@ -298,3 +262,7 @@ export type LocalCommunitySummaryUpdates = {
 };
 
 export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | Failure;
+
+export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | Failure;
+
+export type ManageDefaultChannelsResponse = Success | Failure;

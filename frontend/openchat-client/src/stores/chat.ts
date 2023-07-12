@@ -6,7 +6,6 @@ import {
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
-    GroupChatSummary,
     Message,
     MessageContent,
     ThreadSyncDetails,
@@ -33,7 +32,6 @@ import {
     mergeLocalSummaryUpdates,
 } from "../utils/chat";
 import { userStore } from "./user";
-import { pinnedChatsStore } from "./pinnedChats";
 import DRange from "drange";
 import { snsFunctions } from "./snsFunctions";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
@@ -45,17 +43,25 @@ import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
 import type { OpenChat } from "../openchat";
-import { allChats, chatListScopeStore, globalStateStore } from "./global";
+import {
+    allChats,
+    chatListScopeStore,
+    getAllChats,
+    globalStateStore,
+    pinnedChatsStore,
+} from "./global";
 import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
+import { safeWritable } from "./safeWritable";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
 const communitiesEnabled = localStorage.getItem("openchat_communities_enabled") === "true";
 
 export const myServerChatSummariesStore = derived(
-    [globalStateStore, chatListScopeStore, allChats],
-    ([$allState, $scope, $allChats]) => {
+    [globalStateStore, chatListScopeStore],
+    ([$allState, $scope]) => {
+        const allChats = getAllChats($allState);
         if (communitiesEnabled) {
             if ($scope.kind === "community") {
                 const community = $allState.communities.get($scope.id);
@@ -68,7 +74,7 @@ export const myServerChatSummariesStore = derived(
                 return $allState.directChats;
             } else if ($scope.kind === "favourite") {
                 return $allState.favourites.values().reduce((favs, chatId) => {
-                    const chat = $allChats.get(chatId);
+                    const chat = allChats.get(chatId);
                     if (chat !== undefined) {
                         favs.set(chat.id, chat);
                     }
@@ -78,7 +84,7 @@ export const myServerChatSummariesStore = derived(
                 return new ChatMap<ChatSummary>();
             }
         } else {
-            return $allChats;
+            return allChats;
         }
     }
 );
@@ -99,8 +105,14 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         if ($scope.kind === "none" || $scope.kind === "direct_chat") {
             all = all.concat([...directChats.entries()]);
         }
-        if ($scope.kind === "none" || $scope.kind === "group_chat") {
+        if ($scope.kind === "none") {
             all = all.concat([...previews.entries()]);
+        }
+        if ($scope.kind === "group_chat") {
+            all = all.concat([...previews.filter((c) => c.kind === "group_chat").entries()]);
+        }
+        if ($scope.kind === "community") {
+            all = all.concat([...previews.filter((c) => c.kind === "channel").entries()]);
         }
         return all.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
             result.set(chatId, summary);
@@ -143,8 +155,9 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
 
 // This is annoying. If only the pinnedChatIndex was stored in the chatSummary...
 export const chatSummariesListStore = derived(
-    [chatSummariesStore, pinnedChatsStore, chatListScopeStore],
-    ([summaries, pinnedChats, scope]) => {
+    [chatSummariesStore, chatListScopeStore],
+    ([summaries, scope]) => {
+        const pinnedChats = get(pinnedChatsStore);
         const pinnedByScope = pinnedChats[scope.kind];
         const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
             const summary = summaries.get(id);
@@ -163,13 +176,17 @@ export const chatSummariesListStore = derived(
     }
 );
 
-export const userMetrics = derived([chatSummariesListStore], ([$chats]) => {
+export const userMetrics = derived([allChats], ([$chats]) => {
     return $chats
+        .values()
         .map((c) => c.membership?.myMetrics ?? emptyChatMetrics())
         .reduce(mergeChatMetrics, emptyChatMetrics());
 });
 
-export const selectedChatId = writable<ChatIdentifier | undefined>(undefined);
+export const selectedChatId = safeWritable<ChatIdentifier | undefined>(
+    undefined,
+    chatIdentifiersEqual
+);
 export const selectedThreadRootEvent = writable<EventWrapper<Message> | undefined>(undefined);
 export const selectedThreadRootMessageIndex = derived(selectedThreadRootEvent, ($rootEvent) => {
     return $rootEvent !== undefined ? $rootEvent.event.messageIndex : undefined;
@@ -522,8 +539,7 @@ export function clearSelectedChat(newSelectedChatId?: ChatIdentifier): void {
 
 export function createDirectChat(chatId: DirectChatIdentifier): void {
     uninitializedDirectChats.update((chatSummaries) => {
-        const clone = chatSummaries.clone();
-        clone.set(chatId, {
+        chatSummaries.set(chatId, {
             kind: "direct_chat",
             id: chatId,
             them: chatId,
@@ -537,32 +553,29 @@ export function createDirectChat(chatId: DirectChatIdentifier): void {
                 role: "owner",
             },
         });
-        return clone as ChatMap<DirectChatSummary>;
+        return chatSummaries;
     });
 }
 
 export function addGroupPreview(chat: MultiUserChat): void {
     localChatSummaryUpdates.delete(chat.id);
     groupPreviewsStore.update((summaries) => {
-        const clone = summaries.clone();
-        clone.set(chat.id, chat);
-        return clone as ChatMap<GroupChatSummary>;
+        summaries.set(chat.id, chat);
+        return summaries;
     });
 }
 
 export function removeUninitializedDirectChat(chatId: ChatIdentifier): void {
     uninitializedDirectChats.update((summaries) => {
-        const clone = summaries.clone();
-        clone.delete(chatId);
-        return clone as ChatMap<DirectChatSummary>;
+        summaries.delete(chatId);
+        return summaries;
     });
 }
 
 export function removeGroupPreview(chatId: ChatIdentifier): void {
     groupPreviewsStore.update((summaries) => {
-        const clone = summaries.clone();
-        clone.delete(chatId);
-        return clone as ChatMap<GroupChatSummary>;
+        summaries.delete(chatId);
+        return summaries;
     });
 }
 

@@ -3,6 +3,7 @@
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import TickIcon from "svelte-material-icons/Check.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import Import from "svelte-material-icons/Import.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
@@ -58,6 +59,7 @@
     $: canConvert =
         selectedChatSummary.kind === "group_chat" &&
         client.canConvertGroupToCommunity(selectedChatSummary.id);
+    $: canImportToCommunity = client.canImportToCommunity(selectedChatSummary.id);
 
     let hasUnreadPinned = false;
 
@@ -144,6 +146,12 @@
             if (selectedChatSummary.kind === "group_chat") {
                 dispatch("convertGroupToCommunity", selectedChatSummary);
             }
+        }
+    }
+
+    function importToCommunity() {
+        if (selectedChatSummary.kind === "group_chat") {
+            dispatch("importToCommunity", selectedChatSummary);
         }
     }
 
@@ -376,6 +384,12 @@
                                 color={"var(--menu-warn)"}
                                 slot="icon" />
                             <div slot="text">{$_("communities.convert")}</div>
+                        </MenuItem>
+                    {/if}
+                    {#if $communitiesEnabled && canImportToCommunity}
+                        <MenuItem warning on:click={importToCommunity}>
+                            <Import size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
+                            <div slot="text">{$_("communities.import")}</div>
                         </MenuItem>
                     {/if}
                 {/if}
