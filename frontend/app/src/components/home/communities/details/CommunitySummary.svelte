@@ -2,7 +2,7 @@
     import { _ } from "svelte-i18n";
     import CommunityCard from "../explore/CommunityCard.svelte";
     import CommunityDetails from "./CommunityDetails.svelte";
-    import { OpenChat, defaultAccessRules, emptyChatMetrics } from "openchat-client";
+    import { OpenChat, defaultAccessRules } from "openchat-client";
     import CommunityDetailsHeader from "./CommunityDetailsHeader.svelte";
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { getContext } from "svelte";
@@ -17,8 +17,6 @@
         $selectedCommunity !== undefined && client.canDeleteCommunity($selectedCommunity.id);
     $: canEdit = $selectedCommunity !== undefined && client.canEditCommunity($selectedCommunity.id);
     $: canInvite = $selectedCommunity !== undefined && client.canInviteUsers($selectedCommunity.id);
-
-    let metrics = emptyChatMetrics(); //TODO where does this come from
 
     function showChannels() {
         if ($selectedCommunity) {
@@ -53,7 +51,7 @@
             {canDelete}
             {canInvite}
             {rules}
-            {metrics}
+            metrics={$selectedCommunity.metrics}
             community={$selectedCommunity} />
     </div>
 {/if}

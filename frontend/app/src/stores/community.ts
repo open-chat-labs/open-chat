@@ -1,4 +1,8 @@
-import type { CommunitySummary, CommunityPermissions } from "openchat-client";
+import {
+    type CommunitySummary,
+    type CommunityPermissions,
+    emptyChatMetrics,
+} from "openchat-client";
 
 const defaultPermissions: CommunityPermissions = {
     changeRoles: "owner",
@@ -34,5 +38,6 @@ export function createCandidateCommunity(id: string): CommunitySummary {
             pinned: [],
         },
         primaryLanguage: "en",
+        metrics: emptyChatMetrics(),
     };
 }

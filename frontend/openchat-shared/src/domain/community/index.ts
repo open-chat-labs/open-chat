@@ -61,6 +61,7 @@ export type CommunitySummary = AccessControlled &
         memberCount: number;
         avatar: DataContent;
         banner: DataContent;
+        metrics: Metrics;
         membership?: CommunityMembership;
         channels: ChannelSummary[]; // TODO - this might be better as a ChatMap - but that would have some serialisation complications
         primaryLanguage: string;

@@ -1422,6 +1422,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         historyVisible: false,
         latestEventIndex: candid.latest_event_index,
         lastUpdated: candid.last_updated,
+        metrics: chatMetrics(candid.metrics),
         avatar: {
             blobReference: optional(candid.avatar_id, (blobId) => ({
                 blobId,
