@@ -853,6 +853,7 @@
     },
     "communities": {
         "explore": "Explore communities",
+        "exploreMobile": "Explore",
         "search": "Search communities",
         "create": "Create a community",
         "edit": "Edit community",

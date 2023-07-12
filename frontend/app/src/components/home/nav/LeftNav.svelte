@@ -11,7 +11,6 @@
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import { AvatarSize, CommunitySummary, OpenChat } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import CommunityMenu from "../communities/CommunityMenu.svelte";
     import { _ } from "svelte-i18n";
     import { pathParams } from "../../../routes";
     import page from "page";
@@ -140,14 +139,6 @@
                         $chatListScope.kind !== "favourite"}
                     url={client.communityAvatarUrl(community.avatar)}
                     size={avatarSize} />
-                <div slot="menu">
-                    <CommunityMenu
-                        on:deleteCommunity
-                        on:leaveCommunity
-                        on:communityDetails
-                        on:newChannel
-                        {community} />
-                </div>
             </LeftNavItem>
         {/each}
     </div>
@@ -196,6 +187,9 @@
         }
     }
 
+    $size: toRem(48);
+    $mobile-size: toRem(40);
+
     .top,
     .bottom,
     .middle {
@@ -206,13 +200,13 @@
         gap: $sp3;
     }
     .logo {
-        width: toRem(48);
-        height: toRem(48);
+        width: $size;
+        height: $size;
         margin: auto;
 
         @include mobile() {
-            width: toRem(35);
-            height: toRem(35);
+            width: $mobile-size;
+            height: $mobile-size;
         }
     }
 
@@ -223,8 +217,8 @@
     }
 
     .hover {
-        width: toRem(48);
-        height: toRem(48);
+        width: $size;
+        height: $size;
         border: 1px solid transparent;
         border-radius: 50%;
         background: var(--icon-hv);
@@ -234,8 +228,8 @@
         transition: border-color 250ms ease-in-out;
 
         @include mobile() {
-            width: toRem(35);
-            height: toRem(35);
+            width: $mobile-size;
+            height: $mobile-size;
         }
     }
 

@@ -13,6 +13,7 @@
     import FancyLoader from "../../../icons/FancyLoader.svelte";
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { communityFiltersStore } from "../../../../stores/communityFilters";
+    import Plus from "svelte-material-icons/Plus.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -94,7 +95,11 @@
     <div class="header">
         <div class="title-row">
             <div class="title">
-                <h4>{$_("communities.explore")}</h4>
+                {#if $mobileWidth}
+                    <h4>{$_("communities.exploreMobile")}</h4>
+                {:else}
+                    <h4>{$_("communities.explore")}</h4>
+                {/if}
             </div>
             {#if !$mobileWidth}
                 <div class="search">
@@ -109,9 +114,17 @@
                     <Button on:click={createCommunity} hollow>{$_("communities.create")}</Button>
                 </div>
             {/if}
-            <HoverIcon on:click={showFilters}>
-                <Tune size={$iconSize} color={"var(--icon-txt)"} />
-            </HoverIcon>
+            <div class="buttons">
+                {#if $mobileWidth}
+                    <HoverIcon on:click={createCommunity}>
+                        <Plus size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                {/if}
+
+                <HoverIcon on:click={showFilters}>
+                    <Tune size={$iconSize} color={"var(--icon-txt)"} />
+                </HoverIcon>
+            </div>
         </div>
         <div class="subtitle-row">
             {#if $mobileWidth}
@@ -184,6 +197,11 @@
             gap: $sp4;
             margin-bottom: $sp5;
 
+            @include mobile() {
+                margin-bottom: $sp3;
+                justify-content: space-between;
+            }
+
             .title {
                 display: flex;
                 gap: $sp3;
@@ -197,6 +215,12 @@
 
             .search {
                 flex: auto;
+            }
+
+            .buttons {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
             }
         }
 

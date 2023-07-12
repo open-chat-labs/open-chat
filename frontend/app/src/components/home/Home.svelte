@@ -540,7 +540,7 @@
         if (chatId.kind === "channel") {
             page(`/community/${chatId.communityId}`);
         } else {
-            page("/");
+            page(routeForScopoe($chatListScope));
         }
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
@@ -599,7 +599,7 @@
 
     function deleteDirectChat(ev: CustomEvent<ChatIdentifier>) {
         if ($pathParams.kind === "global_chat_selected_route" && ev.detail === $pathParams.chatId) {
-            page("/");
+        page(routeForScope($chatListScope));
         }
         tick().then(() => client.removeChat(ev.detail));
     }
@@ -1051,7 +1051,7 @@
             bind:currentChatMessages
             loadingChats={$chatsLoading}
             on:successfulImport={successfulImport}
-            on:clearSelection={() => page("/")}
+            on:clearSelection={() => page(routeForScope($chatListScope))}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
             on:leaveGroup={triggerConfirm}

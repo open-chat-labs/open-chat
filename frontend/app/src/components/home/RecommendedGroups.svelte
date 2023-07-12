@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        ChatListScope,
         GroupChatIdentifier,
         GroupChatSummary,
         MultiUserChat,
@@ -21,17 +22,19 @@
     import RecommendedGroup from "./RecommendedGroup.svelte";
     import { RemoteData, mapRemoteData } from "../../utils/remoteData";
     import page from "page";
+    import { routeForScope } from "../../routes";
 
     export let joining: MultiUserChat | undefined;
 
     const client = getContext<OpenChat>("client");
+    $: chatListScope = client.chatListScope;
 
     let hotGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
 
     onMount(loadData);
 
     function cancelRecommendations() {
-        page("/");
+        page(routeForScope($chatListScope));
     }
 
     function dismissRecommendation(ev: CustomEvent<GroupChatIdentifier>) {
