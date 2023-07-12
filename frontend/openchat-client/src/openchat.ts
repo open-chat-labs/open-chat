@@ -333,7 +333,6 @@ import {
     ChannelIdentifier,
     ExploreChannelsResponse,
     CommunityInvite,
-    chatScopesEqual,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {

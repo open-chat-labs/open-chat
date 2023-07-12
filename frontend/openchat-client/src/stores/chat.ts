@@ -6,7 +6,6 @@ import {
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
-    GroupChatSummary,
     Message,
     MessageContent,
     ThreadSyncDetails,

@@ -933,7 +933,8 @@
         "otherChannels": "Altri canali",
         "defaultChannel": "Canale di default",
         "defaultInfo": "Gli utenti che si uniscono a questa community verranno aggiunti automaticamente a tutti i canali predefiniti",
-        "saveChanges": "Salvare le modifiche"
+        "saveChanges": "Salvare le modifiche",
+        "exploreMobile": "Esplorare"
     },
     "groupCreatedBy": "{username} ha creato {level}",
     "groupName": "{level} nome",

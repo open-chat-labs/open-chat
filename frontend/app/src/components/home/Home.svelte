@@ -540,7 +540,7 @@
         if (chatId.kind === "channel") {
             page(`/community/${chatId.communityId}`);
         } else {
-            page(routeForScopoe($chatListScope));
+            page(routeForScope($chatListScope));
         }
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
@@ -599,7 +599,7 @@
 
     function deleteDirectChat(ev: CustomEvent<ChatIdentifier>) {
         if ($pathParams.kind === "global_chat_selected_route" && ev.detail === $pathParams.chatId) {
-        page(routeForScope($chatListScope));
+            page(routeForScope($chatListScope));
         }
         tick().then(() => client.removeChat(ev.detail));
     }
