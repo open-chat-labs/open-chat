@@ -92,6 +92,13 @@
         }
     }
 
+    $: {
+        // need to make sure that we reset the view each time the chat list scope changes
+        if ($chatListScope) {
+            view = "chats";
+        }
+    }
+
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat" || chat.kind === "channel") {
             return (
@@ -106,8 +113,6 @@
         }
         return false;
     }
-
-    // TODO - we need to reset the view if the selected chat changes
 
     $: chats =
         searchTerm !== ""

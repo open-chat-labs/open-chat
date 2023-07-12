@@ -44,7 +44,13 @@ import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
 import type { OpenChat } from "../openchat";
-import { chatListScopeStore, getAllChats, globalStateStore, pinnedChatsStore } from "./global";
+import {
+    allChats,
+    chatListScopeStore,
+    getAllChats,
+    globalStateStore,
+    pinnedChatsStore,
+} from "./global";
 import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
 
@@ -170,9 +176,9 @@ export const chatSummariesListStore = derived(
     }
 );
 
-// TODO - this might not be right now that we have multiple chat lists - should probably be derived from global scope
-export const userMetrics = derived([chatSummariesListStore], ([$chats]) => {
+export const userMetrics = derived([allChats], ([$chats]) => {
     return $chats
+        .values()
         .map((c) => c.membership?.myMetrics ?? emptyChatMetrics())
         .reduce(mergeChatMetrics, emptyChatMetrics());
 });
