@@ -13,10 +13,12 @@ import {
     GroupChatSummary,
     Message,
     ObjectSet,
+    chatScopesEqual,
 } from "openchat-shared";
 import { immutableStore } from "./immutable";
-import { derived, writable } from "svelte/store";
+import { derived } from "svelte/store";
 import { messagesRead } from "./markRead";
+import { safeWritable } from "./safeWritable";
 
 export type PinnedByScope = Record<ChatListScope["kind"], ChatIdentifier[]>;
 
@@ -48,7 +50,7 @@ export const globalStateStore = immutableStore<GlobalState>({
 
 export const pinnedChatsStore = derived(globalStateStore, ($global) => $global.pinnedChats);
 
-export const chatListScopeStore = writable<ChatListScope>({ kind: "none" });
+export const chatListScopeStore = safeWritable<ChatListScope>({ kind: "none" }, chatScopesEqual);
 
 export const favouritesStore = derived(globalStateStore, (state) => state.favourites);
 
@@ -67,6 +69,7 @@ function unreadCountForChatList(chats: (ChatSummary | undefined)[]): number {
 export const unreadGroupChats = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
+        console.log("UI: STORE: unreadGroupChats");
         return unreadCountForChatList($global.groupChats.values());
     }
 );

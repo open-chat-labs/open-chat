@@ -53,6 +53,7 @@ import {
 } from "./global";
 import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
+import { safeWritable } from "./safeWritable";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
@@ -101,6 +102,7 @@ export const groupPreviewsStore: Writable<ChatMap<MultiUserChat>> = immutableSto
 export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
     [myServerChatSummariesStore, uninitializedDirectChats, groupPreviewsStore, chatListScopeStore],
     ([summaries, directChats, previews, $scope]) => {
+        console.log("UI: STORE: serverChatSummariesStore");
         let all = [...summaries.entries()];
         if ($scope.kind === "none" || $scope.kind === "direct_chat") {
             all = all.concat([...directChats.entries()]);
@@ -183,7 +185,10 @@ export const userMetrics = derived([allChats], ([$chats]) => {
         .reduce(mergeChatMetrics, emptyChatMetrics());
 });
 
-export const selectedChatId = writable<ChatIdentifier | undefined>(undefined);
+export const selectedChatId = safeWritable<ChatIdentifier | undefined>(
+    undefined,
+    chatIdentifiersEqual
+);
 export const selectedThreadRootEvent = writable<EventWrapper<Message> | undefined>(undefined);
 export const selectedThreadRootMessageIndex = derived(selectedThreadRootEvent, ($rootEvent) => {
     return $rootEvent !== undefined ? $rootEvent.event.messageIndex : undefined;
@@ -536,8 +541,7 @@ export function clearSelectedChat(newSelectedChatId?: ChatIdentifier): void {
 
 export function createDirectChat(chatId: DirectChatIdentifier): void {
     uninitializedDirectChats.update((chatSummaries) => {
-        const clone = chatSummaries.clone();
-        clone.set(chatId, {
+        chatSummaries.set(chatId, {
             kind: "direct_chat",
             id: chatId,
             them: chatId,
@@ -551,32 +555,29 @@ export function createDirectChat(chatId: DirectChatIdentifier): void {
                 role: "owner",
             },
         });
-        return clone as ChatMap<DirectChatSummary>;
+        return chatSummaries;
     });
 }
 
 export function addGroupPreview(chat: MultiUserChat): void {
     localChatSummaryUpdates.delete(chat.id);
     groupPreviewsStore.update((summaries) => {
-        const clone = summaries.clone();
-        clone.set(chat.id, chat);
-        return clone as ChatMap<GroupChatSummary>;
+        summaries.set(chat.id, chat);
+        return summaries;
     });
 }
 
 export function removeUninitializedDirectChat(chatId: ChatIdentifier): void {
     uninitializedDirectChats.update((summaries) => {
-        const clone = summaries.clone();
-        clone.delete(chatId);
-        return clone as ChatMap<DirectChatSummary>;
+        summaries.delete(chatId);
+        return summaries;
     });
 }
 
 export function removeGroupPreview(chatId: ChatIdentifier): void {
     groupPreviewsStore.update((summaries) => {
-        const clone = summaries.clone();
-        clone.delete(chatId);
-        return clone as ChatMap<GroupChatSummary>;
+        summaries.delete(chatId);
+        return summaries;
     });
 }
 

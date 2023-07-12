@@ -4643,9 +4643,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setChatListScope(scope: ChatListScope): void {
-        if (!chatScopesEqual(scope, this._liveState.chatListScope)) {
-            chatListScopeStore.set(scope);
-        }
+        chatListScopeStore.set(scope);
     }
 
     getDefaultScope(): ChatListScope {
