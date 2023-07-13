@@ -113,7 +113,7 @@ impl PublicGroups {
     ) -> UpdateGroupResult {
         match self.groups.get_mut(chat_id) {
             None => UpdateGroupResult::ChatNotFound,
-            Some(mut group) => {
+            Some(group) => {
                 group.name = name;
                 group.description = description;
                 group.avatar_id = avatar_id;

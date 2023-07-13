@@ -56,7 +56,7 @@ mod retrieve_proposals {
         loop {
             let list_proposals_args = ListProposalInfo {
                 limit: BATCH_SIZE_LIMIT,
-                before_proposal: proposals.iter().rev().next().and_then(|p| p.id.clone()),
+                before_proposal: proposals.iter().next_back().and_then(|p| p.id.clone()),
                 exclude_topic: vec![TOPIC_NEURON_MANAGEMENT, TOPIC_EXCHANGE_RATE],
                 include_reward_status: vec![REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE],
                 ..Default::default()
@@ -86,7 +86,7 @@ mod retrieve_proposals {
         loop {
             let list_proposals_args = ListProposals {
                 limit: BATCH_SIZE_LIMIT,
-                before_proposal: proposals.iter().rev().next().and_then(|p| p.id.clone()),
+                before_proposal: proposals.iter().next_back().and_then(|p| p.id.clone()),
                 include_reward_status: vec![REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE],
                 ..Default::default()
             };

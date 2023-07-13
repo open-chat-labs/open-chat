@@ -106,7 +106,7 @@ impl PublicCommunities {
     ) -> UpdateCommunityResult {
         match self.communities.get_mut(community_id) {
             None => UpdateCommunityResult::CommunityNotFound,
-            Some(mut community) => {
+            Some(community) => {
                 community.name = name;
                 community.description = description;
                 community.avatar_id = avatar_id;

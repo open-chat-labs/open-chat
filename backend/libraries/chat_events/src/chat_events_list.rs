@@ -175,7 +175,7 @@ impl ChatEventsList {
     }
 
     pub fn last(&self) -> Option<&EventWrapperInternal<ChatEventInternal>> {
-        self.events_map.values().rev().next()
+        self.events_map.values().next_back()
     }
 
     pub fn len(&self) -> usize {
