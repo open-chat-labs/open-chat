@@ -52,7 +52,7 @@ impl<K: Eq + Hash + Clone, V> TimestampedMap<K, V> {
     }
 
     pub fn last_updated(&self) -> Option<TimestampMillis> {
-        self.by_last_updated.keys().rev().next().copied()
+        self.by_last_updated.keys().next_back().copied()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&K, &ValueLastUpdated<V>)> {

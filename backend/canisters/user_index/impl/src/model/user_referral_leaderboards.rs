@@ -55,7 +55,7 @@ impl UserReferralLeaderboard {
     }
 
     fn add_reward(&mut self, user_id: UserId, new_diamond_member: bool, reward_e8s: u64) {
-        let mut stats = self.users.entry(user_id).or_default();
+        let stats = self.users.entry(user_id).or_default();
         if new_diamond_member {
             stats.diamond_members += 1;
         }
