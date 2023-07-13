@@ -79,6 +79,7 @@
     import { createCandidateCommunity } from "../../stores/community";
     import { interpolateLevel } from "../../utils/i18n";
     import Convert from "./communities/Convert.svelte";
+    import Guide from "./Guide.svelte";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -1005,6 +1006,8 @@
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
+
+<Guide />
 
 <main>
     {#if $layoutStore.showNav}

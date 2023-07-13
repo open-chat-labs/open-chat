@@ -315,6 +315,7 @@ export default {
                                     href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap"
                                     rel="stylesheet"
                                 />
+                                <link href="/shepherd.css" rel="stylesheet" />
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}

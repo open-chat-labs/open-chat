@@ -115,4 +115,9 @@
     }
 </script>
 
-<Search {placeholder} {searching} {searchTerm} on:searchEntered={performSearch} />
+<Search
+    id={"chat-list-search"}
+    {placeholder}
+    {searching}
+    {searchTerm}
+    on:searchEntered={performSearch} />

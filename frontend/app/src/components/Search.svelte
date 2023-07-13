@@ -6,6 +6,7 @@
     import { iconSize } from "../stores/iconSize";
 
     const dispatch = createEventDispatcher();
+    export let id: string | undefined = undefined;
     export let searchTerm = "";
     export let searching: boolean;
     export let placeholder: string = "searchPlaceholder";
@@ -41,6 +42,7 @@
 
 <form on:submit|preventDefault={performSearch} class="wrapper" class:fill>
     <input
+        {id}
         on:keydown={keydown}
         spellcheck="false"
         bind:value={searchTerm}

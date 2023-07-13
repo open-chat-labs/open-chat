@@ -96,6 +96,7 @@
         "page": "^1.11.6",
         "peerjs": "^1.3.2",
         "rollbar": "^2.24.1",
+        "shepherd.js": "^11.1.1",
         "sirv-cli": "^1.0.14",
         "smoothscroll": "^0.4.0",
         "svelte-confetti": "^1.2.2",

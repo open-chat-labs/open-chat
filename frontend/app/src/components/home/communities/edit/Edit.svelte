@@ -246,6 +246,7 @@
             </div>
             <div class="actions">
                 <Button
+                    id="community-modal-cancel"
                     disabled={false}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
@@ -262,6 +263,7 @@
                         >{interpolateLevel("group.update", "community", true)}</Button>
                 {:else if step < steps.length - 1}
                     <Button
+                        id="community-modal-next"
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={() => (step = step + 1)}>

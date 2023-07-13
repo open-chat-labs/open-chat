@@ -1,4 +1,5 @@
 <script lang="ts">
+    export let id: string | undefined = undefined;
     export let cls = "";
     export let loading: boolean = false;
     export let disabled: boolean = false;
@@ -12,6 +13,7 @@
 </script>
 
 <button
+    {id}
     on:click|stopPropagation
     class={cls}
     class:loading

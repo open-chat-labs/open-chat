@@ -75,6 +75,7 @@
 </script>
 
 <div
+    id={"modal-content"}
     bind:this={divElement}
     {style}
     class="modal-content"

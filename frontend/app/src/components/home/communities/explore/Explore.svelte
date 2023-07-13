@@ -102,7 +102,7 @@
                 {/if}
             </div>
             {#if !$mobileWidth}
-                <div class="search">
+                <div id="community-search" class="search">
                     <Search
                         fill
                         bind:searchTerm
@@ -128,7 +128,7 @@
         </div>
         <div class="subtitle-row">
             {#if $mobileWidth}
-                <div class="search">
+                <div id="community-search" class="search">
                     <Search
                         searching={false}
                         fill
