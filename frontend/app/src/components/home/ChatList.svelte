@@ -64,8 +64,6 @@
     $: unreadCommunityChannels = client.unreadCommunityChannels;
     $: globalUnreadCount = client.globalUnreadCount;
 
-    $: console.log("ChatListScope: ", $chatListScope);
-
     let unread = 0;
     $: {
         if ($communitiesEnabled) {

@@ -275,7 +275,6 @@
         // wait until we have loaded the chats
         if (initialised) {
             if ("scope" in pathParams) {
-                console.log("Setting chatlist scope: ", pathParams, pathParams.scope);
                 client.setChatListScope(pathParams.scope);
             }
             if (pathParams.kind === "home_route") {

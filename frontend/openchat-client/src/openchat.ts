@@ -4647,7 +4647,6 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setChatListScope(scope: ChatListScope): void {
-        console.log("Setting chat list scope internal: ", scope);
         chatListScopeStore.set(scope);
     }
 
