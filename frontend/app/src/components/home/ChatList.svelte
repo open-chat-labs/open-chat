@@ -3,7 +3,6 @@
     import CurrentUser from "./CurrentUser.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
-    import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
     import { _ } from "svelte-i18n";
     import {
@@ -49,7 +48,6 @@
     $: selectedChatId = client.selectedChatId;
     $: chatListScope = client.chatListScope;
     $: numberOfThreadsStore = client.numberOfThreadsStore;
-    $: chatsLoading = client.chatsLoading;
     $: selectedCommunity = client.selectedCommunity;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: userStore = client.userStore;
@@ -230,9 +228,7 @@
     {/if}
 
     <div use:menuCloser bind:this={chatListElement} class="body">
-        {#if $chatsLoading}
-            <Loading />
-        {:else if view === "threads"}
+        {#if view === "threads"}
             <ThreadPreviews />
         {:else}
             <div class="chat-summaries">

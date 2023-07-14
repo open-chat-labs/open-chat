@@ -1,6 +1,5 @@
 <script lang="ts">
     import Panel from "../Panel.svelte";
-    import Loading from "../Loading.svelte";
     import { fade } from "svelte/transition";
     import NoChatSelected from "./NoChatSelected.svelte";
     import RecommendedGroups from "./RecommendedGroups.svelte";
@@ -13,7 +12,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let loadingChats: boolean = false;
     export let joining: MultiUserChat | undefined;
     export let currentChatMessages: CurrentChatMessages | undefined;
 
@@ -29,8 +27,6 @@
         <RecommendedGroups {joining} on:joinGroup on:leaveGroup on:upgrade />
     {:else if $pathParams.kind === "communities_route"}
         <ExploreCommunities on:upgrade on:createCommunity />
-    {:else if loadingChats}
-        <Loading />
     {:else if $selectedChatId === undefined}
         {#if noChat}
             <div class="no-chat" in:fade>

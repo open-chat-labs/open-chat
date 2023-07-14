@@ -149,7 +149,6 @@
 
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: chatSummariesStore = client.chatSummariesStore;
-    $: chatsLoading = client.chatsLoading;
     $: selectedChatStore = client.selectedChatStore;
     $: selectedChatId = client.selectedChatId;
     $: chatsInitialised = client.chatsInitialised;
@@ -1036,7 +1035,6 @@
         <MiddlePanel
             {joining}
             bind:currentChatMessages
-            loadingChats={$chatsLoading}
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:blockUser={blockUser}

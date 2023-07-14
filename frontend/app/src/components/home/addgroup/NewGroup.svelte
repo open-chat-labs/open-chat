@@ -110,7 +110,6 @@
     }
 
     function groupCreationErrorMessage(resp: CreateGroupResponse): string | undefined {
-        console.log(resp);
         if (resp.kind === "success") return undefined;
         if (resp.kind === "internal_error") return "groupCreationFailed";
         if (resp.kind === "name_too_short") return "groupNameTooShort";

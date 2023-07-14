@@ -787,7 +787,6 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (resp.kind === "failure") {
                         return false;
                     }
-                    console.log("Are we getting here: ", resp);
                     addGroupPreview(resp);
                     return true;
                 });
@@ -4110,6 +4109,13 @@ export class OpenChat extends OpenChatAgentWorker {
                     }
                 }
 
+                // if (!init) {
+                //     if (communitiesEnabled && this._liveState.chatListScope.kind === "none") {
+                //         this.setChatListScope(this.getDefaultScope());
+                //     }
+                //     console.log("InitialScope: ", this._liveState.chatListScope);
+                // }
+
                 chatsInitialised.set(true);
 
                 this.dispatchEvent(new ChatsUpdated());
@@ -4647,7 +4653,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setChatListScope(scope: ChatListScope): void {
-        chatListScopeStore.set(scope);
+        if (communitiesEnabled && scope.kind === "none") {
+            chatListScopeStore.set(this.getDefaultScope());
+        } else {
+            chatListScopeStore.set(scope);
+        }
     }
 
     getDefaultScope(): ChatListScope {
