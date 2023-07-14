@@ -68,7 +68,6 @@
                 Array.from($communityFiltersStore.languages)
             )
             .then((results) => {
-                console.log("SearchResults: ", results);
                 if (results.kind === "success") {
                     if (reset) {
                         searchResults = results.matches;

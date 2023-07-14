@@ -29,10 +29,7 @@
     $: canDelete = member && client.canDeleteCommunity(community.id);
     $: canEdit = member && client.canEditCommunity(community.id);
     $: canInvite = member && client.canInviteUsers(community.id);
-    $: canCreateChannel =
-        member &&
-        (client.canCreatePrivateChannel(community.id) ||
-            client.canCreatePublicChannel(community.id));
+    $: canCreateChannel = member && client.canCreateChannel(community.id);
 
     function leaveCommunity() {
         dispatch("leaveCommunity", {

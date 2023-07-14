@@ -955,5 +955,6 @@
     "searchGroupsPlaceholder": "グループを検索...",
     "searchUsersPlaceholder": "ユーザーを検索...",
     "searchChannelsPlaceholder": "チャンネルを検索...",
-    "searchFavouritesPlaceholder": "お気に入りを検索してください..."
+    "searchFavouritesPlaceholder": "お気に入りを検索してください...",
+    "membersHeader": "{level} メンバー"
 }

@@ -1132,17 +1132,6 @@ export class CommunityClient extends CandidService {
         isPublic?: boolean,
         primaryLanguage?: string
     ): Promise<UpdateCommunityResponse> {
-        console.log(
-            "updating community: ",
-            name,
-            description,
-            rules,
-            permissions,
-            avatar,
-            banner,
-            gate,
-            isPublic
-        );
         return this.handleResponse(
             this.service.update_community({
                 name: apiOptional(identity, name),

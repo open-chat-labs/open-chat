@@ -787,7 +787,6 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (resp.kind === "failure") {
                         return false;
                     }
-                    console.log("Are we getting here: ", resp);
                     addGroupPreview(resp);
                     return true;
                 });
@@ -1102,6 +1101,8 @@ export class OpenChat extends OpenChatAgentWorker {
         switch (chatId.kind) {
             case "community":
                 return this.communityPredicate(chatId, canBlockCommunityUsers);
+            case "channel":
+                return false;
             default:
                 return this.chatPredicate(chatId, canBlockUsers);
         }
@@ -1209,6 +1210,10 @@ export class OpenChat extends OpenChatAgentWorker {
             default:
                 return this.chatPredicate(id, canInviteUsers);
         }
+    }
+
+    canCreateChannel(id: CommunityIdentifier): boolean {
+        return this.canCreatePrivateChannel(id) || this.canCreatePublicChannel(id);
     }
 
     canCreatePublicChannel(id: CommunityIdentifier): boolean {
@@ -4104,6 +4109,13 @@ export class OpenChat extends OpenChatAgentWorker {
                     }
                 }
 
+                // if (!init) {
+                //     if (communitiesEnabled && this._liveState.chatListScope.kind === "none") {
+                //         this.setChatListScope(this.getDefaultScope());
+                //     }
+                //     console.log("InitialScope: ", this._liveState.chatListScope);
+                // }
+
                 chatsInitialised.set(true);
 
                 this.dispatchEvent(new ChatsUpdated());
@@ -4415,7 +4427,6 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         communityStateStore.clear(id);
-        chatListScopeStore.set({ kind: "community", id });
         if (clearChat) {
             this.clearSelectedChat();
         }
@@ -4642,7 +4653,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setChatListScope(scope: ChatListScope): void {
-        chatListScopeStore.set(scope);
+        if (communitiesEnabled && scope.kind === "none") {
+            chatListScopeStore.set(this.getDefaultScope());
+        } else {
+            chatListScopeStore.set(scope);
+        }
     }
 
     getDefaultScope(): ChatListScope {

@@ -7,9 +7,12 @@
     import { createEventDispatcher } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { iconSize } from "../../../stores/iconSize";
+    import type { Level } from "openchat-client";
+    import { interpolateLevel } from "utils/i18n";
 
     export let closeIcon: "close" | "back";
     export let canInvite: boolean;
+    export let level: Level;
 
     const dispatch = createEventDispatcher();
     function close() {
@@ -29,7 +32,7 @@
             </HoverIcon>
         </span>
     {/if}
-    <h4>{$_("members")}</h4>
+    <h4>{interpolateLevel("membersHeader", level)}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             {#if closeIcon === "close"}

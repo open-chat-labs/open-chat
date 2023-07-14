@@ -954,5 +954,6 @@
     "searchGroupsPlaceholder": "Rechercher des groupes...",
     "searchUsersPlaceholder": "Rechercher des utilisateurs...",
     "searchChannelsPlaceholder": "Rechercher des chaînes...",
-    "searchFavouritesPlaceholder": "Recherchez vos favoris..."
+    "searchFavouritesPlaceholder": "Recherchez vos favoris...",
+    "membersHeader": "{level} membres"
 }

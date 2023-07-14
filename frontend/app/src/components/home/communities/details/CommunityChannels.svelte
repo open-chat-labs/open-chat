@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { ChannelMatch, OpenChat } from "openchat-client";
+    import Plus from "svelte-material-icons/Plus.svelte";
     import { _ } from "svelte-i18n";
     import SectionHeader from "../../../SectionHeader.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
@@ -9,11 +10,12 @@
     import Search from "../../../Search.svelte";
     import { iconSize } from "../../../../stores/iconSize";
     import { popRightPanelHistory, rightPanelHistory } from "../../../../stores/rightPanel";
-    import { getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import ChannelCard from "./ChannelCard.svelte";
     import { toastStore } from "stores/toast";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     $: selectedCommunity = client.selectedCommunity;
 
@@ -27,6 +29,9 @@
     let addDefault = new Set<string>();
     let removeDefault = new Set<string>();
     $: more = total > searchResults.length;
+    $: member = $selectedCommunity?.membership.role !== "none";
+    $: canCreateChannel =
+        $selectedCommunity && member && client.canCreateChannel($selectedCommunity.id);
 
     function close() {
         popRightPanelHistory();
@@ -98,7 +103,14 @@
     onMount(() => search(true));
 </script>
 
-<SectionHeader border={false} flush shadow>
+<SectionHeader gap border={false} flush shadow>
+    {#if canCreateChannel}
+        <span class="menu" on:click={() => dispatch("newChannel")}>
+            <HoverIcon>
+                <Plus size={$iconSize} color={"var(--icon-txt)"} />
+            </HoverIcon>
+        </span>
+    {/if}
     <h4>{$_("communities.channels")}</h4>
     <span title={$_("back")} class="back" on:click={close}>
         <HoverIcon>

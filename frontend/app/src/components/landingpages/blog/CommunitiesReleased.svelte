@@ -15,12 +15,11 @@
 </section>
 
 <section>
-    <h2>Orientation</h2>
-
     <div class="pic-row">
         <img class="left" src="/assets/blog/communities/desktop_nav.png" />
 
         <div class="right">
+            <h2>Orientation</h2>
             <p>
                 While a lot has changed, things should feel still feel quite familiar. You will
                 notice that you now see a new navigation bar on the left of the screen. Let's first
@@ -34,22 +33,22 @@
             </p>
 
             <p>
-                Next you will see your own avatar (2). Click here to navigate to you user profile
-                which will open to the right as before.
+                Next you will see your own avatar (2). Click here to navigate to your user profile
+                which will open in the right hand panel as before.
             </p>
 
             <p>
-                Below your avatar you will see three new icons representing direct chats (3), global
-                group chats (4) and favourites (5). Direct chats are all the chats where you are
+                Below your avatar you will see three new icons representing Direct chats (3), Global
+                Group chats (4) and Favourites (5). Direct chats are all the chats where you are
                 having a one to one converstation with another user. Global group chats are exactly
                 like group chats were before. They are simply groups that do not belong inside a
                 Community. It's perfectly ok for groups to remain global and not form part of a new
                 community. And finally we have favourite chats. This is a place where you can add <em
-                    >any</em> chat. Then if you would prefer to just have a single view with all of your
-                favourite chats without worrying about the new categories you can set it up that way.
-                By default you should see that any chat you previously had pinned will now automatically
-                appear in your favourites list. It is still possible to pin chats within any of these
-                three lists.
+                    >any</em>
+                chat. So if you would prefer to have a single uncategorised view with all the chats that
+                you use most frequently you can set it up that way. By default you should see that any
+                chat you previously had <em>pinned</em> will now automatically appear in your favourites
+                list. It is still possible to pin chats within any of these three lists.
             </p>
         </div>
     </div>
@@ -57,12 +56,12 @@
     <div class="pic-row inverted">
         <div class="left">
             <p>
-                Below the top level chat lists, you will see an avatar for each community that you
-                belong to. A community <em>also</em> acts as a list of chats - when you select a community
-                you will see those chats that belong to it. Chats within communities are referred to
-                as "Channels" to make it clear that they are part of a community. Just like direct and
-                group chats, channels can also be added to favourites so you can still have everything
-                you're interested in in one place.
+                Below the top level chat lists, you will see an icon for each community that you
+                belong to. A community <em>also</em> acts as a list of chats - you will see a community's
+                list of chats when you select it. Chats within communities are referred to as "Channels"
+                to make it clear that they are part of a community. Just like direct and group chats,
+                channels can also be added to favourites so you can still have everything you're interested
+                in in one place.
             </p>
             <p>
                 Finally, at the bottom of the navigation panel you will see a link to explore
@@ -82,8 +81,8 @@
 
     <p>
         To explore public communities, click on the icon in the left hand navigation panel. Here you
-        can search for communities. User the filters to restrict the results to communities with
-        specific primary languages or to communities that have been given particular flags.
+        can search for communities. You can use the filters to restrict the results to communities
+        with specific primary languages or to communities that have been given particular flags.
     </p>
 
     <BlogScreenshot
@@ -92,8 +91,8 @@
         mobileUrl={"/assets/blog/communities/mobile_explore.png"} />
 
     <p>
-        We expect to expand the system of tagging of communities in the future to make it even
-        easier to find exactly what you're looking for.
+        We expect to expand the filtering system in the future to include user defined tags making
+        it even easier for community builders to connect with the right audience.
     </p>
 
     <p>
@@ -110,9 +109,9 @@
     </p>
 
     <p>
-        First, you can click the "Browse other channels" item in the left hand panel. This will open
-        the channel browser in the right hand panel. From here you can search and click on any
-        channel that interests you to preview and / or join it.
+        First, you can click the "Browse channels" item in the left hand panel. This will open the
+        channel browser in the right hand panel. From here you can search and click on any channel
+        that interests you to preview and / or join it.
     </p>
 
     <p>
@@ -139,14 +138,14 @@
                 What about if you want to create a community of your own? There are a couple of
                 common scenarios...
             </p>
-            <h3>Create a community from scratch</h3>
+            <h3>Creating a community from scratch</h3>
             <p>
                 To create a community from scratch, simply navigate to the Community explorer and
                 click the Create Community button to launch the wizard.
             </p>
             <p>
                 The wizard should be relatively easy to understand and offers many similar choices
-                to the existing group creation process. There are some key decisions that will need
+                to the existing group creation wizard. There are some key decisions that will need
                 to be made. Do you want to create a public community which anyone can discover and
                 join or would you prefer it to be private so that only those invited or provided
                 with an invite link can join? Will you apply an access gate that users must pass?
@@ -155,11 +154,14 @@
                 You will also need to set up permissions for the community to control what your
                 users can do.
             </p>
-
             <p>
                 You will also have an opportunity to quickly define one or more default channels.
                 You will be able to further configure these channels later after the community has
                 been created.
+            </p>
+            <p>
+                Finally, you may decide to invite users to your community right away. You can of
+                course do this later.
             </p>
         </div>
         <div class="right">
@@ -170,8 +172,8 @@
     <h3>Convert a group to a community</h3>
     <p>
         It's possible that you are already the owner of a group and you would like to promote this
-        group to a community. This will allow you to have more fine-grained channels leading to more
-        focused conversations.
+        group to a community. This will allow you to grow your community and still have
+        fine-grained, focused and productive conversations within channels.
     </p>
     <p>
         To convert a group to a community, simply select the group and then choose "Convert to
@@ -205,10 +207,9 @@
 
     <p>
         To do that, again simply select the group you wish to import and select "Import to
-        community" from the group chat's menu. You will then be asked to choose from a list of
-        communities that you own as the target into which you wish to import the group. Note that
-        you must be an owner of both the source group and the target community to perform this
-        operation.
+        community" from the group chat's menu. You will then be asked to choose the target community
+        to import into from a list of any communities that you own. Note that you must be an owner
+        of both the source group and the target community to perform this operation.
     </p>
 
     <p>
