@@ -955,5 +955,6 @@
     "searchGroupsPlaceholder": "Tìm kiếm các nhóm...",
     "searchUsersPlaceholder": "Tìm kiếm người dùng...",
     "searchChannelsPlaceholder": "Tìm kiếm các kênh...",
-    "searchFavouritesPlaceholder": "Tìm kiếm mục yêu thích của bạn..."
+    "searchFavouritesPlaceholder": "Tìm kiếm mục yêu thích của bạn...",
+    "membersHeader": "{level} thành viên"
 }

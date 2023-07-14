@@ -28,7 +28,6 @@
         ChatType,
         CommunitySummary,
         Level,
-        GroupSearchResponse,
         ChatIdentifier,
         DirectChatIdentifier,
         GroupChatIdentifier,
@@ -140,11 +139,6 @@
     }
 
     let modal = ModalType.None;
-    let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
-    let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
-    let searchTerm: string = "";
-    let searching: boolean = false;
-    let searchResultsAvailable: boolean = false;
     let confirmActionEvent: ConfirmActionEvent | undefined;
     let joining: MultiUserChat | undefined = undefined;
     let showUpgrade: boolean = false;
@@ -212,7 +206,7 @@
                 return false;
             });
         } else if (ev instanceof SelectedChatInvalid) {
-            page.replace("/");
+            page.replace(routeForScope(client.getDefaultScope()));
         }
     }
 
@@ -236,7 +230,7 @@
                     };
                 }
                 if (!(await client.previewChat(chatId))) {
-                    page.replace("/");
+                    page.replace(routeForScope(client.getDefaultScope()));
                     return;
                 }
             }
@@ -281,6 +275,7 @@
         // wait until we have loaded the chats
         if (initialised) {
             if ("scope" in pathParams) {
+                console.log("Setting chatlist scope: ", pathParams, pathParams.scope);
                 client.setChatListScope(pathParams.scope);
             }
             if (pathParams.kind === "home_route") {
@@ -332,7 +327,7 @@
                         url: pathParams.url,
                         files: [],
                     };
-                    page.replace("/");
+                    page.replace(routeForScope(client.getDefaultScope()));
                     modal = ModalType.SelectChat;
                 }
             }
@@ -415,13 +410,6 @@
     function closeNoAccess() {
         closeModal();
         page(routeForScope(client.getDefaultScope()));
-    }
-
-    function clearSearch() {
-        groupSearchResults = userSearchResults = undefined;
-        searchTerm = "";
-        searching = false;
-        searchResultsAvailable = false;
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
@@ -1084,6 +1072,7 @@
             on:editGroup={editGroup}
             on:editCommunity={editCommunity}
             on:deleteCommunity={triggerConfirm}
+            on:newChannel={newChannel}
             on:groupCreated={groupCreated} />
     {/if}
 </main>
@@ -1104,6 +1093,7 @@
                 on:editGroup={editGroup}
                 on:editCommunity={editCommunity}
                 on:deleteCommunity={triggerConfirm}
+                on:newChannel={newChannel}
                 on:groupCreated={groupCreated} />
         </div>
     </Overlay>

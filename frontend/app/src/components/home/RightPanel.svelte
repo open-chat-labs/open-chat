@@ -404,7 +404,7 @@
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
         <ProposalGroupFilters on:close={popRightPanelHistory} />
     {:else if lastState.kind === "community_channels"}
-        <CommunityChannels />
+        <CommunityChannels on:newChannel />
     {:else if lastState.kind === "community_details"}
         <CommunityDetails on:deleteCommunity on:editCommunity />
     {:else if lastState.kind === "community_filters"}

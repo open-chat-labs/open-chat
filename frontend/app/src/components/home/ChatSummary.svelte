@@ -49,11 +49,12 @@
     let unreadMentions: number;
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
+        const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
         switch (chatSummary.kind) {
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
                 return {
-                    name: client.usernameAndIcon(them),
+                    name: `${client.usernameAndIcon(them)} ${fav ? "♥️" : ""}`,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
@@ -65,7 +66,7 @@
                 };
             default:
                 return {
-                    name: chatSummary.name,
+                    name: `${chatSummary.name} ${fav ? "♥️" : ""}`,
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     userId: undefined,
                     typing: client.getTypingString(

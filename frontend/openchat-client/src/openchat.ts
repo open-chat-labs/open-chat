@@ -1102,6 +1102,8 @@ export class OpenChat extends OpenChatAgentWorker {
         switch (chatId.kind) {
             case "community":
                 return this.communityPredicate(chatId, canBlockCommunityUsers);
+            case "channel":
+                return false;
             default:
                 return this.chatPredicate(chatId, canBlockUsers);
         }
@@ -1209,6 +1211,10 @@ export class OpenChat extends OpenChatAgentWorker {
             default:
                 return this.chatPredicate(id, canInviteUsers);
         }
+    }
+
+    canCreateChannel(id: CommunityIdentifier): boolean {
+        return this.canCreatePrivateChannel(id) || this.canCreatePublicChannel(id);
     }
 
     canCreatePublicChannel(id: CommunityIdentifier): boolean {
@@ -4415,7 +4421,6 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         communityStateStore.clear(id);
-        chatListScopeStore.set({ kind: "community", id });
         if (clearChat) {
             this.clearSelectedChat();
         }
@@ -4642,6 +4647,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setChatListScope(scope: ChatListScope): void {
+        console.log("Setting chat list scope internal: ", scope);
         chatListScopeStore.set(scope);
     }
 

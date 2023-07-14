@@ -204,6 +204,7 @@
     "previewing": "previewing group",
     "userIsBlocked": "Unblock user to send messages",
     "members": "Members",
+    "membersHeader": "{level} members",
     "invited": "Invited",
     "leaveGroup": "Leave {level}",
     "remove": "Remove",

@@ -955,5 +955,6 @@
     "searchGroupsPlaceholder": "搜索群组...",
     "searchUsersPlaceholder": "搜索用户...",
     "searchChannelsPlaceholder": "搜索频道...",
-    "searchFavouritesPlaceholder": "搜索您的最爱..."
+    "searchFavouritesPlaceholder": "搜索您的最爱...",
+    "membersHeader": "{level} 成员"
 }

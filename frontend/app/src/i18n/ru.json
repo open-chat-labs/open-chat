@@ -954,5 +954,6 @@
     "searchGroupsPlaceholder": "Поиск групп...",
     "searchUsersPlaceholder": "Поиск пользователей...",
     "searchChannelsPlaceholder": "Поиск каналов...",
-    "searchFavouritesPlaceholder": "Ищите в избранном..."
+    "searchFavouritesPlaceholder": "Ищите в избранном...",
+    "membersHeader": "{level} участников"
 }

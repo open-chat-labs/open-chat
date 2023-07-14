@@ -127,7 +127,12 @@
     }
 </script>
 
-<MembersHeader {closeIcon} {canInvite} on:close={close} on:showInviteUsers={showInviteUsers} />
+<MembersHeader
+    level={collection.level}
+    {closeIcon}
+    {canInvite}
+    on:close={close}
+    on:showInviteUsers={showInviteUsers} />
 
 <div class="search">
     <Search

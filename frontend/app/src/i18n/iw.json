@@ -952,5 +952,6 @@
     "searchGroupsPlaceholder": "חפש קבוצות...",
     "searchUsersPlaceholder": "חפש משתמשים...",
     "searchChannelsPlaceholder": "חפש ערוצים...",
-    "searchFavouritesPlaceholder": "חפש את המועדפים שלך..."
+    "searchFavouritesPlaceholder": "חפש את המועדפים שלך...",
+    "membersHeader": "חברי {level}"
 }
