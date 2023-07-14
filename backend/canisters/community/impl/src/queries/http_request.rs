@@ -1,12 +1,24 @@
 use crate::{read_state, RuntimeState};
 use http_request::{build_json_response, encode_logs, extract_route, get_document, Route};
 use ic_cdk_macros::query;
-use types::{HttpRequest, HttpResponse, TimestampMillis};
+use types::{ChannelId, HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_avatar_impl(requested_avatar_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
         get_document(requested_avatar_id, &state.data.avatar, "avatar")
+    }
+
+    fn get_channel_avatar_impl(channel_id: ChannelId, requested_avatar_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
+        if let Some(channel) = state.data.channels.get(&channel_id) {
+            get_document(
+                requested_avatar_id,
+                &channel.chat.avatar,
+                &format!("channel/{channel_id}/avatar"),
+            )
+        } else {
+            HttpResponse::not_found()
+        }
     }
 
     fn get_banner_impl(requested_banner_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
@@ -27,6 +39,9 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 
     match extract_route(&request.url) {
         Route::Avatar(requested_avatar_id) => read_state(|state| get_avatar_impl(requested_avatar_id, state)),
+        Route::ChannelAvatar((channel_id, requested_avatar_id)) => {
+            read_state(|state| get_channel_avatar_impl(channel_id, requested_avatar_id, state))
+        }
         Route::Banner(requested_banner_id) => read_state(|state| get_banner_impl(requested_banner_id, state)),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),

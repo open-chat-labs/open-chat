@@ -1,9 +1,10 @@
 use std::str::FromStr;
-use types::{FileId, TimestampMillis};
+use types::{ChannelId, FileId, TimestampMillis};
 
 pub enum Route {
     Avatar(Option<u128>),
     Banner(Option<u128>),
+    ChannelAvatar((ChannelId, Option<u128>)),
     File(u128),
     Logs(Option<TimestampMillis>),
     Traces(Option<TimestampMillis>),
@@ -25,30 +26,40 @@ pub fn extract_route(path: &str) -> Route {
     match parts[0] {
         "avatar" => {
             let blob_id = parts.get(1).and_then(|p| u128::from_str(p).ok());
-            Route::Avatar(blob_id)
+            return Route::Avatar(blob_id);
         }
         "banner" => {
             let blob_id = parts.get(1).and_then(|p| u128::from_str(p).ok());
-            Route::Banner(blob_id)
+            return Route::Banner(blob_id);
         }
         "blobs" | "files" if parts.len() > 1 => {
             if let Ok(file_id) = FileId::from_str(parts[1]) {
-                Route::File(file_id)
-            } else {
-                Route::Other(path.to_string(), qs.to_string())
+                return Route::File(file_id);
+            }
+        }
+        "channel" => {
+            if let Some(channel_id) = parts.get(1).and_then(|p| u128::from_str(p).ok()) {
+                if let Some(sub_route) = parts.get(2) {
+                    if *sub_route == "avatar" {
+                        let blob_id = parts.get(3).and_then(|p| u128::from_str(p).ok());
+                        return Route::ChannelAvatar((channel_id, blob_id));
+                    }
+                }
             }
         }
         "logs" => {
             let since = parts.get(1).and_then(|p| u64::from_str(p).ok());
-            Route::Logs(since)
+            return Route::Logs(since);
         }
         "trace" => {
             let since = parts.get(1).and_then(|p| u64::from_str(p).ok());
-            Route::Traces(since)
+            return Route::Traces(since);
         }
-        "metrics" => Route::Metrics,
-        _ => Route::Other(path.to_string(), qs.to_string()),
+        "metrics" => return Route::Metrics,
+        _ => (),
     }
+
+    Route::Other(path.to_string(), qs.to_string())
 }
 
 #[cfg(test)]

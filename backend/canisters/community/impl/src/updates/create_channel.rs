@@ -11,6 +11,7 @@ use group_chat_core::GroupChatCore;
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{ChannelId, Timestamped};
+use utils::document_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
 use super::c2c_join_community::c2c_join_community_impl;
@@ -85,6 +86,8 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
                 RulesValidationError::TooShort(s) => RulesTooShort(s),
                 RulesValidationError::TooLong(l) => RulesTooLong(l),
             }
+        } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
+            AvatarTooBig(error)
         } else {
             let now = state.env.now();
             let channel_id: ChannelId = state.env.rng().gen();
@@ -95,7 +98,7 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.description,
                 args.rules,
                 None,
-                None,
+                args.avatar,
                 args.history_visible_to_new_joiners,
                 args.permissions.unwrap_or_default(),
                 args.gate,
