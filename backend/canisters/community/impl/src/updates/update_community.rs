@@ -47,7 +47,11 @@ async fn update_community(mut args: Args) -> Response {
             Err(_) => return InternalError,
         }
     } else if prepare_result.is_public
-        && (args.name.is_some() || args.description.is_some() || args.avatar.has_update() || args.primary_language.is_some())
+        && (args.name.is_some()
+            || args.description.is_some()
+            || args.avatar.has_update()
+            || args.banner.has_update()
+            || args.primary_language.is_some())
     {
         let c2c_update_community_args = c2c_update_community::Args {
             name: prepare_result.name,
