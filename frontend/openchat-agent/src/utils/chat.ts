@@ -31,6 +31,7 @@ import {
     CommunityDetails,
     CommunityDetailsUpdates,
     CommunityCanisterCommunitySummaryUpdates,
+    ChannelIdentifier,
 } from "openchat-shared";
 import { toRecord } from "./list";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
@@ -521,11 +522,15 @@ export function buildBlobUrl(
     pattern: string,
     canisterId: string,
     blobId: bigint,
-    blobType: "blobs" | "avatar" | "banner"
+    blobType: "blobs" | "avatar" | "banner",
+    channelId?: ChannelIdentifier
 ): string {
+    const blobTypeFragment =
+        channelId === undefined ? blobType : `channel/${channelId.channelId}/${blobType}`;
+
     return `${pattern
         .replace("{canisterId}", canisterId)
-        .replace("{blobType}", blobType)}${blobId}`;
+        .replace("{blobType}", blobTypeFragment)}${blobId}`;
 }
 
 export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: bigint): string {
