@@ -1474,7 +1474,7 @@ export function communityChannelSummary(
         lastUpdated: candid.last_updated,
         blobReference: optional(candid.avatar_id, (blobId) => ({
             blobId,
-            canisterId: candid.channel_id.toString(),
+            canisterId: communityId,
         })),
         memberCount: candid.member_count,
         permissions: groupPermissions(candid.permissions),

@@ -1047,7 +1047,8 @@ export class OpenChatAgent extends EventTarget {
 
     private rehydrateDataContent<T extends DataContent>(
         dataContent: T,
-        blobType: "blobs" | "avatar" | "banner" = "blobs"
+        blobType: "blobs" | "avatar" | "banner" = "blobs",
+        channelId?: ChannelIdentifier
     ): T {
         const ref = dataContent.blobReference;
         return ref !== undefined
@@ -1058,7 +1059,8 @@ export class OpenChatAgent extends EventTarget {
                       this.config.blobUrlPattern,
                       ref.canisterId,
                       ref.blobId,
-                      blobType
+                      blobType,
+                      channelId
                   ),
               }
             : dataContent;
@@ -1099,7 +1101,7 @@ export class OpenChatAgent extends EventTarget {
                         ...res,
                         matches: res.matches.map((match) => ({
                             ...match,
-                            avatar: this.rehydrateDataContent(match.avatar, "avatar"),
+                            avatar: this.rehydrateDataContent(match.avatar, "avatar", match.id),
                         })),
                     };
                 }
@@ -1487,8 +1489,10 @@ export class OpenChatAgent extends EventTarget {
         switch (chat.kind) {
             case "direct_chat":
                 return chat;
-            default:
+            case "group_chat":
                 return this.rehydrateDataContent(chat, "avatar") as T;
+            case "channel":
+                return this.rehydrateDataContent(chat, "avatar", chat.id) as T;
         }
     }
 
