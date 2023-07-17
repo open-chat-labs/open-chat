@@ -1677,6 +1677,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-ledger-types",
+ "icp_ledger_canister_c2c_client",
  "ledger_utils",
  "serde",
  "serde_bytes",
@@ -2539,6 +2540,7 @@ dependencies = [
  "ic-icrc1",
  "ic-ledger-types",
  "ic-stable-structures",
+ "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
  "itertools",
  "lazy_static",
@@ -4050,6 +4052,7 @@ dependencies = [
  "ic-ledger-types",
  "ic-stable-structures",
  "icp_dispenser_bot",
+ "icp_ledger_canister_c2c_client",
  "ledger_utils",
  "msgpack",
  "serde",
@@ -4061,6 +4064,28 @@ dependencies = [
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
+]
+
+[[package]]
+name = "icp_ledger_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "ic-ledger-types",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "icp_ledger_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.8.1",
+ "icp_ledger_canister",
+ "types",
 ]
 
 [[package]]
@@ -4326,6 +4351,7 @@ dependencies = [
  "ic-icrc1-client-cdk",
  "ic-ledger-canister-core",
  "ic-ledger-types",
+ "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
  "serde",
  "serde_cbor",
@@ -7597,6 +7623,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-sns-governance",
+ "icp_ledger_canister_c2c_client",
  "itertools",
  "ledger_utils",
  "local_user_index_canister",

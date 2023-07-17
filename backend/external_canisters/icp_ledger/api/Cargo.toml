@@ -1,0 +1,13 @@
+[package]
+name = "icp_ledger_canister"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+candid_gen = { path = "../../../libraries/candid_gen" }
+ic-ledger-types = { workspace = true }
+serde = { workspace = true }
+types = { path = "../../../libraries/types" }

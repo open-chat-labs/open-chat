@@ -35,7 +35,7 @@ mod process_pending_actions {
     }
 
     async fn process_icp_transfer(recipient: UserId, transfer_args: TransferArgs, transaction_hash: TransactionHash) {
-        let action = match ic_ledger_types::transfer(MAINNET_LEDGER_CANISTER_ID, transfer_args.clone()).await {
+        let action = match icp_ledger_canister_c2c_client::transfer(MAINNET_LEDGER_CANISTER_ID, &transfer_args).await {
             Ok(Ok(block_index)) => {
                 let this_canister_id = read_state(|state| state.env.canister_id());
                 let message = BotMessage {
