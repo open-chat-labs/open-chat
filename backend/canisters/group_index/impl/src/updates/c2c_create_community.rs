@@ -64,6 +64,7 @@ pub(crate) async fn create_community_impl(
                     args.gate,
                     args.primary_language,
                     local_group_index_canister,
+                    args.default_channels.len() as u32,
                     state,
                 )
             });
@@ -128,6 +129,7 @@ fn commit(
     gate: Option<AccessGate>,
     primary_language: String,
     local_group_index_canister: CanisterId,
+    channel_count: u32,
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
@@ -141,6 +143,7 @@ fn commit(
             banner_id,
             gate,
             primary_language,
+            channel_count,
             now,
         );
     } else {
