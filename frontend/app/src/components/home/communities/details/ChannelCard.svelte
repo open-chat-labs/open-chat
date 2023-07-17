@@ -8,7 +8,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import page from "page";
     import AccessGateIcon from "../../AccessGateIcon.svelte";
-    import { popRightPanelHistory } from "stores/rightPanel";
+    import { popRightPanelHistory } from "../../../../stores/rightPanel";
 
     const dispatch = createEventDispatcher();
 
