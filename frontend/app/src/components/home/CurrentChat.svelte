@@ -30,6 +30,7 @@
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { toastStore } from "stores/toast";
     import ImportToCommunity from "./communities/Import.svelte";
+    import { randomSentence } from "../../utils/randomMsg";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -165,7 +166,7 @@
         function send(n: number) {
             if (n === ev.detail) return;
 
-            sendMessageWithAttachment(`Test message ${n}`, [], undefined);
+            sendMessageWithAttachment(randomSentence(), [], undefined);
 
             setTimeout(() => send(n + 1), 500);
         }
