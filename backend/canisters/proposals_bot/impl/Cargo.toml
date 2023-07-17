@@ -33,6 +33,8 @@ proposals_bot_canister = { path = "../api" }
 serde = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
 sha2 = { workspace = true }
+sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
+sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }
