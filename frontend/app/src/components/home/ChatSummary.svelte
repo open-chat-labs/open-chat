@@ -49,7 +49,10 @@
     let unreadMentions: number;
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
+        const fav =
+            $communitiesEnabled &&
+            $chatListScope.kind !== "favourite" &&
+            $favouritesStore.has(chatSummary.id);
         switch (chatSummary.kind) {
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
