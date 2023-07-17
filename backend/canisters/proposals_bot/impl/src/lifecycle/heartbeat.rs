@@ -85,7 +85,7 @@ mod retrieve_proposals {
         loop {
             let list_proposals_args = sns_governance_canister::list_proposals::Args {
                 limit: BATCH_SIZE_LIMIT,
-                before_proposal: proposals.iter().next_back().and_then(|p| p.id.clone()),
+                before_proposal: proposals.iter().next_back().and_then(|p| p.id),
                 include_reward_status: vec![REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE],
                 ..Default::default()
             };

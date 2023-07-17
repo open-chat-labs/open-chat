@@ -15,7 +15,7 @@ pub async fn list_neurons(
     let args = sns_governance_canister::list_neurons::Args {
         limit,
         start_page_at: None,
-        of_principal: Some(of_principal.into()),
+        of_principal: Some(of_principal),
     };
 
     let response = sns_governance_canister_c2c_client::list_neurons(governance_canister_id, &args).await?;

@@ -39,7 +39,7 @@ async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIf
     let args = sns_governance_canister::list_neurons::Args {
         limit: 10,
         start_page_at: None,
-        of_principal: Some(Principal::from(user_id).into()),
+        of_principal: Some(Principal::from(user_id)),
     };
 
     match sns_governance_canister_c2c_client::list_neurons(gate.governance_canister_id, &args).await {
