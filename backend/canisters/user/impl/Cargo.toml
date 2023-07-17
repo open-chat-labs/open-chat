@@ -32,7 +32,6 @@ ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
-ic-sns-governance = { workspace = true }
 itertools = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../local_user_index/api" }

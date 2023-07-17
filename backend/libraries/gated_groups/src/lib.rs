@@ -1,4 +1,6 @@
 use candid::Principal;
+use sns_governance_canister::types::neuron::DissolveState;
+use sns_governance_canister::types::Neuron;
 use types::{AccessGate, CanisterId, GateCheckFailedReason, SnsNeuronGate, UserId};
 use user_index_canister_c2c_client::LookupUserError;
 
@@ -48,7 +50,7 @@ async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIf
             let mut valid_neurons = response.neurons;
             if let Some(dd) = gate.min_dissolve_delay {
                 let now = utils::time::now_millis();
-                valid_neurons.retain(|n| n.dissolve_delay_seconds(now / 1000) > (dd / 1000));
+                valid_neurons.retain(|n| dissolve_delay_seconds(n, now / 1000) > (dd / 1000));
             }
 
             if valid_neurons.is_empty() {
@@ -69,5 +71,13 @@ async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIf
             CheckIfPassesGateResult::Success
         }
         Err(error) => CheckIfPassesGateResult::InternalError(format!("Error calling 'list_neurons': {error:?}")),
+    }
+}
+
+fn dissolve_delay_seconds(neuron: &Neuron, now_seconds: u64) -> u64 {
+    match neuron.dissolve_state {
+        Some(DissolveState::DissolveDelaySeconds(d)) => d,
+        Some(DissolveState::WhenDissolvedTimestampSeconds(ts)) => ts.saturating_sub(now_seconds),
+        None => 0,
     }
 }

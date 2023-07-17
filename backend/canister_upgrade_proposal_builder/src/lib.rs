@@ -1,6 +1,6 @@
 use candid::Encode;
 use clap::Parser;
-use ic_sns_governance::pb::v1::{proposal, ExecuteGenericNervousSystemFunction, Proposal};
+use sns_governance_canister::types::{proposal, ExecuteGenericNervousSystemFunction, Proposal};
 use std::error::Error;
 use std::fs;
 use types::{CanisterWasm, UpgradeCanisterWasmArgs, Version};
