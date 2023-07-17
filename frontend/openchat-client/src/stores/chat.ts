@@ -605,9 +605,10 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
 function isContiguousInternal(range: DRange, events: EventWrapper<ChatEvent>[]): boolean {
     if (range.length === 0 || events.length === 0) return true;
 
-    const firstIndex = events[0].index;
-    const lastIndex = events[events.length - 1].index;
-    const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
+    const indexes = [events[0].index, events[events.length - 1].index];
+    const minIndex = Math.min(...indexes);
+    const maxIndex = Math.max(...indexes);
+    const contiguousCheck = new DRange(minIndex - 1, maxIndex + 1);
 
     const isContiguous = range.clone().intersect(contiguousCheck).length > 0;
 
@@ -615,8 +616,8 @@ function isContiguousInternal(range: DRange, events: EventWrapper<ChatEvent>[]):
         console.log(
             "Events in response are not contiguous with the loaded events",
             range,
-            firstIndex,
-            lastIndex
+            minIndex,
+            maxIndex
         );
     }
 
