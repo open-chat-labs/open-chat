@@ -19,18 +19,17 @@ fn calculate_community_and_group_hotness(state: &mut RuntimeState) {
 
     for community in state.data.public_communities.iter_mut() {
         let random = state.env.rng().next_u32();
-        if let Some(activity) = community.activity() {
-            let score = calculate_hotness(
-                &activity.last_day,
-                &activity.last_hour,
-                activity.member_count,
-                community.created(),
-                community.marked_active_until(),
-                now,
-                random,
-            );
-            community.set_hotness_score(score);
-        }
+        let activity = community.activity();
+        let score = calculate_hotness(
+            &activity.last_day,
+            &activity.last_hour,
+            activity.member_count,
+            community.created(),
+            community.marked_active_until(),
+            now,
+            random,
+        );
+        community.set_hotness_score(score);
     }
 
     for group in state.data.public_groups.iter_mut() {

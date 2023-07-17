@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Set `activity` field on new public communities ([#3961](https://github.com/open-chat-labs/open-chat/pull/3961))
+
+## [[2.0.743](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.743-group_index)] - 2023-07-14
+
 ### Added
 
 - Public community moderation flags ([#3911](https://github.com/open-chat-labs/open-chat/pull/3911))

@@ -34,6 +34,7 @@ impl PublicCommunities {
         banner_id: Option<u128>,
         gate: Option<AccessGate>,
         primary_language: String,
+        channel_count: u32,
         now: TimestampMillis,
     ) {
         self.communities.insert(
@@ -46,6 +47,7 @@ impl PublicCommunities {
                 banner_id,
                 gate,
                 primary_language,
+                channel_count,
                 now,
             ),
         );
@@ -73,7 +75,7 @@ impl PublicCommunities {
                 } else if c.hotness_score > 0 {
                     c.hotness_score
                 } else {
-                    c.activity.as_ref().map_or(1, |a| a.member_count)
+                    c.activity.member_count
                 };
                 (score, c)
             })
@@ -143,7 +145,7 @@ pub struct PublicCommunityInfo {
     description: String,
     avatar_id: Option<u128>,
     banner_id: Option<u128>,
-    activity: Option<PublicCommunityActivity>,
+    activity: PublicCommunityActivity,
     hotness_score: u32,
     gate: Option<AccessGate>,
     #[serde(default)]
@@ -166,6 +168,7 @@ impl PublicCommunityInfo {
         banner_id: Option<u128>,
         gate: Option<AccessGate>,
         primary_language: String,
+        channel_count: u32,
         now: TimestampMillis,
     ) -> PublicCommunityInfo {
         PublicCommunityInfo {
@@ -177,7 +180,7 @@ impl PublicCommunityInfo {
             gate,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
-            activity: None,
+            activity: PublicCommunityActivity::new(channel_count, now),
             hotness_score: 0,
             frozen: None,
             moderation_flags: ModerationFlags::default(),
@@ -201,13 +204,13 @@ impl PublicCommunityInfo {
         self.marked_active_until
     }
 
-    pub fn activity(&self) -> &Option<PublicCommunityActivity> {
+    pub fn activity(&self) -> &PublicCommunityActivity {
         &self.activity
     }
 
     pub fn mark_active(&mut self, until: TimestampMillis, activity: PublicCommunityActivity) {
         self.marked_active_until = until;
-        self.activity = Some(activity);
+        self.activity = activity;
     }
 
     pub fn has_been_active_since(&self, since: TimestampMillis) -> bool {
@@ -247,8 +250,8 @@ impl From<&PublicCommunityInfo> for CommunityMatch {
             description: community.description.clone(),
             avatar_id: community.avatar_id,
             banner_id: community.banner_id,
-            member_count: community.activity.as_ref().map_or(0, |a| a.member_count),
-            channel_count: community.activity.as_ref().map_or(0, |a| a.channel_count),
+            member_count: community.activity.member_count,
+            channel_count: community.activity.channel_count,
             gate: community.gate.clone(),
             moderation_flags: community.moderation_flags.bits(),
             primary_language: community.primary_language.clone(),

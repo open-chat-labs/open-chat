@@ -40,7 +40,7 @@ fn c2c_leave_community_impl(state: &mut RuntimeState) -> Response {
     let user_id = member.user_id;
 
     state.data.members.remove(&user_id);
-    state.data.channels.remove_member(user_id);
+    state.data.channels.leave_all_channels(user_id, now);
 
     state
         .data

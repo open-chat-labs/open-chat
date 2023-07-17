@@ -26,3 +26,24 @@ pub struct Activity {
     pub reactions: u32,
     pub reaction_unique_users: u32,
 }
+
+impl PublicCommunityActivity {
+    pub fn new(channel_count: u32, now: TimestampMillis) -> PublicCommunityActivity {
+        PublicCommunityActivity {
+            timestamp: now,
+            member_count: 1,
+            channel_count,
+            ..Default::default()
+        }
+    }
+}
+
+impl PublicGroupActivity {
+    pub fn new(now: TimestampMillis) -> PublicGroupActivity {
+        PublicGroupActivity {
+            timestamp: now,
+            member_count: 1,
+            ..Default::default()
+        }
+    }
+}

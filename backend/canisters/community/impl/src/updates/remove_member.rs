@@ -101,11 +101,13 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
 }
 
 fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) {
+    let now = state.env.now();
+
     // Remove the user from the community
     state.data.members.remove(&user_id).expect("user must be a member");
 
     // Remove the user from each group they are a member of
-    state.data.channels.remove_member(user_id);
+    state.data.channels.leave_all_channels(user_id, now);
 
     if block {
         // Also block the user
@@ -118,7 +120,6 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
             user_ids: vec![user_id],
             blocked_by: removed_by,
         };
-
         CommunityEvent::UsersBlocked(Box::new(event))
     } else {
         let event = MembersRemoved {
@@ -127,7 +128,7 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
         };
         CommunityEvent::MembersRemoved(Box::new(event))
     };
-    state.data.events.push_event(event, state.env.now());
+    state.data.events.push_event(event, now);
 
     handle_activity_notification(state);
 

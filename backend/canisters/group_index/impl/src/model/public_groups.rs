@@ -190,7 +190,7 @@ impl PublicGroupInfo {
             gate,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
-            activity: PublicGroupActivity::default(),
+            activity: PublicGroupActivity::new(now),
             hotness_score: 0,
             frozen: None,
             exclude_from_hotlist: false,
