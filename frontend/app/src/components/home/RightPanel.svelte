@@ -47,12 +47,11 @@
     $: currentChatBlocked = client.currentChatBlockedUsers;
     $: currentChatRules = client.currentChatRules;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
-
+    $: chatListScope = client.chatListScope;
     $: currentCommunityMembers = client.currentCommunityMembers;
     $: currentCommunityInvited = client.currentCommunityInvitedUsers;
     $: currentCommunityBlocked = client.currentCommunityBlockedUsers;
     $: selectedCommunity = client.selectedCommunity;
-
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
     $: user = $userStore[currentUser.userId] ?? client.nullUser("unknown");
@@ -60,6 +59,23 @@
     $: modal = $numberOfColumns === 2;
     $: multiUserChat = selectedChatStore as Readable<MultiUserChat>;
     $: empty = $rightPanelHistory.length === 0;
+
+    /**
+     * if we're adding users to a channel we need to check whether or not the user has
+     * permission to invite users to the community. If not, then they can only search
+     * from the community's existing members
+     */
+    function searchUsers(term: string, max?: number): Promise<UserSummary[]> {
+        if (
+            $chatListScope.kind === "community" &&
+            $selectedCommunity !== undefined &&
+            !client.canInviteUsers($selectedCommunity.id) &&
+            lastState.kind === "invite_group_users"
+        ) {
+            return client.searchCommunityUsers(term);
+        }
+        return client.searchUsers(term, max);
+    }
 
     function onChangeGroupRole(
         ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>
@@ -340,6 +356,7 @@
             on:showGroupMembers />
     {:else if lastState.kind === "invite_community_users"}
         <InviteUsers
+            userLookup={searchUsers}
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             on:inviteUsers={inviteCommunityUsers}
@@ -360,6 +377,7 @@
             on:changeRole={onChangeCommunityRole} />
     {:else if lastState.kind === "invite_group_users"}
         <InviteUsers
+            userLookup={searchUsers}
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             on:inviteUsers={inviteGroupUsers}

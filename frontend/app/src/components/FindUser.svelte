@@ -9,7 +9,6 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { toastStore } from "../stores/toast";
     import { iconSize } from "../stores/iconSize";
-    import { now } from "../stores/time";
     import type { OpenChat } from "openchat-client";
     import FilteredUsername from "./FilteredUsername.svelte";
 
@@ -17,6 +16,7 @@
 
     export let mode: "add" | "edit";
     export let enabled = true;
+    export let userLookup: (searchTerm: string, maxResults?: number) => Promise<UserSummary[]>;
 
     const dispatch = createEventDispatcher();
     let inp: HTMLInputElement;
@@ -54,8 +54,7 @@
                 return;
             }
             searching = true;
-            client
-                .searchUsers(value)
+            userLookup(value)
                 .then((u) => (users = u))
                 .catch((_err) => toastStore.showFailureToast("userSearchFailed"))
                 .finally(() => (searching = false));

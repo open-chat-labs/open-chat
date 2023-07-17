@@ -3284,6 +3284,17 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    searchCommunityUsers(term: string): Promise<UserSummary[]> {
+        const matches = this._liveState.currentCommunityMembers.filter((m) => {
+            const user = this._liveState.userStore[m.userId];
+            if (user?.username === undefined) return false;
+            return user.username.toLowerCase().includes(term.toLowerCase());
+        });
+        return Promise.resolve(
+            matches.map((m) => this._liveState.userStore[m.userId] as UserSummary)
+        );
+    }
+
     clearReferralCode(): void {
         localStorage.removeItem("openchat_referredby");
         this._referralCode = undefined;

@@ -5,6 +5,7 @@
 
     export let members: CandidateMember[];
     export let busy: boolean;
+    export let userLookup: (searchTerm: string, maxResults?: number) => Promise<UserSummary[]>;
 
     $: selectedUsers = members.map((m) => m.user);
 
@@ -27,6 +28,7 @@
 
 <div class="members">
     <SelectUsers
+        {userLookup}
         enabled={!busy}
         mode={"add"}
         on:deleteUser={deleteMember}
