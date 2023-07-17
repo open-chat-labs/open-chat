@@ -12,7 +12,6 @@ import {
     CreatedUser,
     compareChats,
     emptyChatMetrics,
-    UpdatedEvent,
     ChatIdentifier,
     ChatMap,
     DirectChatIdentifier,
