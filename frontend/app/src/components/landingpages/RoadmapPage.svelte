@@ -9,10 +9,7 @@
 
     <CollapsibleCard transition={false} first open={false}>
         <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="quarter">Q1</div>
-                <div class="year">2023</div>
-            </div>
+            <div class="date subtitle complete">Complete</div>
             <div class="title">SNS Launch</div>
         </div>
         <div class="body">
@@ -42,10 +39,7 @@
 
     <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="quarter">Q1</div>
-                <div class="year">2023</div>
-            </div>
+            <div class="date subtitle complete">Continuous</div>
             <div class="title">User Rewards</div>
         </div>
         <div class="body">
@@ -69,10 +63,7 @@
 
     <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="quarter">Q2</div>
-                <div class="year">2023</div>
-            </div>
+            <div class="date subtitle complete">Complete</div>
             <div class="title">Communities</div>
         </div>
         <div class="body">
@@ -303,7 +294,8 @@
         gap: toRem(15);
         @include font(bold, normal, fs-160, 38);
 
-        .quarter {
+        .quarter,
+        &.complete {
             color: #23a2ee;
         }
 
@@ -312,7 +304,8 @@
             color: var(--landing-txt-light);
         }
 
-        &.future {
+        &.future,
+        &.complete {
             @include font(book, normal, fs-100, 38);
             font-weight: 500;
         }

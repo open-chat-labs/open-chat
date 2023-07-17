@@ -10,7 +10,6 @@
     import EditCommunity from "./communities/edit/Edit.svelte";
     import {
         MessageMatch,
-        UserSummary,
         ChatSummary,
         EnhancedReplyContext,
         AccessRules,
@@ -83,7 +82,7 @@
     const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
-    let candidateCommunityRules: AccessRules = defaultAccessRules;
+    let candidateCommunityRules: AccessRules = defaultAccessRules();
     let convertGroup: GroupChatSummary | undefined = undefined;
 
     type ConfirmActionEvent =
@@ -891,7 +890,7 @@
                 reactToMessages: "member",
                 replyInThread: "member",
             },
-            rules: defaultAccessRules,
+            rules: defaultAccessRules(),
             gate: { kind: "no_gate" },
             level,
             membership: {
@@ -914,7 +913,7 @@
             frozen: chat.frozen,
             members: [],
             permissions: { ...chat.permissions },
-            rules: rules !== undefined ? { ...rules } : defaultAccessRules,
+            rules: rules !== undefined ? { ...rules } : defaultAccessRules(),
             avatar: {
                 blobUrl: chat.blobUrl,
                 blobData: chat.blobData,
@@ -970,13 +969,13 @@
 
     function createCommunity() {
         candidateCommunity = createCandidateCommunity("");
-        candidateCommunityRules = defaultAccessRules;
+        candidateCommunityRules = defaultAccessRules();
         modal = ModalType.EditCommunity;
     }
 
     function editCommunity(ev: CustomEvent<CommunitySummary>) {
         candidateCommunity = ev.detail;
-        candidateCommunityRules = $currentCommunityRules ?? defaultAccessRules;
+        candidateCommunityRules = $currentCommunityRules ?? defaultAccessRules();
         modal = ModalType.EditCommunity;
     }
 

@@ -178,7 +178,7 @@
 
         padding: $sp4;
         @include mobile() {
-            padding: $sp3 $sp4;
+            padding: $sp3 toRem(10);
         }
     }
 

@@ -8,6 +8,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import page from "page";
     import AccessGateIcon from "../../AccessGateIcon.svelte";
+    import { popRightPanelHistory } from "stores/rightPanel";
 
     const dispatch = createEventDispatcher();
 
@@ -20,6 +21,9 @@
 
     function selectChannel(match: ChannelMatch) {
         if ($selectedCommunity === undefined) return;
+        if ($mobileWidth) {
+            popRightPanelHistory();
+        }
         page(routeForChatIdentifier($chatListScope.kind, match.id));
     }
 
@@ -30,9 +34,7 @@
 
 <div class="details" on:click={() => selectChannel(channel)}>
     <div class="avatar">
-        <Avatar
-            url={client.groupAvatarUrl(channel.avatar)}
-            size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
+        <Avatar url={client.groupAvatarUrl(channel.avatar)} size={AvatarSize.Default} />
     </div>
     <div class="channel-text">
         <h3 class="channel-name">
@@ -80,6 +82,10 @@
         padding: $sp4;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         cursor: pointer;
+
+        @include mobile() {
+            padding: $sp3 toRem(10);
+        }
 
         &:hover {
             background-color: var(--chatSummary-hv);

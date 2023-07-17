@@ -20,17 +20,22 @@
     import page from "page";
     import NotificationsBar from "./NotificationsBar.svelte";
     import { chatListScroll } from "../../stores/scrollPos";
+    import Button from "../Button.svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import ThreadsButton from "./ThreadsButton.svelte";
     import ChatsButton from "./ChatsButton.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import { discoverHotGroupsDismissed } from "../../stores/settings";
     import { communitiesEnabled } from "../../utils/features";
     import { pushRightPanelHistory } from "../../stores/rightPanel";
     import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
     import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
+    import PreviewWrapper from "./communities/PreviewWrapper.svelte";
+    import { routeForScope } from "../../routes";
+    import ButtonGroup from "../ButtonGroup.svelte";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -49,6 +54,10 @@
     $: chatListScope = client.chatListScope;
     $: numberOfThreadsStore = client.numberOfThreadsStore;
     $: selectedCommunity = client.selectedCommunity;
+    $: showPreview =
+        $mobileWidth &&
+        $selectedCommunity?.membership.role === "none" &&
+        $selectedChatId === undefined;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
@@ -94,6 +103,13 @@
         // need to make sure that we reset the view each time the chat list scope changes
         if ($chatListScope) {
             view = "chats";
+        }
+    }
+
+    function cancelPreview() {
+        if ($selectedCommunity) {
+            client.removeCommunity($selectedCommunity.id);
+            page(routeForScope(client.getDefaultScope()));
         }
     }
 
@@ -332,6 +348,22 @@
         {/if}
     </div>
     <NotificationsBar />
+    {#if showPreview}
+        <PreviewWrapper let:joiningCommunity let:joinCommunity>
+            <div class="join">
+                <ButtonGroup align="center">
+                    <Button secondary={true} small={true} on:click={cancelPreview}>
+                        {$_("leave")}
+                    </Button>
+                    <Button
+                        loading={joiningCommunity}
+                        disabled={joiningCommunity}
+                        on:click={() => joinCommunity(false)}
+                        >{$_("communities.joinCommunity")}</Button>
+                </ButtonGroup>
+            </div>
+        </PreviewWrapper>
+    {/if}
 {/if}
 
 <style lang="scss">
@@ -346,13 +378,19 @@
         overflow-x: hidden;
     }
 
+    .join {
+        position: sticky;
+        bottom: 0;
+        padding: $sp3 $sp4;
+        background-color: var(--entry-bg);
+    }
+
     .section-selector {
-        display: flex;
-        justify-content: flex-start;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
         margin: 0 $sp4 $sp4 $sp4;
         gap: $sp3;
         @include mobile() {
-            justify-content: space-evenly;
             margin: 0 $sp3 $sp3 $sp3;
         }
     }
@@ -393,15 +431,11 @@
         cursor: pointer;
 
         @include mobile() {
-            padding: $sp3 $sp4;
+            padding: $sp3 toRem(10);
         }
 
         .label {
             flex: auto;
-        }
-
-        .close {
-            flex: 0 0 toRem(20);
         }
 
         .flame {

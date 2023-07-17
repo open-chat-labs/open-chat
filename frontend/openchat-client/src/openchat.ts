@@ -86,7 +86,6 @@ import {
     chatStateStore,
     chatSummariesListStore,
     chatSummariesStore,
-    chatUpdatedStore,
     clearSelectedChat,
     userMetrics,
     createDirectChat,
@@ -419,13 +418,6 @@ export class OpenChat extends OpenChatAgentWorker {
         initialiseTracking(config);
 
         this._authClient.then((c) => c.getIdentity()).then((id) => this.loadedIdentity(id));
-
-        chatUpdatedStore.subscribe((val) => {
-            if (val !== undefined) {
-                this.chatUpdated(val.chatId, val.updatedEvents);
-                chatUpdatedStore.set(undefined);
-            }
-        });
 
         load()
             .then((botd) => botd.detect())
@@ -4037,6 +4029,20 @@ export class OpenChat extends OpenChatAgentWorker {
                     blockedUsers.set(new Set(chatsResponse.state.blockedUsers));
                 }
 
+                // if the selected community has updates, reload the details
+                const selectedCommunity = this._liveState.selectedCommunity;
+                if (selectedCommunity !== undefined) {
+                    const updatedCommunity = chatsResponse.state.communities.find(
+                        (c) => c.id.communityId === selectedCommunity.id.communityId
+                    );
+                    if (
+                        updatedCommunity !== undefined &&
+                        updatedCommunity.latestEventIndex > selectedCommunity.latestEventIndex
+                    ) {
+                        this.updateCommunityDetails(updatedCommunity);
+                    }
+                }
+
                 setGlobalState(
                     chatsResponse.state.communities,
                     updatedChats,
@@ -4066,10 +4072,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         this.dispatchEvent(new SelectedChatInvalid());
                     } else {
                         const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
-                        chatUpdatedStore.set({
-                            chatId: selectedChatId,
-                            updatedEvents: updatedEvents.get(selectedChatId) ?? [],
-                        });
+                        this.chatUpdated(selectedChatId, updatedEvents.get(selectedChatId) ?? []);
                     }
                 }
 
@@ -4108,13 +4111,6 @@ export class OpenChat extends OpenChatAgentWorker {
                         messagesRead.markReadUpTo(chat.id, latestMessage.messageIndex);
                     }
                 }
-
-                // if (!init) {
-                //     if (communitiesEnabled && this._liveState.chatListScope.kind === "none") {
-                //         this.setChatListScope(this.getDefaultScope());
-                //     }
-                //     console.log("InitialScope: ", this._liveState.chatListScope);
-                // }
 
                 chatsInitialised.set(true);
 

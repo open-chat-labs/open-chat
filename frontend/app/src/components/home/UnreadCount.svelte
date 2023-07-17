@@ -7,7 +7,7 @@
 
 {#if unread > 0}
     <div
-        in:pop={{ duration: 1500 }}
+        in:pop={{ duration: 1500, transform: "translateY(-50%)" }}
         title={$_("thread.unread", {
             values: { count: unread.toString() },
         })}
@@ -19,7 +19,13 @@
 <style lang="scss">
     .unread-count {
         position: absolute;
-        right: -16px;
+        right: $sp3;
         @include unread();
+        top: 50%;
+        transform: translateY(-50%);
+
+        @include mobile() {
+            right: toRem(6);
+        }
     }
 </style>

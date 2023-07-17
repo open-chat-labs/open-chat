@@ -205,9 +205,6 @@ export const selectedMessageContext = derived(
 );
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
-export const chatUpdatedStore: Writable<
-    { chatId: ChatIdentifier; updatedEvents: UpdatedEvent[] } | undefined
-> = writable(undefined);
 
 export const selectedServerChatStore = derived(
     [serverChatSummariesStore, selectedChatId],
