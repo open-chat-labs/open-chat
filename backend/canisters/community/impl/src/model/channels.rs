@@ -1,5 +1,5 @@
 use chat_events::Reader;
-use group_chat_core::{GroupChatCore, GroupMemberInternal};
+use group_chat_core::{GroupChatCore, GroupMemberInternal, LeaveResult};
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
@@ -99,10 +99,18 @@ impl Channels {
         }
     }
 
-    pub fn remove_member(&mut self, user_id: UserId) -> HashMap<ChannelId, GroupMemberInternal> {
+    pub fn leave_all_channels(&mut self, user_id: UserId, now: TimestampMillis) -> HashMap<ChannelId, GroupMemberInternal> {
         self.channels
             .iter_mut()
-            .filter_map(|(id, c)| c.chat.members.remove(user_id).map(|m| (*id, m)))
+            .filter_map(
+                |(id, c)| {
+                    if let LeaveResult::Success(m) = c.chat.leave(user_id, now) {
+                        Some((*id, m))
+                    } else {
+                        None
+                    }
+                },
+            )
             .collect()
     }
 

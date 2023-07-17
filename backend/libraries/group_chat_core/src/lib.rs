@@ -1143,12 +1143,12 @@ impl GroupChatCore {
                 return LastOwnerCannotLeave;
             }
 
-            self.members.remove(user_id);
+            let removed = self.members.remove(user_id).unwrap();
 
             self.events
                 .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id })), 0, now);
 
-            Success
+            Success(removed)
         } else {
             UserNotInGroup
         }
@@ -1656,7 +1656,7 @@ pub enum PinUnpinMessageResult {
 }
 
 pub enum LeaveResult {
-    Success,
+    Success(GroupMemberInternal),
     UserSuspended,
     LastOwnerCannotLeave,
     UserNotInGroup,
