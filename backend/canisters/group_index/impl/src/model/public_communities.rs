@@ -4,7 +4,7 @@ use crate::MARK_ACTIVE_DURATION;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{AccessGate, Activity, CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
+use types::{AccessGate, CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PublicCommunities {
@@ -180,13 +180,7 @@ impl PublicCommunityInfo {
             gate,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
-            activity: PublicCommunityActivity {
-                timestamp: now,
-                member_count: 1,
-                channel_count,
-                last_hour: Activity::default(),
-                last_day: Activity::default(),
-            },
+            activity: PublicCommunityActivity::new(channel_count, now),
             hotness_score: 0,
             frozen: None,
             moderation_flags: ModerationFlags::default(),
