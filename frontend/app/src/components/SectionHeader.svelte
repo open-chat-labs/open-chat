@@ -36,7 +36,7 @@
         flex: 0 0 toRem(80);
 
         @include mobile() {
-            padding: $sp3;
+            padding: $sp3 toRem(10);
         }
 
         &.border {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { AvatarSize, OpenChat } from "openchat-client";
-    import type { UserLookup, ChatSummary, TypersByKey } from "openchat-client";
+    import type { UserLookup, ChatSummary, TypersByKey, CommunitySummary } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
@@ -49,7 +49,10 @@
     let unreadMentions: number;
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
+        const fav =
+            $communitiesEnabled &&
+            $chatListScope.kind !== "favourite" &&
+            $favouritesStore.has(chatSummary.id);
         switch (chatSummary.kind) {
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
@@ -212,14 +215,27 @@
     }
 
     $: displayDate = client.getDisplayDate(chatSummary);
+    $: selectedCommunity = client.selectedCommunity;
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId);
     $: readonly = client.isChatReadOnly(chatSummary.id);
-    $: canDelete =
-        (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
-        ((chatSummary.kind === "group_chat" || chatSummary.kind === "channel") &&
-            chatSummary.membership.role === "none");
+    $: canDelete = getCanDelete(chatSummary, $selectedCommunity);
     $: pinned = client.pinned($chatListScope.kind, chatSummary.id);
     $: muted = chatSummary.membership.notificationsMuted;
+
+    function getCanDelete(chat: ChatSummary, community: CommunitySummary | undefined) {
+        switch (chat.kind) {
+            case "direct_chat":
+                return chat.latestMessage === undefined;
+            case "group_chat":
+                return chat.membership.role === "none";
+            case "channel":
+                return (
+                    community !== undefined &&
+                    community.membership.role !== "none" &&
+                    chat.membership.role === "none"
+                );
+        }
+    }
 </script>
 
 {#if visible}
@@ -450,7 +466,7 @@
         user-select: none;
 
         @include mobile() {
-            padding: $sp3 $sp4;
+            padding: $sp3 toRem(10);
         }
 
         &:hover {

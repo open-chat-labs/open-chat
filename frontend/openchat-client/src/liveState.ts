@@ -16,6 +16,7 @@ import type {
     UserLookup,
     MultiUserChat,
     ChatListScope,
+    Member,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -49,7 +50,7 @@ import { userStore } from "./stores/user";
 import { blockedUsers } from "./stores/blockedUsers";
 import { diamondMembership, isDiamond } from "./stores/diamond";
 import type DRange from "drange";
-import { communities } from "./stores/community";
+import { communities, currentCommunityMembers, selectedCommunity } from "./stores/community";
 import { GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
 
 /**
@@ -90,6 +91,8 @@ export class LiveState {
     communities!: CommunityMap<CommunitySummary>;
     chatListScope!: ChatListScope;
     globalState!: GlobalState;
+    selectedCommunity!: CommunitySummary | undefined;
+    currentCommunityMembers!: Member[];
 
     constructor() {
         confirmedThreadEventIndexesLoadedStore.subscribe(
@@ -129,5 +132,7 @@ export class LiveState {
         communities.subscribe((data) => (this.communities = data));
         chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
         globalStateStore.subscribe((data) => (this.globalState = data));
+        selectedCommunity.subscribe((data) => (this.selectedCommunity = data));
+        currentCommunityMembers.subscribe((data) => (this.currentCommunityMembers = data));
     }
 }

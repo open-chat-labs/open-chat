@@ -11,7 +11,7 @@
 
     $: selectedCommunity = client.selectedCommunity;
     $: currentCommunityRules = client.currentCommunityRules;
-    $: rules = $currentCommunityRules ?? defaultAccessRules;
+    $: rules = $currentCommunityRules ?? defaultAccessRules();
 
     $: canDelete =
         $selectedCommunity !== undefined && client.canDeleteCommunity($selectedCommunity.id);

@@ -12,6 +12,7 @@
         CommunitySummary,
         DefaultChannel,
         OpenChat,
+        UserSummary,
     } from "openchat-client";
     import StageHeader from "../../StageHeader.svelte";
     import PermissionsEditor from "./PermissionsEditor.svelte";
@@ -100,6 +101,10 @@
 
     function changeStep(ev: CustomEvent<number>) {
         step = ev.detail;
+    }
+
+    function searchUsers(term: string, max?: number): Promise<UserSummary[]> {
+        return client.searchUsers(term, max);
     }
 
     function optionallyInviteUsers(communityId: string): Promise<void> {
@@ -227,7 +232,7 @@
                         <ChooseChannels bind:valid={channelsValid} bind:channels />
                     </div>
                     <div class="members" class:visible={step === 5}>
-                        <ChooseMembers bind:members {busy} />
+                        <ChooseMembers userLookup={searchUsers} bind:members {busy} />
                     </div>
                 {/if}
             </div>

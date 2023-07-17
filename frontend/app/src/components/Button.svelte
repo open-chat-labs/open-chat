@@ -40,6 +40,7 @@
         border: none;
         min-height: 45px;
         min-width: 150px;
+        position: relative;
         @include font(book, normal, fs-100, 20);
 
         &.square {

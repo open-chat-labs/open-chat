@@ -13,6 +13,7 @@
 
     export let closeIcon: "close" | "back";
     export let busy = false;
+    export let userLookup: (searchTerm: string, maxResults?: number) => Promise<UserSummary[]>;
 
     const dispatch = createEventDispatcher();
     let usersToInvite: UserSummary[] = [];
@@ -50,6 +51,7 @@
 {#if !busy}
     <div class="find-user">
         <SelectUsers
+            {userLookup}
             mode={"edit"}
             on:selectUser={selectUser}
             on:deleteUser={deleteUser}

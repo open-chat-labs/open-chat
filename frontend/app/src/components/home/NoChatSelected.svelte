@@ -32,7 +32,7 @@
 </script>
 
 {#if previewingCommunity && $selectedCommunity}
-    <div class="wrapper">
+    <div class="wrapper community">
         <PreviewWrapper let:joinCommunity let:joiningCommunity>
             <CommunityCard
                 name={$selectedCommunity.name}
@@ -71,8 +71,9 @@
 {/if}
 
 <style lang="scss">
-    :global(.wrapper .card) {
+    :global(.wrapper.community .card) {
         min-width: toRem(280);
+        max-width: 50%;
     }
     .wrapper {
         display: flex;
@@ -81,6 +82,10 @@
         text-align: center;
         align-items: center;
         height: 100%;
+
+        &.community {
+            text-align: start;
+        }
     }
 
     .subtitle {

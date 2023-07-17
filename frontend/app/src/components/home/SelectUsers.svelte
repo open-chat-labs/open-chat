@@ -8,6 +8,7 @@
     export let mode: "add" | "edit";
     export let selectedUsers: UserSummary[];
     export let enabled = true;
+    export let userLookup: (searchTerm: string, maxResults?: number) => Promise<UserSummary[]>;
 
     let error: string | undefined = undefined;
 </script>
@@ -24,7 +25,7 @@
 {/if}
 
 <div class="find-user">
-    <FindUser {enabled} {mode} on:selectUser />
+    <FindUser {userLookup} {enabled} {mode} on:selectUser />
 </div>
 
 <style lang="scss">

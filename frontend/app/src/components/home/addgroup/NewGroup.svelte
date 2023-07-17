@@ -20,6 +20,7 @@
         routeForChatIdentifier,
         chatIdentifierUnset,
         MultiUserChatIdentifier,
+        UserSummary,
     } from "openchat-client";
     import StageHeader from "../StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
@@ -52,6 +53,7 @@
     $: left = step * (actualWidth - padding);
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
     $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.id);
+    $: selectedCommunity = client.selectedCommunity;
 
     $: permissionsDirty = client.havePermissionsChanged(
         originalGroup.permissions,
@@ -83,6 +85,17 @@
             steps.push({ labelKey: "invite.invite", valid: true });
         }
         return steps;
+    }
+
+    function searchUsers(term: string, max?: number): Promise<UserSummary[]> {
+        if (
+            $selectedCommunity !== undefined &&
+            !client.canInviteUsers($selectedCommunity.id) &&
+            candidateGroup.level === "channel"
+        ) {
+            return client.searchCommunityUsers(term);
+        }
+        return client.searchUsers(term, max);
     }
 
     function interpolateError(error: string): string {
@@ -401,7 +414,10 @@
                 </div>
                 {#if !editing}
                     <div class="members" class:visible={step === 4}>
-                        <ChooseMembers bind:members={candidateGroup.members} {busy} />
+                        <ChooseMembers
+                            userLookup={searchUsers}
+                            bind:members={candidateGroup.members}
+                            {busy} />
                     </div>
                 {/if}
             </div>

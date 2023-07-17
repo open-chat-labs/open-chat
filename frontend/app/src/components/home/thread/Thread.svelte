@@ -23,6 +23,7 @@
     import { toastStore } from "stores/toast";
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
+    import { randomSentence } from "../../../utils/randomMsg";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -96,7 +97,7 @@
         function send(n: number) {
             if (n === ev.detail) return;
 
-            sendMessageWithAttachment(`Test message ${n}`, [], undefined);
+            sendMessageWithAttachment(randomSentence(), [], undefined);
 
             setTimeout(() => send(n + 1), 500);
         }

@@ -19,7 +19,10 @@
 <style lang="scss">
     :global(.left-nav-item .unread-count) {
         right: toRem(-9);
-        bottom: 0;
+        top: 85%;
+        @include mobile() {
+            right: toRem(-5);
+        }
     }
 
     $size: toRem(48);

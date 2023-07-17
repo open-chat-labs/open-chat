@@ -50,7 +50,7 @@
         padding: 0 $sp4;
         @include nice-scrollbar();
         @include mobile() {
-            padding: 0 $sp4;
+            padding: 0 toRem(10);
         }
     }
 </style>

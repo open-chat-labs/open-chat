@@ -56,10 +56,6 @@
         align-items: center;
         gap: $sp4;
         cursor: pointer;
-
-        @include mobile() {
-            padding: 0 $sp3;
-        }
     }
     .wrapper {
         display: flex;

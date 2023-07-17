@@ -10,25 +10,15 @@
 </script>
 
 <Button fill={$mobileWidth} hollow={!selected} small={!$mobileWidth} tiny={$mobileWidth} on:click>
-    <div class="wrapper">
-        <h4 class="title" class:unread={unread > 0}>
-            {title}
-        </h4>
-        <UnreadCount {unread} />
-    </div>
+    <h4 class="title" class:unread={unread > 0}>
+        {title}
+    </h4>
+    <UnreadCount {unread} />
 </Button>
 
 <style lang="scss">
-    .wrapper {
-        position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: $sp4;
-        min-width: 120px;
-    }
-
     .title {
         @include font(medium, normal, fs-100);
+        @include ellipsis();
     }
 </style>

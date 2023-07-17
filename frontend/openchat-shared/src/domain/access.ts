@@ -46,7 +46,9 @@ export const defaultAccessRuleText = `- Do not impersonate others in a deceptive
 
 If you break the rules you might be blocked and/or have your message(s) deleted.`;
 
-export const defaultAccessRules: AccessRules = {
-    text: defaultAccessRuleText,
-    enabled: false,
-};
+export function defaultAccessRules(): AccessRules {
+    return {
+        text: defaultAccessRuleText,
+        enabled: false,
+    };
+}
