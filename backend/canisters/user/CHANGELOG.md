@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `set_message_reminder_v2` to support channel message reminders ([#3871](https://github.com/open-chat-labs/open-chat/pull/3871))
 - Add missing impl for `c2c_notify_community_deleted` ([#3914](https://github.com/open-chat-labs/open-chat/pull/3914))
 - Add language field to community ([#3923](https://github.com/open-chat-labs/open-chat/pull/3923))
+- Remove dependency on `ic-sns-governance` ([#3965](https://github.com/open-chat-labs/open-chat/pull/3965))
 
 ### Changed
 

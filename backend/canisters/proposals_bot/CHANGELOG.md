@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Remove dependency on `ic-sns-governance` ([#3965](https://github.com/open-chat-labs/open-chat/pull/3965))
+
 ## [[2.0.737](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.737-proposals_bot)] - 2023-07-03
 
 ### Changed
