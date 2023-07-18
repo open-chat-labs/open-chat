@@ -92,9 +92,10 @@ export const allChats = derived(globalStateStore, ($global) => {
 });
 
 export const unreadFavouriteChats = derived(
-    [globalStateStore, allChats, messagesRead],
-    ([$global, $allChats, _$messagesRead]) => {
-        const chats = $global.favourites.values().map((id) => $allChats.get(id));
+    [globalStateStore, messagesRead],
+    ([$global, _$messagesRead]) => {
+        const allChats = getAllChats($global);
+        const chats = $global.favourites.values().map((id) => allChats.get(id));
         return unreadCountForChatList(chats);
     }
 );
