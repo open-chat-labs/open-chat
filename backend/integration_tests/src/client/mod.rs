@@ -59,7 +59,7 @@ pub fn install_canister<P: CandidType>(
     wasm: CanisterWasm,
     payload: P,
 ) {
-    execute_update(
+    execute_update_no_response(
         env,
         sender,
         Principal::management_canister(),
@@ -91,6 +91,17 @@ pub fn execute_update<P: CandidType, R: CandidType + DeserializeOwned>(
     payload: &P,
 ) -> R {
     unwrap_response(env.update_call(canister_id, sender, method_name, candid::encode_one(payload).unwrap()))
+}
+
+pub fn execute_update_no_response<P: CandidType>(
+    env: &mut StateMachine,
+    sender: Principal,
+    canister_id: CanisterId,
+    method_name: &str,
+    payload: &P,
+) {
+    env.update_call(canister_id, sender, method_name, candid::encode_one(payload).unwrap())
+        .unwrap();
 }
 
 pub fn register_diamond_user(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> User {

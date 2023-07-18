@@ -119,7 +119,7 @@ aws-types = "0.55.3"
 base64 = "0.21.2"
 bitflags = { version = "2.3.3", features = ["serde"] }
 candid = "0.9.1"
-ciborium = { git = "https://github.com/enarx/ciborium", rev = "e719537c99b564c3674a56defe53713c702c6f46" }
+ciborium = "0.2.1"
 clap = "4.3.4"
 dirs = "5.0.1"
 dotenv = "0.15.0"

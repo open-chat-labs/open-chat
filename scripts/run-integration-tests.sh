@@ -26,7 +26,7 @@ fi
 
 cd backend/integration_tests/local-bin
 echo "Test state machine download starting"
-curl -sO https://download.dfinity.systems/ic/6d21535b301fee2ad3e8a0e8af2c3f9a3d022111/binaries/x86_64-$PLATFORM/ic-test-state-machine.gz
+curl -sO https://download.dfinity.systems/ic/97df774f8cb88ca1a00e26dc3daa19735ad3599a/binaries/x86_64-$PLATFORM/ic-test-state-machine.gz
 gzip -df ic-test-state-machine.gz
 chmod +x ic-test-state-machine
 echo "Test state machine download completed"
@@ -36,4 +36,4 @@ cd ../../..
 ./scripts/download-nns-canister-wasm.sh cycles_minting_canister cycles-minting-canister
 ./scripts/download-nns-canister-wasm.sh sns_wasm sns-wasm-canister
 
-cargo test --release --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS
+cargo test --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS
