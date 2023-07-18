@@ -22,11 +22,8 @@ http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
-ic-icrc1 = { workspace = true }
-ic-icrc1-client = { workspace = true }
-ic-icrc1-client-cdk = { workspace = true }
 ic-stable-structures = { workspace = true, features = ["candid"] }
-icrc-ledger-types = { workspace = true }
+icrc1_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc1_ledger/c2c_client" }
 itertools = { workspace = true }
 market_maker_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
