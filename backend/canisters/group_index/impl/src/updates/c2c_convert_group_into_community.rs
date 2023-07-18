@@ -56,7 +56,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Respon
         name: args.name.clone(),
         description: args.description,
         rules: args.rules,
-        avatar: None,
+        avatar: args.avatar,
         banner: None,
         history_visible_to_new_joiners: args.history_visible_to_new_joiners,
         permissions: args.permissions,
