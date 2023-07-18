@@ -399,22 +399,6 @@
         page(routeForScope(client.getDefaultScope()));
     }
 
-    function pinChat(ev: CustomEvent<ChatIdentifier>) {
-        client.pinChat(ev.detail).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("pinChat.failed");
-            }
-        });
-    }
-
-    function unpinChat(ev: CustomEvent<ChatIdentifier>) {
-        client.unpinChat(ev.detail).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("pinChat.unpinFailed");
-            }
-        });
-    }
-
     function onArchiveChat(ev: CustomEvent<ChatIdentifier>) {
         client.archiveChat(ev.detail).then((success) => {
             if (!success) {
@@ -988,8 +972,6 @@
             on:logout={() => client.logout()}
             on:wallet={showWallet}
             on:deleteDirectChat={deleteDirectChat}
-            on:pinChat={pinChat}
-            on:unpinChat={unpinChat}
             on:upgrade={upgrade}
             on:archiveChat={onArchiveChat}
             on:unarchiveChat={onUnarchiveChat}

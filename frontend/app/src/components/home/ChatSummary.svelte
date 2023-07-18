@@ -28,6 +28,7 @@
     import MenuItem from "../MenuItem.svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { communitiesEnabled } from "../../utils/features";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -182,11 +183,19 @@
     }
 
     function pinChat() {
-        dispatch("pinChat", chatSummary.id);
+        client.pinChat(chatSummary.id).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("pinChat.failed");
+            }
+        });
     }
 
     function unpinChat() {
-        dispatch("unpinChat", chatSummary.id);
+        client.unpinChat(chatSummary.id).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("pinChat.unpinFailed");
+            }
+        });
     }
 
     function toggleMuteNotifications(mute: boolean) {

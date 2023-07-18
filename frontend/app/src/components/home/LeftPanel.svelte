@@ -14,8 +14,6 @@
             on:profile
             on:logout
             on:deleteDirectChat
-            on:pinChat
-            on:unpinChat
             on:archiveChat
             on:unarchiveChat
             on:wallet
