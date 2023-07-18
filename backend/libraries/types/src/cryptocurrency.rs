@@ -373,6 +373,7 @@ pub mod sns {
         pub to: CryptoAccount,
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
+        #[serde(default)]
         pub transaction_hash: TransactionHash,
         pub block_index: BlockIndex,
     }
@@ -388,6 +389,7 @@ pub mod sns {
         pub to: CryptoAccount,
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
+        #[serde(default)]
         pub transaction_hash: TransactionHash,
         pub error_message: String,
     }

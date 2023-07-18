@@ -1,4 +1,3 @@
-use ic_ledger_canister_core::ledger::LedgerTransaction;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{Memo, TransferArg};
 use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, TransactionHash};
@@ -63,17 +62,6 @@ pub async fn process_transaction(
     })
 }
 
-pub fn transaction_hash(from: Account, args: &TransferArg) -> TransactionHash {
-    ic_icrc1::Transaction {
-        operation: ic_icrc1::Operation::Transfer {
-            from,
-            to: args.to,
-            amount: args.amount.clone().0.try_into().unwrap(),
-            fee: args.fee.clone().and_then(|f| f.0.try_into().ok()),
-        },
-        created_at_time: args.created_at_time,
-        memo: args.memo.clone(),
-    }
-    .hash()
-    .into_bytes()
+pub fn transaction_hash(_from: Account, _args: &TransferArg) -> TransactionHash {
+    Default::default()
 }
