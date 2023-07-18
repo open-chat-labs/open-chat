@@ -4,7 +4,7 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-for canister_path in ./backend/canisters/*/
+for canister_path in ./backend/*canisters/*/
 do
   canister_path=${canister_path%*/}
   candid=${canister_path}/api/can.did
