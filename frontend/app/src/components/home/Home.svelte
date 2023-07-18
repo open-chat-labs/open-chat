@@ -383,16 +383,6 @@
         rightPanelHistory.update((history) => filterByChatType(history, $selectedChatStore));
     }
 
-    function userAvatarSelected(ev: CustomEvent<{ data: Uint8Array }>): void {
-        client.setUserAvatar(ev.detail.data).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("avatarUpdated");
-            } else {
-                toastStore.showFailureToast("avatarUpdateFailed");
-            }
-        });
-    }
-
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
         waitAndScrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
@@ -407,26 +397,6 @@
     function closeNoAccess() {
         closeModal();
         page(routeForScope(client.getDefaultScope()));
-    }
-
-    function blockUser(ev: CustomEvent<{ userId: string }>) {
-        client.blockUserFromDirectChat(ev.detail.userId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("blockUserSucceeded");
-            } else {
-                toastStore.showFailureToast("blockUserFailed");
-            }
-        });
-    }
-
-    function unblockUser(ev: CustomEvent<{ userId: string }>) {
-        client.unblockUserFromDirectChat(ev.detail.userId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("unblockUserSucceeded");
-            } else {
-                toastStore.showFailureToast("unblockUserFailed");
-            }
-        });
     }
 
     function pinChat(ev: CustomEvent<ChatIdentifier>) {
@@ -1036,8 +1006,6 @@
             bind:currentChatMessages
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
-            on:blockUser={blockUser}
-            on:unblockUser={unblockUser}
             on:leaveGroup={triggerConfirm}
             on:chatWith={chatWith}
             on:replyPrivatelyTo={replyPrivatelyTo}
@@ -1056,14 +1024,12 @@
     {/if}
     {#if $layoutStore.rightPanel === "inline"}
         <RightPanel
-            on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
             on:replyPrivatelyTo={replyPrivatelyTo}
             on:showInviteGroupUsers={showInviteGroupUsers}
             on:showGroupMembers={showGroupMembers}
             on:chatWith={chatWith}
             on:upgrade={upgrade}
-            on:blockUser={blockUser}
             on:deleteGroup={triggerConfirm}
             on:editGroup={editGroup}
             on:editCommunity={editCommunity}
@@ -1077,14 +1043,12 @@
     <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
             <RightPanel
-                on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
                 on:replyPrivatelyTo={replyPrivatelyTo}
                 on:showInviteGroupUsers={showInviteGroupUsers}
                 on:showGroupMembers={showGroupMembers}
                 on:chatWith={chatWith}
                 on:upgrade={upgrade}
-                on:blockUser={blockUser}
                 on:deleteGroup={triggerConfirm}
                 on:editGroup={editGroup}
                 on:editCommunity={editCommunity}

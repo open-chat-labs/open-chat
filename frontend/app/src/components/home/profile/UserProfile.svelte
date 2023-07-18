@@ -147,7 +147,13 @@
     }
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
-        dispatch("userAvatarSelected", ev.detail);
+        client.setUserAvatar(ev.detail.data).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast("avatarUpdated");
+            } else {
+                toastStore.showFailureToast("avatarUpdateFailed");
+            }
+        });
     }
 
     function closeProfile() {

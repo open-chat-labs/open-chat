@@ -28,7 +28,6 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import { rightPanelHistory } from "../../stores/rightPanel";
     import { rtlStore } from "../../stores/rtl";
-    import { communitiesEnabled } from "../../utils/features";
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
     import { interpolateLevel } from "../../utils/i18n";
@@ -116,13 +115,25 @@
 
     function blockUser() {
         if (selectedChatSummary.kind === "direct_chat") {
-            dispatch("blockUser", { userId: selectedChatSummary.them });
+            client.blockUserFromDirectChat(selectedChatSummary.them.userId).then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast("blockUserSucceeded");
+                } else {
+                    toastStore.showFailureToast("blockUserFailed");
+                }
+            });
         }
     }
 
     function unblockUser() {
         if (selectedChatSummary.kind === "direct_chat") {
-            dispatch("unblockUser", { userId: selectedChatSummary.them });
+            client.unblockUserFromDirectChat(selectedChatSummary.them.userId).then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast("unblockUserSucceeded");
+                } else {
+                    toastStore.showFailureToast("unblockUserFailed");
+                }
+            });
         }
     }
 
@@ -256,22 +267,20 @@
         </div>
         <div slot="menu">
             <Menu>
-                {#if $communitiesEnabled}
-                    {#if !$favouritesStore.has(selectedChatSummary.id)}
-                        <MenuItem on:click={addToFavourites}>
-                            <HeartPlus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                            <div slot="text">
-                                {$_("communities.addToFavourites")}
-                            </div>
-                        </MenuItem>
-                    {:else}
-                        <MenuItem on:click={removeFromFavourites}>
-                            <HeartMinus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                            <div slot="text">
-                                {$_("communities.removeFromFavourites")}
-                            </div>
-                        </MenuItem>
-                    {/if}
+                {#if !$favouritesStore.has(selectedChatSummary.id)}
+                    <MenuItem on:click={addToFavourites}>
+                        <HeartPlus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
+                        <div slot="text">
+                            {$_("communities.addToFavourites")}
+                        </div>
+                    </MenuItem>
+                {:else}
+                    <MenuItem on:click={removeFromFavourites}>
+                        <HeartMinus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
+                        <div slot="text">
+                            {$_("communities.removeFromFavourites")}
+                        </div>
+                    </MenuItem>
                 {/if}
                 {#if $mobileWidth}
                     {#if $isProposalGroup}
@@ -377,7 +386,7 @@
                             </div>
                         </MenuItem>
                     {/if}
-                    {#if $communitiesEnabled && canConvert}
+                    {#if canConvert}
                         <MenuItem warning on:click={convertToCommunity}>
                             <ConvertToCommunity
                                 size={$iconSize}
@@ -386,7 +395,7 @@
                             <div slot="text">{$_("communities.convert")}</div>
                         </MenuItem>
                     {/if}
-                    {#if $communitiesEnabled && canImportToCommunity}
+                    {#if canImportToCommunity}
                         <MenuItem warning on:click={importToCommunity}>
                             <Import size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                             <div slot="text">{$_("communities.import")}</div>

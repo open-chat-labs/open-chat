@@ -409,7 +409,6 @@
             on:unsubscribeNotifications={() => client.setSoftDisabled(true)}
             on:upgrade
             {user}
-            on:userAvatarSelected
             on:closeProfile={popRightPanelHistory} />
     {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined}
         <Thread

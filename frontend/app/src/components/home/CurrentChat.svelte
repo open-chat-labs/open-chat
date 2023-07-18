@@ -275,8 +275,6 @@
     {:else}
         <CurrentChatHeader
             on:clearSelection
-            on:blockUser
-            on:unblockUser
             on:markAllRead={onMarkAllRead}
             on:toggleMuteNotifications
             on:showInviteGroupUsers

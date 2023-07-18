@@ -41,9 +41,7 @@
             events={$eventsStore}
             filteredProposals={$filteredProposalsStore}
             on:successfulImport
-            on:unblockUser
             on:clearSelection
-            on:blockUser
             on:leaveGroup
             on:replyPrivatelyTo
             on:showInviteGroupUsers
