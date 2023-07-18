@@ -536,18 +536,6 @@
         }
     }
 
-    function loadMessage(ev: CustomEvent<MessageMatch>): void {
-        if (chatIdentifiersEqual(ev.detail.chatId, $selectedChatId)) {
-            currentChatMessages?.externalGoToMessage(ev.detail.messageIndex);
-        } else {
-            page(
-                `${routeForChatIdentifier($chatListScope.kind, ev.detail.chatId)}/${
-                    ev.detail.messageIndex
-                }`
-            );
-        }
-    }
-
     function showInviteGroupUsers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
             if (ev.detail) {
@@ -952,8 +940,7 @@
             on:newChannel={newChannel}
             on:editCommunity={editCommunity}
             on:leaveCommunity={triggerConfirm}
-            on:deleteCommunity={triggerConfirm}
-            on:loadMessage={loadMessage} />
+            on:deleteCommunity={triggerConfirm} />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel

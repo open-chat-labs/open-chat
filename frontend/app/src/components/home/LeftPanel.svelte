@@ -6,7 +6,6 @@
 <Panel left>
     <div class="chat-list">
         <ChatList
-            on:loadMessage
             on:chatWith
             on:halloffame
             on:newGroup
