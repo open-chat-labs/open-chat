@@ -1,5 +1,5 @@
 [package]
-name = "types"
+name = "icrc1_ledger_canister"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,11 +7,8 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-human_readable = { path = "../human_readable" }
+candid_gen = { path = "../../../libraries/candid_gen" }
 ic-ledger-types = { workspace = true }
-rand_core = { workspace = true }
-range-set = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serde_json = { workspace = true }
-sha256 = { path = "../sha256" }
+types = { path = "../../../libraries/types" }

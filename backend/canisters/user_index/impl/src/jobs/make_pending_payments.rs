@@ -3,13 +3,12 @@ use crate::LocalUserIndexEvent;
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::{BlockIndex, Tokens};
-use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc1::transfer::TransferArg;
 use local_user_index_canister::OpenChatBotMessage;
 use serde::Serialize;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
+use types::icrc1::{Account, TransferArg};
 use types::{Cryptocurrency, MessageContent, TextContent};
 use utils::consts::SNS_ROOT_CANISTER_ID;
 
@@ -56,10 +55,7 @@ async fn process_payment(pending_payment: PendingPayment) {
 
 // Error response contains a boolean stating if the transfer should be retried
 async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bool> {
-    let to = Account {
-        owner: pending_payment.recipient,
-        subaccount: None,
-    };
+    let to = Account::from(pending_payment.recipient);
 
     let args = TransferArg {
         from_subaccount: None,
@@ -70,19 +66,14 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bo
         amount: pending_payment.amount.into(),
     };
 
-    let client = ic_icrc1_client::ICRC1Client {
-        ledger_canister_id: pending_payment.currency.ledger_canister_id(),
-        runtime: ic_icrc1_client_cdk::CdkRuntime,
-    };
-
-    match client.transfer(args.clone()).await {
-        Ok(Ok(block_index)) => Ok(block_index),
+    match icrc1_ledger_canister_c2c_client::icrc1_transfer(pending_payment.currency.ledger_canister_id(), &args).await {
+        Ok(Ok(block_index)) => Ok(block_index.0.try_into().unwrap()),
         Ok(Err(transfer_error)) => {
             error!(?transfer_error, ?args, "Transfer failed");
             Err(false)
         }
-        Err((code, msg)) => {
-            error!(code, msg, ?args, "Transfer failed");
+        Err(error) => {
+            error!(?error, ?args, "Transfer failed");
             Err(true)
         }
     }

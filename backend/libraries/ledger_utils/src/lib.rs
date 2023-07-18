@@ -4,9 +4,9 @@ pub mod sns;
 
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
-use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
+use types::icrc1::Account;
 use types::{
     nns::UserOrAccount, CanisterId, CompletedCryptoTransaction, Cryptocurrency, FailedCryptoTransaction,
     PendingCryptoTransaction, TimestampNanos, TransactionHash, UserId,
@@ -32,10 +32,7 @@ pub fn create_pending_transaction(
             ledger: token.ledger_canister_id(),
             token,
             amount: amount.e8s().into(),
-            to: Account {
-                owner: Principal::from(user_id),
-                subaccount: None,
-            },
+            to: Account::from(Principal::from(user_id)),
             fee: token.fee(),
             memo: None,
             created: now_nanos,

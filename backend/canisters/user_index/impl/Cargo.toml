@@ -26,12 +26,9 @@ human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
-ic-icrc1 = { workspace = true }
-ic-icrc1-client = { workspace = true }
-ic-icrc1-client-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
-icrc-ledger-types = { workspace = true }
+icrc1_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc1_ledger/c2c_client" }
 itertools = { workspace = true }
 local_user_index_canister = { path = "../../local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }

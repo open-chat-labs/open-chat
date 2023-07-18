@@ -1,10 +1,10 @@
 use crate::{mutate_state, Prize, RuntimeState};
 use ic_ledger_types::Tokens;
-use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::sns;
 use rand::Rng;
 use std::{cmp, time::Duration};
 use tracing::{error, trace};
+use types::sns::Account;
 use types::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageContentInitial, MessageId,
     PrizeContentInitial, TimestampMillis, TimestampNanos,
@@ -150,10 +150,7 @@ async fn transfer_prize_funds_to_group(
         ledger: ledger_canister_id,
         token,
         amount: Tokens::from_e8s(amount),
-        to: Account {
-            owner: group,
-            subaccount: None,
-        },
+        to: Account::from(group),
         fee: Tokens::from_e8s(token.fee() as u64),
         memo: None,
         created: now_nanos,
