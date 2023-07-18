@@ -388,7 +388,8 @@
         "editGroupPhoto": "{level} の写真を編集",
         "image": "{level} 画像",
         "name": "{level}の名前",
-        "description": "{level}の説明"
+        "description": "{level}の説明",
+        "inviteUsers": "{level} ユーザーを招待する"
     },
     "invite": {
         "enableLink": "リンクを有効にする",

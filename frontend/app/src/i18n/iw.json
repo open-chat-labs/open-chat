@@ -398,7 +398,8 @@
         "editGroupPhoto": "ערוך תמונה של {level}",
         "image": "תמונה {level}",
         "name": "שם {level}",
-        "description": "תיאור {level}"
+        "description": "תיאור {level}",
+        "inviteUsers": "הזמן {level} משתמשים"
     },
     "invite": {
         "enableLink": "אפשר קישור",

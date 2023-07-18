@@ -387,7 +387,8 @@
         "editGroupPhoto": "编辑 {level} 照片",
         "image": "{level} 图片",
         "name": "{level} 名称",
-        "description": "{level} 描述"
+        "description": "{level} 描述",
+        "inviteUsers": "邀请 {level} 用户"
     },
     "invite": {
         "enableLink": "启用链接",

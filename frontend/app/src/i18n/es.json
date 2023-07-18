@@ -389,7 +389,8 @@
         "editGroupPhoto": "Editar foto {level}",
         "image": "imagen {level}",
         "name": "{level} nombre",
-        "description": "{level} descripción"
+        "description": "{level} descripción",
+        "inviteUsers": "Invitar a {level} usuarios"
     },
     "invite": {
         "enableLink": "Habilitar enlace",

@@ -390,7 +390,8 @@
         "editGroupPhoto": "Bearbeiten Sie das {level}-Foto",
         "image": "{level} Bild",
         "name": "{level} Name",
-        "description": "{level} Beschreibung"
+        "description": "{level} Beschreibung",
+        "inviteUsers": "Laden Sie {level} Benutzer ein"
     },
     "invite": {
         "enableLink": "Verknüpfung aktivieren",

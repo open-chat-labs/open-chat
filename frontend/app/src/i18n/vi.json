@@ -389,7 +389,8 @@
         "editGroupPhoto": "Chỉnh sửa ảnh {level}",
         "image": "hình ảnh {level}",
         "name": "tên {level}",
-        "description": "mô tả {level}"
+        "description": "mô tả {level}",
+        "inviteUsers": "Mời người dùng {level}"
     },
     "invite": {
         "enableLink": "Bật liên kết",
