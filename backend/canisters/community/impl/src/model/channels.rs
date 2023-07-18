@@ -21,6 +21,7 @@ pub struct Channel {
     pub id: ChannelId,
     pub chat: GroupChatCore,
     pub is_default: Timestamped<bool>,
+    pub date_imported: Option<TimestampMillis>,
 }
 
 impl Channels {
@@ -183,6 +184,7 @@ impl Channel {
                 now,
             ),
             is_default: Timestamped::new(true, now),
+            date_imported: None,
         }
     }
 
@@ -254,7 +256,9 @@ impl Channel {
     }
 
     pub fn has_updates_since(&self, user_id: Option<UserId>, since: TimestampMillis) -> bool {
-        self.is_default.timestamp > since || self.chat.has_updates_since(user_id, since)
+        self.chat.has_updates_since(user_id, since)
+            || self.is_default.timestamp > since
+            || self.date_imported.unwrap_or_default() > since
     }
 
     pub fn summary_updates(&self, user_id: Option<UserId>, since: TimestampMillis, now: TimestampMillis) -> ChannelUpdates {
