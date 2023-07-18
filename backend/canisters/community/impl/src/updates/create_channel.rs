@@ -109,6 +109,7 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
                 id: channel_id,
                 chat,
                 is_default: Timestamped::new(args.is_default, now),
+                date_imported: None,
             });
             member.channels.insert(channel_id);
             handle_activity_notification(state);
