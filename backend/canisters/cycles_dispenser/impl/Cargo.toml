@@ -22,6 +22,7 @@ ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }
+icp_ledger_canister_c2c_client = { path = "../../../external_canisters/icp_ledger/c2c_client" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

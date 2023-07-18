@@ -25,10 +25,9 @@ pub async fn process_transaction(
             timestamp_nanos: transaction.created,
         }),
     };
-
     let transaction_hash = calculate_transaction_hash(sender, &transfer_args);
 
-    match ic_ledger_types::transfer(transaction.ledger, transfer_args).await {
+    match icp_ledger_canister_c2c_client::transfer(transaction.ledger, &transfer_args).await {
         Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::NNS(types::nns::CompletedCryptoTransaction {
             // ledger: transaction.ledger,
             token: transaction.token,

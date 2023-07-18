@@ -1,0 +1,13 @@
+[package]
+name = "icp_ledger_canister_c2c_client"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+canister_client = { path = "../../../libraries/canister_client" }
+ic-cdk = { workspace = true }
+icp_ledger_canister = { path = "../api" }
+types = { path = "../../../libraries/types" }
