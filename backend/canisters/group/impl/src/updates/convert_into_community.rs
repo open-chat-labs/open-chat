@@ -94,6 +94,7 @@ fn start_import(
                 name: state.data.chat.name.clone(),
                 description: state.data.chat.description.clone(),
                 rules: args.rules,
+                avatar: state.data.chat.avatar.clone(),
                 permissions: args.permissions,
                 gate: state.data.chat.gate.value.clone(),
                 primary_language: args.primary_language.unwrap_or_else(|| "en".to_string()),
