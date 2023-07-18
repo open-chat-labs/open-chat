@@ -2,8 +2,7 @@ use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use ic_icrc1_client::Runtime;
-use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
+use ic_cdk::api::call::RejectionCode;
 use registry_canister::add_token::{Response::*, *};
 use types::{CanisterId, Empty};
 
@@ -15,17 +14,12 @@ async fn add_token(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let client = ic_icrc1_client::ICRC1Client {
-        ledger_canister_id: args.ledger_canister_id,
-        runtime: ic_icrc1_client_cdk::CdkRuntime,
-    };
-
     match futures::future::try_join5(
-        client.name(),
-        client.symbol(),
-        client.decimals(),
-        client.fee(),
-        get_logo(args.logo, args.ledger_canister_id, &client, sns_wasm_canister_id),
+        icrc1_ledger_canister_c2c_client::icrc1_name(args.ledger_canister_id),
+        icrc1_ledger_canister_c2c_client::icrc1_symbol(args.ledger_canister_id),
+        icrc1_ledger_canister_c2c_client::icrc1_decimals(args.ledger_canister_id),
+        icrc1_ledger_canister_c2c_client::icrc1_fee(args.ledger_canister_id),
+        get_logo(args.logo, args.ledger_canister_id, sns_wasm_canister_id),
     )
     .await
     {
@@ -36,7 +30,7 @@ async fn add_token(args: Args) -> Response {
                 name,
                 symbol,
                 decimals,
-                fee as u128,
+                fee.0.try_into().unwrap(),
                 logo,
                 args.info_url,
                 args.how_to_buy_url,
@@ -66,20 +60,19 @@ fn prepare(ledger_canister_id: CanisterId, state: &RuntimeState) -> Result<Prepa
     }
 }
 
-async fn get_logo<R: Runtime>(
+async fn get_logo(
     logo: Option<String>,
     ledger_canister_id: CanisterId,
-    client: &ic_icrc1_client::ICRC1Client<R>,
     sns_wasm_canister_id: CanisterId,
-) -> Result<Option<String>, (i32, String)> {
+) -> Result<Option<String>, (RejectionCode, String)> {
     if logo.is_some() {
         return Ok(logo);
     }
 
-    let metadata = client.metadata().await?;
+    let metadata = icrc1_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await?;
 
     let logo = metadata.into_iter().find(|(k, _)| k == "icrc1:logo").and_then(|(_, v)| {
-        if let MetadataValue::Text(t) = v {
+        if let icrc1_ledger_canister::MetadataValue::Text(t) = v {
             Some(t)
         } else {
             None
@@ -90,9 +83,7 @@ async fn get_logo<R: Runtime>(
         return Ok(logo);
     }
 
-    let deployed_snses = sns_wasm_canister_c2c_client::list_deployed_snses(sns_wasm_canister_id, &Empty {})
-        .await
-        .map_err(|(code, msg)| (code as i32, msg))?;
+    let deployed_snses = sns_wasm_canister_c2c_client::list_deployed_snses(sns_wasm_canister_id, &Empty {}).await?;
 
     if let Some(governance_canister_id) = deployed_snses
         .instances
@@ -100,9 +91,7 @@ async fn get_logo<R: Runtime>(
         .find(|s| s.ledger_canister_id == Some(ledger_canister_id))
         .and_then(|s| s.governance_canister_id)
     {
-        let governance_metadata = sns_governance_canister_c2c_client::get_metadata(governance_canister_id, &Empty {})
-            .await
-            .map_err(|(code, msg)| (code as i32, msg))?;
+        let governance_metadata = sns_governance_canister_c2c_client::get_metadata(governance_canister_id, &Empty {}).await?;
 
         Ok(governance_metadata.logo)
     } else {

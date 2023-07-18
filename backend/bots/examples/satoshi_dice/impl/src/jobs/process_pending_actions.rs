@@ -3,12 +3,11 @@ use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::Tokens;
-use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use ledger_utils::sns::transaction_hash;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
+use types::icrc1::{Account, TransferArg, TransferError};
 use types::{
     sns, BotMessage, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
 };
@@ -76,11 +75,6 @@ async fn process_action(action: Action) {
             let (this_canister_id, ledger_canister_id, now) =
                 read_state(|state| (state.env.canister_id(), state.data.ckbtc_ledger_canister_id, state.env.now()));
 
-            let ledger_client = ic_icrc1_client::ICRC1Client {
-                runtime: ic_icrc1_client_cdk::CdkRuntime,
-                ledger_canister_id,
-            };
-
             let from = Account::from(this_canister_id);
             let now_nanos = now * 1_000_000;
 
@@ -94,7 +88,7 @@ async fn process_action(action: Action) {
             };
             let transaction_hash = transaction_hash(from, &args);
 
-            match ledger_client.transfer(args.clone()).await {
+            match icrc1_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, &args).await {
                 Ok(Ok(block_index)) => {
                     if send_oc_message {
                         mutate_state(|state| {
@@ -113,7 +107,7 @@ async fn process_action(action: Action) {
                                             memo: None,
                                             created: now_nanos,
                                             transaction_hash,
-                                            block_index,
+                                            block_index: block_index.0.try_into().unwrap(),
                                         },
                                     )),
                                     caption: None,

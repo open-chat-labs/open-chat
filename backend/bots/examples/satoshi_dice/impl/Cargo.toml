@@ -22,12 +22,9 @@ http_request = { path = "../../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
-ic-icrc1 = { workspace = true }
-ic-icrc1-client = { workspace = true }
-ic-icrc1-client-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
-icrc-ledger-types = { workspace = true }
+icrc1_ledger_canister_c2c_client = { path = "../../../../external_canisters/icrc1_ledger/c2c_client" }
 ledger_utils = { path = "../../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../../../canisters/local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../../../canisters/local_user_index/c2c_client" }

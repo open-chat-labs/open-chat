@@ -1,6 +1,4 @@
-use ic_ledger_canister_core::ledger::LedgerTransaction;
-use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc1::transfer::{Memo, TransferArg};
+use types::icrc1::{Account, Memo, TransferArg};
 use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, TransactionHash};
 
 pub async fn process_transaction(
@@ -20,12 +18,7 @@ pub async fn process_transaction(
 
     let transaction_hash = transaction_hash(from, &args);
 
-    let client = ic_icrc1_client::ICRC1Client {
-        ledger_canister_id: transaction.ledger,
-        runtime: ic_icrc1_client_cdk::CdkRuntime,
-    };
-
-    match client.transfer(args).await {
+    match icrc1_ledger_canister_c2c_client::icrc1_transfer(transaction.ledger, &args).await {
         Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::SNS(types::sns::CompletedCryptoTransaction {
             // ledger: transaction.ledger,
             token: transaction.token,
@@ -36,7 +29,7 @@ pub async fn process_transaction(
             memo: transaction.memo,
             created: transaction.created,
             transaction_hash,
-            block_index,
+            block_index: block_index.0.try_into().unwrap(),
         })),
         Ok(Err(transfer_error)) => {
             let error_message = format!("Transfer failed. {transfer_error:?}");
@@ -63,17 +56,6 @@ pub async fn process_transaction(
     })
 }
 
-pub fn transaction_hash(from: Account, args: &TransferArg) -> TransactionHash {
-    ic_icrc1::Transaction {
-        operation: ic_icrc1::Operation::Transfer {
-            from,
-            to: args.to,
-            amount: args.amount.clone().0.try_into().unwrap(),
-            fee: args.fee.clone().and_then(|f| f.0.try_into().ok()),
-        },
-        created_at_time: args.created_at_time,
-        memo: args.memo.clone(),
-    }
-    .hash()
-    .into_bytes()
+pub fn transaction_hash(_from: Account, _args: &TransferArg) -> TransactionHash {
+    Default::default()
 }

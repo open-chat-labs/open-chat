@@ -1,5 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
+use sns_governance_canister::types::ProposalData;
 use types::{Proposal, ProposalId, Tally};
 
 pub const REWARD_STATUS_ACCEPT_VOTES: i32 = 1;
@@ -7,6 +8,12 @@ pub const REWARD_STATUS_READY_TO_SETTLE: i32 = 2;
 
 pub trait RawProposal: TryInto<Proposal, Error = &'static str> {
     fn id(&self) -> ProposalId;
+}
+
+impl RawProposal for ProposalData {
+    fn id(&self) -> ProposalId {
+        self.id.as_ref().map_or(ProposalId::default(), |p| p.id)
+    }
 }
 
 #[derive(CandidType, Deserialize, Clone)]
