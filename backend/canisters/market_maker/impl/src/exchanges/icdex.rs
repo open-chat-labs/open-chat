@@ -89,8 +89,7 @@ impl ICDexClient {
                 amount: order.amount.into(),
             },
         )
-        .await
-        .map_err(|(code, msg)| (RejectionCode::from(code), msg))?
+        .await?
         .map_err(|t| (RejectionCode::Unknown, format!("{t:?}")))?;
 
         let quantity = match order.order_type {
