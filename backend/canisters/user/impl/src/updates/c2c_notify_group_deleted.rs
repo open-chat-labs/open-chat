@@ -2,6 +2,7 @@ use crate::guards::caller_is_group_index;
 use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
+use types::Chat;
 use user_canister::c2c_notify_group_deleted::{Response::*, *};
 
 #[update_msgpack(guard = "caller_is_group_index")]
@@ -21,6 +22,8 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
         cached_groups.remove_group(&chat_id);
     }
 
+    let was_favourite = state.data.favourite_chats.remove(&Chat::Group(chat_id), now);
+
     if let Some(community) = args.deleted_group.community_imported_into {
         openchat_bot::send_group_imported_into_community_message(
             args.deleted_group.group_name,
@@ -31,6 +34,13 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
             state,
         );
         state.data.communities.join(community.community_id, now);
+
+        if was_favourite {
+            state
+                .data
+                .favourite_chats
+                .add(Chat::Channel(community.community_id, community.channel_id), now);
+        }
     } else {
         openchat_bot::send_group_deleted_message(
             args.deleted_group.deleted_by,
