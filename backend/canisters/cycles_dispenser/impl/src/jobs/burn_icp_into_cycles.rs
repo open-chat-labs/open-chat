@@ -71,9 +71,9 @@ fn get_next_action(state: &mut State) -> Action {
 async fn burn_icp(burn_details: BurnIcpDetails) {
     info!(%burn_details.amount, "Burning ICP into cycles");
 
-    match ic_ledger_types::transfer(
+    match icp_ledger_canister_c2c_client::transfer(
         burn_details.ledger,
-        TransferArgs {
+        &TransferArgs {
             memo: MEMO_TOP_UP_CANISTER,
             amount: burn_details.amount,
             fee: ic_ledger_types::DEFAULT_FEE,

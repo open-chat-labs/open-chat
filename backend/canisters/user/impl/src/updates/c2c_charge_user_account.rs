@@ -18,9 +18,9 @@ async fn c2c_charge_user_account(args: Args) -> Response {
         )
     });
 
-    match ic_ledger_types::transfer(
+    match icp_ledger_canister_c2c_client::transfer(
         ledger_canister_id,
-        TransferArgs {
+        &TransferArgs {
             memo: Memo(0),
             amount: args.amount - DEFAULT_FEE,
             fee: DEFAULT_FEE,

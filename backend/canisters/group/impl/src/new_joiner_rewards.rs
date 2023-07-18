@@ -31,7 +31,7 @@ pub async fn process_new_joiner_reward(
     };
     let transaction_hash = calculate_transaction_hash(this_canister_id, &transfer_args);
 
-    match ic_ledger_types::transfer(ledger_canister_id, transfer_args).await {
+    match icp_ledger_canister_c2c_client::transfer(ledger_canister_id, &transfer_args).await {
         Ok(Ok(block_index)) => {
             mutate_state(|state| {
                 update_status(&user_id, NewJoinerRewardStatus::Completed(block_index), state);

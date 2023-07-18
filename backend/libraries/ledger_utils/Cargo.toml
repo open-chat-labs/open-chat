@@ -12,6 +12,7 @@ ic-icrc1-client = { workspace = true }
 ic-icrc1-client-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-ledger-canister-core = { workspace = true }
+icp_ledger_canister_c2c_client = { path = "../../external_canisters/icp_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
 serde_cbor = { workspace = true }

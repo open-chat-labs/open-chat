@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Call into ICP ledger via the new `icp_ledger_canister_c2c_client` ([#3966](https://github.com/open-chat-labs/open-chat/pull/3966))
+
 ## [[2.0.719](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.719-cycles_dispenser)] - 2023-06-14
 
 ### Changed
