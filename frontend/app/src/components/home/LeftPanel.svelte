@@ -9,7 +9,6 @@
             on:loadMessage
             on:chatWith
             on:halloffame
-            on:showHomePage
             on:newGroup
             on:profile
             on:logout

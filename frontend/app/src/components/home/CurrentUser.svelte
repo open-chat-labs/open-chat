@@ -46,7 +46,6 @@
                     on:logout
                     on:newGroup
                     on:profile
-                    on:showHomePage
                     on:upgrade
                     on:wallet
                     on:whatsHot />

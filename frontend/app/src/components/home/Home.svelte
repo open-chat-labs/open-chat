@@ -882,11 +882,6 @@
         });
     }
 
-    function showLandingPageRoute(route: string) {
-        return () => page(route);
-        // return () => (window.location.href = route);
-    }
-
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
         if (!(await client.createDirectChat(chatId))) {
             return false;
@@ -936,7 +931,6 @@
             on:logout={() => client.logout()}
             on:newGroup={() => newGroup("group")}
             on:communityDetails={communityDetails}
-            on:showHomePage={showLandingPageRoute("/home")}
             on:newChannel={newChannel}
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
@@ -945,7 +939,6 @@
 
     {#if $layoutStore.showLeft}
         <LeftPanel
-            on:showHomePage={showLandingPageRoute("/home")}
             on:chatWith={chatWith}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:newGroup={() => newGroup("group")}

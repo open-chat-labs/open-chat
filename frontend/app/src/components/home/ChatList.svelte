@@ -218,7 +218,6 @@
     {:else}
         <CurrentUser
             on:wallet
-            on:showHomePage
             on:logout
             on:whatsHot
             on:halloffame
