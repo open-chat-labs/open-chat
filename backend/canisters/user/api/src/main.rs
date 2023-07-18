@@ -1,5 +1,6 @@
 use candid_gen::generate_candid_method;
 
+#[allow(deprecated)]
 fn main() {
     generate_candid_method!(user, bio, query);
     generate_candid_method!(user, contacts, query);
