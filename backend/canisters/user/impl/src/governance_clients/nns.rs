@@ -1,5 +1,6 @@
 use super::nns::manage_neuron::RegisterVote;
 use candid::CandidType;
+use canister_client::make_c2c_call;
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -17,11 +18,13 @@ pub async fn get_ballots(governance_canister_id: CanisterId, proposal_id: Propos
         include_status: Vec::new(),
     };
 
-    let response: CallResult<(list_proposals::ListProposalInfoResponse,)> =
-        ic_cdk::call(governance_canister_id, "list_proposals", (&args,)).await;
+    let response: CallResult<list_proposals::ListProposalInfoResponse> =
+        make_c2c_call(governance_canister_id, "list_proposals", &args, candid::encode_one, |r| {
+            candid::decode_one(r)
+        })
+        .await;
 
     let result = response?
-        .0
         .proposal_info
         .into_iter()
         .next()
@@ -68,7 +71,13 @@ pub async fn register_vote(
             vote: if adopt { 1 } else { 2 },
         })),
     };
-    let (response,): (ManageNeuronResponse,) = ic_cdk::call(governance_canister_id, "manage_neuron", (&args,)).await?;
+
+    let response: ManageNeuronResponse =
+        make_c2c_call(governance_canister_id, "manage_neuron", &args, candid::encode_one, |r| {
+            candid::decode_one(r)
+        })
+        .await?;
+
     Ok(match response.command {
         Some(manage_neuron_response::Command::RegisterVote(_)) => Ok(()),
         Some(manage_neuron_response::Command::Error(error)) => Err(error),

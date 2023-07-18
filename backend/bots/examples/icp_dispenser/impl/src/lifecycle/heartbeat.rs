@@ -1,5 +1,6 @@
 use crate::model::pending_actions::PendingAction;
 use crate::{mutate_state, read_state, RuntimeState};
+use canister_client::make_c2c_call;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::heartbeat;
 use ic_ledger_types::{TransferArgs, MAINNET_LEDGER_CANISTER_ID};
@@ -70,8 +71,11 @@ mod process_pending_actions {
         let bot_name = read_state(|state| state.data.bot_name.clone());
         let args = user_canister::c2c_handle_bot_messages::Args { bot_name, messages };
 
-        let response: CallResult<(user_canister::c2c_handle_bot_messages::Response,)> =
-            ic_cdk::call(recipient.into(), "c2c_handle_bot_messages", (&args,)).await;
+        let response: CallResult<user_canister::c2c_handle_bot_messages::Response> =
+            make_c2c_call(recipient.into(), "c2c_handle_bot_messages", &args, candid::encode_one, |r| {
+                candid::decode_one(r)
+            })
+            .await;
 
         if response.is_err() {
             error!(?response, "Error calling 'c2c_handle_bot_messages'");

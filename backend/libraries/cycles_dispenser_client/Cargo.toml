@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+candid = { workspace = true }
+canister_client = { path = "../canister_client" }
 cycles_dispenser_canister = { path = "../../canisters/cycles_dispenser/api" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
