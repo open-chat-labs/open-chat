@@ -1,4 +1,4 @@
-use candid::types::{Serializer, Type};
+use candid::types::Serializer;
 use candid::CandidType;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt::{Debug, Formatter};
@@ -47,7 +47,8 @@ impl<T> Default for RangeSet<T> {
 }
 
 impl<T: CandidType + Into<u32>> CandidType for RangeSet<T> {
-    fn _ty() -> Type {
+    #[allow(deprecated)]
+    fn _ty() -> candid::types::Type {
         Vec::<Range>::_ty()
     }
 

@@ -49,7 +49,7 @@ pub async fn create_and_install<A: CandidType>(
 }
 
 pub async fn create(cycles_to_use: Cycles) -> CallResult<Principal> {
-    match management_canister::main::create_canister_with_extra_cycles(
+    match management_canister::main::create_canister(
         CreateCanisterArgument {
             settings: Some(CanisterSettings {
                 controllers: Some(vec![ic_cdk::id()]),

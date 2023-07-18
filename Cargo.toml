@@ -118,7 +118,7 @@ aws-sdk-dynamodb = "0.28.0"
 aws-types = "0.55.3"
 base64 = "0.21.2"
 bitflags = { version = "2.3.3", features = ["serde"] }
-candid = "0.8.4"
+candid = "0.9.1"
 ciborium = { git = "https://github.com/enarx/ciborium", rev = "e719537c99b564c3674a56defe53713c702c6f46" }
 clap = "4.3.4"
 dirs = "5.0.1"
@@ -126,16 +126,16 @@ dotenv = "0.15.0"
 futures = "0.3.28"
 getrandom = "0.2.10"
 hex = "0.4.3"
-ic-agent = "0.24.1"
-ic-cdk = "0.8.1"
-ic-cdk-macros = "0.6.10"
-ic-cdk-timers = "0.2.0"
-ic-ledger-types = "0.5.0"
+ic-agent = "0.25.0"
+ic-cdk = "0.10.0"
+ic-cdk-macros = "0.7.0"
+ic-cdk-timers = "0.4.0"
+ic-ledger-types = "0.7.0"
 ic-stable-structures = "0.5.4"
 ic-test-state-machine-client = { git = "https://github.com/dfinity/test-state-machine-client", rev = "287fd445c098e9c33462df0c810d79f120ed9431" }
-ic-utils = "0.24.1"
-ic0 = "0.18.10"
-itertools = "0.10.5"
+ic-utils = "0.25.0"
+ic0 = "0.18.11"
+itertools = "0.11.0"
 lazy_static = "1.4.0"
 num-traits = "0.2.15"
 openssl = "0.10.55"
@@ -144,7 +144,7 @@ quote = "1.0.28"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_core = "0.6.4"
-range-set = "0.0.9"
+range-set = "0.0.10"
 regex = "1.8.4"
 rmp-serde = "1.1.1"
 serde = "1.0.164"
@@ -170,5 +170,5 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "24e36cdf4115ae3a2d0747613833b2b4e0871fe4" }
-ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "14783e187c17ad3a164fb501219b002b667ee006" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "cc49cf7e3e2f10a12182149b0964372a04c09f08" }
+ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "f269d532e9729c2213c35c324292ceaf775a8973" }

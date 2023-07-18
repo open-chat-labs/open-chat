@@ -1,5 +1,6 @@
 use candid_gen::generate_candid_method;
 
+#[allow(deprecated)]
 fn main() {
     generate_candid_method!(storage_bucket, file_info, query);
 

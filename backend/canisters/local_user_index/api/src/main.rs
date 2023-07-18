@@ -1,5 +1,6 @@
 use candid_gen::generate_candid_method;
 
+#[allow(deprecated)]
 fn main() {
     generate_candid_method!(local_user_index, invite_users_to_channel, update);
     generate_candid_method!(local_user_index, invite_users_to_community, update);
