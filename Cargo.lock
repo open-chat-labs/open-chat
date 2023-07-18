@@ -3115,7 +3115,6 @@ dependencies = [
  "ic-icrc1",
  "ic-icrc1-client",
  "ic-icrc1-client-cdk",
- "ic-ledger-canister-core",
  "ic-ledger-types",
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
