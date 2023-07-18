@@ -93,6 +93,7 @@ fn deserialize_group(group_id: ChatId) {
                 id: channel_id,
                 chat,
                 is_default: group.is_default(),
+                date_imported: None, // This is only set once everything is complete
             });
 
             ic_cdk_timers::set_timer(Duration::ZERO, move || {
@@ -172,8 +173,9 @@ async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attemp
 
 fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
     mutate_state(|state| {
-        let channel = state.data.channels.get(&channel_id).unwrap();
         let now = state.env.now();
+        state.data.channels.get_mut(&channel_id).unwrap().date_imported = Some(now);
+        let channel = state.data.channels.get(&channel_id).unwrap();
         let public_community_activity = state.data.is_public.then(|| extract_activity(now, &state.data));
 
         state.data.fire_and_forget_handler.send(
