@@ -13,7 +13,6 @@
             on:newGroup
             on:profile
             on:logout
-            on:deleteDirectChat
             on:unarchiveChat
             on:wallet
             on:upgrade

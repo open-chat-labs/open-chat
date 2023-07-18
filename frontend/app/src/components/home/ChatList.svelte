@@ -258,8 +258,7 @@
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
                         on:chatSelected={chatSelected}
                         on:unarchiveChat
-                        on:toggleMuteNotifications
-                        on:deleteDirectChat />
+                        on:toggleMuteNotifications />
                 {/each}
 
                 {#if channelSearchResults !== undefined}

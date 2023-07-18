@@ -525,13 +525,6 @@
         return Promise.resolve();
     }
 
-    function deleteDirectChat(ev: CustomEvent<ChatIdentifier>) {
-        if ($pathParams.kind === "global_chat_selected_route" && ev.detail === $pathParams.chatId) {
-            page(routeForScope($chatListScope));
-        }
-        tick().then(() => client.removeChat(ev.detail));
-    }
-
     function chatWith(ev: CustomEvent<DirectChatIdentifier>) {
         const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === ev.detail;
@@ -960,7 +953,6 @@
             on:communityDetails={communityDetails}
             on:logout={() => client.logout()}
             on:wallet={showWallet}
-            on:deleteDirectChat={deleteDirectChat}
             on:upgrade={upgrade}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}

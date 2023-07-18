@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat } from "openchat-client";
+    import { AvatarSize, OpenChat, chatIdentifiersEqual } from "openchat-client";
     import type { UserLookup, ChatSummary, TypersByKey, CommunitySummary } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -19,7 +19,7 @@
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -29,7 +29,7 @@
     import { notificationsSupported } from "../../utils/notifications";
     import { communitiesEnabled } from "../../utils/features";
     import { toastStore } from "../../stores/toast";
-    import { routeForScope } from "../../routes";
+    import { routeForScope, pathParams } from "../../routes";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -132,7 +132,13 @@
     }
 
     function deleteDirectChat() {
-        dispatch("deleteDirectChat", chatSummary.id);
+        if (
+            $pathParams.kind === "global_chat_selected_route" &&
+            chatIdentifiersEqual(chatSummary.id, $pathParams.chatId)
+        ) {
+            page(routeForScope($chatListScope));
+        }
+        tick().then(() => client.removeChat(chatSummary.id));
         delOffset = -60;
     }
 
