@@ -132,7 +132,7 @@ ic-cdk-macros = "0.7.0"
 ic-cdk-timers = "0.4.0"
 ic-ledger-types = "0.7.0"
 ic-stable-structures = "0.5.4"
-ic-test-state-machine-client = { git = "https://github.com/dfinity/test-state-machine-client", rev = "287fd445c098e9c33462df0c810d79f120ed9431" }
+ic-test-state-machine-client = "2.2.1"
 ic-utils = "0.25.0"
 ic0 = "0.18.11"
 itertools = "0.11.0"
@@ -172,3 +172,4 @@ debug = false
 [patch.crates-io]
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "cc49cf7e3e2f10a12182149b0964372a04c09f08" }
 ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "f269d532e9729c2213c35c324292ceaf775a8973" }
+ic-test-state-machine-client = { git = "https://github.com/hpeebles/test-state-machine-client", rev = "64f4482d9b744ec1c9a350f7fc5f591874fc4a49" }
