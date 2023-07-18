@@ -621,7 +621,8 @@ export function completedCryptoTransfer(
     recipient: string
 ): CompletedCryptocurrencyTransfer {
     if ("NNS" in candid || "SNS" in candid) {
-        const trans = "NNS" in candid ? candid.NNS : candid.SNS;
+        const isNns = "NNS" in candid;
+        const trans = isNns ? candid.NNS : candid.SNS;
         return {
             kind: "completed",
             token: token(trans.token),
@@ -633,7 +634,7 @@ export function completedCryptoTransfer(
                 ? optional(trans.memo, identity) ?? BigInt(0)
                 : trans.memo,
             blockIndex: trans.block_index,
-            transactionHash: bytesToHexString(trans.transaction_hash),
+            transactionHash: isNns ? bytesToHexString(trans.transaction_hash) : undefined,
         };
     }
     if ("ICRC1" in candid) {

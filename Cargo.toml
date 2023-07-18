@@ -132,7 +132,6 @@ ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "b314222935b7d06c70036
 ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "b314222935b7d06c70036b0b54aa80a33252d79c" }
 ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "b314222935b7d06c70036b0b54aa80a33252d79c" }
 ic-ledger-types = "0.5.0"
-ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "b314222935b7d06c70036b0b54aa80a33252d79c" }
 ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "b314222935b7d06c70036b0b54aa80a33252d79c" }
 ic-stable-structures = "0.5.4"
 ic-test-state-machine-client = { git = "https://github.com/dfinity/test-state-machine-client", rev = "287fd445c098e9c33462df0c810d79f120ed9431" }
