@@ -257,7 +257,6 @@
                         selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
                         on:chatSelected={chatSelected}
-                        on:archiveChat
                         on:unarchiveChat
                         on:toggleMuteNotifications
                         on:deleteDirectChat />

@@ -29,6 +29,7 @@
     import { notificationsSupported } from "../../utils/notifications";
     import { communitiesEnabled } from "../../utils/features";
     import { toastStore } from "../../stores/toast";
+    import { routeForScope } from "../../routes";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -37,6 +38,7 @@
     export let selected: boolean;
     export let visible: boolean;
 
+    $: selectedChatId = client.selectedChatId;
     $: chatListScope = client.chatListScope;
     $: blockedUsers = client.blockedUsers;
     $: messagesRead = client.messagesRead;
@@ -204,7 +206,14 @@
 
     function archiveChat() {
         client.markAllRead(chatSummary);
-        dispatch("archiveChat", chatSummary.id);
+        client.archiveChat(chatSummary.id).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("archiveChatFailed");
+            }
+        });
+        if (chatSummary.id === $selectedChatId) {
+            page(routeForScope($chatListScope));
+        }
     }
 
     function selectChat() {

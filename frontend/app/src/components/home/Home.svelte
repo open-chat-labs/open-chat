@@ -399,17 +399,6 @@
         page(routeForScope(client.getDefaultScope()));
     }
 
-    function onArchiveChat(ev: CustomEvent<ChatIdentifier>) {
-        client.archiveChat(ev.detail).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("archiveChatFailed");
-            }
-        });
-        if (ev.detail === $selectedChatId) {
-            page(routeForScope($chatListScope));
-        }
-    }
-
     function onUnarchiveChat(ev: CustomEvent<ChatIdentifier>) {
         unarchiveChat(ev.detail);
     }
@@ -973,7 +962,6 @@
             on:wallet={showWallet}
             on:deleteDirectChat={deleteDirectChat}
             on:upgrade={upgrade}
-            on:archiveChat={onArchiveChat}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:newChannel={newChannel}
