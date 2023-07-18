@@ -193,6 +193,7 @@ type SelectedUpdatesSuccess = record {
 
 type ChannelSummaryArgs = record {
     channel_id : ChannelId;
+    invite_code: opt nat64;
 };
 
 type ChannelSummaryResponse = variant {
@@ -213,6 +214,7 @@ type SummaryResponse = variant {
 
 type ChannelSummaryUpdatesArgs = record {
     channel_id : ChannelId;
+    invite_code: opt nat64;
     updates_since : TimestampMillis;
 };
 

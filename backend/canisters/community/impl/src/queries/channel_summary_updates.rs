@@ -12,7 +12,7 @@ fn channel_summary_updates(args: Args) -> Response {
 fn channel_summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if !state.data.is_accessible(caller, None) {
+    if !state.data.is_accessible(caller, args.invite_code) {
         return PrivateCommunity;
     }
 
