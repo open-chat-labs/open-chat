@@ -6,7 +6,11 @@
     import CommunityFilters from "./communities/explore/Filters.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
-    import { popRightPanelHistory, rightPanelHistory } from "../../stores/rightPanel";
+    import {
+        popRightPanelHistory,
+        pushRightPanelHistory,
+        rightPanelHistory,
+    } from "../../stores/rightPanel";
     import type {
         ChatEvent,
         EventWrapper,
@@ -327,7 +331,9 @@
     }
 
     function showInviteCommunityUsers(ev: CustomEvent<boolean>) {
-        dispatch("showInviteGroupUsers", ev.detail);
+        if ($selectedCommunity !== undefined) {
+            rightPanelHistory.set([{ kind: "invite_community_users" }]);
+        }
     }
 
     function updateGroupRules(
