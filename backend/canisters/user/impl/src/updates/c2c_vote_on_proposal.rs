@@ -58,7 +58,7 @@ mod nns {
 
 mod sns {
     use super::*;
-    use ic_sns_governance::pb::v1::GovernanceError;
+    use sns_governance_canister::types::GovernanceError;
 
     pub async fn vote_on_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId, adopt: bool) -> Response {
         let (canister_id, now) = read_state(|state| (state.env.canister_id(), state.env.now()));

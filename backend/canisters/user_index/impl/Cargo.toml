@@ -30,7 +30,6 @@ ic-icrc1 = { workspace = true }
 ic-icrc1-client = { workspace = true }
 ic-icrc1-client-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
-ic-sns-governance = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }

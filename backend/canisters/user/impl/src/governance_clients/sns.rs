@@ -1,8 +1,8 @@
 use crate::governance_clients::sns::manage_neuron::RegisterVote;
 use candid::Principal;
 use ic_cdk::api::call::CallResult;
-use ic_sns_governance::pb::v1::neuron::DissolveState;
-use ic_sns_governance::pb::v1::{manage_neuron, manage_neuron_response, GovernanceError};
+use sns_governance_canister::types::neuron::DissolveState;
+use sns_governance_canister::types::{manage_neuron, manage_neuron_response, GovernanceError};
 use tracing::error;
 use types::{CanisterId, ProposalId, SnsNeuronId, TimestampMillis};
 
@@ -15,7 +15,7 @@ pub async fn list_neurons(
     let args = sns_governance_canister::list_neurons::Args {
         limit,
         start_page_at: None,
-        of_principal: Some(of_principal.into()),
+        of_principal: Some(of_principal),
     };
 
     let response = sns_governance_canister_c2c_client::list_neurons(governance_canister_id, &args).await?;
@@ -40,7 +40,7 @@ pub async fn register_vote(
     let args = sns_governance_canister::manage_neuron::Args {
         subaccount: neuron_id.to_vec(),
         command: Some(manage_neuron::Command::RegisterVote(RegisterVote {
-            proposal: Some(proposal_id.into()),
+            proposal: Some(sns_governance_canister::types::ProposalId { id: proposal_id }),
             vote: if adopt { 1 } else { 2 },
         })),
     };

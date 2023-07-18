@@ -1,9 +1,9 @@
 use crate::governance_clients::common::WrappedProposalId;
 use crate::governance_clients::nns::ListProposalInfo;
-use crate::governance_clients::sns::ListProposals;
 use crate::{generate_message_id, governance_clients, mutate_state, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use ic_cdk_timers::TimerId;
+use sns_governance_canister::types::ListProposals;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
@@ -93,15 +93,16 @@ async fn get_sns_proposal(
     proposal_id: ProposalId,
     now: TimestampMillis,
 ) -> CallResult<Option<ProposalUpdate>> {
-    let response = governance_clients::sns::list_proposals(
+    let response = sns_governance_canister_c2c_client::list_proposals(
         governance_canister_id,
         &ListProposals {
             limit: 1,
-            before_proposal: Some(WrappedProposalId { id: proposal_id + 1 }),
+            before_proposal: Some(sns_governance_canister::types::ProposalId { id: proposal_id + 1 }),
             ..Default::default()
         },
     )
-    .await?;
+    .await?
+    .proposals;
 
     Ok(response.into_iter().next().map(|p| ProposalUpdate {
         message_id: generate_message_id(governance_canister_id, proposal_id),

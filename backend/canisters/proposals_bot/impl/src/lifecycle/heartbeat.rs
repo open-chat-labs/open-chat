@@ -3,8 +3,6 @@ use crate::governance_clients;
 use crate::governance_clients::common::{RawProposal, REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE};
 use crate::governance_clients::nns::governance_response_types::ProposalInfo;
 use crate::governance_clients::nns::{ListProposalInfo, TOPIC_EXCHANGE_RATE, TOPIC_NEURON_MANAGEMENT};
-use crate::governance_clients::sns::governance_response_types::ProposalData;
-use crate::governance_clients::sns::ListProposals;
 use crate::model::nervous_systems::{ProposalToPush, ProposalsToUpdate};
 use crate::{mutate_state, RuntimeState};
 use ic_cdk::api::call::CallResult;
@@ -24,6 +22,7 @@ fn heartbeat() {
 
 mod retrieve_proposals {
     use super::*;
+    use sns_governance_canister::types::ProposalData;
 
     const BATCH_SIZE_LIMIT: u32 = 50;
 
@@ -84,14 +83,17 @@ mod retrieve_proposals {
         let mut proposals: Vec<ProposalData> = Vec::new();
 
         loop {
-            let list_proposals_args = ListProposals {
+            let list_proposals_args = sns_governance_canister::list_proposals::Args {
                 limit: BATCH_SIZE_LIMIT,
-                before_proposal: proposals.iter().next_back().and_then(|p| p.id.clone()),
+                before_proposal: proposals.iter().next_back().and_then(|p| p.id),
                 include_reward_status: vec![REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE],
                 ..Default::default()
             };
 
-            let response = governance_clients::sns::list_proposals(governance_canister_id, &list_proposals_args).await?;
+            let response = sns_governance_canister_c2c_client::list_proposals(governance_canister_id, &list_proposals_args)
+                .await?
+                .proposals;
+
             let finished = response.len() < BATCH_SIZE_LIMIT as usize;
             proposals.extend(response);
 
