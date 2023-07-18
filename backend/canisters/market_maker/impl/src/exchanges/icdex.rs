@@ -4,10 +4,9 @@ use async_trait::async_trait;
 use candid::{CandidType, Nat};
 use canister_client::make_c2c_call;
 use ic_cdk::api::call::{CallResult, RejectionCode};
-use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc1::transfer::TransferArg;
 use market_maker_canister::{CancelOrderRequest, ExchangeId, MakeOrderRequest, OrderType, ICDEX_EXCHANGE_ID};
 use serde::{Deserialize, Serialize};
+use types::icrc1::{Account, TransferArg};
 use types::CanisterId;
 
 pub struct ICDexClient {
@@ -79,22 +78,20 @@ impl ICDexClient {
             OrderType::Bid => self.icp_ledger_canister_id,
             OrderType::Ask => self.chat_ledger_canister_id,
         };
-        let ledger_client = ic_icrc1_client::ICRC1Client {
+        icrc1_ledger_canister_c2c_client::icrc1_transfer(
             ledger_canister_id,
-            runtime: ic_icrc1_client_cdk::CdkRuntime {},
-        };
-        ledger_client
-            .transfer(TransferArg {
+            &TransferArg {
                 from_subaccount: None,
                 to: account,
                 fee: None,
                 created_at_time: None,
                 memo: None,
                 amount: order.amount.into(),
-            })
-            .await
-            .map_err(|(code, msg)| (RejectionCode::from(code), msg))?
-            .map_err(|t| (RejectionCode::Unknown, format!("{t:?}")))?;
+            },
+        )
+        .await
+        .map_err(|(code, msg)| (RejectionCode::from(code), msg))?
+        .map_err(|t| (RejectionCode::Unknown, format!("{t:?}")))?;
 
         let quantity = match order.order_type {
             OrderType::Bid => OrderQuantity::Buy(order.amount.into(), 0.into()),

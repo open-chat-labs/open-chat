@@ -1,6 +1,6 @@
 use crate::{generate_query_call, generate_update_call};
-use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
+use candid::Nat;
+use types::icrc1::{Account, NumTokens, TransferArg, TransferError};
 
 // Queries
 generate_query_call!(icrc1_balance_of);
@@ -12,14 +12,14 @@ pub mod icrc1_balance_of {
     use super::*;
 
     pub type Args = Account;
-    pub type Response = candid::Nat;
+    pub type Response = Nat;
 }
 
 pub mod icrc1_transfer {
     use super::*;
 
     pub type Args = TransferArg;
-    pub type Response = Result<candid::Nat, TransferError>;
+    pub type Response = Result<Nat, TransferError>;
 }
 
 pub mod happy_path {
@@ -27,7 +27,6 @@ pub mod happy_path {
     use candid::Principal;
     use ic_ledger_types::BlockIndex;
     use ic_test_state_machine_client::StateMachine;
-    use icrc_ledger_types::icrc1::transfer::NumTokens;
     use types::CanisterId;
 
     pub fn transfer(

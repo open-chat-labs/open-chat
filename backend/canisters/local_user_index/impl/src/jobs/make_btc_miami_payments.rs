@@ -3,12 +3,11 @@ use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::{BlockIndex, Tokens};
-use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::sns::transaction_hash;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
+use types::icrc1::{Account, TransferArg};
 use types::sns::CryptoAccount;
 use types::{
     sns, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent,
@@ -64,10 +63,7 @@ async fn make_payment(
     pending_payment: &PendingPayment,
     this_canister_id: CanisterId,
 ) -> Result<(BlockIndex, TransactionHash), ()> {
-    let to = Account {
-        owner: pending_payment.recipient,
-        subaccount: None,
-    };
+    let to = Account::from(pending_payment.recipient);
 
     let args = TransferArg {
         from_subaccount: None,
@@ -80,13 +76,8 @@ async fn make_payment(
 
     let transaction_hash = transaction_hash(Account::from(this_canister_id), &args);
 
-    let ckbtc_client = ic_icrc1_client::ICRC1Client {
-        ledger_canister_id: CanisterId::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
-        runtime: ic_icrc1_client_cdk::CdkRuntime,
-    };
-
-    match ckbtc_client.transfer(args).await {
-        Ok(Ok(block_index)) => return Ok((block_index, transaction_hash)),
+    match icrc1_ledger_canister_c2c_client::icrc1_transfer(Cryptocurrency::CKBTC.ledger_canister_id(), &args).await {
+        Ok(Ok(block_index)) => return Ok((block_index.0.try_into().unwrap(), transaction_hash)),
         Ok(Err(transfer_error)) => error!("Transfer failed. {transfer_error:?}"),
         Err((code, msg)) => error!("Transfer failed. {code:?}: {msg}"),
     }

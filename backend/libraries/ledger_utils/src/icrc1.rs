@@ -1,5 +1,4 @@
-use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc1::transfer::TransferArg;
+use types::icrc1::{Account, TransferArg};
 use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction};
 
 pub async fn process_transaction(
@@ -17,12 +16,7 @@ pub async fn process_transaction(
         amount: transaction.amount.into(),
     };
 
-    let client = ic_icrc1_client::ICRC1Client {
-        ledger_canister_id: transaction.ledger,
-        runtime: ic_icrc1_client_cdk::CdkRuntime,
-    };
-
-    match client.transfer(args).await {
+    match icrc1_ledger_canister_c2c_client::icrc1_transfer(transaction.ledger, &args).await {
         Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::ICRC1(types::icrc1::CompletedCryptoTransaction {
             // ledger: transaction.ledger,
             token: transaction.token,
@@ -32,7 +26,7 @@ pub async fn process_transaction(
             to: types::icrc1::CryptoAccount::Account(transaction.to),
             memo: transaction.memo.clone(),
             created: transaction.created,
-            block_index,
+            block_index: block_index.0.try_into().unwrap(),
         })),
         Ok(Err(transfer_error)) => {
             let error_message = format!("Transfer failed. {transfer_error:?}");

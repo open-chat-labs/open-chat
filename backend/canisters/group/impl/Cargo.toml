@@ -29,11 +29,9 @@ http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
-ic-icrc1 = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 icp_ledger_canister_c2c_client = { path = "../../../external_canisters/icp_ledger/c2c_client" }
-icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }

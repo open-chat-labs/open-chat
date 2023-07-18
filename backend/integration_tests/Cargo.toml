@@ -12,10 +12,8 @@ cycles_dispenser_canister = { path = "../canisters/cycles_dispenser/api" }
 group_canister = { path = "../canisters/group/api" }
 group_index_canister = { path = "../canisters/group_index/api" }
 ic-cdk = { workspace = true }
-ic-icrc1 = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-test-state-machine-client = { workspace = true }
-icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
 ledger_utils = { path = "../libraries/ledger_utils" }
