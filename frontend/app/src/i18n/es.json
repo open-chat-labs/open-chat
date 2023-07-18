@@ -382,7 +382,6 @@
         "members": "miembros",
         "edit": "Editar {level}",
         "update": "Actualizar {level}",
-        "inviteUsers": "Invitar usuarios",
         "inviteUsersFailed": "Hubo un error al invitar a los usuarios",
         "tooManyInvites": "Solo puedes tener 100 invitaciones pendientes",
         "usersInvited": "¡Mensaje de invitación enviado!",

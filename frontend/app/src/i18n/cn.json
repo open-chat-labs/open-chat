@@ -380,7 +380,6 @@
         "members": "成员",
         "edit": "编辑 {level}",
         "update": "更新 {level}",
-        "inviteUsers": "邀请用户",
         "inviteUsersFailed": "邀请用户时出错",
         "tooManyInvites": "您只能有 100 个未完成的邀请",
         "usersInvited": "邀请信息已发送！",

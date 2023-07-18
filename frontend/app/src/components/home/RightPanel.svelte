@@ -6,11 +6,7 @@
     import CommunityFilters from "./communities/explore/Filters.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
-    import {
-        popRightPanelHistory,
-        pushRightPanelHistory,
-        rightPanelHistory,
-    } from "../../stores/rightPanel";
+    import { popRightPanelHistory, rightPanelHistory } from "../../stores/rightPanel";
     import type {
         ChatEvent,
         EventWrapper,
@@ -35,6 +31,7 @@
     import { CommunityIdentifier, GroupChatIdentifier, compareRoles } from "openchat-shared";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
     import CommunityChannels from "./communities/details/CommunityChannels.svelte";
+    import { interpolateLevel } from "../../utils/i18n";
 
     const dispatch = createEventDispatcher();
 
@@ -44,7 +41,7 @@
     let invitingUsers = false;
 
     $: selectedChatId = client.selectedChatId;
-    $: selectedChatStore = client.selectedChatStore;
+    $: selectedChat = client.selectedChatStore;
     $: chatStateStore = client.chatStateStore;
     $: currentChatMembers = client.currentChatMembers;
     $: currentChatInvited = client.currentChatInvitedUsers;
@@ -61,7 +58,7 @@
     $: user = $userStore[currentUser.userId] ?? client.nullUser("unknown");
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $numberOfColumns === 2;
-    $: multiUserChat = selectedChatStore as Readable<MultiUserChat>;
+    $: multiUserChat = selectedChat as Readable<MultiUserChat>;
     $: empty = $rightPanelHistory.length === 0;
 
     /**
@@ -143,15 +140,16 @@
 
     async function inviteGroupUsers(ev: CustomEvent<UserSummary[]>) {
         if (
-            $selectedChatId !== undefined &&
-            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+            $multiUserChat !== undefined &&
+            ($multiUserChat.id.kind === "group_chat" || $multiUserChat.id.kind === "channel")
         ) {
             const userIds = ev.detail.map((u) => u.userId);
+            const level = $multiUserChat.level;
 
             invitingUsers = true;
 
             await client
-                .inviteUsers($selectedChatId, userIds)
+                .inviteUsers($multiUserChat.id, userIds)
                 .then((resp) => {
                     switch (resp) {
                         case "success":
@@ -161,13 +159,21 @@
                             }
                             break;
                         default:
-                            toastStore.showFailureToast("group.inviteUsersFailed");
+                            toastStore.showFailureToast(
+                                interpolateLevel(
+                                    "group.inviteUsersFailed",
+                                    $multiUserChat.level,
+                                    true
+                                )
+                            );
                             break;
                     }
                 })
                 .catch((err) => {
                     client.logError("InviteUsersFailed", err);
-                    toastStore.showFailureToast("group.inviteUsersFailed");
+                    toastStore.showFailureToast(
+                        interpolateLevel("group.inviteUsersFailed", $multiUserChat.level, true)
+                    );
                 });
 
             invitingUsers = false;
@@ -362,6 +368,7 @@
             on:showGroupMembers />
     {:else if lastState.kind === "invite_community_users"}
         <InviteUsers
+            level="community"
             userLookup={searchUsers}
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
@@ -383,6 +390,7 @@
             on:changeRole={onChangeCommunityRole} />
     {:else if lastState.kind === "invite_group_users"}
         <InviteUsers
+            level={$selectedChat?.kind === "channel" ? "channel" : "group"}
             userLookup={searchUsers}
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
@@ -416,13 +424,13 @@
             on:upgrade
             {user}
             on:closeProfile={popRightPanelHistory} />
-    {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined}
+    {:else if threadRootEvent !== undefined && $selectedChat !== undefined}
         <Thread
             on:chatWith
             on:upgrade
             on:replyPrivatelyTo
             rootEvent={threadRootEvent}
-            chat={$selectedChatStore}
+            chat={$selectedChat}
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
         <ProposalGroupFilters on:close={popRightPanelHistory} />

@@ -382,7 +382,6 @@
         "members": "Các thành viên",
         "edit": "Chỉnh sửa {level}",
         "update": "Cập nhật {level}",
-        "inviteUsers": "Mời người dùng",
         "inviteUsersFailed": "Đã xảy ra lỗi khi mời người dùng",
         "tooManyInvites": "Bạn chỉ có thể có 100 lời mời nổi bật",
         "usersInvited": "Đã gửi tin nhắn mời!",

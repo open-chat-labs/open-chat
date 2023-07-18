@@ -381,7 +381,6 @@
         "members": "Membri",
         "edit": "Modifica {level}",
         "update": "Aggiorna {level}",
-        "inviteUsers": "Invita gli utenti",
         "inviteUsersFailed": "Si è verificato un errore durante l'invito agli utenti",
         "tooManyInvites": "Puoi avere solo 100 inviti in sospeso",
         "usersInvited": "Messaggio di invito inviato!",

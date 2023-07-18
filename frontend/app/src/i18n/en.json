@@ -443,7 +443,7 @@
         "permissionsUpdateFailed": "Permissions update failed",
         "rulesUpdateFailed": "Sorry we were unable to update your {level} rules",
         "getRulesFailed": "Failed to get {level} rules",
-        "inviteUsers": "Invite users",
+        "inviteUsers": "Invite {level} users",
         "inviteUsersFailed": "There was an error inviting users",
         "tooManyInvites": "You can only have 100 outstanding invitations",
         "image": "{level} image",

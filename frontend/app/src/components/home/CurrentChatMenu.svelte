@@ -247,7 +247,8 @@
         </span>
         {#if client.canInviteUsers(selectedChatSummary.id)}
             <span on:click={showInviteGroupUsers}>
-                <HoverIcon title={$_("group.inviteUsers")}>
+                <HoverIcon
+                    title={interpolateLevel("group.inviteUsers", selectedChatSummary.level, true)}>
                     <AccountMultiplePlus
                         size={$iconSize}
                         color={inviteMembersSelected
@@ -329,7 +330,7 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("group.inviteUsers")}</div>
+                                <div slot="text">{interpolateLevel("group.inviteUsers", selectedChatSummary.level, true)}</div>
                             </MenuItem>
                         {/if}
                     {/if}

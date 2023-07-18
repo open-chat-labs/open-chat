@@ -391,7 +391,6 @@
         "members": "חברים",
         "edit": "ערוך {level}",
         "update": "עדכן את {level}",
-        "inviteUsers": "הזמן משתמשים",
         "inviteUsersFailed": "אירעה שגיאה בהזמנת משתמשים",
         "tooManyInvites": "אתה יכול לקבל רק 100 הזמנות יוצאות דופן",
         "usersInvited": "הודעת הזמנה נשלחה!",

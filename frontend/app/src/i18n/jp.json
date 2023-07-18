@@ -381,7 +381,6 @@
         "members": "メンバー",
         "edit": "{level}を編集",
         "update": "{level}を更新します",
-        "inviteUsers": "ユーザーを招待する",
         "inviteUsersFailed": "ユーザーの招待中にエラーが発生しました",
         "tooManyInvites": "未処理の招待状は 100 件までしか持てません",
         "usersInvited": "招待メッセージを送信しました！",

@@ -383,7 +383,6 @@
         "members": "Mitglieder",
         "edit": "Bearbeiten Sie {level}",
         "update": "Aktualisieren Sie {level}",
-        "inviteUsers": "Benutzer einladen",
         "inviteUsersFailed": "Beim Einladen von Benutzern ist ein Fehler aufgetreten",
         "tooManyInvites": "Sie können nur 100 ausstehende Einladungen haben",
         "usersInvited": "Einladungsnachricht gesendet!",

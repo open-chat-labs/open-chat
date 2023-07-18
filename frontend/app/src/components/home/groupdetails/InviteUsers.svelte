@@ -6,14 +6,16 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import { _ } from "svelte-i18n";
     import SelectUsers from "../SelectUsers.svelte";
-    import type { UserSummary } from "openchat-client";
+    import type { Level, UserSummary } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
+    import { interpolateLevel } from "../../../utils/i18n";
 
     export let closeIcon: "close" | "back";
     export let busy = false;
     export let userLookup: (searchTerm: string, maxResults?: number) => Promise<UserSummary[]>;
+    export let level: Level;
 
     const dispatch = createEventDispatcher();
     let usersToInvite: UserSummary[] = [];
@@ -36,7 +38,7 @@
 </script>
 
 <SectionHeader border={false} flush={true}>
-    <h4>{$_("group.inviteUsers")}</h4>
+    <h4>{interpolateLevel("group.inviteUsers", level, true)}</h4>
     <span title={$_("close")} class="close" on:click={cancelInviteUsers}>
         <HoverIcon>
             {#if closeIcon === "close"}
@@ -69,7 +71,7 @@
         loading={busy}
         square
         on:click={inviteUsers}
-        fill={true}>{$_("group.inviteUsers")}</Button>
+        fill={true}>{interpolateLevel("group.inviteUsers", level, true)}</Button>
 </div>
 
 <style lang="scss">
