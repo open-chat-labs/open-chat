@@ -2,9 +2,7 @@
     import { numberOfColumns } from "../stores/layout";
     import { mobileWidth } from "../stores/screenDimensions";
     import { rtlStore } from "../stores/rtl";
-    import { menuStore } from "../stores/menu";
     import { navOpen } from "../stores/layout";
-    import { communitiesEnabled } from "../utils/features";
 
     export let left: boolean = false;
     export let nav: boolean = false;
@@ -24,7 +22,6 @@
     class:middle
     class:modal
     class:hovering={$navOpen}
-    class:nav-supported={$communitiesEnabled}
     class:empty>
     <slot />
 </section>
@@ -39,7 +36,7 @@
         overflow-x: hidden;
 
         // whichever panel is the 2nd panel should be nudged right to accommodate the nav
-        &.nav-supported:nth-child(2) {
+        &:nth-child(2) {
             margin-inline-start: toRem(80);
             @include mobile() {
                 margin-inline-start: toRem(60);

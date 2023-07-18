@@ -27,7 +27,6 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { notificationsSupported } from "../../utils/notifications";
-    import { communitiesEnabled } from "../../utils/features";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -49,10 +48,7 @@
     let unreadMentions: number;
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const fav =
-            $communitiesEnabled &&
-            $chatListScope.kind !== "favourite" &&
-            $favouritesStore.has(chatSummary.id);
+        const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
         switch (chatSummary.kind) {
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
@@ -322,28 +318,26 @@
                         </div>
                         <div slot="menu">
                             <Menu>
-                                {#if $communitiesEnabled}
-                                    {#if !$favouritesStore.has(chatSummary.id)}
-                                        <MenuItem on:click={addToFavourites}>
-                                            <HeartPlus
-                                                size={$iconSize}
-                                                color={"var(--menu-warn)"}
-                                                slot="icon" />
-                                            <div slot="text">
-                                                {$_("communities.addToFavourites")}
-                                            </div>
-                                        </MenuItem>
-                                    {:else}
-                                        <MenuItem on:click={removeFromFavourites}>
-                                            <HeartMinus
-                                                size={$iconSize}
-                                                color={"var(--menu-warn)"}
-                                                slot="icon" />
-                                            <div slot="text">
-                                                {$_("communities.removeFromFavourites")}
-                                            </div>
-                                        </MenuItem>
-                                    {/if}
+                                {#if !$favouritesStore.has(chatSummary.id)}
+                                    <MenuItem on:click={addToFavourites}>
+                                        <HeartPlus
+                                            size={$iconSize}
+                                            color={"var(--menu-warn)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            {$_("communities.addToFavourites")}
+                                        </div>
+                                    </MenuItem>
+                                {:else}
+                                    <MenuItem on:click={removeFromFavourites}>
+                                        <HeartMinus
+                                            size={$iconSize}
+                                            color={"var(--menu-warn)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            {$_("communities.removeFromFavourites")}
+                                        </div>
+                                    </MenuItem>
                                 {/if}
                                 {#if !pinned}
                                     <MenuItem on:click={pinChat}>

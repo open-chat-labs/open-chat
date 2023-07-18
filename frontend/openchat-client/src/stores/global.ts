@@ -44,13 +44,15 @@ export const globalStateStore = immutableStore<GlobalState>({
         direct_chat: [],
         favourite: [],
         community: [],
-        none: [],
     },
 });
 
 export const pinnedChatsStore = derived(globalStateStore, ($global) => $global.pinnedChats);
 
-export const chatListScopeStore = safeWritable<ChatListScope>({ kind: "none" }, chatScopesEqual);
+export const chatListScopeStore = safeWritable<ChatListScope>(
+    { kind: "direct_chat" },
+    chatScopesEqual
+);
 
 export const favouritesStore = derived(globalStateStore, (state) => state.favourites);
 

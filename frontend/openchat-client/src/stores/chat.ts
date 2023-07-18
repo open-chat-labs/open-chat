@@ -18,6 +18,7 @@ import {
     nullMembership,
     chatIdentifiersEqual,
     MultiUserChat,
+    ChatListScope,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
@@ -54,36 +55,30 @@ import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
-
-const communitiesEnabled = localStorage.getItem("openchat_communities_enabled") === "true";
+let currentScope: ChatListScope = { kind: "direct_chat" };
+chatListScopeStore.subscribe((s) => (currentScope = s));
 
 export const myServerChatSummariesStore = derived(
     [globalStateStore, chatListScopeStore],
     ([$allState, $scope]) => {
         const allChats = getAllChats($allState);
-        if (communitiesEnabled) {
-            if ($scope.kind === "community") {
-                const community = $allState.communities.get($scope.id);
-                return community
-                    ? ChatMap.fromList(community.channels)
-                    : new ChatMap<ChatSummary>();
-            } else if ($scope.kind === "group_chat") {
-                return $allState.groupChats;
-            } else if ($scope.kind === "direct_chat") {
-                return $allState.directChats;
-            } else if ($scope.kind === "favourite") {
-                return $allState.favourites.values().reduce((favs, chatId) => {
-                    const chat = allChats.get(chatId);
-                    if (chat !== undefined) {
-                        favs.set(chat.id, chat);
-                    }
-                    return favs;
-                }, new ChatMap<ChatSummary>());
-            } else {
-                return new ChatMap<ChatSummary>();
-            }
+        if ($scope.kind === "community") {
+            const community = $allState.communities.get($scope.id);
+            return community ? ChatMap.fromList(community.channels) : new ChatMap<ChatSummary>();
+        } else if ($scope.kind === "group_chat") {
+            return $allState.groupChats;
+        } else if ($scope.kind === "direct_chat") {
+            return $allState.directChats;
+        } else if ($scope.kind === "favourite") {
+            return $allState.favourites.values().reduce((favs, chatId) => {
+                const chat = allChats.get(chatId);
+                if (chat !== undefined) {
+                    favs.set(chat.id, chat);
+                }
+                return favs;
+            }, new ChatMap<ChatSummary>());
         } else {
-            return allChats;
+            return new ChatMap<ChatSummary>();
         }
     }
 );
@@ -98,19 +93,16 @@ export const groupPreviewsStore: Writable<ChatMap<MultiUserChat>> = immutableSto
 );
 
 export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
-    [myServerChatSummariesStore, uninitializedDirectChats, groupPreviewsStore, chatListScopeStore],
-    ([summaries, directChats, previews, $scope]) => {
+    [myServerChatSummariesStore, uninitializedDirectChats, groupPreviewsStore],
+    ([summaries, directChats, previews]) => {
         let all = [...summaries.entries()];
-        if ($scope.kind === "none" || $scope.kind === "direct_chat") {
+        if (currentScope.kind === "direct_chat") {
             all = all.concat([...directChats.entries()]);
         }
-        if ($scope.kind === "none") {
-            all = all.concat([...previews.entries()]);
-        }
-        if ($scope.kind === "group_chat") {
+        if (currentScope.kind === "group_chat") {
             all = all.concat([...previews.filter((c) => c.kind === "group_chat").entries()]);
         }
-        if ($scope.kind === "community") {
+        if (currentScope.kind === "community") {
             all = all.concat([...previews.filter((c) => c.kind === "channel").entries()]);
         }
         return all.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
@@ -127,10 +119,13 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         unconfirmed,
         currentUserStore,
         localMessageUpdates,
-        chatListScopeStore,
     ],
-    ([summaries, localSummaryUpdates, unconfirmed, currentUser, localUpdates, scope]) => {
-        const mergedSummaries = mergeLocalSummaryUpdates(scope, summaries, localSummaryUpdates);
+    ([summaries, localSummaryUpdates, unconfirmed, currentUser, localUpdates]) => {
+        const mergedSummaries = mergeLocalSummaryUpdates(
+            currentScope,
+            summaries,
+            localSummaryUpdates
+        );
 
         return mergedSummaries
             .entries()
@@ -153,27 +148,23 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
 );
 
 // This is annoying. If only the pinnedChatIndex was stored in the chatSummary...
-export const chatSummariesListStore = derived(
-    [chatSummariesStore, chatListScopeStore],
-    ([summaries, scope]) => {
-        const pinnedChats = get(pinnedChatsStore);
-        const pinnedByScope = pinnedChats[scope.kind];
-        const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
-            const summary = summaries.get(id);
-            if (summary !== undefined) {
-                result.push(summary);
-            }
-            return result;
-        }, []);
-        const unpinned = summaries
-            .values()
-            .filter(
-                (chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1
-            )
-            .sort(compareChats);
-        return pinned.concat(unpinned);
-    }
-);
+export const chatSummariesListStore = derived([chatSummariesStore], ([summaries]) => {
+    console.log("UI: deriving chatSummariesListStore");
+    const pinnedChats = get(pinnedChatsStore);
+    const pinnedByScope = pinnedChats[currentScope.kind];
+    const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
+        const summary = summaries.get(id);
+        if (summary !== undefined) {
+            result.push(summary);
+        }
+        return result;
+    }, []);
+    const unpinned = summaries
+        .values()
+        .filter((chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1)
+        .sort(compareChats);
+    return pinned.concat(unpinned);
+});
 
 export const userMetrics = derived([allChats], ([$chats]) => {
     return $chats

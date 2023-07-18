@@ -1,6 +1,5 @@
 <script lang="ts">
     import Close from "svelte-material-icons/Close.svelte";
-    import CurrentUser from "./CurrentUser.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
     import ChatSummary from "./ChatSummary.svelte";
@@ -28,7 +27,6 @@
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
     import { discoverHotGroupsDismissed } from "../../stores/settings";
-    import { communitiesEnabled } from "../../utils/features";
     import { pushRightPanelHistory } from "../../stores/rightPanel";
     import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
     import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
@@ -63,39 +61,36 @@
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
     $: showWhatsHot =
-        $chatListScope.kind === "none" && !$discoverHotGroupsDismissed && !searchResultsAvailable;
+        $chatListScope.kind === "group_chat" &&
+        !$discoverHotGroupsDismissed &&
+        !searchResultsAvailable;
     $: showBrowseChannnels = $chatListScope.kind === "community" && !searchResultsAvailable;
     $: unreadDirectChats = client.unreadDirectChats;
     $: unreadGroupChats = client.unreadGroupChats;
     $: unreadFavouriteChats = client.unreadFavouriteChats;
     $: unreadCommunityChannels = client.unreadCommunityChannels;
-    $: globalUnreadCount = client.globalUnreadCount;
 
     let unread = 0;
     $: {
-        if ($communitiesEnabled) {
-            switch ($chatListScope.kind) {
-                case "group_chat": {
-                    unread = $unreadGroupChats;
-                    break;
-                }
-                case "direct_chat": {
-                    unread = $unreadDirectChats;
-                    break;
-                }
-                case "favourite": {
-                    unread = $unreadFavouriteChats;
-                    break;
-                }
-                case "community": {
-                    unread = $unreadCommunityChannels.get($chatListScope.id) ?? 0;
-                    break;
-                }
-                default:
-                    unread = 0;
+        switch ($chatListScope.kind) {
+            case "group_chat": {
+                unread = $unreadGroupChats;
+                break;
             }
-        } else {
-            unread = $globalUnreadCount;
+            case "direct_chat": {
+                unread = $unreadDirectChats;
+                break;
+            }
+            case "favourite": {
+                unread = $unreadFavouriteChats;
+                break;
+            }
+            case "community": {
+                unread = $unreadCommunityChannels.get($chatListScope.id) ?? 0;
+                break;
+            }
+            default:
+                unread = 0;
         }
     }
 
@@ -199,33 +194,20 @@
 </script>
 
 {#if user}
-    {#if $communitiesEnabled}
-        {#if $chatListScope.kind === "favourite"}
-            <FavouriteChatsHeader />
-        {:else if $chatListScope.kind === "group_chat"}
-            <GroupChatsHeader on:newGroup />
-        {:else if $chatListScope.kind === "direct_chat"}
-            <DirectChatsHeader />
-        {:else if $selectedCommunity && $chatListScope.kind === "community"}
-            <SelectedCommunityHeader
-                community={$selectedCommunity}
-                on:leaveCommunity
-                on:deleteCommunity
-                on:editCommunity
-                on:communityDetails
-                on:newChannel />
-        {/if}
-    {:else}
-        <CurrentUser
-            on:wallet
-            on:showHomePage
-            on:logout
-            on:whatsHot
-            on:halloffame
-            {user}
-            on:profile
-            on:upgrade
-            on:newGroup />
+    {#if $chatListScope.kind === "favourite"}
+        <FavouriteChatsHeader />
+    {:else if $chatListScope.kind === "group_chat"}
+        <GroupChatsHeader on:newGroup />
+    {:else if $chatListScope.kind === "direct_chat"}
+        <DirectChatsHeader />
+    {:else if $selectedCommunity && $chatListScope.kind === "community"}
+        <SelectedCommunityHeader
+            community={$selectedCommunity}
+            on:leaveCommunity
+            on:deleteCommunity
+            on:editCommunity
+            on:communityDetails
+            on:newChannel />
     {/if}
 
     <ChatListSearch

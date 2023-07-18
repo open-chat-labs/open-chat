@@ -375,7 +375,6 @@ const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
-const communitiesEnabled = localStorage.getItem("openchat_communities_enabled") === "true";
 
 export class OpenChat extends OpenChatAgentWorker {
     private _authClient: Promise<AuthClient>;
@@ -874,7 +873,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     pinChat(chatId: ChatIdentifier): Promise<boolean> {
         this.pinLocally(chatId);
-        return this.sendRequest({ kind: "pinChat", chatId, communitiesEnabled })
+        return this.sendRequest({ kind: "pinChat", chatId })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error pinning chat", err);
@@ -885,7 +884,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     unpinChat(chatId: ChatIdentifier): Promise<boolean> {
         this.unpinLocally(chatId);
-        return this.sendRequest({ kind: "unpinChat", chatId, communitiesEnabled })
+        return this.sendRequest({ kind: "unpinChat", chatId })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error unpinning chat", err);
@@ -4059,7 +4058,6 @@ export class OpenChat extends OpenChatAgentWorker {
                     updatedChats,
                     chatsResponse.state.favouriteChats,
                     {
-                        none: chatsResponse.state.pinnedChats,
                         group_chat: chatsResponse.state.pinnedGroupChats,
                         direct_chat: chatsResponse.state.pinnedDirectChats,
                         favourite: chatsResponse.state.pinnedFavouriteChats,
@@ -4660,11 +4658,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setChatListScope(scope: ChatListScope): void {
-        if (communitiesEnabled && scope.kind === "none") {
-            chatListScopeStore.set(this.getDefaultScope());
-        } else {
-            chatListScopeStore.set(scope);
-        }
+        chatListScopeStore.set(scope);
     }
 
     getDefaultScope(): ChatListScope {
@@ -4673,7 +4667,6 @@ export class OpenChat extends OpenChatAgentWorker {
         // we actually need to direct the user to one of the global scopes "direct", "group" or "favourites"
         // which one we choose is kind of unclear and probably depends on the state
         const global = this._liveState.globalState;
-        if (!communitiesEnabled) return { kind: "none" };
         if (global.favourites.size > 0) return { kind: "favourite" };
         if (global.groupChats.size > 0) return { kind: "group_chat" };
         return { kind: "direct_chat" };

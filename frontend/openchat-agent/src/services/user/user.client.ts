@@ -10,53 +10,52 @@ import {
     idlFactory,
     UserService,
 } from "./candid/idl";
-import {
-    type InitialStateResponse,
-    type UpdatesResponse,
-    type EventsResponse,
-    type CandidateGroupChat,
-    type CreateGroupResponse,
-    type DeleteGroupResponse,
-    type DirectChatEvent,
-    type Message,
-    type SendMessageResponse,
-    type BlockUserResponse,
-    type UnblockUserResponse,
-    type LeaveGroupResponse,
-    type MarkReadResponse,
-    type IndexRange,
-    type AddRemoveReactionResponse,
-    type DeleteMessageResponse,
-    type UndeleteMessageResponse,
-    type EditMessageResponse,
-    type MarkReadRequest,
-    type WithdrawCryptocurrencyResponse,
-    type CryptocurrencyContent,
-    type PendingCryptocurrencyWithdrawal,
-    type ArchiveChatResponse,
-    type BlobReference,
-    type CreatedUser,
-    type MigrateUserPrincipalResponse,
-    type PinChatResponse,
-    type PublicProfile,
-    type SearchDirectChatResponse,
-    type SetBioResponse,
-    type ToggleMuteNotificationResponse,
-    type UnpinChatResponse,
-    type DeletedDirectMessageResponse,
-    type EventWrapper,
-    type SetMessageReminderResponse,
-    type ChatEvent,
-    type EventsSuccessResult,
-    type CommunitySummary,
-    type CreateCommunityResponse,
-    type AccessRules,
-    type ChatIdentifier,
-    type DirectChatIdentifier,
-    type GroupChatIdentifier,
-    type ThreadRead,
-    type ManageFavouritesResponse,
-    chatIdentifierToString,
+import type {
+    InitialStateResponse,
+    UpdatesResponse,
+    EventsResponse,
+    CandidateGroupChat,
+    CreateGroupResponse,
+    DeleteGroupResponse,
+    DirectChatEvent,
+    Message,
+    SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    LeaveGroupResponse,
+    MarkReadResponse,
+    IndexRange,
+    AddRemoveReactionResponse,
+    DeleteMessageResponse,
+    UndeleteMessageResponse,
+    EditMessageResponse,
+    MarkReadRequest,
+    WithdrawCryptocurrencyResponse,
+    CryptocurrencyContent,
+    PendingCryptocurrencyWithdrawal,
+    ArchiveChatResponse,
+    BlobReference,
+    CreatedUser,
+    MigrateUserPrincipalResponse,
+    PinChatResponse,
+    PublicProfile,
+    SearchDirectChatResponse,
+    SetBioResponse,
+    ToggleMuteNotificationResponse,
+    UnpinChatResponse,
+    DeletedDirectMessageResponse,
+    EventWrapper,
+    SetMessageReminderResponse,
+    ChatEvent,
+    EventsSuccessResult,
+    CommunitySummary,
+    CreateCommunityResponse,
+    AccessRules,
+    ChatIdentifier,
+    DirectChatIdentifier,
+    GroupChatIdentifier,
+    ThreadRead,
+    ManageFavouritesResponse,
     CommunityIdentifier,
     LeaveCommunityResponse,
     DeleteCommunityResponse,
@@ -872,43 +871,23 @@ export class UserClient extends CandidService {
         }
     }
 
-    pinChat(chatId: ChatIdentifier, communitiesEnabled: boolean): Promise<PinChatResponse> {
-        if (communitiesEnabled) {
-            return this.handleResponse(
-                this.userService.pin_chat_v2({
-                    chat: this.toChatInList(chatId),
-                }),
+    pinChat(chatId: ChatIdentifier): Promise<PinChatResponse> {
+        return this.handleResponse(
+            this.userService.pin_chat_v2({
+                chat: this.toChatInList(chatId),
+            }),
 
-                pinChatResponse
-            );
-        } else {
-            return this.handleResponse(
-                this.userService.pin_chat({
-                    chat_id: Principal.fromText(chatIdentifierToString(chatId)),
-                }),
-
-                pinChatResponse
-            );
-        }
+            pinChatResponse
+        );
     }
 
-    unpinChat(chatId: ChatIdentifier, communitiesEnabled: boolean): Promise<UnpinChatResponse> {
-        if (communitiesEnabled) {
-            return this.handleResponse(
-                this.userService.unpin_chat_v2({
-                    chat: this.toChatInList(chatId),
-                }),
-                unpinChatResponse
-            );
-        } else {
-            return this.handleResponse(
-                this.userService.unpin_chat({
-                    chat_id: Principal.fromText(chatIdentifierToString(chatId)),
-                }),
-
-                pinChatResponse
-            );
-        }
+    unpinChat(chatId: ChatIdentifier): Promise<UnpinChatResponse> {
+        return this.handleResponse(
+            this.userService.unpin_chat_v2({
+                chat: this.toChatInList(chatId),
+            }),
+            unpinChatResponse
+        );
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {

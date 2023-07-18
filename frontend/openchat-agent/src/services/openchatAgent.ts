@@ -2017,12 +2017,12 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    pinChat(chatId: ChatIdentifier, communitiesEnabled: boolean): Promise<PinChatResponse> {
-        return this.userClient.pinChat(chatId, communitiesEnabled);
+    pinChat(chatId: ChatIdentifier): Promise<PinChatResponse> {
+        return this.userClient.pinChat(chatId);
     }
 
-    unpinChat(chatId: ChatIdentifier, communitiesEnabled: boolean): Promise<UnpinChatResponse> {
-        return this.userClient.unpinChat(chatId, communitiesEnabled);
+    unpinChat(chatId: ChatIdentifier): Promise<UnpinChatResponse> {
+        return this.userClient.unpinChat(chatId);
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
