@@ -26,7 +26,7 @@
 
 <Menu>
     {#if !$communitiesEnabled}
-        <MenuItem on:click={() => dispatch("showHomePage")}>
+        <MenuItem on:click={() => page("/home")}>
             <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text">{$_("homepage")}</span>
         </MenuItem>

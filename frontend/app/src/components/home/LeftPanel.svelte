@@ -6,17 +6,11 @@
 <Panel left>
     <div class="chat-list">
         <ChatList
-            on:loadMessage
             on:chatWith
             on:halloffame
-            on:showHomePage
             on:newGroup
             on:profile
             on:logout
-            on:deleteDirectChat
-            on:pinChat
-            on:unpinChat
-            on:archiveChat
             on:unarchiveChat
             on:wallet
             on:upgrade

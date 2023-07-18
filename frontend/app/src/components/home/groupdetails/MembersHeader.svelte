@@ -26,7 +26,10 @@
 
 <SectionHeader gap border={false}>
     {#if canInvite}
-        <span title={$_("group.inviteUsers")} class="add" on:click={showInviteUsers}>
+        <span
+            title={interpolateLevel("group.inviteUsers", level, true)}
+            class="add"
+            on:click={showInviteUsers}>
             <HoverIcon>
                 <AccountMultiplePlus size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat } from "openchat-client";
+    import { AvatarSize, OpenChat, chatIdentifiersEqual } from "openchat-client";
     import type { UserLookup, ChatSummary, TypersByKey, CommunitySummary } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -19,7 +19,7 @@
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -28,6 +28,8 @@
     import MenuItem from "../MenuItem.svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { communitiesEnabled } from "../../utils/features";
+    import { toastStore } from "../../stores/toast";
+    import { routeForScope, pathParams } from "../../routes";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -36,6 +38,7 @@
     export let selected: boolean;
     export let visible: boolean;
 
+    $: selectedChatId = client.selectedChatId;
     $: chatListScope = client.chatListScope;
     $: blockedUsers = client.blockedUsers;
     $: messagesRead = client.messagesRead;
@@ -129,7 +132,13 @@
     }
 
     function deleteDirectChat() {
-        dispatch("deleteDirectChat", chatSummary.id);
+        if (
+            $pathParams.kind === "global_chat_selected_route" &&
+            chatIdentifiersEqual(chatSummary.id, $pathParams.chatId)
+        ) {
+            page(routeForScope($chatListScope));
+        }
+        tick().then(() => client.removeChat(chatSummary.id));
         delOffset = -60;
     }
 
@@ -182,11 +191,19 @@
     }
 
     function pinChat() {
-        dispatch("pinChat", chatSummary.id);
+        client.pinChat(chatSummary.id).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("pinChat.failed");
+            }
+        });
     }
 
     function unpinChat() {
-        dispatch("unpinChat", chatSummary.id);
+        client.unpinChat(chatSummary.id).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("pinChat.unpinFailed");
+            }
+        });
     }
 
     function toggleMuteNotifications(mute: boolean) {
@@ -195,7 +212,14 @@
 
     function archiveChat() {
         client.markAllRead(chatSummary);
-        dispatch("archiveChat", chatSummary.id);
+        client.archiveChat(chatSummary.id).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("archiveChatFailed");
+            }
+        });
+        if (chatSummary.id === $selectedChatId) {
+            page(routeForScope($chatListScope));
+        }
     }
 
     function selectChat() {

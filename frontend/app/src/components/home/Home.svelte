@@ -260,8 +260,8 @@
         }
     }
 
-    async function selectCommunity(id: CommunityIdentifier): Promise<boolean> {
-        const found = await client.setSelectedCommunity(id, $querystring.get("code"));
+    async function selectCommunity(id: CommunityIdentifier, clearChat = true): Promise<boolean> {
+        const found = await client.setSelectedCommunity(id, $querystring.get("code"), clearChat);
         if (!found) {
             modal = ModalType.NoAccess;
         }
@@ -289,7 +289,7 @@
                 pathParams.kind === "selected_channel_route"
             ) {
                 if (pathParams.kind === "selected_channel_route") {
-                    await selectCommunity(pathParams.communityId);
+                    await selectCommunity(pathParams.communityId, false);
                 }
 
                 // first close any open thread
@@ -383,16 +383,6 @@
         rightPanelHistory.update((history) => filterByChatType(history, $selectedChatStore));
     }
 
-    function userAvatarSelected(ev: CustomEvent<{ data: Uint8Array }>): void {
-        client.setUserAvatar(ev.detail.data).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("avatarUpdated");
-            } else {
-                toastStore.showFailureToast("avatarUpdateFailed");
-            }
-        });
-    }
-
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
         waitAndScrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
@@ -407,53 +397,6 @@
     function closeNoAccess() {
         closeModal();
         page(routeForScope(client.getDefaultScope()));
-    }
-
-    function blockUser(ev: CustomEvent<{ userId: string }>) {
-        client.blockUserFromDirectChat(ev.detail.userId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("blockUserSucceeded");
-            } else {
-                toastStore.showFailureToast("blockUserFailed");
-            }
-        });
-    }
-
-    function unblockUser(ev: CustomEvent<{ userId: string }>) {
-        client.unblockUserFromDirectChat(ev.detail.userId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("unblockUserSucceeded");
-            } else {
-                toastStore.showFailureToast("unblockUserFailed");
-            }
-        });
-    }
-
-    function pinChat(ev: CustomEvent<ChatIdentifier>) {
-        client.pinChat(ev.detail).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("pinChat.failed");
-            }
-        });
-    }
-
-    function unpinChat(ev: CustomEvent<ChatIdentifier>) {
-        client.unpinChat(ev.detail).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("pinChat.unpinFailed");
-            }
-        });
-    }
-
-    function onArchiveChat(ev: CustomEvent<ChatIdentifier>) {
-        client.archiveChat(ev.detail).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("archiveChatFailed");
-            }
-        });
-        if (ev.detail === $selectedChatId) {
-            page(routeForScope($chatListScope));
-        }
     }
 
     function onUnarchiveChat(ev: CustomEvent<ChatIdentifier>) {
@@ -582,13 +525,6 @@
         return Promise.resolve();
     }
 
-    function deleteDirectChat(ev: CustomEvent<ChatIdentifier>) {
-        if ($pathParams.kind === "global_chat_selected_route" && ev.detail === $pathParams.chatId) {
-            page(routeForScope($chatListScope));
-        }
-        tick().then(() => client.removeChat(ev.detail));
-    }
-
     function chatWith(ev: CustomEvent<DirectChatIdentifier>) {
         const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === ev.detail;
@@ -597,18 +533,6 @@
             page(routeForChatIdentifier($chatListScope.kind, ev.detail));
         } else {
             createDirectChat(ev.detail);
-        }
-    }
-
-    function loadMessage(ev: CustomEvent<MessageMatch>): void {
-        if (chatIdentifiersEqual(ev.detail.chatId, $selectedChatId)) {
-            currentChatMessages?.externalGoToMessage(ev.detail.messageIndex);
-        } else {
-            page(
-                `${routeForChatIdentifier($chatListScope.kind, ev.detail.chatId)}/${
-                    ev.detail.messageIndex
-                }`
-            );
         }
     }
 
@@ -696,34 +620,12 @@
         }
     }
 
-    function showGroupDetails() {
-        if ($selectedChatId !== undefined) {
-            page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
-            rightPanelHistory.set([
-                {
-                    kind: "group_details",
-                },
-            ]);
-        }
-    }
-
     function showProposalFilters() {
         if ($selectedChatId !== undefined) {
             page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
-                },
-            ]);
-        }
-    }
-
-    function showPinned() {
-        if ($selectedChatId !== undefined) {
-            page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
-            rightPanelHistory.set([
-                {
-                    kind: "show_pinned",
                 },
             ]);
         }
@@ -946,11 +848,6 @@
         });
     }
 
-    function showLandingPageRoute(route: string) {
-        return () => page(route);
-        // return () => (window.location.href = route);
-    }
-
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
         if (!(await client.createDirectChat(chatId))) {
             return false;
@@ -1000,7 +897,6 @@
             on:logout={() => client.logout()}
             on:newGroup={() => newGroup("group")}
             on:communityDetails={communityDetails}
-            on:showHomePage={showLandingPageRoute("/home")}
             on:newChannel={newChannel}
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
@@ -1009,7 +905,6 @@
 
     {#if $layoutStore.showLeft}
         <LeftPanel
-            on:showHomePage={showLandingPageRoute("/home")}
             on:chatWith={chatWith}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:newGroup={() => newGroup("group")}
@@ -1017,18 +912,13 @@
             on:communityDetails={communityDetails}
             on:logout={() => client.logout()}
             on:wallet={showWallet}
-            on:deleteDirectChat={deleteDirectChat}
-            on:pinChat={pinChat}
-            on:unpinChat={unpinChat}
             on:upgrade={upgrade}
-            on:archiveChat={onArchiveChat}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:newChannel={newChannel}
             on:editCommunity={editCommunity}
             on:leaveCommunity={triggerConfirm}
-            on:deleteCommunity={triggerConfirm}
-            on:loadMessage={loadMessage} />
+            on:deleteCommunity={triggerConfirm} />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel
@@ -1036,18 +926,14 @@
             bind:currentChatMessages
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
-            on:blockUser={blockUser}
-            on:unblockUser={unblockUser}
             on:leaveGroup={triggerConfirm}
             on:chatWith={chatWith}
             on:replyPrivatelyTo={replyPrivatelyTo}
             on:showInviteGroupUsers={showInviteGroupUsers}
-            on:showGroupDetails={showGroupDetails}
             on:showProposalFilters={showProposalFilters}
             on:showGroupMembers={showGroupMembers}
             on:joinGroup={joinGroup}
             on:upgrade={upgrade}
-            on:showPinned={showPinned}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage}
@@ -1056,14 +942,12 @@
     {/if}
     {#if $layoutStore.rightPanel === "inline"}
         <RightPanel
-            on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
             on:replyPrivatelyTo={replyPrivatelyTo}
             on:showInviteGroupUsers={showInviteGroupUsers}
             on:showGroupMembers={showGroupMembers}
             on:chatWith={chatWith}
             on:upgrade={upgrade}
-            on:blockUser={blockUser}
             on:deleteGroup={triggerConfirm}
             on:editGroup={editGroup}
             on:editCommunity={editCommunity}
@@ -1077,14 +961,12 @@
     <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
             <RightPanel
-                on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
                 on:replyPrivatelyTo={replyPrivatelyTo}
                 on:showInviteGroupUsers={showInviteGroupUsers}
                 on:showGroupMembers={showGroupMembers}
                 on:chatWith={chatWith}
                 on:upgrade={upgrade}
-                on:blockUser={blockUser}
                 on:deleteGroup={triggerConfirm}
                 on:editGroup={editGroup}
                 on:editCommunity={editCommunity}

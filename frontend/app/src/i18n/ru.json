@@ -381,7 +381,6 @@
         "members": "Члены",
         "edit": "Изменить {level}",
         "update": "Обновить {level}",
-        "inviteUsers": "Пригласить пользователей",
         "inviteUsersFailed": "При приглашении пользователей произошла ошибка",
         "tooManyInvites": "У вас может быть только 100 активных приглашений",
         "usersInvited": "Сообщение с приглашением отправлено!",
@@ -389,7 +388,8 @@
         "editGroupPhoto": "Редактировать {level} фото",
         "image": "{level} изображение",
         "name": "{level} имя",
-        "description": "{level} описание"
+        "description": "{level} описание",
+        "inviteUsers": "Пригласить {level} пользователей"
     },
     "invite": {
         "enableLink": "Включить ссылку",

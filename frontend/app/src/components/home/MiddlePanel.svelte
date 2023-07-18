@@ -41,19 +41,15 @@
             events={$eventsStore}
             filteredProposals={$filteredProposalsStore}
             on:successfulImport
-            on:unblockUser
             on:clearSelection
-            on:blockUser
             on:leaveGroup
             on:replyPrivatelyTo
             on:showInviteGroupUsers
-            on:showGroupDetails
             on:showProposalFilters
             on:showGroupMembers
             on:chatWith
             on:joinGroup
             on:upgrade
-            on:showPinned
             on:toggleMuteNotifications
             on:goToMessageIndex
             on:convertGroupToCommunity

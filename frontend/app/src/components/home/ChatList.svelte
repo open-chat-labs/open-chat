@@ -218,7 +218,6 @@
     {:else}
         <CurrentUser
             on:wallet
-            on:showHomePage
             on:logout
             on:whatsHot
             on:halloffame
@@ -257,12 +256,8 @@
                         selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
                         on:chatSelected={chatSelected}
-                        on:pinChat
-                        on:unpinChat
-                        on:archiveChat
                         on:unarchiveChat
-                        on:toggleMuteNotifications
-                        on:deleteDirectChat />
+                        on:toggleMuteNotifications />
                 {/each}
 
                 {#if channelSearchResults !== undefined}

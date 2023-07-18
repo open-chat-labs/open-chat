@@ -5,6 +5,7 @@
         type ChannelIdentifier,
         type GroupChatSummary,
         type OpenChat,
+        ChatListScope,
     } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
@@ -24,12 +25,15 @@
 
     $: chatListScope = client.chatListScope;
 
+    let scope: ChatListScope["kind"] | undefined;
+
     let state: "idle" | "converting" | "converted" | "error" = "idle";
     let channelId: ChannelIdentifier | undefined;
 
     function convert() {
         if (group === undefined) return;
 
+        scope = $chatListScope.kind;
         state = "converting";
         client.convertGroupToCommunity(group, rules ?? { enabled: false, text: "" }).then((id) => {
             state = id ? "converted" : "error";
@@ -40,7 +44,7 @@
     function go() {
         if (channelId !== undefined) {
             close();
-            page(routeForChatIdentifier($chatListScope.kind, channelId));
+            page(routeForChatIdentifier(scope ?? $chatListScope.kind, channelId));
         }
     }
 
