@@ -17,6 +17,7 @@
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import SuspendModal from "./SuspendModal.svelte";
+    import { rightPanelHistory } from "../../stores/rightPanel";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -37,13 +38,20 @@
         selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: hasUserProfile = !isMultiUser && !isBot;
+    $: selectedChatId = client.selectedChatId;
 
     function clearSelection() {
         dispatch("clearSelection");
     }
 
     function showGroupDetails() {
-        dispatch("showGroupDetails");
+        if ($selectedChatId !== undefined) {
+            rightPanelHistory.set([
+                {
+                    kind: "group_details",
+                },
+            ]);
+        }
     }
 
     function showGroupMembers() {
@@ -162,8 +170,7 @@
             on:convertGroupToCommunity
             on:importToCommunity
             on:toggleMuteNotifications
-            on:showGroupDetails
-            on:showPinned
+            on:showGroupDetails={showGroupDetails}
             on:searchChat
             on:showProposalFilters
             on:showGroupMembers

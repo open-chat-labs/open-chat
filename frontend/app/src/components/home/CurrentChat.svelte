@@ -278,11 +278,9 @@
             on:markAllRead={onMarkAllRead}
             on:toggleMuteNotifications
             on:showInviteGroupUsers
-            on:showGroupDetails
             on:showProposalFilters
             on:showGroupMembers
             on:leaveGroup
-            on:showPinned
             on:upgrade
             on:createPoll={createPoll}
             on:searchChat={searchChat}

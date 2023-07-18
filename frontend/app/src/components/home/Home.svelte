@@ -260,8 +260,8 @@
         }
     }
 
-    async function selectCommunity(id: CommunityIdentifier): Promise<boolean> {
-        const found = await client.setSelectedCommunity(id, $querystring.get("code"));
+    async function selectCommunity(id: CommunityIdentifier, clearChat = true): Promise<boolean> {
+        const found = await client.setSelectedCommunity(id, $querystring.get("code"), clearChat);
         if (!found) {
             modal = ModalType.NoAccess;
         }
@@ -289,7 +289,7 @@
                 pathParams.kind === "selected_channel_route"
             ) {
                 if (pathParams.kind === "selected_channel_route") {
-                    await selectCommunity(pathParams.communityId);
+                    await selectCommunity(pathParams.communityId, false);
                 }
 
                 // first close any open thread
@@ -620,34 +620,12 @@
         }
     }
 
-    function showGroupDetails() {
-        if ($selectedChatId !== undefined) {
-            page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
-            rightPanelHistory.set([
-                {
-                    kind: "group_details",
-                },
-            ]);
-        }
-    }
-
     function showProposalFilters() {
         if ($selectedChatId !== undefined) {
             page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
-                },
-            ]);
-        }
-    }
-
-    function showPinned() {
-        if ($selectedChatId !== undefined) {
-            page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
-            rightPanelHistory.set([
-                {
-                    kind: "show_pinned",
                 },
             ]);
         }
@@ -952,12 +930,10 @@
             on:chatWith={chatWith}
             on:replyPrivatelyTo={replyPrivatelyTo}
             on:showInviteGroupUsers={showInviteGroupUsers}
-            on:showGroupDetails={showGroupDetails}
             on:showProposalFilters={showProposalFilters}
             on:showGroupMembers={showGroupMembers}
             on:joinGroup={joinGroup}
             on:upgrade={upgrade}
-            on:showPinned={showPinned}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage}

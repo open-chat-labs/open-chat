@@ -94,7 +94,11 @@
     }
 
     function showPinned() {
-        dispatch("showPinned");
+        rightPanelHistory.set([
+            {
+                kind: "show_pinned",
+            },
+        ]);
     }
 
     function searchChat() {
@@ -330,7 +334,13 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{interpolateLevel("group.inviteUsers", selectedChatSummary.level, true)}</div>
+                                <div slot="text">
+                                    {interpolateLevel(
+                                        "group.inviteUsers",
+                                        selectedChatSummary.level,
+                                        true
+                                    )}
+                                </div>
                             </MenuItem>
                         {/if}
                     {/if}
