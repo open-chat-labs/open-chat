@@ -40,28 +40,7 @@ fn get_method_attribute(inputs: Vec<String>) -> MethodAttribute {
     let second_arg = inputs.get(1).unwrap();
     let third_arg = inputs.get(2).unwrap();
 
-    let canister_name = match first_arg.as_str() {
-        "community"
-        | "cycles_dispenser"
-        | "group"
-        | "group_index"
-        | "local_group_index"
-        | "local_user_index"
-        | "market_maker"
-        | "notifications"
-        | "notifications_index"
-        | "online_users"
-        | "proposals_bot"
-        | "registry"
-        | "sns_governance"
-        | "storage_bucket"
-        | "storage_index"
-        | "user"
-        | "user_index" => {
-            format!("{first_arg}_canister")
-        }
-        _ => panic!("Unrecognised 'canister_name' value: {first_arg}"),
-    };
+    let canister_name = format!("{first_arg}_canister");
 
     let method_name = second_arg.to_string();
 
