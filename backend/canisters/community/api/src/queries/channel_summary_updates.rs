@@ -5,6 +5,7 @@ use types::{ChannelId, CommunityCanisterChannelSummary, CommunityCanisterChannel
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
+    pub invite_code: Option<u64>,
     pub updates_since: TimestampMillis,
 }
 

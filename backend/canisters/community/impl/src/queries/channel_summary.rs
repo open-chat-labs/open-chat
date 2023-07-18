@@ -11,7 +11,7 @@ fn channel_summary(args: Args) -> Response {
 fn summary_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if !state.data.is_accessible(caller, None) {
+    if !state.data.is_accessible(caller, args.invite_code) {
         return PrivateCommunity;
     }
 

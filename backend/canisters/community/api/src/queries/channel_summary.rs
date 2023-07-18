@@ -5,6 +5,7 @@ use types::{ChannelId, CommunityCanisterChannelSummary};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
+    pub invite_code: Option<u64>,
 }
 
 // Allow the large size difference because essentially all responses are the large variant anyway
