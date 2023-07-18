@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Call into ICP ledger via the new `icp_ledger_canister_c2c_client` ([#3966](https://github.com/open-chat-labs/open-chat/pull/3966))
 - Stop using `transaction_hash` field on SNS transactions ([#3967](https://github.com/open-chat-labs/open-chat/pull/3967))
 - Remove dependencies on IC repo ([#3970](https://github.com/open-chat-labs/open-chat/pull/3970))
+- Set community avatar after converting group into community ([#3976](https://github.com/open-chat-labs/open-chat/pull/3976))
 
 ### Removed
 
