@@ -7,7 +7,7 @@ cd $SCRIPT_DIR/..
 CANISTER_NAME=$1
 FILE_NAME=$2
 
-COMMIT_ID=${3:-6d21535b301fee2ad3e8a0e8af2c3f9a3d022111}
+COMMIT_ID=${3:-97df774f8cb88ca1a00e26dc3daa19735ad3599a}
 
 echo "Downloading $CANISTER_NAME at commit $COMMIT_ID"
 
