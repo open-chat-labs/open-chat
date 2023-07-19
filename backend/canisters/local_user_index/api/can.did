@@ -83,11 +83,11 @@ type InviteUsersToChannelResponse = variant {
 };
 
 type InviteUsersToChannelPartialSuccess = record {
-    users_not_in_community : vec UserId;
+    failed_users : vec UserId;
 };
 
 type InviteUsersToChannelFailed = record {
-    users_not_in_community : vec UserId;
+    failed_users : vec UserId;
 };
 
 type InviteUsersToCommunityArgs = record {

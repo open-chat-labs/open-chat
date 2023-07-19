@@ -15,10 +15,10 @@ const MAX_INVITES: usize = 100;
 fn c2c_invite_users(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| c2c_invite_users_impl(args, state))
+    mutate_state(|state| invite_users_to_community_impl(args, state))
 }
 
-fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return CommunityFrozen;
     }

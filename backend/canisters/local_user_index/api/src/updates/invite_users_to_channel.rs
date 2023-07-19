@@ -26,10 +26,10 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct PartialSuccessResult {
-    pub users_not_in_community: Vec<UserId>,
+    pub failed_users: Vec<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct FailedResult {
-    pub users_not_in_community: Vec<UserId>,
+    pub failed_users: Vec<UserId>,
 }
