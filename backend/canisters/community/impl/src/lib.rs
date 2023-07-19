@@ -98,7 +98,7 @@ impl RuntimeState {
                 .channels
                 .iter()
                 .filter_map(|c| self.data.channels.get(c))
-                .filter_map(|c| c.summary(Some(m.user_id), now))
+                .filter_map(|c| c.summary(Some(m.user_id), data.is_public, now))
                 .collect();
 
             (channels, Some(membership))
@@ -109,7 +109,7 @@ impl RuntimeState {
                 .channels
                 .default_channels()
                 .iter()
-                .filter_map(|c| c.summary(None, now))
+                .filter_map(|c| c.summary(None, data.is_public, now))
                 .collect();
 
             (channels, None)
