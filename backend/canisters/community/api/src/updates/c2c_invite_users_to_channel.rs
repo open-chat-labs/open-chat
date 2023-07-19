@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{ChannelId, UserId};
 
@@ -6,7 +6,7 @@ use types::{ChannelId, UserId};
 pub struct Args {
     pub caller: UserId,
     pub channel_id: ChannelId,
-    pub user_ids: Vec<UserId>,
+    pub users: Vec<(UserId, Principal)>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -35,10 +35,10 @@ pub struct PartialSuccessResult {
     pub invited_users: Vec<UserId>,
     pub community_name: String,
     pub channel_name: String,
-    pub users_not_in_community: Vec<UserId>,
+    pub failed_users: Vec<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct FailedResult {
-    pub users_not_in_community: Vec<UserId>,
+    pub failed_users: Vec<UserId>,
 }
