@@ -121,7 +121,10 @@ export const idlFactory = ({ IDL }) => {
     'TargetUserNotInCommunity' : IDL.Null,
     'InternalError' : IDL.Text,
   });
-  const ChannelSummaryArgs = IDL.Record({ 'channel_id' : ChannelId });
+  const ChannelSummaryArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'invite_code' : IDL.Opt(IDL.Nat64),
+  });
   const PermissionRole = IDL.Variant({
     'Moderators' : IDL.Null,
     'Owner' : IDL.Null,
@@ -614,6 +617,7 @@ export const idlFactory = ({ IDL }) => {
   const ChannelSummaryUpdatesArgs = IDL.Record({
     'channel_id' : ChannelId,
     'updates_since' : TimestampMillis,
+    'invite_code' : IDL.Opt(IDL.Nat64),
   });
   const GroupSubtypeUpdate = IDL.Variant({
     'NoChange' : IDL.Null,

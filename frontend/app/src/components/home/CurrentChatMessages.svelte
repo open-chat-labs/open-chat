@@ -65,6 +65,7 @@
     $: userStore = client.userStore;
     $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
     $: selectedMessageContext = client.selectedMessageContext;
+    $: selectedCommunity = client.selectedCommunity;
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let chatEventList: ChatEventList | undefined;
@@ -198,10 +199,17 @@
         groupInner(filteredProposals)
     );
 
-    $: privatePreview =
+    $: privateCommunityPreview =
+        $selectedCommunity !== undefined &&
+        !$selectedCommunity.public &&
+        $selectedCommunity.membership.role === "none";
+
+    $: privateChatPreview =
         (chat.kind === "group_chat" || chat.kind === "channel") &&
         chat.membership.role === "none" &&
         !chat.public;
+
+    $: privatePreview = privateCommunityPreview || privateChatPreview;
     $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
 
     $: {

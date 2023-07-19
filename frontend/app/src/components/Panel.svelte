@@ -109,6 +109,7 @@
 
             @include mobile() {
                 width: toRem(60);
+                padding: $sp1 0;
             }
 
             &.hovering {

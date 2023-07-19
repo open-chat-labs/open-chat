@@ -5,7 +5,7 @@
     import { iconSize } from "../../../stores/iconSize";
 </script>
 
-<SectionHeader border={false}>
+<SectionHeader slim border={false}>
     <div class="favourites">
         <div class="icon">
             <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />

@@ -3,6 +3,7 @@
 
     export let flush: boolean = false;
     export let shadow: boolean = false;
+    export let slim: boolean = false;
     export let entry = false;
     export let gap = false;
     export let border = true;
@@ -16,6 +17,7 @@
     class:shadow
     class:entry
     class:gap
+    class:slim
     class:rtl={$rtlStore}
     bind:clientHeight={height}>
     <slot />
@@ -30,13 +32,17 @@
         width: 100%;
         padding: $sp4 $sp5;
         height: toRem(80);
-        // margin-bottom: $sp3;
         background-color: var(--section-bg);
         @include z-index("section-header");
         flex: 0 0 toRem(80);
 
         @include mobile() {
             padding: $sp3 toRem(10);
+
+            &.slim {
+                height: toRem(56);
+                flex: 0 0 toRem(56);
+            }
         }
 
         &.border {

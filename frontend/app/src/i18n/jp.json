@@ -907,8 +907,6 @@
         "channelCount": "チャンネル",
         "usersInvited": "ユーザーがコミュニティに招待されました",
         "joinCommunity": "コミュニティに参加する",
-        "noChannelSelected": "チャンネルが選択されていません",
-        "selectAChannel": "チャンネルを選択するか、このコミュニティ内の他のチャンネルを参照します。",
         "directChats": "直接チャット",
         "groupChats": "グループチャット",
         "favourites": "お気に入り",
@@ -956,5 +954,11 @@
     "searchUsersPlaceholder": "ユーザーを検索...",
     "searchChannelsPlaceholder": "チャンネルを検索...",
     "searchFavouritesPlaceholder": "お気に入りを検索してください...",
-    "membersHeader": "{level} メンバー"
+    "membersHeader": "{level} メンバー",
+    "selectAGroupChat": "リストからグループを選択するか、参加するグローバル グループを検索します。",
+    "noChannelSelected": "現在選択されているチャンネルはありません",
+    "noUserSelected": "現在選択されているユーザーはいません",
+    "selectAChannel": "リストからチャンネルを選択するか、このコミュニティでさらにチャンネルを検索します。",
+    "selectAUser": "リストからユーザーを選択するか、チャットするユーザーを検索します。",
+    "selectAFavourite": "ダイレクト チャット、グループ チャット、コミュニティ チャネルをお気に入りに追加すると、ここに表示されます。"
 }

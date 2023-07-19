@@ -153,7 +153,10 @@ export interface ChannelMembershipUpdates {
   'mentions' : Array<Mention>,
   'my_metrics' : [] | [ChatMetrics],
 }
-export interface ChannelSummaryArgs { 'channel_id' : ChannelId }
+export interface ChannelSummaryArgs {
+  'channel_id' : ChannelId,
+  'invite_code' : [] | [bigint],
+}
 export type ChannelSummaryResponse = { 'ChannelNotFound' : null } |
   { 'Success' : CommunityCanisterChannelSummary } |
   { 'PrivateCommunity' : null } |
@@ -161,6 +164,7 @@ export type ChannelSummaryResponse = { 'ChannelNotFound' : null } |
 export interface ChannelSummaryUpdatesArgs {
   'channel_id' : ChannelId,
   'updates_since' : TimestampMillis,
+  'invite_code' : [] | [bigint],
 }
 export type ChannelSummaryUpdatesResponse = {
     'SuccessAdded' : CommunityCanisterChannelSummary
