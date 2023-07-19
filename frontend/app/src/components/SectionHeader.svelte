@@ -36,10 +36,11 @@
         @include z-index("section-header");
         flex: 0 0 toRem(80);
 
-        &.slim {
-            height: toRem(68);
-            flex: 0 0 toRem(68);
-        }
+        // &.slim {
+        //     height: toRem(68);
+        //     flex: 0 0 toRem(68);
+        //     padding-bottom: toRem(12);
+        // }
 
         @include mobile() {
             padding: $sp3 toRem(10);

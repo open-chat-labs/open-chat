@@ -906,8 +906,6 @@
         "channelCount": "chaîne(s)",
         "usersInvited": "Des utilisateurs ont été invités dans votre communauté",
         "joinCommunity": "Rejoignez la communauté",
-        "noChannelSelected": "Aucune chaîne sélectionnée",
-        "selectAChannel": "Sélectionnez une chaîne ou recherchez d'autres chaînes dans cette communauté.",
         "directChats": "Chats directs",
         "groupChats": "Discussions de groupe",
         "favourites": "Favoris",
@@ -955,5 +953,11 @@
     "searchUsersPlaceholder": "Rechercher des utilisateurs...",
     "searchChannelsPlaceholder": "Rechercher des chaînes...",
     "searchFavouritesPlaceholder": "Recherchez vos favoris...",
-    "membersHeader": "{level} membres"
+    "membersHeader": "{level} membres",
+    "selectAGroupChat": "Sélectionnez un groupe dans la liste ou recherchez un groupe global à rejoindre.",
+    "noChannelSelected": "Aucune chaîne actuellement sélectionnée",
+    "noUserSelected": "Aucun utilisateur actuellement sélectionné",
+    "selectAChannel": "Sélectionnez une chaîne dans la liste ou recherchez d'autres chaînes dans cette communauté.",
+    "selectAUser": "Sélectionnez un utilisateur dans la liste ou recherchez un utilisateur avec qui discuter.",
+    "selectAFavourite": "Vous pouvez ajouter des chats directs, des chats de groupe ou des canaux communautaires à vos favoris et vous les verrez ici."
 }
