@@ -9,12 +9,21 @@ use types::{ChannelId, CommunityId, MessageContent, TextContent, UserId};
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
 async fn invite_users_to_channel(args: Args) -> Response {
-    let invited_by = read_state(|state| state.calling_user().user_id);
+    let (invited_by, users) = read_state(|state| {
+        let users = args
+            .user_ids
+            .iter()
+            .flat_map(|u| state.data.global_users.get_by_user_id(u))
+            .map(|u| (u.user_id, u.principal))
+            .collect();
 
-    let c2c_args = community_canister::c2c_invite_users_to_channel::Args {
+        (state.calling_user().user_id, users)
+    });
+
+    let c2c_args = c2c_invite_users_to_channel::Args {
         caller: invited_by,
         channel_id: args.channel_id,
-        user_ids: args.user_ids,
+        users,
     };
 
     match community_canister_c2c_client::c2c_invite_users_to_channel(args.community_id.into(), &c2c_args).await {
@@ -46,11 +55,11 @@ async fn invite_users_to_channel(args: Args) -> Response {
                     );
                 });
                 PartialSuccess(PartialSuccessResult {
-                    users_not_in_community: r.users_not_in_community,
+                    failed_users: r.failed_users,
                 })
             }
             c2c_invite_users_to_channel::Response::Failed(r) => Failed(FailedResult {
-                users_not_in_community: r.users_not_in_community,
+                failed_users: r.failed_users,
             }),
             c2c_invite_users_to_channel::Response::UserNotInCommunity => UserNotInCommunity,
             c2c_invite_users_to_channel::Response::ChannelNotFound => ChannelNotFound,

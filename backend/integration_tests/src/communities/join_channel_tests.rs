@@ -147,6 +147,57 @@ fn join_community_and_channel_in_single_call_succeeds() {
 }
 
 #[test]
+fn invite_non_community_member_to_channel_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2: _,
+        community_id,
+        channel_id,
+    } = init_test_data(env, canister_ids, *controller, false);
+
+    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+
+    let invite_users_response = client::local_user_index::invite_users_to_channel(
+        env,
+        user1.principal,
+        canister_ids.local_user_index,
+        &local_user_index_canister::invite_users_to_channel::Args {
+            community_id,
+            channel_id,
+            user_ids: vec![user3.user_id],
+        },
+    );
+
+    assert!(matches!(
+        invite_users_response,
+        local_user_index_canister::invite_users_to_channel::Response::Success
+    ));
+
+    let join_channel_response = client::local_user_index::join_channel(
+        env,
+        user3.principal,
+        canister_ids.local_user_index,
+        &local_user_index_canister::join_channel::Args {
+            community_id,
+            channel_id,
+            invite_code: None,
+        },
+    );
+
+    assert!(matches!(
+        join_channel_response,
+        local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_)
+    ));
+}
+
+#[test]
 fn invite_to_channel_oc_bot_message_received() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
