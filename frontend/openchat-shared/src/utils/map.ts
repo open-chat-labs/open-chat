@@ -14,6 +14,13 @@ export class SafeMap<K, V> {
         protected _map: Map<string, V> = new Map<string, V>()
     ) {}
 
+    merge(other: SafeMap<K, V>): SafeMap<K, V> {
+        other.forEach((val, key) => {
+            this.set(key, val);
+        });
+        return this;
+    }
+
     filter(fn: (value: V, key: K) => boolean): SafeMap<K, V> {
         return this.entries()
             .filter(([k, v]) => {
