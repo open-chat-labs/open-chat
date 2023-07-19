@@ -1,13 +1,12 @@
 use crate::{calc_chunk_count, read_state, RuntimeState};
-use candid::Func;
 use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk_macros::query;
 use num_traits::cast::ToPrimitive;
 use serde_bytes::ByteBuf;
-use std::borrow::Cow;
 use std::cmp::min;
 use types::{
-    FileId, HeaderField, HttpRequest, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy, TimestampMillis, Token,
+    CallbackFunc, FileId, HeaderField, HttpRequest, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy,
+    TimestampMillis, Token,
 };
 
 const BLOB_RESPONSE_CHUNK_SIZE_BYTES: u32 = 1 << 19; // 1/2 MB
@@ -50,10 +49,7 @@ fn start_streaming_file(file_id: FileId, state: &RuntimeState) -> HttpResponse {
 
             let streaming_strategy = if stream_next_chunk {
                 Some(StreamingStrategy::Callback {
-                    callback: Func {
-                        principal: canister_id,
-                        method: "http_request_streaming_callback".to_string(),
-                    },
+                    callback: CallbackFunc::new(canister_id, "http_request_streaming_callback".to_string()),
                     token: build_token(file_id, 1),
                 })
             } else {
@@ -71,7 +67,7 @@ fn start_streaming_file(file_id: FileId, state: &RuntimeState) -> HttpResponse {
                         "default-src 'none'; img-src *; media-src *; style-src 'unsafe-inline'".to_string(),
                     ),
                 ],
-                body: Cow::Owned(chunk_bytes),
+                body: chunk_bytes,
                 streaming_strategy,
             };
         }
