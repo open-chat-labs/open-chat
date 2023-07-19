@@ -27,7 +27,7 @@ fn channel_summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             return SuccessNoUpdates;
         }
 
-        match channel.summary_updates(user_id, args.updates_since, state.env.now()) {
+        match channel.summary_updates(user_id, args.updates_since, state.data.is_public, state.env.now()) {
             ChannelUpdates::Added(s) => SuccessAdded(s),
             ChannelUpdates::Updated(s) => SuccessUpdated(s),
         }
