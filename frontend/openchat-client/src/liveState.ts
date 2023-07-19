@@ -50,7 +50,12 @@ import { userStore } from "./stores/user";
 import { blockedUsers } from "./stores/blockedUsers";
 import { diamondMembership, isDiamond } from "./stores/diamond";
 import type DRange from "drange";
-import { communities, currentCommunityMembers, selectedCommunity } from "./stores/community";
+import {
+    communities,
+    communityPreviewsStore,
+    currentCommunityMembers,
+    selectedCommunity,
+} from "./stores/community";
 import { GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
 
 /**
@@ -71,6 +76,7 @@ export class LiveState {
     chatSummaries!: ChatMap<ChatSummary>;
     uninitializedDirectChats!: ChatMap<DirectChatSummary>;
     groupPreviews!: ChatMap<MultiUserChat>;
+    communityPreviews!: CommunityMap<CommunitySummary>;
     selectedChatId: ChatIdentifier | undefined;
     chatSummariesList!: ChatSummary[];
     threadsByChat!: ChatMap<ThreadSyncDetails[]>;
@@ -107,6 +113,7 @@ export class LiveState {
         chatSummariesStore.subscribe((data) => (this.chatSummaries = data));
         uninitializedDirectChats.subscribe((data) => (this.uninitializedDirectChats = data));
         groupPreviewsStore.subscribe((data) => (this.groupPreviews = data));
+        communityPreviewsStore.subscribe((data) => (this.communityPreviews = data));
         selectedChatId.subscribe((data) => (this.selectedChatId = data));
         eventsStore.subscribe((data) => (this.events = data));
         selectedChatStore.subscribe((data) => (this.selectedChat = data));

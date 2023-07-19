@@ -341,6 +341,7 @@ import {
     diamondDurationToMs,
 } from "./stores/diamond";
 import {
+    addCommunityPreview,
     communities,
     communitiesList,
     communityStateStore,
@@ -348,6 +349,7 @@ import {
     currentCommunityInvitedUsers,
     currentCommunityMembers,
     currentCommunityRules,
+    removeCommunityPreview,
     selectedCommunity,
 } from "./stores/community";
 import {
@@ -2042,12 +2044,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     removeCommunity(id: CommunityIdentifier): void {
-        globalStateStore.update((state) => {
-            state.communities.delete(id);
-            return state;
-        });
         if (this._liveState.communities.has(id)) {
             localCommunitySummaryUpdates.markRemoved(id);
+        }
+        if (this._liveState.communityPreviews.has(id)) {
+            removeCommunityPreview(id);
         }
     }
 
@@ -4422,10 +4423,7 @@ export class OpenChat extends OpenChatAgentWorker {
             });
             if ("id" in resp) {
                 community = resp;
-                globalStateStore.update((global) => {
-                    global.communities.set(resp.id, resp);
-                    return global;
-                });
+                addCommunityPreview(resp);
             } else {
                 // if we get here it means we're not a member of the community and we can't look it up
                 // it may be private and we may not be invited.
