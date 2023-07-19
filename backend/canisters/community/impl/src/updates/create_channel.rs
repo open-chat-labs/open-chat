@@ -14,7 +14,7 @@ use types::{ChannelId, Timestamped};
 use utils::document_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
-use super::c2c_join_community::c2c_join_community_impl;
+use super::c2c_join_community::join_community_impl;
 
 #[update]
 #[trace]
@@ -32,7 +32,7 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
     mutate_state(|state| {
         let caller = state.env.caller();
 
-        if let Some(response) = c2c_join_community_impl(
+        if let Some(response) = join_community_impl(
             &c2c_join_community::Args {
                 user_id: caller.into(),
                 principal: caller,
@@ -44,7 +44,7 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
         .err()
         {
             match response {
-                c2c_join_community::Response::Blocked => return NotAuthorized,
+                c2c_join_community::Response::UserBlocked => return NotAuthorized,
                 c2c_join_community::Response::AlreadyInCommunity(_) => {}
                 _ => panic!("Unexpected response from c2c_join_community"),
             }

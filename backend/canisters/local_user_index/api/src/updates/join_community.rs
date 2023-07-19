@@ -17,7 +17,7 @@ pub enum Response {
     CommunityNotPublic,
     NotInvited,
     MemberLimitReached(u32),
-    Blocked,
+    UserBlocked,
     UserSuspended,
     CommunityFrozen,
     InternalError(String),
