@@ -1,3 +1,4 @@
+use canister_client::make_c2c_call;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_timers::TimerId;
 use std::cell::{Cell, RefCell};
@@ -97,10 +98,16 @@ async fn request_top_up(cycles_balance: Cycles, cycles_dispenser_canister_id: Ca
 
     let args = cycles_dispenser_canister::c2c_request_cycles::Args { amount: None };
 
-    let response: CallResult<(cycles_dispenser_canister::c2c_request_cycles::Response,)> =
-        ic_cdk::call(cycles_dispenser_canister_id, "c2c_request_cycles", (&args,)).await;
+    let response: CallResult<cycles_dispenser_canister::c2c_request_cycles::Response> = make_c2c_call(
+        cycles_dispenser_canister_id,
+        "c2c_request_cycles",
+        &args,
+        candid::encode_one,
+        |r| candid::decode_one(r),
+    )
+    .await;
 
-    if let Ok(cycles_dispenser_canister::c2c_request_cycles::Response::Success(cycles)) = response.as_ref().map(|r| &r.0) {
+    if let Ok(cycles_dispenser_canister::c2c_request_cycles::Response::Success(cycles)) = &response {
         info!(cycles, "Cycles topped up successfully");
         CONFIG.with(|config| {
             if let Some(on_success) = config.borrow().as_ref().map(|c| &c.on_success_callback) {

@@ -1194,6 +1194,8 @@ dependencies = [
 name = "cycles_dispenser_client"
 version = "0.1.0"
 dependencies = [
+ "candid",
+ "canister_client",
  "cycles_dispenser_canister",
  "ic-cdk",
  "ic-cdk-timers",
@@ -2348,6 +2350,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_api_macros",
+ "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -5224,6 +5227,7 @@ dependencies = [
  "bot_c2c_client",
  "candid",
  "canister_api_macros",
+ "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_timer_jobs",

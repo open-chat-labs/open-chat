@@ -1,5 +1,6 @@
 use crate::{mutate_state, State};
 use candid::CandidType;
+use canister_client::make_c2c_call;
 use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo, Subaccount, Timestamp, Tokens, TransferArgs};
 use serde::{Deserialize, Serialize};
@@ -105,18 +106,20 @@ async fn burn_icp(burn_details: BurnIcpDetails) {
 }
 
 async fn notify_cmc(notify_details: NotifyTopUpDetails) {
-    let response: CallResult<(Result<Cycles, NotifyError>,)> = ic_cdk::call(
+    let response: CallResult<Result<Cycles, NotifyError>> = make_c2c_call(
         notify_details.cmc,
         "notify_top_up",
-        (&NotifyTopUpArgs {
+        &NotifyTopUpArgs {
             block_index: notify_details.block_index,
             canister_id: notify_details.this_canister_id,
-        },),
+        },
+        candid::encode_one,
+        |r| candid::decode_one(r),
     )
     .await;
 
     match response {
-        Ok((Ok(cycles),)) => {
+        Ok(Ok(cycles)) => {
             info!(cycles, "Canister topped up with cycles");
         }
         err => {
