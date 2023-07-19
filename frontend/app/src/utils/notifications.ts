@@ -42,7 +42,7 @@ export async function subscribeToNotifications(
                 "PUSH: notification clicked existing client routing to: ",
                 event.data.path
             );
-            page(`/${event.data.path}`);
+            page(event.data.path);
         }
     });
 
