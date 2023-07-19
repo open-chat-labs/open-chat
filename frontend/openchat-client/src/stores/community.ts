@@ -1,17 +1,44 @@
-import { derived } from "svelte/store";
+import { Writable, derived, writable } from "svelte/store";
 import { setsAreEqual } from "../utils/set";
-import { CommunitySpecificState, CommunityIdentifier, defaultAccessRules } from "openchat-shared";
+import {
+    CommunitySpecificState,
+    CommunityIdentifier,
+    defaultAccessRules,
+    CommunityMap,
+    CommunitySummary,
+} from "openchat-shared";
 import { createCommunitySpecificObjectStore } from "./dataByCommunityFactory";
 import { createDerivedPropStore } from "./derived";
 import { chatListScopeStore, globalStateStore } from "./global";
 import { localCommunitySummaryUpdates } from "./localCommunitySummaryUpdates";
 import { mergeLocalUpdates } from "../utils/community";
 
+// Communities which the current user is previewing
+export const communityPreviewsStore: Writable<CommunityMap<CommunitySummary>> = writable(
+    new CommunityMap<CommunitySummary>()
+);
+
+export function addCommunityPreview(community: CommunitySummary): void {
+    localCommunitySummaryUpdates.delete(community.id);
+    communityPreviewsStore.update((summaries) => {
+        summaries.set(community.id, community);
+        return summaries;
+    });
+}
+
+export function removeCommunityPreview(id: CommunityIdentifier): void {
+    communityPreviewsStore.update((summaries) => {
+        summaries.delete(id);
+        return summaries;
+    });
+}
+
 // these are the communities I am in
 export const communities = derived(
-    [globalStateStore, localCommunitySummaryUpdates],
-    ([$globalStateStore, $localUpdates]) => {
-        return mergeLocalUpdates($globalStateStore.communities, $localUpdates);
+    [globalStateStore, localCommunitySummaryUpdates, communityPreviewsStore],
+    ([$globalStateStore, $localUpdates, $previews]) => {
+        const merged = mergeLocalUpdates($globalStateStore.communities, $localUpdates);
+        return merged.merge($previews);
     }
 );
 

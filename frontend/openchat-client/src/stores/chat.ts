@@ -53,6 +53,7 @@ import {
 import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
+import { communityPreviewsStore } from "./community";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 let currentScope: ChatListScope = { kind: "direct_chat" };
@@ -101,8 +102,13 @@ export const groupPreviewsStore: Writable<ChatMap<MultiUserChat>> = immutableSto
 );
 
 export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
-    [myServerChatSummariesStore, uninitializedDirectChats, groupPreviewsStore],
-    ([summaries, directChats, previews]) => {
+    [
+        myServerChatSummariesStore,
+        uninitializedDirectChats,
+        groupPreviewsStore,
+        communityPreviewsStore,
+    ],
+    ([summaries, directChats, previews, communityPreviews]) => {
         let all = [...summaries.entries()];
         if (currentScope.kind === "none" || currentScope.kind === "direct_chat") {
             all = all.concat([...directChats.entries()]);
@@ -114,7 +120,13 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
             all = all.concat([...previews.filter((c) => c.kind === "group_chat").entries()]);
         }
         if (currentScope.kind === "community") {
-            all = all.concat([...previews.filter((c) => c.kind === "channel").entries()]);
+            const previewChannels = ChatMap.fromList(
+                communityPreviews.get(currentScope.id)?.channels ?? []
+            );
+            all = all.concat([
+                ...previewChannels.entries(),
+                ...previews.filter((c) => c.kind === "channel").entries(),
+            ]);
         }
         return all.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
             result.set(chatId, summary);
