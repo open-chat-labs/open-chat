@@ -12,14 +12,12 @@ use types::{
     GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
     ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersRemoved, Message, MessageContent, MessageContentInitial,
     MessageId, MessageIndex, MessagePinned, MessageReminderContent, MessageReminderCreatedContent, MessageUnpinned,
-    MultiUserChat, OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin,
-    ParticipantRelinquishesSuperAdmin, PermissionsChanged, PollContentInternal, PrizeContent, PrizeContentInternal,
-    PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage, ReportedMessageInternal,
-    RoleChanged, TextContent, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
+    MultiUserChat, PermissionsChanged, PollContentInternal, PrizeContent, PrizeContentInternal, PrizeWinnerContent, Proposal,
+    ProposalContent, Reaction, ReplyContext, ReportedMessage, ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary,
+    TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "ChatEventInternalPrevious")]
 pub enum ChatEventInternal {
     #[serde(rename = "m")]
     Message(Box<MessageInternal>),
@@ -43,68 +41,6 @@ pub enum ChatEventInternal {
     ParticipantJoined(Box<MemberJoined>),
     #[serde(rename = "ml")]
     ParticipantLeft(Box<MemberLeft>),
-    #[serde(rename = "rc")]
-    RoleChanged(Box<RoleChanged>),
-    #[serde(rename = "ub")]
-    UsersBlocked(Box<UsersBlocked>),
-    #[serde(rename = "uub")]
-    UsersUnblocked(Box<UsersUnblocked>),
-    #[serde(rename = "mp")]
-    MessagePinned(Box<MessagePinned>),
-    #[serde(rename = "mup")]
-    MessageUnpinned(Box<MessageUnpinned>),
-    #[serde(rename = "pc")]
-    PermissionsChanged(Box<PermissionsChanged>),
-    #[serde(rename = "vc")]
-    GroupVisibilityChanged(Box<GroupVisibilityChanged>),
-    #[serde(rename = "icc")]
-    GroupInviteCodeChanged(Box<GroupInviteCodeChanged>),
-    #[serde(rename = "fz")]
-    ChatFrozen(Box<GroupFrozen>),
-    #[serde(rename = "ufz")]
-    ChatUnfrozen(Box<GroupUnfrozen>),
-    #[serde(rename = "ttl")]
-    EventsTimeToLiveUpdated(Box<EventsTimeToLiveUpdated>),
-    #[serde(rename = "gu")]
-    GroupGateUpdated(Box<GroupGateUpdated>),
-    #[serde(rename = "ui")]
-    UsersInvited(Box<UsersInvited>),
-    #[serde(rename = "e")]
-    Empty,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum ChatEventInternalPrevious {
-    #[serde(rename = "m")]
-    Message(Box<MessageInternal>),
-    #[serde(rename = "dcc")]
-    DirectChatCreated(DirectChatCreated),
-    #[serde(rename = "gcc")]
-    GroupChatCreated(Box<GroupCreated>),
-    #[serde(rename = "nc")]
-    GroupNameChanged(Box<GroupNameChanged>),
-    #[serde(rename = "dc")]
-    GroupDescriptionChanged(Box<GroupDescriptionChanged>),
-    #[serde(rename = "grc")]
-    GroupRulesChanged(Box<GroupRulesChanged>),
-    #[serde(rename = "ac")]
-    AvatarChanged(Box<AvatarChanged>),
-    #[serde(rename = "ot")]
-    OwnershipTransferred(Box<OwnershipTransferred>),
-    #[serde(rename = "ma")]
-    ParticipantsAdded(Box<MembersAdded>),
-    #[serde(rename = "mr")]
-    ParticipantsRemoved(Box<MembersRemoved>),
-    #[serde(rename = "mj")]
-    ParticipantJoined(Box<MemberJoined>),
-    #[serde(rename = "ml")]
-    ParticipantLeft(Box<MemberLeft>),
-    #[serde(rename = "asa")]
-    ParticipantAssumesSuperAdmin(Box<ParticipantAssumesSuperAdmin>),
-    #[serde(rename = "dsa")]
-    ParticipantDismissedAsSuperAdmin(Box<ParticipantDismissedAsSuperAdmin>),
-    #[serde(rename = "rsa")]
-    ParticipantRelinquishesSuperAdmin(Box<ParticipantRelinquishesSuperAdmin>),
     #[serde(rename = "rc")]
     RoleChanged(Box<RoleChanged>),
     #[serde(rename = "ub")]
@@ -793,45 +729,6 @@ impl ChatMetricsInternal {
             message_reminders: self.message_reminders,
             custom_type_messages: self.custom_type_messages,
             last_active: self.last_active,
-        }
-    }
-}
-
-impl From<ChatEventInternalPrevious> for ChatEventInternal {
-    fn from(value: ChatEventInternalPrevious) -> Self {
-        use ChatEventInternal as C; // Current
-        use ChatEventInternalPrevious as P; // Previous
-
-        match value {
-            P::Message(x) => C::Message(x),
-            P::DirectChatCreated(x) => C::DirectChatCreated(x),
-            P::GroupChatCreated(x) => C::GroupChatCreated(x),
-            P::GroupNameChanged(x) => C::GroupNameChanged(x),
-            P::GroupDescriptionChanged(x) => C::GroupDescriptionChanged(x),
-            P::GroupRulesChanged(x) => C::GroupRulesChanged(x),
-            P::AvatarChanged(x) => C::AvatarChanged(x),
-            P::ParticipantsAdded(x) => C::ParticipantsAdded(x),
-            P::ParticipantsRemoved(x) => C::ParticipantsRemoved(x),
-            P::ParticipantJoined(x) => C::ParticipantJoined(x),
-            P::ParticipantLeft(x) => C::ParticipantLeft(x),
-            P::RoleChanged(x) => C::RoleChanged(x),
-            P::UsersBlocked(x) => C::UsersBlocked(x),
-            P::UsersUnblocked(x) => C::UsersUnblocked(x),
-            P::MessagePinned(x) => C::MessagePinned(x),
-            P::MessageUnpinned(x) => C::MessageUnpinned(x),
-            P::PermissionsChanged(x) => C::PermissionsChanged(x),
-            P::GroupVisibilityChanged(x) => C::GroupVisibilityChanged(x),
-            P::GroupInviteCodeChanged(x) => C::GroupInviteCodeChanged(x),
-            P::ChatFrozen(x) => C::ChatFrozen(x),
-            P::ChatUnfrozen(x) => C::ChatUnfrozen(x),
-            P::EventsTimeToLiveUpdated(x) => C::EventsTimeToLiveUpdated(x),
-            P::GroupGateUpdated(x) => C::GroupGateUpdated(x),
-            P::UsersInvited(x) => C::UsersInvited(x),
-            P::OwnershipTransferred(_)
-            | P::ParticipantAssumesSuperAdmin(_)
-            | P::ParticipantDismissedAsSuperAdmin(_)
-            | P::ParticipantRelinquishesSuperAdmin(_)
-            | P::Empty => C::Empty,
         }
     }
 }

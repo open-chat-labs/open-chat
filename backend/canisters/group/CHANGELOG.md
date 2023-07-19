@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.745](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.745-group)] - 2023-07-TBD
+
 ### Added
 
 - Add language field to community ([#3923](https://github.com/open-chat-labs/open-chat/pull/3923))
@@ -29,7 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove deprecated event types ([#3862](https://github.com/open-chat-labs/open-chat/pull/3862))
 
-## [[2.0.735](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.724-group)] - 2023-06-27
+## [[2.0.735](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.735-group)] - 2023-06-27
 
 ### Added
 
