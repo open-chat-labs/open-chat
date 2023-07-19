@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use types::{Document, HeaderField, HttpResponse};
 
 const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
@@ -13,7 +12,7 @@ pub fn get_document(requested_document_id: Option<u128>, document: &Option<Docum
                         HeaderField("Content-Type".to_string(), document.mime_type.to_owned()),
                         HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_owned()),
                     ],
-                    body: Cow::Owned(document.data.clone()),
+                    body: document.data.clone(),
                     streaming_strategy: None,
                 }
             } else {
