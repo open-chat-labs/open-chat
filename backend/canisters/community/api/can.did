@@ -521,24 +521,6 @@ type ImportGroupResponse = variant {
     InternalError : text;
 };
 
-type JoinChannelArgs = record {
-    channel_id : ChannelId;
-};
-
-type JoinChannelResponse = variant {
-    Success : CommunityCanisterChannelSummary;
-    AlreadyInChannel : CommunityCanisterChannelSummary;
-    GateCheckFailed : GateCheckFailedReason;
-    UserNotInCommunity;
-    ChannelNotFound;
-    UserSuspended;
-    UserBlocked;
-    UserLimitReached : nat32;
-    CommunityFrozen;
-    NotInvited;
-    InternalError : text;
-};
-
 type LeaveChannelArgs = record {
     channel_id : ChannelId;
 };
@@ -868,7 +850,6 @@ service : {
     edit_message : (EditMessageArgs) -> (EditMessageResponse);
     enable_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     import_group : (ImportGroupArgs) -> (ImportGroupResponse);
-    join_channel : (JoinChannelArgs) -> (JoinChannelResponse);
     leave_channel : (LeaveChannelArgs) -> (LeaveChannelResponse);
     manage_default_channels : (ManageDefaultChannelsArgs) -> (ManageDefaultChannelsResponse);
     pin_message : (PinMessageArgs) -> (PinMessageResponse);

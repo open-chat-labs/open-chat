@@ -129,7 +129,7 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
             AlreadyInGroupV2(Box::new(summary))
         }
         AddResult::Blocked => Blocked,
-        AddResult::UserLimitReached(limit) => ParticipantLimitReached(limit),
+        AddResult::MemberLimitReached(limit) => ParticipantLimitReached(limit),
     };
 
     if new_event {

@@ -22,16 +22,16 @@ async fn join_community(args: Args) -> Response {
     match community_canister_c2c_client::c2c_join_community(args.community_id.into(), &c2c_args).await {
         Ok(response) => match response {
             community_canister::c2c_join_community::Response::Success(s) => {
-                mutate_state(|state| commit(user_details.user_id, args.community_id, state));
+                mutate_state(|state| notify_user_joined_community(user_details.user_id, args.community_id, state));
                 Success(s)
             }
             community_canister::c2c_join_community::Response::AlreadyInCommunity(s) => {
-                mutate_state(|state| commit(user_details.user_id, args.community_id, state));
+                mutate_state(|state| notify_user_joined_community(user_details.user_id, args.community_id, state));
                 AlreadyInCommunity(s)
             }
             community_canister::c2c_join_community::Response::GateCheckFailed(msg) => GateCheckFailed(msg),
             community_canister::c2c_join_community::Response::NotInvited => NotInvited,
-            community_canister::c2c_join_community::Response::Blocked => Blocked,
+            community_canister::c2c_join_community::Response::UserBlocked => UserBlocked,
             community_canister::c2c_join_community::Response::MemberLimitReached(l) => MemberLimitReached(l),
             community_canister::c2c_join_community::Response::CommunityFrozen => CommunityFrozen,
             community_canister::c2c_join_community::Response::InternalError(error) => InternalError(error),
@@ -56,7 +56,7 @@ fn user_details(state: &RuntimeState) -> UserDetails {
     }
 }
 
-fn commit(user_id: UserId, community_id: CommunityId, state: &mut RuntimeState) {
+pub(crate) fn notify_user_joined_community(user_id: UserId, community_id: CommunityId, state: &mut RuntimeState) {
     if state.data.local_users.get(&user_id).is_some() {
         state.push_event_to_user(
             user_id,

@@ -188,27 +188,30 @@ impl Channel {
         }
     }
 
-    pub fn summary(&self, user_id: Option<UserId>, now: TimestampMillis) -> Option<CommunityCanisterChannelSummary> {
+    pub fn summary(
+        &self,
+        user_id: Option<UserId>,
+        is_public_community: bool,
+        now: TimestampMillis,
+    ) -> Option<CommunityCanisterChannelSummary> {
         let chat = &self.chat;
         let member = user_id.and_then(|user_id| chat.members.get(&user_id));
 
-        let (min_visible_event_index, min_visible_message_index, see_latest_message) = if let Some(member) = member {
-            (member.min_visible_event_index(), member.min_visible_message_index(), true)
+        let (min_visible_event_index, min_visible_message_index) = if let Some(member) = member {
+            (member.min_visible_event_index(), member.min_visible_message_index())
         } else if chat.is_public {
-            (EventIndex::default(), MessageIndex::default(), true)
+            (EventIndex::default(), MessageIndex::default())
         } else if let Some(invitation) = user_id.and_then(|user_id| chat.invited_users.get(&user_id)) {
-            (
-                invitation.min_visible_event_index,
-                invitation.min_visible_message_index,
-                false,
-            )
+            (invitation.min_visible_event_index, invitation.min_visible_message_index)
         } else {
             return None;
         };
 
+        let can_view_latest_message = self.can_view_latest_message(member.is_some(), user_id.is_some(), is_public_community);
+
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index, now);
         let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
-        let latest_message = if see_latest_message { main_events_reader.latest_message_event(user_id) } else { None };
+        let latest_message = if can_view_latest_message { main_events_reader.latest_message_event(user_id) } else { None };
 
         let membership = member.map(|m| ChannelMembership {
             joined: m.date_added,
@@ -261,16 +264,26 @@ impl Channel {
             || self.date_imported.unwrap_or_default() > since
     }
 
-    pub fn summary_updates(&self, user_id: Option<UserId>, since: TimestampMillis, now: TimestampMillis) -> ChannelUpdates {
+    pub fn summary_updates(
+        &self,
+        user_id: Option<UserId>,
+        since: TimestampMillis,
+        is_public_community: bool,
+        now: TimestampMillis,
+    ) -> ChannelUpdates {
         let chat = &self.chat;
         let member = user_id.and_then(|id| chat.members.get(&id));
 
         if let Some(m) = member {
             if m.date_added > since {
-                return ChannelUpdates::Added(self.summary(user_id, now).expect("Channel should be accessible"));
+                return ChannelUpdates::Added(
+                    self.summary(user_id, is_public_community, now)
+                        .expect("Channel should be accessible"),
+                );
             }
         }
 
+        let can_view_latest_message = self.can_view_latest_message(member.is_some(), user_id.is_some(), is_public_community);
         let updates_from_events = chat.summary_updates_from_events(since, user_id, now);
 
         let membership = member.map(|m| ChannelMembershipUpdates {
@@ -295,7 +308,9 @@ impl Channel {
             subtype: updates_from_events.subtype,
             avatar_id: updates_from_events.avatar_id,
             is_public: updates_from_events.is_public,
-            latest_message: updates_from_events.latest_message,
+            latest_message: can_view_latest_message
+                .then_some(updates_from_events.latest_message)
+                .flatten(),
             latest_event_index: updates_from_events.latest_event_index,
             member_count: updates_from_events.members_changed.then_some(self.chat.members.len()),
             permissions: updates_from_events.permissions,
@@ -322,6 +337,10 @@ impl Channel {
         } else {
             UserNotFound
         }
+    }
+
+    fn can_view_latest_message(&self, is_channel_member: bool, is_community_member: bool, is_community_public: bool) -> bool {
+        is_channel_member || (self.chat.is_public && (is_community_member || is_community_public))
     }
 }
 

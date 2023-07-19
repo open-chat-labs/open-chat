@@ -69,7 +69,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let mut channels_updated = Vec::new();
 
     for channel in channels_with_updates {
-        match channel.summary_updates(member.map(|m| m.user_id), args.updates_since, now) {
+        match channel.summary_updates(member.map(|m| m.user_id), args.updates_since, state.data.is_public, now) {
             ChannelUpdates::Added(s) => channels_added.push(s),
             ChannelUpdates::Updated(s) => channels_updated.push(s),
         }

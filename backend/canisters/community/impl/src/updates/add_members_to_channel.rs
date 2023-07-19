@@ -157,7 +157,7 @@ fn commit(
                     state.data.members.mark_member_joined_channel(&user_id, channel_id);
                 }
                 AddResult::AlreadyInGroup => users_already_in_channel.push(user_id),
-                AddResult::UserLimitReached(_) => users_limit_reached.push(user_id),
+                AddResult::MemberLimitReached(_) => users_limit_reached.push(user_id),
                 AddResult::Blocked => users_failed_with_error.push(UserFailedError {
                     user_id,
                     error: "User blocked".to_string(),

@@ -967,6 +967,7 @@ export class CommunityClient extends CandidService {
             () =>
                 this.service.channel_summary({
                     channel_id: BigInt(chatId.channelId),
+                    invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
             (resp) => communityChannelSummaryResponse(resp, this.communityId)
         );

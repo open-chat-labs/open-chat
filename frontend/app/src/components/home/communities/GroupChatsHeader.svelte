@@ -10,7 +10,7 @@
     const dispatch = createEventDispatcher();
 </script>
 
-<SectionHeader border={false}>
+<SectionHeader slim border={false}>
     <div class="group-chats">
         <div class="icon">
             <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />

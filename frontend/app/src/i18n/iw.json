@@ -904,8 +904,6 @@
         "channelCount": "ערוץ(ים)",
         "usersInvited": "משתמשים הוזמנו לקהילה שלך",
         "joinCommunity": "הצטרף לקהילה",
-        "noChannelSelected": "לא נבחר ערוץ",
-        "selectAChannel": "בחר ערוץ או עיין בערוצים אחרים בקהילה זו.",
         "directChats": "צ'אטים ישירים",
         "groupChats": "צ'אטים קבוצתיים",
         "favourites": "מועדפים",
@@ -953,5 +951,11 @@
     "searchUsersPlaceholder": "חפש משתמשים...",
     "searchChannelsPlaceholder": "חפש ערוצים...",
     "searchFavouritesPlaceholder": "חפש את המועדפים שלך...",
-    "membersHeader": "חברי {level}"
+    "membersHeader": "חברי {level}",
+    "selectAGroupChat": "בחר קבוצה מהרשימה או חפש קבוצה גלובלית להצטרף אליה.",
+    "noChannelSelected": "לא נבחר ערוץ כרגע",
+    "noUserSelected": "לא נבחר משתמש כרגע",
+    "selectAChannel": "בחר ערוץ מהרשימה או חפש ערוצים נוספים בקהילה זו.",
+    "selectAUser": "בחר משתמש מהרשימה או חפש משתמש לצ'אט איתו.",
+    "selectAFavourite": "אתה יכול להוסיף צ'אטים ישירים, צ'אטים קבוצתיים או ערוצים קהילתיים למועדפים שלך ותראה אותם כאן."
 }

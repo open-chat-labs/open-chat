@@ -7,6 +7,7 @@ use local_user_index_canister::*;
 generate_update_call!(invite_users_to_channel);
 generate_update_call!(invite_users_to_community);
 generate_update_call!(invite_users_to_group);
+generate_update_call!(join_channel);
 generate_update_call!(join_community);
 generate_update_call!(join_group);
 generate_update_call!(register_user);
@@ -177,6 +178,30 @@ pub mod happy_path {
         match response {
             local_user_index_canister::join_community::Response::Success(_) => {}
             response => panic!("'join_community' error: {response:?}"),
+        }
+    }
+
+    pub fn join_channel(
+        env: &mut StateMachine,
+        sender: Principal,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        local_user_index_canister_id: CanisterId,
+    ) {
+        let response = super::join_channel(
+            env,
+            sender,
+            local_user_index_canister_id,
+            &local_user_index_canister::join_channel::Args {
+                community_id,
+                channel_id,
+                invite_code: None,
+            },
+        );
+
+        match response {
+            local_user_index_canister::join_channel::Response::Success(_) => {}
+            response => panic!("'join_channel' error: {response:?}"),
         }
     }
 

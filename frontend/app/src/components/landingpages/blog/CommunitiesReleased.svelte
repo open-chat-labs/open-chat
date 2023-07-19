@@ -77,6 +77,21 @@
 </section>
 
 <section>
+    <h2>Where did my groups go???</h2>
+
+    <p>
+        If it seems like any of your groups have disappeared it might be that they have been
+        converted to communities. Don't worry, when a group is converted to a community, all the
+        group's members will automatically become members of the community. If one or more of your
+        groups has been converted, you will receive a message from the OpenChatBot (found within the
+        Direct Chats section) telling you about it and giving you a link to the converted community
+        and channel.
+    </p>
+
+    <p>We'll find out how to find other communities next.</p>
+</section>
+
+<section>
     <h2>Finding Communities</h2>
 
     <p>
@@ -134,9 +149,24 @@
         <div class="left">
             <h2>Creating Communities</h2>
 
+            <h3>When to create a community.</h3>
+
             <p>
-                What about if you want to create a community of your own? There are a couple of
-                common scenarios...
+                If you are (or would like to be) the owner of a larger community with a shared
+                interest of some kind and with the potential to have multiple separate streams of
+                conversation - then a community would be a good fit. The sort of thing that you
+                might use a Discord server for today.
+            </p>
+
+            <p>
+                Note that if you already run a public group and are quite happy with the way things
+                are then there is no need to change anything at all. Your group can carry on as
+                before as a global level public group.
+            </p>
+
+            <p>
+                If you <em>do</em> decide that you want to create a community of your own? There are
+                a couple of common scenarios...
             </p>
             <h3>Creating a community from scratch</h3>
             <p>

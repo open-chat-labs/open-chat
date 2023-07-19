@@ -5,7 +5,7 @@
     import { iconSize } from "../../../stores/iconSize";
 </script>
 
-<SectionHeader border={false}>
+<SectionHeader slim border={false}>
     <div class="direct-chats">
         <div class="icon">
             <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />

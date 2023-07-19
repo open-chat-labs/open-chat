@@ -23,7 +23,13 @@ fn join_public_channel_succeeds() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller, true);
 
-    client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
+    client::local_user_index::happy_path::join_channel(
+        env,
+        user2.principal,
+        community_id,
+        channel_id,
+        canister_ids.local_user_index,
+    );
 
     env.tick();
 
@@ -48,14 +54,21 @@ fn join_private_channel_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller, false);
 
-    let response = client::community::join_channel(
+    let response = client::local_user_index::join_channel(
         env,
         user2.principal,
-        community_id.into(),
-        &community_canister::join_channel::Args { channel_id },
+        canister_ids.local_user_index,
+        &local_user_index_canister::join_channel::Args {
+            community_id,
+            channel_id,
+            invite_code: None,
+        },
     );
 
-    assert!(matches!(response, community_canister::join_channel::Response::NotInvited));
+    assert!(matches!(
+        response,
+        local_user_index_canister::join_channel::Response::NotInvited
+    ));
 }
 
 #[test]
@@ -83,13 +96,54 @@ fn join_private_community_with_invitation_succeeds() {
         vec![user2.user_id],
     );
 
-    client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
+    client::local_user_index::happy_path::join_channel(
+        env,
+        user2.principal,
+        community_id,
+        channel_id,
+        canister_ids.local_user_index,
+    );
 
     env.tick();
 
     let summary = client::community::happy_path::summary(env, &user2, community_id);
 
     assert!(summary.channels.iter().any(|c| c.channel_id == channel_id));
+}
+
+#[test]
+fn join_community_and_channel_in_single_call_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let TestData {
+        user1: _,
+        user2: _,
+        community_id,
+        channel_id,
+    } = init_test_data(env, canister_ids, *controller, true);
+
+    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+
+    let response = client::local_user_index::join_channel(
+        env,
+        user3.principal,
+        canister_ids.local_user_index,
+        &local_user_index_canister::join_channel::Args {
+            community_id,
+            channel_id,
+            invite_code: None,
+        },
+    );
+
+    assert!(matches!(
+        response,
+        local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_)
+    ));
 }
 
 #[test]

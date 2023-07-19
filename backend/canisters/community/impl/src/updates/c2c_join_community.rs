@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::events::CommunityEvent;
 use crate::model::members::AddResult;
-use crate::updates::join_channel::join_channel_impl;
+use crate::updates::c2c_join_channel::join_channel_impl;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
@@ -16,6 +16,10 @@ use types::{AccessGate, CanisterId, ChannelId, MemberJoined, UsersUnblocked};
 async fn c2c_join_community(args: Args) -> Response {
     run_regular_jobs();
 
+    join_community(args).await
+}
+
+pub(crate) async fn join_community(args: Args) -> Response {
     match read_state(|state| is_permitted_to_join(args.invite_code, args.principal, state)) {
         Ok(Some((gate, user_index_canister_id))) => {
             match check_if_passes_gate(&gate, args.user_id, user_index_canister_id).await {
@@ -28,7 +32,7 @@ async fn c2c_join_community(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    match mutate_state(|state| c2c_join_community_impl(&args, state)) {
+    match mutate_state(|state| join_community_impl(&args, state)) {
         Ok(default_channel_ids) => {
             futures::future::join_all(default_channel_ids.into_iter().map(|c| join_channel_impl(c, args.principal))).await;
             read_state(|state| {
@@ -69,7 +73,7 @@ fn is_permitted_to_join(
     }
 }
 
-pub(crate) fn c2c_join_community_impl(args: &Args, state: &mut RuntimeState) -> Result<Vec<ChannelId>, Response> {
+pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Result<Vec<ChannelId>, Response> {
     let now = state.env.now();
 
     // Unblock "platform moderator" if necessary
@@ -108,6 +112,6 @@ pub(crate) fn c2c_join_community_impl(args: &Args, state: &mut RuntimeState) -> 
             let summary = state.summary(Some(member), now);
             Err(AlreadyInCommunity(Box::new(summary)))
         }
-        AddResult::Blocked => Err(Blocked),
+        AddResult::Blocked => Err(UserBlocked),
     }
 }

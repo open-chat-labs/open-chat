@@ -3,7 +3,7 @@ use crate::model::channels::Channel;
 use crate::model::events::CommunityEvent;
 use crate::model::groups_being_imported::NextBatchResult;
 use crate::model::members::AddResult;
-use crate::updates::join_channel::join_channel_unchecked;
+use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{mutate_state, RuntimeState};
 use group_canister::c2c_export_group::{Args, Response};
 use group_chat_core::GroupChatCore;

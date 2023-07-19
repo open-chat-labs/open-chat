@@ -439,18 +439,6 @@ export async function getEventsResponse(
             latestEventIndex,
         };
     }
-    if ("ChatNotFound" in candid) {
-        return "events_failed";
-    }
-    if ("ThreadNotFound" in candid) {
-        return "events_failed";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "events_failed";
-    }
-    if ("ThreadMessageNotFound" in candid) {
-        return "events_failed";
-    }
     if ("ReplicaNotUpToDate" in candid) {
         throw ReplicaNotUpToDateError.byEventIndex(
             candid.ReplicaNotUpToDate,
@@ -458,16 +446,8 @@ export async function getEventsResponse(
             false
         );
     }
-    if ("UserNotInChannel" in candid) {
-        return "events_failed";
-    }
-    if ("UserNotInCommunity" in candid) {
-        return "events_failed";
-    }
-    if ("ChannelNotFound" in candid) {
-        return "events_failed";
-    }
-    throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
+    console.warn("GetGroupChatEvents failed with ", candid);
+    return "events_failed";
 }
 
 function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
