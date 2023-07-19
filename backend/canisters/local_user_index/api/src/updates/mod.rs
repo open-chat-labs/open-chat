@@ -6,6 +6,7 @@ pub mod c2c_upgrade_user_canister_wasm;
 pub mod invite_users_to_channel;
 pub mod invite_users_to_community;
 pub mod invite_users_to_group;
+pub mod join_channel;
 pub mod join_community;
 pub mod join_group;
 pub mod register_user;

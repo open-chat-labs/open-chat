@@ -60,7 +60,7 @@ impl GroupMembers {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
         } else if let Some(limit) = self.user_limit_reached() {
-            AddResult::UserLimitReached(limit)
+            AddResult::MemberLimitReached(limit)
         } else {
             match self.members.entry(user_id) {
                 Vacant(e) => {
@@ -274,7 +274,7 @@ impl GroupMembers {
 pub enum AddResult {
     Success(GroupMemberInternal),
     AlreadyInGroup,
-    UserLimitReached(u32),
+    MemberLimitReached(u32),
     Blocked,
 }
 

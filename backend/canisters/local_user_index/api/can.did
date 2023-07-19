@@ -1,5 +1,27 @@
 import "../../../libraries/types/can.did";
 
+type JoinChannelArgs = record {
+    community_id : CommunityId;
+    channel_id : ChannelId;
+    invite_code: opt nat64;
+};
+
+type JoinChannelResponse = variant {
+    Success : CommunityCanisterChannelSummary;
+    SuccessJoinedCommunity : CommunityCanisterCommunitySummary;
+    AlreadyInChannel : CommunityCanisterChannelSummary;
+    GateCheckFailed : GateCheckFailedReason;
+    CommunityNotFound;
+    CommunityNotPublic;
+    ChannelNotFound;
+    MemberLimitReached : nat32;
+    UserBlocked;
+    UserSuspended;
+    CommunityFrozen;
+    NotInvited;
+    InternalError : text;
+};
+
 type JoinCommunityArgs = record {
     community_id : CommunityId;
     invite_code : opt nat64;
@@ -13,7 +35,7 @@ type JoinCommunityResponse = variant {
     CommunityNotPublic;
     NotInvited;
     MemberLimitReached : nat32;
-    Blocked;
+    UserBlocked;
     UserSuspended;
     CommunityFrozen;
     InternalError : text;
@@ -145,6 +167,7 @@ type ReportMessageResponse = variant {
 };
 
 service : {
+    join_channel : (JoinChannelArgs) -> (JoinChannelResponse);
     join_community : (JoinCommunityArgs) -> (JoinCommunityResponse);
     join_group : (JoinGroupArgs) -> (JoinGroupResponse);
     invite_users_to_channel : (InviteUsersToChannelArgs) -> (InviteUsersToChannelResponse);
