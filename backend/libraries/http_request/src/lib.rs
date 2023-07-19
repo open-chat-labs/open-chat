@@ -4,7 +4,6 @@ mod router;
 
 use serde::Serialize;
 use serde_bytes::ByteBuf;
-use std::borrow::Cow;
 use types::{HeaderField, HttpResponse};
 
 pub use document_handler::*;
@@ -24,7 +23,7 @@ pub fn build_response(body: Vec<u8>, content_type: impl Into<String>) -> HttpRes
             HeaderField("Content-Type".to_string(), content_type.into()),
             HeaderField("Content-Length".to_string(), body.len().to_string()),
         ],
-        body: Cow::Owned(ByteBuf::from(body)),
+        body: ByteBuf::from(body),
         streaming_strategy: None,
     }
 }

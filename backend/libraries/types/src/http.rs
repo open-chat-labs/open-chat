@@ -1,7 +1,7 @@
-use candid::{CandidType, Func, Nat};
+#![allow(deprecated)]
+use candid::{define_function, CandidType, Nat};
 use serde::Deserialize;
 use serde_bytes::ByteBuf;
-use std::borrow::Cow;
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct HeaderField(pub String, pub String);
@@ -18,7 +18,7 @@ pub struct HttpRequest {
 pub struct HttpResponse {
     pub status_code: u16,
     pub headers: Vec<HeaderField>,
-    pub body: Cow<'static, ByteBuf>,
+    pub body: ByteBuf,
     pub streaming_strategy: Option<StreamingStrategy>,
 }
 
@@ -32,9 +32,11 @@ pub struct Token {
     pub sha256: Option<ByteBuf>,
 }
 
+define_function!(pub CallbackFunc : (Token) -> (HttpResponse) query);
+
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum StreamingStrategy {
-    Callback { callback: Func, token: Token },
+    Callback { callback: CallbackFunc, token: Token },
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -58,7 +60,7 @@ impl HttpResponse {
         HttpResponse {
             status_code: code,
             headers: Vec::new(),
-            body: Cow::default(),
+            body: ByteBuf::default(),
             streaming_strategy: None,
         }
     }
@@ -90,7 +92,7 @@ impl HttpResponse {
         HttpResponse {
             status_code,
             headers,
-            body: Cow::default(),
+            body: ByteBuf::default(),
             streaming_strategy: None,
         }
     }
