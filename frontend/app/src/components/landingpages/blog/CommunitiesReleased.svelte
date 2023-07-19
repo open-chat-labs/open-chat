@@ -82,7 +82,7 @@
     <p>
         If it seems like any of your groups have disappeared it might be that they have been
         converted to communities. Don't worry, when a group is converted to a community, all the
-        group's members will automatically become users of the community. If one or more of your
+        group's members will automatically become members of the community. If one or more of your
         groups has been converted, you will receive a message from the OpenChatBot (found within the
         Direct Chats section) telling you about it and giving you a link to the converted community
         and channel.
