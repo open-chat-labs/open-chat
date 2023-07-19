@@ -112,6 +112,41 @@ fn join_private_community_with_invitation_succeeds() {
 }
 
 #[test]
+fn join_community_and_channel_in_single_call_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let TestData {
+        user1: _,
+        user2: _,
+        community_id,
+        channel_id,
+    } = init_test_data(env, canister_ids, *controller, true);
+
+    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+
+    let response = client::local_user_index::join_channel(
+        env,
+        user3.principal,
+        canister_ids.local_user_index,
+        &local_user_index_canister::join_channel::Args {
+            community_id,
+            channel_id,
+            invite_code: None,
+        },
+    );
+
+    assert!(matches!(
+        response,
+        local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_)
+    ));
+}
+
+#[test]
 fn invite_to_channel_oc_bot_message_received() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
