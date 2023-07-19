@@ -124,23 +124,18 @@ impl GroupChatCore {
     ) -> SummaryUpdatesFromEvents {
         let member = user_id.and_then(|user_id| self.members.get(&user_id));
 
-        let (min_visible_event_index, see_latest_message) = if let Some(member) = member {
-            (member.min_visible_event_index(), true)
+        let min_visible_event_index = if let Some(member) = member {
+            member.min_visible_event_index()
         } else if self.is_public {
-            (EventIndex::default(), true)
+            EventIndex::default()
         } else if let Some(invited_user) = user_id.and_then(|user_id| self.invited_users.get(&user_id)) {
-            (invited_user.min_visible_event_index, false)
+            invited_user.min_visible_event_index
         } else {
             panic!("Cannot get private summary updates if user is not a member");
         };
 
-        let user_id = member.map(|m| m.user_id);
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index, now);
-        let latest_message = if see_latest_message {
-            events_reader.latest_message_event_if_updated(since, user_id)
-        } else {
-            None
-        };
+        let latest_message = events_reader.latest_message_event_if_updated(since, user_id);
         let mentions = member
             .map(|m| m.most_recent_mentions(Some(since), &self.events, now))
             .unwrap_or_default();
