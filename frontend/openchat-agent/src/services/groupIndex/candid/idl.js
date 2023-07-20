@@ -113,18 +113,6 @@ export const idlFactory = ({ IDL }) => {
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
-  const FilterGroupsArgs = IDL.Record({
-    'active_since' : IDL.Opt(TimestampMillis),
-    'chat_ids' : IDL.Vec(ChatId),
-  });
-  const FilterGroupsResponse = IDL.Variant({
-    'Success' : IDL.Record({
-      'upgrades_in_progress' : IDL.Vec(ChatId),
-      'deleted_groups' : IDL.Vec(DeletedGroupInfo),
-      'active_groups' : IDL.Vec(ChatId),
-      'timestamp' : TimestampMillis,
-    }),
-  });
   const FreezeCommunityArgs = IDL.Record({
     'community_id' : ChatId,
     'suspend_members' : IDL.Opt(
@@ -671,11 +659,6 @@ export const idlFactory = ({ IDL }) => {
     'explore_groups' : IDL.Func(
         [ExploreGroupsArgs],
         [ExploreGroupsResponse],
-        ['query'],
-      ),
-    'filter_groups' : IDL.Func(
-        [FilterGroupsArgs],
-        [FilterGroupsResponse],
         ['query'],
       ),
     'freeze_community' : IDL.Func(

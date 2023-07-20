@@ -1718,13 +1718,6 @@ export type SnsFunctionType =
     | { kind: "native_nervous_system_function" }
     | { kind: "generic_nervous_system_function" };
 
-export type FilterGroupsResponse = {
-    timestamp: bigint;
-    activeGroups: string[];
-    deletedGroups: DeletedInfo[];
-    upgradesInProgress: string[];
-};
-
 export type ActiveGroupsResponse = {
     timestamp: bigint;
     activeGroups: string[];
