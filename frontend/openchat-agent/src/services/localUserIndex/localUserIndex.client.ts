@@ -2,6 +2,7 @@ import type { Identity, SignIdentity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, LocalUserIndexService } from "./candid/idl";
 import type {
+    ChannelIdentifier,
     InviteUsersResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
@@ -12,6 +13,7 @@ import type {
 import { CandidService } from "../candidService";
 import {
     inviteUsersResponse,
+    joinChannelResponse,
     joinCommunityResponse,
     registerUserResponse,
     reportMessageResponse,
@@ -77,6 +79,18 @@ export class LocalUserIndexClient extends CandidService {
                 correlation_id: BigInt(0),
             }),
             joinGroupResponse
+        );
+    }
+
+    joinChannel(id: ChannelIdentifier, inviteCode: string | undefined): Promise<JoinGroupResponse> {
+        console.log("xxx are we getting here");
+        return this.handleResponse(
+            this.localUserIndexService.join_channel({
+                community_id: Principal.fromText(id.communityId),
+                channel_id: BigInt(id.channelId),
+                invite_code: apiOptional(textToCode, inviteCode),
+            }),
+            (resp) => joinChannelResponse(resp, id.communityId)
         );
     }
 

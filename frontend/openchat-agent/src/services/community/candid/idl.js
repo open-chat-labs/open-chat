@@ -375,6 +375,7 @@ export const idlFactory = ({ IDL }) => {
     'block_index' : BlockIndex,
     'from' : NnsCryptoAccount,
     'memo' : IDL.Nat64,
+    'ledger' : CanisterId,
     'amount' : Tokens,
   });
   const Icrc1Account = IDL.Record({
@@ -394,6 +395,7 @@ export const idlFactory = ({ IDL }) => {
     'block_index' : BlockIndex,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(IDL.Nat64),
+    'ledger' : CanisterId,
     'amount' : Tokens,
   });
   const Memo = IDL.Vec(IDL.Nat8);
@@ -405,6 +407,7 @@ export const idlFactory = ({ IDL }) => {
     'block_index' : BlockIndex,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
+    'ledger' : CanisterId,
     'amount' : IDL.Nat,
   });
   const CompletedCryptoTransaction = IDL.Variant({
@@ -431,6 +434,7 @@ export const idlFactory = ({ IDL }) => {
     'from' : NnsCryptoAccount,
     'memo' : IDL.Nat64,
     'error_message' : IDL.Text,
+    'ledger' : CanisterId,
     'amount' : Tokens,
   });
   const SnsFailedCryptoTransaction = IDL.Record({
@@ -442,6 +446,7 @@ export const idlFactory = ({ IDL }) => {
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(IDL.Nat64),
     'error_message' : IDL.Text,
+    'ledger' : CanisterId,
     'amount' : Tokens,
   });
   const Icrc1FailedCryptoTransaction = IDL.Record({
@@ -452,6 +457,7 @@ export const idlFactory = ({ IDL }) => {
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
     'error_message' : IDL.Text,
+    'ledger' : CanisterId,
     'amount' : IDL.Nat,
   });
   const FailedCryptoTransaction = IDL.Variant({
@@ -1051,20 +1057,6 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({ 'code' : IDL.Opt(IDL.Nat64) }),
     'UserNotInCommunity' : IDL.Null,
-  });
-  const JoinChannelArgs = IDL.Record({ 'channel_id' : ChannelId });
-  const JoinChannelResponse = IDL.Variant({
-    'NotInvited' : IDL.Null,
-    'AlreadyInChannel' : CommunityCanisterChannelSummary,
-    'GateCheckFailed' : GateCheckFailedReason,
-    'ChannelNotFound' : IDL.Null,
-    'UserLimitReached' : IDL.Nat32,
-    'Success' : CommunityCanisterChannelSummary,
-    'UserNotInCommunity' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-    'CommunityFrozen' : IDL.Null,
-    'InternalError' : IDL.Text,
-    'UserBlocked' : IDL.Null,
   });
   const LeaveChannelArgs = IDL.Record({ 'channel_id' : ChannelId });
   const LeaveChannelResponse = IDL.Variant({
@@ -1671,7 +1663,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'import_group' : IDL.Func([ImportGroupArgs], [ImportGroupResponse], []),
     'invite_code' : IDL.Func([EmptyArgs], [InviteCodeResponse], ['query']),
-    'join_channel' : IDL.Func([JoinChannelArgs], [JoinChannelResponse], []),
     'leave_channel' : IDL.Func([LeaveChannelArgs], [LeaveChannelResponse], []),
     'local_user_index' : IDL.Func(
         [EmptyArgs],

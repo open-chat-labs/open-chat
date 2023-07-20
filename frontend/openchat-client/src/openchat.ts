@@ -1012,8 +1012,17 @@ export class OpenChat extends OpenChatAgentWorker {
                 return "success";
             })
             .then((resp) => {
-                if (resp === "success" && this._liveState.groupPreviews.has(chat.id)) {
-                    removeGroupPreview(chat.id);
+                if (resp === "success") {
+                    if (this._liveState.groupPreviews.has(chat.id)) {
+                        removeGroupPreview(chat.id);
+                    }
+                    const community = this._liveState.selectedCommunity;
+                    if (
+                        community !== undefined &&
+                        this._liveState.communityPreviews.has(community.id)
+                    ) {
+                        removeCommunityPreview(community.id);
+                    }
                 }
                 return resp;
             })
@@ -4055,6 +4064,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     }
                 }
 
+                console.log("xxx: chatsResponse", chatsResponse);
+
                 setGlobalState(
                     chatsResponse.state.communities,
                     updatedChats,
@@ -4483,6 +4494,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((resp) => {
                 if (resp.kind === "success") {
                     localCommunitySummaryUpdates.markAdded(resp.community);
+                    removeCommunityPreview(id);
                     this.loadCommunityDetails(resp.community);
                 } else {
                     if (resp.kind === "gate_check_failed") {

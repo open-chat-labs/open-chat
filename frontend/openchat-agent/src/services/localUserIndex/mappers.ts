@@ -2,6 +2,7 @@ import {
     CommonResponses,
     InviteUsersResponse,
     JoinCommunityResponse,
+    JoinGroupResponse,
     RegisterUserResponse,
     ReportMessageResponse,
     UnsupportedValueError,
@@ -9,12 +10,39 @@ import {
 import type {
     ApiInviteUsersResponse,
     ApiInviteUsersToChannelResponse,
+    ApiJoinChannelResponse,
     ApiJoinCommunityResponse,
     ApiRegisterUserResponse,
     ApiReportMessageResponse,
 } from "./candid/idl";
 import { bytesToHexString } from "../../utils/mapping";
-import { communitySummary, gateCheckFailedReason } from "../common/chatMappers";
+import {
+    communityChannelSummary,
+    communitySummary,
+    gateCheckFailedReason,
+} from "../common/chatMappers";
+
+export function joinChannelResponse(
+    candid: ApiJoinChannelResponse,
+    communityId: string
+): JoinGroupResponse {
+    console.log("xxx and here", candid, communityId);
+    if ("Success" in candid) {
+        return { kind: "success", group: communityChannelSummary(candid.Success, communityId) };
+    } else if ("AlreadyInChannel" in candid) {
+        return {
+            kind: "success",
+            group: communityChannelSummary(candid.AlreadyInChannel, communityId),
+        };
+    } else if ("UserBlocked" in candid) {
+        return CommonResponses.userBlocked();
+    } else if ("GateCheckFailed" in candid) {
+        return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
+    } else {
+        console.warn("Join group failed with: ", candid);
+        return CommonResponses.failure();
+    }
+}
 
 export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterUserResponse {
     if ("Success" in candid) {
