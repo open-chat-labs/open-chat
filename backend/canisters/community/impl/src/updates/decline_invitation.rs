@@ -15,10 +15,10 @@ fn decline_invitation_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
 
-    if let Some(channel_id) = args.channel_id {
-        if let Some(member) = state.data.members.get(caller) {
+    let result = if let Some(user_id) = state.data.members.lookup_user_id(caller) {
+        if let Some(channel_id) = args.channel_id {
             if let Some(channel) = state.data.channels.get_mut(&channel_id) {
-                match channel.chat.invited_users.remove(&member.user_id, now) {
+                match channel.chat.invited_users.remove(&user_id, now) {
                     Some(_) => Success,
                     None => NotInvited,
                 }
@@ -26,12 +26,20 @@ fn decline_invitation_impl(args: Args, state: &mut RuntimeState) -> Response {
                 ChannelNotFound
             }
         } else {
-            UserNotInCommunity
+            match state.data.invited_users.remove(&user_id, now) {
+                Some(_) => Success,
+                None => NotInvited,
+            }
         }
     } else {
-        match state.data.invited_users.remove(&caller, now) {
-            Some(_) => Success,
-            None => NotInvited,
-        }
+        UserNotInCommunity
+    };
+
+    // If the user isn't a member of the community, remove their principal and user_id from
+    // `members`
+    if matches!(result, Success) && state.data.members.get(caller).is_none() {
+        state.data.members.remove_by_principal(&caller);
     }
+
+    result
 }
