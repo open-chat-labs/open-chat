@@ -191,6 +191,7 @@ impl Channel {
     pub fn summary(
         &self,
         user_id: Option<UserId>,
+        is_community_member: bool,
         is_public_community: bool,
         now: TimestampMillis,
     ) -> Option<CommunityCanisterChannelSummary> {
@@ -207,7 +208,7 @@ impl Channel {
             return None;
         };
 
-        let can_view_latest_message = self.can_view_latest_message(member.is_some(), user_id.is_some(), is_public_community);
+        let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);
 
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index, now);
         let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
@@ -268,6 +269,7 @@ impl Channel {
         &self,
         user_id: Option<UserId>,
         since: TimestampMillis,
+        is_community_member: bool,
         is_public_community: bool,
         now: TimestampMillis,
     ) -> ChannelUpdates {
@@ -277,13 +279,13 @@ impl Channel {
         if let Some(m) = member {
             if m.date_added > since {
                 return ChannelUpdates::Added(
-                    self.summary(user_id, is_public_community, now)
+                    self.summary(user_id, is_community_member, is_public_community, now)
                         .expect("Channel should be accessible"),
                 );
             }
         }
 
-        let can_view_latest_message = self.can_view_latest_message(member.is_some(), user_id.is_some(), is_public_community);
+        let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);
         let updates_from_events = chat.summary_updates_from_events(since, user_id, now);
 
         let membership = member.map(|m| ChannelMembershipUpdates {
