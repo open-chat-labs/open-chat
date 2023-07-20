@@ -275,20 +275,22 @@
         </div>
         <div slot="menu">
             <Menu>
-                {#if !$favouritesStore.has(selectedChatSummary.id)}
-                    <MenuItem on:click={addToFavourites}>
-                        <HeartPlus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                        <div slot="text">
-                            {$_("communities.addToFavourites")}
-                        </div>
-                    </MenuItem>
-                {:else}
-                    <MenuItem on:click={removeFromFavourites}>
-                        <HeartMinus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                        <div slot="text">
-                            {$_("communities.removeFromFavourites")}
-                        </div>
-                    </MenuItem>
+                {#if $communitiesEnabled}
+                    {#if !$favouritesStore.has(selectedChatSummary.id)}
+                        <MenuItem on:click={addToFavourites}>
+                            <HeartPlus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
+                            <div slot="text">
+                                {$_("communities.addToFavourites")}
+                            </div>
+                        </MenuItem>
+                    {:else}
+                        <MenuItem on:click={removeFromFavourites}>
+                            <HeartMinus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
+                            <div slot="text">
+                                {$_("communities.removeFromFavourites")}
+                            </div>
+                        </MenuItem>
+                    {/if}
                 {/if}
                 {#if $mobileWidth}
                     {#if $isProposalGroup}
