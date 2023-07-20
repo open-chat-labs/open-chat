@@ -9,6 +9,7 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
     members: HashMap<UserId, CommunityMemberInternal>,
+    // This includes the userIds of community members and also users invited to the community
     principal_to_user_id_map: HashMap<Principal, UserId>,
     blocked: HashSet<UserId>,
     admin_count: u32,
@@ -55,12 +56,16 @@ impl CommunityMembers {
                         channels_removed: Vec::new(),
                     };
                     e.insert(member.clone());
-                    self.principal_to_user_id_map.insert(principal, user_id);
+                    self.add_user_id(principal, user_id);
                     AddResult::Success(member)
                 }
                 _ => AddResult::AlreadyInCommunity,
             }
         }
+    }
+
+    pub fn add_user_id(&mut self, principal: Principal, user_id: UserId) {
+        self.principal_to_user_id_map.insert(principal, user_id);
     }
 
     pub fn remove(&mut self, user_id: &UserId) -> Option<CommunityMemberInternal> {
@@ -195,7 +200,10 @@ impl CommunityMembers {
     }
 
     pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
-        self.get(user_id_or_principal).map(|m| m.user_id)
+        self.principal_to_user_id_map.get(&user_id_or_principal).copied().or_else(|| {
+            let user_id: UserId = user_id_or_principal.into();
+            self.members.contains_key(&user_id).then_some(user_id)
+        })
     }
 
     pub fn get(&self, user_id_or_principal: Principal) -> Option<&CommunityMemberInternal> {
