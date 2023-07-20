@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.751](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.751-local_group_index)] - 2023-07-20
+
 ### Added
 
 - Add language field to community ([#3923](https://github.com/open-chat-labs/open-chat/pull/3923))
