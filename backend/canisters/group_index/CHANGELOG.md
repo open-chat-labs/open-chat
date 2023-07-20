@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.748](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.748-group_index)] - 2023-07-20
+
 ### Changed
 
 - Set `activity` field on new public communities ([#3961](https://github.com/open-chat-labs/open-chat/pull/3961))
