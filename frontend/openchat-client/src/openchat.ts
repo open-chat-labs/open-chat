@@ -987,11 +987,28 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    private addCommunityLocally(community: CommunitySummary): void {
+        localCommunitySummaryUpdates.markAdded(community);
+        community.channels.forEach((c) => localChatSummaryUpdates.markAdded(c));
+    }
+
+    private removeCommunityLocally(id: CommunityIdentifier): void {
+        if (this._liveState.communityPreviews.has(id)) {
+            removeCommunityPreview(id);
+        }
+        localCommunitySummaryUpdates.markRemoved(id);
+        const community = this._liveState.communities.get(id);
+        if (community !== undefined) {
+            community.channels.forEach((c) => localChatSummaryUpdates.markRemoved(c.id));
+        }
+    }
+
     async joinGroup(
         chat: MultiUserChat
     ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
         return this.sendRequest({ kind: "joinGroup", chatId: chat.id })
             .then((resp) => {
+                console.log("xxx join response", resp);
                 if (resp.kind === "success") {
                     localChatSummaryUpdates.markAdded(resp.group);
                     this.loadChatDetails(resp.group);
@@ -1002,7 +1019,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         undefined
                     );
                 } else if (resp.kind === "success_joined_community") {
-                    localCommunitySummaryUpdates.markAdded(resp.community);
+                    this.addCommunityLocally(resp.community);
                     const channel = resp.community.channels.find((c) =>
                         chatIdentifiersEqual(c.id, chat.id)
                     );
@@ -2064,12 +2081,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     removeCommunity(id: CommunityIdentifier): void {
-        if (this._liveState.communities.has(id)) {
-            localCommunitySummaryUpdates.markRemoved(id);
-        }
-        if (this._liveState.communityPreviews.has(id)) {
-            removeCommunityPreview(id);
-        }
+        this.removeCommunityLocally(id);
     }
 
     clearSelectedChat = clearSelectedChat;
@@ -4504,7 +4516,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "joinCommunity", id })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    localCommunitySummaryUpdates.markAdded(resp.community);
+                    this.addCommunityLocally(resp.community);
                     removeCommunityPreview(id);
                     this.loadCommunityDetails(resp.community);
                 } else {
@@ -4525,14 +4537,12 @@ export class OpenChat extends OpenChatAgentWorker {
         const community = this._liveState.communities.get(id);
         if (community === undefined) return Promise.resolve(false);
 
-        community.channels.forEach((c) => localChatSummaryUpdates.markRemoved(c.id));
-        localCommunitySummaryUpdates.markRemoved(id);
+        this.removeCommunityLocally(id);
 
         return this.sendRequest({ kind: "deleteCommunity", id })
             .then((resp) => {
                 if (resp !== "success") {
-                    community.channels.forEach((c) => localChatSummaryUpdates.markAdded(c));
-                    localCommunitySummaryUpdates.markAdded(community);
+                    this.addCommunityLocally(community);
                 }
                 return resp === "success";
             })
@@ -4546,14 +4556,12 @@ export class OpenChat extends OpenChatAgentWorker {
         const community = this._liveState.communities.get(id);
         if (community === undefined) return Promise.resolve(false);
 
-        community.channels.forEach((c) => localChatSummaryUpdates.markRemoved(c.id));
-        localCommunitySummaryUpdates.markRemoved(id);
+        this.removeCommunityLocally(id);
 
         return this.sendRequest({ kind: "leaveCommunity", id })
             .then((resp) => {
                 if (resp !== "success") {
-                    community.channels.forEach((c) => localChatSummaryUpdates.markAdded(c));
-                    localCommunitySummaryUpdates.markAdded(community);
+                    this.addCommunityLocally(community);
                 }
                 return resp === "success";
             })
