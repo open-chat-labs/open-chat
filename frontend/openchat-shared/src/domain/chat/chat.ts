@@ -1545,9 +1545,15 @@ export type LeaveGroupResponse = "success" | "owner_cannot_leave" | "failure";
 
 export type JoinGroupResponse =
     | (Success & { group: MultiUserChat })
+    | SuccessJoinedCommunity
     | GateCheckFailed
     | UserBlocked
     | Failure;
+
+export type SuccessJoinedCommunity = {
+    kind: "success_joined_community";
+    community: CommunitySummary;
+};
 
 export type InviteUsersResponse = "success" | "failure";
 

@@ -26,13 +26,17 @@ export function joinChannelResponse(
     candid: ApiJoinChannelResponse,
     communityId: string
 ): JoinGroupResponse {
-    console.log("xxx and here", candid, communityId);
     if ("Success" in candid) {
         return { kind: "success", group: communityChannelSummary(candid.Success, communityId) };
     } else if ("AlreadyInChannel" in candid) {
         return {
             kind: "success",
             group: communityChannelSummary(candid.AlreadyInChannel, communityId),
+        };
+    } else if ("SuccessJoinedCommunity" in candid) {
+        return {
+            kind: "success_joined_community",
+            community: communitySummary(candid.SuccessJoinedCommunity),
         };
     } else if ("UserBlocked" in candid) {
         return CommonResponses.userBlocked();

@@ -83,7 +83,6 @@ export class LocalUserIndexClient extends CandidService {
     }
 
     joinChannel(id: ChannelIdentifier, inviteCode: string | undefined): Promise<JoinGroupResponse> {
-        console.log("xxx are we getting here");
         return this.handleResponse(
             this.localUserIndexService.join_channel({
                 community_id: Principal.fromText(id.communityId),
