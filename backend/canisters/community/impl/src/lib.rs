@@ -268,6 +268,8 @@ impl Data {
             || self.is_invite_code_valid(invite_code)
     }
 
+    // This will get the user_id if called directly by a community member, c2c from a community
+    // member's user canister, or directly by an invited user
     pub fn user_id(&self, principal: Principal) -> Option<UserId> {
         self.members
             .lookup_user_id(principal)
