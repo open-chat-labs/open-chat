@@ -60,6 +60,7 @@ export class OpenChatAgentWorker extends EventTarget {
                     ledgerCanisterBTC: this.config.ledgerCanisterBTC,
                     ledgerCanisterCHAT: this.config.ledgerCanisterCHAT,
                     ledgerCanisterKINIC: this.config.ledgerCanisterKINIC,
+                    ledgerCanisterHOTORNOT: this.config.ledgerCanisterHOTORNOT,
                     userGeekApiKey: this.config.userGeekApiKey,
                     enableMultiCrypto: this.config.enableMultiCrypto,
                     blobUrlPattern: this.config.blobUrlPattern,

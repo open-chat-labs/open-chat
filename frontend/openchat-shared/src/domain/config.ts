@@ -13,6 +13,7 @@ export type AgentConfig = {
     ledgerCanisterBTC: string;
     ledgerCanisterCHAT: string;
     ledgerCanisterKINIC: string;
+    ledgerCanisterHOTORNOT: string;
     userGeekApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;

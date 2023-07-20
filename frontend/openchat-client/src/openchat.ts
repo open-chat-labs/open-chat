@@ -4400,6 +4400,9 @@ export class OpenChat extends OpenChatAgentWorker {
 
             case "kinic":
                 return this.config.ledgerCanisterKINIC;
+
+            case "hotornot":
+                return this.config.ledgerCanisterHOTORNOT;
         }
     }
 

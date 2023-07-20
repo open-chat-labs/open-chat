@@ -204,6 +204,7 @@ export class OpenChatAgent extends EventTarget {
             ckbtc: LedgerClient.create(identity, config, this.config.ledgerCanisterBTC),
             chat: LedgerClient.create(identity, config, this.config.ledgerCanisterCHAT),
             kinic: LedgerClient.create(identity, config, this.config.ledgerCanisterKINIC),
+            hotornot: LedgerClient.create(identity, config, this.config.ledgerCanisterHOTORNOT),
         };
         this._groupClients = {};
         this._communityClients = {};

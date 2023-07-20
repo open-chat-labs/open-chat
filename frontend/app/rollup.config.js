@@ -230,6 +230,7 @@ export default {
             "process.env.LEDGER_CANISTER_BTC": JSON.stringify(process.env.LEDGER_CANISTER_BTC),
             "process.env.LEDGER_CANISTER_CHAT": JSON.stringify(process.env.LEDGER_CANISTER_CHAT),
             "process.env.LEDGER_CANISTER_KINIC": JSON.stringify(process.env.LEDGER_CANISTER_KINIC),
+            "process.env.LEDGER_CANISTER_HOTORNOT": JSON.stringify(process.env.LEDGER_CANISTER_HOTORNOT),
             "process.env.BLOB_URL_PATTERN": JSON.stringify(process.env.BLOB_URL_PATTERN),
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             "process.env.METERED_APIKEY": JSON.stringify(process.env.METERED_APIKEY),
