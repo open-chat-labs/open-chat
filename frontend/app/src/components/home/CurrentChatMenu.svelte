@@ -57,11 +57,11 @@
     $: inviteMembersSelected = lastState.kind === "invite_group_users";
     $: desktop = !$mobileWidth;
     $: canConvert =
-        communitiesEnabled &&
+        $communitiesEnabled &&
         selectedChatSummary.kind === "group_chat" &&
         client.canConvertGroupToCommunity(selectedChatSummary.id);
     $: canImportToCommunity =
-        communitiesEnabled && client.canImportToCommunity(selectedChatSummary.id);
+        $communitiesEnabled && client.canImportToCommunity(selectedChatSummary.id);
 
     let hasUnreadPinned = false;
 
