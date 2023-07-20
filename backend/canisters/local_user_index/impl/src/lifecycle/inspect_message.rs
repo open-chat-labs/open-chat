@@ -16,12 +16,13 @@ fn accept_if_valid(state: &RuntimeState) {
     }
 
     let is_valid = match method_name.as_str() {
-        "join_group"
-        | "report_message"
-        | "invite_users_to_group"
-        | "invite_users_to_channel"
+        "invite_users_to_channel"
         | "invite_users_to_community"
-        | "join_community" => state.is_caller_openchat_user(),
+        | "invite_users_to_group"
+        | "join_channel"
+        | "join_community"
+        | "join_group"
+        | "report_message" => state.is_caller_openchat_user(),
         "register_user" => true,
         _ => false,
     };
