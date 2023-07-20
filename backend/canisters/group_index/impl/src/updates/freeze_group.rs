@@ -82,8 +82,7 @@ async fn unfreeze_group(args: unfreeze_group::Args) -> unfreeze_group::Response 
         user_index_canister_id,
         ..
     } = match read_state(|state| prepare(&args.chat_id, state)) {
-        Ok(ok) if ok.is_frozen => ok,
-        Ok(_) => return ChatNotFrozen,
+        Ok(ok) => ok,
         Err(_) => return ChatNotFound,
     };
 
