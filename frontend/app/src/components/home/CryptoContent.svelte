@@ -85,6 +85,7 @@
         background-size: contain;
         background-repeat: no-repeat;
         background-position: top;
+        border-radius: 50%;
 
         -webkit-box-reflect: below 0
             linear-gradient(hsla(0, 0%, 100%, 0), hsla(0, 0%, 100%, 0) 45%, hsla(0, 0%, 100%, 0.2));
@@ -103,7 +104,6 @@
         }
         &.kinic {
             background-image: url("/assets/kinic_token.png");
-            border-radius: 50%;
         }
         &.hot {
             background-image: url("/assets/hot_token.svg");
