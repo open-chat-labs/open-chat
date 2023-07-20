@@ -98,7 +98,10 @@ async fn unfreeze_group(args: unfreeze_group::Args) -> unfreeze_group::Response 
             mutate_state(|state| commit(&args.chat_id, None, state));
             Success(event)
         }
-        Ok(group_canister::c2c_unfreeze_group::Response::ChatNotFrozen) => ChatNotFrozen,
+        Ok(group_canister::c2c_unfreeze_group::Response::ChatNotFrozen) => {
+            mutate_state(|state| commit(&args.chat_id, None, state));
+            ChatNotFrozen
+        }
         Err(error) => InternalError(format!("{error:?}")),
     }
 }
