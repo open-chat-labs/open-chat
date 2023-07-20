@@ -1,7 +1,7 @@
 {
   "community": "dcdd95d7e76d595493e49c376eef9239cab185e6",
   "cycles_dispenser": "06e1b287efc463a466cef473fea544d501510dda",
-  "group": "38371d7eaebd4111347bf43aa3620b17d60c5a1a",
+  "group": "ba5b14a8b04302eaedfe48da18c769a1ae33fd09",
   "group_index": "77d6883cbbea1632dba6e2dcb280d82614e1cd8d",
   "local_group_index": "622c13b79a4924898fff59d804830c5888739329",
   "local_user_index": "4e2b0374cc4ddd6d17d188bdd86916bc2c8f77ab",
@@ -14,6 +14,6 @@
   "registry": "b16cbbc927dcfc2cfbd10ab522fa4cbeb7970454",
   "storage_bucket": "7d524d0d6f8bba3f614f1292bdab97eb187aaf5c",
   "storage_index": "78b868be84098d436fc853c6edd3087eddc60a3d",
-  "user": "38371d7eaebd4111347bf43aa3620b17d60c5a1a",
+  "user": "ba5b14a8b04302eaedfe48da18c769a1ae33fd09",
   "user_index": "622c13b79a4924898fff59d804830c5888739329"
 }

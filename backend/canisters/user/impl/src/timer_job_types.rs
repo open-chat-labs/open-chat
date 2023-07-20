@@ -35,7 +35,6 @@ pub struct DeleteFileReferencesJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(from = "MessageReminderJobPrevious")]
 pub struct MessageReminderJob {
     pub reminder_id: u64,
     pub chat: Chat,
@@ -43,30 +42,6 @@ pub struct MessageReminderJob {
     pub event_index: EventIndex,
     pub notes: Option<String>,
     pub reminder_created_message_index: MessageIndex,
-}
-
-// TODO: Delete this after next User release
-#[derive(Serialize, Deserialize, Clone)]
-pub struct MessageReminderJobPrevious {
-    pub reminder_id: u64,
-    pub chat_id: ChatId,
-    pub thread_root_message_index: Option<MessageIndex>,
-    pub event_index: EventIndex,
-    pub notes: Option<String>,
-    pub reminder_created_message_index: MessageIndex,
-}
-
-impl From<MessageReminderJobPrevious> for MessageReminderJob {
-    fn from(value: MessageReminderJobPrevious) -> Self {
-        MessageReminderJob {
-            reminder_id: value.reminder_id,
-            chat: Chat::Group(value.chat_id),
-            thread_root_message_index: value.thread_root_message_index,
-            event_index: value.event_index,
-            notes: value.notes,
-            reminder_created_message_index: value.reminder_created_message_index,
-        }
-    }
 }
 
 impl Job for TimerJob {

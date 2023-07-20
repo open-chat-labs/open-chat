@@ -127,12 +127,6 @@ pub struct MemberLeft {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct OwnershipTransferred {
-    pub old_owner: UserId,
-    pub new_owner: UserId,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct RoleChanged {
     pub user_ids: Vec<UserId>,
     pub changed_by: UserId,
@@ -146,21 +140,6 @@ pub struct CommunityRoleChanged {
     pub changed_by: UserId,
     pub old_role: CommunityRole,
     pub new_role: CommunityRole,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ParticipantAssumesSuperAdmin {
-    pub user_id: UserId,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ParticipantDismissedAsSuperAdmin {
-    pub user_id: UserId,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ParticipantRelinquishesSuperAdmin {
-    pub user_id: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
