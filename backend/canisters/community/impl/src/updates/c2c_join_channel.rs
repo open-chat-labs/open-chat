@@ -28,7 +28,7 @@ async fn c2c_join_channel(args: Args) -> Response {
     {
         community_canister::c2c_join_community::Response::Success(_) => {
             let response = join_channel_impl(args.channel_id, args.principal).await;
-            if matches!(response, Success(_)) {
+            if matches!(response, Success(_) | AlreadyInChannel(_)) {
                 let summary = read_state(|state| {
                     let member = state.data.members.get_by_user_id(&args.user_id);
                     state.summary(member, state.env.now())
