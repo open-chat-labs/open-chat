@@ -98,7 +98,7 @@ impl RuntimeState {
                 .channels
                 .iter()
                 .filter_map(|c| self.data.channels.get(c))
-                .filter_map(|c| c.summary(Some(m.user_id), data.is_public, now))
+                .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public, now))
                 .collect();
 
             (channels, Some(membership))
@@ -109,7 +109,7 @@ impl RuntimeState {
                 .channels
                 .default_channels()
                 .iter()
-                .filter_map(|c| c.summary(None, data.is_public, now))
+                .filter_map(|c| c.summary(None, false, data.is_public, now))
                 .collect();
 
             (channels, None)
@@ -266,6 +266,12 @@ impl Data {
             || self.members.get(caller).is_some()
             || self.invited_users.get(&caller).is_some()
             || self.is_invite_code_valid(invite_code)
+    }
+
+    pub fn user_id(&self, principal: Principal) -> Option<UserId> {
+        self.members
+            .lookup_user_id(principal)
+            .or_else(|| self.invited_users.get(&principal).map(|u| u.invited))
     }
 
     pub fn build_chat_metrics(&mut self, now: TimestampMillis) {

@@ -17,7 +17,7 @@ fn channel_summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
-        let user_id = state.data.members.lookup_user_id(caller);
+        let user_id = state.data.user_id(caller);
 
         if !channel.chat.is_accessible(user_id) {
             return PrivateChannel;
@@ -27,7 +27,15 @@ fn channel_summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             return SuccessNoUpdates;
         }
 
-        match channel.summary_updates(user_id, args.updates_since, state.data.is_public, state.env.now()) {
+        let is_community_member = state.data.members.get(caller).is_some();
+
+        match channel.summary_updates(
+            user_id,
+            args.updates_since,
+            is_community_member,
+            state.data.is_public,
+            state.env.now(),
+        ) {
             ChannelUpdates::Added(s) => SuccessAdded(s),
             ChannelUpdates::Updated(s) => SuccessUpdated(s),
         }
