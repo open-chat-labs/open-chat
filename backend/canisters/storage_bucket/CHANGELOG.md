@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.757](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.757-storage_bucket)] - 2023-07-20
+
 ### Changed
 
 - Avoid using `candid::Func` type directly ([#3983](https://github.com/open-chat-labs/open-chat/pull/3983))
