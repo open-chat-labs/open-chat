@@ -51,6 +51,7 @@
             ledgerCanisterBTC: process.env.LEDGER_CANISTER_BTC!,
             ledgerCanisterCHAT: process.env.LEDGER_CANISTER_CHAT!,
             ledgerCanisterKINIC: process.env.LEDGER_CANISTER_KINIC!,
+            ledgerCanisterHOTORNOT: process.env.LEDGER_CANISTER_HOTORNOT!,
             userGeekApiKey: process.env.USERGEEK_APIKEY!,
             meteredApiKey: process.env.METERED_APIKEY!,
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,

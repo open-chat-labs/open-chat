@@ -16,6 +16,7 @@ export type OpenChatConfig = {
     ledgerCanisterBTC: string;
     ledgerCanisterCHAT: string;
     ledgerCanisterKINIC: string;
+    ledgerCanisterHOTORNOT: string;
     userGeekApiKey: string;
     meteredApiKey: string;
     enableMultiCrypto?: boolean;

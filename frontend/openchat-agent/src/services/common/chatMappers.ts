@@ -547,6 +547,7 @@ export function token(candid: ApiCryptocurrency): Cryptocurrency {
     if ("CKBTC" in candid) return "ckbtc";
     if ("CHAT" in candid) return "chat";
     if ("KINIC" in candid) return "kinic";
+    if ("HotOrNot" in candid) return "hotornot";
     throw new UnsupportedValueError("Unexpected ApiCryptocurrency type received", candid);
 }
 
@@ -562,6 +563,8 @@ export function apiToken(token: Cryptocurrency): ApiCryptocurrency {
             return { CHAT: null };
         case "kinic":
             throw new Error("KINIC is not supported yet");
+        case "hotornot":
+            throw new Error("HotOrNot is not supported yet");
     }
 }
 
