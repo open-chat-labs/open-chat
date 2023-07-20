@@ -333,6 +333,9 @@ export function apiCryptocurrency(domain: Cryptocurrency): ApiCryptocurrency {
     if (domain === "kinic") {
         throw new Error("KINIC is not supported yet");
     }
+    if (domain === "hotornot") {
+        throw new Error("HotOrNot is not supported yet");
+    }
     throw new UnsupportedValueError("Unexpected Cryptocurrency type received", domain);
 }
 

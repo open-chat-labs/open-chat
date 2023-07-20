@@ -2,7 +2,7 @@ export const E8S_PER_TOKEN = 100_000_000;
 
 export const ICP_TRANSFER_FEE_E8S = BigInt(10_000);
 
-export const cryptoCurrencyList = ["chat", "icp", "ckbtc", "sns1", "kinic"] as const;
+export const cryptoCurrencyList = ["chat", "icp", "ckbtc", "sns1", "kinic", "hotornot"] as const;
 
 type CryptocurrenciesType = typeof cryptoCurrencyList;
 export type Cryptocurrency = CryptocurrenciesType[number];
@@ -21,6 +21,7 @@ export const tokenByGovernanceCanisterLookup: Record<string, Cryptocurrency> = {
     "zqfso-syaaa-aaaaq-aaafq-cai": "sns1",
     "rrkah-fqaaa-aaaaa-aaaaq-cai": "icp",
     "74ncn-fqaaa-aaaaq-aaasa-cai": "kinic",
+    "6wcax-haaaa-aaaaq-aaava-cai": "hotornot",
 };
 
 export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
@@ -65,6 +66,15 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
             "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
         disabled: true,
         rootCanister: "7jkta-eyaaa-aaaaq-aaarq-cai",
+    },
+    hotornot: {
+        symbol: "HOT",
+        name: "HotOrNot",
+        transferFeesE8s: BigInt(100_000),
+        howToBuyUrl:
+            "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
+        disabled: true,
+        rootCanister: "67bll-riaaa-aaaaq-aaauq-cai",
     }
 };
 
