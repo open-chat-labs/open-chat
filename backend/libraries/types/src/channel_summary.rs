@@ -71,3 +71,9 @@ pub struct ChannelMembershipUpdates {
     pub my_metrics: Option<ChatMetrics>,
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ChannelLatestMessageIndex {
+    pub channel_id: ChannelId,
+    pub latest_message_index: Option<MessageIndex>,
+}

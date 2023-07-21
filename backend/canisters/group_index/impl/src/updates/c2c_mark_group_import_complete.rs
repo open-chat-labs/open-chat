@@ -27,7 +27,8 @@ fn c2c_mark_group_import_complete_impl(args: Args, state: &mut RuntimeState) -> 
         Some(CommunityImportedInto {
             community_name: args.community_name,
             community_id,
-            channel_id: args.channel_id,
+            channel: args.channel,
+            other_default_channels: args.other_default_channels,
         }),
         state,
     );

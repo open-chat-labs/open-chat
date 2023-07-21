@@ -1,5 +1,4 @@
 use crate::guards::caller_is_openchat_user;
-use crate::updates::join_community::notify_user_joined_community;
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
@@ -21,9 +20,12 @@ async fn join_channel(args: Args) -> Response {
     };
     match community_canister_c2c_client::c2c_join_channel(args.community_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            community_canister::c2c_join_channel::Response::Success(s) => Success(s),
+            community_canister::c2c_join_channel::Response::Success(s) => {
+                mutate_state(|state| state.notify_user_joined_channel(user_details.user_id, args.community_id, &s));
+                Success(s)
+            }
             community_canister::c2c_join_channel::Response::SuccessJoinedCommunity(s) => {
-                mutate_state(|state| notify_user_joined_community(user_details.user_id, args.community_id, state));
+                mutate_state(|state| state.notify_user_joined_community(user_details.user_id, &s));
                 SuccessJoinedCommunity(s)
             }
             community_canister::c2c_join_channel::Response::AlreadyInChannel(s) => AlreadyInChannel(s),

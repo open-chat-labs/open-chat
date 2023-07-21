@@ -11,7 +11,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{ChannelId, ChatId, MemberJoined};
+use types::{ChannelId, ChannelLatestMessageIndex, ChatId, MemberJoined};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -183,10 +183,24 @@ fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
             "c2c_mark_group_import_complete_msgpack".to_string(),
             msgpack::serialize_then_unwrap(group_index_canister::c2c_mark_group_import_complete::Args {
                 community_name: state.data.name.clone(),
-                channel_id,
+                channel: ChannelLatestMessageIndex {
+                    channel_id,
+                    latest_message_index: channel.chat.events.main_events_list().latest_message_index(),
+                },
                 group_id,
                 group_name: channel.chat.name.clone(),
                 members: channel.chat.members.iter().map(|m| m.user_id).collect(),
+                other_default_channels: state
+                    .data
+                    .channels
+                    .default_channels()
+                    .iter()
+                    .filter(|c| c.id != channel_id)
+                    .map(|c| ChannelLatestMessageIndex {
+                        channel_id: c.id,
+                        latest_message_index: c.chat.events.main_events_list().latest_message_index(),
+                    })
+                    .collect(),
                 mark_active_duration: state.data.activity_notification_state.notify(now),
                 public_community_activity,
             }),

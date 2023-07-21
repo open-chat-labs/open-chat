@@ -38,14 +38,13 @@ impl Communities {
         true
     }
 
-    pub fn join(&mut self, community_id: CommunityId, now: TimestampMillis) -> bool {
+    pub fn join(&mut self, community_id: CommunityId, now: TimestampMillis) -> (&mut Community, bool) {
         match self.communities.entry(community_id) {
             Vacant(e) => {
-                e.insert(Community::new(community_id, now));
                 self.removed.retain(|c| c.community_id != community_id);
-                true
+                (e.insert(Community::new(community_id, now)), true)
             }
-            Occupied(_) => false,
+            Occupied(e) => (e.into_mut(), false),
         }
     }
 
