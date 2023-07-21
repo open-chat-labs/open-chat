@@ -1588,14 +1588,23 @@ export class OpenChatAgent extends EventTarget {
     async joinGroup(chatId: MultiUserChatIdentifier): Promise<JoinGroupResponse> {
         switch (chatId.kind) {
             case "group_chat":
-                const inviteCode = this.getProvidedGroupInviteCode(chatId);
-                const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
-                return this.createLocalUserIndexClient(localUserIndex).joinGroup(
+                const groupInviteCode = this.getProvidedGroupInviteCode(chatId);
+                const groupLocalUserIndex = await this.getGroupClient(
+                    chatId.groupId
+                ).localUserIndex();
+                return this.createLocalUserIndexClient(groupLocalUserIndex).joinGroup(
                     chatId.groupId,
-                    inviteCode
+                    groupInviteCode
                 );
             case "channel":
-                return this.communityClient(chatId.communityId).joinChannel(chatId);
+                const communityInviteCode = this.getProvidedCommunityInviteCode(chatId.communityId);
+                const communityLocalIndex = await this.communityClient(
+                    chatId.communityId
+                ).localUserIndex();
+                return this.createLocalUserIndexClient(communityLocalIndex).joinChannel(
+                    chatId,
+                    communityInviteCode
+                );
         }
     }
 

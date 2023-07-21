@@ -987,6 +987,22 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    private addCommunityLocally(community: CommunitySummary): void {
+        localCommunitySummaryUpdates.markAdded(community);
+        community.channels.forEach((c) => localChatSummaryUpdates.markAdded(c));
+    }
+
+    private removeCommunityLocally(id: CommunityIdentifier): void {
+        if (this._liveState.communityPreviews.has(id)) {
+            removeCommunityPreview(id);
+        }
+        localCommunitySummaryUpdates.markRemoved(id);
+        const community = this._liveState.communities.get(id);
+        if (community !== undefined) {
+            community.channels.forEach((c) => localChatSummaryUpdates.markRemoved(c.id));
+        }
+    }
+
     async joinGroup(
         chat: MultiUserChat
     ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
@@ -1001,6 +1017,22 @@ export class OpenChat extends OpenChatAgentWorker {
                         [],
                         undefined
                     );
+                } else if (resp.kind === "success_joined_community") {
+                    this.addCommunityLocally(resp.community);
+                    messagesRead.batchUpdate(() =>
+                        resp.community.channels.forEach((c) => {
+                            if (chatIdentifiersEqual(c.id, chat.id)) {
+                                localChatSummaryUpdates.markAdded(c);
+                                this.loadChatDetails(c);
+                            }
+                            if (c.latestMessage) {
+                                messagesRead.markReadUpTo(c.id, c.latestMessage.event.messageIndex);
+                            }
+                        })
+                    );
+                    if (this._liveState.communityPreviews.has(resp.community.id)) {
+                        removeCommunityPreview(resp.community.id);
+                    }
                 } else {
                     if (resp.kind === "user_blocked") {
                         return "blocked";
@@ -1012,8 +1044,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 return "success";
             })
             .then((resp) => {
-                if (resp === "success" && this._liveState.groupPreviews.has(chat.id)) {
-                    removeGroupPreview(chat.id);
+                if (resp === "success") {
+                    if (this._liveState.groupPreviews.has(chat.id)) {
+                        removeGroupPreview(chat.id);
+                    }
                 }
                 return resp;
             })
@@ -2044,12 +2078,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     removeCommunity(id: CommunityIdentifier): void {
-        if (this._liveState.communities.has(id)) {
-            localCommunitySummaryUpdates.markRemoved(id);
-        }
-        if (this._liveState.communityPreviews.has(id)) {
-            removeCommunityPreview(id);
-        }
+        this.removeCommunityLocally(id);
     }
 
     clearSelectedChat = clearSelectedChat;
@@ -4485,8 +4514,16 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "joinCommunity", id })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    localCommunitySummaryUpdates.markAdded(resp.community);
+                    this.addCommunityLocally(resp.community);
+                    removeCommunityPreview(id);
                     this.loadCommunityDetails(resp.community);
+                    messagesRead.batchUpdate(() => {
+                        resp.community.channels.forEach((c) => {
+                            if (c.latestMessage) {
+                                messagesRead.markReadUpTo(c.id, c.latestMessage.event.messageIndex);
+                            }
+                        });
+                    });
                 } else {
                     if (resp.kind === "gate_check_failed") {
                         return "gate_check_failed";
@@ -4502,14 +4539,15 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     deleteCommunity(id: CommunityIdentifier): Promise<boolean> {
-        localCommunitySummaryUpdates.markRemoved(id);
+        const community = this._liveState.communities.get(id);
+        if (community === undefined) return Promise.resolve(false);
+
+        this.removeCommunityLocally(id);
+
         return this.sendRequest({ kind: "deleteCommunity", id })
             .then((resp) => {
                 if (resp !== "success") {
-                    const community = this._liveState.communities.get(id);
-                    if (community) {
-                        localCommunitySummaryUpdates.markAdded(community);
-                    }
+                    this.addCommunityLocally(community);
                 }
                 return resp === "success";
             })
@@ -4520,14 +4558,15 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     leaveCommunity(id: CommunityIdentifier): Promise<boolean> {
-        localCommunitySummaryUpdates.markRemoved(id);
+        const community = this._liveState.communities.get(id);
+        if (community === undefined) return Promise.resolve(false);
+
+        this.removeCommunityLocally(id);
+
         return this.sendRequest({ kind: "leaveCommunity", id })
             .then((resp) => {
                 if (resp !== "success") {
-                    const community = this._liveState.communities.get(id);
-                    if (community) {
-                        localCommunitySummaryUpdates.markAdded(community);
-                    }
+                    this.addCommunityLocally(community);
                 }
                 return resp === "success";
             })

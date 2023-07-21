@@ -20,7 +20,6 @@ import {
     ExploreChannelsResponse,
     GateCheckFailedReason,
     ImportGroupResponse,
-    JoinGroupResponse,
     ManageDefaultChannelsResponse,
     MemberRole,
     Message,
@@ -38,7 +37,6 @@ import type {
     ApiAddMembersToChannelResponse,
     ApiBlockUserResponse,
     ApiChangeRoleResponse,
-    ApiJoinChannelResponse,
     ApiLocalUserIndexResponse,
     ApiMessagesByMessageIndexResponse,
     ApiRemoveMemberResponse,
@@ -77,7 +75,6 @@ import {
     communityChannelSummary,
     communityPermissions,
     communitySummary,
-    gateCheckFailedReason,
     groupPermissions,
     groupRules,
     groupSubtype,
@@ -212,27 +209,6 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommuni
     } else {
         console.warn("Unexpected ApiChangeRoleResponse type received", candid);
         return "failure";
-    }
-}
-
-export function joinChannelResponse(
-    candid: ApiJoinChannelResponse,
-    communityId: string
-): JoinGroupResponse {
-    if ("Success" in candid) {
-        return { kind: "success", group: communityChannelSummary(candid.Success, communityId) };
-    } else if ("AlreadyInChannel" in candid) {
-        return {
-            kind: "success",
-            group: communityChannelSummary(candid.AlreadyInChannel, communityId),
-        };
-    } else if ("UserBlocked" in candid) {
-        return CommonResponses.userBlocked();
-    } else if ("GateCheckFailed" in candid) {
-        return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
-    } else {
-        console.warn("Join group failed with: ", candid);
-        return CommonResponses.failure();
     }
 }
 

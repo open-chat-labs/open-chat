@@ -11,6 +11,7 @@ import {
     JoinCommunityResponse,
     CommunityCanisterCommunitySummary,
     CommunityMembership,
+    JoinChannelResponse,
 } from "./types";
 export {
     _SERVICE as LocalUserIndexService,
@@ -24,6 +25,7 @@ export {
     JoinCommunityResponse as ApiJoinCommunityResponse,
     CommunityCanisterCommunitySummary as ApiCommunityCanisterCommunitySummary,
     CommunityMembership as ApiCommunityMembership,
+    JoinChannelResponse as ApiJoinChannelResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

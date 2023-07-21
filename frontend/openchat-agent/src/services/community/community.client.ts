@@ -7,7 +7,6 @@ import type { AgentConfig } from "../../config";
 import {
     addMembersToChannelResponse,
     blockUserResponse,
-    joinChannelResponse,
     localUserIndexResponse,
     messagesByMessageIndexResponse,
     removeMemberResponse,
@@ -106,7 +105,6 @@ import {
     type ChannelSummaryResponse,
     type RegisterPollVoteResponse,
     type ToggleMuteNotificationResponse,
-    type JoinGroupResponse,
     type ExploreChannelsResponse,
     type GroupChatIdentifier,
     type ImportGroupResponse,
@@ -623,15 +621,6 @@ export class CommunityClient extends CandidService {
 
     getInviteCode(): Promise<InviteCodeResponse> {
         return this.handleResponse(this.service.invite_code({}), inviteCodeResponse);
-    }
-
-    joinChannel(chatId: ChannelIdentifier): Promise<JoinGroupResponse> {
-        return this.handleResponse(
-            this.service.join_channel({
-                channel_id: BigInt(chatId.channelId),
-            }),
-            (resp) => joinChannelResponse(resp, chatId.communityId)
-        );
     }
 
     leaveChannel(chatId: ChannelIdentifier): Promise<LeaveGroupResponse> {
