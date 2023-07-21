@@ -2,20 +2,20 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, VecDeque};
-use types::{ChatId, DeletedGroupInfo, UserId};
+use types::{ChatId, DeletedGroupInfoInternal, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct DeletedGroups {
-    groups: HashMap<ChatId, DeletedGroupInfo>,
+    groups: HashMap<ChatId, DeletedGroupInfoInternal>,
     pending_group_deleted_notifications: VecDeque<(ChatId, UserId)>,
 }
 
 impl DeletedGroups {
-    pub fn get(&self, chat_id: &ChatId) -> Option<&DeletedGroupInfo> {
+    pub fn get(&self, chat_id: &ChatId) -> Option<&DeletedGroupInfoInternal> {
         self.groups.get(chat_id)
     }
 
-    pub fn insert(&mut self, deleted_group: DeletedGroupInfo, members: Vec<UserId>) -> bool {
+    pub fn insert(&mut self, deleted_group: DeletedGroupInfoInternal, members: Vec<UserId>) -> bool {
         let chat_id = deleted_group.id;
 
         match self.groups.entry(chat_id) {
@@ -31,7 +31,7 @@ impl DeletedGroups {
         }
     }
 
-    pub fn dequeue_group_deleted_notification(&mut self) -> Option<(UserId, DeletedGroupInfo)> {
+    pub fn dequeue_group_deleted_notification(&mut self) -> Option<(UserId, DeletedGroupInfoInternal)> {
         self.pending_group_deleted_notifications
             .pop_front()
             .and_then(|(chat_id, user_id)| self.groups.get(&chat_id).map(|d| (user_id, d.clone())))

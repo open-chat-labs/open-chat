@@ -24,6 +24,7 @@ fn active_groups_impl(args: Args, state: &RuntimeState) -> Response {
         .iter()
         .filter_map(|id| all_deleted_groups.get(id))
         .cloned()
+        .map(|g| g.into())
         .collect();
     let deleted_communities = args
         .community_ids

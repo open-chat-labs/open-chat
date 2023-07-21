@@ -3,7 +3,7 @@ use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_delete_group::{Response::*, *};
-use types::{ChatId, CommunityImportedInto, DeletedGroupInfo, UserId};
+use types::{ChatId, CommunityImportedInto, DeletedGroupInfoInternal, UserId};
 
 #[update_msgpack(guard = "caller_is_group_canister")]
 #[trace]
@@ -50,7 +50,7 @@ pub(crate) fn delete_group(
     };
 
     state.data.deleted_groups.insert(
-        DeletedGroupInfo {
+        DeletedGroupInfoInternal {
             id: group_id,
             timestamp: state.env.now(),
             deleted_by,

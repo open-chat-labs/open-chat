@@ -339,7 +339,6 @@ type CommunityCanisterChannelSummary = record {
     description : text;
     subtype : opt GroupSubtype;
     avatar_id : opt nat;
-    banner_id : opt nat;
     is_public : bool;
     history_visible_to_new_joiners : bool;
     min_visible_event_index : EventIndex;
@@ -594,6 +593,7 @@ type PublicGroupSummary = record {
     participant_count : nat32;
     is_public : bool;
     frozen : opt FrozenGroupInfo;
+    events_ttl : opt Milliseconds;
     gate : opt AccessGate;
     wasm_version : Version;
 };

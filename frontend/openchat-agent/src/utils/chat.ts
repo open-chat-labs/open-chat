@@ -34,7 +34,7 @@ import {
     ChannelIdentifier,
 } from "openchat-shared";
 import { toRecord } from "./list";
-import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
+import { applyOptionUpdate, identity, mapOptionUpdate } from "./mapping";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../constants";
@@ -497,10 +497,6 @@ export function getUpdatedEvents(
         .forEach((c) => result.set(c.id, c.updatedEvents));
 
     return result;
-}
-
-export function identity<T>(x: T): T {
-    return x;
 }
 
 export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {

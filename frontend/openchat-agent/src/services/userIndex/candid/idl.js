@@ -13,9 +13,11 @@ export const idlFactory = ({ IDL }) => {
     'User' : IDL.Null,
     'BtcMiami' : IDL.Null,
   });
+  const TimestampMillis = IDL.Nat64;
   const AddReferralCodesArgs = IDL.Record({
     'codes' : IDL.Vec(IDL.Text),
     'referral_type' : ReferralType,
+    'expiry' : IDL.Opt(TimestampMillis),
   });
   const AddReferralCodesResponse = IDL.Variant({ 'Success' : IDL.Null });
   const ChatId = CanisterId;
@@ -42,7 +44,6 @@ export const idlFactory = ({ IDL }) => {
     'NotRequired' : IDL.Null,
     'InProgress' : IDL.Null,
   });
-  const TimestampMillis = IDL.Nat64;
   const SuspensionAction = IDL.Variant({
     'Unsuspend' : TimestampMillis,
     'Delete' : TimestampMillis,
