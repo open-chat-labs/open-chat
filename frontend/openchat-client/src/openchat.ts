@@ -1008,7 +1008,6 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
         return this.sendRequest({ kind: "joinGroup", chatId: chat.id })
             .then((resp) => {
-                console.log("xxx join response", resp);
                 if (resp.kind === "success") {
                     localChatSummaryUpdates.markAdded(resp.group);
                     this.loadChatDetails(resp.group);
@@ -1020,19 +1019,17 @@ export class OpenChat extends OpenChatAgentWorker {
                     );
                 } else if (resp.kind === "success_joined_community") {
                     this.addCommunityLocally(resp.community);
-                    const channel = resp.community.channels.find((c) =>
-                        chatIdentifiersEqual(c.id, chat.id)
+                    messagesRead.batchUpdate(() =>
+                        resp.community.channels.forEach((c) => {
+                            if (chatIdentifiersEqual(c.id, chat.id)) {
+                                localChatSummaryUpdates.markAdded(c);
+                                this.loadChatDetails(c);
+                            }
+                            if (c.latestMessage) {
+                                messagesRead.markReadUpTo(c.id, c.latestMessage.event.messageIndex);
+                            }
+                        })
                     );
-                    if (channel !== undefined) {
-                        localChatSummaryUpdates.markAdded(channel);
-                        this.loadChatDetails(channel);
-                        messagesRead.syncWithServer(
-                            channel.id,
-                            channel.membership?.readByMeUpTo,
-                            [],
-                            undefined
-                        );
-                    }
                     if (this._liveState.communityPreviews.has(resp.community.id)) {
                         removeCommunityPreview(resp.community.id);
                     }
@@ -2365,13 +2362,11 @@ export class OpenChat extends OpenChatAgentWorker {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (clientChat.kind === "group_chat" || clientChat.kind === "channel") {
             if (!chatStateStore.getProp(clientChat.id, "detailsLoaded")) {
-                console.log("xxx loading chat details");
                 const resp = await this.sendRequest({
                     kind: "getGroupDetails",
                     chatId: clientChat.id,
                     timestamp: clientChat.lastUpdated,
                 });
-                console.log("xxx loaded chat details", resp);
                 if (resp !== "failure") {
                     chatStateStore.setProp(clientChat.id, "detailsLoaded", true);
                     chatStateStore.setProp(clientChat.id, "members", resp.members);
@@ -4089,8 +4084,6 @@ export class OpenChat extends OpenChatAgentWorker {
                     }
                 }
 
-                console.log("xxx: chatsResponse", chatsResponse);
-
                 setGlobalState(
                     chatsResponse.state.communities,
                     updatedChats,
@@ -4524,6 +4517,13 @@ export class OpenChat extends OpenChatAgentWorker {
                     this.addCommunityLocally(resp.community);
                     removeCommunityPreview(id);
                     this.loadCommunityDetails(resp.community);
+                    messagesRead.batchUpdate(() => {
+                        resp.community.channels.forEach((c) => {
+                            if (c.latestMessage) {
+                                messagesRead.markReadUpTo(c.id, c.latestMessage.event.messageIndex);
+                            }
+                        });
+                    });
                 } else {
                     if (resp.kind === "gate_check_failed") {
                         return "gate_check_failed";
