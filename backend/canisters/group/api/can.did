@@ -319,6 +319,7 @@ type MakePrivateResponse = variant {
 type ConvertIntoCommunityArgs = record {
     rules : AccessRules;
     permissions : opt CommunityPermissions;
+    primary_language : opt text;
     history_visible_to_new_joiners : bool;
 };
 

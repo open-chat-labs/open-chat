@@ -606,7 +606,6 @@ export const idlFactory = ({ IDL }) => {
     'next_message_expiry' : IDL.Opt(TimestampMillis),
     'membership' : IDL.Opt(ChannelMembership),
     'latest_event_index' : EventIndex,
-    'banner_id' : IDL.Opt(IDL.Nat),
     'history_visible_to_new_joiners' : IDL.Bool,
     'min_visible_message_index' : MessageIndex,
     'member_count' : IDL.Nat32,

@@ -64,6 +64,7 @@ pub struct GroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
+    pub gate: Option<AccessGate>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

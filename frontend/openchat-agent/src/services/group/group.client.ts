@@ -883,6 +883,7 @@ export class GroupClient extends CandidService {
         return this.handleResponse(
             this.groupService.convert_into_community({
                 history_visible_to_new_joiners: historyVisible,
+                primary_language: [],
                 permissions: [],
                 rules: apiGroupRules(rules),
             }),

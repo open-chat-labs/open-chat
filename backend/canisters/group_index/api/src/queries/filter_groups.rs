@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, DeletedGroupInfo, TimestampMillis};
+use types::{ChatId, DeletedGroupInfoInternal, TimestampMillis};
 
 // TODO: Deprecated, remove once FE using active_groups
 
@@ -19,6 +19,6 @@ pub enum Response {
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub active_groups: Vec<ChatId>,
-    pub deleted_groups: Vec<DeletedGroupInfo>,
+    pub deleted_groups: Vec<DeletedGroupInfoInternal>,
     pub upgrades_in_progress: Vec<ChatId>,
 }

@@ -173,6 +173,6 @@ type UpdateSnsSubnetListRequest = record {
     sns_subnet_ids_to_remove : vec principal;
 };
 type UpdateSnsSubnetListResponse = record { error : opt SnsWasmError };
-service : (SnsWasmCanisterInitPayload) -> {
+service : {
     list_deployed_snses : (record {}) -> (ListDeployedSnsesResponse) query;
 }

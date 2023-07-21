@@ -2,6 +2,7 @@ import "../../../libraries/types/can.did";
 
 type AddGovernanceCanisterArgs = record {
     governance_canister_id : CanisterId;
+    community_id : opt CommunityId;
     name : text;
     description : opt text;
     avatar : opt Document;

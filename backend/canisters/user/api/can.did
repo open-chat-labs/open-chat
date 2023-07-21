@@ -178,6 +178,7 @@ type CreateGroupArgs = record {
     history_visible_to_new_joiners : bool;
     permissions : opt GroupPermissions;
     rules : AccessRules;
+    events_ttl: opt Milliseconds;
     gate : opt AccessGate;
 };
 

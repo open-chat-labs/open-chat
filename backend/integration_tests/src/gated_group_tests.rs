@@ -31,7 +31,6 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
             history_visible_to_new_joiners: true,
             permissions: None,
             rules: AccessRules::default(),
-            subtype: None,
             events_ttl: None,
             gate: Some(AccessGate::DiamondMember),
         },
