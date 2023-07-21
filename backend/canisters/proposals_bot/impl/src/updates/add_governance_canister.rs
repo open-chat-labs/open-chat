@@ -21,10 +21,7 @@ async fn add_governance_canister(args: Args) -> Response {
     };
 
     mutate_state(|state| {
-        state
-            .data
-            .nervous_systems
-            .add(args.name, args.governance_canister_id, chat_id);
+        state.data.nervous_systems.add(args.governance_canister_id, chat_id);
     });
 
     Success

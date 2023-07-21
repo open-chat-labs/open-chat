@@ -19,11 +19,9 @@ pub struct NervousSystems {
 }
 
 impl NervousSystems {
-    pub fn add(&mut self, name: String, governance_canister_id: CanisterId, chat_id: MultiUserChat) {
-        self.nervous_systems.insert(
-            governance_canister_id,
-            NervousSystem::new(name, governance_canister_id, chat_id),
-        );
+    pub fn add(&mut self, governance_canister_id: CanisterId, chat_id: MultiUserChat) {
+        self.nervous_systems
+            .insert(governance_canister_id, NervousSystem::new(governance_canister_id, chat_id));
     }
 
     pub fn get_chat_id(&self, governance_canister_id: &CanisterId) -> Option<MultiUserChat> {
@@ -188,7 +186,6 @@ impl NervousSystems {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NervousSystem {
-    name: String,
     governance_canister_id: CanisterId,
     chat_id: MultiUserChat,
     latest_successful_sync: Option<TimestampMillis>,
@@ -213,9 +210,8 @@ struct ProposalsToBeUpdated {
 }
 
 impl NervousSystem {
-    pub fn new(name: String, governance_canister_id: CanisterId, chat_id: MultiUserChat) -> NervousSystem {
+    pub fn new(governance_canister_id: CanisterId, chat_id: MultiUserChat) -> NervousSystem {
         NervousSystem {
-            name,
             governance_canister_id,
             chat_id,
             latest_successful_sync: None,
