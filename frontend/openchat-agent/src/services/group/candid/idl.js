@@ -587,7 +587,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const ReplyContext = IDL.Record({
     'chat_if_other' : IDL.Opt(IDL.Tuple(Chat, IDL.Opt(MessageIndex))),
-    'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
     'event_index' : EventIndex,
   });
   const Message = IDL.Record({

@@ -77,7 +77,7 @@ fn set_message_reminder_succeeds() {
             panic!()
         }
         let replies_to = m.replies_to.unwrap();
-        assert_eq!(replies_to.event_list_if_other, Some((user2.user_id.into(), None)));
+        assert_eq!(replies_to.chat_if_other, Some((Chat::Direct(user2.user_id.into()), None)));
         assert_eq!(replies_to.event_index, 10.into());
     } else {
         panic!()

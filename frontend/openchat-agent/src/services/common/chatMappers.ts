@@ -974,13 +974,11 @@ export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext
                     apiOptional(identity, domain.sourceContext.threadRootMessageIndex),
                 ],
             ],
-            event_list_if_other: [],
             event_index: domain.eventIndex,
         };
     } else {
         return {
             chat_if_other: [],
-            event_list_if_other: [],
             event_index: domain.eventIndex,
         };
     }

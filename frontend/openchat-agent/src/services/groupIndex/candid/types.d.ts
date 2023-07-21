@@ -1087,7 +1087,6 @@ export type RemoveHotGroupExclusionResponse = { 'ChatNotFound' : null } |
   { 'InternalError' : string };
 export interface ReplyContext {
   'chat_if_other' : [] | [[Chat, [] | [MessageIndex]]],
-  'event_list_if_other' : [] | [[ChatId, [] | [MessageIndex]]],
   'event_index' : EventIndex,
 }
 export interface ReportedMessage {

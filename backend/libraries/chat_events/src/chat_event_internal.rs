@@ -595,13 +595,6 @@ pub struct ReplyContextInternal {
 impl ReplyContextInternal {
     pub fn hydrate(&self) -> ReplyContext {
         ReplyContext {
-            event_list_if_other: self.chat_if_other.as_ref().and_then(|(c, t)| {
-                if let ChatInternal::Group(chat_id) = c {
-                    Some((*chat_id, *t))
-                } else {
-                    None
-                }
-            }),
             chat_if_other: self.chat_if_other.as_ref().map(|(c, t)| (c.hydrate(), *t)),
             event_index: self.event_index,
         }
