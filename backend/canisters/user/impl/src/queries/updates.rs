@@ -9,11 +9,6 @@ fn updates(args: Args) -> Response {
     read_state(|state| updates_impl(args.updates_since, state))
 }
 
-#[query(guard = "caller_is_owner")]
-fn updates_v2(args: user_canister::updates_v2::Args) -> user_canister::updates_v2::Response {
-    read_state(|state| updates_impl(args.updates_since, state)).into()
-}
-
 fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Response {
     let avatar_id = state
         .data

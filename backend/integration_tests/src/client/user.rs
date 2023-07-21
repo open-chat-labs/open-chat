@@ -25,7 +25,7 @@ generate_update_call!(remove_reaction);
 generate_update_call!(send_message_v2);
 generate_update_call!(send_message_with_transfer_to_channel);
 generate_update_call!(send_message_with_transfer_to_group);
-generate_update_call!(set_message_reminder);
+generate_update_call!(set_message_reminder_v2);
 generate_update_call!(unblock_user);
 generate_update_call!(undelete_messages);
 

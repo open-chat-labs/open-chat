@@ -36,9 +36,6 @@ export interface AddedToGroupNotification {
   'chat_id' : ChatId,
   'group_name' : string,
 }
-export interface ArchiveChatArgs { 'chat_id' : ChatId }
-export type ArchiveChatResponse = { 'ChatNotFound' : null } |
-  { 'Success' : null };
 export interface ArchiveUnarchiveChatsArgs {
   'to_archive' : Array<Chat>,
   'to_unarchive' : Array<Chat>,
@@ -890,31 +887,6 @@ export type InitialStateResponse = {
       'timestamp' : TimestampMillis,
     }
   };
-export interface InitialStateV2Args { 'disable_cache' : [] | [boolean] }
-export type InitialStateV2Response = {
-    'SuccessCached' : {
-      'user_canister_wasm_version' : Version,
-      'blocked_users' : Array<UserId>,
-      'group_chats_added' : Array<UserCanisterGroupChatSummary>,
-      'avatar_id' : [] | [bigint],
-      'direct_chats' : Array<DirectChatSummary>,
-      'timestamp' : TimestampMillis,
-      'cached_group_chat_summaries' : Array<GroupChatSummary>,
-      'cache_timestamp' : TimestampMillis,
-      'pinned_chats' : Array<ChatId>,
-    }
-  } |
-  {
-    'Success' : {
-      'user_canister_wasm_version' : Version,
-      'blocked_users' : Array<UserId>,
-      'group_chats' : Array<UserCanisterGroupChatSummary>,
-      'avatar_id' : [] | [bigint],
-      'direct_chats' : Array<DirectChatSummary>,
-      'timestamp' : TimestampMillis,
-      'pinned_chats' : Array<ChatId>,
-    }
-  };
 export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'TooFewOptions' : number } |
   { 'TooManyOptions' : number } |
@@ -953,7 +925,6 @@ export interface MarkReadArgs {
   'messages_read' : Array<ChatMessagesRead>,
 }
 export type MarkReadResponse = { 'Success' : null };
-export interface MarkReadV2Args { 'messages_read' : Array<ChatMessagesRead> }
 export type Memo = Uint8Array | number[];
 export interface Mention {
   'message_id' : MessageId,
@@ -1470,13 +1441,6 @@ export type SetContactResponse = { 'NoChange' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'NicknameTooShort' : FieldTooShortResult };
-export interface SetMessageReminderArgs {
-  'notes' : [] | [string],
-  'remind_at' : TimestampMillis,
-  'chat_id' : ChatId,
-  'event_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export type SetMessageReminderResponse = {
     'NotesTooLong' : FieldTooLongResult
   } |
@@ -1593,9 +1557,6 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
-export interface UnArchiveChatArgs { 'chat_id' : ChatId }
-export type UnArchiveChatResponse = { 'ChatNotFound' : null } |
-  { 'Success' : null };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null } |
   { 'UserSuspended' : null };
@@ -1627,22 +1588,6 @@ export type UpdatesResponse = {
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
-    }
-  } |
-  { 'SuccessNoUpdates' : null };
-export interface UpdatesV2Args { 'updates_since' : TimestampMillis }
-export type UpdatesV2Response = {
-    'Success' : {
-      'user_canister_wasm_version' : [] | [Version],
-      'direct_chats_added' : Array<DirectChatSummary>,
-      'blocked_users_v2' : [] | [Array<UserId>],
-      'group_chats_added' : Array<UserCanisterGroupChatSummary>,
-      'avatar_id' : DocumentIdUpdate,
-      'chats_removed' : Array<ChatId>,
-      'timestamp' : TimestampMillis,
-      'group_chats_updated' : Array<UserCanisterGroupChatSummaryUpdates>,
-      'direct_chats_updated' : Array<DirectChatSummaryUpdates>,
-      'pinned_chats' : [] | [Array<ChatId>],
     }
   } |
   { 'SuccessNoUpdates' : null };
@@ -1735,7 +1680,6 @@ export interface _SERVICE {
     AddHotGroupExclusionsResponse
   >,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
-  'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
   'archive_unarchive_chats' : ActorMethod<
     [ArchiveUnarchiveChatsArgs],
     ArchiveUnarchiveChatsResponse
@@ -1772,10 +1716,6 @@ export interface _SERVICE {
     InitUserPrincipalMigrationResponse
   >,
   'initial_state' : ActorMethod<[InitialStateArgs], InitialStateResponse>,
-  'initial_state_v2' : ActorMethod<
-    [InitialStateV2Args],
-    InitialStateV2Response
-  >,
   'leave_community' : ActorMethod<[LeaveCommunityArgs], LeaveCommunityResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
   'manage_favourite_chats' : ActorMethod<
@@ -1783,7 +1723,6 @@ export interface _SERVICE {
     ManageFavouriteChatsResponse
   >,
   'mark_read' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
-  'mark_read_v2' : ActorMethod<[MarkReadV2Args], MarkReadResponse>,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse
@@ -1813,15 +1752,10 @@ export interface _SERVICE {
   'set_avatar' : ActorMethod<[SetAvatarArgs], SetAvatarResponse>,
   'set_bio' : ActorMethod<[SetBioArgs], SetBioResponse>,
   'set_contact' : ActorMethod<[SetContactArgs], SetContactResponse>,
-  'set_message_reminder' : ActorMethod<
-    [SetMessageReminderArgs],
-    SetMessageReminderResponse
-  >,
   'set_message_reminder_v2' : ActorMethod<
     [SetMessageReminderV2Args],
     SetMessageReminderResponse
   >,
-  'unarchive_chat' : ActorMethod<[UnArchiveChatArgs], UnArchiveChatResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'undelete_messages' : ActorMethod<
     [UndeleteMessagesArgs],
@@ -1834,7 +1768,6 @@ export interface _SERVICE {
   'unpin_chat' : ActorMethod<[UnpinChatRequest], UnpinChatResponse>,
   'unpin_chat_v2' : ActorMethod<[UnpinChatV2Request], UnpinChatV2Response>,
   'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
-  'updates_v2' : ActorMethod<[UpdatesV2Args], UpdatesV2Response>,
   'withdraw_crypto_v2' : ActorMethod<
     [WithdrawCryptoArgs],
     WithdrawCryptoResponse
