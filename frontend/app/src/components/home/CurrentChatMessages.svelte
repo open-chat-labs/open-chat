@@ -212,8 +212,6 @@
     $: privatePreview = privateCommunityPreview || privateChatPreview;
     $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
 
-    $: console.log("Private: ", privateCommunityPreview, privateChatPreview, privatePreview, chat);
-
     $: {
         if (currentChatId === undefined || !chatIdentifiersEqual(chat.id, currentChatId)) {
             currentChatId = chat.id;

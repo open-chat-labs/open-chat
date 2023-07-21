@@ -22,7 +22,6 @@
         background-position: center center;
         height: toRem(200);
         border-radius: $sp3 $sp3 0 0;
-        transition: background-size 250ms ease-in-out;
 
         &.square {
             border-radius: 0;
