@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Drop `name` from nervous systems since it is unused ([#4011](https://github.com/open-chat-labs/open-chat/pull/4011))
+
 ## [[2.0.755](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.755-proposals_bot)] - 2023-07-20
 
 ### Changed

@@ -19,11 +19,9 @@ pub struct NervousSystems {
 }
 
 impl NervousSystems {
-    pub fn add(&mut self, name: String, governance_canister_id: CanisterId, chat_id: MultiUserChat) {
-        self.nervous_systems.insert(
-            governance_canister_id,
-            NervousSystem::new(name, governance_canister_id, chat_id),
-        );
+    pub fn add(&mut self, governance_canister_id: CanisterId, chat_id: MultiUserChat) {
+        self.nervous_systems
+            .insert(governance_canister_id, NervousSystem::new(governance_canister_id, chat_id));
     }
 
     pub fn get_chat_id(&self, governance_canister_id: &CanisterId) -> Option<MultiUserChat> {
@@ -180,7 +178,7 @@ impl NervousSystems {
     pub fn metrics(&self) -> Vec<NervousSystemMetrics> {
         self.nervous_systems
             .values()
-            .sorted_unstable_by_key(|ns| ns.name.as_str())
+            .sorted_unstable_by_key(|ns| ns.governance_canister_id)
             .map_into()
             .collect()
     }
@@ -188,7 +186,6 @@ impl NervousSystems {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NervousSystem {
-    name: String,
     governance_canister_id: CanisterId,
     chat_id: MultiUserChat,
     latest_successful_sync: Option<TimestampMillis>,
@@ -197,7 +194,7 @@ pub struct NervousSystem {
     latest_failed_proposals_update: Option<TimestampMillis>,
     proposals_to_be_pushed: ProposalsToBePushed,
     proposals_to_be_updated: ProposalsToBeUpdated,
-    pub active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
+    active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -213,9 +210,8 @@ struct ProposalsToBeUpdated {
 }
 
 impl NervousSystem {
-    pub fn new(name: String, governance_canister_id: CanisterId, chat_id: MultiUserChat) -> NervousSystem {
+    pub fn new(governance_canister_id: CanisterId, chat_id: MultiUserChat) -> NervousSystem {
         NervousSystem {
-            name,
             governance_canister_id,
             chat_id,
             latest_successful_sync: None,
@@ -291,7 +287,6 @@ impl NervousSystem {
 impl From<&NervousSystem> for NervousSystemMetrics {
     fn from(ns: &NervousSystem) -> Self {
         NervousSystemMetrics {
-            name: ns.name.clone(),
             governance_canister_id: ns.governance_canister_id,
             chat_id: ns.chat_id,
             latest_successful_sync: ns.latest_successful_sync,
