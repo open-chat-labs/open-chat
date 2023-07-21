@@ -28,6 +28,9 @@ type UpdateConfigArgs = record {
     max_top_up_amount : opt Cycles;
     min_interval : opt Milliseconds;
     min_cycles_balance : opt Cycles;
+    icp_burn_amount : opt record {
+        e8s : nat64;
+    };
 };
 
 type UpdateConfigResponse = variant {

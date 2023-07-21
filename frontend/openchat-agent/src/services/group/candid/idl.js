@@ -197,6 +197,7 @@ export const idlFactory = ({ IDL }) => {
     'permissions' : IDL.Opt(CommunityPermissions),
     'history_visible_to_new_joiners' : IDL.Bool,
     'rules' : AccessRules,
+    'primary_language' : IDL.Opt(IDL.Text),
   });
   const ChannelId = IDL.Nat;
   const CommunityId = CanisterId;
@@ -829,6 +830,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'wasm_version' : Version,
     'description' : IDL.Text,
+    'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'frozen' : IDL.Opt(FrozenGroupInfo),

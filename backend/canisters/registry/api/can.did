@@ -18,10 +18,15 @@ type TokenDetails = record {
     symbol : text;
     decimals : nat8;
     fee : nat;
+    logo : opt text;
+    sns_canisters: opt record {
+        root: CanisterId;
+        governance: CanisterId;
+    };
     info_url : opt text;
     how_to_buy_url : opt text;
     transaction_url_format : opt text;
-    logo : opt text;
+    added : TimestampMillis;
     last_updated : TimestampMillis;
 };
 

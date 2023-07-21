@@ -13,8 +13,8 @@ do
   if test -f "$candid"; then
     echo validating ${candid}
     cargo run -p ${canister_name}_canister > temp.did
-    didc check ${candid} temp.did || exit 1
-    didc check temp.did ${candid} || exit 1
+    didc check --strict ${candid} temp.did || exit 1
+    didc check --strict temp.did ${candid} || exit 1
   fi
 done
 

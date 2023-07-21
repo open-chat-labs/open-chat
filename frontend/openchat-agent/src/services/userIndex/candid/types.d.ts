@@ -20,6 +20,7 @@ export type AddPlatformOperatorResponse = { 'Success' : null };
 export interface AddReferralCodesArgs {
   'codes' : Array<string>,
   'referral_type' : ReferralType,
+  'expiry' : [] | [TimestampMillis],
 }
 export type AddReferralCodesResponse = { 'Success' : null };
 export interface AddedToGroupNotification {
@@ -170,7 +171,6 @@ export interface CommunityCanisterChannelSummary {
   'next_message_expiry' : [] | [TimestampMillis],
   'membership' : [] | [ChannelMembership],
   'latest_event_index' : EventIndex,
-  'banner_id' : [] | [bigint],
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
   'member_count' : number,
@@ -1015,6 +1015,7 @@ export interface PublicGroupSummary {
   'name' : string,
   'wasm_version' : Version,
   'description' : string,
+  'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'frozen' : [] | [FrozenGroupInfo],

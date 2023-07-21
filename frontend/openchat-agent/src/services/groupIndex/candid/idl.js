@@ -559,6 +559,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'wasm_version' : Version,
     'description' : IDL.Text,
+    'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'frozen' : IDL.Opt(FrozenGroupInfo),

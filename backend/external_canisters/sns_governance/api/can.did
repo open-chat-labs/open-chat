@@ -408,7 +408,7 @@ type VotingRewardsParameters = record {
     round_duration_seconds : opt nat64;
 };
 type WaitForQuietState = record { current_deadline_timestamp_seconds : nat64 };
-service : (Governance) -> {
+service : {
     get_metadata : (record {}) -> (GetMetadataResponse) query;
     list_neurons : (ListNeurons) -> (ListNeuronsResponse) query;
     list_proposals : (ListProposals) -> (ListProposalsResponse) query;
