@@ -4,8 +4,7 @@ use ic_cdk::api::call::CallResult;
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
 use types::{
-    CanisterId, ChatId, DeletedGroupInfoInternal, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates,
-    TimestampMillis,
+    CanisterId, ChatId, DeletedGroupInfo, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, TimestampMillis,
 };
 
 #[derive(Debug, Default)]
@@ -37,7 +36,7 @@ pub(crate) struct UpdatesArgs {
 pub(crate) struct Updates {
     pub added: Vec<GroupCanisterGroupChatSummary>,
     pub updated: Vec<GroupCanisterGroupChatSummaryUpdates>,
-    pub deleted: Vec<DeletedGroupInfoInternal>,
+    pub deleted: Vec<DeletedGroupInfo>,
 }
 
 pub(crate) fn build_summaries_args(disable_cache: bool, now: TimestampMillis, data: &Data) -> SummariesArgs {
@@ -148,7 +147,7 @@ fn merge_updates(
     }
 }
 
-fn has_group_been_deleted(groups: &[DeletedGroupInfoInternal], group_id: &ChatId) -> bool {
+fn has_group_been_deleted(groups: &[DeletedGroupInfo], group_id: &ChatId) -> bool {
     groups.iter().any(|g| g.id == *group_id)
 }
 

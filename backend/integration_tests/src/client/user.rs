@@ -86,7 +86,6 @@ pub mod happy_path {
                 history_visible_to_new_joiners,
                 permissions: None,
                 rules: AccessRules::default(),
-                subtype: None,
                 events_ttl: None,
                 gate: None,
             },
