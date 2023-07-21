@@ -107,7 +107,6 @@ pub struct Metrics {
 
 #[derive(CandidType, Serialize, Debug)]
 pub struct NervousSystemMetrics {
-    pub name: String,
     pub governance_canister_id: CanisterId,
     pub chat_id: MultiUserChat,
     pub latest_successful_sync: Option<TimestampMillis>,

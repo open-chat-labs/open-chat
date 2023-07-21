@@ -287,7 +287,6 @@ impl NervousSystem {
 impl From<&NervousSystem> for NervousSystemMetrics {
     fn from(ns: &NervousSystem) -> Self {
         NervousSystemMetrics {
-            name: ns.name.clone(),
             governance_canister_id: ns.governance_canister_id,
             chat_id: ns.chat_id,
             latest_successful_sync: ns.latest_successful_sync,
