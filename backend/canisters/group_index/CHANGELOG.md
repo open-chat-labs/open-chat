@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Mark channels as read after joining community or channel ([#4004](https://github.com/open-chat-labs/open-chat/pull/4004))
+
 ### Deprecated
 
 - Deprecate and remove usages of `filter_groups` ([#4003](https://github.com/open-chat-labs/open-chat/pull/4003))
