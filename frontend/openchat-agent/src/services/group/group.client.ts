@@ -104,10 +104,10 @@ import {
     groupDetailsUpdatesResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import { identity, mergeGroupChatDetails } from "../../utils/chat";
+import { mergeGroupChatDetails } from "../../utils/chat";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import { publicSummaryResponse } from "../common/publicSummaryMapper";
-import { apiOptionUpdate } from "../../utils/mapping";
+import { apiOptionUpdate, identity } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { setCachedMessageFromSendResponse } from "../../utils/caching";
