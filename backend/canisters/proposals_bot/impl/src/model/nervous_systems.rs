@@ -178,7 +178,7 @@ impl NervousSystems {
     pub fn metrics(&self) -> Vec<NervousSystemMetrics> {
         self.nervous_systems
             .values()
-            .sorted_unstable_by_key(|ns| ns.name.as_str())
+            .sorted_unstable_by_key(|ns| ns.governance_canister_id)
             .map_into()
             .collect()
     }
@@ -194,7 +194,7 @@ pub struct NervousSystem {
     latest_failed_proposals_update: Option<TimestampMillis>,
     proposals_to_be_pushed: ProposalsToBePushed,
     proposals_to_be_updated: ProposalsToBeUpdated,
-    pub active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
+    active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
