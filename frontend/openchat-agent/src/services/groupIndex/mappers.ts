@@ -1,7 +1,6 @@
 import { identity, optional } from "../../utils/mapping";
 import type {
     AddHotGroupExclusionResponse,
-    FilterGroupsResponse,
     FreezeGroupResponse,
     GroupMatch,
     RemoveHotGroupExclusionResponse,
@@ -17,7 +16,6 @@ import type {
     ApiAddHotGroupExclusionResponse,
     ApiCommunityMatch,
     ApiDeleteFrozenGroupResponse,
-    ApiFilterGroupsResponse,
     ApiFreezeGroupResponse,
     ApiGroupMatch,
     ApiSearchResponse,
@@ -54,21 +52,6 @@ export function activeGroupsResponse(candid: ApiActiveGroupsResponse): ActiveGro
             name: d.name,
             public: d.public,
         })),
-    };
-}
-
-export function filterGroupsResponse(candid: ApiFilterGroupsResponse): FilterGroupsResponse {
-    return {
-        timestamp: candid.Success.timestamp,
-        activeGroups: candid.Success.active_groups.map((g) => g.toString()),
-        deletedGroups: candid.Success.deleted_groups.map((d) => ({
-            id: d.id.toString(),
-            timestamp: d.timestamp,
-            deletedBy: d.deleted_by.toString(),
-            name: d.group_name,
-            public: d.public,
-        })),
-        upgradesInProgress: candid.Success.upgrades_in_progress.map((c) => c.toString()),
     };
 }
 

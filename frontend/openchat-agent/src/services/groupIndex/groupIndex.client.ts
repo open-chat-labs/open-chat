@@ -4,7 +4,6 @@ import type { AgentConfig } from "../../config";
 import type {
     AddHotGroupExclusionResponse,
     DeleteFrozenGroupResponse,
-    FilterGroupsResponse,
     FreezeGroupResponse,
     GroupChatSummary,
     RemoveHotGroupExclusionResponse,
@@ -21,7 +20,6 @@ import { idlFactory, GroupIndexService } from "./candid/idl";
 import {
     addHotGroupExclusionResponse,
     deleteFrozenGroupResponse,
-    filterGroupsResponse,
     freezeGroupResponse,
     recommendedGroupsResponse,
     removeHotGroupExclusionResponse,
@@ -64,18 +62,6 @@ export class GroupIndexClient extends CandidService {
         return this.handleQueryResponse(
             () => this.groupIndexService.active_groups(args),
             activeGroupsResponse,
-            args
-        );
-    }
-
-    filterGroups(chatIds: string[], activeSince: bigint): Promise<FilterGroupsResponse> {
-        const args = {
-            chat_ids: chatIds.map((c) => Principal.fromText(c)),
-            active_since: apiOptional(identity, activeSince),
-        };
-        return this.handleQueryResponse(
-            () => this.groupIndexService.filter_groups(args),
-            filterGroupsResponse,
             args
         );
     }

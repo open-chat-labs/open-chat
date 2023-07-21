@@ -2,7 +2,6 @@ import type { IDL } from "@dfinity/candid";
 import {
     _SERVICE,
     DeleteFrozenGroupResponse,
-    FilterGroupsResponse,
     FreezeGroupResponse,
     GroupMatch,
     RecommendedGroupsResponse,
@@ -19,7 +18,6 @@ import {
 export {
     _SERVICE as GroupIndexService,
     DeleteFrozenGroupResponse as ApiDeleteFrozenGroupResponse,
-    FilterGroupsResponse as ApiFilterGroupsResponse,
     FreezeGroupResponse as ApiFreezeGroupResponse,
     GroupMatch as ApiGroupMatch,
     RecommendedGroupsResponse as ApiRecommendedGroupsResponse,
