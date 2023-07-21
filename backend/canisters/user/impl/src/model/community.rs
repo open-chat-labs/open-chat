@@ -1,4 +1,4 @@
-use crate::model::group_chat::GroupMessagesRead;
+use crate::model::group_chat::{GroupChat, GroupMessagesRead};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{ChannelId, CommunityId, TimestampMillis, Timestamped};
@@ -56,6 +56,17 @@ impl Community {
                 );
         }
         self.last_read = now;
+    }
+
+    pub fn import_group(&mut self, channel_id: ChannelId, group: GroupChat) {
+        self.channels.insert(
+            channel_id,
+            Channel {
+                channel_id,
+                messages_read: group.messages_read,
+                archived: group.archived,
+            },
+        );
     }
 
     pub fn to_summary(&self) -> user_canister::CommunitySummary {

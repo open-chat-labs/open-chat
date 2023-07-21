@@ -2,8 +2,8 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageIndex, PhoneNumber,
-    ReferralType, SuspensionDuration, TimestampMillis, UserId,
+    ChannelLatestMessageIndex, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent,
+    MessageIndex, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UserId,
 };
 
 mod lifecycle;
@@ -26,7 +26,7 @@ pub enum Event {
     UserUpgradeConcurrencyChanged(UserUpgradeConcurrencyChanged),
     UserSuspended(UserSuspended),
     UserJoinedGroup(UserJoinedGroup),
-    UserJoinedCommunity(UserJoinedCommunity),
+    UserJoinedCommunityOrChannel(UserJoinedCommunityOrChannel),
     DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     ReferralCodeAdded(ReferralCodeAdded),
@@ -89,17 +89,18 @@ pub struct UserSuspended {
     pub suspended_by: UserId,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UserJoinedGroup {
     pub user_id: UserId,
     pub chat_id: ChatId,
     pub latest_message_index: Option<MessageIndex>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct UserJoinedCommunity {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserJoinedCommunityOrChannel {
     pub user_id: UserId,
     pub community_id: CommunityId,
+    pub channels: Vec<ChannelLatestMessageIndex>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

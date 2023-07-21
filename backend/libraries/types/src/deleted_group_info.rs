@@ -1,4 +1,4 @@
-use crate::{ChannelId, ChatId, CommunityId, TimestampMillis, UserId};
+use crate::{ChannelLatestMessageIndex, ChatId, CommunityId, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -26,5 +26,6 @@ pub struct DeletedCommunityInfo {
 pub struct CommunityImportedInto {
     pub community_name: String,
     pub community_id: CommunityId,
-    pub channel_id: ChannelId,
+    pub channel: ChannelLatestMessageIndex,
+    pub other_default_channels: Vec<ChannelLatestMessageIndex>,
 }

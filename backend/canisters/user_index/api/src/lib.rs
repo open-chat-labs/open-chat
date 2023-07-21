@@ -1,6 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, CommunityId, MessageContent, MessageIndex, UserId};
+use types::{ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageIndex, UserId};
 
 mod lifecycle;
 mod queries;
@@ -14,7 +14,7 @@ pub use updates::*;
 pub enum Event {
     UserRegistered(Box<UserRegistered>),
     UserJoinedGroup(Box<UserJoinedGroup>),
-    UserJoinedCommunity(Box<UserJoinedCommunity>),
+    UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     JoinUserToGroup(Box<JoinUserToGroup>),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
 }
@@ -35,9 +35,10 @@ pub struct UserJoinedGroup {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UserJoinedCommunity {
+pub struct UserJoinedCommunityOrChannel {
     pub user_id: UserId,
     pub community_id: CommunityId,
+    pub channels: Vec<ChannelLatestMessageIndex>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

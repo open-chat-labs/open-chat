@@ -3,6 +3,7 @@ use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use user_canister::c2c_notify_user_events::{Response::*, *};
+use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::Event;
 
 #[update_msgpack(guard = "caller_is_local_user_index")]
@@ -46,9 +47,21 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             state.data.group_chats.join(ev.chat_id, ev.latest_message_index, now);
             state.data.hot_group_exclusions.remove(&ev.chat_id, now);
         }
-        Event::UserJoinedCommunity(ev) => {
+        Event::UserJoinedCommunityOrChannel(ev) => {
             let now = state.env.now();
-            state.data.communities.join(ev.community_id, now);
+            let (community, _) = state.data.communities.join(ev.community_id, now);
+            community.mark_read(
+                ev.channels
+                    .into_iter()
+                    .map(|c| ChannelMessagesRead {
+                        channel_id: c.channel_id,
+                        read_up_to: c.latest_message_index,
+                        threads: Vec::new(),
+                        date_read_pinned: None,
+                    })
+                    .collect(),
+                now,
+            );
         }
         Event::DiamondMembershipPaymentReceived(ev) => {
             state.data.diamond_membership_expires_at = Some(ev.expires_at);

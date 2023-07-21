@@ -10,7 +10,9 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use types::{
-    CanisterId, CanisterWasm, ChatId, Cycles, MessageContent, ReferralType, TimestampMillis, Timestamped, UserId, Version,
+    CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, CommunityCanisterChannelSummary,
+    CommunityCanisterCommunitySummary, CommunityId, Cycles, MessageContent, ReferralType, TimestampMillis, Timestamped, UserId,
+    Version,
 };
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
@@ -91,6 +93,60 @@ impl RuntimeState {
         } else {
             self.push_event_to_user_index(UserIndexEvent::OpenChatBotMessage(Box::new(
                 user_index_canister::OpenChatBotMessage { user_id, message },
+            )));
+        }
+    }
+
+    pub fn notify_user_joined_community(&mut self, user_id: UserId, community: &CommunityCanisterCommunitySummary) {
+        let channels = community
+            .channels
+            .iter()
+            .map(|c| ChannelLatestMessageIndex {
+                channel_id: c.channel_id,
+                latest_message_index: c.latest_message.as_ref().map(|m| m.event.message_index),
+            })
+            .collect();
+
+        self.notify_user_joined_community_or_channel(user_id, community.community_id, channels);
+    }
+
+    pub fn notify_user_joined_channel(
+        &mut self,
+        user_id: UserId,
+        community_id: CommunityId,
+        channel: &CommunityCanisterChannelSummary,
+    ) {
+        self.notify_user_joined_community_or_channel(
+            user_id,
+            community_id,
+            vec![ChannelLatestMessageIndex {
+                channel_id: channel.channel_id,
+                latest_message_index: channel.latest_message.as_ref().map(|m| m.event.message_index),
+            }],
+        );
+    }
+
+    fn notify_user_joined_community_or_channel(
+        &mut self,
+        user_id: UserId,
+        community_id: CommunityId,
+        channels: Vec<ChannelLatestMessageIndex>,
+    ) {
+        if self.data.local_users.get(&user_id).is_some() {
+            self.push_event_to_user(
+                user_id,
+                UserEvent::UserJoinedCommunityOrChannel(Box::new(user_canister::UserJoinedCommunityOrChannel {
+                    community_id,
+                    channels,
+                })),
+            );
+        } else {
+            self.push_event_to_user_index(UserIndexEvent::UserJoinedCommunityOrChannel(Box::new(
+                user_index_canister::UserJoinedCommunityOrChannel {
+                    user_id,
+                    community_id,
+                    channels,
+                },
             )));
         }
     }

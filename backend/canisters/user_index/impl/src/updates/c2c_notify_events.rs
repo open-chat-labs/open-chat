@@ -5,7 +5,8 @@ use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{
-    Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedCommunity, UserJoinedGroup, UserRegistered, UsernameChanged,
+    Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedCommunityOrChannel, UserJoinedGroup, UserRegistered,
+    UsernameChanged,
 };
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, MessageContent, TextContent, UserId};
@@ -41,12 +42,13 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 }),
             );
         }
-        Event::UserJoinedCommunity(ev) => {
+        Event::UserJoinedCommunityOrChannel(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
-                LocalUserIndexEvent::UserJoinedCommunity(UserJoinedCommunity {
+                LocalUserIndexEvent::UserJoinedCommunityOrChannel(UserJoinedCommunityOrChannel {
                     user_id: ev.user_id,
                     community_id: ev.community_id,
+                    channels: ev.channels,
                 }),
             );
         }
