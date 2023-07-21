@@ -1,6 +1,5 @@
 pub mod add_hot_group_exclusions;
 pub mod add_reaction;
-pub mod archive_chat;
 pub mod archive_unarchive_chats;
 pub mod block_user;
 pub mod c2c_charge_user_account;

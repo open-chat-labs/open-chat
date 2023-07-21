@@ -187,6 +187,65 @@ fn invite_to_community_oc_bot_message_received() {
     }));
 }
 
+#[test]
+fn default_channels_marked_as_read_after_joining() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2: _,
+        community_id,
+    } = init_test_data(env, canister_ids, *controller, true);
+
+    let default1 =
+        client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string(), true);
+    let default2 =
+        client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string(), true);
+    let default3 =
+        client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string(), true);
+
+    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+
+    for i in 0..3 {
+        if i < 1 {
+            client::community::happy_path::send_text_message(env, &user1, community_id, default1, None, random_string(), None);
+        }
+
+        if i < 2 {
+            client::community::happy_path::send_text_message(env, &user1, community_id, default2, None, random_string(), None);
+        }
+
+        client::community::happy_path::send_text_message(env, &user1, community_id, default3, None, random_string(), None);
+    }
+
+    client::local_user_index::happy_path::join_community(env, user3.principal, canister_ids.local_user_index, community_id);
+
+    tick_many(env, 3);
+
+    let initial_state = client::user::happy_path::initial_state(env, &user3);
+
+    let community = initial_state
+        .communities
+        .summaries
+        .iter()
+        .find(|c| c.community_id == community_id)
+        .unwrap();
+
+    let channel1 = community.channels.iter().find(|c| c.channel_id == default1).unwrap();
+    assert_eq!(channel1.read_by_me_up_to, Some(0.into()));
+
+    let channel2 = community.channels.iter().find(|c| c.channel_id == default2).unwrap();
+    assert_eq!(channel2.read_by_me_up_to, Some(1.into()));
+
+    let channel3 = community.channels.iter().find(|c| c.channel_id == default3).unwrap();
+    assert_eq!(channel3.read_by_me_up_to, Some(2.into()));
+}
+
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);

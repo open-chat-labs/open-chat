@@ -4,7 +4,7 @@ use crate::utils::now_millis;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
-use types::{ChatEvent, EventIndex, MessageContent};
+use types::{Chat, ChatEvent, EventIndex, MessageContent};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[test]
@@ -26,12 +26,12 @@ fn set_message_reminder_succeeds() {
             .index
             .incr();
 
-    client::user::set_message_reminder(
+    client::user::set_message_reminder_v2(
         env,
         user1.principal,
         user1.user_id.into(),
-        &user_canister::set_message_reminder::Args {
-            chat_id: user2.user_id.into(),
+        &user_canister::set_message_reminder_v2::Args {
+            chat: Chat::Direct(user2.user_id.into()),
             thread_root_message_index: None,
             event_index: 10.into(),
             notes: Some(notes.clone()),
@@ -94,19 +94,19 @@ fn cancel_message_reminder_succeeds() {
 
     let now = now_millis(env);
 
-    let set_message_reminder_response = client::user::set_message_reminder(
+    let set_message_reminder_response = client::user::set_message_reminder_v2(
         env,
         user1.principal,
         user1.user_id.into(),
-        &user_canister::set_message_reminder::Args {
-            chat_id: user2.user_id.into(),
+        &user_canister::set_message_reminder_v2::Args {
+            chat: Chat::Direct(user2.user_id.into()),
             thread_root_message_index: None,
             event_index: 10.into(),
             notes: None,
             remind_at: now + 1000,
         },
     );
-    let reminder_id = if let user_canister::set_message_reminder::Response::Success(id) = set_message_reminder_response {
+    let reminder_id = if let user_canister::set_message_reminder_v2::Response::Success(id) = set_message_reminder_response {
         id
     } else {
         panic!()
