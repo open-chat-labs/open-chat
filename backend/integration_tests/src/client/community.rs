@@ -42,6 +42,7 @@ pub mod happy_path {
         community_id: CommunityId,
         is_public: bool,
         name: String,
+        is_default: bool,
     ) -> ChannelId {
         let response = super::create_channel(
             env,
@@ -58,7 +59,7 @@ pub mod happy_path {
                 permissions: None,
                 events_ttl: None,
                 gate: None,
-                is_default: false,
+                is_default,
             },
         );
 

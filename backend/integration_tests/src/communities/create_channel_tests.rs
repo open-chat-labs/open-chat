@@ -58,8 +58,14 @@ fn create_channel_succeeds(is_public: bool) {
     let TestData { user, community_id } = init_test_data(env, canister_ids, *controller, true, default_channels.clone());
 
     let channel_name = random_string();
-    let channel_id =
-        client::community::happy_path::create_channel(env, user.principal, community_id, is_public, channel_name.clone());
+    let channel_id = client::community::happy_path::create_channel(
+        env,
+        user.principal,
+        community_id,
+        is_public,
+        channel_name.clone(),
+        false,
+    );
 
     let summary = client::community::happy_path::summary(env, &user, community_id);
 
