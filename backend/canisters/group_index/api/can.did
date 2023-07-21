@@ -16,20 +16,6 @@ type ActiveGroupsResponse = variant {
     };
 };
 
-type FilterGroupsArgs = record {
-    chat_ids : vec ChatId;
-    active_since : opt TimestampMillis;
-};
-
-type FilterGroupsResponse = variant {
-    Success : record {
-        timestamp : TimestampMillis;
-        active_groups : vec ChatId;
-        deleted_groups : vec DeletedGroupInfo;
-        upgrades_in_progress : vec ChatId;
-    };
-};
-
 type RecommendedGroupsArgs = record {
     count : nat8;
     exclusions : vec ChatId;
@@ -258,7 +244,6 @@ type SetUpgradeConcurrencyResponse = variant {
 
 service : {
     active_groups : (ActiveGroupsArgs) -> (ActiveGroupsResponse) query;
-    filter_groups : (FilterGroupsArgs) -> (FilterGroupsResponse) query;
     recommended_groups : (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     search : (SearchArgs) -> (SearchResponse) query;
     explore_communities : (ExploreCommunitiesArgs) -> (ExploreCommunitiesResponse) query;

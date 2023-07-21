@@ -264,14 +264,11 @@ impl Data {
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
         self.is_public
             || self.members.get(caller).is_some()
-            || self.invited_users.get(&caller).is_some()
+            || self
+                .members
+                .lookup_user_id(caller)
+                .map_or(false, |u| self.invited_users.get(&u).is_some())
             || self.is_invite_code_valid(invite_code)
-    }
-
-    pub fn user_id(&self, principal: Principal) -> Option<UserId> {
-        self.members
-            .lookup_user_id(principal)
-            .or_else(|| self.invited_users.get(&principal).map(|u| u.invited))
     }
 
     pub fn build_chat_metrics(&mut self, now: TimestampMillis) {

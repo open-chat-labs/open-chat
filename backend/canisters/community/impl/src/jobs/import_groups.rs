@@ -136,7 +136,7 @@ async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attemp
                 for (user_id, principal) in users {
                     match state.data.members.add(user_id, principal, now) {
                         AddResult::Success(_) => {
-                            state.data.invited_users.remove(&principal, now);
+                            state.data.invited_users.remove(&user_id, now);
                             state.data.events.push_event(
                                 CommunityEvent::MemberJoined(Box::new(MemberJoined {
                                     user_id,

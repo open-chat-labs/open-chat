@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.754](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.754-notifications)] - 2023-07-20
+
 ### Changed
 
 - Use `canister_client` for making all c2c calls ([#3979](https://github.com/open-chat-labs/open-chat/pull/3979))

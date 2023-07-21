@@ -17,7 +17,7 @@ fn channel_summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
-        let user_id = state.data.user_id(caller);
+        let user_id = state.data.members.lookup_user_id(caller);
 
         if !channel.chat.is_accessible(user_id) {
             return PrivateChannel;

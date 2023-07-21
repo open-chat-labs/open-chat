@@ -39,8 +39,8 @@ pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeStat
         let invited_users: Vec<_> = args
             .users
             .iter()
-            .filter(|(_, principal)| {
-                state.data.members.get(*principal).is_none() && !state.data.invited_users.contains(principal)
+            .filter(|(user_id, principal)| {
+                state.data.members.get(*principal).is_none() && !state.data.invited_users.contains(user_id)
             })
             .copied()
             .collect();
@@ -54,11 +54,10 @@ pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeStat
             }
 
             // Add new invites
-            for (user_id, principal) in invited_users.iter() {
+            for user_id in user_ids.iter().copied() {
                 state.data.invited_users.add(
-                    *principal,
+                    user_id,
                     UserInvitation {
-                        invited: *user_id,
                         invited_by: member.user_id,
                         timestamp: now,
                     },
@@ -75,6 +74,10 @@ pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeStat
             );
 
             handle_activity_notification(state);
+        }
+
+        for (user_id, principal) in invited_users.iter() {
+            state.data.members.add_user_id(*principal, *user_id);
         }
 
         Success(SuccessResult {

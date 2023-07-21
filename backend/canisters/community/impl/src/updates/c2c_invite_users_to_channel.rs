@@ -28,7 +28,7 @@ fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Res
         let mut users_to_invite_to_channel = Vec::new();
         let mut users_to_invite_to_community = Vec::new();
         for (user_id, principal) in args.users {
-            if state.data.members.get_by_user_id(&user_id).is_some() || state.data.invited_users.contains(&principal) {
+            if state.data.members.get_by_user_id(&user_id).is_some() || state.data.invited_users.contains(&user_id) {
                 users_to_invite_to_channel.push(user_id);
             } else {
                 users_to_invite_to_community.push((user_id, principal));

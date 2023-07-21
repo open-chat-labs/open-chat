@@ -93,7 +93,7 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
 
     match state.data.members.add(args.user_id, args.principal, now) {
         AddResult::Success(_) => {
-            let invitation = state.data.invited_users.remove(&args.principal, now);
+            let invitation = state.data.invited_users.remove(&args.user_id, now);
 
             state.data.events.push_event(
                 CommunityEvent::MemberJoined(Box::new(MemberJoined {

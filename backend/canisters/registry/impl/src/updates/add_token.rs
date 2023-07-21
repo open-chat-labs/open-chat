@@ -4,6 +4,7 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::RejectionCode;
 use registry_canister::add_token::{Response::*, *};
+use registry_canister::SnsCanisters;
 use types::{CanisterId, Empty};
 
 #[proposal(guard = "caller_is_governance_principal")]
@@ -14,12 +15,28 @@ async fn add_token(args: Args) -> Response {
         Err(response) => return response,
     };
 
+    let sns_canisters = match sns_wasm_canister_c2c_client::list_deployed_snses(sns_wasm_canister_id, &Empty {}).await {
+        Ok(response) => response
+            .instances
+            .into_iter()
+            .find(|s| s.ledger_canister_id == Some(args.ledger_canister_id))
+            .map(|sns| SnsCanisters {
+                root: sns.root_canister_id.unwrap(),
+                governance: sns.governance_canister_id.unwrap(),
+            }),
+        Err(error) => return InternalError(format!("{error:?}")),
+    };
+
     match futures::future::try_join5(
         icrc1_ledger_canister_c2c_client::icrc1_name(args.ledger_canister_id),
         icrc1_ledger_canister_c2c_client::icrc1_symbol(args.ledger_canister_id),
         icrc1_ledger_canister_c2c_client::icrc1_decimals(args.ledger_canister_id),
         icrc1_ledger_canister_c2c_client::icrc1_fee(args.ledger_canister_id),
-        get_logo(args.logo, args.ledger_canister_id, sns_wasm_canister_id),
+        get_logo(
+            args.logo,
+            args.ledger_canister_id,
+            sns_canisters.as_ref().map(|sns| sns.governance),
+        ),
     )
     .await
     {
@@ -32,6 +49,7 @@ async fn add_token(args: Args) -> Response {
                 decimals,
                 fee.0.try_into().unwrap(),
                 logo,
+                sns_canisters,
                 args.info_url,
                 args.how_to_buy_url,
                 args.transaction_url_format,
@@ -63,7 +81,7 @@ fn prepare(ledger_canister_id: CanisterId, state: &RuntimeState) -> Result<Prepa
 async fn get_logo(
     logo: Option<String>,
     ledger_canister_id: CanisterId,
-    sns_wasm_canister_id: CanisterId,
+    governance_canister_id: Option<CanisterId>,
 ) -> Result<Option<String>, (RejectionCode, String)> {
     if logo.is_some() {
         return Ok(logo);
@@ -83,15 +101,8 @@ async fn get_logo(
         return Ok(logo);
     }
 
-    let deployed_snses = sns_wasm_canister_c2c_client::list_deployed_snses(sns_wasm_canister_id, &Empty {}).await?;
-
-    if let Some(governance_canister_id) = deployed_snses
-        .instances
-        .into_iter()
-        .find(|s| s.ledger_canister_id == Some(ledger_canister_id))
-        .and_then(|s| s.governance_canister_id)
-    {
-        let governance_metadata = sns_governance_canister_c2c_client::get_metadata(governance_canister_id, &Empty {}).await?;
+    if let Some(canister_id) = governance_canister_id {
+        let governance_metadata = sns_governance_canister_c2c_client::get_metadata(canister_id, &Empty {}).await?;
 
         Ok(governance_metadata.logo)
     } else {

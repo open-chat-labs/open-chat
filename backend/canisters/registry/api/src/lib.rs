@@ -22,11 +22,18 @@ pub struct TokenDetails {
     pub decimals: u8,
     pub fee: u128,
     pub logo: Option<String>,
+    pub sns_canisters: Option<SnsCanisters>,
     pub info_url: Option<String>,
     pub how_to_buy_url: Option<String>,
     pub transaction_url_format: Option<String>,
     pub added: TimestampMillis,
     pub last_updated: TimestampMillis,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct SnsCanisters {
+    pub root: CanisterId,
+    pub governance: CanisterId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

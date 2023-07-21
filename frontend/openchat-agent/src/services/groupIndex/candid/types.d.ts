@@ -447,18 +447,6 @@ export interface FileContent {
   'caption' : [] | [string],
 }
 export type FileId = bigint;
-export interface FilterGroupsArgs {
-  'active_since' : [] | [TimestampMillis],
-  'chat_ids' : Array<ChatId>,
-}
-export type FilterGroupsResponse = {
-    'Success' : {
-      'upgrades_in_progress' : Array<ChatId>,
-      'deleted_groups' : Array<DeletedGroupInfo>,
-      'active_groups' : Array<ChatId>,
-      'timestamp' : TimestampMillis,
-    }
-  };
 export interface FreezeCommunityArgs {
   'community_id' : ChatId,
   'suspend_members' : [] | [
@@ -1332,7 +1320,6 @@ export interface _SERVICE {
     ExploreCommunitiesResponse
   >,
   'explore_groups' : ActorMethod<[ExploreGroupsArgs], ExploreGroupsResponse>,
-  'filter_groups' : ActorMethod<[FilterGroupsArgs], FilterGroupsResponse>,
   'freeze_community' : ActorMethod<
     [FreezeCommunityArgs],
     FreezeCommunityResponse

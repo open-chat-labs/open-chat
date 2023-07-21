@@ -1,5 +1,5 @@
 use crate::{CachedGroupSummaries, Data};
-use group_index_canister::c2c_filter_groups;
+use group_index_canister::c2c_active_groups;
 use ic_cdk::api::call::CallResult;
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
@@ -31,7 +31,6 @@ pub(crate) struct UpdatesArgs {
     updates_since: UpdatesSince,
     group_chat_ids: Vec<ChatId>,
     group_chat_ids_with_my_changes: Vec<ChatId>,
-    now: TimestampMillis,
 }
 
 pub(crate) struct Updates {
@@ -58,7 +57,6 @@ pub(crate) async fn summaries(args: SummariesArgs) -> Result<Vec<GroupCanisterGr
             .map_or(UpdatesSince::default(), |c| c.updates_args()),
         group_chat_ids: args.group_chat_ids,
         group_chat_ids_with_my_changes: Vec::new(),
-        now: args.now,
     };
 
     let updates = updates(updates_args).await?;
@@ -104,24 +102,19 @@ async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
     let mut updated = Vec::new();
     let mut deleted = Vec::new();
     if !all_groups.is_empty() {
-        let duration_since_last_sync = if args.updates_since.timestamp == 0 {
-            None
-        } else {
-            Some(args.now.saturating_sub(args.updates_since.timestamp))
+        let active_groups_args = c2c_active_groups::Args {
+            group_ids: all_groups,
+            community_ids: Vec::new(),
+            active_since: Some(args.updates_since.timestamp),
         };
-
-        let filter_groups_args = c2c_filter_groups::Args {
-            chat_ids: all_groups,
-            active_in_last: duration_since_last_sync,
-        };
-        let filter_groups_result =
-            match group_index_canister_c2c_client::c2c_filter_groups(args.group_index_canister_id, &filter_groups_args).await {
-                Ok(group_index_canister::c2c_filter_groups::Response::Success(result)) => result,
-                Err(error) => return Err(format!("Failed to call 'c2c_filter_groups': {error:?}")),
+        let active_groups_result =
+            match group_index_canister_c2c_client::c2c_active_groups(args.group_index_canister_id, &active_groups_args).await {
+                Ok(c2c_active_groups::Response::Success(result)) => result,
+                Err(error) => return Err(format!("Failed to call 'c2c_active_groups': {error:?}")),
             };
 
-        let active_groups: HashSet<_> = filter_groups_result.active_groups.into_iter().collect();
-        group_chats_added.retain(|id| !has_group_been_deleted(&filter_groups_result.deleted_groups, id));
+        let active_groups: HashSet<_> = active_groups_result.active_groups.into_iter().collect();
+        group_chats_added.retain(|id| !has_group_been_deleted(&active_groups_result.deleted_groups, id));
         group_chats_to_check_for_updates
             .retain(|(id, _)| active_groups.contains(id) || args.group_chat_ids_with_my_changes.contains(id));
 
@@ -132,7 +125,7 @@ async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
 
         added = s.map_err(|(code, msg)| format!("Failed to get summaries. {code:?}: {msg}"))?;
         updated = su.map_err(|(code, msg)| format!("Failed to get summary updates. {code:?}: {msg}"))?;
-        deleted = filter_groups_result.deleted_groups;
+        deleted = active_groups_result.deleted_groups;
     }
 
     Ok(Updates { added, updated, deleted })
