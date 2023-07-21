@@ -16,22 +16,6 @@ fn mark_read(args: Args) -> Response {
     mutate_state(|state| mark_read_impl(args, state))
 }
 
-#[update(guard = "caller_is_owner")]
-#[trace]
-fn mark_read_v2(args: user_canister::mark_read_v2::Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| {
-        mark_read_impl(
-            Args {
-                messages_read: args.messages_read,
-                community_messages_read: Vec::new(),
-            },
-            state,
-        )
-    })
-}
-
 fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
 

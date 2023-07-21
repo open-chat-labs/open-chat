@@ -11,11 +11,6 @@ fn initial_state(args: Args) -> Response {
     read_state(|state| initial_state_impl(args, state))
 }
 
-#[query(guard = "caller_is_owner")]
-fn initial_state_v2(args: Args) -> user_canister::initial_state_v2::Response {
-    read_state(|state| initial_state_impl(args, state)).into()
-}
-
 fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
     let now = state.env.now();
     let my_user_id: UserId = state.env.canister_id().into();

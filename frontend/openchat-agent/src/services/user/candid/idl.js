@@ -34,11 +34,6 @@ export const idlFactory = ({ IDL }) => {
     'InvalidReaction' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });
-  const ArchiveChatArgs = IDL.Record({ 'chat_id' : ChatId });
-  const ArchiveChatResponse = IDL.Variant({
-    'ChatNotFound' : IDL.Null,
-    'Success' : IDL.Null,
-  });
   const CommunityId = CanisterId;
   const ChannelId = IDL.Nat;
   const Chat = IDL.Variant({
@@ -968,31 +963,6 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
     }),
   });
-  const InitialStateV2Args = IDL.Record({
-    'disable_cache' : IDL.Opt(IDL.Bool),
-  });
-  const InitialStateV2Response = IDL.Variant({
-    'SuccessCached' : IDL.Record({
-      'user_canister_wasm_version' : Version,
-      'blocked_users' : IDL.Vec(UserId),
-      'group_chats_added' : IDL.Vec(UserCanisterGroupChatSummary),
-      'avatar_id' : IDL.Opt(IDL.Nat),
-      'direct_chats' : IDL.Vec(DirectChatSummary),
-      'timestamp' : TimestampMillis,
-      'cached_group_chat_summaries' : IDL.Vec(GroupChatSummary),
-      'cache_timestamp' : TimestampMillis,
-      'pinned_chats' : IDL.Vec(ChatId),
-    }),
-    'Success' : IDL.Record({
-      'user_canister_wasm_version' : Version,
-      'blocked_users' : IDL.Vec(UserId),
-      'group_chats' : IDL.Vec(UserCanisterGroupChatSummary),
-      'avatar_id' : IDL.Opt(IDL.Nat),
-      'direct_chats' : IDL.Vec(DirectChatSummary),
-      'timestamp' : TimestampMillis,
-      'pinned_chats' : IDL.Vec(ChatId),
-    }),
-  });
   const LeaveCommunityArgs = IDL.Record({ 'community_id' : CommunityId });
   const LeaveCommunityResponse = IDL.Variant({
     'CommunityNotFound' : IDL.Null,
@@ -1051,9 +1021,6 @@ export const idlFactory = ({ IDL }) => {
     'messages_read' : IDL.Vec(ChatMessagesRead),
   });
   const MarkReadResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const MarkReadV2Args = IDL.Record({
-    'messages_read' : IDL.Vec(ChatMessagesRead),
-  });
   const MessagesByMessageIndexArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'messages' : IDL.Vec(MessageIndex),
@@ -1280,10 +1247,10 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'NicknameTooShort' : FieldTooShortResult,
   });
-  const SetMessageReminderArgs = IDL.Record({
+  const SetMessageReminderV2Args = IDL.Record({
+    'chat' : Chat,
     'notes' : IDL.Opt(IDL.Text),
     'remind_at' : TimestampMillis,
-    'chat_id' : ChatId,
     'event_index' : EventIndex,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
@@ -1292,18 +1259,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Nat64,
     'ReminderDateInThePast' : IDL.Null,
     'UserSuspended' : IDL.Null,
-  });
-  const SetMessageReminderV2Args = IDL.Record({
-    'chat' : Chat,
-    'notes' : IDL.Opt(IDL.Text),
-    'remind_at' : TimestampMillis,
-    'event_index' : EventIndex,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-  });
-  const UnArchiveChatArgs = IDL.Record({ 'chat_id' : ChatId });
-  const UnArchiveChatResponse = IDL.Variant({
-    'ChatNotFound' : IDL.Null,
-    'Success' : IDL.Null,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({
@@ -1411,22 +1366,6 @@ export const idlFactory = ({ IDL }) => {
     }),
     'SuccessNoUpdates' : IDL.Null,
   });
-  const UpdatesV2Args = IDL.Record({ 'updates_since' : TimestampMillis });
-  const UpdatesV2Response = IDL.Variant({
-    'Success' : IDL.Record({
-      'user_canister_wasm_version' : IDL.Opt(Version),
-      'direct_chats_added' : IDL.Vec(DirectChatSummary),
-      'blocked_users_v2' : IDL.Opt(IDL.Vec(UserId)),
-      'group_chats_added' : IDL.Vec(UserCanisterGroupChatSummary),
-      'avatar_id' : DocumentIdUpdate,
-      'chats_removed' : IDL.Vec(ChatId),
-      'timestamp' : TimestampMillis,
-      'group_chats_updated' : IDL.Vec(UserCanisterGroupChatSummaryUpdates),
-      'direct_chats_updated' : IDL.Vec(DirectChatSummaryUpdates),
-      'pinned_chats' : IDL.Opt(IDL.Vec(ChatId)),
-    }),
-    'SuccessNoUpdates' : IDL.Null,
-  });
   const WithdrawCryptoArgs = IDL.Record({
     'withdrawal' : PendingCryptoTransaction,
   });
@@ -1442,7 +1381,6 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
-    'archive_chat' : IDL.Func([ArchiveChatArgs], [ArchiveChatResponse], []),
     'archive_unarchive_chats' : IDL.Func(
         [ArchiveUnarchiveChatsArgs],
         [ArchiveUnarchiveChatsResponse],
@@ -1505,11 +1443,6 @@ export const idlFactory = ({ IDL }) => {
         [InitialStateResponse],
         ['query'],
       ),
-    'initial_state_v2' : IDL.Func(
-        [InitialStateV2Args],
-        [InitialStateV2Response],
-        ['query'],
-      ),
     'leave_community' : IDL.Func(
         [LeaveCommunityArgs],
         [LeaveCommunityResponse],
@@ -1522,7 +1455,6 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
-    'mark_read_v2' : IDL.Func([MarkReadV2Args], [MarkReadResponse], []),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],
@@ -1573,19 +1505,9 @@ export const idlFactory = ({ IDL }) => {
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
     'set_bio' : IDL.Func([SetBioArgs], [SetBioResponse], []),
     'set_contact' : IDL.Func([SetContactArgs], [SetContactResponse], []),
-    'set_message_reminder' : IDL.Func(
-        [SetMessageReminderArgs],
-        [SetMessageReminderResponse],
-        [],
-      ),
     'set_message_reminder_v2' : IDL.Func(
         [SetMessageReminderV2Args],
         [SetMessageReminderResponse],
-        [],
-      ),
-    'unarchive_chat' : IDL.Func(
-        [UnArchiveChatArgs],
-        [UnArchiveChatResponse],
         [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
@@ -1602,7 +1524,6 @@ export const idlFactory = ({ IDL }) => {
     'unpin_chat' : IDL.Func([UnpinChatRequest], [UnpinChatResponse], []),
     'unpin_chat_v2' : IDL.Func([UnpinChatV2Request], [UnpinChatV2Response], []),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
-    'updates_v2' : IDL.Func([UpdatesV2Args], [UpdatesV2Response], ['query']),
     'withdraw_crypto_v2' : IDL.Func(
         [WithdrawCryptoArgs],
         [WithdrawCryptoResponse],
