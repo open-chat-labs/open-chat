@@ -2365,11 +2365,13 @@ export class OpenChat extends OpenChatAgentWorker {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (clientChat.kind === "group_chat" || clientChat.kind === "channel") {
             if (!chatStateStore.getProp(clientChat.id, "detailsLoaded")) {
+                console.log("xxx loading chat details");
                 const resp = await this.sendRequest({
                     kind: "getGroupDetails",
                     chatId: clientChat.id,
                     timestamp: clientChat.lastUpdated,
                 });
+                console.log("xxx loaded chat details", resp);
                 if (resp !== "failure") {
                     chatStateStore.setProp(clientChat.id, "detailsLoaded", true);
                     chatStateStore.setProp(clientChat.id, "members", resp.members);
