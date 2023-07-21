@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: install didc 0.8.4
+      - name: install didc 0.3.2
         uses: supplypike/setup-bin@v1
         with:
-          uri: https://github.com/dfinity/candid/releases/download/2022-11-17/didc-linux64
+          uri: https://github.com/dfinity/candid/releases/download/2023-07-11/didc-linux64
           name: didc
-          version: 0.8.4
+          version: 0.3.2
       - name: run validate-candid-syntax.sh
         run: ./scripts/validate-candid-syntax.sh
         shell: bash
@@ -35,12 +35,12 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: "build-debug"
-      - name: install didc 0.8.4
+      - name: install didc 0.3.2
         uses: supplypike/setup-bin@v1
         with:
-          uri: https://github.com/dfinity/candid/releases/download/2022-11-17/didc-linux64
+          uri: https://github.com/dfinity/candid/releases/download/2023-07-11/didc-linux64
           name: didc
-          version: 0.8.4
+          version: 0.3.2
       - name: run validate-candid-matches-rust.sh
         run: ./scripts/validate-candid-matches-rust.sh
         shell: bash

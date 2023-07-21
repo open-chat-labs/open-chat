@@ -92,7 +92,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             name: args.name,
             description: args.description,
             rules: args.rules,
-            subtype: args.subtype,
+            subtype: None,
             history_visible_to_new_joiners: args.history_visible_to_new_joiners,
             avatar: args.avatar,
             permissions: args.permissions,

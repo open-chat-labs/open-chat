@@ -3,7 +3,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{DeletedGroupInfo, UserId};
+use types::{DeletedGroupInfoInternal, UserId};
 
 const MAX_BATCH_SIZE: usize = 100;
 
@@ -33,7 +33,7 @@ fn run() {
     }
 }
 
-fn next_batch(state: &mut RuntimeState) -> Option<Vec<(UserId, DeletedGroupInfo)>> {
+fn next_batch(state: &mut RuntimeState) -> Option<Vec<(UserId, DeletedGroupInfoInternal)>> {
     if state.data.deleted_groups.notifications_pending() == 0 {
         None
     } else {
@@ -45,13 +45,13 @@ fn next_batch(state: &mut RuntimeState) -> Option<Vec<(UserId, DeletedGroupInfo)
     }
 }
 
-async fn push_notifications(notifications: Vec<(UserId, DeletedGroupInfo)>) {
+async fn push_notifications(notifications: Vec<(UserId, DeletedGroupInfoInternal)>) {
     let futures: Vec<_> = notifications.into_iter().map(|(u, d)| push_notification(u, d)).collect();
 
     futures::future::join_all(futures).await;
 }
 
-async fn push_notification(user_id: UserId, deleted_group: DeletedGroupInfo) {
+async fn push_notification(user_id: UserId, deleted_group: DeletedGroupInfoInternal) {
     let args = user_canister::c2c_notify_group_deleted::Args { deleted_group };
     // TODO handle case where this fails
     let _ = user_canister_c2c_client::c2c_notify_group_deleted(user_id.into(), &args).await;

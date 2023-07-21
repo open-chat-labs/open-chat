@@ -166,6 +166,7 @@ export const idlFactory = ({ IDL }) => {
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'events_ttl' : IDL.Opt(Milliseconds),
     'history_visible_to_new_joiners' : IDL.Bool,
     'rules' : AccessRules,
     'avatar' : IDL.Opt(Document),
