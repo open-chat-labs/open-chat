@@ -184,9 +184,9 @@ pub mod happy_path {
     pub fn join_channel(
         env: &mut StateMachine,
         sender: Principal,
+        local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
         channel_id: ChannelId,
-        local_user_index_canister_id: CanisterId,
     ) {
         let response = super::join_channel(
             env,
@@ -200,7 +200,8 @@ pub mod happy_path {
         );
 
         match response {
-            local_user_index_canister::join_channel::Response::Success(_) => {}
+            local_user_index_canister::join_channel::Response::Success(_)
+            | local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_) => {}
             response => panic!("'join_channel' error: {response:?}"),
         }
     }

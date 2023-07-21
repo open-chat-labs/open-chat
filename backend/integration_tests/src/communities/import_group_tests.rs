@@ -7,6 +7,7 @@ use ic_test_state_machine_client::StateMachine;
 use itertools::Itertools;
 use std::ops::Deref;
 use types::{ChatId, CommunityId};
+use user_canister::mark_read::ChatMessagesRead;
 
 #[test]
 fn import_group_succeeds() {
@@ -70,6 +71,70 @@ fn import_group_succeeds() {
 
     // Check that the group has been deleted
     assert!(!env.canister_exists(group_id.into()));
+}
+
+#[test]
+fn read_up_to_data_maintained_after_import() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        group_id,
+        group_name: _,
+        community_id,
+        default_channels: _,
+    } = init_test_data(env, canister_ids, *controller);
+
+    for _ in 1..5 {
+        client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
+    }
+
+    client::user::mark_read(
+        env,
+        user2.principal,
+        user2.user_id.into(),
+        &user_canister::mark_read::Args {
+            messages_read: vec![ChatMessagesRead {
+                chat_id: group_id,
+                read_up_to: Some(4.into()),
+                threads: Vec::new(),
+                date_read_pinned: None,
+            }],
+            community_messages_read: Vec::new(),
+        },
+    );
+
+    let import_group_response = client::community::import_group(
+        env,
+        user1.principal,
+        community_id.into(),
+        &community_canister::import_group::Args { group_id },
+    );
+
+    let channel_id = match import_group_response {
+        community_canister::import_group::Response::Success(result) => result.channel_id,
+        response => panic!("{response:?}"),
+    };
+
+    tick_many(env, 10);
+
+    let initial_state = client::user::happy_path::initial_state(env, &user2);
+
+    let community = initial_state
+        .communities
+        .summaries
+        .iter()
+        .find(|c| c.community_id == community_id)
+        .unwrap();
+
+    let channel = community.channels.iter().find(|c| c.channel_id == channel_id).unwrap();
+    assert_eq!(channel.read_by_me_up_to, Some(4.into()));
 }
 
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
