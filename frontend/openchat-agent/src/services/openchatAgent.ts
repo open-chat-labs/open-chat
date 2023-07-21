@@ -10,6 +10,7 @@ import {
     setCachedMessageIfNotExists,
 } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
+import { getRegistry, setRegistry } from "../utils/registryCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
@@ -20,6 +21,7 @@ import { DataClient } from "./data/data.client";
 import { LedgerClient } from "./ledger/ledger.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
+import { RegistryClient } from "./registry/registry.client";
 import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
 import {
@@ -161,6 +163,7 @@ import {
     ConvertToCommunityResponse,
     ExploreChannelsResponse,
     CommunityInvite,
+    RegistryValue,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -181,6 +184,7 @@ export class OpenChatAgent extends EventTarget {
     private _userClient?: UserClient;
     private _notificationClient: NotificationsClient;
     private _marketMakerClient: MarketMakerClient;
+    private _registryClient: RegistryClient;
     private _ledgerClients: Record<Cryptocurrency, LedgerClient>;
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
@@ -198,6 +202,7 @@ export class OpenChatAgent extends EventTarget {
         this._groupIndexClient = GroupIndexClient.create(identity, config);
         this._notificationClient = NotificationsClient.create(identity, config);
         this._marketMakerClient = MarketMakerClient.create(identity, config);
+        this._registryClient = RegistryClient.create(identity, config);
         this._ledgerClients = {
             icp: LedgerClient.create(identity, config, this.config.ledgerCanisterICP),
             sns1: LedgerClient.create(identity, config, this.config.ledgerCanisterSNS1),
@@ -2349,5 +2354,24 @@ export class OpenChatAgent extends EventTarget {
         rules: AccessRules
     ): Promise<ConvertToCommunityResponse> {
         return this.getGroupClient(chatId.groupId).convertToCommunity(historyVisible, rules);
+    }
+
+    async getRegistry(): Promise<RegistryValue> {
+        const current = await getRegistry();
+
+        const updates = await this._registryClient.updates(current?.lastUpdated);
+
+        if (updates.kind === "success" && updates.tokenDetails !== undefined) {
+            const updated = {
+                lastUpdated: updates.lastUpdated,
+                tokenDetails: updates.tokenDetails
+            };
+            setRegistry(updated);
+            return updated;
+        } else if (current !== undefined) {
+            return current;
+        } else {
+            throw new Error("Registry is empty... this should never happen!");
+        }
     }
 }
