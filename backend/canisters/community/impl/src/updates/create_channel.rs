@@ -108,7 +108,7 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
             state.data.channels.add(Channel {
                 id: channel_id,
                 chat,
-                is_default: Timestamped::new(args.is_default, now),
+                is_default: Timestamped::new(args.is_default && args.is_public, now),
                 date_imported: None,
             });
             member.channels.insert(channel_id);
