@@ -534,9 +534,6 @@ export const Notification = IDL.Variant({
                 IDL.Opt(IDL.Nat32),
               )
             ),
-            'event_list_if_other' : IDL.Opt(
-              IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
-            ),
             'event_index' : IDL.Nat32,
           })
         ),
@@ -1082,9 +1079,6 @@ export const Notification = IDL.Variant({
                 }),
                 IDL.Opt(IDL.Nat32),
               )
-            ),
-            'event_list_if_other' : IDL.Opt(
-              IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
             ),
             'event_index' : IDL.Nat32,
           })
@@ -1644,9 +1638,6 @@ export const Notification = IDL.Variant({
                 IDL.Opt(IDL.Nat32),
               )
             ),
-            'event_list_if_other' : IDL.Opt(
-              IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
-            ),
             'event_index' : IDL.Nat32,
           })
         ),
@@ -2202,9 +2193,6 @@ export const Notification = IDL.Variant({
                 IDL.Opt(IDL.Nat32),
               )
             ),
-            'event_list_if_other' : IDL.Opt(
-              IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
-            ),
             'event_index' : IDL.Nat32,
           })
         ),
@@ -2756,9 +2744,6 @@ export const Notification = IDL.Variant({
                 IDL.Opt(IDL.Nat32),
               )
             ),
-            'event_list_if_other' : IDL.Opt(
-              IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
-            ),
             'event_index' : IDL.Nat32,
           })
         ),
@@ -3306,9 +3291,6 @@ export const Notification = IDL.Variant({
                 }),
                 IDL.Opt(IDL.Nat32),
               )
-            ),
-            'event_list_if_other' : IDL.Opt(
-              IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
             ),
             'event_index' : IDL.Nat32,
           })

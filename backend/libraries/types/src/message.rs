@@ -1,6 +1,4 @@
-use crate::{
-    Chat, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, TimestampMillis, UserId,
-};
+use crate::{Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -20,7 +18,6 @@ pub struct Message {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReplyContext {
-    pub event_list_if_other: Option<(ChatId, Option<MessageIndex>)>,
     pub chat_if_other: Option<(Chat, Option<MessageIndex>)>,
     pub event_index: EventIndex,
 }

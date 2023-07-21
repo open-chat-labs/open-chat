@@ -5,7 +5,7 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use ic_test_state_machine_client::StateMachine;
 use std::ops::Deref;
-use types::{ChatEvent, ChatId, MessageContent};
+use types::{Chat, ChatEvent, ChatId, MessageContent};
 
 #[test]
 fn new_platform_moderators_added_to_moderators_group() {
@@ -87,7 +87,10 @@ fn report_message_succeeds() {
     if let group_canister::events::Response::Success(mut e) = events_response {
         let last_event = e.events.pop().unwrap().event;
         if let ChatEvent::Message(m) = last_event {
-            assert_eq!(m.replies_to.as_ref().unwrap().event_list_if_other, Some((group_id, None)));
+            assert_eq!(
+                m.replies_to.as_ref().unwrap().chat_if_other,
+                Some((Chat::Group(group_id), None))
+            );
             assert_eq!(m.replies_to.as_ref().unwrap().event_index, 10.into());
             if let MessageContent::ReportedMessage(r) = m.content {
                 assert_eq!(r.reports.len(), 1);
