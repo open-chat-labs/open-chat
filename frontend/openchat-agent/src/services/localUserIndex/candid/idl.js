@@ -9,10 +9,10 @@ export const idlFactory = ({ IDL }) => {
     'user_ids' : IDL.Vec(UserId),
   });
   const InviteUsersToChannelFailed = IDL.Record({
-    'users_not_in_community' : IDL.Vec(UserId),
+    'failed_users' : IDL.Vec(UserId),
   });
   const InviteUsersToChannelPartialSuccess = IDL.Record({
-    'users_not_in_community' : IDL.Vec(UserId),
+    'failed_users' : IDL.Vec(UserId),
   });
   const InviteUsersToChannelResponse = IDL.Variant({
     'Failed' : InviteUsersToChannelFailed,
@@ -55,29 +55,31 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'TooManyInvites' : IDL.Nat32,
   });
-  const JoinCommunityArgs = IDL.Record({
+  const JoinChannelArgs = IDL.Record({
+    'channel_id' : ChannelId,
     'community_id' : CommunityId,
     'invite_code' : IDL.Opt(IDL.Nat64),
   });
-  const GateCheckFailedReason = IDL.Variant({
-    'NotDiamondMember' : IDL.Null,
-    'NoSnsNeuronsFound' : IDL.Null,
-    'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
-    'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,
-  });
-  const CommunityPermissionRole = IDL.Variant({
-    'Owners' : IDL.Null,
+  const PermissionRole = IDL.Variant({
+    'Moderators' : IDL.Null,
+    'Owner' : IDL.Null,
     'Admins' : IDL.Null,
     'Members' : IDL.Null,
   });
-  const CommunityPermissions = IDL.Record({
-    'create_public_channel' : CommunityPermissionRole,
-    'block_users' : CommunityPermissionRole,
-    'update_details' : CommunityPermissionRole,
-    'remove_members' : CommunityPermissionRole,
-    'invite_users' : CommunityPermissionRole,
-    'change_roles' : CommunityPermissionRole,
-    'create_private_channel' : CommunityPermissionRole,
+  const GroupPermissions = IDL.Record({
+    'block_users' : PermissionRole,
+    'change_permissions' : PermissionRole,
+    'delete_messages' : PermissionRole,
+    'send_messages' : PermissionRole,
+    'remove_members' : PermissionRole,
+    'update_group' : PermissionRole,
+    'invite_users' : PermissionRole,
+    'change_roles' : PermissionRole,
+    'add_members' : PermissionRole,
+    'create_polls' : PermissionRole,
+    'pin_messages' : PermissionRole,
+    'reply_in_thread' : PermissionRole,
+    'react_to_messages' : PermissionRole,
   });
   const TimestampMillis = IDL.Nat64;
   const ChatMetrics = IDL.Record({
@@ -106,6 +108,14 @@ export const idlFactory = ({ IDL }) => {
     'custom_type_messages' : IDL.Nat64,
     'prize_messages' : IDL.Nat64,
   });
+  const GovernanceProposalsSubtype = IDL.Record({
+    'is_nns' : IDL.Bool,
+    'governance_canister_id' : CanisterId,
+  });
+  const GroupSubtype = IDL.Variant({
+    'GovernanceProposals' : GovernanceProposalsSubtype,
+  });
+  const EventIndex = IDL.Nat32;
   const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
@@ -116,35 +126,6 @@ export const idlFactory = ({ IDL }) => {
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
   });
-  const PermissionRole = IDL.Variant({
-    'Moderators' : IDL.Null,
-    'Owner' : IDL.Null,
-    'Admins' : IDL.Null,
-    'Members' : IDL.Null,
-  });
-  const GroupPermissions = IDL.Record({
-    'block_users' : PermissionRole,
-    'change_permissions' : PermissionRole,
-    'delete_messages' : PermissionRole,
-    'send_messages' : PermissionRole,
-    'remove_members' : PermissionRole,
-    'update_group' : PermissionRole,
-    'invite_users' : PermissionRole,
-    'change_roles' : PermissionRole,
-    'add_members' : PermissionRole,
-    'create_polls' : PermissionRole,
-    'pin_messages' : PermissionRole,
-    'reply_in_thread' : PermissionRole,
-    'react_to_messages' : PermissionRole,
-  });
-  const GovernanceProposalsSubtype = IDL.Record({
-    'is_nns' : IDL.Bool,
-    'governance_canister_id' : CanisterId,
-  });
-  const GroupSubtype = IDL.Variant({
-    'GovernanceProposals' : GovernanceProposalsSubtype,
-  });
-  const EventIndex = IDL.Nat32;
   const GroupRole = IDL.Variant({
     'Participant' : IDL.Null,
     'Admin' : IDL.Null,
@@ -337,6 +318,7 @@ export const idlFactory = ({ IDL }) => {
     'block_index' : BlockIndex,
     'from' : NnsCryptoAccount,
     'memo' : IDL.Nat64,
+    'ledger' : CanisterId,
     'amount' : Tokens,
   });
   const Icrc1Account = IDL.Record({
@@ -356,6 +338,7 @@ export const idlFactory = ({ IDL }) => {
     'block_index' : BlockIndex,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(IDL.Nat64),
+    'ledger' : CanisterId,
     'amount' : Tokens,
   });
   const Memo = IDL.Vec(IDL.Nat8);
@@ -367,6 +350,7 @@ export const idlFactory = ({ IDL }) => {
     'block_index' : BlockIndex,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
+    'ledger' : CanisterId,
     'amount' : IDL.Nat,
   });
   const CompletedCryptoTransaction = IDL.Variant({
@@ -393,6 +377,7 @@ export const idlFactory = ({ IDL }) => {
     'from' : NnsCryptoAccount,
     'memo' : IDL.Nat64,
     'error_message' : IDL.Text,
+    'ledger' : CanisterId,
     'amount' : Tokens,
   });
   const SnsFailedCryptoTransaction = IDL.Record({
@@ -404,6 +389,7 @@ export const idlFactory = ({ IDL }) => {
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(IDL.Nat64),
     'error_message' : IDL.Text,
+    'ledger' : CanisterId,
     'amount' : Tokens,
   });
   const Icrc1FailedCryptoTransaction = IDL.Record({
@@ -414,6 +400,7 @@ export const idlFactory = ({ IDL }) => {
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
     'error_message' : IDL.Text,
+    'ledger' : CanisterId,
     'amount' : IDL.Nat,
   });
   const FailedCryptoTransaction = IDL.Variant({
@@ -567,6 +554,20 @@ export const idlFactory = ({ IDL }) => {
     'expired_messages' : IDL.Vec(MessageIndexRange),
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
+  const CommunityPermissionRole = IDL.Variant({
+    'Owners' : IDL.Null,
+    'Admins' : IDL.Null,
+    'Members' : IDL.Null,
+  });
+  const CommunityPermissions = IDL.Record({
+    'create_public_channel' : CommunityPermissionRole,
+    'block_users' : CommunityPermissionRole,
+    'update_details' : CommunityPermissionRole,
+    'remove_members' : CommunityPermissionRole,
+    'invite_users' : CommunityPermissionRole,
+    'change_roles' : CommunityPermissionRole,
+    'create_private_channel' : CommunityPermissionRole,
+  });
   const CommunityRole = IDL.Variant({
     'Member' : IDL.Null,
     'Admin' : IDL.Null,
@@ -599,9 +600,33 @@ export const idlFactory = ({ IDL }) => {
     'member_count' : IDL.Nat32,
     'primary_language' : IDL.Text,
   });
+  const GateCheckFailedReason = IDL.Variant({
+    'NotDiamondMember' : IDL.Null,
+    'NoSnsNeuronsFound' : IDL.Null,
+    'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
+    'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,
+  });
+  const JoinChannelResponse = IDL.Variant({
+    'NotInvited' : IDL.Null,
+    'AlreadyInChannel' : CommunityCanisterChannelSummary,
+    'SuccessJoinedCommunity' : CommunityCanisterCommunitySummary,
+    'CommunityNotFound' : IDL.Null,
+    'GateCheckFailed' : GateCheckFailedReason,
+    'MemberLimitReached' : IDL.Nat32,
+    'ChannelNotFound' : IDL.Null,
+    'Success' : CommunityCanisterChannelSummary,
+    'CommunityNotPublic' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'UserBlocked' : IDL.Null,
+  });
+  const JoinCommunityArgs = IDL.Record({
+    'community_id' : CommunityId,
+    'invite_code' : IDL.Opt(IDL.Nat64),
+  });
   const JoinCommunityResponse = IDL.Variant({
     'NotInvited' : IDL.Null,
-    'Blocked' : IDL.Null,
     'CommunityNotFound' : IDL.Null,
     'GateCheckFailed' : GateCheckFailedReason,
     'MemberLimitReached' : IDL.Nat32,
@@ -611,6 +636,7 @@ export const idlFactory = ({ IDL }) => {
     'CommunityFrozen' : IDL.Null,
     'AlreadyInCommunity' : CommunityCanisterCommunitySummary,
     'InternalError' : IDL.Text,
+    'UserBlocked' : IDL.Null,
   });
   const JoinGroupArgs = IDL.Record({
     'invite_code' : IDL.Opt(IDL.Nat64),
@@ -726,6 +752,7 @@ export const idlFactory = ({ IDL }) => {
         [InviteUsersToGroupResponse],
         [],
       ),
+    'join_channel' : IDL.Func([JoinChannelArgs], [JoinChannelResponse], []),
     'join_community' : IDL.Func(
         [JoinCommunityArgs],
         [JoinCommunityResponse],

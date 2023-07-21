@@ -46,7 +46,7 @@
     $: symbol = cryptoLookup[token].symbol;
     $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
     $: transferFees = cryptoLookup[token].transferFeesE8s;
-    $: group = chat.kind === "group_chat";
+    $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalanceE8s =
         draftAmountE8s > BigInt(0)
             ? $cryptoBalance[token] - draftAmountE8s - transferFees
@@ -161,20 +161,20 @@
                         {$_("howToBuyToken", { values: { token: symbol.toUpperCase() } })}
                     </a>
                 {:else}
-                    {#if group}
+                    {#if multiUserChat}
                         <div class="receiver">
                             <Legend label={$_("tokenTransfer.receiver")} />
                             <SingleUserSelector
                                 bind:selectedReceiver={receiver}
                                 members={$currentChatMembers}
                                 blockedUsers={$currentChatBlockedUsers}
-                                autofocus={group} />
+                                autofocus={multiUserChat} />
                         </div>
                     {/if}
                     <div class="transfer">
                         <TokenInput
                             {token}
-                            autofocus={!group}
+                            autofocus={!multiUserChat}
                             bind:valid={validAmount}
                             maxAmountE8s={maxAmountE8s($cryptoBalance[token])}
                             bind:amountE8s={draftAmountE8s} />

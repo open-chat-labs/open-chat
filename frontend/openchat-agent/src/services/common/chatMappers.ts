@@ -1771,6 +1771,7 @@ export function groupDetailsResponse(
         "PrivateChannel" in candid ||
         "ChannelNotFound" in candid
     ) {
+        console.warn("GetGroupDetails failed with ", candid);
         return "failure";
     }
     if ("Success" in candid) {

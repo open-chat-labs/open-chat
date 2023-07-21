@@ -614,6 +614,7 @@ export interface Icrc1CompletedCryptoTransaction {
   'block_index' : BlockIndex,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
+  'ledger' : CanisterId,
   'amount' : bigint,
 }
 export interface Icrc1FailedCryptoTransaction {
@@ -624,6 +625,7 @@ export interface Icrc1FailedCryptoTransaction {
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
   'error_message' : string,
+  'ledger' : CanisterId,
   'amount' : bigint,
 }
 export interface Icrc1PendingCryptoTransaction {
@@ -658,11 +660,9 @@ export interface InviteUsersToChannelArgs {
   'community_id' : CommunityId,
   'user_ids' : Array<UserId>,
 }
-export interface InviteUsersToChannelFailed {
-  'users_not_in_community' : Array<UserId>,
-}
+export interface InviteUsersToChannelFailed { 'failed_users' : Array<UserId> }
 export interface InviteUsersToChannelPartialSuccess {
-  'users_not_in_community' : Array<UserId>,
+  'failed_users' : Array<UserId>,
 }
 export type InviteUsersToChannelResponse = {
     'Failed' : InviteUsersToChannelFailed
@@ -700,12 +700,29 @@ export type InviteUsersToGroupResponse = { 'GroupNotFound' : null } |
   { 'Success' : null } |
   { 'InternalError' : string } |
   { 'TooManyInvites' : number };
+export interface JoinChannelArgs {
+  'channel_id' : ChannelId,
+  'community_id' : CommunityId,
+  'invite_code' : [] | [bigint],
+}
+export type JoinChannelResponse = { 'NotInvited' : null } |
+  { 'AlreadyInChannel' : CommunityCanisterChannelSummary } |
+  { 'SuccessJoinedCommunity' : CommunityCanisterCommunitySummary } |
+  { 'CommunityNotFound' : null } |
+  { 'GateCheckFailed' : GateCheckFailedReason } |
+  { 'MemberLimitReached' : number } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : CommunityCanisterChannelSummary } |
+  { 'CommunityNotPublic' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'InternalError' : string } |
+  { 'UserBlocked' : null };
 export interface JoinCommunityArgs {
   'community_id' : CommunityId,
   'invite_code' : [] | [bigint],
 }
 export type JoinCommunityResponse = { 'NotInvited' : null } |
-  { 'Blocked' : null } |
   { 'CommunityNotFound' : null } |
   { 'GateCheckFailed' : GateCheckFailedReason } |
   { 'MemberLimitReached' : number } |
@@ -714,7 +731,8 @@ export type JoinCommunityResponse = { 'NotInvited' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
   { 'AlreadyInCommunity' : CommunityCanisterCommunitySummary } |
-  { 'InternalError' : string };
+  { 'InternalError' : string } |
+  { 'UserBlocked' : null };
 export interface JoinGroupArgs {
   'invite_code' : [] | [bigint],
   'correlation_id' : bigint,
@@ -843,6 +861,7 @@ export interface NnsCompletedCryptoTransaction {
   'block_index' : BlockIndex,
   'from' : NnsCryptoAccount,
   'memo' : bigint,
+  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export type NnsCryptoAccount = { 'Mint' : null } |
@@ -856,6 +875,7 @@ export interface NnsFailedCryptoTransaction {
   'from' : NnsCryptoAccount,
   'memo' : bigint,
   'error_message' : string,
+  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export type NnsNeuronId = bigint;
@@ -1105,6 +1125,7 @@ export interface SnsCompletedCryptoTransaction {
   'block_index' : BlockIndex,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [bigint],
+  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export interface SnsFailedCryptoTransaction {
@@ -1116,6 +1137,7 @@ export interface SnsFailedCryptoTransaction {
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [bigint],
   'error_message' : string,
+  'ledger' : CanisterId,
   'amount' : Tokens,
 }
 export interface SnsNeuronGate {
@@ -1247,6 +1269,7 @@ export interface _SERVICE {
     [InviteUsersToGroupArgs],
     InviteUsersToGroupResponse
   >,
+  'join_channel' : ActorMethod<[JoinChannelArgs], JoinChannelResponse>,
   'join_community' : ActorMethod<[JoinCommunityArgs], JoinCommunityResponse>,
   'join_group' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,

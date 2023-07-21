@@ -7,7 +7,6 @@
     import { getContext } from "svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { cryptoLookup } from "openchat-client";
-    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -86,21 +85,28 @@
         background-size: contain;
         background-repeat: no-repeat;
         background-position: top;
+        border-radius: 50%;
 
         -webkit-box-reflect: below 0
             linear-gradient(hsla(0, 0%, 100%, 0), hsla(0, 0%, 100%, 0) 45%, hsla(0, 0%, 100%, 0.2));
 
         &.icp {
-            background-image: url("../assets/icp_token.svg");
+            background-image: url("/assets/icp_token.svg");
         }
         &.sns1 {
-            background-image: url("../assets/sns1_medium.png");
+            background-image: url("/assets/sns1_medium.png");
         }
         &.ckbtc {
-            background-image: url("../assets/ckbtc_nobackground.svg");
+            background-image: url("/assets/ckbtc_nobackground.svg");
         }
         &.chat {
-            background-image: url("../assets/spinner.svg");
+            background-image: url("/assets/spinner.svg");
+        }
+        &.kinic {
+            background-image: url("/assets/kinic_token.png");
+        }
+        &.hot {
+            background-image: url("/assets/hot_token.svg");
         }
     }
 

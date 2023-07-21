@@ -186,6 +186,7 @@ export const Notification = IDL.Variant({
                   'Account' : IDL.Vec(IDL.Nat8),
                 }),
                 'memo' : IDL.Nat64,
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
               'SNS' : IDL.Record({
@@ -215,6 +216,7 @@ export const Notification = IDL.Variant({
                   }),
                 }),
                 'memo' : IDL.Opt(IDL.Nat64),
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
               'ICRC1' : IDL.Record({
@@ -243,6 +245,7 @@ export const Notification = IDL.Variant({
                   }),
                 }),
                 'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Nat,
               }),
             }),
@@ -282,6 +285,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Nat64,
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
@@ -311,6 +315,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'ICRC1' : IDL.Record({
@@ -339,6 +344,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
                 }),
               }),
@@ -364,6 +370,7 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
@@ -393,6 +400,7 @@ export const Notification = IDL.Variant({
                     }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'ICRC1' : IDL.Record({
@@ -421,6 +429,7 @@ export const Notification = IDL.Variant({
                     }),
                   }),
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
                 }),
               }),
@@ -732,6 +741,7 @@ export const Notification = IDL.Variant({
                   'Account' : IDL.Vec(IDL.Nat8),
                 }),
                 'memo' : IDL.Nat64,
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
               'SNS' : IDL.Record({
@@ -761,6 +771,7 @@ export const Notification = IDL.Variant({
                   }),
                 }),
                 'memo' : IDL.Opt(IDL.Nat64),
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
               'ICRC1' : IDL.Record({
@@ -789,6 +800,7 @@ export const Notification = IDL.Variant({
                   }),
                 }),
                 'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Nat,
               }),
             }),
@@ -828,6 +840,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Nat64,
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
@@ -857,6 +870,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'ICRC1' : IDL.Record({
@@ -885,6 +899,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
                 }),
               }),
@@ -910,6 +925,7 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
@@ -939,6 +955,7 @@ export const Notification = IDL.Variant({
                     }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'ICRC1' : IDL.Record({
@@ -967,6 +984,7 @@ export const Notification = IDL.Variant({
                     }),
                   }),
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
                 }),
               }),
@@ -1290,6 +1308,7 @@ export const Notification = IDL.Variant({
                   'Account' : IDL.Vec(IDL.Nat8),
                 }),
                 'memo' : IDL.Nat64,
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
               'SNS' : IDL.Record({
@@ -1319,6 +1338,7 @@ export const Notification = IDL.Variant({
                   }),
                 }),
                 'memo' : IDL.Opt(IDL.Nat64),
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
               'ICRC1' : IDL.Record({
@@ -1347,6 +1367,7 @@ export const Notification = IDL.Variant({
                   }),
                 }),
                 'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Nat,
               }),
             }),
@@ -1386,6 +1407,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Nat64,
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
@@ -1415,6 +1437,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'ICRC1' : IDL.Record({
@@ -1443,6 +1466,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
                 }),
               }),
@@ -1468,6 +1492,7 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
@@ -1497,6 +1522,7 @@ export const Notification = IDL.Variant({
                     }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'ICRC1' : IDL.Record({
@@ -1525,6 +1551,7 @@ export const Notification = IDL.Variant({
                     }),
                   }),
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
                 }),
               }),
@@ -1845,6 +1872,7 @@ export const Notification = IDL.Variant({
                   'Account' : IDL.Vec(IDL.Nat8),
                 }),
                 'memo' : IDL.Nat64,
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
               'SNS' : IDL.Record({
@@ -1874,6 +1902,7 @@ export const Notification = IDL.Variant({
                   }),
                 }),
                 'memo' : IDL.Opt(IDL.Nat64),
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
               'ICRC1' : IDL.Record({
@@ -1902,6 +1931,7 @@ export const Notification = IDL.Variant({
                   }),
                 }),
                 'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Nat,
               }),
             }),
@@ -1941,6 +1971,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Nat64,
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
@@ -1970,6 +2001,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'ICRC1' : IDL.Record({
@@ -1998,6 +2030,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
                 }),
               }),
@@ -2023,6 +2056,7 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
@@ -2052,6 +2086,7 @@ export const Notification = IDL.Variant({
                     }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'ICRC1' : IDL.Record({
@@ -2080,6 +2115,7 @@ export const Notification = IDL.Variant({
                     }),
                   }),
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
                 }),
               }),
@@ -2396,6 +2432,7 @@ export const Notification = IDL.Variant({
                   'Account' : IDL.Vec(IDL.Nat8),
                 }),
                 'memo' : IDL.Nat64,
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
               'SNS' : IDL.Record({
@@ -2425,6 +2462,7 @@ export const Notification = IDL.Variant({
                   }),
                 }),
                 'memo' : IDL.Opt(IDL.Nat64),
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
               'ICRC1' : IDL.Record({
@@ -2453,6 +2491,7 @@ export const Notification = IDL.Variant({
                   }),
                 }),
                 'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Nat,
               }),
             }),
@@ -2492,6 +2531,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Nat64,
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
@@ -2521,6 +2561,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'ICRC1' : IDL.Record({
@@ -2549,6 +2590,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
                 }),
               }),
@@ -2574,6 +2616,7 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
@@ -2603,6 +2646,7 @@ export const Notification = IDL.Variant({
                     }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'ICRC1' : IDL.Record({
@@ -2631,6 +2675,7 @@ export const Notification = IDL.Variant({
                     }),
                   }),
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
                 }),
               }),
@@ -2944,6 +2989,7 @@ export const Notification = IDL.Variant({
                   'Account' : IDL.Vec(IDL.Nat8),
                 }),
                 'memo' : IDL.Nat64,
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
               'SNS' : IDL.Record({
@@ -2973,6 +3019,7 @@ export const Notification = IDL.Variant({
                   }),
                 }),
                 'memo' : IDL.Opt(IDL.Nat64),
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
               }),
               'ICRC1' : IDL.Record({
@@ -3001,6 +3048,7 @@ export const Notification = IDL.Variant({
                   }),
                 }),
                 'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                'ledger' : IDL.Principal,
                 'amount' : IDL.Nat,
               }),
             }),
@@ -3040,6 +3088,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Nat64,
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
@@ -3069,6 +3118,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'ICRC1' : IDL.Record({
@@ -3097,6 +3147,7 @@ export const Notification = IDL.Variant({
                   }),
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   'error_message' : IDL.Text,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
                 }),
               }),
@@ -3122,6 +3173,7 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
@@ -3151,6 +3203,7 @@ export const Notification = IDL.Variant({
                     }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'ICRC1' : IDL.Record({
@@ -3179,6 +3232,7 @@ export const Notification = IDL.Variant({
                     }),
                   }),
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
                 }),
               }),

@@ -677,7 +677,9 @@
                 } else if (resp === "gate_check_failed") {
                     modal = ModalType.GateCheckFailed;
                 } else if (resp === "failure") {
-                    toastStore.showFailureToast("joinGroupFailed");
+                    toastStore.showFailureToast(
+                        interpolateLevel("joinGroupFailed", group.level, true)
+                    );
                     joining = undefined;
                 } else if (select) {
                     joining = undefined;

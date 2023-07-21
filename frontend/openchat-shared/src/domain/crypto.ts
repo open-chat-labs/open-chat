@@ -37,8 +37,7 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         symbol: "SNS1",
         name: "SNS-1",
         transferFeesE8s: BigInt(1_000),
-        howToBuyUrl:
-            "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
+        howToBuyUrl: "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
         disabled: false,
         rootCanister: "zxeu2-7aaaa-aaaaq-aaafa-cai",
     },
@@ -62,8 +61,7 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         symbol: "KINIC",
         name: "Kinic",
         transferFeesE8s: BigInt(100_000),
-        howToBuyUrl:
-            "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
+        howToBuyUrl: "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
         disabled: true,
         rootCanister: "7jkta-eyaaa-aaaaq-aaarq-cai",
     },
@@ -71,11 +69,10 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         symbol: "HOT",
         name: "HotOrNot",
         transferFeesE8s: BigInt(100_000),
-        howToBuyUrl:
-            "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
+        howToBuyUrl: "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
         disabled: true,
         rootCanister: "67bll-riaaa-aaaaq-aaauq-cai",
-    }
+    },
 };
 
 export type Tokens = {

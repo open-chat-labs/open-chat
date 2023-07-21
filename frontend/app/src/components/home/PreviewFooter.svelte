@@ -1,5 +1,4 @@
 <script lang="ts">
-    import PreviewWrapper from "./communities/PreviewWrapper.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
     import GroupGateIcon from "./AccessGateIcon.svelte";
@@ -65,58 +64,40 @@
     }
 </script>
 
-<PreviewWrapper let:joiningCommunity let:joinCommunity>
-    <div class="preview">
-        {#if previewingCommunity && $selectedCommunity !== undefined}
-            <div class="gate">
-                <GroupGateIcon on:upgrade gate={$selectedCommunity.gate} />
-            </div>
-        {:else if chat.kind === "group_chat" || chat.kind === "channel"}
-            <div class="gate">
-                <GroupGateIcon on:upgrade gate={chat.gate} />
-            </div>
-        {/if}
-        {#if isPlatformModerator}
-            {#if isFrozen}
-                <Button
-                    loading={freezingInProgress}
-                    secondary={true}
-                    small={true}
-                    on:click={unfreezeGroup}>
-                    {$_("unfreezeGroup")}
-                </Button>
-            {:else}
-                <Button
-                    loading={freezingInProgress}
-                    secondary={true}
-                    small={true}
-                    on:click={freezeGroup}>
-                    {$_("freezeGroup")}
-                </Button>
-            {/if}
-        {/if}
-        <Button secondary={true} small={true} on:click={cancelPreview}>
-            {$_("leave")}
-        </Button>
-        {#if previewingCommunity}
+<div class="preview">
+    <div class="gate">
+        <GroupGateIcon on:upgrade gate={chat.gate} />
+    </div>
+    {#if isPlatformModerator}
+        {#if isFrozen}
             <Button
-                loading={joiningCommunity}
-                disabled={joiningCommunity}
+                loading={freezingInProgress}
+                secondary={true}
                 small={true}
-                on:click={() => joinCommunity(false)}>
-                {$_("communities.joinCommunity")}
+                on:click={unfreezeGroup}>
+                {$_("unfreezeGroup")}
             </Button>
         {:else}
             <Button
-                loading={joining !== undefined}
-                disabled={joining !== undefined}
+                loading={freezingInProgress}
+                secondary={true}
                 small={true}
-                on:click={joinGroup}>
-                {interpolateLevel("joinGroup", chat.level, true)}
+                on:click={freezeGroup}>
+                {$_("freezeGroup")}
             </Button>
         {/if}
-    </div>
-</PreviewWrapper>
+    {/if}
+    <Button secondary={true} small={true} on:click={cancelPreview}>
+        {$_("leave")}
+    </Button>
+    <Button
+        loading={joining !== undefined}
+        disabled={joining !== undefined}
+        small={true}
+        on:click={joinGroup}>
+        {interpolateLevel("joinGroup", chat.level, true)}
+    </Button>
+</div>
 
 <style lang="scss">
     .preview {
