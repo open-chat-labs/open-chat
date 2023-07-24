@@ -823,10 +823,6 @@
         "chooseGate": "בחר שער גישה",
         "diamondMember": "חברות יהלום",
         "diamondGateInfo": "רק משתמשים עם חברות Diamond יורשו להצטרף",
-        "sns1Holder": "מחזיק נוירון SNS-1",
-        "sns1HolderInfo": "רק בעלי נוירונים SNS-1 יורשו להצטרף",
-        "chatHolder": "מחזיק נוירון CHAT",
-        "chatHolderInfo": "רק בעלי נוירוני CHAT יורשו להצטרף",
         "nnsHolder": "מחזיק נוירון NNS (בקרוב)",
         "nftHolder": "מחזיק NFT (בקרוב)",
         "openAccess": "גישה חופשית",
@@ -837,7 +833,9 @@
         "optional": "אופציונאלי",
         "openAccessInfo": "אין דרישות גישה מיוחדות כדי להצטרף",
         "gateCheckFailed": "שער הגישה לא נפגש",
-        "cannotMakePublic": "אינך יכול להפוך {level} פרטי לציבורי מכיוון שזה יסכן את הפרטיות של החברים הקיימים."
+        "cannotMakePublic": "אינך יכול להפוך {level} פרטי לציבורי מכיוון שזה יסכן את הפרטיות של החברים הקיימים.",
+        "snsHolder": "מחזיק נוירון {token}",
+        "snsHolderInfo": "רק בעלי נוירונים {token} יורשו להצטרף"
     },
     "communities": {
         "explore": "חקור קהילות",

@@ -4,6 +4,8 @@ export type AccessGate =
     | OpenChatNeuronGate
     | DiamondGate
     | NnsNeuronGate
+    | HotOrNotNeuronGate
+    | KinicNeuronGate
     | NftGate;
 
 export type NoGate = { kind: "no_gate" };
@@ -12,9 +14,32 @@ export type NnsNeuronGate = { kind: "nns_gate" };
 
 export type NftGate = { kind: "nft_gate" };
 
+export type SNSAccessGate =
+    | Sns1NeuronGate
+    | OpenChatNeuronGate
+    | KinicNeuronGate
+    | HotOrNotNeuronGate;
+
+export function isSnsGate(gate: AccessGate): gate is SNSAccessGate {
+    return (
+        gate.kind === "hotornot_gate" ||
+        gate.kind === "kinic_gate" ||
+        gate.kind === "openchat_gate" ||
+        gate.kind === "sns1_gate"
+    );
+}
+
 type SnsNeuronGate = {
     minStakeE8s?: number;
     minDissolveDelay?: number;
+};
+
+export type HotOrNotNeuronGate = SnsNeuronGate & {
+    kind: "hotornot_gate";
+};
+
+export type KinicNeuronGate = SnsNeuronGate & {
+    kind: "kinic_gate";
 };
 
 export type Sns1NeuronGate = SnsNeuronGate & {

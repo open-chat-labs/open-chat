@@ -827,10 +827,6 @@
         "chooseGate": "Wählen Sie ein Zugangstor",
         "diamondMember": "Diamond-Mitgliedschaft",
         "diamondGateInfo": "Nur Benutzer mit Diamond-Mitgliedschaft können beitreten",
-        "sns1Holder": "SNS-1-Neuronenhalter",
-        "sns1HolderInfo": "Nur Inhaber von SNS-1-Neuronen dürfen teilnehmen",
-        "chatHolder": "CHAT-Neuronenhalter",
-        "chatHolderInfo": "Nur Inhaber von CHAT-Neuronen dürfen teilnehmen",
         "nnsHolder": "NNS-Neuronenhalter (in Kürze verfügbar)",
         "nftHolder": "NFT-Inhaber (in Kürze verfügbar)",
         "openAccess": "Offener Zugang",
@@ -841,7 +837,9 @@
         "optional": "Optional",
         "openAccessInfo": "Für den Beitritt sind keine besonderen Zugangsvoraussetzungen erforderlich",
         "gateCheckFailed": "Zugangstor nicht erreicht",
-        "cannotMakePublic": "Sie können ein privates {level} nicht öffentlich machen, da dies die Privatsphäre der bestehenden Mitglieder gefährden würde."
+        "cannotMakePublic": "Sie können ein privates {level} nicht öffentlich machen, da dies die Privatsphäre der bestehenden Mitglieder gefährden würde.",
+        "snsHolder": "{token} Neuronenhalter",
+        "snsHolderInfo": "Nur Inhaber von {token}-Neuronen dürfen beitreten"
     },
     "communities": {
         "explore": "Entdecken Sie Communities",

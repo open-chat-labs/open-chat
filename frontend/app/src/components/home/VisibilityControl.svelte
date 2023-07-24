@@ -9,6 +9,7 @@
         Permissioned,
         HasLevel,
         HasMembershipRole,
+        isSnsGate,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Radio from "../Radio.svelte";
@@ -18,7 +19,7 @@
     import { iconSize } from "stores/iconSize";
     import Legend from "../Legend.svelte";
     import Input from "../Input.svelte";
-    import { gateBindings } from "../../utils/access";
+    import { gateBindings, snsGateBindings } from "../../utils/access";
 
     type T = $$Generic;
 
@@ -43,7 +44,7 @@
     });
 
     afterUpdate(() => {
-        if (candidate.gate.kind === "openchat_gate" || candidate.gate.kind === "sns1_gate") {
+        if (isSnsGate(candidate.gate)) {
             candidate = {
                 ...candidate,
                 gate: {
@@ -150,11 +151,11 @@
                 <Select margin={false} on:change={updateGate} bind:value={selectedGateIndex}>
                     {#each gateBindings as gate}
                         <option disabled={!gate.enabled} value={gate.index}
-                            >{$_(gate.label)}</option>
+                            >{$_(gate.label, { values: gate.labelParams })}</option>
                     {/each}
                 </Select>
             </div>
-            {#if candidate.gate.kind === "openchat_gate" || candidate.gate.kind === "sns1_gate"}
+            {#if isSnsGate(candidate.gate)}
                 <Legend label={$_("access.minDissolveDelay")} />
                 <Input
                     maxlength={100}
@@ -171,10 +172,12 @@
             {/if}
             {#if candidate.gate.kind === "diamond_gate"}
                 <div class="info">{$_("access.diamondGateInfo")}</div>
-            {:else if candidate.gate.kind === "openchat_gate"}
-                <div class="info">{$_("access.chatHolderInfo")}</div>
-            {:else if candidate.gate.kind === "sns1_gate"}
-                <div class="info">{$_("access.sns1HolderInfo")}</div>
+            {:else if isSnsGate(candidate.gate)}
+                <div class="info">
+                    {$_("access.snsHolderInfo", {
+                        values: snsGateBindings[candidate.gate.kind].labelParams,
+                    })}
+                </div>
             {:else if candidate.gate.kind === "no_gate"}
                 <div class="info">{$_("access.openAccessInfo")}</div>
             {/if}

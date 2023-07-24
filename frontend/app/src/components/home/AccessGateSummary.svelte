@@ -1,14 +1,13 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { AccessGate } from "openchat-client";
+    import { isSnsGate, type AccessGate } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import AccessGateParameters from "./AccessGateParameters.svelte";
 
     export let gate: AccessGate;
     export let showHeader = true;
     $: showDetails =
-        (gate.kind === "sns1_gate" || gate.kind === "openchat_gate") &&
-        (gate.minDissolveDelay !== undefined || gate.minStakeE8s !== undefined);
+        isSnsGate(gate) && (gate.minDissolveDelay !== undefined || gate.minStakeE8s !== undefined);
 </script>
 
 {#if gate.kind !== "no_gate"}
@@ -20,9 +19,7 @@
             <AccessGateIcon {gate} />
             {#if gate.kind === "diamond_gate"}
                 <p>{$_("access.diamondMember")}</p>
-            {:else if gate.kind === "openchat_gate"}
-                <AccessGateParameters {gate} />
-            {:else if gate.kind === "sns1_gate"}
+            {:else if isSnsGate(gate)}
                 <AccessGateParameters {gate} />
             {/if}
         </div>

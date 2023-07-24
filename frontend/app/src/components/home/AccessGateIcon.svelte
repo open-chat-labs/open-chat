@@ -2,9 +2,10 @@
     import { _ } from "svelte-i18n";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import { E8S_PER_TOKEN, AccessGate } from "openchat-client";
+    import { E8S_PER_TOKEN, AccessGate, isSnsGate } from "openchat-client";
     import { createEventDispatcher } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
+    import { snsGateBindings } from "utils/access";
 
     export let gate: AccessGate;
     export let position: Position = "top";
@@ -17,7 +18,7 @@
 
     function formatParams(gate: AccessGate): string {
         const parts = [];
-        if (gate.kind === "openchat_gate" || gate.kind === "sns1_gate") {
+        if (isSnsGate(gate)) {
             if (gate.minDissolveDelay) {
                 parts.push(
                     `${$_("access.minDissolveDelayN", {
@@ -45,22 +46,16 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
-    {:else if gate.kind === "openchat_gate"}
+    {:else if isSnsGate(gate)}
         <TooltipWrapper {position} {align}>
-            <div slot="target" class="icon oc" class:small />
+            <div slot="target" class={`icon ${snsGateBindings[gate.kind].cssClass}`} class:small />
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
-                    <p>{`${$_("access.chatHolderInfo")}`}</p>
-                    <p class="params">{params}</p>
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
-    {:else if gate.kind === "sns1_gate"}
-        <TooltipWrapper {position} {align}>
-            <div slot="target" class="icon sns1" class:small />
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {position} {align}>
-                    <p>{`${$_("access.sns1HolderInfo")}`}</p>
+                    <p>
+                        {`${$_("access.snsHolderInfo", {
+                            values: snsGateBindings[gate.kind].labelParams,
+                        })}`}
+                    </p>
                     <p class="params">{params}</p>
                 </TooltipPopup>
             </div>
@@ -96,6 +91,9 @@
     }
     .kinic {
         background-image: url("../assets/kinic_token.png");
+    }
+    .hotornot {
+        background-image: url("../assets/hot_token.svg");
     }
 
     .params {

@@ -1,12 +1,13 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { E8S_PER_TOKEN, OpenChatNeuronGate, Sns1NeuronGate } from "openchat-client";
+    import { E8S_PER_TOKEN, SNSAccessGate } from "openchat-client";
+    import { snsGateBindings } from "utils/access";
 
-    export let gate: Sns1NeuronGate | OpenChatNeuronGate;
+    export let gate: SNSAccessGate;
 </script>
 
 <div class="detail">
-    <div>{gate.kind === "openchat_gate" ? $_("access.chatHolder") : $_("access.sns1Holder")}</div>
+    <div>{$_("access.snsHolder", { values: snsGateBindings[gate.kind].labelParams })}</div>
     <div class="params">
         {#if gate.minDissolveDelay}
             <div>
