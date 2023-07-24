@@ -332,6 +332,7 @@ import {
     ChannelIdentifier,
     ExploreChannelsResponse,
     CommunityInvite,
+    isSnsGate,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -2099,10 +2100,7 @@ export class OpenChat extends OpenChatAgentWorker {
     hasAccessGateChanged(current: AccessGate, original: AccessGate): boolean {
         if (current === original) return false;
         if (current.kind !== original.kind) return true;
-        if (
-            (current.kind === "openchat_gate" || current.kind === "sns1_gate") &&
-            (original.kind === "openchat_gate" || original.kind === "sns1_gate")
-        ) {
+        if (isSnsGate(current) && isSnsGate(original)) {
             return (
                 current.minDissolveDelay !== original.minDissolveDelay ||
                 current.minStakeE8s !== original.minStakeE8s
@@ -2112,7 +2110,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getMinDissolveDelayDays(gate: AccessGate): number | undefined {
-        if (gate.kind === "sns1_gate" || gate.kind === "openchat_gate") {
+        if (isSnsGate(gate)) {
             return gate.minDissolveDelay
                 ? gate.minDissolveDelay / (24 * 60 * 60 * 1000)
                 : undefined;
@@ -2121,7 +2119,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getMinStakeInTokens(gate: AccessGate): number | undefined {
-        if (gate.kind === "sns1_gate" || gate.kind === "openchat_gate") {
+        if (isSnsGate(gate)) {
             return gate.minStakeE8s ? gate.minStakeE8s / E8S_PER_TOKEN : undefined;
         }
         return undefined;

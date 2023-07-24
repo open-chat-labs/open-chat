@@ -73,6 +73,8 @@
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: chatListScope = client.chatListScope;
 
+    $: console.log("Dirty: ", dirty, infoDirty, rulesDirty, permissionsDirty, visDirty, gateDirty);
+
     function getSteps(editing: boolean) {
         let steps = [
             { labelKey: "group.details", valid: true },
