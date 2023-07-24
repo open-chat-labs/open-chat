@@ -22,7 +22,8 @@ pub struct TokenDetails {
     pub decimals: u8,
     pub fee: u128,
     pub logo: Option<String>,
-    pub sns_canisters: Option<SnsCanisters>,
+    #[serde(alias = "sns_canisters")]
+    pub nervous_system: Option<NervousSystem>,
     pub info_url: Option<String>,
     pub how_to_buy_url: Option<String>,
     pub transaction_url_format: Option<String>,
@@ -31,7 +32,9 @@ pub struct TokenDetails {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct SnsCanisters {
+pub struct NervousSystem {
+    #[serde(default)]
+    pub is_nns: bool,
     pub root: CanisterId,
     pub governance: CanisterId,
 }

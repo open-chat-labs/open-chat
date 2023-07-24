@@ -19,7 +19,8 @@ type TokenDetails = record {
     decimals : nat8;
     fee : nat;
     logo : opt text;
-    sns_canisters: opt record {
+    nervous_system: opt record {
+        is_nns: bool;
         root: CanisterId;
         governance: CanisterId;
     };

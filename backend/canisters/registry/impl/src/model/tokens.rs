@@ -1,4 +1,4 @@
-use registry_canister::{SnsCanisters, TokenDetails};
+use registry_canister::{NervousSystem, TokenDetails};
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, TimestampMillis};
 
@@ -18,7 +18,7 @@ impl Tokens {
         decimals: u8,
         fee: u128,
         logo: Option<String>,
-        sns_canisters: Option<SnsCanisters>,
+        nervous_system: Option<NervousSystem>,
         info_url: Option<String>,
         how_to_buy_url: Option<String>,
         transaction_url_format: Option<String>,
@@ -34,7 +34,7 @@ impl Tokens {
                 decimals,
                 fee,
                 logo,
-                sns_canisters,
+                nervous_system,
                 info_url,
                 how_to_buy_url,
                 transaction_url_format,
