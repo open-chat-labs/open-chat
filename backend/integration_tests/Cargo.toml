@@ -14,6 +14,7 @@ group_index_canister = { path = "../canisters/group_index/api" }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-test-state-machine-client = { workspace = true }
+icrc1_ledger_canister = { path = "../external_canisters/icrc1_ledger/api" }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
 ledger_utils = { path = "../libraries/ledger_utils" }
