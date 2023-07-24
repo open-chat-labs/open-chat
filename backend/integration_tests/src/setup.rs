@@ -201,6 +201,9 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
 
     let registry_init_args = registry_canister::init::Args {
         governance_principals: vec![controller],
+        nns_ledger_canister_id,
+        nns_root_canister_id,
+        nns_governance_canister_id,
         sns_wasm_canister_id,
         cycles_dispenser_canister_id,
         wasm_version: Version::min(),
