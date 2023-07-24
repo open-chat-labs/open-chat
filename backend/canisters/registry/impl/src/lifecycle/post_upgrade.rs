@@ -30,9 +30,9 @@ fn post_upgrade(args: Args) {
     // TODO remove this after next upgrade
     mutate_state(|state| {
         state.data.add_icp_token_details(
-            CanisterId::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
-            CanisterId::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap(),
-            CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap(),
+            CanisterId::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(), // Ledger
+            CanisterId::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap(), // Root
+            CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap(), // Governance
             state.env.now(),
         );
     })
