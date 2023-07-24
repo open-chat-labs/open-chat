@@ -96,6 +96,7 @@ pub struct CanisterIds {
     pub cycles_dispenser: CanisterId,
     pub registry: CanisterId,
     pub market_maker: CanisterId,
+    pub nns_root: CanisterId,
     pub nns_governance: CanisterId,
     pub nns_internet_identity: CanisterId,
     pub nns_ledger: CanisterId,

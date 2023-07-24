@@ -35,5 +35,6 @@ cd ../../..
 ./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister_notify-method
 ./scripts/download-nns-canister-wasm.sh cycles_minting_canister cycles-minting-canister
 ./scripts/download-nns-canister-wasm.sh sns_wasm sns-wasm-canister
+./scripts/download-nns-canister-wasm.sh icrc1_ledger ic-icrc1-ledger
 
 cargo test --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS

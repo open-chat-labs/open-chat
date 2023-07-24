@@ -20,6 +20,7 @@ async fn main() {
         cycles_dispenser: opts.cycles_dispenser,
         registry: opts.registry,
         market_maker: opts.market_maker,
+        nns_root: opts.nns_root,
         nns_governance: opts.nns_governance,
         nns_internet_identity: opts.nns_internet_identity,
         nns_ledger: opts.nns_ledger,
@@ -78,6 +79,9 @@ struct Opts {
 
     #[arg(long)]
     market_maker: CanisterId,
+
+    #[arg(long)]
+    nns_root: CanisterId,
 
     #[arg(long)]
     nns_governance: CanisterId,

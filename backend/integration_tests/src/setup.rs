@@ -5,8 +5,10 @@ use crate::{client, wasms, CanisterIds, TestEnv, NNS_GOVERNANCE_CANISTER_ID, NNS
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use ic_test_state_machine_client::StateMachine;
+use icrc1_ledger_canister::MetadataValue;
 use std::collections::{HashMap, HashSet};
 use storage_index_canister::init::CyclesDispenserConfig;
+use types::icrc1::Account;
 use types::{CanisterId, Version};
 
 pub fn setup_new_env() -> TestEnv {
@@ -25,7 +27,9 @@ pub fn setup_new_env() -> TestEnv {
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
     let nns_canister_ids: Vec<_> = (0..11).map(|_| create_canister(env, controller)).collect();
-    let icp_ledger_canister_id = nns_canister_ids[2];
+    let nns_governance_canister_id = nns_canister_ids[1];
+    let nns_ledger_canister_id = nns_canister_ids[2];
+    let nns_root_canister_id = nns_canister_ids[3];
     let cycles_minting_canister_id = nns_canister_ids[4];
     let sns_wasm_canister_id = nns_canister_ids[10];
 
@@ -186,7 +190,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         min_interval: 5 * 60 * 1000, // 5 minutes
         min_cycles_balance: 200 * T,
         icp_burn_amount_e8s: 1_000_000_000, // 10 ICP
-        ledger_canister: icp_ledger_canister_id,
+        ledger_canister: nns_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
         wasm_version: Version::min(),
         test_mode: true,
@@ -201,6 +205,9 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
 
     let registry_init_args = registry_canister::init::Args {
         governance_principals: vec![controller],
+        nns_ledger_canister_id,
+        nns_root_canister_id,
+        nns_governance_canister_id,
         sns_wasm_canister_id,
         cycles_dispenser_canister_id,
         wasm_version: Version::min(),
@@ -268,7 +275,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
 
     let minting_account = AccountIdentifier::new(&controller, &DEFAULT_SUBACCOUNT);
 
-    let icp_ledger_init_args = LedgerCanisterInitPayload {
+    let icp_ledger_init_args = NnsLedgerCanisterInitPayload {
         minting_account: minting_account.to_string(),
         initial_values: HashMap::new(),
         send_whitelist: HashSet::new(),
@@ -277,13 +284,13 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     install_canister(
         env,
         controller,
-        icp_ledger_canister_id,
+        nns_ledger_canister_id,
         icp_ledger_canister_wasm,
         icp_ledger_init_args,
     );
 
     let cycles_minting_canister_init_args = CyclesMintingCanisterInitPayload {
-        ledger_canister_id: icp_ledger_canister_id,
+        ledger_canister_id: nns_ledger_canister_id,
         governance_canister_id: CanisterId::anonymous(),
         minting_account_id: Some(minting_account.to_string()),
         last_purged_notification: Some(0),
@@ -320,13 +327,64 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         storage_index: storage_index_canister_id,
         cycles_dispenser: cycles_dispenser_canister_id,
         registry: registry_canister_id,
-        icp_ledger: icp_ledger_canister_id,
+        icp_ledger: nns_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
     }
 }
 
+pub fn install_icrc1_ledger(
+    env: &mut StateMachine,
+    controller: Principal,
+    token_name: String,
+    token_symbol: String,
+    transfer_fee: u64,
+    initial_balances: Vec<(Account, u64)>,
+) -> CanisterId {
+    #[derive(CandidType)]
+    pub struct InitArgs {
+        pub minting_account: Account,
+        pub initial_balances: Vec<(Account, u64)>,
+        pub transfer_fee: u64,
+        pub token_name: String,
+        pub token_symbol: String,
+        pub metadata: Vec<(String, MetadataValue)>,
+        pub archive_options: ArchiveOptions,
+    }
+
+    #[derive(CandidType)]
+    pub enum LedgerArgument {
+        Init(InitArgs),
+    }
+
+    #[derive(CandidType)]
+    pub struct ArchiveOptions {
+        pub trigger_threshold: usize,
+        pub num_blocks_to_archive: usize,
+        pub controller_id: Principal,
+    }
+
+    let args = LedgerArgument::Init(InitArgs {
+        minting_account: Account::from(controller),
+        initial_balances,
+        transfer_fee,
+        token_name,
+        token_symbol,
+        metadata: Vec::new(),
+        archive_options: ArchiveOptions {
+            trigger_threshold: 1000,
+            num_blocks_to_archive: 1000,
+            controller_id: controller,
+        },
+    });
+
+    let canister_id = create_canister(env, controller);
+    install_canister(env, controller, canister_id, wasms::ICRC1_LEDGER.clone(), args);
+
+    canister_id
+}
+
 #[derive(CandidType)]
-struct LedgerCanisterInitPayload {
+struct NnsLedgerCanisterInitPayload {
     minting_account: String,
     initial_values: HashMap<String, Tokens>,
     send_whitelist: HashSet<CanisterId>,
