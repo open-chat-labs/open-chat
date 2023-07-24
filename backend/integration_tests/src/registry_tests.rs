@@ -59,9 +59,14 @@ fn add_token_succeeds() {
 
     if let registry_canister::updates::Response::Success(result) = updates_response1 {
         assert_eq!(result.last_updated, now);
-        let token_details = result.token_details.unwrap();
-        let token = token_details.first().unwrap();
-        assert_eq!(token.ledger_canister_id, ledger_canister_id);
+
+        let token = result
+            .token_details
+            .unwrap()
+            .iter()
+            .find(|t| t.ledger_canister_id == ledger_canister_id)
+            .unwrap();
+
         assert_eq!(token.name, "ABC Token");
         assert_eq!(token.symbol, "ABC");
         assert_eq!(token.decimals, 8);
