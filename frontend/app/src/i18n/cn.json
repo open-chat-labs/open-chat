@@ -825,10 +825,6 @@
         "chooseGate": "选择一个门禁",
         "diamondMember": "钻石会员",
         "diamondGateInfo": "只有拥有钻石会员资格的用户才能加入",
-        "sns1Holder": "SNS-1 神经元持有者",
-        "sns1HolderInfo": "只允许持有 SNS-1 神经元的人加入",
-        "chatHolder": "CHAT 神经元持有者",
-        "chatHolderInfo": "只有 CHAT 神经元的持有者才能加入",
         "nnsHolder": "NNS 神经元持有者（即将推出）",
         "nftHolder": "NFT持有者（即将推出）",
         "openAccess": "开放获取",
@@ -839,7 +835,9 @@
         "optional": "选修的",
         "openAccessInfo": "加入没有特殊的访问要求",
         "gateCheckFailed": "未满足访问门禁",
-        "cannotMakePublic": "您不能将私有的 {level} 设为公开，因为这会危及现有成员的隐私。"
+        "cannotMakePublic": "您不能将私有的 {level} 设为公开，因为这会危及现有成员的隐私。",
+        "snsHolder": "{token} 神经元支架",
+        "snsHolderInfo": "仅允许 {token} 神经元的持有者加入"
     },
     "communities": {
         "explore": "探索社区",

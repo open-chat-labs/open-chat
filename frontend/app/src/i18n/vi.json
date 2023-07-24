@@ -826,10 +826,6 @@
         "chooseGate": "Chọn một cổng truy cập",
         "diamondMember": "thành viên kim cương",
         "diamondGateInfo": "Chỉ những người dùng có tư cách thành viên Kim cương mới được phép tham gia",
-        "sns1Holder": "Người giữ nơ-ron SNS-1",
-        "sns1HolderInfo": "Chỉ những người nắm giữ tế bào thần kinh SNS-1 mới được phép tham gia",
-        "chatHolder": "Người giữ nơ ron CHAT",
-        "chatHolderInfo": "Chỉ những người nắm giữ tế bào thần kinh CHAT mới được phép tham gia",
         "nnsHolder": "Người giữ tế bào thần kinh NNS (sắp ra mắt)",
         "nftHolder": "Giá đỡ NFT (sắp ra mắt)",
         "openAccess": "truy cập mở",
@@ -840,7 +836,9 @@
         "optional": "Không bắt buộc",
         "openAccessInfo": "Không có yêu cầu truy cập đặc biệt để tham gia",
         "gateCheckFailed": "Cổng truy cập không được đáp ứng",
-        "cannotMakePublic": "Bạn không thể công khai {level} riêng tư vì điều đó sẽ gây rủi ro cho quyền riêng tư của các thành viên hiện có."
+        "cannotMakePublic": "Bạn không thể công khai {level} riêng tư vì điều đó sẽ gây rủi ro cho quyền riêng tư của các thành viên hiện có.",
+        "snsHolder": "người giữ nơ ron {token}",
+        "snsHolderInfo": "Chỉ những người sở hữu nơ-ron {token} mới được phép tham gia"
     },
     "communities": {
         "explore": "Khám phá cộng đồng",
