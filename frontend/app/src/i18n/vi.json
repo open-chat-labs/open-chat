@@ -836,7 +836,9 @@
         "optional": "Không bắt buộc",
         "openAccessInfo": "Không có yêu cầu truy cập đặc biệt để tham gia",
         "gateCheckFailed": "Cổng truy cập không được đáp ứng",
-        "cannotMakePublic": "Bạn không thể công khai {level} riêng tư vì điều đó sẽ gây rủi ro cho quyền riêng tư của các thành viên hiện có."
+        "cannotMakePublic": "Bạn không thể công khai {level} riêng tư vì điều đó sẽ gây rủi ro cho quyền riêng tư của các thành viên hiện có.",
+        "snsHolder": "người giữ nơ ron {token}",
+        "snsHolderInfo": "Chỉ những người sở hữu nơ-ron {token} mới được phép tham gia"
     },
     "communities": {
         "explore": "Khám phá cộng đồng",

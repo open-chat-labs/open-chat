@@ -835,7 +835,9 @@
         "optional": "Facultatif",
         "openAccessInfo": "Il n'y a pas d'exigences d'accès particulières pour rejoindre",
         "gateCheckFailed": "Porte d'accès non rencontrée",
-        "cannotMakePublic": "Vous ne pouvez pas rendre public un {level} privé car cela mettrait en danger la vie privée des membres existants."
+        "cannotMakePublic": "Vous ne pouvez pas rendre public un {level} privé car cela mettrait en danger la vie privée des membres existants.",
+        "snsHolder": "support de neurone {token}",
+        "snsHolderInfo": "Seuls les détenteurs de {token} neurones seront autorisés à rejoindre"
     },
     "communities": {
         "explore": "Explorer les communautés",

@@ -835,7 +835,9 @@
         "optional": "Opzionale",
         "openAccessInfo": "Non ci sono particolari requisiti di accesso per aderire",
         "gateCheckFailed": "Cancello di accesso non rispettato",
-        "cannotMakePublic": "Non puoi rendere pubblico un {level} privato in quanto ciò metterebbe a rischio la privacy dei membri esistenti."
+        "cannotMakePublic": "Non puoi rendere pubblico un {level} privato in quanto ciò metterebbe a rischio la privacy dei membri esistenti.",
+        "snsHolder": "{token} detentore di neuroni",
+        "snsHolderInfo": "Solo i possessori di {token} neuroni potranno partecipare"
     },
     "communities": {
         "explore": "Esplora le comunità",

@@ -837,7 +837,9 @@
         "optional": "Optional",
         "openAccessInfo": "Für den Beitritt sind keine besonderen Zugangsvoraussetzungen erforderlich",
         "gateCheckFailed": "Zugangstor nicht erreicht",
-        "cannotMakePublic": "Sie können ein privates {level} nicht öffentlich machen, da dies die Privatsphäre der bestehenden Mitglieder gefährden würde."
+        "cannotMakePublic": "Sie können ein privates {level} nicht öffentlich machen, da dies die Privatsphäre der bestehenden Mitglieder gefährden würde.",
+        "snsHolder": "{token} Neuronenhalter",
+        "snsHolderInfo": "Nur Inhaber von {token}-Neuronen dürfen beitreten"
     },
     "communities": {
         "explore": "Entdecken Sie Communities",

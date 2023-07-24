@@ -836,7 +836,9 @@
         "optional": "オプション",
         "openAccessInfo": "参加するための特別なアクセス要件はありません",
         "gateCheckFailed": "アクセスゲートが満たされていません",
-        "cannotMakePublic": "既存のメンバーのプライバシーが危険にさらされるため、非公開の {level} を公開することはできません。"
+        "cannotMakePublic": "既存のメンバーのプライバシーが危険にさらされるため、非公開の {level} を公開することはできません。",
+        "snsHolder": "{token} ニューロン ホルダー",
+        "snsHolderInfo": "{token} ニューロンの所有者のみが参加を許可されます"
     },
     "communities": {
         "explore": "コミュニティを探索する",
