@@ -25,7 +25,9 @@ pub fn setup_new_env() -> TestEnv {
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
     let nns_canister_ids: Vec<_> = (0..11).map(|_| create_canister(env, controller)).collect();
-    let icp_ledger_canister_id = nns_canister_ids[2];
+    let nns_governance_canister_id = nns_canister_ids[1];
+    let nns_ledger_canister_id = nns_canister_ids[2];
+    let nns_root_canister_id = nns_canister_ids[3];
     let cycles_minting_canister_id = nns_canister_ids[4];
     let sns_wasm_canister_id = nns_canister_ids[10];
 
@@ -186,7 +188,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         min_interval: 5 * 60 * 1000, // 5 minutes
         min_cycles_balance: 200 * T,
         icp_burn_amount_e8s: 1_000_000_000, // 10 ICP
-        ledger_canister: icp_ledger_canister_id,
+        ledger_canister: nns_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
         wasm_version: Version::min(),
         test_mode: true,
@@ -280,13 +282,13 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     install_canister(
         env,
         controller,
-        icp_ledger_canister_id,
+        nns_ledger_canister_id,
         icp_ledger_canister_wasm,
         icp_ledger_init_args,
     );
 
     let cycles_minting_canister_init_args = CyclesMintingCanisterInitPayload {
-        ledger_canister_id: icp_ledger_canister_id,
+        ledger_canister_id: nns_ledger_canister_id,
         governance_canister_id: CanisterId::anonymous(),
         minting_account_id: Some(minting_account.to_string()),
         last_purged_notification: Some(0),
@@ -323,7 +325,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         storage_index: storage_index_canister_id,
         cycles_dispenser: cycles_dispenser_canister_id,
         registry: registry_canister_id,
-        icp_ledger: icp_ledger_canister_id,
+        icp_ledger: nns_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
     }
 }
