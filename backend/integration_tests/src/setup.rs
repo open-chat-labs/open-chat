@@ -5,6 +5,7 @@ use crate::{client, wasms, CanisterIds, TestEnv, NNS_GOVERNANCE_CANISTER_ID, NNS
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use ic_test_state_machine_client::StateMachine;
+use icrc1_ledger_canister::MetadataValue;
 use std::collections::{HashMap, HashSet};
 use storage_index_canister::init::CyclesDispenserConfig;
 use types::icrc1::Account;
@@ -346,14 +347,13 @@ pub fn install_icrc1_ledger(
         pub transfer_fee: u64,
         pub token_name: String,
         pub token_symbol: String,
-        pub metadata: Vec<(String, Value)>,
+        pub metadata: Vec<(String, MetadataValue)>,
         pub archive_options: ArchiveOptions,
     }
 
     #[derive(CandidType)]
     pub enum LedgerArgument {
         Init(InitArgs),
-        Upgrade(Option<UpgradeArgs>),
     }
 
     #[derive(CandidType)]
