@@ -60,9 +60,8 @@ fn add_token_succeeds() {
     if let registry_canister::updates::Response::Success(result) = updates_response1 {
         assert_eq!(result.last_updated, now);
 
-        let token = result
-            .token_details
-            .unwrap()
+        let token_details = result.token_details.unwrap();
+        let token = token_details
             .iter()
             .find(|t| t.ledger_canister_id == ledger_canister_id)
             .unwrap();
