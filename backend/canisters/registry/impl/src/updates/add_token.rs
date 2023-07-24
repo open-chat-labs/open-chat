@@ -4,7 +4,7 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::RejectionCode;
 use registry_canister::add_token::{Response::*, *};
-use registry_canister::SnsCanisters;
+use registry_canister::NervousSystem;
 use types::{CanisterId, Empty};
 
 #[proposal(guard = "caller_is_governance_principal")]
@@ -15,12 +15,13 @@ async fn add_token(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let sns_canisters = match sns_wasm_canister_c2c_client::list_deployed_snses(sns_wasm_canister_id, &Empty {}).await {
+    let nervous_system = match sns_wasm_canister_c2c_client::list_deployed_snses(sns_wasm_canister_id, &Empty {}).await {
         Ok(response) => response
             .instances
             .into_iter()
             .find(|s| s.ledger_canister_id == Some(args.ledger_canister_id))
-            .map(|sns| SnsCanisters {
+            .map(|sns| NervousSystem {
+                is_nns: false,
                 root: sns.root_canister_id.unwrap(),
                 governance: sns.governance_canister_id.unwrap(),
             }),
@@ -35,7 +36,7 @@ async fn add_token(args: Args) -> Response {
         get_logo(
             args.logo,
             args.ledger_canister_id,
-            sns_canisters.as_ref().map(|sns| sns.governance),
+            nervous_system.as_ref().map(|ns| ns.governance),
         ),
     )
     .await
@@ -49,7 +50,7 @@ async fn add_token(args: Args) -> Response {
                 decimals,
                 fee.0.try_into().unwrap(),
                 logo,
-                sns_canisters,
+                nervous_system,
                 args.info_url,
                 args.how_to_buy_url,
                 args.transaction_url_format,
