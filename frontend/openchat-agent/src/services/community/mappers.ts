@@ -446,7 +446,7 @@ export function communitySummaryUpdates(
         membership: optional(candid.membership, communityMembershipUpdates),
         frozen: optionUpdate(candid.frozen, (_) => true),
         latestEventIndex: optional(candid.latest_event_index, identity),
-        bannerId: optionUpdate(candid.avatar_id, identity),
+        bannerId: optionUpdate(candid.banner_id, identity),
         memberCount: optional(candid.member_count, identity),
         primaryLanguage: optional(candid.primary_language, identity),
     };
