@@ -933,17 +933,13 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    setUserAvatar(data: Uint8Array): Promise<boolean> {
-        this.user = {
-            ...this.user,
-            ...data,
-        };
-
+    setUserAvatar(data: Uint8Array, url: string): Promise<boolean> {
         const partialUser = this._liveState.userStore[this.user.userId];
         if (partialUser) {
             userStore.add({
                 ...partialUser,
-                ...data,
+                blobData: data,
+                blobUrl: url,
             });
         }
 
