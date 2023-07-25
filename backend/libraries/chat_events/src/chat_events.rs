@@ -96,16 +96,6 @@ impl ChatEvents {
         events
     }
 
-    pub fn mark_event_updated(
-        &mut self,
-        thread_root_message_index: Option<MessageIndex>,
-        event_index: EventIndex,
-        now: TimestampMillis,
-    ) {
-        self.last_updated_timestamps
-            .mark_updated(thread_root_message_index, event_index, now);
-    }
-
     pub fn iter_recently_updated_events(
         &self,
     ) -> impl Iterator<Item = (Option<MessageIndex>, EventIndex, TimestampMillis)> + '_ {
@@ -182,7 +172,8 @@ impl ChatEvents {
                     message.content = args.content.into();
                     message.last_updated = Some(args.now);
                     message.last_edited = Some(args.now);
-                    self.mark_event_updated(args.thread_root_message_index, event_index, args.now);
+                    self.last_updated_timestamps
+                        .mark_updated(args.thread_root_message_index, event_index, args.now);
 
                     add_to_metrics(
                         &mut self.metrics,
@@ -715,7 +706,7 @@ impl ChatEvents {
                     reason_code,
                     notes,
                 });
-                self.mark_event_updated(None, index, now);
+                self.last_updated_timestamps.mark_updated(None, index, now);
                 return;
             }
         }
@@ -742,6 +733,19 @@ impl ChatEvents {
             correlation_id: 0,
             now,
         });
+    }
+
+    // Used when a group is imported into a community
+    pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
+        for (thread_root_message_index, events_list) in [(None, &mut self.main)]
+            .into_iter()
+            .chain(self.threads.iter_mut().map(|(t, e)| (Some(*t), e)))
+        {
+            for event_index in events_list.migrate_replies(old, new) {
+                self.last_updated_timestamps
+                    .mark_updated(thread_root_message_index, event_index, now);
+            }
+        }
     }
 
     fn update_thread_summary(
@@ -896,7 +900,7 @@ impl ChatEvents {
             if let MessageContentInternal::MessageReminderCreated(r) = &mut message.content {
                 r.hidden = true;
                 message.last_updated = Some(now);
-                self.mark_event_updated(None, event_index, now);
+                self.last_updated_timestamps.mark_updated(None, event_index, now);
                 return true;
             }
         }
