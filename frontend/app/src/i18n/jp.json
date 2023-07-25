@@ -441,12 +441,13 @@
         "yourAccount": "あなたの {token} アドレス",
         "receiver": "受信者",
         "chooseReceiver": "受信者のユーザー名を入力します",
-        "icp": "インターネット コンピュータ",
-        "btc": "ビットコイン",
-        "chat": "オープンチャット",
+        "icp": "Internet Computer",
+        "btc": "Bitcoin",
+        "ckbtc": "ckBitcoin",
+        "chat": "OpenChat",
         "sns1": "SNS-1",
+        "kinic": "Kinic",
         "max": "最大",
-        "ckbtc": "ckビットコイン",
         "viewTransaction": "[取引]({url})"
     },
     "cryptoAccount": {
