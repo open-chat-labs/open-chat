@@ -1,6 +1,6 @@
 use crate::{mutate_state, Prize, RuntimeState};
 use ic_ledger_types::Tokens;
-use ledger_utils::icrc1;
+use ledger_utils::sns;
 use rand::Rng;
 use std::{cmp, time::Duration};
 use tracing::{error, trace};
@@ -146,18 +146,17 @@ async fn transfer_prize_funds_to_group(
     now_nanos: TimestampNanos,
 ) -> Result<CompletedCryptoTransaction, String> {
     // Assume ICRC-1 for now
-    let pending_transaction = types::icrc1::PendingCryptoTransaction {
+    let pending_transaction = types::sns::PendingCryptoTransaction {
         ledger: ledger_canister_id,
-        symbol: token.token_symbol().to_string(),
         token,
-        amount: amount as u128,
+        amount: Tokens::from_e8s(amount),
         to: Account::from(group),
-        fee: token.fee(),
+        fee: Tokens::from_e8s(token.fee() as u64),
         memo: None,
         created: now_nanos,
     };
 
-    match icrc1::process_transaction(pending_transaction, group).await {
+    match sns::process_transaction(pending_transaction, group).await {
         Ok(completed_transaction) => mutate_state(|state| {
             state.data.prizes_sent.push(Prize {
                 group,
