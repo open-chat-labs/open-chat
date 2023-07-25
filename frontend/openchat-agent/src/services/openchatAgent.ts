@@ -2032,12 +2032,20 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    pinChat(chatId: ChatIdentifier, communitiesEnabled: boolean): Promise<PinChatResponse> {
-        return this.userClient.pinChat(chatId, communitiesEnabled);
+    pinChat(
+        chatId: ChatIdentifier,
+        communitiesEnabled: boolean,
+        favourite: boolean
+    ): Promise<PinChatResponse> {
+        return this.userClient.pinChat(chatId, communitiesEnabled, favourite);
     }
 
-    unpinChat(chatId: ChatIdentifier, communitiesEnabled: boolean): Promise<UnpinChatResponse> {
-        return this.userClient.unpinChat(chatId, communitiesEnabled);
+    unpinChat(
+        chatId: ChatIdentifier,
+        communitiesEnabled: boolean,
+        favourite: boolean
+    ): Promise<UnpinChatResponse> {
+        return this.userClient.unpinChat(chatId, communitiesEnabled, favourite);
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
@@ -2364,7 +2372,7 @@ export class OpenChatAgent extends EventTarget {
         if (updates.kind === "success" && updates.tokenDetails !== undefined) {
             const updated = {
                 lastUpdated: updates.lastUpdated,
-                tokenDetails: updates.tokenDetails
+                tokenDetails: updates.tokenDetails,
             };
             setRegistry(updated);
             return updated;

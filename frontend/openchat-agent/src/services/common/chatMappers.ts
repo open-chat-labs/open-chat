@@ -155,6 +155,7 @@ import {
     ResetInviteCodeResponse,
     KinicGovernanceCanisterId,
     HotOrNotGovernanceCanisterId,
+    ThreadSyncDetails,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -1546,11 +1547,21 @@ export function communityChannelSummary(
             myMetrics:
                 optional(candid.membership, (m) => chatMetrics(m.my_metrics)) ?? emptyChatMetrics(),
             readByMeUpTo: latestMessage?.event.messageIndex,
-            latestThreads: [],
+            latestThreads:
+                optional(candid.membership, (m) => m.latest_threads.map(threadSyncDetails)) ?? [],
             mentions: [],
             archived: false,
         },
         isDefault: candid.is_default,
+    };
+}
+
+export function threadSyncDetails(candid: ApiGroupCanisterThreadDetails): ThreadSyncDetails {
+    return {
+        threadRootMessageIndex: candid.root_message_index,
+        lastUpdated: candid.last_updated,
+        latestEventIndex: candid.latest_event,
+        latestMessageIndex: candid.latest_message,
     };
 }
 

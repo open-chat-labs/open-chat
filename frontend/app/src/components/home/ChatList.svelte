@@ -29,7 +29,7 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import { discoverHotGroupsDismissed } from "../../stores/settings";
     import { communitiesEnabled } from "../../utils/features";
-    import { pushRightPanelHistory } from "../../stores/rightPanel";
+    import { pushRightPanelHistory, rightPanelHistory } from "../../stores/rightPanel";
     import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
     import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
@@ -191,9 +191,11 @@
 
     function showChannels() {
         if ($chatListScope.kind === "community") {
-            pushRightPanelHistory({
-                kind: "community_channels",
-            });
+            rightPanelHistory.set([
+                {
+                    kind: "community_channels",
+                },
+            ]);
         }
     }
 </script>

@@ -66,6 +66,7 @@ import {
     RegisterPollVoteResponse,
     ImportGroupResponse,
     ManageDefaultChannelsResponse,
+    GroupCanisterThreadDetails,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -134,6 +135,7 @@ export {
     RegisterPollVoteResponse as ApiRegisterPollVoteResponse,
     ImportGroupResponse as ApiImportGroupResponse,
     ManageDefaultChannelsResponse as ApiManageDefaultChannelsResponse,
+    GroupCanisterThreadDetails as ApiGroupCanisterThreadDetails,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

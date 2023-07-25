@@ -444,7 +444,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "pinChat":
                 agent
-                    .pinChat(payload.chatId, payload.communitiesEnabled)
+                    .pinChat(payload.chatId, payload.communitiesEnabled, payload.favourite)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -455,7 +455,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "unpinChat":
                 agent
-                    .unpinChat(payload.chatId, payload.communitiesEnabled)
+                    .unpinChat(payload.chatId, payload.communitiesEnabled, payload.favourite)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

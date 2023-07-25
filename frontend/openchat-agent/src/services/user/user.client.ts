@@ -2,6 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import {
     ApiChannelMessagesRead,
+    ApiChat,
     ApiChatInList,
     ApiChatMessagesRead,
     ApiMarkReadArgs,
@@ -860,7 +861,7 @@ export class UserClient extends CandidService {
         );
     }
 
-    private toChatInList(chatId: ChatIdentifier): ApiChatInList {
+    private toChat(chatId: ChatIdentifier): ApiChat {
         switch (chatId.kind) {
             case "direct_chat":
                 return { Direct: Principal.fromText(chatId.userId) };
@@ -868,16 +869,42 @@ export class UserClient extends CandidService {
                 return { Group: Principal.fromText(chatId.groupId) };
             case "channel":
                 return {
-                    Community: [Principal.fromText(chatId.communityId), BigInt(chatId.channelId)],
+                    Channel: [Principal.fromText(chatId.communityId), BigInt(chatId.channelId)],
                 };
         }
     }
 
-    pinChat(chatId: ChatIdentifier, communitiesEnabled: boolean): Promise<PinChatResponse> {
+    private toChatInList(chatId: ChatIdentifier, favourite: boolean): ApiChatInList {
+        if (favourite) {
+            return {
+                Favourite: this.toChat(chatId),
+            };
+        } else {
+            switch (chatId.kind) {
+                case "direct_chat":
+                    return { Direct: Principal.fromText(chatId.userId) };
+                case "group_chat":
+                    return { Group: Principal.fromText(chatId.groupId) };
+                case "channel":
+                    return {
+                        Community: [
+                            Principal.fromText(chatId.communityId),
+                            BigInt(chatId.channelId),
+                        ],
+                    };
+            }
+        }
+    }
+
+    pinChat(
+        chatId: ChatIdentifier,
+        communitiesEnabled: boolean,
+        favourite: boolean
+    ): Promise<PinChatResponse> {
         if (communitiesEnabled) {
             return this.handleResponse(
                 this.userService.pin_chat_v2({
-                    chat: this.toChatInList(chatId),
+                    chat: this.toChatInList(chatId, favourite),
                 }),
 
                 pinChatResponse
@@ -893,11 +920,15 @@ export class UserClient extends CandidService {
         }
     }
 
-    unpinChat(chatId: ChatIdentifier, communitiesEnabled: boolean): Promise<UnpinChatResponse> {
+    unpinChat(
+        chatId: ChatIdentifier,
+        communitiesEnabled: boolean,
+        favourite: boolean
+    ): Promise<UnpinChatResponse> {
         if (communitiesEnabled) {
             return this.handleResponse(
                 this.userService.unpin_chat_v2({
-                    chat: this.toChatInList(chatId),
+                    chat: this.toChatInList(chatId, favourite),
                 }),
                 unpinChatResponse
             );

@@ -16,7 +16,7 @@
     import MenuItem from "../../MenuItem.svelte";
     import type { CommunitySummary, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
-    import { pushRightPanelHistory } from "../../../stores/rightPanel";
+    import { rightPanelHistory } from "../../../stores/rightPanel";
 
     const client = getContext<OpenChat>("client");
 
@@ -58,15 +58,17 @@
     }
 
     function showMembers() {
-        pushRightPanelHistory({ kind: "show_community_members" });
+        rightPanelHistory.set([{ kind: "show_community_members" }]);
     }
     function invite() {
-        canInvite && pushRightPanelHistory({ kind: "invite_community_users" });
+        canInvite && rightPanelHistory.set([{ kind: "invite_community_users" }]);
     }
     function showChannels() {
-        pushRightPanelHistory({
-            kind: "community_channels",
-        });
+        rightPanelHistory.set([
+            {
+                kind: "community_channels",
+            },
+        ]);
     }
 
     function editCommunity() {
