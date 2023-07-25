@@ -595,6 +595,7 @@ function pendingCryptoTransfer(
         const trans = "NNS" in candid ? candid.NNS : candid.SNS;
         return {
             kind: "pending",
+            symbol: trans.symbol,
             ledger: trans.ledger.toString(),
             token: token(trans.token),
             recipient,
@@ -608,6 +609,7 @@ function pendingCryptoTransfer(
         return {
             kind: "pending",
             ledger: candid.ICRC1.ledger.toString(),
+            symbol: candid.ICRC1.symbol,
             token: token(candid.ICRC1.token),
             recipient,
             amountE8s: candid.ICRC1.amount,
@@ -1321,6 +1323,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
                 Pending: {
                     NNS: {
                         ledger: Principal.fromText(domain.ledger),
+                        symbol: domain.symbol,
                         token: apiToken(domain.token),
                         to: {
                             User: Principal.fromText(domain.recipient),
@@ -1337,6 +1340,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
                 Pending: {
                     ICRC1: {
                         ledger: Principal.fromText(domain.ledger),
+                        symbol: domain.symbol,
                         token: apiToken(domain.token),
                         to: {
                             owner: Principal.fromText(domain.recipient),
@@ -1362,6 +1366,7 @@ export function apiPendingCryptocurrencyWithdrawal(
             withdrawal: {
                 NNS: {
                     ledger: Principal.fromText(domain.ledger),
+                    symbol: domain.symbol,
                     token: apiToken(domain.token),
                     to: { Account: hexStringToBytes(domain.to) },
                     amount: apiICP(domain.amountE8s),
@@ -1376,6 +1381,7 @@ export function apiPendingCryptocurrencyWithdrawal(
             withdrawal: {
                 ICRC1: {
                     ledger: Principal.fromText(domain.ledger),
+                    symbol: domain.symbol,
                     token: apiToken(domain.token),
                     to: { owner: Principal.fromText(domain.to), subaccount: [] },
                     amount: domain.amountE8s,
