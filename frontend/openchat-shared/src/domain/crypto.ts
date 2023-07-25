@@ -62,7 +62,7 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         name: "Kinic",
         transferFeesE8s: BigInt(100_000),
         howToBuyUrl: "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
-        disabled: true,
+        disabled: false,
         rootCanister: "7jkta-eyaaa-aaaaq-aaarq-cai",
     },
     hotornot: {
