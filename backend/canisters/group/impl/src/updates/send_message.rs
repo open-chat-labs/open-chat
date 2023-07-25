@@ -48,13 +48,16 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     &mut state.data.timer_jobs,
                 );
 
+                let mut trimmed_message = result.message_event.clone();
+                trimmed_message.event.content.trim(500);
+
                 let notification = Notification::GroupMessageNotification(GroupMessageNotification {
                     chat_id: state.env.canister_id().into(),
                     thread_root_message_index: args.thread_root_message_index,
                     group_name: state.data.chat.name.clone(),
                     sender: user_id,
                     sender_name: args.sender_name,
-                    message: result.message_event,
+                    message: trimmed_message,
                     mentioned: args.mentioned,
                 });
 
