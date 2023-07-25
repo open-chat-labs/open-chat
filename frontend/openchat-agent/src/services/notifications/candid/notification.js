@@ -451,7 +451,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'symbol' : IDL.Text,
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Record({
@@ -470,7 +469,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'symbol' : IDL.Text,
                 }),
                 'ICRC1' : IDL.Record({
                   'to' : IDL.Record({
@@ -489,7 +487,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
-                  'symbol' : IDL.Text,
                 }),
               }),
             }),
@@ -1009,7 +1006,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'symbol' : IDL.Text,
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Record({
@@ -1028,7 +1024,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'symbol' : IDL.Text,
                 }),
                 'ICRC1' : IDL.Record({
                   'to' : IDL.Record({
@@ -1047,7 +1042,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
-                  'symbol' : IDL.Text,
                 }),
               }),
             }),
@@ -1579,7 +1573,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'symbol' : IDL.Text,
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Record({
@@ -1598,7 +1591,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'symbol' : IDL.Text,
                 }),
                 'ICRC1' : IDL.Record({
                   'to' : IDL.Record({
@@ -1617,7 +1609,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
-                  'symbol' : IDL.Text,
                 }),
               }),
             }),
@@ -2146,7 +2137,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'symbol' : IDL.Text,
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Record({
@@ -2165,7 +2155,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'symbol' : IDL.Text,
                 }),
                 'ICRC1' : IDL.Record({
                   'to' : IDL.Record({
@@ -2184,7 +2173,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
-                  'symbol' : IDL.Text,
                 }),
               }),
             }),
@@ -2709,7 +2697,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'symbol' : IDL.Text,
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Record({
@@ -2728,7 +2715,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'symbol' : IDL.Text,
                 }),
                 'ICRC1' : IDL.Record({
                   'to' : IDL.Record({
@@ -2747,7 +2733,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
-                  'symbol' : IDL.Text,
                 }),
               }),
             }),
@@ -3269,7 +3254,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'symbol' : IDL.Text,
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Record({
@@ -3288,7 +3272,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Nat64),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'symbol' : IDL.Text,
                 }),
                 'ICRC1' : IDL.Record({
                   'to' : IDL.Record({
@@ -3307,7 +3290,6 @@ export const Notification = IDL.Variant({
                   'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   'ledger' : IDL.Principal,
                   'amount' : IDL.Nat,
-                  'symbol' : IDL.Text,
                 }),
               }),
             }),

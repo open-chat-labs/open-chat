@@ -635,7 +635,6 @@ export interface Icrc1PendingCryptoTransaction {
   'memo' : [] | [Memo],
   'ledger' : CanisterId,
   'amount' : bigint,
-  'symbol' : string,
 }
 export interface ImageContent {
   'height' : number,
@@ -792,7 +791,6 @@ export interface NnsPendingCryptoTransaction {
   'memo' : [] | [bigint],
   'ledger' : CanisterId,
   'amount' : Tokens,
-  'symbol' : string,
 }
 export interface NnsProposal {
   'id' : ProposalId,
@@ -1035,7 +1033,6 @@ export interface SnsPendingCryptoTransaction {
   'memo' : [] | [bigint],
   'ledger' : CanisterId,
   'amount' : Tokens,
-  'symbol' : string,
 }
 export interface SnsProposal {
   'id' : ProposalId,

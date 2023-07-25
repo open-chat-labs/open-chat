@@ -21,7 +21,6 @@ pub fn create_pending_transaction(
     match token {
         Cryptocurrency::InternetComputer => PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
             ledger: token.ledger_canister_id(),
-            symbol: token.token_symbol().to_string(),
             token,
             amount,
             to: UserOrAccount::User(user_id),
@@ -31,7 +30,6 @@ pub fn create_pending_transaction(
         }),
         _ => PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
             ledger: token.ledger_canister_id(),
-            symbol: token.token_symbol().to_string(),
             token,
             amount: amount.e8s().into(),
             to: Account::from(Principal::from(user_id)),
