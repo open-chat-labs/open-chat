@@ -41,7 +41,7 @@ impl DirectChats {
     }
 
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
-        self.direct_chats.values().any(|c| c.has_updates_since(since))
+        self.direct_chats.values().any(|c| c.has_updates_since(since)) || self.pinned.timestamp > since
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &DirectChat> {
