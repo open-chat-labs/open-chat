@@ -1,4 +1,4 @@
-use crate::{ChatEventInternal, EventKey, MessageContentInternal, MessageInternal};
+use crate::{ChatEventInternal, ChatInternal, EventKey, MessageContentInternal, MessageInternal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -126,6 +126,23 @@ impl ChatEventsList {
 
     pub fn values(&self) -> impl Iterator<Item = &EventWrapperInternal<ChatEventInternal>> {
         self.events_map.values()
+    }
+
+    pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal) -> Vec<EventIndex> {
+        let mut updated = Vec::new();
+        for event in self.events_map.values_mut() {
+            if let Some(message) = event.event.as_message_mut() {
+                if let Some(r) = message.replies_to.as_mut() {
+                    if let Some((chat, _)) = r.chat_if_other.as_mut() {
+                        if *chat == old {
+                            *chat = new;
+                            updated.push(event.index);
+                        }
+                    }
+                }
+            }
+        }
+        updated
     }
 
     pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(
