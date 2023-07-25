@@ -213,8 +213,10 @@ pub mod nns {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[serde(from = "PendingCryptoTransactionPrevious")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
+        pub symbol: String,
         pub token: Cryptocurrency,
         pub amount: Tokens,
         pub to: UserOrAccount,
@@ -250,6 +252,32 @@ pub mod nns {
         pub transaction_hash: TransactionHash,
         pub error_message: String,
     }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct PendingCryptoTransactionPrevious {
+        pub ledger: CanisterId,
+        pub token: Cryptocurrency,
+        pub amount: Tokens,
+        pub to: UserOrAccount,
+        pub fee: Option<Tokens>,
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+    }
+
+    impl From<PendingCryptoTransactionPrevious> for PendingCryptoTransaction {
+        fn from(value: PendingCryptoTransactionPrevious) -> Self {
+            PendingCryptoTransaction {
+                ledger: value.ledger,
+                symbol: value.token.token_symbol().to_string(),
+                token: value.token,
+                amount: value.amount,
+                to: value.to,
+                fee: value.fee,
+                memo: value.memo,
+                created: value.created,
+            }
+        }
+    }
 }
 
 pub mod sns {
@@ -260,8 +288,10 @@ pub mod sns {
     pub type Account = icrc1::Account;
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[serde(from = "PendingCryptoTransactionPrevious")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
+        pub symbol: String,
         pub token: Cryptocurrency,
         pub amount: Tokens,
         pub to: Account,
@@ -298,6 +328,32 @@ pub mod sns {
         #[serde(default)]
         pub transaction_hash: TransactionHash,
         pub error_message: String,
+    }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct PendingCryptoTransactionPrevious {
+        pub ledger: CanisterId,
+        pub token: Cryptocurrency,
+        pub amount: Tokens,
+        pub to: Account,
+        pub fee: Tokens,
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+    }
+
+    impl From<PendingCryptoTransactionPrevious> for PendingCryptoTransaction {
+        fn from(value: PendingCryptoTransactionPrevious) -> Self {
+            PendingCryptoTransaction {
+                ledger: value.ledger,
+                symbol: value.token.token_symbol().to_string(),
+                token: value.token,
+                amount: value.amount,
+                to: value.to,
+                fee: value.fee,
+                memo: value.memo,
+                created: value.created,
+            }
+        }
     }
 }
 
@@ -388,8 +444,10 @@ pub mod icrc1 {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[serde(from = "PendingCryptoTransactionPrevious")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
+        pub symbol: String,
         pub token: Cryptocurrency,
         pub amount: u128,
         pub to: Account,
@@ -423,12 +481,39 @@ pub mod icrc1 {
         pub created: TimestampNanos,
         pub error_message: String,
     }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct PendingCryptoTransactionPrevious {
+        pub ledger: CanisterId,
+        pub token: Cryptocurrency,
+        pub amount: u128,
+        pub to: Account,
+        pub fee: u128,
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+    }
+
+    impl From<PendingCryptoTransactionPrevious> for PendingCryptoTransaction {
+        fn from(value: PendingCryptoTransactionPrevious) -> Self {
+            PendingCryptoTransaction {
+                ledger: value.ledger,
+                symbol: value.token.token_symbol().to_string(),
+                token: value.token,
+                amount: value.amount,
+                to: value.to,
+                fee: value.fee,
+                memo: value.memo,
+                created: value.created,
+            }
+        }
+    }
 }
 
 impl From<sns::PendingCryptoTransaction> for icrc1::PendingCryptoTransaction {
     fn from(value: sns::PendingCryptoTransaction) -> Self {
         icrc1::PendingCryptoTransaction {
             ledger: value.ledger,
+            symbol: value.symbol,
             token: value.token,
             amount: value.amount.e8s() as u128,
             to: value.to,

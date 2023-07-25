@@ -256,3 +256,14 @@ export function routeForChatIdentifier(scope: ChatListScope["kind"], id: ChatIde
             return `${prefix}/community/${id.communityId}/channel/${id.channelId}`;
     }
 }
+
+export function tokenSymbol(token: Cryptocurrency): string {
+    switch (token) {
+        case "icp": return "ICP";
+        case "chat": return "CHAT";
+        case "ckbtc": return "ckBTC";
+        case "sns1": return "SNS1";
+        case "kinic": return "KINIC";
+        case "hotornot": return "HOT";
+    }
+}

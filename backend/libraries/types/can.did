@@ -959,6 +959,7 @@ type FailedCryptoTransaction = variant {
 
 type NnsPendingCryptoTransaction = record {
     ledger : CanisterId;
+    symbol: text;
     token : Cryptocurrency;
     amount : Tokens;
     to : NnsUserOrAccount;
@@ -1005,6 +1006,7 @@ type NnsCryptoAccount = variant {
 
 type SnsPendingCryptoTransaction = record {
     ledger : CanisterId;
+    symbol: text;
     token : Cryptocurrency;
     amount : Tokens;
     to : Icrc1Account;
@@ -1051,6 +1053,7 @@ type Icrc1Account = record {
 
 type Icrc1PendingCryptoTransaction = record {
     ledger : CanisterId;
+    symbol: text;
     token : Cryptocurrency;
     amount : nat;
     fee : nat;

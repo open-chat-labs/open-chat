@@ -19,6 +19,7 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import TextArea from "../TextArea.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
+    import { tokenSymbol } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -85,6 +86,7 @@
             caption: message === "" ? undefined : message,
             transfer: {
                 ledger: client.ledgerCanisterId(token),
+                symbol: tokenSymbol(token),
                 token,
                 kind: "pending",
                 recipient: receiver.userId,
