@@ -70,7 +70,6 @@ export type CryptocurrencyDeposit = {
 export type PendingCryptocurrencyWithdrawal = {
     kind: "pending";
     ledger: string;
-    symbol: string;
     token: Cryptocurrency;
     to: string;
     amountE8s: bigint;
@@ -125,7 +124,6 @@ export type CompletedCryptocurrencyTransfer = {
 export type PendingCryptocurrencyTransfer = {
     kind: "pending";
     ledger: string;
-    symbol: string;
     token: Cryptocurrency;
     recipient: string;
     amountE8s: bigint;
