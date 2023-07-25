@@ -8,6 +8,7 @@
     import { toastStore } from "../../../stores/toast";
     import { iconSize } from "../../../stores/iconSize";
     import Scanner from "./Scanner.svelte";
+    import { tokenSymbol } from "openchat-shared";
 
     export let token: Cryptocurrency;
     export let amountToSendE8s: bigint;
@@ -47,6 +48,7 @@
             .withdrawCryptocurrency({
                 kind: "pending",
                 ledger: client.ledgerCanisterId(token),
+                symbol: tokenSymbol(token),
                 token,
                 to: targetAccount,
                 amountE8s: amountToSendE8s,
