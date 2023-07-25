@@ -28,7 +28,6 @@ function qs(ctx: PageJS.Context): URLSearchParams {
 export function communitesRoute(_ctx: PageJS.Context): RouteParams {
     return {
         kind: "communities_route",
-        scope: { kind: "none" },
     };
 }
 
@@ -286,7 +285,7 @@ export type SelectedChannelRoute = RouteCommon & {
     open: boolean;
 };
 
-export type CommunitiesRoute = RouteCommon & {
+export type CommunitiesRoute = {
     kind: "communities_route";
 };
 
