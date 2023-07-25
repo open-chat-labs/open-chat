@@ -25,3 +25,10 @@ export class SessionExpiryError extends HttpError {
         this.name = "SessionExpiryError";
     }
 }
+
+export class DestinationInvalidError extends HttpError {
+    constructor(error: Error) {
+        super(404, error);
+        this.name = "DestinationInvalidError";
+    }
+}
