@@ -1,7 +1,7 @@
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import type { Principal } from "@dfinity/principal";
-import { AuthError, SessionExpiryError } from "openchat-shared";
+import { AuthError, DestinationInvalidError, SessionExpiryError } from "openchat-shared";
 import type { AgentConfig } from "../config";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 
@@ -61,6 +61,7 @@ export abstract class CandidService {
                 )}, args: ${JSON.stringify(args)}`;
                 if (
                     !(responseErr instanceof SessionExpiryError) &&
+                    !(responseErr instanceof DestinationInvalidError) &&
                     !(responseErr instanceof AuthError) &&
                     retries < MAX_RETRIES
                 ) {

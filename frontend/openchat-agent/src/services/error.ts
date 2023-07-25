@@ -4,6 +4,7 @@ import {
     HttpError,
     SessionExpiryError,
     AuthError,
+    DestinationInvalidError,
 } from "openchat-shared";
 
 export class ReplicaNotUpToDateError extends Error {
@@ -40,6 +41,11 @@ export function toCanisterResponseError(
     }
 
     let code = 500;
+
+    if (error.message.includes("DestinationInvalid")) {
+        // this will allow us to short-circuit the retry mechanism in this circumstance
+        return new DestinationInvalidError(error);
+    }
 
     const statusLine = error.message
         .split("\n")
