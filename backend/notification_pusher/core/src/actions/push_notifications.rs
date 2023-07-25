@@ -12,7 +12,9 @@ use web_push::{
     VapidSignatureBuilder, WebPushClient, WebPushError, WebPushMessage, WebPushMessageBuilder,
 };
 
-const MAX_PAYLOAD_LENGTH_BYTES: usize = 4 * 1024;
+// Max notification size (including everything) is as low as 3 KB for some browsers, so we restrict
+// the payload to 2 KB to ensure we don't exceed 3 KB once everything else is included.
+const MAX_PAYLOAD_LENGTH_BYTES: usize = 2 * 1024;
 
 pub async fn run<'a>(
     ic_agent: &IcAgent,
