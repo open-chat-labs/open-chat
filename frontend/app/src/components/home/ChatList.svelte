@@ -63,7 +63,9 @@
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
     $: showWhatsHot =
-        $chatListScope.kind === "none" && !$discoverHotGroupsDismissed && !searchResultsAvailable;
+        ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
+        !$discoverHotGroupsDismissed &&
+        !searchResultsAvailable;
     $: showBrowseChannnels = $chatListScope.kind === "community" && !searchResultsAvailable;
     $: unreadDirectChats = client.unreadDirectChats;
     $: unreadGroupChats = client.unreadGroupChats;
