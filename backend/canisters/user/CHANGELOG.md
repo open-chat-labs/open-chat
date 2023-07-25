@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove a few deprecated methods ([#4006](https://github.com/open-chat-labs/open-chat/pull/4006))
 
+### Fixed
+
+- Fix check for direct chat updates to include pinned ([#4024](https://github.com/open-chat-labs/open-chat/pull/4024))
+
 ## [[2.0.746](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.746-user)] - 2023-07-19
 
 ### Added
