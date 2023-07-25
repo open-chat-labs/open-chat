@@ -564,7 +564,7 @@ export function apiToken(token: Cryptocurrency): ApiCryptocurrency {
         case "chat":
             return { CHAT: null };
         case "kinic":
-            throw new Error("KINIC is not supported yet");
+            return { KINIC: null };
         case "hotornot":
             throw new Error("HotOrNot is not supported yet");
     }

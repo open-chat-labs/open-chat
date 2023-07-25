@@ -441,12 +441,13 @@
         "yourAccount": "Il tuo indirizzo {token}",
         "receiver": "Destinatario",
         "chooseReceiver": "inserire il nome utente del destinatario",
-        "icp": "Computer Internet",
+        "icp": "Internet Computer",
         "btc": "Bitcoin",
-        "chat": "ApriChat",
-        "sns1": "SNS-1",
-        "max": "Massimo",
         "ckbtc": "ckBitcoin",
+        "chat": "OpenChat",
+        "sns1": "SNS-1",
+        "kinic": "Kinic",
+        "max": "Massimo",
         "viewTransaction": "[Transazione]({url})"
     },
     "cryptoAccount": {

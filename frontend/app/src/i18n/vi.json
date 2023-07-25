@@ -442,12 +442,13 @@
         "yourAccount": "Địa chỉ {token} của bạn",
         "receiver": "Người nhận",
         "chooseReceiver": "nhập tên người dùng của người nhận",
-        "icp": "Máy tính Internet",
+        "icp": "Internet Computer",
         "btc": "Bitcoin",
-        "chat": "trò chuyện mở",
-        "sns1": "SNS-1",
-        "max": "tối đa",
         "ckbtc": "ckBitcoin",
+        "chat": "OpenChat",
+        "sns1": "SNS-1",
+        "kinic": "Kinic",
+        "max": "tối đa",
         "viewTransaction": "[Giao dịch]({url})"
     },
     "cryptoAccount": {
