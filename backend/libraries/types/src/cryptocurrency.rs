@@ -256,12 +256,7 @@ pub mod sns {
     use super::*;
     use ic_ledger_types::{BlockIndex, Memo, Tokens};
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-    pub enum CryptoAccount {
-        Mint,
-        Account(Account),
-    }
-
+    pub type CryptoAccount = icrc1::CryptoAccount;
     pub type Account = icrc1::Account;
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -427,5 +422,51 @@ pub mod icrc1 {
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub error_message: String,
+    }
+}
+
+impl From<sns::PendingCryptoTransaction> for icrc1::PendingCryptoTransaction {
+    fn from(value: sns::PendingCryptoTransaction) -> Self {
+        icrc1::PendingCryptoTransaction {
+            ledger: value.ledger,
+            token: value.token,
+            amount: value.amount.e8s() as u128,
+            to: value.to,
+            fee: value.fee.e8s() as u128,
+            memo: value.memo.map(|m| m.0.into()),
+            created: value.created,
+        }
+    }
+}
+
+impl From<sns::CompletedCryptoTransaction> for icrc1::CompletedCryptoTransaction {
+    fn from(value: sns::CompletedCryptoTransaction) -> Self {
+        icrc1::CompletedCryptoTransaction {
+            ledger: value.ledger,
+            token: value.token,
+            amount: value.amount.e8s() as u128,
+            from: value.from,
+            to: value.to,
+            fee: value.fee.e8s() as u128,
+            memo: value.memo.map(|m| m.0.into()),
+            created: value.created,
+            block_index: value.block_index,
+        }
+    }
+}
+
+impl From<sns::FailedCryptoTransaction> for icrc1::FailedCryptoTransaction {
+    fn from(value: sns::FailedCryptoTransaction) -> Self {
+        icrc1::FailedCryptoTransaction {
+            ledger: value.ledger,
+            token: value.token,
+            amount: value.amount.e8s() as u128,
+            from: value.from,
+            to: value.to,
+            fee: value.fee.e8s() as u128,
+            memo: value.memo.map(|m| m.0.into()),
+            created: value.created,
+            error_message: value.error_message,
+        }
     }
 }
