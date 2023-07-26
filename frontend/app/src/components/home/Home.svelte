@@ -363,9 +363,7 @@
     // Note: very important (and hacky) that this is hidden in a function rather than inline in the top level reactive
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
-        rightPanelHistory.update((history) =>
-            history.filter((panel) => panel.kind === "user_profile")
-        );
+        filterRightPanelHistory((panel) => panel.kind === "user_profile");
     }
 
     function closeThread() {
@@ -374,14 +372,12 @@
             return;
         }
         tick().then(() => {
-            rightPanelHistory.update((history) =>
-                history.filter((panel) => panel.kind !== "message_thread_panel")
-            );
+            filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
         });
     }
 
     function resetRightPanel() {
-        rightPanelHistory.update((history) => filterByChatType(history, $selectedChatStore));
+        filterByChatType($selectedChatStore);
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
