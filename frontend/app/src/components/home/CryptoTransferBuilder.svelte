@@ -2,7 +2,7 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import { cryptoLookup, PartialUserSummary } from "openchat-client";
-    import type { Cryptocurrency, ChatSummary, OpenChat } from "openchat-client";
+    import type { ChatSummary, OpenChat } from "openchat-client";
     import type { CryptocurrencyContent } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
@@ -25,7 +25,7 @@
     const dispatch = createEventDispatcher();
 
     export let draftAmountE8s: bigint;
-    export let token: Cryptocurrency;
+    export let token: string;
     export let chat: ChatSummary;
     export let defaultReceiver: string | undefined;
 

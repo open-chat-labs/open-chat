@@ -4,12 +4,12 @@
     import { toastStore } from "../../stores/toast";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import type { CreatedUser, Cryptocurrency } from "openchat-client";
+    import type { CreatedUser } from "openchat-client";
     import { copyToClipboard } from "../../utils/urls";
 
     export let user: CreatedUser;
     export let qrSize: "default" | "smaller" | "larger" = "default";
-    export let token: Cryptocurrency;
+    export let token: string;
     export let centered = false;
     export let border = true;
 
