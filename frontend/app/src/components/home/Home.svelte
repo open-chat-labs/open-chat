@@ -82,7 +82,7 @@
     const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
-    let candidateCommunityRules: AccessRules = defaultAccessRules();
+    let candidateCommunityRules: AccessRules = defaultAccessRules("community");
     let convertGroup: GroupChatSummary | undefined = undefined;
 
     type ConfirmActionEvent =
@@ -789,7 +789,7 @@
                 reactToMessages: "member",
                 replyInThread: "member",
             },
-            rules: defaultAccessRules(),
+            rules: defaultAccessRules(level),
             gate: { kind: "no_gate" },
             level,
             membership: {
@@ -803,6 +803,7 @@
     function editGroup(ev: CustomEvent<{ chat: MultiUserChat; rules: AccessRules | undefined }>) {
         modal = ModalType.NewGroup;
         const { chat, rules } = ev.detail;
+        let level: Level = chat.id.kind === "group_chat" ? "group" : "channel";
         candidateGroup = {
             id: chat.id,
             name: chat.name,
@@ -812,13 +813,13 @@
             frozen: chat.frozen,
             members: [],
             permissions: { ...chat.permissions },
-            rules: rules !== undefined ? { ...rules } : defaultAccessRules(),
+            rules: rules !== undefined ? { ...rules } : defaultAccessRules(level),
             avatar: {
                 blobUrl: chat.blobUrl,
                 blobData: chat.blobData,
             },
             gate: chat.gate,
-            level: chat.id.kind === "group_chat" ? "group" : "channel",
+            level,
             membership: chat.membership,
             isDefault: chat.isDefault,
         };
@@ -863,13 +864,13 @@
 
     function createCommunity() {
         candidateCommunity = createCandidateCommunity("");
-        candidateCommunityRules = defaultAccessRules();
+        candidateCommunityRules = defaultAccessRules("community");
         modal = ModalType.EditCommunity;
     }
 
     function editCommunity(ev: CustomEvent<CommunitySummary>) {
         candidateCommunity = ev.detail;
-        candidateCommunityRules = $currentCommunityRules ?? defaultAccessRules();
+        candidateCommunityRules = $currentCommunityRules ?? defaultAccessRules("community");
         modal = ModalType.EditCommunity;
     }
 

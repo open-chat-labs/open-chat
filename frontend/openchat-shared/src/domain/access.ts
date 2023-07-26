@@ -1,3 +1,5 @@
+import type { Level } from "./structure";
+
 export type AccessGate =
     | NoGate
     | Sns1NeuronGate
@@ -65,15 +67,22 @@ export type AccessRules = {
     enabled: boolean;
 };
 
-export const defaultAccessRuleText = `- Do not impersonate others in a deceptive or misleading manner
-- Do not intentionally share false or misleading information
-- Keep messages relevant to the group
 
-If you break the rules you might be blocked and/or have your message(s) deleted.`;
+export function defaultAccessRules(level: Level): AccessRules {
+    function levelText(level: Level): string {
+        switch (level) {
+            case "channel": return "the channel";
+            case "group": return "the group";
+            case "community": return "each channel";
+        }    
+    }
 
-export function defaultAccessRules(): AccessRules {
     return {
-        text: defaultAccessRuleText,
+        text: `- Do not impersonate others in a deceptive or misleading manner
+- Do not intentionally share false or misleading information
+- Keep messages relevant to ${levelText(level)}
+
+If you break the rules you might be blocked and/or have your message(s) deleted.`,
         enabled: false,
     };
 }
