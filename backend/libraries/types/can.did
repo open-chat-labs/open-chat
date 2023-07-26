@@ -205,6 +205,7 @@ type ChatEvent = variant {
     EventsTimeToLiveUpdated : EventsTimeToLiveUpdated;
     GroupGateUpdated : GroupGateUpdated;
     UsersInvited : UsersInvited;
+    MembersAddedToDefaultChannel : MembersAddedToDefaultChannel;
 };
 
 type ChatEventWrapper = record {
@@ -1324,6 +1325,10 @@ type CustomMessageContent = record {
 type UsersInvited = record {
     user_ids : vec UserId;
     invited_by : UserId;
+};
+
+type MembersAddedToDefaultChannel = record {
+    count: nat32;
 };
 
 type ReportedMessage = record {

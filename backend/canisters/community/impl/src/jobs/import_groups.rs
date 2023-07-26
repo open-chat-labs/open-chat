@@ -143,7 +143,9 @@ async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attemp
                             let member = state.data.members.get_by_user_id_mut(&user_id).unwrap();
                             for default_channel_id in default_channel_ids.iter() {
                                 if let Some(channel) = state.data.channels.get_mut(default_channel_id) {
-                                    join_channel_unchecked(channel, member, notifications_muted, now);
+                                    if channel.chat.gate.is_none() {
+                                        join_channel_unchecked(channel, member, notifications_muted, true, now);
+                                    }
                                 }
                             }
                             member.channels.insert(channel_id);
