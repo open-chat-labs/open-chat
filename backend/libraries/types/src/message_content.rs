@@ -107,6 +107,12 @@ impl MessageContent {
 
         references
     }
+
+    pub fn trim(&mut self, max_chars: usize) {
+        if let MessageContent::Text(TextContent { text }) = self {
+            text.truncate(max_chars)
+        }
+    }
 }
 
 impl MessageContentInitial {

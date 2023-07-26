@@ -440,12 +440,13 @@
         "yourAccount": "您的 {token} 地址",
         "receiver": "接收者",
         "chooseReceiver": "输入接收者的用户名",
-        "icp": "ICP",
-        "btc": "BTC",
-        "chat": "CHAT",
+        "icp": "Internet Computer",
+        "btc": "Bitcoin",
+        "ckbtc": "ckBitcoin",
+        "chat": "OpenChat",
         "sns1": "SNS-1",
+        "kinic": "Kinic",
         "max": "最大余额",
-        "ckbtc": "ckBTC",
         "viewTransaction": "[交易]({url})"
     },
     "cryptoAccount": {

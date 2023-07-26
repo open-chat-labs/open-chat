@@ -198,11 +198,14 @@ pub(crate) fn handle_message_impl(
             chat.mark_read_up_to(message_event.event.message_index, false, args.now);
         }
         if !mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
+            let mut trimmed_message = message_event.clone();
+            trimmed_message.event.content.trim(500);
+
             let notification = Notification::DirectMessageNotification(DirectMessageNotification {
                 sender,
                 thread_root_message_index: None,
                 sender_name: args.sender_name,
-                message: message_event.clone(),
+                message: trimmed_message,
             });
 
             let recipient = state.env.canister_id().into();

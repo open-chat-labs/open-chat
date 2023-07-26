@@ -1,5 +1,5 @@
 use crate::model::direct_chat::DirectChat;
-use chat_events::{ChatMetricsInternal, PushMessageArgs};
+use chat_events::{ChatInternal, ChatMetricsInternal, PushMessageArgs};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
@@ -41,7 +41,7 @@ impl DirectChats {
     }
 
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
-        self.direct_chats.values().any(|c| c.has_updates_since(since))
+        self.direct_chats.values().any(|c| c.has_updates_since(since)) || self.pinned.timestamp > since
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &DirectChat> {
@@ -80,6 +80,12 @@ impl DirectChats {
         }
 
         message_event
+    }
+
+    pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
+        for chat in self.direct_chats.values_mut() {
+            chat.events.migrate_replies(old, new, now);
+        }
     }
 
     pub fn aggregate_metrics(&mut self) {
