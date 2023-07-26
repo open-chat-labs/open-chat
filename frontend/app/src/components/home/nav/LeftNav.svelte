@@ -200,9 +200,6 @@
         display: flex;
         flex-direction: column;
     }
-    .bottom {
-        gap: $sp3;
-    }
     .logo {
         width: $size;
         height: $size;

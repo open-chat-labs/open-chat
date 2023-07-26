@@ -53,13 +53,14 @@
     } from "../../utils/notifications";
     import {
         filterByChatType,
+        filterRightPanelHistory,
         pushRightPanelHistory,
         rightPanelHistory,
     } from "../../stores/rightPanel";
     import Upgrade from "./upgrade/Upgrade.svelte";
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import { layoutStore } from "../../stores/layout";
+    import { fullWidth, layoutStore } from "../../stores/layout";
     import { dimensions } from "../../stores/screenDimensions";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import type { Share } from "../../utils/share";
@@ -271,6 +272,7 @@
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
         if (initialised) {
+            filterRightPanelHistory((state) => state.kind !== "community_filters");
             if ("scope" in pathParams) {
                 client.setChatListScope(pathParams.scope);
             }
@@ -280,7 +282,7 @@
                 filterChatSpecificRightPanelStates();
             } else if (pathParams.kind === "communities_route") {
                 client.clearSelectedChat();
-                rightPanelHistory.set([]);
+                rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
             } else if (pathParams.kind === "selected_community_route") {
                 await selectCommunity(pathParams.communityId);
             } else if (

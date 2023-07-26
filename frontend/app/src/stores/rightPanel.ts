@@ -83,6 +83,10 @@ export type UpdatedGroup = {
     permissions: ChatPermissions;
 };
 
+export function filterRightPanelHistory(fn: (state: RightPanelState) => boolean): void {
+    return rightPanelHistory.update((history) => history.filter(fn));
+}
+
 export function filterByChatType(
     history: RightPanelState[],
     chat: ChatSummary | undefined

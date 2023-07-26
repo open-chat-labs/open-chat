@@ -333,6 +333,7 @@ import {
     ExploreChannelsResponse,
     CommunityInvite,
     isSnsGate,
+    ChannelSummary,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -4482,13 +4483,24 @@ export class OpenChat extends OpenChatAgentWorker {
         groupId: GroupChatIdentifier,
         communityId: CommunityIdentifier
     ): Promise<ChannelIdentifier | undefined> {
+        const group = this._liveState.chatSummaries.get(groupId);
         return this.sendRequest({
             kind: "importGroupToCommunity",
             groupId,
             communityId,
         })
             .then((resp) => {
-                return resp.kind === "success" ? resp.channelId : undefined;
+                if (resp.kind === "success") {
+                    if (group !== undefined) {
+                        localChatSummaryUpdates.markAdded({
+                            ...group,
+                            id: resp.channelId,
+                            kind: "channel",
+                        } as ChannelSummary);
+                    }
+                    return resp.channelId;
+                }
+                return undefined;
             })
             .catch((err) => {
                 this._logger.error("Unable to import group to community", err);
