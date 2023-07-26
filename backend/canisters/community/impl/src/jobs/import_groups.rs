@@ -10,7 +10,7 @@ use group_chat_core::GroupChatCore;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::trace;
+use tracing::{info, trace};
 use types::{ChannelId, ChannelLatestMessageIndex, ChatId};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
@@ -54,6 +54,7 @@ async fn import_groups(groups: Vec<(ChatId, u64)>) {
 }
 
 async fn import_group(group_id: ChatId, from: u64) {
+    info!(%group_id, from, "'import_group' starting");
     match group_canister_c2c_client::c2c_export_group(
         group_id.into(),
         &Args {
@@ -66,7 +67,8 @@ async fn import_group(group_id: ChatId, from: u64) {
         Ok(Response::Success(bytes)) => {
             mutate_state(|state| {
                 if state.data.groups_being_imported.mark_batch_complete(&group_id, &bytes) {
-                    ic_cdk_timers::set_timer(Duration::ZERO, move || deserialize_group(group_id));
+                    ic_cdk_timers::set_timer(Duration::ZERO, move || finalize_group_import(group_id));
+                    info!(%group_id, "Group data imported");
                 }
             });
         }
@@ -83,7 +85,10 @@ async fn import_group(group_id: ChatId, from: u64) {
     }
 }
 
-fn deserialize_group(group_id: ChatId) {
+pub(crate) fn finalize_group_import(group_id: ChatId) {
+    info!(%group_id, "'deserialize_group' starting");
+    let initial_instructions = ic_cdk::api::instruction_counter();
+
     mutate_state(|state| {
         if let Some(group) = state.data.groups_being_imported.take(&group_id) {
             let channel_id = group.channel_id();
@@ -101,12 +106,17 @@ fn deserialize_group(group_id: ChatId) {
             });
         }
     });
+
+    let instructions_count = ic_cdk::api::instruction_counter() - initial_instructions;
+    info!(%group_id, instructions_count, "'deserialize_group' completed");
 }
 
 // For each user already in the community, add the new channel to their set of channels.
 // For users who are not members, lookup their principals, then join them to the community, then add
 // them to the default channels, then add the new channel to their set of channels.
 async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attempt: u32) {
+    info!(%group_id, attempt, "'process_channel_members' starting");
+
     let (members_to_add, local_user_index_canister_id) = mutate_state(|state| {
         let channel = state.data.channels.get(&channel_id).unwrap();
         let mut to_add = Vec::new();
@@ -178,9 +188,12 @@ async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attemp
     });
 
     ic_cdk_timers::set_timer(Duration::ZERO, move || mark_import_complete(group_id, channel_id));
+    info!(%group_id, attempt, "'process_channel_members' completed");
 }
 
 fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
+    info!(%group_id, "'mark_import_complete' starting");
+
     mutate_state(|state| {
         let now = state.env.now();
         state.data.channels.get_mut(&channel_id).unwrap().date_imported = Some(now);
@@ -215,4 +228,6 @@ fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
             }),
         )
     });
+
+    info!(%group_id, "'mark_import_complete' completed");
 }
