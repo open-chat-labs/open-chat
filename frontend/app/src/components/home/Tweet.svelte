@@ -52,7 +52,14 @@
         min-height: toRem(150);
 
         .logo {
-            @include loading-spinner(4em, 2em, var(--button-spinner), "../assets/twitter.svg");
+            @include loading-spinner(
+                4em,
+                2em,
+                var(--button-spinner),
+                "/assets/twitter.svg",
+                0.8s,
+                1
+            );
             &::after {
                 @include pulse();
             }
