@@ -778,10 +778,8 @@
             frozen: false,
             members: [],
             permissions: {
-                changePermissions: "admin",
                 changeRoles: "admin",
                 removeMembers: "moderator",
-                blockUsers: "moderator",
                 deleteMessages: "moderator",
                 updateGroup: "admin",
                 pinMessages: "admin",

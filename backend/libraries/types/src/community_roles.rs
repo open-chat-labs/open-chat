@@ -11,10 +11,9 @@ pub enum CommunityRole {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityPermissions {
     pub change_roles: CommunityPermissionRole,
+    pub update_details: CommunityPermissionRole,
     pub invite_users: CommunityPermissionRole,
     pub remove_members: CommunityPermissionRole,
-    pub block_users: CommunityPermissionRole,
-    pub update_details: CommunityPermissionRole,
     pub create_public_channel: CommunityPermissionRole,
     pub create_private_channel: CommunityPermissionRole,
 }
@@ -22,10 +21,9 @@ pub struct CommunityPermissions {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct OptionalCommunityPermissions {
     pub change_roles: Option<CommunityPermissionRole>,
+    pub update_details: Option<CommunityPermissionRole>,
     pub invite_users: Option<CommunityPermissionRole>,
     pub remove_members: Option<CommunityPermissionRole>,
-    pub block_users: Option<CommunityPermissionRole>,
-    pub update_details: Option<CommunityPermissionRole>,
     pub create_public_channel: Option<CommunityPermissionRole>,
     pub create_private_channel: Option<CommunityPermissionRole>,
 }
@@ -34,12 +32,11 @@ impl Default for CommunityPermissions {
     fn default() -> Self {
         CommunityPermissions {
             change_roles: CommunityPermissionRole::Admins,
+            update_details: CommunityPermissionRole::Admins,
             invite_users: CommunityPermissionRole::Admins,
             remove_members: CommunityPermissionRole::Admins,
-            block_users: CommunityPermissionRole::Admins,
-            update_details: CommunityPermissionRole::Admins,
-            create_public_channel: CommunityPermissionRole::Members,
-            create_private_channel: CommunityPermissionRole::Members,
+            create_public_channel: CommunityPermissionRole::Admins,
+            create_private_channel: CommunityPermissionRole::Admins,
         }
     }
 }
@@ -81,11 +78,11 @@ impl CommunityRole {
     }
 
     pub fn can_block_users(&self, permissions: &CommunityPermissions) -> bool {
-        self.is_permitted(permissions.block_users)
+        self.is_permitted(permissions.remove_members)
     }
 
     pub fn can_unblock_users(&self, permissions: &CommunityPermissions) -> bool {
-        self.is_permitted(permissions.block_users)
+        self.is_permitted(permissions.remove_members)
     }
 
     pub fn can_update_details(&self, permissions: &CommunityPermissions) -> bool {
