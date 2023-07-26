@@ -11,22 +11,13 @@
 
 <SelectPermissionRole
     {roles}
-    label={$_("permissions.changePermissions")}
-    bind:rolePermission={permissions.changePermissions} />
-<SelectPermissionRole
-    {roles}
     label={$_("permissions.changeRoles")}
     bind:rolePermission={permissions.changeRoles} />
-{#if isPublic}
-    <SelectPermissionRole
-        {roles}
-        label={$_("permissions.blockUsers")}
-        bind:rolePermission={permissions.blockUsers} />
-{:else}
-    <SelectPermissionRole
-        {roles}
-        label={$_("permissions.removeMembers")}
-        bind:rolePermission={permissions.removeMembers} />
+<SelectPermissionRole
+    {roles}
+    label={$_("permissions.updateGroup")}
+    bind:rolePermission={permissions.updateGroup} />
+{#if !isPublic}
     <SelectPermissionRole
         {roles}
         label={$_("permissions.inviteUsers")}
@@ -34,12 +25,12 @@
 {/if}
 <SelectPermissionRole
     {roles}
-    label={$_("permissions.deleteMessages")}
-    bind:rolePermission={permissions.deleteMessages} />
+    label={$_("permissions.removeMembers")}
+    bind:rolePermission={permissions.removeMembers} />
 <SelectPermissionRole
     {roles}
-    label={$_("permissions.updateGroup")}
-    bind:rolePermission={permissions.updateGroup} />
+    label={$_("permissions.deleteMessages")}
+    bind:rolePermission={permissions.deleteMessages} />
 <SelectPermissionRole
     {roles}
     label={$_("permissions.pinMessages")}

@@ -20,10 +20,7 @@
     $: partitioned = partitionPermissions(permissions);
 
     function filterPermissions([key, _]: PermissionsEntry): boolean {
-        if (isPublic && (key === "removeMembers" || key === "inviteUsers")) {
-            return false;
-        }
-        if (!isPublic && key === "blockUsers") {
+        if (isPublic && key === "inviteUsers") {
             return false;
         }
         return true;

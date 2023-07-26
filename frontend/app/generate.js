@@ -41,6 +41,7 @@ async function generateLanguage(lang, code) {
             // "failedToLeaveGroup",
             // "nUsersJoined",
             // "ownerCantLeave",
+            "permissions.removeMembers"
         ]);
         const missing = [];
         enEntries.forEach(([k, v]) => {

@@ -16,15 +16,15 @@ pub struct GroupPermissions {
     #[serde(default = "group_permission_role_owner")]
     pub change_permissions: GroupPermissionRole,
     pub change_roles: GroupPermissionRole,
+    pub update_group: GroupPermissionRole,
     pub add_members: GroupPermissionRole,
+    pub invite_users: GroupPermissionRole,
     pub remove_members: GroupPermissionRole,
     #[deprecated]
     #[serde(default = "group_permission_role_owner")]
     pub block_users: GroupPermissionRole,
     pub delete_messages: GroupPermissionRole,
-    pub update_group: GroupPermissionRole,
     pub pin_messages: GroupPermissionRole,
-    pub invite_users: GroupPermissionRole,
     pub create_polls: GroupPermissionRole,
     pub send_messages: GroupPermissionRole,
     pub react_to_messages: GroupPermissionRole,
@@ -37,14 +37,14 @@ pub struct OptionalGroupPermissions {
     #[serde(default)]
     pub change_permissions: Option<GroupPermissionRole>,
     pub change_roles: Option<GroupPermissionRole>,
+    pub update_group: Option<GroupPermissionRole>,
+    pub invite_users: Option<GroupPermissionRole>,
     pub remove_members: Option<GroupPermissionRole>,
     #[deprecated]
     #[serde(default)]
     pub block_users: Option<GroupPermissionRole>,
     pub delete_messages: Option<GroupPermissionRole>,
-    pub update_group: Option<GroupPermissionRole>,
     pub pin_messages: Option<GroupPermissionRole>,
-    pub invite_users: Option<GroupPermissionRole>,
     pub create_polls: Option<GroupPermissionRole>,
     pub send_messages: Option<GroupPermissionRole>,
     pub react_to_messages: Option<GroupPermissionRole>,

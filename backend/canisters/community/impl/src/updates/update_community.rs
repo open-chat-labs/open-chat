@@ -338,7 +338,6 @@ fn merge_permissions(new: OptionalCommunityPermissions, old: &CommunityPermissio
         change_roles: new.change_roles.unwrap_or(old.change_roles),
         invite_users: new.invite_users.unwrap_or(old.invite_users),
         remove_members: new.remove_members.unwrap_or(old.remove_members),
-        block_users: new.block_users.unwrap_or(old.block_users),
         update_details: new.update_details.unwrap_or(old.update_details),
         create_public_channel: new.create_public_channel.unwrap_or(old.create_public_channel),
         create_private_channel: new.create_private_channel.unwrap_or(old.create_private_channel),
