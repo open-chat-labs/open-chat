@@ -22,7 +22,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import type { Readable } from "svelte/store";
     import { _ } from "svelte-i18n";
-    import { numberOfColumns } from "stores/layout";
+    import { fullWidth } from "../../stores/layout";
     import Thread from "./thread/Thread.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
@@ -57,7 +57,7 @@
     $: userStore = client.userStore;
     $: user = $userStore[currentUser.userId] ?? client.nullUser("unknown");
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
-    $: modal = $numberOfColumns === 2;
+    $: modal = !$fullWidth;
     $: multiUserChat = selectedChat as Readable<MultiUserChat>;
     $: empty = $rightPanelHistory.length === 0;
 

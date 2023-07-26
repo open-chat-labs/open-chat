@@ -7,9 +7,10 @@ import { communitiesEnabled } from "../utils/features";
 
 export const navOpen = writable<boolean>(false);
 
-export const numberOfColumns: Readable<3 | 2> = derived(screenWidth, ($screenWidth) => {
-    return $screenWidth === ScreenWidth.ExtraExtraLarge ? 3 : 2;
-});
+export const fullWidth = derived(
+    screenWidth,
+    ($screenWidth) => $screenWidth === ScreenWidth.ExtraExtraLarge
+);
 
 type RightPanelState = "hidden" | "floating" | "inline";
 
@@ -30,8 +31,8 @@ function someHomeRoute(route: RouteParams["kind"]): boolean {
 
 // TODO - we really need some tests around this and now that it's out of the Home component we can do that easily
 export const layoutStore: Readable<Layout> = derived(
-    [numberOfColumns, rightPanelHistory, mobileWidth, pathParams, communitiesEnabled],
-    ([$numberOfColumns, $rightPanelHistory, $mobileWidth, $pathParams, $communitiesEnabled]) => {
+    [rightPanelHistory, mobileWidth, pathParams, communitiesEnabled, fullWidth],
+    ([$rightPanelHistory, $mobileWidth, $pathParams, $communitiesEnabled, $fullWidth]) => {
         if ($mobileWidth) {
             const showRight = $rightPanelHistory.length > 0;
             const showMiddle = !someHomeRoute($pathParams.kind) && !showRight;
@@ -47,8 +48,8 @@ export const layoutStore: Readable<Layout> = derived(
                 $pathParams,
             };
         } else {
-            const showRight = $rightPanelHistory.length > 0 || $numberOfColumns === 3;
-            const floatRight = $numberOfColumns < 3;
+            const showRight = $rightPanelHistory.length > 0 || $fullWidth;
+            const floatRight = !$fullWidth;
             const showLeft = $pathParams.kind !== "communities_route";
 
             return {

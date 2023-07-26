@@ -1,8 +1,7 @@
 <script lang="ts">
-    import { numberOfColumns } from "../stores/layout";
+    import { fullWidth } from "../stores/layout";
     import { mobileWidth } from "../stores/screenDimensions";
     import { rtlStore } from "../stores/rtl";
-    import { menuStore } from "../stores/menu";
     import { navOpen } from "../stores/layout";
     import { communitiesEnabled } from "../utils/features";
 
@@ -13,7 +12,7 @@
     export let forceModal: boolean = false;
     export let empty: boolean = false;
 
-    $: modal = !$mobileWidth && (forceModal || $numberOfColumns === 2);
+    $: modal = !$mobileWidth && (forceModal || !$fullWidth);
 </script>
 
 <section
