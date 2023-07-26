@@ -28,9 +28,10 @@
     import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
     import GiphySelector from "./GiphySelector.svelte";
     import { messageToForwardStore } from "../../stores/messageToForward";
-    import { toastStore } from "stores/toast";
+    import { toastStore } from "../../stores/toast";
     import ImportToCommunity from "./communities/Import.svelte";
     import { randomSentence } from "../../utils/randomMsg";
+    import { framed } from "../../stores/frame";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -272,7 +273,7 @@
             bind:searchTerm
             on:goToMessageIndex
             on:close={() => (showSearchHeader = false)} />
-    {:else}
+    {:else if !$framed}
         <CurrentChatHeader
             on:clearSelection
             on:markAllRead={onMarkAllRead}
