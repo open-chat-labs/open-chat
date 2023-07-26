@@ -75,7 +75,7 @@ export const currentCommunityInvitedUsers = createDerivedPropStore<
 export const currentCommunityRules = createDerivedPropStore<CommunitySpecificState, "rules">(
     communityStateStore,
     "rules",
-    defaultAccessRules
+    () => defaultAccessRules("community")
 );
 
 export const selectedCommunity = derived(
