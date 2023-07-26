@@ -9,7 +9,6 @@
     import RightPanel from "./RightPanel.svelte";
     import EditCommunity from "./communities/edit/Edit.svelte";
     import {
-        MessageMatch,
         ChatSummary,
         EnhancedReplyContext,
         AccessRules,
@@ -777,7 +776,7 @@
             name: "",
             description: "",
             historyVisible: true,
-            public: true,
+            public: false,
             frozen: false,
             members: [],
             permissions: {

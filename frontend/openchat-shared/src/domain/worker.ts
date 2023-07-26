@@ -674,12 +674,14 @@ type BlockUserFromDirectChat = {
 type UnpinChat = {
     chatId: ChatIdentifier;
     communitiesEnabled: boolean;
+    favourite: boolean;
     kind: "unpinChat";
 };
 
 type PinChat = {
     chatId: ChatIdentifier;
     communitiesEnabled: boolean;
+    favourite: boolean;
     kind: "pinChat";
 };
 

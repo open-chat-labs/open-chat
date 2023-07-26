@@ -833,8 +833,7 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    private pinLocally(chatId: ChatIdentifier): void {
-        const scope = this._liveState.chatListScope.kind;
+    private pinLocally(chatId: ChatIdentifier, scope: ChatListScope["kind"]): void {
         globalStateStore.update((state) => {
             const ids = state.pinnedChats[scope];
             if (!ids.find((id) => chatIdentifiersEqual(id, chatId))) {
@@ -850,8 +849,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    private unpinLocally(chatId: ChatIdentifier): void {
-        const scope = this._liveState.chatListScope.kind;
+    private unpinLocally(chatId: ChatIdentifier, scope: ChatListScope["kind"]): void {
         globalStateStore.update((state) => {
             const ids = state.pinnedChats[scope];
             const index = ids.findIndex((id) => chatIdentifiersEqual(id, chatId));
@@ -876,23 +874,35 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     pinChat(chatId: ChatIdentifier): Promise<boolean> {
-        this.pinLocally(chatId);
-        return this.sendRequest({ kind: "pinChat", chatId, communitiesEnabled })
+        const scope = this._liveState.chatListScope.kind;
+        this.pinLocally(chatId, scope);
+        return this.sendRequest({
+            kind: "pinChat",
+            chatId,
+            communitiesEnabled,
+            favourite: scope === "favourite",
+        })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error pinning chat", err);
-                this.unpinLocally(chatId);
+                this.unpinLocally(chatId, scope);
                 return false;
             });
     }
 
     unpinChat(chatId: ChatIdentifier): Promise<boolean> {
-        this.unpinLocally(chatId);
-        return this.sendRequest({ kind: "unpinChat", chatId, communitiesEnabled })
+        const scope = this._liveState.chatListScope.kind;
+        this.unpinLocally(chatId, scope);
+        return this.sendRequest({
+            kind: "unpinChat",
+            chatId,
+            communitiesEnabled,
+            favourite: scope === "favourite",
+        })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error unpinning chat", err);
-                this.pinLocally(chatId);
+                this.pinLocally(chatId, scope);
                 return false;
             });
     }
@@ -923,17 +933,13 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    setUserAvatar(data: Uint8Array): Promise<boolean> {
-        this.user = {
-            ...this.user,
-            ...data,
-        };
-
+    setUserAvatar(data: Uint8Array, url: string): Promise<boolean> {
         const partialUser = this._liveState.userStore[this.user.userId];
         if (partialUser) {
             userStore.add({
                 ...partialUser,
-                ...data,
+                blobData: data,
+                blobUrl: url,
             });
         }
 

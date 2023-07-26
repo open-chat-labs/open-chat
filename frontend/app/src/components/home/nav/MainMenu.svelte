@@ -24,17 +24,17 @@
 </script>
 
 <Menu>
-    <MenuItem on:click={() => dispatch("halloffame")}>
-        <span class="halloffame" slot="icon">👑</span>
-        <span slot="text">{$_("halloffame.menu")}</span>
+    <MenuItem on:click={() => dispatch("wallet")}>
+        <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+        <span slot="text">{$_("wallet")}</span>
     </MenuItem>
     <MenuItem on:click={() => dispatch("upgrade")}>
         <span class="diamond-icon" slot="icon">💎</span>
         <span slot="text">{$canExtendDiamond ? $_("upgrade.extend") : $_("upgrade.diamond")}</span>
     </MenuItem>
-    <MenuItem on:click={() => dispatch("wallet")}>
-        <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">{$_("wallet")}</span>
+    <MenuItem on:click={() => dispatch("halloffame")}>
+        <span class="halloffame" slot="icon">👑</span>
+        <span slot="text">{$_("halloffame.menu")}</span>
     </MenuItem>
     <MenuItem separator />
     <MenuItem on:click={() => page("/home")}>

@@ -32,6 +32,7 @@
     $: unreadGroupChats = client.unreadGroupChats;
     $: unreadFavouriteChats = client.unreadFavouriteChats;
     $: unreadCommunityChannels = client.unreadCommunityChannels;
+    $: communityExplorer = $pathParams.kind === "communities_route";
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
@@ -96,7 +97,7 @@
         {/if}
 
         <LeftNavItem
-            selected={$chatListScope.kind === "direct_chat"}
+            selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
             label={$_("communities.directChats")}
             unread={$unreadDirectChats}
             on:click={directChats}>
@@ -106,7 +107,7 @@
         </LeftNavItem>
 
         <LeftNavItem
-            selected={$chatListScope.kind === "group_chat"}
+            selected={$chatListScope.kind === "group_chat" && !communityExplorer}
             label={$_("communities.groupChats")}
             unread={$unreadGroupChats}
             on:click={groupChats}>
@@ -116,7 +117,7 @@
         </LeftNavItem>
 
         <LeftNavItem
-            selected={$chatListScope.kind === "favourite"}
+            selected={$chatListScope.kind === "favourite" && !communityExplorer}
             separator
             label={$_("communities.favourites")}
             unread={$unreadFavouriteChats}
@@ -130,13 +131,16 @@
     <div class="middle">
         {#each $communities as community, i}
             <LeftNavItem
-                selected={community === $selectedCommunity && $chatListScope.kind !== "favourite"}
+                selected={community === $selectedCommunity &&
+                    $chatListScope.kind !== "favourite" &&
+                    !communityExplorer}
                 unread={$unreadCommunityChannels.get(community.id) ?? 0}
                 label={community.name}
                 on:click={() => selectCommunity(community)}>
                 <Avatar
                     selected={community === $selectedCommunity &&
-                        $chatListScope.kind !== "favourite"}
+                        $chatListScope.kind !== "favourite" &&
+                        !communityExplorer}
                     url={client.communityAvatarUrl(community.avatar)}
                     size={avatarSize} />
             </LeftNavItem>
@@ -145,7 +149,7 @@
 
     <div class="bottom">
         <LeftNavItem
-            selected={$pathParams.kind === "communities_route"}
+            selected={communityExplorer}
             label={"Explore communities"}
             on:click={exploreCommunities}>
             <div class="explore hover">

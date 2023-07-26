@@ -29,7 +29,7 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import { discoverHotGroupsDismissed } from "../../stores/settings";
     import { communitiesEnabled } from "../../utils/features";
-    import { pushRightPanelHistory } from "../../stores/rightPanel";
+    import { pushRightPanelHistory, rightPanelHistory } from "../../stores/rightPanel";
     import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
     import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
@@ -63,7 +63,9 @@
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
     $: showWhatsHot =
-        $chatListScope.kind === "none" && !$discoverHotGroupsDismissed && !searchResultsAvailable;
+        ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
+        !$discoverHotGroupsDismissed &&
+        !searchResultsAvailable;
     $: showBrowseChannnels = $chatListScope.kind === "community" && !searchResultsAvailable;
     $: unreadDirectChats = client.unreadDirectChats;
     $: unreadGroupChats = client.unreadGroupChats;
@@ -191,9 +193,11 @@
 
     function showChannels() {
         if ($chatListScope.kind === "community") {
-            pushRightPanelHistory({
-                kind: "community_channels",
-            });
+            rightPanelHistory.set([
+                {
+                    kind: "community_channels",
+                },
+            ]);
         }
     }
 </script>
