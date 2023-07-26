@@ -148,9 +148,7 @@
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         client.setUserAvatar(ev.detail.data, ev.detail.url).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("avatarUpdated");
-            } else {
+            if (!success) {
                 toastStore.showFailureToast("avatarUpdateFailed");
             }
         });
