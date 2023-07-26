@@ -5,13 +5,12 @@ import {
 } from "openchat-client";
 
 const defaultPermissions: CommunityPermissions = {
-    changeRoles: "owner",
-    inviteUsers: "owner",
-    removeMembers: "owner",
-    blockUsers: "owner",
-    updateDetails: "owner",
-    createPublicChannel: "owner",
-    createPrivateChannel: "owner",
+    changeRoles: "admin",
+    updateDetails: "admin",
+    inviteUsers: "admin",
+    removeMembers: "admin",
+    createPublicChannel: "admin",
+    createPrivateChannel: "admin",
 };
 
 export function createCandidateCommunity(id: string): CommunitySummary {

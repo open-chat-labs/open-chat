@@ -37,10 +37,8 @@ const defaultGroupChat: GroupChatSummary = {
     latestEventIndex: 0,
     memberCount: 10,
     permissions: {
-        changePermissions: "admin",
         changeRoles: "admin",
         removeMembers: "moderator",
-        blockUsers: "moderator",
         deleteMessages: "moderator",
         updateGroup: "admin",
         pinMessages: "admin",

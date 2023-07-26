@@ -191,7 +191,8 @@ $sp11: 192px;
     $offset: 0.6em,
     $spinner-color: #191919,
     $background-image: "../assets/spinner.svg",
-    $speed: 0.8s
+    $speed: 0.8s,
+    $opacity: 0.5
 ) {
     position: relative;
 
@@ -202,7 +203,7 @@ $sp11: 192px;
         height: $size;
         position: absolute;
         // border: 3px solid;
-        opacity: 0.5;
+        opacity: $opacity;
         background-image: url($background-image);
         left: calc(50% - #{$offset});
         top: calc(50% - #{$offset});

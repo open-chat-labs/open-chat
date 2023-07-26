@@ -587,7 +587,6 @@ export function apiOptionalCommunityPermissions(
             apiCommunityPermissionRole,
             permissions.createPublicChannel
         ),
-        block_users: apiOptional(apiCommunityPermissionRole, permissions.blockUsers),
         update_details: apiOptional(apiCommunityPermissionRole, permissions.updateDetails),
         remove_members: apiOptional(apiCommunityPermissionRole, permissions.removeMembers),
         invite_users: apiOptional(apiCommunityPermissionRole, permissions.inviteUsers),

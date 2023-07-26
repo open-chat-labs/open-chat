@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Deprecate and remove usages of `filter_groups` ([#4003](https://github.com/open-chat-labs/open-chat/pull/4003))
 
+### Removed
+
+- Consolidate remove and block community permissions ([#4030](https://github.com/open-chat-labs/open-chat/pull/4030))
+  
 ## [[2.0.748](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.748-group_index)] - 2023-07-20
 
 ### Changed
