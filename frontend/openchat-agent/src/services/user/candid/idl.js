@@ -289,6 +289,7 @@ export const idlFactory = ({ IDL }) => {
     'SNS1' : IDL.Null,
     'KINIC' : IDL.Null,
     'CKBTC' : IDL.Null,
+    'Other' : IDL.Text,
   });
   const PrizeContent = IDL.Record({
     'token' : Cryptocurrency,

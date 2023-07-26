@@ -13,7 +13,6 @@ import {
     DiamondMembershipDetails,
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
-    Cryptocurrency,
     ReferralLeaderboardResponse,
     ReferralStats,
 } from "openchat-shared";
@@ -37,7 +36,6 @@ import type {
     ApiUserSummary,
 } from "./candid/idl";
 import { bytesToHexString, identity, optional } from "../../utils/mapping";
-import type { ApiCryptocurrency } from "../user/candid/idl";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
@@ -315,28 +313,6 @@ export function payForDiamondMembershipResponse(
         "Unexpected ApiPayForDiamondMembershipResponse type received",
         candid
     );
-}
-
-export function apiCryptocurrency(domain: Cryptocurrency): ApiCryptocurrency {
-    if (domain === "icp") {
-        return { InternetComputer: null };
-    }
-    if (domain === "chat") {
-        return { CHAT: null };
-    }
-    if (domain === "ckbtc") {
-        return { CKBTC: null };
-    }
-    if (domain === "sns1") {
-        return { SNS1: null };
-    }
-    if (domain === "kinic") {
-        return { KINIC: null };
-    }
-    if (domain === "hotornot") {
-        throw new Error("HotOrNot is not supported yet");
-    }
-    throw new UnsupportedValueError("Unexpected Cryptocurrency type received", domain);
 }
 
 export function apiDiamondDuration(

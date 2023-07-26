@@ -333,6 +333,12 @@ import {
     ExploreChannelsResponse,
     CommunityInvite,
     isSnsGate,
+    CHAT_SYMBOL,
+    CKBTC_SYMBOL,
+    HOTORNOT_SYMBOL,
+    ICP_SYMBOL,
+    KINIC_SYMBOL,
+    SNS1_SYMBOL,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3627,10 +3633,12 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
-        return this.sendRequest({ kind: "refreshAccountBalance", crypto, principal }).then(
+    refreshAccountBalance(token: string, principal: string): Promise<Tokens> {
+        const ledger = this.ledgerCanisterId(token);
+
+        return this.sendRequest({ kind: "refreshAccountBalance", ledger, principal }).then(
             (val) => {
-                cryptoBalance.set(crypto, val);
+                cryptoBalance.set(token, val);
                 return val;
             }
         );
@@ -4417,25 +4425,28 @@ export class OpenChat extends OpenChatAgentWorker {
             : this.config.i18nFormatter("unknownUser");
     }
 
-    ledgerCanisterId(token: Cryptocurrency): string {
+    ledgerCanisterId(token: string): string {
         switch (token) {
-            case "chat":
+            case CHAT_SYMBOL:
                 return this.config.ledgerCanisterCHAT;
 
-            case "icp":
+            case ICP_SYMBOL:
                 return this.config.ledgerCanisterICP;
 
-            case "ckbtc":
+            case CKBTC_SYMBOL:
                 return this.config.ledgerCanisterBTC;
 
-            case "sns1":
+            case SNS1_SYMBOL:
                 return this.config.ledgerCanisterSNS1;
 
-            case "kinic":
+            case KINIC_SYMBOL:
                 return this.config.ledgerCanisterKINIC;
 
-            case "hotornot":
+            case HOTORNOT_SYMBOL:
                 return this.config.ledgerCanisterHOTORNOT;
+
+            default:
+                throw new Error("Token not recognised: " + token);
         }
     }
 

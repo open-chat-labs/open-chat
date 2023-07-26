@@ -7,11 +7,12 @@
     import ArrowLink from "../../ArrowLink.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { getContext, onMount } from "svelte";
+    import { CKBTC_SYMBOL } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
 
     onMount(() => {
-        client.lastCryptoSent.set("ckbtc");
+        client.lastCryptoSent.set(CKBTC_SYMBOL);
     });
 </script>
 

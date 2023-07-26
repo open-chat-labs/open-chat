@@ -16,7 +16,6 @@
 
     let inputElement: HTMLInputElement;
 
-    $: symbol = cryptoLookup[token].symbol;
     $: transferFees = cryptoLookup[token].transferFeesE8s;
 
     onMount(() => {
@@ -54,7 +53,7 @@
 </script>
 
 <div class="label">
-    <Legend label={$_("tokenTransfer.amount")} rules={`${symbol.toUpperCase()}`} />
+    <Legend label={$_("tokenTransfer.amount")} rules={`${token}`} />
     <div on:click={max} class="max">{$_("tokenTransfer.max")}</div>
 </div>
 <div class="wrapper">
@@ -64,7 +63,7 @@
             {$_("tokenTransfer.fee", {
                 values: {
                     fee: client.formatTokens(transferFees, 0),
-                    token: symbol,
+                    token,
                 },
             })}
         </span>

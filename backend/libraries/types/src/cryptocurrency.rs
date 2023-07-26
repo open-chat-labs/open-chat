@@ -3,53 +3,58 @@ use candid::{CandidType, Principal};
 use ic_ledger_types::Subaccount;
 use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Cryptocurrency {
     InternetComputer,
     SNS1,
     CKBTC,
     CHAT,
     KINIC,
+    Other(String),
 }
 
 impl Cryptocurrency {
-    pub const fn token_symbol(&self) -> &'static str {
+    pub fn token_symbol(&self) -> &str {
         match self {
             Cryptocurrency::InternetComputer => "ICP",
             Cryptocurrency::SNS1 => "SNS1",
             Cryptocurrency::CKBTC => "ckBTC",
             Cryptocurrency::CHAT => "CHAT",
             Cryptocurrency::KINIC => "KINIC",
+            Cryptocurrency::Other(symbol) => symbol,
         }
     }
 
-    pub const fn decimals(&self) -> usize {
+    pub fn decimals(&self) -> Option<usize> {
         match self {
-            Cryptocurrency::InternetComputer => 8,
-            Cryptocurrency::SNS1 => 8,
-            Cryptocurrency::CKBTC => 8,
-            Cryptocurrency::CHAT => 8,
-            Cryptocurrency::KINIC => 8,
+            Cryptocurrency::InternetComputer => Some(8),
+            Cryptocurrency::SNS1 => Some(8),
+            Cryptocurrency::CKBTC => Some(8),
+            Cryptocurrency::CHAT => Some(8),
+            Cryptocurrency::KINIC => Some(8),
+            Cryptocurrency::Other(_) => None,
         }
     }
 
-    pub const fn fee(&self) -> u128 {
+    pub fn fee(&self) -> Option<u128> {
         match self {
-            Cryptocurrency::InternetComputer => 10_000,
-            Cryptocurrency::SNS1 => 1_000,
-            Cryptocurrency::CKBTC => 10,
-            Cryptocurrency::CHAT => 100_000,
-            Cryptocurrency::KINIC => 100_000,
+            Cryptocurrency::InternetComputer => Some(10_000),
+            Cryptocurrency::SNS1 => Some(1_000),
+            Cryptocurrency::CKBTC => Some(10),
+            Cryptocurrency::CHAT => Some(100_000),
+            Cryptocurrency::KINIC => Some(100_000),
+            Cryptocurrency::Other(_) => None,
         }
     }
 
-    pub fn ledger_canister_id(&self) -> CanisterId {
+    pub fn ledger_canister_id(&self) -> Option<CanisterId> {
         match self {
-            Cryptocurrency::InternetComputer => Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
-            Cryptocurrency::SNS1 => Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
-            Cryptocurrency::CKBTC => Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
-            Cryptocurrency::CHAT => Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap(),
-            Cryptocurrency::KINIC => Principal::from_text("73mez-iiaaa-aaaaq-aaasq-cai").unwrap(),
+            Cryptocurrency::InternetComputer => Some(Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()),
+            Cryptocurrency::SNS1 => Some(Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap()),
+            Cryptocurrency::CKBTC => Some(Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap()),
+            Cryptocurrency::CHAT => Some(Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap()),
+            Cryptocurrency::KINIC => Some(Principal::from_text("73mez-iiaaa-aaaaq-aaasq-cai").unwrap()),
+            Cryptocurrency::Other(_) => None,
         }
     }
 }
@@ -110,9 +115,9 @@ impl CryptoTransaction {
 impl PendingCryptoTransaction {
     pub fn token(&self) -> Cryptocurrency {
         match self {
-            PendingCryptoTransaction::NNS(t) => t.token,
-            PendingCryptoTransaction::SNS(t) => t.token,
-            PendingCryptoTransaction::ICRC1(t) => t.token,
+            PendingCryptoTransaction::NNS(t) => t.token.clone(),
+            PendingCryptoTransaction::SNS(t) => t.token.clone(),
+            PendingCryptoTransaction::ICRC1(t) => t.token.clone(),
         }
     }
 
@@ -149,9 +154,9 @@ impl PendingCryptoTransaction {
 impl CompletedCryptoTransaction {
     pub fn token(&self) -> Cryptocurrency {
         match self {
-            CompletedCryptoTransaction::NNS(t) => t.token,
-            CompletedCryptoTransaction::SNS(t) => t.token,
-            CompletedCryptoTransaction::ICRC1(t) => t.token,
+            CompletedCryptoTransaction::NNS(t) => t.token.clone(),
+            CompletedCryptoTransaction::SNS(t) => t.token.clone(),
+            CompletedCryptoTransaction::ICRC1(t) => t.token.clone(),
         }
     }
 
@@ -167,9 +172,9 @@ impl CompletedCryptoTransaction {
 impl FailedCryptoTransaction {
     pub fn token(&self) -> Cryptocurrency {
         match self {
-            FailedCryptoTransaction::NNS(t) => t.token,
-            FailedCryptoTransaction::SNS(t) => t.token,
-            FailedCryptoTransaction::ICRC1(t) => t.token,
+            FailedCryptoTransaction::NNS(t) => t.token.clone(),
+            FailedCryptoTransaction::SNS(t) => t.token.clone(),
+            FailedCryptoTransaction::ICRC1(t) => t.token.clone(),
         }
     }
 

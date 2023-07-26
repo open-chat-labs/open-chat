@@ -162,7 +162,7 @@ impl RuntimeState {
                     ic_cdk::spawn(process_new_joiner_reward(
                         self.env.canister_id(),
                         args.user_id,
-                        Cryptocurrency::InternetComputer.ledger_canister_id(),
+                        Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
                         amount,
                         args.now,
                     ));
@@ -257,7 +257,7 @@ impl RuntimeState {
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
-                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id(),
+                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
     }

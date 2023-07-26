@@ -1,7 +1,6 @@
 import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
-import type { Cryptocurrency } from "../crypto";
 import type { AccessGate, AccessControlled, AccessRules } from "../access";
 import type {
     ChatPermissionRole,
@@ -59,7 +58,7 @@ export interface PlaceholderContent {
 }
 
 export type CryptocurrencyDeposit = {
-    token: Cryptocurrency;
+    token: string;
     amountE8s: bigint;
     feeE8s: bigint;
     memo: bigint;
@@ -70,7 +69,7 @@ export type CryptocurrencyDeposit = {
 export type PendingCryptocurrencyWithdrawal = {
     kind: "pending";
     ledger: string;
-    token: Cryptocurrency;
+    token: string;
     to: string;
     amountE8s: bigint;
     feeE8s?: bigint;
@@ -80,7 +79,7 @@ export type PendingCryptocurrencyWithdrawal = {
 
 export type CompletedCryptocurrencyWithdrawal = {
     kind: "completed";
-    token: Cryptocurrency;
+    token: string;
     to: string;
     amountE8s: bigint;
     feeE8s: bigint;
@@ -91,7 +90,7 @@ export type CompletedCryptocurrencyWithdrawal = {
 
 export type FailedCryptocurrencyWithdrawal = {
     kind: "failed";
-    token: Cryptocurrency;
+    token: string;
     to: string;
     amountE8s: bigint;
     feeE8s: bigint;
@@ -111,7 +110,7 @@ export type CryptocurrencyWithdrawal =
 
 export type CompletedCryptocurrencyTransfer = {
     kind: "completed";
-    token: Cryptocurrency;
+    token: string;
     recipient: string;
     sender: string;
     amountE8s: bigint;
@@ -124,7 +123,7 @@ export type CompletedCryptocurrencyTransfer = {
 export type PendingCryptocurrencyTransfer = {
     kind: "pending";
     ledger: string;
-    token: Cryptocurrency;
+    token: string;
     recipient: string;
     amountE8s: bigint;
     feeE8s?: bigint;
@@ -134,7 +133,7 @@ export type PendingCryptocurrencyTransfer = {
 
 export type FailedCryptocurrencyTransfer = {
     kind: "failed";
-    token: Cryptocurrency;
+    token: string;
     recipient: string;
     amountE8s: bigint;
     feeE8s: bigint;
@@ -217,7 +216,7 @@ export interface PrizeContent {
     prizesRemaining: number;
     prizesPending: number;
     winners: string[];
-    token: Cryptocurrency;
+    token: string;
     endDate: bigint;
     caption?: string;
 }

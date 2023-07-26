@@ -87,7 +87,7 @@ fn process_charge(
         let has_ever_been_diamond_member = diamond_membership.has_ever_been_diamond_member();
 
         diamond_membership.add_payment(
-            args.token,
+            args.token.clone(),
             args.expected_price_e8s,
             block_index,
             args.duration,
@@ -106,7 +106,7 @@ fn process_charge(
                 user_id,
                 timestamp: now,
                 expires_at,
-                token: args.token,
+                token: args.token.clone(),
                 amount_e8s: args.expected_price_e8s,
                 block_index,
                 duration: args.duration,
@@ -132,14 +132,14 @@ fn process_charge(
             );
         }
 
-        let mut amount_to_treasury = args.expected_price_e8s - (2 * Cryptocurrency::InternetComputer.fee() as u64);
+        let mut amount_to_treasury = args.expected_price_e8s - (2 * Cryptocurrency::InternetComputer.fee().unwrap() as u64);
 
         let now_nanos = state.env.now_nanos();
 
         if let Some(share_with) = share_with {
             let amount_to_referrer = args.expected_price_e8s / 2;
             amount_to_treasury -= amount_to_referrer;
-            amount_to_treasury -= Cryptocurrency::InternetComputer.fee() as u64;
+            amount_to_treasury -= Cryptocurrency::InternetComputer.fee().unwrap() as u64;
 
             let referral_payment = PendingPayment {
                 amount: amount_to_referrer,

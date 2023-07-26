@@ -92,7 +92,7 @@
     .kinic {
         background-image: url("../assets/kinic_token.png");
     }
-    .hotornot {
+    .hot {
         background-image: url("../assets/hot_token.svg");
     }
 

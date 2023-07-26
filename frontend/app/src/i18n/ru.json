@@ -441,12 +441,6 @@
         "yourAccount": "Ваш адрес {token}",
         "receiver": "Получатель",
         "chooseReceiver": "введите имя пользователя получателя",
-        "icp": "Internet Computer",
-        "btc": "Bitcoin",
-        "ckbtc": "ckBitcoin",
-        "chat": "OpenChat",
-        "sns1": "SNS-1",
-        "kinic": "Kinic",
         "max": "Максимум",
         "viewTransaction": "[Транзакция]({url})"
     },

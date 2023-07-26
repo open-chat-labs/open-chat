@@ -29,13 +29,12 @@ import {
     userSearchResponse,
     suspendUserResponse,
     unsuspendUserResponse,
-    apiCryptocurrency,
     apiDiamondDuration,
     payForDiamondMembershipResponse,
     referralLeaderboardResponse,
     userRegistrationCanisterResponse,
 } from "./mappers";
-import { apiOptional } from "../common/chatMappers";
+import { apiOptional, apiToken } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
 import {
     getCachedUsers,
@@ -278,7 +277,7 @@ export class UserIndexClient extends CandidService {
     ): Promise<PayForDiamondMembershipResponse> {
         return this.handleResponse(
             this.userIndexService.pay_for_diamond_membership({
-                token: apiCryptocurrency(token),
+                token: apiToken(token),
                 duration: apiDiamondDuration(duration),
                 recurring,
                 expected_price_e8s: expectedPriceE8s,
