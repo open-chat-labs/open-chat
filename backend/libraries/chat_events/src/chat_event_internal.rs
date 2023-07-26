@@ -10,11 +10,12 @@ use types::{
     CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy, DirectChatCreated, EventIndex,
     EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
     GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
-    ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersRemoved, Message, MessageContent, MessageContentInitial,
-    MessageId, MessageIndex, MessagePinned, MessageReminderContent, MessageReminderCreatedContent, MessageUnpinned,
-    MultiUserChat, PermissionsChanged, PollContentInternal, PrizeContent, PrizeContentInternal, PrizeWinnerContent, Proposal,
-    ProposalContent, Reaction, ReplyContext, ReportedMessage, ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary,
-    TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
+    ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageReminderContent,
+    MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged, PollContentInternal, PrizeContent,
+    PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage,
+    ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersInvited,
+    UsersUnblocked, VideoContent,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -67,6 +68,8 @@ pub enum ChatEventInternal {
     GroupGateUpdated(Box<GroupGateUpdated>),
     #[serde(rename = "ui")]
     UsersInvited(Box<UsersInvited>),
+    #[serde(rename = "adc")]
+    MembersAddedToDefaultChannel(Box<MembersAddedToDefaultChannelInternal>),
     #[serde(rename = "e")]
     Empty,
 }
@@ -107,6 +110,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::EventsTimeToLiveUpdated(_)
                 | ChatEventInternal::GroupGateUpdated(_)
                 | ChatEventInternal::UsersInvited(_)
+                | ChatEventInternal::MembersAddedToDefaultChannel(_)
         )
     }
 
@@ -315,6 +319,20 @@ impl From<DeletedBy> for DeletedByInternal {
         DeletedByInternal {
             deleted_by: value.deleted_by,
             timestamp: value.timestamp,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MembersAddedToDefaultChannelInternal {
+    #[serde(rename = "u")]
+    pub user_ids: Vec<UserId>,
+}
+
+impl From<&MembersAddedToDefaultChannelInternal> for MembersAddedToDefaultChannel {
+    fn from(value: &MembersAddedToDefaultChannelInternal) -> MembersAddedToDefaultChannel {
+        MembersAddedToDefaultChannel {
+            count: value.user_ids.len() as u32,
         }
     }
 }

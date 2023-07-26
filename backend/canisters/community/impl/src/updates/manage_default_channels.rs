@@ -1,11 +1,8 @@
-use crate::{
-    activity_notifications::handle_activity_notification,
-    model::{
-        channels::{AddDefaultChannelResult, RemoveDefaultChannelResult},
-        events::CommunityEventInternal,
-    },
-    mutate_state, run_regular_jobs, RuntimeState,
-};
+use crate::activity_notifications::handle_activity_notification;
+use crate::model::channels::{AddDefaultChannelResult, RemoveDefaultChannelResult};
+use crate::model::events::CommunityEventInternal;
+use crate::updates::c2c_join_channel::join_channel_unchecked;
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::manage_default_channels::{Response::*, *};
 use ic_cdk_macros::update;
@@ -44,10 +41,19 @@ fn manage_default_channels_impl(args: Args, state: &mut RuntimeState) -> Respons
         let mut removed = Vec::new();
 
         let now = state.env.now();
+        let user_id = member.user_id;
 
         for channel_id in args.to_add.iter() {
             match state.data.channels.add_default_channel(*channel_id, now) {
-                AddDefaultChannelResult::Added => added.push(*channel_id),
+                AddDefaultChannelResult::Added => {
+                    let channel = state.data.channels.get_mut(channel_id).unwrap();
+                    if channel.chat.gate.is_none() {
+                        for member in state.data.members.iter_mut() {
+                            join_channel_unchecked(channel, member, true, true, now);
+                        }
+                    }
+                    added.push(*channel_id)
+                }
                 AddDefaultChannelResult::AlreadyDefault => (),
                 AddDefaultChannelResult::Private => failed_channels.private.push(*channel_id),
                 AddDefaultChannelResult::NotFound => failed_channels.not_found.push(*channel_id),
@@ -68,7 +74,7 @@ fn manage_default_channels_impl(args: Args, state: &mut RuntimeState) -> Respons
             let event = DefaultChannelsChanged {
                 added,
                 removed,
-                changed_by: member.user_id,
+                changed_by: user_id,
             };
 
             state
