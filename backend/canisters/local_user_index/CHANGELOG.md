@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Allow inviting non-community members directly into a channel ([#3990](https://github.com/open-chat-labs/open-chat/pull/3990))
 - Handle `join_channel` in `inspect_message` ([#3994](https://github.com/open-chat-labs/open-chat/pull/3994))
 
+### Removed
+
+- Consolidate remove and block community permissions ([#4030](https://github.com/open-chat-labs/open-chat/pull/4030))
+
 ## [[2.0.741](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.741-local_user_index)] - 2023-07-07
 
 ### Changed
