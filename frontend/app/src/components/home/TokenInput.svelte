@@ -53,7 +53,7 @@
 </script>
 
 <div class="label">
-    <Legend label={$_("tokenTransfer.amount")} rules={`${token}`} />
+    <Legend label={$_("tokenTransfer.amount")} rules={token} />
     <div on:click={max} class="max">{$_("tokenTransfer.max")}</div>
 </div>
 <div class="wrapper">
