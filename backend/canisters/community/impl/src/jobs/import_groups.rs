@@ -1,6 +1,6 @@
 use crate::activity_notifications::extract_activity;
 use crate::model::channels::Channel;
-use crate::model::events::CommunityEvent;
+use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::NextBatchResult;
 use crate::model::members::AddResult;
 use crate::updates::c2c_join_channel::join_channel_unchecked;
@@ -11,7 +11,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{ChannelId, ChannelLatestMessageIndex, ChatId, MemberJoined};
+use types::{ChannelId, ChannelLatestMessageIndex, ChatId};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -107,7 +107,7 @@ fn deserialize_group(group_id: ChatId) {
 // For users who are not members, lookup their principals, then join them to the community, then add
 // them to the default channels, then add the new channel to their set of channels.
 async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attempt: u32) {
-    let (members_to_add, local_user_index_canister_id, is_public) = mutate_state(|state| {
+    let (members_to_add, local_user_index_canister_id) = mutate_state(|state| {
         let channel = state.data.channels.get(&channel_id).unwrap();
         let mut to_add = Vec::new();
         for user_id in channel.chat.members.iter().map(|m| m.user_id) {
@@ -118,8 +118,10 @@ async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attemp
             }
         }
 
-        (to_add, state.data.local_user_index_canister_id, state.data.is_public)
+        (to_add, state.data.local_user_index_canister_id)
     });
+
+    let mut members_added = Vec::new();
 
     if !members_to_add.is_empty() {
         let c2c_args = local_user_index_canister::c2c_user_principals::Args {
@@ -130,27 +132,23 @@ async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attemp
         {
             mutate_state(|state| {
                 let now = state.env.now();
-                let notifications_muted = is_public;
                 let default_channel_ids = state.data.channels.default_channel_ids();
 
                 for (user_id, principal) in users {
                     match state.data.members.add(user_id, principal, now) {
                         AddResult::Success(_) => {
                             state.data.invited_users.remove(&user_id, now);
-                            state.data.events.push_event(
-                                CommunityEvent::MemberJoined(Box::new(MemberJoined {
-                                    user_id,
-                                    invited_by: None,
-                                })),
-                                now,
-                            );
+
                             let member = state.data.members.get_by_user_id_mut(&user_id).unwrap();
                             for default_channel_id in default_channel_ids.iter() {
                                 if let Some(channel) = state.data.channels.get_mut(default_channel_id) {
-                                    join_channel_unchecked(channel, member, notifications_muted, now);
+                                    if channel.chat.gate.is_none() {
+                                        join_channel_unchecked(channel, member, true, true, now);
+                                    }
                                 }
                             }
                             member.channels.insert(channel_id);
+                            members_added.push(user_id);
                         }
                         AddResult::AlreadyInCommunity => {}
                         AddResult::Blocked => {
@@ -167,6 +165,17 @@ async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attemp
             return;
         }
     }
+
+    mutate_state(|state| {
+        state.data.events.push_event(
+            CommunityEventInternal::GroupImported(Box::new(GroupImportedInternal {
+                group_id,
+                channel_id,
+                members_added,
+            })),
+            state.env.now(),
+        );
+    });
 
     ic_cdk_timers::set_timer(Duration::ZERO, move || mark_import_complete(group_id, channel_id));
 }

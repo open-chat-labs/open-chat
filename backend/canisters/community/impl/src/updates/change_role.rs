@@ -1,6 +1,6 @@
 use crate::{
     activity_notifications::handle_activity_notification,
-    model::{events::CommunityEvent, members::ChangeRoleResult},
+    model::{events::CommunityEventInternal, members::ChangeRoleResult},
     mutate_state, read_state, run_regular_jobs, RuntimeState,
 };
 use canister_tracing_macros::trace;
@@ -113,7 +113,7 @@ fn change_role_impl(
                 new_role: args.new_role,
                 changed_by: r.caller_id,
             };
-            CommunityEvent::RoleChanged(Box::new(event))
+            CommunityEventInternal::RoleChanged(Box::new(event))
         }
         ChangeRoleResult::NotAuthorized => return NotAuthorized,
         ChangeRoleResult::Invalid => return Invalid,

@@ -49,13 +49,13 @@ export function canDeleteCommunity({ membership }: CommunitySummary): boolean {
 
 export function canBlockUsers(community: CommunitySummary): boolean {
     return (
-        community.public && isPermitted(community.membership.role, community.permissions.blockUsers)
+        community.public && isPermitted(community.membership.role, community.permissions.removeMembers)
     );
 }
 
 export function canUnblockUsers(community: CommunitySummary): boolean {
     return (
-        community.public && isPermitted(community.membership.role, community.permissions.blockUsers)
+        community.public && isPermitted(community.membership.role, community.permissions.removeMembers)
     );
 }
 

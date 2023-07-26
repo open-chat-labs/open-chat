@@ -1,6 +1,6 @@
 use crate::{
-    activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, run_regular_jobs,
-    RuntimeState,
+    activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
+    run_regular_jobs, RuntimeState,
 };
 use canister_tracing_macros::trace;
 use community_canister::disable_invite_code::{Response::*, *};
@@ -31,7 +31,7 @@ fn disable_invite_code_impl(state: &mut RuntimeState) -> Response {
 
             let now = state.env.now();
             state.data.events.push_event(
-                CommunityEvent::InviteCodeChanged(Box::new(GroupInviteCodeChanged {
+                CommunityEventInternal::InviteCodeChanged(Box::new(GroupInviteCodeChanged {
                     change: GroupInviteCodeChange::Disabled,
                     changed_by: member.user_id,
                 })),

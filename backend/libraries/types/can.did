@@ -205,6 +205,7 @@ type ChatEvent = variant {
     EventsTimeToLiveUpdated : EventsTimeToLiveUpdated;
     GroupGateUpdated : GroupGateUpdated;
     UsersInvited : UsersInvited;
+    MembersAddedToDefaultChannel : MembersAddedToDefaultChannel;
 };
 
 type ChatEventWrapper = record {
@@ -1138,20 +1139,18 @@ type PermissionRole = variant {
 
 type CommunityPermissions = record {
     change_roles : CommunityPermissionRole;
+    update_details : CommunityPermissionRole;
     invite_users : CommunityPermissionRole;
     remove_members : CommunityPermissionRole;
-    block_users : CommunityPermissionRole;
-    update_details : CommunityPermissionRole;
     create_public_channel : CommunityPermissionRole;
     create_private_channel : CommunityPermissionRole;
 };
 
 type OptionalCommunityPermissions = record {
     change_roles : opt CommunityPermissionRole;
+    update_details : opt CommunityPermissionRole;
     invite_users : opt CommunityPermissionRole;
     remove_members : opt CommunityPermissionRole;
-    block_users : opt CommunityPermissionRole;
-    update_details : opt CommunityPermissionRole;
     create_public_channel : opt CommunityPermissionRole;
     create_private_channel : opt CommunityPermissionRole;
 };
@@ -1326,6 +1325,10 @@ type CustomMessageContent = record {
 type UsersInvited = record {
     user_ids : vec UserId;
     invited_by : UserId;
+};
+
+type MembersAddedToDefaultChannel = record {
+    count: nat32;
 };
 
 type ReportedMessage = record {

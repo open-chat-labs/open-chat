@@ -1,6 +1,6 @@
 use crate::{
-    activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, run_regular_jobs,
-    RuntimeState,
+    activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
+    run_regular_jobs, RuntimeState,
 };
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
@@ -35,7 +35,7 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
                     let channel = state.data.channels.delete(channel_id).expect("Channel should exist");
 
                     state.data.events.push_event(
-                        CommunityEvent::ChannelDeleted(Box::new(ChannelDeleted {
+                        CommunityEventInternal::ChannelDeleted(Box::new(ChannelDeleted {
                             channel_id,
                             name: channel.chat.name,
                             deleted_by: user_id,
