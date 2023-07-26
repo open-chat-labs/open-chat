@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::model::events::CommunityEvent;
+use crate::model::events::CommunityEventInternal;
 use crate::updates::unblock_user::Response::*;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
@@ -45,7 +45,7 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
             state
                 .data
                 .events
-                .push_event(CommunityEvent::UsersUnblocked(Box::new(event)), now);
+                .push_event(CommunityEventInternal::UsersUnblocked(Box::new(event)), now);
 
             handle_activity_notification(state);
 

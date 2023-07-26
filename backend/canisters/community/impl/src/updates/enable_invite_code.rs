@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::model::events::CommunityEvent;
+use crate::model::events::CommunityEventInternal;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
@@ -69,7 +69,7 @@ fn record_event(caller: Principal, change: GroupInviteCodeChange, state: &mut Ru
 
     if let Some(participant) = state.data.members.get(caller) {
         state.data.events.push_event(
-            CommunityEvent::InviteCodeChanged(Box::new(GroupInviteCodeChanged {
+            CommunityEventInternal::InviteCodeChanged(Box::new(GroupInviteCodeChanged {
                 change,
                 changed_by: participant.user_id,
             })),

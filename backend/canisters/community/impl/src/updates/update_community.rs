@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::model::events::CommunityEvent;
+use crate::model::events::CommunityEventInternal;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::update_community::{Response::*, *};
@@ -189,7 +189,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
     if let Some(name) = args.name {
         if state.data.name != name {
             events.push_event(
-                CommunityEvent::NameChanged(Box::new(GroupNameChanged {
+                CommunityEventInternal::NameChanged(Box::new(GroupNameChanged {
                     new_name: name.clone(),
                     previous_name: state.data.name.clone(),
                     changed_by: my_user_id,
@@ -204,7 +204,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
     if let Some(description) = args.description {
         if state.data.description != description {
             events.push_event(
-                CommunityEvent::DescriptionChanged(Box::new(GroupDescriptionChanged {
+                CommunityEventInternal::DescriptionChanged(Box::new(GroupDescriptionChanged {
                     new_description: description.clone(),
                     previous_description: state.data.description.clone(),
                     changed_by: my_user_id,
@@ -219,7 +219,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
     if let Some(rules) = args.rules {
         if state.data.rules.enabled != rules.enabled || state.data.rules.text != rules.text {
             events.push_event(
-                CommunityEvent::RulesChanged(Box::new(GroupRulesChanged {
+                CommunityEventInternal::RulesChanged(Box::new(GroupRulesChanged {
                     enabled: rules.enabled,
                     prev_enabled: state.data.rules.enabled,
                     changed_by: my_user_id,
@@ -237,7 +237,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
 
         if new_avatar_id != previous_avatar_id {
             events.push_event(
-                CommunityEvent::AvatarChanged(Box::new(AvatarChanged {
+                CommunityEventInternal::AvatarChanged(Box::new(AvatarChanged {
                     new_avatar: new_avatar_id,
                     previous_avatar: previous_avatar_id,
                     changed_by: my_user_id,
@@ -255,7 +255,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
 
         if new_banner_id != previous_banner_id {
             events.push_event(
-                CommunityEvent::BannerChanged(Box::new(BannerChanged {
+                CommunityEventInternal::BannerChanged(Box::new(BannerChanged {
                     new_banner: new_banner_id,
                     previous_banner: previous_banner_id,
                     changed_by: my_user_id,
@@ -273,7 +273,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
         state.data.permissions = new_permissions.clone();
 
         state.data.events.push_event(
-            CommunityEvent::PermissionsChanged(Box::new(CommunityPermissionsChanged {
+            CommunityEventInternal::PermissionsChanged(Box::new(CommunityPermissionsChanged {
                 old_permissions,
                 new_permissions,
                 changed_by: my_user_id,
@@ -287,7 +287,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
             state.data.gate = Timestamped::new(gate.clone(), now);
 
             state.data.events.push_event(
-                CommunityEvent::GateUpdated(Box::new(GroupGateUpdated {
+                CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdated {
                     updated_by: my_user_id,
                     new_gate: gate,
                 })),
@@ -308,7 +308,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
             state
                 .data
                 .events
-                .push_event(CommunityEvent::VisibilityChanged(Box::new(event)), now);
+                .push_event(CommunityEventInternal::VisibilityChanged(Box::new(event)), now);
         }
     }
     if let Some(new) = args.primary_language {
@@ -326,7 +326,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
             state
                 .data
                 .events
-                .push_event(CommunityEvent::PrimaryLanguageChanged(Box::new(event)), now);
+                .push_event(CommunityEventInternal::PrimaryLanguageChanged(Box::new(event)), now);
         }
     }
 
