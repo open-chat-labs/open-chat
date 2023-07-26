@@ -83,12 +83,13 @@ export type UpdatedGroup = {
     permissions: ChatPermissions;
 };
 
-export function filterByChatType(
-    history: RightPanelState[],
-    chat: ChatSummary | undefined
-): RightPanelState[] {
-    if (chat === undefined) return [];
-    return history.filter((panel) => {
+export function filterRightPanelHistory(fn: (state: RightPanelState) => boolean): void {
+    return rightPanelHistory.update((history) => history.filter(fn));
+}
+
+export function filterByChatType(chat: ChatSummary | undefined): void {
+    if (chat === undefined) return;
+    filterRightPanelHistory((panel) => {
         if (chat.kind === "direct_chat") {
             return ["new_group_panel", "user_profile"].includes(panel.kind);
         }
