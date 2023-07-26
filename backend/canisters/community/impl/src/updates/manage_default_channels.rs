@@ -1,11 +1,7 @@
-use crate::{
-    activity_notifications::handle_activity_notification,
-    model::{
-        channels::{AddDefaultChannelResult, RemoveDefaultChannelResult},
-        events::CommunityEventInternal,
-    },
-    mutate_state, run_regular_jobs, RuntimeState,
-};
+use crate::activity_notifications::handle_activity_notification;
+use crate::model::channels::{AddDefaultChannelResult, RemoveDefaultChannelResult};
+use crate::model::events::CommunityEventInternal;
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::manage_default_channels::{Response::*, *};
 use ic_cdk_macros::update;

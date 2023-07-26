@@ -1011,6 +1011,27 @@ impl ChatEvents {
         )
     }
 
+    pub fn mark_member_added_to_default_channel(&mut self, user_id: UserId, now: TimestampMillis) {
+        // If the last event is of type `MembersAddedToDefaultChannel` then add this user_id to that
+        // event and mark the event as updated, else push a new event
+        if let Some(e) = self.main.last_mut() {
+            if let ChatEventInternal::MembersAddedToDefaultChannel(m) = &mut e.event {
+                m.user_ids.push(user_id);
+                e.timestamp = now;
+                self.last_updated_timestamps.mark_updated(None, e.index, now);
+                return;
+            }
+        }
+
+        self.push_main_event(
+            ChatEventInternal::MembersAddedToDefaultChannel(Box::new(MembersAddedToDefaultChannelInternal {
+                user_ids: vec![user_id],
+            })),
+            0,
+            now,
+        );
+    }
+
     pub fn next_message_expiry(&self, now: TimestampMillis) -> Option<TimestampMillis> {
         self.expiring_events.next_message_expiry(now)
     }
