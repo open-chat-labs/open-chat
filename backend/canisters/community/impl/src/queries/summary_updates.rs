@@ -1,5 +1,5 @@
 use crate::model::channels::ChannelUpdates;
-use crate::model::events::CommunityEvent;
+use crate::model::events::CommunityEventInternal;
 use crate::model::members::CommunityMemberInternal;
 use crate::RuntimeState;
 use crate::{read_state, Data};
@@ -141,47 +141,48 @@ fn process_events(since: TimestampMillis, member: Option<&CommunityMemberInterna
         }
 
         match &event_wrapper.event {
-            CommunityEvent::NameChanged(n) => {
+            CommunityEventInternal::NameChanged(n) => {
                 if updates.name.is_none() {
                     updates.name = Some(n.new_name.clone());
                 }
             }
-            CommunityEvent::DescriptionChanged(n) => {
+            CommunityEventInternal::DescriptionChanged(n) => {
                 if updates.description.is_none() {
                     updates.description = Some(n.new_description.clone());
                 }
             }
-            CommunityEvent::AvatarChanged(a) => {
+            CommunityEventInternal::AvatarChanged(a) => {
                 if !updates.avatar_id.has_update() {
                     updates.avatar_id = OptionUpdate::from_update(a.new_avatar);
                 }
             }
-            CommunityEvent::BannerChanged(a) => {
+            CommunityEventInternal::BannerChanged(a) => {
                 if !updates.banner_id.has_update() {
                     updates.banner_id = OptionUpdate::from_update(a.new_banner);
                 }
             }
-            CommunityEvent::RoleChanged(r) => {
+            CommunityEventInternal::RoleChanged(r) => {
                 if member.map(|m| r.user_ids.contains(&m.user_id)).unwrap_or_default() {
                     updates.role_changed = true;
                 }
             }
-            CommunityEvent::MemberJoined(_)
-            | CommunityEvent::MembersRemoved(_)
-            | CommunityEvent::MemberLeft(_)
-            | CommunityEvent::UsersBlocked(_)
-            | CommunityEvent::UsersUnblocked(_) => {
+            CommunityEventInternal::MemberJoined(_)
+            | CommunityEventInternal::MembersRemoved(_)
+            | CommunityEventInternal::MemberLeft(_)
+            | CommunityEventInternal::UsersBlocked(_)
+            | CommunityEventInternal::UsersUnblocked(_)
+            | CommunityEventInternal::GroupImported(_) => {
                 updates.members_changed = true;
             }
-            CommunityEvent::PermissionsChanged(p) => {
+            CommunityEventInternal::PermissionsChanged(p) => {
                 if updates.permissions.is_none() {
                     updates.permissions = Some(p.new_permissions.clone());
                 }
             }
-            CommunityEvent::VisibilityChanged(v) => {
+            CommunityEventInternal::VisibilityChanged(v) => {
                 updates.is_public = Some(v.now_public);
             }
-            CommunityEvent::PrimaryLanguageChanged(l) => {
+            CommunityEventInternal::PrimaryLanguageChanged(l) => {
                 if updates.primary_language.is_none() {
                     updates.primary_language = Some(l.new.clone());
                 }

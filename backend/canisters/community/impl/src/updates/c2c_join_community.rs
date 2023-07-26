@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
-use crate::model::events::CommunityEvent;
+use crate::model::events::CommunityEventInternal;
 use crate::model::members::AddResult;
 use crate::updates::c2c_join_channel::join_channel_impl;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
@@ -88,7 +88,7 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
         state
             .data
             .events
-            .push_event(CommunityEvent::UsersUnblocked(Box::new(event)), now);
+            .push_event(CommunityEventInternal::UsersUnblocked(Box::new(event)), now);
     }
 
     match state.data.members.add(args.user_id, args.principal, now) {
@@ -96,7 +96,7 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
             let invitation = state.data.invited_users.remove(&args.user_id, now);
 
             state.data.events.push_event(
-                CommunityEvent::MemberJoined(Box::new(MemberJoined {
+                CommunityEventInternal::MemberJoined(Box::new(MemberJoined {
                     user_id: args.user_id,
                     invited_by: invitation.map(|i| i.invited_by),
                 })),
