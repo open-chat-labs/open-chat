@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
-use crate::model::events::CommunityEvent;
+use crate::model::events::CommunityEventInternal;
 use crate::model::invited_users::UserInvitation;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
@@ -66,7 +66,7 @@ pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeStat
 
             // Push a UsersInvited event
             state.data.events.push_event(
-                CommunityEvent::UsersInvited(Box::new(UsersInvited {
+                CommunityEventInternal::UsersInvited(Box::new(UsersInvited {
                     user_ids: user_ids.clone(),
                     invited_by: member.user_id,
                 })),

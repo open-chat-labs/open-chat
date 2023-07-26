@@ -30,10 +30,8 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
             canisterId: candid.chat_id.toString(),
         })),
         permissions: {
-            changePermissions: "owner",
             changeRoles: "owner",
             removeMembers: "owner",
-            blockUsers: "owner",
             deleteMessages: "owner",
             updateGroup: "owner",
             pinMessages: "owner",

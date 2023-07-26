@@ -803,7 +803,7 @@ export function canChangePermissions(chat: ChatSummary): boolean {
         (chat.kind === "group_chat" || chat.kind === "channel") &&
         chat.membership !== undefined &&
         !chat.frozen &&
-        isPermitted(chat.membership.role, chat.permissions.changePermissions)
+        hasOwnerRights(chat.membership.role)
     );
 }
 
@@ -841,7 +841,7 @@ export function canBlockUsers(chat: ChatSummary): boolean {
         return (
             chat.public &&
             !chat.frozen &&
-            isPermitted(chat.membership.role, chat.permissions.blockUsers)
+            isPermitted(chat.membership.role, chat.permissions.removeMembers)
         );
     } else {
         return true;
@@ -853,7 +853,7 @@ export function canUnblockUsers(chat: ChatSummary): boolean {
         return (
             chat.public &&
             !chat.frozen &&
-            isPermitted(chat.membership.role, chat.permissions.blockUsers)
+            isPermitted(chat.membership.role, chat.permissions.removeMembers)
         );
     } else {
         return true;

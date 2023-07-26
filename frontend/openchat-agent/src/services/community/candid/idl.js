@@ -1369,7 +1369,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const CommunityPermissions = IDL.Record({
     'create_public_channel' : CommunityPermissionRole,
-    'block_users' : CommunityPermissionRole,
     'update_details' : CommunityPermissionRole,
     'remove_members' : CommunityPermissionRole,
     'invite_users' : CommunityPermissionRole,
@@ -1550,7 +1549,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const OptionalCommunityPermissions = IDL.Record({
     'create_public_channel' : IDL.Opt(CommunityPermissionRole),
-    'block_users' : IDL.Opt(CommunityPermissionRole),
     'update_details' : IDL.Opt(CommunityPermissionRole),
     'remove_members' : IDL.Opt(CommunityPermissionRole),
     'invite_users' : IDL.Opt(CommunityPermissionRole),

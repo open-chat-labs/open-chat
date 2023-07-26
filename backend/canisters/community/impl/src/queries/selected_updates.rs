@@ -1,4 +1,4 @@
-use crate::{model::events::CommunityEvent, read_state, Data, RuntimeState};
+use crate::{model::events::CommunityEventInternal, read_state, Data, RuntimeState};
 use community_canister::selected_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use std::{cmp::max, collections::HashSet};
@@ -50,36 +50,41 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     // Iterate through the new events starting from most recent
     for event_wrapper in data.events.iter(None, false).take_while(|e| e.timestamp > args.updates_since) {
         match &event_wrapper.event {
-            CommunityEvent::MembersRemoved(p) => {
+            CommunityEventInternal::MembersRemoved(p) => {
                 for user_id in p.user_ids.iter() {
                     user_updates_handler.mark_member_updated(&mut result, *user_id, true);
                 }
             }
-            CommunityEvent::MemberJoined(p) => {
+            CommunityEventInternal::MemberJoined(p) => {
                 user_updates_handler.mark_member_updated(&mut result, p.user_id, false);
             }
-            CommunityEvent::MemberLeft(p) => {
+            CommunityEventInternal::MemberLeft(p) => {
                 user_updates_handler.mark_member_updated(&mut result, p.user_id, true);
             }
-            CommunityEvent::RoleChanged(rc) => {
+            CommunityEventInternal::RoleChanged(rc) => {
                 for user_id in rc.user_ids.iter() {
                     user_updates_handler.mark_member_updated(&mut result, *user_id, false);
                 }
             }
-            CommunityEvent::UsersBlocked(ub) => {
+            CommunityEventInternal::UsersBlocked(ub) => {
                 for user_id in ub.user_ids.iter() {
                     user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
                     user_updates_handler.mark_member_updated(&mut result, *user_id, true);
                 }
             }
-            CommunityEvent::UsersUnblocked(ub) => {
+            CommunityEventInternal::UsersUnblocked(ub) => {
                 for user_id in ub.user_ids.iter() {
                     user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
                 }
             }
-            CommunityEvent::RulesChanged(_) => {
+            CommunityEventInternal::RulesChanged(_) => {
                 if result.rules.is_none() {
                     result.rules = Some(data.rules.clone());
+                }
+            }
+            CommunityEventInternal::GroupImported(g) => {
+                for user_id in g.members_added.iter() {
+                    user_updates_handler.mark_member_updated(&mut result, *user_id, false);
                 }
             }
             _ => {}

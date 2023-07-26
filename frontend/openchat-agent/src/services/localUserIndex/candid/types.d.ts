@@ -241,7 +241,6 @@ export type CommunityPermissionRole = { 'Owners' : null } |
   { 'Members' : null };
 export interface CommunityPermissions {
   'create_public_channel' : CommunityPermissionRole,
-  'block_users' : CommunityPermissionRole,
   'update_details' : CommunityPermissionRole,
   'remove_members' : CommunityPermissionRole,
   'invite_users' : CommunityPermissionRole,
@@ -917,7 +916,6 @@ export interface NotificationEnvelope {
 }
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
-  'block_users' : [] | [CommunityPermissionRole],
   'update_details' : [] | [CommunityPermissionRole],
   'remove_members' : [] | [CommunityPermissionRole],
   'invite_users' : [] | [CommunityPermissionRole],

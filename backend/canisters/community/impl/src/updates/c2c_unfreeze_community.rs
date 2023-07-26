@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_group_index_or_local_group_index;
-use crate::model::events::CommunityEvent;
+use crate::model::events::CommunityEventInternal;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -22,7 +22,7 @@ fn c2c_unfreeze_community_impl(args: Args, state: &mut RuntimeState) -> Response
         state.data.frozen = Timestamped::new(None, now);
 
         let event_index = state.data.events.push_event(
-            CommunityEvent::Unfrozen(Box::new(GroupUnfrozen {
+            CommunityEventInternal::Unfrozen(Box::new(GroupUnfrozen {
                 unfrozen_by: args.caller,
             })),
             now,

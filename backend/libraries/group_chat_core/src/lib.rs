@@ -1530,11 +1530,11 @@ impl GroupChatCore {
     fn merge_permissions(new: OptionalGroupPermissions, old: &GroupPermissions) -> GroupPermissions {
         #[allow(deprecated)]
         GroupPermissions {
-            change_permissions: new.change_permissions.unwrap_or(old.change_permissions),
+            change_permissions: GroupPermissionRole::Owner,
             change_roles: new.change_roles.unwrap_or(old.change_roles),
             add_members: GroupPermissionRole::Owner,
             remove_members: new.remove_members.unwrap_or(old.remove_members),
-            block_users: new.block_users.unwrap_or(old.block_users),
+            block_users: GroupPermissionRole::Owner,
             delete_messages: new.delete_messages.unwrap_or(old.delete_messages),
             update_group: new.update_group.unwrap_or(old.update_group),
             pin_messages: new.pin_messages.unwrap_or(old.pin_messages),
