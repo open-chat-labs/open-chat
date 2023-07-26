@@ -2,7 +2,7 @@ use crate::{
     activity_notifications::handle_activity_notification,
     model::{
         channels::{AddDefaultChannelResult, RemoveDefaultChannelResult},
-        events::CommunityEvent,
+        events::CommunityEventInternal,
     },
     mutate_state, run_regular_jobs, RuntimeState,
 };
@@ -74,7 +74,7 @@ fn manage_default_channels_impl(args: Args, state: &mut RuntimeState) -> Respons
             state
                 .data
                 .events
-                .push_event(CommunityEvent::DefaultChannelsChanged(Box::new(event)), now);
+                .push_event(CommunityEventInternal::DefaultChannelsChanged(Box::new(event)), now);
 
             handle_activity_notification(state);
         }
