@@ -115,11 +115,11 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
             let mut channel = Channel {
                 id: channel_id,
                 chat,
-                is_default: Timestamped::new(args.is_default && args.is_public, now),
+                is_default: Timestamped::new(args.is_default, now),
                 date_imported: None,
             };
 
-            if channel.chat.gate.is_none() {
+            if args.is_default && channel.chat.gate.is_none() {
                 for m in state.data.members.iter_mut() {
                     join_channel_unchecked(&mut channel, m, true, true, now);
                 }
