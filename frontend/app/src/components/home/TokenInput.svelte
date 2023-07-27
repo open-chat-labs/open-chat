@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getContext, onMount } from "svelte";
-    import { Cryptocurrency, cryptoLookup, E8S_PER_TOKEN, OpenChat } from "openchat-client";
+    import { cryptoLookup, E8S_PER_TOKEN, OpenChat } from "openchat-client";
     import Alert from "svelte-material-icons/Alert.svelte";
     import { iconSize } from "stores/iconSize";
     import { _ } from "svelte-i18n";
@@ -11,12 +11,11 @@
     export let amountE8s: bigint = BigInt(0);
     export let autofocus: boolean = false;
     export let maxAmountE8s: bigint;
-    export let token: Cryptocurrency;
+    export let token: string;
     export let valid: boolean = false;
 
     let inputElement: HTMLInputElement;
 
-    $: symbol = cryptoLookup[token].symbol;
     $: transferFees = cryptoLookup[token].transferFeesE8s;
 
     onMount(() => {
@@ -54,7 +53,7 @@
 </script>
 
 <div class="label">
-    <Legend label={$_("tokenTransfer.amount")} rules={`${symbol.toUpperCase()}`} />
+    <Legend label={$_("tokenTransfer.amount")} rules={token} />
     <div on:click={max} class="max">{$_("tokenTransfer.max")}</div>
 </div>
 <div class="wrapper">
@@ -64,7 +63,7 @@
             {$_("tokenTransfer.fee", {
                 values: {
                     fee: client.formatTokens(transferFees, 0),
-                    token: symbol,
+                    token,
                 },
             })}
         </span>

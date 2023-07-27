@@ -39,7 +39,6 @@
 
     $: crypto = cryptoCurrencyList.map((t) => ({
         key: t,
-        symbol: cryptoLookup[t].symbol,
         balance: $cryptoBalance[t],
         disabled: cryptoLookup[t].disabled,
     }));
@@ -74,10 +73,10 @@
     <div />
 
     {#each crypto as token}
-        <div class={`icon ${token.key}`} />
+        <div class={`icon ${token.key.toLowerCase()}`} />
 
         <div class="token">
-            {token.symbol}
+            {token.key}
             {#if token.disabled}
                 <span class="coming-soon">{$_("cryptoAccount.comingSoon")}</span>
             {/if}
@@ -173,7 +172,7 @@
             &.kinic {
                 background-image: url("/assets/kinic_token.png");
             }
-            &.hotornot {
+            &.hot {
                 background-image: url("/assets/hot_token.svg");
             }
         }

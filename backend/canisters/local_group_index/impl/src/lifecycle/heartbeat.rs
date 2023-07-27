@@ -34,22 +34,22 @@ mod upgrade_groups {
     }
 
     fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
-        let canister_id = state.data.groups_requiring_upgrade.try_take_next()?;
+        let (canister_id, force) = state.data.groups_requiring_upgrade.try_take_next()?;
 
-        initialize_upgrade(canister_id, state).or_else(|| {
+        initialize_upgrade(canister_id, force, state).or_else(|| {
             state.data.groups_requiring_upgrade.mark_skipped(&canister_id);
             None
         })
     }
 
-    fn initialize_upgrade(canister_id: CanisterId, state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
+    fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
         let chat_id = canister_id.into();
         let group = state.data.local_groups.get_mut(&chat_id)?;
         let current_wasm_version = group.wasm_version;
         let group_canister_wasm = &state.data.group_canister_wasm_for_upgrades;
         let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
 
-        if current_wasm_version == group_canister_wasm.version {
+        if current_wasm_version == group_canister_wasm.version && !force {
             return None;
         }
 
@@ -146,22 +146,22 @@ mod upgrade_communities {
     }
 
     fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
-        let canister_id = state.data.communities_requiring_upgrade.try_take_next()?;
+        let (canister_id, force) = state.data.communities_requiring_upgrade.try_take_next()?;
 
-        initialize_upgrade(canister_id, state).or_else(|| {
+        initialize_upgrade(canister_id, force, state).or_else(|| {
             state.data.communities_requiring_upgrade.mark_skipped(&canister_id);
             None
         })
     }
 
-    fn initialize_upgrade(canister_id: CanisterId, state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
+    fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
         let community_id = canister_id.into();
         let community = state.data.local_communities.get_mut(&community_id)?;
         let current_wasm_version = community.wasm_version;
         let community_canister_wasm = &state.data.community_canister_wasm_for_upgrades;
         let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
 
-        if current_wasm_version == community_canister_wasm.version {
+        if current_wasm_version == community_canister_wasm.version && !force {
             return None;
         }
 

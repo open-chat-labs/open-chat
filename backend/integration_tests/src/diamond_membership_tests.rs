@@ -63,7 +63,7 @@ fn can_upgrade_to_diamond() {
 
     assert_eq!(
         treasury_balance - init_treasury_balance,
-        20_000_000 - (2 * Cryptocurrency::InternetComputer.fee()) as u64
+        20_000_000 - (2 * Cryptocurrency::InternetComputer.fee().unwrap()) as u64
     );
 }
 
@@ -144,6 +144,6 @@ fn membership_payment_shared_with_referrer() {
     let treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
     assert_eq!(
         treasury_balance - init_treasury_balance,
-        10_000_000 - (3 * Cryptocurrency::InternetComputer.fee()) as u64
+        10_000_000 - (3 * Cryptocurrency::InternetComputer.fee().unwrap()) as u64
     );
 }

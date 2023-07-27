@@ -8,7 +8,6 @@ use satoshi_dice_canister::handle_direct_message::*;
 use types::{BotMessage, Cryptocurrency, MessageContent, TextContent, UserId};
 use utils::time::MINUTE_IN_MS;
 
-const CKBTC_FEE: u64 = Cryptocurrency::CKBTC.fee() as u64;
 const MAX_TOTAL_WINNINGS: u64 = 50_000;
 
 #[update_msgpack]
@@ -22,23 +21,24 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(sats) = extract_ckbtc_amount(&args.content) {
         let user_id: UserId = state.env.caller().into();
         let now = state.env.now();
+        let fee = Cryptocurrency::CKBTC.fee().unwrap() as u64;
 
         if sats > MAX_SATS_PER_ROLL {
             messages.push("❗️I only accept messages with up to 0.0001 ckBTC".to_string());
             messages.push("Please wait a moment while I refund your ckBTC 🕰".to_string());
-            send_ckbtc_message(user_id, sats + CKBTC_FEE, state);
+            send_ckbtc_message(user_id, sats + fee, state);
         } else if state.data.users.total_winnings(&user_id) > MAX_TOTAL_WINNINGS {
             messages.push("You have already made over 50k SATS in bonuses, that's the limit I'm afraid!".to_string());
             messages.push("Feel free to continue sending me ckBTC and I will send it back to you (no more bonus)".to_string());
             messages.push("Please wait a moment while I refund your ckBTC 🕰".to_string());
-            send_ckbtc_message(user_id, sats + CKBTC_FEE, state);
+            send_ckbtc_message(user_id, sats + fee, state);
         } else {
             match state.data.users.time_until_next_roll_permitted(&user_id, now) {
                 Some(0) => {
                     // This isn't quite uniformly distributed but it's more than good enough
                     let roll = state.env.rng().next_u64() % 101;
                     let winnings = (sats * roll) / 100;
-                    let amount_out = sats + CKBTC_FEE + winnings;
+                    let amount_out = sats + fee + winnings;
                     state.data.users.add_roll(
                         &user_id,
                         DiceRoll {
@@ -62,14 +62,14 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
                     ));
                     messages.push("Please wait a moment while I refund your ckBTC 🕰️".to_string());
 
-                    send_ckbtc_message(user_id, sats + CKBTC_FEE, state);
+                    send_ckbtc_message(user_id, sats + fee, state);
                 }
                 None => {
                     messages.push("User not recognized, please wait a moment while I refund your ckBTC".to_string());
 
                     state.enqueue_pending_action(Action::TransferCkbtc(TransferCkbtc {
                         user_id,
-                        amount: sats.saturating_sub(2 * CKBTC_FEE),
+                        amount: sats.saturating_sub(2 * fee),
                         send_oc_message: false,
                     }));
                 }

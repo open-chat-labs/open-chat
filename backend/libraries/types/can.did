@@ -932,6 +932,7 @@ type Cryptocurrency = variant {
     CKBTC;
     CHAT;
     KINIC;
+    Other: text;
 };
 
 type CryptoTransaction = variant {

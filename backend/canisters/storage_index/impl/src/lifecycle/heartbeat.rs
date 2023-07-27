@@ -154,7 +154,7 @@ mod upgrade_canisters {
     }
 
     fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
-        let canister_id = state.data.canisters_requiring_upgrade.try_take_next()?;
+        let (canister_id, _) = state.data.canisters_requiring_upgrade.try_take_next()?;
         let bucket = state.data.buckets.get(&canister_id)?;
         let new_wasm = state.data.bucket_canister_wasm.clone();
         let wasm_version = new_wasm.version;

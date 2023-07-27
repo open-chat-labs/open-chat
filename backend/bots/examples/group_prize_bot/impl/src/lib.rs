@@ -45,7 +45,7 @@ impl RuntimeState {
             mean_time_between_prizes: self.data.mean_time_between_prizes,
             started: self.data.started,
             username: self.data.username.clone(),
-            token: self.data.prize_data.as_ref().map(|p| p.token),
+            token: self.data.prize_data.as_ref().map(|p| p.token.clone()),
             ledger_canister_id: self.data.prize_data.as_ref().map(|p| p.ledger_canister_id),
             end_date: self.data.prize_data.as_ref().map(|p| p.end_date),
             group_count: self.data.groups.len(),

@@ -2,8 +2,6 @@ import {
     ChatEvent,
     Metrics,
     ChatSummary,
-    Cryptocurrency,
-    cryptoLookup,
     EventWrapper,
     extractUserIdsFromMentions,
     IndexRange,
@@ -109,7 +107,7 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
     } else if (content.kind === "crypto_content") {
         text = captionedContent(
             formatter("tokenTransfer.transfer", {
-                values: { token: toSymbol(content.transfer.token) },
+                values: { token: content.transfer.token },
             }),
             content.caption
         );
@@ -143,10 +141,6 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
     return text.trim();
-}
-
-function toSymbol(token: Cryptocurrency): string {
-    return cryptoLookup[token].symbol;
 }
 
 function captionedContent(type: string, caption?: string): string {

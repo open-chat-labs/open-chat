@@ -225,6 +225,9 @@ impl MessageInternal {
                 Cryptocurrency::KINIC => {
                     incr(&mut metrics.kinic_messages);
                 }
+                Cryptocurrency::Other(_) => {
+                    incr(&mut metrics.other_crypto_messages);
+                }
             },
             MessageContentInternal::Deleted(_) => {}
             MessageContentInternal::Giphy(_) => {
@@ -522,7 +525,8 @@ impl From<&MessageContentInternal> for Document {
 
                 if let CryptoTransaction::Completed(c) = &c.transfer {
                     let amount = c.units();
-                    let decimals = c.token().decimals();
+                    // This is only used for string searching so it's better to default to 8 than to trap
+                    let decimals = c.token().decimals().unwrap_or(8);
                     let amount_string = format_crypto_amount(amount, decimals as u32);
                     document.add_field(amount_string, 1.0, false);
                 }
@@ -663,6 +667,8 @@ pub struct ChatMetricsInternal {
     pub chat_messages: u64,
     #[serde(rename = "kinic", default, skip_serializing_if = "is_default")]
     pub kinic_messages: u64,
+    #[serde(rename = "o", default, skip_serializing_if = "is_default")]
+    pub other_crypto_messages: u64,
     #[serde(rename = "d", default, skip_serializing_if = "is_default")]
     pub deleted_messages: u64,
     #[serde(rename = "g", default, skip_serializing_if = "is_default")]

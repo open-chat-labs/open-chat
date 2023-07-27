@@ -114,7 +114,7 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
-                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id(),
+                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
     }

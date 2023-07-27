@@ -5,7 +5,6 @@ import {
     CryptocurrencyContent,
     MessageContent,
     User,
-    Cryptocurrency,
     E8S_PER_TOKEN,
     UnsupportedValueError,
     routeForMessage,
@@ -322,7 +321,7 @@ function extractMessageContentFromCryptoContent(
         return {
             text: `${senderName} sent ${
                 Number(content.transfer.amountE8s) / E8S_PER_TOKEN
-            } ${toSymbol(content.transfer.token)}`,
+            } ${content.transfer.token}`,
         };
     } else {
         return {
@@ -335,10 +334,6 @@ function isMessageNotification(notification: Notification): boolean {
     return (
         notification.kind === "direct_notification" || notification.kind === "group_notification"
     );
-}
-
-function toSymbol(token: Cryptocurrency): string {
-    return token.toUpperCase();
 }
 
 type ContentExtract = {

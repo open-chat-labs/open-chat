@@ -943,7 +943,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "refreshAccountBalance":
                 agent
-                    .refreshAccountBalance(payload.crypto, payload.principal)
+                    .refreshAccountBalance(payload.ledger, payload.principal)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

@@ -55,8 +55,7 @@
         amount: number;
     };
 
-    const symbol = "ICP";
-    const token: Cryptocurrency = "icp";
+    const token: Cryptocurrency = "ICP";
 
     $: icpBalance = accountBalance / E8S_PER_TOKEN; //balance in the user's account expressed as ICP
     $: toPay = selectedOption?.amount ?? 0;
@@ -144,7 +143,7 @@
                 {/if}
 
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                    {$_("howToBuyToken", { values: { token: symbol.toUpperCase() } })}
+                    {$_("howToBuyToken", { values: { token } })}
                 </a>
 
                 {#if error}

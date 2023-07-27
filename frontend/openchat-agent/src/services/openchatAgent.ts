@@ -185,7 +185,7 @@ export class OpenChatAgent extends EventTarget {
     private _notificationClient: NotificationsClient;
     private _marketMakerClient: MarketMakerClient;
     private _registryClient: RegistryClient;
-    private _ledgerClients: Record<Cryptocurrency, LedgerClient>;
+    private _ledgerClients: Record<string, LedgerClient>;
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
     private _groupInvite: GroupInvite | undefined;
@@ -203,14 +203,7 @@ export class OpenChatAgent extends EventTarget {
         this._notificationClient = NotificationsClient.create(identity, config);
         this._marketMakerClient = MarketMakerClient.create(identity, config);
         this._registryClient = RegistryClient.create(identity, config);
-        this._ledgerClients = {
-            icp: LedgerClient.create(identity, config, this.config.ledgerCanisterICP),
-            sns1: LedgerClient.create(identity, config, this.config.ledgerCanisterSNS1),
-            ckbtc: LedgerClient.create(identity, config, this.config.ledgerCanisterBTC),
-            chat: LedgerClient.create(identity, config, this.config.ledgerCanisterCHAT),
-            kinic: LedgerClient.create(identity, config, this.config.ledgerCanisterKINIC),
-            hotornot: LedgerClient.create(identity, config, this.config.ledgerCanisterHOTORNOT),
-        };
+        this._ledgerClients = {};
         this._groupClients = {};
         this._communityClients = {};
     }
@@ -282,6 +275,17 @@ export class OpenChatAgent extends EventTarget {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
+    }
+
+    getLedgerClient(ledger: string): LedgerClient {
+        if (!this._ledgerClients[ledger]) {
+            this._ledgerClients[ledger] = LedgerClient.create(
+                this.identity,
+                this.config,
+                ledger,
+            );
+        }
+        return this._ledgerClients[ledger];
     }
 
     private createLocalUserIndexClient(canisterId: string): LocalUserIndexClient {
@@ -1903,8 +1907,8 @@ export class OpenChatAgent extends EventTarget {
         return DataClient.create(this.identity, this.config).storageStatus();
     }
 
-    refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
-        return this._ledgerClients[crypto].accountBalance(principal);
+    refreshAccountBalance(ledger: string, principal: string): Promise<Tokens> {
+        return this.getLedgerClient(ledger).accountBalance(principal);
     }
 
     getGroupMessagesByMessageIndex(

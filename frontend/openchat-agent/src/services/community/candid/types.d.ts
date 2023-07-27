@@ -416,7 +416,8 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CHAT' : null } |
   { 'SNS1' : null } |
   { 'KINIC' : null } |
-  { 'CKBTC' : null };
+  { 'CKBTC' : null } |
+  { 'Other' : string };
 export interface CustomMessageContent {
   'data' : Uint8Array | number[],
   'kind' : string,

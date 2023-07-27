@@ -527,12 +527,6 @@
         "receiver": "Recipient",
         "chooseReceiver": "enter the recipient's user name",
         "done": "refresh and continue",
-        "icp": "Internet Computer",
-        "btc": "Bitcoin",
-        "ckbtc": "ckBitcoin",
-        "chat": "OpenChat",
-        "sns1": "SNS-1",
-        "kinic": "Kinic",
         "max": "Max"
     },
     "cryptoAccount": {

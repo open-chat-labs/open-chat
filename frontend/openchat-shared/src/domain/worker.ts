@@ -418,7 +418,7 @@ type GetThreadPreviews = {
 };
 
 type RefreshAccountBalance = {
-    crypto: Cryptocurrency;
+    ledger: string;
     principal: string;
     kind: "refreshAccountBalance";
 };

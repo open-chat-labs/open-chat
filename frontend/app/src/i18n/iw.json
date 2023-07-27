@@ -440,12 +440,6 @@
         "yourAccount": "כתובת ה-{token} שלך",
         "receiver": "מקבל",
         "chooseReceiver": "הזן את שם המשתמש של הנמען",
-        "icp": "Internet Computer",
-        "btc": "Bitcoin",
-        "ckbtc": "ckBitcoin",
-        "chat": "OpenChat",
-        "sns1": "SNS-1",
-        "kinic": "Kinic",
         "max": "מקסימום",
         "viewTransaction": "[עסקה]({url})"
     },

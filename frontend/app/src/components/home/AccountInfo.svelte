@@ -4,17 +4,16 @@
     import { toastStore } from "../../stores/toast";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { CreatedUser, Cryptocurrency, cryptoLookup } from "openchat-client";
+    import type { CreatedUser } from "openchat-client";
     import { copyToClipboard } from "../../utils/urls";
 
     export let user: CreatedUser;
     export let qrSize: "default" | "smaller" | "larger" = "default";
-    export let token: Cryptocurrency;
+    export let token: string;
     export let centered = false;
     export let border = true;
 
-    $: account = token === "icp" ? user.cryptoAccount : user.userId;
-    $: symbol = cryptoLookup[token].symbol;
+    $: account = token === "ICP" ? user.cryptoAccount : user.userId;
 
     function collapseAccount(account: string) {
         if (account.length > 23) {
@@ -40,10 +39,10 @@
     <div class="qr-wrapper" class:border>
         <div class="qr" class:smaller={qrSize === "smaller"} class:larger={qrSize === "larger"}>
             <QR text={account} level="Q" />
-            <div class={`icon ${token}`} />
+            <div class={`icon ${token.toLowerCase()}`} />
         </div>
     </div>
-    <p class:centered>{$_("tokenTransfer.yourAccount", { values: { token: symbol } })}</p>
+    <p class:centered>{$_("tokenTransfer.yourAccount", { values: { token } })}</p>
     <div class="receiver" class:centered>
         <div class="account">
             {collapseAccount(account)}
