@@ -47,7 +47,7 @@ async fn send_next_prize() -> bool {
                     return Some((
                         prize_data.ledger_canister_id,
                         group,
-                        prize_data.token,
+                        prize_data.token.clone(),
                         prize,
                         prize_data.end_date,
                         state.env.now_nanos(),
@@ -70,7 +70,7 @@ async fn send_next_prize() -> bool {
     };
 
     // 2. Transfer the prize funds to the group
-    let amount = prize.iter().sum::<u64>() + (token.fee() as u64) * (prize.len() as u64);
+    let amount = prize.iter().sum::<u64>() + (token.fee().unwrap() as u64) * (prize.len() as u64);
     let completed_transaction = match transfer_prize_funds_to_group(ledger_canister_id, token, group, amount, now_nanos).await {
         Ok(t) => t,
         Err(error_message) => {
@@ -148,10 +148,10 @@ async fn transfer_prize_funds_to_group(
     // Assume ICRC-1 for now
     let pending_transaction = types::sns::PendingCryptoTransaction {
         ledger: ledger_canister_id,
+        fee: Tokens::from_e8s(token.fee().unwrap() as u64),
         token,
         amount: Tokens::from_e8s(amount),
         to: Account::from(group),
-        fee: Tokens::from_e8s(token.fee() as u64),
         memo: None,
         created: now_nanos,
     };

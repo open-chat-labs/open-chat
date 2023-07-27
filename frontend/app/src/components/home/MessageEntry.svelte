@@ -72,7 +72,7 @@
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
     let tokens = cryptoCurrencyList
-        .filter((t) => !cryptoLookup[t].disabled)
+        .filter((t) => cryptoLookup[t]?.disabled === false)
         .map((t) => t.toLowerCase())
         .join("|");
     let tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\d*[.,]?\d*)$`);

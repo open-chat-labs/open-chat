@@ -12,7 +12,6 @@
         Mention,
         Message,
         MessageContent,
-        Cryptocurrency,
         OpenChat,
         FilteredProposals,
         User,
@@ -45,7 +44,7 @@
     let unreadMessages = 0;
     let firstUnreadMention: Mention | undefined;
     let creatingPoll = false;
-    let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
+    let creatingCryptoTransfer: { token: string; amount: bigint } | undefined = undefined;
     let selectingGif = false;
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
@@ -132,7 +131,7 @@
         creatingPoll = true;
     }
 
-    function tokenTransfer(ev: CustomEvent<{ token: Cryptocurrency; amount: bigint } | undefined>) {
+    function tokenTransfer(ev: CustomEvent<{ token: string; amount: bigint } | undefined>) {
         creatingCryptoTransfer = ev.detail ?? {
             token: $lastCryptoSent,
             amount: BigInt(0),

@@ -27,7 +27,6 @@ import {
     LocalMessageUpdates,
     LocalReaction,
     emptyChatMetrics,
-    Cryptocurrency,
     cryptoLookup,
     LocalPollVote,
     CryptocurrencyTransfer,
@@ -43,6 +42,8 @@ import {
     MultiUserChatIdentifier,
     MultiUserChat,
     ChatListScope,
+    CKBTC_SYMBOL,
+    ICP_SYMBOL,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -1319,9 +1320,9 @@ export function buildTransactionUrl(transfer: CryptocurrencyTransfer): string | 
     const rootCanister = cryptoLookup[transfer.token].rootCanister;
 
     switch (transfer.token) {
-        case "icp":
+        case ICP_SYMBOL:
             return `https://dashboard.internetcomputer.org/transaction/${transfer.transactionHash}`;
-        case "ckbtc":
+        case CKBTC_SYMBOL:
             return `https://dashboard.internetcomputer.org/bitcoin/transaction/${transfer.blockIndex}`;
         default:
             return `https://dashboard.internetcomputer.org/sns/${rootCanister}/transaction/${transfer.blockIndex}`;
@@ -1351,7 +1352,7 @@ export function buildCryptoTransferText(
         amount: formatTokens(content.transfer.amountE8s, 0),
         receiver: username(content.transfer.recipient),
         sender: username(senderId),
-        token: toSymbol(content.transfer.token),
+        token: content.transfer.token,
     };
 
     const key =
@@ -1362,10 +1363,6 @@ export function buildCryptoTransferText(
             : "pendingSent";
 
     return formatter(`tokenTransfer.${key}`, { values });
-}
-
-function toSymbol(token: Cryptocurrency): string {
-    return cryptoLookup[token].symbol;
 }
 
 export function stopTyping(

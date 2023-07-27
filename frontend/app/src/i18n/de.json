@@ -442,12 +442,6 @@
         "yourAccount": "Ihre {token}-Adresse",
         "receiver": "Empfänger",
         "chooseReceiver": "Geben Sie den Benutzernamen des Empfängers ein",
-        "icp": "Internet Computer",
-        "btc": "Bitcoin",
-        "ckbtc": "ckBitcoin",
-        "chat": "OpenChat",
-        "sns1": "SNS-1",
-        "kinic": "Kinic",
         "max": "max",
         "viewTransaction": "[Transaktion]({url})"
     },

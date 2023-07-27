@@ -76,7 +76,7 @@ async fn make_payment(
 
     let transaction_hash = transaction_hash(Account::from(this_canister_id), &args);
 
-    match icrc1_ledger_canister_c2c_client::icrc1_transfer(Cryptocurrency::CKBTC.ledger_canister_id(), &args).await {
+    match icrc1_ledger_canister_c2c_client::icrc1_transfer(Cryptocurrency::CKBTC.ledger_canister_id().unwrap(), &args).await {
         Ok(Ok(block_index)) => return Ok((block_index.0.try_into().unwrap(), transaction_hash)),
         Ok(Err(transfer_error)) => error!("Transfer failed. {transfer_error:?}"),
         Err((code, msg)) => error!("Transfer failed. {code:?}: {msg}"),
@@ -98,7 +98,7 @@ fn send_oc_bot_messages(
         MessageContent::Crypto(CryptoContent {
             recipient: user_id,
             transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::SNS(sns::CompletedCryptoTransaction {
-                ledger: Cryptocurrency::CKBTC.ledger_canister_id(),
+                ledger: Cryptocurrency::CKBTC.ledger_canister_id().unwrap(),
                 token: Cryptocurrency::CKBTC,
                 amount,
                 fee: Tokens::from_e8s(10),

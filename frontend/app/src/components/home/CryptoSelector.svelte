@@ -1,15 +1,13 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
     import { OpenChat, cryptoCurrencyList, cryptoLookup } from "openchat-client";
-    import type { Cryptocurrency } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "stores/iconSize";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let token: Cryptocurrency;
+    export let token: string;
 
     let selecting = false;
 
@@ -18,12 +16,11 @@
     $: crypto = cryptoCurrencyList
         .map((t) => ({
             key: t,
-            symbol: cryptoLookup[t].symbol,
-            name: $_(`tokenTransfer.${t}`),
+            name: cryptoLookup[t]?.name ?? "Unknown",
             balance: $cryptoBalance[t],
-            disabled: cryptoLookup[t].disabled,
+            disabled: cryptoLookup[t]?.disabled ?? true,
         }))
-        .filter((token) => !token.disabled);
+        .filter((t) => !t.disabled);
 
     $: {
         crypto.sort((a, b) => {
@@ -37,7 +34,7 @@
         });
     }
 
-    function selectToken(symbol: Cryptocurrency) {
+    function selectToken(symbol: string) {
         selecting = false;
         token = symbol;
     }
@@ -51,7 +48,7 @@
 
 <div class="selected" on:click={() => (selecting = !selecting)}>
     <div class="symbol">
-        {cryptoLookup[token].symbol}
+        {token}
     </div>
     <div class="icon" class:selecting>
         <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
@@ -62,12 +59,12 @@
     <div transition:fade|local={{ duration: 100 }} class="tokens">
         {#each crypto as token}
             <div class="token" on:click={() => selectToken(token.key)}>
-                <div class={`icon ${token.key}`} />
+                <div class={`icon ${token.key.toLowerCase()}`} />
                 <div class="name">
                     {token.name}
                 </div>
                 <div class="symbol">
-                    {token.symbol}
+                    {token.key}
                 </div>
             </div>
         {/each}

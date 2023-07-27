@@ -80,7 +80,6 @@ import {
     type TotalPollVotes,
     type DeletedContent,
     type CryptocurrencyContent,
-    type Cryptocurrency,
     type CryptocurrencyTransfer,
     type PendingCryptocurrencyTransfer,
     type CompletedCryptocurrencyTransfer,
@@ -156,6 +155,11 @@ import {
     KinicGovernanceCanisterId,
     HotOrNotGovernanceCanisterId,
     ThreadSyncDetails,
+    CHAT_SYMBOL,
+    CKBTC_SYMBOL,
+    ICP_SYMBOL,
+    KINIC_SYMBOL,
+    SNS1_SYMBOL,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -544,30 +548,24 @@ function cryptoContent(candid: ApiCryptoContent, sender: string): Cryptocurrency
     };
 }
 
-export function token(candid: ApiCryptocurrency): Cryptocurrency {
-    if ("InternetComputer" in candid) return "icp";
-    if ("SNS1" in candid) return "sns1";
-    if ("CKBTC" in candid) return "ckbtc";
-    if ("CHAT" in candid) return "chat";
-    if ("KINIC" in candid) return "kinic";
-    if ("HotOrNot" in candid) return "hotornot";
+export function token(candid: ApiCryptocurrency): string {
+    if ("InternetComputer" in candid) return ICP_SYMBOL;
+    if ("SNS1" in candid) return SNS1_SYMBOL;
+    if ("CKBTC" in candid) return CKBTC_SYMBOL;
+    if ("CHAT" in candid) return CHAT_SYMBOL;
+    if ("KINIC" in candid) return KINIC_SYMBOL;
+    if ("Other" in candid) return candid.Other;
     throw new UnsupportedValueError("Unexpected ApiCryptocurrency type received", candid);
 }
 
-export function apiToken(token: Cryptocurrency): ApiCryptocurrency {
+export function apiToken(token: string): ApiCryptocurrency {
     switch (token) {
-        case "icp":
-            return { InternetComputer: null };
-        case "sns1":
-            return { SNS1: null };
-        case "ckbtc":
-            return { CKBTC: null };
-        case "chat":
-            return { CHAT: null };
-        case "kinic":
-            return { KINIC: null };
-        case "hotornot":
-            throw new Error("HotOrNot is not supported yet");
+        case ICP_SYMBOL: return { InternetComputer: null };
+        case SNS1_SYMBOL: return { SNS1: null };
+        case CKBTC_SYMBOL: return { CKBTC: null };
+        case CHAT_SYMBOL: return { CHAT: null };
+        case KINIC_SYMBOL: return { KINIC: null };
+        default: return { Other: token };
     }
 }
 
@@ -1313,7 +1311,7 @@ export function apiPendingCryptoContent(domain: CryptocurrencyContent): ApiCrypt
 
 function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoTransaction {
     if (domain.kind === "pending") {
-        if (domain.token === "icp") {
+        if (domain.token === "ICP") {
             return {
                 Pending: {
                     NNS: {
@@ -1354,7 +1352,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
 export function apiPendingCryptocurrencyWithdrawal(
     domain: PendingCryptocurrencyWithdrawal
 ): WithdrawCryptoArgs {
-    if (domain.token === "icp") {
+    if (domain.token === ICP_SYMBOL) {
         return {
             withdrawal: {
                 NNS: {

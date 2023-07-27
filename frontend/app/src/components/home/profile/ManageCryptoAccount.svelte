@@ -22,8 +22,8 @@
 
     $: title =
         mode === "receive"
-            ? $_("cryptoAccount.receiveToken", { values: { symbol: token.toUpperCase() } })
-            : $_("cryptoAccount.sendToken", { values: { symbol: token.toUpperCase() } });
+            ? $_("cryptoAccount.receiveToken", { values: { symbol: token } })
+            : $_("cryptoAccount.sendToken", { values: { symbol: token } });
     $: cryptoBalance = client.cryptoBalance;
 
     let sendCrypto: SendCrypto;
@@ -33,9 +33,9 @@
     let sending = false;
     let valid = false;
 
-    $: transferFees = cryptoLookup[token].transferFeesE8s;
-    $: symbol = cryptoLookup[token].symbol;
-    $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
+    $: tokenDetails = cryptoLookup[token];
+    $: transferFees = tokenDetails.transferFeesE8s;
+    $: howToBuyUrl = tokenDetails.howToBuyUrl;
 
     $: remainingBalanceE8s =
         amountToSendE8s > BigInt(0)
@@ -69,7 +69,7 @@
             {#if mode === "receive"}
                 <AccountInfo qrSize={"larger"} centered {token} {user} />
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                    {$_("howToBuyToken", { values: { token: symbol.toUpperCase() } })}
+                    {$_("howToBuyToken", { values: { token } })}
                 </a>
             {/if}
 

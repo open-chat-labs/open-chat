@@ -290,7 +290,8 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CHAT' : null } |
   { 'SNS1' : null } |
   { 'KINIC' : null } |
-  { 'CKBTC' : null };
+  { 'CKBTC' : null } |
+  { 'Other' : string };
 export type CurrentUserResponse = {
     'Success' : {
       'username' : string,

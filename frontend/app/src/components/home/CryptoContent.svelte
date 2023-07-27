@@ -6,7 +6,6 @@
     import Markdown from "./Markdown.svelte";
     import { getContext } from "svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
-    import { cryptoLookup } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -16,7 +15,7 @@
     export let reply: boolean = false;
     export let senderId: string;
 
-    let symbol = cryptoLookup[content.transfer.token].symbol;
+    let token = content.transfer.token;
 
     $: transferText = client.buildCryptoTransferText($_, user.userId, senderId, content, me);
     $: transactionLinkText = client.buildTransactionLink($_, content.transfer);
@@ -25,7 +24,7 @@
 {#if transferText !== undefined}
     <div class="message">
         <div class="logo-wrapper">
-            <div class={`logo ${symbol.toLowerCase()}`} />
+            <div class={`logo ${token.toLowerCase()}`} />
         </div>
         <div class="details">
             <div class="transfer-txt">{transferText}</div>

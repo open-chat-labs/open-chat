@@ -1,21 +1,30 @@
-import type { Cryptocurrency, Tokens } from "openchat-shared";
+import type { Tokens } from "openchat-shared";
 import { writable } from "svelte/store";
 import { configKeys } from "../utils/config";
+import {
+    CHAT_SYMBOL,
+    CKBTC_SYMBOL,
+    cryptoLookup,
+    HOTORNOT_SYMBOL,
+    ICP_SYMBOL,
+    KINIC_SYMBOL,
+    SNS1_SYMBOL
+} from "openchat-shared";
 
-type BalanceByCrypto = Record<Cryptocurrency, bigint>;
+type BalanceByCrypto = Record<string, bigint>;
 
 const cryptoBalanceStore = writable<BalanceByCrypto>({
-    icp: BigInt(0),
-    sns1: BigInt(0),
-    ckbtc: BigInt(0),
-    chat: BigInt(0),
-    kinic: BigInt(0),
-    hotornot: BigInt(0),
+    [ICP_SYMBOL]: BigInt(0),
+    [SNS1_SYMBOL]: BigInt(0),
+    [CKBTC_SYMBOL]: BigInt(0),
+    [CHAT_SYMBOL]: BigInt(0),
+    [KINIC_SYMBOL]: BigInt(0),
+    [HOTORNOT_SYMBOL]: BigInt(0),
 });
 
 export const cryptoBalance = {
     subscribe: cryptoBalanceStore.subscribe,
-    set: (crypto: Cryptocurrency, balance: Tokens): void => {
+    set: (crypto: string, balance: Tokens): void => {
         cryptoBalanceStore.update((record) => {
             record[crypto] = balance.e8s;
             return record;
@@ -23,13 +32,18 @@ export const cryptoBalance = {
     },
 };
 
-const lastCryptoSentStore = writable<Cryptocurrency>(
-    (localStorage.getItem(configKeys.lastCryptoSent) || "icp") as Cryptocurrency
-);
+const lastCryptoSentStore = writable<string>(getLastCryptoSent());
+
+function getLastCryptoSent(): string {
+    const token = (localStorage.getItem(configKeys.lastCryptoSent) || ICP_SYMBOL);
+    return cryptoLookup[token] !== undefined
+        ? token
+        : ICP_SYMBOL;
+}
 
 export const lastCryptoSent = {
     subscribe: lastCryptoSentStore.subscribe,
-    set: (token: Cryptocurrency): void => {
+    set: (token: string): void => {
         lastCryptoSentStore.set(token);
         localStorage.setItem(configKeys.lastCryptoSent, token);
     },

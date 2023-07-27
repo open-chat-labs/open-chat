@@ -74,6 +74,7 @@ export const idlFactory = ({ IDL }) => {
     'SNS1' : IDL.Null,
     'KINIC' : IDL.Null,
     'CKBTC' : IDL.Null,
+    'Other' : IDL.Text,
   });
   const TransactionHash = IDL.Vec(IDL.Nat8);
   const BlockIndex = IDL.Nat64;
