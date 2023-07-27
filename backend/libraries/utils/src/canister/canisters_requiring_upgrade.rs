@@ -14,7 +14,7 @@ pub struct FailedUpgrade {
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct CanistersRequiringUpgrade {
-    pending: VecDeque<CanisterId>,
+    pending: VecDeque<(CanisterId, bool)>,
     in_progress: HashSet<CanisterId>,
     failed: VecDeque<FailedUpgrade>,
     completed: u64,
