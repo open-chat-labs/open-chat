@@ -64,7 +64,7 @@ type ExploreChannelsArgs = record {
 type ExploreChannelsResponse = variant {
     Success : record {
         matches : vec ChannelMatch;
-        total: nat32;
+        total : nat32;
     };
     TermTooShort : nat8;
     TermTooLong : nat8;
@@ -193,7 +193,7 @@ type SelectedUpdatesSuccess = record {
 
 type ChannelSummaryArgs = record {
     channel_id : ChannelId;
-    invite_code: opt nat64;
+    invite_code : opt nat64;
 };
 
 type ChannelSummaryResponse = variant {
@@ -214,7 +214,7 @@ type SummaryResponse = variant {
 
 type ChannelSummaryUpdatesArgs = record {
     channel_id : ChannelId;
-    invite_code: opt nat64;
+    invite_code : opt nat64;
     updates_since : TimestampMillis;
 };
 
@@ -421,6 +421,7 @@ type CreateChannelResponse = variant {
     UserSuspended;
     NotAuthorized;
     CommunityFrozen;
+    DefaultMustBePublic;
 };
 
 type DeclineInvitationArgs = record {

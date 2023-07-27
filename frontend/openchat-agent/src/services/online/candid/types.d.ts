@@ -84,6 +84,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
+  { 'MembersAddedToDefaultChannel' : MembersAddedToDefaultChannel } |
   { 'ChatFrozen' : GroupFrozen } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'UsersUnblocked' : UsersUnblocked } |
@@ -663,6 +664,7 @@ export type MarkAsOnlineArgs = {};
 export type MarkAsOnlineResponse = { 'Success' : null } |
   { 'InternalError' : string } |
   { 'UserNotFound' : null };
+export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
   'message_id' : MessageId,
