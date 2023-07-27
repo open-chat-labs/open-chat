@@ -134,6 +134,7 @@
         if (resp.kind === "rules_too_short") return "groupRulesTooShort";
         if (resp.kind === "rules_too_long") return "groupRulesTooLong";
         if (resp.kind === "user_suspended") return "userSuspended";
+        if (resp.kind === "default_must_be_public") return "defaultMustBePublic";
         if (resp.kind === "unauthorized_to_create_public_group")
             return "unauthorizedToCreatePublicGroup";
         return "groupCreationFailed";

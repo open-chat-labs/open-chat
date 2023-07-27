@@ -543,6 +543,7 @@ export type GroupChatEvent =
     | ChatUnfrozenEvent
     | EventsTimeToLiveUpdated
     | UsersInvitedEvent
+    | MembersAddedToDefaultChannel
     | EmptyEvent;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
@@ -1322,7 +1323,8 @@ export type CreateGroupResponse =
     | UnauthorizedToCreatePublicGroup
     | NotAuthorised
     | CommunityFrozen
-    | UserSuspended;
+    | UserSuspended
+    | DefaultMustBePublic;
 
 export type CreateGroupSuccess = {
     kind: "success";
@@ -1381,6 +1383,10 @@ export type UnauthorizedToCreatePublicGroup = {
 
 export type MemberLimitReached = {
     kind: "member_limit_reached";
+};
+
+export type DefaultMustBePublic = {
+    kind: "default_must_be_public";
 };
 
 export type EditMessageResponse = "success" | "failure";
@@ -1508,6 +1514,11 @@ export type EventsTimeToLiveUpdated = {
     kind: "events_ttl_updated";
     updatedBy: string;
     newTimeToLive: bigint | undefined;
+};
+
+export type MembersAddedToDefaultChannel = {
+    kind: "members_added_to_default_channel";
+    count: number;
 };
 
 export type EmptyEvent = {

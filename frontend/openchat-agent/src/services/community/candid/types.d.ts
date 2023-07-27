@@ -189,6 +189,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
+  { 'MembersAddedToDefaultChannel' : MembersAddedToDefaultChannel } |
   { 'ChatFrozen' : GroupFrozen } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'UsersUnblocked' : UsersUnblocked } |
@@ -394,6 +395,7 @@ export type CreateChannelResponse = { 'MaxChannelsCreated' : number } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
+  { 'DefaultMustBePublic' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : { 'channel_id' : ChannelId } } |
@@ -941,6 +943,7 @@ export type ManageDefaultChannelsResponse = { 'Failed' : FailedChannels } |
   { 'UserNotInCommunity' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null };
+export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
   'message_id' : MessageId,
