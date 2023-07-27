@@ -47,8 +47,7 @@
                     on:newGroup
                     on:profile
                     on:upgrade
-                    on:wallet
-                    on:whatsHot />
+                    on:wallet />
             </span>
         </MenuIcon>
     </span>
