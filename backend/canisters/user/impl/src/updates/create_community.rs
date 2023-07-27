@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, COMMUNITY_CREATION_LIMIT};
 use canister_tracing_macros::trace;
@@ -111,7 +113,17 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
 }
 
 fn default_channels_valid(default_channels: &Vec<String>) -> bool {
-    !default_channels.is_empty() && default_channels.iter().all(|channel| validate_name(channel, true).is_ok())
+    if default_channels.is_empty() || default_channels.iter().any(|channel| validate_name(channel, true).is_err()) {
+        return false;
+    }
+
+    let names: HashSet<String> = default_channels.iter().map(|name| name.to_lowercase()).collect();
+
+    if names.len() != default_channels.len() {
+        return false;
+    }
+
+    true
 }
 
 fn commit(community_id: CommunityId, state: &mut RuntimeState) {
