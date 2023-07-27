@@ -52,6 +52,7 @@
     <div class="wrapper community">
         <PreviewWrapper let:joinCommunity let:joiningCommunity>
             <CommunityCard
+                id={$selectedCommunity.id.communityId}
                 name={$selectedCommunity.name}
                 description={$selectedCommunity.description}
                 banner={$selectedCommunity.banner}
