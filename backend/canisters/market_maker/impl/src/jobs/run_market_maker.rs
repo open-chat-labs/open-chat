@@ -46,12 +46,6 @@ fn get_active_exchanges(state: &RuntimeState) -> Vec<(Box<dyn Exchange>, Config)
 }
 
 async fn run_async(exchanges: Vec<(Box<dyn Exchange>, Config)>) {
-    mutate_state(|state| {
-        let now = state.env.now();
-        for exchange_id in exchanges.iter().map(|(e, _)| e.exchange_id()) {
-            state.data.market_makers_in_progress.insert(exchange_id, now);
-        }
-    });
     futures::future::join_all(exchanges.into_iter().map(|(e, c)| async {
         let exchange_id = e.exchange_id();
         let _ = run_single(e, c).await;
