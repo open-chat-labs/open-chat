@@ -95,6 +95,8 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
             }
         } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
             AvatarTooBig(error)
+        } else if args.is_public && state.data.channels.is_name_taken(&args.name) {
+            NameTaken
         } else {
             let now = state.env.now();
             let channel_id: ChannelId = state.env.rng().gen();
