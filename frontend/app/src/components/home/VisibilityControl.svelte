@@ -20,13 +20,17 @@
     import Legend from "../Legend.svelte";
     import Input from "../Input.svelte";
     import { gateBindings, snsGateBindings } from "../../utils/access";
+    import { fade } from "svelte/transition";
 
     type T = $$Generic;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let candidate: AccessControlled & HasLevel & Permissioned<T> & HasMembershipRole;
+    export let candidate: AccessControlled &
+        HasLevel &
+        Permissioned<T> &
+        HasMembershipRole & { isDefault?: boolean };
     export let original: AccessControlled;
     export let editing: boolean;
     export let history: boolean;
@@ -66,6 +70,8 @@
         candidate.public = !candidate.public;
         if (candidate.public) {
             candidate.historyVisible = true;
+        } else {
+            candidate.isDefault = false;
         }
     }
 
@@ -140,8 +146,21 @@
     </div>
 {/if}
 
+{#if !editing && candidate.level === "channel" && candidate.public}
+    <section transition:fade|local={{ duration: 250 }} class="section">
+        <Checkbox
+            id={`default_channel`}
+            label={$_("communities.defaultChannel")}
+            align={"start"}
+            bind:checked={candidate.isDefault}>
+            <div class="section-title">{$_("communities.defaultChannel")}</div>
+            <p class="info">{$_("communities.defaultInfo")}</p>
+        </Checkbox>
+    </section>
+{/if}
+
 {#if $isDiamond && candidate.public}
-    <div class="wrapper">
+    <div transition:fade|local={{ duration: 250 }} class="wrapper">
         <div class="icon">
             <LockOutline size={$iconSize} color={"var(--icon-txt)"} />
         </div>
@@ -253,11 +272,11 @@
             height: $size;
 
             &.public {
-                background-image: url("../assets/unlocked.svg");
+                background-image: url("/assets/unlocked.svg");
             }
 
             &.private {
-                background-image: url("../assets/locked.svg");
+                background-image: url("/assets/locked.svg");
             }
         }
     }

@@ -71,7 +71,7 @@
 
             <ZoomableImage
                 on:zoom={zoomImage}
-                url={"../assets/architecture/simple.svg"}
+                url={"/assets/architecture/simple.svg"}
                 alt="High level architecture" />
         </div>
     </CollapsibleCard>
@@ -96,7 +96,7 @@
 
             <ZoomableImage
                 on:zoom={zoomImage}
-                url={"../assets/architecture/complex.svg"}
+                url={"/assets/architecture/complex.svg"}
                 alt="Complete architecture" />
 
             <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1">Canister components</HashLinkTarget>
@@ -317,7 +317,7 @@
 
             <ZoomableImage
                 on:zoom={zoomImage}
-                url={"../assets/architecture/frontend.svg"}
+                url={"/assets/architecture/frontend.svg"}
                 alt="Frontend architecture" />
 
             <HashLinkTarget on:copyUrl={onCopyUrl} id="2-3-1">Landing pages</HashLinkTarget>
@@ -573,7 +573,7 @@
 
             <ZoomableImage
                 on:zoom={zoomImage}
-                url={"../assets/architecture/usergeek.png"}
+                url={"/assets/architecture/usergeek.png"}
                 alt="UserGeek charts" />
         </div>
     </CollapsibleCard>

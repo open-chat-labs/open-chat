@@ -205,7 +205,7 @@
         {editing ? $_("communities.edit") : $_("communities.create")}
     </div>
     <div class="body" slot="body">
-        <StageHeader {steps} enabled={true} on:step={changeStep} {step} />
+        <StageHeader {steps} enabled on:step={changeStep} {step} />
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details" class:visible={step === 0}>

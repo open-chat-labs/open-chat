@@ -31,8 +31,6 @@
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
-    const MIN_LENGTH = 3;
-    const MAX_LENGTH = 25;
 
     export let candidateGroup: CandidateGroupChat;
 
@@ -40,6 +38,7 @@
     let busy = false;
     let step = 0;
     let actualWidth = 0;
+    let detailsValid = true;
     let originalGroup = {
         ...candidateGroup,
         rules: { ...candidateGroup.rules },
@@ -47,11 +46,10 @@
         gate: { ...candidateGroup.gate },
     };
     let rulesValid = true;
-    $: steps = getSteps(editing);
+    $: steps = getSteps(editing, detailsValid);
     $: editing = !chatIdentifierUnset(candidateGroup.id);
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
-    $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
     $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.id);
     $: selectedCommunity = client.selectedCommunity;
 
@@ -73,9 +71,9 @@
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: chatListScope = client.chatListScope;
 
-    function getSteps(editing: boolean) {
+    function getSteps(editing: boolean, detailsValid: boolean) {
         let steps = [
-            { labelKey: "group.details", valid: true },
+            { labelKey: "group.details", valid: detailsValid },
             { labelKey: "access.visibility", valid: true },
             { labelKey: interpolateLevel("rules.rules", candidateGroup.level), valid: true },
             { labelKey: "permissions.permissions", valid: true },
@@ -136,6 +134,7 @@
         if (resp.kind === "rules_too_short") return "groupRulesTooShort";
         if (resp.kind === "rules_too_long") return "groupRulesTooLong";
         if (resp.kind === "user_suspended") return "userSuspended";
+        if (resp.kind === "default_must_be_public") return "defaultMustBePublic";
         if (resp.kind === "unauthorized_to_create_public_group")
             return "unauthorizedToCreatePublicGroup";
         return "groupCreationFailed";
@@ -362,9 +361,7 @@
     }
 
     function changeStep(ev: CustomEvent<number>) {
-        if (valid) {
-            step = ev.detail;
-        }
+        step = ev.detail;
     }
 </script>
 
@@ -381,11 +378,11 @@
             : interpolateLevel("group.createTitle", candidateGroup.level, true)}
     </div>
     <div class="body" slot="body">
-        <StageHeader {steps} enabled={valid} on:step={changeStep} {step} />
+        <StageHeader {steps} enabled on:step={changeStep} {step} />
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details" class:visible={step === 0}>
-                    <GroupDetails {editing} {busy} bind:candidateGroup />
+                    <GroupDetails bind:valid={detailsValid} {busy} bind:candidateGroup />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
                     <VisibilityControl
@@ -452,7 +449,6 @@
                         >{interpolateLevel("group.update", candidateGroup.level, true)}</Button>
                 {:else if step < steps.length - 1}
                     <Button
-                        disabled={!valid}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={() => (step = step + 1)}>
@@ -460,7 +456,7 @@
                     </Button>
                 {:else}
                     <Button
-                        disabled={busy}
+                        disabled={busy || !detailsValid}
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}

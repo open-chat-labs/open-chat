@@ -530,7 +530,7 @@
     }
 
     .spinner {
-        @include loading-spinner(1em, 0.5em, var(--button-spinner), "../assets/plain-spinner.svg");
+        @include loading-spinner(1em, 0.5em, var(--button-spinner), "/assets/plain-spinner.svg");
     }
 
     .fab {

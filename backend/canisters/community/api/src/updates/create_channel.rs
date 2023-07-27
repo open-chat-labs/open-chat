@@ -35,6 +35,7 @@ pub enum Response {
     UserSuspended,
     NotAuthorized,
     CommunityFrozen,
+    DefaultMustBePublic,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

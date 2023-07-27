@@ -5,7 +5,7 @@
     import { themeStore } from "../../theme/themes";
 
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
-    $: bgPath = $themeStore.mode === "light" ? "../assets/brag_light" : "../assets/brag_dark";
+    $: bgPath = $themeStore.mode === "light" ? "/assets/brag_light" : "/assets/brag_dark";
     $: bgUrl = isFirefox ? `${bgPath}.png` : `${bgPath}.svg`;
 
     const brags = [

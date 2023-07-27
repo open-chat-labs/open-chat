@@ -59,6 +59,10 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
         return CommunityFrozen;
     }
 
+    if !args.is_public && args.is_default {
+        return DefaultMustBePublic;
+    }
+
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
