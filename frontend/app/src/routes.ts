@@ -296,7 +296,7 @@ export type ShareRoute = {
     url: string;
 };
 
-export type HotGroupsRoute = {
+export type HotGroupsRoute = RouteCommon & {
     kind: "hot_groups_route";
 };
 

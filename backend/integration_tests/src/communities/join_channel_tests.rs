@@ -320,7 +320,7 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
     client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
 
     let channel_id =
-        client::community::happy_path::create_channel(env, user1.principal, community_id, public, channel_name, true);
+        client::community::happy_path::create_channel(env, user1.principal, community_id, public, channel_name, false);
 
     env.tick();
 

@@ -732,6 +732,7 @@ export const idlFactory = ({ IDL }) => {
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
+    'DefaultMustBePublic' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Record({ 'channel_id' : ChannelId }),
@@ -895,6 +896,7 @@ export const idlFactory = ({ IDL }) => {
     'old_permissions' : GroupPermissions,
     'new_permissions' : GroupPermissions,
   });
+  const MembersAddedToDefaultChannel = IDL.Record({ 'count' : IDL.Nat32 });
   const GroupFrozen = IDL.Record({
     'frozen_by' : UserId,
     'reason' : IDL.Opt(IDL.Text),
@@ -962,6 +964,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
+    'MembersAddedToDefaultChannel' : MembersAddedToDefaultChannel,
     'ChatFrozen' : GroupFrozen,
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,

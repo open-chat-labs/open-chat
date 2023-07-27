@@ -678,6 +678,7 @@
     "groupRulesDisabled": "{changedBy} disabled the group rules",
     "groupRulesTooShort": "The group rules must not be empty",
     "groupRulesTooLong": "The group rules are too long",
+    "defaultMustBePublic": "Only a public channel can be a default",
     "userId": "User id",
     "alsoCanisterId": "also your canister id",
     "version": "Version",

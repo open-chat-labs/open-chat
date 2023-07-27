@@ -1775,6 +1775,10 @@ export function createGroupResponse(
         return CommonResponses.communityFrozen();
     }
 
+    if ("DefaultMustBePublic" in candid) {
+        return { kind: "default_must_be_public" };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
 }
 

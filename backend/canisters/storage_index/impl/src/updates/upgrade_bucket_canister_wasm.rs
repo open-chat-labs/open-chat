@@ -24,7 +24,7 @@ fn upgrade_bucket_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> Re
     } else {
         state.data.bucket_canister_wasm = args.wasm;
         for canister_id in canisters_to_upgrade {
-            state.data.canisters_requiring_upgrade.enqueue(canister_id)
+            state.data.canisters_requiring_upgrade.enqueue(canister_id, false);
         }
         Success
     }

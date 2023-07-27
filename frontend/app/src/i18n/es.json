@@ -953,5 +953,6 @@
     "noUserSelected": "Ningún usuario seleccionado actualmente",
     "selectAChannel": "Seleccione un canal de la lista o busque más canales en esta comunidad.",
     "selectAUser": "Seleccione un usuario de la lista o busque un usuario para chatear.",
-    "selectAFavourite": "Puede agregar chats directos, chats grupales o canales comunitarios a sus favoritos y los verá aquí."
+    "selectAFavourite": "Puede agregar chats directos, chats grupales o canales comunitarios a sus favoritos y los verá aquí.",
+    "defaultMustBePublic": "Solo un canal público puede ser un canal predeterminado"
 }

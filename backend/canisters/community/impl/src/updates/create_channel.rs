@@ -1,7 +1,7 @@
 use crate::guards::caller_is_proposals_bot;
 use crate::{
     activity_notifications::handle_activity_notification, model::channels::Channel, mutate_state, run_regular_jobs,
-    RuntimeState,
+    updates::c2c_join_channel::join_channel_unchecked, RuntimeState,
 };
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -59,6 +59,10 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
         return CommunityFrozen;
     }
 
+    if !args.is_public && args.is_default {
+        return DefaultMustBePublic;
+    }
+
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
@@ -105,13 +109,24 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.events_ttl,
                 now,
             );
-            state.data.channels.add(Channel {
+
+            member.channels.insert(channel_id);
+
+            let mut channel = Channel {
                 id: channel_id,
                 chat,
-                is_default: Timestamped::new(args.is_default && args.is_public, now),
+                is_default: Timestamped::new(args.is_default, now),
                 date_imported: None,
-            });
-            member.channels.insert(channel_id);
+            };
+
+            if args.is_default && channel.chat.gate.is_none() {
+                for m in state.data.members.iter_mut() {
+                    join_channel_unchecked(&mut channel, m, true, true, now);
+                }
+            }
+
+            state.data.channels.add(channel);
+
             handle_activity_notification(state);
             Success(SuccessResult { channel_id })
         }

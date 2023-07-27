@@ -16,8 +16,8 @@
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
     $: imgUrl =
         $themeStore.mode === "light"
-            ? "../assets/screenshots/intro_light.png"
-            : "../assets/screenshots/intro_dark.png";
+            ? "/assets/screenshots/intro_light.png"
+            : "/assets/screenshots/intro_dark.png";
 
     $: introStyle = $mobileWidth ? "" : `height: ${$availableHeight}px`;
 
@@ -59,7 +59,7 @@
                         class="provider"
                         class:selected={$selectedAuthProviderStore === AuthProvider.NFID}
                         on:click={() => selectedAuthProviderStore.set(AuthProvider.NFID)}>
-                        <img class="nfid-img" src="../assets/nfid.svg" alt="" />
+                        <img class="nfid-img" src="/assets/nfid.svg" alt="" />
                         {AuthProvider.NFID}
                     </div>
                 </div>

@@ -74,9 +74,9 @@ impl ICDexClient {
 
         let (account, nonce) = get_account_response.map(|(a, _, n, _)| (a, n))?;
 
-        let ledger_canister_id = match order.order_type {
-            OrderType::Bid => self.icp_ledger_canister_id,
-            OrderType::Ask => self.chat_ledger_canister_id,
+        let (ledger_canister_id, amount) = match order.order_type {
+            OrderType::Bid => (self.icp_ledger_canister_id, order.amount * order.price / 100_000_000),
+            OrderType::Ask => (self.chat_ledger_canister_id, order.amount),
         };
         icrc1_ledger_canister_c2c_client::icrc1_transfer(
             ledger_canister_id,
@@ -86,7 +86,7 @@ impl ICDexClient {
                 fee: None,
                 created_at_time: None,
                 memo: None,
-                amount: order.amount.into(),
+                amount: amount.into(),
             },
         )
         .await?
@@ -97,7 +97,7 @@ impl ICDexClient {
             OrderType::Ask => OrderQuantity::Sell(order.amount.into()),
         };
         // Convert the price per whole CHAT into the price per `unit_size` of CHAT
-        let price = (order.price * self.unit_size / 100000000).into();
+        let price = (order.price * self.unit_size / 100_000_000).into();
 
         type TradeArgs = (
             OrderPrice,

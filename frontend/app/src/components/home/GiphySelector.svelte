@@ -8,7 +8,12 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { GIFObject, PagedGIFObject, GiphySearchResponse, GiphyContent } from "openchat-client";
+    import type {
+        GIFObject,
+        PagedGIFObject,
+        GiphySearchResponse,
+        GiphyContent,
+    } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 
@@ -234,7 +239,7 @@
 
                 {#if selectedGif === undefined}
                     <div class="powered-by">
-                        <img src="../assets/giphy_small.gif" alt="Powered by Giphy" />
+                        <img src="/assets/giphy_small.gif" alt="Powered by Giphy" />
                     </div>
                 {/if}
 

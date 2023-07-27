@@ -68,7 +68,7 @@
                 1em,
                 0.5em,
                 var(--button-spinner),
-                "../assets/plain-spinner.svg"
+                "/assets/plain-spinner.svg"
             );
         }
 

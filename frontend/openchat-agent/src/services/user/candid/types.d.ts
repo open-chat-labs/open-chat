@@ -131,6 +131,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
+  { 'MembersAddedToDefaultChannel' : MembersAddedToDefaultChannel } |
   { 'ChatFrozen' : GroupFrozen } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'UsersUnblocked' : UsersUnblocked } |
@@ -927,6 +928,7 @@ export interface MarkReadArgs {
   'messages_read' : Array<ChatMessagesRead>,
 }
 export type MarkReadResponse = { 'Success' : null };
+export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
   'message_id' : MessageId,

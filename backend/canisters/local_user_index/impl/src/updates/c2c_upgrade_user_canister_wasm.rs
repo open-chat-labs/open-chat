@@ -39,7 +39,7 @@ fn c2c_upgrade_user_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> 
             .filter(|c| include_all || include.contains(c))
             .filter(|c| !exclude.contains(c))
         {
-            state.data.canisters_requiring_upgrade.enqueue(canister_id)
+            state.data.canisters_requiring_upgrade.enqueue(canister_id, false);
         }
         crate::jobs::upgrade_canisters::start_job_if_required(state);
 

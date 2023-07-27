@@ -74,8 +74,8 @@
 
     <BlogScreenshot
         caption="Home screen with community selected"
-        desktopUrl={"../assets/blog/desktop.png"}
-        mobileUrl={"../assets/blog/mobile.png"} />
+        desktopUrl={"/assets/blog/desktop.png"}
+        mobileUrl={"/assets/blog/mobile.png"} />
 
     <p>
         As you can see there will be a new navigation panel on the left that will allow the
@@ -106,8 +106,8 @@
 
     <BlogScreenshot
         caption="Exploring communities"
-        desktopUrl={"../assets/blog/desktop_explore.png"}
-        mobileUrl={"../assets/blog/mobile_explore.png"} />
+        desktopUrl={"/assets/blog/desktop_explore.png"}
+        mobileUrl={"/assets/blog/mobile_explore.png"} />
 
     <p>
         Once you have found a community of interest you will be able to see the details of the
@@ -117,8 +117,8 @@
 
 <BlogScreenshot
     caption="Exploring a specific community"
-    desktopUrl={"../assets/blog/desktop_selected.png"}
-    mobileUrl={"../assets/blog/mobile_selected.png"} />
+    desktopUrl={"/assets/blog/desktop_selected.png"}
+    mobileUrl={"/assets/blog/mobile_selected.png"} />
 
 <section>
     <h2>Private Communities</h2>

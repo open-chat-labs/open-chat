@@ -635,6 +635,13 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("MembersAddedToDefaultChannel" in candid) {
+        return {
+            kind: "members_added_to_default_channel",
+            count: candid.MembersAddedToDefaultChannel.count,
+        };
+    }
+
     if ("Empty" in candid) {
         return { kind: "empty" };
     }

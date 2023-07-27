@@ -953,5 +953,6 @@
     "noUserSelected": "Derzeit ist kein Benutzer ausgewählt",
     "selectAChannel": "Wählen Sie einen Kanal aus der Liste aus oder suchen Sie nach weiteren Kanälen in dieser Community.",
     "selectAUser": "Wählen Sie einen Benutzer aus der Liste aus oder suchen Sie nach einem Benutzer, mit dem Sie chatten möchten.",
-    "selectAFavourite": "Sie können Direktchats, Gruppenchats oder Community-Kanäle zu Ihren Favoriten hinzufügen und sehen diese hier."
+    "selectAFavourite": "Sie können Direktchats, Gruppenchats oder Community-Kanäle zu Ihren Favoriten hinzufügen und sehen diese hier.",
+    "defaultMustBePublic": "Nur ein öffentlicher Kanal kann ein Standardkanal sein"
 }
