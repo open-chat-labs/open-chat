@@ -34,7 +34,7 @@
     $: avatarUrl =
         profile !== undefined
             ? client.buildUserAvatarUrl(process.env.BLOB_URL_PATTERN!, userId, profile.avatarId)
-            : "../assets/unknownUserAvatar.svg";
+            : "/assets/unknownUserAvatar.svg";
     $: joined =
         profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined;
     $: isPremium = profile?.isPremium ?? false;

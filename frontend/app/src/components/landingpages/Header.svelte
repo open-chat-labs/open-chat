@@ -59,7 +59,7 @@
         align-items: center;
 
         .logo-img {
-            background-image: url("../assets/spinner.svg");
+            background-image: url("/assets/spinner.svg");
             background-repeat: no-repeat;
             height: 32px;
             width: 32px;

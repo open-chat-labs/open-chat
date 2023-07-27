@@ -18,8 +18,8 @@
         >.
     </p>
     <p>
-        The dev team beacon neuron id is<br>
-        <code>9adf350c7388dfe7277213a5fc8d817c2d5bc6ff6be5870f0d33d9d6dab01fc6</code>        
+        The dev team beacon neuron id is<br />
+        <code>9adf350c7388dfe7277213a5fc8d817c2d5bc6ff6be5870f0d33d9d6dab01fc6</code>
     </p>
 </section>
 <section>
@@ -37,8 +37,8 @@
     </p>
     <BlogScreenshot
         caption="Your CHAT neurons in the NNS dApp"
-        desktopUrl={"../assets/blog/desktop_neurons.png"}
-        mobileUrl={"../assets/blog/mobile_neurons.png"} />
+        desktopUrl={"/assets/blog/desktop_neurons.png"}
+        mobileUrl={"/assets/blog/mobile_neurons.png"} />
 </section>
 
 <section>
@@ -74,16 +74,16 @@
     </p>
     <BlogScreenshot
         caption="Governance proposals in OpenChat"
-        desktopUrl={"../assets/blog/desktop_voting.png"}
-        mobileUrl={"../assets/blog/mobile_voting.png"} />
+        desktopUrl={"/assets/blog/desktop_voting.png"}
+        mobileUrl={"/assets/blog/mobile_voting.png"} />
 </section>
 <section>
     <h2>Dev team proposals</h2>
     <p>
         Before working on a substantial new feature or other change to OpenChat the dev team will
         describe their plan as a message in the <Link path="n2qig-viaaa-aaaar-ahviq-cai"
-            >OpenChat Governance</Link> group. This is gated to CHAT neuron holders and we invite
-        anyone who plans to submit a proposal, to introduce it here first for discussion.
+            >OpenChat Governance</Link> group. This is gated to CHAT neuron holders and we invite anyone
+        who plans to submit a proposal, to introduce it here first for discussion.
     </p>
     <p>
         Having talked through the feature and explored different options we can then use a poll
@@ -149,8 +149,8 @@
     </ul>
     <BlogScreenshot
         caption="Finding your userId in OpenChat"
-        desktopUrl={"../assets/blog/desktop_finduserid.png"}
-        mobileUrl={"../assets/blog/mobile_finduserid.png"} />
+        desktopUrl={"/assets/blog/desktop_finduserid.png"}
+        mobileUrl={"/assets/blog/mobile_finduserid.png"} />
     <p>
         If you took part in the decentralization sale your neurons are configured to <em>follow</em>
         the neuron with the longest dissolve delay which means if you vote with that neuron the other
@@ -173,8 +173,8 @@
     </p>
     <BlogScreenshot
         caption="Adding your userId as a hotkey"
-        desktopUrl={"../assets/blog/desktop_addhotkey.png"}
-        mobileUrl={"../assets/blog/mobile_addhotkey.png"} />
+        desktopUrl={"/assets/blog/desktop_addhotkey.png"}
+        mobileUrl={"/assets/blog/mobile_addhotkey.png"} />
 </section>
 <section>
     <h2>Following</h2>
@@ -190,14 +190,14 @@
         follow on that topic vote the same way.
     </p>
     <p>
-        It is possible to configure topic <em>exclusions</em> in a slightly quirky manner. This allows a
-        neuron to follow another on the catch-all topic but exclude certain topics so that the user
-        can vote for themselves. For example a reasonable choice might be to follow the OpenChat dev
-        team beacon neuron (see below) on the catch-all but exclude motions, token transfers and SNS
-        parameter changes. To exclude a particular topic you can configure your neuron to follow <em
-            >itself</em> on this topic. This works because the explicit following relationship overrides
-        the implicit catch-all and by using your own neuron id you ensure you are following no other
-        neuron.
+        It is possible to configure topic <em>exclusions</em> in a slightly quirky manner. This
+        allows a neuron to follow another on the catch-all topic but exclude certain topics so that
+        the user can vote for themselves. For example a reasonable choice might be to follow the
+        OpenChat dev team beacon neuron (see below) on the catch-all but exclude motions, token
+        transfers and SNS parameter changes. To exclude a particular topic you can configure your
+        neuron to follow <em>itself</em> on this topic. This works because the explicit following relationship
+        overrides the implicit catch-all and by using your own neuron id you ensure you are following
+        no other neuron.
     </p>
     <p>
         Going forwards we hope that rather than every SNS "action" being mapped 1-1 to a topic, the
@@ -212,8 +212,8 @@
     </p>
     <BlogScreenshot
         caption="Setting up following in the NNS"
-        desktopUrl={"../assets/blog/desktop_following.png"}
-        mobileUrl={"../assets/blog/mobile_following.png"} />
+        desktopUrl={"/assets/blog/desktop_following.png"}
+        mobileUrl={"/assets/blog/mobile_following.png"} />
 </section>
 <section>
     <h2>Dev team beacon neuron</h2>
@@ -222,14 +222,14 @@
         follow on any topic. This beacon neuron will itself follow the neurons of each member of the
         dev team and so will implicitly vote when a majority of the dev team vote the same way. The
         dev team will vote on every proposal so if you are happy to follow their lead you will
-        implicitly participate in every vote and so maximise your voting rewards.         
+        implicitly participate in every vote and so maximise your voting rewards.
     </p>
-    <p> 
-        The dev team beacon neuron id is<br>
+    <p>
+        The dev team beacon neuron id is<br />
         <code>9adf350c7388dfe7277213a5fc8d817c2d5bc6ff6be5870f0d33d9d6dab01fc6</code>
     </p>
-    <p> 
-        Having set the beacon neuron to follow the dev team neurons we removed its controller making 
+    <p>
+        Having set the beacon neuron to follow the dev team neurons we removed its controller making
         it immutable and unable to vote itself.
     </p>
 </section>

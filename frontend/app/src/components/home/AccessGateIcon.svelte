@@ -84,16 +84,16 @@
         @include font-size(fs-130);
     }
     .oc {
-        background-image: url("../assets/spinner.svg");
+        background-image: url("/assets/spinner.svg");
     }
     .sns1 {
-        background-image: url("../assets/sns1_token.png");
+        background-image: url("/assets/sns1_token.png");
     }
     .kinic {
-        background-image: url("../assets/kinic_token.png");
+        background-image: url("/assets/kinic_token.png");
     }
     .hotornot {
-        background-image: url("../assets/hot_token.svg");
+        background-image: url("/assets/hot_token.svg");
     }
 
     .params {

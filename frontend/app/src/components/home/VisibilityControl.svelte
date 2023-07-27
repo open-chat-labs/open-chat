@@ -272,11 +272,11 @@
             height: $size;
 
             &.public {
-                background-image: url("../assets/unlocked.svg");
+                background-image: url("/assets/unlocked.svg");
             }
 
             &.private {
-                background-image: url("../assets/locked.svg");
+                background-image: url("/assets/locked.svg");
             }
         }
     }

@@ -32,11 +32,11 @@
 
 <div class="msg" on:click={zoomToMessage}>
     <div class="graphic">
-        <img class="lid" src={"../assets/lid.png"} />
+        <img class="lid" src={"/assets/lid.png"} />
         <div class="winner-coin">
             <CkBtcSmall />
         </div>
-        <img class="box" src={"../assets/box.png"} />
+        <img class="box" src={"/assets/box.png"} />
     </div>
     <div class="label">
         <Markdown
