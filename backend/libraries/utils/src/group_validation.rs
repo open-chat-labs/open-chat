@@ -1,6 +1,6 @@
 use types::{FieldTooLongResult, FieldTooShortResult};
 
-const MIN_GROUP_NAME_LENGTH: usize = 4;
+const MIN_GROUP_NAME_LENGTH: usize = 3;
 const MAX_GROUP_NAME_LENGTH: usize = 25;
 const MAX_GROUP_DESCRIPTION_LENGTH: u32 = 1024;
 const MAX_GROUP_RULES_LENGTH: u32 = 1024;
