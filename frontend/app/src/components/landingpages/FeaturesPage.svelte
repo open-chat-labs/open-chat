@@ -34,14 +34,14 @@
 
     [...communityThemes, themes.dark, themes.light].forEach((theme) => {
         screenshotMap[theme.name] = [
-            { url: "../assets/screenshots/mobilefirst.png", alt: "mobile first" },
-            { url: "../assets/screenshots/creategroup1.png", alt: "create group" },
-            { url: "../assets/screenshots/permissions.png", alt: "group permissions" },
-            { url: "../assets/screenshots/whatshot.gif", alt: "find groups to join" },
-            { url: "../assets/screenshots/userprofile.gif", alt: "user profile" },
-            { url: "../assets/screenshots/messages.gif", alt: "sending messages" },
-            { url: "../assets/screenshots/search.gif", alt: "searching" },
-            { url: `../assets/screenshots/voting_${theme.mode}.png`, alt: "voting" },
+            { url: "/assets/screenshots/mobilefirst.png", alt: "mobile first" },
+            { url: "/assets/screenshots/creategroup1.png", alt: "create group" },
+            { url: "/assets/screenshots/permissions.png", alt: "group permissions" },
+            { url: "/assets/screenshots/whatshot.gif", alt: "find groups to join" },
+            { url: "/assets/screenshots/userprofile.gif", alt: "user profile" },
+            { url: "/assets/screenshots/messages.gif", alt: "sending messages" },
+            { url: "/assets/screenshots/search.gif", alt: "searching" },
+            { url: `/assets/screenshots/voting_${theme.mode}.png`, alt: "voting" },
         ];
     });
 

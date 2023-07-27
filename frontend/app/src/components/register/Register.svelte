@@ -138,7 +138,7 @@
             </div>
         {:else if badCode}
             <div class="bad-code">
-                <img class="shirt" src="../assets/miami/miami_shirt.png" alt="Miami shirt" />
+                <img class="shirt" src="/assets/miami/miami_shirt.png" alt="Miami shirt" />
                 <div class="message">
                     <h4 class="invalid">{$_("register.referralCodeInvalid")}</h4>
                     <p>{$_("register.doYouWantToProceed")}</p>
@@ -253,7 +253,7 @@
         @include font(bold, normal, fs-120);
 
         .logo {
-            background-image: url("../assets/spinner.svg");
+            background-image: url("/assets/spinner.svg");
             width: toRem(30);
             height: toRem(30);
         }

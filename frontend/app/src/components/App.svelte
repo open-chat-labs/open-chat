@@ -245,7 +245,7 @@
     }
 
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
-    $: burstPath = $themeStore.name === "dark" ? "../assets/burst_dark" : "../assets/burst_light";
+    $: burstPath = $themeStore.name === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
     $: burstFixed = isScrollingRoute($pathParams);
 </script>

@@ -190,7 +190,7 @@ $sp11: 192px;
     $size: 1.2em,
     $offset: 0.6em,
     $spinner-color: #191919,
-    $background-image: "../assets/spinner.svg",
+    $background-image: "/assets/spinner.svg",
     $speed: 0.8s,
     $opacity: 0.5
 ) {
@@ -533,7 +533,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
 }
 
 @mixin spinning_coin(
-    $coin_face: url("../assets/ckbtc_nobackground.svg"),
+    $coin_face: url("/assets/ckbtc_nobackground.svg"),
     $coin_diam: 9rem,
     $shadow: null
 ) {
