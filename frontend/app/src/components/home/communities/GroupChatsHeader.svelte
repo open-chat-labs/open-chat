@@ -1,13 +1,9 @@
 <script lang="ts">
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
-    import Plus from "svelte-material-icons/Plus.svelte";
     import { _ } from "svelte-i18n";
-    import HoverIcon from "../../HoverIcon.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import { createEventDispatcher } from "svelte";
-
-    const dispatch = createEventDispatcher();
+    import GroupChatsMenu from "./GroupChatsMenu.svelte";
 </script>
 
 <SectionHeader slim border={false}>
@@ -19,10 +15,8 @@
             <h4 class="name">{$_("communities.groupChats")}</h4>
         </div>
     </div>
-    <span class="menu" on:click={() => dispatch("newGroup")}>
-        <HoverIcon>
-            <Plus size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
+    <span class="menu">
+        <GroupChatsMenu on:newGroup />
     </span>
 </SectionHeader>
 

@@ -69,18 +69,16 @@ export type AccessRules = {
 
 
 export function defaultAccessRules(level: Level): AccessRules {
-    function levelText(level: Level): string {
-        switch (level) {
-            case "channel": return "the channel";
-            case "group": return "the group";
-            case "community": return "each channel";
-        }    
-    }
+    const LEVEL_TEXT: Map<Level, string> = new Map([
+        ["channel", "the channel"],
+        ["group", "the group"],
+        ["community", "each channel"],
+    ]);
 
     return {
         text: `- Do not impersonate others in a deceptive or misleading manner
 - Do not intentionally share false or misleading information
-- Keep messages relevant to ${levelText(level)}
+- Keep messages relevant to ${LEVEL_TEXT.get(level)}
 
 If you break the rules you might be blocked and/or have your message(s) deleted.`,
         enabled: false,
