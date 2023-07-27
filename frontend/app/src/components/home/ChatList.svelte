@@ -220,15 +220,7 @@
                 on:newChannel />
         {/if}
     {:else}
-        <CurrentUser
-            on:wallet
-            on:logout
-            on:whatsHot
-            on:halloffame
-            {user}
-            on:profile
-            on:upgrade
-            on:newGroup />
+        <CurrentUser on:wallet on:logout on:halloffame {user} on:profile on:upgrade on:newGroup />
     {/if}
 
     <ChatListSearch
