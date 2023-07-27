@@ -60,7 +60,7 @@
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
                 return {
-                    name: `${client.usernameAndIcon(them)} ${fav ? "♥️" : ""}`,
+                    name: client.usernameAndIcon(them),
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
@@ -72,7 +72,7 @@
                 };
             default:
                 return {
-                    name: `${chatSummary.name} ${fav ? "♥️" : ""}`,
+                    name: chatSummary.name,
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     userId: undefined,
                     typing: client.getTypingString(
