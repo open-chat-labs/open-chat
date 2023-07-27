@@ -26,7 +26,7 @@
     } from "../utils/urls";
     import page from "page";
     import { menuStore } from "../stores/menu";
-    import { framed } from "../stores/frame";
+    import { framed } from "../stores/xframe";
 
     let viewPortContent = "width=device-width, initial-scale=1";
 
@@ -84,6 +84,7 @@
             viewPortContent += ", maximum-scale=1";
         }
         calculateHeight();
+
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
         (<any>window).platformModerator = {

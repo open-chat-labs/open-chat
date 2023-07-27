@@ -31,7 +31,7 @@
     import { toastStore } from "../../stores/toast";
     import ImportToCommunity from "./communities/Import.svelte";
     import { randomSentence } from "../../utils/randomMsg";
-    import { framed } from "../../stores/frame";
+    import { framed } from "../../stores/xframe";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;

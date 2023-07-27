@@ -5,6 +5,7 @@ import { derived, readable, writable } from "svelte/store";
 import { getTheme as getSubmarineTheme } from "./community/submarine";
 import { getTheme as getNightvisionTheme } from "./community/nightvision";
 import type { Theme, Themes } from "./types";
+import { deepMerge } from "./merge";
 
 const defaultTheme = lightTheme();
 const dark = darkTheme(defaultTheme);
@@ -84,4 +85,17 @@ export function getCurrentThemeName(): string {
 export function saveSeletedTheme(themeName: string): void {
     themeNameStore.set(themeName);
     localStorage.setItem("openchat_theme", themeName);
+}
+
+export function setModifiedTheme(
+    baseName: string,
+    newName: string,
+    overrides: Partial<Theme>
+): void {
+    const base = themes[baseName];
+    if (base) {
+        const overridden = deepMerge(base, overrides);
+        themes[newName] = overridden;
+        themeNameStore.set(newName);
+    }
 }
