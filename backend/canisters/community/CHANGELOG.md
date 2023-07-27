@@ -25,6 +25,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Consolidate remove and block permissions ([#4030](https://github.com/open-chat-labs/open-chat/pull/4030))
 
+### Fixed
+
+- Ensure public channel names are ci unique ([#4044](https://github.com/open-chat-labs/open-chat/pull/4044))
+
 ## [[2.0.749](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.749-community)] - 2023-07-20
 
 ### Changed
