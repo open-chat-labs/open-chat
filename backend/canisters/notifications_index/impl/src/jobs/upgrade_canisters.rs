@@ -55,7 +55,7 @@ fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
         return GetNextResult::QueueEmpty;
     }
 
-    let canister_id = match state.data.canisters_requiring_upgrade.try_take_next() {
+    let (canister_id, force) = match state.data.canisters_requiring_upgrade.try_take_next() {
         Some(c) => c,
         None => return GetNextResult::Continue,
     };
@@ -66,7 +66,7 @@ fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
         .notifications_canisters
         .get(&canister_id)
         .map(|c| c.wasm_version())
-        .filter(|v| *v != new_wasm_version)
+        .filter(|v| *v != new_wasm_version || force)
     {
         Some(v) => v,
         None => {

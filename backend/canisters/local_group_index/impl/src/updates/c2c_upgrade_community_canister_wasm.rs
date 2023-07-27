@@ -39,7 +39,7 @@ fn c2c_upgrade_community_canister_wasm_impl(args: Args, state: &mut RuntimeState
             .filter(|c| include_all || include.contains(c))
             .filter(|c| !exclude.contains(c))
         {
-            state.data.communities_requiring_upgrade.enqueue(canister_id)
+            state.data.communities_requiring_upgrade.enqueue(canister_id, false);
         }
 
         let canisters_queued_for_upgrade = state.data.communities_requiring_upgrade.count_pending();

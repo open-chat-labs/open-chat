@@ -57,22 +57,22 @@ fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>> {
 }
 
 fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
-    let canister_id = state.data.canisters_requiring_upgrade.try_take_next()?;
+    let (canister_id, force) = state.data.canisters_requiring_upgrade.try_take_next()?;
 
-    initialize_upgrade(canister_id, state).or_else(|| {
+    initialize_upgrade(canister_id, force, state).or_else(|| {
         state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
         None
     })
 }
 
-fn initialize_upgrade(canister_id: CanisterId, state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
+fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
     let user_id = canister_id.into();
     let user = state.data.local_users.get_mut(&user_id)?;
     let current_wasm_version = user.wasm_version;
     let user_canister_wasm = &state.data.user_canister_wasm_for_upgrades;
     let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
 
-    if current_wasm_version == user_canister_wasm.version {
+    if current_wasm_version == user_canister_wasm.version && !force {
         return None;
     }
 
