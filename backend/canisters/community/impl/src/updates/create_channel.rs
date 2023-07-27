@@ -1,8 +1,9 @@
+use super::c2c_join_community::join_community_impl;
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_proposals_bot;
-use crate::{
-    activity_notifications::handle_activity_notification, model::channels::Channel, mutate_state, run_regular_jobs,
-    updates::c2c_join_channel::join_channel_unchecked, RuntimeState,
-};
+use crate::model::channels::Channel;
+use crate::updates::c2c_join_channel::join_channel_unchecked;
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community;
@@ -14,14 +15,12 @@ use types::{ChannelId, Timestamped};
 use utils::document_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
-use super::c2c_join_community::join_community_impl;
-
 #[update]
 #[trace]
 fn create_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| create_channel_impl(args, state))
+    mutate_state(|state| create_channel_impl(args, false, state))
 }
 
 #[update_msgpack(guard = "caller_is_proposals_bot")]
@@ -50,11 +49,11 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
             }
         }
 
-        create_channel_impl(args, state)
+        create_channel_impl(args, true, state)
     })
 }
 
-fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return CommunityFrozen;
     }
@@ -69,21 +68,25 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
             return UserSuspended;
         }
 
-        let is_authorized = if args.is_public {
-            member.role.can_create_public_channel(&state.data.permissions)
-        } else {
-            member.role.can_create_private_channel(&state.data.permissions)
-        };
+        if !is_proposals_channel {
+            let is_authorized = if args.is_public {
+                member.role.can_create_public_channel(&state.data.permissions)
+            } else {
+                member.role.can_create_private_channel(&state.data.permissions)
+            };
 
-        if !is_authorized {
-            NotAuthorized
-        } else if let Err(error) = validate_name(&args.name, args.is_public) {
-            match error {
-                NameValidationError::TooShort(s) => NameTooShort(s),
-                NameValidationError::TooLong(l) => NameTooLong(l),
-                NameValidationError::Reserved => NameReserved,
+            if !is_authorized {
+                return NotAuthorized;
+            } else if let Err(error) = validate_name(&args.name, args.is_public) {
+                return match error {
+                    NameValidationError::TooShort(s) => NameTooShort(s),
+                    NameValidationError::TooLong(l) => NameTooLong(l),
+                    NameValidationError::Reserved => NameReserved,
+                };
             }
-        } else if let Err(error) = validate_description(&args.description) {
+        }
+
+        if let Err(error) = validate_description(&args.description) {
             DescriptionTooLong(error)
         } else if let Err(error) = validate_rules(args.rules.enabled, &args.rules.text) {
             match error {
