@@ -538,8 +538,8 @@
     "noChatsAvailable": "Không có cuộc trò chuyện nào!",
     "invitedUsers": "Người dùng được mời",
     "hotGroups": "Nhóm nóng",
-    "showHotGroups": "Cho tôi xem một số nhóm nóng",
-    "noHotGroups": "Không có nhóm nóng 😭",
+    "discoverMoreGroups": "Khám phá thêm các nhóm",
+    "noGroupsFound": "Không tìm thấy nhóm nào 😭",
     "pinChat": {
         "limitExceeded": "Bạn chỉ có thể ghim tối đa {limit} cuộc trò chuyện",
         "failed": "Không thể ghim cuộc trò chuyện - vui lòng thử lại sau",
@@ -805,7 +805,6 @@
     "invited": "Được mời",
     "tapForReferralLink": "Nhấn để sao chép liên kết giới thiệu cá nhân của bạn",
     "deleteMessageForMe": "Xóa cho tôi",
-    "whatsHotButton": "Khám phá các nhóm hấp dẫn",
     "moderator": "người điều hành",
     "level": {
         "group": "Nhóm",
@@ -953,5 +952,6 @@
     "selectAChannel": "Chọn một kênh từ danh sách hoặc tìm kiếm các kênh khác trong cộng đồng này.",
     "selectAUser": "Chọn người dùng từ danh sách hoặc tìm kiếm người dùng để trò chuyện.",
     "selectAFavourite": "Bạn có thể thêm các cuộc trò chuyện trực tiếp, trò chuyện nhóm hoặc các kênh cộng đồng vào mục yêu thích của mình và bạn sẽ thấy chúng ở đây.",
-    "defaultMustBePublic": "Chỉ một kênh công khai mới có thể là kênh mặc định"
+    "defaultMustBePublic": "Chỉ một kênh công khai mới có thể là kênh mặc định",
+    "discoverGroups": "Khám phá các nhóm"
 }

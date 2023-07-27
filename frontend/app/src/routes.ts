@@ -297,7 +297,7 @@ export type ShareRoute = {
 };
 
 export type HotGroupsRoute = RouteCommon & {
-    kind: "hot_groups_route";
+    kind: "discover_groups_route";
 };
 
 export type BlogRoute = {

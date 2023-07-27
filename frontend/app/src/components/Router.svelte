@@ -170,9 +170,9 @@
         );
         page("/share", parsePathParams(shareRoute), track, () => (route = Home));
         page(
-            "/hotgroups",
+            "/groups",
             parsePathParams(() => ({
-                kind: "hot_groups_route",
+                kind: "discover_groups_route",
                 scope: $communitiesEnabled ? { kind: "group_chat" } : { kind: "none" },
             })),
             track,

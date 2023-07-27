@@ -3,6 +3,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
+    import Compass from "svelte-material-icons/CompassOutline.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Menu from "../../Menu.svelte";
     import { _ } from "svelte-i18n";
@@ -32,9 +33,9 @@
                     slot="icon" />
                 <span slot="text">{$_("newGroup")}</span>
             </MenuItem>
-            <MenuItem on:click={() => page("/hotgroups")}>
-                <span class="flame" slot="icon">🔥</span>
-                <span slot="text">{$_("whatsHot")}</span>
+            <MenuItem on:click={() => page("/groups")}>
+                <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                <span slot="text">{$_("discoverGroups")}</span>
             </MenuItem>
         </Menu>
     </span>

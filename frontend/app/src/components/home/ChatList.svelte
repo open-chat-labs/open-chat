@@ -1,5 +1,6 @@
 <script lang="ts">
     import Close from "svelte-material-icons/Close.svelte";
+    import Compass from "svelte-material-icons/CompassOutline.svelte";
     import CurrentUser from "./CurrentUser.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
@@ -27,7 +28,7 @@
     import ChatsButton from "./ChatsButton.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import { discoverHotGroupsDismissed } from "../../stores/settings";
+    import { discoverGroupsDismissed } from "../../stores/settings";
     import { communitiesEnabled } from "../../utils/features";
     import { pushRightPanelHistory, rightPanelHistory } from "../../stores/rightPanel";
     import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
@@ -62,9 +63,9 @@
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
-    $: showWhatsHot =
+    $: showDiscoverGroups =
         ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
-        !$discoverHotGroupsDismissed &&
+        !$discoverGroupsDismissed &&
         !searchResultsAvailable;
     $: showBrowseChannnels = $chatListScope.kind === "community" && !searchResultsAvailable;
     $: unreadDirectChats = client.unreadDirectChats;
@@ -321,11 +322,11 @@
                     </div>
                 {/if}
             </div>
-            {#if showWhatsHot}
-                <div class="hot-groups" on:click={() => page("/hotgroups")}>
-                    <div class="flame">🔥</div>
-                    <div class="label">{$_("whatsHotButton")}</div>
-                    <div on:click={() => discoverHotGroupsDismissed.set(true)} class="close">
+            {#if showDiscoverGroups}
+                <div class="hot-groups" on:click={() => page("/groups")}>
+                    <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                    <div class="label">{$_("discoverGroups")}</div>
+                    <div on:click={() => discoverGroupsDismissed.set(true)} class="close">
                         <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
                     </div>
                 </div>
