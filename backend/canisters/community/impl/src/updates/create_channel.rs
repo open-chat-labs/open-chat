@@ -1,7 +1,7 @@
 use crate::guards::caller_is_proposals_bot;
 use crate::{
     activity_notifications::handle_activity_notification, model::channels::Channel, mutate_state, run_regular_jobs,
-    RuntimeState,
+    updates::c2c_join_channel::join_channel_unchecked, RuntimeState,
 };
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -115,7 +115,17 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
                 is_default: Timestamped::new(args.is_default && args.is_public, now),
                 date_imported: None,
             });
+
             member.channels.insert(channel_id);
+
+            let channel = state.data.channels.get_mut(&channel_id).unwrap();
+
+            if channel.chat.gate.is_none() {
+                for m in state.data.members.iter_mut() {
+                    join_channel_unchecked(channel, m, true, true, now);
+                }
+            }
+
             handle_activity_notification(state);
             Success(SuccessResult { channel_id })
         }
