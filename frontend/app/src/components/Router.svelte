@@ -172,7 +172,7 @@
         page(
             "/groups",
             parsePathParams(() => ({
-                kind: "discover_groups_route",
+                kind: "explore_groups_route",
                 scope: $communitiesEnabled ? { kind: "group_chat" } : { kind: "none" },
             })),
             track,

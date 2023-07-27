@@ -324,7 +324,7 @@
             </div>
             {#if showexploreGroups}
                 <div class="hot-groups" on:click={() => page("/groups")}>
-                    <div class="flame">
+                    <div class="circle">
                         <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     </div>
                     <div class="label">{$_("exploreGroups")}</div>
@@ -335,7 +335,7 @@
             {/if}
             {#if showBrowseChannnels}
                 <div class="browse-channels" on:click={showChannels}>
-                    <div class="flame">#</div>
+                    <div class="circle">#</div>
                     <div class="label">{$_("communities.browseChannels")}</div>
                 </div>
             {/if}
@@ -432,7 +432,7 @@
             flex: auto;
         }
 
-        .flame {
+        .circle {
             display: flex;
             align-items: center;
             justify-content: center;
