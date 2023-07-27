@@ -21,14 +21,14 @@ pub struct CanistersRequiringUpgrade {
 }
 
 impl CanistersRequiringUpgrade {
-    pub fn enqueue(&mut self, canister_id: CanisterId) {
-        self.pending.push_back(canister_id);
+    pub fn enqueue(&mut self, canister_id: CanisterId, force: bool) {
+        self.pending.push_back((canister_id, force));
     }
 
-    pub fn try_take_next(&mut self) -> Option<CanisterId> {
-        let canister_id = self.pending.pop_front()?;
+    pub fn try_take_next(&mut self) -> Option<(CanisterId, bool)> {
+        let (canister_id, force) = self.pending.pop_front()?;
         self.in_progress.insert(canister_id);
-        Some(canister_id)
+        Some((canister_id, force))
     }
 
     pub fn clear(&mut self) {
