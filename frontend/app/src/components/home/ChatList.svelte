@@ -28,7 +28,7 @@
     import ChatsButton from "./ChatsButton.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import { discoverGroupsDismissed } from "../../stores/settings";
+    import { exploreGroupsDismissed } from "../../stores/settings";
     import { communitiesEnabled } from "../../utils/features";
     import { pushRightPanelHistory, rightPanelHistory } from "../../stores/rightPanel";
     import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
@@ -63,9 +63,9 @@
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
-    $: showDiscoverGroups =
+    $: showexploreGroups =
         ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
-        !$discoverGroupsDismissed &&
+        !$exploreGroupsDismissed &&
         !searchResultsAvailable;
     $: showBrowseChannnels = $chatListScope.kind === "community" && !searchResultsAvailable;
     $: unreadDirectChats = client.unreadDirectChats;
@@ -322,11 +322,13 @@
                     </div>
                 {/if}
             </div>
-            {#if showDiscoverGroups}
+            {#if showexploreGroups}
                 <div class="hot-groups" on:click={() => page("/groups")}>
-                    <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                    <div class="label">{$_("discoverGroups")}</div>
-                    <div on:click={() => discoverGroupsDismissed.set(true)} class="close">
+                    <div class="flame">
+                        <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                    </div>
+                    <div class="label">{$_("exploreGroups")}</div>
+                    <div on:click={() => exploreGroupsDismissed.set(true)} class="close">
                         <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
                     </div>
                 </div>
@@ -431,11 +433,12 @@
         }
 
         .flame {
-            display: grid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             align-content: center;
             @include font-size(fs-120);
             text-align: center;
-            flex: 0 0 toRem(48);
             height: toRem(48);
             width: toRem(48);
             background-color: rgba(255, 255, 255, 0.2);

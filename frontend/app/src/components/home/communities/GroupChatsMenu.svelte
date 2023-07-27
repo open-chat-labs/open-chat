@@ -35,7 +35,7 @@
             </MenuItem>
             <MenuItem on:click={() => page("/groups")}>
                 <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                <span slot="text">{$_("discoverGroups")}</span>
+                <span slot="text">{$_("exploreGroups")}</span>
             </MenuItem>
         </Menu>
     </span>
