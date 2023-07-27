@@ -12,7 +12,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{info, trace};
-use types::{ChannelId, ChannelLatestMessageIndex, ChatId};
+use types::{ChannelId, ChannelLatestMessageIndex, ChatId, Empty};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -75,6 +75,10 @@ async fn import_group(group_id: ChatId, from: u64) {
                         now,
                         now,
                     );
+
+                    // We set a timer to trigger an upgrade in case deserializing the group requires
+                    // more instructions than are allowed in a normal update call
+                    ic_cdk_timers::set_timer(Duration::from_secs(10), move || trigger_upgrade_to_finalize_import(group_id));
 
                     info!(%group_id, "Group data imported");
                 }
@@ -254,4 +258,16 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
     });
 
     info!(%group_id, "'mark_import_complete' completed");
+}
+
+fn trigger_upgrade_to_finalize_import(group_id: ChatId) {
+    mutate_state(|state| {
+        if state.data.groups_being_imported.contains(&group_id) {
+            state.data.fire_and_forget_handler.send(
+                state.data.local_group_index_canister_id,
+                "c2c_trigger_upgrade_msgpack".to_string(),
+                msgpack::serialize_then_unwrap(Empty {}),
+            );
+        }
+    });
 }
