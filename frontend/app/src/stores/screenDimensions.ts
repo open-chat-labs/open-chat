@@ -52,6 +52,10 @@ export const mobileWidth = derived(dimensions, ($dimensions) => {
     return $dimensions.width < 768;
 });
 
+export const ipadWidth = derived(dimensions, ($dimensions) => {
+    return $dimensions.width < 992;
+});
+
 export const availableHeight = derived(dimensions, ($dimensions) => {
     return $dimensions.height - pixelsFromRems(5, $dimensions.width);
 });

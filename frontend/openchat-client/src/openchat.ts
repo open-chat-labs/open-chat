@@ -59,6 +59,7 @@ import {
     serialiseMessageForRtc,
     canConvertToCommunity,
     canImportToCommunity,
+    buildIdenticonUrl,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -1131,8 +1132,8 @@ export class OpenChat extends OpenChatAgentWorker {
     groupBy = groupBy;
     getTypingString = getTypingString;
 
-    communityAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
-        return dataContent?.blobUrl ?? "/assets/wink.svg";
+    communityAvatarUrl(id: string, avatar: DataContent): string {
+        return avatar?.blobUrl ?? buildIdenticonUrl(id);
     }
 
     communityBannerUrl<T extends { blobUrl?: string }>(dataContent?: T): string {

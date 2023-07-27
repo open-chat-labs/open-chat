@@ -6,7 +6,7 @@
     import page from "page";
     import CommunityCard from "./CommunityCard.svelte";
     import Search from "../../..//Search.svelte";
-    import { mobileWidth, screenWidth, ScreenWidth } from "../../../../stores/screenDimensions";
+    import { ipadWidth, screenWidth, ScreenWidth } from "../../../../stores/screenDimensions";
     import { iconSize } from "../../../../stores/iconSize";
     import type { CommunityMatch, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
@@ -94,13 +94,9 @@
     <div class="header">
         <div class="title-row">
             <div class="title">
-                {#if $mobileWidth}
-                    <h4>{$_("communities.exploreMobile")}</h4>
-                {:else}
-                    <h4>{$_("communities.explore")}</h4>
-                {/if}
+                <h4>{$_("communities.explore")}</h4>
             </div>
-            {#if !$mobileWidth}
+            {#if !$ipadWidth}
                 <div class="search">
                     <Search
                         fill
@@ -114,7 +110,7 @@
                 </div>
             {/if}
             <div class="buttons">
-                {#if $mobileWidth}
+                {#if $ipadWidth}
                     <HoverIcon on:click={createCommunity}>
                         <Plus size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
@@ -126,7 +122,7 @@
             </div>
         </div>
         <div class="subtitle-row">
-            {#if $mobileWidth}
+            {#if $ipadWidth}
                 <div class="search">
                     <Search
                         searching={false}
@@ -152,6 +148,7 @@
             {:else}
                 {#each searchResults as community, i (community.id.communityId)}
                     <CommunityCard
+                        id={community.id.communityId}
                         name={community.name}
                         description={community.description}
                         avatar={community.avatar}
@@ -196,7 +193,7 @@
             gap: $sp4;
             margin-bottom: $sp5;
 
-            @include mobile() {
+            @include size-below(lg) {
                 margin-bottom: $sp3;
                 justify-content: space-between;
             }
@@ -228,7 +225,7 @@
             justify-content: space-between;
             gap: $sp4;
 
-            @include mobile() {
+            @include size-below(lg) {
                 flex-direction: column;
             }
         }

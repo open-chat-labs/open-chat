@@ -65,7 +65,10 @@
                         class:selected={community === selected}>
                         <div class="avatar">
                             <Avatar
-                                url={client.communityAvatarUrl(community.avatar)}
+                                url={client.communityAvatarUrl(
+                                    community.id.communityId,
+                                    community.avatar
+                                )}
                                 userId={undefined}
                                 size={AvatarSize.Default} />
                         </div>

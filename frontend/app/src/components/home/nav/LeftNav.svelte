@@ -141,7 +141,7 @@
                     selected={community === $selectedCommunity &&
                         $chatListScope.kind !== "favourite" &&
                         !communityExplorer}
-                    url={client.communityAvatarUrl(community.avatar)}
+                    url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                     size={avatarSize} />
             </LeftNavItem>
         {/each}
