@@ -272,6 +272,6 @@
     <ChatFrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_unfrozen"}
     <ChatUnfrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
-{:else if event.event.kind !== "empty" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "member_joined" && event.event.kind !== "member_left" && event.event.kind !== "events_ttl_updated"}
+{:else if event.event.kind !== "empty" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "member_joined" && event.event.kind !== "member_left" && event.event.kind !== "events_ttl_updated" && event.event.kind !== "members_added_to_default_channel"}
     <div>Unexpected event type</div>
 {/if}
