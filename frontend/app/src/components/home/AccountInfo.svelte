@@ -85,19 +85,19 @@
             background-repeat: no-repeat;
             background-position: top;
             &.icp {
-                background-image: url("../assets/icp_token.svg");
+                background-image: url("/assets/icp_token.svg");
             }
             &.sns1 {
-                background-image: url("../assets/sns1_token.png");
+                background-image: url("/assets/sns1_token.png");
             }
             &.ckbtc {
-                background-image: url("../assets/ckbtc_nobackground.svg");
+                background-image: url("/assets/ckbtc_nobackground.svg");
             }
             &.chat {
-                background-image: url("../assets/spinner.svg");
+                background-image: url("/assets/spinner.svg");
             }
             &.kinic {
-                background-image: url("../assets/kinic_token.png");
+                background-image: url("/assets/kinic_token.png");
             }
         }
 

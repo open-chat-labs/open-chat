@@ -112,8 +112,8 @@
         {#if showGame}
             <Invaders />
         {:else}
-            <img class="bot left" src="../assets/pixel.svg" />
-            <img class="bot right" src="../assets/pixel.svg" />
+            <img class="bot left" src="/assets/pixel.svg" />
+            <img class="bot right" src="/assets/pixel.svg" />
             <div class="title-wrapper">
                 <div class="title">{$_("openChat")}</div>
             </div>
