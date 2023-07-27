@@ -69,12 +69,9 @@ async fn import_group(group_id: ChatId, from: u64) {
                 if state.data.groups_being_imported.mark_batch_complete(&group_id, &bytes) {
                     // We set a timer to trigger an upgrade in case deserializing the group requires
                     // more instructions than are allowed in a normal update call
-                    let trigger_upgrade_timer =
-                        ic_cdk_timers::set_timer(Duration::from_secs(10), move || trigger_upgrade_to_finalize_import(group_id));
+                    ic_cdk_timers::set_timer(Duration::from_secs(10), move || trigger_upgrade_to_finalize_import(group_id));
 
-                    ic_cdk_timers::set_timer(Duration::ZERO, move || {
-                        finalize_group_import(group_id, Some(trigger_upgrade_timer))
-                    });
+                    ic_cdk_timers::set_timer(Duration::ZERO, move || finalize_group_import(group_id));
 
                     info!(%group_id, "Group data imported");
                 }
@@ -93,7 +90,7 @@ async fn import_group(group_id: ChatId, from: u64) {
     }
 }
 
-pub(crate) fn finalize_group_import(group_id: ChatId, trigger_upgrade_timer: Option<TimerId>) {
+pub(crate) fn finalize_group_import(group_id: ChatId) {
     info!(%group_id, "'finalize_group_import' starting");
     let initial_instruction_count = ic_cdk::api::instruction_counter();
 
@@ -114,10 +111,6 @@ pub(crate) fn finalize_group_import(group_id: ChatId, trigger_upgrade_timer: Opt
             });
         }
     });
-
-    if let Some(timer_id) = trigger_upgrade_timer {
-        ic_cdk_timers::clear_timer(timer_id);
-    }
 
     let instruction_count = ic_cdk::api::instruction_counter() - initial_instruction_count;
     info!(%group_id, instruction_count, "'finalize_group_import' completed");

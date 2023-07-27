@@ -26,7 +26,7 @@ fn post_upgrade(args: Args) {
     let completed_imports = read_state(|state| state.data.groups_being_imported.completed_imports());
 
     for group_id in completed_imports {
-        finalize_group_import(group_id, None);
+        finalize_group_import(group_id);
     }
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
