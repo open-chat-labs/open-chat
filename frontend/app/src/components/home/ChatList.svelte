@@ -323,7 +323,7 @@
                 {/if}
             </div>
             {#if showExploreGroups}
-                <div class="hot-groups" on:click={() => page("/groups")}>
+                <div class="explore-groups" on:click={() => page("/groups")}>
                     <div class="circle">
                         <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     </div>
@@ -411,7 +411,7 @@
         @include ellipsis();
     }
 
-    .hot-groups,
+    .explore-groups,
     .browse-channels {
         position: relative;
         display: flex;
