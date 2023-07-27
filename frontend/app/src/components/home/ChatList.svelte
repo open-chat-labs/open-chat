@@ -63,7 +63,7 @@
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
-    $: showexploreGroups =
+    $: showExploreGroups =
         ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
         !$exploreGroupsDismissed &&
         !searchResultsAvailable;
@@ -322,7 +322,7 @@
                     </div>
                 {/if}
             </div>
-            {#if showexploreGroups}
+            {#if showExploreGroups}
                 <div class="hot-groups" on:click={() => page("/groups")}>
                     <div class="circle">
                         <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} />
