@@ -802,14 +802,12 @@ function reactions(candid: [string, Principal[]][]): Reaction[] {
 
 export function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
     return {
-        changePermissions: permissionRole(candid.change_permissions),
         changeRoles: permissionRole(candid.change_roles),
-        removeMembers: permissionRole(candid.remove_members),
-        blockUsers: permissionRole(candid.block_users),
-        deleteMessages: permissionRole(candid.delete_messages),
         updateGroup: permissionRole(candid.update_group),
-        pinMessages: permissionRole(candid.pin_messages),
         inviteUsers: permissionRole(candid.invite_users),
+        removeMembers: permissionRole(candid.remove_members),
+        deleteMessages: permissionRole(candid.delete_messages),
+        pinMessages: permissionRole(candid.pin_messages),
         createPolls: permissionRole(candid.create_polls),
         sendMessages: permissionRole(candid.send_messages),
         reactToMessages: permissionRole(candid.react_to_messages),
@@ -820,10 +818,9 @@ export function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
 export function communityPermissions(candid: ApiCommunityPermissions): CommunityPermissions {
     return {
         changeRoles: communityPermissionRole(candid.change_roles),
+        updateDetails: communityPermissionRole(candid.update_details),
         inviteUsers: communityPermissionRole(candid.invite_users),
         removeMembers: communityPermissionRole(candid.remove_members),
-        blockUsers: communityPermissionRole(candid.block_users),
-        updateDetails: communityPermissionRole(candid.update_details),
         createPublicChannel: communityPermissionRole(candid.create_public_channel),
         createPrivateChannel: communityPermissionRole(candid.create_private_channel),
     };
@@ -842,10 +839,9 @@ export function apiCommunityPermissions(
 ): ApiCommunityPermissions {
     return {
         create_public_channel: apiCommunityPermissionRole(permissions.createPublicChannel),
-        block_users: apiCommunityPermissionRole(permissions.blockUsers),
         update_details: apiCommunityPermissionRole(permissions.updateDetails),
-        remove_members: apiCommunityPermissionRole(permissions.removeMembers),
         invite_users: apiCommunityPermissionRole(permissions.inviteUsers),
+        remove_members: apiCommunityPermissionRole(permissions.removeMembers),
         change_roles: apiCommunityPermissionRole(permissions.changeRoles),
         create_private_channel: apiCommunityPermissionRole(permissions.createPrivateChannel),
     };
@@ -866,14 +862,14 @@ export function apiCommunityPermissionRole(
 
 export function apiGroupPermissions(permissions: ChatPermissions): ApiGroupPermissions {
     return {
-        change_permissions: apiPermissionRole(permissions.changePermissions),
+        change_permissions: apiPermissionRole("owner"), // TODO remove this
         change_roles: apiPermissionRole(permissions.changeRoles),
-        remove_members: apiPermissionRole(permissions.removeMembers),
-        block_users: apiPermissionRole(permissions.blockUsers),
-        delete_messages: apiPermissionRole(permissions.deleteMessages),
         update_group: apiPermissionRole(permissions.updateGroup),
-        pin_messages: apiPermissionRole(permissions.pinMessages),
         invite_users: apiPermissionRole(permissions.inviteUsers),
+        remove_members: apiPermissionRole(permissions.removeMembers),
+        block_users: apiPermissionRole("owner"), // TODO remove this
+        delete_messages: apiPermissionRole(permissions.deleteMessages),
+        pin_messages: apiPermissionRole(permissions.pinMessages),
         create_polls: apiPermissionRole(permissions.createPolls),
         send_messages: apiPermissionRole(permissions.sendMessages),
         react_to_messages: apiPermissionRole(permissions.reactToMessages),

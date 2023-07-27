@@ -110,7 +110,7 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
     if let Some(member) = state.data.members.get_mut(user_principal) {
         if let Some(channel) = state.data.channels.get_mut(&channel_id) {
             let now = state.env.now();
-            match join_channel_unchecked(channel, member, state.data.is_public, now) {
+            match join_channel_unchecked(channel, member, state.data.is_public, false, now) {
                 AddResult::Success(_) => {
                     let summary = channel
                         .summary(Some(member.user_id), true, state.data.is_public, now)
@@ -139,6 +139,7 @@ pub(crate) fn join_channel_unchecked(
     channel: &mut Channel,
     member: &mut CommunityMemberInternal,
     notifications_muted: bool,
+    added_to_default_channel: bool,
     now: TimestampMillis,
 ) -> AddResult {
     let min_visible_event_index;
@@ -168,14 +169,18 @@ pub(crate) fn join_channel_unchecked(
         AddResult::Success(_) => {
             let invitation = channel.chat.invited_users.remove(&member.user_id, now);
 
-            channel.chat.events.push_main_event(
-                ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
-                    user_id: member.user_id,
-                    invited_by: invitation.map(|i| i.invited_by),
-                })),
-                0,
-                now,
-            );
+            if added_to_default_channel {
+                channel.chat.events.mark_member_added_to_default_channel(member.user_id, now);
+            } else {
+                channel.chat.events.push_main_event(
+                    ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
+                        user_id: member.user_id,
+                        invited_by: invitation.map(|i| i.invited_by),
+                    })),
+                    0,
+                    now,
+                );
+            }
 
             member.channels.insert(channel.id);
         }

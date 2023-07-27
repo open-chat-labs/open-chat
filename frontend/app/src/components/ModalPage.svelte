@@ -67,7 +67,7 @@
         top: $sp3;
     }
     .powered-by {
-        background-image: url("../assets/ic-badge-powered-by_label-stripe-white-text.svg");
+        background-image: url("/assets/ic-badge-powered-by_label-stripe-white-text.svg");
         position: absolute;
         bottom: 0;
         height: 40px;
@@ -83,34 +83,34 @@
         width: 100%;
 
         &.underwater {
-            @include fullScreenImg("../assets/underwater.jpg");
+            @include fullScreenImg("/assets/underwater.jpg");
         }
 
         &.woods {
-            @include fullScreenImg("../assets/woods.jpg");
+            @include fullScreenImg("/assets/woods.jpg");
         }
 
         &.sunset {
-            @include fullScreenImg("../assets/sunset.jpg");
+            @include fullScreenImg("/assets/sunset.jpg");
         }
 
         &.error {
-            @include fullScreenImg("../assets/error.jpg");
+            @include fullScreenImg("/assets/error.jpg");
         }
 
         &.upgrade {
-            @include fullScreenImg("../assets/upgrade.jpg");
+            @include fullScreenImg("/assets/upgrade.jpg");
         }
 
         &.empty {
-            @include fullScreenImg("../assets/empty.jpg");
+            @include fullScreenImg("/assets/empty.jpg");
         }
 
         &.network {
-            @include fullScreenImg("../assets/network12-md.jpg");
+            @include fullScreenImg("/assets/network12-md.jpg");
 
             @include mobile() {
-                @include fullScreenImg("../assets/network12-sm.jpg");
+                @include fullScreenImg("/assets/network12-sm.jpg");
             }
         }
 

@@ -227,8 +227,8 @@ export function apiOptionalGroupPermissions(
     permissions: Partial<ChatPermissions>
 ): OptionalGroupPermissions {
     return {
-        block_users: apiOptional(apiPermissionRole, permissions.blockUsers),
-        change_permissions: apiOptional(apiPermissionRole, permissions.changePermissions),
+        block_users: [],
+        change_permissions: [],
         delete_messages: apiOptional(apiPermissionRole, permissions.deleteMessages),
         send_messages: apiOptional(apiPermissionRole, permissions.sendMessages),
         remove_members: apiOptional(apiPermissionRole, permissions.removeMembers),

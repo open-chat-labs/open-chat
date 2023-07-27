@@ -21,14 +21,12 @@ export type HasMembershipRole = {
 };
 
 export type ChatPermissions = {
-    changePermissions: ChatPermissionRole;
     changeRoles: ChatPermissionRole;
-    removeMembers: ChatPermissionRole;
-    blockUsers: ChatPermissionRole;
-    deleteMessages: ChatPermissionRole;
     updateGroup: ChatPermissionRole;
-    pinMessages: ChatPermissionRole;
     inviteUsers: ChatPermissionRole;
+    removeMembers: ChatPermissionRole;
+    deleteMessages: ChatPermissionRole;
+    pinMessages: ChatPermissionRole;
     createPolls: ChatPermissionRole;
     sendMessages: ChatPermissionRole;
     reactToMessages: ChatPermissionRole;
@@ -37,10 +35,9 @@ export type ChatPermissions = {
 
 export type CommunityPermissions = {
     changeRoles: CommunityPermissionRole;
+    updateDetails: CommunityPermissionRole;
     inviteUsers: CommunityPermissionRole;
     removeMembers: CommunityPermissionRole;
-    blockUsers: CommunityPermissionRole;
-    updateDetails: CommunityPermissionRole;
     createPublicChannel: CommunityPermissionRole;
     createPrivateChannel: CommunityPermissionRole;
 };

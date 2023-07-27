@@ -32,6 +32,7 @@ pub enum ChatEvent {
     EventsTimeToLiveUpdated(EventsTimeToLiveUpdated),
     GroupGateUpdated(GroupGateUpdated),
     UsersInvited(UsersInvited),
+    MembersAddedToDefaultChannel(MembersAddedToDefaultChannel),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -239,4 +240,9 @@ pub struct PrimaryLanguageChanged {
     pub previous: String,
     pub new: String,
     pub changed_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MembersAddedToDefaultChannel {
+    pub count: u32,
 }

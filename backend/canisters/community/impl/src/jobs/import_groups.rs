@@ -1,6 +1,6 @@
 use crate::activity_notifications::extract_activity;
 use crate::model::channels::Channel;
-use crate::model::events::CommunityEvent;
+use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::NextBatchResult;
 use crate::model::members::AddResult;
 use crate::updates::c2c_join_channel::join_channel_unchecked;
@@ -10,8 +10,8 @@ use group_chat_core::GroupChatCore;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::trace;
-use types::{ChannelId, ChannelLatestMessageIndex, ChatId, MemberJoined};
+use tracing::{info, trace};
+use types::{ChannelId, ChannelLatestMessageIndex, ChatId};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -54,6 +54,7 @@ async fn import_groups(groups: Vec<(ChatId, u64)>) {
 }
 
 async fn import_group(group_id: ChatId, from: u64) {
+    info!(%group_id, from, "'import_group' starting");
     match group_canister_c2c_client::c2c_export_group(
         group_id.into(),
         &Args {
@@ -66,7 +67,8 @@ async fn import_group(group_id: ChatId, from: u64) {
         Ok(Response::Success(bytes)) => {
             mutate_state(|state| {
                 if state.data.groups_being_imported.mark_batch_complete(&group_id, &bytes) {
-                    ic_cdk_timers::set_timer(Duration::ZERO, move || deserialize_group(group_id));
+                    ic_cdk_timers::set_timer(Duration::ZERO, move || finalize_group_import(group_id));
+                    info!(%group_id, "Group data imported");
                 }
             });
         }
@@ -83,7 +85,10 @@ async fn import_group(group_id: ChatId, from: u64) {
     }
 }
 
-fn deserialize_group(group_id: ChatId) {
+pub(crate) fn finalize_group_import(group_id: ChatId) {
+    info!(%group_id, "'finalize_group_import' starting");
+    let initial_instruction_count = ic_cdk::api::instruction_counter();
+
     mutate_state(|state| {
         if let Some(group) = state.data.groups_being_imported.take(&group_id) {
             let channel_id = group.channel_id();
@@ -101,13 +106,18 @@ fn deserialize_group(group_id: ChatId) {
             });
         }
     });
+
+    let instruction_count = ic_cdk::api::instruction_counter() - initial_instruction_count;
+    info!(%group_id, instruction_count, "'finalize_group_import' completed");
 }
 
 // For each user already in the community, add the new channel to their set of channels.
 // For users who are not members, lookup their principals, then join them to the community, then add
 // them to the default channels, then add the new channel to their set of channels.
 async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attempt: u32) {
-    let (members_to_add, local_user_index_canister_id, is_public) = mutate_state(|state| {
+    info!(%group_id, attempt, "'process_channel_members' starting");
+
+    let (members_to_add, local_user_index_canister_id) = mutate_state(|state| {
         let channel = state.data.channels.get(&channel_id).unwrap();
         let mut to_add = Vec::new();
         for user_id in channel.chat.members.iter().map(|m| m.user_id) {
@@ -118,8 +128,10 @@ async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attemp
             }
         }
 
-        (to_add, state.data.local_user_index_canister_id, state.data.is_public)
+        (to_add, state.data.local_user_index_canister_id)
     });
+
+    let mut members_added = Vec::new();
 
     if !members_to_add.is_empty() {
         let c2c_args = local_user_index_canister::c2c_user_principals::Args {
@@ -130,27 +142,23 @@ async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attemp
         {
             mutate_state(|state| {
                 let now = state.env.now();
-                let notifications_muted = is_public;
                 let default_channel_ids = state.data.channels.default_channel_ids();
 
                 for (user_id, principal) in users {
                     match state.data.members.add(user_id, principal, now) {
                         AddResult::Success(_) => {
                             state.data.invited_users.remove(&user_id, now);
-                            state.data.events.push_event(
-                                CommunityEvent::MemberJoined(Box::new(MemberJoined {
-                                    user_id,
-                                    invited_by: None,
-                                })),
-                                now,
-                            );
+
                             let member = state.data.members.get_by_user_id_mut(&user_id).unwrap();
                             for default_channel_id in default_channel_ids.iter() {
                                 if let Some(channel) = state.data.channels.get_mut(default_channel_id) {
-                                    join_channel_unchecked(channel, member, notifications_muted, now);
+                                    if channel.chat.gate.is_none() {
+                                        join_channel_unchecked(channel, member, true, true, now);
+                                    }
                                 }
                             }
                             member.channels.insert(channel_id);
+                            members_added.push(user_id);
                         }
                         AddResult::AlreadyInCommunity => {}
                         AddResult::Blocked => {
@@ -168,10 +176,24 @@ async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attemp
         }
     }
 
+    mutate_state(|state| {
+        state.data.events.push_event(
+            CommunityEventInternal::GroupImported(Box::new(GroupImportedInternal {
+                group_id,
+                channel_id,
+                members_added,
+            })),
+            state.env.now(),
+        );
+    });
+
     ic_cdk_timers::set_timer(Duration::ZERO, move || mark_import_complete(group_id, channel_id));
+    info!(%group_id, attempt, "'process_channel_members' completed");
 }
 
 fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
+    info!(%group_id, "'mark_import_complete' starting");
+
     mutate_state(|state| {
         let now = state.env.now();
         state.data.channels.get_mut(&channel_id).unwrap().date_imported = Some(now);
@@ -206,4 +228,6 @@ fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
             }),
         )
     });
+
+    info!(%group_id, "'mark_import_complete' completed");
 }

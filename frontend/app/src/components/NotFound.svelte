@@ -30,7 +30,7 @@
     }
 
     .not-found {
-        background-image: url("../assets/not_found.svg");
+        background-image: url("/assets/not_found.svg");
         width: 400px;
         height: 420px;
 

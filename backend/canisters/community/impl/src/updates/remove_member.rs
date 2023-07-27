@@ -1,5 +1,5 @@
 use crate::{
-    activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, read_state,
+    activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state, read_state,
     run_regular_jobs, RuntimeState,
 };
 use canister_tracing_macros::trace;
@@ -120,13 +120,13 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
             user_ids: vec![user_id],
             blocked_by: removed_by,
         };
-        CommunityEvent::UsersBlocked(Box::new(event))
+        CommunityEventInternal::UsersBlocked(Box::new(event))
     } else {
         let event = MembersRemoved {
             user_ids: vec![user_id],
             removed_by,
         };
-        CommunityEvent::MembersRemoved(Box::new(event))
+        CommunityEventInternal::MembersRemoved(Box::new(event))
     };
     state.data.events.push_event(event, now);
 

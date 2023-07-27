@@ -2,21 +2,21 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{
-    AvatarChanged, BannerChanged, ChannelDeleted, CommunityPermissionsChanged, CommunityRoleChanged, DefaultChannelsChanged,
-    EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
-    GroupNameChanged, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersRemoved,
-    PrimaryLanguageChanged, TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    AvatarChanged, BannerChanged, ChannelDeleted, ChannelId, ChatId, CommunityPermissionsChanged, CommunityRoleChanged,
+    DefaultChannelsChanged, EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
+    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined,
+    MemberLeft, MembersRemoved, PrimaryLanguageChanged, TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize)]
 pub struct CommunityEvents {
-    events_map: BTreeMap<EventIndex, EventWrapper<CommunityEvent>>,
+    events_map: BTreeMap<EventIndex, EventWrapper<CommunityEventInternal>>,
     latest_event_index: EventIndex,
     latest_event_timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum CommunityEvent {
+pub enum CommunityEventInternal {
     Created(Box<GroupCreated>),
     NameChanged(Box<GroupNameChanged>),
     DescriptionChanged(Box<GroupDescriptionChanged>),
@@ -39,6 +39,7 @@ pub enum CommunityEvent {
     ChannelDeleted(Box<ChannelDeleted>),
     DefaultChannelsChanged(Box<DefaultChannelsChanged>),
     PrimaryLanguageChanged(Box<PrimaryLanguageChanged>),
+    GroupImported(Box<GroupImportedInternal>),
 }
 
 impl CommunityEvents {
@@ -53,7 +54,7 @@ impl CommunityEvents {
                 timestamp: now,
                 correlation_id: 0,
                 expires_at: None,
-                event: CommunityEvent::Created(Box::new(GroupCreated {
+                event: CommunityEventInternal::Created(Box::new(GroupCreated {
                     name,
                     description,
                     created_by,
@@ -68,7 +69,7 @@ impl CommunityEvents {
         }
     }
 
-    pub(crate) fn push_event(&mut self, event: CommunityEvent, now: TimestampMillis) -> EventIndex {
+    pub(crate) fn push_event(&mut self, event: CommunityEventInternal, now: TimestampMillis) -> EventIndex {
         let event_index = self.next_event_index();
 
         self.events_map.insert(
@@ -100,7 +101,7 @@ impl CommunityEvents {
         self.latest_event_timestamp
     }
 
-    pub(crate) fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<CommunityEvent>> {
+    pub(crate) fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<CommunityEventInternal>> {
         self.events_map.get(&event_index)
     }
 
@@ -108,7 +109,7 @@ impl CommunityEvents {
         &self,
         start: Option<EventIndex>,
         ascending: bool,
-    ) -> Box<dyn Iterator<Item = &EventWrapper<CommunityEvent>> + '_> {
+    ) -> Box<dyn Iterator<Item = &EventWrapper<CommunityEventInternal>> + '_> {
         let range = if let Some(start) = start {
             if let Some(event_index) = self.get(start).map(|e| e.index) {
                 if ascending {
@@ -131,4 +132,11 @@ impl CommunityEvents {
             Box::new(iter.rev())
         }
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GroupImportedInternal {
+    pub group_id: ChatId,
+    pub channel_id: ChannelId,
+    pub members_added: Vec<UserId>,
 }

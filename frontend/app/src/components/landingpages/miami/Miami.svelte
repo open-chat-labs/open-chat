@@ -28,7 +28,7 @@
                         <div class="hero-wrapper">
                             <img
                                 class="hero"
-                                src="../assets/miami/hero.svg"
+                                src="/assets/miami/hero.svg"
                                 alt="Send bitcoin at the speed of chat" />
                             <div class="headlines">
                                 <div class="sub-one">Claim your</div>
@@ -70,19 +70,19 @@
                 <section class="bitcoin">
                     <div class="img">
                         <img
-                            src="../assets/ckbtc_nobackground.svg"
+                            src="/assets/ckbtc_nobackground.svg"
                             alt="ckBTC logo"
                             class="ckbtc one" />
                         <img
-                            src="../assets/ckbtc_nobackground.svg"
+                            src="/assets/ckbtc_nobackground.svg"
                             alt="ckBTC logo"
                             class="ckbtc two" />
                         <img
-                            src="../assets/ckbtc_nobackground.svg"
+                            src="/assets/ckbtc_nobackground.svg"
                             alt="ckBTC logo"
                             class="ckbtc three" />
                         <img
-                            src="../assets/ckbtc_nobackground.svg"
+                            src="/assets/ckbtc_nobackground.svg"
                             alt="ckBTC logo"
                             class="ckbtc four" />
                     </div>
@@ -185,7 +185,7 @@
                 align-items: center;
 
                 .logo {
-                    background-image: url("../assets/spinner.svg");
+                    background-image: url("/assets/spinner.svg");
                     width: 44px;
                     height: 44px;
                 }

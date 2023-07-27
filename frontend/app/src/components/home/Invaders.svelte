@@ -47,10 +47,10 @@
     let tiltAngle: number | null = 0;
     const tiltSpeed = 0.2;
     const invaderImg = new Image();
-    invaderImg.src = "../assets/evil-robot.svg";
+    invaderImg.src = "/assets/evil-robot.svg";
     const playerImg = new Image();
-    playerImg.src = "../assets/ship.png";
-    const laserSound = new Audio("../assets/laser.mp3");
+    playerImg.src = "/assets/ship.png";
+    const laserSound = new Audio("/assets/laser.mp3");
 
     onMount(() => {
         init();
@@ -265,7 +265,7 @@
 
     function createInvaders() {
         const invader = new Image();
-        invader.src = "../assets/robot.svg";
+        invader.src = "/assets/robot.svg";
         const rows = 5;
         const columns = $mobileWidth ? 5 : 8;
         const spacing = 30;

@@ -199,6 +199,10 @@ impl CommunityMembers {
         self.members.values()
     }
 
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut CommunityMemberInternal> {
+        self.members.values_mut()
+    }
+
     pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
         self.principal_to_user_id_map.get(&user_id_or_principal).copied().or_else(|| {
             let user_id: UserId = user_id_or_principal.into();
