@@ -56,6 +56,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             exchanges: self.data.exchange_config.clone(),
+            latest_bid_and_ask: self.data.latest_bid_and_ask.clone(),
             market_makers_in_progress: self.data.market_makers_in_progress.clone(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -75,6 +76,8 @@ struct Data {
     pub icp_ledger_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
     pub orders_log: OrdersLog,
+    #[serde(default)]
+    pub latest_bid_and_ask: HashMap<ExchangeId, BidAndAsk>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
     pub test_mode: bool,
 }
@@ -94,6 +97,7 @@ impl Data {
             icp_ledger_canister_id,
             chat_ledger_canister_id,
             orders_log: OrdersLog::default(),
+            latest_bid_and_ask: HashMap::new(),
             market_makers_in_progress: HashMap::new(),
             test_mode,
         }
@@ -108,6 +112,7 @@ pub struct Metrics {
     pub wasm_version: Version,
     pub git_commit_id: String,
     pub exchanges: HashMap<ExchangeId, Config>,
+    pub latest_bid_and_ask: HashMap<ExchangeId, BidAndAsk>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
     pub canister_ids: CanisterIds,
 }
@@ -145,6 +150,12 @@ pub struct Config {
     max_orders_per_direction: u32,
     max_orders_to_make_per_iteration: u32,
     max_orders_to_cancel_per_iteration: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct BidAndAsk {
+    pub bid: Option<u64>,
+    pub ask: Option<u64>,
 }
 
 fn on_order_made(exchange_id: ExchangeId, order: MakeOrderRequest) {
