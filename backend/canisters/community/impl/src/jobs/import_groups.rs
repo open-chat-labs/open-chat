@@ -87,7 +87,7 @@ async fn import_group(group_id: ChatId, from: u64) {
 
 pub(crate) fn finalize_group_import(group_id: ChatId) {
     info!(%group_id, "'finalize_group_import' starting");
-    let initial_instructions = ic_cdk::api::instruction_counter();
+    let initial_instruction_count = ic_cdk::api::instruction_counter();
 
     mutate_state(|state| {
         if let Some(group) = state.data.groups_being_imported.take(&group_id) {
@@ -107,8 +107,8 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
         }
     });
 
-    let instructions_count = ic_cdk::api::instruction_counter() - initial_instructions;
-    info!(%group_id, instructions_count, "'finalize_group_import' completed");
+    let instruction_count = ic_cdk::api::instruction_counter() - initial_instruction_count;
+    info!(%group_id, instruction_count, "'finalize_group_import' completed");
 }
 
 // For each user already in the community, add the new channel to their set of channels.
