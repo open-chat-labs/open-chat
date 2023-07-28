@@ -537,8 +537,8 @@
     "noChatsAvailable": "チャットはありません！",
     "invitedUsers": "招待されたユーザー",
     "hotGroups": "ホットグループ",
-    "showHotGroups": "ホットグループを見せて",
-    "noHotGroups": "ホットグループはありません😭",
+    "discoverMoreGroups": "さらに多くのグループを発見",
+    "noGroupsFound": "グループが見つかりません 😭",
     "pinChat": {
         "limitExceeded": "ピンナップできるのは{limit}チャットのみです",
         "failed": "チャットの固定に失敗しました-後で試してください",
@@ -805,7 +805,6 @@
     "invited": "招待された",
     "tapForReferralLink": "タップして個人紹介リンクをコピーします",
     "deleteMessageForMe": "削除してください",
-    "whatsHotButton": "注目のグループを発見する",
     "moderator": "モデレータ",
     "level": {
         "group": "グループ",
@@ -953,5 +952,6 @@
     "selectAChannel": "リストからチャンネルを選択するか、このコミュニティでさらにチャンネルを検索します。",
     "selectAUser": "リストからユーザーを選択するか、チャットするユーザーを検索します。",
     "selectAFavourite": "ダイレクト チャット、グループ チャット、コミュニティ チャネルをお気に入りに追加すると、ここに表示されます。",
-    "defaultMustBePublic": "デフォルトにできるのはパブリック チャネルのみです"
+    "defaultMustBePublic": "デフォルトにできるのはパブリック チャネルのみです",
+    "exploreGroups": "グループを探索する"
 }

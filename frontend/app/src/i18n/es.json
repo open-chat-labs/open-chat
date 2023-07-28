@@ -539,8 +539,8 @@
     "noChatsAvailable": "¡No hay chats disponibles!",
     "invitedUsers": "Usuarios invitados",
     "hotGroups": "Grupos calientes",
-    "showHotGroups": "Muéstrame algunos grupos calientes",
-    "noHotGroups": "No hay grupos calientes 😭",
+    "discoverMoreGroups": "Descubre más grupos",
+    "noGroupsFound": "No se encontraron grupos 😭",
     "pinChat": {
         "limitExceeded": "Solo puedes anclar hasta {limit} chats",
         "failed": "Error al anclar el chat. Inténtalo más tarde.",
@@ -806,7 +806,6 @@
     "invited": "Invitado",
     "tapForReferralLink": "Toque para copiar su enlace de referencia personal",
     "deleteMessageForMe": "Eliminar para mí",
-    "whatsHotButton": "Descubre grupos calientes",
     "moderator": "moderador",
     "level": {
         "group": "Grupo",
@@ -954,5 +953,6 @@
     "selectAChannel": "Seleccione un canal de la lista o busque más canales en esta comunidad.",
     "selectAUser": "Seleccione un usuario de la lista o busque un usuario para chatear.",
     "selectAFavourite": "Puede agregar chats directos, chats grupales o canales comunitarios a sus favoritos y los verá aquí.",
-    "defaultMustBePublic": "Solo un canal público puede ser un canal predeterminado"
+    "defaultMustBePublic": "Solo un canal público puede ser un canal predeterminado",
+    "exploreGroups": "Explorar grupos"
 }
