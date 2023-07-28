@@ -56,7 +56,7 @@ impl PublicCommunities {
     pub fn search(
         &self,
         search_term: Option<String>,
-        exclude_moderation_flags: ModerationFlags,
+        include_moderation_flags: ModerationFlags,
         languages: Vec<String>,
         page_index: u32,
         page_size: u8,
@@ -66,7 +66,7 @@ impl PublicCommunities {
         let mut matches: Vec<_> = self
             .iter()
             .filter(|c| !c.is_frozen())
-            .filter(|c| !c.moderation_flags().intersects(exclude_moderation_flags))
+            .filter(|c| include_moderation_flags.contains(*c.moderation_flags()))
             .filter(|c| languages.is_empty() || languages.contains(&c.primary_language))
             .map(|c| {
                 let score = if let Some(query) = &query {
