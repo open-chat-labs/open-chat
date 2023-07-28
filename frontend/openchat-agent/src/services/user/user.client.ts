@@ -7,6 +7,7 @@ import {
     ApiChatMessagesRead,
     ApiMarkReadArgs,
     ApiSendMessageArgs,
+    ApiSendMessageWithTransferToChannelArgs,
     ApiSendMessageWithTransferToGroupArgs,
     idlFactory,
     UserService,
@@ -61,6 +62,7 @@ import {
     CommunityIdentifier,
     LeaveCommunityResponse,
     DeleteCommunityResponse,
+    ChannelIdentifier,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -77,6 +79,7 @@ import {
     setBioResponse,
     unblockResponse,
     withdrawCryptoResponse,
+    sendMessageWithTransferToChannelResponse,
     sendMessageWithTransferToGroupResponse,
     publicProfileResponse,
     pinChatResponse,
@@ -577,7 +580,7 @@ export class UserClient extends CandidService {
             });
     }
 
-    sendMessageWithTransferToGroupToBackend(
+    private sendMessageWithTransferToGroupToBackend(
         groupId: GroupChatIdentifier,
         recipientId: string,
         sender: CreatedUser,
@@ -604,6 +607,58 @@ export class UserClient extends CandidService {
         return this.handleResponse(
             this.userService.send_message_with_transfer_to_group(req),
             (resp) => sendMessageWithTransferToGroupResponse(resp, event.event.sender, recipientId)
+        ).then((resp) => [resp, event.event]);
+    }
+
+    sendMessageWithTransferToChannel(
+        id: ChannelIdentifier,
+        recipientId: string,
+        sender: CreatedUser,
+        event: EventWrapper<Message>,
+        threadRootMessageIndex?: number
+    ): Promise<[SendMessageResponse, Message]> {
+        removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
+        return this.sendMessageWithTransferToChannelToBackend(
+            id,
+            recipientId,
+            sender,
+            event,
+            threadRootMessageIndex
+        )
+            .then(setCachedMessageFromSendResponse(this.db, id, event, threadRootMessageIndex))
+            .catch((err) => {
+                recordFailedMessage(this.db, id, event);
+                throw err;
+            });
+    }
+
+    private sendMessageWithTransferToChannelToBackend(
+        id: ChannelIdentifier,
+        recipientId: string,
+        sender: CreatedUser,
+        event: EventWrapper<Message>,
+        threadRootMessageIndex?: number
+    ): Promise<[SendMessageResponse, Message]> {
+        const content = apiPendingCryptoContent(event.event.content as CryptocurrencyContent);
+
+        const req: ApiSendMessageWithTransferToChannelArgs = {
+            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            content: {
+                Crypto: content,
+            },
+            sender_name: sender.username,
+            mentioned: [],
+            message_id: event.event.messageId,
+            community_id: Principal.fromText(id.communityId),
+            channel_id: BigInt(id.channelId),
+            replies_to: apiOptional(
+                (replyContext) => apiReplyContextArgs(id, replyContext),
+                event.event.repliesTo
+            ),
+        };
+        return this.handleResponse(
+            this.userService.send_message_with_transfer_to_channel(req),
+            (resp) => sendMessageWithTransferToChannelResponse(resp, event.event.sender, recipientId)
         ).then((resp) => [resp, event.event]);
     }
 
