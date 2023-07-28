@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Mark channels as read after joining community or channel ([#4004](https://github.com/open-chat-labs/open-chat/pull/4004))
+- Use `include_moderation_flags` rather than `exclude_moderation_flags` ([#4050](https://github.com/open-chat-labs/open-chat/pull/4050))
 
 ### Deprecated
 

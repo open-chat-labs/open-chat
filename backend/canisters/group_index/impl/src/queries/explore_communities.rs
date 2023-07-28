@@ -21,14 +21,14 @@ fn explore_communities_impl(args: Args, state: &RuntimeState) -> Response {
         }
     }
 
-    let exclude_moderation_flags = match ModerationFlags::from_bits(args.exclude_moderation_flags.unwrap_or_default()) {
+    let include_moderation_flags = match ModerationFlags::from_bits(args.include_moderation_flags.unwrap_or_default()) {
         Some(tags) => tags,
         None => return InvalidFlags,
     };
 
     let (matches, total) = state.data.public_communities.search(
         args.search_term,
-        exclude_moderation_flags,
+        include_moderation_flags,
         args.languages,
         args.page_index,
         args.page_size,

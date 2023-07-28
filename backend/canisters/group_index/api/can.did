@@ -66,7 +66,7 @@ type ExploreCommunitiesArgs = record {
     languages : vec text;
     page_index : nat32;
     page_size : nat8;
-    exclude_moderation_flags : opt nat32;
+    include_moderation_flags : opt nat32;
 };
 
 type ExploreCommunitiesResponse = variant {

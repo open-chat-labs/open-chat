@@ -44,6 +44,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             suspension_details,
             is_suspected_bot: state.data.users.is_suspected_bot(&u.user_id),
             diamond_membership_details: u.diamond_membership_details.hydrate(now),
+            moderation_flags_enabled: u.moderation_flags_enabled,
         })
     } else {
         UserNotFound

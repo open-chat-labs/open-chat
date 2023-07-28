@@ -23,6 +23,8 @@ pub struct User {
     pub is_bot: bool,
     pub suspension_details: Option<SuspensionDetails>,
     pub diamond_membership_details: DiamondMembershipDetailsInternal,
+    #[serde(default)]
+    pub moderation_flags_enabled: Option<u32>,
 }
 
 impl User {
@@ -69,6 +71,7 @@ impl User {
             is_bot,
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
+            moderation_flags_enabled: None,
         }
     }
 
@@ -137,6 +140,7 @@ impl Default for User {
             is_bot: false,
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
+            moderation_flags_enabled: None,
         }
     }
 }
