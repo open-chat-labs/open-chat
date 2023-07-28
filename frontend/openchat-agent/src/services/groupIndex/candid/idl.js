@@ -51,9 +51,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const ExploreCommunitiesArgs = IDL.Record({
     'page_size' : IDL.Nat8,
+    'include_moderation_flags' : IDL.Opt(IDL.Nat32),
     'page_index' : IDL.Nat32,
     'languages' : IDL.Vec(IDL.Text),
-    'exclude_moderation_flags' : IDL.Opt(IDL.Nat32),
     'search_term' : IDL.Opt(IDL.Text),
   });
   const Milliseconds = IDL.Nat64;

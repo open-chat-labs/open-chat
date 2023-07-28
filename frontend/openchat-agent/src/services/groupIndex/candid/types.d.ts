@@ -401,9 +401,9 @@ export interface EventsTimeToLiveUpdated {
 }
 export interface ExploreCommunitiesArgs {
   'page_size' : number,
+  'include_moderation_flags' : [] | [number],
   'page_index' : number,
   'languages' : Array<string>,
-  'exclude_moderation_flags' : [] | [number],
   'search_term' : [] | [string],
 }
 export type ExploreCommunitiesResponse = { 'TermTooShort' : number } |

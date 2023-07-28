@@ -341,6 +341,7 @@ import {
     ICP_SYMBOL,
     KINIC_SYMBOL,
     SNS1_SYMBOL,
+    ModerationFlag,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -4450,6 +4451,28 @@ export class OpenChat extends OpenChatAgentWorker {
             default:
                 throw new Error("Token not recognised: " + token);
         }
+    }
+
+    setModerationFlags(flags: number): Promise<number> {
+        const previousValue = this.user.moderationFlagsEnabled;
+        this.user = {
+            ...this.user,
+            moderationFlagsEnabled: flags,
+        };
+
+        return this.sendRequest({
+            kind: "setModerationFlags",
+            flags: this.user.moderationFlagsEnabled,
+        })
+            .then((resp) => resp === "success" ? flags : previousValue)
+            .catch((err) => {
+                this._logger.error("Error setting moderation flags", err);
+                this.user = {
+                    ...this.user,
+                    moderationFlagsEnabled: previousValue,
+                };
+                return previousValue;
+            });
     }
 
     // **** Communities Stuff

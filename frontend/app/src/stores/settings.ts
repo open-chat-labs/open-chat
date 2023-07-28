@@ -9,6 +9,7 @@ export const lowBandwidth = createLsBoolStore(configKeys.lowBandwidth, false);
 export const userInfoOpen = createLsBoolStore(configKeys.userInfoSection, true);
 export const appearanceSectionOpen = createLsBoolStore(configKeys.appearanceSection, false);
 export const chatsSectionOpen = createLsBoolStore(configKeys.chatsSection, false);
+export const restrictedSectionOpen = createLsBoolStore(configKeys.restrictedSection, false);
 export const referralOpen = createLsBoolStore(configKeys.referralSection, false);
 export const storageSectionOpen = createLsBoolStore(configKeys.storageSection, false);
 export const statsSectionOpen = createLsBoolStore(configKeys.userStatsSection, false);
@@ -20,10 +21,7 @@ export const groupPermissionsOpen = createLsBoolStore(configKeys.groupPermission
 export const groupStatsOpen = createLsBoolStore(configKeys.groupStatsSection, false);
 export const groupInviteUsersOpen = createLsBoolStore(configKeys.groupInviteUsersSections, false);
 export const groupAdvancedOpen = createLsBoolStore(configKeys.groupAdvancedSection, false);
-export const exploreGroupsDismissed = createLsBoolStore(
-    configKeys.exploreGroupsDismissed,
-    false
-);
+export const exploreGroupsDismissed = createLsBoolStore(configKeys.exploreGroupsDismissed, false);
 
 export const communityVisibilityOpen = createLsBoolStore(
     configKeys.communityVisibilitySection,

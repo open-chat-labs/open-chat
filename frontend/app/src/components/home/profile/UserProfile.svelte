@@ -1,6 +1,6 @@
 <script lang="ts">
     import SectionHeader from "../../SectionHeader.svelte";
-    import { PartialUserSummary, OpenChat, AvatarSize } from "openchat-client";
+    import { PartialUserSummary, OpenChat, AvatarSize, ModerationFlag } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -23,6 +23,7 @@
         advancedSectionOpen,
         appearanceSectionOpen,
         chatsSectionOpen,
+        restrictedSectionOpen,
         enterSend,
         lowBandwidth,
         referralOpen,
@@ -39,8 +40,14 @@
     import ReferUsers from "./ReferUsers.svelte";
     import Expiry from "../upgrade/Expiry.svelte";
 
-    const client = getContext<OpenChat>("client");
+    type Flag = 1 | 2;
 
+    const Flags = {
+        Offensive: 1 as Flag,
+        Adult: 2 as Flag,
+    };
+
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
     const MAX_BIO_LENGTH = 2000;
 
@@ -55,6 +62,9 @@
     let validUsername: string | undefined = undefined;
     let checkingUsername: boolean;
     let readonly = client.isReadOnly();
+    let moderationFlags = client.user.moderationFlagsEnabled;
+    $: adultEnabled = hasFlag(moderationFlags, Flags.Adult);
+    $: offensiveEnabled = hasFlag(moderationFlags, Flags.Offensive);
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -74,6 +84,15 @@
             originalBio = userbio = bio;
         });
     });
+
+    function hasFlag(mask: number, flag: ModerationFlag): boolean {
+        return (mask & flag) !== 0;
+    }
+
+    function toggleModerationFlag(flag: ModerationFlag) {
+        moderationFlags = moderationFlags ^ flag;
+        client.setModerationFlags(moderationFlags).then((val) => (moderationFlags = val));
+    }
 
     function saveUser() {
         saving = true;
@@ -304,6 +323,26 @@
                 checked={$lowBandwidth} />
         </CollapsibleCard>
     </div>
+    <div class="restricted">
+        <CollapsibleCard
+            on:toggle={restrictedSectionOpen.toggle}
+            open={$restrictedSectionOpen}
+            headerText={$_("restrictedContent")}>
+            <p class="blurb">{$_("restrictedContentInfo")}</p>
+            <Toggle
+                id={"offensive"}
+                small
+                on:change={() => toggleModerationFlag(Flags.Offensive)}
+                label={$_("communities.offensive")}
+                checked={offensiveEnabled} />
+            <Toggle
+                id={"adult"}
+                small
+                on:change={() => toggleModerationFlag(Flags.Adult)}
+                label={$_("communities.adult")}
+                checked={adultEnabled} />
+        </CollapsibleCard>
+    </div>
     {#if !readonly}
         <div class="storage">
             <CollapsibleCard
@@ -426,6 +465,11 @@
         @include mobile() {
             padding: 0 $sp3;
         }
+    }
+
+    .blurb {
+        @include font-size(fs-80);
+        color: var(--txt-light);
     }
 
     .expiry {

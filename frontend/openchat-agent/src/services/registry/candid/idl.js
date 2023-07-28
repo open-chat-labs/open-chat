@@ -11,8 +11,12 @@ export const idlFactory = ({ IDL }) => {
     'logo' : IDL.Opt(IDL.Text),
     'name' : IDL.Text,
     'last_updated' : TimestampMillis,
-    'sns_canisters' : IDL.Opt(
-      IDL.Record({ 'root' : CanisterId, 'governance' : CanisterId })
+    'nervous_system' : IDL.Opt(
+      IDL.Record({
+        'root' : CanisterId,
+        'is_nns' : IDL.Bool,
+        'governance' : CanisterId,
+      })
     ),
     'ledger_canister_id' : CanisterId,
     'symbol' : IDL.Text,

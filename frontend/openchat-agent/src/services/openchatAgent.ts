@@ -279,11 +279,7 @@ export class OpenChatAgent extends EventTarget {
 
     getLedgerClient(ledger: string): LedgerClient {
         if (!this._ledgerClients[ledger]) {
-            this._ledgerClients[ledger] = LedgerClient.create(
-                this.identity,
-                this.config,
-                ledger,
-            );
+            this._ledgerClients[ledger] = LedgerClient.create(this.identity, this.config, ledger);
         }
         return this._ledgerClients[ledger];
     }
@@ -1508,6 +1504,10 @@ export class OpenChatAgent extends EventTarget {
 
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this._userIndexClient.getCurrentUser();
+    }
+
+    setModerationFlags(flags: number): Promise<boolean> {
+        return this._userIndexClient.setModerationFlags(flags);
     }
 
     checkUsername(username: string): Promise<CheckUsernameResponse> {
