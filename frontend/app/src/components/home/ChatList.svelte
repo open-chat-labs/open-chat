@@ -325,7 +325,7 @@
             {#if showExploreGroups}
                 <div class="explore-groups" on:click={() => page("/groups")}>
                     <div class="disc">
-                        <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        <Compass size={$iconSize} color={"var(--icon-txt)"} />
                     </div>
                     <div class="label">{$_("exploreGroups")}</div>
                     <div on:click={() => exploreGroupsDismissed.set(true)} class="close">

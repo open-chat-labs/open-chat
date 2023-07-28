@@ -956,5 +956,7 @@
     "selectAFavourite": "Puede agregar chats directos, chats grupales o canales comunitarios a sus favoritos y los verá aquí.",
     "defaultMustBePublic": "Solo un canal público puede ser un canal predeterminado",
     "exploreGroups": "Explorar grupos",
-    "channelAlreadyExists": "Ya existe un canal con ese nombre"
+    "channelAlreadyExists": "Ya existe un canal con ese nombre",
+    "restrictedContent": "Contenido restringido",
+    "restrictedContentInfo": "Elija si desea ver grupos y comunidades a los que se les han aplicado las siguientes marcas de moderación."
 }

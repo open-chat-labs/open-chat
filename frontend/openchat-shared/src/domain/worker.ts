@@ -264,6 +264,7 @@ export type WorkerRequest =
     | ConvertGroupToCommunity
     | ImportGroupToCommunity
     | ManageDefaultChannels
+    | SetModerationFlags
     | ChangeCommunityRole;
 
 type ManageDefaultChannels = {
@@ -271,6 +272,11 @@ type ManageDefaultChannels = {
     id: CommunityIdentifier;
     toAdd: Set<string>;
     toRemove: Set<string>;
+};
+
+type SetModerationFlags = {
+    kind: "setModerationFlags";
+    flags: number;
 };
 
 type ImportGroupToCommunity = {

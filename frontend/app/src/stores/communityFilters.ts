@@ -1,16 +1,8 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { Writable, derived, writable } from "svelte/store";
+import { Writable, writable } from "svelte/store";
 
 type CommunityFilter = {
     languages: Set<string>;
-    flags: number;
-};
-
-type Flag = 1 | 2;
-
-export const Flags = {
-    Offensive: 1 as Flag,
-    Adult: 2 as Flag,
 };
 
 function toString(filter: CommunityFilter): string {
@@ -24,7 +16,6 @@ function fromString(serialised: string | null): CommunityFilter | undefined {
     if (!serialised) return undefined;
     const parsed = JSON.parse(serialised);
     return {
-        flags: parsed.flags,
         languages: new Set(parsed.languages),
     };
 }
@@ -32,7 +23,6 @@ function fromString(serialised: string | null): CommunityFilter | undefined {
 function initialise(): Writable<CommunityFilter> {
     const filter = fromString(localStorage.getItem("openchat_community_filters")) ?? {
         languages: new Set<string>(),
-        flags: 0,
     };
     return writable(filter);
 }
@@ -56,19 +46,4 @@ export const communityFiltersStore = {
             return save({ ...filter });
         });
     },
-    toggleFlag: (flag: Flag) => {
-        store.update((filter) => {
-            return save({
-                ...filter,
-                flags: filter.flags ^ flag,
-            });
-        });
-    },
 };
-
-export function hasFlag(mask: number, flag: Flag): boolean {
-    return (mask & flag) !== 0;
-}
-
-export const adultEnabled = derived(store, (store) => hasFlag(store.flags, Flags.Adult));
-export const offensiveEnabled = derived(store, (store) => hasFlag(store.flags, Flags.Offensive));

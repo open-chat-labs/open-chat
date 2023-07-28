@@ -7,12 +7,7 @@
     import { iconSize } from "../../../../stores/iconSize";
     import Checkbox from "../../../Checkbox.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
-    import {
-        communityFiltersStore,
-        adultEnabled,
-        offensiveEnabled,
-        Flags,
-    } from "../../../../stores/communityFilters";
+    import { communityFiltersStore } from "../../../../stores/communityFilters";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import { supportedLanguages } from "../../../../i18n/i18n";
 
@@ -43,22 +38,6 @@
                     checked={$communityFiltersStore.languages.has(lang.code)} />
             </div>
         {/each}
-    </CollapsibleCard>
-    <CollapsibleCard open headerText={$_("communities.flags")}>
-        <div class="toggle">
-            <Checkbox
-                id={`tag_offensive`}
-                on:change={() => communityFiltersStore.toggleFlag(Flags.Offensive)}
-                label={$_("communities.offensive")}
-                checked={$offensiveEnabled} />
-        </div>
-        <div class="toggle">
-            <Checkbox
-                id={`tag_adult`}
-                on:change={() => communityFiltersStore.toggleFlag(Flags.Adult)}
-                label={$_("communities.adult")}
-                checked={$adultEnabled} />
-        </div>
     </CollapsibleCard>
 </div>
 

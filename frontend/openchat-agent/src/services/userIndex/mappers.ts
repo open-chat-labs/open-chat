@@ -120,6 +120,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             suspensionDetails: optional(r.suspension_details, suspensionDetails),
             isSuspectedBot: r.is_suspected_bot,
             diamondMembership: optional(r.diamond_membership_details, diamondMembership),
+            moderationFlagsEnabled: r.moderation_flags_enabled,
         };
     }
 

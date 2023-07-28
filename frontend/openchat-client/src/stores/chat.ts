@@ -59,7 +59,7 @@ export const currentUserStore = immutableStore<CreatedUser | undefined>(undefine
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
 
-const communitiesEnabled = localStorage.getItem("openchat_communities_enabled") === "true";
+const communitiesEnabled = true;
 
 export const myServerChatSummariesStore = derived(
     [globalStateStore, chatListScopeStore],
@@ -215,7 +215,7 @@ export const selectedMessageContext = derived(
         return undefined;
     }
 );
-export const chatsLoading = writable(false);
+export const chatsLoading = writable(true);
 export const chatsInitialised = writable(false);
 
 export const selectedServerChatStore = derived(

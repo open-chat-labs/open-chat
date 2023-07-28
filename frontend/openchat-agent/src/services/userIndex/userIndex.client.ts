@@ -63,6 +63,15 @@ export class UserIndexClient extends CandidService {
         );
     }
 
+    setModerationFlags(flags: number): Promise<boolean> {
+        return this.handleResponse(
+            this.userIndexService.set_moderation_flags({
+                moderation_flags_enabled: flags,
+            }),
+            (_) => true
+        );
+    }
+
     userRegistrationCanister(): Promise<string> {
         return this.handleResponse(
             this.userIndexService.user_registration_canister({}),
