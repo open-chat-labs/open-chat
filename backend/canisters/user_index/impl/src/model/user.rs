@@ -140,6 +140,7 @@ impl Default for User {
             is_bot: false,
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
+            moderation_flags_enabled: None,
         }
     }
 }
