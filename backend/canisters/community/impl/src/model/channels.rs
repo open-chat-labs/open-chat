@@ -167,9 +167,7 @@ impl Channels {
     pub fn is_name_taken(&self, name: &str) -> bool {
         let lowercase_name = name.to_lowercase();
 
-        self.channels
-            .values()
-            .any(|c| c.chat.is_public && c.chat.name.to_lowercase() == lowercase_name)
+        self.channels.values().any(|c| c.chat.name.to_lowercase() == lowercase_name)
     }
 }
 
