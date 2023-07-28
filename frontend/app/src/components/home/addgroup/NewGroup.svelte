@@ -100,13 +100,17 @@
         return interpolateLevel(error, candidateGroup.level, true);
     }
 
-    function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
+    function groupUpdateErrorMessage(
+        resp: UpdateGroupResponse,
+        isChannel: boolean
+    ): string | undefined {
         if (resp === "success") return undefined;
         if (resp === "unchanged") return undefined;
         if (resp === "name_too_short") return "groupNameTooShort";
         if (resp === "name_too_long") return "groupNameTooLong";
         if (resp === "name_reserved") return "groupNameReserved";
         if (resp === "desc_too_long") return "groupDescTooLong";
+        if (resp === "name_taken" && isChannel) return "channelAlreadyExists";
         if (resp === "name_taken") return "groupAlreadyExists";
         if (resp === "not_in_group") return "userNotInGroup";
         if (resp === "internal_error") return "groupUpdateFailed";
@@ -120,13 +124,17 @@
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
-    function groupCreationErrorMessage(resp: CreateGroupResponse): string | undefined {
+    function groupCreationErrorMessage(
+        resp: CreateGroupResponse,
+        isChannel: boolean
+    ): string | undefined {
         if (resp.kind === "success") return undefined;
         if (resp.kind === "internal_error") return "groupCreationFailed";
         if (resp.kind === "name_too_short") return "groupNameTooShort";
         if (resp.kind === "name_too_long") return "groupNameTooLong";
         if (resp.kind === "name_reserved") return "groupNameReserved";
         if (resp.kind === "description_too_long") return "groupDescTooLong";
+        if (resp.kind === "group_name_taken" && isChannel) return "channelAlreadyExists";
         if (resp.kind === "group_name_taken") return "groupAlreadyExists";
         if (resp.kind === "avatar_too_big") return "groupAvatarTooBig";
         if (resp.kind === "max_groups_created") return "maxGroupsCreated";
@@ -243,6 +251,8 @@
     function doUpdateGate(gate: AccessGate): Promise<void> {
         if (!editing) return Promise.resolve();
 
+        let isChannel = candidateGroup.id.kind === "channel";
+
         return client
             .updateGroup(
                 candidateGroup.id,
@@ -254,7 +264,7 @@
                 gate
             )
             .then((resp) => {
-                const err = groupUpdateErrorMessage(resp);
+                const err = groupUpdateErrorMessage(resp, isChannel);
                 if (err) {
                     toastStore.showFailureToast(interpolateError(err));
                 } else {
@@ -289,6 +299,8 @@
     function doUpdateInfo(): Promise<void> {
         if (!editing) return Promise.resolve();
 
+        let isChannel = candidateGroup.id.kind === "channel";
+
         return client
             .updateGroup(
                 candidateGroup.id,
@@ -300,7 +312,7 @@
                 undefined
             )
             .then((resp) => {
-                const err = groupUpdateErrorMessage(resp);
+                const err = groupUpdateErrorMessage(resp, isChannel);
                 if (err) {
                     toastStore.showFailureToast(interpolateError(err));
                 } else {
@@ -322,11 +334,13 @@
     function createGroup() {
         busy = true;
 
+        let isChannel = candidateGroup.id.kind === "channel";
+
         client
             .createGroupChat(candidateGroup)
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    const err = groupCreationErrorMessage(resp);
+                    const err = groupCreationErrorMessage(resp, isChannel);
                     if (err) toastStore.showFailureToast(interpolateError(err));
                     step = 0;
                 } else {

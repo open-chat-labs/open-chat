@@ -878,7 +878,7 @@
         "general": "Tổng quan",
         "mustHaveOneChannel": "Bạn phải tạo ít nhất một kênh mặc định",
         "mustHaveUniqueChannels": "Bạn không thể có tên kênh mặc định trùng lặp",
-        "noBlankChannels": "Tất cả các kênh mặc định phải có tên",
+        "noBlankChannels": "Tất cả các kênh phải có tên",
         "members": "Các thành viên",
         "created": "Cộng đồng của bạn đã được tạo thành công",
         "saved": "Cộng đồng của bạn đã được cập nhật thành công",
@@ -903,7 +903,7 @@
         "favourites": "yêu thích",
         "addToFavourites": "Thêm vào mục ưa thích",
         "removeFromFavourites": "Loại bỏ khỏi mục ưa thích",
-        "noInvalidChannels": "Tất cả các kênh mặc định phải nằm trong khoảng từ {min} đến {max} ký tự",
+        "noInvalidChannels": "Tất cả tên kênh phải nằm trong khoảng từ {min} đến {max} ký tự",
         "convertButton": "Chuyển thành",
         "converted": "Nhóm của bạn đã được chuyển đổi thành một cộng đồng.",
         "pleaseWait": "Vui lòng đợi - quá trình này có thể mất chút thời gian",
@@ -954,5 +954,6 @@
     "selectAUser": "Chọn người dùng từ danh sách hoặc tìm kiếm người dùng để trò chuyện.",
     "selectAFavourite": "Bạn có thể thêm các cuộc trò chuyện trực tiếp, trò chuyện nhóm hoặc các kênh cộng đồng vào mục yêu thích của mình và bạn sẽ thấy chúng ở đây.",
     "defaultMustBePublic": "Chỉ một kênh công khai mới có thể là kênh mặc định",
-    "exploreGroups": "Khám phá các nhóm"
+    "exploreGroups": "Khám phá các nhóm",
+    "channelAlreadyExists": "Kênh có tên đó đã tồn tại"
 }

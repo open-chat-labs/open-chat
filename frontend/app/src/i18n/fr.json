@@ -877,7 +877,7 @@
         "general": "Général",
         "mustHaveOneChannel": "Vous devez créer au moins un canal par défaut",
         "mustHaveUniqueChannels": "Vous ne pouvez pas avoir de noms de chaîne par défaut en double",
-        "noBlankChannels": "Tous les canaux par défaut doivent avoir un nom",
+        "noBlankChannels": "Tous les canaux doivent avoir un nom",
         "members": "Membres",
         "created": "Votre communauté a été créée avec succès",
         "saved": "Votre communauté a été mise à jour avec succès",
@@ -902,7 +902,7 @@
         "favourites": "Favoris",
         "addToFavourites": "Ajouter aux Favoris",
         "removeFromFavourites": "Supprimer des favoris",
-        "noInvalidChannels": "Tous les critères par défaut doivent contenir entre {min} et {max} caractères",
+        "noInvalidChannels": "Tous les noms de chaînes doivent être compris entre {min} et {max} caractères",
         "convertButton": "Convertir",
         "converted": "Votre groupe a été converti en communauté.",
         "pleaseWait": "Veuillez patienter - cela peut prendre un peu de temps",
@@ -953,5 +953,6 @@
     "selectAUser": "Sélectionnez un utilisateur dans la liste ou recherchez un utilisateur avec qui discuter.",
     "selectAFavourite": "Vous pouvez ajouter des chats directs, des chats de groupe ou des canaux communautaires à vos favoris et vous les verrez ici.",
     "defaultMustBePublic": "Seul un canal public peut être un canal par défaut",
-    "exploreGroups": "Explorer les groupes"
+    "exploreGroups": "Explorer les groupes",
+    "channelAlreadyExists": "Une chaîne portant ce nom existe déjà"
 }

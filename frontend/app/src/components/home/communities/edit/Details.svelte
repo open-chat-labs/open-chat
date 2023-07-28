@@ -18,7 +18,7 @@
 
     $: {
         valid =
-            candidate.name.length > MIN_LENGTH &&
+            candidate.name.length >= MIN_LENGTH &&
             candidate.name.length <= MAX_LENGTH &&
             candidate.description.length <= MAX_DESC_LENGTH &&
             candidate.description.length > 0;
