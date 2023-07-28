@@ -329,6 +329,15 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
         if (chatId.kind === "channel") {
+            if (event.event.content.kind === "crypto_content") {
+                return this.userClient.sendMessageWithTransferToChannel(
+                    chatId,
+                    event.event.content.transfer.recipient,
+                    user,
+                    event,
+                    threadRootMessageIndex
+                );
+            }
             return this.sendChannelMessage(
                 chatId,
                 user.username,
