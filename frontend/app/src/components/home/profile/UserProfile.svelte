@@ -85,10 +85,6 @@
         });
     });
 
-    function hasFlag(mask: number, flag: ModerationFlag): boolean {
-        return (mask & flag) !== 0;
-    }
-
     function toggleModerationFlag(flag: ModerationFlag) {
         client.setModerationFlags($moderationFlags ^ flag);
     }
