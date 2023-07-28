@@ -2,4 +2,4 @@
 
 import { createLsBoolStore } from "openchat-client";
 
-export const communitiesEnabled = createLsBoolStore("openchat_communities_enabled", true);
+export const communitiesEnabled = createLsBoolStore("openchat_communities_enabled", false);
