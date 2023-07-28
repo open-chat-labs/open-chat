@@ -538,8 +538,8 @@
     },
     "noChatsAvailable": "Keine Chats verfügbar!",
     "invitedUsers": "Eingeladene Benutzer",
-    "showHotGroups": "Zeig mir ein paar heiße Gruppen",
-    "noHotGroups": "Keine heißen Gruppen 😭",
+    "discoverMoreGroups": "Entdecken Sie weitere Gruppen",
+    "noGroupsFound": "Keine Gruppen gefunden 😭",
     "hotGroups": "Heiße Gruppen",
     "pinChat": {
         "limitExceeded": "Sie können nur an {limit} Chats anheften",
@@ -806,7 +806,6 @@
     "invited": "Eingeladen",
     "tapForReferralLink": "Tippen Sie hier, um Ihren persönlichen Empfehlungslink zu kopieren",
     "deleteMessageForMe": "Für mich löschen",
-    "whatsHotButton": "Entdecken Sie heiße Gruppen",
     "moderator": "Moderator",
     "level": {
         "group": "Gruppe",
@@ -954,5 +953,6 @@
     "selectAChannel": "Wählen Sie einen Kanal aus der Liste aus oder suchen Sie nach weiteren Kanälen in dieser Community.",
     "selectAUser": "Wählen Sie einen Benutzer aus der Liste aus oder suchen Sie nach einem Benutzer, mit dem Sie chatten möchten.",
     "selectAFavourite": "Sie können Direktchats, Gruppenchats oder Community-Kanäle zu Ihren Favoriten hinzufügen und sehen diese hier.",
-    "defaultMustBePublic": "Nur ein öffentlicher Kanal kann ein Standardkanal sein"
+    "defaultMustBePublic": "Nur ein öffentlicher Kanal kann ein Standardkanal sein",
+    "exploreGroups": "Entdecken Sie Gruppen"
 }

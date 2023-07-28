@@ -93,7 +93,7 @@
     </div>
 {:else}
     <div class="no-groups">
-        <h3 class="title">{$_("noHotGroups")}</h3>
+        <h3 class="title">{$_("noGroupsFound")}</h3>
         <p class="subtitle">{$_("checkBackLater")}</p>
         <ButtonGroup align={"fill"}>
             <Button small={true} on:click={cancelRecommendations}>{$_("close")}</Button>

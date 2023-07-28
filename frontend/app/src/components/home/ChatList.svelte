@@ -1,5 +1,6 @@
 <script lang="ts">
     import Close from "svelte-material-icons/Close.svelte";
+    import Compass from "svelte-material-icons/CompassOutline.svelte";
     import CurrentUser from "./CurrentUser.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
@@ -27,7 +28,7 @@
     import ChatsButton from "./ChatsButton.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import { discoverHotGroupsDismissed } from "../../stores/settings";
+    import { exploreGroupsDismissed } from "../../stores/settings";
     import { communitiesEnabled } from "../../utils/features";
     import { pushRightPanelHistory, rightPanelHistory } from "../../stores/rightPanel";
     import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
@@ -62,9 +63,9 @@
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
-    $: showWhatsHot =
+    $: showExploreGroups =
         ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
-        !$discoverHotGroupsDismissed &&
+        !$exploreGroupsDismissed &&
         !searchResultsAvailable;
     $: showBrowseChannnels = $chatListScope.kind === "community" && !searchResultsAvailable;
     $: unreadDirectChats = client.unreadDirectChats;
@@ -321,18 +322,20 @@
                     </div>
                 {/if}
             </div>
-            {#if showWhatsHot}
-                <div class="hot-groups" on:click={() => page("/hotgroups")}>
-                    <div class="flame">🔥</div>
-                    <div class="label">{$_("whatsHotButton")}</div>
-                    <div on:click={() => discoverHotGroupsDismissed.set(true)} class="close">
+            {#if showExploreGroups}
+                <div class="explore-groups" on:click={() => page("/groups")}>
+                    <div class="disc">
+                        <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                    </div>
+                    <div class="label">{$_("exploreGroups")}</div>
+                    <div on:click={() => exploreGroupsDismissed.set(true)} class="close">
                         <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
                     </div>
                 </div>
             {/if}
             {#if showBrowseChannnels}
                 <div class="browse-channels" on:click={showChannels}>
-                    <div class="flame">#</div>
+                    <div class="disc">#</div>
                     <div class="label">{$_("communities.browseChannels")}</div>
                 </div>
             {/if}
@@ -408,7 +411,7 @@
         @include ellipsis();
     }
 
-    .hot-groups,
+    .explore-groups,
     .browse-channels {
         position: relative;
         display: flex;
@@ -429,12 +432,13 @@
             flex: auto;
         }
 
-        .flame {
-            display: grid;
+        .disc {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             align-content: center;
             @include font-size(fs-120);
             text-align: center;
-            flex: 0 0 toRem(48);
             height: toRem(48);
             width: toRem(48);
             background-color: rgba(255, 255, 255, 0.2);
