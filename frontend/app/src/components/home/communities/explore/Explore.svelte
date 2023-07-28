@@ -64,8 +64,6 @@
     }
 
     function search(reset = false) {
-        if (searching) return;
-
         searching = true;
         if (reset) {
             pageIndex = 0;
