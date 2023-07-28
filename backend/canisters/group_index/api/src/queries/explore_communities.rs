@@ -8,7 +8,7 @@ pub struct Args {
     pub languages: Vec<String>,
     pub page_index: u32,
     pub page_size: u8,
-    pub include_moderation_flags: Option<u32>,
+    pub include_moderation_flags: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

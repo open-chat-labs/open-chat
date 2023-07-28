@@ -43,13 +43,13 @@ type CurrentUserResponse = variant {
         suspension_details : opt SuspensionDetails;
         is_suspected_bot : bool;
         diamond_membership_details : opt DiamondMembershipDetails;
-        moderation_flags_enabled: opt nat32;
+        moderation_flags_enabled: nat32;
     };
     UserNotFound;
 };
 
 type SetModerationFlagsArgs = record {
-    moderation_flags_enabled : opt nat32;
+    moderation_flags_enabled : nat32;
 };
 
 type SetModerationFlagsResponse = variant {
