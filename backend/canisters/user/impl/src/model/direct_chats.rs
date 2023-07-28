@@ -13,13 +13,6 @@ pub struct DirectChats {
 }
 
 impl DirectChats {
-    // TODO remove this after next upgrade
-    pub fn convert_sns_messages_to_icrc1(&mut self) {
-        for chat in self.direct_chats.values_mut() {
-            chat.events.convert_sns_messages_to_icrc1();
-        }
-    }
-
     pub fn get(&self, chat_id: &ChatId) -> Option<&DirectChat> {
         self.direct_chats.get(chat_id)
     }

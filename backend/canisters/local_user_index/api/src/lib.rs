@@ -20,7 +20,6 @@ pub enum Event {
     PhoneNumberConfirmed(PhoneNumberConfirmed),
     StorageUpgraded(StorageUpgraded),
     UserRegistered(UserRegistered),
-    #[serde(alias = "PlatformModeratorStatusChanged")]
     SuperAdminStatusChanged(PlatformModeratorStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
     UserUpgradeConcurrencyChanged(UserUpgradeConcurrencyChanged),
@@ -66,7 +65,6 @@ pub struct UserRegistered {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlatformModeratorStatusChanged {
     pub user_id: UserId,
-    #[serde(alias = "is_platform_moderator")]
     pub is_super_admin: bool,
 }
 
