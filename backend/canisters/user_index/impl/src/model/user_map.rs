@@ -234,7 +234,7 @@ impl UserMap {
         metrics
     }
 
-    pub fn set_moderation_flags_enabled(&mut self, caller: &Principal, moderation_flags_enabled: Option<u32>) -> bool {
+    pub fn set_moderation_flags_enabled(&mut self, caller: &Principal, moderation_flags_enabled: u32) -> bool {
         if let Some(user) = self.principal_to_user_id.get(caller).and_then(|u| self.users.get_mut(u)) {
             user.moderation_flags_enabled = moderation_flags_enabled;
             true
