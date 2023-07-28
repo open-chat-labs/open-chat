@@ -8,7 +8,7 @@
     import EditableChannel from "./EditableChannel.svelte";
     import ErrorMessage from "../../../ErrorMessage.svelte";
 
-    const MIN_CHANNEL_LENGTH = 4;
+    const MIN_CHANNEL_LENGTH = 3;
     const MAX_CHANNEL_LENGTH = 25;
 
     export let channels: DefaultChannel[];
