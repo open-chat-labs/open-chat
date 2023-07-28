@@ -942,7 +942,8 @@
         "importBtn": "Import",
         "noOwned": "You are not the owner of any communities",
         "chooseCommunity": "Choose a community",
-        "saveChanges": "Save changes"
+        "saveChanges": "Save changes",
+        "publicChannels": "Public channels"
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",

@@ -924,7 +924,8 @@
         "defaultChannel": "Kênh mặc định",
         "defaultInfo": "Người dùng tham gia cộng đồng này sẽ tự động được thêm vào tất cả các kênh mặc định",
         "saveChanges": "Lưu thay đổi",
-        "exploreMobile": "Khám phá"
+        "exploreMobile": "Khám phá",
+        "publicChannels": "Kênh công cộng"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",

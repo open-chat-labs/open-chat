@@ -20,8 +20,10 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
         return CommunityFrozen;
     }
 
-    if is_name_taken(&args, state) {
-        return NameTaken;
+    if let Some(name) = &args.name {
+        if state.data.channels.is_name_taken(name) {
+            return NameTaken;
+        }
     }
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
@@ -66,27 +68,6 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
     } else {
         ChannelNotFound
     }
-}
-
-fn is_name_taken(args: &Args, state: &RuntimeState) -> bool {
-    let channel = match state.data.channels.get(&args.channel_id) {
-        Some(channel) => channel,
-        None => return false,
-    };
-
-    if !channel.chat.is_public && args.public != Some(true) {
-        return false;
-    }
-
-    let name_to_check: &str = if let Some(name) = &args.name {
-        name
-    } else if args.public == Some(true) {
-        &channel.chat.name
-    } else {
-        return false;
-    };
-
-    state.data.channels.is_name_taken(name_to_check)
 }
 
 fn clean_args(args: &mut Args) {

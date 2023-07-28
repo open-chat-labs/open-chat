@@ -25,7 +25,7 @@ pub struct SuccessResult {
     pub suspension_details: Option<SuspensionDetails>,
     pub is_suspected_bot: bool,
     pub diamond_membership_details: Option<DiamondMembershipDetails>,
-    pub moderation_flags_enabled: Option<u32>,
+    pub moderation_flags_enabled: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

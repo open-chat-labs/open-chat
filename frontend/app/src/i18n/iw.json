@@ -921,7 +921,8 @@
         "defaultChannel": "ערוץ ברירת מחדל",
         "defaultInfo": "משתמשים המצטרפים לקהילה זו יתווספו אוטומטית לכל ערוצי ברירת המחדל",
         "saveChanges": "שמור שינויים",
-        "exploreMobile": "לַחקוֹר"
+        "exploreMobile": "לַחקוֹר",
+        "publicChannels": "ערוצים ציבוריים"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",

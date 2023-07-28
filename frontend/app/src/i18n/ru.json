@@ -923,7 +923,8 @@
         "defaultChannel": "Канал по умолчанию",
         "defaultInfo": "Пользователи, присоединившиеся к этому сообществу, будут автоматически добавлены ко всем каналам по умолчанию.",
         "saveChanges": "Сохранить изменения",
-        "exploreMobile": "Исследовать"
+        "exploreMobile": "Исследовать",
+        "publicChannels": "Общедоступные каналы"
     },
     "groupCreatedBy": "{username} создал {level}",
     "groupName": "{level} имя",

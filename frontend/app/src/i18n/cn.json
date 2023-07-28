@@ -923,7 +923,8 @@
         "defaultChannel": "默认频道",
         "defaultInfo": "加入此社区的用户将自动添加到所有默认频道",
         "saveChanges": "保存更改",
-        "exploreMobile": "探索"
+        "exploreMobile": "探索",
+        "publicChannels": "公共频道"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",

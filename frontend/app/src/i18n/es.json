@@ -925,7 +925,8 @@
         "defaultChannel": "Canal por defecto",
         "defaultInfo": "Los usuarios que se unan a esta comunidad se agregarán automáticamente a todos los canales predeterminados",
         "saveChanges": "Guardar cambios",
-        "exploreMobile": "Explorar"
+        "exploreMobile": "Explorar",
+        "publicChannels": "Canales públicos"
     },
     "groupCreatedBy": "{username} creó el {level}",
     "groupName": "{level} nombre",
