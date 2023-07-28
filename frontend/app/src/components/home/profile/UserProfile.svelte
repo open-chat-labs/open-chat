@@ -62,9 +62,10 @@
     let validUsername: string | undefined = undefined;
     let checkingUsername: boolean;
     let readonly = client.isReadOnly();
-    let moderationFlags = client.user.moderationFlagsEnabled;
-    $: adultEnabled = hasFlag(moderationFlags, Flags.Adult);
-    $: offensiveEnabled = hasFlag(moderationFlags, Flags.Offensive);
+
+    $: moderationFlags = client.moderationFlags;
+    $: adultEnabled = client.hasModerationFlag($moderationFlags, Flags.Adult);
+    $: offensiveEnabled = client.hasModerationFlag($moderationFlags, Flags.Offensive);
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -90,8 +91,7 @@
     }
 
     function toggleModerationFlag(flag: ModerationFlag) {
-        moderationFlags = moderationFlags ^ flag;
-        client.setModerationFlags(moderationFlags).then((val) => (moderationFlags = val));
+        client.setModerationFlags($moderationFlags ^ flag);
     }
 
     function saveUser() {
@@ -470,9 +470,6 @@
     .blurb {
         @include font-size(fs-80);
         color: var(--txt-light);
-    }
-
-    .expiry {
         margin-bottom: $sp3;
     }
 

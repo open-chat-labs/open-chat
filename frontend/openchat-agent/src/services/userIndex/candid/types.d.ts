@@ -300,7 +300,7 @@ export type CurrentUserResponse = {
       'referrals' : Array<UserId>,
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
-      'moderation_flags_enabled' : [] | [number],
+      'moderation_flags_enabled' : number,
       'is_suspected_bot' : boolean,
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'suspension_details' : [] | [SuspensionDetails],
@@ -1106,9 +1106,7 @@ export interface SelectedGroupUpdates {
   'rules' : [] | [AccessRules],
   'blocked_users_added' : Array<UserId>,
 }
-export interface SetModerationFlagsArgs {
-  'moderation_flags_enabled' : [] | [number],
-}
+export interface SetModerationFlagsArgs { 'moderation_flags_enabled' : number }
 export type SetModerationFlagsResponse = { 'Success' : null };
 export interface SetUserUpgradeConcurrencyArgs { 'value' : number }
 export type SetUserUpgradeConcurrencyResponse = { 'Success' : null };

@@ -401,7 +401,7 @@ export interface EventsTimeToLiveUpdated {
 }
 export interface ExploreCommunitiesArgs {
   'page_size' : number,
-  'include_moderation_flags' : [] | [number],
+  'include_moderation_flags' : number,
   'page_index' : number,
   'languages' : Array<string>,
   'search_term' : [] | [string],

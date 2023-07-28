@@ -375,6 +375,7 @@ import {
     globalUnreadCount,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
+import { hasFlag, moderationFlags } from "./stores/flagStore";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -635,6 +636,7 @@ export class OpenChat extends OpenChatAgentWorker {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
         this._user = user;
+        moderationFlags.set(user.moderationFlagsEnabled);
         this.setDiamondMembership(user.diamondMembership);
         const id = this._identity;
         // TODO remove this once the principal migration can be done via the UI
@@ -4453,24 +4455,30 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    hasModerationFlag(flags: number, flag: ModerationFlag): boolean {
+        return hasFlag(flags, flag);
+    }
+
     setModerationFlags(flags: number): Promise<number> {
         const previousValue = this.user.moderationFlagsEnabled;
         this.user = {
             ...this.user,
             moderationFlagsEnabled: flags,
         };
+        moderationFlags.set(flags);
 
         return this.sendRequest({
             kind: "setModerationFlags",
-            flags: this.user.moderationFlagsEnabled,
+            flags,
         })
-            .then((resp) => resp === "success" ? flags : previousValue)
+            .then((resp) => (resp === "success" ? flags : previousValue))
             .catch((err) => {
                 this._logger.error("Error setting moderation flags", err);
                 this.user = {
                     ...this.user,
                     moderationFlagsEnabled: previousValue,
                 };
+                moderationFlags.set(previousValue);
                 return previousValue;
             });
     }
@@ -4855,4 +4863,5 @@ export class OpenChat extends OpenChatAgentWorker {
     unreadCommunityChannels = unreadCommunityChannels;
     globalUnreadCount = globalUnreadCount;
     staleThreadsCount = staleThreadsCount;
+    moderationFlags = moderationFlags;
 }

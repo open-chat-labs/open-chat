@@ -24,6 +24,7 @@
     let total = 0;
     let pageIndex = 0;
 
+    $: moderationFlags = client.moderationFlags;
     $: pageSize = calculatePageSize($screenWidth);
     $: more = total > searchResults.length;
     $: isDiamond = client.isDiamond;
@@ -64,7 +65,7 @@
                 searchTerm === "" ? undefined : searchTerm,
                 pageIndex,
                 pageSize,
-                $communityFiltersStore.flags,
+                $moderationFlags,
                 Array.from($communityFiltersStore.languages)
             )
             .then((results) => {
