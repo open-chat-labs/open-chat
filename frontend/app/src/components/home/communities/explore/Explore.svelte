@@ -78,7 +78,7 @@
                 searchTerm === "" ? undefined : searchTerm,
                 pageIndex,
                 pageSize,
-                $filters.flags,
+                $filters.flags ?? 0,
                 $filters.languages
             )
             .then((results) => {
