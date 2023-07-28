@@ -1034,8 +1034,8 @@ export function buildBlobUrl(
         .replace("{blobType}", blobType)}${blobId}`;
 }
 
-function buildIdenticonUrl(userId: string): string {
-    const identicon = new Identicon(md5(userId), {
+export function buildIdenticonUrl(id: string): string {
+    const identicon = new Identicon(md5(id), {
         margin: 0,
         format: "svg",
     });

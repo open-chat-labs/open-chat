@@ -14,6 +14,7 @@
     import { Flags, hasFlag } from "stores/communityFilters";
     import { supportedLanguagesByCode } from "../../../../i18n/i18n";
 
+    export let id: string;
     export let name: string;
     export let description: string;
     export let avatar: DataContent;
@@ -50,7 +51,7 @@
         {/if}
         <div class="avatar">
             <Avatar
-                url={client.communityAvatarUrl(avatar)}
+                url={client.communityAvatarUrl(id, avatar)}
                 userId={undefined}
                 size={AvatarSize.Default} />
         </div>
