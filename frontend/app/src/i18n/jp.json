@@ -878,7 +878,7 @@
         "general": "全般的",
         "mustHaveOneChannel": "少なくとも 1 つのデフォルト チャネルを作成する必要があります",
         "mustHaveUniqueChannels": "デフォルトのチャンネル名を重複させることはできません",
-        "noBlankChannels": "すべてのデフォルトチャンネルには名前が必要です",
+        "noBlankChannels": "すべてのチャンネルには名前が必要です",
         "members": "メンバー",
         "created": "コミュニティが正常に作成されました",
         "saved": "コミュニティは正常に更新されました",
@@ -903,7 +903,7 @@
         "favourites": "お気に入り",
         "addToFavourites": "お気に入りに追加",
         "removeFromFavourites": "お気に入りから削除",
-        "noInvalidChannels": "すべてのデフォルト チャネルは、{min} 文字と {max} 文字の間にある必要があります",
+        "noInvalidChannels": "すべてのチャンネル名は {min} から {max} 文字の間にある必要があります",
         "convertButton": "変換",
         "converted": "あなたのグループはコミュニティに変換されました。",
         "pleaseWait": "お待ちください - これには少し時間がかかる場合があります",
@@ -954,5 +954,6 @@
     "selectAUser": "リストからユーザーを選択するか、チャットするユーザーを検索します。",
     "selectAFavourite": "ダイレクト チャット、グループ チャット、コミュニティ チャネルをお気に入りに追加すると、ここに表示されます。",
     "defaultMustBePublic": "デフォルトにできるのはパブリック チャネルのみです",
-    "exploreGroups": "グループを探索する"
+    "exploreGroups": "グループを探索する",
+    "channelAlreadyExists": "その名前のチャンネルはすでに存在します"
 }

@@ -877,7 +877,7 @@
         "general": "一般的",
         "mustHaveOneChannel": "您必须至少创建一个默认频道",
         "mustHaveUniqueChannels": "您不能有重复的默认频道名称",
-        "noBlankChannels": "所有默认频道都必须有一个名称",
+        "noBlankChannels": "所有频道都必须有名称",
         "members": "会员",
         "created": "您的社区已成功创建",
         "saved": "您的社区已成功更新",
@@ -902,7 +902,7 @@
         "favourites": "收藏夹",
         "addToFavourites": "加入“最喜欢的",
         "removeFromFavourites": "从收藏夹中删除",
-        "noInvalidChannels": "所有默认通道必须位于 {min} 和 {max} 字符之间",
+        "noInvalidChannels": "所有频道名称必须介于 {min} 和 {max} 字符之间",
         "convertButton": "转变",
         "converted": "您的群组已转换为社区。",
         "pleaseWait": "请稍候 - 这可能需要一些时间",
@@ -954,5 +954,6 @@
     "selectAUser": "从列表中选择用户或搜索要与之聊天的用户。",
     "selectAFavourite": "您可以将直接聊天、群聊或社区频道添加到您的收藏夹中，您将在此处看到它们。",
     "defaultMustBePublic": "只能默认公共频道",
-    "exploreGroups": "探索群组"
+    "exploreGroups": "探索群组",
+    "channelAlreadyExists": "同名的频道已存在"
 }
