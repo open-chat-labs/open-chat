@@ -21,7 +21,7 @@ fn explore_communities_impl(args: Args, state: &RuntimeState) -> Response {
         }
     }
 
-    let include_moderation_flags = match ModerationFlags::from_bits(args.include_moderation_flags.unwrap_or_default()) {
+    let include_moderation_flags = match ModerationFlags::from_bits(args.include_moderation_flags) {
         Some(tags) => tags,
         None => return InvalidFlags,
     };
