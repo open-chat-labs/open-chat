@@ -43,8 +43,17 @@ type CurrentUserResponse = variant {
         suspension_details : opt SuspensionDetails;
         is_suspected_bot : bool;
         diamond_membership_details : opt DiamondMembershipDetails;
+        moderation_flags_enabled: opt nat32;
     };
     UserNotFound;
+};
+
+type SetModerationFlagsArgs = record {
+    moderation_flags_enabled : opt nat32;
+};
+
+type SetModerationFlagsResponse = variant {
+    Success;
 };
 
 type SuspensionDetails = record {
@@ -285,6 +294,9 @@ service : {
 
     // This is used to set the initial username and subsequently to change it
     set_username : (SetUsernameArgs) -> (SetUsernameResponse);
+
+    // Sets which moderation flags (eg. Adult) are enabled for the user when exploring groups/communities
+    set_moderation_flags : (SetModerationFlagsArgs) -> (SetModerationFlagsResponse);
 
     // This is used to check whether the username already exists
     check_username : (CheckUsernameArgs) -> (CheckUsernameResponse) query;
