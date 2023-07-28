@@ -925,7 +925,8 @@
         "defaultChannel": "Standardkanal",
         "defaultInfo": "Benutzer, die dieser Community beitreten, werden automatisch allen Standardkanälen hinzugefügt",
         "saveChanges": "Änderungen speichern",
-        "exploreMobile": "Erkunden"
+        "exploreMobile": "Erkunden",
+        "publicChannels": "Öffentliche Kanäle"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",

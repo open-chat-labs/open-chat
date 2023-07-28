@@ -924,7 +924,8 @@
         "defaultChannel": "デフォルトチャンネル",
         "defaultInfo": "このコミュニティに参加しているユーザーは、すべてのデフォルト チャネルに自動的に追加されます",
         "saveChanges": "変更内容を保存",
-        "exploreMobile": "探検"
+        "exploreMobile": "探検",
+        "publicChannels": "パブリックチャンネル"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",
