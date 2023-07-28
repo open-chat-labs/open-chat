@@ -875,7 +875,7 @@
         "general": "כללי",
         "mustHaveOneChannel": "עליך ליצור לפחות ערוץ ברירת מחדל אחד",
         "mustHaveUniqueChannels": "אתה לא יכול לקבל שמות ערוצי ברירת מחדל כפולים",
-        "noBlankChannels": "לכל ערוצי ברירת המחדל חייבים להיות שם",
+        "noBlankChannels": "לכל הערוצים צריך להיות שם",
         "members": "חברים",
         "created": "הקהילה שלך נוצרה בהצלחה",
         "saved": "הקהילה שלך עודכנה בהצלחה",
@@ -900,7 +900,7 @@
         "favourites": "מועדפים",
         "addToFavourites": "הוסף למועדפים",
         "removeFromFavourites": "הסר ממועדפים",
-        "noInvalidChannels": "כל ערוצי ברירת המחדל חייבים להיות בין התווים {min} ל-{max}",
+        "noInvalidChannels": "כל שמות הערוצים חייבים להיות בין התווים {min} ל-{max}",
         "convertButton": "להמיר",
         "converted": "הקבוצה שלך הומרה לקהילה.",
         "pleaseWait": "אנא המתן - זה עשוי להימשך זמן מה",
@@ -951,5 +951,6 @@
     "selectAUser": "בחר משתמש מהרשימה או חפש משתמש לצ'אט איתו.",
     "selectAFavourite": "אתה יכול להוסיף צ'אטים ישירים, צ'אטים קבוצתיים או ערוצים קהילתיים למועדפים שלך ותראה אותם כאן.",
     "defaultMustBePublic": "רק ערוץ ציבורי יכול להיות ברירת מחדל",
-    "exploreGroups": "חקור קבוצות"
+    "exploreGroups": "חקור קבוצות",
+    "channelAlreadyExists": "ערוץ בשם זה כבר קיים"
 }
