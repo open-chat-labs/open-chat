@@ -100,7 +100,11 @@
         ev.detail.isDefault = !ev.detail.isDefault;
     }
 
-    onMount(() => search(true));
+    $: {
+        if ($selectedCommunity !== undefined) {
+            search(true);
+        }
+    }
 </script>
 
 <SectionHeader gap border={false} flush shadow>
