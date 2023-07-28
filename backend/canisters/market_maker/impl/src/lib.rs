@@ -5,7 +5,7 @@ use canister_state_macros::canister_state;
 use market_maker_canister::{CancelOrderRequest, ExchangeId, MakeOrderRequest, OrderType, ICDEX_EXCHANGE_ID};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use types::{CanisterId, Cycles, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 
@@ -56,7 +56,6 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             exchanges: self.data.exchange_config.clone(),
-            latest_bid_and_ask: self.data.latest_bid_and_ask.clone(),
             market_makers_in_progress: self.data.market_makers_in_progress.clone(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -77,7 +76,7 @@ struct Data {
     pub chat_ledger_canister_id: CanisterId,
     pub orders_log: OrdersLog,
     #[serde(default)]
-    pub latest_bid_and_ask: HashMap<ExchangeId, BidAndAsk>,
+    pub market_details: HashMap<ExchangeId, MarketDetails>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
     pub test_mode: bool,
 }
@@ -97,7 +96,7 @@ impl Data {
             icp_ledger_canister_id,
             chat_ledger_canister_id,
             orders_log: OrdersLog::default(),
-            latest_bid_and_ask: HashMap::new(),
+            market_details: HashMap::new(),
             market_makers_in_progress: HashMap::new(),
             test_mode,
         }
@@ -112,7 +111,6 @@ pub struct Metrics {
     pub wasm_version: Version,
     pub git_commit_id: String,
     pub exchanges: HashMap<ExchangeId, Config>,
-    pub latest_bid_and_ask: HashMap<ExchangeId, BidAndAsk>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
     pub canister_ids: CanisterIds,
 }
@@ -125,12 +123,41 @@ pub struct CanisterIds {
     pub chat_ledger: CanisterId,
 }
 
-pub struct MarketState {
-    latest_price: u64,
-    open_orders: Vec<Order>,
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MarketDetails {
+    latest_bid_taken: Option<u64>,
+    latest_ask_taken: Option<u64>,
+    latest_snapshot: MarketSnapshot,
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MarketSnapshot {
+    latest_price: u64,
+    open_orders: Vec<Order>,
+    orderbook: AggregatedOrders,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct AggregatedOrders {
+    bids: BTreeMap<u64, u64>,
+    asks: BTreeMap<u64, u64>,
+}
+
+impl From<&[Order]> for AggregatedOrders {
+    fn from(orders: &[Order]) -> Self {
+        let mut bids = BTreeMap::new();
+        let mut asks = BTreeMap::new();
+        for order in orders {
+            match order.order_type {
+                OrderType::Bid => *bids.entry(order.price).or_default() += order.amount,
+                OrderType::Ask => *asks.entry(order.price).or_default() += order.amount,
+            }
+        }
+        AggregatedOrders { bids, asks }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Order {
     order_type: OrderType,
     id: String,
@@ -150,12 +177,6 @@ pub struct Config {
     max_orders_per_direction: u32,
     max_orders_to_make_per_iteration: u32,
     max_orders_to_cancel_per_iteration: u32,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct BidAndAsk {
-    pub bid: Option<u64>,
-    pub ask: Option<u64>,
 }
 
 fn on_order_made(exchange_id: ExchangeId, order: MakeOrderRequest) {
