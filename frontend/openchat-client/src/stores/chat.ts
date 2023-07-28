@@ -215,7 +215,7 @@ export const selectedMessageContext = derived(
         return undefined;
     }
 );
-export const chatsLoading = writable(false);
+export const chatsLoading = writable(true);
 export const chatsInitialised = writable(false);
 
 export const selectedServerChatStore = derived(

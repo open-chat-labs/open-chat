@@ -14,6 +14,7 @@
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { communityFiltersStore } from "../../../../stores/communityFilters";
     import Plus from "svelte-material-icons/Plus.svelte";
+    import { derived } from "svelte/store";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -24,11 +25,20 @@
     let total = 0;
     let pageIndex = 0;
 
-    $: moderationFlags = client.moderationFlags;
     $: pageSize = calculatePageSize($screenWidth);
     $: more = total > searchResults.length;
     $: isDiamond = client.isDiamond;
     $: loading = searching && searchResults.length === 0;
+
+    let filters = derived(
+        [communityFiltersStore, client.moderationFlags],
+        ([communityFilters, flags]) => {
+            return {
+                languages: Array.from(communityFilters.languages),
+                flags,
+            };
+        }
+    );
 
     function calculatePageSize(width: ScreenWidth): number {
         // make sure we get even rows of results
@@ -54,19 +64,22 @@
     }
 
     function search(reset = false) {
+        if (searching) return;
+
         searching = true;
         if (reset) {
             pageIndex = 0;
         } else {
             pageIndex += 1;
         }
+
         client
             .exploreCommunities(
                 searchTerm === "" ? undefined : searchTerm,
                 pageIndex,
                 pageSize,
-                $moderationFlags,
-                Array.from($communityFiltersStore.languages)
+                $filters.flags,
+                $filters.languages
             )
             .then((results) => {
                 if (results.kind === "success") {
@@ -86,8 +99,9 @@
     }
 
     onMount(() => {
-        const sub = communityFiltersStore.subscribe((_) => search(true));
-        return sub;
+        return filters.subscribe((f) => {
+            search(true);
+        });
     });
 </script>
 

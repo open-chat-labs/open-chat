@@ -1,6 +1,12 @@
 <script lang="ts">
     import SectionHeader from "../../SectionHeader.svelte";
-    import { PartialUserSummary, OpenChat, AvatarSize, ModerationFlag } from "openchat-client";
+    import {
+        PartialUserSummary,
+        OpenChat,
+        AvatarSize,
+        ModerationFlag,
+        ModerationFlags,
+    } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -40,13 +46,6 @@
     import ReferUsers from "./ReferUsers.svelte";
     import Expiry from "../upgrade/Expiry.svelte";
 
-    type Flag = 1 | 2;
-
-    const Flags = {
-        Offensive: 1 as Flag,
-        Adult: 2 as Flag,
-    };
-
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
     const MAX_BIO_LENGTH = 2000;
@@ -64,8 +63,8 @@
     let readonly = client.isReadOnly();
 
     $: moderationFlags = client.moderationFlags;
-    $: adultEnabled = client.hasModerationFlag($moderationFlags, Flags.Adult);
-    $: offensiveEnabled = client.hasModerationFlag($moderationFlags, Flags.Offensive);
+    $: adultEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Adult);
+    $: offensiveEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Offensive);
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -332,13 +331,13 @@
             <Toggle
                 id={"offensive"}
                 small
-                on:change={() => toggleModerationFlag(Flags.Offensive)}
+                on:change={() => toggleModerationFlag(ModerationFlags.Offensive)}
                 label={$_("communities.offensive")}
                 checked={offensiveEnabled} />
             <Toggle
                 id={"adult"}
                 small
-                on:change={() => toggleModerationFlag(Flags.Adult)}
+                on:change={() => toggleModerationFlag(ModerationFlags.Adult)}
                 label={$_("communities.adult")}
                 checked={adultEnabled} />
         </CollapsibleCard>

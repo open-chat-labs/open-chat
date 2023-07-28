@@ -64,11 +64,15 @@ export class UserIndexClient extends CandidService {
     }
 
     setModerationFlags(flags: number): Promise<boolean> {
+        console.log("calling setModerationFlags", flags);
         return this.handleResponse(
             this.userIndexService.set_moderation_flags({
                 moderation_flags_enabled: flags,
             }),
-            (_resp) => true
+            (resp) => {
+                console.log("SetModeration result: ", flags, resp);
+                return true;
+            }
         );
     }
 

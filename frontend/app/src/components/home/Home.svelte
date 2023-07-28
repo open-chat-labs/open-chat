@@ -77,6 +77,7 @@
     import { createCandidateCommunity } from "../../stores/community";
     import { interpolateLevel } from "../../utils/i18n";
     import Convert from "./communities/Convert.svelte";
+    import { communitiesEnabled } from "../../utils/features";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;

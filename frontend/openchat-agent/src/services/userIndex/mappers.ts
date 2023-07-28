@@ -26,7 +26,6 @@ import type {
     ApiReferralLeaderboardResponse,
     ApiReferralStats,
     ApiSearchResponse,
-    ApiSetModerationFlagsResponse,
     ApiSetUsernameResponse,
     ApiSuspendUserResponse,
     ApiSuspensionAction,

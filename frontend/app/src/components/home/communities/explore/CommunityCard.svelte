@@ -7,12 +7,13 @@
     import Avatar from "../../../Avatar.svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "../../Markdown.svelte";
-    import { AvatarSize } from "openchat-client";
+    import { AvatarSize, ModerationFlags } from "openchat-client";
     import { getContext } from "svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
     import AccessGateIcon from "../../AccessGateIcon.svelte";
-    import { Flags, hasFlag } from "stores/communityFilters";
     import { supportedLanguagesByCode } from "../../../../i18n/i18n";
+
+    const client = getContext<OpenChat>("client");
 
     export let id: string;
     export let name: string;
@@ -30,16 +31,14 @@
 
     function serialiseFlags(flags: number) {
         const f: string[] = [supportedLanguagesByCode[language]?.name];
-        if (hasFlag(flags, Flags.Adult)) {
+        if (client.hasModerationFlag(flags, ModerationFlags.Adult)) {
             f.push(`${$_("communities.adult")}`);
         }
-        if (hasFlag(flags, Flags.Offensive)) {
+        if (client.hasModerationFlag(flags, ModerationFlags.Offensive)) {
             f.push(`${$_("communities.offensive")}`);
         }
         return f;
     }
-
-    const client = getContext<OpenChat>("client");
 </script>
 
 <div class:header on:click class="card">
