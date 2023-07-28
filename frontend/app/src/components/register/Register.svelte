@@ -91,6 +91,7 @@
                     suspensionDetails: undefined,
                     isSuspectedBot: false,
                     diamondMembership: undefined,
+                    moderationFlagsEnabled: 0,
                 };
                 dispatch("createdUser", createdUser);
             }
