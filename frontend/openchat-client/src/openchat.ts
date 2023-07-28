@@ -388,7 +388,7 @@ const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
-const communitiesEnabled = localStorage.getItem("openchat_communities_enabled") === "true";
+const communitiesEnabled = true;
 
 export class OpenChat extends OpenChatAgentWorker {
     private _authClient: Promise<AuthClient>;
