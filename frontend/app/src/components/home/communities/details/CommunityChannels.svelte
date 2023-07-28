@@ -115,7 +115,7 @@
             </HoverIcon>
         </span>
     {/if}
-    <h4>{$_("communities.channels")}</h4>
+    <h4>{$_("communities.publicChannels")}</h4>
     <span title={$_("back")} class="back" on:click={close}>
         <HoverIcon>
             {#if $rightPanelHistory.length > 1}

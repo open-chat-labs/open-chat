@@ -66,7 +66,7 @@
                 </MenuItem>
                 <MenuItem on:click={showChannels}>
                     <Pound size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                    <span slot="text">{$_("communities.channels")}</span>
+                    <span slot="text">{$_("communities.publicChannels")}</span>
                 </MenuItem>
                 {#if canEdit}
                     <MenuItem on:click={editCommunity}>

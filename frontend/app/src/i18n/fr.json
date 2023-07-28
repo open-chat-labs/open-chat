@@ -923,7 +923,8 @@
         "defaultChannel": "Chaîne par défaut",
         "defaultInfo": "Les utilisateurs rejoignant cette communauté seront automatiquement ajoutés à tous les canaux par défaut",
         "saveChanges": "Sauvegarder les modifications",
-        "exploreMobile": "Explorer"
+        "exploreMobile": "Explorer",
+        "publicChannels": "Chaînes publiques"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",
