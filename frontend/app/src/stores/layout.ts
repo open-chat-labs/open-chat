@@ -4,6 +4,7 @@ import { mobileWidth } from "./screenDimensions";
 import { rightPanelHistory } from "./rightPanel";
 import { RouteParams, pathParams } from "../routes";
 import { communitiesEnabled } from "../utils/features";
+import { framed } from "./xframe";
 
 export const navOpen = writable<boolean>(false);
 
@@ -31,9 +32,9 @@ function someHomeRoute(route: RouteParams["kind"]): boolean {
 
 // TODO - we really need some tests around this and now that it's out of the Home component we can do that easily
 export const layoutStore: Readable<Layout> = derived(
-    [rightPanelHistory, mobileWidth, pathParams, communitiesEnabled, fullWidth],
-    ([$rightPanelHistory, $mobileWidth, $pathParams, $communitiesEnabled, $fullWidth]) => {
-        if ($mobileWidth) {
+    [rightPanelHistory, mobileWidth, pathParams, communitiesEnabled, fullWidth, framed],
+    ([$rightPanelHistory, $mobileWidth, $pathParams, $communitiesEnabled, $fullWidth, $framed]) => {
+        if ($mobileWidth || $framed) {
             const showRight = $rightPanelHistory.length > 0;
             const showMiddle = !someHomeRoute($pathParams.kind) && !showRight;
             const showLeft = !showMiddle && !showRight;
