@@ -23,7 +23,6 @@ pub struct User {
     pub is_bot: bool,
     pub suspension_details: Option<SuspensionDetails>,
     pub diamond_membership_details: DiamondMembershipDetailsInternal,
-    #[serde(default)]
     pub moderation_flags_enabled: u32,
 }
 
