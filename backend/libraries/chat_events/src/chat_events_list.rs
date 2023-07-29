@@ -1,12 +1,12 @@
-use crate::{ChatEventInternal, ChatInternal, EventKey, MessageContentInternal, MessageInternal};
+use crate::{ChatEventInternal, ChatInternal, EventKey, MessageInternal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap};
 use std::ops::Deref;
 use types::{
-    ChatEvent, CompletedCryptoTransaction, CryptoTransaction, EventIndex, EventWrapper, EventWrapperInternal, HydratedMention,
-    Mention, Message, MessageId, MessageIndex, TimestampMillis, UserId,
+    ChatEvent, EventIndex, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message, MessageId, MessageIndex,
+    TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -20,19 +20,6 @@ pub struct ChatEventsList {
 }
 
 impl ChatEventsList {
-    // TODO remove this after next upgrade
-    pub fn convert_sns_messages_to_icrc1(&mut self) {
-        for message in self.events_map.values_mut().filter_map(|e| e.event.as_message_mut()) {
-            if let MessageContentInternal::Crypto(c) = &mut message.content {
-                if let CryptoTransaction::Completed(t) = &mut c.transfer {
-                    if let CompletedCryptoTransaction::SNS(sns) = t {
-                        *t = CompletedCryptoTransaction::ICRC1(sns.clone().into());
-                    }
-                }
-            }
-        }
-    }
-
     pub(crate) fn push_event(
         &mut self,
         event: ChatEventInternal,

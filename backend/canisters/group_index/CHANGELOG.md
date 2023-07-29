@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.760](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.760-group_index)] - 2023-07-28
+
 ### Changed
 
 - Mark channels as read after joining community or channel ([#4004](https://github.com/open-chat-labs/open-chat/pull/4004))
@@ -17,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Consolidate remove and block community permissions ([#4030](https://github.com/open-chat-labs/open-chat/pull/4030))
-  
+
 ## [[2.0.748](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.748-group_index)] - 2023-07-20
 
 ### Changed

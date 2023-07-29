@@ -148,7 +148,6 @@ pub struct PublicCommunityInfo {
     activity: PublicCommunityActivity,
     hotness_score: u32,
     gate: Option<AccessGate>,
-    #[serde(default)]
     moderation_flags: ModerationFlags,
     primary_language: String,
 }
