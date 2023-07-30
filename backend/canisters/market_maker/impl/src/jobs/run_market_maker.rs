@@ -222,6 +222,19 @@ fn calculate_orders_to_make(
         config.min_order_size,
     );
 
+    // Don't top up the best bid and ask, otherwise someone can keep trading against that price and
+    // the bot will keep topping it up
+    if let Occupied(e) = bids_to_make_map.entry(max_bid_price) {
+        if e.get().amount < config.order_size {
+            e.remove();
+        }
+    }
+    if let Occupied(e) = asks_to_make_map.entry(min_ask_price) {
+        if e.get().amount < config.order_size {
+            e.remove();
+        }
+    }
+
     bids_to_make_map
         .into_values()
         .interleave(asks_to_make_map.into_values().rev())
