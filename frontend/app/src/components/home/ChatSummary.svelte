@@ -30,6 +30,7 @@
     import { communitiesEnabled } from "../../utils/features";
     import { toastStore } from "../../stores/toast";
     import { routeForScope, pathParams } from "../../routes";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;

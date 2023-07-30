@@ -6,7 +6,12 @@
     import page from "page";
     import CommunityCard from "./CommunityCard.svelte";
     import Search from "../../..//Search.svelte";
-    import { ipadWidth, screenWidth, ScreenWidth } from "../../../../stores/screenDimensions";
+    import {
+        ipadWidth,
+        mobileWidth,
+        screenWidth,
+        ScreenWidth,
+    } from "../../../../stores/screenDimensions";
     import { iconSize } from "../../../../stores/iconSize";
     import type { CommunityMatch, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
@@ -107,7 +112,11 @@
     <div class="header">
         <div class="title-row">
             <div class="title">
-                <h4>{$_("communities.explore")}</h4>
+                {#if $mobileWidth}
+                    <h4>{$_("communities.exploreMobile")}</h4>
+                {:else}
+                    <h4>{$_("communities.explore")}</h4>
+                {/if}
             </div>
             {#if !$ipadWidth}
                 <div class="search">
@@ -219,6 +228,10 @@
                 h4 {
                     @include font(bold, normal, fs-160, 38);
                     flex: auto;
+
+                    @include mobile() {
+                        @include font(bold, normal, fs-140, 38);
+                    }
                 }
             }
 
