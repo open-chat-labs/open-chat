@@ -33,7 +33,7 @@ export class MarketMakerClient extends CandidService {
             min_order_size: apiOptional(identity, config.minOrderSize),
             max_buy_price: apiOptional(identity, config.maxBuyPrice),
             min_sell_price: apiOptional(identity, config.minSellPrice),
-            spread: apiOption(identity, config.spread),
+            spread: apiOptional(identity, config.spread),
             min_orders_per_direction: apiOptional(identity, config.minOrdersPerDirection),
             max_orders_per_direction: apiOptional(identity, config.maxOrdersPerDirection),
             max_orders_to_make_per_iteration: apiOptional(
