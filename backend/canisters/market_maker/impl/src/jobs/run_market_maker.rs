@@ -165,11 +165,17 @@ fn calculate_price_limits(
     );
 
     if let Some(bid) = latest_bid_taken {
-        min_ask_price = max(bid.saturating_add(config.spread * config.price_increment), min_ask_price);
+        min_ask_price = max(
+            bid.saturating_add(config.spread.saturating_sub(1) * config.price_increment),
+            min_ask_price,
+        );
     }
 
     if let Some(ask) = latest_ask_taken {
-        max_bid_price = min(ask.saturating_sub(config.spread * config.price_increment), max_bid_price);
+        max_bid_price = min(
+            ask.saturating_sub(config.spread.saturating_sub(1) * config.price_increment),
+            max_bid_price,
+        );
     }
 
     if max_bid_price > min_ask_price {
@@ -353,10 +359,10 @@ mod tests {
     #[test_case(50, 80, None, None, 50, 70)]
     #[test_case(50, 90, None, None, 60, 80)]
     #[test_case(40, 100, Some(50), None, 60, 80)]
-    #[test_case(40, 100, None, Some(90), 50, 70)]
-    #[test_case(40, 100, Some(30), Some(50), 30, 60)]
-    #[test_case(40, 100, Some(90), Some(90), 70, 110)]
-    #[test_case(40, 100, Some(90), Some(110), 80, 110)]
+    #[test_case(40, 100, None, Some(90), 60, 80)]
+    #[test_case(40, 100, Some(30), Some(50), 40, 60)]
+    #[test_case(40, 100, Some(90), Some(90), 80, 100)]
+    #[test_case(40, 100, Some(90), Some(110), 80, 100)]
     fn calculate_price_limits_tests(
         latest_bid: u64,
         latest_ask: u64,
