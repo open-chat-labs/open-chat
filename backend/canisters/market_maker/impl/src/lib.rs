@@ -133,7 +133,7 @@ pub struct MarketDetails {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MarketSnapshot {
     latest_price: u64,
-    open_orders: Vec<Order>,
+    my_open_orders: Vec<Order>,
     orderbook: AggregatedOrders,
 }
 

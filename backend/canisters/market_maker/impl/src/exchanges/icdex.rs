@@ -49,7 +49,7 @@ impl ICDexClient {
         Ok((response.price * 100000000f64) as u64)
     }
 
-    async fn open_orders(&self) -> CallResult<Vec<Order>> {
+    async fn my_open_orders(&self) -> CallResult<Vec<Order>> {
         type OpenOrdersArgs = (String, Option<Nat>, Option<Nat>);
 
         let args: OpenOrdersArgs = (self.this_canister_id.to_string(), None, None);
@@ -170,12 +170,12 @@ impl Exchange for ICDexClient {
     }
 
     async fn market_state(&self) -> CallResult<MarketSnapshot> {
-        let (latest_price, open_orders, orderbook) =
-            futures::future::try_join3(self.latest_price(), self.open_orders(), self.orderbook()).await?;
+        let (latest_price, my_open_orders, orderbook) =
+            futures::future::try_join3(self.latest_price(), self.my_open_orders(), self.orderbook()).await?;
 
         Ok(MarketSnapshot {
             latest_price,
-            open_orders,
+            my_open_orders,
             orderbook,
         })
     }
