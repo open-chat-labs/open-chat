@@ -29,8 +29,8 @@
         : client.formatTimeRemaining($now500, Number(content.endDate));
     let progressWidth = 0;
 
-    function claim(e: MouseEvent) {
-        if (e.isTrusted && chatId.kind === "group_chat") {
+    function claim(e: CustomEvent<MouseEvent | TouchEvent>) {
+        if (e.detail.isTrusted && chatId.kind === "group_chat") {
             claimsStore.add(messageId);
             client
                 .claimPrize(chatId, messageId)
