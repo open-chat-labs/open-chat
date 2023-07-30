@@ -12,7 +12,6 @@ use types::Milliseconds;
 use utils::time::MINUTE_IN_MS;
 
 const RUN_MARKET_MAKER_INTERVAL: Milliseconds = MINUTE_IN_MS;
-const SPREAD_MULTIPLIER: u64 = 2;
 
 pub fn start_job() {
     ic_cdk_timers::set_timer_interval(Duration::from_millis(RUN_MARKET_MAKER_INTERVAL), run);
@@ -157,20 +156,20 @@ fn calculate_price_limits(
     config: &Config,
 ) -> (u64, u64) {
     let mut max_bid_price = min(
-        current_ask.saturating_sub(SPREAD_MULTIPLIER * config.price_increment),
+        current_ask.saturating_sub(config.spread * config.price_increment),
         config.max_buy_price,
     );
     let mut min_ask_price = max(
-        current_bid.saturating_add(SPREAD_MULTIPLIER * config.price_increment),
+        current_bid.saturating_add(config.spread * config.price_increment),
         config.min_sell_price,
     );
 
     if let Some(bid) = latest_bid_taken {
-        min_ask_price = max(bid.saturating_add(SPREAD_MULTIPLIER * config.price_increment), min_ask_price);
+        min_ask_price = max(bid.saturating_add(config.spread * config.price_increment), min_ask_price);
     }
 
     if let Some(ask) = latest_ask_taken {
-        max_bid_price = min(ask.saturating_sub(SPREAD_MULTIPLIER * config.price_increment), max_bid_price);
+        max_bid_price = min(ask.saturating_sub(config.spread * config.price_increment), max_bid_price);
     }
 
     if max_bid_price > min_ask_price {
@@ -183,8 +182,8 @@ fn calculate_price_limits(
     min_ask_price = round_up_to_next_increment(min_ask_price, config.price_increment);
 
     let diff_in_increments = min_ask_price.saturating_sub(max_bid_price) / config.price_increment;
-    if diff_in_increments < SPREAD_MULTIPLIER {
-        let increase_required = SPREAD_MULTIPLIER - diff_in_increments;
+    if diff_in_increments < config.spread {
+        let increase_required = config.spread - diff_in_increments;
 
         if increase_required % 2 == 0 {
             max_bid_price = max_bid_price.saturating_sub((increase_required / 2) * config.price_increment);
@@ -373,6 +372,7 @@ mod tests {
             min_order_size: 10,
             max_buy_price: 100,
             min_sell_price: 0,
+            spread: 2,
             min_orders_per_direction: 3,
             max_orders_per_direction: 5,
             max_orders_to_make_per_iteration: 2,

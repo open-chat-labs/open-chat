@@ -173,10 +173,16 @@ pub struct Config {
     min_order_size: u64,
     max_buy_price: u64,
     min_sell_price: u64,
+    #[serde(default = "two")]
+    spread: u64,
     min_orders_per_direction: u32,
     max_orders_per_direction: u32,
     max_orders_to_make_per_iteration: u32,
     max_orders_to_cancel_per_iteration: u32,
+}
+
+fn two() -> u64 {
+    2
 }
 
 fn on_order_made(exchange_id: ExchangeId, order: MakeOrderRequest) {
