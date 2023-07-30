@@ -233,7 +233,7 @@ fn welcome_messages() -> Vec<String> {
         "I am the OpenChat bot. I will send you messages to let you know about events that don't belong to any other chat, \
             such as if crypto has been deposited into your OpenChat account(s) or if you've been removed from a group. In \
             the future you'll be able to ask me questions or send me commands.",
-        "Please join the [OpenChat Community](/community/4stss-vaaaa-aaaar-amjda-cai) to find out more about OpenChat, take \
+        "Please join the [OpenChat](/community/dgegb-daaaa-aaaar-arlhq-cai) community to find out more about OpenChat, take \
             part in governance, request new features, report bugs or just chat.",
     ];
 
