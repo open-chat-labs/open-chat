@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add API endpoint `lookup_channel_by_group_id` ([#4066](https://github.com/open-chat-labs/open-chat/pull/4066))
+
 ## [[2.0.760](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.760-group_index)] - 2023-07-28
 
 ### Changed

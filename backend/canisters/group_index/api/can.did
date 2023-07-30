@@ -100,6 +100,18 @@ type ExploreGroupsSuccess = record {
     total : nat32;
 };
 
+type LookupChannelByGroupIdArgs = record {
+    group_id : ChatId;
+};
+
+type LookupChannelByGroupIdResponse = variant {
+    Success : record {
+        community_id : CommunityId;
+        channel_id : ChannelId;
+    };
+    NotFound;
+};
+
 type FreezeCommunityArgs = record {
     community_id : ChatId;
     reason : opt text;
@@ -248,6 +260,7 @@ service : {
     search : (SearchArgs) -> (SearchResponse) query;
     explore_communities : (ExploreCommunitiesArgs) -> (ExploreCommunitiesResponse) query;
     explore_groups : (ExploreGroupsArgs) -> (ExploreGroupsResponse) query;
+    lookup_channel_by_group_id : (LookupChannelByGroupIdArgs) -> (LookupChannelByGroupIdResponse) query;
 
     // Only callable by "platform moderators"
     freeze_community : (FreezeCommunityArgs) -> (FreezeCommunityResponse);
