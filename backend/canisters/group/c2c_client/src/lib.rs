@@ -3,7 +3,6 @@ use group_canister::*;
 
 // Queries
 generate_c2c_call!(c2c_events_internal);
-generate_c2c_call!(c2c_export_group);
 generate_c2c_call!(c2c_name_and_members);
 generate_c2c_call!(c2c_summary);
 generate_c2c_call!(c2c_summary_updates);
@@ -16,6 +15,7 @@ generate_candid_c2c_call!(selected_initial);
 
 // Updates
 generate_c2c_call!(c2c_delete_group);
+generate_c2c_call!(c2c_export_group);
 generate_c2c_call!(c2c_freeze_group);
 generate_c2c_call!(c2c_invite_users);
 generate_c2c_call!(c2c_join_group);
