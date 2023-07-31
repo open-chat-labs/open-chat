@@ -14,6 +14,7 @@ import {
     ActiveGroupsResponse,
     ExploreCommunitiesResponse,
     ExploreCommunitiesSuccess,
+    LookupChannelByGroupIdResponse,
 } from "./types";
 export {
     _SERVICE as GroupIndexService,
@@ -30,6 +31,7 @@ export {
     ActiveGroupsResponse as ApiActiveGroupsResponse,
     ExploreCommunitiesResponse as ApiExploreCommunitiesResponse,
     ExploreCommunitiesSuccess as ApiExploreCommunitiesSuccess,
+    LookupChannelByGroupIdResponse as ApiLookupChannelByGroupIdResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

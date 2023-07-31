@@ -342,6 +342,7 @@ import {
     KINIC_SYMBOL,
     SNS1_SYMBOL,
     ModerationFlag,
+    GroupMoved,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -776,25 +777,27 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    previewChat(chatId: MultiUserChatIdentifier): Promise<boolean> {
+    previewChat(
+        chatId: MultiUserChatIdentifier
+    ): Promise<{ kind: "success" } | { kind: "failure" } | GroupMoved> {
         switch (chatId.kind) {
             case "group_chat":
-                return this.sendRequest({ kind: "getPublicGroupSummary", chatId }).then(
-                    (maybeChat) => {
-                        if (maybeChat === undefined || maybeChat.frozen) {
-                            return false;
-                        }
-                        addGroupPreview(maybeChat);
-                        return true;
+                return this.sendRequest({ kind: "getPublicGroupSummary", chatId }).then((resp) => {
+                    if (resp.kind === "success" && !resp.group.frozen) {
+                        addGroupPreview(resp.group);
+                        return { kind: "success" };
+                    } else if (resp.kind === "group_moved") {
+                        return resp;
                     }
-                );
+                    return { kind: "failure" };
+                });
             case "channel":
                 return this.sendRequest({ kind: "getChannelSummary", chatId }).then((resp) => {
                     if (resp.kind === "failure") {
-                        return false;
+                        return { kind: "failure" };
                     }
                     addGroupPreview(resp);
-                    return true;
+                    return { kind: "success" };
                 });
         }
     }
