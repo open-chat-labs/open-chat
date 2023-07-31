@@ -68,16 +68,19 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let mut channels_added = Vec::new();
     let mut channels_updated = Vec::new();
 
+    let user_id = member.map(|m| m.user_id);
+    let is_community_member = member.is_some();
+
     for channel in channels_with_updates {
-        match channel.summary_updates(
-            member.map(|m| m.user_id),
-            args.updates_since,
-            member.is_some(),
-            state.data.is_public,
-            now,
-        ) {
-            ChannelUpdates::Added(s) => channels_added.push(s),
-            ChannelUpdates::Updated(s) => channels_updated.push(s),
+        if channel.date_imported.map_or(false, |ts| ts > args.updates_since) {
+            if let Some(summary) = channel.summary(user_id, is_community_member, state.data.is_public, now) {
+                channels_added.push(summary);
+            }
+        } else {
+            match channel.summary_updates(user_id, args.updates_since, is_community_member, state.data.is_public, now) {
+                ChannelUpdates::Added(s) => channels_added.push(s),
+                ChannelUpdates::Updated(s) => channels_updated.push(s),
+            }
         }
     }
 
