@@ -1,7 +1,4 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-    import { isTouchDevice } from "../utils/devices";
-
     export let cls = "";
     export let loading: boolean = false;
     export let disabled: boolean = false;
@@ -12,25 +9,10 @@
     export let hollow: boolean = false;
     export let title: string | undefined = undefined;
     export let square: boolean = false;
-
-    const dispatch = createEventDispatcher();
-
-    function click(ev: MouseEvent) {
-        if (!isTouchDevice) {
-            dispatch("click", ev);
-        }
-    }
-
-    function touchstart(ev: TouchEvent) {
-        if (isTouchDevice) {
-            dispatch("click", ev);
-        }
-    }
 </script>
 
 <button
-    on:click|stopPropagation={click}
-    on:touchstart|stopPropagation={touchstart}
+    on:click|stopPropagation
     class={cls}
     class:loading
     class:disabled
