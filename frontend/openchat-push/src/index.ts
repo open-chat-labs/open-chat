@@ -96,7 +96,7 @@ async function handleNotificationClick(event: NotificationEvent): Promise<void> 
             path: event.notification.data.path,
         });
     } else {
-        const urlToOpen = `${new URL(self.location.origin)}${event.notification.data.path}`;
+        const urlToOpen = new URL(event.notification.data.path, self.location.origin);
         console.debug("PUSH: notification clicked no open clients. Opening: ", urlToOpen);
         await self.clients.openWindow(urlToOpen);
     }
