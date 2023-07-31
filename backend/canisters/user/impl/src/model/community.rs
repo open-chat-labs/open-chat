@@ -99,6 +99,7 @@ impl Community {
                 .map(|c| {
                     // If the channel has just been imported, return all updates
                     let since = if c.imported.unwrap_or_default() > updates_since { 0 } else { updates_since };
+
                     user_canister::ChannelSummaryUpdates {
                         channel_id: c.channel_id,
                         read_by_me_up_to: c.messages_read.read_by_me_up_to_updates(since),
