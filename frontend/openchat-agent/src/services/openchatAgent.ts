@@ -133,6 +133,7 @@ import {
     PayForDiamondMembershipResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
+    SetCommunityModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
@@ -2319,6 +2320,10 @@ export class OpenChatAgent extends EventTarget {
             recurring,
             expectedPriceE8s
         );
+    }
+
+    setCommunityModerationFlags(communityId: string, flags: number): Promise<SetCommunityModerationFlagsResponse> {
+        return this._groupIndexClient.setCommunityModerationFlags(communityId, flags);
     }
 
     setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {

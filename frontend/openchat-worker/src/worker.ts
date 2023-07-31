@@ -1191,6 +1191,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
+            case "setCommunityModerationFlags":
+                agent
+                    .setCommunityModerationFlags(payload.communityId, payload.flags)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
             case "setGroupUpgradeConcurrency":
                 agent
                     .setGroupUpgradeConcurrency(payload.value)
