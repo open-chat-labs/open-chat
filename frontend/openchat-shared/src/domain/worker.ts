@@ -53,6 +53,7 @@ import type {
     ResetInviteCodeResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
+    SetCommunityModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     DeclineInvitationResponse,
     ChatIdentifier,
@@ -229,6 +230,7 @@ export type WorkerRequest =
     | DeleteFailedMessage
     | ClaimPrize
     | PayForDiamondMembership
+    | SetCommunityModerationFlags
     | SetGroupUpgradeConcurrency
     | SetUserUpgradeConcurrency
     | UpdateMarketMakerConfig
@@ -838,6 +840,12 @@ type UnsuspendUser = {
     kind: "unsuspendUser";
 };
 
+type SetCommunityModerationFlags = {
+    communityId: string;
+    flags: number;
+    kind: "setCommunityModerationFlags";
+};
+
 type SetGroupUpgradeConcurrency = {
     value: number;
     kind: "setGroupUpgradeConcurrency";
@@ -1392,6 +1400,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? SuspendUserResponse
     : T extends UnsuspendUser
     ? UnsuspendUserResponse
+    : T extends SetCommunityModerationFlags
+    ? SetCommunityModerationFlagsResponse
     : T extends SetGroupUpgradeConcurrency
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetUserUpgradeConcurrency

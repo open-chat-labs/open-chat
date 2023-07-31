@@ -88,10 +88,11 @@
         (<any>window).platformModerator = {
             addHotGroupExclusion,
             deleteFrozenGroup,
+            deleteMessage,
             freezeGroup,
             removeHotGroupExclusion,
+            setCommunityModerationFlags,
             unfreezeGroup,
-            deleteMessage,
         };
         (<any>window).platformOperator = {
             setGroupUpgradeConcurrency,
@@ -136,6 +137,16 @@
                 console.log("Hot group exclusion removed", chatId);
             } else {
                 console.log("Failed to remove hot group exclusion", chatId);
+            }
+        });
+    }
+
+    function setCommunityModerationFlags(communityId: string, flags: number): void {
+        client.setCommunityModerationFlags(communityId, flags).then((success) => {
+            if (success) {
+                console.log("Community moderation flags updated", communityId);
+            } else {
+                console.log("Failed to set community moderation flags", communityId);
             }
         });
     }

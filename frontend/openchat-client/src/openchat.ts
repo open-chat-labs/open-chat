@@ -3948,6 +3948,15 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    setCommunityModerationFlags(communityId: string, flags: number): Promise<boolean> {
+        return this.sendRequest({ kind: "setCommunityModerationFlags", communityId, flags })
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to set community moderation flags", err);
+                return false;
+            });
+    }
+
     setGroupUpgradeConcurrency(value: number): Promise<boolean> {
         return this.sendRequest({ kind: "setGroupUpgradeConcurrency", value })
             .then((resp) => resp === "success")

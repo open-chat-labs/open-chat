@@ -4,6 +4,7 @@ import type {
     FreezeGroupResponse,
     GroupMatch,
     RemoveHotGroupExclusionResponse,
+    SetCommunityModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     UnfreezeGroupResponse,
     CommunityMatch,
@@ -22,6 +23,7 @@ import type {
     ApiSearchResponse,
     ApiRecommendedGroupsResponse,
     ApiRemoveHotGroupExclusionResponse,
+    ApiSetCommunityModerationFlagsResponse,
     ApiSetUpgradeConcurrencyResponse,
     ApiUnfreezeGroupResponse,
     ApiExploreCommunitiesResponse,
@@ -252,6 +254,30 @@ export function setUpgradeConcurrencyResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetUpgradeConcurrencyResponse type received",
+        candid
+    );
+}
+
+export function setCommunityModerationFlagsResponse(
+    candid: ApiSetCommunityModerationFlagsResponse,
+): SetCommunityModerationFlagsResponse {
+    if ("Success" in candid || "Unchanged" in candid) {
+        return "success";
+    }
+    if ("CommunityNotFound" in candid) {
+        return "community_not_found";
+    }
+    if ("InvalidFlags" in candid) {
+        return "invalid_flags";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorized";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiSetCommunityModerationFlagsResponse type received",
         candid
     );
 }

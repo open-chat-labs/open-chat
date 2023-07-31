@@ -1789,6 +1789,7 @@ export type RemoveHotGroupExclusionResponse =
     | "internal_error";
 
 export type SetGroupUpgradeConcurrencyResponse = "success" | "not_authorized" | "internal_error";
+export type SetCommunityModerationFlagsResponse = "success" | "community_not_found" | "not_authorized" | "invalid_flags" | "internal_error";
 
 export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
 
