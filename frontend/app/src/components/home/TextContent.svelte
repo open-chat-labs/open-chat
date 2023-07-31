@@ -42,10 +42,6 @@
     $: youtubeStartTime = youtubeMatch
         ? new URL(youtubeMatch[0]).searchParams.get("t") || "0"
         : "0";
-
-    function expand() {
-        expanded = true;
-    }
 </script>
 
 {#if !youtubeMatch}
@@ -55,7 +51,7 @@
     {/if}
     {#if twitterLinkMatch}
         {#if !expanded}
-            <span on:touchstart={expand} on:click={expand} class="expand" title={$_("showTweet")}>
+            <span on:click={() => (expanded = true)} class="expand" title={$_("showTweet")}>
                 <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={"var(--txt)"} />
             </span>
         {:else}
@@ -69,7 +65,7 @@
         <Markdown suppressLinks={pinned} {text} />
     {/if}
     {#if !expanded}
-        <span on:click={expand} on:touchstart={expand} class="expand" title={$_("showVideo")}>
+        <span on:click={() => (expanded = true)} class="expand" title={$_("showVideo")}>
             <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={"var(--txt)"} />
         </span>
     {:else}
