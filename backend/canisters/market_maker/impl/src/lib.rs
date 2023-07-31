@@ -56,6 +56,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             exchanges: self.data.exchange_config.clone(),
+            my_open_orders: self.data.my_open_orders.clone(),
             market_makers_in_progress: self.data.market_makers_in_progress.clone(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -111,6 +112,7 @@ pub struct Metrics {
     pub wasm_version: Version,
     pub git_commit_id: String,
     pub exchanges: HashMap<ExchangeId, Config>,
+    pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
     pub canister_ids: CanisterIds,
 }

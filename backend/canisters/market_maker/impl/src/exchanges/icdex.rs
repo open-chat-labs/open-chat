@@ -41,7 +41,7 @@ impl ICDexClient {
     }
 
     async fn latest_price(&self) -> CallResult<u64> {
-        let response: StatsResponse = make_c2c_call(self.dex_canister_id, "stats", (), candid::encode_one, |r| {
+        let response: StatsResponse = make_c2c_call(self.dex_canister_id, "stats", (), candid::encode_args, |r| {
             candid::decode_one(r)
         })
         .await?;
@@ -64,7 +64,7 @@ impl ICDexClient {
 
     async fn orderbook(&self) -> CallResult<AggregatedOrders> {
         let (_, orderbook): (Nat, Orderbook) = make_c2c_call(self.dex_canister_id, "level10", (), candid::encode_args, |r| {
-            candid::decode_one(r)
+            candid::decode_args(r)
         })
         .await?;
 
