@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Clear failing group imports ([#4083](https://github.com/open-chat-labs/open-chat/pull/4083))
+
 ### Fixed
 
 - Newly imported channels missing from updates loop ([#4079](https://github.com/open-chat-labs/open-chat/pull/4079))
