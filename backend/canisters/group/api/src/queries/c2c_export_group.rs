@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -8,5 +9,5 @@ pub struct Args {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(Vec<u8>),
+    Success(ByteBuf),
 }
