@@ -1807,3 +1807,10 @@ export type ClaimPrizeResponse =
 export type ReportMessageResponse = "success" | "failure";
 
 export type DeclineInvitationResponse = "success" | "failure";
+
+export type PublicGroupSummaryResponse =
+    | (Success & { group: GroupChatSummary })
+    | Failure
+    | GroupMoved;
+
+export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };

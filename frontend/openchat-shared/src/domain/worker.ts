@@ -60,6 +60,7 @@ import type {
     DirectChatIdentifier,
     ChannelIdentifier,
     MultiUserChatIdentifier,
+    PublicGroupSummaryResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -1006,6 +1007,7 @@ export type WorkerResponse =
     | Response<ExploreChannelsResponse>
     | Response<ImportGroupResponse>
     | Response<ManageDefaultChannelsResponse>
+    | Response<PublicGroupSummaryResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1265,7 +1267,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends GetUserStorageLimits
     ? StorageStatus
     : T extends GetPublicGroupSummary
-    ? GroupChatSummary | undefined
+    ? PublicGroupSummaryResponse
     : T extends ToggleMuteNotifications
     ? ToggleMuteNotificationResponse
     : T extends ArchiveChat

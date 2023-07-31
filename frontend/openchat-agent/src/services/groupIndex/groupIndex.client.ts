@@ -14,6 +14,7 @@ import type {
     GroupChatIdentifier,
     ActiveGroupsResponse,
     ExploreCommunitiesResponse,
+    ChannelIdentifier,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
@@ -28,6 +29,7 @@ import {
     searchGroupsResponse,
     activeGroupsResponse,
     exploreCommunitiesResponse,
+    lookupChannelResponse,
 } from "./mappers";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
@@ -87,6 +89,16 @@ export class GroupIndexClient extends CandidService {
             () => this.groupIndexService.search(args),
             searchGroupsResponse,
             args
+        );
+    }
+
+    lookupChannelByGroupId(id: GroupChatIdentifier): Promise<ChannelIdentifier | undefined> {
+        return this.handleQueryResponse(
+            () =>
+                this.groupIndexService.lookup_channel_by_group_id({
+                    group_id: Principal.fromText(id.groupId),
+                }),
+            lookupChannelResponse
         );
     }
 

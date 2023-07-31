@@ -227,7 +227,10 @@
                         code,
                     };
                 }
-                if (!(await client.previewChat(chatId))) {
+                const preview = await client.previewChat(chatId);
+                if (preview.kind === "group_moved") {
+                    page.replace(routeForChatIdentifier($chatListScope.kind, preview.location));
+                } else if (preview.kind === "failure") {
                     page.replace(routeForScope(client.getDefaultScope()));
                     return;
                 }
