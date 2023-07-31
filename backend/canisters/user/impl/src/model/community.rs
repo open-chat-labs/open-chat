@@ -58,13 +58,14 @@ impl Community {
         self.last_read = now;
     }
 
-    pub fn import_group(&mut self, channel_id: ChannelId, group: GroupChat) {
+    pub fn import_group(&mut self, channel_id: ChannelId, group: GroupChat, now: TimestampMillis) {
         self.channels.insert(
             channel_id,
             Channel {
                 channel_id,
                 messages_read: group.messages_read,
                 archived: group.archived,
+                imported: Some(now),
             },
         );
     }
@@ -128,6 +129,8 @@ pub struct Channel {
     pub channel_id: ChannelId,
     pub messages_read: GroupMessagesRead,
     pub archived: Timestamped<bool>,
+    #[serde(default)]
+    pub imported: Option<TimestampMillis>,
 }
 
 impl Channel {
@@ -136,6 +139,7 @@ impl Channel {
             channel_id,
             messages_read: GroupMessagesRead::default(),
             archived: Timestamped::default(),
+            imported: None,
         }
     }
 
@@ -145,6 +149,7 @@ impl Channel {
             self.messages_read.threads_read.last_updated().unwrap_or_default(),
             self.messages_read.date_read_pinned.timestamp,
             self.archived.timestamp,
+            self.imported.unwrap_or_default(),
         ]
         .iter()
         .max()
