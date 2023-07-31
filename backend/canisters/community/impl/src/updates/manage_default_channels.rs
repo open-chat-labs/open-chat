@@ -49,7 +49,7 @@ fn manage_default_channels_impl(args: Args, state: &mut RuntimeState) -> Respons
                     let channel = state.data.channels.get_mut(channel_id).unwrap();
                     if channel.chat.gate.is_none() {
                         for member in state.data.members.iter_mut() {
-                            join_channel_unchecked(channel, member, true, true, now);
+                            join_channel_unchecked(channel, member, true, now);
                         }
                     }
                     added.push(*channel_id)
