@@ -233,15 +233,9 @@ fn welcome_messages() -> Vec<String> {
         "I am the OpenChat bot. I will send you messages to let you know about events that don't belong to any other chat, \
             such as if crypto has been deposited into your OpenChat account(s) or if you've been removed from a group. In \
             the future you'll be able to ask me questions or send me commands.",
-        "\
-- To follow announcements by the OpenChat team, join [Announcements](/group/kvvn5-aiaaa-aaaaf-aqznq-cai).
-- To ask for help, join [OpenChat Help](/group/4stss-vaaaa-aaaar-amjda-cai).
-- To request new features, join [Feature Requests](/group/vfaj4-zyaaa-aaaaf-aabya-cai).
-- To report bugs, join [Bug Reports](/group/sycha-wyaaa-aaaaf-aabka-cai).
-- To provide feedback in general, join the [Product Feedback](/group/s7dbu-3aaaa-aaaaf-aabkq-cai).
-- To view, vote on and discuss governance proposals, join [OpenChat Proposals](/group/nsbx4-4iaaa-aaaar-afusa-cai).
-- To introduce and discuss upcoming proposals, join [OpenChat Roadmap](/group/n2qig-viaaa-aaaar-ahviq-cai).",
-        "Please keep posts relevant to each group. If you just want to say \"hi\", post in the [OpenChat](/group/vmdca-pqaaa-aaaaf-aabzq-cai) group."];
+        "Please join the [OpenChat](/community/dgegb-daaaa-aaaar-arlhq-cai) community to find out more about OpenChat, take \
+            part in governance, request new features, report bugs or just chat.",
+    ];
 
     WELCOME_MESSAGES.iter().map(|t| t.to_string()).collect()
 }
