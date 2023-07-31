@@ -765,6 +765,9 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
+export interface LookupChannelByGroupIdArgs { 'group_id' : ChatId }
+export type LookupChannelByGroupIdResponse = { 'NotFound' : null } |
+  { 'Success' : { 'channel_id' : ChannelId, 'community_id' : CommunityId } };
 export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
@@ -1325,6 +1328,10 @@ export interface _SERVICE {
     FreezeCommunityResponse
   >,
   'freeze_group' : ActorMethod<[FreezeGroupArgs], FreezeGroupResponse>,
+  'lookup_channel_by_group_id' : ActorMethod<
+    [LookupChannelByGroupIdArgs],
+    LookupChannelByGroupIdResponse
+  >,
   'recommended_groups' : ActorMethod<
     [RecommendedGroupsArgs],
     RecommendedGroupsResponse

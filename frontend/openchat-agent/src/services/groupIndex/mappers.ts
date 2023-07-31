@@ -10,6 +10,7 @@ import type {
     GroupSearchResponse,
     ActiveGroupsResponse,
     ExploreCommunitiesResponse,
+    ChannelIdentifier,
 } from "openchat-shared";
 import type {
     ApiActiveGroupsResponse,
@@ -24,6 +25,7 @@ import type {
     ApiSetUpgradeConcurrencyResponse,
     ApiUnfreezeGroupResponse,
     ApiExploreCommunitiesResponse,
+    ApiLookupChannelByGroupIdResponse,
 } from "./candid/idl";
 import {
     DeleteFrozenGroupResponse,
@@ -62,6 +64,20 @@ export function recommendedGroupsResponse(
         return candid.Success.groups.map(publicGroupSummary);
     }
     throw new Error(`Unknown GroupIndex.RecommendedGroupsResponse of ${candid}`);
+}
+
+export function lookupChannelResponse(
+    candid: ApiLookupChannelByGroupIdResponse
+): ChannelIdentifier | undefined {
+    if ("Success" in candid) {
+        return {
+            kind: "channel",
+            communityId: candid.Success.community_id.toString(),
+            channelId: candid.Success.channel_id.toString(),
+        };
+    }
+    console.warn("ApiLookupChannelByGroupIdResponse failed with ", candid);
+    return undefined;
 }
 
 export function exploreCommunitiesResponse(

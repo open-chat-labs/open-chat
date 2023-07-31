@@ -164,6 +164,9 @@ import {
     ExploreChannelsResponse,
     CommunityInvite,
     RegistryValue,
+    DestinationInvalidError,
+    PublicGroupSummaryResponse,
+    CommonResponses,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1867,8 +1870,21 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    getPublicGroupSummary(chatId: GroupChatIdentifier): Promise<GroupChatSummary | undefined> {
-        return this.getGroupClient(chatId.groupId).getPublicSummary();
+    getPublicGroupSummary(chatId: GroupChatIdentifier): Promise<PublicGroupSummaryResponse> {
+        return this.getGroupClient(chatId.groupId)
+            .getPublicSummary()
+            .catch((err) => {
+                if (err instanceof DestinationInvalidError) {
+                    return this._groupIndexClient.lookupChannelByGroupId(chatId).then((resp) => {
+                        if (resp === undefined) return CommonResponses.failure();
+                        return {
+                            kind: "group_moved",
+                            location: resp,
+                        };
+                    });
+                }
+                return CommonResponses.failure();
+            });
     }
 
     getGroupRules(chatId: MultiUserChatIdentifier): Promise<AccessRules | undefined> {

@@ -158,6 +158,15 @@ export const idlFactory = ({ IDL }) => {
     }),
     'InternalError' : IDL.Text,
   });
+  const LookupChannelByGroupIdArgs = IDL.Record({ 'group_id' : ChatId });
+  const ChannelId = IDL.Nat;
+  const LookupChannelByGroupIdResponse = IDL.Variant({
+    'NotFound' : IDL.Null,
+    'Success' : IDL.Record({
+      'channel_id' : ChannelId,
+      'community_id' : CommunityId,
+    }),
+  });
   const RecommendedGroupsArgs = IDL.Record({
     'count' : IDL.Nat8,
     'exclusions' : IDL.Vec(ChatId),
@@ -524,7 +533,6 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
   });
   const MessageId = IDL.Nat;
-  const ChannelId = IDL.Nat;
   const Chat = IDL.Variant({
     'Group' : ChatId,
     'Channel' : IDL.Tuple(CommunityId, ChannelId),
@@ -674,6 +682,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'freeze_group' : IDL.Func([FreezeGroupArgs], [FreezeGroupResponse], []),
+    'lookup_channel_by_group_id' : IDL.Func(
+        [LookupChannelByGroupIdArgs],
+        [LookupChannelByGroupIdResponse],
+        ['query'],
+      ),
     'recommended_groups' : IDL.Func(
         [RecommendedGroupsArgs],
         [RecommendedGroupsResponse],

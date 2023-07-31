@@ -17,7 +17,6 @@ import type {
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
-    GroupChatSummary,
     MemberRole,
     PinMessageResponse,
     UnpinMessageResponse,
@@ -44,6 +43,7 @@ import type {
     ChatEvent,
     GroupChatIdentifier,
     ConvertToCommunityResponse,
+    PublicGroupSummaryResponse,
 } from "openchat-shared";
 import { textToCode } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -634,16 +634,13 @@ export class GroupClient extends CandidService {
         return mergeGroupChatDetails(previous, updatesResponse);
     }
 
-    getPublicSummary(): Promise<GroupChatSummary | undefined> {
+    getPublicSummary(): Promise<PublicGroupSummaryResponse> {
         const args = { invite_code: apiOptional(textToCode, this.inviteCode) };
         return this.handleQueryResponse(
             () => this.groupService.public_summary(args),
             publicSummaryResponse,
             args
-        ).catch((_err) => {
-            // whatever error we get, just assume that we cannot get hold of the group
-            return undefined;
-        });
+        );
     }
 
     getRules(): Promise<AccessRules | undefined> {

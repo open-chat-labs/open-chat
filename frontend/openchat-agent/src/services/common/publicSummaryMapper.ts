@@ -5,7 +5,12 @@ import type {
 } from "../../services/group/candid/idl";
 import { optional } from "../../utils/mapping";
 import { apiGroupSubtype, accessGate, message } from "./chatMappers";
-import { nullMembership, type GroupChatSummary } from "openchat-shared";
+import {
+    nullMembership,
+    type GroupChatSummary,
+    PublicGroupSummaryResponse,
+    CommonResponses,
+} from "openchat-shared";
 
 export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSummary {
     return {
@@ -56,8 +61,14 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
 
 export function publicSummaryResponse(
     candid: ApiPublicSummaryResponse
-): GroupChatSummary | undefined {
+): PublicGroupSummaryResponse {
     if ("Success" in candid) {
-        return publicGroupSummary(candid.Success.summary);
+        return {
+            kind: "success",
+            group: publicGroupSummary(candid.Success.summary),
+        };
+    } else {
+        console.warn("ApiPublicSummaryResponse failed with ", candid);
+        return CommonResponses.failure();
     }
 }
