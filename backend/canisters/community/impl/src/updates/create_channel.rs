@@ -126,7 +126,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
 
             if args.is_default && channel.chat.gate.is_none() {
                 for m in state.data.members.iter_mut() {
-                    join_channel_unchecked(&mut channel, m, true, true, now);
+                    join_channel_unchecked(&mut channel, m, true, now);
                 }
             }
 
