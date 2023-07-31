@@ -46,7 +46,7 @@ impl ICDexClient {
         })
         .await?;
 
-        Ok((response.price * 100000000f64) as u64)
+        Ok((response.price * 100_000_000f64) as u64)
     }
 
     async fn my_open_orders(&self) -> CallResult<Vec<Order>> {
@@ -72,12 +72,22 @@ impl ICDexClient {
             bids: orderbook
                 .bid
                 .into_iter()
-                .map(|p| (p.price.0.try_into().unwrap(), p.quantity.0.try_into().unwrap()))
+                .map(|p| {
+                    (
+                        u64::try_from(p.price.0).unwrap() * 10,
+                        u64::try_from(p.quantity.0).unwrap() * 10,
+                    )
+                })
                 .collect(),
             asks: orderbook
                 .ask
                 .into_iter()
-                .map(|p| (p.price.0.try_into().unwrap(), p.quantity.0.try_into().unwrap()))
+                .map(|p| {
+                    (
+                        u64::try_from(p.price.0).unwrap() * 10,
+                        u64::try_from(p.quantity.0).unwrap() * 10,
+                    )
+                })
                 .collect(),
         })
     }
