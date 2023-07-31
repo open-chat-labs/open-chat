@@ -172,7 +172,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                             for default_channel_id in default_channel_ids.iter() {
                                 if let Some(channel) = state.data.channels.get_mut(default_channel_id) {
                                     if channel.chat.gate.is_none() {
-                                        join_channel_unchecked(channel, member, true, true, now);
+                                        join_channel_unchecked(channel, member, true, now);
                                     }
                                 }
                             }
