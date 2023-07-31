@@ -18,7 +18,7 @@ async fn c2c_import_proposals_group(
         read_state(|state| (state.data.group_index_canister_id, state.env.caller().into()));
 
     match import_group_impl(args.group_id, user_id, group_index_canister_id).await {
-        Success(_) => community_canister::c2c_import_proposals_group::Response::Success,
+        Success(result) => community_canister::c2c_import_proposals_group::Response::Success(result.channel_id),
         InternalError(error) => community_canister::c2c_import_proposals_group::Response::InternalError(error),
         response => community_canister::c2c_import_proposals_group::Response::InternalError(format!(
             "Unexpected response from 'c2c_start_importing_group_into_community': {response:?}"
