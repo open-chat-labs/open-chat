@@ -120,12 +120,15 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
             all = all.concat([...previews.filter((c) => c.kind === "group_chat").entries()]);
         }
         if (currentScope.kind === "community") {
+            const communityId = currentScope.id.communityId;
             const previewChannels = ChatMap.fromList(
                 communityPreviews.get(currentScope.id)?.channels ?? []
             );
             all = all.concat([
                 ...previewChannels.entries(),
-                ...previews.filter((c) => c.kind === "channel").entries(),
+                ...previews
+                    .filter((c) => c.kind === "channel" && c.id.communityId === communityId)
+                    .entries(),
             ]);
         }
         return all.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
