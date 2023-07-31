@@ -89,6 +89,7 @@
             addHotGroupExclusion,
             deleteFrozenGroup,
             deleteMessage,
+            deleteChannelMessage,
             freezeGroup,
             removeHotGroupExclusion,
             setCommunityModerationFlags,
@@ -159,6 +160,40 @@
                 console.log("Failed to unfreeze group", chatId);
             }
         });
+    }
+
+    function deleteChannelMessage(
+        communityId: string,
+        channelId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number | undefined
+    ): void {
+        client
+            .deleteMessage(
+                { kind: "channel", communityId, channelId },
+                threadRootMessageIndex,
+                messageId,
+                true
+            )
+            .then((success) => {
+                if (success) {
+                    console.log(
+                        "Message deleted",
+                        communityId,
+                        channelId,
+                        messageId,
+                        threadRootMessageIndex
+                    );
+                } else {
+                    console.log(
+                        "Failed to delete message",
+                        communityId,
+                        channelId,
+                        messageId,
+                        threadRootMessageIndex
+                    );
+                }
+            });
     }
 
     function deleteMessage(

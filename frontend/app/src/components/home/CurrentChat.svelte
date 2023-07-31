@@ -30,6 +30,7 @@
     import { toastStore } from "stores/toast";
     import ImportToCommunity from "./communities/Import.svelte";
     import { randomSentence } from "../../utils/randomMsg";
+    import { rightPanelHistory } from "../../stores/rightPanel";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -105,6 +106,8 @@
         if (importToCommunities.size === 0) {
             toastStore.showFailureToast("communities.noOwned");
             importToCommunities = undefined;
+        } else {
+            rightPanelHistory.set([]);
         }
     }
 
