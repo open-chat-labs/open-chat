@@ -7,10 +7,8 @@
     import TooltipPopup from "../TooltipPopup.svelte";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import type { OpenChat, UserLookup } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
-    import { isTouchDevice } from "../../utils/devices";
+    import { getContext } from "svelte";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     export let finished: boolean;
@@ -59,28 +57,10 @@
             }
         }
     }
-
-    function click(ev: MouseEvent) {
-        if (!isTouchDevice) {
-            dispatch("click", ev);
-        }
-    }
-
-    function touchstart(ev: TouchEvent) {
-        if (isTouchDevice) {
-            dispatch("click", ev);
-        }
-    }
 </script>
 
 <TooltipWrapper position={"right"} align={"center"} enable={showVotes}>
-    <div
-        slot="target"
-        class:readonly
-        class="answer-text"
-        class:finished
-        on:click|stopPropagation={click}
-        on:touchstart|stopPropagation={touchstart}>
+    <div slot="target" class:readonly class="answer-text" class:finished on:click>
         <Progress bg={"button"} {percent}>
             <div class="label">
                 <span>{answer}</span>
