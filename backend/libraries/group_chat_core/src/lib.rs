@@ -326,6 +326,11 @@ impl GroupChatCore {
                 ChatEventInternal::ParticipantLeft(p) => {
                     user_updates_handler.mark_member_updated(&mut result, p.user_id, true);
                 }
+                ChatEventInternal::MembersAddedToDefaultChannel(m) => {
+                    for user_id in m.user_ids.iter() {
+                        user_updates_handler.mark_member_updated(&mut result, *user_id, false);
+                    }
+                }
                 ChatEventInternal::RoleChanged(rc) => {
                     for user_id in rc.user_ids.iter() {
                         user_updates_handler.mark_member_updated(&mut result, *user_id, false);
