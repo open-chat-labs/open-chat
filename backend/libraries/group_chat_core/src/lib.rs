@@ -214,7 +214,8 @@ impl GroupChatCore {
                         updates.role_changed = true;
                     }
                 }
-                ChatEventInternal::ParticipantsAdded(_)
+                ChatEventInternal::MembersAddedToDefaultChannel(_)
+                | ChatEventInternal::ParticipantsAdded(_)
                 | ChatEventInternal::ParticipantsRemoved(_)
                 | ChatEventInternal::ParticipantJoined(_)
                 | ChatEventInternal::ParticipantLeft(_)
