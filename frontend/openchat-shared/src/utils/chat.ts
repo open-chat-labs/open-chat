@@ -83,6 +83,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "chat_frozen":
             case "chat_unfrozen":
             case "empty":
+            case "members_added_to_default_channel":
             case "users_invited":
                 break;
             default:
