@@ -78,10 +78,10 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "gate_updated":
                 userIds.add(e.event.updatedBy);
                 break;
-            case "direct_chat_created":
             case "aggregate_common_events":
             case "chat_frozen":
             case "chat_unfrozen":
+            case "direct_chat_created":
             case "empty":
             case "members_added_to_default_channel":
             case "users_invited":

@@ -177,13 +177,13 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.updatedBy;
         case "users_invited":
             return event.invitedBy;
-        case "direct_chat_created":
         case "aggregate_common_events":
-        case "member_left": // We exclude participant_left events since the user is no longer in the group
         case "chat_frozen":
         case "chat_unfrozen":
-        case "members_added_to_default_channel":
+        case "direct_chat_created":
         case "empty":
+        case "member_left": // We exclude participant_left events since the user is no longer in the group
+        case "members_added_to_default_channel":
             return undefined;
         default:
             console.warn("Unexpected ChatEvent type received", event);
