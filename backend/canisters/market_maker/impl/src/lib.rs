@@ -76,7 +76,7 @@ struct Data {
     pub chat_ledger_canister_id: CanisterId,
     pub orders_log: OrdersLog,
     #[serde(default)]
-    pub market_details: HashMap<ExchangeId, MarketDetails>,
+    pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
     pub test_mode: bool,
 }
@@ -96,7 +96,7 @@ impl Data {
             icp_ledger_canister_id,
             chat_ledger_canister_id,
             orders_log: OrdersLog::default(),
-            market_details: HashMap::new(),
+            my_open_orders: HashMap::new(),
             market_makers_in_progress: HashMap::new(),
             test_mode,
         }
@@ -124,20 +124,13 @@ pub struct CanisterIds {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct MarketDetails {
-    latest_bid_taken: Option<u64>,
-    latest_ask_taken: Option<u64>,
-    latest_snapshot: MarketSnapshot,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MarketSnapshot {
     latest_price: u64,
     my_open_orders: Vec<Order>,
     orderbook: AggregatedOrders,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AggregatedOrders {
     bids: BTreeMap<u64, u64>,
     asks: BTreeMap<u64, u64>,
@@ -145,15 +138,20 @@ pub struct AggregatedOrders {
 
 impl From<&[Order]> for AggregatedOrders {
     fn from(orders: &[Order]) -> Self {
-        let mut bids = BTreeMap::new();
-        let mut asks = BTreeMap::new();
+        let mut aggregated_orders = AggregatedOrders::default();
         for order in orders {
-            match order.order_type {
-                OrderType::Bid => *bids.entry(order.price).or_default() += order.amount,
-                OrderType::Ask => *asks.entry(order.price).or_default() += order.amount,
-            }
+            aggregated_orders.add(order.order_type, order.price, order.amount);
         }
-        AggregatedOrders { bids, asks }
+        aggregated_orders
+    }
+}
+
+impl AggregatedOrders {
+    pub fn add(&mut self, order_type: OrderType, price: u64, amount: u64) {
+        match order_type {
+            OrderType::Bid => *self.bids.entry(price).or_default() += amount,
+            OrderType::Ask => *self.asks.entry(price).or_default() += amount,
+        }
     }
 }
 

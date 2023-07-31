@@ -1,5 +1,5 @@
 use crate::exchanges::Exchange;
-use crate::{mutate_state, read_state, AggregatedOrders, Config, MarketDetails, Order, RuntimeState};
+use crate::{mutate_state, read_state, AggregatedOrders, Config, Order, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use itertools::Itertools;
 use market_maker_canister::{CancelOrderRequest, ExchangeId, MakeOrderRequest, OrderType};
@@ -58,9 +58,9 @@ async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallR
     let exchange_id = exchange_client.exchange_id();
     trace!(%exchange_id, "Running market maker");
 
-    let previous_market_details = mutate_state(|state| {
+    let my_previous_open_orders = mutate_state(|state| {
         state.data.market_makers_in_progress.insert(exchange_id, state.env.now());
-        state.data.market_details.get(&exchange_id).cloned()
+        state.data.my_open_orders.get(&exchange_id).cloned()
     });
 
     let market_state = exchange_client.market_state().await?;
@@ -73,10 +73,10 @@ async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallR
         _ => return Ok(()),
     };
 
-    let my_open_orders_aggregated = market_state.my_open_orders.as_slice().into();
+    let my_open_orders_aggregated: AggregatedOrders = market_state.my_open_orders.as_slice().into();
 
     let (latest_bid_taken, latest_ask_taken) =
-        calculate_latest_orders_taken(&my_open_orders_aggregated, previous_market_details.as_ref());
+        calculate_orders_taken_since_previous_round(&my_open_orders_aggregated, my_previous_open_orders.as_ref());
 
     let (max_bid_price, min_ask_price) =
         calculate_price_limits(current_bid, current_ask, latest_bid_taken, latest_ask_taken, &config);
@@ -93,20 +93,18 @@ async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallR
     let orders_cancelled = orders_to_cancel.len();
 
     futures::future::try_join(
-        exchange_client.make_orders(orders_to_make),
+        exchange_client.make_orders(orders_to_make.clone()),
         exchange_client.cancel_orders(orders_to_cancel),
     )
     .await?;
 
+    let mut my_open_orders: AggregatedOrders = market_state.my_open_orders.as_slice().into();
+    for order in orders_to_make {
+        my_open_orders.add(order.order_type, order.price, order.amount);
+    }
+
     mutate_state(|state| {
-        state.data.market_details.insert(
-            exchange_id,
-            MarketDetails {
-                latest_bid_taken,
-                latest_ask_taken,
-                latest_snapshot: market_state,
-            },
-        );
+        state.data.my_open_orders.insert(exchange_id, my_open_orders);
     });
 
     trace!(%exchange_id, orders_made, orders_cancelled, "Market maker ran successfully");
@@ -117,13 +115,11 @@ fn mark_market_maker_complete(exchange_id: &ExchangeId) {
     mutate_state(|state| state.data.market_makers_in_progress.remove(exchange_id));
 }
 
-fn calculate_latest_orders_taken(
+fn calculate_orders_taken_since_previous_round(
     my_open_orders: &AggregatedOrders,
-    previous_market_details: Option<&MarketDetails>,
+    my_previous_open_orders: Option<&AggregatedOrders>,
 ) -> (Option<u64>, Option<u64>) {
-    if let Some(previous) = previous_market_details {
-        let previous_orders: AggregatedOrders = previous.latest_snapshot.my_open_orders.as_slice().into();
-
+    if let Some(previous_orders) = my_previous_open_orders {
         let bids_taken: Vec<_> = previous_orders
             .bids
             .keys()
@@ -139,8 +135,8 @@ fn calculate_latest_orders_taken(
             .copied()
             .collect();
 
-        let latest_bid_taken = bids_taken.iter().min().copied().or(previous.latest_bid_taken);
-        let latest_ask_taken = asks_taken.iter().max().copied().or(previous.latest_ask_taken);
+        let latest_bid_taken = bids_taken.iter().min().copied();
+        let latest_ask_taken = asks_taken.iter().max().copied();
 
         (latest_bid_taken, latest_ask_taken)
     } else {
@@ -190,14 +186,17 @@ fn calculate_price_limits(
     let diff_in_increments = min_ask_price.saturating_sub(max_bid_price) / config.price_increment;
     if diff_in_increments < config.spread {
         let increase_required = config.spread - diff_in_increments;
-
-        if increase_required % 2 == 0 {
+        if increase_required % 2 == 0 || latest_ask_taken.is_some() {
             max_bid_price = max_bid_price.saturating_sub((increase_required / 2) * config.price_increment);
         } else {
             max_bid_price = max_bid_price.saturating_sub(((increase_required + 1) / 2) * config.price_increment);
         }
 
-        min_ask_price = min_ask_price.saturating_add((increase_required / 2) * config.price_increment);
+        if increase_required % 2 == 0 || latest_ask_taken.is_none() {
+            min_ask_price = min_ask_price.saturating_add((increase_required / 2) * config.price_increment);
+        } else {
+            min_ask_price = min_ask_price.saturating_add(((increase_required + 1) / 2) * config.price_increment);
+        }
     }
 
     (max_bid_price, min_ask_price)
@@ -363,6 +362,8 @@ mod tests {
     #[test_case(40, 100, Some(30), Some(50), 40, 60)]
     #[test_case(40, 100, Some(90), Some(90), 80, 100)]
     #[test_case(40, 100, Some(90), Some(110), 80, 100)]
+    #[test_case(40, 70, Some(50), None, 40, 60)]
+    #[test_case(40, 70, None, Some(60), 50, 70)]
     fn calculate_price_limits_tests(
         latest_bid: u64,
         latest_ask: u64,
