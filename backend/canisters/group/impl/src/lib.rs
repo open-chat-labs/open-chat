@@ -176,7 +176,7 @@ impl RuntimeState {
     pub fn start_importing_into_community(&mut self, community: CommunityBeingImportedInto) -> StartImportIntoCommunityResult {
         use StartImportIntoCommunityResult::*;
 
-        if self.data.community_being_imported_into.is_some() {
+        if self.data.community_being_imported_into.is_some() && self.data.is_frozen() {
             AlreadyImportingToAnotherCommunity
         } else if self.data.is_frozen() {
             ChatFrozen
