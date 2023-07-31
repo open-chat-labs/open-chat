@@ -3,6 +3,7 @@ use crate::read_state;
 use crate::RuntimeState;
 use canister_api_macros::query_msgpack;
 use group_canister::c2c_export_group::{Response::*, *};
+use serde_bytes::ByteBuf;
 use std::cmp::min;
 
 #[query_msgpack(guard = "caller_is_community_being_imported_into")]
@@ -17,7 +18,7 @@ fn c2c_export_group_impl(args: Args, state: &RuntimeState) -> Response {
         .data
         .serialized_chat_state
         .as_ref()
-        .map(|bytes| bytes[from..(min(to, bytes.len()))].to_vec())
+        .map(|bytes| ByteBuf::from(bytes[from..(min(to, bytes.len()))].to_vec()))
         .unwrap_or_default();
 
     Success(page)
