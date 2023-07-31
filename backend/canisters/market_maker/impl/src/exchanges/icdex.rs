@@ -1,5 +1,5 @@
 use crate::exchanges::Exchange;
-use crate::{AggregatedOrders, MarketSnapshot, Order};
+use crate::{AggregatedOrders, MarketState, Order};
 use async_trait::async_trait;
 use candid::{CandidType, Nat};
 use canister_client::make_c2c_call;
@@ -179,11 +179,11 @@ impl Exchange for ICDexClient {
         ICDEX_EXCHANGE_ID
     }
 
-    async fn market_state(&self) -> CallResult<MarketSnapshot> {
+    async fn market_state(&self) -> CallResult<MarketState> {
         let (latest_price, my_open_orders, orderbook) =
             futures::future::try_join3(self.latest_price(), self.my_open_orders(), self.orderbook()).await?;
 
-        Ok(MarketSnapshot {
+        Ok(MarketState {
             latest_price,
             my_open_orders,
             orderbook,

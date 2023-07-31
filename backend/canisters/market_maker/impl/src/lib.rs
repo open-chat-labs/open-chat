@@ -126,7 +126,7 @@ pub struct CanisterIds {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct MarketSnapshot {
+pub struct MarketState {
     latest_price: u64,
     my_open_orders: Vec<Order>,
     orderbook: AggregatedOrders,
