@@ -954,5 +954,7 @@
     "selectAFavourite": "Vous pouvez ajouter des chats directs, des chats de groupe ou des canaux communautaires à vos favoris et vous les verrez ici.",
     "defaultMustBePublic": "Seul un canal public peut être un canal par défaut",
     "exploreGroups": "Explorer les groupes",
-    "channelAlreadyExists": "Une chaîne portant ce nom existe déjà"
+    "channelAlreadyExists": "Une chaîne portant ce nom existe déjà",
+    "restrictedContent": "Contenu restreint",
+    "restrictedContentInfo": "Choisissez si vous souhaitez voir les groupes et les communautés auxquels les indicateurs de modération suivants ont été appliqués."
 }

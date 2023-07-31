@@ -1,6 +1,5 @@
-import { writable } from "svelte/store";
-
 import type { ChatSummary, ChatPermissions } from "openchat-client";
+import { writable } from "svelte/store";
 
 export type RightPanelState =
     | GroupDetailsPanel

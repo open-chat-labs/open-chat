@@ -955,5 +955,7 @@
     "selectAFavourite": "您可以将直接聊天、群聊或社区频道添加到您的收藏夹中，您将在此处看到它们。",
     "defaultMustBePublic": "只能默认公共频道",
     "exploreGroups": "探索群组",
-    "channelAlreadyExists": "同名的频道已存在"
+    "channelAlreadyExists": "同名的频道已存在",
+    "restrictedContent": "受限内容",
+    "restrictedContentInfo": "选择您是否希望查看已应用以下审核标志的群组和社区。"
 }

@@ -13,7 +13,6 @@ pub struct PublicCommunityActivity {
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct PublicGroupActivity {
     pub timestamp: TimestampMillis,
-    #[serde(alias = "participant_count")]
     pub member_count: u32,
     pub last_hour: Activity,
     pub last_day: Activity,

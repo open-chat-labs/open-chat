@@ -325,7 +325,7 @@
             {#if showExploreGroups}
                 <div class="explore-groups" on:click={() => page("/groups")}>
                     <div class="disc">
-                        <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        <Compass size={$iconSize} color={"var(--icon-txt)"} />
                     </div>
                     <div class="label">{$_("exploreGroups")}</div>
                     <div on:click={() => exploreGroupsDismissed.set(true)} class="close">
@@ -335,7 +335,7 @@
             {/if}
             {#if showBrowseChannnels}
                 <div class="browse-channels" on:click={showChannels}>
-                    <div class="disc">#</div>
+                    <div class="disc hash">#</div>
                     <div class="label">{$_("communities.browseChannels")}</div>
                 </div>
             {/if}
@@ -437,12 +437,15 @@
             align-items: center;
             justify-content: center;
             align-content: center;
-            @include font-size(fs-120);
             text-align: center;
             height: toRem(48);
             width: toRem(48);
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: var(--icon-hv);
             border-radius: 50%;
+
+            &.hash {
+                @include font-size(fs-120);
+            }
         }
     }
 </style>

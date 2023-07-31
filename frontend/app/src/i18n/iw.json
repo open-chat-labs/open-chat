@@ -952,5 +952,7 @@
     "selectAFavourite": "אתה יכול להוסיף צ'אטים ישירים, צ'אטים קבוצתיים או ערוצים קהילתיים למועדפים שלך ותראה אותם כאן.",
     "defaultMustBePublic": "רק ערוץ ציבורי יכול להיות ברירת מחדל",
     "exploreGroups": "חקור קבוצות",
-    "channelAlreadyExists": "ערוץ בשם זה כבר קיים"
+    "channelAlreadyExists": "ערוץ בשם זה כבר קיים",
+    "restrictedContent": "תוכן מוגבל",
+    "restrictedContentInfo": "בחר אם תרצה לראות קבוצות וקהילות שהוחלו עליהן את דגלי הניהול הבאים."
 }

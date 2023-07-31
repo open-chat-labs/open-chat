@@ -956,5 +956,7 @@
     "selectAFavourite": "Sie können Direktchats, Gruppenchats oder Community-Kanäle zu Ihren Favoriten hinzufügen und sehen diese hier.",
     "defaultMustBePublic": "Nur ein öffentlicher Kanal kann ein Standardkanal sein",
     "exploreGroups": "Entdecken Sie Gruppen",
-    "channelAlreadyExists": "Ein Kanal mit diesem Namen existiert bereits"
+    "channelAlreadyExists": "Ein Kanal mit diesem Namen existiert bereits",
+    "restrictedContent": "Eingeschränkter Inhalt",
+    "restrictedContentInfo": "Wählen Sie aus, ob Sie Gruppen und Communities sehen möchten, auf die die folgenden Moderationsflags angewendet wurden."
 }

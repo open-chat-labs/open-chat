@@ -6,7 +6,12 @@
     import page from "page";
     import CommunityCard from "./CommunityCard.svelte";
     import Search from "../../..//Search.svelte";
-    import { ipadWidth, screenWidth, ScreenWidth } from "../../../../stores/screenDimensions";
+    import {
+        ipadWidth,
+        mobileWidth,
+        screenWidth,
+        ScreenWidth,
+    } from "../../../../stores/screenDimensions";
     import { iconSize } from "../../../../stores/iconSize";
     import type { CommunityMatch, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
@@ -14,6 +19,7 @@
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { communityFiltersStore } from "../../../../stores/communityFilters";
     import Plus from "svelte-material-icons/Plus.svelte";
+    import { derived } from "svelte/store";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -28,6 +34,16 @@
     $: more = total > searchResults.length;
     $: isDiamond = client.isDiamond;
     $: loading = searching && searchResults.length === 0;
+
+    let filters = derived(
+        [communityFiltersStore, client.moderationFlags],
+        ([communityFilters, flags]) => {
+            return {
+                languages: Array.from(communityFilters.languages),
+                flags,
+            };
+        }
+    );
 
     function calculatePageSize(width: ScreenWidth): number {
         // make sure we get even rows of results
@@ -59,13 +75,14 @@
         } else {
             pageIndex += 1;
         }
+
         client
             .exploreCommunities(
                 searchTerm === "" ? undefined : searchTerm,
                 pageIndex,
                 pageSize,
-                $communityFiltersStore.flags,
-                Array.from($communityFiltersStore.languages)
+                $filters.flags ?? 0,
+                $filters.languages
             )
             .then((results) => {
                 if (results.kind === "success") {
@@ -85,8 +102,9 @@
     }
 
     onMount(() => {
-        const sub = communityFiltersStore.subscribe((_) => search(true));
-        return sub;
+        return filters.subscribe((f) => {
+            search(true);
+        });
     });
 </script>
 
@@ -94,7 +112,11 @@
     <div class="header">
         <div class="title-row">
             <div class="title">
-                <h4>{$_("communities.explore")}</h4>
+                {#if $mobileWidth}
+                    <h4>{$_("communities.exploreMobile")}</h4>
+                {:else}
+                    <h4>{$_("communities.explore")}</h4>
+                {/if}
             </div>
             {#if !$ipadWidth}
                 <div class="search">
@@ -206,6 +228,10 @@
                 h4 {
                     @include font(bold, normal, fs-160, 38);
                     flex: auto;
+
+                    @include mobile() {
+                        @include font(bold, normal, fs-140, 38);
+                    }
                 }
             }
 

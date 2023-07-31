@@ -948,5 +948,7 @@
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",
-    "noAccessText": "Sorry, but you do not have access to the community, group or channel that you are trying to access."
+    "noAccessText": "Sorry, but you do not have access to the community, group or channel that you are trying to access.",
+    "restrictedContent": "Restricted Content",
+    "restrictedContentInfo": "Choose whether you would like to see groups and communities that have had the following moderation flags applied."
 }

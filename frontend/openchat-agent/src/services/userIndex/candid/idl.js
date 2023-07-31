@@ -70,6 +70,7 @@ export const idlFactory = ({ IDL }) => {
       'referrals' : IDL.Vec(UserId),
       'user_id' : UserId,
       'avatar_id' : IDL.Opt(IDL.Nat),
+      'moderation_flags_enabled' : IDL.Nat32,
       'is_suspected_bot' : IDL.Bool,
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'suspension_details' : IDL.Opt(SuspensionDetails),
@@ -179,6 +180,10 @@ export const idlFactory = ({ IDL }) => {
       'users' : IDL.Vec(UserSummary),
     }),
   });
+  const SetModerationFlagsArgs = IDL.Record({
+    'moderation_flags_enabled' : IDL.Nat32,
+  });
+  const SetModerationFlagsResponse = IDL.Variant({ 'Success' : IDL.Null });
   const SetUserUpgradeConcurrencyArgs = IDL.Record({ 'value' : IDL.Nat32 });
   const SetUserUpgradeConcurrencyResponse = IDL.Variant({
     'Success' : IDL.Null,
@@ -325,6 +330,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'set_moderation_flags' : IDL.Func(
+        [SetModerationFlagsArgs],
+        [SetModerationFlagsResponse],
+        [],
+      ),
     'set_user_upgrade_concurrency' : IDL.Func(
         [SetUserUpgradeConcurrencyArgs],
         [SetUserUpgradeConcurrencyResponse],

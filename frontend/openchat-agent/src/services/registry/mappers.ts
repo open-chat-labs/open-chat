@@ -3,19 +3,17 @@ import type { RegistryUpdatesResponse, TokenDetails } from "openchat-shared";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "openchat-shared";
 
-export function updatesResponse(
-    candid: ApiUpdatesResponse
-): RegistryUpdatesResponse {
+export function updatesResponse(candid: ApiUpdatesResponse): RegistryUpdatesResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
             lastUpdated: candid.Success.last_updated,
             tokenDetails: optional(candid.Success.token_details, (t) => t.map(tokenDetails)),
-        }
+        };
     }
     if ("SuccessNoUpdates" in candid) {
         return {
-            kind: "success_no_updates"
+            kind: "success_no_updates",
         };
     }
     throw new UnsupportedValueError("Unexpected ApiUpdatesResponse type received", candid);
@@ -29,7 +27,7 @@ function tokenDetails(candid: ApiTokenDetails): TokenDetails {
         decimals: candid.decimals,
         fee: candid.fee,
         logo: optional(candid.logo, identity),
-        snsCanisters: optional(candid.sns_canisters, (sns) => ({
+        snsCanisters: optional(candid.nervous_system, (sns) => ({
             root: sns.root.toString(),
             governance: sns.governance.toString(),
         })),
@@ -38,5 +36,5 @@ function tokenDetails(candid: ApiTokenDetails): TokenDetails {
         transactionUrlFormat: optional(candid.transaction_url_format, identity),
         added: candid.added,
         lastUpdated: candid.last_updated,
-    }
+    };
 }

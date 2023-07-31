@@ -9,6 +9,7 @@ export const configKeys = {
     userInfoSection: "openchat_userinfo_section",
     appearanceSection: "openchat_appearance_section",
     chatsSection: "openchat_chats_section",
+    restrictedSection: "openchat_restricted_section",
     accountSection: "openchat_account_section",
     referralSection: "openchat_referral_section",
     storageSection: "openchat_storage_section",

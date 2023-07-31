@@ -83,6 +83,7 @@ export type CreatedUser = {
     suspensionDetails: SuspensionDetails | undefined;
     isSuspectedBot: boolean;
     diamondMembership?: DiamondMembershipDetails;
+    moderationFlagsEnabled: number;
 };
 
 export type DiamondMembershipDetails = {
@@ -219,4 +220,11 @@ export type ReferralStats = {
     userId: string;
     diamondMembers: number;
     totalRewardsE8s: bigint;
+};
+
+export type ModerationFlag = 1 | 2;
+
+export const ModerationFlags = {
+    Offensive: 1 as ModerationFlag,
+    Adult: 2 as ModerationFlag,
 };

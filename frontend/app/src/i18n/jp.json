@@ -955,5 +955,7 @@
     "selectAFavourite": "ダイレクト チャット、グループ チャット、コミュニティ チャネルをお気に入りに追加すると、ここに表示されます。",
     "defaultMustBePublic": "デフォルトにできるのはパブリック チャネルのみです",
     "exploreGroups": "グループを探索する",
-    "channelAlreadyExists": "その名前のチャンネルはすでに存在します"
+    "channelAlreadyExists": "その名前のチャンネルはすでに存在します",
+    "restrictedContent": "制限されたコンテンツ",
+    "restrictedContentInfo": "次のモデレーションフラグが適用されているグループとコミュニティを表示するかどうかを選択します。"
 }

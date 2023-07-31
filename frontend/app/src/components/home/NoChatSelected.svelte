@@ -108,6 +108,7 @@
 
     .subtitle {
         margin-bottom: $sp5;
+        text-wrap: balance;
     }
 
     .join {
