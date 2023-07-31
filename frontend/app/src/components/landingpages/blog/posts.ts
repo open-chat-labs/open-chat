@@ -13,6 +13,13 @@ export type BlogPostInfo = {
 };
 
 export const postsBySlug: Record<string, BlogPostInfo> = {
+    communities_released: {
+        slug: "communities_released",
+        title: "Communities released!",
+        author: "@julian_jelfs",
+        date: new Date(2023, 6, 31),
+        component: CommunitiesReleased,
+    },
     communities: {
         slug: "communities",
         title: "Communities in depth",
@@ -35,13 +42,3 @@ export const postsBySlug: Record<string, BlogPostInfo> = {
         component: WebsiteReleases,
     },
 };
-
-if (localStorage.getItem("openchat_communities_enabled") === "true") {
-    postsBySlug["communities_released"] = {
-        slug: "communities_released",
-        title: "Communities released!",
-        author: "@julian_jelfs",
-        date: new Date(2023, 6, 28),
-        component: CommunitiesReleased,
-    };
-}
