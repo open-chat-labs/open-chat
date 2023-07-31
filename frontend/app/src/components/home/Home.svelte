@@ -878,6 +878,7 @@
     }
 
     function convertGroupToCommunity(ev: CustomEvent<GroupChatSummary>) {
+        rightPanelHistory.set([]);
         convertGroup = ev.detail;
     }
 
