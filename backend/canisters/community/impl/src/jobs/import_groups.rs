@@ -86,12 +86,16 @@ async fn import_group(group_id: ChatId, from: u64) {
         }
         Err(error) => {
             mutate_state(|state| {
-                state
-                    .data
-                    .groups_being_imported
-                    .mark_batch_failed(&group_id, format!("{error:?}"));
+                if error.1.contains("violated contract") {
+                    state.data.groups_being_imported.take(&group_id);
+                } else {
+                    state
+                        .data
+                        .groups_being_imported
+                        .mark_batch_failed(&group_id, format!("{error:?}"));
 
-                start_job_if_required(state);
+                    start_job_if_required(state);
+                }
             });
         }
     }
