@@ -98,7 +98,7 @@
         text-align: center;
         align-items: center;
         height: 100%;
-        max-width: 50%;
+        max-width: 60%;
         margin: auto;
 
         &.community {
