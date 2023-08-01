@@ -345,7 +345,7 @@
             {#if !client.isReadOnly()}
                 <div class="menu">
                     <MenuIcon position={"bottom"} align={"end"}>
-                        <div class="menu-icon" slot="icon">
+                        <div class="menu-icon" class:rtl={$rtlStore} slot="icon">
                             <DotsVertical
                                 viewBox="0 -3 24 24"
                                 size="1.6em"
@@ -529,8 +529,14 @@
             bottom: 0.4em;
 
             @include mobile() {
-                width: $sp4;
+                width: 18px;
                 opacity: 1;
+                margin-left: 6px;
+
+                &.rtl {
+                    margin-left: unset;
+                    margin-right: 6px;
+                }
             }
         }
 

@@ -4079,8 +4079,6 @@ export class OpenChat extends OpenChatAgentWorker {
                     .concat(chatsResponse.state.groupChats)
                     .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
 
-                console.log("ChatsResponse", chatsResponse);
-
                 this.updateReadUpToStore(updatedChats);
                 const chats = getAllChats(this._liveState.globalState).values();
 
