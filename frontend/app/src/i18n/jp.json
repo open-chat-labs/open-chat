@@ -957,5 +957,14 @@
     "exploreGroups": "グループを探索する",
     "channelAlreadyExists": "その名前のチャンネルはすでに存在します",
     "restrictedContent": "制限されたコンテンツ",
-    "restrictedContentInfo": "次のモデレーションフラグが適用されているグループとコミュニティを表示するかどうかを選択します。"
+    "restrictedContentInfo": "次のモデレーションフラグが適用されているグループとコミュニティを表示するかどうかを選択します。",
+    "expand": "拡大",
+    "collapse": "崩壊",
+    "showFilters": "フィルターを表示",
+    "stopRecording": "録音を停止する",
+    "recordAudioMessage": "音声メッセージを録音する",
+    "chatMenu": "チャットメニュー",
+    "attachFile": "画像/動画/ファイルを添付する",
+    "pickEmoji": "絵文字を選択してください",
+    "sendMessage": "メッセージを送る"
 }
