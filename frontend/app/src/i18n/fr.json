@@ -882,7 +882,7 @@
         "created": "Votre communauté a été créée avec succès",
         "saved": "Votre communauté a été mise à jour avec succès",
         "errors": {
-            "name_taken": "Désolé - il existe déjà une communauté avec ce nom",
+            "name_taken": "Désolé - il existe déjà une communauté publique ou un groupe avec ce nom",
             "failure": "Désolé, nous n'avons pas pu créer votre communauté",
             "saveFailed": "Désolé, nous n'avons pas pu enregistrer vos mises à jour",
             "inviteUsers": "Désolé, nous n'avons pas pu inviter ces utilisateurs",
@@ -924,7 +924,8 @@
         "defaultInfo": "Les utilisateurs rejoignant cette communauté seront automatiquement ajoutés à tous les canaux par défaut",
         "saveChanges": "Sauvegarder les modifications",
         "exploreMobile": "Explorer",
-        "publicChannels": "Chaînes publiques"
+        "publicChannels": "Chaînes publiques",
+        "underReview": "À l'étude"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",
