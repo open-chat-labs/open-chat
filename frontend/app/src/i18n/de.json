@@ -884,7 +884,7 @@
         "created": "Ihre Community wurde erfolgreich erstellt",
         "saved": "Ihre Community wurde erfolgreich aktualisiert",
         "errors": {
-            "name_taken": "Entschuldigung, es gibt bereits eine Community mit diesem Namen",
+            "name_taken": "Entschuldigung, es gibt bereits eine öffentliche Community oder Gruppe mit diesem Namen",
             "failure": "Es tut uns leid, dass wir Ihre Community nicht erstellen konnten",
             "saveFailed": "Leider konnten wir Ihre Aktualisierungen nicht speichern",
             "inviteUsers": "Leider konnten wir diese Benutzer nicht einladen",
@@ -926,7 +926,8 @@
         "defaultInfo": "Benutzer, die dieser Community beitreten, werden automatisch allen Standardkanälen hinzugefügt",
         "saveChanges": "Änderungen speichern",
         "exploreMobile": "Erkunden",
-        "publicChannels": "Öffentliche Kanäle"
+        "publicChannels": "Öffentliche Kanäle",
+        "underReview": "Wird überprüft"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",

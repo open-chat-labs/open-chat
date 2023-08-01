@@ -1539,7 +1539,7 @@ export function communityChannelSummary(
         level: "channel",
         membership: {
             joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
-            notificationsMuted: false,
+            notificationsMuted: optional(candid.membership, (m) => m.notifications_muted) ?? false,
             role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
             myMetrics:
                 optional(candid.membership, (m) => chatMetrics(m.my_metrics)) ?? emptyChatMetrics(),

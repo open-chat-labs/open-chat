@@ -882,7 +882,7 @@
         "created": "您的社区已成功创建",
         "saved": "您的社区已成功更新",
         "errors": {
-            "name_taken": "抱歉 - 已有一个同名社区",
+            "name_taken": "抱歉 - 已有一个同名的公共社区或群组",
             "failure": "抱歉，我们无法创建您的社区",
             "saveFailed": "抱歉，我们无法保存您的更新",
             "inviteUsers": "抱歉，我们无法邀请这些用户",
@@ -924,7 +924,8 @@
         "defaultInfo": "加入此社区的用户将自动添加到所有默认频道",
         "saveChanges": "保存更改",
         "exploreMobile": "探索",
-        "publicChannels": "公共频道"
+        "publicChannels": "公共频道",
+        "underReview": "审核中"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",

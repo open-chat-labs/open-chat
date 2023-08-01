@@ -18,7 +18,6 @@
         selectedChannelRoute,
         chatListRoute,
     } from "../routes";
-    import { communitiesEnabled } from "../utils/features";
 
     let route: typeof SvelteComponent | undefined = undefined;
 
@@ -100,11 +99,7 @@
         // global direct chat selected
         page(
             "/user/:chatId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(
-                globalDirectChatSelectedRoute(
-                    $communitiesEnabled ? { kind: "direct_chat" } : { kind: "none" }
-                )
-            ),
+            parsePathParams(globalDirectChatSelectedRoute({ kind: "direct_chat" })),
             track,
             () => (route = Home)
         );
@@ -118,11 +113,7 @@
         // global group chat selected
         page(
             "/group/:chatId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(
-                globalGroupChatSelectedRoute(
-                    $communitiesEnabled ? { kind: "group_chat" } : { kind: "none" }
-                )
-            ),
+            parsePathParams(globalGroupChatSelectedRoute({ kind: "group_chat" })),
             track,
             () => (route = Home)
         );
@@ -173,7 +164,7 @@
             "/groups",
             parsePathParams(() => ({
                 kind: "explore_groups_route",
-                scope: $communitiesEnabled ? { kind: "group_chat" } : { kind: "none" },
+                scope: { kind: "group_chat" },
             })),
             track,
             () => (route = Home)
@@ -187,11 +178,7 @@
         // legacy route
         page(
             "/:chatId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(
-                globalGroupChatSelectedRoute(
-                    $communitiesEnabled ? { kind: "group_chat" } : { kind: "none" }
-                )
-            ),
+            parsePathParams(globalGroupChatSelectedRoute({ kind: "group_chat" })),
             track,
             () => (route = Home)
         );
