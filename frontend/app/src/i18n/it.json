@@ -956,5 +956,14 @@
     "exploreGroups": "Esplora i gruppi",
     "channelAlreadyExists": "Esiste già un canale con quel nome",
     "restrictedContent": "Contenuto limitato",
-    "restrictedContentInfo": "Scegli se desideri visualizzare i gruppi e le community a cui sono stati applicati i seguenti contrassegni di moderazione."
+    "restrictedContentInfo": "Scegli se desideri visualizzare i gruppi e le community a cui sono stati applicati i seguenti contrassegni di moderazione.",
+    "expand": "Espandere",
+    "collapse": "Crollo",
+    "showFilters": "Mostra filtri",
+    "stopRecording": "Interrompi la registrazione",
+    "recordAudioMessage": "Registra messaggio audio",
+    "chatMenu": "Menù chat",
+    "attachFile": "Allega immagine/video/file",
+    "pickEmoji": "Scegli le emoji",
+    "sendMessage": "Invia messaggio"
 }

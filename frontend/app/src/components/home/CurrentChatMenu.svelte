@@ -211,7 +211,7 @@
 {#if desktop}
     {#if $isProposalGroup}
         <span on:click={showProposalFilters}>
-            <HoverIcon>
+            <HoverIcon title={$_("showFilters")}>
                 <Tune size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
@@ -269,7 +269,7 @@
 <div class="menu">
     <MenuIcon position={"bottom"} align={"end"}>
         <div slot="icon">
-            <HoverIcon>
+            <HoverIcon title={$_("chatMenu")}>
                 <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </div>
