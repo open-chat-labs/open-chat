@@ -37,8 +37,8 @@
         if (client.hasModerationFlag(flags, ModerationFlags.Offensive)) {
             f.push(`${$_("communities.offensive")}`);
         }
-        if (client.hasModerationFlag(flags, ModerationFlags.Spam)) {
-            f.push(`${$_("communities.spam")}`);
+        if (client.hasModerationFlag(flags, ModerationFlags.UnderReview)) {
+            f.push(`${$_("communities.underReview")}`);
         }
         return f;
     }

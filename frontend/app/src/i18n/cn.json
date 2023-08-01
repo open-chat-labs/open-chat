@@ -925,7 +925,7 @@
         "saveChanges": "保存更改",
         "exploreMobile": "探索",
         "publicChannels": "公共频道",
-        "spam": "垃圾邮件"
+        "underReview": "审核中"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",

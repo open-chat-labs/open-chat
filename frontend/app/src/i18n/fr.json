@@ -925,7 +925,7 @@
         "saveChanges": "Sauvegarder les modifications",
         "exploreMobile": "Explorer",
         "publicChannels": "Chaînes publiques",
-        "spam": "Courrier indésirable"
+        "underReview": "À l'étude"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",

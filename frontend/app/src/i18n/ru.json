@@ -925,7 +925,7 @@
         "saveChanges": "Сохранить изменения",
         "exploreMobile": "Исследовать",
         "publicChannels": "Общедоступные каналы",
-        "spam": "Спам"
+        "underReview": "На рассмотрении"
     },
     "groupCreatedBy": "{username} создал {level}",
     "groupName": "{level} имя",

@@ -14,5 +14,5 @@ export const offensiveEnabled = derived(moderationFlags, (flags) =>
     hasFlag(flags, ModerationFlags.Offensive)
 );
 export const smapEnabled = derived(moderationFlags, (flags) =>
-    hasFlag(flags, ModerationFlags.Spam)
+    hasFlag(flags, ModerationFlags.UnderReview)
 );

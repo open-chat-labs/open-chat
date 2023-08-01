@@ -926,7 +926,7 @@
         "saveChanges": "変更内容を保存",
         "exploreMobile": "探検",
         "publicChannels": "パブリックチャンネル",
-        "spam": "スパム"
+        "underReview": "検討中"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",

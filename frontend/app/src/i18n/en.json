@@ -945,7 +945,7 @@
         "chooseCommunity": "Choose a community",
         "saveChanges": "Save changes",
         "publicChannels": "Public channels",
-        "spam": "Spam"
+        "underReview": "Under review"
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",

@@ -65,7 +65,7 @@
     $: moderationFlags = client.moderationFlags;
     $: adultEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Adult);
     $: offensiveEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Offensive);
-    $: spamEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Spam);
+    $: underReviewEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.UnderReview);
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -338,11 +338,11 @@
                 label={$_("communities.adult")}
                 checked={adultEnabled} />
             <Toggle
-                id={"spam"}
+                id={"underReview"}
                 small
-                on:change={() => toggleModerationFlag(ModerationFlags.Spam)}
-                label={$_("communities.spam")}
-                checked={spamEnabled} />
+                on:change={() => toggleModerationFlag(ModerationFlags.UnderReview)}
+                label={$_("communities.underReview")}
+                checked={underReviewEnabled} />
         </CollapsibleCard>
     </div>
     {#if !readonly}

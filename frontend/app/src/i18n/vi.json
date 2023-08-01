@@ -926,7 +926,7 @@
         "saveChanges": "Lưu thay đổi",
         "exploreMobile": "Khám phá",
         "publicChannels": "Kênh công cộng",
-        "spam": "Thư rác"
+        "underReview": "Đang xem xét"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",

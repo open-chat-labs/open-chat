@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Remove random factor in `explore_communities` ([#4102](https://github.com/open-chat-labs/open-chat/pull/4102))
-- Add a `SPAM` moderation flag  ([#4104](https://github.com/open-chat-labs/open-chat/pull/4104))
+- Add an `UNDER_REVIEW` moderation flag  ([#4104](https://github.com/open-chat-labs/open-chat/pull/4104))
 
 ## [[2.0.769](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.769-group_index)] - 2023-07-31
 

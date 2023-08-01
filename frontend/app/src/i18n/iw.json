@@ -923,7 +923,7 @@
         "saveChanges": "שמור שינויים",
         "exploreMobile": "לַחקוֹר",
         "publicChannels": "ערוצים ציבוריים",
-        "spam": "ספאם"
+        "underReview": "בבדיקה"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",

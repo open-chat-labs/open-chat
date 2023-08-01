@@ -925,7 +925,7 @@
         "saveChanges": "Salvare le modifiche",
         "exploreMobile": "Esplorare",
         "publicChannels": "Canali pubblici",
-        "spam": "Spam"
+        "underReview": "In corso di revisione"
     },
     "groupCreatedBy": "{username} ha creato {level}",
     "groupName": "{level} nome",
