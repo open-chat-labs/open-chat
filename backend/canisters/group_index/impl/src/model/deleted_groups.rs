@@ -8,6 +8,8 @@ use types::{ChatId, DeletedGroupInfoInternal, UserId};
 pub struct DeletedGroups {
     groups: HashMap<ChatId, DeletedGroupInfoInternal>,
     pending_group_deleted_notifications: VecDeque<(ChatId, UserId)>,
+    #[serde(default)]
+    failed_notifications: Vec<(ChatId, UserId)>,
 }
 
 impl DeletedGroups {
@@ -35,6 +37,14 @@ impl DeletedGroups {
         self.pending_group_deleted_notifications
             .pop_front()
             .and_then(|(chat_id, user_id)| self.groups.get(&chat_id).map(|d| (user_id, d.clone())))
+    }
+
+    pub fn mark_notification_failed(&mut self, chat_id: ChatId, user_id: UserId, retry: bool) {
+        if retry {
+            self.pending_group_deleted_notifications.push_back((chat_id, user_id));
+        } else {
+            self.failed_notifications.push((chat_id, user_id));
+        }
     }
 
     pub fn notifications_pending(&self) -> usize {
