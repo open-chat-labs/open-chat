@@ -67,6 +67,8 @@ fn user_canister_notified_of_group_deleted() {
 
     env.advance_time(Duration::from_secs(9 * 60));
 
+    env.tick();
+
     env.start_canister(user2.user_id.into(), Some(canister_ids.local_user_index))
         .unwrap();
 
@@ -76,6 +78,8 @@ fn user_canister_notified_of_group_deleted() {
     assert!(!initial_state2.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
 
     env.advance_time(Duration::from_secs(2 * 60));
+
+    env.tick();
 
     env.start_canister(user3.user_id.into(), Some(canister_ids.local_user_index))
         .unwrap();
