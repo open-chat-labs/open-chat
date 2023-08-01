@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Retry failed group deleted notifications ([#4101](https://github.com/open-chat-labs/open-chat/pull/4101))
+
 ## [[2.0.769](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.769-group_index)] - 2023-07-31
 
 ### Added
