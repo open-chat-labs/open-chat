@@ -775,7 +775,6 @@ export type ChatStateFull = {
     communities: CommunitySummary[];
     avatarId: bigint | undefined;
     blockedUsers: string[];
-    pinnedChats: ChatIdentifier[];
     pinnedGroupChats: GroupChatIdentifier[];
     pinnedDirectChats: DirectChatIdentifier[];
     pinnedFavouriteChats: ChatIdentifier[];
@@ -1793,7 +1792,12 @@ export type RemoveHotGroupExclusionResponse =
     | "internal_error";
 
 export type SetGroupUpgradeConcurrencyResponse = "success" | "not_authorized" | "internal_error";
-export type SetCommunityModerationFlagsResponse = "success" | "community_not_found" | "not_authorized" | "invalid_flags" | "internal_error";
+export type SetCommunityModerationFlagsResponse =
+    | "success"
+    | "community_not_found"
+    | "not_authorized"
+    | "invalid_flags"
+    | "internal_error";
 
 export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
 
