@@ -1350,8 +1350,7 @@ export class OpenChatAgent extends EventTarget {
                 pinnedGroupChats = userResponse.groupChats.pinned ?? pinnedGroupChats;
                 pinnedDirectChats = userResponse.directChats.pinned ?? pinnedDirectChats;
                 pinnedFavouriteChats = userResponse.favouriteChats.pinned ?? pinnedFavouriteChats;
-                pinnedChannels =
-                    this.getUpdatedPinnedChannels(pinnedChannels, userResponse) ?? pinnedChannels;
+                pinnedChannels = this.getUpdatedPinnedChannels(pinnedChannels, userResponse);
                 favouriteChats = userResponse.favouriteChats.chats ?? favouriteChats;
                 latestUserCanisterUpdates = userResponse.timestamp;
                 anyUpdates = true;
@@ -2094,9 +2093,16 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<RegisterProposalVoteResponse> {
         switch (chatId.kind) {
             case "group_chat":
-                return this.getGroupClient(chatId.groupId).registerProposalVote(messageIndex, adopt);
+                return this.getGroupClient(chatId.groupId).registerProposalVote(
+                    messageIndex,
+                    adopt
+                );
             case "channel":
-                return this.communityClient(chatId.communityId).registerProposalVote(chatId.channelId, messageIndex, adopt);
+                return this.communityClient(chatId.communityId).registerProposalVote(
+                    chatId.channelId,
+                    messageIndex,
+                    adopt
+                );
         }
     }
 
