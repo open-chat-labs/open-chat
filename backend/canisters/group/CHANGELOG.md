@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.774](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.774-group)] - 2023-07-31
+
 ### Changed
 
 - Serialize bytes more efficiently when importing group to community ([#4080](https://github.com/open-chat-labs/open-chat/pull/4080))
