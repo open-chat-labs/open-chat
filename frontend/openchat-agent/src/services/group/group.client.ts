@@ -55,7 +55,6 @@ import {
     blockUserResponse,
     unblockUserResponse,
     getMessagesByMessageIndexResponse,
-    registerProposalVoteResponse,
     apiOptionalGroupPermissions,
     apiGroupRules,
     rulesResponse,
@@ -102,6 +101,7 @@ import {
     unpinMessageResponse,
     groupDetailsResponse,
     groupDetailsUpdatesResponse,
+    registerProposalVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";

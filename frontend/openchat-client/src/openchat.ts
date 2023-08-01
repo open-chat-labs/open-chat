@@ -3526,7 +3526,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     registerProposalVote(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         messageIndex: number,
         adopt: boolean
     ): Promise<RegisterProposalVoteResponse> {

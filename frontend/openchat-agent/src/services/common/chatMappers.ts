@@ -160,6 +160,7 @@ import {
     ICP_SYMBOL,
     KINIC_SYMBOL,
     SNS1_SYMBOL,
+    RegisterProposalVoteResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -189,6 +190,7 @@ import type {
     ApiEnableInviteCodeResponse,
     ApiDisableInviteCodeResponse,
     ApiResetInviteCodeResponse,
+    ApiRegisterProposalVoteResponse as ApiGroupRegisterProposalVoteResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -220,6 +222,7 @@ import type {
     ApiInviteCodeResponse as ApiCommunityInviteCodeResponse,
     ApiDisableInviteCodeResponse as ApiCommunityDisableInviteCodeResponse,
     ApiEnableInviteCodeResponse as ApiCommunityEnableInviteCodeResponse,
+    ApiRegisterProposalVoteResponse as ApiCommunityRegisterProposalVoteResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
@@ -2139,4 +2142,52 @@ export function resetInviteCodeResponse(
         console.warn("ResetInviteCode failed with ", candid);
         return CommonResponses.failure();
     }
+}
+
+export function registerProposalVoteResponse(
+    candid: ApiGroupRegisterProposalVoteResponse | ApiCommunityRegisterProposalVoteResponse
+): RegisterProposalVoteResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AlreadyVoted" in candid) {
+        return "already_voted";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("UserNotInChannel" in candid) {
+        return "user_not_in_channel";
+    }
+    if ("ChannelNotFound" in candid) {
+        return "channel_not_found";
+    }
+    if ("UserNotInCommunity" in candid) {
+        return "user_not_in_community";
+    }
+    if ("CommunityFrozen" in candid) {
+        return "community_frozen";
+    }
+    if ("NoEligibleNeurons" in candid) {
+        return "no_eligible_neurons";
+    }
+    if ("ProposalNotAcceptingVotes" in candid) {
+        return "proposal_not_accepting_votes";
+    }
+    if ("ProposalNotFound" in candid) {
+        return "proposal_not_found";
+    }
+    if ("ProposalMessageNotFound" in candid) {
+        return "proposal_message_not_found";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiRegisterProposalVoteResponse type received", candid);
 }

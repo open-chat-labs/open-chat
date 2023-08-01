@@ -488,7 +488,7 @@ type GetRecommendedGroups = {
 };
 
 type RegisterProposalVote = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageIndex: number;
     adopt: boolean;
     kind: "registerProposalVote";

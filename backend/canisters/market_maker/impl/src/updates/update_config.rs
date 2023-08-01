@@ -26,6 +26,7 @@ fn update_config_impl(args: Args, state: &mut RuntimeState) -> Response {
         update_if_some(args.min_order_size, &mut config.min_order_size);
         update_if_some(args.max_buy_price, &mut config.max_buy_price);
         update_if_some(args.min_sell_price, &mut config.min_sell_price);
+        update_if_some(args.spread, &mut config.spread);
         update_if_some(args.min_orders_per_direction, &mut config.min_orders_per_direction);
         update_if_some(args.max_orders_per_direction, &mut config.max_orders_per_direction);
         update_if_some(

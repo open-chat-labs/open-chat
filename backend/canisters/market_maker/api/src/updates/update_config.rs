@@ -11,6 +11,7 @@ pub struct Args {
     pub min_order_size: Option<u64>,
     pub max_buy_price: Option<u64>,
     pub min_sell_price: Option<u64>,
+    pub spread: Option<u64>,
     pub min_orders_per_direction: Option<u32>,
     pub max_orders_per_direction: Option<u32>,
     pub max_orders_to_make_per_iteration: Option<u32>,
