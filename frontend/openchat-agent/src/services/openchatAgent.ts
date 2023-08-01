@@ -168,7 +168,6 @@ import {
     DestinationInvalidError,
     PublicGroupSummaryResponse,
     CommonResponses,
-    CommunityMap,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
