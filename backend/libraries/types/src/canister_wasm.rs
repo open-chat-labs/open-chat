@@ -1,6 +1,6 @@
 use crate::{CanisterId, Version};
 use candid::CandidType;
-use human_readable::ToHumanReadable;
+use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
 use sha256::sha256_string;
 use std::fmt::{Debug, Formatter};
@@ -46,6 +46,7 @@ pub struct UpgradesFilter {
 #[derive(Serialize)]
 pub struct HumanReadableUpgradeCanisterWasmArgs {
     wasm: CanisterWasmTrimmed,
+    filter: Option<HumanReadableUpgradesFilter>,
 }
 
 #[derive(Serialize)]
@@ -61,6 +62,7 @@ impl ToHumanReadable for UpgradeCanisterWasmArgs {
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableUpgradeCanisterWasmArgs {
             wasm: (&self.wasm).into(),
+            filter: self.filter.as_ref().map(|f| f.into()),
         }
     }
 }
@@ -71,6 +73,21 @@ impl From<&CanisterWasm> for CanisterWasmTrimmed {
             version: value.version,
             module_hash: sha256_string(&value.module),
             byte_length: value.module.len() as u64,
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct HumanReadableUpgradesFilter {
+    include: Vec<HumanReadablePrincipal>,
+    exclude: Vec<HumanReadablePrincipal>,
+}
+
+impl From<&UpgradesFilter> for HumanReadableUpgradesFilter {
+    fn from(value: &UpgradesFilter) -> Self {
+        HumanReadableUpgradesFilter {
+            include: value.include.iter().copied().map(|c| c.into()).collect(),
+            exclude: value.exclude.iter().copied().map(|c| c.into()).collect(),
         }
     }
 }
