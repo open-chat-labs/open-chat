@@ -70,6 +70,14 @@
         placeholder={$_("communities.namePlaceholder")} />
 </section>
 <section>
+    <Legend label={$_("communities.primaryLanguage")} />
+    <Select bind:value={candidate.primaryLanguage}>
+        {#each supportedLanguages as lang}
+            <option value={lang.code}>{lang.name}</option>
+        {/each}
+    </Select>
+</section>
+<section>
     <Legend required label={$_("communities.description")} rules={$_("supportsMarkdown")} />
     <TextArea
         rows={4}
@@ -77,14 +85,6 @@
         bind:value={candidate.description}
         maxlength={MAX_DESC_LENGTH}
         placeholder={$_("communities.descriptionPlaceholder")} />
-</section>
-<section>
-    <Legend label={$_("communities.primaryLanguage")} />
-    <Select bind:value={candidate.primaryLanguage}>
-        {#each supportedLanguages as lang}
-            <option value={lang.code}>{lang.name}</option>
-        {/each}
-    </Select>
 </section>
 
 <style lang="scss">

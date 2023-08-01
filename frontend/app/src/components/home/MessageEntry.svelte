@@ -499,7 +499,7 @@
                 </div>
             {:else}
                 <div class="send" on:click={sendMessage}>
-                    <HoverIcon>
+                    <HoverIcon title={$_("sendMessage")}>
                         <Send size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </div>

@@ -8,7 +8,7 @@
 </script>
 
 <div role="button" tabindex="0" class:separator class:selected class="left-nav-item" on:click>
-    <div class="icon">
+    <div class="icon" title={label}>
         <slot />
         <UnreadCount {unread} />
     </div>
