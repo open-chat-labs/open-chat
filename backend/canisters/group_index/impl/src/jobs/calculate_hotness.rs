@@ -96,8 +96,8 @@ pub fn calculate_hotness(
         + 0.5 * calculate_activity_score(activity_last_hour, 10_000.0, HOUR_IN_MS as f64, time_since_activity);
 
     // A random number beteen 0 and 1
-    let random = random as f64 / u32::MAX as f64;
+    let _random = random as f64 / u32::MAX as f64;
 
     // Weighted sum of new, popular, hot and random
-    ((0.5 * newness + popularity + hotness + 0.5 * random) * 1_000_000.0) as u32
+    ((0.5 * newness + popularity + hotness) * 1_000_000.0) as u32
 }
