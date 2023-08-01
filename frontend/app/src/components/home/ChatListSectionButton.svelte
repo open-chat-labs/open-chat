@@ -14,7 +14,7 @@
     <h4 class="title">
         {title}
     </h4>
-    <UnreadCount {unread} />
+    <UnreadCount solid={false} {unread} />
 </Button>
 
 <style lang="scss">
