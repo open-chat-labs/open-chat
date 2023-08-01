@@ -932,7 +932,7 @@ type Cryptocurrency = variant {
     CKBTC;
     CHAT;
     KINIC;
-    Other: text;
+    Other : text;
 };
 
 type CryptoTransaction = variant {
@@ -1329,7 +1329,7 @@ type UsersInvited = record {
 };
 
 type MembersAddedToDefaultChannel = record {
-    count: nat32;
+    count : nat32;
 };
 
 type ReportedMessage = record {
@@ -1348,6 +1348,7 @@ type EmptyArgs = record {};
 
 type CommunityMatch = record {
     id : CommunityId;
+    score : nat32;
     name : text;
     description : text;
     avatar_id : opt nat;
