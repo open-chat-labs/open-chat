@@ -954,5 +954,14 @@
     "exploreGroups": "חקור קבוצות",
     "channelAlreadyExists": "ערוץ בשם זה כבר קיים",
     "restrictedContent": "תוכן מוגבל",
-    "restrictedContentInfo": "בחר אם תרצה לראות קבוצות וקהילות שהוחלו עליהן את דגלי הניהול הבאים."
+    "restrictedContentInfo": "בחר אם תרצה לראות קבוצות וקהילות שהוחלו עליהן את דגלי הניהול הבאים.",
+    "expand": "לְהַרְחִיב",
+    "collapse": "הִתמוֹטְטוּת",
+    "showFilters": "הצג מסננים",
+    "stopRecording": "הפסק להקליט",
+    "recordAudioMessage": "הקלט הודעת שמע",
+    "chatMenu": "תפריט צ'אט",
+    "attachFile": "צרף תמונה/סרטון/קובץ",
+    "pickEmoji": "בחר אימוג'י",
+    "sendMessage": "לשלוח הודעה"
 }

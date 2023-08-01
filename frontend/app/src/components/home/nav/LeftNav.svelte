@@ -150,13 +150,13 @@
     <div class="bottom">
         <LeftNavItem
             selected={communityExplorer}
-            label={"Explore communities"}
+            label={$_("communities.explore")}
             on:click={exploreCommunities}>
             <div class="explore hover">
                 <Compass size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-        <LeftNavItem label={"Collapse"}>
+        <LeftNavItem label={$navOpen ? $_("collapse") : $_("expand")}>
             <div class:open={$navOpen} on:click|stopPropagation={toggleNav} class="expand hover">
                 <ArrowRight size={iconSize} color={"var(--icon-txt)"} />
             </div>
