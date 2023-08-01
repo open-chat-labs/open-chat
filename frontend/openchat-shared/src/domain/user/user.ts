@@ -222,9 +222,10 @@ export type ReferralStats = {
     totalRewardsE8s: bigint;
 };
 
-export type ModerationFlag = 1 | 2;
+export type ModerationFlag = 1 | 2 | 4;
 
 export const ModerationFlags = {
     Offensive: 1 as ModerationFlag,
     Adult: 2 as ModerationFlag,
+    Spam: 4 as ModerationFlag,
 };

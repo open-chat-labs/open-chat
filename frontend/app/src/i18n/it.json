@@ -882,7 +882,7 @@
         "created": "La tua comunità è stata creata con successo",
         "saved": "La tua community è stata aggiornata con successo",
         "errors": {
-            "name_taken": "Siamo spiacenti, esiste già una community con questo nome",
+            "name_taken": "Spiacenti, esiste già una comunità pubblica o un gruppo con questo nome",
             "failure": "Spiacenti, non siamo riusciti a creare la tua community",
             "saveFailed": "Spiacenti, non siamo riusciti a salvare i tuoi aggiornamenti",
             "inviteUsers": "Spiacenti, non siamo riusciti a invitare questi utenti",
@@ -924,7 +924,8 @@
         "defaultInfo": "Gli utenti che si uniscono a questa community verranno aggiunti automaticamente a tutti i canali predefiniti",
         "saveChanges": "Salvare le modifiche",
         "exploreMobile": "Esplorare",
-        "publicChannels": "Canali pubblici"
+        "publicChannels": "Canali pubblici",
+        "spam": "Spam"
     },
     "groupCreatedBy": "{username} ha creato {level}",
     "groupName": "{level} nome",

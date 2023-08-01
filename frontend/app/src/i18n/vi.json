@@ -883,7 +883,7 @@
         "created": "Cộng đồng của bạn đã được tạo thành công",
         "saved": "Cộng đồng của bạn đã được cập nhật thành công",
         "errors": {
-            "name_taken": "Xin lỗi - đã có một cộng đồng có tên này",
+            "name_taken": "Xin lỗi - đã có một cộng đồng hoặc nhóm công khai có tên này",
             "failure": "Xin lỗi, chúng tôi không thể tạo cộng đồng của bạn",
             "saveFailed": "Xin lỗi, chúng tôi không thể lưu cập nhật của bạn",
             "inviteUsers": "Rất tiếc, chúng tôi không thể mời những người dùng này",
@@ -925,7 +925,8 @@
         "defaultInfo": "Người dùng tham gia cộng đồng này sẽ tự động được thêm vào tất cả các kênh mặc định",
         "saveChanges": "Lưu thay đổi",
         "exploreMobile": "Khám phá",
-        "publicChannels": "Kênh công cộng"
+        "publicChannels": "Kênh công cộng",
+        "spam": "Thư rác"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",

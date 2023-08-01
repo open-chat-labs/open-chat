@@ -13,3 +13,6 @@ export const adultEnabled = derived(moderationFlags, (flags) =>
 export const offensiveEnabled = derived(moderationFlags, (flags) =>
     hasFlag(flags, ModerationFlags.Offensive)
 );
+export const smapEnabled = derived(moderationFlags, (flags) =>
+    hasFlag(flags, ModerationFlags.Spam)
+);
