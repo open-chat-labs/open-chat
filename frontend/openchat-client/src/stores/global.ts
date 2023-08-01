@@ -60,6 +60,14 @@ type UnreadCounts = {
     mentions: boolean;
 };
 
+export function emptyUnreadCounts(): UnreadCounts {
+    return {
+        muted: 0,
+        unmuted: 0,
+        mentions: false,
+    };
+}
+
 function hasUnreadMentions(chat: ChatSummary): boolean {
     if (chat.kind === "direct_chat") return false;
     return (

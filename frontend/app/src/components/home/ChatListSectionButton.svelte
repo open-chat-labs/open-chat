@@ -3,10 +3,11 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import Button from "../Button.svelte";
     import UnreadCount from "./UnreadCount.svelte";
+    import { emptyUnreadCounts } from "openchat-client";
 
     export let selected = false;
     export let title: string;
-    export let unread: { muted: number; unmuted: number; mentions: boolean };
+    export let unread = emptyUnreadCounts();
 </script>
 
 <Button fill={$mobileWidth} hollow={!selected} small={!$mobileWidth} tiny={$mobileWidth} on:click>

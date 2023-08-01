@@ -1,12 +1,9 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
+    import { emptyUnreadCounts } from "openchat-client";
 
-    export let unread: { muted: number; unmuted: number; mentions: boolean } = {
-        muted: 0,
-        unmuted: 0,
-        mentions: false,
-    };
+    export let unread = emptyUnreadCounts();
 
     $: muted = !unread.mentions && unread.unmuted <= 0;
     $: count = muted ? unread.muted : unread.unmuted;
