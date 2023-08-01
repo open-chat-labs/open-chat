@@ -99,5 +99,5 @@ pub fn calculate_hotness(
     let random = random as f64 / u32::MAX as f64;
 
     // Weighted sum of new, popular, hot and random
-    ((0.5 * newness + popularity + hotness + random) * 1_000_000.0) as u32
+    ((0.5 * newness + popularity + hotness + 0.5 * random) * 1_000_000.0) as u32
 }
