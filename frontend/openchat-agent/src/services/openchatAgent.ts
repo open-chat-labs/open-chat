@@ -133,6 +133,7 @@ import {
     PayForDiamondMembershipResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
+    SetCommunityModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
@@ -2086,11 +2087,16 @@ export class OpenChatAgent extends EventTarget {
     }
 
     registerProposalVote(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         messageIndex: number,
         adopt: boolean
     ): Promise<RegisterProposalVoteResponse> {
-        return this.getGroupClient(chatId.groupId).registerProposalVote(messageIndex, adopt);
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).registerProposalVote(messageIndex, adopt);
+            case "channel":
+                return this.communityClient(chatId.communityId).registerProposalVote(chatId.channelId, messageIndex, adopt);
+        }
     }
 
     initUserPrincipalMigration(newPrincipal: string): Promise<void> {
@@ -2319,6 +2325,10 @@ export class OpenChatAgent extends EventTarget {
             recurring,
             expectedPriceE8s
         );
+    }
+
+    setCommunityModerationFlags(communityId: string, flags: number): Promise<SetCommunityModerationFlagsResponse> {
+        return this._groupIndexClient.setCommunityModerationFlags(communityId, flags);
     }
 
     setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {

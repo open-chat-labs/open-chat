@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Serialize chat state more efficiently ([#4092](https://github.com/open-chat-labs/open-chat/pull/4092))
+- Discard old serialized state for the OpenChat group ([#4093](https://github.com/open-chat-labs/open-chat/pull/4093))
+
+## [[2.0.774](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.774-group)] - 2023-07-31
+
+### Changed
+
+- Serialize bytes more efficiently when importing group to community ([#4080](https://github.com/open-chat-labs/open-chat/pull/4080))
+- Allow retrying the failed group imports ([#4084](https://github.com/open-chat-labs/open-chat/pull/4084))
+- Make `c2c_export_group` an update call to perform cycles check ([#4086](https://github.com/open-chat-labs/open-chat/pull/4086))
+
 ## [[2.0.763](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.763-group)] - 2023-07-19
 
 ### Changed

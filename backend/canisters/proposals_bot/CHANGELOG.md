@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.777](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.777-proposals_bot)] - 2023-08-01
+
+### Added
+
+- Finish implementing `import_proposals_group_into_community` ([#4089](https://github.com/open-chat-labs/open-chat/pull/4089))
+
 ### Removed
 
 - Drop `name` from nervous systems since it is unused ([#4011](https://github.com/open-chat-labs/open-chat/pull/4011))

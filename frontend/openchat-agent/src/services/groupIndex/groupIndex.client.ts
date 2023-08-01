@@ -7,6 +7,7 @@ import type {
     FreezeGroupResponse,
     GroupChatSummary,
     RemoveHotGroupExclusionResponse,
+    SetCommunityModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     UnfreezeGroupResponse,
     GroupSearchResponse,
@@ -24,6 +25,7 @@ import {
     freezeGroupResponse,
     recommendedGroupsResponse,
     removeHotGroupExclusionResponse,
+    setCommunityModerationFlagsResponse,
     setUpgradeConcurrencyResponse,
     unfreezeGroupResponse,
     searchGroupsResponse,
@@ -161,6 +163,13 @@ export class GroupIndexClient extends CandidService {
                 chat_id: Principal.fromText(chatId),
             }),
             removeHotGroupExclusionResponse
+        );
+    }
+
+    setCommunityModerationFlags(communityId: string, flags: number): Promise<SetCommunityModerationFlagsResponse> {
+        return this.handleResponse(
+            this.groupIndexService.set_community_moderation_flags({ community_id: Principal.fromText(communityId), flags }),
+            setCommunityModerationFlagsResponse
         );
     }
 

@@ -63,12 +63,12 @@
         {#if !header}
             <div class="footer">
                 <div class="footer-row">
-                    <div class="members">
+                    <div class="members" title={$_("members")}>
                         <span class="label"
                             ><AccountMultiple viewBox="0 -4 24 24" size={"1.2em"} /></span>
                         <span class="number">{memberCount.toLocaleString()}</span>
                     </div>
-                    <div class="channels">
+                    <div class="channels" title={$_("communities.publicChannels")}>
                         <span class="label"><Pound viewBox="0 -3 24 24" size={"1.2em"} /></span>
                         <span class="number">{channelCount.toLocaleString()}</span>
                     </div>

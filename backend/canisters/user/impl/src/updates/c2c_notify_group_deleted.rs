@@ -48,7 +48,7 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
         let (community, newly_joined) = state.data.communities.join(community_id, now);
 
         if let Some(group) = group_removed {
-            community.import_group(channel.channel_id, group);
+            community.import_group(channel.channel_id, group, now);
         } else {
             community.mark_read(
                 vec![ChannelMessagesRead {

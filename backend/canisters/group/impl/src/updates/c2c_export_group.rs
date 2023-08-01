@@ -1,12 +1,15 @@
 use crate::guards::caller_is_community_being_imported_into;
-use crate::read_state;
 use crate::RuntimeState;
-use canister_api_macros::query_msgpack;
+use crate::{read_state, run_regular_jobs};
+use canister_api_macros::update_msgpack;
 use group_canister::c2c_export_group::{Response::*, *};
+use serde_bytes::ByteBuf;
 use std::cmp::min;
 
-#[query_msgpack(guard = "caller_is_community_being_imported_into")]
+#[update_msgpack(guard = "caller_is_community_being_imported_into")]
 fn c2c_export_group(args: Args) -> Response {
+    run_regular_jobs();
+
     read_state(|state| c2c_export_group_impl(args, state))
 }
 
@@ -17,7 +20,7 @@ fn c2c_export_group_impl(args: Args, state: &RuntimeState) -> Response {
         .data
         .serialized_chat_state
         .as_ref()
-        .map(|bytes| bytes[from..(min(to, bytes.len()))].to_vec())
+        .map(|bytes| ByteBuf::from(bytes[from..(min(to, bytes.len()))].to_vec()))
         .unwrap_or_default();
 
     Success(page)

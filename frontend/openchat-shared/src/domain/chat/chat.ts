@@ -1712,6 +1712,10 @@ export type RegisterProposalVoteResponse =
     | "success"
     | "already_voted"
     | "caller_not_in_group"
+    | "user_not_in_channel"
+    | "channel_not_found"
+    | "user_not_in_community"
+    | "community_frozen"
     | "no_eligible_neurons"
     | "proposal_message_not_found"
     | "proposal_not_found"
@@ -1789,6 +1793,7 @@ export type RemoveHotGroupExclusionResponse =
     | "internal_error";
 
 export type SetGroupUpgradeConcurrencyResponse = "success" | "not_authorized" | "internal_error";
+export type SetCommunityModerationFlagsResponse = "success" | "community_not_found" | "not_authorized" | "invalid_flags" | "internal_error";
 
 export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
 

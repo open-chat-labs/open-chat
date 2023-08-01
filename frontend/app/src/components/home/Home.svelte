@@ -37,6 +37,7 @@
         MultiUserChatIdentifier,
         GroupChatSummary,
         ChannelIdentifier,
+        compareChats,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -158,9 +159,13 @@
     $: currentCommunityRules = client.currentCommunityRules;
     $: currentChatRules = client.currentChatRules;
     $: globalUnreadCount = client.globalUnreadCount;
+    $: communities = client.communities;
 
     $: {
-        document.title = $globalUnreadCount > 0 ? `OpenChat (${$globalUnreadCount})` : "OpenChat";
+        document.title =
+            $globalUnreadCount.unmuted > 0
+                ? `OpenChat (${$globalUnreadCount.unmuted})`
+                : "OpenChat";
     }
 
     onMount(() => {
@@ -271,6 +276,16 @@
         return found;
     }
 
+    function redirectToFirstChannel(communityId: CommunityIdentifier): boolean {
+        const community = $communities.get(communityId);
+        if (community !== undefined && community.channels.length > 0) {
+            const first = [...community.channels].sort(compareChats)[0];
+            page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
+            return true;
+        }
+        return false;
+    }
+
     // extracting to a function to try to control more tightly what this reacts to
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
@@ -287,6 +302,11 @@
                 client.clearSelectedChat();
                 rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
             } else if (pathParams.kind === "selected_community_route") {
+                if (!$mobileWidth) {
+                    if (redirectToFirstChannel(pathParams.communityId)) {
+                        return;
+                    }
+                }
                 await selectCommunity(pathParams.communityId);
             } else if (
                 pathParams.kind === "global_chat_selected_route" ||
@@ -878,6 +898,7 @@
     }
 
     function convertGroupToCommunity(ev: CustomEvent<GroupChatSummary>) {
+        rightPanelHistory.set([]);
         convertGroup = ev.detail;
     }
 

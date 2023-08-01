@@ -3,10 +3,6 @@
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import { createEventDispatcher } from "svelte";
-    import { isTouchDevice } from "../../../utils/devices";
-
-    const dispatch = createEventDispatcher();
 
     export let mode: "yes" | "no";
     export let percentage: number;
@@ -21,29 +17,11 @@
             ? $_("proposal.youVotedAdopt")
             : $_("proposal.youVotedReject")
         : "";
-
-    function click(ev: MouseEvent) {
-        if (!isTouchDevice) {
-            dispatch("click", ev);
-        }
-    }
-
-    function touchstart(ev: TouchEvent) {
-        if (isTouchDevice) {
-            dispatch("click", ev);
-        }
-    }
 </script>
 
 <div class="vote-button" {title}>
     <div class="label">{label}</div>
-    <div
-        on:click|stopPropagation={click}
-        on:touchstart|stopPropagation={touchstart}
-        class:voting
-        class:voted
-        class:disabled
-        class={`icon ${mode}`}>
+    <div on:click class:voting class:voted class:disabled class={`icon ${mode}`}>
         {#if !voting}
             {#if mode === "yes"}
                 <ThumbUp size={$iconSize} color={iconColor} />

@@ -58,13 +58,14 @@ impl Community {
         self.last_read = now;
     }
 
-    pub fn import_group(&mut self, channel_id: ChannelId, group: GroupChat) {
+    pub fn import_group(&mut self, channel_id: ChannelId, group: GroupChat, now: TimestampMillis) {
         self.channels.insert(
             channel_id,
             Channel {
                 channel_id,
                 messages_read: group.messages_read,
                 archived: group.archived,
+                imported: Some(now),
             },
         );
     }
@@ -95,12 +96,17 @@ impl Community {
                 .channels
                 .values()
                 .filter(|c| c.last_updated() > updates_since)
-                .map(|c| user_canister::ChannelSummaryUpdates {
-                    channel_id: c.channel_id,
-                    read_by_me_up_to: c.messages_read.read_by_me_up_to_updates(updates_since),
-                    threads_read: c.messages_read.threads_read_updates(updates_since),
-                    archived: c.archived.if_set_after(updates_since).copied(),
-                    date_read_pinned: c.messages_read.date_read_pinned_updates(updates_since),
+                .map(|c| {
+                    // If the channel has just been imported, return all updates
+                    let since = if c.imported.unwrap_or_default() > updates_since { 0 } else { updates_since };
+
+                    user_canister::ChannelSummaryUpdates {
+                        channel_id: c.channel_id,
+                        read_by_me_up_to: c.messages_read.read_by_me_up_to_updates(since),
+                        threads_read: c.messages_read.threads_read_updates(since),
+                        archived: c.archived.if_set_after(since).copied(),
+                        date_read_pinned: c.messages_read.date_read_pinned_updates(since),
+                    }
                 })
                 .collect(),
             archived: self.archived.if_set_after(updates_since).copied(),
@@ -128,6 +134,8 @@ pub struct Channel {
     pub channel_id: ChannelId,
     pub messages_read: GroupMessagesRead,
     pub archived: Timestamped<bool>,
+    #[serde(default)]
+    pub imported: Option<TimestampMillis>,
 }
 
 impl Channel {
@@ -136,6 +144,7 @@ impl Channel {
             channel_id,
             messages_read: GroupMessagesRead::default(),
             archived: Timestamped::default(),
+            imported: None,
         }
     }
 
@@ -145,6 +154,7 @@ impl Channel {
             self.messages_read.threads_read.last_updated().unwrap_or_default(),
             self.messages_read.date_read_pinned.timestamp,
             self.archived.timestamp,
+            self.imported.unwrap_or_default(),
         ]
         .iter()
         .max()

@@ -12,6 +12,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
@@ -176,7 +177,7 @@ impl RuntimeState {
     pub fn start_importing_into_community(&mut self, community: CommunityBeingImportedInto) -> StartImportIntoCommunityResult {
         use StartImportIntoCommunityResult::*;
 
-        if self.data.community_being_imported_into.is_some() {
+        if self.data.community_being_imported_into.is_some() && self.data.is_frozen() {
             AlreadyImportingToAnotherCommunity
         } else if self.data.is_frozen() {
             ChatFrozen
@@ -184,7 +185,7 @@ impl RuntimeState {
             self.data.community_being_imported_into = Some(community);
             let serialized = msgpack::serialize_then_unwrap(&self.data.chat);
             let total_bytes = serialized.len() as u64;
-            self.data.serialized_chat_state = Some(serialized);
+            self.data.serialized_chat_state = Some(ByteBuf::from(serialized));
 
             freeze_group_impl(
                 OPENCHAT_BOT_USER_ID,
@@ -282,8 +283,10 @@ struct Data {
     pub activity_notification_state: ActivityNotificationState,
     pub instruction_counts_log: InstructionCountsLog,
     pub test_mode: bool,
+    #[serde(skip_deserializing)]
     pub community_being_imported_into: Option<CommunityBeingImportedInto>,
-    pub serialized_chat_state: Option<Vec<u8>>,
+    #[serde(skip_deserializing)]
+    pub serialized_chat_state: Option<ByteBuf>,
 }
 
 #[allow(clippy::too_many_arguments)]

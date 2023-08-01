@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.775](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.775-user)] - 2023-08-01
+
+### Changed
+
+- Return imported groups in summary updates ([#4082](https://github.com/open-chat-labs/open-chat/pull/4082))
+- Return all channel updates after importing to community ([#4087](https://github.com/open-chat-labs/open-chat/pull/4087))
+
 ## [[2.0.763](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.763-user)] - 2023-07-28
 
 ### Changed

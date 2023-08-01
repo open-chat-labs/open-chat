@@ -957,5 +957,14 @@
     "exploreGroups": "Khám phá các nhóm",
     "channelAlreadyExists": "Kênh có tên đó đã tồn tại",
     "restrictedContent": "Nội dung bị hạn chế",
-    "restrictedContentInfo": "Chọn xem bạn có muốn xem các nhóm và cộng đồng đã áp dụng các cờ kiểm duyệt sau hay không."
+    "restrictedContentInfo": "Chọn xem bạn có muốn xem các nhóm và cộng đồng đã áp dụng các cờ kiểm duyệt sau hay không.",
+    "expand": "Mở rộng",
+    "collapse": "Sụp đổ",
+    "showFilters": "Hiển thị bộ lọc",
+    "stopRecording": "Dừng ghi âm",
+    "recordAudioMessage": "Ghi lại tin nhắn âm thanh",
+    "chatMenu": "menu trò chuyện",
+    "attachFile": "Đính kèm hình ảnh/video/tập tin",
+    "pickEmoji": "Chọn biểu tượng cảm xúc",
+    "sendMessage": "Gửi tin nhắn"
 }
