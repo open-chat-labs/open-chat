@@ -55,7 +55,10 @@ async fn push_notifications(notifications: Vec<(UserId, DeletedGroupInfoInternal
 async fn push_notification(user_id: UserId, deleted_group: DeletedGroupInfoInternal) {
     let args = user_canister::c2c_notify_group_deleted::Args { deleted_group };
 
-    if let Err(_) = user_canister_c2c_client::c2c_notify_group_deleted(user_id.into(), &args).await {
+    if user_canister_c2c_client::c2c_notify_group_deleted(user_id.into(), &args)
+        .await
+        .is_err()
+    {
         mutate_state(|state| {
             let now = state.env.now();
             let deleted_group = args.deleted_group;
