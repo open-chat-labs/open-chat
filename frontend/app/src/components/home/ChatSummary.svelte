@@ -315,7 +315,6 @@
                         values: { count: unreadMentions.toString() },
                     })}
                     class:rtl={$rtlStore}
-                    class:muted
                     class="notification mention">
                     @
                 </div>
@@ -642,6 +641,7 @@
 
         &.muted {
             background-color: var(--unread-mute);
+            text-shadow: none;
         }
     }
 

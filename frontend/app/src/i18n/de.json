@@ -958,5 +958,14 @@
     "exploreGroups": "Entdecken Sie Gruppen",
     "channelAlreadyExists": "Ein Kanal mit diesem Namen existiert bereits",
     "restrictedContent": "Eingeschränkter Inhalt",
-    "restrictedContentInfo": "Wählen Sie aus, ob Sie Gruppen und Communities sehen möchten, auf die die folgenden Moderationsflags angewendet wurden."
+    "restrictedContentInfo": "Wählen Sie aus, ob Sie Gruppen und Communities sehen möchten, auf die die folgenden Moderationsflags angewendet wurden.",
+    "expand": "Expandieren",
+    "collapse": "Zusammenbruch",
+    "showFilters": "Filter anzeigen",
+    "stopRecording": "Höre auf, aufzunehmen",
+    "recordAudioMessage": "Nehmen Sie eine Audionachricht auf",
+    "chatMenu": "Chat-Menü",
+    "attachFile": "Bild/Video/Datei anhängen",
+    "pickEmoji": "Wählen Sie Emoji",
+    "sendMessage": "Nachricht senden"
 }

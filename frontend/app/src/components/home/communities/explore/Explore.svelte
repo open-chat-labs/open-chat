@@ -138,7 +138,7 @@
                     </HoverIcon>
                 {/if}
 
-                <HoverIcon on:click={showFilters}>
+                <HoverIcon title={$_("showFilters")} on:click={showFilters}>
                     <Tune size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>

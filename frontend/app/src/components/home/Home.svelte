@@ -162,7 +162,10 @@
     $: communities = client.communities;
 
     $: {
-        document.title = $globalUnreadCount > 0 ? `OpenChat (${$globalUnreadCount})` : "OpenChat";
+        document.title =
+            $globalUnreadCount.unmuted > 0
+                ? `OpenChat (${$globalUnreadCount.unmuted})`
+                : "OpenChat";
     }
 
     onMount(() => {

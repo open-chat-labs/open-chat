@@ -1,14 +1,15 @@
 <script lang="ts">
+    import { emptyUnreadCounts } from "openchat-client";
     import UnreadCount from "../UnreadCount.svelte";
 
     export let label: string;
     export let selected: boolean = false;
     export let separator: boolean = false;
-    export let unread = 0;
+    export let unread = emptyUnreadCounts();
 </script>
 
 <div role="button" tabindex="0" class:separator class:selected class="left-nav-item" on:click>
-    <div class="icon">
+    <div class="icon" title={label}>
         <slot />
         <UnreadCount {unread} />
     </div>

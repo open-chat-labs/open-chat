@@ -957,5 +957,14 @@
     "exploreGroups": "探索群组",
     "channelAlreadyExists": "同名的频道已存在",
     "restrictedContent": "受限内容",
-    "restrictedContentInfo": "选择您是否希望查看已应用以下审核标志的群组和社区。"
+    "restrictedContentInfo": "选择您是否希望查看已应用以下审核标志的群组和社区。",
+    "expand": "扩张",
+    "collapse": "坍塌",
+    "showFilters": "显示过滤器",
+    "stopRecording": "停止录音",
+    "recordAudioMessage": "录制音频消息",
+    "chatMenu": "聊天菜单",
+    "attachFile": "附加图像/视频/文件",
+    "pickEmoji": "选择表情符号",
+    "sendMessage": "发信息"
 }

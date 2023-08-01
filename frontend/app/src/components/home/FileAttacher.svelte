@@ -1,6 +1,7 @@
 <script lang="ts">
     import HoverIcon from "../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import { _ } from "svelte-i18n";
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
     import { iconSize } from "../../stores/iconSize";
@@ -44,7 +45,7 @@
 </script>
 
 <div on:click={click}>
-    <HoverIcon>
+    <HoverIcon title={open ? $_("close") : $_("attachFile")}>
         {#if open}
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         {:else}

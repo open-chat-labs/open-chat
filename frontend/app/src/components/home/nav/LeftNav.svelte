@@ -9,7 +9,13 @@
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
-    import { AvatarSize, CommunitySummary, OpenChat } from "openchat-client";
+    import {
+        AvatarSize,
+        CommunitySummary,
+        OpenChat,
+        emptyChatMetrics,
+        emptyUnreadCounts,
+    } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { _ } from "svelte-i18n";
     import { pathParams } from "../../../routes";
@@ -134,7 +140,7 @@
                 selected={community === $selectedCommunity &&
                     $chatListScope.kind !== "favourite" &&
                     !communityExplorer}
-                unread={$unreadCommunityChannels.get(community.id) ?? 0}
+                unread={$unreadCommunityChannels.get(community.id) ?? emptyUnreadCounts()}
                 label={community.name}
                 on:click={() => selectCommunity(community)}>
                 <Avatar
@@ -150,13 +156,13 @@
     <div class="bottom">
         <LeftNavItem
             selected={communityExplorer}
-            label={"Explore communities"}
+            label={$_("communities.explore")}
             on:click={exploreCommunities}>
             <div class="explore hover">
                 <Compass size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-        <LeftNavItem label={"Collapse"}>
+        <LeftNavItem label={$navOpen ? $_("collapse") : $_("expand")}>
             <div class:open={$navOpen} on:click|stopPropagation={toggleNav} class="expand hover">
                 <ArrowRight size={iconSize} color={"var(--icon-txt)"} />
             </div>
