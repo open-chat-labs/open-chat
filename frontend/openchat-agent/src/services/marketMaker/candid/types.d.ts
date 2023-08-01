@@ -12,6 +12,7 @@ export interface UpdateConfigArgs {
   'min_sell_price' : [] | [bigint],
   'order_size' : [] | [bigint],
   'max_buy_price' : [] | [bigint],
+  'spread' : [] | [bigint],
   'max_orders_to_make_per_iteration' : [] | [number],
   'max_orders_per_direction' : [] | [number],
 }
