@@ -46,6 +46,7 @@
     $: typersByContext = client.typersByContext;
     $: userStore = client.userStore;
     $: favouritesStore = client.favouritesStore;
+    $: menuColour = $mobileWidth ? "rgba(255,255,255,0.4)" : "var(--icon-txt)";
 
     const dispatch = createEventDispatcher();
     let hovering = false;
@@ -346,10 +347,7 @@
                 <div class="menu">
                     <MenuIcon position={"bottom"} align={"end"}>
                         <div class="menu-icon" class:rtl={$rtlStore} slot="icon">
-                            <DotsVertical
-                                viewBox="0 -3 24 24"
-                                size="1.6em"
-                                color="var(--icon-txt" />
+                            <DotsVertical viewBox="0 -3 24 24" size="1.6em" color={menuColour} />
                         </div>
                         <div slot="menu">
                             <Menu>
