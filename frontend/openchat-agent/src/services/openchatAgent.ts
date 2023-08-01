@@ -2088,11 +2088,16 @@ export class OpenChatAgent extends EventTarget {
     }
 
     registerProposalVote(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         messageIndex: number,
         adopt: boolean
     ): Promise<RegisterProposalVoteResponse> {
-        return this.getGroupClient(chatId.groupId).registerProposalVote(messageIndex, adopt);
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).registerProposalVote(messageIndex, adopt);
+            case "channel":
+                return this.communityClient(chatId.communityId).registerProposalVote(chatId.channelId, messageIndex, adopt);
+        }
     }
 
     initUserPrincipalMigration(newPrincipal: string): Promise<void> {

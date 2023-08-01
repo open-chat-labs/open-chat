@@ -1,5 +1,5 @@
 use crate::exchanges::Exchange;
-use crate::{MarketState, Order};
+use crate::{AggregatedOrders, MarketState, Order};
 use async_trait::async_trait;
 use candid::{CandidType, Nat};
 use canister_client::make_c2c_call;
@@ -41,15 +41,15 @@ impl ICDexClient {
     }
 
     async fn latest_price(&self) -> CallResult<u64> {
-        let response: StatsResponse = make_c2c_call(self.dex_canister_id, "stats", (), candid::encode_one, |r| {
+        let response: StatsResponse = make_c2c_call(self.dex_canister_id, "stats", (), candid::encode_args, |r| {
             candid::decode_one(r)
         })
         .await?;
 
-        Ok((response.price * 100000000f64) as u64)
+        Ok((response.price * 100_000_000f64) as u64)
     }
 
-    async fn open_orders(&self) -> CallResult<Vec<Order>> {
+    async fn my_open_orders(&self) -> CallResult<Vec<Order>> {
         type OpenOrdersArgs = (String, Option<Nat>, Option<Nat>);
 
         let args: OpenOrdersArgs = (self.this_canister_id.to_string(), None, None);
@@ -60,6 +60,36 @@ impl ICDexClient {
         .await?;
 
         Ok(orders.data.into_iter().map(|(_, o)| o.into()).collect())
+    }
+
+    async fn orderbook(&self) -> CallResult<AggregatedOrders> {
+        let (_, orderbook): (Nat, Orderbook) = make_c2c_call(self.dex_canister_id, "level10", (), candid::encode_args, |r| {
+            candid::decode_args(r)
+        })
+        .await?;
+
+        Ok(AggregatedOrders {
+            bids: orderbook
+                .bid
+                .into_iter()
+                .map(|p| {
+                    (
+                        u64::try_from(p.price.0).unwrap() * 10,
+                        u64::try_from(p.quantity.0).unwrap() * 10,
+                    )
+                })
+                .collect(),
+            asks: orderbook
+                .ask
+                .into_iter()
+                .map(|p| {
+                    (
+                        u64::try_from(p.price.0).unwrap() * 10,
+                        u64::try_from(p.quantity.0).unwrap() * 10,
+                    )
+                })
+                .collect(),
+        })
     }
 
     pub async fn make_order(&self, order: MakeOrderRequest) -> CallResult<()> {
@@ -150,11 +180,13 @@ impl Exchange for ICDexClient {
     }
 
     async fn market_state(&self) -> CallResult<MarketState> {
-        let (latest_price, open_orders) = futures::future::try_join(self.latest_price(), self.open_orders()).await?;
+        let (latest_price, my_open_orders, orderbook) =
+            futures::future::try_join3(self.latest_price(), self.my_open_orders(), self.orderbook()).await?;
 
         Ok(MarketState {
             latest_price,
-            open_orders,
+            my_open_orders,
+            orderbook,
         })
     }
 
@@ -269,4 +301,16 @@ enum MakeOrderErrorCode {
 enum ICDexOrderType {
     #[serde(rename = "LMT")]
     Limit,
+}
+
+#[derive(CandidType, Deserialize, Debug)]
+struct Orderbook {
+    ask: Vec<PriceAndQuantity>,
+    bid: Vec<PriceAndQuantity>,
+}
+
+#[derive(CandidType, Deserialize, Debug)]
+struct PriceAndQuantity {
+    quantity: Nat,
+    price: Nat,
 }

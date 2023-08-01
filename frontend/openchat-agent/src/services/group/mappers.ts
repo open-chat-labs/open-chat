@@ -7,7 +7,6 @@ import type {
     ApiRole,
     ApiMessagesByMessageIndexResponse,
     ApiMessageEventWrapper,
-    ApiRegisterProposalVoteResponse,
     ApiGroupRules,
     ApiRulesResponse,
     ApiGroupCanisterGroupChatSummary,
@@ -33,7 +32,6 @@ import {
     MemberRole,
     Message,
     GroupInviteCodeChange,
-    RegisterProposalVoteResponse,
     AccessRules,
     ChatPermissions,
     UnsupportedValueError,
@@ -655,42 +653,6 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
         index: candid.index,
         timestamp: candid.timestamp,
     };
-}
-
-export function registerProposalVoteResponse(
-    candid: ApiRegisterProposalVoteResponse
-): RegisterProposalVoteResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("AlreadyVoted" in candid) {
-        return "already_voted";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("NoEligibleNeurons" in candid) {
-        return "no_eligible_neurons";
-    }
-    if ("ProposalNotAcceptingVotes" in candid) {
-        return "proposal_not_accepting_votes";
-    }
-    if ("ProposalNotFound" in candid) {
-        return "proposal_not_found";
-    }
-    if ("ProposalMessageNotFound" in candid) {
-        return "proposal_message_not_found";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError("Unexpected ApiVoteOnProposalResponse type received", candid);
 }
 
 export function rulesResponse(candid: ApiRulesResponse): AccessRules | undefined {
