@@ -57,6 +57,7 @@ import {
     searchGroupChatResponse,
     disableInviteCodeResponse,
     enableInviteCodeResponse,
+    registerProposalVoteResponse,
 } from "../common/chatMappers";
 import {
     type AccessGate,
@@ -116,6 +117,7 @@ import {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
+    RegisterProposalVoteResponse,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -1069,6 +1071,21 @@ export class CommunityClient extends CandidService {
                     latest_client_thread_update: apiOptional(identity, latestClientThreadUpdate),
                 }),
             (resp) => threadPreviewsResponse(resp, chatId, latestClientThreadUpdate)
+        );
+    }
+
+    registerProposalVote(
+        channelId: string,
+        messageIdx: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.handleResponse(
+            this.service.register_proposal_vote({
+                channel_id: BigInt(channelId),
+                adopt,
+                message_index: messageIdx,
+            }),
+            registerProposalVoteResponse
         );
     }
 
