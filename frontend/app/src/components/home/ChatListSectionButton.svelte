@@ -6,11 +6,11 @@
 
     export let selected = false;
     export let title: string;
-    export let unread: number;
+    export let unread: { muted: number; unmuted: number; mentions: boolean };
 </script>
 
 <Button fill={$mobileWidth} hollow={!selected} small={!$mobileWidth} tiny={$mobileWidth} on:click>
-    <h4 class="title" class:unread={unread > 0}>
+    <h4 class="title">
         {title}
     </h4>
     <UnreadCount {unread} />

@@ -4,7 +4,7 @@
     export let label: string;
     export let selected: boolean = false;
     export let separator: boolean = false;
-    export let unread = 0;
+    export let unread: { muted: number; unmuted: number } = { muted: 0, unmuted: 0 };
 </script>
 
 <div role="button" tabindex="0" class:separator class:selected class="left-nav-item" on:click>

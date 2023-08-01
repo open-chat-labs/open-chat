@@ -54,15 +54,40 @@ export const chatListScopeStore = safeWritable<ChatListScope>({ kind: "none" }, 
 
 export const favouritesStore = derived(globalStateStore, (state) => state.favourites);
 
-function unreadCountForChatList(chats: (ChatSummary | undefined)[]): number {
-    return chats.reduce((num, chat) => {
-        if (chat === undefined || chat.membership.notificationsMuted) return num;
-        const unread = messagesRead.unreadMessageCount(
-            chat.id,
-            chat.latestMessage?.event.messageIndex
-        );
-        return unread > 0 ? num + 1 : num;
-    }, 0);
+type UnreadCounts = {
+    muted: number;
+    unmuted: number;
+    mentions: boolean;
+};
+
+function hasUnreadMentions(chat: ChatSummary): boolean {
+    if (chat.kind === "direct_chat") return false;
+    return (
+        chat.membership.mentions.filter(
+            (m) => !messagesRead.isRead(chat.id, m.messageIndex, m.messageId)
+        ).length > 0
+    );
+}
+
+function unreadCountForChatList(chats: (ChatSummary | undefined)[]): UnreadCounts {
+    return chats.reduce(
+        (counts, chat) => {
+            if (chat === undefined) return counts;
+            const unread = messagesRead.unreadMessageCount(
+                chat.id,
+                chat.latestMessage?.event.messageIndex
+            );
+            const increment = unread > 0 ? 1 : 0;
+            return {
+                mentions: counts.mentions || hasUnreadMentions(chat),
+                unmuted: chat.membership.notificationsMuted
+                    ? counts.unmuted
+                    : counts.unmuted + increment,
+                muted: chat.membership.notificationsMuted ? counts.muted + increment : counts.muted,
+            };
+        },
+        { muted: 0, unmuted: 0, mentions: false } as UnreadCounts
+    );
 }
 
 // the messagesRead store is used as part of the derivation so that it gets recomputed when messages are read
@@ -106,14 +131,28 @@ export const unreadCommunityChannels = derived(
         return $global.communities.values().reduce((map, community) => {
             map.set(community.id, unreadCountForChatList(community.channels));
             return map;
-        }, new CommunityMap<number>());
+        }, new CommunityMap<UnreadCounts>());
     }
 );
 
 export const globalUnreadCount = derived(
     [unreadGroupChats, unreadDirectChats, unreadCommunityChannels],
-    ([$groups, $directs, $communities]) => {
-        return $groups + $directs + $communities.values().reduce((sum, count) => sum + count, 0);
+    ([groupCounts, directCounts, $communities]) => {
+        const communityCounts = $communities.values().reduce(
+            (agg, counts) => {
+                return {
+                    unmuted: agg.unmuted + counts.unmuted,
+                    muted: agg.muted + counts.muted,
+                    mentions: agg.mentions || counts.mentions,
+                };
+            },
+            { muted: 0, unmuted: 0, mentions: false }
+        );
+        return {
+            unmuted: groupCounts.unmuted + directCounts.unmuted + communityCounts.unmuted,
+            muted: groupCounts.muted + directCounts.muted + communityCounts.muted,
+            mentions: groupCounts.mentions || directCounts.mentions || communityCounts.mentions,
+        };
     }
 );
 

@@ -30,6 +30,7 @@ export interface Theme {
 
     unread: {
         mute: string;
+        "mute-solid": string;
     };
 
     collapsible: {
