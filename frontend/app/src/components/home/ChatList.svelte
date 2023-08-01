@@ -74,7 +74,7 @@
     $: unreadCommunityChannels = client.unreadCommunityChannels;
     $: globalUnreadCount = client.globalUnreadCount;
 
-    let unread = 0;
+    let unread = { muted: 0, unmuted: 0, mentions: false };
     $: {
         if ($communitiesEnabled) {
             switch ($chatListScope.kind) {
@@ -91,11 +91,15 @@
                     break;
                 }
                 case "community": {
-                    unread = $unreadCommunityChannels.get($chatListScope.id) ?? 0;
+                    unread = $unreadCommunityChannels.get($chatListScope.id) ?? {
+                        muted: 0,
+                        unmuted: 0,
+                        mentions: false,
+                    };
                     break;
                 }
                 default:
-                    unread = 0;
+                    unread = { muted: 0, unmuted: 0, mentions: false };
             }
         } else {
             unread = $globalUnreadCount;

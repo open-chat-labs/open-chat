@@ -18,3 +18,4 @@ export { GlobalState } from "./stores/global";
 export { buildCryptoTransferText, buildTransactionUrl } from "./utils/chat";
 export { Poller } from "./utils/poller";
 export { FailedMessages } from "./stores/failedMessages";
+export { emptyUnreadCounts } from "./stores/global";
