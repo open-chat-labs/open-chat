@@ -168,6 +168,7 @@ import {
     DestinationInvalidError,
     PublicGroupSummaryResponse,
     CommonResponses,
+    CommunityMap,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1223,19 +1224,31 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private getUpdatedPinnedChannels(
+        currentPinnedChannels: ChannelIdentifier[],
         userResponse: UpdatesSuccessResponse
-    ): ChannelIdentifier[] | undefined {
-        const addedChannels = userResponse.communities.added.flatMap((c) => c.pinned);
-        const updatedChannels = userResponse.communities.updated.reduce((pinned, c) => {
-            if (c.pinned !== undefined) {
-                return pinned.concat(c.pinned);
+    ): ChannelIdentifier[] {
+        const byCommunity = currentPinnedChannels.reduce((map, channel) => {
+            const channels = map.get(channel.communityId) ?? [];
+            channels.push(channel);
+            map.set(channel.communityId, channels);
+            return map;
+        }, new Map<string, ChannelIdentifier[]>());
+
+        userResponse.communities.added
+            .flatMap((c) => c.pinned)
+            .forEach((channel) => {
+                byCommunity.get(channel.communityId)?.push(channel);
+            });
+
+        userResponse.communities.updated.forEach((c) => {
+            if (c.pinned === undefined) {
+                byCommunity.delete(c.id.communityId);
+            } else {
+                byCommunity.set(c.id.communityId, c.pinned);
             }
-            return pinned;
-        }, [] as ChannelIdentifier[]);
-        if (addedChannels.length > 0 || updatedChannels.length > 0) {
-            return [...addedChannels, ...updatedChannels];
-        }
-        return undefined;
+        });
+
+        return [...byCommunity.values()].flat();
     }
 
     async getUpdates(): Promise<UpdatesResult> {
@@ -1261,7 +1274,6 @@ export class OpenChatAgent extends EventTarget {
 
         let avatarId: bigint | undefined;
         let blockedUsers: string[];
-        let pinnedChats: ChatIdentifier[];
         let pinnedGroupChats: GroupChatIdentifier[];
         let pinnedDirectChats: DirectChatIdentifier[];
         let pinnedFavouriteChats: ChatIdentifier[];
@@ -1292,7 +1304,6 @@ export class OpenChatAgent extends EventTarget {
             pinnedFavouriteChats = userResponse.favouriteChats.pinned;
             pinnedChannels = userResponse.communities.summaries.flatMap((c) => c.pinned);
             favouriteChats = userResponse.favouriteChats.chats;
-            pinnedChats = structuredClone(userResponse.favouriteChats.chats);
             latestUserCanisterUpdates = userResponse.timestamp;
             anyUpdates = true;
         } else {
@@ -1309,7 +1320,6 @@ export class OpenChatAgent extends EventTarget {
 
             avatarId = current.avatarId;
             blockedUsers = current.blockedUsers;
-            pinnedChats = current.pinnedChats;
             pinnedGroupChats = current.pinnedGroupChats;
             pinnedDirectChats = current.pinnedDirectChats;
             pinnedFavouriteChats = current.pinnedFavouriteChats;
@@ -1340,9 +1350,9 @@ export class OpenChatAgent extends EventTarget {
                 pinnedGroupChats = userResponse.groupChats.pinned ?? pinnedGroupChats;
                 pinnedDirectChats = userResponse.directChats.pinned ?? pinnedDirectChats;
                 pinnedFavouriteChats = userResponse.favouriteChats.pinned ?? pinnedFavouriteChats;
-                pinnedChannels = this.getUpdatedPinnedChannels(userResponse) ?? pinnedChannels;
+                pinnedChannels =
+                    this.getUpdatedPinnedChannels(pinnedChannels, userResponse) ?? pinnedChannels;
                 favouriteChats = userResponse.favouriteChats.chats ?? favouriteChats;
-                pinnedChats = structuredClone(userResponse.favouriteChats.chats ?? pinnedChats);
                 latestUserCanisterUpdates = userResponse.timestamp;
                 anyUpdates = true;
             }
@@ -1444,7 +1454,6 @@ export class OpenChatAgent extends EventTarget {
             communities,
             avatarId,
             blockedUsers,
-            pinnedChats,
             pinnedGroupChats,
             pinnedDirectChats,
             pinnedFavouriteChats,
@@ -2062,20 +2071,12 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    pinChat(
-        chatId: ChatIdentifier,
-        communitiesEnabled: boolean,
-        favourite: boolean
-    ): Promise<PinChatResponse> {
-        return this.userClient.pinChat(chatId, communitiesEnabled, favourite);
+    pinChat(chatId: ChatIdentifier, favourite: boolean): Promise<PinChatResponse> {
+        return this.userClient.pinChat(chatId, favourite);
     }
 
-    unpinChat(
-        chatId: ChatIdentifier,
-        communitiesEnabled: boolean,
-        favourite: boolean
-    ): Promise<UnpinChatResponse> {
-        return this.userClient.unpinChat(chatId, communitiesEnabled, favourite);
+    unpinChat(chatId: ChatIdentifier, favourite: boolean): Promise<UnpinChatResponse> {
+        return this.userClient.unpinChat(chatId, favourite);
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
@@ -2322,7 +2323,10 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    setCommunityModerationFlags(communityId: string, flags: number): Promise<SetCommunityModerationFlagsResponse> {
+    setCommunityModerationFlags(
+        communityId: string,
+        flags: number
+    ): Promise<SetCommunityModerationFlagsResponse> {
         return this._groupIndexClient.setCommunityModerationFlags(communityId, flags);
     }
 

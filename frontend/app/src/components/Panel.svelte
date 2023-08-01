@@ -3,7 +3,6 @@
     import { mobileWidth } from "../stores/screenDimensions";
     import { rtlStore } from "../stores/rtl";
     import { navOpen } from "../stores/layout";
-    import { communitiesEnabled } from "../utils/features";
 
     export let left: boolean = false;
     export let nav: boolean = false;
@@ -23,7 +22,7 @@
     class:middle
     class:modal
     class:hovering={$navOpen}
-    class:nav-supported={$communitiesEnabled}
+    class:nav-supported={true}
     class:empty>
     <slot />
 </section>

@@ -59,35 +59,27 @@ export const currentUserStore = immutableStore<CreatedUser | undefined>(undefine
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
 
-const communitiesEnabled = true;
-
 export const myServerChatSummariesStore = derived(
     [globalStateStore, chatListScopeStore],
     ([$allState, $scope]) => {
         const allChats = getAllChats($allState);
-        if (communitiesEnabled) {
-            if ($scope.kind === "community") {
-                const community = $allState.communities.get($scope.id);
-                return community
-                    ? ChatMap.fromList(community.channels)
-                    : new ChatMap<ChatSummary>();
-            } else if ($scope.kind === "group_chat") {
-                return $allState.groupChats;
-            } else if ($scope.kind === "direct_chat") {
-                return $allState.directChats;
-            } else if ($scope.kind === "favourite") {
-                return $allState.favourites.values().reduce((favs, chatId) => {
-                    const chat = allChats.get(chatId);
-                    if (chat !== undefined) {
-                        favs.set(chat.id, chat);
-                    }
-                    return favs;
-                }, new ChatMap<ChatSummary>());
-            } else {
-                return new ChatMap<ChatSummary>();
-            }
+        if ($scope.kind === "community") {
+            const community = $allState.communities.get($scope.id);
+            return community ? ChatMap.fromList(community.channels) : new ChatMap<ChatSummary>();
+        } else if ($scope.kind === "group_chat") {
+            return $allState.groupChats;
+        } else if ($scope.kind === "direct_chat") {
+            return $allState.directChats;
+        } else if ($scope.kind === "favourite") {
+            return $allState.favourites.values().reduce((favs, chatId) => {
+                const chat = allChats.get(chatId);
+                if (chat !== undefined) {
+                    favs.set(chat.id, chat);
+                }
+                return favs;
+            }, new ChatMap<ChatSummary>());
         } else {
-            return allChats;
+            return new ChatMap<ChatSummary>();
         }
     }
 );

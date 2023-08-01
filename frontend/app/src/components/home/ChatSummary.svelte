@@ -28,7 +28,6 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { notificationsSupported } from "../../utils/notifications";
-    import { communitiesEnabled } from "../../utils/features";
     import { toastStore } from "../../stores/toast";
     import { routeForScope, pathParams } from "../../routes";
     import page from "page";
@@ -54,10 +53,7 @@
     let unreadMentions: number;
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const fav =
-            $communitiesEnabled &&
-            $chatListScope.kind !== "favourite" &&
-            $favouritesStore.has(chatSummary.id);
+        const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
         switch (chatSummary.kind) {
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
@@ -305,6 +301,21 @@
         <!-- this date formatting is OK for now but we might want to use something like this:
         https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
         <div class:rtl={$rtlStore} class="chat-date">
+            {#if muted && notificationsSupported}
+                <div class="mute icon" class:rtl={$rtlStore}>
+                    <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
+                </div>
+            {/if}
+            {#if pinned}
+                <div class="pin icon">
+                    <PinIcon size={"1em"} color={"var(--icon-txt)"} />
+                </div>
+            {/if}
+            {#if chat.fav}
+                <div class="fav icon">
+                    <Heart size={"1em"} color={"var(--icon-txt)"} />
+                </div>
+            {/if}
             {client.formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
         </div>
         {#if !readonly}
@@ -331,53 +342,37 @@
                     {unreadMessages > 999 ? "999+" : unreadMessages}
                 </div>
             {/if}
-            <div class="other-icons">
-                {#if muted && notificationsSupported}
-                    <div class="mute icon" class:rtl={$rtlStore}>
-                        <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
-                    </div>
-                {/if}
-                {#if pinned}
-                    <div class="pin icon">
-                        <PinIcon size={"1em"} color={"var(--icon-txt)"} />
-                    </div>
-                {/if}
-                {#if chat.fav}
-                    <div class="fav icon">
-                        <Heart size={"1em"} color={"var(--icon-txt)"} />
-                    </div>
-                {/if}
-            </div>
             {#if !client.isReadOnly()}
                 <div class="menu">
                     <MenuIcon position={"bottom"} align={"end"}>
                         <div class="menu-icon" slot="icon">
-                            <DotsVertical size={$iconSize} color="var(--icon-txt" />
+                            <DotsVertical
+                                viewBox="0 -3 24 24"
+                                size="1.6em"
+                                color="var(--icon-txt" />
                         </div>
                         <div slot="menu">
                             <Menu>
-                                {#if $communitiesEnabled}
-                                    {#if !$favouritesStore.has(chatSummary.id)}
-                                        <MenuItem on:click={addToFavourites}>
-                                            <HeartPlus
-                                                size={$iconSize}
-                                                color={"var(--menu-warn)"}
-                                                slot="icon" />
-                                            <div slot="text">
-                                                {$_("communities.addToFavourites")}
-                                            </div>
-                                        </MenuItem>
-                                    {:else}
-                                        <MenuItem on:click={removeFromFavourites}>
-                                            <HeartMinus
-                                                size={$iconSize}
-                                                color={"var(--menu-warn)"}
-                                                slot="icon" />
-                                            <div slot="text">
-                                                {$_("communities.removeFromFavourites")}
-                                            </div>
-                                        </MenuItem>
-                                    {/if}
+                                {#if !$favouritesStore.has(chatSummary.id)}
+                                    <MenuItem on:click={addToFavourites}>
+                                        <HeartPlus
+                                            size={$iconSize}
+                                            color={"var(--menu-warn)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            {$_("communities.addToFavourites")}
+                                        </div>
+                                    </MenuItem>
+                                {:else}
+                                    <MenuItem on:click={removeFromFavourites}>
+                                        <HeartMinus
+                                            size={$iconSize}
+                                            color={"var(--menu-warn)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            {$_("communities.removeFromFavourites")}
+                                        </div>
+                                    </MenuItem>
                                 {/if}
                                 {#if !pinned}
                                     <MenuItem on:click={pinChat}>
@@ -522,18 +517,22 @@
         }
 
         .menu {
-            padding-top: toRem(10);
-            width: toRem(12);
+            flex: 0;
         }
 
-        // .menu-icon {
-        //     width: 0;
-        //     transition: width 200ms ease-in-out, opacity 200ms;
-        //     height: 0;
-        //     opacity: 0;
-        //     position: relative;
-        //     bottom: 0.4em;
-        // }
+        .menu-icon {
+            width: 0;
+            transition: width 200ms ease-in-out, opacity 200ms;
+            height: 0;
+            opacity: 0;
+            position: relative;
+            bottom: 0.4em;
+
+            @include mobile() {
+                width: $sp4;
+                opacity: 1;
+            }
+        }
 
         .icon {
             height: 0;
@@ -550,13 +549,15 @@
             }
         }
 
-        // &:hover {
-        //     .menu-icon {
-        //         transition-delay: 200ms;
-        //         width: 1.2em;
-        //         opacity: 1;
-        //     }
-        // }
+        @media (hover) {
+            &:hover {
+                .menu-icon {
+                    transition-delay: 200ms;
+                    width: $sp4;
+                    opacity: 1;
+                }
+            }
+        }
     }
     .avatar {
         flex: 0 0 40px;
@@ -594,17 +595,18 @@
         }
     }
 
-    .chat-date,
-    .other-icons {
+    .chat-date {
+        display: flex;
+        gap: $sp2;
         position: absolute;
         color: var(--txt-light);
         @include font(book, normal, fs-60);
-        top: toRem(12);
+        top: $sp3;
         &:not(.rtl) {
-            right: toRem(12);
+            right: $sp4;
         }
         &.rtl {
-            left: toRem(12);
+            left: $sp4;
         }
 
         @include mobile() {
@@ -617,17 +619,9 @@
         }
     }
 
-    .other-icons {
-        display: flex;
-        gap: 4px;
-        top: unset;
-        bottom: 12px;
-        height: 9px;
-    }
-
     .notification {
         @include unread();
-        margin-top: $sp2;
+        margin-top: 18px;
         margin-left: 2px;
         &:not(.rtl) {
             right: $sp3;
