@@ -2,7 +2,8 @@
     import { AvatarSize, OpenChat, chatIdentifiersEqual } from "openchat-client";
     import type { UserLookup, ChatSummary, TypersByKey, CommunitySummary } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import Heart from "svelte-material-icons/Heart.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import PinIcon from "svelte-material-icons/Pin.svelte";
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
@@ -70,6 +71,7 @@
                         { chatId: chatSummary.id },
                         typing
                     ),
+                    fav,
                 };
             default:
                 return {
@@ -82,6 +84,7 @@
                         { chatId: chatSummary.id },
                         typing
                     ),
+                    fav,
                 };
         }
     }
@@ -305,16 +308,6 @@
             {client.formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
         </div>
         {#if !readonly}
-            {#if muted && notificationsSupported}
-                <div class="mute icon" class:rtl={$rtlStore}>
-                    <MutedIcon size={$iconSize} color={"var(--icon-txt)"} />
-                </div>
-            {/if}
-            {#if pinned}
-                <div class="pin icon">
-                    <PinIcon size={$iconSize} color={"var(--icon-txt)"} />
-                </div>
-            {/if}
             {#if unreadMentions > 0}
                 <div
                     in:pop={{ duration: 1500 }}
@@ -339,11 +332,28 @@
                     {unreadMessages > 999 ? "999+" : unreadMessages}
                 </div>
             {/if}
+            <div class="other-icons">
+                {#if muted && notificationsSupported}
+                    <div class="mute icon" class:rtl={$rtlStore}>
+                        <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
+                    </div>
+                {/if}
+                {#if pinned}
+                    <div class="pin icon">
+                        <PinIcon size={"1em"} color={"var(--icon-txt)"} />
+                    </div>
+                {/if}
+                {#if chat.fav}
+                    <div class="fav icon">
+                        <Heart size={"1em"} color={"var(--icon-txt)"} />
+                    </div>
+                {/if}
+            </div>
             {#if !client.isReadOnly()}
                 <div class="menu">
                     <MenuIcon position={"bottom"} align={"end"}>
                         <div class="menu-icon" slot="icon">
-                            <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt" />
+                            <DotsVertical size={$iconSize} color="var(--icon-txt" />
                         </div>
                         <div slot="menu">
                             <Menu>
@@ -513,17 +523,18 @@
         }
 
         .menu {
-            flex: 0;
+            padding-top: toRem(10);
+            width: toRem(12);
         }
 
-        .menu-icon {
-            width: 0;
-            transition: width 200ms ease-in-out, opacity 200ms;
-            height: 0;
-            opacity: 0;
-            position: relative;
-            bottom: 0.4em;
-        }
+        // .menu-icon {
+        //     width: 0;
+        //     transition: width 200ms ease-in-out, opacity 200ms;
+        //     height: 0;
+        //     opacity: 0;
+        //     position: relative;
+        //     bottom: 0.4em;
+        // }
 
         .icon {
             height: 0;
@@ -540,13 +551,13 @@
             }
         }
 
-        &:hover {
-            .menu-icon {
-                transition-delay: 200ms;
-                width: 1.2em;
-                opacity: 1;
-            }
-        }
+        // &:hover {
+        //     .menu-icon {
+        //         transition-delay: 200ms;
+        //         width: 1.2em;
+        //         opacity: 1;
+        //     }
+        // }
     }
     .avatar {
         flex: 0 0 40px;
@@ -584,16 +595,17 @@
         }
     }
 
-    .chat-date {
+    .chat-date,
+    .other-icons {
         position: absolute;
         color: var(--txt-light);
         @include font(book, normal, fs-60);
-        top: $sp3;
+        top: toRem(12);
         &:not(.rtl) {
-            right: $sp4;
+            right: toRem(12);
         }
         &.rtl {
-            left: $sp4;
+            left: toRem(12);
         }
 
         @include mobile() {
@@ -606,9 +618,17 @@
         }
     }
 
+    .other-icons {
+        display: flex;
+        gap: 4px;
+        top: unset;
+        bottom: 12px;
+        height: 9px;
+    }
+
     .notification {
         @include unread();
-        margin-top: 18px;
+        margin-top: $sp2;
         margin-left: 2px;
         &:not(.rtl) {
             right: $sp3;
