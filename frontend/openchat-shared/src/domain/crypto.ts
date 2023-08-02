@@ -8,8 +8,17 @@ export const CKBTC_SYMBOL = "ckBTC";
 export const SNS1_SYMBOL = "SNS1";
 export const KINIC_SYMBOL = "KINIC";
 export const HOTORNOT_SYMBOL = "HOT";
+export const GHOST_SYMBOL = "GHOST";
 
-export const cryptoCurrencyList = [CHAT_SYMBOL, ICP_SYMBOL, CKBTC_SYMBOL, SNS1_SYMBOL, KINIC_SYMBOL, HOTORNOT_SYMBOL] as const;
+export const cryptoCurrencyList = [
+    CHAT_SYMBOL,
+    ICP_SYMBOL,
+    CKBTC_SYMBOL,
+    SNS1_SYMBOL,
+    KINIC_SYMBOL,
+    HOTORNOT_SYMBOL,
+    GHOST_SYMBOL,
+] as const;
 
 type CryptocurrenciesType = typeof cryptoCurrencyList;
 export type Cryptocurrency = CryptocurrenciesType[number];
@@ -29,6 +38,7 @@ export const tokenByGovernanceCanisterLookup: Record<string, Cryptocurrency> = {
     "rrkah-fqaaa-aaaaa-aaaaq-cai": ICP_SYMBOL,
     "74ncn-fqaaa-aaaaq-aaasa-cai": KINIC_SYMBOL,
     "6wcax-haaaa-aaaaq-aaava-cai": HOTORNOT_SYMBOL,
+    "4l7o7-uiaaa-aaaaq-aaa2q-cai": GHOST_SYMBOL,
 };
 
 export const cryptoLookup: Record<string, CryptocurrencyDetails> = {
@@ -77,8 +87,16 @@ export const cryptoLookup: Record<string, CryptocurrencyDetails> = {
         name: "HotOrNot",
         transferFeesE8s: BigInt(100_000),
         howToBuyUrl: "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
-        disabled: true,
+        disabled: false,
         rootCanister: "67bll-riaaa-aaaaq-aaauq-cai",
+    },
+    [GHOST_SYMBOL]: {
+        symbol: GHOST_SYMBOL,
+        name: "Ghost",
+        transferFeesE8s: BigInt(100_000_000),
+        howToBuyUrl: "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
+        disabled: false,
+        rootCanister: "4m6il-zqaaa-aaaaq-aaa2a-cai",
     },
 };
 

@@ -5,10 +5,11 @@ import {
     CHAT_SYMBOL,
     CKBTC_SYMBOL,
     cryptoLookup,
+    GHOST_SYMBOL,
     HOTORNOT_SYMBOL,
     ICP_SYMBOL,
     KINIC_SYMBOL,
-    SNS1_SYMBOL
+    SNS1_SYMBOL,
 } from "openchat-shared";
 
 type BalanceByCrypto = Record<string, bigint>;
@@ -20,6 +21,7 @@ const cryptoBalanceStore = writable<BalanceByCrypto>({
     [CHAT_SYMBOL]: BigInt(0),
     [KINIC_SYMBOL]: BigInt(0),
     [HOTORNOT_SYMBOL]: BigInt(0),
+    [GHOST_SYMBOL]: BigInt(0),
 });
 
 export const cryptoBalance = {
@@ -35,10 +37,8 @@ export const cryptoBalance = {
 const lastCryptoSentStore = writable<string>(getLastCryptoSent());
 
 function getLastCryptoSent(): string {
-    const token = (localStorage.getItem(configKeys.lastCryptoSent) || ICP_SYMBOL);
-    return cryptoLookup[token] !== undefined
-        ? token
-        : ICP_SYMBOL;
+    const token = localStorage.getItem(configKeys.lastCryptoSent) || ICP_SYMBOL;
+    return cryptoLookup[token] !== undefined ? token : ICP_SYMBOL;
 }
 
 export const lastCryptoSent = {
