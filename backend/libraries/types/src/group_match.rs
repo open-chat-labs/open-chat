@@ -17,6 +17,7 @@ pub struct GroupMatch {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct CommunityMatch {
     pub id: CommunityId,
+    pub score: u32,
     pub name: String,
     pub description: String,
     pub avatar_id: Option<u128>,

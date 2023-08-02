@@ -31,7 +31,6 @@
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
     import { interpolateLevel } from "../../utils/i18n";
-    import { communitiesEnabled } from "../../utils/features";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -57,11 +56,9 @@
     $: inviteMembersSelected = lastState.kind === "invite_group_users";
     $: desktop = !$mobileWidth;
     $: canConvert =
-        $communitiesEnabled &&
         selectedChatSummary.kind === "group_chat" &&
         client.canConvertGroupToCommunity(selectedChatSummary.id);
-    $: canImportToCommunity =
-        $communitiesEnabled && client.canImportToCommunity(selectedChatSummary.id);
+    $: canImportToCommunity = client.canImportToCommunity(selectedChatSummary.id);
 
     let hasUnreadPinned = false;
 
@@ -275,22 +272,20 @@
         </div>
         <div slot="menu">
             <Menu>
-                {#if $communitiesEnabled}
-                    {#if !$favouritesStore.has(selectedChatSummary.id)}
-                        <MenuItem on:click={addToFavourites}>
-                            <HeartPlus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                            <div slot="text">
-                                {$_("communities.addToFavourites")}
-                            </div>
-                        </MenuItem>
-                    {:else}
-                        <MenuItem on:click={removeFromFavourites}>
-                            <HeartMinus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                            <div slot="text">
-                                {$_("communities.removeFromFavourites")}
-                            </div>
-                        </MenuItem>
-                    {/if}
+                {#if !$favouritesStore.has(selectedChatSummary.id)}
+                    <MenuItem on:click={addToFavourites}>
+                        <HeartPlus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
+                        <div slot="text">
+                            {$_("communities.addToFavourites")}
+                        </div>
+                    </MenuItem>
+                {:else}
+                    <MenuItem on:click={removeFromFavourites}>
+                        <HeartMinus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
+                        <div slot="text">
+                            {$_("communities.removeFromFavourites")}
+                        </div>
+                    </MenuItem>
                 {/if}
                 {#if $mobileWidth}
                     {#if $isProposalGroup}

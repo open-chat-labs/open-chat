@@ -911,7 +911,7 @@
         "goto": "Go to community",
         "usersInvited": "Users have been invited to your community",
         "errors": {
-            "name_taken": "Sorry - there is already a community with this name",
+            "name_taken": "Sorry - there is already a public community or group with this name",
             "failure": "Sorry we were unable to create your community",
             "saveFailed": "Sorry we were unable to save your updates",
             "inviteUsers": "Sorry we were unable to invite these users",
@@ -944,7 +944,8 @@
         "noOwned": "You are not the owner of any communities",
         "chooseCommunity": "Choose a community",
         "saveChanges": "Save changes",
-        "publicChannels": "Public channels"
+        "publicChannels": "Public channels",
+        "underReview": "Under review"
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",

@@ -150,6 +150,7 @@
                         searching={false}
                         fill
                         bind:searchTerm
+                        on:searchEntered={() => search(true)}
                         placeholder={$_("communities.search")} />
                 </div>
             {/if}
