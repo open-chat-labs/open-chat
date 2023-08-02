@@ -1,4 +1,4 @@
-use crate::{CachedGroupSummaries, Data};
+use crate::{mutate_state, CachedGroupSummaries, Data};
 use group_index_canister::c2c_active_groups;
 use ic_cdk::api::call::CallResult;
 use itertools::Itertools;
@@ -72,6 +72,15 @@ pub(crate) async fn summaries(args: SummariesArgs) -> Result<Vec<GroupCanisterGr
     } else {
         updates.added
     };
+
+    if !updates.deleted.is_empty() {
+        mutate_state(|state| {
+            let now = state.env.now();
+            for group in updates.deleted {
+                state.data.group_chats.remove(group.id, now);
+            }
+        })
+    }
 
     Ok(groups)
 }
