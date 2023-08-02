@@ -31,6 +31,7 @@ export const KinicGovernanceCanisterId = "74ncn-fqaaa-aaaaq-aaasa-cai";
 
 export type InternalError = { kind: "internal_error" };
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
+export type CanisterNotFound = { kind: "canister_not_found" };
 
 export type MessageContent =
     | FileContent
@@ -1202,7 +1203,7 @@ export type ChatMembership = {
     archived: boolean;
 };
 
-export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup;
+export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup | CanisterNotFound;
 
 export type GroupCanisterSummaryUpdatesResponse =
     | GroupCanisterGroupChatSummaryUpdates
