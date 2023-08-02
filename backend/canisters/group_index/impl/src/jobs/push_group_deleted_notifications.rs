@@ -4,6 +4,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{DeletedGroupInfoInternal, UserId};
+use utils::time::MINUTE_IN_MS;
 
 const MAX_BATCH_SIZE: usize = 100;
 
@@ -53,6 +54,23 @@ async fn push_notifications(notifications: Vec<(UserId, DeletedGroupInfoInternal
 
 async fn push_notification(user_id: UserId, deleted_group: DeletedGroupInfoInternal) {
     let args = user_canister::c2c_notify_group_deleted::Args { deleted_group };
-    // TODO handle case where this fails
-    let _ = user_canister_c2c_client::c2c_notify_group_deleted(user_id.into(), &args).await;
+
+    if user_canister_c2c_client::c2c_notify_group_deleted(user_id.into(), &args)
+        .await
+        .is_err()
+    {
+        mutate_state(|state| {
+            let now = state.env.now();
+            let deleted_group = args.deleted_group;
+
+            let retry = now.saturating_sub(deleted_group.timestamp) < 10 * MINUTE_IN_MS;
+
+            state
+                .data
+                .deleted_groups
+                .mark_notification_failed(deleted_group.id, user_id, retry);
+
+            start_job_if_required(state);
+        })
+    }
 }

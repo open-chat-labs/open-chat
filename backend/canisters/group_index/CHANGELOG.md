@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Retry failed group deleted notifications ([#4101](https://github.com/open-chat-labs/open-chat/pull/4101))
 - Remove random factor in `explore_communities` ([#4102](https://github.com/open-chat-labs/open-chat/pull/4102))
 - Add an `UNDER_REVIEW` moderation flag ([#4104](https://github.com/open-chat-labs/open-chat/pull/4104))
 - Add `score` to `CommunityMatch` ([#4106](https://github.com/open-chat-labs/open-chat/pull/4106))
