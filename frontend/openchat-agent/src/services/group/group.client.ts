@@ -45,7 +45,7 @@ import type {
     ConvertToCommunityResponse,
     PublicGroupSummaryResponse,
 } from "openchat-shared";
-import { textToCode } from "openchat-shared";
+import { DestinationInvalidError, textToCode } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     apiRole,
@@ -141,7 +141,14 @@ export class GroupClient extends CandidService {
     }
 
     summary(): Promise<GroupCanisterSummaryResponse> {
-        return this.handleQueryResponse(() => this.groupService.summary({}), summaryResponse, {});
+        return this.handleQueryResponse(() => this.groupService.summary({}), summaryResponse, {})
+            .catch((err) => {
+                if (err instanceof DestinationInvalidError) {
+                    return { kind: "canister_not_found" };
+                } else {
+                    throw err;
+                }
+            });
     }
 
     summaryUpdates(updatesSince: bigint): Promise<GroupCanisterSummaryUpdatesResponse> {

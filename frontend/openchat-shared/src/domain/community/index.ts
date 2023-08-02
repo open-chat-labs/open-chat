@@ -13,6 +13,7 @@ import type {
     GroupCanisterThreadDetails,
     Mention,
     UpdatedEvent,
+    CanisterNotFound,
 } from "../chat";
 import type { DataContent } from "../data";
 import type { OptionUpdate } from "../optionUpdate";
@@ -250,7 +251,7 @@ export type CommunityDetailsUpdates = {
     invitedUsers?: Set<string>;
     lastUpdated: bigint;
 };
-export type ChannelSummaryResponse = Failure | ChannelSummary;
+export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;
 
 export type LeaveCommunityResponse = "success" | "failure";
 
