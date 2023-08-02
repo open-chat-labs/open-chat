@@ -118,6 +118,7 @@ import {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     RegisterProposalVoteResponse,
+    DestinationInvalidError,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -961,7 +962,14 @@ export class CommunityClient extends CandidService {
                     invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
             (resp) => communityChannelSummaryResponse(resp, this.communityId)
-        );
+        )
+        .catch((err) => {
+            if (err instanceof DestinationInvalidError) {
+                return { kind: "canister_not_found" };
+            } else {
+                throw err;
+            }
+        });
     }
 
     importGroup(id: GroupChatIdentifier): Promise<ImportGroupResponse> {

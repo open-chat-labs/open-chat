@@ -793,11 +793,11 @@ export class OpenChat extends OpenChatAgentWorker {
                 });
             case "channel":
                 return this.sendRequest({ kind: "getChannelSummary", chatId }).then((resp) => {
-                    if (resp.kind === "failure") {
-                        return { kind: "failure" };
+                    if (resp.kind === "channel") {
+                        addGroupPreview(resp);
+                        return { kind: "success" };
                     }
-                    addGroupPreview(resp);
-                    return { kind: "success" };
+                    return { kind: "failure" };
                 });
         }
     }
