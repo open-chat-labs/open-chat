@@ -2,7 +2,7 @@
   "community": "cb64eb4c031281eb5482f7dd6fb925f420e2c02e",
   "cycles_dispenser": "5c4fb8d98e68053c6d93050dfafbd2dbb4c3c9b9",
   "group": "8161e3de02c649edab58810eef6d11b1d02e08aa",
-  "group_index": "23073635b206178aa3639a941c8bacbd39f5b18b",
+  "group_index": "342cad86609eb32369f7979a08c0f74d16b621b1",
   "local_group_index": "e7d99a43ab03348dd51a10ffa1b5dc0810fe7d31",
   "local_user_index": "dba6161a99142413222a71ec0e8fed27e6d9b71c",
   "market_maker": "5c4fb8d98e68053c6d93050dfafbd2dbb4c3c9b9",
@@ -15,5 +15,5 @@
   "storage_bucket": "5c4fb8d98e68053c6d93050dfafbd2dbb4c3c9b9",
   "storage_index": "78b868be84098d436fc853c6edd3087eddc60a3d",
   "user": "252b85a1877240dfea17512647ac42ac36e969db",
-  "user_index": "5f7658b1719880a9a1de53c700e13d46e5237adf"
+  "user_index": "5455bf5c016daf2ef8e3b01347840929648a1855"
 }
