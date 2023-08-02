@@ -5,16 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Handle `set_moderation_flags` in `inspect_message` ([#4058](https://github.com/open-chat-labs/open-chat/pull/4058))
+- Add an `UNDER_REVIEW` moderation flag ([#4104](https://github.com/open-chat-labs/open-chat/pull/4104))
+
 ## [[2.0.759](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.759-user_index)] - 2023-07-28
 
 ### Changed
 
 - Mark channels as read after joining community or channel ([#4004](https://github.com/open-chat-labs/open-chat/pull/4004))
 - Store `moderation_flags_enabled` on each user's profile ([#4050](https://github.com/open-chat-labs/open-chat/pull/4050))
-
-### Fixed
-
-- Handle `set_moderation_flags` in `inspect_message` ([#4058](https://github.com/open-chat-labs/open-chat/pull/4058))
 
 ## [[2.0.758](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.758-user_index)] - 2023-07-20
 
