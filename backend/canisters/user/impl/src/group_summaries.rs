@@ -1,4 +1,4 @@
-use crate::{mutate_state, CachedGroupSummaries, Data};
+use crate::{CachedGroupSummaries, Data};
 use group_index_canister::c2c_active_groups;
 use ic_cdk::api::call::CallResult;
 use itertools::Itertools;
@@ -65,8 +65,6 @@ pub(crate) async fn summaries(args: SummariesArgs) -> Result<SummariesResult, St
     };
 
     let updates = updates(updates_args).await?;
-
-    let deleted: HashSet<_> = updates.deleted.into_iter().map(|d| d.id).collect();
 
     let summaries = if let Some(cached) = args.cached_group_summaries {
         let mut merged = merge_updates(cached.groups, updates.updated);
