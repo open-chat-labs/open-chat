@@ -175,6 +175,9 @@
             &.hot {
                 background-image: url("/assets/hot_token.svg");
             }
+            &.ghost {
+                background-image: url("/assets/ghost_token.jpeg");
+            }
         }
     }
 </style>

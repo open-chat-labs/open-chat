@@ -343,6 +343,7 @@ import {
     SNS1_SYMBOL,
     ModerationFlag,
     GroupMoved,
+    GHOST_SYMBOL,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -4459,6 +4460,9 @@ export class OpenChat extends OpenChatAgentWorker {
 
             case HOTORNOT_SYMBOL:
                 return this.config.ledgerCanisterHOTORNOT;
+
+            case GHOST_SYMBOL:
+                return this.config.ledgerCanisterGHOST;
 
             default:
                 throw new Error("Token not recognised: " + token);
