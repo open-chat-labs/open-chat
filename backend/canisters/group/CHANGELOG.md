@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Serialize chat state more efficiently ([#4092](https://github.com/open-chat-labs/open-chat/pull/4092))
-- Discard old serialized state for the OpenChat group ([#4093](https://github.com/open-chat-labs/open-chat/pull/4093))
 
 ## [[2.0.774](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.774-group)] - 2023-07-31
 
