@@ -82,10 +82,13 @@ pub fn calculate_hotness(
         }
 
         recency_multiplier
-            * f64::log10(f64::min(
-                threshold,
-                (activity.messages * activity.message_unique_users) as f64
-                    + (activity.reactions * activity.reaction_unique_users) as f64,
+            * f64::log10(f64::max(
+                1.0,
+                f64::min(
+                    threshold,
+                    (activity.messages * activity.message_unique_users) as f64
+                        + (activity.reactions * activity.reaction_unique_users) as f64,
+                ),
             ))
             / f64::log10(threshold)
     }
@@ -96,8 +99,8 @@ pub fn calculate_hotness(
         + 0.5 * calculate_activity_score(activity_last_hour, 10_000.0, HOUR_IN_MS as f64, time_since_activity);
 
     // A random number beteen 0 and 1
-    let _random = random as f64 / u32::MAX as f64;
+    let random = random as f64 / u32::MAX as f64;
 
     // Weighted sum of new, popular, hot and random
-    ((0.5 * newness + popularity + hotness) * 1_000_000.0) as u32
+    ((0.5 * newness + popularity + hotness + 0.5 * random) * 1_000_000.0) as u32
 }
