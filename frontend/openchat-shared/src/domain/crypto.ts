@@ -87,7 +87,7 @@ export const cryptoLookup: Record<string, CryptocurrencyDetails> = {
         name: "HotOrNot",
         transferFeesE8s: BigInt(100_000),
         howToBuyUrl: "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
-        disabled: true,
+        disabled: false,
         rootCanister: "67bll-riaaa-aaaaq-aaauq-cai",
     },
     [GHOST_SYMBOL]: {
@@ -95,7 +95,7 @@ export const cryptoLookup: Record<string, CryptocurrencyDetails> = {
         name: "Ghost",
         transferFeesE8s: BigInt(100_000_000),
         howToBuyUrl: "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens",
-        disabled: true,
+        disabled: false,
         rootCanister: "4m6il-zqaaa-aaaaq-aaa2a-cai",
     },
 };
