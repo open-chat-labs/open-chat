@@ -61,10 +61,11 @@ pub(crate) async fn summaries(args: SummariesArgs) -> Result<Vec<GroupCanisterGr
 
     let updates = updates(updates_args).await?;
 
+    let deleted: HashSet<_> = updates.deleted.into_iter().map(|d| d.id).collect();
+
     let groups = if let Some(cached) = args.cached_group_summaries {
         let mut merged = merge_updates(cached.groups, updates.updated);
-        if !updates.deleted.is_empty() {
-            let deleted: HashSet<_> = updates.deleted.into_iter().map(|d| d.id).collect();
+        if !deleted.is_empty() {
             merged.retain(|g| !deleted.contains(&g.chat_id));
         }
         merged.extend(updates.added);
@@ -73,11 +74,11 @@ pub(crate) async fn summaries(args: SummariesArgs) -> Result<Vec<GroupCanisterGr
         updates.added
     };
 
-    if !updates.deleted.is_empty() {
+    if !deleted.is_empty() {
         mutate_state(|state| {
             let now = state.env.now();
-            for group in updates.deleted {
-                state.data.group_chats.remove(group.id, now);
+            for chat_id in deleted {
+                state.data.group_chats.remove(chat_id, now);
             }
         })
     }
