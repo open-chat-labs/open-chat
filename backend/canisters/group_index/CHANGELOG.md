@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove random factor in `explore_communities` ([#4102](https://github.com/open-chat-labs/open-chat/pull/4102))
 - Add an `UNDER_REVIEW` moderation flag ([#4104](https://github.com/open-chat-labs/open-chat/pull/4104))
 - Add `score` to `CommunityMatch` ([#4106](https://github.com/open-chat-labs/open-chat/pull/4106))
+- Prevent log(0) in hotness calculation ([#4110](https://github.com/open-chat-labs/open-chat/pull/4110))
 
 ## [[2.0.769](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.769-group_index)] - 2023-07-31
 
