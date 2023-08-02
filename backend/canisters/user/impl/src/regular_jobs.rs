@@ -1,4 +1,4 @@
-use crate::group_summaries::{build_summaries_args, SummariesArgs};
+use crate::group_summaries::{build_summaries_args, SummariesArgs, SummariesResult};
 use crate::{can_borrow_state, mutate_state, CachedGroupSummaries, Data};
 use tracing::{error, info};
 use utils::env::Environment;
@@ -44,7 +44,7 @@ fn update_cached_group_summaries(env: &dyn Environment, data: &mut Data) {
 
 async fn update_cached_group_summaries_impl(args: SummariesArgs) {
     let start = args.now;
-    if let Ok(summaries) = crate::group_summaries::summaries(args).await {
+    if let Ok(SummariesResult { summaries, deleted }) = crate::group_summaries::summaries(args).await {
         // We need this check because the call to `summaries` may have been synchronous in which
         // case we still hold the borrow on `data` which was passed into
         // `update_cached_group_summaries`.
@@ -60,6 +60,10 @@ async fn update_cached_group_summaries_impl(args: SummariesArgs) {
                         .collect(),
                     timestamp: start,
                 });
+                let now = state.env.now();
+                for group in deleted {
+                    state.data.group_chats.remove(group.id, now);
+                }
                 info!("Group summaries cache updated");
             });
         }
