@@ -4,6 +4,7 @@
     import { emptyUnreadCounts } from "openchat-client";
 
     export let unread = emptyUnreadCounts();
+    export let solid = true;
 
     $: muted = !unread.mentions && unread.unmuted <= 0;
     $: count = muted ? unread.muted : unread.unmuted;
@@ -16,6 +17,7 @@
             values: { count: count.toString() },
         })}
         class:muted
+        class:solid
         class="unread-count">
         {#if unread.mentions}
             @
@@ -34,9 +36,13 @@
         transform: translateY(-50%);
 
         &.muted {
-            background-color: var(--unread-mute-solid);
+            background-color: var(--unread-mute);
             text-shadow: none;
-            border: 1px solid var(--bd);
+
+            &.solid {
+                background-color: var(--unread-mute-solid);
+                border: 1px solid var(--bd);
+            }
         }
 
         @include mobile() {
