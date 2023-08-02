@@ -5,10 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add an `UNDER_REVIEW` moderation flag ([#4104](https://github.com/open-chat-labs/open-chat/pull/4104))
+
 ### Fixed
 
 - Handle `set_moderation_flags` in `inspect_message` ([#4058](https://github.com/open-chat-labs/open-chat/pull/4058))
-- Add an `UNDER_REVIEW` moderation flag ([#4104](https://github.com/open-chat-labs/open-chat/pull/4104))
 
 ## [[2.0.759](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.759-user_index)] - 2023-07-28
 
