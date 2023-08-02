@@ -1,5 +1,6 @@
 use crate::env::ENV;
 use crate::rng::random_string;
+use crate::utils::tick_many;
 use crate::{client, TestEnv, User};
 use ic_test_state_machine_client::StateMachine;
 use std::ops::Deref;
@@ -25,7 +26,7 @@ fn delete_group_succeeds() {
         "{delete_group_response:?}",
     );
 
-    env.tick();
+    tick_many(env, 5);
 
     assert!(!env.canister_exists(group_id.into()));
 }
@@ -87,7 +88,7 @@ fn user_canister_notified_of_group_deleted() {
     env.tick();
 
     // Only retry for 10 minutes so the notification shouldn't have made it to user3's canister
-    let initial_state3 = client::user::happy_path::initial_state(env, &user1);
+    let initial_state3 = client::user::happy_path::initial_state(env, &user3);
     assert!(initial_state3.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
 }
 
