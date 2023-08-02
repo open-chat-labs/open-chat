@@ -374,7 +374,7 @@
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             on:inviteUsers={inviteCommunityUsers}
             on:cancelInviteUsers={popRightPanelHistory} />
-    {:else if lastState.kind === "show_community_members" && $selectedCommunity}
+    {:else if lastState.kind === "show_community_members" && $selectedCommunity !== undefined}
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             collection={$selectedCommunity}
@@ -396,7 +396,7 @@
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             on:inviteUsers={inviteGroupUsers}
             on:cancelInviteUsers={popRightPanelHistory} />
-    {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined}
+    {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined}
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             collection={$multiUserChat}
