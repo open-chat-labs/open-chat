@@ -87,8 +87,8 @@ impl RuntimeState {
             active_private_communities: self.data.cached_metrics.active_private_communities,
             deleted_public_communities: self.data.cached_metrics.deleted_public_communities,
             deleted_private_communities: self.data.cached_metrics.deleted_private_communities,
-            group_deleted_notifications_pending: self.data.cached_metrics.group_deleted_notifications_pending,
-            community_deleted_notifications_pending: self.data.cached_metrics.community_deleted_notifications_pending,
+            group_deleted_notifications_pending: self.data.deleted_groups.notifications_pending() as u64,
+            community_deleted_notifications_pending: self.data.deleted_communities.notifications_pending() as u64,
             frozen_groups: self.data.cached_metrics.frozen_groups.clone(),
             frozen_communities: self.data.cached_metrics.frozen_communities.clone(),
             canister_upgrades_completed: canister_upgrades_metrics.completed,
@@ -198,7 +198,6 @@ impl Data {
             last_run: now,
             deleted_public_groups: deleted_group_metrics.public,
             deleted_private_groups: deleted_group_metrics.private,
-            group_deleted_notifications_pending: deleted_group_metrics.notifications_pending,
             ..Default::default()
         };
 
@@ -300,8 +299,6 @@ pub struct CachedMetrics {
     pub active_private_communities: u64,
     pub deleted_public_communities: u64,
     pub deleted_private_communities: u64,
-    pub group_deleted_notifications_pending: u64,
-    pub community_deleted_notifications_pending: u64,
     pub frozen_groups: Vec<ChatId>,
     pub frozen_communities: Vec<ChatId>,
 }

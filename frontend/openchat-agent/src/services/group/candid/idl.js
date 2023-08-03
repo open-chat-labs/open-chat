@@ -758,15 +758,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const LocalUserIndexArgs = IDL.Record({});
   const LocalUserIndexResponse = IDL.Variant({ 'Success' : CanisterId });
-  const MakePrivateArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
-  const MakePrivateResponse = IDL.Variant({
-    'ChatFrozen' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-    'AlreadyPrivate' : IDL.Null,
-    'InternalError' : IDL.Null,
-  });
   const MessagesByMessageIndexArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'messages' : IDL.Vec(MessageIndex),
@@ -1367,7 +1358,6 @@ export const idlFactory = ({ IDL }) => {
         [LocalUserIndexResponse],
         ['query'],
       ),
-    'make_private' : IDL.Func([MakePrivateArgs], [MakePrivateResponse], []),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],

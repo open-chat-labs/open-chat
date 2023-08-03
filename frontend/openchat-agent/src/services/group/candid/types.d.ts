@@ -798,13 +798,6 @@ export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : [] | [bigint] } };
 export type LocalUserIndexArgs = {};
 export type LocalUserIndexResponse = { 'Success' : CanisterId };
-export interface MakePrivateArgs { 'correlation_id' : bigint }
-export type MakePrivateResponse = { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'AlreadyPrivate' : null } |
-  { 'InternalError' : null };
 export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
@@ -1563,7 +1556,6 @@ export interface _SERVICE {
     [LocalUserIndexArgs],
     LocalUserIndexResponse
   >,
-  'make_private' : ActorMethod<[MakePrivateArgs], MakePrivateResponse>,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse
