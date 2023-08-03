@@ -1,5 +1,6 @@
 import type { User } from "../../domain/user/user";
 import type {
+    ChannelIdentifier,
     DirectChatIdentifier,
     EventWrapper,
     GroupChatIdentifier,
@@ -7,11 +8,24 @@ import type {
 } from "../chat/chat";
 
 export type Notification =
+    | AddedToChannelNotification
     | AddedToGroupNotification
+    | ChannelNotification
     | DirectNotification
     | GroupNotification
+    | ChannelReaction
     | DirectReaction
     | GroupReaction;
+
+export type AddedToChannelNotification = {
+    kind: "added_to_channel_notification";
+    chatId: ChannelIdentifier;
+    communityName: string;
+    channelName: string;
+    addedBy: string;
+    addedByUsername: string;
+    timestamp: bigint;
+};
 
 export type AddedToGroupNotification = {
     kind: "added_to_group_notification";
@@ -20,6 +34,18 @@ export type AddedToGroupNotification = {
     addedBy: string;
     addedByUsername: string;
     timestamp: bigint;
+};
+
+export type ChannelNotification = {
+    kind: "channel_notification";
+    chatId: ChannelIdentifier;
+    sender: string;
+    threadRootMessageIndex: number | undefined;
+    message: EventWrapper<Message>;
+    senderName: string;
+    communityName: string;
+    channelName: string;
+    mentioned: User[];
 };
 
 export type DirectNotification = {
@@ -39,6 +65,19 @@ export type GroupNotification = {
     chatId: GroupChatIdentifier;
     groupName: string;
     mentioned: User[];
+};
+
+export type ChannelReaction = {
+    kind: "channel_reaction";
+    chatId: ChannelIdentifier;
+    threadRootMessageIndex: number | undefined;
+    communityName: string;
+    channelName: string;
+    addedBy: string;
+    addedByName: string;
+    message: EventWrapper<Message>;
+    reaction: string;
+    timestamp: bigint;
 };
 
 export type DirectReaction = {

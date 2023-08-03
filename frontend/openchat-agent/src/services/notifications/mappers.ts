@@ -3,9 +3,12 @@ import {
     ToggleMuteNotificationResponse,
     UnsupportedValueError,
     Notification,
+    AddedToChannelNotification,
     AddedToGroupNotification,
+    ChannelNotification,
     GroupNotification,
     DirectNotification,
+    ChannelReaction,
     GroupReaction,
     DirectReaction,
 } from "openchat-shared";
@@ -18,9 +21,12 @@ import type {
 import type {
     ApiSubscriptionExistsResponse,
     ApiNotification,
+    ApiAddedToChannelNotification,
     ApiAddedToGroupNotification,
+    ApiChannelMessageNotification,
     ApiGroupMessageNotification,
     ApiDirectMessageNotification,
+    ApiChannelReactionAddedNotification,
     ApiGroupReactionAddedNotification,
     ApiDirectReactionAddedNotification,
 } from "./candid/idl";
@@ -56,14 +62,23 @@ export function subscriptionExistsResponse(
 }
 
 export function notification(candid: ApiNotification): Notification {
+    if ("AddedToChannelNotification" in candid) {
+        return addedToChannelNotification(candid.AddedToChannelNotification);
+    }
     if ("AddedToGroupNotification" in candid) {
         return addedToGroupNotification(candid.AddedToGroupNotification);
+    }
+    if ("ChannelMessageNotification" in candid) {
+        return channelNotification(candid.ChannelMessageNotification);
     }
     if ("GroupMessageNotification" in candid) {
         return groupNotification(candid.GroupMessageNotification);
     }
     if ("DirectMessageNotification" in candid) {
         return directNotification(candid.DirectMessageNotification);
+    }
+    if ("ChannelReactionAddedNotification" in candid) {
+        return channelReactionNotification(candid.ChannelReactionAddedNotification);
     }
     if ("GroupReactionAddedNotification" in candid) {
         return groupReactionNotification(candid.GroupReactionAddedNotification);
@@ -72,6 +87,20 @@ export function notification(candid: ApiNotification): Notification {
         return directReactionNotification(candid.DirectReactionAddedNotification);
     }
     throw new Error(`Unexpected ApiNotification type received, ${candid}`);
+}
+
+export function addedToChannelNotification(
+    candid: ApiAddedToChannelNotification
+): AddedToChannelNotification {
+    return {
+        kind: "added_to_channel_notification",
+        chatId: { kind: "channel", communityId: candid.community_id.toString(), channelId: candid.channel_id.toString() },
+        communityName: candid.community_name,
+        channelName: candid.channel_name,
+        addedBy: candid.added_by.toString(),
+        addedByUsername: candid.added_by_name,
+        timestamp: candid.timestamp,
+    };
 }
 
 export function addedToGroupNotification(
@@ -84,6 +113,27 @@ export function addedToGroupNotification(
         addedBy: candid.added_by.toString(),
         addedByUsername: candid.added_by_name,
         timestamp: candid.timestamp,
+    };
+}
+
+export function channelNotification(candid: ApiChannelMessageNotification): ChannelNotification {
+    return {
+        kind: "channel_notification",
+        sender: candid.sender.toString(),
+        threadRootMessageIndex: optional(candid.thread_root_message_index, identity),
+        message: {
+            index: candid.message.index,
+            timestamp: candid.message.timestamp,
+            event: message(candid.message.event),
+        },
+        senderName: candid.sender_name,
+        chatId: { kind: "channel", communityId: candid.community_id.toString(), channelId: candid.channel_id.toString() },
+        communityName: candid.community_name,
+        channelName: candid.channel_name,
+        mentioned: candid.mentioned.map((m) => ({
+            userId: m.user_id.toText(),
+            username: m.username,
+        })),
     };
 }
 
@@ -118,6 +168,25 @@ export function directNotification(candid: ApiDirectMessageNotification): Direct
             event: message(candid.message.event),
         },
         senderName: candid.sender_name,
+    };
+}
+
+function channelReactionNotification(candid: ApiChannelReactionAddedNotification): ChannelReaction {
+    return {
+        kind: "channel_reaction",
+        chatId: { kind: "channel", communityId: candid.community_id.toString(), channelId: candid.channel_id.toString() },
+        communityName: candid.community_name,
+        channelName: candid.channel_name,
+        threadRootMessageIndex: optional(candid.thread_root_message_index, identity),
+        addedBy: candid.added_by.toString(),
+        addedByName: candid.added_by_name,
+        message: {
+            index: candid.message.index,
+            timestamp: candid.message.timestamp,
+            event: message(candid.message.event),
+        },
+        reaction: candid.reaction,
+        timestamp: candid.timestamp,
     };
 }
 
