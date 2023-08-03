@@ -39,9 +39,9 @@ fn add_token_succeeds() {
         &registry_canister::add_token::Args {
             ledger_canister_id,
             token_standard: TokenStandard::ICRC1,
-            info_url: Some(info_url.clone()),
-            how_to_buy_url: Some(how_to_buy_url.clone()),
-            transaction_url_format: Some(transaction_url_format.clone()),
+            info_url: info_url.clone(),
+            how_to_buy_url: how_to_buy_url.clone(),
+            transaction_url_format: transaction_url_format.clone(),
             logo: Some(logo.clone()),
         },
     );
