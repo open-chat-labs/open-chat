@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Serialize chat state more efficiently ([#4092](https://github.com/open-chat-labs/open-chat/pull/4092))
 
+### Removed
+
+- Remove `make_private` which is superseded by `update_group` ([#4122](https://github.com/open-chat-labs/open-chat/pull/4122))
+
 ## [[2.0.774](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.774-group)] - 2023-07-31
 
 ### Changed
