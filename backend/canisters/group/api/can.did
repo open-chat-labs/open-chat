@@ -303,19 +303,6 @@ type ClaimPrizeResponse = variant {
     FailedAfterTransfer : record { text; CompletedCryptoTransaction };
 };
 
-type MakePrivateArgs = record {
-    correlation_id : nat64;
-};
-
-type MakePrivateResponse = variant {
-    Success;
-    NotAuthorized;
-    AlreadyPrivate;
-    UserSuspended;
-    ChatFrozen;
-    InternalError;
-};
-
 type ConvertIntoCommunityArgs = record {
     rules : AccessRules;
     permissions : opt CommunityPermissions;
@@ -596,7 +583,6 @@ type ResetInviteCodeResponse = variant {
 
 service : {
     // Owner only
-    make_private : (MakePrivateArgs) -> (MakePrivateResponse);
     convert_into_community : (ConvertIntoCommunityArgs) -> (ConvertIntoCommunityResponse);
 
     // Admin only
