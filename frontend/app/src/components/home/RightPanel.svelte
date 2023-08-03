@@ -355,7 +355,7 @@
 </script>
 
 <Panel right {empty}>
-    {#if lastState.kind === "group_details" && $selectedChatId !== undefined}
+    {#if lastState.kind === "group_details" && $selectedChatId !== undefined && $multiUserChat !== undefined}
         <GroupDetails
             chat={$multiUserChat}
             memberCount={$currentChatMembers.length}
