@@ -6,6 +6,8 @@ use types::CanisterId;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub ledger_canister_id: CanisterId,
+    pub name: Option<String>,
+    pub symbol: Option<String>,
     pub info_url: Option<String>,
     pub how_to_buy_url: Option<String>,
     pub transaction_url_format: Option<String>,
