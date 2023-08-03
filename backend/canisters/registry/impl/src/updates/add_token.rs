@@ -90,8 +90,9 @@ async fn add_token_impl(
     .await
     {
         Ok((.., logo)) if logo.is_none() => {
-            error!(%ledger_canister_id, "Failed to find logo for token");
-            return InternalError("Failed to find logo for token".to_string());
+            let error = "Failed to find logo for token";
+            error!(%ledger_canister_id, error);
+            InternalError(error.to_string())
         }
         Ok((name, symbol, decimals, fee, logo)) => mutate_state(|state| {
             let now = state.env.now();
