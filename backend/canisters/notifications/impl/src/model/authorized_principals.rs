@@ -10,6 +10,10 @@ pub struct AuthorizedPrincipals {
 }
 
 impl AuthorizedPrincipals {
+    pub fn clear_blocked_principals(&mut self) {
+        self.principals.retain(|_, b| *b);
+    }
+
     pub fn new(authorizers: HashSet<CanisterId>) -> AuthorizedPrincipals {
         AuthorizedPrincipals {
             authorizers,
