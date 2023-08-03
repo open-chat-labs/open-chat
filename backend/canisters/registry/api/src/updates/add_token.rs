@@ -8,10 +8,10 @@ use types::CanisterId;
 pub struct Args {
     pub ledger_canister_id: CanisterId,
     pub token_standard: TokenStandard,
-    pub info_url: Option<String>,               // Not needed for SNS tokens
-    pub how_to_buy_url: Option<String>,         // Not needed for SNS tokens
-    pub transaction_url_format: Option<String>, // Not needed for SNS tokens
-    pub logo: Option<String>,                   // Not needed for SNS tokens
+    pub info_url: String,
+    pub how_to_buy_url: String,
+    pub transaction_url_format: String,
+    pub logo: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -26,9 +26,9 @@ pub enum Response {
 pub struct HumanReadableArgs {
     ledger_canister_id: HumanReadablePrincipal,
     token_standard: String,
-    info_url: Option<String>,
-    how_to_buy_url: Option<String>,
-    transaction_url_format: Option<String>,
+    info_url: String,
+    how_to_buy_url: String,
+    transaction_url_format: String,
     logo: Option<String>,
 }
 

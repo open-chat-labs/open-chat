@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::mutate_state;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::RejectionCode;
@@ -11,30 +11,12 @@ use types::{CanisterId, Empty};
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 async fn add_token(args: Args) -> Response {
-    let PrepareResult { sns_wasm_canister_id } = match read_state(|state| prepare(args.ledger_canister_id, state)) {
-        Ok(ok) => ok,
-        Err(response) => return response,
-    };
-
-    let nervous_system = match sns_wasm_canister_c2c_client::list_deployed_snses(sns_wasm_canister_id, &Empty {}).await {
-        Ok(response) => response
-            .instances
-            .into_iter()
-            .find(|s| s.ledger_canister_id == Some(args.ledger_canister_id))
-            .map(|sns| NervousSystem {
-                is_nns: false,
-                root: sns.root_canister_id.unwrap(),
-                governance: sns.governance_canister_id.unwrap(),
-            }),
-        Err(error) => return InternalError(format!("{error:?}")),
-    };
-
     add_token_impl(
         args.ledger_canister_id,
-        nervous_system,
-        args.info_url,
-        args.how_to_buy_url,
-        args.transaction_url_format,
+        None,
+        Some(args.info_url),
+        Some(args.how_to_buy_url),
+        Some(args.transaction_url_format),
         args.logo,
     )
     .await
@@ -116,20 +98,6 @@ async fn add_token_impl(
             }
         }),
         Err(error) => InternalError(format!("{error:?}")),
-    }
-}
-
-struct PrepareResult {
-    sns_wasm_canister_id: CanisterId,
-}
-
-fn prepare(ledger_canister_id: CanisterId, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if state.data.tokens.exists(ledger_canister_id) {
-        Err(AlreadyAdded)
-    } else {
-        Ok(PrepareResult {
-            sns_wasm_canister_id: state.data.sns_wasm_canister_id,
-        })
     }
 }
 
