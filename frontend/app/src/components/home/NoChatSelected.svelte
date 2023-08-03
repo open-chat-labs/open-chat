@@ -85,10 +85,10 @@
         {#if $chatListScope.kind === "community"}
             <Button on:click={showChannels}>
                 {otherChannels > 0
-                    ? $_("communities.browseOtherChannels", {
+                    ? $_("communities.viewOtherChannels", {
                           values: { n: otherChannels },
                       })
-                    : $_("communities.browseChannels")}
+                    : $_("communities.viewChannels")}
             </Button>
         {:else if $chatListScope.kind === "group_chat"}
             <Button on:click={() => page("/groups")}>{$_("discoverMoreGroups")}</Button>

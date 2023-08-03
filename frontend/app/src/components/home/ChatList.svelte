@@ -335,10 +335,10 @@
                     <div class="disc hash">#</div>
                     <div class="label">
                         {otherChannels > 0
-                            ? $_("communities.browseOtherChannels", {
+                            ? $_("communities.viewOtherChannels", {
                                   values: { n: otherChannels },
                               })
-                            : $_("communities.browseChannels")}
+                            : $_("communities.viewChannels")}
                     </div>
                 </div>
             {/if}

@@ -867,7 +867,7 @@
         "descriptionPlaceholder": "Dites-nous en quoi consiste votre communauté",
         "join": "Rejoindre",
         "preview": "Aperçu",
-        "browseChannels": "Parcourir les chaînes",
+        "viewChannels": "Parcourir les chaînes",
         "createChannel": "Nouvelle chaîne",
         "convert": "Convertir en communauté",
         "channels": "Chaînes",
@@ -925,7 +925,8 @@
         "saveChanges": "Sauvegarder les modifications",
         "exploreMobile": "Explorer",
         "publicChannels": "Chaînes publiques",
-        "underReview": "À l'étude"
+        "underReview": "À l'étude",
+        "viewOtherChannels": "Afficher {n} autre(s) chaîne(s)"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",

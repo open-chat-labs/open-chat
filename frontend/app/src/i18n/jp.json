@@ -868,7 +868,7 @@
         "descriptionPlaceholder": "あなたのコミュニティについて教えてください",
         "join": "加入",
         "preview": "プレビュー",
-        "browseChannels": "チャンネルを閲覧する",
+        "viewChannels": "チャンネルを閲覧する",
         "createChannel": "新しいチャンネル",
         "convert": "コミュニティに変換する",
         "channels": "チャンネル",
@@ -926,7 +926,8 @@
         "saveChanges": "変更内容を保存",
         "exploreMobile": "探検",
         "publicChannels": "パブリックチャンネル",
-        "underReview": "検討中"
+        "underReview": "検討中",
+        "viewOtherChannels": "他の {n} チャンネルを表示"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",

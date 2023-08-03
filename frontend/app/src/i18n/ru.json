@@ -867,7 +867,7 @@
         "descriptionPlaceholder": "Расскажите нам, что представляет собой ваше сообщество",
         "join": "Присоединиться",
         "preview": "Предварительный просмотр",
-        "browseChannels": "Просмотр каналов",
+        "viewChannels": "Просмотр каналов",
         "createChannel": "Новый канал",
         "convert": "Преобразовать в сообщество",
         "channels": "каналы",
@@ -925,7 +925,8 @@
         "saveChanges": "Сохранить изменения",
         "exploreMobile": "Исследовать",
         "publicChannels": "Общедоступные каналы",
-        "underReview": "На рассмотрении"
+        "underReview": "На рассмотрении",
+        "viewOtherChannels": "Просмотр {n} других каналов"
     },
     "groupCreatedBy": "{username} создал {level}",
     "groupName": "{level} имя",

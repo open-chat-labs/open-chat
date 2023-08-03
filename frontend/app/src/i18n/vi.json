@@ -868,7 +868,7 @@
         "descriptionPlaceholder": "Hãy cho chúng tôi biết cộng đồng của bạn là gì",
         "join": "Tham gia",
         "preview": "Xem trước",
-        "browseChannels": "Duyệt kênh",
+        "viewChannels": "Duyệt kênh",
         "createChannel": "Kênh mới",
         "convert": "Chuyển đổi thành cộng đồng",
         "channels": "Kênh truyền hình",
@@ -926,7 +926,8 @@
         "saveChanges": "Lưu thay đổi",
         "exploreMobile": "Khám phá",
         "publicChannels": "Kênh công cộng",
-        "underReview": "Đang xem xét"
+        "underReview": "Đang xem xét",
+        "viewOtherChannels": "Xem {n} kênh khác"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",

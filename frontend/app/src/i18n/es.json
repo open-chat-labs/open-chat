@@ -869,7 +869,7 @@
         "descriptionPlaceholder": "Cuéntanos de qué se trata tu comunidad",
         "join": "Unirse",
         "preview": "Avance",
-        "browseChannels": "Explorar canales",
+        "viewChannels": "Explorar canales",
         "createChannel": "nuevo canal",
         "convert": "Convertir a comunidad",
         "channels": "Canales",
@@ -927,7 +927,8 @@
         "saveChanges": "Guardar cambios",
         "exploreMobile": "Explorar",
         "publicChannels": "Canales públicos",
-        "underReview": "Bajo revisión"
+        "underReview": "Bajo revisión",
+        "viewOtherChannels": "Ver {n} otros canales"
     },
     "groupCreatedBy": "{username} creó el {level}",
     "groupName": "{level} nombre",

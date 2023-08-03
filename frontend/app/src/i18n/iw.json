@@ -865,7 +865,7 @@
         "descriptionPlaceholder": "ספר לנו על מה הקהילה שלך",
         "join": "לְהִצְטַרֵף",
         "preview": "תצוגה מקדימה",
-        "browseChannels": "עיין בערוצים",
+        "viewChannels": "עיין בערוצים",
         "createChannel": "ערוץ חדש",
         "convert": "המר לקהילה",
         "channels": "ערוצים",
@@ -923,7 +923,8 @@
         "saveChanges": "שמור שינויים",
         "exploreMobile": "לַחקוֹר",
         "publicChannels": "ערוצים ציבוריים",
-        "underReview": "בבדיקה"
+        "underReview": "בבדיקה",
+        "viewOtherChannels": "הצג {n} ערוצים נוספים"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",

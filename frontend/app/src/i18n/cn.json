@@ -867,7 +867,7 @@
         "descriptionPlaceholder": "告诉我们您的社区是关于什么的",
         "join": "加入",
         "preview": "预览",
-        "browseChannels": "浏览频道",
+        "viewChannels": "浏览频道",
         "createChannel": "新频道",
         "convert": "转换为社区",
         "channels": "频道",
@@ -925,7 +925,8 @@
         "saveChanges": "保存更改",
         "exploreMobile": "探索",
         "publicChannels": "公共频道",
-        "underReview": "审核中"
+        "underReview": "审核中",
+        "viewOtherChannels": "查看 {n} 个其他频道"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",
