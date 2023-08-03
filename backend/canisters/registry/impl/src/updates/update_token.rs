@@ -12,6 +12,12 @@ fn update_token(args: Args) -> Response {
 
 fn update_token_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(token) = state.data.tokens.get_mut(args.ledger_canister_id) {
+        if let Some(name) = args.name {
+            token.name = name;
+        }
+        if let Some(symbol) = args.symbol {
+            token.symbol = symbol;
+        }
         if let Some(info_url) = args.info_url {
             token.info_url = info_url;
         }
