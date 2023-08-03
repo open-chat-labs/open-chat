@@ -1131,9 +1131,9 @@ export interface TokenDetails {
   'fee' : bigint,
   'decimals' : number,
   'added' : TimestampMillis,
-  'how_to_buy_url' : [] | [string],
-  'info_url' : [] | [string],
-  'logo' : [] | [string],
+  'how_to_buy_url' : string,
+  'info_url' : string,
+  'logo' : string,
   'name' : string,
   'last_updated' : TimestampMillis,
   'nervous_system' : [] | [
@@ -1141,7 +1141,7 @@ export interface TokenDetails {
   ],
   'ledger_canister_id' : CanisterId,
   'symbol' : string,
-  'transaction_url_format' : [] | [string],
+  'transaction_url_format' : string,
 }
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |

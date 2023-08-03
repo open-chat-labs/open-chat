@@ -39,9 +39,9 @@ fn add_token_succeeds() {
         &registry_canister::add_token::Args {
             ledger_canister_id,
             token_standard: TokenStandard::ICRC1,
-            info_url: Some(info_url.clone()),
-            how_to_buy_url: Some(how_to_buy_url.clone()),
-            transaction_url_format: Some(transaction_url_format.clone()),
+            info_url: info_url.clone(),
+            how_to_buy_url: how_to_buy_url.clone(),
+            transaction_url_format: transaction_url_format.clone(),
             logo: Some(logo.clone()),
         },
     );
@@ -70,10 +70,10 @@ fn add_token_succeeds() {
         assert_eq!(token.symbol, "ABC");
         assert_eq!(token.decimals, 8);
         assert_eq!(token.fee, 10_000);
-        assert_eq!(token.info_url, Some(info_url));
-        assert_eq!(token.how_to_buy_url, Some(how_to_buy_url));
-        assert_eq!(token.transaction_url_format, Some(transaction_url_format));
-        assert_eq!(token.logo, Some(logo));
+        assert_eq!(token.info_url, info_url);
+        assert_eq!(token.how_to_buy_url, how_to_buy_url);
+        assert_eq!(token.transaction_url_format, transaction_url_format);
+        assert_eq!(token.logo, logo);
         assert_eq!(token.last_updated, now);
     } else {
         panic!()

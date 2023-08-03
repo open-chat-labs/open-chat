@@ -74,6 +74,8 @@ members = [
     "backend/external_canisters/icrc1_ledger/c2c_client",
     "backend/external_canisters/sns_governance/api",
     "backend/external_canisters/sns_governance/c2c_client",
+    "backend/external_canisters/sns_swap/api",
+    "backend/external_canisters/sns_swap/c2c_client",
     "backend/external_canisters/sns_wasm/api",
     "backend/external_canisters/sns_wasm/c2c_client",
     "backend/integration_tests",

@@ -17,11 +17,11 @@ impl Tokens {
         symbol: String,
         decimals: u8,
         fee: u128,
-        logo: Option<String>,
+        logo: String,
         nervous_system: Option<NervousSystem>,
-        info_url: Option<String>,
-        how_to_buy_url: Option<String>,
-        transaction_url_format: Option<String>,
+        info_url: String,
+        how_to_buy_url: String,
+        transaction_url_format: String,
         now: TimestampMillis,
     ) -> bool {
         if self.exists(ledger_canister_id) {

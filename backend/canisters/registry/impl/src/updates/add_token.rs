@@ -1,61 +1,97 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::mutate_state;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::RejectionCode;
 use registry_canister::add_token::{Response::*, *};
 use registry_canister::NervousSystem;
+use tracing::{error, info};
 use types::{CanisterId, Empty};
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 async fn add_token(args: Args) -> Response {
-    let PrepareResult { sns_wasm_canister_id } = match read_state(|state| prepare(args.ledger_canister_id, state)) {
-        Ok(ok) => ok,
-        Err(response) => return response,
-    };
+    add_token_impl(
+        args.ledger_canister_id,
+        None,
+        Some(args.info_url),
+        Some(args.how_to_buy_url),
+        Some(args.transaction_url_format),
+        args.logo,
+    )
+    .await
+}
 
-    let nervous_system = match sns_wasm_canister_c2c_client::list_deployed_snses(sns_wasm_canister_id, &Empty {}).await {
-        Ok(response) => response
-            .instances
-            .into_iter()
-            .find(|s| s.ledger_canister_id == Some(args.ledger_canister_id))
-            .map(|sns| NervousSystem {
-                is_nns: false,
-                root: sns.root_canister_id.unwrap(),
-                governance: sns.governance_canister_id.unwrap(),
-            }),
-        Err(error) => return InternalError(format!("{error:?}")),
+pub(crate) async fn add_sns_token(
+    ledger_canister_id: CanisterId,
+    root_canister_id: CanisterId,
+    governance_canister_id: CanisterId,
+) {
+    add_token_impl(
+        ledger_canister_id,
+        Some(NervousSystem {
+            is_nns: false,
+            root: root_canister_id,
+            governance: governance_canister_id,
+        }),
+        None,
+        None,
+        None,
+        None,
+    )
+    .await;
+}
+
+async fn add_token_impl(
+    ledger_canister_id: CanisterId,
+    nervous_system: Option<NervousSystem>,
+    info_url: Option<String>,
+    how_to_buy_url: Option<String>,
+    transaction_url_format: Option<String>,
+    logo: Option<String>,
+) -> Response {
+    let Urls {
+        info_url,
+        how_to_buy_url,
+        transaction_url_format,
+    } = match extract_urls(info_url, how_to_buy_url, transaction_url_format, nervous_system.as_ref()) {
+        Ok(urls) => urls,
+        Err(error) => {
+            error!(%ledger_canister_id, error);
+            return InvalidRequest(error.to_string());
+        }
     };
 
     match futures::future::try_join5(
-        icrc1_ledger_canister_c2c_client::icrc1_name(args.ledger_canister_id),
-        icrc1_ledger_canister_c2c_client::icrc1_symbol(args.ledger_canister_id),
-        icrc1_ledger_canister_c2c_client::icrc1_decimals(args.ledger_canister_id),
-        icrc1_ledger_canister_c2c_client::icrc1_fee(args.ledger_canister_id),
-        get_logo(
-            args.logo,
-            args.ledger_canister_id,
-            nervous_system.as_ref().map(|ns| ns.governance),
-        ),
+        icrc1_ledger_canister_c2c_client::icrc1_name(ledger_canister_id),
+        icrc1_ledger_canister_c2c_client::icrc1_symbol(ledger_canister_id),
+        icrc1_ledger_canister_c2c_client::icrc1_decimals(ledger_canister_id),
+        icrc1_ledger_canister_c2c_client::icrc1_fee(ledger_canister_id),
+        get_logo(logo, ledger_canister_id, nervous_system.as_ref().map(|ns| ns.governance)),
     )
     .await
     {
+        Ok((.., logo)) if logo.is_none() => {
+            let error = "Failed to find logo for token";
+            error!(%ledger_canister_id, error);
+            InternalError(error.to_string())
+        }
         Ok((name, symbol, decimals, fee, logo)) => mutate_state(|state| {
             let now = state.env.now();
             if state.data.tokens.add(
-                args.ledger_canister_id,
-                name,
+                ledger_canister_id,
+                name.clone(),
                 symbol,
                 decimals,
                 fee.0.try_into().unwrap(),
-                logo,
+                logo.unwrap(),
                 nervous_system,
-                args.info_url,
-                args.how_to_buy_url,
-                args.transaction_url_format,
+                info_url,
+                how_to_buy_url,
+                transaction_url_format,
                 now,
             ) {
+                info!(name, %ledger_canister_id, "Token added");
                 Success
             } else {
                 AlreadyAdded
@@ -65,18 +101,54 @@ async fn add_token(args: Args) -> Response {
     }
 }
 
-struct PrepareResult {
-    sns_wasm_canister_id: CanisterId,
+struct Urls {
+    info_url: String,
+    how_to_buy_url: String,
+    transaction_url_format: String,
 }
 
-fn prepare(ledger_canister_id: CanisterId, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if state.data.tokens.exists(ledger_canister_id) {
-        Err(AlreadyAdded)
-    } else {
-        Ok(PrepareResult {
-            sns_wasm_canister_id: state.data.sns_wasm_canister_id,
-        })
-    }
+fn extract_urls(
+    info_url: Option<String>,
+    how_to_buy_url: Option<String>,
+    transaction_url_format: Option<String>,
+    nervous_system: Option<&NervousSystem>,
+) -> Result<Urls, &'static str> {
+    let info_url = match info_url.or_else(|| {
+        nervous_system
+            .as_ref()
+            .map(|ns| ns.root)
+            .map(|c| format!("https://dashboard.internetcomputer.org/sns/{c}"))
+    }) {
+        Some(url) => url,
+        _ => return Err("'info_url' must be provided for non-SNS tokens"),
+    };
+
+    let how_to_buy_url = match how_to_buy_url.or_else(|| {
+        nervous_system
+            .as_ref()
+            .is_some_and(|ns| !ns.is_nns)
+            .then_some("https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens".to_string())
+    }) {
+        Some(url) => url,
+        _ => return Err("'how_to_buy_url' must be provided for non-SNS tokens"),
+    };
+
+    let transaction_url_format = match transaction_url_format.or_else(|| {
+        nervous_system
+            .as_ref()
+            .filter(|ns| !ns.is_nns)
+            .map(|ns| ns.root)
+            .map(|c| format!("https://dashboard.internetcomputer.org/sns/{c}/transaction/{{block_index}}"))
+    }) {
+        Some(url) => url,
+        _ => return Err("'transaction_url_format' must be provided for non-SNS tokens"),
+    };
+
+    Ok(Urls {
+        info_url,
+        how_to_buy_url,
+        transaction_url_format,
+    })
 }
 
 async fn get_logo(
