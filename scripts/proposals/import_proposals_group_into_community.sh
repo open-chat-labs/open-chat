@@ -2,9 +2,13 @@
 
 # Extract the args
 GOVERNANCE_CANISTER_ID=$1
-COMMUNITY_ID=$2
-TITLE=${3:-"Import the 'OpenChat Proposals' group into the 'OpenChat Official' community"}
-SUMMARY=${4:-"Import the [OpenChat Proposals](https://oc.app/group/nsbx4-4iaaa-aaaar-afusa-cai) group into the [OpenChat Official](https://oc.app/community/dgegb-daaaa-aaaar-arlhq-cai) community."}
+GROUP_ID=$2
+COMMUNITY_ID=$3
+NAME=$4
+COMMUNITY_NAME=$5
+
+TITLE="Import the '$NAME Proposals' group into the '$COMMUNITY_NAME' community"
+SUMMARY="Import the [$NAME Proposals](https://oc.app/group/$GROUP_ID) group into the [$COMMUNITY_NAME](https://oc.app/community/$COMMUNITY_ID) community."
 
 # Set current directory to the scripts root
 SCRIPT=$(readlink -f "$0")
