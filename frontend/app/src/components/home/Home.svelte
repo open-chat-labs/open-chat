@@ -38,6 +38,7 @@
         GroupChatSummary,
         ChannelIdentifier,
         compareChats,
+        ChatListScope,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -277,6 +278,20 @@
         return found;
     }
 
+    function redirectToFirstChat(scope: ChatListScope): boolean {
+        if (scope.kind === "community") {
+            return redirectToFirstChannel(scope.id);
+        } else if (scope.kind === "favourite" && scope.communityId !== undefined) {
+            return redirectToFirstChannel(scope.communityId);
+        } else if (scope.kind !== "none") {
+            const first = $chatSummariesListStore.sort(compareChats)[0];
+            page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     function redirectToFirstChannel(communityId: CommunityIdentifier): boolean {
         const community = $communities.get(communityId);
         if (community !== undefined && community.channels.length > 0) {
@@ -334,7 +349,11 @@
                         waitAndScrollToMessageIndex(pathParams.messageIndex, false);
                     }
                 }
-            } else {
+            } else if (
+                pathParams.kind !== "chat_list_route" ||
+                $mobileWidth ||
+                !redirectToFirstChat(pathParams.scope)
+            ) {
                 // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
                 if ($selectedChatId !== undefined) {
                     client.clearSelectedChat();

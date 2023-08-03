@@ -70,7 +70,6 @@
     $: unreadGroupChats = client.unreadGroupChats;
     $: unreadFavouriteChats = client.unreadFavouriteChats;
     $: unreadCommunityChannels = client.unreadCommunityChannels;
-    $: globalUnreadCount = client.globalUnreadCount;
 
     let unread = { muted: 0, unmuted: 0, mentions: false };
     $: {
