@@ -160,7 +160,6 @@
     $: currentCommunityRules = client.currentCommunityRules;
     $: currentChatRules = client.currentChatRules;
     $: globalUnreadCount = client.globalUnreadCount;
-    $: communities = client.communities;
 
     $: {
         document.title =
@@ -278,28 +277,14 @@
         return found;
     }
 
-    function redirectToFirstChat(scope: ChatListScope): boolean {
-        if (scope.kind === "community") {
-            return redirectToFirstChannel(scope.id);
-        } else if (scope.kind === "favourite" && scope.communityId !== undefined) {
-            return redirectToFirstChannel(scope.communityId);
-        } else if (scope.kind !== "none") {
+    function redirectToFirstChat(): boolean {
+        if ($chatSummariesListStore.length > 0) {
             const first = $chatSummariesListStore.sort(compareChats)[0];
             page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
             return true;
         } else {
             return false;
         }
-    }
-
-    function redirectToFirstChannel(communityId: CommunityIdentifier): boolean {
-        const community = $communities.get(communityId);
-        if (community !== undefined && community.channels.length > 0) {
-            const first = [...community.channels].sort(compareChats)[0];
-            page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
-            return true;
-        }
-        return false;
     }
 
     // extracting to a function to try to control more tightly what this reacts to
@@ -318,10 +303,8 @@
                 client.clearSelectedChat();
                 rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
             } else if (pathParams.kind === "selected_community_route") {
-                if (!$mobileWidth) {
-                    if (redirectToFirstChannel(pathParams.communityId)) {
-                        return;
-                    }
+                if (!$mobileWidth && redirectToFirstChat()) {
+                    return;
                 }
                 await selectCommunity(pathParams.communityId);
             } else if (
@@ -352,7 +335,7 @@
             } else if (
                 pathParams.kind !== "chat_list_route" ||
                 $mobileWidth ||
-                !redirectToFirstChat(pathParams.scope)
+                !redirectToFirstChat()
             ) {
                 // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
                 if ($selectedChatId !== undefined) {
