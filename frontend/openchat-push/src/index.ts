@@ -151,8 +151,10 @@ async function showNotification(notification: Notification, id: string): Promise
             },
             notification.message.event.messageIndex
         );
-        tag =
-            notification.threadRootMessageIndex !== undefined ? path : notification.chatId.groupId;
+        tag = notification.chatId.groupId;
+        if (notification.threadRootMessageIndex !== undefined) {
+            tag += `_${notification.threadRootMessageIndex}`;
+        }
         timestamp = Number(notification.message.timestamp);
         closeExistingNotifications = true;
     } else if (notification.kind === "channel_notification") {
@@ -161,7 +163,7 @@ async function showNotification(notification: Notification, id: string): Promise
             notification.senderName,
             notification.mentioned
         );
-        title = `${notification.communityName}/${notification.channelName}`;
+        title = `${notification.communityName} / ${notification.channelName}`;
         body = `${notification.senderName}: ${content.text}`;
         icon = content.image ?? icon;
         path = routeForMessage(
@@ -172,8 +174,10 @@ async function showNotification(notification: Notification, id: string): Promise
             },
             notification.message.event.messageIndex
         );
-        tag =
-            notification.threadRootMessageIndex !== undefined ? path : (`${notification.chatId.communityId}_${notification.chatId.channelId}}`);
+        tag = `${notification.chatId.communityId}_${notification.chatId.channelId}}`;
+        if (notification.threadRootMessageIndex !== undefined) {
+            tag += `_${notification.threadRootMessageIndex}`;
+        }
         timestamp = Number(notification.message.timestamp);
         closeExistingNotifications = true;
     } else if (notification.kind === "direct_reaction") {
@@ -187,7 +191,7 @@ async function showNotification(notification: Notification, id: string): Promise
         tag = path;
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "channel_reaction") {
-        title = `${notification.communityName}/${notification.channelName}`;
+        title = `${notification.communityName} / ${notification.channelName}`;
         body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
         path = routeForMessage(
             "community",
@@ -214,7 +218,7 @@ async function showNotification(notification: Notification, id: string): Promise
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "added_to_channel_notification") {
         // TODO Multi language support
-        title = `${notification.communityName}/${notification.channelName}`;
+        title = `${notification.communityName} / ${notification.channelName}`;
         body = `${notification.addedByUsername} added you to the channel "${notification.channelName}" in the community "${notification.communityName}"`;
         path = routeForChatIdentifier("none", notification.chatId);
         tag = path;
