@@ -62,16 +62,11 @@ impl DeletedGroups {
             }
         }
 
-        Metrics {
-            public,
-            private,
-            notifications_pending: self.pending_group_deleted_notifications.len() as u64,
-        }
+        Metrics { public, private }
     }
 }
 
 pub struct Metrics {
     pub public: u64,
     pub private: u64,
-    pub notifications_pending: u64,
 }
