@@ -14,6 +14,10 @@
     $: chatListScope = client.chatListScope;
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
+    $: otherChannels = $selectedCommunity
+        ? $selectedCommunity.channelCount -
+          $selectedCommunity.channels.filter((c) => c.public).length
+        : 0;
 
     $: [title, message] = getMessageForScope($chatListScope.kind);
 
@@ -68,7 +72,7 @@
                     loading={joiningCommunity}
                     disabled={joiningCommunity}
                     on:click={() => joinCommunity(false)}>{$_("communities.joinCommunity")}</Button>
-                <Button secondary={true} small={true} on:click={cancelPreview}>
+                <Button secondary small on:click={cancelPreview}>
                     {$_("leave")}
                 </Button>
             </div>
@@ -79,7 +83,13 @@
         <h2 class="title">{$_(title)}</h2>
         <p class="subtitle">{$_(message)}</p>
         {#if $chatListScope.kind === "community"}
-            <Button on:click={showChannels}>{$_("communities.browseChannels")}</Button>
+            <Button on:click={showChannels}>
+                {otherChannels > 0
+                    ? $_("communities.browseOtherChannels", {
+                          values: { n: otherChannels },
+                      })
+                    : $_("communities.browseChannels")}
+            </Button>
         {:else if $chatListScope.kind === "group_chat"}
             <Button on:click={() => page("/groups")}>{$_("discoverMoreGroups")}</Button>
         {/if}

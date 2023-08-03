@@ -70,7 +70,10 @@
     $: unreadGroupChats = client.unreadGroupChats;
     $: unreadFavouriteChats = client.unreadFavouriteChats;
     $: unreadCommunityChannels = client.unreadCommunityChannels;
-    $: globalUnreadCount = client.globalUnreadCount;
+    $: otherChannels = $selectedCommunity
+        ? $selectedCommunity.channelCount -
+          $selectedCommunity.channels.filter((c) => c.public).length
+        : 0;
 
     let unread = { muted: 0, unmuted: 0, mentions: false };
     $: {
@@ -330,7 +333,13 @@
             {#if showBrowseChannnels}
                 <div class="browse-channels" on:click={showChannels}>
                     <div class="disc hash">#</div>
-                    <div class="label">{$_("communities.browseChannels")}</div>
+                    <div class="label">
+                        {otherChannels > 0
+                            ? $_("communities.browseOtherChannels", {
+                                  values: { n: otherChannels },
+                              })
+                            : $_("communities.browseChannels")}
+                    </div>
                 </div>
             {/if}
         {/if}

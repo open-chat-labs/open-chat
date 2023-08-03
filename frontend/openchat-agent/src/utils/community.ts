@@ -97,6 +97,7 @@ export function mergeCommunityUpdates(
             lastUpdated: c?.lastUpdated ?? community.lastUpdated,
             description: c?.description ?? community.description,
             memberCount: c?.memberCount ?? community.memberCount,
+            channelCount: c?.channelCount ?? community.channelCount,
             metrics: c?.metrics ?? community.metrics,
             avatar: {
                 ...community.avatar,

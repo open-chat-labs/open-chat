@@ -422,6 +422,7 @@ export function communitySummaryUpdates(
         latestEventIndex: optional(candid.latest_event_index, identity),
         bannerId: optionUpdate(candid.banner_id, identity),
         memberCount: optional(candid.member_count, identity),
+        channelCount: optional(candid.channel_count, identity),
         primaryLanguage: optional(candid.primary_language, identity),
     };
 }

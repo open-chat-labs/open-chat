@@ -328,6 +328,7 @@ type CommunityCanisterCommunitySummary = record {
     banner_id : opt nat;
     is_public : bool;
     member_count : nat32;
+    channel_count : nat32;
     permissions : CommunityPermissions;
     frozen : opt FrozenGroupInfo;
     gate : opt AccessGate;
@@ -387,6 +388,7 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     banner_id : DocumentIdUpdate;
     is_public : opt bool;
     member_count : opt nat32;
+    channel_count : opt nat32;
     permissions : opt CommunityPermissions;
     frozen : FrozenGroupUpdate;
     gate : AccessGateUpdate;

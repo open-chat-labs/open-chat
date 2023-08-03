@@ -125,6 +125,7 @@ impl RuntimeState {
             is_public: data.is_public,
             latest_event_index: data.events.latest_event_index(),
             member_count: data.members.len(),
+            channel_count: data.channels.public_channel_count(),
             permissions: data.permissions.clone(),
             frozen: data.frozen.value.clone(),
             gate: data.gate.value.clone(),

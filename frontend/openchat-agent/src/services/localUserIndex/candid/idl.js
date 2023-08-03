@@ -585,6 +585,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Bool,
     'permissions' : CommunityPermissions,
     'community_id' : CommunityId,
+    'channel_count' : IDL.Nat32,
     'metrics' : ChatMetrics,
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,

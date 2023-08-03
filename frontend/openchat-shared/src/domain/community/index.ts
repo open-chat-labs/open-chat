@@ -60,6 +60,7 @@ export type CommunitySummary = AccessControlled &
         lastUpdated: bigint;
         description: string;
         memberCount: number;
+        channelCount: number;
         avatar: DataContent;
         banner: DataContent;
         metrics: Metrics;
@@ -177,6 +178,7 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     latestEventIndex: number | undefined;
     bannerId: OptionUpdate<bigint>;
     memberCount: number | undefined;
+    channelCount: number | undefined;
     primaryLanguage: string | undefined;
 };
 

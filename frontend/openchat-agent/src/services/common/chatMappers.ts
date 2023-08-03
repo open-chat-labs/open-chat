@@ -1488,6 +1488,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
             })),
         },
         memberCount: candid.member_count,
+        channelCount: candid.channel_count,
         frozen: candid.frozen.length > 0,
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "community",

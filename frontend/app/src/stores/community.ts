@@ -19,6 +19,7 @@ export function createCandidateCommunity(id: string): CommunitySummary {
         name: "",
         description: "",
         memberCount: 0,
+        channelCount: 0,
         avatar: {},
         banner: {},
         gate: { kind: "no_gate" },

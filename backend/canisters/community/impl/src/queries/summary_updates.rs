@@ -88,6 +88,9 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         role: updates_from_events.role_changed.then_some(m.role),
     });
 
+    let public_channel_count_affected =
+        !channels_added.is_empty() || !channels_removed.is_empty() || channels_updated.iter().any(|c| c.is_public.is_some());
+
     Success(CommunityCanisterCommunitySummaryUpdates {
         community_id: state.env.canister_id().into(),
         last_updated: now,
@@ -97,6 +100,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         banner_id: updates_from_events.banner_id,
         is_public: updates_from_events.is_public,
         member_count: updates_from_events.members_changed.then_some(state.data.members.len()),
+        channel_count: public_channel_count_affected.then_some(state.data.channels.public_channel_count()),
         permissions: updates_from_events.permissions,
         frozen: updates_from_events.frozen,
         gate: updates_from_events.gate,

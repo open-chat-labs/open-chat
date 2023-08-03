@@ -891,6 +891,7 @@
         "joinCommunity": "Join community",
         "preview": "Preview",
         "browseChannels": "Browse channels",
+        "browseOtherChannels": "Browse {n} other channels",
         "createChannel": "New channel",
         "convert": "Convert to community",
         "convertButton": "Convert",
