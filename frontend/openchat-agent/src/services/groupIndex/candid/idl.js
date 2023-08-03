@@ -73,6 +73,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'moderation_flags' : IDL.Nat32,
+    'score' : IDL.Nat32,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'banner_id' : IDL.Opt(IDL.Nat),
     'member_count' : IDL.Nat32,

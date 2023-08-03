@@ -3,6 +3,13 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct NotificationEnvelopeV1 {
+    pub recipients: Vec<UserId>,
+    pub notification: Notification,
+    pub timestamp: TimestampMillis,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct NotificationEnvelope {
     pub recipients: Vec<UserId>,
     pub notification_bytes: Vec<u8>,
