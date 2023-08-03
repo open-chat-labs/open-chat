@@ -3090,6 +3090,12 @@ export class OpenChat extends OpenChatAgentWorker {
         let threadRootMessageIndex: number | undefined = undefined;
         let message: EventWrapper<Message>;
         switch (notification.kind) {
+            case "channel_notification": {
+                chatId = notification.chatId;
+                threadRootMessageIndex = notification.threadRootMessageIndex;
+                message = notification.message;
+                break;
+            }
             case "direct_notification": {
                 chatId = notification.sender;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
@@ -3102,17 +3108,25 @@ export class OpenChat extends OpenChatAgentWorker {
                 message = notification.message;
                 break;
             }
+            case "channel_reaction": {
+                chatId = notification.chatId;
+                threadRootMessageIndex = notification.threadRootMessageIndex;
+                message = notification.message;
+                break;
+            }
             case "direct_reaction": {
                 chatId = notification.them;
                 message = notification.message;
                 break;
             }
-            case "group_reaction":
+            case "group_reaction": {
                 chatId = notification.chatId;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
                 message = notification.message;
                 break;
+            }
             case "added_to_group_notification":
+            case "added_to_channel_notification":
                 return;
         }
 

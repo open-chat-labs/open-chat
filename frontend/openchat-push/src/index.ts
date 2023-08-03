@@ -155,12 +155,46 @@ async function showNotification(notification: Notification, id: string): Promise
             notification.threadRootMessageIndex !== undefined ? path : notification.chatId.groupId;
         timestamp = Number(notification.message.timestamp);
         closeExistingNotifications = true;
+    } else if (notification.kind === "channel_notification") {
+        const content = extractMessageContent(
+            notification.message.event.content,
+            notification.senderName,
+            notification.mentioned
+        );
+        title = `{notification.communityName}/notification.channelName`;
+        body = `${notification.senderName}: ${content.text}`;
+        icon = content.image ?? icon;
+        path = routeForMessage(
+            "community",
+            {
+                chatId: notification.chatId,
+                threadRootMessageIndex: notification.threadRootMessageIndex,
+            },
+            notification.message.event.messageIndex
+        );
+        tag =
+            notification.threadRootMessageIndex !== undefined ? path : (`{notification.chatId.communityId}_{notification.chatId.channelId}}`);
+        timestamp = Number(notification.message.timestamp);
+        closeExistingNotifications = true;
     } else if (notification.kind === "direct_reaction") {
         title = notification.username;
         body = `${notification.username} reacted '${notification.reaction}' to your message`;
         path = routeForMessage(
             "direct_chat",
             { chatId: notification.them },
+            notification.message.event.messageIndex
+        );
+        tag = path;
+        timestamp = Number(notification.timestamp);
+    } else if (notification.kind === "channel_reaction") {
+        title = `{notification.communityName}/notification.channelName`;
+        body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
+        path = routeForMessage(
+            "community",
+            {
+                chatId: notification.chatId,
+                threadRootMessageIndex: notification.threadRootMessageIndex,
+            },
             notification.message.event.messageIndex
         );
         tag = path;
@@ -176,6 +210,13 @@ async function showNotification(notification: Notification, id: string): Promise
             },
             notification.message.event.messageIndex
         );
+        tag = path;
+        timestamp = Number(notification.timestamp);
+    } else if (notification.kind === "added_to_channel_notification") {
+        // TODO Multi language support
+        title = `{notification.communityName}/notification.channelName`;
+        body = `${notification.addedByUsername} added you to the channel "${notification.channelName}" in the community "${notification.communityName}"`;
+        path = routeForChatIdentifier("none", notification.chatId);
         tag = path;
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "added_to_group_notification") {
@@ -332,7 +373,9 @@ function extractMessageContentFromCryptoContent(
 
 function isMessageNotification(notification: Notification): boolean {
     return (
-        notification.kind === "direct_notification" || notification.kind === "group_notification"
+        notification.kind === "channel_notification" || 
+        notification.kind === "direct_notification" || 
+        notification.kind === "group_notification"
     );
 }
 

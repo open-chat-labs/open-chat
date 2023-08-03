@@ -194,6 +194,7 @@
         } else if (ev instanceof ChatsUpdated) {
             closeNotifications((notification: Notification) => {
                 if (
+                    notification.kind === "channel_notification" ||
                     notification.kind === "direct_notification" ||
                     notification.kind === "group_notification"
                 ) {

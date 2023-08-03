@@ -9,6 +9,15 @@ export type AccessGateUpdate = { 'NoChange' : null } |
 export interface AccessRules { 'text' : string, 'enabled' : boolean }
 export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
+export interface AddedToChannelNotification {
+  'channel_id' : ChannelId,
+  'community_id' : CommunityId,
+  'added_by_name' : string,
+  'added_by' : UserId,
+  'channel_name' : string,
+  'community_name' : string,
+  'timestamp' : TimestampMillis,
+}
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -68,6 +77,29 @@ export interface ChannelMembershipUpdates {
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'mentions' : Array<Mention>,
   'my_metrics' : [] | [ChatMetrics],
+}
+export interface ChannelMessageNotification {
+  'channel_id' : ChannelId,
+  'community_id' : CommunityId,
+  'mentioned' : Array<User>,
+  'sender' : UserId,
+  'channel_name' : string,
+  'community_name' : string,
+  'message' : MessageEventWrapper,
+  'sender_name' : string,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export interface ChannelReactionAddedNotification {
+  'channel_id' : ChannelId,
+  'community_id' : CommunityId,
+  'added_by_name' : string,
+  'added_by' : UserId,
+  'channel_name' : string,
+  'community_name' : string,
+  'message' : MessageEventWrapper,
+  'timestamp' : TimestampMillis,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'reaction' : Reaction,
 }
 export type Chat = { 'Group' : ChatId } |
   { 'Channel' : [CommunityId, ChannelId] } |
@@ -222,6 +254,7 @@ export interface CommunityMatch {
   'name' : string,
   'description' : string,
   'moderation_flags' : number,
+  'score' : number,
   'avatar_id' : [] | [bigint],
   'banner_id' : [] | [bigint],
   'member_count' : number,
@@ -331,7 +364,7 @@ export interface DirectReactionAddedNotification {
   'them' : UserId,
   'message' : MessageEventWrapper,
   'timestamp' : TimestampMillis,
-  'reaction' : string,
+  'reaction' : Reaction,
 }
 export interface Document {
   'id' : bigint,
@@ -533,7 +566,6 @@ export interface GroupMatch {
   'member_count' : number,
 }
 export interface GroupMessageNotification {
-  'hide' : boolean,
   'mentioned' : Array<User>,
   'sender' : UserId,
   'message' : MessageEventWrapper,
@@ -570,7 +602,7 @@ export interface GroupReactionAddedNotification {
   'chat_id' : ChatId,
   'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
-  'reaction' : string,
+  'reaction' : Reaction,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
 export type GroupRole = { 'Participant' : null } |
@@ -909,12 +941,21 @@ export type Notification = {
     'DirectReactionAddedNotification' : DirectReactionAddedNotification
   } |
   { 'DirectMessageNotification' : DirectMessageNotification } |
+  { 'AddedToChannelNotification' : AddedToChannelNotification } |
   { 'GroupMessageNotification' : GroupMessageNotification } |
+  { 'ChannelMessageNotification' : ChannelMessageNotification } |
+  { 'ChannelReactionAddedNotification' : ChannelReactionAddedNotification } |
   { 'GroupReactionAddedNotification' : GroupReactionAddedNotification } |
   { 'AddedToGroupNotification' : AddedToGroupNotification };
 export interface NotificationEnvelope {
+  'notification_bytes' : Uint8Array | number[],
+  'recipients' : Array<UserId>,
+  'timestamp' : TimestampMillis,
+}
+export interface NotificationEnvelopeV1 {
   'notification' : Notification,
   'recipients' : Array<UserId>,
+  'timestamp' : TimestampMillis,
 }
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
@@ -1056,6 +1097,7 @@ export interface PushEventResult {
   'index' : EventIndex,
   'expires_at' : [] | [TimestampMillis],
 }
+export type Reaction = string;
 export interface RegisterUserArgs {
   'username' : string,
   'public_key' : Uint8Array | number[],

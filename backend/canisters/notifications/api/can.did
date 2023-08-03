@@ -1,1 +1,38 @@
-service : {}
+import "../../../libraries/types/can.did";
+
+type NotificationsArgs = record {
+    from_notification_index : nat64;
+};
+
+type NotificationsResponse = variant {
+    Success : record {
+        notifications : vec record {
+            value : NotificationEnvelope;
+            index : nat64;
+        };
+        subscriptions : vec record {
+            UserId;
+            vec SubscriptionInfo;
+        };
+        timestamp : TimestampMillis;
+    };
+};
+
+type NotificationsV1Response = variant {
+    Success : record {
+        notifications : vec record {
+            value : NotificationEnvelopeV1;
+            index : nat64;
+        };
+        subscriptions : vec record {
+            UserId;
+            vec SubscriptionInfo;
+        };
+        timestamp : TimestampMillis;
+    };
+};
+
+service : {
+    notifications : (NotificationsArgs) -> (NotificationsResponse) query;
+    notifications_v1 : (NotificationsArgs) -> (NotificationsV1Response) query;
+};
