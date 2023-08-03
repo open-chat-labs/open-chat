@@ -21,14 +21,14 @@ export type TokenDetails = {
     symbol: string;
     decimals: number;
     fee: bigint;
-    logo?: string;
+    logo: string;
     snsCanisters?: {
         root: string
         governance: string
     };
-    infoUrl?: string;
-    howToBuyUrl?: string;
-    transactionUrlFormat?: string;
+    infoUrl: string;
+    howToBuyUrl: string;
+    transactionUrlFormat: string;
     added: bigint;
     lastUpdated: bigint;
 }

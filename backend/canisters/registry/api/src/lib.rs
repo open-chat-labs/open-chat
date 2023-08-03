@@ -21,12 +21,12 @@ pub struct TokenDetails {
     pub symbol: String,
     pub decimals: u8,
     pub fee: u128,
-    pub logo: Option<String>,
+    pub logo: String,
     #[serde(alias = "sns_canisters")]
     pub nervous_system: Option<NervousSystem>,
-    pub info_url: Option<String>,
-    pub how_to_buy_url: Option<String>,
-    pub transaction_url_format: Option<String>,
+    pub info_url: String,
+    pub how_to_buy_url: String,
+    pub transaction_url_format: String,
     pub added: TimestampMillis,
     pub last_updated: TimestampMillis,
 }

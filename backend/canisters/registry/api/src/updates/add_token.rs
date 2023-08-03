@@ -8,16 +8,17 @@ use types::CanisterId;
 pub struct Args {
     pub ledger_canister_id: CanisterId,
     pub token_standard: TokenStandard,
-    pub info_url: Option<String>,
-    pub how_to_buy_url: Option<String>,
-    pub transaction_url_format: Option<String>,
-    pub logo: Option<String>,
+    pub info_url: Option<String>,               // Not needed for SNS tokens
+    pub how_to_buy_url: Option<String>,         // Not needed for SNS tokens
+    pub transaction_url_format: Option<String>, // Not needed for SNS tokens
+    pub logo: Option<String>,                   // Not needed for SNS tokens
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
     AlreadyAdded,
+    InvalidRequest(String),
     InternalError(String),
 }
 

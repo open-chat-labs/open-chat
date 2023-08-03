@@ -18,15 +18,15 @@ type TokenDetails = record {
     symbol : text;
     decimals : nat8;
     fee : nat;
-    logo : opt text;
+    logo : text;
     nervous_system: opt record {
         is_nns: bool;
         root: CanisterId;
         governance: CanisterId;
     };
-    info_url : opt text;
-    how_to_buy_url : opt text;
-    transaction_url_format : opt text;
+    info_url : text;
+    how_to_buy_url : text;
+    transaction_url_format : text;
     added : TimestampMillis;
     last_updated : TimestampMillis;
 };
