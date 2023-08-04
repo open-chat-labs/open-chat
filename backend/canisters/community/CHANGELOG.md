@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - More efficient serialization of notifications ([#4134](https://github.com/open-chat-labs/open-chat/pull/4134))
+- Give public channels default behaviour ([#4137](https://github.com/open-chat-labs/open-chat/pull/4137))
 
 ## [[2.0.776](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.776-community)] - 2023-08-01
 
