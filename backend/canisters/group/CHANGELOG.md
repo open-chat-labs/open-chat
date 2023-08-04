@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Serialize chat state more efficiently ([#4092](https://github.com/open-chat-labs/open-chat/pull/4092))
+- More efficient serialization of notifications ([#4134](https://github.com/open-chat-labs/open-chat/pull/4134))
 
 ### Removed
 
