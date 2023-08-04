@@ -65,22 +65,22 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         .filter(|u| state.data.members.get_by_user_id(u).map_or(false, |m| !m.suspended.value))
                         .collect();
 
-                    let mut trimmed_message = result.message_event.clone();
-                    trimmed_message.event.content.trim(500);
+                    if let Some(message_text) = result.message_event.event.content.notification_text(&args.mentioned) {
+                        let notification = Notification::ChannelMessage(ChannelMessageNotification {
+                            community_id: state.env.canister_id().into(),
+                            channel_id: args.channel_id,
+                            thread_root_message_index: args.thread_root_message_index,
+                            message_index: result.message_event.event.message_index,
+                            community_name: state.data.name.clone(),
+                            channel_name: channel.chat.name.clone(),
+                            sender: user_id,
+                            sender_name: args.sender_name,
+                            message_text,
+                            thumbnail: result.message_event.event.content.notification_thumbnail(),
+                        });
 
-                    let notification = Notification::ChannelMessageNotification(ChannelMessageNotification {
-                        community_id: state.env.canister_id().into(),
-                        channel_id: args.channel_id,
-                        thread_root_message_index: args.thread_root_message_index,
-                        community_name: state.data.name.clone(),
-                        channel_name: channel.chat.name.clone(),
-                        sender: user_id,
-                        sender_name: args.sender_name,
-                        message: trimmed_message,
-                        mentioned: args.mentioned,
-                    });
-
-                    state.push_notification(users_to_notify, notification);
+                        state.push_notification(users_to_notify, notification);
+                    }
 
                     handle_activity_notification(state);
 

@@ -39,7 +39,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             ) {
                 AddRemoveReactionResult::Success => {
                     if let Some(message) = should_push_notification(&args, user_id, &channel.chat, now) {
-                        push_notification(args, user_id, channel.chat.name.clone(), message, now, state);
+                        push_notification(args, user_id, channel.chat.name.clone(), message, state);
                     }
                     handle_activity_notification(state);
                     Success
@@ -93,21 +93,19 @@ fn push_notification(
     user_id: UserId,
     channel_name: String,
     message: EventWrapper<Message>,
-    now: TimestampMillis,
     state: &mut RuntimeState,
 ) {
     let recipient = message.event.sender;
-    let notification = Notification::ChannelReactionAddedNotification(ChannelReactionAddedNotification {
+    let notification = Notification::ChannelReactionAdded(ChannelReactionAddedNotification {
         community_id: state.env.canister_id().into(),
         channel_id: args.channel_id,
         thread_root_message_index: args.thread_root_message_index,
+        message_index: message.event.message_index,
         community_name: state.data.name.clone(),
         channel_name,
         added_by: user_id,
         added_by_name: args.username,
-        message,
         reaction: args.reaction,
-        timestamp: now,
     });
 
     state.push_notification(vec![recipient], notification);

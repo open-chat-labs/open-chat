@@ -100,20 +100,22 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         .claim_prize(args.message_id, winner, transaction, state.env.rng(), now)
     {
         chat_events::ClaimPrizeResult::Success(message_event) => {
-            // Send a notification to group participants
-            let notification_recipients = state.data.chat.members.users_to_notify(None).into_iter().collect();
+            if let Some(message_text) = message_event.event.content.notification_text(&[]) {
+                // Send a notification to group participants
+                let notification_recipients = state.data.chat.members.users_to_notify(None).into_iter().collect();
 
-            let notification = Notification::GroupMessageNotification(GroupMessageNotification {
-                chat_id: state.env.canister_id().into(),
-                thread_root_message_index: None,
-                group_name: state.data.chat.name.clone(),
-                sender: OPENCHAT_BOT_USER_ID,
-                sender_name: OPENCHAT_BOT_USERNAME.to_string(),
-                message: message_event,
-                mentioned: Vec::new(),
-            });
-
-            state.push_notification(notification_recipients, notification);
+                let notification = Notification::GroupMessage(GroupMessageNotification {
+                    chat_id: state.env.canister_id().into(),
+                    thread_root_message_index: None,
+                    message_index: message_event.event.message_index,
+                    group_name: state.data.chat.name.clone(),
+                    sender: OPENCHAT_BOT_USER_ID,
+                    sender_name: OPENCHAT_BOT_USERNAME.to_string(),
+                    message_text,
+                    thumbnail: message_event.event.content.notification_thumbnail(),
+                });
+                state.push_notification(notification_recipients, notification);
+            }
 
             handle_activity_notification(state);
             None

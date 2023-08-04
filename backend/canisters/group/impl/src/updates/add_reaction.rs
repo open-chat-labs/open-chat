@@ -80,15 +80,14 @@ fn handle_notification(
             if !notifications_muted {
                 state.push_notification(
                     vec![message.event.sender],
-                    Notification::GroupReactionAddedNotification(GroupReactionAddedNotification {
+                    Notification::GroupReactionAdded(GroupReactionAddedNotification {
                         chat_id: state.env.canister_id().into(),
                         thread_root_message_index,
+                        message_index: message.event.message_index,
                         group_name: state.data.chat.name.clone(),
                         added_by: user_id,
                         added_by_name: username,
-                        message,
                         reaction,
-                        timestamp: now,
                     }),
                 );
             }

@@ -81,14 +81,14 @@ impl RuntimeState {
         self.data.group_chats.get(&caller.into()).is_some()
     }
 
-    pub fn is_caller_known_commuity_canister(&self) -> bool {
+    pub fn is_caller_known_community_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.communities.get(&caller.into()).is_some()
     }
 
-    pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
+    pub fn push_notification(&mut self, recipient: UserId, notification: Notification) {
         let args = c2c_push_notification::Args {
-            recipients,
+            recipients: vec![recipient],
             authorizer: Some(self.data.local_user_index_canister_id),
             notification_bytes: ByteBuf::from(candid::encode_one(notification).unwrap()),
         };

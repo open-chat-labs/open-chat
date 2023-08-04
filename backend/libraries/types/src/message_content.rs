@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageIndex, ProposalContent, TimestampMillis,
-    TotalVotes, UserId, VoteOperation,
+    TotalVotes, User, UserId, VoteOperation,
 };
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
@@ -108,9 +108,58 @@ impl MessageContent {
         references
     }
 
-    pub fn trim(&mut self, max_chars: usize) {
-        if let MessageContent::Text(TextContent { text }) = self {
-            text.truncate(max_chars)
+    pub fn notification_text(&self, mentioned: &[User]) -> Option<String> {
+        fn text_or_default<'a>(text: Option<&'a String>, default: &'a str) -> &'a str {
+            text.as_ref().map(|t| t.as_str()).unwrap_or(default)
+        }
+
+        let text = match self {
+            MessageContent::Text(t) => Some(t.text.as_str()),
+            MessageContent::Image(i) => Some(text_or_default(i.caption.as_ref(), "Image message")),
+            MessageContent::Video(v) => Some(text_or_default(v.caption.as_ref(), "Video message")),
+            MessageContent::Audio(a) => Some(text_or_default(a.caption.as_ref(), "Audio message")),
+            MessageContent::File(f) => Some(text_or_default(f.caption.as_ref(), "File message")),
+            MessageContent::Poll(p) => Some(text_or_default(p.config.text.as_ref(), "Poll message")),
+            MessageContent::Crypto(c) => Some(text_or_default(c.caption.as_ref(), "Crypto transfer")),
+            MessageContent::Deleted(_) => None,
+            MessageContent::Giphy(g) => Some(text_or_default(g.caption.as_ref(), "Giphy message")),
+            MessageContent::GovernanceProposal(gp) => Some(gp.proposal.title()),
+            MessageContent::Prize(_) => Some("Prize message"),
+            MessageContent::PrizeWinner(_) => None,
+            MessageContent::MessageReminderCreated(_) => None,
+            MessageContent::MessageReminder(_) => Some("Message reminder"),
+            MessageContent::ReportedMessage(_) => Some("Reported message"),
+            MessageContent::Custom(_) => Some("Custom message type"),
+        }?
+        .to_string();
+
+        const MAX_CHARS: usize = 200;
+
+        if !mentioned.is_empty() {
+            // Hydrate mentions
+        }
+
+        Some(text.chars().take(MAX_CHARS).collect())
+    }
+
+    pub fn notification_thumbnail(&self) -> Option<String> {
+        match self {
+            MessageContent::Image(i) => Some(i.thumbnail_data.0.clone()),
+            MessageContent::Video(v) => Some(v.thumbnail_data.0.clone()),
+            MessageContent::Text(_)
+            | MessageContent::Audio(_)
+            | MessageContent::File(_)
+            | MessageContent::Poll(_)
+            | MessageContent::Crypto(_)
+            | MessageContent::Deleted(_)
+            | MessageContent::Giphy(_)
+            | MessageContent::GovernanceProposal(_)
+            | MessageContent::Prize(_)
+            | MessageContent::PrizeWinner(_)
+            | MessageContent::MessageReminderCreated(_)
+            | MessageContent::MessageReminder(_)
+            | MessageContent::ReportedMessage(_)
+            | MessageContent::Custom(_) => None,
         }
     }
 }

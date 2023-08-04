@@ -48,20 +48,20 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     &mut state.data.timer_jobs,
                 );
 
-                let mut trimmed_message = result.message_event.clone();
-                trimmed_message.event.content.trim(500);
+                if let Some(message_text) = result.message_event.event.content.notification_text(&args.mentioned) {
+                    let notification = Notification::GroupMessage(GroupMessageNotification {
+                        chat_id: state.env.canister_id().into(),
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_index,
+                        group_name: state.data.chat.name.clone(),
+                        sender: user_id,
+                        sender_name: args.sender_name,
+                        message_text,
+                        thumbnail: result.message_event.event.content.notification_thumbnail(),
+                    });
 
-                let notification = Notification::GroupMessageNotification(GroupMessageNotification {
-                    chat_id: state.env.canister_id().into(),
-                    thread_root_message_index: args.thread_root_message_index,
-                    group_name: state.data.chat.name.clone(),
-                    sender: user_id,
-                    sender_name: args.sender_name,
-                    message: trimmed_message,
-                    mentioned: args.mentioned,
-                });
-
-                state.push_notification(result.users_to_notify, notification);
+                    state.push_notification(result.users_to_notify, notification);
+                }
                 handle_activity_notification(state);
 
                 Success(SuccessResult {
