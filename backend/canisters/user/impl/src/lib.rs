@@ -19,8 +19,7 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
 use types::{
-    CanisterId, Chat, ChatId, ChatMetrics, Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped,
-    UserId, Version,
+    CanisterId, ChatMetrics, Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
