@@ -1,5 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use std::fmt::{Debug, Formatter};
 use types::{CanisterId, UserId};
 
@@ -7,7 +8,7 @@ use types::{CanisterId, UserId};
 pub struct Args {
     pub recipients: Vec<UserId>,
     pub authorizer: Option<CanisterId>,
-    pub notification_bytes: Vec<u8>,
+    pub notification_bytes: ByteBuf,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

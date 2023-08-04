@@ -1,10 +1,10 @@
 use crate::{mutate_state, Prize, RuntimeState};
 use ic_ledger_types::Tokens;
-use ledger_utils::sns;
+use ledger_utils::icrc1;
 use rand::Rng;
 use std::{cmp, time::Duration};
 use tracing::{error, trace};
-use types::sns::Account;
+use types::icrc1::Account;
 use types::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageContentInitial, MessageId,
     PrizeContentInitial, TimestampMillis, TimestampNanos,
@@ -71,18 +71,19 @@ async fn send_next_prize() -> bool {
 
     // 2. Transfer the prize funds to the group
     let amount = prize.iter().sum::<u64>() + (token.fee().unwrap() as u64) * (prize.len() as u64);
-    let completed_transaction = match transfer_prize_funds_to_group(ledger_canister_id, token, group, amount, now_nanos).await {
-        Ok(t) => t,
-        Err(error_message) => {
-            error!(
-                ?error_message,
-                ?ledger_canister_id,
-                ?group,
-                "Failed to transfer funds to group"
-            );
-            return false;
-        }
-    };
+    let completed_transaction =
+        match transfer_prize_funds_to_group(ledger_canister_id, token, group, amount as u128, now_nanos).await {
+            Ok(t) => t,
+            Err(error_message) => {
+                error!(
+                    ?error_message,
+                    ?ledger_canister_id,
+                    ?group,
+                    "Failed to transfer funds to group"
+                );
+                return false;
+            }
+        };
 
     // 3. Generate a random MessageId
     let new_message_id = mutate_state(|state| MessageId::generate(state.env.rng()));
@@ -142,21 +143,21 @@ async fn transfer_prize_funds_to_group(
     ledger_canister_id: CanisterId,
     token: Cryptocurrency,
     group: CanisterId,
-    amount: u64,
+    amount: u128,
     now_nanos: TimestampNanos,
 ) -> Result<CompletedCryptoTransaction, String> {
     // Assume ICRC-1 for now
-    let pending_transaction = types::sns::PendingCryptoTransaction {
+    let pending_transaction = types::icrc1::PendingCryptoTransaction {
         ledger: ledger_canister_id,
-        fee: Tokens::from_e8s(token.fee().unwrap() as u64),
+        fee: token.fee().unwrap(),
         token,
-        amount: Tokens::from_e8s(amount),
+        amount,
         to: Account::from(group),
         memo: None,
         created: now_nanos,
     };
 
-    match sns::process_transaction(pending_transaction, group).await {
+    match icrc1::process_transaction(pending_transaction, group).await {
         Ok(completed_transaction) => mutate_state(|state| {
             state.data.prizes_sent.push(Prize {
                 group,
