@@ -6,7 +6,7 @@ use index_store::IndexStore;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::time;
-use tracing::error;
+use tracing::{error, info};
 use types::{CanisterId, Error, UserId};
 use web_push::{SubscriptionInfo, SubscriptionKeys};
 
@@ -28,6 +28,8 @@ impl<I: IndexStore> Reader<I> {
     }
 
     pub async fn run(self) {
+        info!(%self.notifications_canister_id, "Notifications reader started");
+
         let mut interval = time::interval(time::Duration::from_secs(2));
         loop {
             for _ in 0..30 {

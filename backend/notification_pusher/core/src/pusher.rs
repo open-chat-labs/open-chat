@@ -71,7 +71,7 @@ impl Pusher {
                 Ok(())
             }
         } else {
-            Err("Max length exceeded".into())
+            Err(format!("Max length exceeded. Length: {length}").into())
         }
     }
 

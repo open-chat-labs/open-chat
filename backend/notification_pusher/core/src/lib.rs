@@ -21,7 +21,7 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
     vapid_private_pem: String,
     pusher_count: usize,
 ) {
-    info!("Runner starting");
+    info!("Notifications pusher starting");
 
     let (sender, receiver) = async_channel::bounded::<Notification>(50_000);
     let (subscriptions_to_remove_sender, subscriptions_to_remove_receiver) = async_channel::bounded(10_000);
@@ -33,21 +33,21 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
             index_store.clone(),
             sender.clone(),
         );
-
-        std::thread::spawn(|| reader.run());
+        tokio::spawn(reader.run());
     }
 
     for _ in 0..pusher_count {
         let pusher = Pusher::new(receiver.clone(), &vapid_private_pem, subscriptions_to_remove_sender.clone());
-
-        std::thread::spawn(|| pusher.run());
+        tokio::spawn(pusher.run());
     }
 
     let subscription_remover = SubscriptionRemover::new(ic_agent, index_canister_id, subscriptions_to_remove_receiver);
 
-    std::thread::spawn(|| subscription_remover.run());
+    tokio::spawn(subscription_remover.run());
 
-    info!("Runner started");
+    info!("Notifications pusher started");
+
+    std::thread::park();
 }
 
 pub struct Notification {
