@@ -1066,6 +1066,7 @@ dependencies = [
  "rand",
  "search",
  "serde",
+ "serde_bytes",
  "serializer",
  "storage_bucket_client",
  "tracing",
@@ -2987,6 +2988,7 @@ dependencies = [
  "candid_gen",
  "notifications_index_canister",
  "serde",
+ "serde_bytes",
  "types",
 ]
 
@@ -3032,6 +3034,7 @@ dependencies = [
  "notifications_canister",
  "notifications_index_canister",
  "serde",
+ "serde_bytes",
  "serializer",
  "tracing",
  "types",

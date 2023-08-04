@@ -1,6 +1,7 @@
 use crate::{ChannelId, ChatId, CommunityId, EventWrapper, Message, MessageIndex, Reaction, TimestampMillis, User, UserId};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct NotificationEnvelopeV1 {
@@ -12,7 +13,7 @@ pub struct NotificationEnvelopeV1 {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct NotificationEnvelope {
     pub recipients: Vec<UserId>,
-    pub notification_bytes: Vec<u8>,
+    pub notification_bytes: ByteBuf,
     pub timestamp: TimestampMillis,
 }
 
