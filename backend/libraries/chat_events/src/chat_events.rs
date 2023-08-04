@@ -36,6 +36,15 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
+    // TODO remove this after next upgrade
+    pub fn convert_sns_messages_to_icrc1(&mut self) {
+        self.main.convert_sns_messages_to_icrc1();
+
+        for thread in self.threads.values_mut() {
+            thread.convert_sns_messages_to_icrc1();
+        }
+    }
+
     pub fn new_direct_chat(events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
             chat_type: ChatType::Direct,
