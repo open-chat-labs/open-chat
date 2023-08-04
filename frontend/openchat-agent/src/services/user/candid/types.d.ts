@@ -1223,9 +1223,6 @@ export interface PermissionsChanged {
   'old_permissions' : GroupPermissions,
   'new_permissions' : GroupPermissions,
 }
-export interface PinChatRequest { 'chat_id' : ChatId }
-export type PinChatResponse = { 'Success' : null } |
-  { 'PinnedLimitReached' : number };
 export interface PinChatV2Request { 'chat' : ChatInList }
 export type PinChatV2Response = { 'ChatNotFound' : null } |
   { 'Success' : null };
@@ -1622,8 +1619,6 @@ export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
 export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
-export interface UnpinChatRequest { 'chat_id' : ChatId }
-export type UnpinChatResponse = { 'Success' : null };
 export interface UnpinChatV2Request { 'chat' : ChatInList }
 export type UnpinChatV2Response = { 'ChatNotFound' : null } |
   { 'Success' : null };
@@ -1784,7 +1779,6 @@ export interface _SERVICE {
     [MuteNotificationsArgs],
     MuteNotificationsResponse
   >,
-  'pin_chat' : ActorMethod<[PinChatRequest], PinChatResponse>,
   'pin_chat_v2' : ActorMethod<[PinChatV2Request], PinChatV2Response>,
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
@@ -1814,7 +1808,6 @@ export interface _SERVICE {
     [UnmuteNotificationsArgs],
     UnmuteNotificationsResponse
   >,
-  'unpin_chat' : ActorMethod<[UnpinChatRequest], UnpinChatResponse>,
   'unpin_chat_v2' : ActorMethod<[UnpinChatV2Request], UnpinChatV2Response>,
   'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
   'withdraw_crypto_v2' : ActorMethod<

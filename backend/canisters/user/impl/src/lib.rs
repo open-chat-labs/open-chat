@@ -145,8 +145,6 @@ struct Data {
     pub storage_limit: u64,
     pub phone_is_verified: bool,
     pub user_created: TimestampMillis,
-    // Remove pinned_chats after the next upgrade
-    pub pinned_chats: Timestamped<Vec<ChatId>>,
     pub pending_user_principal_migration: Option<Principal>,
     pub suspended: Timestamped<bool>,
     pub timer_jobs: TimerJobs<TimerJob>,
@@ -188,7 +186,6 @@ impl Data {
             storage_limit: 0,
             phone_is_verified: false,
             user_created: now,
-            pinned_chats: Timestamped::default(),
             pending_user_principal_migration: None,
             suspended: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
@@ -212,20 +209,6 @@ impl Data {
         if self.blocked_users.value.remove(user_id) {
             self.blocked_users.timestamp = now;
         }
-    }
-
-    // TODO: Legacy - delete me once communities enabled
-    pub fn pin_chat(&mut self, chat_id: ChatId, now: TimestampMillis) {
-        let chat = if self.direct_chats.get(&chat_id).is_some() { Chat::Direct(chat_id) } else { Chat::Group(chat_id) };
-
-        self.favourite_chats.add(chat, now);
-    }
-
-    // TODO: Legacy - delete me once communities enabled
-    pub fn unpin_chat(&mut self, chat_id: ChatId, now: TimestampMillis) {
-        let chat = if self.direct_chats.get(&chat_id).is_some() { Chat::Direct(chat_id) } else { Chat::Group(chat_id) };
-
-        self.favourite_chats.remove(&chat, now);
     }
 
     pub fn is_diamond_member(&self, now: TimestampMillis) -> bool {
