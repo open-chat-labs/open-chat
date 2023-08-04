@@ -2,16 +2,13 @@ use crate::model::btc_miami_payments_queue::PendingPayment;
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use ic_cdk_timers::TimerId;
-use ic_ledger_types::{BlockIndex, Tokens};
-use ledger_utils::sns::transaction_hash;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::icrc1::{Account, TransferArg};
-use types::sns::CryptoAccount;
+use types::icrc1::{Account, BlockIndex, CryptoAccount, TransferArg};
 use types::{
-    sns, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent,
-    MessageContent, TextContent, TransactionHash,
+    icrc1, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, MessageContent,
+    TextContent,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
@@ -31,24 +28,18 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
-    if let Some((pending_payment, this_canister_id)) = mutate_state(|state| {
-        state
-            .data
-            .btc_miami_payments_queue
-            .pop()
-            .map(|p| (p, state.env.canister_id()))
-    }) {
-        ic_cdk::spawn(process_payment(pending_payment, this_canister_id));
+    if let Some(pending_payment) = mutate_state(|state| state.data.btc_miami_payments_queue.pop()) {
+        ic_cdk::spawn(process_payment(pending_payment));
     } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
         ic_cdk_timers::clear_timer(timer_id);
         trace!("'make_btc_miami_payments' job stopped");
     }
 }
 
-async fn process_payment(pending_payment: PendingPayment, this_canister_id: CanisterId) {
-    match make_payment(&pending_payment, this_canister_id).await {
-        Ok((block_index, transaction_hash)) => {
-            mutate_state(|state| send_oc_bot_messages(&pending_payment, block_index, transaction_hash, state));
+async fn process_payment(pending_payment: PendingPayment) {
+    match make_payment(&pending_payment).await {
+        Ok(block_index) => {
+            mutate_state(|state| send_oc_bot_messages(&pending_payment, block_index, state));
         }
         Err(_) => {
             mutate_state(|state| {
@@ -59,10 +50,7 @@ async fn process_payment(pending_payment: PendingPayment, this_canister_id: Cani
     }
 }
 
-async fn make_payment(
-    pending_payment: &PendingPayment,
-    this_canister_id: CanisterId,
-) -> Result<(BlockIndex, TransactionHash), ()> {
+async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, ()> {
     let to = Account::from(pending_payment.recipient);
 
     let args = TransferArg {
@@ -74,10 +62,8 @@ async fn make_payment(
         amount: pending_payment.amount.into(),
     };
 
-    let transaction_hash = transaction_hash(Account::from(this_canister_id), &args);
-
     match icrc1_ledger_canister_c2c_client::icrc1_transfer(Cryptocurrency::CKBTC.ledger_canister_id().unwrap(), &args).await {
-        Ok(Ok(block_index)) => return Ok((block_index.0.try_into().unwrap(), transaction_hash)),
+        Ok(Ok(block_index)) => return Ok(block_index),
         Ok(Err(transfer_error)) => error!("Transfer failed. {transfer_error:?}"),
         Err((code, msg)) => error!("Transfer failed. {code:?}: {msg}"),
     }
@@ -85,29 +71,23 @@ async fn make_payment(
     Err(())
 }
 
-fn send_oc_bot_messages(
-    pending_payment: &PendingPayment,
-    block_index: BlockIndex,
-    transaction_hash: TransactionHash,
-    state: &mut RuntimeState,
-) {
+fn send_oc_bot_messages(pending_payment: &PendingPayment, block_index: BlockIndex, state: &mut RuntimeState) {
     let user_id = pending_payment.recipient.into();
-    let amount = Tokens::from_e8s(pending_payment.amount);
+    let amount = pending_payment.amount as u128;
 
     let messages = vec![
         MessageContent::Crypto(CryptoContent {
             recipient: user_id,
-            transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::SNS(sns::CompletedCryptoTransaction {
+            transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::ICRC1(icrc1::CompletedCryptoTransaction {
                 ledger: Cryptocurrency::CKBTC.ledger_canister_id().unwrap(),
                 token: Cryptocurrency::CKBTC,
                 amount,
-                fee: Tokens::from_e8s(10),
+                fee: 10,
                 from: CryptoAccount::Account(Account::from(Principal::from(OPENCHAT_BOT_USER_ID))),
                 to: CryptoAccount::Account(Account::from(Principal::from(user_id))),
                 memo: None,
                 created: pending_payment.timestamp,
-                transaction_hash,
-                block_index,
+                block_index: block_index.0.try_into().unwrap(),
             })),
             caption: Some("Here are your 50,000 SATS as [ckBTC](https://internetcomputer.org/ckbtc)!".to_string()),
         }),
