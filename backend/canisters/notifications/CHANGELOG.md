@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Expose counts of principals authorized and blocked in metrics ([#4145](https://github.com/open-chat-labs/open-chat/pull/4145))
+
 ### Changed
 
 - More efficient serialization of notifications ([#4134](https://github.com/open-chat-labs/open-chat/pull/4134))
