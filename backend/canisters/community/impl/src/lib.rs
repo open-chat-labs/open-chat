@@ -2,7 +2,6 @@ use crate::model::channels::Channels;
 use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
 use crate::model::members::CommunityMembers;
 use crate::timer_job_types::TimerJob;
-use crate::updates::c2c_join_channel::join_channel_unchecked;
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -256,17 +255,6 @@ impl Data {
             groups_being_imported: GroupsBeingImported::default(),
             test_mode,
             cached_chat_metrics: Timestamped::default(),
-        }
-    }
-
-    // TODO: One-time job - remove this after the next release
-    pub fn add_all_members_to_all_public_channels(&mut self, now: TimestampMillis) {
-        for channel in self.channels.iter_mut() {
-            if channel.chat.is_public && channel.chat.gate.is_none() {
-                for member in self.members.iter_mut() {
-                    join_channel_unchecked(channel, member, true, now);
-                }
-            }
         }
     }
 

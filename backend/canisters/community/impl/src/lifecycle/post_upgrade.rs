@@ -8,7 +8,6 @@ use community_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
 use tracing::info;
-use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]
@@ -18,9 +17,7 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
 
-    let (mut data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
-
-    data.add_all_members_to_all_public_channels(env.now());
+    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, logs, traces);
 

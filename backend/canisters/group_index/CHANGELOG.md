@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.788](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.788-group_index)] - 2023-08-04
+
 ### Changed
 
 - Make `notifications_pending` metrics update instantly ([#4118](https://github.com/open-chat-labs/open-chat/pull/4118))
