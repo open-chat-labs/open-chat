@@ -117,8 +117,12 @@
                 {#if editing && !original.public}
                     <p>{interpolateLevel("access.cannotMakePublic", candidate.level, true)}</p>
                 {:else}
-                    <p>{interpolateLevel("publicGroupInfo", candidate.level, true)}</p>
                     <p>{interpolateLevel("publicGroupUnique", candidate.level, true)}</p>
+                    <p>
+                        {candidate.level === "channel"
+                            ? $_("publicChannelInfo")
+                            : interpolateLevel("publicGroupInfo", candidate.level, true)}
+                    </p>
                 {/if}
             </div>
         </Radio>
@@ -144,19 +148,6 @@
             </div>
         </Checkbox>
     </div>
-{/if}
-
-{#if !editing && candidate.level === "channel" && candidate.public}
-    <section transition:fade|local={{ duration: 250 }} class="section">
-        <Checkbox
-            id={`default_channel`}
-            label={$_("communities.defaultChannel")}
-            align={"start"}
-            bind:checked={candidate.isDefault}>
-            <div class="section-title">{$_("communities.defaultChannel")}</div>
-            <p class="info">{$_("communities.defaultInfo")}</p>
-        </Checkbox>
-    </section>
 {/if}
 
 {#if $isDiamond && candidate.public}

@@ -121,7 +121,6 @@ export const idlFactory = ({ IDL }) => {
     'community_id' : CommunityId,
   });
   const CreateCommunityResponse = IDL.Variant({
-    'DefaultChannelsInvalid' : IDL.Null,
     'NameReserved' : IDL.Null,
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,

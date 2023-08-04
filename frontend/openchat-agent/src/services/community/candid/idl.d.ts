@@ -65,7 +65,6 @@ import {
     ChannelSummaryResponse,
     RegisterPollVoteResponse,
     ImportGroupResponse,
-    ManageDefaultChannelsResponse,
     GroupCanisterThreadDetails,
     RegisterProposalVoteResponse,
 } from "./types";
@@ -135,7 +134,6 @@ export {
     ChannelSummaryResponse as ApiChannelSummaryResponse,
     RegisterPollVoteResponse as ApiRegisterPollVoteResponse,
     ImportGroupResponse as ApiImportGroupResponse,
-    ManageDefaultChannelsResponse as ApiManageDefaultChannelsResponse,
     GroupCanisterThreadDetails as ApiGroupCanisterThreadDetails,
     RegisterProposalVoteResponse as ApiRegisterProposalVoteResponse,
 };

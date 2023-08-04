@@ -374,8 +374,7 @@ export interface CreateCommunityArgs {
   'avatar' : [] | [Document],
   'primary_language' : string,
 }
-export type CreateCommunityResponse = { 'DefaultChannelsInvalid' : null } |
-  { 'NameReserved' : null } |
+export type CreateCommunityResponse = { 'NameReserved' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |

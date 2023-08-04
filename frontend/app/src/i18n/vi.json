@@ -872,12 +872,12 @@
         "createChannel": "Kênh mới",
         "convert": "Chuyển đổi thành cộng đồng",
         "channels": "Kênh truyền hình",
-        "channelPlaceholder": "Nhập một kênh mặc định",
-        "channelsInfo": "Bạn phải tạo một hoặc nhiều kênh mặc định công khai. Bất kỳ người dùng nào tham gia cộng đồng của bạn sẽ tự động được đăng ký vào các kênh mặc định này. Bạn luôn có thể thay đổi điều này sau.",
+        "channelPlaceholder": "Nhập tên kênh",
+        "channelsInfo": "Bạn phải tạo một hoặc nhiều kênh công khai. Bất kỳ người dùng nào tham gia cộng đồng của bạn sẽ tự động được đăng ký vào các kênh này. Bạn luôn có thể thay đổi điều này sau.",
         "updateChannelPlaceholder": "Cập nhật tên kênh",
         "general": "Tổng quan",
-        "mustHaveOneChannel": "Bạn phải tạo ít nhất một kênh mặc định",
-        "mustHaveUniqueChannels": "Bạn không thể có tên kênh mặc định trùng lặp",
+        "mustHaveOneChannel": "Bạn phải tạo ít nhất một kênh công khai",
+        "mustHaveUniqueChannels": "Bạn không thể có tên kênh trùng lặp",
         "noBlankChannels": "Tất cả các kênh phải có tên",
         "members": "Các thành viên",
         "created": "Cộng đồng của bạn đã được tạo thành công",
@@ -891,8 +891,7 @@
             "leaveFailed": "Xin lỗi, chúng tôi không thể rời khỏi cộng đồng này",
             "deleteFailed": "Xin lỗi, chúng tôi không thể xóa cộng đồng này",
             "convertFailed": "Xin lỗi nhưng chúng tôi không thể chuyển đổi nhóm của bạn thành cộng đồng",
-            "importFailed": "Xin lỗi, chúng tôi không thể nhập nhóm của bạn",
-            "manageDefaultChannels": "Xin lỗi nhưng chúng tôi không thể cập nhật các kênh mặc định"
+            "importFailed": "Xin lỗi, chúng tôi không thể nhập nhóm của bạn"
         },
         "memberCount": "các thành viên)",
         "channelCount": "kênh truyền hình)",
@@ -908,7 +907,7 @@
         "converted": "Nhóm của bạn đã được chuyển đổi thành một cộng đồng.",
         "pleaseWait": "Vui lòng đợi - quá trình này có thể mất chút thời gian",
         "goto": "Đi đến cộng đồng",
-        "convertInfo": "Chúng tôi có thể chăm sóc việc chuyển đổi nhóm của bạn thành một cộng đồng.\n\n Đây là một quá trình không thể đảo ngược và sẽ làm như sau:\n\n* đóng băng nhóm hiện có\n* tạo một cộng đồng mới có cùng tên với nhóm\n* thêm kênh mặc định vào cộng đồng có cùng tên với nhóm\n* thêm tất cả các thành viên của nhóm làm thành viên của cộng đồng\n* copy toàn bộ lịch sử tin nhắn từ nhóm vào kênh mặc định\n* xóa nhóm hiện có\n* thông báo cho tất cả các thành viên của nhóm rằng nó đã được chuyển đổi thành cộng đồng\n\nQuá trình này có thể mất vài phút tùy thuộc vào quy mô của nhóm, vì vậy hãy kiên nhẫn.",
+        "convertInfo": "Chúng tôi có thể chăm sóc việc chuyển đổi nhóm của bạn thành một cộng đồng.\n\n Đây là một quá trình không thể đảo ngược và sẽ làm như sau:\n\n* đóng băng nhóm hiện có\n* tạo một cộng đồng mới có cùng tên với nhóm\n* thêm kênh công khai vào cộng đồng có cùng tên với nhóm\n* thêm tất cả các thành viên của nhóm làm thành viên của cộng đồng\n* copy toàn bộ lịch sử tin nhắn từ nhóm vào kênh\n* xóa nhóm hiện có\n* thông báo cho tất cả các thành viên của nhóm rằng nó đã được chuyển đổi thành cộng đồng\n\nQuá trình này có thể mất vài phút tùy thuộc vào quy mô của nhóm, vì vậy hãy kiên nhẫn.",
         "primaryLanguage": "Ngôn ngữ chính",
         "filters": "Bộ lọc cộng đồng",
         "flags": "cờ",
@@ -921,8 +920,7 @@
         "noOwned": "Bạn không phải là chủ sở hữu của bất kỳ cộng đồng nào",
         "chooseCommunity": "Chọn một cộng đồng",
         "otherChannels": "Các kênh khác",
-        "defaultChannel": "Kênh mặc định",
-        "defaultInfo": "Người dùng tham gia cộng đồng này sẽ tự động được thêm vào tất cả các kênh mặc định",
+        "defaultInfo": "Người dùng tham gia cộng đồng này sẽ tự động được thêm vào tất cả các kênh công khai",
         "saveChanges": "Lưu thay đổi",
         "exploreMobile": "Khám phá",
         "publicChannels": "Kênh công cộng",
@@ -967,5 +965,6 @@
     "chatMenu": "menu trò chuyện",
     "attachFile": "Đính kèm hình ảnh/video/tập tin",
     "pickEmoji": "Chọn biểu tượng cảm xúc",
-    "sendMessage": "Gửi tin nhắn"
+    "sendMessage": "Gửi tin nhắn",
+    "publicChannelInfo": "Các thành viên cộng đồng được tự động thêm vào các kênh công cộng (sau đó họ có thể rời đi)."
 }

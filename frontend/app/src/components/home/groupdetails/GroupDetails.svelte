@@ -105,7 +105,9 @@
             {/if}
             <div class="info">
                 {#if chat.public}
-                    <p>{interpolateLevel("publicGroupInfo", chat.level, true)}</p>
+                    {chat.level === "channel"
+                        ? $_("publicChannelInfo")
+                        : interpolateLevel("publicGroupInfo", chat.level, true)}
                 {:else}
                     <p>{interpolateLevel("group.privateGroupInfo", chat.level, true)}</p>
                 {/if}
