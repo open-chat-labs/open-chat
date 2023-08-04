@@ -428,7 +428,6 @@ export type CreateChannelResponse = { 'MaxChannelsCreated' : number } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
-  { 'DefaultMustBePublic' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : { 'channel_id' : ChannelId } } |
@@ -1694,7 +1693,6 @@ export type UpdateChannelResponse = { 'CannotMakeChannelPublic' : null } |
   { 'NameReserved' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
-  { 'CannotMakeDefaultChannelPrivate' : null } |
   { 'NameTooShort' : FieldTooShortResult } |
   { 'UserNotInChannel' : null } |
   { 'ChannelNotFound' : null } |

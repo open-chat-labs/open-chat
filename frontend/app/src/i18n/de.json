@@ -873,12 +873,12 @@
         "createChannel": "Neuer Kanal",
         "convert": "Konvertieren Sie zur Gemeinschaft",
         "channels": "Kanäle",
-        "channelPlaceholder": "Geben Sie einen Standardkanal ein",
-        "channelsInfo": "Sie müssen einen oder mehrere öffentliche Standardkanäle erstellen. Jeder Benutzer, der Ihrer Community beitritt, wird automatisch in diese Standardkanäle aufgenommen. Sie können dies später jederzeit ändern.",
+        "channelPlaceholder": "Geben Sie einen Kanalnamen ein",
+        "channelsInfo": "Sie müssen einen oder mehrere öffentliche Kanäle erstellen. Jeder Benutzer, der Ihrer Community beitritt, wird automatisch in diese Kanäle aufgenommen. Sie können dies später jederzeit ändern.",
         "updateChannelPlaceholder": "Kanalnamen aktualisieren",
         "general": "Allgemein",
-        "mustHaveOneChannel": "Sie müssen mindestens einen Standardkanal erstellen",
-        "mustHaveUniqueChannels": "Sie können keine doppelten Standardkanalnamen haben",
+        "mustHaveOneChannel": "Sie müssen mindestens einen öffentlichen Kanal erstellen",
+        "mustHaveUniqueChannels": "Es dürfen keine doppelten Kanalnamen vorhanden sein",
         "noBlankChannels": "Alle Kanäle müssen einen Namen haben",
         "members": "Mitglieder",
         "created": "Ihre Community wurde erfolgreich erstellt",
@@ -892,8 +892,7 @@
             "leaveFailed": "Es tut uns leid, dass wir diese Community nicht verlassen konnten",
             "deleteFailed": "Leider konnten wir diese Community nicht löschen",
             "convertFailed": "Leider konnten wir Ihre Gruppen nicht in eine Community umwandeln",
-            "importFailed": "Leider konnten wir Ihre Gruppe nicht importieren",
-            "manageDefaultChannels": "Leider konnten wir die Standardkanäle nicht aktualisieren"
+            "importFailed": "Leider konnten wir Ihre Gruppe nicht importieren"
         },
         "memberCount": "Mitglied(er)",
         "channelCount": "Kanal(e)",
@@ -909,7 +908,7 @@
         "converted": "Ihre Gruppe wurde in eine Community umgewandelt.",
         "pleaseWait": "Bitte warten Sie – dies kann eine Weile dauern",
         "goto": "Gehe zur Gemeinschaft",
-        "convertInfo": "Wir können uns darum kümmern, Ihre Gruppe in eine Gemeinschaft umzuwandeln.\n\n Dies ist ein irreversibler Prozess und bewirkt Folgendes:\n\n* Die bestehende Gruppe einfrieren\n* Erstellen Sie eine neue Community mit demselben Namen wie die Gruppe\n* Fügen Sie der Community einen Standardkanal mit demselben Namen wie die Gruppe hinzu\n* Fügen Sie alle Mitglieder der Gruppe als Mitglieder der Community hinzu\n* Kopieren Sie den vollständigen Nachrichtenverlauf aus der Gruppe in den Standardkanal\n* Löschen Sie die vorhandene Gruppe\n* Informieren Sie alle Mitglieder der Gruppe darüber, dass sie in eine Community umgewandelt wurde\n\nDieser Vorgang kann je nach Gruppengröße einige Minuten dauern. Bitte haben Sie etwas Geduld.",
+        "convertInfo": "Wir können uns darum kümmern, Ihre Gruppe in eine Gemeinschaft umzuwandeln.\n\n Dies ist ein irreversibler Prozess und bewirkt Folgendes:\n\n* Die bestehende Gruppe einfrieren\n* Erstellen Sie eine neue Community mit demselben Namen wie die Gruppe\n* Fügen Sie der Community einen öffentlichen Kanal mit demselben Namen wie die Gruppe hinzu\n* Fügen Sie alle Mitglieder der Gruppe als Mitglieder der Community hinzu\n* Kopieren Sie den vollständigen Nachrichtenverlauf von der Gruppe in den Kanal\n* Löschen Sie die vorhandene Gruppe\n* Informieren Sie alle Mitglieder der Gruppe darüber, dass sie in eine Community umgewandelt wurde\n\nDieser Vorgang kann je nach Gruppengröße einige Minuten dauern. Bitte haben Sie etwas Geduld.",
         "primaryLanguage": "Muttersprache",
         "filters": "Community-Filter",
         "flags": "Flaggen",
@@ -922,8 +921,7 @@
         "noOwned": "Sie sind nicht Eigentümer einer Community",
         "chooseCommunity": "Wählen Sie eine Community",
         "otherChannels": "Andere Kanäle",
-        "defaultChannel": "Standardkanal",
-        "defaultInfo": "Benutzer, die dieser Community beitreten, werden automatisch allen Standardkanälen hinzugefügt",
+        "defaultInfo": "Benutzer, die dieser Community beitreten, werden automatisch allen öffentlichen Kanälen hinzugefügt",
         "saveChanges": "Änderungen speichern",
         "exploreMobile": "Erkunden",
         "publicChannels": "Öffentliche Kanäle",
@@ -968,5 +966,6 @@
     "chatMenu": "Chat-Menü",
     "attachFile": "Bild/Video/Datei anhängen",
     "pickEmoji": "Wählen Sie Emoji",
-    "sendMessage": "Nachricht senden"
+    "sendMessage": "Nachricht senden",
+    "publicChannelInfo": "Community-Mitglieder werden automatisch zu öffentlichen Kanälen hinzugefügt (sie können sie anschließend verlassen)."
 }

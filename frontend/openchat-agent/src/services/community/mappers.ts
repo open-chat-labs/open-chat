@@ -20,7 +20,6 @@ import {
     ExploreChannelsResponse,
     GateCheckFailedReason,
     ImportGroupResponse,
-    ManageDefaultChannelsResponse,
     MemberRole,
     Message,
     RemoveMemberResponse,
@@ -65,7 +64,6 @@ import type {
     ApiSelectedUpdatesResponse,
     ApiChannelSummaryResponse,
     ApiImportGroupResponse,
-    ApiManageDefaultChannelsResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -90,17 +88,6 @@ import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
 import { messageWrapper } from "../group/mappers";
 import { ReplicaNotUpToDateError } from "../error";
-
-export function manageDefaultChannelsResponse(
-    candid: ApiManageDefaultChannelsResponse
-): ManageDefaultChannelsResponse {
-    if ("Success" in candid) {
-        return CommonResponses.success();
-    } else {
-        console.warn("ManageDefaultChannels failed with ", candid);
-        return CommonResponses.failure();
-    }
-}
 
 export function addMembersToChannelResponse(
     candid: ApiAddMembersToChannelResponse
@@ -329,7 +316,6 @@ export function channelMatch(candid: ApiChannelMatch, communityId: string): Chan
         name: candid.name,
         description: candid.description,
         memberCount: candid.member_count,
-        isDefault: candid.is_default,
         avatar: {
             blobReference: optional(candid.avatar_id, (blobId) => ({
                 blobId,

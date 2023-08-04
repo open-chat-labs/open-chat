@@ -46,7 +46,7 @@
         gate: { ...candidateGroup.gate },
     };
     let rulesValid = true;
-    $: steps = getSteps(editing, detailsValid);
+    $: steps = getSteps(editing, detailsValid, hideInviteUsers);
     $: editing = !chatIdentifierUnset(candidateGroup.id);
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
@@ -70,8 +70,9 @@
     $: gateDirty = client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: chatListScope = client.chatListScope;
+    $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
 
-    function getSteps(editing: boolean, detailsValid: boolean) {
+    function getSteps(editing: boolean, detailsValid: boolean, hideInviteUsers: boolean) {
         let steps = [
             { labelKey: "group.details", valid: detailsValid },
             { labelKey: "access.visibility", valid: true },
@@ -79,7 +80,7 @@
             { labelKey: "permissions.permissions", valid: true },
         ];
 
-        if (!editing) {
+        if (!editing && !hideInviteUsers) {
             steps.push({ labelKey: "invite.invite", valid: true });
         }
         return steps;
@@ -343,18 +344,18 @@
                     const err = groupCreationErrorMessage(resp, isChannel);
                     if (err) toastStore.showFailureToast(interpolateError(err));
                     step = 0;
-                } else {
+                } else if (!hideInviteUsers) {
                     return optionallyInviteUsers(resp.canisterId)
                         .then(() => {
                             onGroupCreated(resp.canisterId);
                         })
-                        .catch((err) => {
+                        .catch((_err) => {
                             toastStore.showFailureToast("inviteUsersFailed");
                             step = 0;
                         });
                 }
             })
-            .catch((err) => {
+            .catch((_err) => {
                 toastStore.showFailureToast("groupCreationFailed");
                 step = 0;
             })
@@ -423,7 +424,7 @@
                             isPublic={candidateGroup.public} />
                     {/if}
                 </div>
-                {#if !editing}
+                {#if !editing && !hideInviteUsers}
                     <div class="members" class:visible={step === 4}>
                         <ChooseMembers
                             userLookup={searchUsers}
