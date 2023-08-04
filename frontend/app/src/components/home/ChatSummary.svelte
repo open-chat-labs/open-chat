@@ -5,6 +5,7 @@
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Heart from "svelte-material-icons/Heart.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
+    import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import PinIcon from "svelte-material-icons/Pin.svelte";
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
@@ -31,6 +32,7 @@
     import { toastStore } from "../../stores/toast";
     import { routeForScope, pathParams } from "../../routes";
     import page from "page";
+    import { interpolateLevel } from "../../utils/i18n";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -239,6 +241,15 @@
         dispatch("unarchiveChat", chatSummary.id);
     }
 
+    function leaveGroup() {
+        if (chatSummary.kind === "direct_chat") return;
+        dispatch("leaveGroup", {
+            kind: "leave",
+            chatId: chatSummary.id,
+            level: chatSummary.level,
+        });
+    }
+
     $: displayDate = client.getDisplayDate(chatSummary);
     $: selectedCommunity = client.selectedCommunity;
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId);
@@ -423,6 +434,21 @@
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("archiveChat")}</div>
+                                    </MenuItem>
+                                {/if}
+                                {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
+                                    <MenuItem warning on:click={leaveGroup}>
+                                        <LocationExit
+                                            size={$iconSize}
+                                            color={"var(--menu-warn)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            {interpolateLevel(
+                                                "leaveGroup",
+                                                chatSummary.level,
+                                                true
+                                            )}
+                                        </div>
                                     </MenuItem>
                                 {/if}
                                 <MenuItem

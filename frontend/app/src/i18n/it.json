@@ -871,12 +871,12 @@
         "createChannel": "Nuovo canale",
         "convert": "Converti in comunità",
         "channels": "Canali",
-        "channelPlaceholder": "Inserisci un canale predefinito",
-        "channelsInfo": "Devi creare uno o più canali predefiniti pubblici. Qualsiasi utente che si unisca alla tua community verrà automaticamente iscritto a questi canali predefiniti. Puoi sempre cambiarlo in seguito.",
+        "channelPlaceholder": "Inserisci un nome per il canale",
+        "channelsInfo": "Devi creare uno o più canali pubblici. Qualsiasi utente che si unisca alla tua community verrà automaticamente iscritto a questi canali. Puoi sempre cambiarlo in seguito.",
         "updateChannelPlaceholder": "Aggiorna il nome del canale",
         "general": "Generale",
-        "mustHaveOneChannel": "Devi creare almeno un canale predefinito",
-        "mustHaveUniqueChannels": "Non puoi avere nomi di canale predefiniti duplicati",
+        "mustHaveOneChannel": "Devi creare almeno un canale pubblico",
+        "mustHaveUniqueChannels": "Non puoi avere nomi di canale duplicati",
         "noBlankChannels": "Tutti i canali devono avere un nome",
         "members": "Membri",
         "created": "La tua comunità è stata creata con successo",
@@ -890,8 +890,7 @@
             "leaveFailed": "Spiacenti, non siamo riusciti a lasciare questa community",
             "deleteFailed": "Spiacenti, non siamo riusciti a eliminare questa community",
             "convertFailed": "Siamo spiacenti ma non siamo riusciti a convertire i tuoi gruppi in una community",
-            "importFailed": "Spiacenti, non siamo riusciti a importare il tuo gruppo",
-            "manageDefaultChannels": "Siamo spiacenti ma non siamo stati in grado di aggiornare i canali predefiniti"
+            "importFailed": "Spiacenti, non siamo riusciti a importare il tuo gruppo"
         },
         "memberCount": "membri)",
         "channelCount": "canale(i)",
@@ -907,7 +906,7 @@
         "converted": "Il tuo gruppo è stato convertito in una comunità.",
         "pleaseWait": "Attendere, l'operazione potrebbe richiedere un po' di tempo",
         "goto": "Vai alla comunità",
-        "convertInfo": "Possiamo occuparci noi di convertire il tuo gruppo in una community.\n\n Questo è un processo irreversibile e farà quanto segue:\n\n* congelare il gruppo esistente\n* creare una nuova comunità con lo stesso nome del gruppo\n* aggiungi un canale predefinito alla comunità con lo stesso nome del gruppo\n* aggiungi tutti i membri del gruppo come membri della comunità\n* copia la cronologia completa dei messaggi dal gruppo nel canale predefinito\n* eliminare il gruppo esistente\n* informare tutti i membri del gruppo che è stato convertito in comunità\n\nQuesto processo potrebbe richiedere alcuni minuti a seconda delle dimensioni del gruppo, quindi sii paziente.",
+        "convertInfo": "Possiamo occuparci noi di convertire il tuo gruppo in una community.\n\n Questo è un processo irreversibile e farà quanto segue:\n\n* congelare il gruppo esistente\n* creare una nuova comunità con lo stesso nome del gruppo\n* aggiungere un canale pubblico alla comunità con lo stesso nome del gruppo\n* aggiungi tutti i membri del gruppo come membri della comunità\n* copia la cronologia completa dei messaggi dal gruppo nel canale\n* eliminare il gruppo esistente\n* informare tutti i membri del gruppo che è stato convertito in comunità\n\nQuesto processo potrebbe richiedere alcuni minuti a seconda delle dimensioni del gruppo, quindi sii paziente.",
         "primaryLanguage": "Lingua madre",
         "filters": "Filtri della comunità",
         "flags": "Bandiere",
@@ -920,8 +919,7 @@
         "noOwned": "Non sei il proprietario di alcuna comunità",
         "chooseCommunity": "Scegli una comunità",
         "otherChannels": "Altri canali",
-        "defaultChannel": "Canale di default",
-        "defaultInfo": "Gli utenti che si uniscono a questa community verranno aggiunti automaticamente a tutti i canali predefiniti",
+        "defaultInfo": "Gli utenti che si uniscono a questa community verranno automaticamente aggiunti a tutti i canali pubblici",
         "saveChanges": "Salvare le modifiche",
         "exploreMobile": "Esplorare",
         "publicChannels": "Canali pubblici",
@@ -966,5 +964,6 @@
     "chatMenu": "Menù chat",
     "attachFile": "Allega immagine/video/file",
     "pickEmoji": "Scegli le emoji",
-    "sendMessage": "Invia messaggio"
+    "sendMessage": "Invia messaggio",
+    "publicChannelInfo": "I membri della comunità vengono aggiunti automaticamente ai canali pubblici (possono successivamente uscire)."
 }

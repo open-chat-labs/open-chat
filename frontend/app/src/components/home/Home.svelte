@@ -943,7 +943,8 @@
             on:newChannel={newChannel}
             on:editCommunity={editCommunity}
             on:leaveCommunity={triggerConfirm}
-            on:deleteCommunity={triggerConfirm} />
+            on:deleteCommunity={triggerConfirm}
+            on:leaveGroup={triggerConfirm} />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel

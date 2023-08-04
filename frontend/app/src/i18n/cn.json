@@ -871,12 +871,12 @@
         "createChannel": "新频道",
         "convert": "转换为社区",
         "channels": "频道",
-        "channelPlaceholder": "输入默认频道",
-        "channelsInfo": "您必须创建一个或多个公共默认通道。任何加入您社区的用户都将自动注册到这些默认频道中。您以后可以随时更改此设置。",
+        "channelPlaceholder": "输入频道名称",
+        "channelsInfo": "您必须创建一个或多个公共频道。加入您社区的任何用户都将自动注册到这些频道中。您以后可以随时更改此设置。",
         "updateChannelPlaceholder": "更新频道名称",
         "general": "一般的",
-        "mustHaveOneChannel": "您必须至少创建一个默认频道",
-        "mustHaveUniqueChannels": "您不能有重复的默认频道名称",
+        "mustHaveOneChannel": "您必须创建至少一个公共频道",
+        "mustHaveUniqueChannels": "频道名称不能重复",
         "noBlankChannels": "所有频道都必须有名称",
         "members": "会员",
         "created": "您的社区已成功创建",
@@ -890,8 +890,7 @@
             "leaveFailed": "抱歉我们无法离开这个社区",
             "deleteFailed": "抱歉，我们无法删除此社区",
             "convertFailed": "抱歉，我们无法将您的群组转换为社区",
-            "importFailed": "抱歉，我们无法导入您的群组",
-            "manageDefaultChannels": "抱歉，我们无法更新默认频道"
+            "importFailed": "抱歉，我们无法导入您的群组"
         },
         "memberCount": "会员",
         "channelCount": "频道",
@@ -907,7 +906,7 @@
         "converted": "您的群组已转换为社区。",
         "pleaseWait": "请稍候 - 这可能需要一些时间",
         "goto": "前往社区",
-        "convertInfo": "我们可以帮助您将团体转变为社区。\n\n 这是一个不可逆的过程，将执行以下操作：\n\n* 冻结现有组\n* 创建一个与组同名的新社区\n* 为社区添加一个与群组同名的默认频道\n* 将群组所有成员添加为社区成员\n* 将群组中的完整消息历史记录复制到默认频道中\n* 删除现有组\n* 通知群组所有成员已转为社区\n\n此过程可能需要几分钟，具体取决于团体的规模，因此请耐心等待。",
+        "convertInfo": "我们可以帮助您将团体转变为社区。\n\n 这是一个不可逆的过程，将执行以下操作：\n\n* 冻结现有组\n* 创建一个与组同名的新社区\n* 向社区添加与群组同名的公共频道\n* 将群组所有成员添加为社区成员\n* 将群组中的完整消息历史记录复制到频道中\n* 删除现有组\n* 通知群组所有成员已转为社区\n\n此过程可能需要几分钟，具体取决于团体的规模，因此请耐心等待。",
         "primaryLanguage": "主要语言",
         "filters": "社区过滤器",
         "flags": "旗帜",
@@ -920,8 +919,7 @@
         "noOwned": "您不是任何社区的所有者",
         "chooseCommunity": "选择一个社区",
         "otherChannels": "其他渠道",
-        "defaultChannel": "默认频道",
-        "defaultInfo": "加入此社区的用户将自动添加到所有默认频道",
+        "defaultInfo": "加入此社区的用户将自动添加到所有公共频道",
         "saveChanges": "保存更改",
         "exploreMobile": "探索",
         "publicChannels": "公共频道",
@@ -967,5 +965,6 @@
     "chatMenu": "聊天菜单",
     "attachFile": "附加图像/视频/文件",
     "pickEmoji": "选择表情符号",
-    "sendMessage": "发信息"
+    "sendMessage": "发信息",
+    "publicChannelInfo": "社区成员会自动添加到公共频道（他们随后可以离开）。"
 }

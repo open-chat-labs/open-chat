@@ -26,7 +26,6 @@ import {
     changeRoleResponse,
     communityChannelSummaryResponse,
     importGroupResponse,
-    manageDefaultChannelsResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -109,7 +108,6 @@ import {
     type ExploreChannelsResponse,
     type GroupChatIdentifier,
     type ImportGroupResponse,
-    type ManageDefaultChannelsResponse,
     type RemoveMemberResponse,
     type SearchGroupChatResponse,
     textToCode,
@@ -170,19 +168,6 @@ export class CommunityClient extends CandidService {
         inviteCode: string | undefined
     ): CommunityClient {
         return new CommunityClient(communityId, identity, config, db, inviteCode);
-    }
-
-    manageDefaultChannels(
-        add: Set<string>,
-        remove: Set<string>
-    ): Promise<ManageDefaultChannelsResponse> {
-        return this.handleResponse(
-            this.service.manage_default_channels({
-                to_add: Array.from(add).map((id) => BigInt(id)),
-                to_remove: Array.from(remove).map((id) => BigInt(id)),
-            }),
-            manageDefaultChannelsResponse
-        );
     }
 
     addMembersToChannel(

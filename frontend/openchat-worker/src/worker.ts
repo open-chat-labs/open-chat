@@ -1643,18 +1643,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "manageDefaultChannels":
-                agent
-                    .communityClient(payload.id.communityId)
-                    .manageDefaultChannels(payload.toAdd, payload.toRemove)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "setModerationFlags":
                 agent
                     .setModerationFlags(payload.flags)
