@@ -410,7 +410,11 @@
             on:showInviteUsers={showInviteGroupUsers}
             on:removeMember={onRemoveGroupMember}
             on:changeRole={onChangeGroupRole} />
-    {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")}
+    {:else if lastState.kind === "show_pinned" &&
+        $selectedChatId !== undefined &&
+        ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") &&
+        $multiUserChat !== undefined
+    }
         <PinnedMessages
             on:chatWith
             on:goToMessageIndex={goToMessageIndex}
