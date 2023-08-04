@@ -1,8 +1,7 @@
 use candid::Principal;
 use index_store::DummyStore;
-use notification_pusher_core::actions::{prune_notifications, push_notifications};
 use notification_pusher_core::ic_agent::IcAgent;
-use notification_pusher_core::runner;
+use notification_pusher_core::run_notifications_pusher;
 use std::collections::HashMap;
 use std::str::FromStr;
 use tracing::info;
@@ -16,8 +15,7 @@ async fn main() -> Result<(), Error> {
     info!("Initializing notification pusher");
 
     let args: Vec<String> = std::env::args().collect();
-    let command: &str = &args[1];
-    let index = args[2].parse::<u64>().unwrap();
+    let index = args[1].parse::<u64>().unwrap();
     let vapid_private_pem = dotenv::var("VAPID_PRIVATE_PEM")?;
     let index_canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_INDEX_CANISTER_ID")?)?;
     let notifications_canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_CANISTER_ID")?)?;
@@ -30,28 +28,15 @@ async fn main() -> Result<(), Error> {
 
     info!("Initialization complete");
 
-    match command {
-        "push" => {
-            push_notifications::run(
-                &ic_agent,
-                index_canister_id,
-                notifications_canister_id,
-                &index_store,
-                &vapid_private_pem,
-            )
-            .await
-        }
-        "prune" => prune_notifications::run(&ic_agent, notifications_canister_id, &index_store).await,
-        "auto" => {
-            runner::run(
-                &ic_agent,
-                index_canister_id,
-                notifications_canister_id,
-                &index_store,
-                &vapid_private_pem,
-            )
-            .await
-        }
-        _ => Err(format!("Unsupported command: {command}").into()),
-    }
+    run_notifications_pusher(
+        ic_agent,
+        index_canister_id,
+        vec![notifications_canister_id],
+        index_store,
+        vapid_private_pem,
+        1,
+    )
+    .await;
+
+    Ok(())
 }

@@ -6,6 +6,7 @@ use index_store::IndexStore;
 use std::str::FromStr;
 use types::{CanisterId, Error};
 
+#[derive(Clone)]
 pub struct DynamoDbIndexStore {
     client: Client,
     table_name: String,
