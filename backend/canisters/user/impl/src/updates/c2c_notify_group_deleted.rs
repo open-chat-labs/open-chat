@@ -31,7 +31,7 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
         community_name,
         community_id,
         channel,
-        other_default_channels,
+        other_public_channels: other_default_channels,
     }) = args.deleted_group.community_imported_into
     {
         migrate_group_references_to_channel_references(chat_id, community_id, channel.channel_id, now, &mut state.data);

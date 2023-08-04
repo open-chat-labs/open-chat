@@ -11,7 +11,7 @@ use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
 use ic_cdk_macros::update;
 use rand::Rng;
-use types::{ChannelId, Timestamped};
+use types::ChannelId;
 use utils::document_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
@@ -56,10 +56,6 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
 fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return CommunityFrozen;
-    }
-
-    if !args.is_public && args.is_default {
-        return DefaultMustBePublic;
     }
 
     let caller = state.env.caller();
@@ -120,11 +116,10 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
             let mut channel = Channel {
                 id: channel_id,
                 chat,
-                is_default: Timestamped::new(args.is_default, now),
                 date_imported: None,
             };
 
-            if args.is_default && channel.chat.gate.is_none() {
+            if args.is_public && channel.chat.gate.is_none() {
                 for m in state.data.members.iter_mut() {
                     join_channel_unchecked(&mut channel, m, true, now);
                 }

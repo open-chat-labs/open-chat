@@ -69,7 +69,7 @@ pub enum ChatEventInternal {
     #[serde(rename = "ui")]
     UsersInvited(Box<UsersInvited>),
     #[serde(rename = "adc")]
-    MembersAddedToDefaultChannel(Box<MembersAddedToDefaultChannelInternal>),
+    MembersAddedToPublicChannel(Box<MembersAddedToPublicChannelInternal>),
     #[serde(rename = "e")]
     Empty,
 }
@@ -110,7 +110,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::EventsTimeToLiveUpdated(_)
                 | ChatEventInternal::GroupGateUpdated(_)
                 | ChatEventInternal::UsersInvited(_)
-                | ChatEventInternal::MembersAddedToDefaultChannel(_)
+                | ChatEventInternal::MembersAddedToPublicChannel(_)
         )
     }
 
@@ -324,13 +324,13 @@ impl From<DeletedBy> for DeletedByInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct MembersAddedToDefaultChannelInternal {
+pub struct MembersAddedToPublicChannelInternal {
     #[serde(rename = "u")]
     pub user_ids: Vec<UserId>,
 }
 
-impl From<&MembersAddedToDefaultChannelInternal> for MembersAddedToDefaultChannel {
-    fn from(value: &MembersAddedToDefaultChannelInternal) -> MembersAddedToDefaultChannel {
+impl From<&MembersAddedToPublicChannelInternal> for MembersAddedToDefaultChannel {
+    fn from(value: &MembersAddedToPublicChannelInternal) -> MembersAddedToDefaultChannel {
         MembersAddedToDefaultChannel {
             count: value.user_ids.len() as u32,
         }

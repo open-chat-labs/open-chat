@@ -37,7 +37,7 @@ pub struct CommunityImportedInto {
     pub community_name: String,
     pub community_id: CommunityId,
     pub channel: ChannelLatestMessageIndex,
-    pub other_default_channels: Vec<ChannelLatestMessageIndex>,
+    pub other_public_channels: Vec<ChannelLatestMessageIndex>,
 }
 
 impl From<DeletedGroupInfoInternal> for DeletedGroupInfo {

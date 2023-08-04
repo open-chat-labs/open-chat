@@ -35,5 +35,4 @@ pub enum Response {
     UserSuspended,
     CommunityFrozen,
     CannotMakeChannelPublic,
-    CannotMakeDefaultChannelPrivate,
 }

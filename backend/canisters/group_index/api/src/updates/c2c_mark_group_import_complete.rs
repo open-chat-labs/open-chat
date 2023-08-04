@@ -8,7 +8,9 @@ pub struct Args {
     pub group_id: ChatId,
     pub group_name: String,
     pub members: Vec<UserId>,
-    pub other_default_channels: Vec<ChannelLatestMessageIndex>,
+    // TODO: Delete this attribute once group_index has been released
+    #[serde(alias = "other_default_channels")]
+    pub other_public_channels: Vec<ChannelLatestMessageIndex>,
     pub mark_active_duration: Milliseconds,
     pub public_community_activity: Option<PublicCommunityActivity>,
 }
