@@ -458,23 +458,6 @@ type WithdrawCryptoResponse = variant {
     CurrencyNotSupported;
 };
 
-type PinChatRequest = record {
-    chat_id : ChatId;
-};
-
-type PinChatResponse = variant {
-    Success;
-    PinnedLimitReached : nat32;
-};
-
-type UnpinChatRequest = record {
-    chat_id : ChatId;
-};
-
-type UnpinChatResponse = variant {
-    Success;
-};
-
 type PinChatV2Request = record {
     chat : ChatInList;
 };
@@ -817,8 +800,6 @@ service : {
     send_message_with_transfer_to_channel : (SendMessageWithTransferToChannelArgs) -> (SendMessageWithTransferToChannelResponse);
     send_message_with_transfer_to_group : (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     withdraw_crypto_v2 : (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
-    pin_chat : (PinChatRequest) -> (PinChatResponse);
-    unpin_chat : (UnpinChatRequest) -> (UnpinChatResponse);
     pin_chat_v2 : (PinChatV2Request) -> (PinChatV2Response);
     unpin_chat_v2 : (UnpinChatV2Request) -> (UnpinChatV2Response);
     manage_favourite_chats : (ManageFavouriteChatsArgs) -> (ManageFavouriteChatsResponse);

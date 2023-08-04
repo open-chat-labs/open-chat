@@ -1057,11 +1057,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
-  const PinChatRequest = IDL.Record({ 'chat_id' : ChatId });
-  const PinChatResponse = IDL.Variant({
-    'Success' : IDL.Null,
-    'PinnedLimitReached' : IDL.Nat32,
-  });
   const ChatInList = IDL.Variant({
     'Group' : ChatId,
     'Favourite' : Chat,
@@ -1290,8 +1285,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
-  const UnpinChatRequest = IDL.Record({ 'chat_id' : ChatId });
-  const UnpinChatResponse = IDL.Variant({ 'Success' : IDL.Null });
   const UnpinChatV2Request = IDL.Record({ 'chat' : ChatInList });
   const UnpinChatV2Response = IDL.Variant({
     'ChatNotFound' : IDL.Null,
@@ -1478,7 +1471,6 @@ export const idlFactory = ({ IDL }) => {
         [MuteNotificationsResponse],
         [],
       ),
-    'pin_chat' : IDL.Func([PinChatRequest], [PinChatResponse], []),
     'pin_chat_v2' : IDL.Func([PinChatV2Request], [PinChatV2Response], []),
     'public_profile' : IDL.Func(
         [PublicProfileArgs],
@@ -1529,7 +1521,6 @@ export const idlFactory = ({ IDL }) => {
         [UnmuteNotificationsResponse],
         [],
       ),
-    'unpin_chat' : IDL.Func([UnpinChatRequest], [UnpinChatResponse], []),
     'unpin_chat_v2' : IDL.Func([UnpinChatV2Request], [UnpinChatV2Response], []),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
     'withdraw_crypto_v2' : IDL.Func(
