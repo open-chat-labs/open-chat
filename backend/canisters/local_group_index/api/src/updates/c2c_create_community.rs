@@ -15,7 +15,6 @@ pub struct Args {
     pub history_visible_to_new_joiners: bool,
     pub permissions: Option<CommunityPermissions>,
     pub gate: Option<AccessGate>,
-    #[serde(default)]
     pub default_channels: Vec<String>,
     pub source_group: Option<SourceGroup>,
     pub primary_language: String,

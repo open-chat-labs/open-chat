@@ -1148,7 +1148,6 @@ export type ChannelSummary = DataContent &
         memberCount: number;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
-        isDefault: boolean;
     };
 
 export type DirectChatSummary = ChatSummaryCommon & {
@@ -1176,7 +1175,6 @@ export type GroupChatSummary = DataContent &
         previewed: boolean;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
-        isDefault: boolean;
     };
 
 export function nullMembership(): ChatMembership {
@@ -1300,7 +1298,6 @@ export type CandidateGroupChat = AccessControlled &
         rules: AccessRules;
         members: CandidateMember[];
         avatar?: DataContent;
-        isDefault: boolean;
     };
 
 export type CandidateChannel = CandidateGroupChat;

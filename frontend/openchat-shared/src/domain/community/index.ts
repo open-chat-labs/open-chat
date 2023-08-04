@@ -197,7 +197,6 @@ export type CommunityCanisterChannelSummaryUpdates = {
     memberCount: number | undefined;
     latestMessage: EventWrapper<Message> | undefined;
     updatedEvents: UpdatedEvent[];
-    isDefault: boolean | undefined;
 };
 
 export type CommunityMembershipUpdates = {

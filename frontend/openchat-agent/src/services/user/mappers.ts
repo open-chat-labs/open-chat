@@ -796,7 +796,6 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
             readByMeUpTo: optional(candid.read_by_me_up_to, identity),
             archived: candid.archived,
         },
-        isDefault: false,
     };
 }
 

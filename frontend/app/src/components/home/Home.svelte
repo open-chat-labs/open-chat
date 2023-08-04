@@ -822,7 +822,6 @@
                 ...nullMembership(),
                 role: "owner",
             },
-            isDefault: false,
         };
     }
 
@@ -847,7 +846,6 @@
             gate: chat.gate,
             level,
             membership: chat.membership,
-            isDefault: chat.isDefault,
         };
     }
 

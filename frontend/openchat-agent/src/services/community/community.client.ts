@@ -257,7 +257,7 @@ export class CommunityClient extends CandidService {
                 permissions: [apiGroupPermissions(channel.permissions)],
                 rules: apiGroupRules(channel.rules),
                 gate: apiMaybeAccessGate(channel.gate),
-                is_default: channel.isDefault,
+                is_default: false,
             }),
             (resp) => createGroupResponse(resp, channel.id)
         );

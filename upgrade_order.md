@@ -1,3 +1,3 @@
-group_index -> community
+website -> community
 
-# This is because we have renamed "other_default_channels" to "other_public_channels" in group_index::c2c_mark_group_import_complete::Args with a serde alias
+# This is because we haven't yet removed `is_default` from `community::create_channel::Args`

@@ -225,7 +225,6 @@ impl Channel {
             next_message_expiry: chat.events.next_message_expiry(now),
             gate: chat.gate.value.clone(),
             membership,
-            is_default: self.chat.is_public,
         })
     }
 
@@ -290,7 +289,6 @@ impl Channel {
             events_ttl: updates_from_events.events_ttl,
             gate: updates_from_events.gate,
             membership,
-            is_default: updates_from_events.is_public,
         })
     }
 
@@ -328,7 +326,6 @@ impl From<&Channel> for ChannelMatch {
             avatar_id: types::Document::id(&channel.chat.avatar),
             member_count: channel.chat.members.len(),
             gate: channel.chat.gate.value.clone(),
-            is_default: channel.chat.is_public,
         }
     }
 }

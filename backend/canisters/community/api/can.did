@@ -402,7 +402,6 @@ type CreateChannelArgs = record {
     permissions : opt GroupPermissions;
     events_ttl : opt Milliseconds;
     gate : opt AccessGate;
-    is_default : bool;
 };
 
 type CreateChannelResponse = variant {
@@ -533,26 +532,6 @@ type LeaveChannelResponse = variant {
     ChannelNotFound;
     UserNotInChannel;
     LastOwnerCannotLeave;
-};
-
-type ManageDefaultChannelsArgs = record {
-    to_add : vec ChannelId;
-    to_remove : vec ChannelId;
-};
-
-type ManageDefaultChannelsResponse = variant {
-    Success;
-    PartialSuccess : FailedChannels;
-    Failed : FailedChannels;
-    CommunityFrozen;
-    UserNotInCommunity;
-    UserSuspended;
-    NotAuthorized;
-};
-
-type FailedChannels = record {
-    not_found : vec ChannelId;
-    private : vec ChannelId;
 };
 
 type PinMessageArgs = record {
@@ -850,7 +829,6 @@ service : {
     enable_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     import_group : (ImportGroupArgs) -> (ImportGroupResponse);
     leave_channel : (LeaveChannelArgs) -> (LeaveChannelResponse);
-    manage_default_channels : (ManageDefaultChannelsArgs) -> (ManageDefaultChannelsResponse);
     pin_message : (PinMessageArgs) -> (PinMessageResponse);
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     register_proposal_vote : (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
