@@ -201,7 +201,8 @@ pub mod happy_path {
 
         match response {
             local_user_index_canister::join_channel::Response::Success(_)
-            | local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_) => {}
+            | local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_)
+            | local_user_index_canister::join_channel::Response::AlreadyInChannel(_) => {}
             response => panic!("'join_channel' error: {response:?}"),
         }
     }
