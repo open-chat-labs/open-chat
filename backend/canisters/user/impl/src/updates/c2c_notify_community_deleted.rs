@@ -13,7 +13,7 @@ fn c2c_notify_community_deleted(args: Args) -> Response {
 }
 
 fn c2c_notify_community_deleted_impl(args: Args, state: &mut RuntimeState) -> Response {
-    state.data.communities.remove(args.deleted_community.id, state.env.now());
+    state.data.remove_community(args.deleted_community.id, state.env.now());
 
     openchat_bot::send_community_deleted_message(
         args.deleted_community.deleted_by,
