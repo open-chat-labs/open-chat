@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.789](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.789-community)] - 2023-08-04
+
 ### Changed
 
 - More efficient serialization of notifications ([#4134](https://github.com/open-chat-labs/open-chat/pull/4134))
