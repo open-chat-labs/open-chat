@@ -45,7 +45,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         let channels_with_updates: Vec<_> = state
             .data
             .channels
-            .default_channels()
+            .public_channels()
             .into_iter()
             .filter(|c| c.has_updates_since(None, args.updates_since))
             .collect();

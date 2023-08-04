@@ -104,11 +104,11 @@ impl RuntimeState {
 
             (channels, Some(membership))
         } else {
-            // Return all default channels
+            // Return all public channels
             let channels: Vec<_> = self
                 .data
                 .channels
-                .default_channels()
+                .public_channels()
                 .iter()
                 .filter_map(|c| c.summary(None, false, data.is_public, now))
                 .collect();
@@ -222,7 +222,7 @@ impl Data {
         now: TimestampMillis,
     ) -> Data {
         let channels = Channels::new(created_by_user_id, default_channels, now);
-        let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.default_channel_ids(), now);
+        let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.public_channel_ids(), now);
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
         Data {

@@ -22,6 +22,7 @@ pub struct Args {
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub gate: Option<AccessGate>,
+    #[serde(default)]
     pub default_channels: Vec<String>,
     pub source_group: Option<SourceGroup>,
     pub wasm_version: Version,

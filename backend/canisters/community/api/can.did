@@ -421,7 +421,6 @@ type CreateChannelResponse = variant {
     UserSuspended;
     NotAuthorized;
     CommunityFrozen;
-    DefaultMustBePublic;
 };
 
 type DeclineInvitationArgs = record {
@@ -782,7 +781,6 @@ type UpdateChannelResponse = variant {
     UserSuspended;
     CommunityFrozen;
     CannotMakeChannelPublic;
-    CannotMakeDefaultChannelPrivate;
 };
 
 type UpdateCommunityArgs = record {

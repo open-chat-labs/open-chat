@@ -214,7 +214,7 @@ impl GroupChatCore {
                         updates.role_changed = true;
                     }
                 }
-                ChatEventInternal::MembersAddedToDefaultChannel(_)
+                ChatEventInternal::MembersAddedToPublicChannel(_)
                 | ChatEventInternal::ParticipantsAdded(_)
                 | ChatEventInternal::ParticipantsRemoved(_)
                 | ChatEventInternal::ParticipantJoined(_)
@@ -326,7 +326,7 @@ impl GroupChatCore {
                 ChatEventInternal::ParticipantLeft(p) => {
                     user_updates_handler.mark_member_updated(&mut result, p.user_id, true);
                 }
-                ChatEventInternal::MembersAddedToDefaultChannel(m) => {
+                ChatEventInternal::MembersAddedToPublicChannel(m) => {
                     for user_id in m.user_ids.iter() {
                         user_updates_handler.mark_member_updated(&mut result, *user_id, false);
                     }

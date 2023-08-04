@@ -20,7 +20,6 @@ pub struct Channels {
 pub struct Channel {
     pub id: ChannelId,
     pub chat: GroupChatCore,
-    pub is_default: Timestamped<bool>,
     pub date_imported: Option<TimestampMillis>,
 }
 
@@ -53,51 +52,21 @@ impl Channels {
         self.channels.get_mut(channel_id)
     }
 
-    pub fn default_channel_ids(&self) -> Vec<ChannelId> {
+    pub fn public_channel_ids(&self) -> Vec<ChannelId> {
         self.channels
             .iter()
-            .filter(|(_, c)| c.is_default.value)
+            .filter(|(_, c)| c.chat.is_public)
             .map(|(id, _)| id)
             .copied()
             .collect()
     }
 
-    pub fn default_channels(&self) -> Vec<&Channel> {
+    pub fn public_channels(&self) -> Vec<&Channel> {
         self.channels
             .iter()
-            .filter(|(_, c)| c.is_default.value)
+            .filter(|(_, c)| c.chat.is_public)
             .map(|(_, c)| c)
             .collect()
-    }
-
-    pub fn add_default_channel(&mut self, channel_id: ChannelId, now: TimestampMillis) -> AddDefaultChannelResult {
-        if let Some(channel) = self.channels.get_mut(&channel_id) {
-            if channel.chat.is_public {
-                if channel.is_default.value {
-                    AddDefaultChannelResult::AlreadyDefault
-                } else {
-                    channel.is_default = Timestamped::new(true, now);
-                    AddDefaultChannelResult::Added
-                }
-            } else {
-                AddDefaultChannelResult::Private
-            }
-        } else {
-            AddDefaultChannelResult::NotFound
-        }
-    }
-
-    pub fn remove_default_channel(&mut self, channel_id: &ChannelId, now: TimestampMillis) -> RemoveDefaultChannelResult {
-        if let Some(channel) = self.channels.get_mut(channel_id) {
-            if channel.is_default.value {
-                channel.is_default = Timestamped::new(false, now);
-                RemoveDefaultChannelResult::Removed
-            } else {
-                RemoveDefaultChannelResult::NotDefault
-            }
-        } else {
-            RemoveDefaultChannelResult::NotFound
-        }
     }
 
     pub fn leave_all_channels(&mut self, user_id: UserId, now: TimestampMillis) -> HashMap<ChannelId, GroupMemberInternal> {
@@ -113,10 +82,6 @@ impl Channels {
                 },
             )
             .collect()
-    }
-
-    pub fn public_channel_count(&self) -> u32 {
-        self.channels.values().filter(|c| c.chat.is_public).count() as u32
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Channel> {
@@ -189,7 +154,6 @@ impl Channel {
                 None,
                 now,
             ),
-            is_default: Timestamped::new(true, now),
             date_imported: None,
         }
     }
@@ -261,14 +225,12 @@ impl Channel {
             next_message_expiry: chat.events.next_message_expiry(now),
             gate: chat.gate.value.clone(),
             membership,
-            is_default: self.is_default.value,
+            is_default: self.chat.is_public,
         })
     }
 
     pub fn has_updates_since(&self, user_id: Option<UserId>, since: TimestampMillis) -> bool {
-        self.chat.has_updates_since(user_id, since)
-            || self.is_default.timestamp > since
-            || self.date_imported.unwrap_or_default() > since
+        self.chat.has_updates_since(user_id, since) || self.date_imported.unwrap_or_default() > since
     }
 
     pub fn summary_updates(
@@ -328,7 +290,7 @@ impl Channel {
             events_ttl: updates_from_events.events_ttl,
             gate: updates_from_events.gate,
             membership,
-            is_default: self.is_default.if_set_after(since).copied(),
+            is_default: updates_from_events.is_public,
         })
     }
 
@@ -366,7 +328,7 @@ impl From<&Channel> for ChannelMatch {
             avatar_id: types::Document::id(&channel.chat.avatar),
             member_count: channel.chat.members.len(),
             gate: channel.chat.gate.value.clone(),
-            is_default: channel.is_default.value,
+            is_default: channel.chat.is_public,
         }
     }
 }
@@ -379,19 +341,6 @@ impl From<&Channel> for Document {
             .add_field(channel.chat.description.clone(), 1.0, true);
         document
     }
-}
-
-pub enum AddDefaultChannelResult {
-    Added,
-    AlreadyDefault,
-    NotFound,
-    Private,
-}
-
-pub enum RemoveDefaultChannelResult {
-    Removed,
-    NotDefault,
-    NotFound,
 }
 
 pub enum MuteChannelResult {

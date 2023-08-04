@@ -33,8 +33,8 @@ pub(crate) async fn join_community(args: Args) -> Response {
     };
 
     match mutate_state(|state| join_community_impl(&args, state)) {
-        Ok(default_channel_ids) => {
-            futures::future::join_all(default_channel_ids.into_iter().map(|c| join_channel_impl(c, args.principal))).await;
+        Ok(public_channel_ids) => {
+            futures::future::join_all(public_channel_ids.into_iter().map(|c| join_channel_impl(c, args.principal))).await;
             read_state(|state| {
                 if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
                     let now = state.env.now();
@@ -105,7 +105,7 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
 
             handle_activity_notification(state);
 
-            Ok(state.data.channels.default_channel_ids())
+            Ok(state.data.channels.public_channel_ids())
         }
         AddResult::AlreadyInCommunity => {
             let member = state.data.members.get_by_user_id(&args.user_id).unwrap();

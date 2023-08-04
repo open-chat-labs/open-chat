@@ -374,7 +374,7 @@ pub trait Reader {
             ChatEventInternal::EventsTimeToLiveUpdated(u) => ChatEvent::EventsTimeToLiveUpdated(*u.clone()),
             ChatEventInternal::GroupGateUpdated(g) => ChatEvent::GroupGateUpdated(*g.clone()),
             ChatEventInternal::UsersInvited(e) => ChatEvent::UsersInvited(*e.clone()),
-            ChatEventInternal::MembersAddedToDefaultChannel(m) => ChatEvent::MembersAddedToDefaultChannel(m.as_ref().into()),
+            ChatEventInternal::MembersAddedToPublicChannel(m) => ChatEvent::MembersAddedToDefaultChannel(m.as_ref().into()),
             ChatEventInternal::Empty => ChatEvent::Empty,
         };
 

@@ -114,7 +114,6 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             state.data.channels.add(Channel {
                 id: channel_id,
                 chat,
-                is_default: group.is_default(),
                 date_imported: None, // This is only set once everything is complete
             });
 
@@ -165,7 +164,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
         {
             mutate_state(|state| {
                 let now = state.env.now();
-                let default_channel_ids = state.data.channels.default_channel_ids();
+                let default_channel_ids = state.data.channels.public_channel_ids();
 
                 for (user_id, principal) in users {
                     match state.data.members.add(user_id, principal, now) {
@@ -244,10 +243,10 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
                 group_id,
                 group_name: channel.chat.name.clone(),
                 members: channel.chat.members.iter().map(|m| m.user_id).collect(),
-                other_default_channels: state
+                other_public_channels: state
                     .data
                     .channels
-                    .default_channels()
+                    .public_channels()
                     .iter()
                     .filter(|c| c.id != channel_id)
                     .map(|c| ChannelLatestMessageIndex {
