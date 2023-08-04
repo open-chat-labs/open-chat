@@ -202,12 +202,9 @@ fn default_channels_marked_as_read_after_joining() {
         community_id,
     } = init_test_data(env, canister_ids, *controller, true);
 
-    let default1 =
-        client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string(), true);
-    let default2 =
-        client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string(), true);
-    let default3 =
-        client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string(), true);
+    let default1 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
+    let default2 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
+    let default3 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
 
     let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
