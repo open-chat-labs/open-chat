@@ -2,14 +2,12 @@ use crate::model::pending_actions_queue::{Action, TransferCkbtc};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use ic_cdk_timers::TimerId;
-use ic_ledger_types::Tokens;
-use ledger_utils::sns::transaction_hash;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::icrc1::{Account, TransferArg, TransferError};
 use types::{
-    sns, BotMessage, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
+    icrc1, BotMessage, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
 };
 
 const MAX_BATCH_SIZE: usize = 5;
@@ -86,7 +84,6 @@ async fn process_action(action: Action) {
                 memo: None,
                 amount: amount.into(),
             };
-            let transaction_hash = transaction_hash(from, &args);
 
             match icrc1_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, &args).await {
                 Ok(Ok(block_index)) => {
@@ -96,17 +93,16 @@ async fn process_action(action: Action) {
                                 user_id,
                                 vec![MessageContent::Crypto(CryptoContent {
                                     recipient: user_id,
-                                    transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::SNS(
-                                        sns::CompletedCryptoTransaction {
+                                    transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::ICRC1(
+                                        icrc1::CompletedCryptoTransaction {
                                             ledger: Cryptocurrency::CKBTC.ledger_canister_id().unwrap(),
                                             token: Cryptocurrency::CKBTC,
-                                            amount: Tokens::from_e8s(amount),
-                                            fee: Tokens::from_e8s(10),
-                                            from: sns::CryptoAccount::Account(from),
-                                            to: sns::CryptoAccount::Account(Account::from(Principal::from(user_id))),
+                                            amount: amount as u128,
+                                            fee: 10,
+                                            from: icrc1::CryptoAccount::Account(from),
+                                            to: icrc1::CryptoAccount::Account(Account::from(Principal::from(user_id))),
                                             memo: None,
                                             created: now_nanos,
-                                            transaction_hash,
                                             block_index: block_index.0.try_into().unwrap(),
                                         },
                                     )),
