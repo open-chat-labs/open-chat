@@ -41,12 +41,6 @@ async function generateLanguage(lang, code) {
             // "failedToLeaveGroup",
             // "nUsersJoined",
             // "ownerCantLeave",
-            "communities.channelsInfo",
-            "communities.mustHaveOneChannel",
-            "communities.mustHaveUniqueChannels",
-            "communities.convertInfo",
-            "communities.defaultInfo",
-            "communities.channelPlaceholder"
         ]);
         const missing = [];
         enEntries.forEach(([k, v]) => {
