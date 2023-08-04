@@ -1460,7 +1460,6 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
             readByMeUpTo: latestMessage?.event.messageIndex,
             archived: false,
         },
-        isDefault: false,
     };
 }
 
@@ -1549,7 +1548,6 @@ export function communityChannelSummary(
             mentions: [],
             archived: false,
         },
-        isDefault: candid.is_default,
     };
 }
 

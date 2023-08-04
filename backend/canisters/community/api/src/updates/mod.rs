@@ -25,7 +25,6 @@ pub mod edit_message;
 pub mod enable_invite_code;
 pub mod import_group;
 pub mod leave_channel;
-pub mod manage_default_channels;
 pub mod pin_message;
 pub mod register_poll_vote;
 pub mod register_proposal_vote;

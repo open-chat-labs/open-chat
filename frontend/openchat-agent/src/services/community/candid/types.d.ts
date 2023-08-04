@@ -143,7 +143,6 @@ export interface ChannelMatch {
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
-  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'member_count' : number,
 }
@@ -298,7 +297,6 @@ export interface CommunityCanisterChannelSummary {
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
-  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'next_message_expiry' : [] | [TimestampMillis],
   'membership' : [] | [ChannelMembership],
@@ -321,7 +319,6 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
-  'is_default' : [] | [boolean],
   'avatar_id' : DocumentIdUpdate,
   'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
@@ -640,10 +637,6 @@ export type ExploreChannelsResponse = { 'TermTooShort' : number } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null } |
   { 'PrivateCommunity' : null };
-export interface FailedChannels {
-  'not_found' : Array<ChannelId>,
-  'private' : Array<ChannelId>,
-}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction };
@@ -964,17 +957,6 @@ export type LeaveChannelResponse = { 'UserNotInChannel' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null };
 export type LocalUserIndexResponse = { 'Success' : CanisterId };
-export interface ManageDefaultChannelsArgs {
-  'to_add' : Array<ChannelId>,
-  'to_remove' : Array<ChannelId>,
-}
-export type ManageDefaultChannelsResponse = { 'Failed' : FailedChannels } |
-  { 'PartialSuccess' : FailedChannels } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'UserNotInCommunity' : null } |
-  { 'UserSuspended' : null } |
-  { 'CommunityFrozen' : null };
 export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
@@ -1817,10 +1799,6 @@ export interface _SERVICE {
   'invite_code' : ActorMethod<[EmptyArgs], InviteCodeResponse>,
   'leave_channel' : ActorMethod<[LeaveChannelArgs], LeaveChannelResponse>,
   'local_user_index' : ActorMethod<[EmptyArgs], LocalUserIndexResponse>,
-  'manage_default_channels' : ActorMethod<
-    [ManageDefaultChannelsArgs],
-    ManageDefaultChannelsResponse
-  >,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse

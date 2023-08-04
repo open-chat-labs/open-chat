@@ -100,7 +100,6 @@ export interface ChannelMatch {
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
-  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'member_count' : number,
 }
@@ -242,7 +241,6 @@ export interface CommunityCanisterChannelSummary {
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
-  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'next_message_expiry' : [] | [TimestampMillis],
   'membership' : [] | [ChannelMembership],
@@ -265,7 +263,6 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
-  'is_default' : [] | [boolean],
   'avatar_id' : DocumentIdUpdate,
   'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
@@ -374,7 +371,8 @@ export interface CreateCommunityArgs {
   'avatar' : [] | [Document],
   'primary_language' : string,
 }
-export type CreateCommunityResponse = { 'NameReserved' : null } |
+export type CreateCommunityResponse = { 'DefaultChannelsInvalid' : null } |
+  { 'NameReserved' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |

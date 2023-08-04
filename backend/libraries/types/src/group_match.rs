@@ -37,5 +37,4 @@ pub struct ChannelMatch {
     pub avatar_id: Option<u128>,
     pub member_count: u32,
     pub gate: Option<AccessGate>,
-    pub is_default: bool,
 }

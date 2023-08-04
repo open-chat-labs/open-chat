@@ -27,10 +27,7 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let candidate: AccessControlled &
-        HasLevel &
-        Permissioned<T> &
-        HasMembershipRole & { isDefault?: boolean };
+    export let candidate: AccessControlled & HasLevel & Permissioned<T> & HasMembershipRole;
     export let original: AccessControlled;
     export let editing: boolean;
     export let history: boolean;
@@ -70,8 +67,6 @@
         candidate.public = !candidate.public;
         if (candidate.public) {
             candidate.historyVisible = true;
-        } else {
-            candidate.isDefault = false;
         }
     }
 

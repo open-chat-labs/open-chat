@@ -602,7 +602,6 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
-    'is_default' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'next_message_expiry' : IDL.Opt(TimestampMillis),
     'membership' : IDL.Opt(ChannelMembership),
@@ -663,7 +662,6 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'events_ttl' : EventsTimeToLiveUpdate,
     'last_updated' : TimestampMillis,
-    'is_default' : IDL.Opt(IDL.Bool),
     'avatar_id' : DocumentIdUpdate,
     'membership' : IDL.Opt(ChannelMembershipUpdates),
     'latest_event_index' : IDL.Opt(EventIndex),
@@ -1023,7 +1021,6 @@ export const idlFactory = ({ IDL }) => {
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
-    'is_default' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'member_count' : IDL.Nat32,
   });
@@ -1070,23 +1067,6 @@ export const idlFactory = ({ IDL }) => {
     'CommunityFrozen' : IDL.Null,
   });
   const LocalUserIndexResponse = IDL.Variant({ 'Success' : CanisterId });
-  const ManageDefaultChannelsArgs = IDL.Record({
-    'to_add' : IDL.Vec(ChannelId),
-    'to_remove' : IDL.Vec(ChannelId),
-  });
-  const FailedChannels = IDL.Record({
-    'not_found' : IDL.Vec(ChannelId),
-    'private' : IDL.Vec(ChannelId),
-  });
-  const ManageDefaultChannelsResponse = IDL.Variant({
-    'Failed' : FailedChannels,
-    'PartialSuccess' : FailedChannels,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserNotInCommunity' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-    'CommunityFrozen' : IDL.Null,
-  });
   const MessagesByMessageIndexArgs = IDL.Record({
     'channel_id' : ChannelId,
     'latest_client_event_index' : IDL.Opt(EventIndex),
@@ -1666,11 +1646,6 @@ export const idlFactory = ({ IDL }) => {
         [EmptyArgs],
         [LocalUserIndexResponse],
         ['query'],
-      ),
-    'manage_default_channels' : IDL.Func(
-        [ManageDefaultChannelsArgs],
-        [ManageDefaultChannelsResponse],
-        [],
       ),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],
