@@ -290,7 +290,7 @@ impl Channel {
             events_ttl: updates_from_events.events_ttl,
             gate: updates_from_events.gate,
             membership,
-            is_default: None,
+            is_default: updates_from_events.is_public,
         })
     }
 
