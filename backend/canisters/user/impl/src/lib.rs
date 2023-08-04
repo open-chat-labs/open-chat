@@ -1,6 +1,8 @@
 use crate::model::cached_group_summaries::CachedGroupSummaries;
 use crate::model::communities::Communities;
+use crate::model::community::Community;
 use crate::model::direct_chats::DirectChats;
+use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
 use crate::timer_job_types::TimerJob;
@@ -19,8 +21,8 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
 use types::{
-    CanisterId, Chat, ChatId, ChatMetrics, Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped,
-    UserId, Version,
+    CanisterId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Notification, TimestampMillis,
+    Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -228,6 +230,25 @@ impl Data {
 
     pub fn is_diamond_member(&self, now: TimestampMillis) -> bool {
         self.diamond_membership_expires_at.map_or(false, |ts| now < ts)
+    }
+
+    pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {
+        self.favourite_chats.remove(&Chat::Group(chat_id), now);
+        self.hot_group_exclusions.add(chat_id, None, now);
+
+        if let Some(cached_groups) = &mut self.cached_group_summaries {
+            cached_groups.remove_group(&chat_id);
+        }
+
+        self.group_chats.remove(chat_id, now)
+    }
+
+    pub fn remove_community(&mut self, community_id: CommunityId, now: TimestampMillis) -> Option<Community> {
+        let community = self.communities.remove(community_id, now)?;
+        for channel_id in community.channels.keys() {
+            self.favourite_chats.remove(&Chat::Channel(community_id, *channel_id), now);
+        }
+        Some(community)
     }
 }
 

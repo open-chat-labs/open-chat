@@ -15,13 +15,7 @@ fn c2c_remove_from_group_impl(args: Args, state: &mut RuntimeState) -> Response 
     let chat_id = state.env.caller().into();
     let now = state.env.now();
 
-    if state.data.group_chats.remove(chat_id, now).is_some() {
-        state.data.hot_group_exclusions.add(chat_id, None, now);
-
-        if let Some(cached_groups) = &mut state.data.cached_group_summaries {
-            cached_groups.remove_group(&chat_id);
-        }
-
+    if state.data.remove_group(chat_id, now).is_some() {
         openchat_bot::send_removed_from_group_or_community_message(
             true,
             args.removed_by,
