@@ -65,7 +65,8 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         .filter(|u| state.data.members.get_by_user_id(u).map_or(false, |m| !m.suspended.value))
                         .collect();
 
-                    if let Some(message_text) = result.message_event.event.content.notification_text(&args.mentioned) {
+                    let content = &result.message_event.event.content;
+                    if content.should_push_notification() {
                         let notification = Notification::ChannelMessage(ChannelMessageNotification {
                             community_id: state.env.canister_id().into(),
                             channel_id: args.channel_id,
@@ -75,8 +76,9 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                             channel_name: channel.chat.name.clone(),
                             sender: user_id,
                             sender_name: args.sender_name,
-                            message_text,
-                            thumbnail: result.message_event.event.content.notification_thumbnail(),
+                            message_type: content.message_type(),
+                            message_text: content.notification_text(&args.mentioned),
+                            thumbnail: content.notification_thumbnail(),
                         });
 
                         state.push_notification(users_to_notify, notification);

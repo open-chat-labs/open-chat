@@ -48,7 +48,8 @@ pub struct DirectMessageNotification {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
     pub sender_name: String,
-    pub message_text: String,
+    pub message_type: String,
+    pub message_text: Option<String>,
     pub thumbnail: Option<String>,
 }
 
@@ -60,7 +61,8 @@ pub struct GroupMessageNotification {
     pub group_name: String,
     pub sender: UserId,
     pub sender_name: String,
-    pub message_text: String,
+    pub message_type: String,
+    pub message_text: Option<String>,
     pub thumbnail: Option<String>,
 }
 
@@ -74,7 +76,8 @@ pub struct ChannelMessageNotification {
     pub channel_name: String,
     pub sender: UserId,
     pub sender_name: String,
-    pub message_text: String,
+    pub message_type: String,
+    pub message_text: Option<String>,
     pub thumbnail: Option<String>,
 }
 

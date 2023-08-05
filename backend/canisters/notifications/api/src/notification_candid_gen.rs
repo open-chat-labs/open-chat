@@ -7,7 +7,8 @@ fn main() {
         thread_root_message_index: None,
         message_index: 0.into(),
         sender_name: "".to_string(),
-        message_text: "".to_string(),
+        message_type: "".to_string(),
+        message_text: None,
         thumbnail: None,
     });
     let candid_type = candid::types::internal::get_type(&ignored);

@@ -100,7 +100,8 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         .claim_prize(args.message_id, winner, transaction, state.env.rng(), now)
     {
         chat_events::ClaimPrizeResult::Success(message_event) => {
-            if let Some(message_text) = message_event.event.content.notification_text(&[]) {
+            let content = &message_event.event.content;
+            if content.should_push_notification() {
                 // Send a notification to group participants
                 let notification_recipients = state.data.chat.members.users_to_notify(None).into_iter().collect();
 
@@ -111,8 +112,9 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
                     group_name: state.data.chat.name.clone(),
                     sender: OPENCHAT_BOT_USER_ID,
                     sender_name: OPENCHAT_BOT_USERNAME.to_string(),
-                    message_text,
-                    thumbnail: message_event.event.content.notification_thumbnail(),
+                    message_type: content.message_type(),
+                    message_text: content.notification_text(&[]),
+                    thumbnail: content.notification_thumbnail(),
                 });
                 state.push_notification(notification_recipients, notification);
             }

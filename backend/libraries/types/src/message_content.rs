@@ -108,35 +108,59 @@ impl MessageContent {
         references
     }
 
-    pub fn notification_text(&self, mentioned: &[User]) -> Option<String> {
-        fn text_or_default<'a>(text: Option<&'a String>, default: &'a str) -> &'a str {
-            text.as_ref().map(|t| t.as_str()).unwrap_or(default)
+    pub fn should_push_notification(&self) -> bool {
+        match self {
+            MessageContent::Deleted(_) | MessageContent::MessageReminderCreated(_) => false,
+            _ => true,
         }
+    }
 
+    pub fn message_type(&self) -> String {
+        match self {
+            MessageContent::Text(_) => "text".to_string(),
+            MessageContent::Image(_) => "image".to_string(),
+            MessageContent::Video(_) => "video".to_string(),
+            MessageContent::Audio(_) => "audio".to_string(),
+            MessageContent::File(_) => "file".to_string(),
+            MessageContent::Poll(_) => "poll".to_string(),
+            MessageContent::Crypto(_) => "crypto".to_string(),
+            MessageContent::Deleted(_) => "deleted".to_string(),
+            MessageContent::Giphy(_) => "giphy".to_string(),
+            MessageContent::GovernanceProposal(_) => "governance_proposal".to_string(),
+            MessageContent::Prize(_) => "prize".to_string(),
+            MessageContent::PrizeWinner(_) => "prize_winner".to_string(),
+            MessageContent::MessageReminderCreated(_) => "message_reminder_created".to_string(),
+            MessageContent::MessageReminder(_) => "message_reminder".to_string(),
+            MessageContent::ReportedMessage(_) => "reported_message".to_string(),
+            MessageContent::Custom(_) => "custom".to_string(),
+        }
+    }
+
+    pub fn notification_text(&self, mentioned: &[User]) -> Option<String> {
         let text = match self {
             MessageContent::Text(t) => Some(t.text.as_str()),
-            MessageContent::Image(i) => Some(text_or_default(i.caption.as_ref(), "Image message")),
-            MessageContent::Video(v) => Some(text_or_default(v.caption.as_ref(), "Video message")),
-            MessageContent::Audio(a) => Some(text_or_default(a.caption.as_ref(), "Audio message")),
-            MessageContent::File(f) => Some(text_or_default(f.caption.as_ref(), "File message")),
-            MessageContent::Poll(p) => Some(text_or_default(p.config.text.as_ref(), "Poll message")),
-            MessageContent::Crypto(c) => Some(text_or_default(c.caption.as_ref(), "Crypto transfer")),
-            MessageContent::Deleted(_) => None,
-            MessageContent::Giphy(g) => Some(text_or_default(g.caption.as_ref(), "Giphy message")),
+            MessageContent::Image(i) => i.caption.as_deref(),
+            MessageContent::Video(v) => v.caption.as_deref(),
+            MessageContent::Audio(a) => a.caption.as_deref(),
+            MessageContent::File(f) => f.caption.as_deref(),
+            MessageContent::Poll(p) => p.config.text.as_deref(),
+            MessageContent::Crypto(c) => c.caption.as_deref(),
+            MessageContent::Giphy(g) => g.caption.as_deref(),
             MessageContent::GovernanceProposal(gp) => Some(gp.proposal.title()),
-            MessageContent::Prize(_) => Some("Prize message"),
-            MessageContent::PrizeWinner(_) => None,
-            MessageContent::MessageReminderCreated(_) => None,
-            MessageContent::MessageReminder(_) => Some("Message reminder"),
-            MessageContent::ReportedMessage(_) => Some("Reported message"),
-            MessageContent::Custom(_) => Some("Custom message type"),
+            MessageContent::Deleted(_)
+            | MessageContent::Prize(_)
+            | MessageContent::PrizeWinner(_)
+            | MessageContent::MessageReminderCreated(_)
+            | MessageContent::MessageReminder(_)
+            | MessageContent::ReportedMessage(_)
+            | MessageContent::Custom(_) => None,
         }?
         .to_string();
 
         const MAX_CHARS: usize = 200;
 
         if !mentioned.is_empty() {
-            // Hydrate mentions
+            // TODO hydrate mentions
         }
 
         Some(text.chars().take(MAX_CHARS).collect())

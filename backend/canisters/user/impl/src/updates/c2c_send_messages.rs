@@ -198,14 +198,16 @@ pub(crate) fn handle_message_impl(
             chat.mark_read_up_to(message_event.event.message_index, false, args.now);
         }
         if !mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
-            if let Some(message_text) = message_event.event.content.notification_text(&[]) {
+            let content = &message_event.event.content;
+            if content.should_push_notification() {
                 let notification = Notification::DirectMessage(DirectMessageNotification {
                     sender,
                     thread_root_message_index: None,
                     message_index: message_event.event.message_index,
                     sender_name: args.sender_name,
-                    message_text,
-                    thumbnail: message_event.event.content.notification_thumbnail(),
+                    message_type: content.message_type(),
+                    message_text: content.notification_text(&[]),
+                    thumbnail: content.notification_thumbnail(),
                 });
 
                 let recipient = state.env.canister_id().into();
