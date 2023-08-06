@@ -22,12 +22,10 @@ export interface AddedToChannelNotification {
   'added_by' : UserId,
   'channel_name' : string,
   'community_name' : string,
-  'timestamp' : TimestampMillis,
 }
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
-  'timestamp' : TimestampMillis,
   'chat_id' : ChatId,
   'group_name' : string,
 }
@@ -110,25 +108,28 @@ export interface ChannelMembershipUpdates {
 export interface ChannelMessageNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
-  'mentioned' : Array<User>,
+  'thumbnail' : [] | [string],
   'sender' : UserId,
   'channel_name' : string,
   'community_name' : string,
-  'message' : MessageEventWrapper,
   'sender_name' : string,
+  'message_text' : [] | [string],
+  'message_type' : string,
+  'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
+  'message_index' : MessageIndex,
 }
 export interface ChannelReactionAddedNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
   'added_by_name' : string,
+  'message_event_index' : EventIndex,
   'added_by' : UserId,
   'channel_name' : string,
   'community_name' : string,
-  'message' : MessageEventWrapper,
-  'timestamp' : TimestampMillis,
   'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : Reaction,
+  'message_index' : MessageIndex,
 }
 export type Chat = { 'Group' : ChatId } |
   { 'Channel' : [CommunityId, ChannelId] } |
@@ -381,17 +382,22 @@ export interface DirectChatSummaryUpdates {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface DirectMessageNotification {
+  'thumbnail' : [] | [string],
   'sender' : UserId,
-  'message' : MessageEventWrapper,
   'sender_name' : string,
+  'message_text' : [] | [string],
+  'message_type' : string,
+  'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
+  'message_index' : MessageIndex,
 }
 export interface DirectReactionAddedNotification {
   'username' : string,
+  'message_event_index' : EventIndex,
   'them' : UserId,
-  'message' : MessageEventWrapper,
-  'timestamp' : TimestampMillis,
+  'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : Reaction,
+  'message_index' : MessageIndex,
 }
 export interface Document {
   'id' : bigint,
@@ -593,13 +599,16 @@ export interface GroupMatch {
   'member_count' : number,
 }
 export interface GroupMessageNotification {
-  'mentioned' : Array<User>,
+  'thumbnail' : [] | [string],
   'sender' : UserId,
-  'message' : MessageEventWrapper,
   'sender_name' : string,
+  'message_text' : [] | [string],
+  'message_type' : string,
   'chat_id' : ChatId,
+  'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
+  'message_index' : MessageIndex,
 }
 export interface GroupNameChanged {
   'changed_by' : UserId,
@@ -623,13 +632,13 @@ export interface GroupPermissions {
 }
 export interface GroupReactionAddedNotification {
   'added_by_name' : string,
+  'message_event_index' : EventIndex,
   'added_by' : UserId,
-  'message' : MessageEventWrapper,
-  'timestamp' : TimestampMillis,
   'chat_id' : ChatId,
   'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
   'reaction' : Reaction,
+  'message_index' : MessageIndex,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
 export type GroupRole = { 'Participant' : null } |
@@ -870,15 +879,15 @@ export interface NnsProposal {
 export type NnsUserOrAccount = { 'User' : UserId } |
   { 'Account' : AccountIdentifier };
 export type Notification = {
-    'DirectReactionAddedNotification' : DirectReactionAddedNotification
+    'GroupReactionAdded' : GroupReactionAddedNotification
   } |
-  { 'DirectMessageNotification' : DirectMessageNotification } |
-  { 'AddedToChannelNotification' : AddedToChannelNotification } |
-  { 'GroupMessageNotification' : GroupMessageNotification } |
-  { 'ChannelMessageNotification' : ChannelMessageNotification } |
-  { 'ChannelReactionAddedNotification' : ChannelReactionAddedNotification } |
-  { 'GroupReactionAddedNotification' : GroupReactionAddedNotification } |
-  { 'AddedToGroupNotification' : AddedToGroupNotification };
+  { 'DirectMessage' : DirectMessageNotification } |
+  { 'ChannelReactionAdded' : ChannelReactionAddedNotification } |
+  { 'DirectReactionAdded' : DirectReactionAddedNotification } |
+  { 'GroupMessage' : GroupMessageNotification } |
+  { 'AddedToGroup' : AddedToGroupNotification } |
+  { 'AddedToChannel' : AddedToChannelNotification } |
+  { 'ChannelMessage' : ChannelMessageNotification };
 export interface NotificationEnvelope {
   'notification_bytes' : Uint8Array | number[],
   'recipients' : Array<UserId>,

@@ -86,6 +86,7 @@ fn build_notification(
             them: chat.them,
             thread_root_message_index: None,
             message_index: message_event.event.message_index,
+            message_event_index: message_event.index,
             username,
             reaction,
         }),

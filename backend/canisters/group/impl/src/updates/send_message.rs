@@ -54,6 +54,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         chat_id: state.env.canister_id().into(),
                         thread_root_message_index: args.thread_root_message_index,
                         message_index,
+                        event_index,
                         group_name: state.data.chat.name.clone(),
                         sender: user_id,
                         sender_name: args.sender_name,

@@ -204,6 +204,7 @@ pub(crate) fn handle_message_impl(
                     sender,
                     thread_root_message_index: None,
                     message_index: message_event.event.message_index,
+                    event_index: message_event.index,
                     sender_name: args.sender_name,
                     message_type: content.message_type(),
                     message_text: content.notification_text(&[]),

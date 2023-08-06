@@ -1,4 +1,4 @@
-use crate::{ChannelId, ChatId, CommunityId, MessageIndex, Reaction, TimestampMillis, UserId};
+use crate::{ChannelId, ChatId, CommunityId, EventIndex, MessageIndex, Reaction, TimestampMillis, UserId};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -47,6 +47,7 @@ pub struct DirectMessageNotification {
     pub sender: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
+    pub event_index: EventIndex,
     pub sender_name: String,
     pub message_type: String,
     pub message_text: Option<String>,
@@ -58,6 +59,7 @@ pub struct GroupMessageNotification {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
+    pub event_index: EventIndex,
     pub group_name: String,
     pub sender: UserId,
     pub sender_name: String,
@@ -72,6 +74,7 @@ pub struct ChannelMessageNotification {
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
+    pub event_index: EventIndex,
     pub community_name: String,
     pub channel_name: String,
     pub sender: UserId,
@@ -86,6 +89,7 @@ pub struct DirectReactionAddedNotification {
     pub them: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
+    pub message_event_index: EventIndex,
     pub username: String,
     pub reaction: Reaction,
 }
@@ -95,6 +99,7 @@ pub struct GroupReactionAddedNotification {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
+    pub message_event_index: EventIndex,
     pub group_name: String,
     pub added_by: UserId,
     pub added_by_name: String,
@@ -107,6 +112,7 @@ pub struct ChannelReactionAddedNotification {
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
+    pub message_event_index: EventIndex,
     pub community_name: String,
     pub channel_name: String,
     pub added_by: UserId,

@@ -3088,41 +3088,41 @@ export class OpenChat extends OpenChatAgentWorker {
     notificationReceived(notification: Notification): void {
         let chatId: ChatIdentifier;
         let threadRootMessageIndex: number | undefined = undefined;
-        let message: EventWrapper<Message>;
+        let eventIndex: number;
         switch (notification.kind) {
             case "channel_notification": {
                 chatId = notification.chatId;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.eventIndex;
                 break;
             }
             case "direct_notification": {
                 chatId = notification.sender;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.eventIndex;
                 break;
             }
             case "group_notification": {
                 chatId = notification.chatId;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.eventIndex;
                 break;
             }
             case "channel_reaction": {
                 chatId = notification.chatId;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.messageEventIndex;
                 break;
             }
             case "direct_reaction": {
                 chatId = notification.them;
-                message = notification.message;
+                eventIndex = notification.messageEventIndex;
                 break;
             }
             case "group_reaction": {
                 chatId = notification.chatId;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.messageEventIndex;
                 break;
             }
             case "added_to_group_notification":
@@ -3130,28 +3130,13 @@ export class OpenChat extends OpenChatAgentWorker {
                 return;
         }
 
-        if (threadRootMessageIndex !== undefined) {
-            // TODO fix this for thread messages
-            return;
-        }
-
         const serverChat = this._liveState.serverChatSummaries.get(chatId);
 
-        if (serverChat === undefined || serverChat.latestEventIndex >= message.index) {
+        if (serverChat === undefined || serverChat.latestEventIndex >= eventIndex) {
             return;
         }
 
-        this.sendRequest({
-            kind: "setCachedMessageFromNotification",
-            chatId,
-            threadRootMessageIndex,
-            message,
-        });
-
-        this.addMissingUsersFromMessage(message).then(() => {
-            updateSummaryWithConfirmedMessage(chatId, message);
-            this.handleConfirmedMessageSentByOther(serverChat, message, threadRootMessageIndex);
-        });
+        this.loadEvents(serverChat, eventIndex, false);
     }
 
     private handleConfirmedMessageSentByOther(

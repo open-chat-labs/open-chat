@@ -153,6 +153,7 @@ type DirectMessageNotification = record {
     sender : UserId;
     thread_root_message_index : opt MessageIndex;
     message_index : MessageIndex;
+    event_index : EventIndex;
     sender_name : text;
     message_type : text;
     message_text : opt text;
@@ -163,6 +164,7 @@ type DirectReactionAddedNotification = record {
     them : UserId;
     thread_root_message_index : opt MessageIndex;
     message_index : MessageIndex;
+    message_event_index : EventIndex;
     username : text;
     reaction : Reaction;
 };
@@ -532,6 +534,7 @@ type ChannelMessageNotification = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
     message_index : MessageIndex;
+    event_index : EventIndex;
     community_name : text;
     channel_name : text;
     sender : UserId;
@@ -545,6 +548,7 @@ type GroupMessageNotification = record {
     chat_id : ChatId;
     thread_root_message_index : opt MessageIndex;
     message_index : MessageIndex;
+    event_index : EventIndex;
     group_name : text;
     sender : UserId;
     sender_name : text;
@@ -564,6 +568,7 @@ type ChannelReactionAddedNotification = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
     message_index: MessageIndex;
+    message_event_index : EventIndex;
     community_name : text;
     channel_name : text;
     added_by : UserId;
@@ -575,6 +580,7 @@ type GroupReactionAddedNotification = record {
     chat_id : ChatId;
     thread_root_message_index : opt MessageIndex;
     message_index : MessageIndex;
+    message_event_index : EventIndex;
     group_name : text;
     added_by : UserId;
     added_by_name : text;

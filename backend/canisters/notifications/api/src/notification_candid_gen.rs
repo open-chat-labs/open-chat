@@ -6,6 +6,7 @@ fn main() {
         sender: Principal::anonymous().into(),
         thread_root_message_index: None,
         message_index: 0.into(),
+        event_index: 0.into(),
         sender_name: "".to_string(),
         message_type: "".to_string(),
         message_text: None,

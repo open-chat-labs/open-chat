@@ -1,10 +1,7 @@
-import type { User } from "../../domain/user/user";
 import type {
     ChannelIdentifier,
     DirectChatIdentifier,
-    EventWrapper,
     GroupChatIdentifier,
-    Message,
 } from "../chat/chat";
 
 export type Notification =
@@ -41,50 +38,64 @@ export type ChannelNotification = {
     chatId: ChannelIdentifier;
     sender: string;
     threadRootMessageIndex: number | undefined;
-    message: EventWrapper<Message>;
+    messageIndex: number;
+    eventIndex: number;
     senderName: string;
     communityName: string;
     channelName: string;
-    mentioned: User[];
+    messageType: string;
+    messageText: string | undefined;
+    thumbnail: string | undefined;
+    timestamp: bigint;
 };
 
 export type DirectNotification = {
     kind: "direct_notification";
     sender: DirectChatIdentifier;
-    threadRootMessageIndex: number | undefined;
-    message: EventWrapper<Message>;
+    messageIndex: number;
+    eventIndex: number;
     senderName: string;
+    messageType: string;
+    messageText: string | undefined;
+    thumbnail: string | undefined;
+    timestamp: bigint;
 };
 
 export type GroupNotification = {
     kind: "group_notification";
     sender: string;
     threadRootMessageIndex: number | undefined;
-    message: EventWrapper<Message>;
+    messageIndex: number;
+    eventIndex: number;
     senderName: string;
     chatId: GroupChatIdentifier;
     groupName: string;
-    mentioned: User[];
+    messageType: string;
+    messageText: string | undefined;
+    thumbnail: string | undefined;
+    timestamp: bigint;
 };
 
 export type ChannelReaction = {
     kind: "channel_reaction";
     chatId: ChannelIdentifier;
     threadRootMessageIndex: number | undefined;
+    messageIndex: number;
+    messageEventIndex: number;
     communityName: string;
     channelName: string;
     addedBy: string;
     addedByName: string;
-    message: EventWrapper<Message>;
     reaction: string;
     timestamp: bigint;
 };
 
 export type DirectReaction = {
     kind: "direct_reaction";
+    messageIndex: number;
+    messageEventIndex: number;
     them: DirectChatIdentifier;
     username: string;
-    message: EventWrapper<Message>;
     reaction: string;
     timestamp: bigint;
 };
@@ -93,10 +104,11 @@ export type GroupReaction = {
     kind: "group_reaction";
     chatId: GroupChatIdentifier;
     threadRootMessageIndex: number | undefined;
+    messageIndex: number;
+    messageEventIndex: number;
     groupName: string;
     addedBy: string;
     addedByName: string;
-    message: EventWrapper<Message>;
     reaction: string;
     timestamp: bigint;
 };

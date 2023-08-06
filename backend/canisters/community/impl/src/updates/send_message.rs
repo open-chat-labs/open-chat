@@ -72,6 +72,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                             channel_id: args.channel_id,
                             thread_root_message_index: args.thread_root_message_index,
                             message_index: result.message_event.event.message_index,
+                            event_index: result.message_event.index,
                             community_name: state.data.name.clone(),
                             channel_name: channel.chat.name.clone(),
                             sender: user_id,

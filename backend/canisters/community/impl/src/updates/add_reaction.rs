@@ -92,15 +92,16 @@ fn push_notification(
     args: Args,
     user_id: UserId,
     channel_name: String,
-    message: EventWrapper<Message>,
+    message_event: EventWrapper<Message>,
     state: &mut RuntimeState,
 ) {
-    let recipient = message.event.sender;
+    let recipient = message_event.event.sender;
     let notification = Notification::ChannelReactionAdded(ChannelReactionAddedNotification {
         community_id: state.env.canister_id().into(),
         channel_id: args.channel_id,
         thread_root_message_index: args.thread_root_message_index,
-        message_index: message.event.message_index,
+        message_index: message_event.event.message_index,
+        message_event_index: message_event.index,
         community_name: state.data.name.clone(),
         channel_name,
         added_by: user_id,
