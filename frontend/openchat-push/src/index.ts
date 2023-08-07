@@ -41,9 +41,11 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
         return;
     }
 
-    const rawNotification: RawNotification = JSON.parse(event.data.text());
+    const text = event.data.text();
 
-    const bytes = toUint8Array(rawNotification.candidBase64);
+    const { timestamp, value }: TimestampedNotification = JSON.parse(text);
+
+    const bytes = toUint8Array(value);
 
     // Try to extract the typed notification from the event
     const candid = IDL.decode([NotificationIdl], bytes.buffer)[0] as unknown as ApiNotification;
@@ -52,7 +54,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
         return;
     }
 
-    const notification = toNotification(candid, rawNotification.timestamp);
+    const notification = toNotification(candid, timestamp);
 
     const windowClients = await self.clients.matchAll({
         type: "window",
@@ -248,7 +250,7 @@ function isMessageNotification(notification: Notification): boolean {
     );
 }
 
-type RawNotification = {
+type TimestampedNotification = {
     timestamp: bigint;
-    candidBase64: string;
+    value: string;
 }

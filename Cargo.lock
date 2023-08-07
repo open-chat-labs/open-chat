@@ -3011,6 +3011,7 @@ dependencies = [
  "openssl",
  "serde",
  "serde_bytes",
+ "serde_json",
  "tokio",
  "tracing",
  "types",

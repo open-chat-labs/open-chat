@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::time;
 use tracing::{error, info};
-use types::{CanisterId, Error, UserId};
+use types::{CanisterId, Error, Timestamped, UserId};
 use web_push::{SubscriptionInfo, SubscriptionKeys};
 
 pub struct Reader<I: IndexStore> {
@@ -61,12 +61,9 @@ impl<I: IndexStore> Reader<I> {
                 .collect();
 
             for notification in ic_response.notifications.into_iter().map(|n| n.value) {
-                let payload = Arc::new(
-                    base64::engine::general_purpose::STANDARD_NO_PAD
-                        .encode(notification.notification_bytes)
-                        .as_bytes()
-                        .to_vec(),
-                );
+                let base64 = base64::engine::general_purpose::STANDARD_NO_PAD.encode(notification.notification_bytes);
+
+                let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
 
                 for user_id in notification.recipients {
                     if let Some(subscriptions) = subscriptions_map.get(&user_id) {
