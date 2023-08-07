@@ -277,16 +277,6 @@
         return found;
     }
 
-    function redirectToFirstChat(): boolean {
-        if ($chatSummariesListStore.length > 0) {
-            const first = $chatSummariesListStore.sort(compareChats)[0];
-            page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     // extracting to a function to try to control more tightly what this reacts to
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
@@ -295,6 +285,19 @@
             if ("scope" in pathParams) {
                 client.setChatListScope(pathParams.scope);
             }
+
+            // When we have a middle panel and this route is for a chat list then select the first chat
+            if (
+                !$mobileWidth &&
+                (pathParams.kind === "selected_community_route" ||
+                    pathParams.kind === "chat_list_route") &&
+                $chatSummariesListStore.length > 0
+            ) {
+                const first = $chatSummariesListStore[0];
+                page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
+                return;
+            }
+
             if (pathParams.kind === "home_route") {
                 client.clearSelectedChat();
                 closeThread();
@@ -303,9 +306,6 @@
                 client.clearSelectedChat();
                 rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
             } else if (pathParams.kind === "selected_community_route") {
-                if (!$mobileWidth && redirectToFirstChat()) {
-                    return;
-                }
                 await selectCommunity(pathParams.communityId);
             } else if (
                 pathParams.kind === "global_chat_selected_route" ||
@@ -332,11 +332,7 @@
                         waitAndScrollToMessageIndex(pathParams.messageIndex, false);
                     }
                 }
-            } else if (
-                pathParams.kind !== "chat_list_route" ||
-                $mobileWidth ||
-                !redirectToFirstChat()
-            ) {
+            } else {
                 // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
                 if ($selectedChatId !== undefined) {
                     client.clearSelectedChat();
