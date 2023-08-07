@@ -151,6 +151,7 @@ fn notification_length() {
         message_type: "text".to_string(),
         message_text: Some("abc".to_string()),
         image_url: None,
+        sender_avatar_id: None,
     });
 
     let bytes = candid::encode_one(&notification).unwrap().len();
