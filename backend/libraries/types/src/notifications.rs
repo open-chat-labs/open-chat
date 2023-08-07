@@ -154,7 +154,7 @@ fn notification_length() {
         sender_avatar_id: None,
     });
 
-    let bytes = candid::encode_one(&notification).unwrap().len();
+    let bytes = candid::encode_one(notification).unwrap().len();
 
     assert!(bytes < 600, "{bytes}");
 }
