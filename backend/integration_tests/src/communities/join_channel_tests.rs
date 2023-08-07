@@ -23,6 +23,9 @@ fn join_public_channel_succeeds() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller, true);
 
+    // First user2 needs to leave the channel because they were joined automatically
+    client::community::happy_path::leave_channel(env, user2.principal, community_id, channel_id);
+
     client::local_user_index::happy_path::join_channel(
         env,
         user2.principal,
@@ -258,6 +261,9 @@ fn channel_marked_as_read_after_joining() {
         community_id,
         channel_id,
     } = init_test_data(env, canister_ids, *controller, true);
+
+    // First user2 needs to leave the channel because they were joined automatically
+    client::community::happy_path::leave_channel(env, user2.principal, community_id, channel_id);
 
     client::community::happy_path::send_text_message(env, &user1, community_id, channel_id, None, random_string(), None);
     client::community::happy_path::send_text_message(env, &user1, community_id, channel_id, None, random_string(), None);
