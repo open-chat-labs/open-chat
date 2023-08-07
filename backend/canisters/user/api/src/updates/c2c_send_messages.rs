@@ -6,6 +6,8 @@ use types::{Chat, EventIndex, MessageContent, MessageId, MessageIndex};
 pub struct Args {
     pub messages: Vec<SendMessageArgs>,
     pub sender_name: String,
+    #[serde(default)]
+    pub sender_avatar_id: Option<u128>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -31,7 +33,11 @@ pub enum C2CReplyContext {
 }
 
 impl Args {
-    pub fn new(messages: Vec<SendMessageArgs>, sender_name: String) -> Args {
-        Args { messages, sender_name }
+    pub fn new(messages: Vec<SendMessageArgs>, sender_name: String, sender_avatar_id: Option<u128>) -> Args {
+        Args {
+            messages,
+            sender_name,
+            sender_avatar_id,
+        }
     }
 }

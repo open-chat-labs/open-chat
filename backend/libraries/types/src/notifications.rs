@@ -30,6 +30,8 @@ pub struct AddedToChannelNotification {
     pub channel_name: String,
     pub added_by: UserId,
     pub added_by_name: String,
+    pub community_avatar_id: Option<u128>,
+    pub channel_avatar_id: Option<u128>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -42,6 +44,7 @@ pub struct DirectMessageNotification {
     pub message_type: String,
     pub message_text: Option<String>,
     pub image_url: Option<String>,
+    pub sender_avatar_id: Option<u128>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -56,6 +59,7 @@ pub struct GroupMessageNotification {
     pub message_type: String,
     pub message_text: Option<String>,
     pub image_url: Option<String>,
+    pub group_avatar_id: Option<u128>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -72,6 +76,8 @@ pub struct ChannelMessageNotification {
     pub message_type: String,
     pub message_text: Option<String>,
     pub image_url: Option<String>,
+    pub community_avatar_id: Option<u128>,
+    pub channel_avatar_id: Option<u128>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -82,6 +88,7 @@ pub struct DirectReactionAddedNotification {
     pub message_event_index: EventIndex,
     pub username: String,
     pub reaction: Reaction,
+    pub user_avatar_id: Option<u128>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -94,6 +101,7 @@ pub struct GroupReactionAddedNotification {
     pub added_by: UserId,
     pub added_by_name: String,
     pub reaction: Reaction,
+    pub group_avatar_id: Option<u128>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -108,6 +116,8 @@ pub struct ChannelReactionAddedNotification {
     pub added_by: UserId,
     pub added_by_name: String,
     pub reaction: Reaction,
+    pub community_avatar_id: Option<u128>,
+    pub channel_avatar_id: Option<u128>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

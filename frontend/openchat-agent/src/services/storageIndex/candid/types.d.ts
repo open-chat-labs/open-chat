@@ -21,7 +21,9 @@ export interface AddedToChannelNotification {
   'added_by_name' : string,
   'added_by' : UserId,
   'channel_name' : string,
+  'community_avatar_id' : [] | [bigint],
   'community_name' : string,
+  'channel_avatar_id' : [] | [bigint],
 }
 export interface AllocatedBucketArgs {
   'file_hash' : Hash,
@@ -105,12 +107,14 @@ export interface ChannelMessageNotification {
   'image_url' : [] | [string],
   'sender' : UserId,
   'channel_name' : string,
+  'community_avatar_id' : [] | [bigint],
   'community_name' : string,
   'sender_name' : string,
   'message_text' : [] | [string],
   'message_type' : string,
   'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
+  'channel_avatar_id' : [] | [bigint],
   'message_index' : MessageIndex,
 }
 export interface ChannelReactionAddedNotification {
@@ -120,8 +124,10 @@ export interface ChannelReactionAddedNotification {
   'message_event_index' : EventIndex,
   'added_by' : UserId,
   'channel_name' : string,
+  'community_avatar_id' : [] | [bigint],
   'community_name' : string,
   'thread_root_message_index' : [] | [MessageIndex],
+  'channel_avatar_id' : [] | [bigint],
   'reaction' : Reaction,
   'message_index' : MessageIndex,
 }
@@ -377,6 +383,7 @@ export interface DirectChatSummaryUpdates {
 }
 export interface DirectMessageNotification {
   'image_url' : [] | [string],
+  'sender_avatar_id' : [] | [bigint],
   'sender' : UserId,
   'sender_name' : string,
   'message_text' : [] | [string],
@@ -389,6 +396,7 @@ export interface DirectReactionAddedNotification {
   'username' : string,
   'message_event_index' : EventIndex,
   'them' : UserId,
+  'user_avatar_id' : [] | [bigint],
   'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : Reaction,
   'message_index' : MessageIndex,
@@ -594,6 +602,7 @@ export interface GroupMatch {
 }
 export interface GroupMessageNotification {
   'image_url' : [] | [string],
+  'group_avatar_id' : [] | [bigint],
   'sender' : UserId,
   'sender_name' : string,
   'message_text' : [] | [string],
@@ -626,6 +635,7 @@ export interface GroupPermissions {
 }
 export interface GroupReactionAddedNotification {
   'added_by_name' : string,
+  'group_avatar_id' : [] | [bigint],
   'message_event_index' : EventIndex,
   'added_by' : UserId,
   'chat_id' : ChatId,

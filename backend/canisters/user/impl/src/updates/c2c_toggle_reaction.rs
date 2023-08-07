@@ -65,6 +65,7 @@ fn build_notification(
         message_id,
         reaction,
         username,
+        user_avatar_id,
         ..
     }: Args,
     chat: &DirectChat,
@@ -89,6 +90,7 @@ fn build_notification(
             message_event_index: message_event.index,
             username,
             reaction,
+            user_avatar_id,
         }),
     ))
 }

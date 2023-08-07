@@ -42,6 +42,8 @@ type AddedToChannelNotification = record {
     channel_name : text;
     added_by : UserId;
     added_by_name : text;
+    community_avatar_id : opt nat;
+    channel_avatar_id : opt nat;
 };
 
 type AudioContent = record {
@@ -150,7 +152,8 @@ type DirectMessageNotification = record {
     sender_name : text;
     message_type : text;
     message_text : opt text;
-    image_url: opt text;
+    image_url : opt text;
+    sender_avatar_id : opt nat;
 };
 
 type DirectReactionAddedNotification = record {
@@ -160,6 +163,7 @@ type DirectReactionAddedNotification = record {
     message_event_index : EventIndex;
     username : text;
     reaction : Reaction;
+    user_avatar_id : opt nat;
 };
 
 type FieldTooShortResult = record {
@@ -534,7 +538,9 @@ type ChannelMessageNotification = record {
     sender_name : text;
     message_type : text;
     message_text : opt text;
-    image_url: opt text;
+    image_url : opt text;
+    community_avatar_id : opt nat;
+    channel_avatar_id : opt nat;
 };
 
 type GroupMessageNotification = record {
@@ -547,7 +553,8 @@ type GroupMessageNotification = record {
     sender_name : text;
     message_type : text;
     message_text : opt text;
-    image_url: opt text;
+    image_url : opt text;
+    group_avatar_id : opt nat;
 };
 
 type GroupNameChanged = record {
@@ -567,6 +574,8 @@ type ChannelReactionAddedNotification = record {
     added_by : UserId;
     added_by_name : text;
     reaction : Reaction;
+    community_avatar_id : opt nat;
+    channel_avatar_id : opt nat;
 };
 
 type GroupReactionAddedNotification = record {
@@ -578,6 +587,7 @@ type GroupReactionAddedNotification = record {
     added_by : UserId;
     added_by_name : text;
     reaction : Reaction;
+    group_avatar_id : opt nat;
 };
 
 type GroupReplyContext = record {

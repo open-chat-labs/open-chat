@@ -106,7 +106,7 @@ function toUint8Array(base64String: string): Uint8Array {
 }
 
 async function showNotification(notification: Notification, id: string): Promise<void> {
-    const icon = "/_/raw/icon.png";
+    let icon = "/_/raw/icon.png";
     let image = undefined;
     let title: string;
     let body: string;
@@ -125,6 +125,9 @@ async function showNotification(notification: Notification, id: string): Promise
         };
         title = notification.senderName;
         body = notification.messageText ?? notification.messageType;
+        if (notification.senderAvatarId !== undefined) {
+            icon = `https://${notification.sender.userId}.raw.icp0.io/avatar/${notification.senderAvatarId}`;
+        }
         image = notification.imageUrl;
         path = routeForMessage("direct_chat", { chatId }, notification.messageIndex);
         tag = notification.sender.userId;
@@ -133,6 +136,9 @@ async function showNotification(notification: Notification, id: string): Promise
     } else if (notification.kind === "group_notification") {
         title = notification.groupName;
         body = `${notification.senderName}: ${notification.messageText ?? notification.messageType}`;
+        if (notification.groupAvatarId !== undefined) {
+            icon = `https://${notification.chatId.groupId}.raw.icp0.io/avatar/${notification.groupAvatarId}`;
+        }
         image = notification.imageUrl;
         path = routeForMessage(
             "group_chat",
@@ -151,6 +157,11 @@ async function showNotification(notification: Notification, id: string): Promise
     } else if (notification.kind === "channel_notification") {
         title = `${notification.communityName} / ${notification.channelName}`;
         body = `${notification.senderName}: ${notification.messageText ?? notification.messageType}`;
+        if (notification.channelAvatarId !== undefined) {
+            icon = `https://${notification.chatId.communityId}.raw.icp0.io/channel/${notification.chatId.channelId}/avatar/${notification.channelAvatarId}`;
+        } else if (notification.communityAvatarId !== undefined) {
+            icon = `https://${notification.chatId.communityId}.raw.icp0.io/avatar/${notification.communityAvatarId}`;
+        }
         image = notification.imageUrl;
         path = routeForMessage(
             "community",
@@ -169,6 +180,9 @@ async function showNotification(notification: Notification, id: string): Promise
     } else if (notification.kind === "direct_reaction") {
         title = notification.username;
         body = `${notification.username} reacted '${notification.reaction}' to your message`;
+        if (notification.userAvatarId !== undefined) {
+            icon = `https://${notification.them}.raw.icp0.io/avatar/${notification.userAvatarId}`;
+        }
         path = routeForMessage(
             "direct_chat",
             { chatId: notification.them },
@@ -179,6 +193,11 @@ async function showNotification(notification: Notification, id: string): Promise
     } else if (notification.kind === "channel_reaction") {
         title = `${notification.communityName} / ${notification.channelName}`;
         body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
+        if (notification.channelAvatarId !== undefined) {
+            icon = `https://${notification.chatId.communityId}.raw.icp0.io/channel/${notification.chatId.channelId}/avatar/${notification.channelAvatarId}`;
+        } else if (notification.communityAvatarId !== undefined) {
+            icon = `https://${notification.chatId.communityId}.raw.icp0.io/avatar/${notification.communityAvatarId}`;
+        }
         path = routeForMessage(
             "community",
             {
@@ -192,6 +211,9 @@ async function showNotification(notification: Notification, id: string): Promise
     } else if (notification.kind === "group_reaction") {
         title = notification.groupName;
         body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
+        if (notification.groupAvatarId !== undefined) {
+            icon = `https://${notification.chatId.groupId}.raw.icp0.io/avatar/${notification.groupAvatarId}`;
+        }
         path = routeForMessage(
             "group_chat",
             {

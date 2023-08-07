@@ -94,6 +94,8 @@ export function addedToChannelNotification(
         channelName: candid.channel_name,
         addedBy: candid.added_by.toString(),
         addedByUsername: candid.added_by_name,
+        communityAvatarId: optional(candid.community_avatar_id, identity),
+        channelAvatarId: optional(candid.channel_avatar_id, identity),
         timestamp,
     };
 }
@@ -115,6 +117,8 @@ export function channelNotification(
         messageType: candid.message_type,
         messageText: optional(candid.message_text, identity),
         imageUrl: optional(candid.image_url, identity),
+        communityAvatarId: optional(candid.community_avatar_id, identity),
+        channelAvatarId: optional(candid.channel_avatar_id, identity),
         timestamp,
     };
 }
@@ -135,6 +139,7 @@ export function groupNotification(
         messageType: candid.message_type,
         messageText: optional(candid.message_text, identity),
         imageUrl: optional(candid.image_url, identity),
+        groupAvatarId: optional(candid.group_avatar_id, identity),
         timestamp,
     };
 }
@@ -152,6 +157,7 @@ export function directNotification(
         messageType: candid.message_type,
         messageText: optional(candid.message_text, identity),
         imageUrl: optional(candid.image_url, identity),
+        senderAvatarId: optional(candid.sender_avatar_id, identity),
         timestamp,
     };
 }
@@ -171,6 +177,8 @@ function channelReactionNotification(
         addedBy: candid.added_by.toString(),
         addedByName: candid.added_by_name,
         reaction: candid.reaction,
+        communityAvatarId: optional(candid.community_avatar_id, identity),
+        channelAvatarId: optional(candid.channel_avatar_id, identity),
         timestamp,
     };
 }
@@ -189,6 +197,7 @@ function groupReactionNotification(
         addedBy: candid.added_by.toString(),
         addedByName: candid.added_by_name,
         reaction: candid.reaction,
+        groupAvatarId: optional(candid.group_avatar_id, identity),
         timestamp,
     };
 }
@@ -204,6 +213,7 @@ function directReactionNotification(
         messageEventIndex: candid.message_event_index,
         username: candid.username,
         reaction: candid.reaction,
+        userAvatarId: optional(candid.user_avatar_id, identity),
         timestamp,
     };
 }

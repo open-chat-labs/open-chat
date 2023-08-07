@@ -206,7 +206,7 @@ fn send_message_impl(
                 let pending_messages = chat.get_pending_messages();
                 ic_cdk::spawn(send_to_recipients_canister(
                     recipient,
-                    c2c_send_messages::Args::new(pending_messages, sender_name),
+                    c2c_send_messages::Args::new(pending_messages, sender_name, state.data.avatar.value.as_ref().map(|d| d.id)),
                     0,
                 ));
             }

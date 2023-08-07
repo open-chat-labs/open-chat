@@ -58,6 +58,7 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
                     forwarding: message.forwarding,
                     correlation_id: message.correlation_id,
                     is_bot: false,
+                    sender_avatar_id: args.sender_avatar_id,
                     now,
                 },
                 false,
@@ -108,6 +109,7 @@ async fn c2c_handle_bot_messages(
                     forwarding: false,
                     correlation_id: 0,
                     is_bot: true,
+                    sender_avatar_id: None,
                     now,
                 },
                 false,
@@ -127,6 +129,7 @@ pub(crate) struct HandleMessageArgs {
     pub forwarding: bool,
     pub correlation_id: u64,
     pub is_bot: bool,
+    pub sender_avatar_id: Option<u128>,
     pub now: TimestampMillis,
 }
 
@@ -208,6 +211,7 @@ pub(crate) fn handle_message_impl(
                 message_type: content.message_type(),
                 message_text: content.notification_text(&[]),
                 image_url: content.notification_image_url(),
+                sender_avatar_id: args.sender_avatar_id,
             });
 
             let recipient = state.env.canister_id().into();

@@ -46,6 +46,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                         args.message_id,
                         args.reaction,
                         args.username,
+                        state.data.avatar.value.as_ref().map(|d| d.id),
                         &state.data.fire_and_forget_handler,
                     );
                 }
@@ -64,6 +65,7 @@ fn add_reaction_on_recipients_canister(
     message_id: MessageId,
     reaction: Reaction,
     username: String,
+    user_avatar_id: Option<u128>,
     fire_and_forget_handler: &FireAndForgetHandler,
 ) {
     let args = c2c_toggle_reaction::Args {
@@ -71,6 +73,7 @@ fn add_reaction_on_recipients_canister(
         reaction,
         added: true,
         username,
+        user_avatar_id,
         correlation_id: 0,
     };
     fire_and_forget_handler.send(

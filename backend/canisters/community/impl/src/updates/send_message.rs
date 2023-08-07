@@ -79,6 +79,8 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         message_type: content.message_type(),
                         message_text: content.notification_text(&args.mentioned),
                         image_url: content.notification_image_url(),
+                        community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
+                        channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
                     });
                     state.push_notification(users_to_notify, notification);
 

@@ -89,6 +89,7 @@ fn handle_notification(
                         added_by: user_id,
                         added_by_name: username,
                         reaction,
+                        group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
                     }),
                 );
             }

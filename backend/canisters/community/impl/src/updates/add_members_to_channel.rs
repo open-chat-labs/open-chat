@@ -192,6 +192,8 @@ fn commit(
             channel_name: channel.chat.name.clone(),
             added_by,
             added_by_name,
+            community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
+            channel_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
         });
 
         state.push_notification(users_added.clone(), notification);

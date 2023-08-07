@@ -11,6 +11,7 @@ fn main() {
         message_type: "".to_string(),
         message_text: None,
         image_url: None,
+        sender_avatar_id: None,
     });
     let candid_type = candid::types::internal::get_type(&ignored);
     let candid = candid::bindings::candid::pp_ty(&candid_type);
