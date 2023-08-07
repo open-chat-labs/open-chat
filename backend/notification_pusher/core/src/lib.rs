@@ -3,9 +3,10 @@ use crate::pusher::Pusher;
 use crate::reader::Reader;
 use crate::subscription_remover::SubscriptionRemover;
 use index_store::IndexStore;
+use serde::Serialize;
 use std::sync::Arc;
 use tracing::info;
-use types::{CanisterId, UserId};
+use types::{CanisterId, TimestampMillis, UserId};
 use web_push::SubscriptionInfo;
 
 pub mod ic_agent;
@@ -54,4 +55,10 @@ pub struct Notification {
     recipient: UserId,
     payload: Arc<Vec<u8>>,
     subscription_info: SubscriptionInfo,
+}
+
+#[derive(Serialize)]
+pub struct NotificationPayload {
+    timestamp: TimestampMillis,
+    value: String,
 }

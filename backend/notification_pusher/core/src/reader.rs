@@ -1,5 +1,5 @@
 use crate::ic_agent::IcAgent;
-use crate::Notification;
+use crate::{Notification, NotificationPayload};
 use async_channel::Sender;
 use base64::Engine;
 use index_store::IndexStore;
@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::time;
 use tracing::{error, info};
-use types::{CanisterId, Error, Timestamped, UserId};
+use types::{CanisterId, Error, UserId};
 use web_push::{SubscriptionInfo, SubscriptionKeys};
 
 pub struct Reader<I: IndexStore> {
@@ -63,7 +63,13 @@ impl<I: IndexStore> Reader<I> {
             for notification in ic_response.notifications.into_iter().map(|n| n.value) {
                 let base64 = base64::engine::general_purpose::STANDARD_NO_PAD.encode(notification.notification_bytes);
 
-                let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
+                let payload = Arc::new(
+                    serde_json::to_vec(&NotificationPayload {
+                        timestamp: notification.timestamp,
+                        value: base64,
+                    })
+                    .unwrap(),
+                );
 
                 for user_id in notification.recipients {
                     if let Some(subscriptions) = subscriptions_map.get(&user_id) {
