@@ -44,13 +44,6 @@ type AddedToChannelNotification = record {
     added_by_name : text;
 };
 
-type AddedToGroupNotification = record {
-    chat_id : ChatId;
-    group_name : text;
-    added_by : UserId;
-    added_by_name : text;
-};
-
 type AudioContent = record {
     caption : opt text;
     mime_type : text;
@@ -728,7 +721,6 @@ type MessageMatch = record {
 
 type Notification = variant {
     AddedToChannel : AddedToChannelNotification;
-    AddedToGroup : AddedToGroupNotification;
     ChannelMessage : ChannelMessageNotification;
     DirectMessage : DirectMessageNotification;
     GroupMessage : GroupMessageNotification;

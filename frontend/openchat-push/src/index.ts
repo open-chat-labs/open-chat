@@ -41,9 +41,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
         return;
     }
 
-    const text = event.data.text();
-
-    const { t, v }: TimestampedNotification = JSON.parse(text);
+    const { t, v }: TimestampedNotification = JSON.parse(event.data.text());
     const [timestamp, value] = [t, v];
 
     const bytes = toUint8Array(value);

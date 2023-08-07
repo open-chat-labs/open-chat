@@ -37,12 +37,6 @@ export interface AddedToChannelNotification {
   'channel_name' : string,
   'community_name' : string,
 }
-export interface AddedToGroupNotification {
-  'added_by_name' : string,
-  'added_by' : UserId,
-  'chat_id' : ChatId,
-  'group_name' : string,
-}
 export interface ArchiveUnarchiveChatsArgs {
   'to_archive' : Array<Chat>,
   'to_unarchive' : Array<Chat>,
@@ -1154,7 +1148,6 @@ export type Notification = {
   { 'ChannelReactionAdded' : ChannelReactionAddedNotification } |
   { 'DirectReactionAdded' : DirectReactionAddedNotification } |
   { 'GroupMessage' : GroupMessageNotification } |
-  { 'AddedToGroup' : AddedToGroupNotification } |
   { 'AddedToChannel' : AddedToChannelNotification } |
   { 'ChannelMessage' : ChannelMessageNotification };
 export interface NotificationEnvelope {

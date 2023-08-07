@@ -14,21 +14,12 @@ pub struct NotificationEnvelope {
 #[derive(CandidType, Serialize)]
 pub enum Notification {
     AddedToChannel(AddedToChannelNotification),
-    AddedToGroup(AddedToGroupNotification),
     DirectMessage(DirectMessageNotification),
     GroupMessage(GroupMessageNotification),
     ChannelMessage(ChannelMessageNotification),
     DirectReactionAdded(DirectReactionAddedNotification),
     GroupReactionAdded(GroupReactionAddedNotification),
     ChannelReactionAdded(ChannelReactionAddedNotification),
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct AddedToGroupNotification {
-    pub chat_id: ChatId,
-    pub group_name: String,
-    pub added_by: UserId,
-    pub added_by_name: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -154,5 +145,5 @@ fn notification_length() {
 
     let bytes = candid::encode_one(&notification).unwrap().len();
 
-    assert!(bytes < 600, "{bytes}");
+    assert!(bytes < 500, "{bytes}");
 }

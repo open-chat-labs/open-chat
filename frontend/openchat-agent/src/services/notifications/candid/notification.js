@@ -53,12 +53,6 @@ export const Notification = IDL.Variant({
     'group_name' : IDL.Text,
     'message_index' : IDL.Nat32,
   }),
-  'AddedToGroup' : IDL.Record({
-    'added_by_name' : IDL.Text,
-    'added_by' : IDL.Principal,
-    'chat_id' : IDL.Principal,
-    'group_name' : IDL.Text,
-  }),
   'AddedToChannel' : IDL.Record({
     'channel_id' : IDL.Nat,
     'community_id' : IDL.Principal,
