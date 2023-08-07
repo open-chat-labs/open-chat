@@ -108,47 +108,50 @@ impl MessageContent {
         references
     }
 
-    pub fn message_type(&self) -> String {
+    pub fn message_type(&self) -> &'static str {
         match self {
-            MessageContent::Text(_) => "text".to_string(),
-            MessageContent::Image(_) => "image".to_string(),
-            MessageContent::Video(_) => "video".to_string(),
-            MessageContent::Audio(_) => "audio".to_string(),
-            MessageContent::File(_) => "file".to_string(),
-            MessageContent::Poll(_) => "poll".to_string(),
-            MessageContent::Crypto(_) => "crypto".to_string(),
-            MessageContent::Deleted(_) => "deleted".to_string(),
-            MessageContent::Giphy(_) => "giphy".to_string(),
-            MessageContent::GovernanceProposal(_) => "governance_proposal".to_string(),
-            MessageContent::Prize(_) => "prize".to_string(),
-            MessageContent::PrizeWinner(_) => "prize_winner".to_string(),
-            MessageContent::MessageReminderCreated(_) => "message_reminder_created".to_string(),
-            MessageContent::MessageReminder(_) => "message_reminder".to_string(),
-            MessageContent::ReportedMessage(_) => "reported_message".to_string(),
-            MessageContent::Custom(_) => "custom".to_string(),
+            MessageContent::Text(_) => "Text",
+            MessageContent::Image(_) => "Image",
+            MessageContent::Video(_) => "Video",
+            MessageContent::Audio(_) => "Audio",
+            MessageContent::File(_) => "File",
+            MessageContent::Poll(_) => "Poll",
+            MessageContent::Crypto(_) => "Crypto",
+            MessageContent::Deleted(_) => "Deleted",
+            MessageContent::Giphy(_) => "Giphy",
+            MessageContent::GovernanceProposal(_) => "GovernanceProposal",
+            MessageContent::Prize(_) => "Prize",
+            MessageContent::PrizeWinner(_) => "PrizeWinner",
+            MessageContent::MessageReminderCreated(_) => "MessageReminderCreated",
+            MessageContent::MessageReminder(_) => "MessageReminder",
+            MessageContent::ReportedMessage(_) => "ReportedMessage",
+            MessageContent::Custom(_) => "Custom",
         }
     }
 
     pub fn notification_text(&self, mentioned: &[User]) -> Option<String> {
         let mut text = match self {
-            MessageContent::Text(t) => Some(t.text.as_str()),
-            MessageContent::Image(i) => i.caption.as_deref(),
-            MessageContent::Video(v) => v.caption.as_deref(),
-            MessageContent::Audio(a) => a.caption.as_deref(),
-            MessageContent::File(f) => f.caption.as_deref(),
-            MessageContent::Poll(p) => p.config.text.as_deref(),
-            MessageContent::Crypto(c) => c.caption.as_deref(),
-            MessageContent::Giphy(g) => g.caption.as_deref(),
-            MessageContent::GovernanceProposal(gp) => Some(gp.proposal.title()),
-            MessageContent::Prize(p) => p.caption.as_deref(),
+            MessageContent::Text(t) => Some(t.text.clone()),
+            MessageContent::Image(i) => i.caption.clone(),
+            MessageContent::Video(v) => v.caption.clone(),
+            MessageContent::Audio(a) => a.caption.clone(),
+            MessageContent::File(f) => f.caption.clone(),
+            MessageContent::Poll(p) => p.config.text.clone(),
+            MessageContent::Crypto(c) => Some(
+                c.caption
+                    .clone()
+                    .unwrap_or_else(|| format_transfer(c.transfer.token(), c.transfer.units())),
+            ),
+            MessageContent::Giphy(g) => g.caption.clone(),
+            MessageContent::GovernanceProposal(gp) => Some(gp.proposal.title().to_string()),
+            MessageContent::Prize(p) => p.caption.clone(),
             MessageContent::Deleted(_)
             | MessageContent::PrizeWinner(_)
             | MessageContent::MessageReminderCreated(_)
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
             | MessageContent::Custom(_) => None,
-        }?
-        .to_string();
+        }?;
 
         // Populate usernames for mentioned users
         for User { user_id, username } in mentioned {
@@ -631,5 +634,24 @@ pub struct ThumbnailData(pub String);
 impl Debug for ThumbnailData {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ThumbnailData").field("byte_length", &self.0.len()).finish()
+    }
+}
+
+fn format_transfer(token: Cryptocurrency, amount: u128) -> String {
+    let symbol = token.token_symbol();
+
+    if let Some(decimals) = token.decimals() {
+        let per_unit = 10u128.pow(decimals as u32);
+        let units = amount / per_unit;
+        let fractional = amount % per_unit;
+
+        if fractional == 0 {
+            format!("Transferred {units} {symbol}")
+        } else {
+            let fractional_string = format!("{fractional:0decimals$}").trim_end_matches("0").to_string();
+            format!("Transferred {units}.{fractional_string} {symbol}")
+        }
+    } else {
+        format!("Transferred {symbol}")
     }
 }

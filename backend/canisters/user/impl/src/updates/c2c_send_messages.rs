@@ -208,7 +208,7 @@ pub(crate) fn handle_message_impl(
                 message_index: message_event.event.message_index,
                 event_index: message_event.index,
                 sender_name: args.sender_name,
-                message_type: content.message_type(),
+                message_type: content.message_type().to_string(),
                 message_text: content.notification_text(&[]),
                 image_url: content.notification_image_url(),
                 sender_avatar_id: args.sender_avatar_id,

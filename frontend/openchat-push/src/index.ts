@@ -128,10 +128,10 @@ async function showNotification(notification: Notification, id: string): Promise
             userId: notification.sender.userId,
         };
         title = notification.senderName;
-        body = notification.messageText ?? defaultMessage(notification.messageType);
+        body = messageText(notification.messageText, notification.messageType);
         if (notification.senderAvatarId !== undefined) {
             icon = avatarUrl(notification.sender.userId, notification.senderAvatarId);
-        } else if (notification.messageType === "file") {
+        } else if (notification.messageType === "File") {
             icon = FILE_ICON;
         }
         image = notification.imageUrl;
@@ -141,10 +141,10 @@ async function showNotification(notification: Notification, id: string): Promise
         closeExistingNotifications = true;
     } else if (notification.kind === "group_notification") {
         title = notification.groupName;
-        body = `${notification.senderName}: ${notification.messageText ?? defaultMessage(notification.messageType)}`;
+        body = `${notification.senderName}: ${messageText(notification.messageText, notification.messageType)}`;
         if (notification.groupAvatarId !== undefined) {
             icon = avatarUrl(notification.chatId.groupId, notification.groupAvatarId);
-        } else if (notification.messageType === "file") {
+        } else if (notification.messageType === "File") {
             icon = FILE_ICON;
         }
         image = notification.imageUrl;
@@ -164,12 +164,12 @@ async function showNotification(notification: Notification, id: string): Promise
         closeExistingNotifications = true;
     } else if (notification.kind === "channel_notification") {
         title = `${notification.communityName} / ${notification.channelName}`;
-        body = `${notification.senderName}: ${notification.messageText ?? defaultMessage(notification.messageType)}`;
+        body = `${notification.senderName}: ${messageText(notification.messageText, notification.messageType)}`;
         if (notification.channelAvatarId !== undefined) {
             icon = channelAvatarUrl(notification.chatId, notification.channelAvatarId);
         } else if (notification.communityAvatarId !== undefined) {
             icon = avatarUrl(notification.chatId.communityId, notification.communityAvatarId);
-        } else if (notification.messageType === "file") {
+        } else if (notification.messageType === "File") {
             icon = FILE_ICON;
         }
         image = notification.imageUrl;
@@ -273,14 +273,18 @@ async function showNotification(notification: Notification, id: string): Promise
     await self.registration.showNotification(title, toShow);
 }
 
+function messageText(messageText: string | undefined, messageType: string): string {
+    return (messageText === undefined || messageText.length === 0)
+        ? defaultMessage(messageType)
+        : messageText;
+}
+
 function defaultMessage(messageType: string): string {
     const messageTypeLower = messageType.toLowerCase();
     switch (messageTypeLower) {
         case "poll": return "Created a poll";
         default: {
-            const aOrAn = ['a', 'e', 'i', 'o', 'u'].includes(messageTypeLower.charAt(0)) ? "an" : "a";
-
-            return `Sent ${aOrAn} ${toTitleCase(messageType)} message`;
+            return `${toTitleCase(messageType)} message`;
         }
     }
 }
