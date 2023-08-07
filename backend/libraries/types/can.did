@@ -735,12 +735,6 @@ type NotificationEnvelope = record {
     timestamp : TimestampMillis;
 };
 
-type NotificationEnvelopeV1 = record {
-    recipients : vec UserId;
-    notification : Notification;
-    timestamp : TimestampMillis;
-};
-
 type PartialUserSummary = record {
     user_id : UserId;
     username : opt text;

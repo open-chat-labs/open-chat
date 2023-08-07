@@ -64,9 +64,6 @@ export function notification(candid: ApiNotification, timestamp: bigint): Notifi
     if ("AddedToChannel" in candid) {
         return addedToChannelNotification(candid.AddedToChannel, timestamp);
     }
-    if ("AddedToGroup" in candid) {
-        return addedToGroupNotification(candid.AddedToGroup, timestamp);
-    }
     if ("ChannelMessage" in candid) {
         return channelNotification(candid.ChannelMessage, timestamp);
     }
@@ -97,20 +94,6 @@ export function addedToChannelNotification(
         chatId: { kind: "channel", communityId: candid.community_id.toString(), channelId: candid.channel_id.toString() },
         communityName: candid.community_name,
         channelName: candid.channel_name,
-        addedBy: candid.added_by.toString(),
-        addedByUsername: candid.added_by_name,
-        timestamp,
-    };
-}
-
-export function addedToGroupNotification(
-    candid: ApiAddedToGroupNotification,
-    timestamp : bigint,
-): AddedToGroupNotification {
-    return {
-        kind: "added_to_group_notification",
-        chatId: { kind: "group_chat", groupId: candid.chat_id.toString() },
-        groupName: candid.group_name,
         addedBy: candid.added_by.toString(),
         addedByUsername: candid.added_by_name,
         timestamp,

@@ -6,7 +6,6 @@ import type {
 
 export type Notification =
     | AddedToChannelNotification
-    | AddedToGroupNotification
     | ChannelNotification
     | DirectNotification
     | GroupNotification
@@ -19,15 +18,6 @@ export type AddedToChannelNotification = {
     chatId: ChannelIdentifier;
     communityName: string;
     channelName: string;
-    addedBy: string;
-    addedByUsername: string;
-    timestamp: bigint;
-};
-
-export type AddedToGroupNotification = {
-    kind: "added_to_group_notification";
-    chatId: GroupChatIdentifier;
-    groupName: string;
     addedBy: string;
     addedByUsername: string;
     timestamp: bigint;

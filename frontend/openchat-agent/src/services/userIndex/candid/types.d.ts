@@ -897,11 +897,6 @@ export interface NotificationEnvelope {
   'recipients' : Array<UserId>,
   'timestamp' : TimestampMillis,
 }
-export interface NotificationEnvelopeV1 {
-  'notification' : Notification,
-  'recipients' : Array<UserId>,
-  'timestamp' : TimestampMillis,
-}
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
   'update_details' : [] | [CommunityPermissionRole],
