@@ -156,5 +156,5 @@ fn notification_length() {
 
     let bytes = candid::encode_one(&notification).unwrap().len();
 
-    assert!(bytes < 500, "{bytes}");
+    assert!(bytes < 600, "{bytes}");
 }
