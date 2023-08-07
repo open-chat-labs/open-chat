@@ -43,7 +43,8 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
 
     const text = event.data.text();
 
-    const { timestamp, value }: TimestampedNotification = JSON.parse(text);
+    const { t, v }: TimestampedNotification = JSON.parse(text);
+    const [timestamp, value] = [t, v];
 
     const bytes = toUint8Array(value);
 
@@ -251,6 +252,6 @@ function isMessageNotification(notification: Notification): boolean {
 }
 
 type TimestampedNotification = {
-    timestamp: bigint;
-    value: string;
+    t: bigint; // timestamp
+    v: string; // value
 }
