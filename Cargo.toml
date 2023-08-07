@@ -114,6 +114,7 @@ members = [
 ]
 
 [workspace.dependencies]
+async-channel = "1.9.0"
 async-trait = "0.1.68"
 aws-config = "0.55.3"
 aws-sdk-dynamodb = "0.28.0"

@@ -2,16 +2,18 @@ use crate::IndexStore;
 use async_trait::async_trait;
 use futures::lock::Mutex;
 use std::collections::HashMap;
+use std::sync::Arc;
 use types::{CanisterId, Error};
 
+#[derive(Clone)]
 pub struct DummyStore {
-    indexes_processed_up_to: Mutex<HashMap<CanisterId, u64>>,
+    indexes_processed_up_to: Arc<Mutex<HashMap<CanisterId, u64>>>,
 }
 
 impl DummyStore {
     pub fn new(indexes: HashMap<CanisterId, u64>) -> DummyStore {
         DummyStore {
-            indexes_processed_up_to: Mutex::new(indexes),
+            indexes_processed_up_to: Arc::new(Mutex::new(indexes)),
         }
     }
 }

@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 async-trait = { workspace = true }
+async-channel = { workspace = true }
 base64 = { workspace = true }
 futures = { workspace = true }
 ic-agent = { workspace = true }
@@ -15,6 +16,7 @@ notifications_index_canister = { path = "../../canisters/notifications_index/api
 notifications_index_canister_client = { path = "../../canisters/notifications_index/client" }
 openssl = { workspace = true, features = ["vendored"] }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 tokio = { workspace = true, features = ["macros", "time"] }
 tracing = { workspace = true }
 types = { path = "../../libraries/types" }
