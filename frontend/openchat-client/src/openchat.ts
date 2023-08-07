@@ -201,7 +201,6 @@ import {
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
-import { toTitleCase } from "./utils/string";
 import { formatRelativeTime, formatTimeRemaining } from "./utils/time";
 import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
@@ -344,6 +343,7 @@ import {
     ModerationFlag,
     GroupMoved,
     GHOST_SYMBOL,
+    toTitleCase
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
