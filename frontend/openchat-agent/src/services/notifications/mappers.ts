@@ -10,6 +10,7 @@ import {
     ChannelReaction,
     GroupReaction,
     DirectReaction,
+    CryptoTransferDetails,
 } from "openchat-shared";
 import { identity, optional } from "../../utils/mapping";
 import type {
@@ -26,6 +27,7 @@ import type {
     ApiChannelReactionAddedNotification,
     ApiGroupReactionAddedNotification,
     ApiDirectReactionAddedNotification,
+    ApiNotificationCryptoTransferDetails,
 } from "./candid/idl";
 import type { ApiToggleMuteChannelNotificationsResponse } from "../community/candid/idl";
 
@@ -119,6 +121,7 @@ export function channelNotification(
         imageUrl: optional(candid.image_url, identity),
         communityAvatarId: optional(candid.community_avatar_id, identity),
         channelAvatarId: optional(candid.channel_avatar_id, identity),
+        cryptoTransfer: optional(candid.crypto_transfer, cryptoTransfer),
         timestamp,
     };
 }
@@ -140,6 +143,7 @@ export function groupNotification(
         messageText: optional(candid.message_text, identity),
         imageUrl: optional(candid.image_url, identity),
         groupAvatarId: optional(candid.group_avatar_id, identity),
+        cryptoTransfer: optional(candid.crypto_transfer, cryptoTransfer),
         timestamp,
     };
 }
@@ -158,6 +162,7 @@ export function directNotification(
         messageText: optional(candid.message_text, identity),
         imageUrl: optional(candid.image_url, identity),
         senderAvatarId: optional(candid.sender_avatar_id, identity),
+        cryptoTransfer: optional(candid.crypto_transfer, cryptoTransfer),
         timestamp,
     };
 }
@@ -215,5 +220,15 @@ function directReactionNotification(
         reaction: candid.reaction,
         userAvatarId: optional(candid.user_avatar_id, identity),
         timestamp,
+    };
+}
+
+function cryptoTransfer(candid: ApiNotificationCryptoTransferDetails): CryptoTransferDetails {
+    return {
+        recipient: candid.recipient.toString(),
+        recipientUsername: optional(candid.recipient_username, identity),
+        ledger: candid.ledger.toString(),
+        symbol: candid.symbol,
+        amount: candid.amount,
     };
 }

@@ -115,6 +115,7 @@ export interface ChannelMessageNotification {
   'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
   'channel_avatar_id' : [] | [bigint],
+  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
   'message_index' : MessageIndex,
 }
 export interface ChannelReactionAddedNotification {
@@ -390,6 +391,7 @@ export interface DirectMessageNotification {
   'message_type' : string,
   'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
+  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
   'message_index' : MessageIndex,
 }
 export interface DirectReactionAddedNotification {
@@ -611,6 +613,7 @@ export interface GroupMessageNotification {
   'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
+  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
   'message_index' : MessageIndex,
 }
 export interface GroupNameChanged {
@@ -891,6 +894,13 @@ export type Notification = {
   { 'GroupMessage' : GroupMessageNotification } |
   { 'AddedToChannel' : AddedToChannelNotification } |
   { 'ChannelMessage' : ChannelMessageNotification };
+export interface NotificationCryptoTransferDetails {
+  'recipient' : UserId,
+  'ledger' : CanisterId,
+  'recipient_username' : [] | [string],
+  'amount' : bigint,
+  'symbol' : string,
+}
 export interface NotificationEnvelope {
   'notification_bytes' : Uint8Array | number[],
   'recipients' : Array<UserId>,

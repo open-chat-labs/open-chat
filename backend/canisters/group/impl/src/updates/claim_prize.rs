@@ -116,6 +116,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
                 message_text: content.notification_text(&[]),
                 image_url: content.notification_image_url(),
                 group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
+                crypto_transfer: None,
             });
             state.push_notification(notification_recipients, notification);
 

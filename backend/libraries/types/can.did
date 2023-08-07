@@ -154,6 +154,7 @@ type DirectMessageNotification = record {
     message_text : opt text;
     image_url : opt text;
     sender_avatar_id : opt nat;
+    crypto_transfer : opt NotificationCryptoTransferDetails;
 };
 
 type DirectReactionAddedNotification = record {
@@ -541,6 +542,7 @@ type ChannelMessageNotification = record {
     image_url : opt text;
     community_avatar_id : opt nat;
     channel_avatar_id : opt nat;
+    crypto_transfer : opt NotificationCryptoTransferDetails;
 };
 
 type GroupMessageNotification = record {
@@ -555,6 +557,7 @@ type GroupMessageNotification = record {
     message_text : opt text;
     image_url : opt text;
     group_avatar_id : opt nat;
+    crypto_transfer : opt NotificationCryptoTransferDetails;
 };
 
 type GroupNameChanged = record {
@@ -743,6 +746,14 @@ type NotificationEnvelope = record {
     recipients : vec UserId;
     notification_bytes : vec nat8;
     timestamp : TimestampMillis;
+};
+
+type NotificationCryptoTransferDetails = record {
+    recipient : UserId;
+    recipient_username : opt text;
+    ledger : CanisterId;
+    symbol : text;
+    amount : nat;
 };
 
 type PartialUserSummary = record {

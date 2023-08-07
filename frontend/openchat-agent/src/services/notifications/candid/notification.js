@@ -21,6 +21,15 @@ export const Notification = IDL.Variant({
     'message_type' : IDL.Text,
     'event_index' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(IDL.Nat32),
+    'crypto_transfer' : IDL.Opt(
+      IDL.Record({
+        'recipient' : IDL.Principal,
+        'ledger' : IDL.Principal,
+        'recipient_username' : IDL.Opt(IDL.Text),
+        'amount' : IDL.Nat,
+        'symbol' : IDL.Text,
+      })
+    ),
     'message_index' : IDL.Nat32,
   }),
   'ChannelReactionAdded' : IDL.Record({
@@ -57,6 +66,15 @@ export const Notification = IDL.Variant({
     'event_index' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(IDL.Nat32),
     'group_name' : IDL.Text,
+    'crypto_transfer' : IDL.Opt(
+      IDL.Record({
+        'recipient' : IDL.Principal,
+        'ledger' : IDL.Principal,
+        'recipient_username' : IDL.Opt(IDL.Text),
+        'amount' : IDL.Nat,
+        'symbol' : IDL.Text,
+      })
+    ),
     'message_index' : IDL.Nat32,
   }),
   'AddedToChannel' : IDL.Record({
@@ -83,6 +101,15 @@ export const Notification = IDL.Variant({
     'event_index' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(IDL.Nat32),
     'channel_avatar_id' : IDL.Opt(IDL.Nat),
+    'crypto_transfer' : IDL.Opt(
+      IDL.Record({
+        'recipient' : IDL.Principal,
+        'ledger' : IDL.Principal,
+        'recipient_username' : IDL.Opt(IDL.Text),
+        'amount' : IDL.Nat,
+        'symbol' : IDL.Text,
+      })
+    ),
     'message_index' : IDL.Nat32,
   }),
 });

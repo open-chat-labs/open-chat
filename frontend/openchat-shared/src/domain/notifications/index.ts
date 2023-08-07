@@ -40,6 +40,7 @@ export type ChannelNotification = {
     imageUrl: string | undefined;
     communityAvatarId: bigint | undefined;
     channelAvatarId: bigint | undefined;
+    cryptoTransfer: CryptoTransferDetails | undefined;
     timestamp: bigint;
 };
 
@@ -53,6 +54,7 @@ export type DirectNotification = {
     messageText: string | undefined;
     imageUrl: string | undefined;
     senderAvatarId: bigint | undefined;
+    cryptoTransfer: CryptoTransferDetails | undefined;
     timestamp: bigint;
 };
 
@@ -69,6 +71,7 @@ export type GroupNotification = {
     messageText: string | undefined;
     imageUrl: string | undefined;
     groupAvatarId: bigint | undefined;
+    cryptoTransfer: CryptoTransferDetails | undefined;
     timestamp: bigint;
 };
 
@@ -111,6 +114,14 @@ export type GroupReaction = {
     reaction: string;
     groupAvatarId: bigint | undefined;
     timestamp: bigint;
+};
+
+export type CryptoTransferDetails = {
+    recipient: string;
+    recipientUsername: string | undefined;
+    ledger: string;
+    symbol: string;
+    amount: bigint;
 };
 
 export type SubscriptionExistsResponse = boolean;

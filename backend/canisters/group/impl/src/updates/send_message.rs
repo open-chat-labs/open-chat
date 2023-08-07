@@ -61,6 +61,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     message_text: content.notification_text(&args.mentioned),
                     image_url: content.notification_image_url(),
                     group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
+                    crypto_transfer: content.notification_crypto_transfer_details(&args.mentioned),
                 });
 
                 state.push_notification(result.users_to_notify, notification);

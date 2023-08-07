@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageIndex, ProposalContent, TimestampMillis,
-    TotalVotes, User, UserId, VoteOperation,
+    CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
+    ProposalContent, TimestampMillis, TotalVotes, User, UserId, VoteOperation,
 };
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
@@ -137,11 +137,7 @@ impl MessageContent {
             MessageContent::Audio(a) => a.caption.clone(),
             MessageContent::File(f) => f.caption.clone(),
             MessageContent::Poll(p) => p.config.text.clone(),
-            MessageContent::Crypto(c) => Some(
-                c.caption
-                    .clone()
-                    .unwrap_or_else(|| format_transfer(c.transfer.token(), c.transfer.units())),
-            ),
+            MessageContent::Crypto(c) => c.caption.clone(),
             MessageContent::Giphy(g) => g.caption.clone(),
             MessageContent::GovernanceProposal(gp) => Some(gp.proposal.title().to_string()),
             MessageContent::Prize(p) => p.caption.clone(),
@@ -180,6 +176,23 @@ impl MessageContent {
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
             | MessageContent::Custom(_) => None,
+        }
+    }
+
+    pub fn notification_crypto_transfer_details(&self, mentioned: &[User]) -> Option<CryptoTransferDetails> {
+        if let MessageContent::Crypto(c) = self {
+            Some(CryptoTransferDetails {
+                recipient: c.recipient,
+                recipient_username: mentioned
+                    .iter()
+                    .find(|u| u.user_id == c.recipient)
+                    .map(|u| u.username.clone()),
+                ledger: c.transfer.ledger(),
+                symbol: c.transfer.token().token_symbol().to_string(),
+                amount: c.transfer.units(),
+            })
+        } else {
+            None
         }
     }
 }
@@ -634,24 +647,5 @@ pub struct ThumbnailData(pub String);
 impl Debug for ThumbnailData {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ThumbnailData").field("byte_length", &self.0.len()).finish()
-    }
-}
-
-fn format_transfer(token: Cryptocurrency, amount: u128) -> String {
-    let symbol = token.token_symbol();
-
-    if let Some(decimals) = token.decimals() {
-        let per_unit = 10u128.pow(decimals as u32);
-        let units = amount / per_unit;
-        let fractional = amount % per_unit;
-
-        if fractional == 0 {
-            format!("Transferred {units} {symbol}")
-        } else {
-            let fractional_string = format!("{fractional:0decimals$}").trim_end_matches("0").to_string();
-            format!("Transferred {units}.{fractional_string} {symbol}")
-        }
-    } else {
-        format!("Transferred {symbol}")
     }
 }

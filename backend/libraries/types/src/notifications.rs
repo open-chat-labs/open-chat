@@ -1,4 +1,4 @@
-use crate::{ChannelId, ChatId, CommunityId, EventIndex, MessageIndex, Reaction, TimestampMillis, UserId};
+use crate::{CanisterId, ChannelId, ChatId, CommunityId, EventIndex, MessageIndex, Reaction, TimestampMillis, UserId};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -45,6 +45,7 @@ pub struct DirectMessageNotification {
     pub message_text: Option<String>,
     pub image_url: Option<String>,
     pub sender_avatar_id: Option<u128>,
+    pub crypto_transfer: Option<CryptoTransferDetails>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -60,6 +61,7 @@ pub struct GroupMessageNotification {
     pub message_text: Option<String>,
     pub image_url: Option<String>,
     pub group_avatar_id: Option<u128>,
+    pub crypto_transfer: Option<CryptoTransferDetails>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -78,6 +80,7 @@ pub struct ChannelMessageNotification {
     pub image_url: Option<String>,
     pub community_avatar_id: Option<u128>,
     pub channel_avatar_id: Option<u128>,
+    pub crypto_transfer: Option<CryptoTransferDetails>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -120,6 +123,15 @@ pub struct ChannelReactionAddedNotification {
     pub channel_avatar_id: Option<u128>,
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CryptoTransferDetails {
+    pub recipient: UserId,
+    pub recipient_username: Option<String>,
+    pub ledger: CanisterId,
+    pub symbol: String,
+    pub amount: u128,
+}
+
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct CanPushNotificationsArgs {
     pub principal: Principal,
@@ -152,6 +164,7 @@ fn notification_length() {
         message_text: Some("abc".to_string()),
         image_url: None,
         sender_avatar_id: None,
+        crypto_transfer: None,
     });
 
     let bytes = candid::encode_one(notification).unwrap().len();

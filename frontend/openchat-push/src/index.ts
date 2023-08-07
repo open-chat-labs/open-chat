@@ -8,6 +8,8 @@ import {
     toTitleCase,
     DirectChatIdentifier,
     ChannelIdentifier,
+    CryptoTransferDetails,
+    cryptoLookup,
 } from "openchat-shared";
 
 declare const self: ServiceWorkerGlobalScope;
@@ -128,7 +130,7 @@ async function showNotification(notification: Notification, id: string): Promise
             userId: notification.sender.userId,
         };
         title = notification.senderName;
-        body = messageText(notification.messageText, notification.messageType);
+        body = messageText(notification.messageText, notification.messageType, notification.cryptoTransfer);
         if (notification.senderAvatarId !== undefined) {
             icon = avatarUrl(notification.sender.userId, notification.senderAvatarId);
         } else if (notification.messageType === "File") {
@@ -141,7 +143,7 @@ async function showNotification(notification: Notification, id: string): Promise
         closeExistingNotifications = true;
     } else if (notification.kind === "group_notification") {
         title = notification.groupName;
-        body = `${notification.senderName}: ${messageText(notification.messageText, notification.messageType)}`;
+        body = `${notification.senderName}: ${messageText(notification.messageText, notification.messageType, notification.cryptoTransfer)}`;
         if (notification.groupAvatarId !== undefined) {
             icon = avatarUrl(notification.chatId.groupId, notification.groupAvatarId);
         } else if (notification.messageType === "File") {
@@ -164,7 +166,7 @@ async function showNotification(notification: Notification, id: string): Promise
         closeExistingNotifications = true;
     } else if (notification.kind === "channel_notification") {
         title = `${notification.communityName} / ${notification.channelName}`;
-        body = `${notification.senderName}: ${messageText(notification.messageText, notification.messageType)}`;
+        body = `${notification.senderName}: ${messageText(notification.messageText, notification.messageType, notification.cryptoTransfer)}`;
         if (notification.channelAvatarId !== undefined) {
             icon = channelAvatarUrl(notification.chatId, notification.channelAvatarId);
         } else if (notification.communityAvatarId !== undefined) {
@@ -273,10 +275,25 @@ async function showNotification(notification: Notification, id: string): Promise
     await self.registration.showNotification(title, toShow);
 }
 
-function messageText(messageText: string | undefined, messageType: string): string {
-    return (messageText === undefined || messageText.length === 0)
-        ? defaultMessage(messageType)
-        : messageText;
+function messageText(
+    messageText: string | undefined,
+    messageType: string,
+    cryptoTransfer: CryptoTransferDetails | undefined
+): string {
+    if (messageText !== undefined && messageText.length > 0) {
+        return messageText;
+    }
+
+    if (cryptoTransfer !== undefined) {
+        const tokenDetails = cryptoLookup[cryptoTransfer.symbol];
+        if (tokenDetails !== undefined) {
+            return `Sent ${
+                Number(cryptoTransfer.amount) / Math.pow(10, 8)
+            } ${tokenDetails.symbol}`;
+        }
+    }
+
+    return defaultMessage(messageType);
 }
 
 function defaultMessage(messageType: string): string {
