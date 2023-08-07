@@ -130,7 +130,7 @@ impl MessageContent {
     }
 
     pub fn notification_text(&self, mentioned: &[User]) -> Option<String> {
-        let text = match self {
+        let mut text = match self {
             MessageContent::Text(t) => Some(t.text.as_str()),
             MessageContent::Image(i) => i.caption.as_deref(),
             MessageContent::Video(v) => v.caption.as_deref(),
@@ -150,12 +150,12 @@ impl MessageContent {
         }?
         .to_string();
 
-        const MAX_CHARS: usize = 200;
-
-        if !mentioned.is_empty() {
-            // TODO hydrate mentions
+        // Populate usernames for mentioned users
+        for User { user_id, username } in mentioned {
+            text = text.replace(&format!("@UserId({user_id})"), &format!("@{username}"));
         }
 
+        const MAX_CHARS: usize = 200;
         Some(text.chars().take(MAX_CHARS).collect())
     }
 
