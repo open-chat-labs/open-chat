@@ -49,22 +49,20 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 );
 
                 let content = &result.message_event.event.content;
-                if content.should_push_notification() {
-                    let notification = Notification::GroupMessage(GroupMessageNotification {
-                        chat_id: state.env.canister_id().into(),
-                        thread_root_message_index: args.thread_root_message_index,
-                        message_index,
-                        event_index,
-                        group_name: state.data.chat.name.clone(),
-                        sender: user_id,
-                        sender_name: args.sender_name,
-                        message_type: content.message_type(),
-                        message_text: content.notification_text(&args.mentioned),
-                        thumbnail: content.notification_thumbnail(),
-                    });
+                let notification = Notification::GroupMessage(GroupMessageNotification {
+                    chat_id: state.env.canister_id().into(),
+                    thread_root_message_index: args.thread_root_message_index,
+                    message_index,
+                    event_index,
+                    group_name: state.data.chat.name.clone(),
+                    sender: user_id,
+                    sender_name: args.sender_name,
+                    message_type: content.message_type(),
+                    message_text: content.notification_text(&args.mentioned),
+                    thumbnail: content.notification_thumbnail(),
+                });
 
-                    state.push_notification(result.users_to_notify, notification);
-                }
+                state.push_notification(result.users_to_notify, notification);
                 handle_activity_notification(state);
 
                 Success(SuccessResult {

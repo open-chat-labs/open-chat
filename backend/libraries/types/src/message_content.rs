@@ -108,13 +108,6 @@ impl MessageContent {
         references
     }
 
-    pub fn should_push_notification(&self) -> bool {
-        match self {
-            MessageContent::Deleted(_) | MessageContent::MessageReminderCreated(_) => false,
-            _ => true,
-        }
-    }
-
     pub fn message_type(&self) -> String {
         match self {
             MessageContent::Text(_) => "text".to_string(),

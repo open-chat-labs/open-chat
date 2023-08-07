@@ -66,24 +66,21 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         .collect();
 
                     let content = &result.message_event.event.content;
-                    if content.should_push_notification() {
-                        let notification = Notification::ChannelMessage(ChannelMessageNotification {
-                            community_id: state.env.canister_id().into(),
-                            channel_id: args.channel_id,
-                            thread_root_message_index: args.thread_root_message_index,
-                            message_index: result.message_event.event.message_index,
-                            event_index: result.message_event.index,
-                            community_name: state.data.name.clone(),
-                            channel_name: channel.chat.name.clone(),
-                            sender: user_id,
-                            sender_name: args.sender_name,
-                            message_type: content.message_type(),
-                            message_text: content.notification_text(&args.mentioned),
-                            thumbnail: content.notification_thumbnail(),
-                        });
-
-                        state.push_notification(users_to_notify, notification);
-                    }
+                    let notification = Notification::ChannelMessage(ChannelMessageNotification {
+                        community_id: state.env.canister_id().into(),
+                        channel_id: args.channel_id,
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_index: result.message_event.event.message_index,
+                        event_index: result.message_event.index,
+                        community_name: state.data.name.clone(),
+                        channel_name: channel.chat.name.clone(),
+                        sender: user_id,
+                        sender_name: args.sender_name,
+                        message_type: content.message_type(),
+                        message_text: content.notification_text(&args.mentioned),
+                        thumbnail: content.notification_thumbnail(),
+                    });
+                    state.push_notification(users_to_notify, notification);
 
                     handle_activity_notification(state);
 

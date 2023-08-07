@@ -117,28 +117,25 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         .claim_prize(args.message_id, winner, transaction, state.env.rng(), now)
     {
         chat_events::ClaimPrizeResult::Success(message_event) => {
+            // Send a notification to group participants
+            let notification_recipients = channel.chat.members.users_to_notify(None).into_iter().collect();
             let content = &message_event.event.content;
-            if content.should_push_notification() {
-                // Send a notification to group participants
-                let notification_recipients = channel.chat.members.users_to_notify(None).into_iter().collect();
 
-                let notification = Notification::ChannelMessage(ChannelMessageNotification {
-                    community_id: state.env.canister_id().into(),
-                    channel_id: args.channel_id,
-                    thread_root_message_index: None,
-                    message_index: message_event.event.message_index,
-                    event_index: message_event.index,
-                    community_name: state.data.name.clone(),
-                    channel_name: channel.chat.name.clone(),
-                    sender: OPENCHAT_BOT_USER_ID,
-                    sender_name: OPENCHAT_BOT_USERNAME.to_string(),
-                    message_type: content.message_type(),
-                    message_text: content.notification_text(&[]),
-                    thumbnail: content.notification_thumbnail(),
-                });
-
-                state.push_notification(notification_recipients, notification);
-            }
+            let notification = Notification::ChannelMessage(ChannelMessageNotification {
+                community_id: state.env.canister_id().into(),
+                channel_id: args.channel_id,
+                thread_root_message_index: None,
+                message_index: message_event.event.message_index,
+                event_index: message_event.index,
+                community_name: state.data.name.clone(),
+                channel_name: channel.chat.name.clone(),
+                sender: OPENCHAT_BOT_USER_ID,
+                sender_name: OPENCHAT_BOT_USERNAME.to_string(),
+                message_type: content.message_type(),
+                message_text: content.notification_text(&[]),
+                thumbnail: content.notification_thumbnail(),
+            });
+            state.push_notification(notification_recipients, notification);
 
             handle_activity_notification(state);
             None
