@@ -353,6 +353,8 @@
                             toastStore.showFailureToast("inviteUsersFailed");
                             step = 0;
                         });
+                } else {
+                    onGroupCreated(resp.canisterId);
                 }
             })
             .catch((_err) => {
