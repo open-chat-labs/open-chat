@@ -19,6 +19,7 @@ generate_update_call!(delete_messages);
 generate_update_call!(edit_message);
 generate_update_call!(enable_invite_code);
 generate_update_call!(import_group);
+generate_update_call!(leave_channel);
 generate_update_call!(remove_member);
 generate_update_call!(remove_reaction);
 generate_update_call!(send_message);
@@ -64,6 +65,19 @@ pub mod happy_path {
         match response {
             community_canister::create_channel::Response::Success(result) => result.channel_id,
             response => panic!("'create_channel' error: {response:?}"),
+        }
+    }
+
+    pub fn leave_channel(env: &mut StateMachine, sender: Principal, community_id: CommunityId, channel_id: ChannelId) {
+        let response = super::leave_channel(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::leave_channel::Args { channel_id },
+        );
+
+        if !matches!(response, community_canister::leave_channel::Response::Success) {
+            panic!("'leave_channel' error: {response:?}")
         }
     }
 
