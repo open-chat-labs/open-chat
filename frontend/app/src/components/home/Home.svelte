@@ -286,6 +286,7 @@
                 client.setChatListScope(pathParams.scope);
             }
 
+            // When we have a middle panel and this route is for a chat list then select the first chat
             if (
                 !$mobileWidth &&
                 (pathParams.kind === "selected_community_route" ||
