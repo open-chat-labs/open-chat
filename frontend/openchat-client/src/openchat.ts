@@ -3123,7 +3123,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 isReaction = true;
                 break;
             }
-            case "added_to_group_notification":
             case "added_to_channel_notification":
                 return;
         }

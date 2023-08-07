@@ -4,7 +4,6 @@ import {
     UnsupportedValueError,
     Notification,
     AddedToChannelNotification,
-    AddedToGroupNotification,
     ChannelNotification,
     GroupNotification,
     DirectNotification,
@@ -21,7 +20,6 @@ import type {
     ApiSubscriptionExistsResponse,
     ApiNotification,
     ApiAddedToChannelNotification,
-    ApiAddedToGroupNotification,
     ApiChannelMessageNotification,
     ApiGroupMessageNotification,
     ApiDirectMessageNotification,
@@ -116,7 +114,7 @@ export function channelNotification(
         channelName: candid.channel_name,
         messageType: candid.message_type,
         messageText: optional(candid.message_text, identity),
-        thumbnail: optional(candid.thumbnail, identity),
+        imageUrl: optional(candid.image_url, identity),
         timestamp,
     };
 }
@@ -136,7 +134,7 @@ export function groupNotification(
         groupName: candid.group_name,
         messageType: candid.message_type,
         messageText: optional(candid.message_text, identity),
-        thumbnail: optional(candid.thumbnail, identity),
+        imageUrl: optional(candid.image_url, identity),
         timestamp,
     };
 }
@@ -153,7 +151,7 @@ export function directNotification(
         senderName: candid.sender_name,
         messageType: candid.message_type,
         messageText: optional(candid.message_text, identity),
-        thumbnail: optional(candid.thumbnail, identity),
+        imageUrl: optional(candid.image_url, identity),
         timestamp,
     };
 }

@@ -133,7 +133,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
                 sender_name: OPENCHAT_BOT_USERNAME.to_string(),
                 message_type: content.message_type(),
                 message_text: content.notification_text(&[]),
-                thumbnail: content.notification_thumbnail(),
+                image_url: content.notification_image_url(),
             });
             state.push_notification(notification_recipients, notification);
 

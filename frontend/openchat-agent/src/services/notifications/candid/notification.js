@@ -12,7 +12,7 @@ export const Notification = IDL.Variant({
     'message_index' : IDL.Nat32,
   }),
   'DirectMessage' : IDL.Record({
-    'thumbnail' : IDL.Opt(IDL.Text),
+    'image_url' : IDL.Opt(IDL.Text),
     'sender' : IDL.Principal,
     'sender_name' : IDL.Text,
     'message_text' : IDL.Opt(IDL.Text),
@@ -42,7 +42,7 @@ export const Notification = IDL.Variant({
     'message_index' : IDL.Nat32,
   }),
   'GroupMessage' : IDL.Record({
-    'thumbnail' : IDL.Opt(IDL.Text),
+    'image_url' : IDL.Opt(IDL.Text),
     'sender' : IDL.Principal,
     'sender_name' : IDL.Text,
     'message_text' : IDL.Opt(IDL.Text),
@@ -64,7 +64,7 @@ export const Notification = IDL.Variant({
   'ChannelMessage' : IDL.Record({
     'channel_id' : IDL.Nat,
     'community_id' : IDL.Principal,
-    'thumbnail' : IDL.Opt(IDL.Text),
+    'image_url' : IDL.Opt(IDL.Text),
     'sender' : IDL.Principal,
     'channel_name' : IDL.Text,
     'community_name' : IDL.Text,

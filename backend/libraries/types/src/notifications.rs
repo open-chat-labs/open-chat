@@ -41,7 +41,7 @@ pub struct DirectMessageNotification {
     pub sender_name: String,
     pub message_type: String,
     pub message_text: Option<String>,
-    pub thumbnail: Option<String>,
+    pub image_url: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -55,7 +55,7 @@ pub struct GroupMessageNotification {
     pub sender_name: String,
     pub message_type: String,
     pub message_text: Option<String>,
-    pub thumbnail: Option<String>,
+    pub image_url: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -71,7 +71,7 @@ pub struct ChannelMessageNotification {
     pub sender_name: String,
     pub message_type: String,
     pub message_text: Option<String>,
-    pub thumbnail: Option<String>,
+    pub image_url: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -140,7 +140,7 @@ fn notification_length() {
         sender_name: "BlahBlah".to_string(),
         message_type: "text".to_string(),
         message_text: Some("abc".to_string()),
-        thumbnail: None,
+        image_url: None,
     });
 
     let bytes = candid::encode_one(&notification).unwrap().len();

@@ -150,7 +150,7 @@ type DirectMessageNotification = record {
     sender_name : text;
     message_type : text;
     message_text : opt text;
-    thumbnail: opt text;
+    image_url: opt text;
 };
 
 type DirectReactionAddedNotification = record {
@@ -534,7 +534,7 @@ type ChannelMessageNotification = record {
     sender_name : text;
     message_type : text;
     message_text : opt text;
-    thumbnail: opt text;
+    image_url: opt text;
 };
 
 type GroupMessageNotification = record {
@@ -547,7 +547,7 @@ type GroupMessageNotification = record {
     sender_name : text;
     message_type : text;
     message_text : opt text;
-    thumbnail: opt text;
+    image_url: opt text;
 };
 
 type GroupNameChanged = record {

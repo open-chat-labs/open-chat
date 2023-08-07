@@ -140,8 +140,8 @@ impl MessageContent {
             MessageContent::Crypto(c) => c.caption.as_deref(),
             MessageContent::Giphy(g) => g.caption.as_deref(),
             MessageContent::GovernanceProposal(gp) => Some(gp.proposal.title()),
+            MessageContent::Prize(p) => p.caption.as_deref(),
             MessageContent::Deleted(_)
-            | MessageContent::Prize(_)
             | MessageContent::PrizeWinner(_)
             | MessageContent::MessageReminderCreated(_)
             | MessageContent::MessageReminder(_)
@@ -159,10 +159,10 @@ impl MessageContent {
         Some(text.chars().take(MAX_CHARS).collect())
     }
 
-    pub fn notification_thumbnail(&self) -> Option<String> {
+    pub fn notification_image_url(&self) -> Option<String> {
         match self {
-            MessageContent::Image(i) => Some(i.thumbnail_data.0.clone()),
-            MessageContent::Video(v) => Some(v.thumbnail_data.0.clone()),
+            MessageContent::Image(i) => i.blob_reference.as_ref().map(|b| b.url()),
+            MessageContent::Video(v) => v.image_blob_reference.as_ref().map(|b| b.url()),
             MessageContent::Text(_)
             | MessageContent::Audio(_)
             | MessageContent::File(_)
@@ -617,6 +617,12 @@ pub struct DeletedBy {
 pub struct BlobReference {
     pub canister_id: CanisterId,
     pub blob_id: u128,
+}
+
+impl BlobReference {
+    pub fn url(&self) -> String {
+        format!("https://{}.raw.icp0.io/files/{}", self.canister_id, self.blob_id)
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]

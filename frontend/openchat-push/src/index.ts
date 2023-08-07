@@ -106,7 +106,8 @@ function toUint8Array(base64String: string): Uint8Array {
 }
 
 async function showNotification(notification: Notification, id: string): Promise<void> {
-    let icon = "/_/raw/icon.png";
+    const icon = "/_/raw/icon.png";
+    let image = undefined;
     let title: string;
     let body: string;
     let path: string;
@@ -124,7 +125,7 @@ async function showNotification(notification: Notification, id: string): Promise
         };
         title = notification.senderName;
         body = notification.messageText ?? notification.messageType;
-        icon = notification.thumbnail ?? icon;
+        image = notification.imageUrl;
         path = routeForMessage("direct_chat", { chatId }, notification.messageIndex);
         tag = notification.sender.userId;
         timestamp = Number(notification.timestamp);
@@ -132,7 +133,7 @@ async function showNotification(notification: Notification, id: string): Promise
     } else if (notification.kind === "group_notification") {
         title = notification.groupName;
         body = `${notification.senderName}: ${notification.messageText ?? notification.messageType}`;
-        icon = notification.thumbnail ?? icon;
+        image = notification.imageUrl;
         path = routeForMessage(
             "group_chat",
             {
@@ -150,7 +151,7 @@ async function showNotification(notification: Notification, id: string): Promise
     } else if (notification.kind === "channel_notification") {
         title = `${notification.communityName} / ${notification.channelName}`;
         body = `${notification.senderName}: ${notification.messageText ?? notification.messageType}`;
-        icon = notification.thumbnail ?? icon;
+        image = notification.imageUrl;
         path = routeForMessage(
             "community",
             {
@@ -208,13 +209,6 @@ async function showNotification(notification: Notification, id: string): Promise
         path = routeForChatIdentifier("none", notification.chatId);
         tag = path;
         timestamp = Number(notification.timestamp);
-    } else if (notification.kind === "added_to_group_notification") {
-        // TODO Multi language support
-        title = notification.groupName;
-        body = `${notification.addedByUsername} added you to the group "${notification.groupName}"`;
-        path = routeForChatIdentifier("none", notification.chatId);
-        tag = path;
-        timestamp = Number(notification.timestamp);
     } else {
         throw new UnsupportedValueError("Unexpected notification type received", notification);
     }
@@ -228,6 +222,7 @@ async function showNotification(notification: Notification, id: string): Promise
     const toShow = {
         body,
         icon,
+        image,
         tag,
         timestamp,
         data: {

@@ -78,7 +78,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         sender_name: args.sender_name,
                         message_type: content.message_type(),
                         message_text: content.notification_text(&args.mentioned),
-                        thumbnail: content.notification_thumbnail(),
+                        image_url: content.notification_image_url(),
                     });
                     state.push_notification(users_to_notify, notification);
 

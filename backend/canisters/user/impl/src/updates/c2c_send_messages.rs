@@ -207,7 +207,7 @@ pub(crate) fn handle_message_impl(
                 sender_name: args.sender_name,
                 message_type: content.message_type(),
                 message_text: content.notification_text(&[]),
-                thumbnail: content.notification_thumbnail(),
+                image_url: content.notification_image_url(),
             });
 
             let recipient = state.env.canister_id().into();

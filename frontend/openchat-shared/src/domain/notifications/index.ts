@@ -35,7 +35,7 @@ export type ChannelNotification = {
     channelName: string;
     messageType: string;
     messageText: string | undefined;
-    thumbnail: string | undefined;
+    imageUrl: string | undefined;
     timestamp: bigint;
 };
 
@@ -47,7 +47,7 @@ export type DirectNotification = {
     senderName: string;
     messageType: string;
     messageText: string | undefined;
-    thumbnail: string | undefined;
+    imageUrl: string | undefined;
     timestamp: bigint;
 };
 
@@ -62,7 +62,7 @@ export type GroupNotification = {
     groupName: string;
     messageType: string;
     messageText: string | undefined;
-    thumbnail: string | undefined;
+    imageUrl: string | undefined;
     timestamp: bigint;
 };
 

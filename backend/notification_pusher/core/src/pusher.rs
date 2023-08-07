@@ -7,9 +7,7 @@ use web_push::{
     WebPushClient, WebPushError, WebPushMessage, WebPushMessageBuilder,
 };
 
-// Max notification size (including everything) is as low as 3 KB for some browsers, so we restrict
-// the payload to 2 KB to ensure we don't exceed 3 KB once everything else is included.
-const MAX_PAYLOAD_LENGTH_BYTES: usize = 2 * 1024;
+const MAX_PAYLOAD_LENGTH_BYTES: usize = 3 * 1000; // Just under 3KB
 
 pub struct Pusher {
     receiver: Receiver<Notification>,

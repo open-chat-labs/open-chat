@@ -10,7 +10,7 @@ fn main() {
         sender_name: "".to_string(),
         message_type: "".to_string(),
         message_text: None,
-        thumbnail: None,
+        image_url: None,
     });
     let candid_type = candid::types::internal::get_type(&ignored);
     let candid = candid::bindings::candid::pp_ty(&candid_type);
