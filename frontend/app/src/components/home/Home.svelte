@@ -203,7 +203,7 @@
                             ? notification.sender
                             : notification.chatId,
                         notification.messageIndex,
-                        undefined,
+                        undefined
                     );
                 }
 
@@ -548,11 +548,8 @@
         const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === ev.detail;
         });
-        if (chat) {
-            page(routeForChatIdentifier($chatListScope.kind, ev.detail));
-        } else {
-            createDirectChat(ev.detail);
-        }
+
+        page(routeForChatIdentifier(chat ? $chatListScope.kind : "direct_chat", ev.detail));
     }
 
     function showInviteGroupUsers(ev: CustomEvent<boolean>) {
