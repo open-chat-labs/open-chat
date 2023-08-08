@@ -290,7 +290,6 @@ impl MessageContentInitial {
         if is_empty {
             Err(ContentValidationError::Empty)
         // Allow GovernanceProposal messages to exceed the max length since they are collapsed on the UI
-        // TODO only allow GovernanceProposal messages which are sent by the proposals_bot
         } else if self.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(self, MessageContentInitial::GovernanceProposal(_)) {
             Err(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH))
         } else {
@@ -299,24 +298,24 @@ impl MessageContentInitial {
     }
 
     pub fn text_length(&self) -> usize {
-        fn opt_string_len(input: &Option<String>) -> usize {
-            input.as_ref().map_or(0, |s| s.len())
-        }
+        self.text().map_or(0, |t| t.chars().count())
+    }
 
+    pub fn text(&self) -> Option<&str> {
         match self {
-            MessageContentInitial::Text(t) => t.text.len(),
-            MessageContentInitial::Image(i) => opt_string_len(&i.caption),
-            MessageContentInitial::Video(v) => opt_string_len(&v.caption),
-            MessageContentInitial::Audio(a) => opt_string_len(&a.caption),
-            MessageContentInitial::File(f) => opt_string_len(&f.caption),
-            MessageContentInitial::Poll(p) => opt_string_len(&p.config.text),
-            MessageContentInitial::Crypto(c) => opt_string_len(&c.caption),
-            MessageContentInitial::Giphy(g) => opt_string_len(&g.caption),
-            MessageContentInitial::GovernanceProposal(p) => p.proposal.summary().len(),
-            MessageContentInitial::Prize(p) => opt_string_len(&p.caption),
-            MessageContentInitial::MessageReminderCreated(r) => opt_string_len(&r.notes),
-            MessageContentInitial::MessageReminder(r) => opt_string_len(&r.notes),
-            MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => 0,
+            MessageContentInitial::Text(t) => Some(t.text.as_str()),
+            MessageContentInitial::Image(i) => i.caption.as_deref(),
+            MessageContentInitial::Video(v) => v.caption.as_deref(),
+            MessageContentInitial::Audio(a) => a.caption.as_deref(),
+            MessageContentInitial::File(f) => f.caption.as_deref(),
+            MessageContentInitial::Poll(p) => p.config.text.as_deref(),
+            MessageContentInitial::Crypto(c) => c.caption.as_deref(),
+            MessageContentInitial::Giphy(g) => g.caption.as_deref(),
+            MessageContentInitial::GovernanceProposal(p) => Some(p.proposal.summary()),
+            MessageContentInitial::Prize(p) => p.caption.as_deref(),
+            MessageContentInitial::MessageReminderCreated(r) => r.notes.as_deref(),
+            MessageContentInitial::MessageReminder(r) => r.notes.as_deref(),
+            MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
     }
 }

@@ -8,11 +8,12 @@ pub enum UsernameValidationError {
 }
 
 pub fn validate_username(username: &str) -> Result<(), UsernameValidationError> {
-    if username.len() > MAX_USERNAME_LENGTH as usize {
+    let length = username.chars().count();
+    if length > MAX_USERNAME_LENGTH as usize {
         return Err(UsernameValidationError::TooLong(MAX_USERNAME_LENGTH));
     }
 
-    if username.len() < MIN_USERNAME_LENGTH as usize {
+    if length < MIN_USERNAME_LENGTH as usize {
         return Err(UsernameValidationError::TooShort(MIN_USERNAME_LENGTH));
     }
 

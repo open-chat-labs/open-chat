@@ -39,7 +39,7 @@ impl Contacts {
             }
             OptionUpdate::SetToSome(nickname) => {
                 let nickname = nickname.trim().to_string();
-                let length_provided = nickname.len() as u32;
+                let length_provided = nickname.chars().count() as u32;
 
                 if length_provided > MAX_NICKNAME_LEN {
                     return SetContactResponse::NicknameTooLong(FieldTooLongResult {
