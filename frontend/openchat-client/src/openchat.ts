@@ -4132,6 +4132,14 @@ export class OpenChat extends OpenChatAgentWorker {
                     }     
                 }
 
+                if (this._liveState.uninitializedDirectChats.size > 0) {
+                    for (const chat of updatedChats) {
+                        if (this._liveState.uninitializedDirectChats.has(chat.id)) {
+                            removeUninitializedDirectChat(chat.id);
+                        }
+                    }
+                }
+
                 setGlobalState(
                     chatsResponse.state.communities,
                     updatedChats,
@@ -4144,14 +4152,6 @@ export class OpenChat extends OpenChatAgentWorker {
                         none: [],
                     }
                 );
-
-                if (this._liveState.uninitializedDirectChats.size > 0) {
-                    for (const chat of updatedChats) {
-                        if (this._liveState.uninitializedDirectChats.has(chat.id)) {
-                            removeUninitializedDirectChat(chat.id);
-                        }
-                    }
-                }
 
                 const selectedChatId = this._liveState.selectedChatId;
 
