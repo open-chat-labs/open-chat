@@ -871,7 +871,7 @@
             return false;
         }
 
-        page(routeForChatIdentifier($chatListScope.kind, chatId));
+        page(routeForChatIdentifier("direct_chat", chatId));
         return true;
     }
 
