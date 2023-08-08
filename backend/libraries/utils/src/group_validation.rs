@@ -6,7 +6,7 @@ const MAX_GROUP_DESCRIPTION_LENGTH: u32 = 1024;
 const MAX_GROUP_RULES_LENGTH: u32 = 1024;
 
 pub fn validate_name(name: &str, is_public: bool) -> Result<(), NameValidationError> {
-    let length = name.len();
+    let length = name.chars().count();
     if length < MIN_GROUP_NAME_LENGTH {
         Err(NameValidationError::TooShort(FieldTooShortResult {
             length_provided: length as u32,
@@ -25,25 +25,27 @@ pub fn validate_name(name: &str, is_public: bool) -> Result<(), NameValidationEr
 }
 
 pub fn validate_description(description: &str) -> Result<(), FieldTooLongResult> {
-    if description.len() <= MAX_GROUP_DESCRIPTION_LENGTH as usize {
+    let length = description.chars().count();
+    if length <= MAX_GROUP_DESCRIPTION_LENGTH as usize {
         Ok(())
     } else {
         Err(FieldTooLongResult {
-            length_provided: description.len() as u32,
+            length_provided: length as u32,
             max_length: MAX_GROUP_DESCRIPTION_LENGTH,
         })
     }
 }
 
 pub fn validate_rules(enabled: bool, rules: &str) -> Result<(), RulesValidationError> {
+    let length = rules.chars().count();
     if enabled && rules.is_empty() {
         Err(RulesValidationError::TooShort(FieldTooShortResult {
-            length_provided: rules.len() as u32,
+            length_provided: length as u32,
             min_length: 1,
         }))
-    } else if rules.len() > MAX_GROUP_RULES_LENGTH as usize {
+    } else if length > MAX_GROUP_RULES_LENGTH as usize {
         Err(RulesValidationError::TooLong(FieldTooLongResult {
-            length_provided: rules.len() as u32,
+            length_provided: length as u32,
             max_length: MAX_GROUP_RULES_LENGTH,
         }))
     } else {

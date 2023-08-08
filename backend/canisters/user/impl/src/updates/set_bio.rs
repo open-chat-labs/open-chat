@@ -20,7 +20,7 @@ fn set_bio_impl(args: Args, state: &mut RuntimeState) -> Response {
         return UserSuspended;
     }
 
-    let length_provided = args.text.len() as u32;
+    let length_provided = args.text.chars().count() as u32;
     if length_provided > MAX_BIO_LEN {
         return TooLong(FieldTooLongResult {
             length_provided,
