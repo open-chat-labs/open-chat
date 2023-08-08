@@ -91,6 +91,14 @@ pub enum FailedCryptoTransaction {
 }
 
 impl CryptoTransaction {
+    pub fn ledger(&self) -> CanisterId {
+        match self {
+            CryptoTransaction::Pending(p) => p.ledger(),
+            CryptoTransaction::Completed(c) => c.ledger(),
+            CryptoTransaction::Failed(f) => f.ledger(),
+        }
+    }
+
     pub fn token(&self) -> Cryptocurrency {
         match self {
             CryptoTransaction::Pending(p) => p.token(),
@@ -113,6 +121,14 @@ impl CryptoTransaction {
 }
 
 impl PendingCryptoTransaction {
+    pub fn ledger(&self) -> CanisterId {
+        match self {
+            PendingCryptoTransaction::NNS(t) => t.ledger,
+            PendingCryptoTransaction::SNS(t) => t.ledger,
+            PendingCryptoTransaction::ICRC1(t) => t.ledger,
+        }
+    }
+
     pub fn token(&self) -> Cryptocurrency {
         match self {
             PendingCryptoTransaction::NNS(t) => t.token.clone(),
@@ -152,6 +168,14 @@ impl PendingCryptoTransaction {
 }
 
 impl CompletedCryptoTransaction {
+    pub fn ledger(&self) -> CanisterId {
+        match self {
+            CompletedCryptoTransaction::NNS(t) => t.ledger,
+            CompletedCryptoTransaction::SNS(t) => t.ledger,
+            CompletedCryptoTransaction::ICRC1(t) => t.ledger,
+        }
+    }
+
     pub fn token(&self) -> Cryptocurrency {
         match self {
             CompletedCryptoTransaction::NNS(t) => t.token.clone(),
@@ -170,6 +194,14 @@ impl CompletedCryptoTransaction {
 }
 
 impl FailedCryptoTransaction {
+    pub fn ledger(&self) -> CanisterId {
+        match self {
+            FailedCryptoTransaction::NNS(t) => t.ledger,
+            FailedCryptoTransaction::SNS(t) => t.ledger,
+            FailedCryptoTransaction::ICRC1(t) => t.ledger,
+        }
+    }
+
     pub fn token(&self) -> Cryptocurrency {
         match self {
             FailedCryptoTransaction::NNS(t) => t.token.clone(),

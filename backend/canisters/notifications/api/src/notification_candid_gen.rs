@@ -1,29 +1,18 @@
 use candid::Principal;
-use types::{DirectMessageNotification, EventWrapper, Message, MessageContent, Notification, TextContent};
+use types::{DirectMessageNotification, Notification};
 
 fn main() {
-    let ignored = Notification::DirectMessageNotification(DirectMessageNotification {
+    let ignored = Notification::DirectMessage(DirectMessageNotification {
         sender: Principal::anonymous().into(),
         thread_root_message_index: None,
+        message_index: 0.into(),
+        event_index: 0.into(),
         sender_name: "".to_string(),
-        message: EventWrapper {
-            index: 0.into(),
-            timestamp: 0,
-            correlation_id: 0,
-            expires_at: None,
-            event: Message {
-                message_index: 0.into(),
-                message_id: 0.into(),
-                sender: Principal::anonymous().into(),
-                content: MessageContent::Text(TextContent { text: "".to_string() }),
-                replies_to: None,
-                reactions: Vec::new(),
-                edited: false,
-                forwarded: false,
-                thread_summary: None,
-                last_updated: None,
-            },
-        },
+        message_type: "".to_string(),
+        message_text: None,
+        image_url: None,
+        sender_avatar_id: None,
+        crypto_transfer: None,
     });
     let candid_type = candid::types::internal::get_type(&ignored);
     let candid = candid::bindings::candid::pp_ty(&candid_type);

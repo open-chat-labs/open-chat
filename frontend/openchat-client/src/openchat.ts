@@ -201,7 +201,6 @@ import {
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
-import { toTitleCase } from "./utils/string";
 import { formatRelativeTime, formatTimeRemaining } from "./utils/time";
 import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
@@ -344,6 +343,7 @@ import {
     ModerationFlag,
     GroupMoved,
     GHOST_SYMBOL,
+    toTitleCase
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -801,11 +801,6 @@ export class OpenChat extends OpenChatAgentWorker {
                     return { kind: "failure" };
                 });
         }
-    }
-
-    private async addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
-        const users = this.userIdsFromEvents([message]);
-        await this.getMissingUsers(users);
     }
 
     toggleMuteNotifications(chatId: ChatIdentifier, muted: boolean): Promise<boolean> {
@@ -3088,69 +3083,73 @@ export class OpenChat extends OpenChatAgentWorker {
     notificationReceived(notification: Notification): void {
         let chatId: ChatIdentifier;
         let threadRootMessageIndex: number | undefined = undefined;
-        let message: EventWrapper<Message>;
+        let eventIndex: number;
+        let isReaction = false;
         switch (notification.kind) {
             case "channel_notification": {
                 chatId = notification.chatId;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.eventIndex;
                 break;
             }
             case "direct_notification": {
                 chatId = notification.sender;
-                threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.eventIndex;
                 break;
             }
             case "group_notification": {
                 chatId = notification.chatId;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.eventIndex;
                 break;
             }
             case "channel_reaction": {
                 chatId = notification.chatId;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.messageEventIndex;
+                isReaction = true;
                 break;
             }
             case "direct_reaction": {
                 chatId = notification.them;
-                message = notification.message;
+                eventIndex = notification.messageEventIndex;
+                isReaction = true;
                 break;
             }
             case "group_reaction": {
                 chatId = notification.chatId;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.messageEventIndex;
+                isReaction = true;
                 break;
             }
-            case "added_to_group_notification":
             case "added_to_channel_notification":
                 return;
         }
 
-        if (threadRootMessageIndex !== undefined) {
-            // TODO fix this for thread messages
-            return;
-        }
-
         const serverChat = this._liveState.serverChatSummaries.get(chatId);
-
-        if (serverChat === undefined || serverChat.latestEventIndex >= message.index) {
+        if (serverChat === undefined) {
             return;
         }
 
-        this.sendRequest({
-            kind: "setCachedMessageFromNotification",
-            chatId,
-            threadRootMessageIndex,
-            message,
-        });
+        const minVisibleEventIndex = serverChat.kind === "direct_chat" ? 0 : serverChat.minVisibleEventIndex;
+        const latestClientEventIndex = Math.max(eventIndex, serverChat.latestEventIndex);
 
-        this.addMissingUsersFromMessage(message).then(() => {
-            updateSummaryWithConfirmedMessage(chatId, message);
-            this.handleConfirmedMessageSentByOther(serverChat, message, threadRootMessageIndex);
+        if (isReaction) {
+            // TODO first clear the existing cache entry
+            return
+        }
+
+        // Load the event
+        this.sendRequest({
+            kind: "chatEvents",
+            chatType: serverChat.kind,
+            chatId,
+            eventIndexRange: [minVisibleEventIndex, latestClientEventIndex],
+            startIndex: eventIndex,
+            ascending: false,
+            threadRootMessageIndex,
+            latestClientEventIndex,
         });
     }
 

@@ -2,17 +2,19 @@ import { IDL } from "@dfinity/candid";
 import { ApiNotification, NotificationIdl, notification as toNotification } from "openchat-agent";
 import {
     Notification,
-    CryptocurrencyContent,
-    MessageContent,
-    User,
-    E8S_PER_TOKEN,
     UnsupportedValueError,
     routeForMessage,
     routeForChatIdentifier,
+    toTitleCase,
     DirectChatIdentifier,
+    ChannelIdentifier,
+    CryptoTransferDetails,
+    cryptoLookup,
 } from "openchat-shared";
 
 declare const self: ServiceWorkerGlobalScope;
+
+const FILE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==";
 
 // Always install updated SW immediately
 self.addEventListener("install", (ev) => {
@@ -45,7 +47,10 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
         return;
     }
 
-    const bytes = toUint8Array(event.data.text());
+    const { t, v }: TimestampedNotification = JSON.parse(event.data.text());
+    const [timestamp, value] = [t, v];
+
+    const bytes = toUint8Array(value);
 
     // Try to extract the typed notification from the event
     const candid = IDL.decode([NotificationIdl], bytes.buffer)[0] as unknown as ApiNotification;
@@ -54,7 +59,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
         return;
     }
 
-    const notification = toNotification(candid);
+    const notification = toNotification(candid, timestamp);
 
     const windowClients = await self.clients.matchAll({
         type: "window",
@@ -108,6 +113,7 @@ function toUint8Array(base64String: string): Uint8Array {
 
 async function showNotification(notification: Notification, id: string): Promise<void> {
     let icon = "/_/raw/icon.png";
+    let image = undefined;
     let title: string;
     let body: string;
     let path: string;
@@ -123,96 +129,110 @@ async function showNotification(notification: Notification, id: string): Promise
             kind: "direct_chat",
             userId: notification.sender.userId,
         };
-        const content = extractMessageContent(
-            notification.message.event.content,
-            notification.senderName
-        );
         title = notification.senderName;
-        body = content.text;
-        icon = content.image ?? icon;
-        path = routeForMessage("direct_chat", { chatId }, notification.message.event.messageIndex);
+        body = messageText(notification.messageText, notification.messageType, notification.cryptoTransfer);
+        if (notification.senderAvatarId !== undefined) {
+            icon = avatarUrl(notification.sender.userId, notification.senderAvatarId);
+        } else if (notification.messageType === "File") {
+            icon = FILE_ICON;
+        }
+        image = notification.imageUrl;
+        path = routeForMessage("direct_chat", { chatId }, notification.messageIndex);
         tag = notification.sender.userId;
-        timestamp = Number(notification.message.timestamp);
+        timestamp = Number(notification.timestamp);
         closeExistingNotifications = true;
     } else if (notification.kind === "group_notification") {
-        const content = extractMessageContent(
-            notification.message.event.content,
-            notification.senderName,
-            notification.mentioned
-        );
         title = notification.groupName;
-        body = `${notification.senderName}: ${content.text}`;
-        icon = content.image ?? icon;
+        body = `${notification.senderName}: ${messageText(notification.messageText, notification.messageType, notification.cryptoTransfer)}`;
+        if (notification.groupAvatarId !== undefined) {
+            icon = avatarUrl(notification.chatId.groupId, notification.groupAvatarId);
+        } else if (notification.messageType === "File") {
+            icon = FILE_ICON;
+        }
+        image = notification.imageUrl;
         path = routeForMessage(
             "group_chat",
             {
                 chatId: notification.chatId,
                 threadRootMessageIndex: notification.threadRootMessageIndex,
             },
-            notification.message.event.messageIndex
+            notification.messageIndex
         );
         tag = notification.chatId.groupId;
         if (notification.threadRootMessageIndex !== undefined) {
             tag += `_${notification.threadRootMessageIndex}`;
         }
-        timestamp = Number(notification.message.timestamp);
+        timestamp = Number(notification.timestamp);
         closeExistingNotifications = true;
     } else if (notification.kind === "channel_notification") {
-        const content = extractMessageContent(
-            notification.message.event.content,
-            notification.senderName,
-            notification.mentioned
-        );
         title = `${notification.communityName} / ${notification.channelName}`;
-        body = `${notification.senderName}: ${content.text}`;
-        icon = content.image ?? icon;
+        body = `${notification.senderName}: ${messageText(notification.messageText, notification.messageType, notification.cryptoTransfer)}`;
+        if (notification.channelAvatarId !== undefined) {
+            icon = channelAvatarUrl(notification.chatId, notification.channelAvatarId);
+        } else if (notification.communityAvatarId !== undefined) {
+            icon = avatarUrl(notification.chatId.communityId, notification.communityAvatarId);
+        } else if (notification.messageType === "File") {
+            icon = FILE_ICON;
+        }
+        image = notification.imageUrl;
         path = routeForMessage(
             "community",
             {
                 chatId: notification.chatId,
                 threadRootMessageIndex: notification.threadRootMessageIndex,
             },
-            notification.message.event.messageIndex
+            notification.messageIndex
         );
         tag = `${notification.chatId.communityId}_${notification.chatId.channelId}}`;
         if (notification.threadRootMessageIndex !== undefined) {
             tag += `_${notification.threadRootMessageIndex}`;
         }
-        timestamp = Number(notification.message.timestamp);
+        timestamp = Number(notification.timestamp);
         closeExistingNotifications = true;
     } else if (notification.kind === "direct_reaction") {
         title = notification.username;
         body = `${notification.username} reacted '${notification.reaction}' to your message`;
+        if (notification.userAvatarId !== undefined) {
+            icon = avatarUrl(notification.them.userId, notification.userAvatarId);
+        }
         path = routeForMessage(
             "direct_chat",
             { chatId: notification.them },
-            notification.message.event.messageIndex
+            notification.messageIndex
         );
         tag = path;
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "channel_reaction") {
         title = `${notification.communityName} / ${notification.channelName}`;
         body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
+        if (notification.channelAvatarId !== undefined) {
+            icon = channelAvatarUrl(notification.chatId, notification.channelAvatarId);
+        } else if (notification.communityAvatarId !== undefined) {
+            icon = avatarUrl(notification.chatId.communityId, notification.communityAvatarId);
+        }
         path = routeForMessage(
             "community",
             {
                 chatId: notification.chatId,
                 threadRootMessageIndex: notification.threadRootMessageIndex,
             },
-            notification.message.event.messageIndex
+            notification.messageIndex
         );
         tag = path;
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "group_reaction") {
         title = notification.groupName;
         body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
+        if (notification.groupAvatarId !== undefined) {
+            icon = avatarUrl(notification.chatId.groupId, notification.groupAvatarId);
+        }
         path = routeForMessage(
             "group_chat",
             {
                 chatId: notification.chatId,
                 threadRootMessageIndex: notification.threadRootMessageIndex,
             },
-            notification.message.event.messageIndex
+            notification.messageIndex
         );
         tag = path;
         timestamp = Number(notification.timestamp);
@@ -220,13 +240,11 @@ async function showNotification(notification: Notification, id: string): Promise
         // TODO Multi language support
         title = `${notification.communityName} / ${notification.channelName}`;
         body = `${notification.addedByUsername} added you to the channel "${notification.channelName}" in the community "${notification.communityName}"`;
-        path = routeForChatIdentifier("none", notification.chatId);
-        tag = path;
-        timestamp = Number(notification.timestamp);
-    } else if (notification.kind === "added_to_group_notification") {
-        // TODO Multi language support
-        title = notification.groupName;
-        body = `${notification.addedByUsername} added you to the group "${notification.groupName}"`;
+        if (notification.channelAvatarId !== undefined) {
+            icon = channelAvatarUrl(notification.chatId, notification.channelAvatarId);
+        } else if (notification.communityAvatarId !== undefined) {
+            icon = avatarUrl(notification.chatId.communityId, notification.communityAvatarId);
+        }
         path = routeForChatIdentifier("none", notification.chatId);
         tag = path;
         timestamp = Number(notification.timestamp);
@@ -243,6 +261,7 @@ async function showNotification(notification: Notification, id: string): Promise
     const toShow = {
         body,
         icon,
+        image,
         tag,
         timestamp,
         data: {
@@ -256,122 +275,34 @@ async function showNotification(notification: Notification, id: string): Promise
     await self.registration.showNotification(title, toShow);
 }
 
-function extractMessageContent(
-    content: MessageContent,
-    senderName: string,
-    mentioned: Array<User> = []
-): ContentExtract {
-    let result: ContentExtract;
-
-    if (content.kind === "text_content") {
-        result = {
-            text: content.text,
-        };
-    } else if (content.kind === "image_content") {
-        result = {
-            text: content.caption ?? extractMediaType(content.mimeType),
-            image: content.thumbnailData,
-        };
-    } else if (content.kind === "giphy_content") {
-        result = {
-            text: content.caption ?? "Gif message",
-        };
-    } else if (content.kind === "video_content") {
-        result = {
-            text: content.caption ?? extractMediaType(content.mimeType),
-            image: content.thumbnailData,
-        };
-    } else if (content.kind === "audio_content") {
-        result = {
-            text: content.caption ?? extractMediaType(content.mimeType),
-        };
-    } else if (content.kind === "file_content") {
-        result = {
-            text: content.caption ?? content.mimeType,
-            image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==",
-        };
-    } else if (content.kind === "crypto_content") {
-        result = extractMessageContentFromCryptoContent(content, senderName);
-    } else if (content.kind === "deleted_content") {
-        result = {
-            text: "TODO - deleted content",
-        };
-    } else if (content.kind === "prize_content") {
-        result = {
-            text: content.caption ?? "Prize message",
-        };
-    } else if (content.kind === "prize_winner_content") {
-        result = {
-            text: "Prize winner message",
-        };
-    } else if (content.kind === "placeholder_content") {
-        result = {
-            text: "TODO - placeholder content",
-        };
-    } else if (content.kind === "poll_content") {
-        result = {
-            text: content.config.text ?? "New poll",
-        };
-    } else if (content.kind === "proposal_content") {
-        result = {
-            text: content.proposal.title,
-        };
-    } else if (content.kind === "message_reminder_content") {
-        result = {
-            text: content.notes ?? "Reminder",
-        };
-    } else if (content.kind === "message_reminder_created_content") {
-        result = {
-            text: content.notes ?? "Reminder",
-        };
-    } else if (content.kind === "custom_content") {
-        result = {
-            text: "Custom content",
-        };
-    } else if (content.kind === "reported_message_content") {
-        result = {
-            text: "Reported message",
-        };
-    } else {
-        throw new UnsupportedValueError(
-            "Unexpected message content type received with notification",
-            content
-        );
+function messageText(
+    messageText: string | undefined,
+    messageType: string,
+    cryptoTransfer: CryptoTransferDetails | undefined
+): string {
+    if (messageText !== undefined && messageText.length > 0) {
+        return messageText;
     }
 
-    if (mentioned.length > 0) {
-        result.text = replaceMentions(result.text, mentioned);
+    if (cryptoTransfer !== undefined) {
+        const tokenDetails = cryptoLookup[cryptoTransfer.symbol];
+        if (tokenDetails !== undefined) {
+            return `Sent ${
+                Number(cryptoTransfer.amount) / Math.pow(10, 8)
+            } ${tokenDetails.symbol}`;
+        }
     }
 
-    return result;
+    return defaultMessage(messageType);
 }
 
-function extractMediaType(mimeType: string): string {
-    return mimeType.replace(/\/.*/, "");
-}
-
-function replaceMentions(text: string, mentioned: Array<User>): string {
-    const usernameLookup = Object.fromEntries(mentioned.map((u) => [u.userId, u.username]));
-    return text.replace(/@UserId\(([\d\w-]+)\)/g, (_match, p1) => {
-        const username = usernameLookup[p1] ?? "Unknown";
-        return `@${username}`;
-    });
-}
-
-function extractMessageContentFromCryptoContent(
-    content: CryptocurrencyContent,
-    senderName: string
-): ContentExtract {
-    if (content.transfer.kind === "completed" || content.transfer.kind === "pending") {
-        return {
-            text: `${senderName} sent ${
-                Number(content.transfer.amountE8s) / E8S_PER_TOKEN
-            } ${content.transfer.token}`,
-        };
-    } else {
-        return {
-            text: `${senderName} sent a crypto transfer`,
-        };
+function defaultMessage(messageType: string): string {
+    const messageTypeLower = messageType.toLowerCase();
+    switch (messageTypeLower) {
+        case "poll": return "Created a poll";
+        default: {
+            return `${toTitleCase(messageType)} message`;
+        }
     }
 }
 
@@ -383,7 +314,15 @@ function isMessageNotification(notification: Notification): boolean {
     );
 }
 
-type ContentExtract = {
-    text: string;
-    image?: string;
-};
+function avatarUrl(canisterId: string, avatarId: bigint): string {
+    return `https://${canisterId}.raw.icp0.io/avatar/${avatarId}`
+}
+
+function channelAvatarUrl(channel: ChannelIdentifier, avatarId: bigint): string {
+    return `https://${channel.communityId}.raw.icp0.io/channel/${channel.channelId}/avatar/${avatarId}`
+}
+
+type TimestampedNotification = {
+    t: bigint; // timestamp
+    v: string; // value
+}

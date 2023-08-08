@@ -58,6 +58,7 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
                     forwarding: message.forwarding,
                     correlation_id: message.correlation_id,
                     is_bot: false,
+                    sender_avatar_id: args.sender_avatar_id,
                     now,
                 },
                 false,
@@ -108,6 +109,7 @@ async fn c2c_handle_bot_messages(
                     forwarding: false,
                     correlation_id: 0,
                     is_bot: true,
+                    sender_avatar_id: None,
                     now,
                 },
                 false,
@@ -127,6 +129,7 @@ pub(crate) struct HandleMessageArgs {
     pub forwarding: bool,
     pub correlation_id: u64,
     pub is_bot: bool,
+    pub sender_avatar_id: Option<u128>,
     pub now: TimestampMillis,
 }
 
@@ -198,19 +201,23 @@ pub(crate) fn handle_message_impl(
             chat.mark_read_up_to(message_event.event.message_index, false, args.now);
         }
         if !mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
-            let mut trimmed_message = message_event.clone();
-            trimmed_message.event.content.trim(500);
-
-            let notification = Notification::DirectMessageNotification(DirectMessageNotification {
+            let content = &message_event.event.content;
+            let notification = Notification::DirectMessage(DirectMessageNotification {
                 sender,
                 thread_root_message_index: None,
+                message_index: message_event.event.message_index,
+                event_index: message_event.index,
                 sender_name: args.sender_name,
-                message: trimmed_message,
+                message_type: content.message_type().to_string(),
+                message_text: content.notification_text(&[]),
+                image_url: content.notification_image_url(),
+                sender_avatar_id: args.sender_avatar_id,
+                crypto_transfer: content.notification_crypto_transfer_details(&[]),
             });
 
             let recipient = state.env.canister_id().into();
 
-            state.push_notification(vec![recipient], notification);
+            state.push_notification(recipient, notification);
         }
     }
 

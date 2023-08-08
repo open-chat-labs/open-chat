@@ -42,15 +42,8 @@ type AddedToChannelNotification = record {
     channel_name : text;
     added_by : UserId;
     added_by_name : text;
-    timestamp : TimestampMillis;
-};
-
-type AddedToGroupNotification = record {
-    chat_id : ChatId;
-    group_name : text;
-    added_by : UserId;
-    added_by_name : text;
-    timestamp : TimestampMillis;
+    community_avatar_id : opt nat;
+    channel_avatar_id : opt nat;
 };
 
 type AudioContent = record {
@@ -154,16 +147,24 @@ type DirectChatSummaryUpdates = record {
 type DirectMessageNotification = record {
     sender : UserId;
     thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    event_index : EventIndex;
     sender_name : text;
-    message : MessageEventWrapper;
+    message_type : text;
+    message_text : opt text;
+    image_url : opt text;
+    sender_avatar_id : opt nat;
+    crypto_transfer : opt NotificationCryptoTransferDetails;
 };
 
 type DirectReactionAddedNotification = record {
     them : UserId;
+    thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    message_event_index : EventIndex;
     username : text;
-    message : MessageEventWrapper;
     reaction : Reaction;
-    timestamp : TimestampMillis;
+    user_avatar_id : opt nat;
 };
 
 type FieldTooShortResult = record {
@@ -530,22 +531,33 @@ type ChannelMessageNotification = record {
     community_id : CommunityId;
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    event_index : EventIndex;
     community_name : text;
     channel_name : text;
     sender : UserId;
     sender_name : text;
-    message : MessageEventWrapper;
-    mentioned : vec User;
+    message_type : text;
+    message_text : opt text;
+    image_url : opt text;
+    community_avatar_id : opt nat;
+    channel_avatar_id : opt nat;
+    crypto_transfer : opt NotificationCryptoTransferDetails;
 };
 
 type GroupMessageNotification = record {
     chat_id : ChatId;
     thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    event_index : EventIndex;
     group_name : text;
     sender : UserId;
     sender_name : text;
-    message : MessageEventWrapper;
-    mentioned : vec User;
+    message_type : text;
+    message_text : opt text;
+    image_url : opt text;
+    group_avatar_id : opt nat;
+    crypto_transfer : opt NotificationCryptoTransferDetails;
 };
 
 type GroupNameChanged = record {
@@ -558,24 +570,27 @@ type ChannelReactionAddedNotification = record {
     community_id : CommunityId;
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
+    message_index: MessageIndex;
+    message_event_index : EventIndex;
     community_name : text;
     channel_name : text;
     added_by : UserId;
     added_by_name : text;
-    message : MessageEventWrapper;
     reaction : Reaction;
-    timestamp : TimestampMillis;
+    community_avatar_id : opt nat;
+    channel_avatar_id : opt nat;
 };
 
 type GroupReactionAddedNotification = record {
     chat_id : ChatId;
     thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    message_event_index : EventIndex;
     group_name : text;
     added_by : UserId;
     added_by_name : text;
-    message : MessageEventWrapper;
     reaction : Reaction;
-    timestamp : TimestampMillis;
+    group_avatar_id : opt nat;
 };
 
 type GroupReplyContext = record {
@@ -718,14 +733,13 @@ type MessageMatch = record {
 };
 
 type Notification = variant {
-    AddedToChannelNotification : AddedToChannelNotification;
-    AddedToGroupNotification : AddedToGroupNotification;
-    ChannelMessageNotification : ChannelMessageNotification;
-    DirectMessageNotification : DirectMessageNotification;
-    GroupMessageNotification : GroupMessageNotification;
-    ChannelReactionAddedNotification : ChannelReactionAddedNotification;
-    DirectReactionAddedNotification : DirectReactionAddedNotification;
-    GroupReactionAddedNotification : GroupReactionAddedNotification;
+    AddedToChannel : AddedToChannelNotification;
+    ChannelMessage : ChannelMessageNotification;
+    DirectMessage : DirectMessageNotification;
+    GroupMessage : GroupMessageNotification;
+    ChannelReactionAdded : ChannelReactionAddedNotification;
+    DirectReactionAdded : DirectReactionAddedNotification;
+    GroupReactionAdded : GroupReactionAddedNotification;
 };
 
 type NotificationEnvelope = record {
@@ -734,10 +748,12 @@ type NotificationEnvelope = record {
     timestamp : TimestampMillis;
 };
 
-type NotificationEnvelopeV1 = record {
-    recipients : vec UserId;
-    notification : Notification;
-    timestamp : TimestampMillis;
+type NotificationCryptoTransferDetails = record {
+    recipient : UserId;
+    recipient_username : opt text;
+    ledger : CanisterId;
+    symbol : text;
+    amount : nat;
 };
 
 type PartialUserSummary = record {

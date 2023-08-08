@@ -202,8 +202,8 @@
                         notification.kind === "direct_notification"
                             ? notification.sender
                             : notification.chatId,
-                        notification.message.event.messageIndex,
-                        notification.message.event.messageId
+                        notification.messageIndex,
+                        undefined,
                     );
                 }
 

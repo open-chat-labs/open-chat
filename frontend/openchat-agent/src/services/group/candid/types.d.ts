@@ -30,15 +30,9 @@ export interface AddedToChannelNotification {
   'added_by_name' : string,
   'added_by' : UserId,
   'channel_name' : string,
+  'community_avatar_id' : [] | [bigint],
   'community_name' : string,
-  'timestamp' : TimestampMillis,
-}
-export interface AddedToGroupNotification {
-  'added_by_name' : string,
-  'added_by' : UserId,
-  'timestamp' : TimestampMillis,
-  'chat_id' : ChatId,
-  'group_name' : string,
+  'channel_avatar_id' : [] | [bigint],
 }
 export interface AudioContent {
   'mime_type' : string,
@@ -119,25 +113,33 @@ export interface ChannelMembershipUpdates {
 export interface ChannelMessageNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
-  'mentioned' : Array<User>,
+  'image_url' : [] | [string],
   'sender' : UserId,
   'channel_name' : string,
+  'community_avatar_id' : [] | [bigint],
   'community_name' : string,
-  'message' : MessageEventWrapper,
   'sender_name' : string,
+  'message_text' : [] | [string],
+  'message_type' : string,
+  'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
+  'channel_avatar_id' : [] | [bigint],
+  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
+  'message_index' : MessageIndex,
 }
 export interface ChannelReactionAddedNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
   'added_by_name' : string,
+  'message_event_index' : EventIndex,
   'added_by' : UserId,
   'channel_name' : string,
+  'community_avatar_id' : [] | [bigint],
   'community_name' : string,
-  'message' : MessageEventWrapper,
-  'timestamp' : TimestampMillis,
   'thread_root_message_index' : [] | [MessageIndex],
+  'channel_avatar_id' : [] | [bigint],
   'reaction' : Reaction,
+  'message_index' : MessageIndex,
 }
 export type Chat = { 'Group' : ChatId } |
   { 'Channel' : [CommunityId, ChannelId] } |
@@ -444,17 +446,25 @@ export interface DirectChatSummaryUpdates {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface DirectMessageNotification {
+  'image_url' : [] | [string],
+  'sender_avatar_id' : [] | [bigint],
   'sender' : UserId,
-  'message' : MessageEventWrapper,
   'sender_name' : string,
+  'message_text' : [] | [string],
+  'message_type' : string,
+  'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
+  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
+  'message_index' : MessageIndex,
 }
 export interface DirectReactionAddedNotification {
   'username' : string,
+  'message_event_index' : EventIndex,
   'them' : UserId,
-  'message' : MessageEventWrapper,
-  'timestamp' : TimestampMillis,
+  'user_avatar_id' : [] | [bigint],
+  'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : Reaction,
+  'message_index' : MessageIndex,
 }
 export interface DisableInviteCodeArgs { 'correlation_id' : bigint }
 export type DisableInviteCodeResponse = { 'ChatFrozen' : null } |
@@ -701,13 +711,18 @@ export interface GroupMatch {
   'member_count' : number,
 }
 export interface GroupMessageNotification {
-  'mentioned' : Array<User>,
+  'image_url' : [] | [string],
+  'group_avatar_id' : [] | [bigint],
   'sender' : UserId,
-  'message' : MessageEventWrapper,
   'sender_name' : string,
+  'message_text' : [] | [string],
+  'message_type' : string,
   'chat_id' : ChatId,
+  'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
+  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
+  'message_index' : MessageIndex,
 }
 export interface GroupNameChanged {
   'changed_by' : UserId,
@@ -731,13 +746,14 @@ export interface GroupPermissions {
 }
 export interface GroupReactionAddedNotification {
   'added_by_name' : string,
+  'group_avatar_id' : [] | [bigint],
+  'message_event_index' : EventIndex,
   'added_by' : UserId,
-  'message' : MessageEventWrapper,
-  'timestamp' : TimestampMillis,
   'chat_id' : ChatId,
   'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
   'reaction' : Reaction,
+  'message_index' : MessageIndex,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
 export type GroupRole = { 'Participant' : null } |
@@ -999,22 +1015,23 @@ export interface NnsProposal {
 export type NnsUserOrAccount = { 'User' : UserId } |
   { 'Account' : AccountIdentifier };
 export type Notification = {
-    'DirectReactionAddedNotification' : DirectReactionAddedNotification
+    'GroupReactionAdded' : GroupReactionAddedNotification
   } |
-  { 'DirectMessageNotification' : DirectMessageNotification } |
-  { 'AddedToChannelNotification' : AddedToChannelNotification } |
-  { 'GroupMessageNotification' : GroupMessageNotification } |
-  { 'ChannelMessageNotification' : ChannelMessageNotification } |
-  { 'ChannelReactionAddedNotification' : ChannelReactionAddedNotification } |
-  { 'GroupReactionAddedNotification' : GroupReactionAddedNotification } |
-  { 'AddedToGroupNotification' : AddedToGroupNotification };
+  { 'DirectMessage' : DirectMessageNotification } |
+  { 'ChannelReactionAdded' : ChannelReactionAddedNotification } |
+  { 'DirectReactionAdded' : DirectReactionAddedNotification } |
+  { 'GroupMessage' : GroupMessageNotification } |
+  { 'AddedToChannel' : AddedToChannelNotification } |
+  { 'ChannelMessage' : ChannelMessageNotification };
+export interface NotificationCryptoTransferDetails {
+  'recipient' : UserId,
+  'ledger' : CanisterId,
+  'recipient_username' : [] | [string],
+  'amount' : bigint,
+  'symbol' : string,
+}
 export interface NotificationEnvelope {
   'notification_bytes' : Uint8Array | number[],
-  'recipients' : Array<UserId>,
-  'timestamp' : TimestampMillis,
-}
-export interface NotificationEnvelopeV1 {
-  'notification' : Notification,
   'recipients' : Array<UserId>,
   'timestamp' : TimestampMillis,
 }

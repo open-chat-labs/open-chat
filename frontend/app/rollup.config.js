@@ -82,7 +82,7 @@ if (production && !process.env.USERGEEK_APIKEY) {
 if (production && !process.env.METERED_APIKEY) {
     throw Error("METERED_APIKEY environment variable not set");
 }
-const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/push_sw.js";
+const WEBPUSH_SERVICE_WORKER_PATH = "/_/raw/push_sw.js";
 
 console.log("PROD", production);
 console.log("ENV", env);
