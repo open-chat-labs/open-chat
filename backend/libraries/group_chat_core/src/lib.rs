@@ -120,7 +120,7 @@ impl GroupChatCore {
             }
         }
 
-        false
+        self.events.has_updates_since(since) || self.invited_users.last_updated() > since
     }
 
     pub fn summary_updates_from_events(
