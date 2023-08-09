@@ -4,72 +4,72 @@ describe("crypto formatter", () => {
     describe("validate ICP input", () => {
         test("1", () => {
             const validated = validateTokenInput("1", 8);
-            expect(validated).toEqual({ replacementText: undefined, e8s: BigInt(100_000_000) });
+            expect(validated).toEqual({ replacementText: undefined, amount: BigInt(100_000_000) });
         });
 
         test("1234.567890", () => {
             const validated = validateTokenInput("1234.567890", 8);
-            expect(validated).toEqual({ replacementText: undefined, e8s: BigInt(123_456_789_000) });
+            expect(validated).toEqual({ replacementText: undefined, amount: BigInt(123_456_789_000) });
         });
 
         test("1234,567890 (using comma as decimal separator)", () => {
             const validated = validateTokenInput("1234,567890", 8);
-            expect(validated).toEqual({ replacementText: undefined, e8s: BigInt(123_456_789_000) });
+            expect(validated).toEqual({ replacementText: undefined, amount: BigInt(123_456_789_000) });
         });
 
         test("1,234.567890 (invalid due to command and decimal)", () => {
             const validated = validateTokenInput("1,234.567890", 8);
-            expect(validated).toEqual({ replacementText: "", e8s: BigInt(0) });
+            expect(validated).toEqual({ replacementText: "", amount: BigInt(0) });
         });
 
         test("0.12345678", () => {
             const validated = validateTokenInput("0.12345678", 8);
-            expect(validated).toEqual({ replacementText: undefined, e8s: BigInt(12_345_678) });
+            expect(validated).toEqual({ replacementText: undefined, amount: BigInt(12_345_678) });
         });
 
         test("0.123456789", () => {
             const validated = validateTokenInput("0.123456789", 8);
-            expect(validated).toEqual({ replacementText: "0.12345678", e8s: BigInt(12_345_678) });
+            expect(validated).toEqual({ replacementText: "0.12345678", amount: BigInt(12_345_678) });
         });
 
         test("0.", () => {
             const validated = validateTokenInput("0.", 8);
-            expect(validated).toEqual({ replacementText: undefined, e8s: BigInt(0) });
+            expect(validated).toEqual({ replacementText: undefined, amount: BigInt(0) });
         });
 
         test(".", () => {
             const validated = validateTokenInput(".", 8);
-            expect(validated).toEqual({ replacementText: undefined, e8s: BigInt(0) });
+            expect(validated).toEqual({ replacementText: undefined, amount: BigInt(0) });
         });
 
         test(".0", () => {
             const validated = validateTokenInput(".0", 8);
-            expect(validated).toEqual({ replacementText: undefined, e8s: BigInt(0) });
+            expect(validated).toEqual({ replacementText: undefined, amount: BigInt(0) });
         });
 
         test(".000", () => {
             const validated = validateTokenInput(".000", 8);
-            expect(validated).toEqual({ replacementText: undefined, e8s: BigInt(0) });
+            expect(validated).toEqual({ replacementText: undefined, amount: BigInt(0) });
         });
 
         test("0.0", () => {
             const validated = validateTokenInput("0.0", 8);
-            expect(validated).toEqual({ replacementText: undefined, e8s: BigInt(0) });
+            expect(validated).toEqual({ replacementText: undefined, amount: BigInt(0) });
         });
 
         test("all letters", () => {
             const validated = validateTokenInput("abc", 8);
-            expect(validated).toEqual({ replacementText: "", e8s: BigInt(0) });
+            expect(validated).toEqual({ replacementText: "", amount: BigInt(0) });
         });
 
         test("numbers with a letter in the middle", () => {
             const validated = validateTokenInput("123a456.789", 8);
-            expect(validated).toEqual({ replacementText: "", e8s: BigInt(0) });
+            expect(validated).toEqual({ replacementText: "", amount: BigInt(0) });
         });
 
         test("negative input", () => {
             const validated = validateTokenInput("-123", 8);
-            expect(validated).toEqual({ replacementText: "", e8s: BigInt(0) });
+            expect(validated).toEqual({ replacementText: "", amount: BigInt(0) });
         });
     });
 
