@@ -158,7 +158,7 @@ type GetNeuronResponse = record { result : opt Result };
 type GetProposal = record { proposal_id : opt ProposalId };
 type GetProposalResponse = record { result : opt Result_1 };
 type GetRunningSnsVersionResponse = record {
-    deployed_version : opt BuildVersion;
+    deployed_version : opt Version;
     pending_version : opt UpgradeInProgress;
 };
 type GetSnsInitializationParametersResponse = record {
@@ -172,7 +172,7 @@ type Governance = record {
     mode : int32;
     parameters : opt NervousSystemParameters;
     is_finalizing_disburse_maturity : opt bool;
-    deployed_version : opt BuildVersion;
+    deployed_version : opt Version;
     sns_initialization_parameters : text;
     latest_reward_event : opt RewardEvent;
     pending_version : opt UpgradeInProgress;
@@ -385,7 +385,7 @@ type UpgradeInProgress = record {
     mark_failed_at_seconds : nat64;
     checking_upgrade_lock : nat64;
     proposal_id : nat64;
-    target_version : opt BuildVersion;
+    target_version : opt Version;
 };
 type UpgradeSnsControlledCanister = record {
     new_canister_wasm : vec nat8;
@@ -393,7 +393,7 @@ type UpgradeSnsControlledCanister = record {
     canister_id : opt principal;
     canister_upgrade_arg : opt vec nat8;
 };
-type BuildVersion = record {
+type Version = record {
     archive_wasm_hash : vec nat8;
     root_wasm_hash : vec nat8;
     swap_wasm_hash : vec nat8;
