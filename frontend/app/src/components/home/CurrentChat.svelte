@@ -255,7 +255,7 @@
     <CryptoTransferBuilder
         {chat}
         ledger={creatingCryptoTransfer.ledger}
-        draftAmountE8s={creatingCryptoTransfer.amount}
+        draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
         on:sendTransfer={sendMessageWithContent}
         on:upgrade

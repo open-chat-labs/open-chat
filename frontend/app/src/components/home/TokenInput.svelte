@@ -34,16 +34,18 @@
             if (validateResult.amount !== amount) {
                 inputElement.value = client.formatTokens(validateResult.amount, 0, tokenDecimals, ".");
             }
+            validate();
         }
+    }
+
+    $: {
+        // Re-validate whenever maxAmount changes
+        if (maxAmount) {}
+        validate();
     }
 
     function onKeyup() {
         const inputAmount = Math.round(Number(inputElement.value) * E8S_PER_TOKEN);
-        if (isNaN(inputAmount) || inputAmount <= 0 || inputAmount > maxAmount) {
-            valid = false;
-        } else {
-            valid = true;
-        }
         if (!isNaN(inputAmount)) {
             amount = BigInt(inputAmount);
         }
@@ -53,6 +55,14 @@
         amount = maxAmount;
         valid = true;
         inputElement.value = client.formatTokens(maxAmount, 0, tokenDecimals, ".");
+    }
+
+    function validate() {
+        if (amount <= 0 || amount > maxAmount) {
+            valid = false;
+        } else {
+            valid = true;
+        }
     }
 </script>
 

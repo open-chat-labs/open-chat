@@ -1,9 +1,8 @@
 <script lang="ts">
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { PartialUserSummary } from "openchat-client";
-    import type { ChatSummary, OpenChat } from "openchat-client";
-    import type { CryptocurrencyContent, ICP_SYMBOL } from "openchat-shared";
+    import type { ChatSummary, OpenChat, PartialUserSummary } from "openchat-client";
+    import type { CryptocurrencyContent } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -24,7 +23,7 @@
     const user = client.user;
     const dispatch = createEventDispatcher();
 
-    export let draftAmountE8s: bigint;
+    export let draftAmount: bigint;
     export let ledger: string;
     export let chat: ChatSummary;
     export let defaultReceiver: string | undefined;
@@ -50,9 +49,9 @@
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: transferFees = tokenDetails.transferFee;
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
-    $: remainingBalanceE8s =
-        draftAmountE8s > BigInt(0)
-            ? cryptoBalance - draftAmountE8s - transferFees
+    $: remainingBalance =
+        draftAmount > BigInt(0)
+            ? cryptoBalance - draftAmount - transferFees
             : cryptoBalance;
     $: valid = error === undefined && validAmount && receiver !== undefined && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
@@ -71,7 +70,7 @@
         balanceWithRefresh.refresh();
     }
 
-    function maxAmountE8s(balance: bigint): bigint {
+    function maxAmount(balance: bigint): bigint {
         return balance - transferFees;
     }
 
@@ -89,9 +88,9 @@
             transfer: {
                 kind: "pending",
                 ledger,
-                token: ICP_SYMBOL,
+                token: symbol,
                 recipient: receiver.userId,
-                amountE8s: draftAmountE8s,
+                amountE8s: draftAmount,
                 feeE8s: transferFees,
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
@@ -119,11 +118,11 @@
     function onBalanceRefreshFinished() {
         toppingUp = false;
         tokenChanging = false;
-        if (remainingBalanceE8s < 0) {
-            remainingBalanceE8s = BigInt(0);
-            draftAmountE8s = cryptoBalance - transferFees;
-            if (draftAmountE8s < 0) {
-                draftAmountE8s = BigInt(0);
+        if (remainingBalance < 0) {
+            remainingBalance = BigInt(0);
+            draftAmount = cryptoBalance - transferFees;
+            if (draftAmount < 0) {
+                draftAmount = BigInt(0);
             }
         }
     }
@@ -144,7 +143,7 @@
                 bind:toppingUp
                 bind:this={balanceWithRefresh}
                 {ledger}
-                value={remainingBalanceE8s}
+                value={remainingBalance}
                 label={$_("cryptoAccount.shortBalanceLabel")}
                 bold
                 showTopUp
@@ -179,8 +178,8 @@
                             {ledger}
                             autofocus={!multiUserChat}
                             bind:valid={validAmount}
-                            maxAmountE8s={maxAmountE8s(cryptoBalance)}
-                            bind:amountE8s={draftAmountE8s} />
+                            maxAmount={maxAmount(cryptoBalance)}
+                            bind:amount={draftAmount} />
                     </div>
                     <div class="message">
                         <Legend label={$_("tokenTransfer.message")} />

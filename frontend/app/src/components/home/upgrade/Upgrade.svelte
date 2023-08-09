@@ -62,7 +62,7 @@
                 {#if step === "payment"}
                     <div class="balance">
                         <BalanceWithRefresh
-                            token={tokenDetails.symbol}
+                            {ledger}
                             value={tokenDetails.balance}
                             bind:refreshing={refreshingBalance}
                             on:refreshed={onBalanceRefreshed}

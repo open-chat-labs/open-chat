@@ -23,7 +23,8 @@
     let targetAccount: string = "";
     let scanner: Scanner;
 
-    $: cryptoBalance = client.cryptoBalance;
+    $: cryptoBalanceStore = client.cryptoBalance;
+    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: account = tokenDetails.symbol === ICP_SYMBOL ? user.cryptoAccount : user.userId;
@@ -62,18 +63,18 @@
                     targetAccount = "";
                     dispatch("refreshBalance");
                     toastStore.showSuccessToast("cryptoAccount.sendSucceeded", {
-                        values: { symbol: token },
+                        values: { symbol },
                     });
                 } else {
                     dispatch("error", "cryptoAccount.sendFailed");
-                    client.logMessage(`Unable to withdraw ${token}`, resp);
-                    toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol: token } });
+                    client.logMessage(`Unable to withdraw ${symbol}`, resp);
+                    toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
                 }
             })
             .catch((err) => {
                 dispatch("error", "cryptoAccount.sendFailed");
-                client.logError(`Unable to withdraw ${token}`, err);
-                toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol: token } });
+                client.logError(`Unable to withdraw ${symbol}`, err);
+                toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
             })
             .finally(() => (sending = false));
     }
@@ -84,7 +85,7 @@
 <div class="token-input">
     <TokenInput
         {ledger}
-        maxAmount={BigInt(Math.max(0, Number($cryptoBalance[ledger] - transferFees)))}
+        maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
         bind:valid={validAmount}
         bind:amount={amountToSend} />
 </div>

@@ -85,7 +85,7 @@
     $: tokens = Object.values($cryptoLookup)
         .map((t) => t.symbol.toLowerCase())
         .join("|");
-    $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\d*[.,]?\d*)$`);
+    $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
 
     $: {
         if (inp) {
@@ -315,7 +315,7 @@
             if (tokenDetails !== undefined) {
                 dispatch("tokenTransfer", {
                     ledger: tokenDetails.ledger,
-                    amount: client.validateTokenInput(tokenMatch[2], tokenDetails.decimals).e8s,
+                    amount: client.validateTokenInput(tokenMatch[2], tokenDetails.decimals).amount,
                 });
             }
             return true;

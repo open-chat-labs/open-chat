@@ -69,6 +69,7 @@
     $: inThread = threadRootMessage !== undefined;
     $: translationStore = client.translationStore;
     $: isDiamond = client.isDiamond;
+    $: cryptoLookup = client.cryptoLookup;
     $: threadRootMessageIndex =
         msg.messageId === threadRootMessage?.messageId
             ? undefined
@@ -100,7 +101,7 @@
     }
 
     function shareMessage() {
-        shareFunctions.shareMessage($_, user.userId, msg.sender === user.userId, msg);
+        shareFunctions.shareMessage($_, user.userId, msg.sender === user.userId, msg, $cryptoLookup);
     }
 
     function copyMessageUrl() {
