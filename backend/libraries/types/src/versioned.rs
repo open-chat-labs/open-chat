@@ -22,14 +22,6 @@ impl<T> Versioned<T> {
             version: self.version.incr(),
         }
     }
-
-    pub fn if_set_after(&self, version: Version) -> Option<&T> {
-        if self.version > version {
-            Some(&self.value)
-        } else {
-            None
-        }
-    }
 }
 
 impl<T: Default> Default for Versioned<T> {
