@@ -53,11 +53,11 @@ type AddRewardCodesResponse = variant {
 type InitArgs = record {
     user_index_canister_id : CanisterId;
     admins : vec principal;
-    wasm_version : Version;
+    wasm_version : BuildVersion;
     test_mode : bool;
 };
 
-type Version = record {
+type BuildVersion = record {
     major : nat32;
     minor : nat32;
     patch : nat32;

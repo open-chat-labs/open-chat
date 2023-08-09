@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{self, Ordering};
 use std::collections::HashMap;
 use types::{
-    AccessGate, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, PublicGroupActivity, PublicGroupSummary, TimestampMillis,
-    Version,
+    AccessGate, BuildVersion, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, PublicGroupActivity, PublicGroupSummary,
+    TimestampMillis,
 };
 use utils::iterator_extensions::IteratorExtensions;
 use utils::time::DAY_IN_MS;
@@ -99,7 +99,7 @@ impl PublicGroups {
             frozen: None,
             events_ttl: summary.events_ttl,
             gate: summary.gate,
-            wasm_version: Version::default(),
+            wasm_version: BuildVersion::default(),
         })
     }
 

@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{
-    CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
+    BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -39,7 +39,7 @@ const ONE_MB: u64 = 1024 * 1024;
 const ONE_GB: u64 = 1024 * ONE_MB;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -290,7 +290,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub total_cycles_spent_on_canisters: Cycles,
     pub users_created: u64,
@@ -300,8 +300,8 @@ pub struct Metrics {
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
     pub governance_principals: Vec<Principal>,
-    pub user_wasm_version: Version,
-    pub local_user_index_wasm_version: Version,
+    pub user_wasm_version: BuildVersion,
+    pub local_user_index_wasm_version: BuildVersion,
     pub max_concurrent_canister_upgrades: usize,
     pub platform_moderators: u8,
     pub platform_operators: u8,

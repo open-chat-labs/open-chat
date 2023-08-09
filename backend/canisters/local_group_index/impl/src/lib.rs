@@ -3,7 +3,7 @@ use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
+use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId};
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
@@ -23,7 +23,7 @@ const COMMUNITY_CANISTER_TOP_UP_AMOUNT: Cycles = GROUP_CANISTER_TOP_UP_AMOUNT;
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -168,7 +168,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub total_cycles_spent_on_canisters: Cycles,
     pub local_group_count: u64,
@@ -182,8 +182,8 @@ pub struct Metrics {
     pub community_upgrades_failed: Vec<FailedUpgradeCount>,
     pub community_upgrades_pending: u64,
     pub community_upgrades_in_progress: u64,
-    pub group_wasm_version: Version,
-    pub community_wasm_version: Version,
+    pub group_wasm_version: BuildVersion,
+    pub community_wasm_version: BuildVersion,
     pub max_concurrent_group_upgrades: u32,
     pub group_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,

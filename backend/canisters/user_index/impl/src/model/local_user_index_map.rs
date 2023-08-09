@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{CanisterId, CyclesTopUp, UserId, Version};
+use types::{BuildVersion, CanisterId, CyclesTopUp, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct LocalUserIndexMap {
@@ -14,11 +14,11 @@ pub struct LocalUserIndex {
     user_count: u32,
     full: bool,
     cycle_top_ups: Vec<CyclesTopUp>,
-    wasm_version: Version,
+    wasm_version: BuildVersion,
 }
 
 impl LocalUserIndexMap {
-    pub fn add_index(&mut self, index_id: CanisterId, wasm_version: Version) -> bool {
+    pub fn add_index(&mut self, index_id: CanisterId, wasm_version: BuildVersion) -> bool {
         let exists = self.index_map.contains_key(&index_id);
         if !exists {
             self.index_map.insert(
@@ -83,7 +83,7 @@ impl LocalUserIndex {
         self.cycle_top_ups.push(top_up);
     }
 
-    pub fn set_wasm_version(&mut self, wasm_version: Version) {
+    pub fn set_wasm_version(&mut self, wasm_version: BuildVersion) {
         self.wasm_version = wasm_version;
     }
 
@@ -91,7 +91,7 @@ impl LocalUserIndex {
         self.full = true;
     }
 
-    pub fn wasm_version(&self) -> Version {
+    pub fn wasm_version(&self) -> BuildVersion {
         self.wasm_version
     }
 }

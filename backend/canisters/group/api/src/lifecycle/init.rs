@@ -1,6 +1,8 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{AccessGate, AccessRules, CanisterId, Document, GroupPermissions, GroupSubtype, Milliseconds, UserId, Version};
+use types::{
+    AccessGate, AccessRules, BuildVersion, CanisterId, Document, GroupPermissions, GroupSubtype, Milliseconds, UserId,
+};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -23,6 +25,6 @@ pub struct Args {
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub gate: Option<AccessGate>,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub test_mode: bool,
 }

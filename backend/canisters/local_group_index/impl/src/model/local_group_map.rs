@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{ChatId, CyclesTopUp, Version};
+use types::{BuildVersion, ChatId, CyclesTopUp};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct LocalGroupMap {
@@ -8,7 +8,7 @@ pub struct LocalGroupMap {
 }
 
 impl LocalGroupMap {
-    pub fn add(&mut self, chat_id: ChatId, wasm_version: Version) {
+    pub fn add(&mut self, chat_id: ChatId, wasm_version: BuildVersion) {
         let group = LocalGroup::new(wasm_version);
         self.groups.insert(chat_id, group);
     }
@@ -45,13 +45,13 @@ impl LocalGroupMap {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct LocalGroup {
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
 impl LocalGroup {
-    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<Version>) {
+    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<BuildVersion>) {
         self.upgrade_in_progress = upgrade_in_progress;
         if let Some(version) = new_version {
             self.wasm_version = version;
@@ -64,7 +64,7 @@ impl LocalGroup {
 }
 
 impl LocalGroup {
-    pub fn new(wasm_version: Version) -> LocalGroup {
+    pub fn new(wasm_version: BuildVersion) -> LocalGroup {
         LocalGroup {
             wasm_version,
             upgrade_in_progress: false,

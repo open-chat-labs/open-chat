@@ -3,7 +3,7 @@ use clap::Parser;
 use sns_governance_canister::types::{proposal, ExecuteGenericNervousSystemFunction, Proposal};
 use std::error::Error;
 use std::fs;
-use types::{CanisterWasm, UpgradeCanisterWasmArgs, Version};
+use types::{BuildVersion, CanisterWasm, UpgradeCanisterWasmArgs};
 
 /// Builds the binary encoded candid representation of an ExecuteGenericNervousSystemFunction proposal
 /// for upgrading a canister WASM
@@ -31,7 +31,7 @@ pub struct Config {
 
     /// Version of the wasm module
     #[arg(long)]
-    pub version: Version,
+    pub version: BuildVersion,
 }
 
 pub fn build(config: Config) -> Result<Vec<u8>, Box<dyn Error>> {

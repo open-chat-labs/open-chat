@@ -1,4 +1,4 @@
-use crate::{CanisterId, Version};
+use crate::{BuildVersion, CanisterId};
 use candid::CandidType;
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ pub struct UpgradeCanisterWasmArgs {
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct CanisterWasm {
-    pub version: Version,
+    pub version: BuildVersion,
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
 }
@@ -22,7 +22,7 @@ pub struct CanisterWasm {
 impl Default for CanisterWasm {
     fn default() -> Self {
         CanisterWasm {
-            version: Version::new(0, 0, 0),
+            version: BuildVersion::new(0, 0, 0),
             module: Vec::default(),
         }
     }
@@ -51,7 +51,7 @@ pub struct HumanReadableUpgradeCanisterWasmArgs {
 
 #[derive(Serialize)]
 pub struct CanisterWasmTrimmed {
-    version: Version,
+    version: BuildVersion,
     module_hash: String,
     byte_length: u64,
 }

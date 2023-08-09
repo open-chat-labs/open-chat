@@ -6,7 +6,7 @@ use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use notifications_index_canister::add_notifications_canister::{Response::*, *};
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded};
 use std::collections::hash_map::Entry::Vacant;
-use types::{CanisterId, CanisterWasm, Version};
+use types::{BuildVersion, CanisterId, CanisterWasm};
 use utils::canister::{install, CanisterToInstall};
 
 #[proposal(guard = "caller_is_governance_principal")]
@@ -17,7 +17,7 @@ async fn add_notifications_canister(args: Args) -> Response {
             let wasm_version = result.canister_wasm.version;
             match install(CanisterToInstall {
                 canister_id: args.canister_id,
-                current_wasm_version: Version::default(),
+                current_wasm_version: BuildVersion::default(),
                 new_wasm: result.canister_wasm,
                 deposit_cycles_if_needed: true,
                 args: result.init_args,
@@ -57,7 +57,7 @@ fn prepare(canister_id: CanisterId, authorizers: Vec<CanisterId>, state: &Runtim
     }
 }
 
-fn commit(canister_id: CanisterId, wasm_version: Version, state: &mut RuntimeState) -> Response {
+fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) -> Response {
     if let Vacant(e) = state.data.notifications_canisters.entry(canister_id) {
         let now = state.env.now();
         e.insert(NotificationsCanister::new(wasm_version, now));

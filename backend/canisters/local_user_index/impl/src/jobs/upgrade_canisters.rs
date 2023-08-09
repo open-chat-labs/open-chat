@@ -4,7 +4,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{CanisterId, Cycles, CyclesTopUp, UserId, Version};
+use types::{BuildVersion, CanisterId, Cycles, CyclesTopUp, UserId};
 use utils::canister::{install, FailedUpgrade};
 use utils::consts::MIN_CYCLES_BALANCE;
 
@@ -112,7 +112,7 @@ async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
     }
 }
 
-fn on_success(canister_id: CanisterId, to_version: Version, top_up: Option<Cycles>, state: &mut RuntimeState) {
+fn on_success(canister_id: CanisterId, to_version: BuildVersion, top_up: Option<Cycles>, state: &mut RuntimeState) {
     let user_id = canister_id.into();
     mark_upgrade_complete(user_id, Some(to_version), state);
 
@@ -129,7 +129,7 @@ fn on_success(canister_id: CanisterId, to_version: Version, top_up: Option<Cycle
     state.data.canisters_requiring_upgrade.mark_success(&canister_id);
 }
 
-fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Version, state: &mut RuntimeState) {
+fn on_failure(canister_id: CanisterId, from_version: BuildVersion, to_version: BuildVersion, state: &mut RuntimeState) {
     mark_upgrade_complete(canister_id.into(), None, state);
 
     state.data.canisters_requiring_upgrade.mark_failure(FailedUpgrade {
@@ -139,7 +139,7 @@ fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Versio
     });
 }
 
-fn mark_upgrade_complete(canister_id: UserId, new_wasm_version: Option<Version>, state: &mut RuntimeState) {
+fn mark_upgrade_complete(canister_id: UserId, new_wasm_version: Option<BuildVersion>, state: &mut RuntimeState) {
     if let Some(user) = state.data.local_users.get_mut(&canister_id) {
         user.set_canister_upgrade_status(false, new_wasm_version);
     }
