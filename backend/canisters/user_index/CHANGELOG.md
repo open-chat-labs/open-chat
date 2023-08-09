@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.792](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.792-user_index)] - 2023-08-08
+
 ### Changed
 
 - Validate text length based on number of chars rather than bytes ([#4154](https://github.com/open-chat-labs/open-chat/pull/4154))

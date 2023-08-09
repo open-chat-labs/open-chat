@@ -134,7 +134,6 @@ pub struct Channel {
     pub channel_id: ChannelId,
     pub messages_read: GroupMessagesRead,
     pub archived: Timestamped<bool>,
-    #[serde(default)]
     pub imported: Option<TimestampMillis>,
 }
 

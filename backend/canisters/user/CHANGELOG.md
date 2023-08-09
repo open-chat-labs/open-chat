@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.803](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.803-user)] - 2023-08-08
+
 ### Changed
 
 - Remove any deleted groups which were missed ([#4117](https://github.com/open-chat-labs/open-chat/pull/4117))

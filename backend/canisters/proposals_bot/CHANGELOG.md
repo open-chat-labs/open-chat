@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.796](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.796-proposals_bot)] - 2023-08-08
+
 ### Changed
 
 - Display the `community_id` in `add_governance_canister` proposals ([#4121](https://github.com/open-chat-labs/open-chat/pull/4121))

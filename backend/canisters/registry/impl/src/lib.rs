@@ -61,7 +61,6 @@ struct Data {
     sns_wasm_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
     tokens: Tokens,
-    #[serde(default)]
     failed_sns_launches: HashSet<CanisterId>,
     test_mode: bool,
 }
