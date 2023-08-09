@@ -72,8 +72,6 @@
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
 
-    let tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\d*[.,]?\d*)$`);
-
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
 
@@ -87,6 +85,7 @@
     $: tokens = Object.values($cryptoLookup)
         .map((t) => t.symbol.toLowerCase())
         .join("|");
+    $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\d*[.,]?\d*)$`);
 
     $: {
         if (inp) {

@@ -264,7 +264,6 @@ import {
     type GroupInvite,
     type SearchDirectChatResponse,
     type SearchGroupChatResponse,
-    type Cryptocurrency,
     type ThreadPreview,
     type UsersArgs,
     type UsersResponse,
@@ -331,8 +330,18 @@ import {
     ChannelIdentifier,
     ExploreChannelsResponse,
     CommunityInvite,
+    ModerationFlag,
+    ChannelSummary,
+    GroupMoved,
     isSnsGate,
     toTitleCase,
+    CHAT_SYMBOL,
+    CKBTC_SYMBOL,
+    HOTORNOT_SYMBOL,
+    ICP_SYMBOL,
+    KINIC_SYMBOL,
+    SNS1_SYMBOL,
+    GHOST_SYMBOL,
     CryptocurrencyContent,
     CryptocurrencyDetails,
     CryptocurrencyTransfer,
@@ -2863,7 +2872,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                     if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                         this.refreshAccountBalance(
-                            msg.content.transfer.token,
+                            msg.content.transfer.ledger,
                             this.user.cryptoAccount
                         );
                     }
@@ -2959,8 +2968,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            const token = msg.content.transfer.token;
-                            this.refreshAccountBalance(token, this.user.userId);
+                            this.refreshAccountBalance(msg.content.transfer.ledger, this.user.userId);
                         }
                         if (threadRootMessageIndex !== undefined) {
                             trackEvent("sent_threaded_message");
