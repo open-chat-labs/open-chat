@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.802](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.802-group)] - 2023-08-08
+
 ### Changed
 
 - Serialize chat state more efficiently ([#4092](https://github.com/open-chat-labs/open-chat/pull/4092))

@@ -8,7 +8,6 @@ use types::{ChatId, DeletedGroupInfoInternal, UserId};
 pub struct DeletedGroups {
     groups: HashMap<ChatId, DeletedGroupInfoInternal>,
     pending_group_deleted_notifications: VecDeque<(ChatId, UserId)>,
-    #[serde(default)]
     failed_notifications: Vec<(ChatId, UserId)>,
 }
 
