@@ -19,8 +19,8 @@ export const cryptoBalance = {
     },
 };
 
-const lastCryptoSentStore = writable<string>(
-    (localStorage.getItem(configKeys.lastCryptoSent) || "")
+const lastCryptoSentStore = writable<string | undefined>(
+    localStorage.getItem(configKeys.lastCryptoSent) ?? undefined
 );
 
 export const lastCryptoSent = {

@@ -31,6 +31,7 @@
     import ImportToCommunity from "./communities/Import.svelte";
     import { randomSentence } from "../../utils/randomMsg";
     import { rightPanelHistory } from "../../stores/rightPanel";
+    import { ICP_SYMBOL } from "openchat-shared";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -136,7 +137,7 @@
 
     function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
         creatingCryptoTransfer = ev.detail ?? {
-            ledger: $lastCryptoSent,
+            ledger: $lastCryptoSent ?? client.ledgerCanisterId(ICP_SYMBOL),
             amount: BigInt(0),
         };
     }

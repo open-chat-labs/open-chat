@@ -6,10 +6,11 @@
         ChatEvent as ChatEventType,
         EnhancedReplyContext,
         EventWrapper,
+        FailedMessages,
         Message,
         MessageContent,
+        OpenChat,
         User,
-        FailedMessages,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -18,11 +19,11 @@
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
-    import type { OpenChat } from "openchat-client";
     import { toastStore } from "stores/toast";
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
     import { randomSentence } from "../../../utils/randomMsg";
+    import { ICP_SYMBOL } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -186,7 +187,7 @@
 
     function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
         creatingCryptoTransfer = ev.detail ?? {
-            ledger: $lastCryptoSent,
+            ledger: $lastCryptoSent ?? client.ledgerCanisterId(ICP_SYMBOL),
             amount: BigInt(0),
         };
     }
