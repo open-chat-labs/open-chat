@@ -20,8 +20,8 @@
         position: relative;
         background-size: cover;
         background-position: center center;
-        height: toRem(200);
         border-radius: $sp3 $sp3 0 0;
+        padding-bottom: 50%; // forces 2:1 aspect ratio
 
         &.square {
             border-radius: 0;
