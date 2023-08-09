@@ -100,7 +100,7 @@
             width: toRem(48);
             height: toRem(48);
             position: absolute;
-            bottom: toRem(-15);
+            bottom: toRem(-24);
             left: $sp4;
         }
 

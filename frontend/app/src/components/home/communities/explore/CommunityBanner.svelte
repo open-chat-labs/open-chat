@@ -8,7 +8,7 @@
 
     const client = getContext<OpenChat>("client");
 
-    $: style = intersecting ? "" : `background-image: url(${client.communityBannerUrl(banner)})`;
+    $: style = intersecting ? `background-image: url(${client.communityBannerUrl(banner)})` : "";
 </script>
 
 <div class:square class="banner" {style}>

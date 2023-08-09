@@ -9,6 +9,7 @@
     onMount(() => {
         if (typeof IntersectionObserver !== "undefined") {
             const observer = new IntersectionObserver((entries) => {
+                entries.sort((a, b) => b.time - a.time);
                 intersecting = entries[0].isIntersecting;
                 if (intersecting) {
                     dispatch("intersecting");
