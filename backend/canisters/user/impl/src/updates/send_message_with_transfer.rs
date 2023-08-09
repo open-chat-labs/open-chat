@@ -72,6 +72,7 @@ async fn send_message_with_transfer_to_channel(
             send_message::Response::ChannelNotFound => ChannelNotFound(completed_transaction),
             send_message::Response::UserSuspended => UserSuspended,
             send_message::Response::CommunityFrozen => CommunityFrozen,
+            send_message::Response::RulesNotAccepted => RulesNotAccepted,
             send_message::Response::MessageEmpty
             | send_message::Response::InvalidPoll(_)
             | send_message::Response::NotAuthorized

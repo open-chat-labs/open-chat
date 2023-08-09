@@ -31,6 +31,7 @@ pub enum Response {
     UserSuspended,
     InvalidRequest(String),
     CommunityFrozen,
+    RulesNotAccepted,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove deprecated `pin_chat` and `unpin_chat` ([#4139](https://github.com/open-chat-labs/open-chat/pull/4139))
 - Simplify notification types ([#4148](https://github.com/open-chat-labs/open-chat/pull/4148))
 - Validate text length based on number of chars rather than bytes ([#4154](https://github.com/open-chat-labs/open-chat/pull/4154))
+- `RulesNotAccepted` added to `send_message_with_transfer_to_channel` response ([#4159](https://github.com/open-chat-labs/open-chat/pull/4159))
 
 ## [[2.0.775](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.775-user)] - 2023-08-01
 

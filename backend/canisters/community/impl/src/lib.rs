@@ -8,6 +8,7 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::ChatMetricsInternal;
 use fire_and_forget_handler::FireAndForgetHandler;
+use group_chat_core::AccessRulesInternal;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -15,9 +16,9 @@ use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
-    AccessGate, AccessRules, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
-    CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
-    Version,
+    AccessGate, AccessRules, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
+    CommunityMembership, CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis,
+    Timestamped, UserId,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -34,7 +35,7 @@ mod timer_job_types;
 mod updates;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -168,7 +169,7 @@ struct Data {
     is_public: bool,
     name: String,
     description: String,
-    rules: AccessRules,
+    rules: AccessRulesInternal,
     avatar: Option<Document>,
     banner: Option<Document>,
     permissions: CommunityPermissions,
@@ -229,7 +230,7 @@ impl Data {
             is_public,
             name,
             description,
-            rules,
+            rules: AccessRulesInternal::new(rules),
             avatar,
             banner,
             permissions,
@@ -304,7 +305,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub public: bool,
     pub date_created: TimestampMillis,

@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{CanisterId, ChatId, CommunityId, Version};
+use types::{BuildVersion, CanisterId, ChatId, CommunityId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct LocalGroupIndexMap {
@@ -15,11 +15,11 @@ pub struct LocalGroupIndex {
     group_count: u32,
     community_count: u32,
     full: bool,
-    wasm_version: Version,
+    wasm_version: BuildVersion,
 }
 
 impl LocalGroupIndexMap {
-    pub fn add_index(&mut self, index_id: CanisterId, wasm_version: Version) -> bool {
+    pub fn add_index(&mut self, index_id: CanisterId, wasm_version: BuildVersion) -> bool {
         let exists = self.index_map.contains_key(&index_id);
         if !exists {
             self.index_map.insert(
@@ -95,7 +95,7 @@ impl LocalGroupIndexMap {
 }
 
 impl LocalGroupIndex {
-    pub fn set_wasm_version(&mut self, wasm_version: Version) {
+    pub fn set_wasm_version(&mut self, wasm_version: BuildVersion) {
         self.wasm_version = wasm_version;
     }
 
@@ -103,7 +103,7 @@ impl LocalGroupIndex {
         self.full = true;
     }
 
-    pub fn wasm_version(&self) -> Version {
+    pub fn wasm_version(&self) -> BuildVersion {
         self.wasm_version
     }
 }

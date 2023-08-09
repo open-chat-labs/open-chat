@@ -5,6 +5,7 @@ use std::collections::{BTreeMap, HashSet};
 
 mod avatar;
 mod bots;
+mod build_version;
 mod canister_upgrade_status;
 mod canister_wasm;
 mod channel_summary;
@@ -59,10 +60,12 @@ mod timestamped;
 mod user;
 mod user_summary;
 mod version;
+mod versioned;
 
 pub use crate::range_set::*;
 pub use avatar::*;
 pub use bots::*;
+pub use build_version::*;
 pub use canister_upgrade_status::*;
 pub use canister_wasm::*;
 pub use channel_summary::*;
@@ -116,6 +119,7 @@ pub use timestamped::*;
 pub use user::*;
 pub use user_summary::*;
 pub use version::*;
+pub use versioned::*;
 
 pub type AccessorId = Principal;
 pub type CanisterId = Principal;

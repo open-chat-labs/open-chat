@@ -3,13 +3,13 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
 use tracing::info;
-use types::{CanisterId, Version};
+use types::{BuildVersion, CanisterId};
 
 #[derive(CandidType, Serialize, Deserialize)]
 pub struct FailedUpgrade {
     pub canister_id: CanisterId,
-    pub from_version: Version,
-    pub to_version: Version,
+    pub from_version: BuildVersion,
+    pub to_version: BuildVersion,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
@@ -96,7 +96,7 @@ pub struct Metrics {
 
 #[derive(CandidType, Serialize, Debug)]
 pub struct FailedUpgradeCount {
-    pub from_version: Version,
-    pub to_version: Version,
+    pub from_version: BuildVersion,
+    pub to_version: BuildVersion,
     pub count: usize,
 }

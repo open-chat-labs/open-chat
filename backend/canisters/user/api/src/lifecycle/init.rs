@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, MessageContent, Version};
+use types::{BuildVersion, CanisterId, MessageContent};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -9,7 +9,7 @@ pub struct Args {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub username: String,
     pub openchat_bot_messages: Vec<MessageContent>,
     pub test_mode: bool,

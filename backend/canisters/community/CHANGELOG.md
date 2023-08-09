@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Simplify notification types ([#4148](https://github.com/open-chat-labs/open-chat/pull/4148))
 - Validate text length based on number of chars rather than bytes ([#4154](https://github.com/open-chat-labs/open-chat/pull/4154))
+- Add support for versioned access rules ([#4159](https://github.com/open-chat-labs/open-chat/pull/4159))
 
 ### Removed
 

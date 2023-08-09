@@ -3,7 +3,7 @@ use ic_stable_structures::log::WriteError;
 use ic_stable_structures::{StableLog, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use types::{TimestampMillis, Version};
+use types::{BuildVersion, TimestampMillis};
 
 #[derive(Serialize, Deserialize)]
 pub struct InstructionCountsLog {
@@ -16,7 +16,7 @@ impl InstructionCountsLog {
         &self,
         function_id: InstructionCountFunctionId,
         instruction_count: u64,
-        wasm_version: Version,
+        wasm_version: BuildVersion,
         now: TimestampMillis,
     ) -> Result<u64, WriteError> {
         self.log.append(&InstructionCountEntry {
@@ -35,7 +35,7 @@ impl InstructionCountsLog {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct InstructionCountEntry {
     timestamp: u64,
-    wasm_version: Version,
+    wasm_version: BuildVersion,
     function_id: InstructionCountFunctionId,
     instruction_count: u64,
 }
@@ -76,7 +76,7 @@ mod tests {
     fn round_trip() {
         let entry = InstructionCountEntry {
             timestamp: 10,
-            wasm_version: Version::new(20, 30, 40),
+            wasm_version: BuildVersion::new(20, 30, 40),
             function_id: InstructionCountFunctionId::PreUpgrade,
             instruction_count: 100,
         };

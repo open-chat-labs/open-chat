@@ -12,7 +12,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{info, trace};
-use types::{ChannelId, ChannelLatestMessageIndex, ChatId, Empty};
+use types::{ChannelId, ChannelLatestMessageIndex, ChatId, Empty, Version};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -175,7 +175,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                             for default_channel_id in default_channel_ids.iter() {
                                 if let Some(channel) = state.data.channels.get_mut(default_channel_id) {
                                     if channel.chat.gate.is_none() {
-                                        join_channel_unchecked(channel, member, true, now);
+                                        join_channel_unchecked(channel, member, true, Some(Version::zero()), now);
                                     }
                                 }
                             }

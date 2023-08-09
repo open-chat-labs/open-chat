@@ -17,7 +17,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    AccessGate, AccessRules, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, EventIndex,
+    AccessGate, AccessRules, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, EventIndex,
     FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification,
     TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
 };
@@ -38,7 +38,7 @@ mod timer_job_types;
 mod updates;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -138,7 +138,7 @@ impl RuntimeState {
                 now,
             ),
             frozen: self.data.frozen.value.clone(),
-            wasm_version: Version::default(),
+            wasm_version: BuildVersion::default(),
             date_last_pinned: chat.date_last_pinned,
             events_ttl: chat.events.get_events_time_to_live().value,
             expired_messages: chat.events.expired_messages(now),
@@ -154,6 +154,7 @@ impl RuntimeState {
             args.min_visible_event_index,
             args.min_visible_message_index,
             args.mute_notifications,
+            Some(Version::zero()),
         );
 
         if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
@@ -454,7 +455,7 @@ pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub public: bool,
     pub date_created: TimestampMillis,

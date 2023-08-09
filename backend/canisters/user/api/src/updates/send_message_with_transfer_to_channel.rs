@@ -31,6 +31,7 @@ pub enum Response {
     TransferCannotBeZero,
     UserSuspended,
     CommunityFrozen,
+    RulesNotAccepted,
     InternalError(String, CompletedCryptoTransaction),
 }
 
