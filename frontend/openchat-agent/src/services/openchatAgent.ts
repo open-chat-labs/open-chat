@@ -10,7 +10,7 @@ import {
     setCachedMessageIfNotExists,
 } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
-import { getRegistry, setRegistry } from "../utils/registryCache";
+import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
@@ -102,7 +102,6 @@ import {
     ThreadPreviewsResponse,
     ThreadSyncDetails,
     ToggleMuteNotificationResponse,
-    Tokens,
     UnblockUserResponse,
     UndeleteMessageResponse,
     UnpinChatResponse,
@@ -1940,7 +1939,7 @@ export class OpenChatAgent extends EventTarget {
         return DataClient.create(this.identity, this.config).storageStatus();
     }
 
-    refreshAccountBalance(ledger: string, principal: string): Promise<Tokens> {
+    refreshAccountBalance(ledger: string, principal: string): Promise<bigint> {
         return this.getLedgerClient(ledger).accountBalance(principal);
     }
 
@@ -2413,7 +2412,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async getRegistry(): Promise<RegistryValue> {
-        const current = await getRegistry();
+        const current = await getCachedRegistry();
 
         const updates = await this._registryClient.updates(current?.lastUpdated);
 
@@ -2422,7 +2421,7 @@ export class OpenChatAgent extends EventTarget {
                 lastUpdated: updates.lastUpdated,
                 tokenDetails: updates.tokenDetails,
             };
-            setRegistry(updated);
+            setCachedRegistry(updated);
             return updated;
         } else if (current !== undefined) {
             return current;

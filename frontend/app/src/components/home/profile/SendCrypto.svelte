@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
     import TokenInput from "../TokenInput.svelte";
-    import { Cryptocurrency, OpenChat, cryptoLookup } from "openchat-client";
+    import { OpenChat } from "openchat-client";
     import Input from "../../Input.svelte";
     import { _ } from "svelte-i18n";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
@@ -9,8 +9,8 @@
     import { iconSize } from "../../../stores/iconSize";
     import Scanner from "./Scanner.svelte";
 
-    export let token: Cryptocurrency;
-    export let amountToSendE8s: bigint;
+    export let ledger: string;
+    export let amountToSend: bigint;
     export let sending = false;
     export let valid = false;
 
@@ -22,13 +22,16 @@
     let targetAccount: string = "";
     let scanner: Scanner;
 
-    $: account = token === "ICP" ? user.cryptoAccount : user.userId;
     $: cryptoBalance = client.cryptoBalance;
-    $: transferFees = cryptoLookup[token].transferFeesE8s;
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = $cryptoLookup[ledger];
+    $: account = tokenDetails.symbol.toLower() === "icp" ? user.cryptoAccount : user.userId;
+    $: transferFees = tokenDetails.transferFee;
+    $: symbol = tokenDetails.symbol;
     $: {
         valid =
             validAmount &&
-            amountToSendE8s > BigInt(0) &&
+            amountToSend > BigInt(0) &&
             targetAccount !== "" &&
             targetAccount !== account;
     }
@@ -45,16 +48,16 @@
         client
             .withdrawCryptocurrency({
                 kind: "pending",
-                ledger: client.ledgerCanisterId(token),
-                token,
+                ledger,
+                token: "icp",
                 to: targetAccount,
-                amountE8s: amountToSendE8s,
+                amountE8s: amountToSend,
                 feeE8s: transferFees,
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             })
             .then((resp) => {
                 if (resp.kind === "completed") {
-                    amountToSendE8s = BigInt(0);
+                    amountToSend = BigInt(0);
                     targetAccount = "";
                     dispatch("refreshBalance");
                     toastStore.showSuccessToast("cryptoAccount.sendSucceeded", {
@@ -79,10 +82,10 @@
 
 <div class="token-input">
     <TokenInput
-        {token}
-        maxAmountE8s={BigInt(Math.max(0, Number($cryptoBalance[token] - transferFees)))}
+        {ledger}
+        maxAmount={BigInt(Math.max(0, Number($cryptoBalance[ledger] - transferFees)))}
         bind:valid={validAmount}
-        bind:amountE8s={amountToSendE8s} />
+        bind:amount={amountToSend} />
 </div>
 <div class="target">
     <Input

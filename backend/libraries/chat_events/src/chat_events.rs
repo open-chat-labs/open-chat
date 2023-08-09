@@ -12,11 +12,11 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
-    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message,
-    MessageContentInitial, MessageId, MessageIndex, MessageMatch, Milliseconds, MultiUserChat, PollVotes, PrizeWinnerContent,
-    ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, TimestampMillis, Timestamped,
-    UserId, VoteOperation,
+    CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper,
+    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention,
+    Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, Milliseconds, MultiUserChat, PollVotes,
+    PrizeWinnerContent, ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult,
+    TimestampMillis, Timestamped, UserId, VoteOperation,
 };
 use types::{Hash, MessageReport, ReportedMessageInternal};
 
@@ -560,12 +560,13 @@ impl ChatEvents {
                 // Pop the last prize and reserve it
                 let amount = content.prizes_remaining.pop().expect("some prizes_remaining");
                 let token = content.transaction.token();
+                let ledger_canister_id = content.transaction.ledger_canister_id();
 
                 content.reservations.insert(user_id);
                 message.last_updated = Some(now);
                 self.last_updated_timestamps.mark_updated(None, event_index, now);
 
-                return ReservePrizeResult::Success(token, amount);
+                return ReservePrizeResult::Success(token, ledger_canister_id, amount);
             }
         }
 
@@ -1293,7 +1294,7 @@ pub enum AddRemoveReactionResult {
 }
 
 pub enum ReservePrizeResult {
-    Success(Cryptocurrency, Tokens),
+    Success(Cryptocurrency, CanisterId, Tokens),
     MessageNotFound,
     AlreadyClaimed,
     PrizeFullyClaimed,

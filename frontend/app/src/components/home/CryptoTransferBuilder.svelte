@@ -1,7 +1,7 @@
 <script lang="ts">
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { cryptoLookup, PartialUserSummary } from "openchat-client";
+    import { PartialUserSummary } from "openchat-client";
     import type { ChatSummary, OpenChat } from "openchat-client";
     import type { CryptocurrencyContent } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
@@ -25,7 +25,7 @@
     const dispatch = createEventDispatcher();
 
     export let draftAmountE8s: bigint;
-    export let token: string;
+    export let ledger: string;
     export let chat: ChatSummary;
     export let defaultReceiver: string | undefined;
 
@@ -43,16 +43,18 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let receiver: PartialUserSummary | undefined = undefined;
     let validAmount: boolean = false;
-    $: tokenDetails = cryptoLookup[token];
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = $cryptoLookup[ledger];
+    $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
-    $: transferFees = tokenDetails.transferFeesE8s;
+    $: transferFees = tokenDetails.transferFee;
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalanceE8s =
         draftAmountE8s > BigInt(0)
-            ? $cryptoBalance[token] - draftAmountE8s - transferFees
-            : $cryptoBalance[token];
+            ? $cryptoBalance[ledger] - draftAmountE8s - transferFees
+            : $cryptoBalance[ledger];
     $: valid = error === undefined && validAmount && receiver !== undefined && !tokenChanging;
-    $: zero = $cryptoBalance[token] <= transferFees && !tokenChanging;
+    $: zero = $cryptoBalance[ledger] <= transferFees && !tokenChanging;
 
     onMount(() => {
         // default the receiver to the other user in a direct chat
@@ -84,9 +86,9 @@
             kind: "crypto_content",
             caption: message === "" ? undefined : message,
             transfer: {
-                ledger: client.ledgerCanisterId(token),
-                token,
                 kind: "pending",
+                ledger,
+                token: "icp",
                 recipient: receiver.userId,
                 amountE8s: draftAmountE8s,
                 feeE8s: transferFees,
@@ -94,7 +96,7 @@
             },
         };
         dispatch("sendTransfer", [content, undefined]);
-        lastCryptoSent.set(token);
+        lastCryptoSent.set(ledger);
         dispatch("close");
     }
 
@@ -118,7 +120,7 @@
         tokenChanging = false;
         if (remainingBalanceE8s < 0) {
             remainingBalanceE8s = BigInt(0);
-            draftAmountE8s = $cryptoBalance[token] - transferFees;
+            draftAmountE8s = $cryptoBalance[ledger] - transferFees;
             if (draftAmountE8s < 0) {
                 draftAmountE8s = BigInt(0);
             }
@@ -133,14 +135,14 @@
                 <div class="main-title">
                     <div>{$_("tokenTransfer.send")}</div>
                     <div>
-                        <CryptoSelector bind:token />
+                        <CryptoSelector bind:ledger />
                     </div>
                 </div>
             </div>
             <BalanceWithRefresh
                 bind:toppingUp
                 bind:this={balanceWithRefresh}
-                {token}
+                {ledger}
                 value={remainingBalanceE8s}
                 label={$_("cryptoAccount.shortBalanceLabel")}
                 bold

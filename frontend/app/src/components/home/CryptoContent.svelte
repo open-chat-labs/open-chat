@@ -14,8 +14,8 @@
     export let reply: boolean = false;
     export let senderId: string;
 
-    let token = content.transfer.token;
-
+    $: cryptoLookup = client.cryptoLookup;
+    $: icon = $cryptoLookup[content.transfer.ledger].icon;
     $: transferText = client.buildCryptoTransferText($_, user.userId, senderId, content, me);
     $: transactionLinkText = client.buildTransactionLink($_, content.transfer);
 </script>
@@ -23,7 +23,9 @@
 {#if transferText !== undefined}
     <div class="message">
         <div class="logo-wrapper">
-            <div class={`logo ${token.toLowerCase()}`} />
+            <div class="logo">
+                <img src={icon} />
+            </div>
         </div>
         <div class="details">
             <div class="transfer-txt">{transferText}</div>

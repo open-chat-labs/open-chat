@@ -25,7 +25,7 @@
         OpenChat,
         MultiUserChat,
     } from "openchat-client";
-    import { allQuestions, cryptoCurrencyList, cryptoLookup } from "openchat-client";
+    import { allQuestions, cryptoCurrencyList } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
@@ -71,10 +71,7 @@
     let messageEntryHeight: number;
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
-    let tokens = cryptoCurrencyList
-        .filter((t) => cryptoLookup[t]?.disabled === false)
-        .map((t) => t.toLowerCase())
-        .join("|");
+
     let tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\d*[.,]?\d*)$`);
 
     // Update this to force a new textbox instance to be created
@@ -86,6 +83,10 @@
     $: isBot = $userStore[userId]?.kind === "bot";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
     $: pollsAllowed = isMultiUser && !isBot && client.canCreatePolls(chat.id);
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokens = Object.values($cryptoLookup)
+        .map((t) => t.symbol.toLowerCase())
+        .join("|");
 
     $: {
         if (inp) {

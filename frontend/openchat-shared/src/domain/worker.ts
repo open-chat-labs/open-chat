@@ -101,7 +101,7 @@ import type {
     ExploreCommunitiesResponse,
     ExploreChannelsResponse,
 } from "./search/search";
-import type { Cryptocurrency, Tokens } from "./crypto";
+import type { Cryptocurrency } from "./crypto";
 import type { GroupInvite, CommunityInvite } from "./inviteCodes";
 import type { CommunityPermissions, MemberRole } from "./permission";
 import type { AccessGate, AccessRules } from "./access";
@@ -127,6 +127,7 @@ import type {
     ImportGroupResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
+import type { RegistryValue } from "./registry";
 /**
  * Worker request types
  */
@@ -266,7 +267,8 @@ export type WorkerRequest =
     | ConvertGroupToCommunity
     | ImportGroupToCommunity
     | SetModerationFlags
-    | ChangeCommunityRole;
+    | ChangeCommunityRole
+    | UpdateRegistry;
 
 type SetModerationFlags = {
     kind: "setModerationFlags";
@@ -913,7 +915,7 @@ export type WorkerResponse =
     | Response<PublicProfile>
     | Response<PartialUserSummary | undefined>
     | Response<ThreadPreview[]>
-    | Response<Tokens>
+    | Response<bigint>
     | Response<SearchDirectChatResponse>
     | Response<SearchGroupChatResponse>
     | Response<AccessRules | undefined>
@@ -1004,7 +1006,8 @@ export type WorkerResponse =
     | Response<ExploreChannelsResponse>
     | Response<ImportGroupResponse>
     | Response<PublicGroupSummaryResponse>
-    | Response<AddMembersToChannelResponse>;
+    | Response<AddMembersToChannelResponse>
+    | Response<RegistryValue>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -1214,6 +1217,10 @@ type ChangeCommunityRole = {
     newRole: MemberRole;
 };
 
+type UpdateRegistry = {
+    kind: "updateRegistry";
+};
+
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
     : T extends UnpinMessage
@@ -1345,7 +1352,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends SearchDirectChat
     ? SearchDirectChatResponse
     : T extends RefreshAccountBalance
-    ? Tokens
+    ? bigint
     : T extends GetThreadPreviews
     ? ThreadPreview[]
     : T extends GetUser
@@ -1470,4 +1477,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? ConvertToCommunityResponse
     : T extends ImportGroupToCommunity
     ? ImportGroupResponse
+    : T extends UpdateRegistry
+    ? RegistryValue
     : never;

@@ -9,30 +9,27 @@
     const user = client.user;
     const dispatch = createEventDispatcher();
 
-    export let token: string = "ICP";
+    export let ledger: string;
     export let value: bigint;
     export let label: string | undefined = undefined;
     export let minDecimals = 4;
     export let bold = false;
-    export let disabled = false;
     export let toppingUp = false;
     export let showTopUp = false;
     export let refreshing = false;
 
     $: {
-        if (token) {
+        if (ledger) {
             refresh();
         }
     }
 
     export function refresh() {
-        if (disabled) return;
-
         dispatch("click");
         refreshing = true;
 
         return client
-            .refreshAccountBalance(token, user.userId)
+            .refreshAccountBalance(ledger, user.userId)
             .then((val) => {
                 dispatch("refreshed", val);
             })
@@ -56,8 +53,8 @@
         <div class="label">{label}</div>
     {/if}
     <div class="amount" class:bold>{client.formatTokens(value, minDecimals)}</div>
-    <div class="refresh" class:refreshing class:disabled on:click={refresh}>
-        <Refresh size={"1em"} color={disabled ? "var(--button-disabled)" : "var(--icon-txt)"} />
+    <div class="refresh" class:refreshing on:click={refresh}>
+        <Refresh size={"1em"} color={"var(--icon-txt)"} />
     </div>
     {#if showTopUp}
         <div class="top-up" on:click={topUp} title={$_("cryptoAccount.topUp")}>
@@ -81,9 +78,7 @@
         @include font-size(fs-140);
         height: $sp5;
         width: $sp5;
-        &:not(.disabled) {
-            cursor: pointer;
-        }
+        cursor: pointer;
         @include mobile() {
             height: 21.59px;
             width: 21.59px;

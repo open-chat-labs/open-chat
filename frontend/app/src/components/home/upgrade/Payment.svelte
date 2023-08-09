@@ -8,7 +8,6 @@
     import Congratulations from "./Congratulations.svelte";
     import {
         Cryptocurrency,
-        cryptoLookup,
         DiamondMembershipDuration,
         E8S_PER_TOKEN,
     } from "openchat-client";
@@ -55,12 +54,16 @@
         amount: number;
     };
 
-    const token: Cryptocurrency = "ICP";
+    const token = "icp";
+    const ledger = client.ledgerCanisterId(token);
 
     $: icpBalance = accountBalance / E8S_PER_TOKEN; //balance in the user's account expressed as ICP
     $: toPay = selectedOption?.amount ?? 0;
     $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
-    $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = cryptoLookup[ledger];
+    $: symbol = tokenDetails.symbol;
+    $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: selectedDuration = indexToDuration[selectedOption?.index ?? 0] ?? "one_month";
 
     const indexToDuration: Record<number, DiamondMembershipDuration> = {

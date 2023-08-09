@@ -12,7 +12,8 @@
     export let content: PrizeWinnerContent;
 
     $: userStore = client.userStore;
-    $: symbol = content.transaction.token;
+    $: cryptoLookup = client.cryptoLookup;
+    $: symbol = $cryptoLookup[content.transaction.ledger].symbol;
     $: amount = client.formatTokens(content.transaction.amountE8s, 0);
     $: winner = `${username(content.transaction.recipient)}`;
     $: transactionLinkText = client.buildTransactionLink($_, content.transaction);

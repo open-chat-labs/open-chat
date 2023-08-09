@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getContext, onMount } from "svelte";
-    import { cryptoLookup, E8S_PER_TOKEN, OpenChat } from "openchat-client";
+    import { E8S_PER_TOKEN, OpenChat } from "openchat-client";
     import Alert from "svelte-material-icons/Alert.svelte";
     import { iconSize } from "stores/iconSize";
     import { _ } from "svelte-i18n";
@@ -8,47 +8,51 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let amountE8s: bigint = BigInt(0);
+    export let amount: bigint = BigInt(0);
     export let autofocus: boolean = false;
-    export let maxAmountE8s: bigint;
-    export let token: string;
+    export let maxAmount: bigint;
+    export let ledger: string;
     export let valid: boolean = false;
 
     let inputElement: HTMLInputElement;
 
-    $: transferFees = cryptoLookup[token].transferFeesE8s;
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = $cryptoLookup[ledger];
+    $: symbol = tokenDetails.symbol;
+    $: transferFees = tokenDetails.transferFee;
+    $: tokenDecimals = tokenDetails.decimals;
 
     onMount(() => {
-        if (amountE8s > BigInt(0)) {
-            inputElement.value = client.formatTokens(amountE8s, 0, ".");
+        if (amount > BigInt(0)) {
+            inputElement.value = client.formatTokens(amount, 0, tokenDecimals, ".");
         }
     });
 
     $: {
         if (inputElement !== undefined) {
-            const e8s = client.validateTokenInput(inputElement.value).e8s;
-            if (e8s !== amountE8s) {
-                inputElement.value = client.formatTokens(amountE8s, 0, ".");
+            const validateResult = client.validateTokenInput(inputElement.value, tokenDecimals);
+            if (validateResult.amount !== amount) {
+                inputElement.value = client.formatTokens(validateResult.amount, 0, tokenDecimals, ".");
             }
         }
     }
 
     function onKeyup() {
-        const e8s = Math.round(Number(inputElement.value) * E8S_PER_TOKEN);
-        if (isNaN(e8s) || e8s <= 0 || e8s > maxAmountE8s) {
+        const inputAmount = Math.round(Number(inputElement.value) * E8S_PER_TOKEN);
+        if (isNaN(inputAmount) || inputAmount <= 0 || inputAmount > maxAmount) {
             valid = false;
         } else {
             valid = true;
         }
-        if (!isNaN(e8s)) {
-            amountE8s = BigInt(e8s);
+        if (!isNaN(inputAmount)) {
+            amount = BigInt(inputAmount);
         }
     }
 
     function max() {
-        amountE8s = maxAmountE8s;
+        amount = maxAmount;
         valid = true;
-        inputElement.value = client.formatTokens(maxAmountE8s, 0, ".");
+        inputElement.value = client.formatTokens(maxAmount, 0, tokenDecimals, ".");
     }
 </script>
 
@@ -72,7 +76,7 @@
         {autofocus}
         class="amount-val"
         min={0}
-        max={Number(maxAmountE8s) / E8S_PER_TOKEN}
+        max={Number(maxAmount) / E8S_PER_TOKEN}
         type="number"
         step="0.00000001"
         bind:this={inputElement}
