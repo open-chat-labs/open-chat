@@ -18,6 +18,9 @@
     export let showTopUp = false;
     export let refreshing = false;
 
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = $cryptoLookup[ledger];
+
     $: {
         if (ledger) {
             refresh();
@@ -52,7 +55,7 @@
     {#if label !== undefined}
         <div class="label">{label}</div>
     {/if}
-    <div class="amount" class:bold>{client.formatTokens(value, minDecimals)}</div>
+    <div class="amount" class:bold>{client.formatTokens(value, minDecimals, tokenDetails.decimals)}</div>
     <div class="refresh" class:refreshing on:click={refresh}>
         <Refresh size={"1em"} color={"var(--icon-txt)"} />
     </div>

@@ -3,7 +3,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import { PartialUserSummary } from "openchat-client";
     import type { ChatSummary, OpenChat } from "openchat-client";
-    import type { CryptocurrencyContent } from "openchat-shared";
+    import type { CryptocurrencyContent, ICP_SYMBOL } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -32,7 +32,8 @@
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: currentChatMembers = client.currentChatMembers;
     $: lastCryptoSent = client.lastCryptoSent;
-    $: cryptoBalance = client.cryptoBalance;
+    $: cryptoBalanceStore = client.cryptoBalance;
+    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: userStore = client.userStore;
     let refreshing = false;
     let error: string | undefined = undefined;
@@ -51,10 +52,10 @@
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalanceE8s =
         draftAmountE8s > BigInt(0)
-            ? $cryptoBalance[ledger] - draftAmountE8s - transferFees
-            : $cryptoBalance[ledger];
+            ? cryptoBalance - draftAmountE8s - transferFees
+            : cryptoBalance;
     $: valid = error === undefined && validAmount && receiver !== undefined && !tokenChanging;
-    $: zero = $cryptoBalance[ledger] <= transferFees && !tokenChanging;
+    $: zero = cryptoBalance <= transferFees && !tokenChanging;
 
     onMount(() => {
         // default the receiver to the other user in a direct chat
@@ -88,7 +89,7 @@
             transfer: {
                 kind: "pending",
                 ledger,
-                token: "icp",
+                token: ICP_SYMBOL,
                 recipient: receiver.userId,
                 amountE8s: draftAmountE8s,
                 feeE8s: transferFees,
@@ -120,7 +121,7 @@
         tokenChanging = false;
         if (remainingBalanceE8s < 0) {
             remainingBalanceE8s = BigInt(0);
-            draftAmountE8s = $cryptoBalance[ledger] - transferFees;
+            draftAmountE8s = cryptoBalance - transferFees;
             if (draftAmountE8s < 0) {
                 draftAmountE8s = BigInt(0);
             }
@@ -154,13 +155,13 @@
         <form slot="body">
             <div class="body" class:zero={zero || toppingUp}>
                 {#if zero || toppingUp}
-                    <AccountInfo {token} {user} />
+                    <AccountInfo {ledger} {user} />
                     {#if zero}
-                        <p>{$_("tokenTransfer.zeroBalance", { values: { token } })}</p>
+                        <p>{$_("tokenTransfer.zeroBalance", { values: { token: symbol } })}</p>
                     {/if}
                     <p>{$_("tokenTransfer.makeDeposit")}</p>
                     <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                        {$_("howToBuyToken", { values: { token } })}
+                        {$_("howToBuyToken", { values: { token: symbol } })}
                     </a>
                 {:else}
                     {#if multiUserChat}
@@ -175,10 +176,10 @@
                     {/if}
                     <div class="transfer">
                         <TokenInput
-                            {token}
+                            {ledger}
                             autofocus={!multiUserChat}
                             bind:valid={validAmount}
-                            maxAmountE8s={maxAmountE8s($cryptoBalance[token])}
+                            maxAmountE8s={maxAmountE8s(cryptoBalance)}
                             bind:amountE8s={draftAmountE8s} />
                     </div>
                     <div class="message">
@@ -199,7 +200,7 @@
                                 <Alert size={$iconSize} color={"var(--warn"} />
                             </div>
                             <div class="alert-txt">
-                                {$_("tokenTransfer.warning", { values: { token } })}
+                                {$_("tokenTransfer.warning", { values: { token: symbol } })}
                             </div>
                         </div>
                     {/if}

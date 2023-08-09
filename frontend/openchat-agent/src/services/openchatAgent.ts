@@ -49,7 +49,6 @@ import {
     CheckUsernameResponse,
     CreatedUser,
     CreateGroupResponse,
-    Cryptocurrency,
     CurrentUserResponse,
     DataContent,
     DeleteFrozenGroupResponse,
@@ -2318,7 +2317,7 @@ export class OpenChatAgent extends EventTarget {
 
     payForDiamondMembership(
         userId: string,
-        token: Cryptocurrency,
+        token: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint

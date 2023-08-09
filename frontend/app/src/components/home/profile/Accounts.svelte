@@ -76,9 +76,7 @@
     <div />
 
     {#each crypto as token}
-        <div class="icon">
-            <img src={token.icon} />
-        </div>
+        <img class="icon" src={token.logo} />
 
         <div class="token">
             {token.symbol}

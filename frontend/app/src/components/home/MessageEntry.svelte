@@ -311,10 +311,14 @@
 
         const tokenMatch = txt.match(tokenMatchRegex);
         if (tokenMatch && tokenMatch[2] !== undefined) {
-            dispatch("tokenTransfer", {
-                token: tokenMatch[1],
-                amount: client.validateTokenInput(tokenMatch[2]).e8s,
-            });
+            const token = tokenMatch[1];
+            const tokenDetails = Object.values($cryptoLookup).find((t) => t.symbol.toLowerCase() === token);
+            if (tokenDetails !== undefined) {
+                dispatch("tokenTransfer", {
+                    ledger: tokenDetails.ledger,
+                    amount: client.validateTokenInput(tokenMatch[2], tokenDetails.decimals).e8s,
+                });
+            }
             return true;
         }
         return false;

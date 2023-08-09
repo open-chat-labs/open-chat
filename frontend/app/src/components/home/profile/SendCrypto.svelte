@@ -2,6 +2,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import TokenInput from "../TokenInput.svelte";
     import { OpenChat } from "openchat-client";
+    import { ICP_SYMBOL } from "openchat-shared";
     import Input from "../../Input.svelte";
     import { _ } from "svelte-i18n";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
@@ -25,7 +26,7 @@
     $: cryptoBalance = client.cryptoBalance;
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
-    $: account = tokenDetails.symbol.toLower() === "icp" ? user.cryptoAccount : user.userId;
+    $: account = tokenDetails.symbol === ICP_SYMBOL ? user.cryptoAccount : user.userId;
     $: transferFees = tokenDetails.transferFee;
     $: symbol = tokenDetails.symbol;
     $: {
@@ -49,7 +50,7 @@
             .withdrawCryptocurrency({
                 kind: "pending",
                 ledger,
-                token: "icp",
+                token: symbol,
                 to: targetAccount,
                 amountE8s: amountToSend,
                 feeE8s: transferFees,

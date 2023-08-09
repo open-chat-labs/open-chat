@@ -101,7 +101,6 @@ import type {
     ExploreCommunitiesResponse,
     ExploreChannelsResponse,
 } from "./search/search";
-import type { Cryptocurrency } from "./crypto";
 import type { GroupInvite, CommunityInvite } from "./inviteCodes";
 import type { CommunityPermissions, MemberRole } from "./permission";
 import type { AccessGate, AccessRules } from "./access";
@@ -1063,7 +1062,7 @@ type ClaimPrize = {
 
 type PayForDiamondMembership = {
     userId: string;
-    token: Cryptocurrency;
+    token: string;
     duration: DiamondMembershipDuration;
     recurring: boolean;
     expectedPriceE8s: bigint;

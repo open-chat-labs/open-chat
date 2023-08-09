@@ -4051,7 +4051,7 @@ export class OpenChat extends OpenChatAgentWorker {
             } else if (chat.latestMessage !== undefined) {
                 userIds.add(chat.latestMessage.event.sender);
                 this.extractUserIdsFromMentions(
-                    getContentAsText((k) => k, chat.latestMessage.event.content)
+                    getContentAsText((k) => k, chat.latestMessage.event.content, get(cryptoLookup))
                 ).forEach((id) => userIds.add(id));
             }
         });
@@ -4374,7 +4374,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     payForDiamondMembership(
-        token: Cryptocurrency,
+        token: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint

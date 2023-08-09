@@ -19,8 +19,8 @@
             ledger: t.ledger,
             symbol: t.symbol,
             name: t.name,
-            icon: t.icon,
-            balance: $cryptoBalance[t],
+            logo: t.logo,
+            balance: $cryptoBalance[t] ?? BigInt(0),
         }));
 
     $: {
@@ -60,14 +60,12 @@
     <div transition:fade|local={{ duration: 100 }} class="tokens">
         {#each crypto as token}
             <div class="token" on:click={() => selectToken(token.ledger)}>
-                <div class="icon">
-                    <img src={token.icon} />
-                </div>
+                <img class="icon" src={token.logo} />
                 <div class="name">
                     {token.name}
                 </div>
                 <div class="symbol">
-                    {token.key}
+                    {token.symbol}
                 </div>
             </div>
         {/each}
@@ -130,27 +128,6 @@
             border-radius: 50%;
             background-repeat: no-repeat;
             background-position: top;
-            &.icp {
-                background-image: url("/assets/icp_token.svg");
-            }
-            &.sns1 {
-                background-image: url("/assets/sns1_token.png");
-            }
-            &.ckbtc {
-                background-image: url("/assets/ckbtc_nobackground.svg");
-            }
-            &.chat {
-                background-image: url("/assets/spinner.svg");
-            }
-            &.kinic {
-                background-image: url("/assets/kinic_token.png");
-            }
-            &.hot {
-                background-image: url("/assets/hot_token.svg");
-            }
-            &.ghost {
-                background-image: url("/assets/ghost_token.jpeg");
-            }
         }
     }
 </style>

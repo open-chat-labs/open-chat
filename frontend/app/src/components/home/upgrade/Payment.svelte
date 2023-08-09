@@ -7,7 +7,6 @@
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
     import {
-        Cryptocurrency,
         DiamondMembershipDuration,
         E8S_PER_TOKEN,
     } from "openchat-client";
@@ -17,6 +16,7 @@
     import Checkbox from "../../Checkbox.svelte";
     import { toastStore } from "stores/toast";
     import Expiry from "./Expiry.svelte";
+    import { ICP_SYMBOL } from "openchat-shared";
 
     export let accountBalance = 0;
     export let error: string | undefined;
@@ -54,7 +54,7 @@
         amount: number;
     };
 
-    const token = "icp";
+    const token = ICP_SYMBOL;
     const ledger = client.ledgerCanisterId(token);
 
     $: icpBalance = accountBalance / E8S_PER_TOKEN; //balance in the user's account expressed as ICP

@@ -57,7 +57,7 @@
 </script>
 
 <div class="label">
-    <Legend label={$_("tokenTransfer.amount")} rules={token} />
+    <Legend label={$_("tokenTransfer.amount")} rules={symbol} />
     <div on:click={max} class="max">{$_("tokenTransfer.max")}</div>
 </div>
 <div class="wrapper">
@@ -66,8 +66,8 @@
         <span>
             {$_("tokenTransfer.fee", {
                 values: {
-                    fee: client.formatTokens(transferFees, 0),
-                    token,
+                    fee: client.formatTokens(transferFees, 0, tokenDecimals),
+                    token: symbol,
                 },
             })}
         </span>

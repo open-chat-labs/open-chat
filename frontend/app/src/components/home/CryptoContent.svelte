@@ -15,7 +15,7 @@
     export let senderId: string;
 
     $: cryptoLookup = client.cryptoLookup;
-    $: icon = $cryptoLookup[content.transfer.ledger].icon;
+    $: logo = $cryptoLookup[content.transfer.ledger].logo;
     $: transferText = client.buildCryptoTransferText($_, user.userId, senderId, content, me);
     $: transactionLinkText = client.buildTransactionLink($_, content.transfer);
 </script>
@@ -23,9 +23,7 @@
 {#if transferText !== undefined}
     <div class="message">
         <div class="logo-wrapper">
-            <div class="logo">
-                <img src={icon} />
-            </div>
+            <img class="logo" src={logo} />
         </div>
         <div class="details">
             <div class="transfer-txt">{transferText}</div>

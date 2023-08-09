@@ -5,11 +5,12 @@
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
     import { OpenChat } from "openchat-client";
+    import { ICP_SYMBOL } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
     const client = getContext<OpenChat>("client");
-    const ledger: string = client.ledgerCanisterId("icp");
+    const ledger: string = client.ledgerCanisterId(ICP_SYMBOL);
 
     let step: "features" | "payment" = "features";
     let error: string | undefined;
@@ -23,7 +24,7 @@
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = {
         symbol: $cryptoLookup[ledger],
-        balance: $cryptoBalance[ledger],
+        balance: $cryptoBalance[ledger] ?? BigInt(0),
     };
 
     function onBalanceRefreshed() {

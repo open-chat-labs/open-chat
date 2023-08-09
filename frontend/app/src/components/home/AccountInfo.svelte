@@ -7,6 +7,7 @@
     import { CreatedUser, OpenChat } from "openchat-client";
     import { copyToClipboard } from "../../utils/urls";
     import { getContext } from "svelte";
+    import { ICP_SYMBOL } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
 
@@ -18,7 +19,7 @@
 
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
-    $: account = tokenDetails.symbol === "icp" ? user.cryptoAccount : user.userId;
+    $: account = tokenDetails.symbol === ICP_SYMBOL ? user.cryptoAccount : user.userId;
     $: symbol = tokenDetails.symbol;
 
     function collapseAccount(account: string) {
@@ -45,12 +46,10 @@
     <div class="qr-wrapper" class:border>
         <div class="qr" class:smaller={qrSize === "smaller"} class:larger={qrSize === "larger"}>
             <QR text={account} level="Q" />
-            <div class=icon>
-                <img src={tokenDetails.icon} />
-            </div>
+            <img class="icon" src={tokenDetails.logo} />
         </div>
     </div>
-    <p class:centered>{$_("tokenTransfer.yourAccount", { values: { token } })}</p>
+    <p class:centered>{$_("tokenTransfer.yourAccount", { values: { token: symbol } })}</p>
     <div class="receiver" class:centered>
         <div class="account">
             {collapseAccount(account)}
@@ -91,21 +90,6 @@
             border-radius: 50%;
             background-repeat: no-repeat;
             background-position: top;
-            &.icp {
-                background-image: url("/assets/icp_token.svg");
-            }
-            &.sns1 {
-                background-image: url("/assets/sns1_token.png");
-            }
-            &.ckbtc {
-                background-image: url("/assets/ckbtc_nobackground.svg");
-            }
-            &.chat {
-                background-image: url("/assets/spinner.svg");
-            }
-            &.kinic {
-                background-image: url("/assets/kinic_token.png");
-            }
         }
 
         &.smaller {
