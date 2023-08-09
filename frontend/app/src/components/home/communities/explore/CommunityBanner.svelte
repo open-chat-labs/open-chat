@@ -4,14 +4,14 @@
 
     export let banner: DataContent;
     export let square: boolean = false;
+    export let intersecting = false;
 
     const client = getContext<OpenChat>("client");
+
+    $: style = intersecting ? "" : `background-image: url(${client.communityBannerUrl(banner)})`;
 </script>
 
-<div
-    class:square
-    class="banner"
-    style={`background-image: url(${client.communityBannerUrl(banner)})`}>
+<div class:square class="banner" {style}>
     <slot />
 </div>
 
