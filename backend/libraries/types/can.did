@@ -1027,6 +1027,7 @@ type NnsPendingCryptoTransaction = record {
 
 type NnsCompletedCryptoTransaction = record {
     ledger : CanisterId;
+    token : Cryptocurrency;
     amount : Tokens;
     fee : Tokens;
     from : NnsCryptoAccount;
@@ -1039,6 +1040,7 @@ type NnsCompletedCryptoTransaction = record {
 
 type NnsFailedCryptoTransaction = record {
     ledger : CanisterId;
+    token : Cryptocurrency;
     amount : Tokens;
     fee : Tokens;
     from : NnsCryptoAccount;
@@ -1081,6 +1083,7 @@ type Icrc1PendingCryptoTransaction = record {
 
 type Icrc1CompletedCryptoTransaction = record {
     ledger : CanisterId;
+    token : Cryptocurrency;
     amount : nat;
     fee : nat;
     from : Icrc1AccountOrMint;
@@ -1092,6 +1095,7 @@ type Icrc1CompletedCryptoTransaction = record {
 
 type Icrc1FailedCryptoTransaction = record {
     ledger : CanisterId;
+    token : Cryptocurrency;
     amount : nat;
     fee : nat;
     from : Icrc1AccountOrMint;
