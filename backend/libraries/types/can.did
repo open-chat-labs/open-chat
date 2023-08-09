@@ -1002,19 +1002,16 @@ type CryptoTransaction = variant {
 
 type PendingCryptoTransaction = variant {
     NNS : NnsPendingCryptoTransaction;
-    SNS : SnsPendingCryptoTransaction;
     ICRC1 : Icrc1PendingCryptoTransaction;
 };
 
 type CompletedCryptoTransaction = variant {
     NNS : NnsCompletedCryptoTransaction;
-    SNS : SnsCompletedCryptoTransaction;
     ICRC1 : Icrc1CompletedCryptoTransaction;
 };
 
 type FailedCryptoTransaction = variant {
     NNS : NnsFailedCryptoTransaction;
-    SNS : SnsFailedCryptoTransaction;
     ICRC1 : Icrc1FailedCryptoTransaction;
 };
 
@@ -1062,42 +1059,6 @@ type NnsUserOrAccount = variant {
 type NnsCryptoAccount = variant {
     Mint;
     Account : AccountIdentifier;
-};
-
-type SnsPendingCryptoTransaction = record {
-    ledger : CanisterId;
-    token : Cryptocurrency;
-    amount : Tokens;
-    to : Icrc1Account;
-    fee : Tokens;
-    memo : opt nat64;
-    created : TimestampNanos;
-};
-
-type SnsCompletedCryptoTransaction = record {
-    ledger : CanisterId;
-    token : Cryptocurrency;
-    amount : Tokens;
-    fee : Tokens;
-    from : Icrc1AccountOrMint;
-    to : Icrc1AccountOrMint;
-    memo : opt nat64;
-    created : TimestampNanos;
-    transaction_hash : TransactionHash;
-    block_index : BlockIndex;
-};
-
-type SnsFailedCryptoTransaction = record {
-    ledger : CanisterId;
-    token : Cryptocurrency;
-    amount : Tokens;
-    fee : Tokens;
-    from : Icrc1AccountOrMint;
-    to : Icrc1AccountOrMint;
-    memo : opt nat64;
-    created : TimestampNanos;
-    transaction_hash : TransactionHash;
-    error_message : text;
 };
 
 type Icrc1AccountOrMint = variant {
