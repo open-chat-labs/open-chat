@@ -29,8 +29,6 @@ import type {
     ApiUserCanisterGroupChatSummaryUpdates,
     ApiNnsFailedCryptoTransaction,
     ApiNnsCompletedCryptoTransaction,
-    ApiSnsFailedCryptoTransaction,
-    ApiSnsCompletedCryptoTransaction,
     ApiIcrc1FailedCryptoTransaction,
     ApiIcrc1CompletedCryptoTransaction,
     ApiIcrc1Account,
@@ -848,20 +846,6 @@ function failedNnsCryptoWithdrawal(
     };
 }
 
-function failedSnsCryptoWithdrawal(
-    candid: ApiSnsFailedCryptoTransaction
-): FailedCryptocurrencyWithdrawal {
-    return {
-        kind: "failed",
-        token: token(candid.token),
-        to: "Account" in candid.to ? formatIcrc1Account(candid.to.Account) : "",
-        amountE8s: candid.amount.e8s,
-        feeE8s: candid.fee.e8s,
-        memo: candid.memo[0] ?? BigInt(0),
-        errorMessage: candid.error_message,
-    };
-}
-
 function failedIcrc1CryptoWithdrawal(
     candid: ApiIcrc1FailedCryptoTransaction
 ): FailedCryptocurrencyWithdrawal {
@@ -891,21 +875,6 @@ function completedNnsCryptoWithdrawal(
     };
 }
 
-function completedSnsCryptoWithdrawal(
-    candid: ApiSnsCompletedCryptoTransaction
-): CompletedCryptocurrencyWithdrawal {
-    return {
-        kind: "completed",
-        token: token(candid.token),
-        to: "Account" in candid.to ? formatIcrc1Account(candid.to.Account) : "",
-        amountE8s: candid.amount.e8s,
-        feeE8s: candid.fee.e8s,
-        memo: candid.memo[0] ?? BigInt(0),
-        blockIndex: candid.block_index,
-        transactionHash: bytesToHexString(candid.transaction_hash),
-    };
-}
-
 function completedIcrc1CryptoWithdrawal(
     candid: ApiIcrc1CompletedCryptoTransaction
 ): CompletedCryptocurrencyWithdrawal {
@@ -930,8 +899,6 @@ export function withdrawCryptoResponse(
     if ("TransactionFailed" in candid) {
         if ("NNS" in candid.TransactionFailed) {
             return failedNnsCryptoWithdrawal(candid.TransactionFailed.NNS);
-        } else if ("SNS" in candid.TransactionFailed) {
-            return failedSnsCryptoWithdrawal(candid.TransactionFailed.SNS);
         } else if ("ICRC1" in candid.TransactionFailed) {
             return failedIcrc1CryptoWithdrawal(candid.TransactionFailed.ICRC1);
         }
@@ -939,8 +906,6 @@ export function withdrawCryptoResponse(
     if ("Success" in candid) {
         if ("NNS" in candid.Success) {
             return completedNnsCryptoWithdrawal(candid.Success.NNS);
-        } else if ("SNS" in candid.Success) {
-            return completedSnsCryptoWithdrawal(candid.Success.SNS);
         } else if ("ICRC1" in candid.Success) {
             return completedIcrc1CryptoWithdrawal(candid.Success.ICRC1);
         }

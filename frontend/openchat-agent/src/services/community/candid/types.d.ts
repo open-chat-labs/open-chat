@@ -407,7 +407,6 @@ export type CommunityRole = { 'Member' : null } |
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
-  { 'SNS' : SnsCompletedCryptoTransaction } |
   { 'ICRC1' : Icrc1CompletedCryptoTransaction };
 export interface CreateChannelArgs {
   'is_public' : boolean,
@@ -648,7 +647,6 @@ export type ExploreChannelsResponse = { 'TermTooShort' : number } |
   { 'InvalidTerm' : null } |
   { 'PrivateCommunity' : null };
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
-  { 'SNS' : SnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction };
 export interface FieldTooLongResult {
   'length_provided' : number,
@@ -1211,7 +1209,6 @@ export interface ParticipantsRemoved {
   'removed_by' : UserId,
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
-  { 'SNS' : SnsPendingCryptoTransaction } |
   { 'ICRC1' : Icrc1PendingCryptoTransaction };
 export type PermissionRole = { 'Moderators' : null } |
   { 'Owner' : null } |
@@ -1518,45 +1515,12 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
   { 'InvalidRequest' : string };
-export interface SnsCompletedCryptoTransaction {
-  'to' : Icrc1AccountOrMint,
-  'fee' : Tokens,
-  'created' : TimestampNanos,
-  'token' : Cryptocurrency,
-  'transaction_hash' : TransactionHash,
-  'block_index' : BlockIndex,
-  'from' : Icrc1AccountOrMint,
-  'memo' : [] | [bigint],
-  'ledger' : CanisterId,
-  'amount' : Tokens,
-}
-export interface SnsFailedCryptoTransaction {
-  'to' : Icrc1AccountOrMint,
-  'fee' : Tokens,
-  'created' : TimestampNanos,
-  'token' : Cryptocurrency,
-  'transaction_hash' : TransactionHash,
-  'from' : Icrc1AccountOrMint,
-  'memo' : [] | [bigint],
-  'error_message' : string,
-  'ledger' : CanisterId,
-  'amount' : Tokens,
-}
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
   'governance_canister_id' : CanisterId,
 }
 export type SnsNeuronId = Uint8Array | number[];
-export interface SnsPendingCryptoTransaction {
-  'to' : Icrc1Account,
-  'fee' : Tokens,
-  'created' : TimestampNanos,
-  'token' : Cryptocurrency,
-  'memo' : [] | [bigint],
-  'ledger' : CanisterId,
-  'amount' : Tokens,
-}
 export interface SnsProposal {
   'id' : ProposalId,
   'url' : string,
