@@ -34,6 +34,8 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         let now = state.env.now();
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
+            // TODO: Call channel.chat.accept_rules and fail if the user has not accepted the rules
+
             match channel.chat.send_message(
                 user_id,
                 args.thread_root_message_index,

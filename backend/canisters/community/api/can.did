@@ -681,6 +681,7 @@ type SendMessageArgs = record {
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     forwarding : bool;
+    rules_accepted : opt Version;
 };
 
 type SendMessageResponse = variant {

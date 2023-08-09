@@ -393,6 +393,7 @@ type SendMessageWithTransferToChannelArgs = record {
     sender_name : text;
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
+    rules_accepted : opt Version;
 };
 
 type SendMessageWithTransferToChannelResponse = variant {

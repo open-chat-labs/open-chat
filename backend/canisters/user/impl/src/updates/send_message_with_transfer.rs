@@ -55,6 +55,7 @@ async fn send_message_with_transfer_to_channel(
         replies_to: args.replies_to,
         mentioned: args.mentioned,
         forwarding: false,
+        rules_accepted: args.rules_accepted,
     };
 
     // Send the message to the community

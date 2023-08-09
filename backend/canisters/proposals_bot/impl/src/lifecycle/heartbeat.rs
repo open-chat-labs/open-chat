@@ -152,6 +152,8 @@ mod retrieve_proposals {
 }
 
 mod push_proposals {
+    use types::Version;
+
     use super::*;
 
     pub fn run() {
@@ -221,6 +223,7 @@ mod push_proposals {
             mentioned: Vec::new(),
             forwarding: false,
             channel_id,
+            rules_accepted: Some(Version::zero()),
         };
 
         let failed = community_canister_c2c_client::send_message(community_id.into(), &send_message_args)
