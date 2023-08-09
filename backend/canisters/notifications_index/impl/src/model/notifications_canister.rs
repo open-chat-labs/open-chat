@@ -1,25 +1,25 @@
 use serde::{Deserialize, Serialize};
-use types::{TimestampMillis, Version};
+use types::{BuildVersion, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct NotificationsCanister {
     added: TimestampMillis,
-    wasm_version: Version,
+    wasm_version: BuildVersion,
 }
 
 impl NotificationsCanister {
-    pub fn new(wasm_version: Version, now: TimestampMillis) -> NotificationsCanister {
+    pub fn new(wasm_version: BuildVersion, now: TimestampMillis) -> NotificationsCanister {
         NotificationsCanister {
             added: now,
             wasm_version,
         }
     }
 
-    pub fn wasm_version(&self) -> Version {
+    pub fn wasm_version(&self) -> BuildVersion {
         self.wasm_version
     }
 
-    pub fn set_wasm_version(&mut self, version: Version) {
+    pub fn set_wasm_version(&mut self, version: BuildVersion) {
         self.wasm_version = version;
     }
 }

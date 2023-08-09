@@ -4,7 +4,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::init::Args as InitCommunityCanisterArgs;
 use local_group_index_canister::c2c_create_community::{Response::*, *};
-use types::{CanisterId, CanisterWasm, CommunityId, Cycles, Version};
+use types::{BuildVersion, CanisterId, CanisterWasm, CommunityId, Cycles};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
@@ -97,7 +97,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     })
 }
 
-fn commit(community_id: CommunityId, wasm_version: Version, state: &mut RuntimeState) {
+fn commit(community_id: CommunityId, wasm_version: BuildVersion, state: &mut RuntimeState) {
     state.data.local_communities.add(community_id, wasm_version);
 }
 

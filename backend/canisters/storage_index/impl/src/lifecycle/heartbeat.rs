@@ -2,7 +2,7 @@ use crate::{mutate_state, RuntimeState};
 use ic_cdk_macros::heartbeat;
 use storage_bucket_canister::c2c_sync_index::{Args, Response, SuccessResult};
 use tracing::error;
-use types::{CanisterId, CanisterWasm, Cycles, Version};
+use types::{BuildVersion, CanisterId, CanisterWasm, Cycles};
 
 const MAX_CONCURRENT_CANISTER_UPGRADES: usize = 1;
 const MIN_CYCLES_BALANCE: Cycles = 60_000_000_000_000; // 60T
@@ -191,14 +191,14 @@ mod upgrade_canisters {
         }
     }
 
-    fn on_success(canister_id: CanisterId, to_version: Version, state: &mut RuntimeState) {
+    fn on_success(canister_id: CanisterId, to_version: BuildVersion, state: &mut RuntimeState) {
         if let Some(bucket) = state.data.buckets.get_mut(&canister_id) {
             bucket.wasm_version = to_version;
         }
         state.data.canisters_requiring_upgrade.mark_success(&canister_id);
     }
 
-    fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Version, state: &mut RuntimeState) {
+    fn on_failure(canister_id: CanisterId, from_version: BuildVersion, to_version: BuildVersion, state: &mut RuntimeState) {
         state.data.canisters_requiring_upgrade.mark_failure(FailedUpgrade {
             canister_id,
             from_version,

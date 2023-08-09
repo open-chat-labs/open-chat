@@ -15,9 +15,9 @@ use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
-    AccessGate, AccessRules, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
-    CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
-    Version,
+    AccessGate, AccessRules, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
+    CommunityMembership, CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis,
+    Timestamped, UserId,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -34,7 +34,7 @@ mod timer_job_types;
 mod updates;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -304,7 +304,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub public: bool,
     pub date_created: TimestampMillis,

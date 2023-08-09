@@ -9,7 +9,7 @@ use icrc1_ledger_canister::MetadataValue;
 use std::collections::{HashMap, HashSet};
 use storage_index_canister::init::CyclesDispenserConfig;
 use types::icrc1::Account;
-use types::{CanisterId, Version};
+use types::{BuildVersion, CanisterId};
 
 pub fn setup_new_env() -> TestEnv {
     let mut file_path = local_bin();
@@ -75,7 +75,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         storage_index_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
-        wasm_version: Version::min(),
+        wasm_version: BuildVersion::min(),
         test_mode: true,
     };
     install_canister(
@@ -94,7 +94,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         user_index_canister_id,
         cycles_dispenser_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
-        wasm_version: Version::min(),
+        wasm_version: BuildVersion::min(),
         test_mode: true,
     };
     install_canister(
@@ -112,7 +112,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         authorizers: vec![user_index_canister_id, group_index_canister_id],
         cycles_dispenser_canister_id,
         notifications_canister_wasm,
-        wasm_version: Version::min(),
+        wasm_version: BuildVersion::min(),
         test_mode: true,
     };
     install_canister(
@@ -126,7 +126,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id,
         cycles_dispenser_canister_id,
-        wasm_version: Version::min(),
+        wasm_version: BuildVersion::min(),
         test_mode: true,
     };
     install_canister(
@@ -143,7 +143,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         group_index_canister_id,
         nns_governance_canister_id: NNS_GOVERNANCE_CANISTER_ID,
         cycles_dispenser_canister_id,
-        wasm_version: Version::min(),
+        wasm_version: BuildVersion::min(),
         test_mode: true,
     };
     install_canister(
@@ -162,7 +162,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
             canister_id: cycles_dispenser_canister_id,
             min_cycles_balance: 200 * T,
         },
-        wasm_version: Version::min(),
+        wasm_version: BuildVersion::min(),
         test_mode: true,
     };
     install_canister(
@@ -192,7 +192,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         icp_burn_amount_e8s: 1_000_000_000, // 10 ICP
         ledger_canister: nns_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
-        wasm_version: Version::min(),
+        wasm_version: BuildVersion::min(),
         test_mode: true,
     };
     install_canister(
@@ -210,7 +210,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         nns_governance_canister_id,
         sns_wasm_canister_id,
         cycles_dispenser_canister_id,
-        wasm_version: Version::min(),
+        wasm_version: BuildVersion::min(),
         test_mode: true,
     };
     install_canister(

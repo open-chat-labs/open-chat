@@ -3,7 +3,7 @@ use crate::model::principal_to_user_id_map::PrincipalToUserIdMap;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{CanisterId, Cycles, TimestampMillis, Timestamped, Version};
+use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod jobs;
@@ -14,7 +14,7 @@ mod queries;
 mod updates;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -82,7 +82,7 @@ pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub mark_as_online_count: u64,
     pub batches_sent_to_user_index: u64,

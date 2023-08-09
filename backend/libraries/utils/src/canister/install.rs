@@ -5,11 +5,11 @@ use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk::api::management_canister;
 use ic_cdk::api::management_canister::main::{CanisterInstallMode, InstallCodeArgument};
 use tracing::{error, trace};
-use types::{CanisterId, CanisterWasm, Cycles, Version};
+use types::{BuildVersion, CanisterId, CanisterWasm, Cycles};
 
 pub struct CanisterToInstall<A: CandidType> {
     pub canister_id: CanisterId,
-    pub current_wasm_version: Version,
+    pub current_wasm_version: BuildVersion,
     pub new_wasm: CanisterWasm,
     pub deposit_cycles_if_needed: bool,
     pub args: A,

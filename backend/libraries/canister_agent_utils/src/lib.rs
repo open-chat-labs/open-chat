@@ -9,7 +9,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use types::{CanisterId, CanisterWasm, Version};
+use types::{BuildVersion, CanisterId, CanisterWasm};
 
 #[derive(Clone, Debug)]
 pub enum CanisterName {
@@ -155,7 +155,7 @@ pub async fn install_wasm<A: CandidType + Sync + Send>(
         .expect("Failed to install wasm");
 }
 
-pub fn get_canister_wasm(canister_name: impl ToString, version: Version) -> CanisterWasm {
+pub fn get_canister_wasm(canister_name: impl ToString, version: BuildVersion) -> CanisterWasm {
     let mut local_bin_path =
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to read CARGO_MANIFEST_DIR env variable"));
     local_bin_path.push("local-bin");

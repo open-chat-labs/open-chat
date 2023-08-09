@@ -4,7 +4,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{CanisterId, Version};
+use types::{BuildVersion, CanisterId};
 use utils::canister::{install, FailedUpgrade};
 
 type CanisterToUpgrade = utils::canister::CanisterToInstall<local_group_index_canister::post_upgrade::Args>;
@@ -104,7 +104,7 @@ async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
     }
 }
 
-fn on_success(canister_id: CanisterId, to_version: Version, state: &mut RuntimeState) {
+fn on_success(canister_id: CanisterId, to_version: BuildVersion, state: &mut RuntimeState) {
     if let Some(local_group_index) = state.data.local_index_map.get_mut(&canister_id) {
         local_group_index.set_wasm_version(to_version);
 
@@ -112,7 +112,7 @@ fn on_success(canister_id: CanisterId, to_version: Version, state: &mut RuntimeS
     }
 }
 
-fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Version, state: &mut RuntimeState) {
+fn on_failure(canister_id: CanisterId, from_version: BuildVersion, to_version: BuildVersion, state: &mut RuntimeState) {
     state.data.canisters_requiring_upgrade.mark_failure(FailedUpgrade {
         canister_id,
         from_version,
