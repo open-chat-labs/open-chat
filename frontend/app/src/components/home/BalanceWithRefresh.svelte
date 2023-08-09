@@ -20,6 +20,7 @@
 
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
+    $: symbol = tokenDetails.symbol;
 
     $: {
         if (ledger) {
@@ -38,9 +39,9 @@
             })
             .catch((err) => {
                 const errorMessage = $_("unableToRefreshAccountBalance", {
-                    values: { token },
+                    values: { token: symbol },
                 });
-                client.logError(`Failed to refresh ${token} account balance`, err);
+                client.logError(`Failed to refresh ${symbol} account balance`, err);
                 dispatch("error", errorMessage);
             })
             .finally(() => (refreshing = false));

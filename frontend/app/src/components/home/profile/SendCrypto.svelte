@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
     import TokenInput from "../TokenInput.svelte";
-    import { OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import { ICP_SYMBOL } from "openchat-shared";
     import Input from "../../Input.svelte";
     import { _ } from "svelte-i18n";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ManageCryptoAccount from "./ManageCryptoAccount.svelte";

@@ -123,7 +123,7 @@
                 {/each}
             </div>
             <div class="right">
-                <AccountInfo border={false} centered {token} user={client.user} />
+                <AccountInfo border={false} centered {ledger} user={client.user} />
             </div>
         </div>
 

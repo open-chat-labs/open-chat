@@ -25,7 +25,7 @@
         OpenChat,
         MultiUserChat,
     } from "openchat-client";
-    import { allQuestions, cryptoCurrencyList } from "openchat-client";
+    import { allQuestions } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";

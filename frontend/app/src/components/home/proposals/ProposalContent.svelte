@@ -18,7 +18,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import { proposalVotes } from "../../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
-    import { OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";

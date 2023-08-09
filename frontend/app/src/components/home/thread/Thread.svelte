@@ -9,7 +9,6 @@
         Message,
         MessageContent,
         User,
-        Cryptocurrency,
         FailedMessages,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";

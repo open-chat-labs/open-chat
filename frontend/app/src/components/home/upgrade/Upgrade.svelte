@@ -4,7 +4,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
-    import { OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import { ICP_SYMBOL } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";

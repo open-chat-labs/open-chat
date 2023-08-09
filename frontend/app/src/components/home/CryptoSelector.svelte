@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import { OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "stores/iconSize";
     import { getContext } from "svelte";
@@ -20,7 +20,7 @@
             symbol: t.symbol,
             name: t.name,
             logo: t.logo,
-            balance: $cryptoBalance[t] ?? BigInt(0),
+            balance: $cryptoBalance[t.ledger] ?? BigInt(0),
         }));
 
     $: {

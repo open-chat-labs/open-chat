@@ -4,7 +4,7 @@
     import { toastStore } from "../../stores/toast";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { CreatedUser, OpenChat } from "openchat-client";
+    import type { CreatedUser, OpenChat } from "openchat-client";
     import { copyToClipboard } from "../../utils/urls";
     import { getContext } from "svelte";
     import { ICP_SYMBOL } from "openchat-shared";
