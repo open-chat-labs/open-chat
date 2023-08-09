@@ -32,7 +32,6 @@ import {
     CryptocurrencyTransfer,
     Tally,
     getContentAsText,
-    eventIsVisible,
     AccessControlled,
     nullMembership,
     HasMembershipRole,
@@ -515,9 +514,24 @@ export function groupEvents(
     expandedDeletedMessages: Set<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][]
 ): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(sameDate, events.filter(eventIsVisible))
+    return groupWhile(sameDate, events.filter((e) => !isEventKindHidden(e.event.kind)))
         .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
         .map(groupInner ?? groupBySender);
+}
+
+export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
+    switch (kind) {
+        case "empty":
+        case "message_pinned":
+        case "message_unpinned":
+        case "member_left":
+        case "events_ttl_updated":
+        case "members_added_to_default_channel":
+            return true;
+
+        default:
+            return false;
+    }
 }
 
 function reduceJoinedOrLeft(
@@ -535,9 +549,8 @@ function reduceJoinedOrLeft(
 
     return events.reduce((previous: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
         if (
+            isEventKindHidden(e.event.kind) ||
             e.event.kind === "member_joined" ||
-            e.event.kind === "member_left" ||
-            e.event.kind === "empty" ||
             (e.event.kind === "message" &&
                 messageIsHidden(e.event, myUserId, expandedDeletedMessages))
         ) {
@@ -592,7 +605,7 @@ function messageIsHidden(message: Message, myUserId: string, expandedDeletedMess
 }
 
 export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapper<Message>[][] {
-    return groupWhile(sameDate, events.filter(eventIsVisible));
+    return groupWhile(sameDate, events.filter((e) => !isEventKindHidden(e.event.kind)));
 }
 
 export function getNextEventAndMessageIndexes(

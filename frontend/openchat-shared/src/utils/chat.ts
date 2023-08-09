@@ -205,10 +205,6 @@ export function emptyChatMetrics(): Metrics {
     };
 }
 
-export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
-    return ew.event.kind !== "message_pinned" && ew.event.kind !== "message_unpinned";
-}
-
 export function compareRoles(a: MemberRole, b: MemberRole): number {
     if (a === b) return 0;
     if (a === "owner") return 1;
