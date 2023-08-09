@@ -60,6 +60,7 @@ import {
     canConvertToCommunity,
     canImportToCommunity,
     buildIdenticonUrl,
+    isEventKindHidden,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -4123,13 +4124,13 @@ export class OpenChat extends OpenChatAgentWorker {
                     ) {
                         this.updateCommunityDetails(updatedCommunity);
                     }
-                }                        
+                }
 
                 // If we are still previewing a community we are a member of then remove the preview
                 for (const community of chatsResponse.state.communities) {
                     if (community?.membership !== undefined && this._liveState.communityPreviews.has(community.id)) {
                         removeCommunityPreview(community.id);
-                    }     
+                    }
                 }
 
                 if (this._liveState.uninitializedDirectChats.size > 0) {
@@ -4879,4 +4880,5 @@ export class OpenChat extends OpenChatAgentWorker {
     globalUnreadCount = globalUnreadCount;
     staleThreadsCount = staleThreadsCount;
     moderationFlags = moderationFlags;
+    isEventKindHidden = isEventKindHidden;
 }
