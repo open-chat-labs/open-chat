@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
-use types::{CanisterId, CanisterWasm, Cycles, MessageContent, TextContent, UserId, Version};
+use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContent, TextContent, UserId};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::{Event as UserEvent, ReferredUserRegistered};
 use user_index_canister::{Event as UserIndexEvent, JoinUserToGroup, UserRegistered};
@@ -171,7 +171,7 @@ fn commit(
     principal: Principal,
     user_id: UserId,
     username: String,
-    wasm_version: Version,
+    wasm_version: BuildVersion,
     referral_code: Option<ReferralCode>,
     state: &mut RuntimeState,
 ) {

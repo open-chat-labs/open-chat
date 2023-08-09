@@ -6,7 +6,7 @@ use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, S
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use types::{CanisterId, CanisterWasm, Cycles, SubscriptionInfo, TimestampMillis, Timestamped, UserId, Version};
+use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, SubscriptionInfo, TimestampMillis, Timestamped, UserId};
 use utils::canister::CanistersRequiringUpgrade;
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
@@ -20,7 +20,7 @@ mod queries;
 mod updates;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -154,13 +154,13 @@ pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub subscriptions: u64,
     pub users: u64,
     pub governance_principals: Vec<Principal>,
     pub push_service_principals: Vec<Principal>,
-    pub notifications_canister_wasm_version: Version,
+    pub notifications_canister_wasm_version: BuildVersion,
     pub notifications_canisters: Vec<(CanisterId, NotificationsCanister)>,
     pub canister_ids: CanisterIds,
 }

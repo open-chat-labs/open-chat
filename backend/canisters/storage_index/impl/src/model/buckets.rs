@@ -4,7 +4,7 @@ use crate::BucketMetrics;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use storage_bucket_canister::c2c_sync_index;
-use types::{CanisterId, CyclesTopUp, Hash, Version};
+use types::{BuildVersion, CanisterId, CyclesTopUp, Hash};
 
 const TARGET_ACTIVE_BUCKETS: usize = 4;
 
@@ -122,7 +122,7 @@ impl Buckets {
 #[derive(Serialize, Deserialize)]
 pub struct BucketRecord {
     pub canister_id: CanisterId,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub bytes_used: u64,
     pub bytes_remaining: i64,
     pub sync_state: BucketSyncState,
@@ -130,7 +130,7 @@ pub struct BucketRecord {
 }
 
 impl BucketRecord {
-    pub fn new(canister_id: CanisterId, wasm_version: Version) -> BucketRecord {
+    pub fn new(canister_id: CanisterId, wasm_version: BuildVersion) -> BucketRecord {
         BucketRecord {
             canister_id,
             wasm_version,

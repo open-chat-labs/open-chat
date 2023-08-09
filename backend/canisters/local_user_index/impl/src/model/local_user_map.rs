@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{CyclesTopUp, TimestampMillis, UserId, Version};
+use types::{BuildVersion, CyclesTopUp, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct LocalUserMap {
@@ -8,7 +8,7 @@ pub struct LocalUserMap {
 }
 
 impl LocalUserMap {
-    pub fn add(&mut self, user_id: UserId, wasm_version: Version, now: TimestampMillis) {
+    pub fn add(&mut self, user_id: UserId, wasm_version: BuildVersion, now: TimestampMillis) {
         let user = LocalUser::new(now, wasm_version);
         self.users.insert(user_id, user);
     }
@@ -42,13 +42,13 @@ impl LocalUserMap {
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct LocalUser {
     pub date_created: TimestampMillis,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
 impl LocalUser {
-    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<Version>) {
+    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<BuildVersion>) {
         self.upgrade_in_progress = upgrade_in_progress;
         if let Some(version) = new_version {
             self.wasm_version = version;
@@ -61,7 +61,7 @@ impl LocalUser {
 }
 
 impl LocalUser {
-    pub fn new(now: TimestampMillis, wasm_version: Version) -> LocalUser {
+    pub fn new(now: TimestampMillis, wasm_version: BuildVersion) -> LocalUser {
         LocalUser {
             date_created: now,
             wasm_version,

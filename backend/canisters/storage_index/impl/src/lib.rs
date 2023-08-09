@@ -8,8 +8,8 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use storage_index_canister::init::CyclesDispenserConfig;
 use types::{
-    CanisterId, CanisterWasm, Cycles, CyclesTopUp, FileAdded, FileRejected, FileRejectedReason, FileRemoved, TimestampMillis,
-    Timestamped, Version,
+    BuildVersion, CanisterId, CanisterWasm, Cycles, CyclesTopUp, FileAdded, FileRejected, FileRejectedReason, FileRemoved,
+    TimestampMillis, Timestamped,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -27,7 +27,7 @@ const MIN_CYCLES_BALANCE: Cycles = 20_000_000_000_000; // 20T
 const BUCKET_CANISTER_TOP_UP_AMOUNT: Cycles = 5_000_000_000_000; // 5T
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -205,7 +205,7 @@ pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
     pub user_controllers: Vec<Principal>,
@@ -219,14 +219,14 @@ pub struct Metrics {
     pub bucket_upgrades_pending: u64,
     pub bucket_upgrades_in_progress: u64,
     pub bucket_upgrades_failed: Vec<FailedUpgradeCount>,
-    pub bucket_canister_wasm: Version,
+    pub bucket_canister_wasm: BuildVersion,
     pub cycles_dispenser_config: CyclesDispenserConfig,
 }
 
 #[derive(CandidType, Serialize, Debug)]
 pub struct BucketMetrics {
     pub canister_id: CanisterId,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub bytes_used: u64,
     pub bytes_remaining: i64,
     pub cycle_top_ups: Vec<CyclesTopUp>,

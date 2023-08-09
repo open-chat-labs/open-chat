@@ -15,8 +15,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{
-    CanisterId, CanisterWasm, ChatId, CommunityId, Cycles, FrozenGroupInfo, Milliseconds, TimestampMillis, Timestamped, UserId,
-    Version,
+    BuildVersion, CanisterId, CanisterWasm, ChatId, CommunityId, Cycles, FrozenGroupInfo, Milliseconds, TimestampMillis,
+    Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -35,7 +35,7 @@ const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
 const CACHED_HOT_GROUPS_COUNT: usize = 50;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -258,7 +258,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -282,8 +282,8 @@ pub struct Metrics {
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
-    pub group_wasm_version: Version,
-    pub local_group_index_wasm_version: Version,
+    pub group_wasm_version: BuildVersion,
+    pub local_group_index_wasm_version: BuildVersion,
     pub local_group_indexes: Vec<(CanisterId, LocalGroupIndex)>,
     pub canister_ids: CanisterIds,
 }

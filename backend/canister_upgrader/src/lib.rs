@@ -5,13 +5,13 @@ use ic_utils::call::AsyncCall;
 use ic_utils::interfaces::management_canister::builders::InstallMode;
 use ic_utils::interfaces::management_canister::CanisterStatus;
 use ic_utils::interfaces::ManagementCanister;
-use types::{CanisterId, CanisterWasm, UpgradeCanisterWasmArgs, Version};
+use types::{BuildVersion, CanisterId, CanisterWasm, UpgradeCanisterWasmArgs};
 
 pub async fn upgrade_group_index_canister(
     identity: BasicIdentity,
     url: String,
     group_index_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     upgrade_top_level_canister(
         identity,
@@ -30,7 +30,7 @@ pub async fn upgrade_user_index_canister(
     identity: BasicIdentity,
     url: String,
     user_index_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     upgrade_top_level_canister(
         identity,
@@ -49,7 +49,7 @@ pub async fn upgrade_notifications_index_canister(
     identity: BasicIdentity,
     url: String,
     notifications_index_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     upgrade_top_level_canister(
         identity,
@@ -68,7 +68,7 @@ pub async fn upgrade_online_users_canister(
     identity: BasicIdentity,
     url: String,
     online_users_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     upgrade_top_level_canister(
         identity,
@@ -87,7 +87,7 @@ pub async fn upgrade_proposals_bot_canister(
     identity: BasicIdentity,
     url: String,
     proposals_bot_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     upgrade_top_level_canister(
         identity,
@@ -106,7 +106,7 @@ pub async fn upgrade_storage_index_canister(
     identity: BasicIdentity,
     url: String,
     storage_index_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     upgrade_top_level_canister(
         identity,
@@ -125,7 +125,7 @@ pub async fn upgrade_cycles_dispenser_canister(
     identity: BasicIdentity,
     url: String,
     cycles_dispenser_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     upgrade_top_level_canister(
         identity,
@@ -144,7 +144,7 @@ pub async fn upgrade_registry_canister(
     identity: BasicIdentity,
     url: String,
     registry_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     upgrade_top_level_canister(
         identity,
@@ -163,7 +163,7 @@ pub async fn upgrade_market_maker_canister(
     identity: BasicIdentity,
     url: String,
     market_maker_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     upgrade_top_level_canister(
         identity,
@@ -182,7 +182,7 @@ pub async fn upgrade_local_group_index_canister(
     identity: BasicIdentity,
     url: String,
     group_index_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::LocalGroupIndex, version);
@@ -213,7 +213,7 @@ pub async fn upgrade_group_canister(
     identity: BasicIdentity,
     url: String,
     group_index_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::Group, version);
@@ -240,7 +240,7 @@ pub async fn upgrade_community_canister(
     identity: BasicIdentity,
     url: String,
     group_index_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::Community, version);
@@ -266,7 +266,12 @@ pub async fn upgrade_community_canister(
     println!("Community canister wasm upgraded to version {version}");
 }
 
-pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_index_canister_id: CanisterId, version: Version) {
+pub async fn upgrade_user_canister(
+    identity: BasicIdentity,
+    url: String,
+    user_index_canister_id: CanisterId,
+    version: BuildVersion,
+) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::User, version);
     let args = UpgradeCanisterWasmArgs {
@@ -292,7 +297,7 @@ pub async fn upgrade_local_user_index_canister(
     identity: BasicIdentity,
     url: String,
     user_index_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
@@ -322,7 +327,7 @@ pub async fn upgrade_notifications_canister(
     identity: BasicIdentity,
     url: String,
     notifications_index_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
@@ -356,7 +361,7 @@ pub async fn upgrade_storage_bucket_canister(
     identity: BasicIdentity,
     url: String,
     storage_index_canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::StorageBucket, version);
@@ -386,7 +391,7 @@ async fn upgrade_top_level_canister<A: CandidType + Send + Sync>(
     identity: BasicIdentity,
     url: String,
     canister_id: CanisterId,
-    version: Version,
+    version: BuildVersion,
     args: A,
     canister_name: CanisterName,
 ) {

@@ -21,8 +21,8 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
 use types::{
-    CanisterId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Notification, TimestampMillis,
-    Timestamped, UserId, Version,
+    BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Notification,
+    TimestampMillis, Timestamped, UserId,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -44,7 +44,7 @@ pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 40;
 pub const COMMUNITY_CREATION_LIMIT: u32 = 10;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -240,7 +240,7 @@ pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub direct_chats: u32,
     pub group_chats: u32,
