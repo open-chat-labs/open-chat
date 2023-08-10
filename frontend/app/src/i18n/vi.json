@@ -578,7 +578,8 @@
         "storageIndexAction": "Hành động chỉ mục lưu trữ",
         "cyclesDispenserAction": "Hành động của bộ phân phối chu kỳ",
         "unknownActionCategory": "Hành động khác",
-        "notificationsAction": "Thông báo Chỉ mục Hành động"
+        "notificationsAction": "Thông báo Chỉ mục Hành động",
+        "registryAction": "Hành động đăng ký"
     },
     "yes": "Đúng",
     "no": "Không",

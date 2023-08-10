@@ -577,7 +577,8 @@
         "storageIndexAction": "存储索引操作",
         "cyclesDispenserAction": "循环分配器操作",
         "unknownActionCategory": "其他行为",
-        "notificationsAction": "通知索引操作"
+        "notificationsAction": "通知索引操作",
+        "registryAction": "注册表操作"
     },
     "quoteReply": "引用",
     "groupNameTooShort": "{level} 名称太短",

@@ -263,7 +263,7 @@ export function nextEventAndMessageIndexes(): [number, number] {
 export const isProposalGroup = derived([selectedChatStore], ([$selectedChat]) => {
     return (
         $selectedChat !== undefined &&
-        $selectedChat.kind === "group_chat" &&
+        $selectedChat.kind !== "direct_chat" &&
         $selectedChat.subtype?.kind === "governance_proposals"
     );
 });
@@ -304,7 +304,7 @@ export const proposalTopicsStore = derived(
     ([$selectedChat, $snsFunctions]): Map<number, string> => {
         if (
             $selectedChat !== undefined &&
-            $selectedChat.kind === "group_chat" &&
+            $selectedChat.kind !== "direct_chat" &&
             $selectedChat.subtype !== undefined
         ) {
             if ($selectedChat.subtype.isNns) {

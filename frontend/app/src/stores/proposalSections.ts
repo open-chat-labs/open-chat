@@ -11,7 +11,8 @@ export type ProposalActionCategory =
     | "notifications"
     | "proposalsBot"
     | "storageIndex"
-    | "cyclesDispenser";
+    | "cyclesDispenser"
+    | "registry";
 
 export type ProposalSectionState = Record<ProposalActionCategory, boolean>;
 
@@ -25,6 +26,7 @@ const defaultSectionState: ProposalSectionState = {
     proposalsBot: false,
     storageIndex: false,
     cyclesDispenser: false,
+    registry: false,
 };
 
 function initialise() {

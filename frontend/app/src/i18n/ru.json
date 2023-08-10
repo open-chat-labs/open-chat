@@ -577,7 +577,8 @@
         "storageIndexAction": "Действия индекса хранилища",
         "cyclesDispenserAction": "Действия дозатора циклов",
         "unknownActionCategory": "Другие действия",
-        "notificationsAction": "Действия индекса уведомлений"
+        "notificationsAction": "Действия индекса уведомлений",
+        "registryAction": "Действия реестра"
     },
     "yes": "Да",
     "no": "Нет",
