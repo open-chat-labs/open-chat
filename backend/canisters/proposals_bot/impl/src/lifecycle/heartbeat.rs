@@ -10,7 +10,7 @@ use ic_cdk_macros::heartbeat;
 use std::collections::HashSet;
 use types::{
     CanisterId, ChannelId, ChatId, CommunityId, MessageContentInitial, MessageId, MultiUserChat, Proposal, ProposalContent,
-    ProposalUpdate,
+    ProposalUpdate, Version,
 };
 
 #[heartbeat]
@@ -152,8 +152,6 @@ mod retrieve_proposals {
 }
 
 mod push_proposals {
-    use types::Version;
-
     use super::*;
 
     pub fn run() {
