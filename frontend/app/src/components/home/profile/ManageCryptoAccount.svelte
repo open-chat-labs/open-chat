@@ -8,39 +8,39 @@
     import { createEventDispatcher, getContext } from "svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import { Cryptocurrency, cryptoLookup } from "openchat-client";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import type { OpenChat } from "openchat-client";
     import SendCrypto from "./SendCrypto.svelte";
 
-    export let token: Cryptocurrency;
+    export let ledger: string;
     export let mode: "send" | "receive";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
     const dispatch = createEventDispatcher();
 
-    $: title =
-        mode === "receive"
-            ? $_("cryptoAccount.receiveToken", { values: { symbol: token } })
-            : $_("cryptoAccount.sendToken", { values: { symbol: token } });
-    $: cryptoBalance = client.cryptoBalance;
-
     let sendCrypto: SendCrypto;
     let error: string | undefined = undefined;
-    let amountToSendE8s = BigInt(0);
+    let amountToSend = BigInt(0);
     let balanceWithRefresh: BalanceWithRefresh;
     let sending = false;
     let valid = false;
 
-    $: tokenDetails = cryptoLookup[token];
-    $: transferFees = tokenDetails.transferFeesE8s;
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = $cryptoLookup[ledger];
+    $: transferFees = tokenDetails.transferFee;
+    $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
+    $: title =
+        mode === "receive"
+            ? $_("cryptoAccount.receiveToken", { values: { symbol } })
+            : $_("cryptoAccount.sendToken", { values: { symbol } });
+    $: cryptoBalance = client.cryptoBalance;
 
-    $: remainingBalanceE8s =
-        amountToSendE8s > BigInt(0)
-            ? $cryptoBalance[token] - amountToSendE8s - transferFees
-            : $cryptoBalance[token];
+    $: remainingBalance =
+        amountToSend > BigInt(0)
+            ? $cryptoBalance[ledger] - amountToSend - transferFees
+            : $cryptoBalance[ledger];
 
     function onBalanceRefreshed() {
         error = undefined;
@@ -57,8 +57,8 @@
             <div class="main-title">{title}</div>
             <BalanceWithRefresh
                 bind:this={balanceWithRefresh}
-                {token}
-                value={remainingBalanceE8s}
+                {ledger}
+                value={remainingBalance}
                 label={$_("cryptoAccount.shortBalanceLabel")}
                 minDecimals={2}
                 bold
@@ -67,9 +67,9 @@
         </span>
         <form class={`body ${mode}`} slot="body">
             {#if mode === "receive"}
-                <AccountInfo qrSize={"larger"} centered {token} {user} />
+                <AccountInfo qrSize={"larger"} centered {ledger} {user} />
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                    {$_("howToBuyToken", { values: { token } })}
+                    {$_("howToBuyToken", { values: { token: symbol } })}
                 </a>
             {/if}
 
@@ -80,8 +80,8 @@
                     bind:valid
                     on:error={(ev) => (error = ev.detail)}
                     on:refreshBalance={() => balanceWithRefresh.refresh()}
-                    {token}
-                    bind:amountToSendE8s />
+                    {ledger}
+                    bind:amountToSend />
             {/if}
             {#if error}
                 <ErrorMessage>{$_(error)}</ErrorMessage>

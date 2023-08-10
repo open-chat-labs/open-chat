@@ -12,7 +12,6 @@ import type {
     SuspendUserResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
-    Cryptocurrency,
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     SetUserUpgradeConcurrencyResponse,
@@ -279,7 +278,7 @@ export class UserIndexClient extends CandidService {
 
     payForDiamondMembership(
         userId: string,
-        token: Cryptocurrency,
+        token: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint

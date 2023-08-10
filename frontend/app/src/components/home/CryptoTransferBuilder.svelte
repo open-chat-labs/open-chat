@@ -1,8 +1,7 @@
 <script lang="ts">
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { cryptoLookup, PartialUserSummary } from "openchat-client";
-    import type { ChatSummary, OpenChat } from "openchat-client";
+    import type { ChatSummary, OpenChat, PartialUserSummary } from "openchat-client";
     import type { CryptocurrencyContent } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
@@ -24,15 +23,16 @@
     const user = client.user;
     const dispatch = createEventDispatcher();
 
-    export let draftAmountE8s: bigint;
-    export let token: string;
+    export let draftAmount: bigint;
+    export let ledger: string;
     export let chat: ChatSummary;
     export let defaultReceiver: string | undefined;
 
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: currentChatMembers = client.currentChatMembers;
     $: lastCryptoSent = client.lastCryptoSent;
-    $: cryptoBalance = client.cryptoBalance;
+    $: cryptoBalanceStore = client.cryptoBalance;
+    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: userStore = client.userStore;
     let refreshing = false;
     let error: string | undefined = undefined;
@@ -43,16 +43,18 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let receiver: PartialUserSummary | undefined = undefined;
     let validAmount: boolean = false;
-    $: tokenDetails = cryptoLookup[token];
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = $cryptoLookup[ledger];
+    $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
-    $: transferFees = tokenDetails.transferFeesE8s;
+    $: transferFees = tokenDetails.transferFee;
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
-    $: remainingBalanceE8s =
-        draftAmountE8s > BigInt(0)
-            ? $cryptoBalance[token] - draftAmountE8s - transferFees
-            : $cryptoBalance[token];
+    $: remainingBalance =
+        draftAmount > BigInt(0)
+            ? cryptoBalance - draftAmount - transferFees
+            : cryptoBalance;
     $: valid = error === undefined && validAmount && receiver !== undefined && !tokenChanging;
-    $: zero = $cryptoBalance[token] <= transferFees && !tokenChanging;
+    $: zero = cryptoBalance <= transferFees && !tokenChanging;
 
     onMount(() => {
         // default the receiver to the other user in a direct chat
@@ -68,7 +70,7 @@
         balanceWithRefresh.refresh();
     }
 
-    function maxAmountE8s(balance: bigint): bigint {
+    function maxAmount(balance: bigint): bigint {
         return balance - transferFees;
     }
 
@@ -84,17 +86,17 @@
             kind: "crypto_content",
             caption: message === "" ? undefined : message,
             transfer: {
-                ledger: client.ledgerCanisterId(token),
-                token,
                 kind: "pending",
+                ledger,
+                token: symbol,
                 recipient: receiver.userId,
-                amountE8s: draftAmountE8s,
+                amountE8s: draftAmount,
                 feeE8s: transferFees,
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
         };
         dispatch("sendTransfer", [content, undefined]);
-        lastCryptoSent.set(token);
+        lastCryptoSent.set(ledger);
         dispatch("close");
     }
 
@@ -116,11 +118,11 @@
     function onBalanceRefreshFinished() {
         toppingUp = false;
         tokenChanging = false;
-        if (remainingBalanceE8s < 0) {
-            remainingBalanceE8s = BigInt(0);
-            draftAmountE8s = $cryptoBalance[token] - transferFees;
-            if (draftAmountE8s < 0) {
-                draftAmountE8s = BigInt(0);
+        if (remainingBalance < 0) {
+            remainingBalance = BigInt(0);
+            draftAmount = cryptoBalance - transferFees;
+            if (draftAmount < 0) {
+                draftAmount = BigInt(0);
             }
         }
     }
@@ -133,15 +135,15 @@
                 <div class="main-title">
                     <div>{$_("tokenTransfer.send")}</div>
                     <div>
-                        <CryptoSelector bind:token />
+                        <CryptoSelector bind:ledger />
                     </div>
                 </div>
             </div>
             <BalanceWithRefresh
                 bind:toppingUp
                 bind:this={balanceWithRefresh}
-                {token}
-                value={remainingBalanceE8s}
+                {ledger}
+                value={remainingBalance}
                 label={$_("cryptoAccount.shortBalanceLabel")}
                 bold
                 showTopUp
@@ -152,13 +154,13 @@
         <form slot="body">
             <div class="body" class:zero={zero || toppingUp}>
                 {#if zero || toppingUp}
-                    <AccountInfo {token} {user} />
+                    <AccountInfo {ledger} {user} />
                     {#if zero}
-                        <p>{$_("tokenTransfer.zeroBalance", { values: { token } })}</p>
+                        <p>{$_("tokenTransfer.zeroBalance", { values: { token: symbol } })}</p>
                     {/if}
                     <p>{$_("tokenTransfer.makeDeposit")}</p>
                     <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                        {$_("howToBuyToken", { values: { token } })}
+                        {$_("howToBuyToken", { values: { token: symbol } })}
                     </a>
                 {:else}
                     {#if multiUserChat}
@@ -173,11 +175,11 @@
                     {/if}
                     <div class="transfer">
                         <TokenInput
-                            {token}
+                            {ledger}
                             autofocus={!multiUserChat}
                             bind:valid={validAmount}
-                            maxAmountE8s={maxAmountE8s($cryptoBalance[token])}
-                            bind:amountE8s={draftAmountE8s} />
+                            maxAmount={maxAmount(cryptoBalance)}
+                            bind:amount={draftAmount} />
                     </div>
                     <div class="message">
                         <Legend label={$_("tokenTransfer.message")} />
@@ -197,7 +199,7 @@
                                 <Alert size={$iconSize} color={"var(--warn"} />
                             </div>
                             <div class="alert-txt">
-                                {$_("tokenTransfer.warning", { values: { token } })}
+                                {$_("tokenTransfer.warning", { values: { token: symbol } })}
                             </div>
                         </div>
                     {/if}

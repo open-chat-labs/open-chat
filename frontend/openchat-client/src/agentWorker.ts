@@ -39,7 +39,7 @@ export class OpenChatAgentWorker extends EventTarget {
         super();
     }
 
-    public connectToWorker(): Promise<boolean> {
+    protected connectToWorker(): Promise<boolean> {
         console.debug("WORKER_CLIENT: loading worker with version: ", this.config.websiteVersion);
         this._worker = new Worker(`/worker.js?v=${this.config.websiteVersion}`);
         const ready = new Promise<boolean>((resolve) => {
@@ -53,6 +53,7 @@ export class OpenChatAgentWorker extends EventTarget {
                     notificationsCanister: this.config.notificationsCanister,
                     onlineCanister: this.config.onlineCanister,
                     userIndexCanister: this.config.userIndexCanister,
+                    registryCanister: this.config.registryCanister,
                     internetIdentityUrl: this.config.internetIdentityUrl,
                     nfidUrl: this.config.nfidUrl,
                     ledgerCanisterICP: this.config.ledgerCanisterICP,

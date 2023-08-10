@@ -3,7 +3,7 @@ export const configKeys = {
     profile: "openchat_profile",
     primeCacheLimit: "openchat_prime_cache_limit",
     primeCacheBatchSize: "openchat_prime_cache_batch_size",
-    lastCryptoSent: "openchat_lastcryptosent",
+    lastCryptoSent: "openchat_lastcryptosent_v2",
     fontSize: "openchat_font_size",
     enterSend: "openchat_entersend",
     userInfoSection: "openchat_userinfo_section",

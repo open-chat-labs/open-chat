@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Cryptocurrency, cryptoCurrencyList, cryptoLookup, OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
@@ -11,8 +11,9 @@
 
     let balanceError: string | undefined;
     let manageMode: "none" | "send" | "receive";
-    let selectedCryptoAccount: Cryptocurrency | undefined = undefined;
+    let selectedLedger: string | undefined = undefined;
 
+    $: cryptoLookup = client.cryptoLookup;
     $: cryptoBalance = client.cryptoBalance;
 
     function onBalanceRefreshed() {
@@ -27,20 +28,22 @@
         manageMode = "none";
     }
 
-    function showReceive(crypto: Cryptocurrency) {
-        selectedCryptoAccount = crypto;
+    function showReceive(ledger: string) {
+        selectedLedger = ledger;
         manageMode = "receive";
     }
 
-    function showSend(crypto: Cryptocurrency) {
-        selectedCryptoAccount = crypto;
+    function showSend(ledger: string) {
+        selectedLedger = ledger;
         manageMode = "send";
     }
 
-    $: crypto = cryptoCurrencyList.map((t) => ({
-        key: t,
-        balance: $cryptoBalance[t],
-        disabled: cryptoLookup[t].disabled,
+    $: crypto = Object.values($cryptoLookup).map((t) => ({
+        key: t.ledger,
+        ledger: t.ledger,
+        symbol: t.symbol,
+        balance: $cryptoBalance[t.ledger] ?? BigInt(0),
+        logo: t.logo,
     }));
 
     $: {
@@ -56,10 +59,10 @@
     }
 </script>
 
-{#if manageMode !== "none" && selectedCryptoAccount !== undefined}
+{#if manageMode !== "none" && selectedLedger !== undefined}
     <ManageCryptoAccount
         mode={manageMode}
-        bind:token={selectedCryptoAccount}
+        bind:ledger={selectedLedger}
         on:close={hideManageModal} />
 {/if}
 
@@ -73,29 +76,23 @@
     <div />
 
     {#each crypto as token}
-        <div class={`icon ${token.key.toLowerCase()}`} />
+        <img class="icon" src={token.logo} />
 
         <div class="token">
-            {token.key}
-            {#if token.disabled}
-                <span class="coming-soon">{$_("cryptoAccount.comingSoon")}</span>
-            {/if}
+            {token.symbol}
         </div>
         <div class="balance">
             <BalanceWithRefresh
-                token={token.key}
+                ledger={token.ledger}
                 value={token.balance}
-                disabled={token.disabled}
                 on:refreshed={onBalanceRefreshed}
                 on:error={onBalanceRefreshError} />
         </div>
         <div class="manage">
-            {#if !token.disabled}
-                <LinkButton underline={"hover"} on:click={() => showSend(token.key)}
-                    >{$_("cryptoAccount.send")}</LinkButton>
-                <LinkButton underline={"hover"} on:click={() => showReceive(token.key)}
-                    >{$_("cryptoAccount.receive")}</LinkButton>
-            {/if}
+            <LinkButton underline={"hover"} on:click={() => showSend(token.key)}
+                >{$_("cryptoAccount.send")}</LinkButton>
+            <LinkButton underline={"hover"} on:click={() => showReceive(token.key)}
+                >{$_("cryptoAccount.receive")}</LinkButton>
         </div>
     {/each}
 </div>
@@ -157,27 +154,6 @@
             border-radius: 50%;
             background-repeat: no-repeat;
             background-position: top;
-            &.icp {
-                background-image: url("/assets/icp_token.svg");
-            }
-            &.sns1 {
-                background-image: url("/assets/sns1_token.png");
-            }
-            &.ckbtc {
-                background-image: url("/assets/ckbtc_nobackground.svg");
-            }
-            &.chat {
-                background-image: url("/assets/spinner.svg");
-            }
-            &.kinic {
-                background-image: url("/assets/kinic_token.png");
-            }
-            &.hot {
-                background-image: url("/assets/hot_token.svg");
-            }
-            &.ghost {
-                background-image: url("/assets/ghost_token.jpeg");
-            }
         }
     }
 </style>

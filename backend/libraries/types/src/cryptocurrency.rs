@@ -88,11 +88,11 @@ pub enum FailedCryptoTransaction {
 }
 
 impl CryptoTransaction {
-    pub fn ledger(&self) -> CanisterId {
+    pub fn ledger_canister_id(&self) -> CanisterId {
         match self {
-            CryptoTransaction::Pending(p) => p.ledger(),
-            CryptoTransaction::Completed(c) => c.ledger(),
-            CryptoTransaction::Failed(f) => f.ledger(),
+            CryptoTransaction::Pending(p) => p.ledger_canister_id(),
+            CryptoTransaction::Completed(c) => c.ledger_canister_id(),
+            CryptoTransaction::Failed(f) => f.ledger_canister_id(),
         }
     }
 
@@ -118,7 +118,7 @@ impl CryptoTransaction {
 }
 
 impl PendingCryptoTransaction {
-    pub fn ledger(&self) -> CanisterId {
+    pub fn ledger_canister_id(&self) -> CanisterId {
         match self {
             PendingCryptoTransaction::NNS(t) => t.ledger,
             PendingCryptoTransaction::ICRC1(t) => t.ledger,
@@ -159,7 +159,7 @@ impl PendingCryptoTransaction {
 }
 
 impl CompletedCryptoTransaction {
-    pub fn ledger(&self) -> CanisterId {
+    pub fn ledger_canister_id(&self) -> CanisterId {
         match self {
             CompletedCryptoTransaction::NNS(t) => t.ledger,
             CompletedCryptoTransaction::ICRC1(t) => t.ledger,
@@ -182,7 +182,7 @@ impl CompletedCryptoTransaction {
 }
 
 impl FailedCryptoTransaction {
-    pub fn ledger(&self) -> CanisterId {
+    pub fn ledger_canister_id(&self) -> CanisterId {
         match self {
             FailedCryptoTransaction::NNS(t) => t.ledger,
             FailedCryptoTransaction::ICRC1(t) => t.ledger,
