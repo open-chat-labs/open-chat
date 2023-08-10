@@ -581,7 +581,8 @@
         "storageIndexAction": "Speicherindexaktionen",
         "cyclesDispenserAction": "Zyklen Spenderaktionen",
         "unknownActionCategory": "Andere Aktionen",
-        "notificationsAction": "Indexaktionen für Benachrichtigungen"
+        "notificationsAction": "Indexaktionen für Benachrichtigungen",
+        "registryAction": "Registrierungsaktionen"
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Name {level} ist zu kurz",

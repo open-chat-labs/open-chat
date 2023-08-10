@@ -579,7 +579,8 @@
         "storageIndexAction": "Acciones de índice de almacenamiento",
         "cyclesDispenserAction": "Acciones del dispensador de ciclos",
         "unknownActionCategory": "Otras acciones",
-        "notificationsAction": "Índice de notificaciones Acciones"
+        "notificationsAction": "Índice de notificaciones Acciones",
+        "registryAction": "Acciones de registro"
     },
     "yes": "Sí",
     "no": "No",

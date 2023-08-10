@@ -436,8 +436,8 @@
             rootEvent={threadRootEvent}
             chat={$selectedChat}
             on:closeThread={closeThread} />
-    {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
-        <ProposalGroupFilters on:close={popRightPanelHistory} />
+    {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}
+        <ProposalGroupFilters selectedChat={$selectedChat} on:close={popRightPanelHistory} />
     {:else if lastState.kind === "community_channels"}
         <CommunityChannels on:newChannel />
     {:else if lastState.kind === "community_details"}

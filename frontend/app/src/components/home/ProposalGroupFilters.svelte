@@ -11,8 +11,11 @@
     import LinkButton from "../LinkButton.svelte";
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import { proposalActionCategories, ProposalActionCategory } from "stores/proposalSections";
+    import type { ChatSummary } from "openchat-shared";
 
-    const OC_PROPOSALS_GROUP = "nsbx4-4iaaa-aaaar-afusa-cai";
+    export let selectedChat: ChatSummary;
+
+    const OC_PROPOSALS_NAME = "OpenChat Proposals";
 
     type SectionLabels = Record<ProposalActionCategory, string>;
 
@@ -26,18 +29,17 @@
         proposalsBot: "proposal.proposalsBotAction",
         storageIndex: "proposal.storageIndexAction",
         cyclesDispenser: "proposal.cyclesDispenserAction",
+        registry: "proposal.registryAction",
     };
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
-    $: selectedChatId = client.selectedChatId;
     $: proposalTopicsStore = client.proposalTopicsStore;
     $: filteredProposalsStore = client.filteredProposalsStore;
     $: topics = [...$proposalTopicsStore];
     $: groupTopics =
-        $selectedChatId !== undefined &&
-        $selectedChatId.kind === "group_chat" &&
-        $selectedChatId.groupId === OC_PROPOSALS_GROUP;
+        selectedChat.kind !== "direct_chat" &&
+        selectedChat.name === OC_PROPOSALS_NAME;
 
     $: grouped = [
         ...client.groupBy(topics, ([id, _]) => {
@@ -57,6 +59,8 @@
                 return "storageIndex";
             } else if (id < 7000) {
                 return "cyclesDispenser";
+            } else if (id < 8000) {
+                return "registry";
             } else {
                 return "unknown";
             }
