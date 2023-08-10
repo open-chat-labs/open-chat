@@ -575,7 +575,8 @@
         "storageIndexAction": "פעולות אינדקס אחסון",
         "cyclesDispenserAction": "פעולות מתקן מחזורים",
         "unknownActionCategory": "פעולות אחרות",
-        "notificationsAction": "פעולות אינדקס התראות"
+        "notificationsAction": "פעולות אינדקס התראות",
+        "registryAction": "פעולות הרישום"
     },
     "yes": "כן",
     "no": "לא",

@@ -577,7 +577,8 @@
         "storageIndexAction": "ストレージ インデックス アクション",
         "cyclesDispenserAction": "サイクル ディスペンサー アクション",
         "unknownActionCategory": "その他のアクション",
-        "notificationsAction": "通知インデックス アクション"
+        "notificationsAction": "通知インデックス アクション",
+        "registryAction": "レジストリアクション"
     },
     "yes": "はい",
     "no": "いいえ",

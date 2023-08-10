@@ -577,7 +577,8 @@
         "storageIndexAction": "Azioni dell'indice di archiviazione",
         "cyclesDispenserAction": "Cicli Azioni Dispenser",
         "unknownActionCategory": "Altre azioni",
-        "notificationsAction": "Notifiche Indice Azioni"
+        "notificationsAction": "Notifiche Indice Azioni",
+        "registryAction": "Azioni di registro"
     },
     "yes": "sì",
     "no": "No",
