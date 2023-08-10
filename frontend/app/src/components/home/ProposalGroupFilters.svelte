@@ -11,7 +11,7 @@
     import LinkButton from "../LinkButton.svelte";
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import { proposalActionCategories, ProposalActionCategory } from "stores/proposalSections";
-    import { ChatSummary } from "openchat-shared";
+    import type { ChatSummary } from "openchat-shared";
 
     export let selectedChat: ChatSummary;
 
