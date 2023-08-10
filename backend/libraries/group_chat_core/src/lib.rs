@@ -1761,17 +1761,33 @@ pub enum AcceptRulesResult {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-#[serde(from = "AccessRules")]
+#[serde(from = "AccessRulesCombined")]
 pub struct AccessRulesInternal {
+    #[serde(rename = "versioned_text")]
     pub text: Versioned<String>,
     pub enabled: bool,
 }
 
 // TODO: Remove this once users, groups, and communities have been upgraded
-impl From<AccessRules> for AccessRulesInternal {
-    fn from(value: AccessRules) -> Self {
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct AccessRulesCombined {
+    #[serde(default)]
+    pub text: String,
+    #[serde(default)]
+    pub versioned_text: Versioned<String>,
+    pub enabled: bool,
+}
+
+impl From<AccessRulesCombined> for AccessRulesInternal {
+    fn from(value: AccessRulesCombined) -> Self {
+        let text = if value.text.is_empty() {
+            value.versioned_text
+        } else {
+            Versioned::new(value.text, Version::zero())
+        };
+
         AccessRulesInternal {
-            text: Versioned::new(value.text, Version::zero()),
+            text,
             enabled: value.enabled,
         }
     }
