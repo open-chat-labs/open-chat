@@ -4,12 +4,13 @@
     import ModalContent from "../../ModalContent.svelte";
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
-    import { Cryptocurrency, cryptoLookup, OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
+    import { ICP_SYMBOL } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
     const client = getContext<OpenChat>("client");
-    const token: Cryptocurrency = "ICP";
+    const ledger: string = client.ledgerCanisterId(ICP_SYMBOL);
 
     let step: "features" | "payment" = "features";
     let error: string | undefined;
@@ -20,9 +21,10 @@
     $: isDiamond = client.isDiamond;
     $: canExtendDiamond = client.canExtendDiamond;
     $: cryptoBalance = client.cryptoBalance;
+    $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = {
-        balance: $cryptoBalance[token],
-        disabled: cryptoLookup[token]?.disabled ?? true,
+        symbol: $cryptoLookup[ledger],
+        balance: $cryptoBalance[ledger] ?? BigInt(0),
     };
 
     function onBalanceRefreshed() {
@@ -60,7 +62,7 @@
                 {#if step === "payment"}
                     <div class="balance">
                         <BalanceWithRefresh
-                            {token}
+                            {ledger}
                             value={tokenDetails.balance}
                             bind:refreshing={refreshingBalance}
                             on:refreshed={onBalanceRefreshed}

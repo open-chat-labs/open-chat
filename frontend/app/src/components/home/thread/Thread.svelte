@@ -6,12 +6,13 @@
         ChatEvent as ChatEventType,
         EnhancedReplyContext,
         EventWrapper,
+        FailedMessages,
         Message,
         MessageContent,
+        OpenChat,
         User,
-        Cryptocurrency,
-        FailedMessages,
     } from "openchat-client";
+    import { ICP_SYMBOL } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Loading from "../../Loading.svelte";
@@ -19,7 +20,6 @@
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
-    import type { OpenChat } from "openchat-client";
     import { toastStore } from "stores/toast";
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
@@ -36,7 +36,7 @@
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
     let creatingPoll = false;
-    let creatingCryptoTransfer: { token: string; amount: bigint } | undefined = undefined;
+    let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
     let selectingGif = false;
     let initialised = false;
     let messagesDiv: HTMLDivElement | undefined;
@@ -185,9 +185,9 @@
         draftThreadMessages.setAttachment(threadRootMessageIndex, ev.detail);
     }
 
-    function tokenTransfer(ev: CustomEvent<{ token: Cryptocurrency; amount: bigint } | undefined>) {
+    function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
         creatingCryptoTransfer = ev.detail ?? {
-            token: $lastCryptoSent,
+            ledger: $lastCryptoSent ?? client.ledgerCanisterId(ICP_SYMBOL),
             amount: BigInt(0),
         };
     }
@@ -266,8 +266,8 @@
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
         {chat}
-        token={creatingCryptoTransfer.token}
-        draftAmountE8s={creatingCryptoTransfer.amount}
+        ledger={creatingCryptoTransfer.ledger}
+        draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
         on:sendTransfer={sendMessageWithContent}
         on:upgrade

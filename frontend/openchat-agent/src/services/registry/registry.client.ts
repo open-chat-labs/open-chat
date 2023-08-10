@@ -15,7 +15,7 @@ export class RegistryClient extends CandidService {
 
         this.service = this.createServiceClient<RegistryService>(
             idlFactory,
-            config.onlineCanister,
+            config.registryCanister,
             config
         );
     }

@@ -5,13 +5,12 @@
     import SectionHeader from "../SectionHeader.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import type { OpenChat } from "openchat-client";
+    import type { ChatSummary, OpenChat } from "openchat-client";
     import Checkbox from "../Checkbox.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import LinkButton from "../LinkButton.svelte";
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import { proposalActionCategories, ProposalActionCategory } from "stores/proposalSections";
-    import type { ChatSummary } from "openchat-shared";
 
     export let selectedChat: ChatSummary;
 

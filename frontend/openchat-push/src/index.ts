@@ -9,7 +9,6 @@ import {
     DirectChatIdentifier,
     ChannelIdentifier,
     CryptoTransferDetails,
-    cryptoLookup,
 } from "openchat-shared";
 
 declare const self: ServiceWorkerGlobalScope;
@@ -285,12 +284,7 @@ function messageText(
     }
 
     if (cryptoTransfer !== undefined) {
-        const tokenDetails = cryptoLookup[cryptoTransfer.symbol];
-        if (tokenDetails !== undefined) {
-            return `Sent ${
-                Number(cryptoTransfer.amount) / Math.pow(10, 8)
-            } ${tokenDetails.symbol}`;
-        }
+        return `Sent ${Number(cryptoTransfer.amount) / Math.pow(10, 8)} ${cryptoTransfer.symbol}`;
     }
 
     return defaultMessage(messageType);
@@ -308,8 +302,8 @@ function defaultMessage(messageType: string): string {
 
 function isMessageNotification(notification: Notification): boolean {
     return (
-        notification.kind === "channel_notification" || 
-        notification.kind === "direct_notification" || 
+        notification.kind === "channel_notification" ||
+        notification.kind === "direct_notification" ||
         notification.kind === "group_notification"
     );
 }

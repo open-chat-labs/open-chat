@@ -131,7 +131,6 @@ import {
     groupPermissions,
     message,
     messageContent,
-    token,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -837,7 +836,7 @@ function failedNnsCryptoWithdrawal(
 ): FailedCryptocurrencyWithdrawal {
     return {
         kind: "failed",
-        token: token(candid.token),
+        ledger: candid.ledger.toString(),
         to: "Account" in candid.to ? bytesToHexString(candid.to.Account) : "",
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
@@ -851,7 +850,7 @@ function failedIcrc1CryptoWithdrawal(
 ): FailedCryptocurrencyWithdrawal {
     return {
         kind: "failed",
-        token: token(candid.token),
+        ledger: candid.ledger.toString(),
         to: "Account" in candid.to ? formatIcrc1Account(candid.to.Account) : "",
         amountE8s: candid.amount,
         feeE8s: candid.fee,
@@ -865,7 +864,7 @@ function completedNnsCryptoWithdrawal(
 ): CompletedCryptocurrencyWithdrawal {
     return {
         kind: "completed",
-        token: token(candid.token),
+        ledger: candid.ledger.toString(),
         to: "Account" in candid.to ? bytesToHexString(candid.to.Account) : "",
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
@@ -880,7 +879,7 @@ function completedIcrc1CryptoWithdrawal(
 ): CompletedCryptocurrencyWithdrawal {
     return {
         kind: "completed",
-        token: token(candid.token),
+        ledger: candid.ledger.toString(),
         to: "Account" in candid.to ? formatIcrc1Account(candid.to.Account) : "",
         amountE8s: candid.amount,
         feeE8s: candid.fee,

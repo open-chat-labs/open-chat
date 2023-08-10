@@ -1,26 +1,27 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import { OpenChat, cryptoCurrencyList, cryptoLookup } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "stores/iconSize";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let token: string;
+    export let ledger: string;
 
     let selecting = false;
 
     $: cryptoBalance = client.cryptoBalance;
 
-    $: crypto = cryptoCurrencyList
+    $: cryptoLookup = client.cryptoLookup;
+    $: crypto = Object.values($cryptoLookup)
         .map((t) => ({
-            key: t,
-            name: cryptoLookup[t]?.name ?? "Unknown",
-            balance: $cryptoBalance[t],
-            disabled: cryptoLookup[t]?.disabled ?? true,
-        }))
-        .filter((t) => !t.disabled);
+            ledger: t.ledger,
+            symbol: t.symbol,
+            name: t.name,
+            logo: t.logo,
+            balance: $cryptoBalance[t.ledger] ?? BigInt(0),
+        }));
 
     $: {
         crypto.sort((a, b) => {
@@ -34,9 +35,9 @@
         });
     }
 
-    function selectToken(symbol: string) {
+    function selectToken(selectedLedger: string) {
         selecting = false;
-        token = symbol;
+        ledger = selectedLedger;
     }
 
     function onKeyDown(ev: KeyboardEvent) {
@@ -48,7 +49,7 @@
 
 <div class="selected" on:click={() => (selecting = !selecting)}>
     <div class="symbol">
-        {token}
+        {$cryptoLookup[ledger].symbol}
     </div>
     <div class="icon" class:selecting>
         <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
@@ -58,13 +59,13 @@
 {#if selecting}
     <div transition:fade|local={{ duration: 100 }} class="tokens">
         {#each crypto as token}
-            <div class="token" on:click={() => selectToken(token.key)}>
-                <div class={`icon ${token.key.toLowerCase()}`} />
+            <div class="token" on:click={() => selectToken(token.ledger)}>
+                <img class="icon" src={token.logo} />
                 <div class="name">
                     {token.name}
                 </div>
                 <div class="symbol">
-                    {token.key}
+                    {token.symbol}
                 </div>
             </div>
         {/each}
@@ -127,27 +128,6 @@
             border-radius: 50%;
             background-repeat: no-repeat;
             background-position: top;
-            &.icp {
-                background-image: url("/assets/icp_token.svg");
-            }
-            &.sns1 {
-                background-image: url("/assets/sns1_token.png");
-            }
-            &.ckbtc {
-                background-image: url("/assets/ckbtc_nobackground.svg");
-            }
-            &.chat {
-                background-image: url("/assets/spinner.svg");
-            }
-            &.kinic {
-                background-image: url("/assets/kinic_token.png");
-            }
-            &.hot {
-                background-image: url("/assets/hot_token.svg");
-            }
-            &.ghost {
-                background-image: url("/assets/ghost_token.jpeg");
-            }
         }
     }
 </style>

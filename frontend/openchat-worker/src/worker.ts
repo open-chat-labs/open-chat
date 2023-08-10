@@ -1654,6 +1654,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
+            case "updateRegistry":
+                agent
+                    .getRegistry()
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
