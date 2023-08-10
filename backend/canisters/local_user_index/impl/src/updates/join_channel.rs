@@ -17,6 +17,7 @@ async fn join_channel(args: Args) -> Response {
         channel_id: args.channel_id,
         invite_code: args.invite_code,
         is_platform_moderator: user_details.is_platform_moderator,
+        rules_accepted: args.rules_accepted,
     };
     match community_canister_c2c_client::c2c_join_channel(args.community_id.into(), &c2c_args).await {
         Ok(response) => match response {
@@ -37,6 +38,7 @@ async fn join_channel(args: Args) -> Response {
             community_canister::c2c_join_channel::Response::MemberLimitReached(l) => MemberLimitReached(l),
             community_canister::c2c_join_channel::Response::CommunityFrozen => CommunityFrozen,
             community_canister::c2c_join_channel::Response::NotInvited => NotInvited,
+            community_canister::c2c_join_channel::Response::RulesNotAccepted => RulesNotAccepted,
             community_canister::c2c_join_channel::Response::InternalError(error) => InternalError(error),
         },
         Err(error) => InternalError(format!("Failed to call 'community::c2c_join_channel': {error:?}")),

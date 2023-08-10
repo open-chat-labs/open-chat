@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Formatter;
 use types::{
     is_default, is_empty_btreemap, is_empty_hashset, EventIndex, GroupMember, GroupPermissions, HydratedMention, MessageIndex,
-    TimestampMillis, Timestamped, UserId, MAX_RETURNED_MENTIONS,
+    TimestampMillis, Timestamped, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
@@ -38,6 +38,7 @@ impl GroupMembers {
             threads: HashSet::new(),
             proposal_votes: BTreeMap::default(),
             suspended: Timestamped::default(),
+            rules_accepted: Some(Timestamped::new(Version::zero(), now)),
         };
 
         GroupMembers {
@@ -56,6 +57,7 @@ impl GroupMembers {
         min_visible_event_index: EventIndex,
         min_visible_message_index: MessageIndex,
         notifications_muted: bool,
+        rules_accepted: Option<Version>,
     ) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
@@ -75,6 +77,7 @@ impl GroupMembers {
                         threads: HashSet::new(),
                         proposal_votes: BTreeMap::default(),
                         suspended: Timestamped::default(),
+                        rules_accepted: rules_accepted.map(|version| Timestamped::new(version, now)),
                     };
                     e.insert(member.clone());
                     AddResult::Success(member)
@@ -310,11 +313,18 @@ pub struct GroupMemberInternal {
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     pub suspended: Timestamped<bool>,
+    #[serde(rename = "ra", default = "default_version", skip_serializing_if = "is_default")]
+    pub rules_accepted: Option<Timestamped<Version>>,
 
     #[serde(rename = "me", default, skip_serializing_if = "is_default")]
     min_visible_event_index: EventIndex,
     #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
     min_visible_message_index: MessageIndex,
+}
+
+// TODO: remove this when users, groups and communities are released
+fn default_version() -> Option<Timestamped<Version>> {
+    Some(Timestamped::new(Version::zero(), 0))
 }
 
 impl GroupMemberInternal {
@@ -413,7 +423,7 @@ mod tests {
     use crate::{GroupMemberInternal, Mentions};
     use candid::Principal;
     use std::collections::{BTreeMap, HashSet};
-    use types::Timestamped;
+    use types::{Timestamped, Version};
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -428,14 +438,15 @@ mod tests {
             suspended: Timestamped::default(),
             min_visible_event_index: 0.into(),
             min_visible_message_index: 0.into(),
+            rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
         };
 
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        // Before optimisation: 232
-        // After optimisation: 27
-        assert_eq!(member_bytes_len, 27);
+        // Before optimisation: 232 (? - this has now changed)
+        // After optimisation: 37
+        assert_eq!(member_bytes_len, 37);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }
@@ -456,6 +467,7 @@ mod tests {
             suspended: Timestamped::new(true, 1),
             min_visible_event_index: 1.into(),
             min_visible_message_index: 1.into(),
+            rules_accepted: None,
         };
 
         let member_bytes = msgpack::serialize_then_unwrap(&member);

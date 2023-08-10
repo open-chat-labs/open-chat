@@ -79,7 +79,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             }
             CommunityEventInternal::RulesChanged(_) => {
                 if result.rules.is_none() {
-                    result.rules = Some(data.rules.clone());
+                    result.rules = Some(data.rules.clone().into());
                 }
             }
             CommunityEventInternal::GroupImported(g) => {

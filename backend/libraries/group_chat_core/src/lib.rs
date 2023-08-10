@@ -12,7 +12,8 @@ use types::{
     GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse,
     Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged,
-    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked, UsersInvited,
+    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked, UsersInvited, Version,
+    Versioned, VersionedRules,
 };
 use utils::document_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -32,7 +33,7 @@ pub struct GroupChatCore {
     pub is_public: bool,
     pub name: String,
     pub description: String,
-    pub rules: AccessRules,
+    pub rules: AccessRulesInternal,
     pub subtype: Timestamped<Option<GroupSubtype>>,
     pub avatar: Option<Document>,
     pub history_visible_to_new_joiners: bool,
@@ -70,7 +71,7 @@ impl GroupChatCore {
             is_public,
             name,
             description,
-            rules,
+            rules: AccessRulesInternal::new(rules),
             subtype: Timestamped::new(subtype, now),
             avatar,
             history_visible_to_new_joiners,
@@ -108,7 +109,13 @@ impl GroupChatCore {
 
     pub fn has_updates_since(&self, user_id: Option<UserId>, since: TimestampMillis) -> bool {
         if let Some(member) = user_id.and_then(|user_id| self.members.get(&user_id)) {
-            if member.date_added > since || member.notifications_muted.timestamp > since {
+            if member.date_added > since
+                || member.notifications_muted.timestamp > since
+                || member
+                    .rules_accepted
+                    .as_ref()
+                    .map_or(false, |accepted| accepted.timestamp > since)
+            {
                 return true;
             }
         }
@@ -236,6 +243,9 @@ impl GroupChatCore {
                         updates.events_ttl = OptionUpdate::from_update(u.new_ttl);
                     }
                 }
+                ChatEventInternal::GroupRulesChanged(_) => {
+                    updates.rules_changed = true;
+                }
                 _ => {}
             }
         }
@@ -359,7 +369,8 @@ impl GroupChatCore {
                 }
                 ChatEventInternal::GroupRulesChanged(_) => {
                     if result.rules.is_none() {
-                        result.rules = Some(self.rules.clone());
+                        result.rules = Some(self.rules.clone().into());
+                        result.access_rules = Some(self.rules.clone().into());
                     }
                 }
                 _ => {}
@@ -1364,18 +1375,18 @@ impl GroupChatCore {
         }
 
         if let Some(rules) = rules {
-            if self.rules.enabled != rules.enabled || self.rules.text != rules.text {
+            let prev_enabled = self.rules.enabled;
+
+            if self.rules.update(rules) {
                 events.push_main_event(
                     ChatEventInternal::GroupRulesChanged(Box::new(GroupRulesChanged {
-                        enabled: rules.enabled,
-                        prev_enabled: self.rules.enabled,
+                        enabled: self.rules.enabled,
+                        prev_enabled,
                         changed_by: user_id,
                     })),
                     0,
                     now,
                 );
-
-                self.rules = rules;
             }
         }
 
@@ -1447,6 +1458,32 @@ impl GroupChatCore {
                 self.events
                     .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
             }
+        }
+    }
+
+    pub fn accept_rules(&mut self, user_id: UserId, version: Version, now: TimestampMillis) -> AcceptRulesResult {
+        use AcceptRulesResult::*;
+
+        if version < self.rules.text.version {
+            return OldVersion;
+        }
+
+        if let Some(member) = self.members.get_mut(&user_id) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+
+            if let Some(rules_accepted) = &member.rules_accepted {
+                if version <= rules_accepted.value {
+                    return AlreadyAccepted;
+                }
+            }
+
+            member.rules_accepted = Some(Timestamped::new(version, now));
+
+            Success
+        } else {
+            UserNotInGroup
         }
     }
 
@@ -1710,4 +1747,92 @@ pub struct SummaryUpdatesFromEvents {
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
+    pub rules_changed: bool,
+}
+
+pub enum AcceptRulesResult {
+    Success,
+    UserSuspended,
+    UserNotInGroup,
+    AlreadyAccepted,
+    OldVersion,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(from = "AccessRulesCombined")]
+pub struct AccessRulesInternal {
+    // TODO: Make this an alias once users, groups, and communities have been upgraded
+    // THEN in the subsequent release can delete the serde attribute altogether!
+    #[serde(rename = "versioned_text")]
+    pub text: Versioned<String>,
+    pub enabled: bool,
+}
+
+// TODO: Remove this once users, groups, and communities have been upgraded
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct AccessRulesCombined {
+    #[serde(default)]
+    pub text: String,
+    #[serde(default)]
+    pub versioned_text: Versioned<String>,
+    pub enabled: bool,
+}
+
+impl From<AccessRulesCombined> for AccessRulesInternal {
+    fn from(value: AccessRulesCombined) -> Self {
+        let text = if value.text.is_empty() {
+            value.versioned_text
+        } else {
+            Versioned::new(value.text, Version::zero())
+        };
+
+        AccessRulesInternal {
+            text,
+            enabled: value.enabled,
+        }
+    }
+}
+
+impl AccessRulesInternal {
+    pub fn new(rules: AccessRules) -> Self {
+        Self {
+            text: Versioned::new(rules.text, Version::zero()),
+            enabled: rules.enabled,
+        }
+    }
+
+    pub fn update(&mut self, rules: AccessRules) -> bool {
+        if rules.enabled != self.enabled || self.text.value != rules.text {
+            if self.text.value != rules.text {
+                self.text.update(rules.text);
+            }
+
+            self.enabled = rules.enabled;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn text_if_enabled(&self) -> Option<&Versioned<String>> {
+        self.enabled.then_some(&self.text)
+    }
+}
+
+impl From<AccessRulesInternal> for AccessRules {
+    fn from(rules: AccessRulesInternal) -> Self {
+        AccessRules {
+            text: rules.text.value,
+            enabled: rules.enabled,
+        }
+    }
+}
+
+impl From<AccessRulesInternal> for VersionedRules {
+    fn from(rules: AccessRulesInternal) -> Self {
+        VersionedRules {
+            text: rules.text.value,
+            version: rules.text.version,
+        }
+    }
 }
