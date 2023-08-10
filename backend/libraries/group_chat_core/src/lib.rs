@@ -1763,6 +1763,8 @@ pub enum AcceptRulesResult {
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(from = "AccessRulesCombined")]
 pub struct AccessRulesInternal {
+    // TODO: Make this an alias once users, groups, and communities have been upgraded
+    // THEN in the subsequent release can delete the serde attribute altogether!
     #[serde(rename = "versioned_text")]
     pub text: Versioned<String>,
     pub enabled: bool,
