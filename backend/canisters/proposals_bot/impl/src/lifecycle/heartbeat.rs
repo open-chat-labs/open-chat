@@ -10,7 +10,7 @@ use ic_cdk_macros::heartbeat;
 use std::collections::HashSet;
 use types::{
     CanisterId, ChannelId, ChatId, CommunityId, MessageContentInitial, MessageId, MultiUserChat, Proposal, ProposalContent,
-    ProposalUpdate, Version,
+    ProposalUpdate,
 };
 
 #[heartbeat]
@@ -221,7 +221,7 @@ mod push_proposals {
             mentioned: Vec::new(),
             forwarding: false,
             channel_id,
-            rules_accepted: Some(Version::zero()),
+            rules_accepted: None,
         };
 
         let failed = community_canister_c2c_client::send_message(community_id.into(), &send_message_args)

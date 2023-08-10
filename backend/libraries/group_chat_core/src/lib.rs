@@ -244,8 +244,8 @@ impl GroupChatCore {
                     }
                 }
                 ChatEventInternal::GroupRulesChanged(_) => {
-                    if updates.rules_enabled.is_none() {
-                        updates.rules_enabled = Some(self.rules.enabled);
+                    if !updates.rules_changed {
+                        updates.rules_changed = true;
                     }
                 }
                 _ => {}
@@ -1749,7 +1749,7 @@ pub struct SummaryUpdatesFromEvents {
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
-    pub rules_enabled: Option<bool>,
+    pub rules_changed: bool,
 }
 
 pub enum AcceptRulesResult {

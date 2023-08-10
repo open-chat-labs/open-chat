@@ -217,11 +217,10 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
     }
 
     if let Some(new_rules) = args.rules {
-        let curr_rules = &mut state.data.rules;
         let enabled = new_rules.enabled;
-        let prev_enabled = curr_rules.enabled;
+        let prev_enabled = state.data.rules.enabled;
 
-        if curr_rules.update(new_rules) {
+        if state.data.rules.update(new_rules) {
             events.push_event(
                 CommunityEventInternal::RulesChanged(Box::new(GroupRulesChanged {
                     enabled,

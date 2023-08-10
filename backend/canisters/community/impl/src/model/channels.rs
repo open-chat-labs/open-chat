@@ -263,7 +263,7 @@ impl Channel {
         let membership = member.map(|m| {
             let mut rules_accepted = None;
             if let Some(accepted) = &m.rules_accepted {
-                if updates_from_events.rules_enabled.is_some() || accepted.timestamp > since {
+                if updates_from_events.rules_changed || accepted.timestamp > since {
                     rules_accepted = Some(accepted.value >= chat.rules.text.version);
                 }
             }
@@ -303,7 +303,7 @@ impl Channel {
             date_last_pinned: updates_from_events.date_last_pinned,
             events_ttl: updates_from_events.events_ttl,
             gate: updates_from_events.gate,
-            rules_enabled: updates_from_events.rules_enabled,
+            rules_enabled: updates_from_events.rules_changed.then_some(chat.rules.enabled),
             membership,
         })
     }
