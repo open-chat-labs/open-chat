@@ -114,7 +114,7 @@ export function toggleProposalFilterMessageExpansion(messageId: bigint, expand: 
 
 export function resetFilteredProposalsStore(chat: ChatSummary): void {
     const filteredProposals =
-        chat.kind === "group_chat" && chat.subtype?.kind === "governance_proposals"
+        chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals"
             ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
             : undefined;
 

@@ -656,6 +656,7 @@
         "proposalsBotAction": "Proposals Bot Actions",
         "storageIndexAction": "Storage Index Actions",
         "cyclesDispenserAction": "Cycles Dispenser Actions",
+        "registryAction": "Registry Actions",
         "unknownActionCategory": "Other Actions"
     },
     "yes": "Yes",
