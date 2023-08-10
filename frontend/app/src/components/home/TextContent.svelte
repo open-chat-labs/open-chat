@@ -9,6 +9,7 @@
     import type { OpenChat, TextContent } from "openchat-client";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import { lowBandwidth } from "../../stores/settings";
+    import LinkPreview from "./LinkPreview.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -42,6 +43,8 @@
     $: youtubeStartTime = youtubeMatch
         ? new URL(youtubeMatch[0]).searchParams.get("t") || "0"
         : "0";
+    $: linkMatch = content.text.match(/(https?:\/\/[^\s]+)/g);
+    $: console.log("Links: ", linkMatch);
 </script>
 
 {#if !youtubeMatch}
@@ -57,6 +60,16 @@
         {:else}
             <IntersectionObserver let:intersecting>
                 <Tweet tweetId={twitterLinkMatch[2]} {intersecting} />
+            </IntersectionObserver>
+        {/if}
+    {:else if linkMatch}
+        {#if !expanded}
+            <span on:click={() => (expanded = true)} class="expand" title={$_("showPreview")}>
+                <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={"var(--txt)"} />
+            </span>
+        {:else}
+            <IntersectionObserver let:intersecting>
+                <LinkPreview links={linkMatch} {intersecting} />
             </IntersectionObserver>
         {/if}
     {/if}
