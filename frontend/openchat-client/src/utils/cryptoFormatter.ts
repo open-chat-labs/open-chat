@@ -2,12 +2,12 @@ import { locale } from "svelte-i18n";
 import { get } from "svelte/store";
 import { getDecimalSeparator } from "./i18n";
 
-export function validateTokenInput(value: string): ValidatedICPInput {
-    const [replacementText, e8s] = validateInput(value, 8);
+export function validateTokenInput(value: string, powTenPerWhole: number): ValidatedICPInput {
+    const [replacementText, amount] = validateInput(value, powTenPerWhole);
 
     return {
         replacementText,
-        e8s,
+        amount,
     };
 }
 
@@ -57,14 +57,15 @@ function parseBigInt(value: string): bigint | undefined {
 }
 
 export function formatTokens(
-    e8s: bigint,
+    amount: bigint,
     minDecimals: number,
+    powTenPerWhole: number,
     decimalSeparatorOverride?: string
 ): string {
-    if (e8s < 0) {
-        e8s = BigInt(0);
+    if (amount < 0) {
+        amount = BigInt(0);
     }
-    return format(e8s, minDecimals, 8, decimalSeparatorOverride);
+    return format(amount, minDecimals, powTenPerWhole, decimalSeparatorOverride);
 }
 
 function format(
@@ -100,7 +101,7 @@ function format(
 
 export type ValidatedICPInput = {
     replacementText: string | undefined;
-    e8s: bigint;
+    amount: bigint;
 };
 
 const decimalSeparatorsRegex = /[.,]/;

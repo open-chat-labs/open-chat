@@ -187,7 +187,7 @@ impl MessageContent {
                     .iter()
                     .find(|u| u.user_id == c.recipient)
                     .map(|u| u.username.clone()),
-                ledger: c.transfer.ledger(),
+                ledger: c.transfer.ledger_canister_id(),
                 symbol: c.transfer.token().token_symbol().to_string(),
                 amount: c.transfer.units(),
             })

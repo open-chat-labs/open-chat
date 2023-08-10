@@ -135,7 +135,7 @@ import {
     selectedMessageContext,
     staleThreadsCount,
 } from "./stores/chat";
-import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
+import { cryptoBalance, cryptoLookup, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
     disableAllProposalFilters,
@@ -227,9 +227,8 @@ import {
     ThreadSelected,
 } from "./events";
 import { LiveState } from "./liveState";
-import { getTypingString } from "./utils/chat";
-import { startTyping } from "./utils/chat";
-import { stopTyping } from "./utils/chat";
+import { getTypingString, startTyping, stopTyping } from "./utils/chat";
+import type { MessageFormatter } from "./utils/i18n";
 import { indexIsInRanges } from "./utils/range";
 import { OpenChatAgentWorker } from "./agentWorker";
 import {
@@ -265,8 +264,6 @@ import {
     type GroupInvite,
     type SearchDirectChatResponse,
     type SearchGroupChatResponse,
-    type Cryptocurrency,
-    type Tokens,
     type ThreadPreview,
     type UsersArgs,
     type UsersResponse,
@@ -333,18 +330,21 @@ import {
     ChannelIdentifier,
     ExploreChannelsResponse,
     CommunityInvite,
-    isSnsGate,
+    ModerationFlag,
     ChannelSummary,
+    GroupMoved,
+    isSnsGate,
+    toTitleCase,
     CHAT_SYMBOL,
     CKBTC_SYMBOL,
     HOTORNOT_SYMBOL,
     ICP_SYMBOL,
     KINIC_SYMBOL,
     SNS1_SYMBOL,
-    ModerationFlag,
-    GroupMoved,
     GHOST_SYMBOL,
-    toTitleCase
+    CryptocurrencyContent,
+    CryptocurrencyDetails,
+    CryptocurrencyTransfer,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -389,6 +389,7 @@ const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+const REGISTRY_UPDATE_INTERVAL = 30 * ONE_MINUTE_MILLIS;
 const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
@@ -578,6 +579,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private async loadUser() {
         this._cachePrimer = new CachePrimer(this);
         await this.connectToWorker();
+        this.startRegistryPoller();
         this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
             failedMessagesStore.initialise(MessageContextMap.fromMap(res))
         );
@@ -692,6 +694,10 @@ export class OpenChat extends OpenChatAgentWorker {
             undefined,
             true
         );
+    }
+
+    private startRegistryPoller() {
+        new Poller(() => this.updateRegistry(), REGISTRY_UPDATE_INTERVAL, REGISTRY_UPDATE_INTERVAL, true);
     }
 
     logout(): Promise<void> {
@@ -1112,6 +1118,10 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
+        return getContentAsText(formatter, content, get(cryptoLookup));
+    }
+
     /**
      * Wrap a bunch of pure utility functions
      */
@@ -1128,7 +1138,6 @@ export class OpenChat extends OpenChatAgentWorker {
     missingUserIds = missingUserIds;
     toRecord2 = toRecord2;
     toDatetimeString = toDatetimeString;
-    getContentAsText = getContentAsText;
     groupBySender = groupBySender;
     groupBy = groupBy;
     getTypingString = getTypingString;
@@ -2859,7 +2868,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                     if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                         this.refreshAccountBalance(
-                            msg.content.transfer.token,
+                            msg.content.transfer.ledger,
                             this.user.cryptoAccount
                         );
                     }
@@ -2955,8 +2964,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            const token = msg.content.transfer.token;
-                            this.refreshAccountBalance(token, this.user.userId);
+                            this.refreshAccountBalance(msg.content.transfer.ledger, this.user.userId);
                         }
                         if (threadRootMessageIndex !== undefined) {
                             trackEvent("sent_threaded_message");
@@ -3022,10 +3030,25 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    buildCryptoTransferText(
+        formatter: MessageFormatter,
+        myUserId: string,
+        senderId: string,
+        content: CryptocurrencyContent,
+        me: boolean
+    ): string | undefined {
+        return buildCryptoTransferText(formatter, myUserId, senderId, content, me, get(cryptoLookup));
+    }
+
+    buildTransactionLink(
+        formatter: MessageFormatter,
+        transfer: CryptocurrencyTransfer,
+    ): string | undefined {
+        return buildTransactionLink(formatter, transfer, get(cryptoLookup));
+    }
+
     getFirstUnreadMention = getFirstUnreadMention;
     markAllRead = markAllRead;
-    buildCryptoTransferText = buildCryptoTransferText;
-    buildTransactionLink = buildTransactionLink;
     getDisplayDate = getDisplayDate;
     isSocialVideoLink = isSocialVideoLink;
     containsSocialVideoLink = containsSocialVideoLink;
@@ -3654,15 +3677,22 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    refreshAccountBalance(token: string, principal: string): Promise<Tokens> {
-        const ledger = this.ledgerCanisterId(token);
-
+    refreshAccountBalance(ledger: string, principal: string): Promise<bigint> {
         return this.sendRequest({ kind: "refreshAccountBalance", ledger, principal }).then(
             (val) => {
-                cryptoBalance.set(token, val);
+                cryptoBalance.set(ledger, val);
                 return val;
             }
         );
+    }
+
+    getTokenByGovernanceCanister(governanceCanister: string): CryptocurrencyDetails {
+        const tokenDetails = Object.values(get(cryptoLookup)).find((t) => t.governanceCanister === governanceCanister);
+        if (tokenDetails === undefined) {
+            throw new Error(`Unknown governance canister: ${governanceCanister}`);
+        } else {
+            return tokenDetails;
+        }
     }
 
     async threadPreviews(
@@ -4025,7 +4055,7 @@ export class OpenChat extends OpenChatAgentWorker {
             } else if (chat.latestMessage !== undefined) {
                 userIds.add(chat.latestMessage.event.sender);
                 this.extractUserIdsFromMentions(
-                    getContentAsText((k) => k, chat.latestMessage.event.content)
+                    getContentAsText((k) => k, chat.latestMessage.event.content, get(cryptoLookup))
                 ).forEach((id) => userIds.add(id));
             }
         });
@@ -4090,6 +4120,11 @@ export class OpenChat extends OpenChatAgentWorker {
             });
 
             if (!init || chatsResponse.anyUpdates) {
+                if (!init) {
+                    // We need the registry to be loaded before we attempt to render chats / events
+                    await this.updateRegistry();
+                }
+
                 const updatedChats = (chatsResponse.state.directChats as ChatSummary[])
                     .concat(chatsResponse.state.groupChats)
                     .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
@@ -4343,7 +4378,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     payForDiamondMembership(
-        token: Cryptocurrency,
+        token: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint
@@ -4516,6 +4551,27 @@ export class OpenChat extends OpenChatAgentWorker {
                 moderationFlags.set(previousValue);
                 return previousValue;
             });
+    }
+
+    private async updateRegistry() {
+        const registry = await this.sendRequest({
+            kind: "updateRegistry"
+        });
+
+        cryptoLookup.set(toRecord2(registry.tokenDetails, (t) => t.ledgerCanisterId, (t) => ({
+            name: t.name,
+            symbol: t.symbol,
+            ledger: t.ledgerCanisterId,
+            decimals: t.decimals,
+            transferFee: t.fee,
+            logo: t.logo,
+            howToBuyUrl: t.howToBuyUrl,
+            infoUrl: t.infoUrl,
+            transactionUrlFormat: t.transactionUrlFormat,
+            rootCanister: t.nervousSystem?.governance,
+            governanceCanister: t.nervousSystem?.governance,
+            lastUpdated: t.lastUpdated,
+        })));
     }
 
     // **** Communities Stuff
@@ -4823,6 +4879,7 @@ export class OpenChat extends OpenChatAgentWorker {
     chatStateStore = chatStateStore;
     unconfirmed = unconfirmed;
     failedMessagesStore = failedMessagesStore;
+    cryptoLookup = cryptoLookup;
     lastCryptoSent = lastCryptoSent;
     draftThreadMessages = draftThreadMessages;
     translationStore = translationStore;

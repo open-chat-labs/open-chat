@@ -1,7 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { idlFactory, LedgerService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import type { Tokens } from "openchat-shared";
 import type { AgentConfig } from "../../config";
 import { Principal } from "@dfinity/principal";
 
@@ -18,11 +17,11 @@ export class LedgerClient extends CandidService {
         return new LedgerClient(identity, config, canisterId);
     }
 
-    accountBalance(principal: string): Promise<Tokens> {
+    accountBalance(principal: string): Promise<bigint> {
         return this.handleResponse(
             this.service.icrc1_balance_of({ owner: Principal.fromText(principal), subaccount: [] }),
-            (e8s) => {
-                return { e8s };
+            (balance) => {
+                return balance;
             }
         );
     }

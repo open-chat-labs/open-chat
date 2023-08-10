@@ -3,7 +3,6 @@ use crate::rng::{random_message_id, random_string};
 use crate::utils::now_nanos;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_ledger_types::Tokens;
 use ic_test_state_machine_client::StateMachine;
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
@@ -73,7 +72,9 @@ fn send_crypto_in_channel() {
                 recipient: user2.user_id,
                 transfer: CryptoTransaction::Pending(create_pending_transaction(
                     Cryptocurrency::InternetComputer,
-                    Tokens::from_e8s(10000),
+                    canister_ids.icp_ledger,
+                    10000,
+                    10000,
                     user2.user_id,
                     now_nanos(env),
                 )),

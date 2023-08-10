@@ -27,9 +27,9 @@ function tokenDetails(candid: ApiTokenDetails): TokenDetails {
         decimals: candid.decimals,
         fee: candid.fee,
         logo: candid.logo,
-        snsCanisters: optional(candid.nervous_system, (sns) => ({
-            root: sns.root.toString(),
-            governance: sns.governance.toString(),
+        nervousSystem: optional(candid.nervous_system, (ns) => ({
+            root: ns.root.toString(),
+            governance: ns.governance.toString(),
         })),
         infoUrl: candid.info_url,
         howToBuyUrl: candid.how_to_buy_url,

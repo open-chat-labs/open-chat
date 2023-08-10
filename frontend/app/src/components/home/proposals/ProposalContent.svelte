@@ -18,7 +18,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import { proposalVotes } from "../../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
-    import { OpenChat, cryptoLookup, tokenByGovernanceCanisterLookup } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -43,8 +43,8 @@
     let showNeuronInfo = false;
     let showPayload = false;
 
-    $: token = tokenByGovernanceCanisterLookup[content.governanceCanisterId];
-    $: rootCanister = cryptoLookup[token].rootCanister;
+    $: tokenDetails = client.getTokenByGovernanceCanister(content.governanceCanisterId);
+    $: rootCanister = tokenDetails.rootCanister ?? "";
     $: proposalTopicsStore = client.proposalTopicsStore;
     $: isNns = content.proposal.kind === "nns";
     $: voteStatus =
