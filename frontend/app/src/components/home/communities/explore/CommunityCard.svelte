@@ -5,6 +5,7 @@
     import Pound from "svelte-material-icons/Pound.svelte";
     import type { AccessGate, DataContent, OpenChat } from "openchat-client";
     import Avatar from "../../../Avatar.svelte";
+    import IntersectionObserver from "../../IntersectionObserver.svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "../../Markdown.svelte";
     import { AvatarSize, ModerationFlags } from "openchat-client";
@@ -45,19 +46,21 @@
 </script>
 
 <div class:header on:click class="card">
-    <CommunityBanner square={header} {banner}>
-        {#if !header}
-            <div class="gate">
-                <AccessGateIcon position={"bottom"} align={"end"} on:upgrade {gate} />
+    <IntersectionObserver let:intersecting>
+        <CommunityBanner {intersecting} square={header} {banner}>
+            {#if !header}
+                <div class="gate">
+                    <AccessGateIcon position={"bottom"} align={"end"} on:upgrade {gate} />
+                </div>
+            {/if}
+            <div class="avatar">
+                <Avatar
+                    url={client.communityAvatarUrl(id, avatar)}
+                    userId={undefined}
+                    size={AvatarSize.Default} />
             </div>
-        {/if}
-        <div class="avatar">
-            <Avatar
-                url={client.communityAvatarUrl(id, avatar)}
-                userId={undefined}
-                size={AvatarSize.Default} />
-        </div>
-    </CommunityBanner>
+        </CommunityBanner>
+    </IntersectionObserver>
     <div class="content">
         <div class="name">{name}</div>
         <div class="desc" class:fixed={!header}>
@@ -97,7 +100,7 @@
             width: toRem(48);
             height: toRem(48);
             position: absolute;
-            bottom: toRem(-15);
+            bottom: toRem(-24);
             left: $sp4;
         }
 
