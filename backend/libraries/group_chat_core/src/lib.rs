@@ -244,9 +244,7 @@ impl GroupChatCore {
                     }
                 }
                 ChatEventInternal::GroupRulesChanged(_) => {
-                    if !updates.rules_changed {
-                        updates.rules_changed = true;
-                    }
+                    updates.rules_changed = true;
                 }
                 _ => {}
             }
