@@ -1,7 +1,7 @@
 use crate::{init_state as set_state, mutate_state, Data, RuntimeState, WASM_VERSION};
 use std::time::Duration;
 use tracing::{error, info, trace};
-use types::{CanisterId, Cycles, Timestamped, Version};
+use types::{BuildVersion, CanisterId, Cycles, Timestamped};
 use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
@@ -18,7 +18,7 @@ fn init_env() -> Box<CanisterEnv> {
     Box::default()
 }
 
-fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: Version) {
+fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion) {
     let now = env.now();
     let state = RuntimeState::new(env, data);
 

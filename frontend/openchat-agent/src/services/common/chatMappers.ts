@@ -593,15 +593,15 @@ function pendingCryptoTransfer(
     candid: ApiPendingCryptoTransaction,
     recipient: string
 ): PendingCryptocurrencyTransfer {
-    if ("NNS" in candid || "SNS" in candid) {
-        const trans = "NNS" in candid ? candid.NNS : candid.SNS;
+    if ("NNS" in candid) {
+        const trans = candid.NNS;
         return {
             kind: "pending",
             ledger: trans.ledger.toString(),
             token: token(trans.token),
             recipient,
             amountE8s: trans.amount.e8s,
-            feeE8s: Array.isArray(trans.fee) ? optional(trans.fee, (f) => f.e8s) : trans.fee.e8s,
+            feeE8s: optional(trans.fee, (f) => f.e8s),
             memo: optional(trans.memo, identity),
             createdAtNanos: trans.created,
         };
@@ -627,9 +627,8 @@ export function completedCryptoTransfer(
     sender: string,
     recipient: string
 ): CompletedCryptocurrencyTransfer {
-    if ("NNS" in candid || "SNS" in candid) {
-        const isNns = "NNS" in candid;
-        const trans = isNns ? candid.NNS : candid.SNS;
+    if ("NNS" in candid) {
+        const trans = candid.NNS;
         return {
             kind: "completed",
             token: token(trans.token),
@@ -637,11 +636,9 @@ export function completedCryptoTransfer(
             sender,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
-            memo: Array.isArray(trans.memo)
-                ? optional(trans.memo, identity) ?? BigInt(0)
-                : trans.memo,
+            memo: trans.memo,
             blockIndex: trans.block_index,
-            transactionHash: isNns ? bytesToHexString(trans.transaction_hash) : undefined,
+            transactionHash: bytesToHexString(trans.transaction_hash),
         };
     }
     if ("ICRC1" in candid) {
@@ -667,17 +664,15 @@ export function failedCryptoTransfer(
     candid: ApiFailedCryptoTransaction,
     recipient: string
 ): FailedCryptocurrencyTransfer {
-    if ("NNS" in candid || "SNS" in candid) {
-        const trans = "NNS" in candid ? candid.NNS : candid.SNS;
+    if ("NNS" in candid) {
+        const trans = candid.NNS;
         return {
             kind: "failed",
             token: token(trans.token),
             recipient,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
-            memo: Array.isArray(trans.memo)
-                ? optional(trans.memo, identity) ?? BigInt(0)
-                : trans.memo,
+            memo: trans.memo,
             errorMessage: trans.error_message,
         };
     }

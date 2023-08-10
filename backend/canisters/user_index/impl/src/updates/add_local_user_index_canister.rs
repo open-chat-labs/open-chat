@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use local_user_index_canister::{Event, UserRegistered};
 use tracing::info;
-use types::{CanisterId, CanisterWasm, Version};
+use types::{BuildVersion, CanisterId, CanisterWasm};
 use user_index_canister::add_local_user_index_canister::{Response::*, *};
 use utils::canister::{install, CanisterToInstall};
 
@@ -17,7 +17,7 @@ async fn add_local_user_index_canister(args: Args) -> Response {
             let wasm_version = result.canister_wasm.version;
             match install(CanisterToInstall {
                 canister_id: args.canister_id,
-                current_wasm_version: Version::default(),
+                current_wasm_version: BuildVersion::default(),
                 new_wasm: result.canister_wasm,
                 deposit_cycles_if_needed: true,
                 args: result.init_args,
@@ -63,7 +63,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     }
 }
 
-fn commit(canister_id: CanisterId, wasm_version: Version, state: &mut RuntimeState) -> Response {
+fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) -> Response {
     if state.data.local_index_map.add_index(canister_id, wasm_version) {
         // We need to initialize the new local user index with all of the existing users
         for user in state.data.users.iter() {

@@ -387,18 +387,6 @@ export const idlFactory = ({ IDL }) => {
     'Mint' : IDL.Null,
     'Account' : Icrc1Account,
   });
-  const SnsCompletedCryptoTransaction = IDL.Record({
-    'to' : Icrc1AccountOrMint,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'block_index' : BlockIndex,
-    'from' : Icrc1AccountOrMint,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
   const Memo = IDL.Vec(IDL.Nat8);
   const Icrc1CompletedCryptoTransaction = IDL.Record({
     'to' : Icrc1AccountOrMint,
@@ -413,7 +401,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
-    'SNS' : SnsCompletedCryptoTransaction,
     'ICRC1' : Icrc1CompletedCryptoTransaction,
   });
   const PrizeWinnerContent = IDL.Record({
@@ -438,18 +425,6 @@ export const idlFactory = ({ IDL }) => {
     'ledger' : CanisterId,
     'amount' : Tokens,
   });
-  const SnsFailedCryptoTransaction = IDL.Record({
-    'to' : Icrc1AccountOrMint,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'from' : Icrc1AccountOrMint,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'error_message' : IDL.Text,
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
   const Icrc1FailedCryptoTransaction = IDL.Record({
     'to' : Icrc1AccountOrMint,
     'fee' : IDL.Nat,
@@ -463,7 +438,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const FailedCryptoTransaction = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
-    'SNS' : SnsFailedCryptoTransaction,
     'ICRC1' : Icrc1FailedCryptoTransaction,
   });
   const NnsUserOrAccount = IDL.Variant({
@@ -473,15 +447,6 @@ export const idlFactory = ({ IDL }) => {
   const NnsPendingCryptoTransaction = IDL.Record({
     'to' : NnsUserOrAccount,
     'fee' : IDL.Opt(Tokens),
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
-  const SnsPendingCryptoTransaction = IDL.Record({
-    'to' : Icrc1Account,
-    'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'memo' : IDL.Opt(IDL.Nat64),
@@ -499,7 +464,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const PendingCryptoTransaction = IDL.Variant({
     'NNS' : NnsPendingCryptoTransaction,
-    'SNS' : SnsPendingCryptoTransaction,
     'ICRC1' : Icrc1PendingCryptoTransaction,
   });
   const CryptoTransaction = IDL.Variant({

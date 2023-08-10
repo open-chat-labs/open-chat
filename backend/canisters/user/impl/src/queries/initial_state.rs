@@ -3,7 +3,7 @@ use crate::model::group_chat::GroupChat;
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
 use std::collections::HashMap;
-use types::{GroupCanisterGroupChatSummary, GroupChatSummary, ThreadSyncDetails, UserId, Version};
+use types::{BuildVersion, GroupCanisterGroupChatSummary, GroupChatSummary, ThreadSyncDetails, UserId};
 use user_canister::initial_state::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
@@ -128,7 +128,7 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         latest_threads: threads.into_values().collect(),
         archived: user_details.archived.value,
         frozen: cached.frozen.clone(),
-        wasm_version: Version::default(),
+        wasm_version: BuildVersion::default(),
         date_last_pinned: cached.date_last_pinned,
         date_read_pinned: user_details.messages_read.date_read_pinned.value,
         events_ttl: cached.events_ttl,

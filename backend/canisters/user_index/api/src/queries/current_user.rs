@@ -1,7 +1,7 @@
 use candid::CandidType;
 use ic_ledger_types::AccountIdentifier;
 use serde::{Deserialize, Serialize};
-use types::{CanisterUpgradeStatus, DiamondMembershipDetails, Empty, TimestampMillis, UserId, Version};
+use types::{BuildVersion, CanisterUpgradeStatus, DiamondMembershipDetails, Empty, TimestampMillis, UserId};
 
 pub type Args = Empty;
 
@@ -18,7 +18,7 @@ pub struct SuccessResult {
     pub username: String,
     pub avatar_id: Option<u128>,
     pub canister_upgrade_status: CanisterUpgradeStatus,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub icp_account: AccountIdentifier,
     pub referrals: Vec<UserId>,
     pub is_platform_moderator: bool,

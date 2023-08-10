@@ -1,7 +1,7 @@
 use crate::{mutate_state, Data, RuntimeState, WASM_VERSION};
 use std::time::Duration;
 use tracing::trace;
-use types::{Timestamped, Version};
+use types::{BuildVersion, Timestamped};
 use utils::canister::get_random_seed;
 use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
@@ -17,7 +17,7 @@ fn init_env() -> Box<CanisterEnv> {
     Box::default()
 }
 
-fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: Version) {
+fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion) {
     let now = env.now();
     let mut state = RuntimeState::new(env, data);
 

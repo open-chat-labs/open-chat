@@ -3,7 +3,7 @@ use canister_agent_utils::{build_ic_agent, get_canister_wasm, install_wasm, set_
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
-use types::{CanisterWasm, Cycles, Version};
+use types::{BuildVersion, CanisterWasm, Cycles};
 
 const T: Cycles = 1_000_000_000_000;
 
@@ -51,7 +51,7 @@ async fn install_service_canisters_impl(
     ])
     .await;
 
-    let version = Version::min();
+    let version = BuildVersion::min();
 
     let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
     let user_index_init_args = user_index_canister::init::Args {
