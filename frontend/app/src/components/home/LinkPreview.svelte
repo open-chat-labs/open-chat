@@ -1,5 +1,7 @@
 <script lang="ts">
-    import FancyLoader from "../icons/FancyLoader.svelte";
+    import { getContext } from "svelte";
+    import Tweet from "./Tweet.svelte";
+    import type { OpenChat } from "openchat-client";
 
     type LinkInfo = {
         title: string | null | undefined;
@@ -7,11 +9,26 @@
         image: string | null | undefined;
     };
 
+    const client = getContext<OpenChat>("client");
+
     export let links: string[];
-    export let intersecting = false;
+    export let intersecting: boolean;
+    export let text: string;
+    export let pinned: boolean;
+    export let fill: boolean;
+    export let height: number | undefined;
+    export let loading: boolean;
 
     let previews: (LinkInfo | undefined)[] = [];
-    let state: "rendered" | "rendering" | "not_rendered" = "not_rendered";
+    let rendered = false;
+
+    $: youtubeMatch = text.match(client.youtubeRegex());
+    $: twitterLinkMatch = text.match(client.twitterLinkRegex());
+    $: youtubeCode =
+        youtubeMatch && (youtubeMatch[1] ?? youtubeMatch[2] ?? youtubeMatch[3])?.split("?")[0];
+    $: youtubeStartTime = youtubeMatch
+        ? new URL(youtubeMatch[0]).searchParams.get("t") || "0"
+        : "0";
 
     async function loadPreview(url: string): Promise<LinkInfo | undefined> {
         const response = await fetch(`https://proxy.cors.sh/${url}`, {
@@ -36,22 +53,41 @@
     }
 
     $: {
-        if (intersecting && state === "not_rendered") {
-            state = "rendering";
+        if (!twitterLinkMatch && !youtubeMatch && intersecting && !rendered) {
+            loading = true;
             Promise.all(links.map(loadPreview))
                 .then((res) => {
                     previews = res;
-                    state = "rendered";
+                    rendered = true;
                 })
                 .catch((err) => {
                     console.error("Error rendering link(s)", err);
-                    state = "not_rendered";
-                });
+                    rendered = false;
+                })
+                .finally(() => (loading = false));
         }
     }
 </script>
 
-{#if state === "rendered"}
+{#if twitterLinkMatch}
+    <Tweet tweetId={twitterLinkMatch[2]} {intersecting} />
+{:else if youtubeMatch}
+    <iframe
+        class:pinned
+        class:fill
+        width="100%"
+        {height}
+        src={`https://www.youtube.com/embed/${youtubeCode}?start=${youtubeStartTime}`}
+        title="YouTube video player"
+        frameborder="0"
+        allow="accelerometer;
+                        autoplay;
+                        clipboard-write;
+                        encrypted-media;
+                        gyroscope;
+                        picture-in-picture"
+        allowfullscreen />
+{:else if rendered}
     {#each previews as preview}
         {#if preview !== undefined}
             {#if preview.title}
@@ -65,13 +101,6 @@
             {/if}
         {/if}
     {/each}
-{/if}
-{#if state === "rendering"}
-    <div class="logo-wrapper">
-        <div class="logo">
-            <FancyLoader loop />
-        </div>
-    </div>
 {/if}
 
 <style lang="scss">
@@ -88,15 +117,16 @@
         width: 100%;
         border-radius: $sp3;
     }
-    .logo-wrapper {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: $sp5;
 
-        .logo {
-            width: $size;
-            height: $size;
-        }
+    iframe {
+        margin-top: $sp3;
+    }
+
+    iframe:not(.fill) {
+        border-radius: $sp3;
+    }
+
+    iframe.pinned {
+        pointer-events: none;
     }
 </style>
