@@ -23,6 +23,7 @@ type TimestampNanos = nat64;
 type Tokens = record { e8s : nat64 };
 type TransactionHash = blob;
 type UserId = CanisterId;
+type Version = nat32;
 
 type Chat = variant {
     Direct : ChatId;
@@ -366,6 +367,7 @@ type CommunityCanisterChannelSummary = record {
     expired_messages : vec MessageIndexRange;
     next_message_expiry : opt TimestampMillis;
     gate : opt AccessGate;
+    rules_enabled : bool;
     membership : opt ChannelMembership;
 };
 
@@ -376,6 +378,7 @@ type ChannelMembership = record {
     notifications_muted : bool;
     my_metrics : ChatMetrics;
     latest_threads : vec GroupCanisterThreadDetails;
+    rules_accepted : bool;
 };
 
 type CommunityCanisterCommunitySummaryUpdates = record {
@@ -420,6 +423,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
+    rules_enabled : opt bool;
     membership : opt ChannelMembershipUpdates;
 };
 
@@ -429,6 +433,7 @@ type ChannelMembershipUpdates = record {
     notifications_muted : opt bool;
     my_metrics : opt ChatMetrics;
     latest_threads : vec GroupCanisterThreadDetails;
+    rules_accepted : opt bool;
 };
 
 type SelectedGroupUpdates = record {
@@ -442,6 +447,7 @@ type SelectedGroupUpdates = record {
     pinned_messages_added : vec MessageIndex;
     pinned_messages_removed : vec MessageIndex;
     rules : opt AccessRules;
+    access_rules : opt VersionedRules;
 };
 
 type GroupDescriptionChanged = record {
@@ -570,7 +576,7 @@ type ChannelReactionAddedNotification = record {
     community_id : CommunityId;
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
-    message_index: MessageIndex;
+    message_index : MessageIndex;
     message_event_index : EventIndex;
     community_name : text;
     channel_name : text;
@@ -1213,6 +1219,11 @@ type GroupCanisterThreadDetails = record {
 type AccessRules = record {
     text : text;
     enabled : bool;
+};
+
+type VersionedRules = record {
+    text : text;
+    version : Version;
 };
 
 type GroupRulesChanged = record {

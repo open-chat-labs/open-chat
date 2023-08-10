@@ -34,7 +34,7 @@ pub mod happy_path {
     use ic_test_state_machine_client::StateMachine;
     use types::{
         AccessRules, ChannelId, CommunityCanisterCommunitySummary, CommunityCanisterCommunitySummaryUpdates, CommunityId,
-        EventIndex, EventsResponse, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis,
+        EventIndex, EventsResponse, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis, Version,
     };
 
     pub fn create_channel(
@@ -103,6 +103,7 @@ pub mod happy_path {
                 replies_to: None,
                 mentioned: Vec::new(),
                 forwarding: false,
+                rules_accepted: Some(Version::zero()),
             },
         );
 

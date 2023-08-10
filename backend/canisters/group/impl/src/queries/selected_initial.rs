@@ -12,29 +12,21 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
     if let Some(member) = state.data.get_member(caller) {
         let now = state.env.now();
         let min_visible_message_index = member.min_visible_message_index();
-        let members = &state.data.chat.members;
+        let chat = &state.data.chat;
 
         Success(SuccessResult {
             timestamp: now,
-            latest_event_index: state
-                .data
-                .chat
-                .events
-                .main_events_reader(now)
-                .latest_event_index()
-                .unwrap_or_default(),
-            participants: members.iter().map(|p| p.into()).collect(),
-            blocked_users: members.blocked(),
-            invited_users: state.data.chat.invited_users.users(),
-            pinned_messages: state
-                .data
-                .chat
+            latest_event_index: chat.events.main_events_reader(now).latest_event_index().unwrap_or_default(),
+            participants: chat.members.iter().map(|p| p.into()).collect(),
+            blocked_users: chat.members.blocked(),
+            invited_users: chat.invited_users.users(),
+            pinned_messages: chat
                 .pinned_messages
                 .iter()
                 .filter(|&m| *m >= min_visible_message_index)
                 .copied()
                 .collect(),
-            rules: state.data.chat.rules.clone(),
+            rules: chat.rules.clone().into(),
         })
     } else {
         CallerNotInGroup

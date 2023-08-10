@@ -1,6 +1,6 @@
 use crate::{
     AccessGate, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember, GroupPermissions,
-    GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis, UserId,
+    GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis, UserId, Version,
     MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
@@ -239,7 +239,10 @@ pub struct SelectedGroupUpdates {
     pub invited_users: Option<Vec<UserId>>,
     pub pinned_messages_added: Vec<MessageIndex>,
     pub pinned_messages_removed: Vec<MessageIndex>,
+    // TODO: remove this field once the website is using `access_rules` instead
     pub rules: Option<AccessRules>,
+    #[serde(default)]
+    pub access_rules: Option<VersionedRules>,
 }
 
 impl SelectedGroupUpdates {
@@ -327,4 +330,10 @@ pub struct GovernanceProposalsSubtype {
 pub struct AccessRules {
     pub text: String,
     pub enabled: bool,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct VersionedRules {
+    pub text: String,
+    pub version: Version,
 }

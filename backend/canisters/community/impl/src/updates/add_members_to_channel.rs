@@ -151,6 +151,7 @@ fn commit(
                 min_visible_event_index,
                 min_visible_message_index,
                 channel.chat.is_public,
+                None,
             ) {
                 AddResult::Success(_) => {
                     users_added.push(user_id);

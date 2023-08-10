@@ -1,6 +1,8 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, GateCheckFailedReason, UserId};
+use types::{
+    ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, GateCheckFailedReason, UserId, Version,
+};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -9,6 +11,8 @@ pub struct Args {
     pub channel_id: ChannelId,
     pub invite_code: Option<u64>,
     pub is_platform_moderator: bool,
+    #[serde(default)]
+    pub rules_accepted: Option<Version>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -24,5 +28,6 @@ pub enum Response {
     MemberLimitReached(u32),
     CommunityFrozen,
     NotInvited,
+    RulesNotAccepted,
     InternalError(String),
 }

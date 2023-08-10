@@ -19,7 +19,7 @@ pub mod happy_path {
     use crate::User;
     use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
-    use types::{CanisterId, ChannelId, ChatId, CommunityId, UserId};
+    use types::{CanisterId, ChannelId, ChatId, CommunityId, UserId, Version};
 
     pub fn register_user(env: &mut StateMachine, canister_id: CanisterId) -> User {
         register_user_with_referrer(env, canister_id, None)
@@ -196,6 +196,7 @@ pub mod happy_path {
                 community_id,
                 channel_id,
                 invite_code: None,
+                rules_accepted: Some(Version::zero()),
             },
         );
 
