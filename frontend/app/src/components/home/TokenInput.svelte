@@ -32,7 +32,7 @@
         if (inputElement !== undefined) {
             const validateResult = client.validateTokenInput(inputElement.value, tokenDecimals);
             if (validateResult.amount !== amount) {
-                inputElement.value = client.formatTokens(validateResult.amount, 0, tokenDecimals, ".");
+                inputElement.value = client.formatTokens(amount, 0, tokenDecimals, ".");
             }
             validate();
         }
@@ -54,7 +54,6 @@
     function max() {
         amount = maxAmount;
         valid = true;
-        inputElement.value = client.formatTokens(maxAmount, 0, tokenDecimals, ".");
     }
 
     function validate() {
