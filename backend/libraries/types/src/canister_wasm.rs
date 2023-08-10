@@ -1,6 +1,6 @@
-use crate::{CanisterId, Version};
+use crate::{BuildVersion, CanisterId};
 use candid::CandidType;
-use human_readable::ToHumanReadable;
+use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
 use sha256::sha256_string;
 use std::fmt::{Debug, Formatter};
@@ -14,7 +14,7 @@ pub struct UpgradeCanisterWasmArgs {
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct CanisterWasm {
-    pub version: Version,
+    pub version: BuildVersion,
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
 }
@@ -22,7 +22,7 @@ pub struct CanisterWasm {
 impl Default for CanisterWasm {
     fn default() -> Self {
         CanisterWasm {
-            version: Version::new(0, 0, 0),
+            version: BuildVersion::new(0, 0, 0),
             module: Vec::default(),
         }
     }
@@ -46,11 +46,12 @@ pub struct UpgradesFilter {
 #[derive(Serialize)]
 pub struct HumanReadableUpgradeCanisterWasmArgs {
     wasm: CanisterWasmTrimmed,
+    filter: Option<HumanReadableUpgradesFilter>,
 }
 
 #[derive(Serialize)]
 pub struct CanisterWasmTrimmed {
-    version: Version,
+    version: BuildVersion,
     module_hash: String,
     byte_length: u64,
 }
@@ -61,6 +62,7 @@ impl ToHumanReadable for UpgradeCanisterWasmArgs {
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableUpgradeCanisterWasmArgs {
             wasm: (&self.wasm).into(),
+            filter: self.filter.as_ref().map(|f| f.into()),
         }
     }
 }
@@ -71,6 +73,21 @@ impl From<&CanisterWasm> for CanisterWasmTrimmed {
             version: value.version,
             module_hash: sha256_string(&value.module),
             byte_length: value.module.len() as u64,
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct HumanReadableUpgradesFilter {
+    include: Vec<HumanReadablePrincipal>,
+    exclude: Vec<HumanReadablePrincipal>,
+}
+
+impl From<&UpgradesFilter> for HumanReadableUpgradesFilter {
+    fn from(value: &UpgradesFilter) -> Self {
+        HumanReadableUpgradesFilter {
+            include: value.include.iter().copied().map(|c| c.into()).collect(),
+            exclude: value.exclude.iter().copied().map(|c| c.into()).collect(),
         }
     }
 }

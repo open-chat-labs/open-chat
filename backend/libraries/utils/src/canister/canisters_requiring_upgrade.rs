@@ -3,32 +3,32 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
 use tracing::info;
-use types::{CanisterId, Version};
+use types::{BuildVersion, CanisterId};
 
 #[derive(CandidType, Serialize, Deserialize)]
 pub struct FailedUpgrade {
     pub canister_id: CanisterId,
-    pub from_version: Version,
-    pub to_version: Version,
+    pub from_version: BuildVersion,
+    pub to_version: BuildVersion,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct CanistersRequiringUpgrade {
-    pending: VecDeque<CanisterId>,
+    pending: VecDeque<(CanisterId, bool)>,
     in_progress: HashSet<CanisterId>,
     failed: VecDeque<FailedUpgrade>,
     completed: u64,
 }
 
 impl CanistersRequiringUpgrade {
-    pub fn enqueue(&mut self, canister_id: CanisterId) {
-        self.pending.push_back(canister_id);
+    pub fn enqueue(&mut self, canister_id: CanisterId, force: bool) {
+        self.pending.push_back((canister_id, force));
     }
 
-    pub fn try_take_next(&mut self) -> Option<CanisterId> {
-        let canister_id = self.pending.pop_front()?;
+    pub fn try_take_next(&mut self) -> Option<(CanisterId, bool)> {
+        let (canister_id, force) = self.pending.pop_front()?;
         self.in_progress.insert(canister_id);
-        Some(canister_id)
+        Some((canister_id, force))
     }
 
     pub fn clear(&mut self) {
@@ -96,7 +96,7 @@ pub struct Metrics {
 
 #[derive(CandidType, Serialize, Debug)]
 pub struct FailedUpgradeCount {
-    pub from_version: Version,
-    pub to_version: Version,
+    pub from_version: BuildVersion,
+    pub to_version: BuildVersion,
     pub count: usize,
 }

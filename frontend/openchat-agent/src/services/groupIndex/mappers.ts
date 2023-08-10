@@ -4,12 +4,14 @@ import type {
     FreezeGroupResponse,
     GroupMatch,
     RemoveHotGroupExclusionResponse,
+    SetCommunityModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     UnfreezeGroupResponse,
     CommunityMatch,
     GroupSearchResponse,
     ActiveGroupsResponse,
     ExploreCommunitiesResponse,
+    ChannelIdentifier,
 } from "openchat-shared";
 import type {
     ApiActiveGroupsResponse,
@@ -21,9 +23,11 @@ import type {
     ApiSearchResponse,
     ApiRecommendedGroupsResponse,
     ApiRemoveHotGroupExclusionResponse,
+    ApiSetCommunityModerationFlagsResponse,
     ApiSetUpgradeConcurrencyResponse,
     ApiUnfreezeGroupResponse,
     ApiExploreCommunitiesResponse,
+    ApiLookupChannelByGroupIdResponse,
 } from "./candid/idl";
 import {
     DeleteFrozenGroupResponse,
@@ -62,6 +66,20 @@ export function recommendedGroupsResponse(
         return candid.Success.groups.map(publicGroupSummary);
     }
     throw new Error(`Unknown GroupIndex.RecommendedGroupsResponse of ${candid}`);
+}
+
+export function lookupChannelResponse(
+    candid: ApiLookupChannelByGroupIdResponse
+): ChannelIdentifier | undefined {
+    if ("Success" in candid) {
+        return {
+            kind: "channel",
+            communityId: candid.Success.community_id.toString(),
+            channelId: candid.Success.channel_id.toString(),
+        };
+    }
+    console.warn("ApiLookupChannelByGroupIdResponse failed with ", candid);
+    return undefined;
 }
 
 export function exploreCommunitiesResponse(
@@ -236,6 +254,30 @@ export function setUpgradeConcurrencyResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetUpgradeConcurrencyResponse type received",
+        candid
+    );
+}
+
+export function setCommunityModerationFlagsResponse(
+    candid: ApiSetCommunityModerationFlagsResponse,
+): SetCommunityModerationFlagsResponse {
+    if ("Success" in candid || "Unchanged" in candid) {
+        return "success";
+    }
+    if ("CommunityNotFound" in candid) {
+        return "community_not_found";
+    }
+    if ("InvalidFlags" in candid) {
+        return "invalid_flags";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorized";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiSetCommunityModerationFlagsResponse type received",
         candid
     );
 }

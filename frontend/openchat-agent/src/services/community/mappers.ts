@@ -20,7 +20,6 @@ import {
     ExploreChannelsResponse,
     GateCheckFailedReason,
     ImportGroupResponse,
-    ManageDefaultChannelsResponse,
     MemberRole,
     Message,
     RemoveMemberResponse,
@@ -65,7 +64,6 @@ import type {
     ApiSelectedUpdatesResponse,
     ApiChannelSummaryResponse,
     ApiImportGroupResponse,
-    ApiManageDefaultChannelsResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -90,17 +88,6 @@ import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
 import { messageWrapper } from "../group/mappers";
 import { ReplicaNotUpToDateError } from "../error";
-
-export function manageDefaultChannelsResponse(
-    candid: ApiManageDefaultChannelsResponse
-): ManageDefaultChannelsResponse {
-    if ("Success" in candid) {
-        return CommonResponses.success();
-    } else {
-        console.warn("ManageDefaultChannels failed with ", candid);
-        return CommonResponses.failure();
-    }
-}
 
 export function addMembersToChannelResponse(
     candid: ApiAddMembersToChannelResponse
@@ -300,36 +287,10 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
         };
+    } else {
+        console.warn("SendMessage failed with", candid);
+        return CommonResponses.failure();
     }
-    if ("CallerNotInGroup" in candid) {
-        return { kind: "not_in_group" };
-    }
-    if ("TextTooLong" in candid) {
-        return { kind: "text_too_long" };
-    }
-    if ("MessageEmpty" in candid) {
-        return { kind: "message_empty" };
-    }
-    if ("InvalidRequest" in candid) {
-        return { kind: "invalid_request", reason: candid.InvalidRequest };
-    }
-    if ("InvalidPoll" in candid) {
-        return { kind: "invalid_poll" };
-    }
-    if ("NotAuthorized" in candid) {
-        return { kind: "not_authorized" };
-    }
-    if ("ThreadMessageNotFound" in candid) {
-        return { kind: "thread_message_not_found" };
-    }
-    if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-
-    return CommonResponses.failure();
 }
 
 export function exploreChannelsResponse(
@@ -355,7 +316,6 @@ export function channelMatch(candid: ApiChannelMatch, communityId: string): Chan
         name: candid.name,
         description: candid.description,
         memberCount: candid.member_count,
-        isDefault: candid.is_default,
         avatar: {
             blobReference: optional(candid.avatar_id, (blobId) => ({
                 blobId,
@@ -481,7 +441,6 @@ export function communityChannelUpdates(
         latestEventIndex: optional(candid.latest_event_index, identity),
         memberCount: optional(candid.member_count, identity),
         latestMessage: optional(candid.latest_message, messageEvent),
-        isDefault: optional(candid.is_default, identity),
     };
 }
 

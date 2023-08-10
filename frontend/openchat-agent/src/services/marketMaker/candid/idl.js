@@ -10,6 +10,7 @@ export const idlFactory = ({ IDL }) => {
     'min_sell_price' : IDL.Opt(IDL.Nat64),
     'order_size' : IDL.Opt(IDL.Nat64),
     'max_buy_price' : IDL.Opt(IDL.Nat64),
+    'spread' : IDL.Opt(IDL.Nat64),
     'max_orders_to_make_per_iteration' : IDL.Opt(IDL.Nat32),
     'max_orders_per_direction' : IDL.Opt(IDL.Nat32),
   });

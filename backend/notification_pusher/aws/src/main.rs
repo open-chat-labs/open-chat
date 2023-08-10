@@ -1,7 +1,7 @@
 use candid::Principal;
 use dynamodb_index_store::DynamoDbIndexStore;
 use notification_pusher_core::ic_agent::IcAgent;
-use notification_pusher_core::runner;
+use notification_pusher_core::run_notifications_pusher;
 use std::str::FromStr;
 use tracing::info;
 use types::Error;
@@ -29,20 +29,20 @@ async fn main() -> Result<(), Error> {
 
     info!("Configuration complete");
 
-    let futures: Vec<_> = notifications_canister_ids_string
+    let notifications_canister_ids: Vec<_> = notifications_canister_ids_string
         .split(';')
         .map(|str| Principal::from_text(str).unwrap())
-        .map(|notifications_canister_id| {
-            runner::run(
-                &ic_agent,
-                index_canister_id,
-                notifications_canister_id,
-                &dynamodb_index_store,
-                &vapid_private_pem,
-            )
-        })
         .collect();
 
-    futures::future::join_all(futures).await;
+    run_notifications_pusher(
+        ic_agent,
+        index_canister_id,
+        notifications_canister_ids,
+        dynamodb_index_store,
+        vapid_private_pem,
+        5,
+    )
+    .await;
+
     Ok(())
 }

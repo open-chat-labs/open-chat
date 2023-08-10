@@ -19,13 +19,8 @@ fn c2c_notify_group_deleted(args: Args) -> Response {
 fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     let chat_id = args.deleted_group.id;
-    let group_removed = state.data.group_chats.remove(chat_id, now);
-
-    if let Some(cached_groups) = &mut state.data.cached_group_summaries {
-        cached_groups.remove_group(&chat_id);
-    }
-
     let was_favourite = state.data.favourite_chats.remove(&Chat::Group(chat_id), now);
+    let group_removed = state.data.remove_group(chat_id, now);
 
     if let Some(CommunityImportedInto {
         community_name,
@@ -48,7 +43,7 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
         let (community, newly_joined) = state.data.communities.join(community_id, now);
 
         if let Some(group) = group_removed {
-            community.import_group(channel.channel_id, group);
+            community.import_group(channel.channel_id, group, now);
         } else {
             community.mark_read(
                 vec![ChannelMessagesRead {

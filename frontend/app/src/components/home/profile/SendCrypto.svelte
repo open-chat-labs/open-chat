@@ -22,10 +22,9 @@
     let targetAccount: string = "";
     let scanner: Scanner;
 
-    $: account = token === "icp" ? user.cryptoAccount : user.userId;
+    $: account = token === "ICP" ? user.cryptoAccount : user.userId;
     $: cryptoBalance = client.cryptoBalance;
     $: transferFees = cryptoLookup[token].transferFeesE8s;
-    $: symbol = cryptoLookup[token].symbol;
     $: {
         valid =
             validAmount &&
@@ -59,18 +58,18 @@
                     targetAccount = "";
                     dispatch("refreshBalance");
                     toastStore.showSuccessToast("cryptoAccount.sendSucceeded", {
-                        values: { symbol },
+                        values: { symbol: token },
                     });
                 } else {
                     dispatch("error", "cryptoAccount.sendFailed");
-                    client.logMessage(`Unable to withdraw ${symbol}`, resp);
-                    toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
+                    client.logMessage(`Unable to withdraw ${token}`, resp);
+                    toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol: token } });
                 }
             })
             .catch((err) => {
                 dispatch("error", "cryptoAccount.sendFailed");
-                client.logError(`Unable to withdraw ${symbol}`, err);
-                toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
+                client.logError(`Unable to withdraw ${token}`, err);
+                toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol: token } });
             })
             .finally(() => (sending = false));
     }

@@ -191,7 +191,7 @@ fn prepare(content: &MessageContentInitial, state: &RuntimeState) -> PrepareResu
             match &c.transfer {
                 CryptoTransaction::Pending(t) => {
                     let total_prize = c.prizes.iter().map(|t| t.e8s()).sum::<u64>() as u128;
-                    let prize_fees = c.prizes.len() as u128 * t.token().fee();
+                    let prize_fees = c.prizes.len() as u128 * t.token().fee().unwrap();
                     let total_amount_to_send = total_prize + prize_fees;
 
                     if t.units() != total_amount_to_send {

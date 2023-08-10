@@ -2,7 +2,7 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import { cryptoLookup, PartialUserSummary } from "openchat-client";
-    import type { Cryptocurrency, ChatSummary, OpenChat } from "openchat-client";
+    import type { ChatSummary, OpenChat } from "openchat-client";
     import type { CryptocurrencyContent } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
@@ -25,7 +25,7 @@
     const dispatch = createEventDispatcher();
 
     export let draftAmountE8s: bigint;
-    export let token: Cryptocurrency;
+    export let token: string;
     export let chat: ChatSummary;
     export let defaultReceiver: string | undefined;
 
@@ -43,9 +43,9 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let receiver: PartialUserSummary | undefined = undefined;
     let validAmount: boolean = false;
-    $: symbol = cryptoLookup[token].symbol;
-    $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
-    $: transferFees = cryptoLookup[token].transferFeesE8s;
+    $: tokenDetails = cryptoLookup[token];
+    $: howToBuyUrl = tokenDetails.howToBuyUrl;
+    $: transferFees = tokenDetails.transferFeesE8s;
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalanceE8s =
         draftAmountE8s > BigInt(0)
@@ -154,11 +154,11 @@
                 {#if zero || toppingUp}
                     <AccountInfo {token} {user} />
                     {#if zero}
-                        <p>{$_("tokenTransfer.zeroBalance", { values: { token: symbol } })}</p>
+                        <p>{$_("tokenTransfer.zeroBalance", { values: { token } })}</p>
                     {/if}
                     <p>{$_("tokenTransfer.makeDeposit")}</p>
                     <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                        {$_("howToBuyToken", { values: { token: symbol.toUpperCase() } })}
+                        {$_("howToBuyToken", { values: { token } })}
                     </a>
                 {:else}
                     {#if multiUserChat}
@@ -197,7 +197,7 @@
                                 <Alert size={$iconSize} color={"var(--warn"} />
                             </div>
                             <div class="alert-txt">
-                                {$_("tokenTransfer.warning", { values: { token: symbol } })}
+                                {$_("tokenTransfer.warning", { values: { token } })}
                             </div>
                         </div>
                     {/if}

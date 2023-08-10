@@ -65,6 +65,7 @@ fn remove_reaction_on_recipients_canister(
         reaction,
         added: false,
         username: "".to_string(),
+        user_avatar_id: None,
         correlation_id: 0,
     };
     fire_and_forget_handler.send(

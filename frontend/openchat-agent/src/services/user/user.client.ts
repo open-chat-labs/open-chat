@@ -7,60 +7,61 @@ import {
     ApiChatMessagesRead,
     ApiMarkReadArgs,
     ApiSendMessageArgs,
+    ApiSendMessageWithTransferToChannelArgs,
     ApiSendMessageWithTransferToGroupArgs,
     idlFactory,
     UserService,
 } from "./candid/idl";
-import {
-    type InitialStateResponse,
-    type UpdatesResponse,
-    type EventsResponse,
-    type CandidateGroupChat,
-    type CreateGroupResponse,
-    type DeleteGroupResponse,
-    type DirectChatEvent,
-    type Message,
-    type SendMessageResponse,
-    type BlockUserResponse,
-    type UnblockUserResponse,
-    type LeaveGroupResponse,
-    type MarkReadResponse,
-    type IndexRange,
-    type AddRemoveReactionResponse,
-    type DeleteMessageResponse,
-    type UndeleteMessageResponse,
-    type EditMessageResponse,
-    type MarkReadRequest,
-    type WithdrawCryptocurrencyResponse,
-    type CryptocurrencyContent,
-    type PendingCryptocurrencyWithdrawal,
-    type ArchiveChatResponse,
-    type BlobReference,
-    type CreatedUser,
-    type MigrateUserPrincipalResponse,
-    type PinChatResponse,
-    type PublicProfile,
-    type SearchDirectChatResponse,
-    type SetBioResponse,
-    type ToggleMuteNotificationResponse,
-    type UnpinChatResponse,
-    type DeletedDirectMessageResponse,
-    type EventWrapper,
-    type SetMessageReminderResponse,
-    type ChatEvent,
-    type EventsSuccessResult,
-    type CommunitySummary,
-    type CreateCommunityResponse,
-    type AccessRules,
-    type ChatIdentifier,
-    type DirectChatIdentifier,
-    type GroupChatIdentifier,
-    type ThreadRead,
-    type ManageFavouritesResponse,
-    chatIdentifierToString,
+import type {
+    InitialStateResponse,
+    UpdatesResponse,
+    EventsResponse,
+    CandidateGroupChat,
+    CreateGroupResponse,
+    DeleteGroupResponse,
+    DirectChatEvent,
+    Message,
+    SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    LeaveGroupResponse,
+    MarkReadResponse,
+    IndexRange,
+    AddRemoveReactionResponse,
+    DeleteMessageResponse,
+    UndeleteMessageResponse,
+    EditMessageResponse,
+    MarkReadRequest,
+    WithdrawCryptocurrencyResponse,
+    CryptocurrencyContent,
+    PendingCryptocurrencyWithdrawal,
+    ArchiveChatResponse,
+    BlobReference,
+    CreatedUser,
+    MigrateUserPrincipalResponse,
+    PinChatResponse,
+    PublicProfile,
+    SearchDirectChatResponse,
+    SetBioResponse,
+    ToggleMuteNotificationResponse,
+    UnpinChatResponse,
+    DeletedDirectMessageResponse,
+    EventWrapper,
+    SetMessageReminderResponse,
+    ChatEvent,
+    EventsSuccessResult,
+    CommunitySummary,
+    CreateCommunityResponse,
+    AccessRules,
+    ChatIdentifier,
+    DirectChatIdentifier,
+    GroupChatIdentifier,
+    ThreadRead,
+    ManageFavouritesResponse,
     CommunityIdentifier,
     LeaveCommunityResponse,
     DeleteCommunityResponse,
+    ChannelIdentifier,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -77,6 +78,7 @@ import {
     setBioResponse,
     unblockResponse,
     withdrawCryptoResponse,
+    sendMessageWithTransferToChannelResponse,
     sendMessageWithTransferToGroupResponse,
     publicProfileResponse,
     pinChatResponse,
@@ -577,7 +579,7 @@ export class UserClient extends CandidService {
             });
     }
 
-    sendMessageWithTransferToGroupToBackend(
+    private sendMessageWithTransferToGroupToBackend(
         groupId: GroupChatIdentifier,
         recipientId: string,
         sender: CreatedUser,
@@ -604,6 +606,59 @@ export class UserClient extends CandidService {
         return this.handleResponse(
             this.userService.send_message_with_transfer_to_group(req),
             (resp) => sendMessageWithTransferToGroupResponse(resp, event.event.sender, recipientId)
+        ).then((resp) => [resp, event.event]);
+    }
+
+    sendMessageWithTransferToChannel(
+        id: ChannelIdentifier,
+        recipientId: string,
+        sender: CreatedUser,
+        event: EventWrapper<Message>,
+        threadRootMessageIndex?: number
+    ): Promise<[SendMessageResponse, Message]> {
+        removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
+        return this.sendMessageWithTransferToChannelToBackend(
+            id,
+            recipientId,
+            sender,
+            event,
+            threadRootMessageIndex
+        )
+            .then(setCachedMessageFromSendResponse(this.db, id, event, threadRootMessageIndex))
+            .catch((err) => {
+                recordFailedMessage(this.db, id, event);
+                throw err;
+            });
+    }
+
+    private sendMessageWithTransferToChannelToBackend(
+        id: ChannelIdentifier,
+        recipientId: string,
+        sender: CreatedUser,
+        event: EventWrapper<Message>,
+        threadRootMessageIndex?: number
+    ): Promise<[SendMessageResponse, Message]> {
+        const content = apiPendingCryptoContent(event.event.content as CryptocurrencyContent);
+
+        const req: ApiSendMessageWithTransferToChannelArgs = {
+            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            content: {
+                Crypto: content,
+            },
+            sender_name: sender.username,
+            mentioned: [],
+            message_id: event.event.messageId,
+            community_id: Principal.fromText(id.communityId),
+            channel_id: BigInt(id.channelId),
+            replies_to: apiOptional(
+                (replyContext) => apiReplyContextArgs(id, replyContext),
+                event.event.repliesTo
+            ),
+        };
+        return this.handleResponse(
+            this.userService.send_message_with_transfer_to_channel(req),
+            (resp) =>
+                sendMessageWithTransferToChannelResponse(resp, event.event.sender, recipientId)
         ).then((resp) => [resp, event.event]);
     }
 
@@ -896,51 +951,23 @@ export class UserClient extends CandidService {
         }
     }
 
-    pinChat(
-        chatId: ChatIdentifier,
-        communitiesEnabled: boolean,
-        favourite: boolean
-    ): Promise<PinChatResponse> {
-        if (communitiesEnabled) {
-            return this.handleResponse(
-                this.userService.pin_chat_v2({
-                    chat: this.toChatInList(chatId, favourite),
-                }),
+    pinChat(chatId: ChatIdentifier, favourite: boolean): Promise<PinChatResponse> {
+        return this.handleResponse(
+            this.userService.pin_chat_v2({
+                chat: this.toChatInList(chatId, favourite),
+            }),
 
-                pinChatResponse
-            );
-        } else {
-            return this.handleResponse(
-                this.userService.pin_chat({
-                    chat_id: Principal.fromText(chatIdentifierToString(chatId)),
-                }),
-
-                pinChatResponse
-            );
-        }
+            pinChatResponse
+        );
     }
 
-    unpinChat(
-        chatId: ChatIdentifier,
-        communitiesEnabled: boolean,
-        favourite: boolean
-    ): Promise<UnpinChatResponse> {
-        if (communitiesEnabled) {
-            return this.handleResponse(
-                this.userService.unpin_chat_v2({
-                    chat: this.toChatInList(chatId, favourite),
-                }),
-                unpinChatResponse
-            );
-        } else {
-            return this.handleResponse(
-                this.userService.unpin_chat({
-                    chat_id: Principal.fromText(chatIdentifierToString(chatId)),
-                }),
-
-                pinChatResponse
-            );
-        }
+    unpinChat(chatId: ChatIdentifier, favourite: boolean): Promise<UnpinChatResponse> {
+        return this.handleResponse(
+            this.userService.unpin_chat_v2({
+                chat: this.toChatInList(chatId, favourite),
+            }),
+            unpinChatResponse
+        );
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {

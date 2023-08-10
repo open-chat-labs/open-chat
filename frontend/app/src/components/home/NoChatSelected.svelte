@@ -52,6 +52,7 @@
     <div class="wrapper community">
         <PreviewWrapper let:joinCommunity let:joiningCommunity>
             <CommunityCard
+                id={$selectedCommunity.id.communityId}
                 name={$selectedCommunity.name}
                 description={$selectedCommunity.description}
                 banner={$selectedCommunity.banner}
@@ -80,7 +81,7 @@
         {#if $chatListScope.kind === "community"}
             <Button on:click={showChannels}>{$_("communities.browseChannels")}</Button>
         {:else if $chatListScope.kind === "group_chat"}
-            <Button on:click={() => page("/hotgroups")}>{$_("showHotGroups")}</Button>
+            <Button on:click={() => page("/groups")}>{$_("discoverMoreGroups")}</Button>
         {/if}
     </div>
 {/if}
@@ -97,7 +98,7 @@
         text-align: center;
         align-items: center;
         height: 100%;
-        max-width: 50%;
+        max-width: 60%;
         margin: auto;
 
         &.community {
@@ -107,6 +108,7 @@
 
     .subtitle {
         margin-bottom: $sp5;
+        text-wrap: balance;
     }
 
     .join {

@@ -64,7 +64,7 @@ type ExploreChannelsArgs = record {
 type ExploreChannelsResponse = variant {
     Success : record {
         matches : vec ChannelMatch;
-        total: nat32;
+        total : nat32;
     };
     TermTooShort : nat8;
     TermTooLong : nat8;
@@ -193,7 +193,7 @@ type SelectedUpdatesSuccess = record {
 
 type ChannelSummaryArgs = record {
     channel_id : ChannelId;
-    invite_code: opt nat64;
+    invite_code : opt nat64;
 };
 
 type ChannelSummaryResponse = variant {
@@ -214,7 +214,7 @@ type SummaryResponse = variant {
 
 type ChannelSummaryUpdatesArgs = record {
     channel_id : ChannelId;
-    invite_code: opt nat64;
+    invite_code : opt nat64;
     updates_since : TimestampMillis;
 };
 
@@ -402,7 +402,6 @@ type CreateChannelArgs = record {
     permissions : opt GroupPermissions;
     events_ttl : opt Milliseconds;
     gate : opt AccessGate;
-    is_default : bool;
 };
 
 type CreateChannelResponse = variant {
@@ -533,26 +532,6 @@ type LeaveChannelResponse = variant {
     ChannelNotFound;
     UserNotInChannel;
     LastOwnerCannotLeave;
-};
-
-type ManageDefaultChannelsArgs = record {
-    to_add : vec ChannelId;
-    to_remove : vec ChannelId;
-};
-
-type ManageDefaultChannelsResponse = variant {
-    Success;
-    PartialSuccess : FailedChannels;
-    Failed : FailedChannels;
-    CommunityFrozen;
-    UserNotInCommunity;
-    UserSuspended;
-    NotAuthorized;
-};
-
-type FailedChannels = record {
-    not_found : vec ChannelId;
-    private : vec ChannelId;
 };
 
 type PinMessageArgs = record {
@@ -781,7 +760,6 @@ type UpdateChannelResponse = variant {
     UserSuspended;
     CommunityFrozen;
     CannotMakeChannelPublic;
-    CannotMakeDefaultChannelPrivate;
 };
 
 type UpdateCommunityArgs = record {
@@ -851,7 +829,6 @@ service : {
     enable_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     import_group : (ImportGroupArgs) -> (ImportGroupResponse);
     leave_channel : (LeaveChannelArgs) -> (LeaveChannelResponse);
-    manage_default_channels : (ManageDefaultChannelsArgs) -> (ManageDefaultChannelsResponse);
     pin_message : (PinMessageArgs) -> (PinMessageResponse);
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     register_proposal_vote : (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);

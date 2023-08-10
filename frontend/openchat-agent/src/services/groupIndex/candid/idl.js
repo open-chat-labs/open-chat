@@ -51,9 +51,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const ExploreCommunitiesArgs = IDL.Record({
     'page_size' : IDL.Nat8,
+    'include_moderation_flags' : IDL.Nat32,
     'page_index' : IDL.Nat32,
     'languages' : IDL.Vec(IDL.Text),
-    'exclude_moderation_flags' : IDL.Opt(IDL.Nat32),
     'search_term' : IDL.Opt(IDL.Text),
   });
   const Milliseconds = IDL.Nat64;
@@ -73,6 +73,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'moderation_flags' : IDL.Nat32,
+    'score' : IDL.Nat32,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'banner_id' : IDL.Opt(IDL.Nat),
     'member_count' : IDL.Nat32,
@@ -157,6 +158,15 @@ export const idlFactory = ({ IDL }) => {
       'expires_at' : IDL.Opt(TimestampMillis),
     }),
     'InternalError' : IDL.Text,
+  });
+  const LookupChannelByGroupIdArgs = IDL.Record({ 'group_id' : ChatId });
+  const ChannelId = IDL.Nat;
+  const LookupChannelByGroupIdResponse = IDL.Variant({
+    'NotFound' : IDL.Null,
+    'Success' : IDL.Record({
+      'channel_id' : ChannelId,
+      'community_id' : CommunityId,
+    }),
   });
   const RecommendedGroupsArgs = IDL.Record({
     'count' : IDL.Nat8,
@@ -249,6 +259,7 @@ export const idlFactory = ({ IDL }) => {
     'SNS1' : IDL.Null,
     'KINIC' : IDL.Null,
     'CKBTC' : IDL.Null,
+    'Other' : IDL.Text,
   });
   const PrizeContent = IDL.Record({
     'token' : Cryptocurrency,
@@ -349,18 +360,6 @@ export const idlFactory = ({ IDL }) => {
     'Mint' : IDL.Null,
     'Account' : Icrc1Account,
   });
-  const SnsCompletedCryptoTransaction = IDL.Record({
-    'to' : Icrc1AccountOrMint,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'block_index' : BlockIndex,
-    'from' : Icrc1AccountOrMint,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
   const Memo = IDL.Vec(IDL.Nat8);
   const Icrc1CompletedCryptoTransaction = IDL.Record({
     'to' : Icrc1AccountOrMint,
@@ -375,7 +374,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
-    'SNS' : SnsCompletedCryptoTransaction,
     'ICRC1' : Icrc1CompletedCryptoTransaction,
   });
   const MessageIndex = IDL.Nat32;
@@ -401,18 +399,6 @@ export const idlFactory = ({ IDL }) => {
     'ledger' : CanisterId,
     'amount' : Tokens,
   });
-  const SnsFailedCryptoTransaction = IDL.Record({
-    'to' : Icrc1AccountOrMint,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'from' : Icrc1AccountOrMint,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'error_message' : IDL.Text,
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
   const Icrc1FailedCryptoTransaction = IDL.Record({
     'to' : Icrc1AccountOrMint,
     'fee' : IDL.Nat,
@@ -426,7 +412,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const FailedCryptoTransaction = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
-    'SNS' : SnsFailedCryptoTransaction,
     'ICRC1' : Icrc1FailedCryptoTransaction,
   });
   const NnsUserOrAccount = IDL.Variant({
@@ -436,15 +421,6 @@ export const idlFactory = ({ IDL }) => {
   const NnsPendingCryptoTransaction = IDL.Record({
     'to' : NnsUserOrAccount,
     'fee' : IDL.Opt(Tokens),
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
-  const SnsPendingCryptoTransaction = IDL.Record({
-    'to' : Icrc1Account,
-    'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'memo' : IDL.Opt(IDL.Nat64),
@@ -462,7 +438,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const PendingCryptoTransaction = IDL.Variant({
     'NNS' : NnsPendingCryptoTransaction,
-    'SNS' : SnsPendingCryptoTransaction,
     'ICRC1' : Icrc1PendingCryptoTransaction,
   });
   const CryptoTransaction = IDL.Variant({
@@ -523,7 +498,6 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
   });
   const MessageId = IDL.Nat;
-  const ChannelId = IDL.Nat;
   const Chat = IDL.Variant({
     'Group' : ChatId,
     'Channel' : IDL.Tuple(CommunityId, ChannelId),
@@ -673,6 +647,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'freeze_group' : IDL.Func([FreezeGroupArgs], [FreezeGroupResponse], []),
+    'lookup_channel_by_group_id' : IDL.Func(
+        [LookupChannelByGroupIdArgs],
+        [LookupChannelByGroupIdResponse],
+        ['query'],
+      ),
     'recommended_groups' : IDL.Func(
         [RecommendedGroupsArgs],
         [RecommendedGroupsResponse],

@@ -17,7 +17,6 @@ import type {
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
-    GroupChatSummary,
     MemberRole,
     PinMessageResponse,
     UnpinMessageResponse,
@@ -44,8 +43,9 @@ import type {
     ChatEvent,
     GroupChatIdentifier,
     ConvertToCommunityResponse,
+    PublicGroupSummaryResponse,
 } from "openchat-shared";
-import { textToCode } from "openchat-shared";
+import { DestinationInvalidError, textToCode } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     apiRole,
@@ -55,7 +55,6 @@ import {
     blockUserResponse,
     unblockUserResponse,
     getMessagesByMessageIndexResponse,
-    registerProposalVoteResponse,
     apiOptionalGroupPermissions,
     apiGroupRules,
     rulesResponse,
@@ -102,6 +101,7 @@ import {
     unpinMessageResponse,
     groupDetailsResponse,
     groupDetailsUpdatesResponse,
+    registerProposalVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";
@@ -141,7 +141,14 @@ export class GroupClient extends CandidService {
     }
 
     summary(): Promise<GroupCanisterSummaryResponse> {
-        return this.handleQueryResponse(() => this.groupService.summary({}), summaryResponse, {});
+        return this.handleQueryResponse(() => this.groupService.summary({}), summaryResponse, {})
+            .catch((err) => {
+                if (err instanceof DestinationInvalidError) {
+                    return { kind: "canister_not_found" };
+                } else {
+                    throw err;
+                }
+            });
     }
 
     summaryUpdates(updatesSince: bigint): Promise<GroupCanisterSummaryUpdatesResponse> {
@@ -634,16 +641,13 @@ export class GroupClient extends CandidService {
         return mergeGroupChatDetails(previous, updatesResponse);
     }
 
-    getPublicSummary(): Promise<GroupChatSummary | undefined> {
+    getPublicSummary(): Promise<PublicGroupSummaryResponse> {
         const args = { invite_code: apiOptional(textToCode, this.inviteCode) };
         return this.handleQueryResponse(
             () => this.groupService.public_summary(args),
             publicSummaryResponse,
             args
-        ).catch((_err) => {
-            // whatever error we get, just assume that we cannot get hold of the group
-            return undefined;
-        });
+        );
     }
 
     getRules(): Promise<AccessRules | undefined> {

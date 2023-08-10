@@ -7,6 +7,7 @@ import type {
     FreezeGroupResponse,
     GroupChatSummary,
     RemoveHotGroupExclusionResponse,
+    SetCommunityModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     UnfreezeGroupResponse,
     GroupSearchResponse,
@@ -14,6 +15,7 @@ import type {
     GroupChatIdentifier,
     ActiveGroupsResponse,
     ExploreCommunitiesResponse,
+    ChannelIdentifier,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
@@ -23,11 +25,13 @@ import {
     freezeGroupResponse,
     recommendedGroupsResponse,
     removeHotGroupExclusionResponse,
+    setCommunityModerationFlagsResponse,
     setUpgradeConcurrencyResponse,
     unfreezeGroupResponse,
     searchGroupsResponse,
     activeGroupsResponse,
     exploreCommunitiesResponse,
+    lookupChannelResponse,
 } from "./mappers";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
@@ -90,6 +94,16 @@ export class GroupIndexClient extends CandidService {
         );
     }
 
+    lookupChannelByGroupId(id: GroupChatIdentifier): Promise<ChannelIdentifier | undefined> {
+        return this.handleQueryResponse(
+            () =>
+                this.groupIndexService.lookup_channel_by_group_id({
+                    group_id: Principal.fromText(id.groupId),
+                }),
+            lookupChannelResponse
+        );
+    }
+
     exploreCommunities(
         searchTerm: string | undefined,
         pageIndex: number,
@@ -99,7 +113,7 @@ export class GroupIndexClient extends CandidService {
     ): Promise<ExploreCommunitiesResponse> {
         const args = {
             languages,
-            exclude_moderation_flags: apiOptional(identity, flags),
+            include_moderation_flags: flags,
             page_size: pageSize,
             page_index: pageIndex,
             search_term: apiOptional(identity, searchTerm),
@@ -149,6 +163,13 @@ export class GroupIndexClient extends CandidService {
                 chat_id: Principal.fromText(chatId),
             }),
             removeHotGroupExclusionResponse
+        );
+    }
+
+    setCommunityModerationFlags(communityId: string, flags: number): Promise<SetCommunityModerationFlagsResponse> {
+        return this.handleResponse(
+            this.groupIndexService.set_community_moderation_flags({ community_id: Principal.fromText(communityId), flags }),
+            setCommunityModerationFlagsResponse
         );
     }
 

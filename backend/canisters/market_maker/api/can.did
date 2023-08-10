@@ -8,6 +8,7 @@ type UpdateConfigArgs = record {
     min_order_size : opt nat64;
     max_buy_price : opt nat64;
     min_sell_price : opt nat64;
+    spread: opt nat64;
     min_orders_per_direction : opt nat32;
     max_orders_per_direction : opt nat32;
     max_orders_to_make_per_iteration : opt nat32;

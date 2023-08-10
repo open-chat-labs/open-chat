@@ -48,7 +48,7 @@ pub(crate) fn extract_activity(now: TimestampMillis, data: &Data) -> PublicCommu
     let mut activity = PublicCommunityActivity {
         timestamp: now,
         member_count: data.members.len(),
-        channel_count: data.channels.public_channel_count(),
+        channel_count: data.channels.public_channels().len() as u32,
         ..Default::default()
     };
 

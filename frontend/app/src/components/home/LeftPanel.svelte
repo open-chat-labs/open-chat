@@ -19,6 +19,7 @@
             on:leaveCommunity
             on:deleteCommunity
             on:editCommunity
+            on:leaveGroup
             on:newChannel />
     </div>
 </Panel>

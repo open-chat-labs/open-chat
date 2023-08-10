@@ -65,21 +65,24 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         .filter(|u| state.data.members.get_by_user_id(u).map_or(false, |m| !m.suspended.value))
                         .collect();
 
-                    let mut trimmed_message = result.message_event.clone();
-                    trimmed_message.event.content.trim(500);
-
-                    let notification = Notification::ChannelMessageNotification(ChannelMessageNotification {
+                    let content = &result.message_event.event.content;
+                    let notification = Notification::ChannelMessage(ChannelMessageNotification {
                         community_id: state.env.canister_id().into(),
                         channel_id: args.channel_id,
                         thread_root_message_index: args.thread_root_message_index,
+                        message_index: result.message_event.event.message_index,
+                        event_index: result.message_event.index,
                         community_name: state.data.name.clone(),
                         channel_name: channel.chat.name.clone(),
                         sender: user_id,
                         sender_name: args.sender_name,
-                        message: trimmed_message,
-                        mentioned: args.mentioned,
+                        message_type: content.message_type().to_string(),
+                        message_text: content.notification_text(&args.mentioned),
+                        image_url: content.notification_image_url(),
+                        community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
+                        channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
+                        crypto_transfer: content.notification_crypto_transfer_details(&args.mentioned),
                     });
-
                     state.push_notification(users_to_notify, notification);
 
                     handle_activity_notification(state);

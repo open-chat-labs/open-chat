@@ -106,7 +106,6 @@ async fn create_channel(args: &Args, is_nns: bool) -> Result<MultiUserChat, Resp
         }),
         events_ttl: None,
         gate: None,
-        is_default: false,
     };
 
     let community_id = args.community_id.unwrap();

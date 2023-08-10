@@ -323,7 +323,7 @@
     .wrapper {
         width: 100%;
         overflow: hidden;
-        height: 550px;
+        height: 600px;
         position: relative;
 
         @include mobile() {

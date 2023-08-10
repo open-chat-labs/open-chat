@@ -2,6 +2,7 @@
     import HoverIcon from "../HoverIcon.svelte";
     import Microphone from "svelte-material-icons/Microphone.svelte";
     import RadioboxMarked from "svelte-material-icons/RadioboxMarked.svelte";
+    import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { toastStore } from "../../stores/toast";
     import type { AudioContent, OpenChat } from "openchat-client";
@@ -106,7 +107,7 @@
 
 {#if supported}
     <div on:click={toggle}>
-        <HoverIcon>
+        <HoverIcon title={recording ? $_("stopRecording") : $_("recordAudioMessage")}>
             {#if recording}
                 <RadioboxMarked size={$iconSize} color={"red"} />
             {:else}

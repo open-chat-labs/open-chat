@@ -30,7 +30,7 @@ pub async fn process_transaction(
     match icp_ledger_canister_c2c_client::transfer(transaction.ledger, &transfer_args).await {
         Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::NNS(types::nns::CompletedCryptoTransaction {
             ledger: transaction.ledger,
-            token: transaction.token,
+            token: transaction.token.clone(),
             amount: transaction.amount,
             fee,
             from: types::nns::CryptoAccount::Account(from),

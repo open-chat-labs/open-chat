@@ -2,8 +2,10 @@
     import { AvatarSize, OpenChat, chatIdentifiersEqual } from "openchat-client";
     import type { UserLookup, ChatSummary, TypersByKey, CommunitySummary } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import Heart from "svelte-material-icons/Heart.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
+    import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import PinIcon from "svelte-material-icons/Pin.svelte";
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
@@ -27,9 +29,10 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { notificationsSupported } from "../../utils/notifications";
-    import { communitiesEnabled } from "../../utils/features";
     import { toastStore } from "../../stores/toast";
     import { routeForScope, pathParams } from "../../routes";
+    import page from "page";
+    import { interpolateLevel } from "../../utils/i18n";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -45,6 +48,7 @@
     $: typersByContext = client.typersByContext;
     $: userStore = client.userStore;
     $: favouritesStore = client.favouritesStore;
+    $: menuColour = $mobileWidth ? "rgba(255,255,255,0.4)" : "var(--icon-txt)";
 
     const dispatch = createEventDispatcher();
     let hovering = false;
@@ -52,10 +56,7 @@
     let unreadMentions: number;
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const fav =
-            $communitiesEnabled &&
-            $chatListScope.kind !== "favourite" &&
-            $favouritesStore.has(chatSummary.id);
+        const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
         switch (chatSummary.kind) {
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
@@ -69,6 +70,7 @@
                         { chatId: chatSummary.id },
                         typing
                     ),
+                    fav,
                 };
             default:
                 return {
@@ -81,6 +83,7 @@
                         { chatId: chatSummary.id },
                         typing
                     ),
+                    fav,
                 };
         }
     }
@@ -238,6 +241,15 @@
         dispatch("unarchiveChat", chatSummary.id);
     }
 
+    function leaveGroup() {
+        if (chatSummary.kind === "direct_chat") return;
+        dispatch("leaveGroup", {
+            kind: "leave",
+            chatId: chatSummary.id,
+            level: chatSummary.level,
+        });
+    }
+
     $: displayDate = client.getDisplayDate(chatSummary);
     $: selectedCommunity = client.selectedCommunity;
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId);
@@ -301,19 +313,24 @@
         <!-- this date formatting is OK for now but we might want to use something like this:
         https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
         <div class:rtl={$rtlStore} class="chat-date">
-            {client.formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
-        </div>
-        {#if !readonly}
             {#if muted && notificationsSupported}
                 <div class="mute icon" class:rtl={$rtlStore}>
-                    <MutedIcon size={$iconSize} color={"var(--icon-txt)"} />
+                    <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
                 </div>
             {/if}
             {#if pinned}
                 <div class="pin icon">
-                    <PinIcon size={$iconSize} color={"var(--icon-txt)"} />
+                    <PinIcon size={"1em"} color={"var(--icon-txt)"} />
                 </div>
             {/if}
+            {#if chat.fav}
+                <div class="fav icon">
+                    <Heart size={"1em"} color={"var(--icon-txt)"} />
+                </div>
+            {/if}
+            {client.formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
+        </div>
+        {#if !readonly}
             {#if unreadMentions > 0}
                 <div
                     in:pop={{ duration: 1500 }}
@@ -321,7 +338,6 @@
                         values: { count: unreadMentions.toString() },
                     })}
                     class:rtl={$rtlStore}
-                    class:muted
                     class="notification mention">
                     @
                 </div>
@@ -341,33 +357,31 @@
             {#if !client.isReadOnly()}
                 <div class="menu">
                     <MenuIcon position={"bottom"} align={"end"}>
-                        <div class="menu-icon" slot="icon">
-                            <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt" />
+                        <div class="menu-icon" class:rtl={$rtlStore} slot="icon">
+                            <DotsVertical viewBox="0 -3 24 24" size="1.6em" color={menuColour} />
                         </div>
                         <div slot="menu">
                             <Menu>
-                                {#if $communitiesEnabled}
-                                    {#if !$favouritesStore.has(chatSummary.id)}
-                                        <MenuItem on:click={addToFavourites}>
-                                            <HeartPlus
-                                                size={$iconSize}
-                                                color={"var(--menu-warn)"}
-                                                slot="icon" />
-                                            <div slot="text">
-                                                {$_("communities.addToFavourites")}
-                                            </div>
-                                        </MenuItem>
-                                    {:else}
-                                        <MenuItem on:click={removeFromFavourites}>
-                                            <HeartMinus
-                                                size={$iconSize}
-                                                color={"var(--menu-warn)"}
-                                                slot="icon" />
-                                            <div slot="text">
-                                                {$_("communities.removeFromFavourites")}
-                                            </div>
-                                        </MenuItem>
-                                    {/if}
+                                {#if !$favouritesStore.has(chatSummary.id)}
+                                    <MenuItem on:click={addToFavourites}>
+                                        <HeartPlus
+                                            size={$iconSize}
+                                            color={"var(--menu-warn)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            {$_("communities.addToFavourites")}
+                                        </div>
+                                    </MenuItem>
+                                {:else}
+                                    <MenuItem on:click={removeFromFavourites}>
+                                        <HeartMinus
+                                            size={$iconSize}
+                                            color={"var(--menu-warn)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            {$_("communities.removeFromFavourites")}
+                                        </div>
+                                    </MenuItem>
                                 {/if}
                                 {#if !pinned}
                                     <MenuItem on:click={pinChat}>
@@ -420,6 +434,21 @@
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("archiveChat")}</div>
+                                    </MenuItem>
+                                {/if}
+                                {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
+                                    <MenuItem warning on:click={leaveGroup}>
+                                        <LocationExit
+                                            size={$iconSize}
+                                            color={"var(--menu-warn)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            {interpolateLevel(
+                                                "leaveGroup",
+                                                chatSummary.level,
+                                                true
+                                            )}
+                                        </div>
                                     </MenuItem>
                                 {/if}
                                 <MenuItem
@@ -522,6 +551,17 @@
             opacity: 0;
             position: relative;
             bottom: 0.4em;
+
+            @include mobile() {
+                width: 18px;
+                opacity: 1;
+                margin-left: 6px;
+
+                &.rtl {
+                    margin-left: unset;
+                    margin-right: 6px;
+                }
+            }
         }
 
         .icon {
@@ -539,11 +579,13 @@
             }
         }
 
-        &:hover {
-            .menu-icon {
-                transition-delay: 200ms;
-                width: 1.2em;
-                opacity: 1;
+        @media (hover) {
+            &:hover {
+                .menu-icon {
+                    transition-delay: 200ms;
+                    width: $sp4;
+                    opacity: 1;
+                }
             }
         }
     }
@@ -584,6 +626,8 @@
     }
 
     .chat-date {
+        display: flex;
+        gap: $sp2;
         position: absolute;
         color: var(--txt-light);
         @include font(book, normal, fs-60);
@@ -621,6 +665,7 @@
 
         &.muted {
             background-color: var(--unread-mute);
+            text-shadow: none;
         }
     }
 

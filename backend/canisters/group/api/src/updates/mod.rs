@@ -1,6 +1,7 @@
 pub mod add_reaction;
 pub mod block_user;
 pub mod c2c_delete_group;
+pub mod c2c_export_group;
 pub mod c2c_freeze_group;
 pub mod c2c_invite_users;
 pub mod c2c_join_group;
@@ -21,7 +22,6 @@ pub mod delete_messages;
 pub mod disable_invite_code;
 pub mod edit_message_v2;
 pub mod enable_invite_code;
-pub mod make_private;
 pub mod pin_message_v2;
 pub mod register_poll_vote;
 pub mod register_proposal_vote;

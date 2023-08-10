@@ -1,13 +1,17 @@
+use crate::jobs::import_groups::{finalize_group_import, mark_import_complete, process_channel_members};
 use crate::mutate_state;
 use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
-use types::{BlobReference, ChannelId, MessageId, MessageIndex};
+use types::{BlobReference, ChannelId, ChatId, MessageId, MessageIndex};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     HardDeleteMessageContent(HardDeleteMessageContentJob),
     DeleteFileReferences(DeleteFileReferencesJob),
     EndPoll(EndPollJob),
+    FinalizeGroupImport(FinalizeGroupImportJob),
+    ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob),
+    MarkGroupImportComplete(MarkGroupImportCompleteJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -29,12 +33,33 @@ pub struct EndPollJob {
     pub message_index: MessageIndex,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct FinalizeGroupImportJob {
+    pub group_id: ChatId,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ProcessGroupImportChannelMembersJob {
+    pub group_id: ChatId,
+    pub channel_id: ChannelId,
+    pub attempt: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MarkGroupImportCompleteJob {
+    pub group_id: ChatId,
+    pub channel_id: ChannelId,
+}
+
 impl Job for TimerJob {
     fn execute(&self) {
         match self {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::EndPoll(job) => job.execute(),
+            TimerJob::FinalizeGroupImport(job) => job.execute(),
+            TimerJob::ProcessGroupImportChannelMembers(job) => job.execute(),
+            TimerJob::MarkGroupImportComplete(job) => job.execute(),
         }
     }
 }
@@ -85,5 +110,23 @@ impl Job for EndPollJob {
                 // handle_activity_notification(state);
             }
         });
+    }
+}
+
+impl Job for FinalizeGroupImportJob {
+    fn execute(&self) {
+        finalize_group_import(self.group_id);
+    }
+}
+
+impl Job for ProcessGroupImportChannelMembersJob {
+    fn execute(&self) {
+        ic_cdk::spawn(process_channel_members(self.group_id, self.channel_id, self.attempt));
+    }
+}
+
+impl Job for MarkGroupImportCompleteJob {
+    fn execute(&self) {
+        mark_import_complete(self.group_id, self.channel_id);
     }
 }

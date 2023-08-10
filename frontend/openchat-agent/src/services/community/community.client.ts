@@ -26,7 +26,6 @@ import {
     changeRoleResponse,
     communityChannelSummaryResponse,
     importGroupResponse,
-    manageDefaultChannelsResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -57,6 +56,7 @@ import {
     searchGroupChatResponse,
     disableInviteCodeResponse,
     enableInviteCodeResponse,
+    registerProposalVoteResponse,
 } from "../common/chatMappers";
 import {
     type AccessGate,
@@ -108,7 +108,6 @@ import {
     type ExploreChannelsResponse,
     type GroupChatIdentifier,
     type ImportGroupResponse,
-    type ManageDefaultChannelsResponse,
     type RemoveMemberResponse,
     type SearchGroupChatResponse,
     textToCode,
@@ -116,6 +115,8 @@ import {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
+    RegisterProposalVoteResponse,
+    DestinationInvalidError,
 } from "openchat-shared";
 import {
     apiGroupRules,
@@ -167,19 +168,6 @@ export class CommunityClient extends CandidService {
         inviteCode: string | undefined
     ): CommunityClient {
         return new CommunityClient(communityId, identity, config, db, inviteCode);
-    }
-
-    manageDefaultChannels(
-        add: Set<string>,
-        remove: Set<string>
-    ): Promise<ManageDefaultChannelsResponse> {
-        return this.handleResponse(
-            this.service.manage_default_channels({
-                to_add: Array.from(add).map((id) => BigInt(id)),
-                to_remove: Array.from(remove).map((id) => BigInt(id)),
-            }),
-            manageDefaultChannelsResponse
-        );
     }
 
     addMembersToChannel(
@@ -269,7 +257,7 @@ export class CommunityClient extends CandidService {
                 permissions: [apiGroupPermissions(channel.permissions)],
                 rules: apiGroupRules(channel.rules),
                 gate: apiMaybeAccessGate(channel.gate),
-                is_default: channel.isDefault,
+                is_default: false,
             }),
             (resp) => createGroupResponse(resp, channel.id)
         );
@@ -959,7 +947,14 @@ export class CommunityClient extends CandidService {
                     invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
             (resp) => communityChannelSummaryResponse(resp, this.communityId)
-        );
+        )
+        .catch((err) => {
+            if (err instanceof DestinationInvalidError) {
+                return { kind: "canister_not_found" };
+            } else {
+                throw err;
+            }
+        });
     }
 
     importGroup(id: GroupChatIdentifier): Promise<ImportGroupResponse> {
@@ -1069,6 +1064,21 @@ export class CommunityClient extends CandidService {
                     latest_client_thread_update: apiOptional(identity, latestClientThreadUpdate),
                 }),
             (resp) => threadPreviewsResponse(resp, chatId, latestClientThreadUpdate)
+        );
+    }
+
+    registerProposalVote(
+        channelId: string,
+        messageIdx: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.handleResponse(
+            this.service.register_proposal_vote({
+                channel_id: BigInt(channelId),
+                adopt,
+                message_index: messageIdx,
+            }),
+            registerProposalVoteResponse
         );
     }
 

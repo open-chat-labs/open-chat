@@ -286,6 +286,7 @@ export const idlFactory = ({ IDL }) => {
     'SNS1' : IDL.Null,
     'KINIC' : IDL.Null,
     'CKBTC' : IDL.Null,
+    'Other' : IDL.Text,
   });
   const PrizeContent = IDL.Record({
     'token' : Cryptocurrency,
@@ -386,18 +387,6 @@ export const idlFactory = ({ IDL }) => {
     'Mint' : IDL.Null,
     'Account' : Icrc1Account,
   });
-  const SnsCompletedCryptoTransaction = IDL.Record({
-    'to' : Icrc1AccountOrMint,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'block_index' : BlockIndex,
-    'from' : Icrc1AccountOrMint,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
   const Memo = IDL.Vec(IDL.Nat8);
   const Icrc1CompletedCryptoTransaction = IDL.Record({
     'to' : Icrc1AccountOrMint,
@@ -412,7 +401,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
-    'SNS' : SnsCompletedCryptoTransaction,
     'ICRC1' : Icrc1CompletedCryptoTransaction,
   });
   const PrizeWinnerContent = IDL.Record({
@@ -437,18 +425,6 @@ export const idlFactory = ({ IDL }) => {
     'ledger' : CanisterId,
     'amount' : Tokens,
   });
-  const SnsFailedCryptoTransaction = IDL.Record({
-    'to' : Icrc1AccountOrMint,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'from' : Icrc1AccountOrMint,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'error_message' : IDL.Text,
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
   const Icrc1FailedCryptoTransaction = IDL.Record({
     'to' : Icrc1AccountOrMint,
     'fee' : IDL.Nat,
@@ -462,7 +438,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const FailedCryptoTransaction = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
-    'SNS' : SnsFailedCryptoTransaction,
     'ICRC1' : Icrc1FailedCryptoTransaction,
   });
   const NnsUserOrAccount = IDL.Variant({
@@ -472,15 +447,6 @@ export const idlFactory = ({ IDL }) => {
   const NnsPendingCryptoTransaction = IDL.Record({
     'to' : NnsUserOrAccount,
     'fee' : IDL.Opt(Tokens),
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
-  const SnsPendingCryptoTransaction = IDL.Record({
-    'to' : Icrc1Account,
-    'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'memo' : IDL.Opt(IDL.Nat64),
@@ -498,7 +464,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const PendingCryptoTransaction = IDL.Variant({
     'NNS' : NnsPendingCryptoTransaction,
-    'SNS' : SnsPendingCryptoTransaction,
     'ICRC1' : Icrc1PendingCryptoTransaction,
   });
   const CryptoTransaction = IDL.Variant({
@@ -601,7 +566,6 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
-    'is_default' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'next_message_expiry' : IDL.Opt(TimestampMillis),
     'membership' : IDL.Opt(ChannelMembership),
@@ -662,7 +626,6 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'events_ttl' : EventsTimeToLiveUpdate,
     'last_updated' : TimestampMillis,
-    'is_default' : IDL.Opt(IDL.Bool),
     'avatar_id' : DocumentIdUpdate,
     'membership' : IDL.Opt(ChannelMembershipUpdates),
     'latest_event_index' : IDL.Opt(EventIndex),
@@ -894,6 +857,7 @@ export const idlFactory = ({ IDL }) => {
     'old_permissions' : GroupPermissions,
     'new_permissions' : GroupPermissions,
   });
+  const MembersAddedToDefaultChannel = IDL.Record({ 'count' : IDL.Nat32 });
   const GroupFrozen = IDL.Record({
     'frozen_by' : UserId,
     'reason' : IDL.Opt(IDL.Text),
@@ -961,6 +925,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
+    'MembersAddedToDefaultChannel' : MembersAddedToDefaultChannel,
     'ChatFrozen' : GroupFrozen,
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
@@ -1020,7 +985,6 @@ export const idlFactory = ({ IDL }) => {
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
-    'is_default' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'member_count' : IDL.Nat32,
   });
@@ -1067,23 +1031,6 @@ export const idlFactory = ({ IDL }) => {
     'CommunityFrozen' : IDL.Null,
   });
   const LocalUserIndexResponse = IDL.Variant({ 'Success' : CanisterId });
-  const ManageDefaultChannelsArgs = IDL.Record({
-    'to_add' : IDL.Vec(ChannelId),
-    'to_remove' : IDL.Vec(ChannelId),
-  });
-  const FailedChannels = IDL.Record({
-    'not_found' : IDL.Vec(ChannelId),
-    'private' : IDL.Vec(ChannelId),
-  });
-  const ManageDefaultChannelsResponse = IDL.Variant({
-    'Failed' : FailedChannels,
-    'PartialSuccess' : FailedChannels,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserNotInCommunity' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-    'CommunityFrozen' : IDL.Null,
-  });
   const MessagesByMessageIndexArgs = IDL.Record({
     'channel_id' : ChannelId,
     'latest_client_event_index' : IDL.Opt(EventIndex),
@@ -1532,7 +1479,6 @@ export const idlFactory = ({ IDL }) => {
     'NameReserved' : IDL.Null,
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
-    'CannotMakeDefaultChannelPrivate' : IDL.Null,
     'NameTooShort' : FieldTooShortResult,
     'UserNotInChannel' : IDL.Null,
     'ChannelNotFound' : IDL.Null,
@@ -1664,11 +1610,6 @@ export const idlFactory = ({ IDL }) => {
         [EmptyArgs],
         [LocalUserIndexResponse],
         ['query'],
-      ),
-    'manage_default_channels' : IDL.Func(
-        [ManageDefaultChannelsArgs],
-        [ManageDefaultChannelsResponse],
-        [],
       ),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],

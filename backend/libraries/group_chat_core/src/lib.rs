@@ -214,7 +214,8 @@ impl GroupChatCore {
                         updates.role_changed = true;
                     }
                 }
-                ChatEventInternal::ParticipantsAdded(_)
+                ChatEventInternal::MembersAddedToPublicChannel(_)
+                | ChatEventInternal::ParticipantsAdded(_)
                 | ChatEventInternal::ParticipantsRemoved(_)
                 | ChatEventInternal::ParticipantJoined(_)
                 | ChatEventInternal::ParticipantLeft(_)
@@ -324,6 +325,11 @@ impl GroupChatCore {
                 }
                 ChatEventInternal::ParticipantLeft(p) => {
                     user_updates_handler.mark_member_updated(&mut result, p.user_id, true);
+                }
+                ChatEventInternal::MembersAddedToPublicChannel(m) => {
+                    for user_id in m.user_ids.iter() {
+                        user_updates_handler.mark_member_updated(&mut result, *user_id, false);
+                    }
                 }
                 ChatEventInternal::RoleChanged(rc) => {
                     for user_id in rc.user_ids.iter() {
@@ -1442,51 +1448,6 @@ impl GroupChatCore {
                     .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
             }
         }
-    }
-
-    // TODO: Delete this when FE starts using the new update method
-    pub fn make_private(&mut self, user_id: UserId, now: TimestampMillis) -> MakePrivateResult {
-        use MakePrivateResult::*;
-
-        let result = self.can_make_private(user_id);
-
-        if matches!(result, Success) {
-            self.do_make_private(user_id, now);
-        }
-
-        result
-    }
-
-    // TODO: Delete this when FE starts using the new update method
-    pub fn can_make_private(&self, user_id: UserId) -> MakePrivateResult {
-        use MakePrivateResult::*;
-
-        if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
-                UserSuspended
-            } else if !self.is_public {
-                AlreadyPrivate
-            } else if !member.role.can_change_group_visibility() {
-                NotAuthorized
-            } else {
-                Success
-            }
-        } else {
-            UserNotInGroup
-        }
-    }
-
-    // TODO: Delete this when FE starts using the new update method
-    pub fn do_make_private(&mut self, user_id: UserId, now: TimestampMillis) {
-        self.is_public = false;
-
-        let event = GroupVisibilityChanged {
-            now_public: false,
-            changed_by: user_id,
-        };
-
-        self.events
-            .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
     }
 
     fn events_reader(

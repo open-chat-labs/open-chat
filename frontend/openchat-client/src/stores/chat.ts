@@ -59,35 +59,27 @@ export const currentUserStore = immutableStore<CreatedUser | undefined>(undefine
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
 
-const communitiesEnabled = localStorage.getItem("openchat_communities_enabled") === "true";
-
 export const myServerChatSummariesStore = derived(
     [globalStateStore, chatListScopeStore],
     ([$allState, $scope]) => {
         const allChats = getAllChats($allState);
-        if (communitiesEnabled) {
-            if ($scope.kind === "community") {
-                const community = $allState.communities.get($scope.id);
-                return community
-                    ? ChatMap.fromList(community.channels)
-                    : new ChatMap<ChatSummary>();
-            } else if ($scope.kind === "group_chat") {
-                return $allState.groupChats;
-            } else if ($scope.kind === "direct_chat") {
-                return $allState.directChats;
-            } else if ($scope.kind === "favourite") {
-                return $allState.favourites.values().reduce((favs, chatId) => {
-                    const chat = allChats.get(chatId);
-                    if (chat !== undefined) {
-                        favs.set(chat.id, chat);
-                    }
-                    return favs;
-                }, new ChatMap<ChatSummary>());
-            } else {
-                return new ChatMap<ChatSummary>();
-            }
+        if ($scope.kind === "community") {
+            const community = $allState.communities.get($scope.id);
+            return community ? ChatMap.fromList(community.channels) : new ChatMap<ChatSummary>();
+        } else if ($scope.kind === "group_chat") {
+            return $allState.groupChats;
+        } else if ($scope.kind === "direct_chat") {
+            return $allState.directChats;
+        } else if ($scope.kind === "favourite") {
+            return $allState.favourites.values().reduce((favs, chatId) => {
+                const chat = allChats.get(chatId);
+                if (chat !== undefined) {
+                    favs.set(chat.id, chat);
+                }
+                return favs;
+            }, new ChatMap<ChatSummary>());
         } else {
-            return allChats;
+            return new ChatMap<ChatSummary>();
         }
     }
 );
@@ -120,12 +112,15 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
             all = all.concat([...previews.filter((c) => c.kind === "group_chat").entries()]);
         }
         if (currentScope.kind === "community") {
+            const communityId = currentScope.id.communityId;
             const previewChannels = ChatMap.fromList(
                 communityPreviews.get(currentScope.id)?.channels ?? []
             );
             all = all.concat([
                 ...previewChannels.entries(),
-                ...previews.filter((c) => c.kind === "channel").entries(),
+                ...previews
+                    .filter((c) => c.kind === "channel" && c.id.communityId === communityId)
+                    .entries(),
             ]);
         }
         return all.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
@@ -215,7 +210,7 @@ export const selectedMessageContext = derived(
         return undefined;
     }
 );
-export const chatsLoading = writable(false);
+export const chatsLoading = writable(true);
 export const chatsInitialised = writable(false);
 
 export const selectedServerChatStore = derived(
@@ -268,7 +263,7 @@ export function nextEventAndMessageIndexes(): [number, number] {
 export const isProposalGroup = derived([selectedChatStore], ([$selectedChat]) => {
     return (
         $selectedChat !== undefined &&
-        $selectedChat.kind === "group_chat" &&
+        $selectedChat.kind !== "direct_chat" &&
         $selectedChat.subtype?.kind === "governance_proposals"
     );
 });
@@ -309,7 +304,7 @@ export const proposalTopicsStore = derived(
     ([$selectedChat, $snsFunctions]): Map<number, string> => {
         if (
             $selectedChat !== undefined &&
-            $selectedChat.kind === "group_chat" &&
+            $selectedChat.kind !== "direct_chat" &&
             $selectedChat.subtype !== undefined
         ) {
             if ($selectedChat.subtype.isNns) {

@@ -66,7 +66,7 @@ type ExploreCommunitiesArgs = record {
     languages : vec text;
     page_index : nat32;
     page_size : nat8;
-    exclude_moderation_flags : opt nat32;
+    include_moderation_flags : nat32;
 };
 
 type ExploreCommunitiesResponse = variant {
@@ -98,6 +98,18 @@ type ExploreGroupsResponse = variant {
 type ExploreGroupsSuccess = record {
     matches : vec GroupMatch;
     total : nat32;
+};
+
+type LookupChannelByGroupIdArgs = record {
+    group_id : ChatId;
+};
+
+type LookupChannelByGroupIdResponse = variant {
+    Success : record {
+        community_id : CommunityId;
+        channel_id : ChannelId;
+    };
+    NotFound;
 };
 
 type FreezeCommunityArgs = record {
@@ -248,6 +260,7 @@ service : {
     search : (SearchArgs) -> (SearchResponse) query;
     explore_communities : (ExploreCommunitiesArgs) -> (ExploreCommunitiesResponse) query;
     explore_groups : (ExploreGroupsArgs) -> (ExploreGroupsResponse) query;
+    lookup_channel_by_group_id : (LookupChannelByGroupIdArgs) -> (LookupChannelByGroupIdResponse) query;
 
     // Only callable by "platform moderators"
     freeze_community : (FreezeCommunityArgs) -> (FreezeCommunityResponse);

@@ -53,6 +53,7 @@ import type {
     ResetInviteCodeResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
+    SetCommunityModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     DeclineInvitationResponse,
     ChatIdentifier,
@@ -60,6 +61,7 @@ import type {
     DirectChatIdentifier,
     ChannelIdentifier,
     MultiUserChatIdentifier,
+    PublicGroupSummaryResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -123,7 +125,6 @@ import type {
     DeleteCommunityResponse,
     ConvertToCommunityResponse,
     ImportGroupResponse,
-    ManageDefaultChannelsResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 /**
@@ -228,6 +229,7 @@ export type WorkerRequest =
     | DeleteFailedMessage
     | ClaimPrize
     | PayForDiamondMembership
+    | SetCommunityModerationFlags
     | SetGroupUpgradeConcurrency
     | SetUserUpgradeConcurrency
     | UpdateMarketMakerConfig
@@ -263,14 +265,12 @@ export type WorkerRequest =
     | DeleteCommunity
     | ConvertGroupToCommunity
     | ImportGroupToCommunity
-    | ManageDefaultChannels
+    | SetModerationFlags
     | ChangeCommunityRole;
 
-type ManageDefaultChannels = {
-    kind: "manageDefaultChannels";
-    id: CommunityIdentifier;
-    toAdd: Set<string>;
-    toRemove: Set<string>;
+type SetModerationFlags = {
+    kind: "setModerationFlags";
+    flags: number;
 };
 
 type ImportGroupToCommunity = {
@@ -418,7 +418,7 @@ type GetThreadPreviews = {
 };
 
 type RefreshAccountBalance = {
-    crypto: Cryptocurrency;
+    ledger: string;
     principal: string;
     kind: "refreshAccountBalance";
 };
@@ -479,7 +479,7 @@ type GetRecommendedGroups = {
 };
 
 type RegisterProposalVote = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageIndex: number;
     adopt: boolean;
     kind: "registerProposalVote";
@@ -673,14 +673,12 @@ type BlockUserFromDirectChat = {
 
 type UnpinChat = {
     chatId: ChatIdentifier;
-    communitiesEnabled: boolean;
     favourite: boolean;
     kind: "unpinChat";
 };
 
 type PinChat = {
     chatId: ChatIdentifier;
-    communitiesEnabled: boolean;
     favourite: boolean;
     kind: "pinChat";
 };
@@ -829,6 +827,12 @@ type SuspendUser = {
 type UnsuspendUser = {
     userId: string;
     kind: "unsuspendUser";
+};
+
+type SetCommunityModerationFlags = {
+    communityId: string;
+    flags: number;
+    kind: "setCommunityModerationFlags";
 };
 
 type SetGroupUpgradeConcurrency = {
@@ -999,7 +1003,7 @@ export type WorkerResponse =
     | Response<ConvertToCommunityResponse>
     | Response<ExploreChannelsResponse>
     | Response<ImportGroupResponse>
-    | Response<ManageDefaultChannelsResponse>
+    | Response<PublicGroupSummaryResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1259,7 +1263,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends GetUserStorageLimits
     ? StorageStatus
     : T extends GetPublicGroupSummary
-    ? GroupChatSummary | undefined
+    ? PublicGroupSummaryResponse
     : T extends ToggleMuteNotifications
     ? ToggleMuteNotificationResponse
     : T extends ArchiveChat
@@ -1384,6 +1388,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? SuspendUserResponse
     : T extends UnsuspendUser
     ? UnsuspendUserResponse
+    : T extends SetCommunityModerationFlags
+    ? SetCommunityModerationFlagsResponse
     : T extends SetGroupUpgradeConcurrency
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetUserUpgradeConcurrency
@@ -1464,6 +1470,4 @@ export type WorkerResult<T> = T extends PinMessage
     ? ConvertToCommunityResponse
     : T extends ImportGroupToCommunity
     ? ImportGroupResponse
-    : T extends ManageDefaultChannels
-    ? ManageDefaultChannelsResponse
     : never;

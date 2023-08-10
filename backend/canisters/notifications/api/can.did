@@ -1,1 +1,5 @@
-service : {}
+import "../../../libraries/types/can.did";
+
+service : {
+    notification_candid_check : (EmptyArgs) -> (Notification) query;
+};

@@ -153,6 +153,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-channel"
+version = "1.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "81953c529336010edd6d8e358f886d9581267795c61b19475b71314bffa46d35"
+dependencies = [
+ "concurrent-queue",
+ "event-listener",
+ "futures-core",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1066,6 +1077,7 @@ dependencies = [
  "rand",
  "search",
  "serde",
+ "serde_bytes",
  "serializer",
  "storage_bucket_client",
  "tracing",
@@ -1075,6 +1087,15 @@ dependencies = [
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
+]
+
+[[package]]
+name = "concurrent-queue"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62ec6771ecfa0762d24683ee5a32ad78487a3d3afdc0fb8cae19d2c5deb50b7c"
+dependencies = [
+ "crossbeam-utils",
 ]
 
 [[package]]
@@ -1119,6 +1140,15 @@ name = "crc32fast"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b540bd8bc810d3885c6ea91e2018302f68baba2129ab3e88f32389ee9370880d"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
+name = "crossbeam-utils"
+version = "0.8.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a22b2d63d4d1dc0b7f1b6b2747dd0088008a9be28b6ddf0b1e7d335e3037294"
 dependencies = [
  "cfg-if",
 ]
@@ -1448,6 +1478,12 @@ dependencies = [
  "cc",
  "libc",
 ]
+
+[[package]]
+name = "event-listener"
+version = "2.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 
 [[package]]
 name = "fallible_collections"
@@ -2962,6 +2998,7 @@ dependencies = [
 name = "notification_pusher_core"
 version = "0.1.0"
 dependencies = [
+ "async-channel",
  "async-trait",
  "base64 0.21.2",
  "futures",
@@ -2973,6 +3010,8 @@ dependencies = [
  "notifications_index_canister_client",
  "openssl",
  "serde",
+ "serde_bytes",
+ "serde_json",
  "tokio",
  "tracing",
  "types",
@@ -2987,6 +3026,7 @@ dependencies = [
  "candid_gen",
  "notifications_index_canister",
  "serde",
+ "serde_bytes",
  "types",
 ]
 
@@ -3032,6 +3072,7 @@ dependencies = [
  "notifications_canister",
  "notifications_index_canister",
  "serde",
+ "serde_bytes",
  "serializer",
  "tracing",
  "types",
@@ -3809,6 +3850,8 @@ dependencies = [
  "serde",
  "serializer",
  "sns_governance_canister_c2c_client",
+ "sns_swap_canister",
+ "sns_swap_canister_c2c_client",
  "sns_wasm_canister",
  "sns_wasm_canister_c2c_client",
  "tracing",
@@ -4474,6 +4517,27 @@ dependencies = [
  "canister_client",
  "ic-cdk",
  "sns_governance_canister",
+ "types",
+]
+
+[[package]]
+name = "sns_swap_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "sns_swap_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk",
+ "sns_swap_canister",
  "types",
 ]
 

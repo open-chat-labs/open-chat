@@ -142,6 +142,7 @@ pub(crate) fn send_message_with_reply(
         forwarding: false,
         correlation_id: 0,
         is_bot: true,
+        sender_avatar_id: None,
         now: state.env.now(),
     };
 

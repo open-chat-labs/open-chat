@@ -27,13 +27,11 @@ import {
     LocalMessageUpdates,
     LocalReaction,
     emptyChatMetrics,
-    Cryptocurrency,
     cryptoLookup,
     LocalPollVote,
     CryptocurrencyTransfer,
     Tally,
     getContentAsText,
-    eventIsVisible,
     AccessControlled,
     nullMembership,
     HasMembershipRole,
@@ -43,6 +41,8 @@ import {
     MultiUserChatIdentifier,
     MultiUserChat,
     ChatListScope,
+    CKBTC_SYMBOL,
+    ICP_SYMBOL,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -176,12 +176,13 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.updatedBy;
         case "users_invited":
             return event.invitedBy;
-        case "direct_chat_created":
         case "aggregate_common_events":
-        case "member_left": // We exclude participant_left events since the user is no longer in the group
         case "chat_frozen":
         case "chat_unfrozen":
+        case "direct_chat_created":
         case "empty":
+        case "member_left": // We exclude participant_left events since the user is no longer in the group
+        case "members_added_to_default_channel":
             return undefined;
         default:
             console.warn("Unexpected ChatEvent type received", event);
@@ -513,9 +514,24 @@ export function groupEvents(
     expandedDeletedMessages: Set<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][]
 ): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(sameDate, events.filter(eventIsVisible))
+    return groupWhile(sameDate, events.filter((e) => !isEventKindHidden(e.event.kind)))
         .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
         .map(groupInner ?? groupBySender);
+}
+
+export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
+    switch (kind) {
+        case "empty":
+        case "message_pinned":
+        case "message_unpinned":
+        case "member_left":
+        case "events_ttl_updated":
+        case "members_added_to_default_channel":
+            return true;
+
+        default:
+            return false;
+    }
 }
 
 function reduceJoinedOrLeft(
@@ -533,9 +549,8 @@ function reduceJoinedOrLeft(
 
     return events.reduce((previous: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
         if (
+            isEventKindHidden(e.event.kind) ||
             e.event.kind === "member_joined" ||
-            e.event.kind === "member_left" ||
-            e.event.kind === "empty" ||
             (e.event.kind === "message" &&
                 messageIsHidden(e.event, myUserId, expandedDeletedMessages))
         ) {
@@ -590,7 +605,7 @@ function messageIsHidden(message: Message, myUserId: string, expandedDeletedMess
 }
 
 export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapper<Message>[][] {
-    return groupWhile(sameDate, events.filter(eventIsVisible));
+    return groupWhile(sameDate, events.filter((e) => !isEventKindHidden(e.event.kind)));
 }
 
 export function getNextEventAndMessageIndexes(
@@ -1033,8 +1048,8 @@ export function buildBlobUrl(
         .replace("{blobType}", blobType)}${blobId}`;
 }
 
-function buildIdenticonUrl(userId: string): string {
-    const identicon = new Identicon(md5(userId), {
+export function buildIdenticonUrl(id: string): string {
+    const identicon = new Identicon(md5(id), {
         margin: 0,
         format: "svg",
     });
@@ -1319,9 +1334,9 @@ export function buildTransactionUrl(transfer: CryptocurrencyTransfer): string | 
     const rootCanister = cryptoLookup[transfer.token].rootCanister;
 
     switch (transfer.token) {
-        case "icp":
+        case ICP_SYMBOL:
             return `https://dashboard.internetcomputer.org/transaction/${transfer.transactionHash}`;
-        case "ckbtc":
+        case CKBTC_SYMBOL:
             return `https://dashboard.internetcomputer.org/bitcoin/transaction/${transfer.blockIndex}`;
         default:
             return `https://dashboard.internetcomputer.org/sns/${rootCanister}/transaction/${transfer.blockIndex}`;
@@ -1351,7 +1366,7 @@ export function buildCryptoTransferText(
         amount: formatTokens(content.transfer.amountE8s, 0),
         receiver: username(content.transfer.recipient),
         sender: username(senderId),
-        token: toSymbol(content.transfer.token),
+        token: content.transfer.token,
     };
 
     const key =
@@ -1362,10 +1377,6 @@ export function buildCryptoTransferText(
             : "pendingSent";
 
     return formatter(`tokenTransfer.${key}`, { values });
-}
-
-function toSymbol(token: Cryptocurrency): string {
-    return cryptoLookup[token].symbol;
 }
 
 export function stopTyping(

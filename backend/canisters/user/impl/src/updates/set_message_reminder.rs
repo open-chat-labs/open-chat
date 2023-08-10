@@ -28,7 +28,7 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
         return ReminderDateInThePast;
     }
 
-    let notes_len = args.notes.as_ref().map(|n| n.len()).unwrap_or_default();
+    let notes_len = args.notes.as_ref().map(|n| n.chars().count()).unwrap_or_default();
     if notes_len > MAX_NOTES_LENGTH {
         return NotesTooLong(FieldTooLongResult {
             length_provided: notes_len as u32,

@@ -20,7 +20,7 @@ impl CommunityMembers {
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,
-        default_channels: Vec<ChannelId>,
+        public_channels: Vec<ChannelId>,
         now: TimestampMillis,
     ) -> CommunityMembers {
         let member = CommunityMemberInternal {
@@ -28,7 +28,7 @@ impl CommunityMembers {
             date_added: now,
             role: CommunityRole::Owner,
             suspended: Timestamped::default(),
-            channels: default_channels.into_iter().collect(),
+            channels: public_channels.into_iter().collect(),
             channels_removed: Vec::new(),
         };
 

@@ -288,6 +288,7 @@ export const idlFactory = ({ IDL }) => {
     'SNS1' : IDL.Null,
     'KINIC' : IDL.Null,
     'CKBTC' : IDL.Null,
+    'Other' : IDL.Text,
   });
   const PrizeContent = IDL.Record({
     'token' : Cryptocurrency,
@@ -388,18 +389,6 @@ export const idlFactory = ({ IDL }) => {
     'Mint' : IDL.Null,
     'Account' : Icrc1Account,
   });
-  const SnsCompletedCryptoTransaction = IDL.Record({
-    'to' : Icrc1AccountOrMint,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'block_index' : BlockIndex,
-    'from' : Icrc1AccountOrMint,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
   const Memo = IDL.Vec(IDL.Nat8);
   const Icrc1CompletedCryptoTransaction = IDL.Record({
     'to' : Icrc1AccountOrMint,
@@ -414,7 +403,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
-    'SNS' : SnsCompletedCryptoTransaction,
     'ICRC1' : Icrc1CompletedCryptoTransaction,
   });
   const PrizeWinnerContent = IDL.Record({
@@ -439,18 +427,6 @@ export const idlFactory = ({ IDL }) => {
     'ledger' : CanisterId,
     'amount' : Tokens,
   });
-  const SnsFailedCryptoTransaction = IDL.Record({
-    'to' : Icrc1AccountOrMint,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'from' : Icrc1AccountOrMint,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'error_message' : IDL.Text,
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
   const Icrc1FailedCryptoTransaction = IDL.Record({
     'to' : Icrc1AccountOrMint,
     'fee' : IDL.Nat,
@@ -464,7 +440,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const FailedCryptoTransaction = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
-    'SNS' : SnsFailedCryptoTransaction,
     'ICRC1' : Icrc1FailedCryptoTransaction,
   });
   const NnsUserOrAccount = IDL.Variant({
@@ -474,15 +449,6 @@ export const idlFactory = ({ IDL }) => {
   const NnsPendingCryptoTransaction = IDL.Record({
     'to' : NnsUserOrAccount,
     'fee' : IDL.Opt(Tokens),
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
-  const SnsPendingCryptoTransaction = IDL.Record({
-    'to' : Icrc1Account,
-    'fee' : Tokens,
     'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'memo' : IDL.Opt(IDL.Nat64),
@@ -500,7 +466,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const PendingCryptoTransaction = IDL.Variant({
     'NNS' : NnsPendingCryptoTransaction,
-    'SNS' : SnsPendingCryptoTransaction,
     'ICRC1' : Icrc1PendingCryptoTransaction,
   });
   const CryptoTransaction = IDL.Variant({
@@ -673,6 +638,7 @@ export const idlFactory = ({ IDL }) => {
     'old_permissions' : GroupPermissions,
     'new_permissions' : GroupPermissions,
   });
+  const MembersAddedToDefaultChannel = IDL.Record({ 'count' : IDL.Nat32 });
   const GroupFrozen = IDL.Record({
     'frozen_by' : UserId,
     'reason' : IDL.Opt(IDL.Text),
@@ -746,6 +712,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
+    'MembersAddedToDefaultChannel' : MembersAddedToDefaultChannel,
     'ChatFrozen' : GroupFrozen,
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
@@ -1054,11 +1021,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
-  const PinChatRequest = IDL.Record({ 'chat_id' : ChatId });
-  const PinChatResponse = IDL.Variant({
-    'Success' : IDL.Null,
-    'PinnedLimitReached' : IDL.Nat32,
-  });
   const ChatInList = IDL.Variant({
     'Group' : ChatId,
     'Favourite' : Chat,
@@ -1287,8 +1249,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
-  const UnpinChatRequest = IDL.Record({ 'chat_id' : ChatId });
-  const UnpinChatResponse = IDL.Variant({ 'Success' : IDL.Null });
   const UnpinChatV2Request = IDL.Record({ 'chat' : ChatInList });
   const UnpinChatV2Response = IDL.Variant({
     'ChatNotFound' : IDL.Null,
@@ -1475,7 +1435,6 @@ export const idlFactory = ({ IDL }) => {
         [MuteNotificationsResponse],
         [],
       ),
-    'pin_chat' : IDL.Func([PinChatRequest], [PinChatResponse], []),
     'pin_chat_v2' : IDL.Func([PinChatV2Request], [PinChatV2Response], []),
     'public_profile' : IDL.Func(
         [PublicProfileArgs],
@@ -1526,7 +1485,6 @@ export const idlFactory = ({ IDL }) => {
         [UnmuteNotificationsResponse],
         [],
       ),
-    'unpin_chat' : IDL.Func([UnpinChatRequest], [UnpinChatResponse], []),
     'unpin_chat_v2' : IDL.Func([UnpinChatV2Request], [UnpinChatV2Response], []),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
     'withdraw_crypto_v2' : IDL.Func(

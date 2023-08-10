@@ -2,8 +2,6 @@ import {
     ChatEvent,
     Metrics,
     ChatSummary,
-    Cryptocurrency,
-    cryptoLookup,
     EventWrapper,
     extractUserIdsFromMentions,
     IndexRange,
@@ -80,11 +78,12 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "gate_updated":
                 userIds.add(e.event.updatedBy);
                 break;
-            case "direct_chat_created":
             case "aggregate_common_events":
             case "chat_frozen":
             case "chat_unfrozen":
+            case "direct_chat_created":
             case "empty":
+            case "members_added_to_default_channel":
             case "users_invited":
                 break;
             default:
@@ -109,7 +108,7 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
     } else if (content.kind === "crypto_content") {
         text = captionedContent(
             formatter("tokenTransfer.transfer", {
-                values: { token: toSymbol(content.transfer.token) },
+                values: { token: content.transfer.token },
             }),
             content.caption
         );
@@ -143,10 +142,6 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
     return text.trim();
-}
-
-function toSymbol(token: Cryptocurrency): string {
-    return cryptoLookup[token].symbol;
 }
 
 function captionedContent(type: string, caption?: string): string {
@@ -208,10 +203,6 @@ export function emptyChatMetrics(): Metrics {
         polls: 0,
         reactions: 0,
     };
-}
-
-export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
-    return ew.event.kind !== "message_pinned" && ew.event.kind !== "message_unpinned";
 }
 
 export function compareRoles(a: MemberRole, b: MemberRole): number {

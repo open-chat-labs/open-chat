@@ -444,7 +444,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "pinChat":
                 agent
-                    .pinChat(payload.chatId, payload.communitiesEnabled, payload.favourite)
+                    .pinChat(payload.chatId, payload.favourite)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -455,7 +455,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "unpinChat":
                 agent
-                    .unpinChat(payload.chatId, payload.communitiesEnabled, payload.favourite)
+                    .unpinChat(payload.chatId, payload.favourite)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -943,7 +943,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "refreshAccountBalance":
                 agent
-                    .refreshAccountBalance(payload.crypto, payload.principal)
+                    .refreshAccountBalance(payload.ledger, payload.principal)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1183,6 +1183,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "unsuspendUser":
                 agent
                     .unsuspendUser(payload.userId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "setCommunityModerationFlags":
+                agent
+                    .setCommunityModerationFlags(payload.communityId, payload.flags)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1632,10 +1643,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "manageDefaultChannels":
+            case "setModerationFlags":
                 agent
-                    .communityClient(payload.id.communityId)
-                    .manageDefaultChannels(payload.toAdd, payload.toRemove)
+                    .setModerationFlags(payload.flags)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

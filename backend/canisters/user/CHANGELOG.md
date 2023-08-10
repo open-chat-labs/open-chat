@@ -5,6 +5,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove SNS transaction types ([#4162](https://github.com/open-chat-labs/open-chat/pull/4162))
+
+## [[2.0.803](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.803-user)] - 2023-08-08
+
+### Changed
+
+- Remove any deleted groups which were missed ([#4117](https://github.com/open-chat-labs/open-chat/pull/4117))
+- Convert `SNS` transactions to `ICRC1` ([#4133](https://github.com/open-chat-labs/open-chat/pull/4133))
+- More efficient serialization of notifications ([#4134](https://github.com/open-chat-labs/open-chat/pull/4134))
+- Consolidate logic to remove group or community from user canister ([#4138](https://github.com/open-chat-labs/open-chat/pull/4138))
+- Remove deprecated `pin_chat` and `unpin_chat` ([#4139](https://github.com/open-chat-labs/open-chat/pull/4139))
+- Simplify notification types ([#4148](https://github.com/open-chat-labs/open-chat/pull/4148))
+- Validate text length based on number of chars rather than bytes ([#4154](https://github.com/open-chat-labs/open-chat/pull/4154))
+
+## [[2.0.775](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.775-user)] - 2023-08-01
+
+### Changed
+
+- Return imported groups in summary updates ([#4082](https://github.com/open-chat-labs/open-chat/pull/4082))
+- Return all channel updates after importing to community ([#4087](https://github.com/open-chat-labs/open-chat/pull/4087))
+
+## [[2.0.763](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.763-user)] - 2023-07-28
+
 ### Changed
 
 - Switch to using `active_groups` instead of `filter_groups` ([#4003](https://github.com/open-chat-labs/open-chat/pull/4003))
@@ -12,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Convert SNS transaction messages into ICRC1 messages ([#4015](https://github.com/open-chat-labs/open-chat/pull/4015))
 - Migrate group references to channel references after import ([#4019](https://github.com/open-chat-labs/open-chat/pull/4019))
 - Trim messages before pushing them as notifications ([#4020](https://github.com/open-chat-labs/open-chat/pull/4020))
+- Support sending any ICRC1 tokens ([#4026](https://github.com/open-chat-labs/open-chat/pull/4026))
 
 ### Removed
 
@@ -21,6 +47,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix check for direct chat updates to include pinned ([#4024](https://github.com/open-chat-labs/open-chat/pull/4024))
+- Ensure public channel names are ci unique ([#4044](https://github.com/open-chat-labs/open-chat/pull/4044))
 
 ## [[2.0.746](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.746-user)] - 2023-07-19
 

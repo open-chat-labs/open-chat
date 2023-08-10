@@ -102,11 +102,11 @@
 <div class:visible={showActions} class="message-actions" class:useDrawer class:rtl={$rtlStore}>
     <div class="emoji" on:click|stopPropagation={toggleEmojiPicker}>
         {#if messageAction === "emoji"}
-            <HoverIcon>
+            <HoverIcon title={$_("close")}>
                 <Close size={$iconSize} color={iconColour} />
             </HoverIcon>
         {:else}
-            <HoverIcon>
+            <HoverIcon title={$_("pickEmoji")}>
                 <Smiley color={iconColour} />
             </HoverIcon>
         {/if}

@@ -5,8 +5,6 @@
     import type { CryptocurrencyContent, OpenChat } from "openchat-client";
     import Markdown from "./Markdown.svelte";
     import { getContext } from "svelte";
-    import Wallet from "svelte-material-icons/WalletOutline.svelte";
-    import { cryptoLookup } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -16,7 +14,7 @@
     export let reply: boolean = false;
     export let senderId: string;
 
-    let symbol = cryptoLookup[content.transfer.token].symbol;
+    let token = content.transfer.token;
 
     $: transferText = client.buildCryptoTransferText($_, user.userId, senderId, content, me);
     $: transactionLinkText = client.buildTransactionLink($_, content.transfer);
@@ -25,17 +23,11 @@
 {#if transferText !== undefined}
     <div class="message">
         <div class="logo-wrapper">
-            <div class={`logo ${symbol.toLowerCase()}`} />
+            <div class={`logo ${token.toLowerCase()}`} />
         </div>
         <div class="details">
             <div class="transfer-txt">{transferText}</div>
             <div class="links">
-                <a href="?wallet" class="link icon">
-                    <Wallet viewBox={"0 -2 24 24"} size={"1.5em"} color={"var(--txt)"} />
-                </a>
-                <div class="link wallet">
-                    <Markdown text={`[${$_("wallet")}](?wallet)`} inline={!reply} />
-                </div>
                 {#if transactionLinkText !== undefined}
                     <div class="link transaction">
                         <Markdown text={transactionLinkText} inline={!reply} />
@@ -68,14 +60,6 @@
         margin-bottom: $sp3;
         cursor: pointer;
         @include font-size(fs-80);
-
-        &.wallet {
-            border-right: 1px solid var(--txt-light);
-        }
-
-        &.icon {
-            width: 10px;
-        }
     }
 
     .logo {
@@ -107,6 +91,9 @@
         }
         &.hot {
             background-image: url("/assets/hot_token.svg");
+        }
+        &.ghost {
+            background-image: url("/assets/ghost_token.jpeg");
         }
     }
 

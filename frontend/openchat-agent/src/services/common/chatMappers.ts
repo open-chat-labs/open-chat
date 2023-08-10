@@ -80,7 +80,6 @@ import {
     type TotalPollVotes,
     type DeletedContent,
     type CryptocurrencyContent,
-    type Cryptocurrency,
     type CryptocurrencyTransfer,
     type PendingCryptocurrencyTransfer,
     type CompletedCryptocurrencyTransfer,
@@ -156,6 +155,12 @@ import {
     KinicGovernanceCanisterId,
     HotOrNotGovernanceCanisterId,
     ThreadSyncDetails,
+    CHAT_SYMBOL,
+    CKBTC_SYMBOL,
+    ICP_SYMBOL,
+    KINIC_SYMBOL,
+    SNS1_SYMBOL,
+    RegisterProposalVoteResponse,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -185,6 +190,7 @@ import type {
     ApiEnableInviteCodeResponse,
     ApiDisableInviteCodeResponse,
     ApiResetInviteCodeResponse,
+    ApiRegisterProposalVoteResponse as ApiGroupRegisterProposalVoteResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -216,6 +222,7 @@ import type {
     ApiInviteCodeResponse as ApiCommunityInviteCodeResponse,
     ApiDisableInviteCodeResponse as ApiCommunityDisableInviteCodeResponse,
     ApiEnableInviteCodeResponse as ApiCommunityEnableInviteCodeResponse,
+    ApiRegisterProposalVoteResponse as ApiCommunityRegisterProposalVoteResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
@@ -544,30 +551,24 @@ function cryptoContent(candid: ApiCryptoContent, sender: string): Cryptocurrency
     };
 }
 
-export function token(candid: ApiCryptocurrency): Cryptocurrency {
-    if ("InternetComputer" in candid) return "icp";
-    if ("SNS1" in candid) return "sns1";
-    if ("CKBTC" in candid) return "ckbtc";
-    if ("CHAT" in candid) return "chat";
-    if ("KINIC" in candid) return "kinic";
-    if ("HotOrNot" in candid) return "hotornot";
+export function token(candid: ApiCryptocurrency): string {
+    if ("InternetComputer" in candid) return ICP_SYMBOL;
+    if ("SNS1" in candid) return SNS1_SYMBOL;
+    if ("CKBTC" in candid) return CKBTC_SYMBOL;
+    if ("CHAT" in candid) return CHAT_SYMBOL;
+    if ("KINIC" in candid) return KINIC_SYMBOL;
+    if ("Other" in candid) return candid.Other;
     throw new UnsupportedValueError("Unexpected ApiCryptocurrency type received", candid);
 }
 
-export function apiToken(token: Cryptocurrency): ApiCryptocurrency {
+export function apiToken(token: string): ApiCryptocurrency {
     switch (token) {
-        case "icp":
-            return { InternetComputer: null };
-        case "sns1":
-            return { SNS1: null };
-        case "ckbtc":
-            return { CKBTC: null };
-        case "chat":
-            return { CHAT: null };
-        case "kinic":
-            return { KINIC: null };
-        case "hotornot":
-            throw new Error("HotOrNot is not supported yet");
+        case ICP_SYMBOL: return { InternetComputer: null };
+        case SNS1_SYMBOL: return { SNS1: null };
+        case CKBTC_SYMBOL: return { CKBTC: null };
+        case CHAT_SYMBOL: return { CHAT: null };
+        case KINIC_SYMBOL: return { KINIC: null };
+        default: return { Other: token };
     }
 }
 
@@ -592,15 +593,15 @@ function pendingCryptoTransfer(
     candid: ApiPendingCryptoTransaction,
     recipient: string
 ): PendingCryptocurrencyTransfer {
-    if ("NNS" in candid || "SNS" in candid) {
-        const trans = "NNS" in candid ? candid.NNS : candid.SNS;
+    if ("NNS" in candid) {
+        const trans = candid.NNS;
         return {
             kind: "pending",
             ledger: trans.ledger.toString(),
             token: token(trans.token),
             recipient,
             amountE8s: trans.amount.e8s,
-            feeE8s: Array.isArray(trans.fee) ? optional(trans.fee, (f) => f.e8s) : trans.fee.e8s,
+            feeE8s: optional(trans.fee, (f) => f.e8s),
             memo: optional(trans.memo, identity),
             createdAtNanos: trans.created,
         };
@@ -626,9 +627,8 @@ export function completedCryptoTransfer(
     sender: string,
     recipient: string
 ): CompletedCryptocurrencyTransfer {
-    if ("NNS" in candid || "SNS" in candid) {
-        const isNns = "NNS" in candid;
-        const trans = isNns ? candid.NNS : candid.SNS;
+    if ("NNS" in candid) {
+        const trans = candid.NNS;
         return {
             kind: "completed",
             token: token(trans.token),
@@ -636,11 +636,9 @@ export function completedCryptoTransfer(
             sender,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
-            memo: Array.isArray(trans.memo)
-                ? optional(trans.memo, identity) ?? BigInt(0)
-                : trans.memo,
+            memo: trans.memo,
             blockIndex: trans.block_index,
-            transactionHash: isNns ? bytesToHexString(trans.transaction_hash) : undefined,
+            transactionHash: bytesToHexString(trans.transaction_hash),
         };
     }
     if ("ICRC1" in candid) {
@@ -666,17 +664,15 @@ export function failedCryptoTransfer(
     candid: ApiFailedCryptoTransaction,
     recipient: string
 ): FailedCryptocurrencyTransfer {
-    if ("NNS" in candid || "SNS" in candid) {
-        const trans = "NNS" in candid ? candid.NNS : candid.SNS;
+    if ("NNS" in candid) {
+        const trans = candid.NNS;
         return {
             kind: "failed",
             token: token(trans.token),
             recipient,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
-            memo: Array.isArray(trans.memo)
-                ? optional(trans.memo, identity) ?? BigInt(0)
-                : trans.memo,
+            memo: trans.memo,
             errorMessage: trans.error_message,
         };
     }
@@ -1313,7 +1309,7 @@ export function apiPendingCryptoContent(domain: CryptocurrencyContent): ApiCrypt
 
 function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoTransaction {
     if (domain.kind === "pending") {
-        if (domain.token === "icp") {
+        if (domain.token === "ICP") {
             return {
                 Pending: {
                     NNS: {
@@ -1354,7 +1350,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
 export function apiPendingCryptocurrencyWithdrawal(
     domain: PendingCryptocurrencyWithdrawal
 ): WithdrawCryptoArgs {
-    if (domain.token === "icp") {
+    if (domain.token === ICP_SYMBOL) {
         return {
             withdrawal: {
                 NNS: {
@@ -1459,7 +1455,6 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
             readByMeUpTo: latestMessage?.event.messageIndex,
             archived: false,
         },
-        isDefault: false,
     };
 }
 
@@ -1538,7 +1533,7 @@ export function communityChannelSummary(
         level: "channel",
         membership: {
             joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
-            notificationsMuted: false,
+            notificationsMuted: optional(candid.membership, (m) => m.notifications_muted) ?? false,
             role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
             myMetrics:
                 optional(candid.membership, (m) => chatMetrics(m.my_metrics)) ?? emptyChatMetrics(),
@@ -1548,7 +1543,6 @@ export function communityChannelSummary(
             mentions: [],
             archived: false,
         },
-        isDefault: candid.is_default,
     };
 }
 
@@ -1775,6 +1769,10 @@ export function createGroupResponse(
 
     if ("CommunityFrozen" in candid) {
         return CommonResponses.communityFrozen();
+    }
+
+    if ("DefaultMustBePublic" in candid) {
+        return { kind: "default_must_be_public" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
@@ -2137,4 +2135,52 @@ export function resetInviteCodeResponse(
         console.warn("ResetInviteCode failed with ", candid);
         return CommonResponses.failure();
     }
+}
+
+export function registerProposalVoteResponse(
+    candid: ApiGroupRegisterProposalVoteResponse | ApiCommunityRegisterProposalVoteResponse
+): RegisterProposalVoteResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AlreadyVoted" in candid) {
+        return "already_voted";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("UserNotInChannel" in candid) {
+        return "user_not_in_channel";
+    }
+    if ("ChannelNotFound" in candid) {
+        return "channel_not_found";
+    }
+    if ("UserNotInCommunity" in candid) {
+        return "user_not_in_community";
+    }
+    if ("CommunityFrozen" in candid) {
+        return "community_frozen";
+    }
+    if ("NoEligibleNeurons" in candid) {
+        return "no_eligible_neurons";
+    }
+    if ("ProposalNotAcceptingVotes" in candid) {
+        return "proposal_not_accepting_votes";
+    }
+    if ("ProposalNotFound" in candid) {
+        return "proposal_not_found";
+    }
+    if ("ProposalMessageNotFound" in candid) {
+        return "proposal_message_not_found";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiRegisterProposalVoteResponse type received", candid);
 }

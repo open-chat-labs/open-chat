@@ -5,15 +5,18 @@
     import Pound from "svelte-material-icons/Pound.svelte";
     import type { AccessGate, DataContent, OpenChat } from "openchat-client";
     import Avatar from "../../../Avatar.svelte";
+    import IntersectionObserver from "../../IntersectionObserver.svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "../../Markdown.svelte";
-    import { AvatarSize } from "openchat-client";
+    import { AvatarSize, ModerationFlags } from "openchat-client";
     import { getContext } from "svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
     import AccessGateIcon from "../../AccessGateIcon.svelte";
-    import { Flags, hasFlag } from "stores/communityFilters";
     import { supportedLanguagesByCode } from "../../../../i18n/i18n";
 
+    const client = getContext<OpenChat>("client");
+
+    export let id: string;
     export let name: string;
     export let description: string;
     export let avatar: DataContent;
@@ -29,32 +32,35 @@
 
     function serialiseFlags(flags: number) {
         const f: string[] = [supportedLanguagesByCode[language]?.name];
-        if (hasFlag(flags, Flags.Adult)) {
+        if (client.hasModerationFlag(flags, ModerationFlags.Adult)) {
             f.push(`${$_("communities.adult")}`);
         }
-        if (hasFlag(flags, Flags.Offensive)) {
+        if (client.hasModerationFlag(flags, ModerationFlags.Offensive)) {
             f.push(`${$_("communities.offensive")}`);
+        }
+        if (client.hasModerationFlag(flags, ModerationFlags.UnderReview)) {
+            f.push(`${$_("communities.underReview")}`);
         }
         return f;
     }
-
-    const client = getContext<OpenChat>("client");
 </script>
 
 <div class:header on:click class="card">
-    <CommunityBanner square={header} {banner}>
-        {#if !header}
-            <div class="gate">
-                <AccessGateIcon position={"bottom"} align={"end"} on:upgrade {gate} />
+    <IntersectionObserver let:intersecting>
+        <CommunityBanner {intersecting} square={header} {banner}>
+            {#if !header}
+                <div class="gate">
+                    <AccessGateIcon position={"bottom"} align={"end"} on:upgrade {gate} />
+                </div>
+            {/if}
+            <div class="avatar">
+                <Avatar
+                    url={client.communityAvatarUrl(id, avatar)}
+                    userId={undefined}
+                    size={AvatarSize.Default} />
             </div>
-        {/if}
-        <div class="avatar">
-            <Avatar
-                url={client.communityAvatarUrl(avatar)}
-                userId={undefined}
-                size={AvatarSize.Default} />
-        </div>
-    </CommunityBanner>
+        </CommunityBanner>
+    </IntersectionObserver>
     <div class="content">
         <div class="name">{name}</div>
         <div class="desc" class:fixed={!header}>
@@ -63,12 +69,12 @@
         {#if !header}
             <div class="footer">
                 <div class="footer-row">
-                    <div class="members">
+                    <div class="members" title={$_("members")}>
                         <span class="label"
                             ><AccountMultiple viewBox="0 -4 24 24" size={"1.2em"} /></span>
                         <span class="number">{memberCount.toLocaleString()}</span>
                     </div>
-                    <div class="channels">
+                    <div class="channels" title={$_("communities.publicChannels")}>
                         <span class="label"><Pound viewBox="0 -3 24 24" size={"1.2em"} /></span>
                         <span class="number">{channelCount.toLocaleString()}</span>
                     </div>
@@ -94,7 +100,7 @@
             width: toRem(48);
             height: toRem(48);
             position: absolute;
-            bottom: toRem(-15);
+            bottom: toRem(-24);
             left: $sp4;
         }
 

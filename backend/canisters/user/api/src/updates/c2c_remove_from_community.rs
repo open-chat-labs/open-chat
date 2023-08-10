@@ -2,7 +2,6 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::UserId;
 
-// TODO: Implement this method
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub removed_by: UserId,

@@ -42,7 +42,7 @@ impl GroupsBeingImported {
             NextBatchResult::Exit
         } else {
             let mut batch = Vec::new();
-            for (chat_id, group) in self.groups.iter_mut() {
+            for (chat_id, group) in self.groups.iter_mut().filter(|(_, g)| !g.is_complete()) {
                 if group.current_batch_started.is_none() {
                     group.current_batch_started = Some(now);
                     batch.push((*chat_id, group.bytes.len() as u64));

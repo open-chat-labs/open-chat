@@ -16,6 +16,7 @@ type MessageIndex = nat32;
 type Milliseconds = nat64;
 type NnsNeuronId = nat64;
 type ProposalId = nat64;
+type Reaction = text;
 type SnsNeuronId = blob;
 type TimestampMillis = nat64;
 type TimestampNanos = nat64;
@@ -34,12 +35,15 @@ type MultiUserChat = variant {
     Channel : record { CommunityId; ChannelId };
 };
 
-type AddedToGroupNotification = record {
-    chat_id : ChatId;
-    group_name : text;
+type AddedToChannelNotification = record {
+    community_id : CommunityId;
+    community_name : text;
+    channel_id : ChannelId;
+    channel_name : text;
     added_by : UserId;
     added_by_name : text;
-    timestamp : TimestampMillis;
+    community_avatar_id : opt nat;
+    channel_avatar_id : opt nat;
 };
 
 type AudioContent = record {
@@ -66,7 +70,7 @@ type CanisterUpgradeStatus = variant {
 
 type CanisterWasm = record {
     module : vec nat8;
-    version : Version;
+    version : BuildVersion;
     compressed : bool;
 };
 
@@ -143,16 +147,24 @@ type DirectChatSummaryUpdates = record {
 type DirectMessageNotification = record {
     sender : UserId;
     thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    event_index : EventIndex;
     sender_name : text;
-    message : MessageEventWrapper;
+    message_type : text;
+    message_text : opt text;
+    image_url : opt text;
+    sender_avatar_id : opt nat;
+    crypto_transfer : opt NotificationCryptoTransferDetails;
 };
 
 type DirectReactionAddedNotification = record {
     them : UserId;
+    thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    message_event_index : EventIndex;
     username : text;
-    message : MessageEventWrapper;
-    reaction : text;
-    timestamp : TimestampMillis;
+    reaction : Reaction;
+    user_avatar_id : opt nat;
 };
 
 type FieldTooShortResult = record {
@@ -241,7 +253,7 @@ type GroupChatSummary = record {
     latest_threads : vec ThreadSyncDetails;
     archived : bool;
     frozen : opt FrozenGroupInfo;
-    wasm_version : Version;
+    wasm_version : BuildVersion;
     date_last_pinned : opt TimestampMillis;
     date_read_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
@@ -273,7 +285,7 @@ type GroupCanisterGroupChatSummary = record {
     my_metrics : ChatMetrics;
     latest_threads : vec GroupCanisterThreadDetails;
     frozen : opt FrozenGroupInfo;
-    wasm_version : Version;
+    wasm_version : BuildVersion;
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
     expired_messages : vec MessageIndexRange;
@@ -301,7 +313,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     latest_threads : vec GroupCanisterThreadDetails;
     notifications_muted : opt bool;
     frozen : FrozenGroupUpdate;
-    wasm_version : opt Version;
+    wasm_version : opt BuildVersion;
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
     newly_expired_messages : vec MessageIndexRange;
@@ -355,7 +367,6 @@ type CommunityCanisterChannelSummary = record {
     next_message_expiry : opt TimestampMillis;
     gate : opt AccessGate;
     membership : opt ChannelMembership;
-    is_default : bool;
 };
 
 type ChannelMembership = record {
@@ -410,7 +421,6 @@ type CommunityCanisterChannelSummaryUpdates = record {
     events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
     membership : opt ChannelMembershipUpdates;
-    is_default : opt bool;
 };
 
 type ChannelMembershipUpdates = record {
@@ -517,15 +527,37 @@ type FrozenGroupUpdate = variant {
     SetToSome : FrozenGroupInfo;
 };
 
+type ChannelMessageNotification = record {
+    community_id : CommunityId;
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    event_index : EventIndex;
+    community_name : text;
+    channel_name : text;
+    sender : UserId;
+    sender_name : text;
+    message_type : text;
+    message_text : opt text;
+    image_url : opt text;
+    community_avatar_id : opt nat;
+    channel_avatar_id : opt nat;
+    crypto_transfer : opt NotificationCryptoTransferDetails;
+};
+
 type GroupMessageNotification = record {
     chat_id : ChatId;
     thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    event_index : EventIndex;
     group_name : text;
     sender : UserId;
     sender_name : text;
-    message : MessageEventWrapper;
-    mentioned : vec User;
-    hide : bool;
+    message_type : text;
+    message_text : opt text;
+    image_url : opt text;
+    group_avatar_id : opt nat;
+    crypto_transfer : opt NotificationCryptoTransferDetails;
 };
 
 type GroupNameChanged = record {
@@ -534,15 +566,31 @@ type GroupNameChanged = record {
     changed_by : UserId;
 };
 
+type ChannelReactionAddedNotification = record {
+    community_id : CommunityId;
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_index: MessageIndex;
+    message_event_index : EventIndex;
+    community_name : text;
+    channel_name : text;
+    added_by : UserId;
+    added_by_name : text;
+    reaction : Reaction;
+    community_avatar_id : opt nat;
+    channel_avatar_id : opt nat;
+};
+
 type GroupReactionAddedNotification = record {
     chat_id : ChatId;
     thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    message_event_index : EventIndex;
     group_name : text;
     added_by : UserId;
     added_by_name : text;
-    message : MessageEventWrapper;
-    reaction : text;
-    timestamp : TimestampMillis;
+    reaction : Reaction;
+    group_avatar_id : opt nat;
 };
 
 type GroupReplyContext = record {
@@ -596,7 +644,7 @@ type PublicGroupSummary = record {
     frozen : opt FrozenGroupInfo;
     events_ttl : opt Milliseconds;
     gate : opt AccessGate;
-    wasm_version : Version;
+    wasm_version : BuildVersion;
 };
 
 type ReplyContext = record {
@@ -685,16 +733,27 @@ type MessageMatch = record {
 };
 
 type Notification = variant {
-    AddedToGroupNotification : AddedToGroupNotification;
-    DirectMessageNotification : DirectMessageNotification;
-    GroupMessageNotification : GroupMessageNotification;
-    DirectReactionAddedNotification : DirectReactionAddedNotification;
-    GroupReactionAddedNotification : GroupReactionAddedNotification;
+    AddedToChannel : AddedToChannelNotification;
+    ChannelMessage : ChannelMessageNotification;
+    DirectMessage : DirectMessageNotification;
+    GroupMessage : GroupMessageNotification;
+    ChannelReactionAdded : ChannelReactionAddedNotification;
+    DirectReactionAdded : DirectReactionAddedNotification;
+    GroupReactionAdded : GroupReactionAddedNotification;
 };
 
 type NotificationEnvelope = record {
     recipients : vec UserId;
-    notification : Notification;
+    notification_bytes : vec nat8;
+    timestamp : TimestampMillis;
+};
+
+type NotificationCryptoTransferDetails = record {
+    recipient : UserId;
+    recipient_username : opt text;
+    ledger : CanisterId;
+    symbol : text;
+    amount : nat;
 };
 
 type PartialUserSummary = record {
@@ -920,7 +979,7 @@ type UserSummary = record {
     diamond_member : bool;
 };
 
-type Version = record {
+type BuildVersion = record {
     major : nat32;
     minor : nat32;
     patch : nat32;
@@ -932,6 +991,7 @@ type Cryptocurrency = variant {
     CKBTC;
     CHAT;
     KINIC;
+    Other : text;
 };
 
 type CryptoTransaction = variant {
@@ -942,19 +1002,16 @@ type CryptoTransaction = variant {
 
 type PendingCryptoTransaction = variant {
     NNS : NnsPendingCryptoTransaction;
-    SNS : SnsPendingCryptoTransaction;
     ICRC1 : Icrc1PendingCryptoTransaction;
 };
 
 type CompletedCryptoTransaction = variant {
     NNS : NnsCompletedCryptoTransaction;
-    SNS : SnsCompletedCryptoTransaction;
     ICRC1 : Icrc1CompletedCryptoTransaction;
 };
 
 type FailedCryptoTransaction = variant {
     NNS : NnsFailedCryptoTransaction;
-    SNS : SnsFailedCryptoTransaction;
     ICRC1 : Icrc1FailedCryptoTransaction;
 };
 
@@ -1002,42 +1059,6 @@ type NnsUserOrAccount = variant {
 type NnsCryptoAccount = variant {
     Mint;
     Account : AccountIdentifier;
-};
-
-type SnsPendingCryptoTransaction = record {
-    ledger : CanisterId;
-    token : Cryptocurrency;
-    amount : Tokens;
-    to : Icrc1Account;
-    fee : Tokens;
-    memo : opt nat64;
-    created : TimestampNanos;
-};
-
-type SnsCompletedCryptoTransaction = record {
-    ledger : CanisterId;
-    token : Cryptocurrency;
-    amount : Tokens;
-    fee : Tokens;
-    from : Icrc1AccountOrMint;
-    to : Icrc1AccountOrMint;
-    memo : opt nat64;
-    created : TimestampNanos;
-    transaction_hash : TransactionHash;
-    block_index : BlockIndex;
-};
-
-type SnsFailedCryptoTransaction = record {
-    ledger : CanisterId;
-    token : Cryptocurrency;
-    amount : Tokens;
-    fee : Tokens;
-    from : Icrc1AccountOrMint;
-    to : Icrc1AccountOrMint;
-    memo : opt nat64;
-    created : TimestampNanos;
-    transaction_hash : TransactionHash;
-    error_message : text;
 };
 
 type Icrc1AccountOrMint = variant {
@@ -1328,7 +1349,7 @@ type UsersInvited = record {
 };
 
 type MembersAddedToDefaultChannel = record {
-    count: nat32;
+    count : nat32;
 };
 
 type ReportedMessage = record {
@@ -1347,6 +1368,7 @@ type EmptyArgs = record {};
 
 type CommunityMatch = record {
     id : CommunityId;
+    score : nat32;
     name : text;
     description : text;
     avatar_id : opt nat;
@@ -1375,7 +1397,6 @@ type ChannelMatch = record {
     avatar_id : opt nat;
     member_count : nat32;
     gate : opt AccessGate;
-    is_default : bool;
 };
 
 type ThreadPreview = record {

@@ -5,10 +5,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove SNS transaction types ([#4162](https://github.com/open-chat-labs/open-chat/pull/4162))
+
+## [[2.0.802](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.802-group)] - 2023-08-08
+
+### Changed
+
+- Serialize chat state more efficiently ([#4092](https://github.com/open-chat-labs/open-chat/pull/4092))
+- More efficient serialization of notifications ([#4134](https://github.com/open-chat-labs/open-chat/pull/4134))
+- Simplify notification types ([#4148](https://github.com/open-chat-labs/open-chat/pull/4148))
+- Validate text length based on number of chars rather than bytes ([#4154](https://github.com/open-chat-labs/open-chat/pull/4154))
+
+### Removed
+
+- Remove `make_private` which is superseded by `update_group` ([#4122](https://github.com/open-chat-labs/open-chat/pull/4122))
+
+## [[2.0.774](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.774-group)] - 2023-07-31
+
+### Changed
+
+- Serialize bytes more efficiently when importing group to community ([#4080](https://github.com/open-chat-labs/open-chat/pull/4080))
+- Allow retrying the failed group imports ([#4084](https://github.com/open-chat-labs/open-chat/pull/4084))
+- Make `c2c_export_group` an update call to perform cycles check ([#4086](https://github.com/open-chat-labs/open-chat/pull/4086))
+
+## [[2.0.763](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.763-group)] - 2023-07-19
+
 ### Changed
 
 - Convert SNS transaction messages into ICRC1 messages ([#4015](https://github.com/open-chat-labs/open-chat/pull/4015))
 - Trim messages before pushing them as notifications ([#4020](https://github.com/open-chat-labs/open-chat/pull/4020))
+- Support sending any ICRC1 tokens ([#4026](https://github.com/open-chat-labs/open-chat/pull/4026))
 
 ## [[2.0.745](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.745-group)] - 2023-07-19
 

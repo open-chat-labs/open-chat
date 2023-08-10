@@ -60,7 +60,7 @@ fn handle_notification(
     now: TimestampMillis,
     state: &mut RuntimeState,
 ) {
-    if let Some(message) = state
+    if let Some(message_event) = state
         .data
         .chat
         .events
@@ -69,26 +69,27 @@ fn handle_notification(
         // the notification with data for the current user (eg. their poll votes).
         .and_then(|events_reader| events_reader.message_event(message_id.into(), None))
     {
-        if message.event.sender != user_id {
+        if message_event.event.sender != user_id {
             let notifications_muted = state
                 .data
                 .chat
                 .members
-                .get(&message.event.sender)
+                .get(&message_event.event.sender)
                 .map_or(true, |p| p.notifications_muted.value || p.suspended.value);
 
             if !notifications_muted {
                 state.push_notification(
-                    vec![message.event.sender],
-                    Notification::GroupReactionAddedNotification(GroupReactionAddedNotification {
+                    vec![message_event.event.sender],
+                    Notification::GroupReactionAdded(GroupReactionAddedNotification {
                         chat_id: state.env.canister_id().into(),
                         thread_root_message_index,
+                        message_index: message_event.event.message_index,
+                        message_event_index: message_event.index,
                         group_name: state.data.chat.name.clone(),
                         added_by: user_id,
                         added_by_name: username,
-                        message,
                         reaction,
-                        timestamp: now,
+                        group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
                     }),
                 );
             }

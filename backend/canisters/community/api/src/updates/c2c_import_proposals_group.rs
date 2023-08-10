@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use types::ChatId;
+use types::{ChannelId, ChatId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -8,6 +8,6 @@ pub struct Args {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(ChannelId),
     InternalError(String),
 }

@@ -1,6 +1,6 @@
 use crate::{
-    AccessGate, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember, GroupPermissions, GroupRole,
-    HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis, UserId, Version,
+    AccessGate, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember, GroupPermissions,
+    GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis, UserId,
     MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
@@ -52,7 +52,7 @@ pub struct GroupChatSummary {
     pub participant_count: u32,
     pub role: GroupRole,
     pub mentions: Vec<HydratedMention>,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub permissions: GroupPermissions,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
@@ -98,7 +98,7 @@ pub struct PublicGroupSummary {
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
     pub participant_count: u32,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub is_public: bool,
     pub frozen: Option<FrozenGroupInfo>,
     pub events_ttl: Option<Milliseconds>,
@@ -123,7 +123,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub participant_count: u32,
     pub role: GroupRole,
     pub mentions: Vec<HydratedMention>,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub permissions: GroupPermissions,
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
@@ -212,7 +212,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub participant_count: Option<u32>,
     pub role: Option<GroupRole>,
     pub mentions: Vec<HydratedMention>,
-    pub wasm_version: Option<Version>,
+    pub wasm_version: Option<BuildVersion>,
     pub permissions: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,

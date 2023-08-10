@@ -15,7 +15,8 @@ export LEDGER_CANISTER_SNS1=zfcdd-tqaaa-aaaaq-aaaga-cai
 export LEDGER_CANISTER_BTC=mxzaz-hqaaa-aaaar-qaada-cai
 export LEDGER_CANISTER_CHAT=2ouva-viaaa-aaaaq-aaamq-cai
 export LEDGER_CANISTER_KINIC=73mez-iiaaa-aaaaq-aaasq-cai
-export LEDGER_CANISTER_HOTORNOT=67bll-riaaa-aaaaq-aaauq-cai
+export LEDGER_CANISTER_HOTORNOT=6rdgd-kyaaa-aaaaq-aaavq-cai
+export LEDGER_CANISTER_GHOST=4c4fd-caaaa-aaaaq-aaa3a-cai
 export BLOB_URL_PATTERN=https://{canisterId}.raw.$DFX_NETWORK.testnet.dfinity.network/{blobType}/
 
 npx rollup -c

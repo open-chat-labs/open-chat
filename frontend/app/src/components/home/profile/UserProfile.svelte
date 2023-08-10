@@ -1,6 +1,12 @@
 <script lang="ts">
     import SectionHeader from "../../SectionHeader.svelte";
-    import { PartialUserSummary, OpenChat, AvatarSize } from "openchat-client";
+    import {
+        PartialUserSummary,
+        OpenChat,
+        AvatarSize,
+        ModerationFlag,
+        ModerationFlags,
+    } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -23,6 +29,7 @@
         advancedSectionOpen,
         appearanceSectionOpen,
         chatsSectionOpen,
+        restrictedSectionOpen,
         enterSend,
         lowBandwidth,
         referralOpen,
@@ -40,7 +47,6 @@
     import Expiry from "../upgrade/Expiry.svelte";
 
     const client = getContext<OpenChat>("client");
-
     const dispatch = createEventDispatcher();
     const MAX_BIO_LENGTH = 2000;
 
@@ -55,6 +61,11 @@
     let validUsername: string | undefined = undefined;
     let checkingUsername: boolean;
     let readonly = client.isReadOnly();
+
+    $: moderationFlags = client.moderationFlags;
+    $: adultEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Adult);
+    $: offensiveEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Offensive);
+    $: underReviewEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.UnderReview);
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -74,6 +85,10 @@
             originalBio = userbio = bio;
         });
     });
+
+    function toggleModerationFlag(flag: ModerationFlag) {
+        client.setModerationFlags($moderationFlags ^ flag);
+    }
 
     function saveUser() {
         saving = true;
@@ -304,6 +319,32 @@
                 checked={$lowBandwidth} />
         </CollapsibleCard>
     </div>
+    <div class="restricted">
+        <CollapsibleCard
+            on:toggle={restrictedSectionOpen.toggle}
+            open={$restrictedSectionOpen}
+            headerText={$_("restrictedContent")}>
+            <p class="blurb">{$_("restrictedContentInfo")}</p>
+            <Toggle
+                id={"offensive"}
+                small
+                on:change={() => toggleModerationFlag(ModerationFlags.Offensive)}
+                label={$_("communities.offensive")}
+                checked={offensiveEnabled} />
+            <Toggle
+                id={"adult"}
+                small
+                on:change={() => toggleModerationFlag(ModerationFlags.Adult)}
+                label={$_("communities.adult")}
+                checked={adultEnabled} />
+            <Toggle
+                id={"underReview"}
+                small
+                on:change={() => toggleModerationFlag(ModerationFlags.UnderReview)}
+                label={$_("communities.underReview")}
+                checked={underReviewEnabled} />
+        </CollapsibleCard>
+    </div>
     {#if !readonly}
         <div class="storage">
             <CollapsibleCard
@@ -428,7 +469,9 @@
         }
     }
 
-    .expiry {
+    .blurb {
+        @include font-size(fs-80);
+        color: var(--txt-light);
         margin-bottom: $sp3;
     }
 

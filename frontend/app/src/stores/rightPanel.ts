@@ -1,6 +1,5 @@
-import { writable } from "svelte/store";
-
 import type { ChatSummary, ChatPermissions } from "openchat-client";
+import { writable } from "svelte/store";
 
 export type RightPanelState =
     | GroupDetailsPanel
@@ -93,13 +92,19 @@ export function filterByChatType(chat: ChatSummary | undefined): void {
         if (chat.kind === "direct_chat") {
             return ["new_group_panel", "user_profile"].includes(panel.kind);
         }
+        
         if (
-            chat.kind == "group_chat" &&
+            chat.kind === "group_chat" &&
             (chat.previewed ||
                 (!(chat.subtype?.isNns ?? false) && panel.kind === "proposal_filters"))
         ) {
             return false;
         }
+
+        if (chat.kind !== "channel" && panel.kind === "community_channels") {
+            return false;
+        }
+        
         return true;
     });
 }

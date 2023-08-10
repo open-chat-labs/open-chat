@@ -12,13 +12,14 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    AccessGate, AccessRules, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, EventIndex,
+    AccessGate, AccessRules, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, EventIndex,
     FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification,
-    TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
+    TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
@@ -37,7 +38,7 @@ mod timer_job_types;
 mod updates;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -87,7 +88,7 @@ impl RuntimeState {
             let args = c2c_push_notification::Args {
                 recipients,
                 authorizer: Some(self.data.local_group_index_canister_id),
-                notification_bytes: candid::encode_one(notification).unwrap(),
+                notification_bytes: ByteBuf::from(candid::encode_one(notification).unwrap()),
             };
             ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
         }
@@ -137,7 +138,7 @@ impl RuntimeState {
                 now,
             ),
             frozen: self.data.frozen.value.clone(),
-            wasm_version: Version::default(),
+            wasm_version: BuildVersion::default(),
             date_last_pinned: chat.date_last_pinned,
             events_ttl: chat.events.get_events_time_to_live().value,
             expired_messages: chat.events.expired_messages(now),
@@ -162,7 +163,7 @@ impl RuntimeState {
                     ic_cdk::spawn(process_new_joiner_reward(
                         self.env.canister_id(),
                         args.user_id,
-                        Cryptocurrency::InternetComputer.ledger_canister_id(),
+                        Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
                         amount,
                         args.now,
                     ));
@@ -176,7 +177,7 @@ impl RuntimeState {
     pub fn start_importing_into_community(&mut self, community: CommunityBeingImportedInto) -> StartImportIntoCommunityResult {
         use StartImportIntoCommunityResult::*;
 
-        if self.data.community_being_imported_into.is_some() {
+        if self.data.community_being_imported_into.is_some() && self.data.is_frozen() {
             AlreadyImportingToAnotherCommunity
         } else if self.data.is_frozen() {
             ChatFrozen
@@ -184,7 +185,7 @@ impl RuntimeState {
             self.data.community_being_imported_into = Some(community);
             let serialized = msgpack::serialize_then_unwrap(&self.data.chat);
             let total_bytes = serialized.len() as u64;
-            self.data.serialized_chat_state = Some(serialized);
+            self.data.serialized_chat_state = Some(ByteBuf::from(serialized));
 
             freeze_group_impl(
                 OPENCHAT_BOT_USER_ID,
@@ -257,7 +258,7 @@ impl RuntimeState {
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
-                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id(),
+                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
     }
@@ -283,7 +284,7 @@ struct Data {
     pub instruction_counts_log: InstructionCountsLog,
     pub test_mode: bool,
     pub community_being_imported_into: Option<CommunityBeingImportedInto>,
-    pub serialized_chat_state: Option<Vec<u8>>,
+    pub serialized_chat_state: Option<ByteBuf>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -453,7 +454,7 @@ pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub public: bool,
     pub date_created: TimestampMillis,

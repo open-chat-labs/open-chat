@@ -1,6 +1,6 @@
 <script lang="ts">
     import Close from "svelte-material-icons/Close.svelte";
-    import CurrentUser from "./CurrentUser.svelte";
+    import Compass from "svelte-material-icons/CompassOutline.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
     import ChatSummary from "./ChatSummary.svelte";
@@ -27,9 +27,8 @@
     import ChatsButton from "./ChatsButton.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import { discoverHotGroupsDismissed } from "../../stores/settings";
-    import { communitiesEnabled } from "../../utils/features";
-    import { pushRightPanelHistory, rightPanelHistory } from "../../stores/rightPanel";
+    import { exploreGroupsDismissed } from "../../stores/settings";
+    import { rightPanelHistory } from "../../stores/rightPanel";
     import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
     import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
@@ -62,42 +61,41 @@
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
-    $: showWhatsHot =
+    $: showExploreGroups =
         ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
-        !$discoverHotGroupsDismissed &&
+        !$exploreGroupsDismissed &&
         !searchResultsAvailable;
     $: showBrowseChannnels = $chatListScope.kind === "community" && !searchResultsAvailable;
     $: unreadDirectChats = client.unreadDirectChats;
     $: unreadGroupChats = client.unreadGroupChats;
     $: unreadFavouriteChats = client.unreadFavouriteChats;
     $: unreadCommunityChannels = client.unreadCommunityChannels;
-    $: globalUnreadCount = client.globalUnreadCount;
 
-    let unread = 0;
+    let unread = { muted: 0, unmuted: 0, mentions: false };
     $: {
-        if ($communitiesEnabled) {
-            switch ($chatListScope.kind) {
-                case "group_chat": {
-                    unread = $unreadGroupChats;
-                    break;
-                }
-                case "direct_chat": {
-                    unread = $unreadDirectChats;
-                    break;
-                }
-                case "favourite": {
-                    unread = $unreadFavouriteChats;
-                    break;
-                }
-                case "community": {
-                    unread = $unreadCommunityChannels.get($chatListScope.id) ?? 0;
-                    break;
-                }
-                default:
-                    unread = 0;
+        switch ($chatListScope.kind) {
+            case "group_chat": {
+                unread = $unreadGroupChats;
+                break;
             }
-        } else {
-            unread = $globalUnreadCount;
+            case "direct_chat": {
+                unread = $unreadDirectChats;
+                break;
+            }
+            case "favourite": {
+                unread = $unreadFavouriteChats;
+                break;
+            }
+            case "community": {
+                unread = $unreadCommunityChannels.get($chatListScope.id) ?? {
+                    muted: 0,
+                    unmuted: 0,
+                    mentions: false,
+                };
+                break;
+            }
+            default:
+                unread = { muted: 0, unmuted: 0, mentions: false };
         }
     }
 
@@ -203,24 +201,20 @@
 </script>
 
 {#if user}
-    {#if $communitiesEnabled}
-        {#if $chatListScope.kind === "favourite"}
-            <FavouriteChatsHeader />
-        {:else if $chatListScope.kind === "group_chat"}
-            <GroupChatsHeader on:newGroup />
-        {:else if $chatListScope.kind === "direct_chat"}
-            <DirectChatsHeader />
-        {:else if $selectedCommunity && $chatListScope.kind === "community"}
-            <SelectedCommunityHeader
-                community={$selectedCommunity}
-                on:leaveCommunity
-                on:deleteCommunity
-                on:editCommunity
-                on:communityDetails
-                on:newChannel />
-        {/if}
-    {:else}
-        <CurrentUser on:wallet on:logout on:halloffame {user} on:profile on:upgrade on:newGroup />
+    {#if $chatListScope.kind === "favourite"}
+        <FavouriteChatsHeader />
+    {:else if $chatListScope.kind === "group_chat"}
+        <GroupChatsHeader on:newGroup />
+    {:else if $chatListScope.kind === "direct_chat"}
+        <DirectChatsHeader />
+    {:else if $selectedCommunity && $chatListScope.kind === "community"}
+        <SelectedCommunityHeader
+            community={$selectedCommunity}
+            on:leaveCommunity
+            on:deleteCommunity
+            on:editCommunity
+            on:communityDetails
+            on:newChannel />
     {/if}
 
     <ChatListSearch
@@ -252,6 +246,7 @@
                         selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
                         on:chatSelected={chatSelected}
+                        on:leaveGroup
                         on:unarchiveChat
                         on:toggleMuteNotifications />
                 {/each}
@@ -321,18 +316,20 @@
                     </div>
                 {/if}
             </div>
-            {#if showWhatsHot}
-                <div class="hot-groups" on:click={() => page("/hotgroups")}>
-                    <div class="flame">🔥</div>
-                    <div class="label">{$_("whatsHotButton")}</div>
-                    <div on:click={() => discoverHotGroupsDismissed.set(true)} class="close">
+            {#if showExploreGroups}
+                <div class="explore-groups" on:click={() => page("/groups")}>
+                    <div class="disc">
+                        <Compass size={$iconSize} color={"var(--icon-txt)"} />
+                    </div>
+                    <div class="label">{$_("exploreGroups")}</div>
+                    <div on:click={() => exploreGroupsDismissed.set(true)} class="close">
                         <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
                     </div>
                 </div>
             {/if}
             {#if showBrowseChannnels}
                 <div class="browse-channels" on:click={showChannels}>
-                    <div class="flame">#</div>
+                    <div class="disc hash">#</div>
                     <div class="label">{$_("communities.browseChannels")}</div>
                 </div>
             {/if}
@@ -408,7 +405,7 @@
         @include ellipsis();
     }
 
-    .hot-groups,
+    .explore-groups,
     .browse-channels {
         position: relative;
         display: flex;
@@ -429,16 +426,20 @@
             flex: auto;
         }
 
-        .flame {
-            display: grid;
+        .disc {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             align-content: center;
-            @include font-size(fs-120);
             text-align: center;
-            flex: 0 0 toRem(48);
             height: toRem(48);
             width: toRem(48);
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: var(--icon-hv);
             border-radius: 50%;
+
+            &.hash {
+                @include font-size(fs-120);
+            }
         }
     }
 </style>

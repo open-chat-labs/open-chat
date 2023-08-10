@@ -56,7 +56,7 @@ impl PublicCommunities {
     pub fn search(
         &self,
         search_term: Option<String>,
-        exclude_moderation_flags: ModerationFlags,
+        include_moderation_flags: ModerationFlags,
         languages: Vec<String>,
         page_index: u32,
         page_size: u8,
@@ -66,7 +66,7 @@ impl PublicCommunities {
         let mut matches: Vec<_> = self
             .iter()
             .filter(|c| !c.is_frozen())
-            .filter(|c| !c.moderation_flags().intersects(exclude_moderation_flags))
+            .filter(|c| include_moderation_flags.contains(*c.moderation_flags()))
             .filter(|c| languages.is_empty() || languages.contains(&c.primary_language))
             .map(|c| {
                 let score = if let Some(query) = &query {
@@ -89,7 +89,7 @@ impl PublicCommunities {
         let matches = matches
             .into_iter()
             .rev()
-            .map(|(_, c)| c.into())
+            .map(|(s, c)| c.to_match(s))
             .skip(page_index as usize * page_size as usize)
             .take(page_size as usize)
             .collect();
@@ -148,7 +148,6 @@ pub struct PublicCommunityInfo {
     activity: PublicCommunityActivity,
     hotness_score: u32,
     gate: Option<AccessGate>,
-    #[serde(default)]
     moderation_flags: ModerationFlags,
     primary_language: String,
 }
@@ -240,21 +239,20 @@ impl PublicCommunityInfo {
     pub fn set_moderation_flags(&mut self, flags: ModerationFlags) {
         self.moderation_flags = flags;
     }
-}
 
-impl From<&PublicCommunityInfo> for CommunityMatch {
-    fn from(community: &PublicCommunityInfo) -> Self {
+    pub fn to_match(&self, score: u32) -> CommunityMatch {
         CommunityMatch {
-            id: community.id,
-            name: community.name.clone(),
-            description: community.description.clone(),
-            avatar_id: community.avatar_id,
-            banner_id: community.banner_id,
-            member_count: community.activity.member_count,
-            channel_count: community.activity.channel_count,
-            gate: community.gate.clone(),
-            moderation_flags: community.moderation_flags.bits(),
-            primary_language: community.primary_language.clone(),
+            id: self.id,
+            score,
+            name: self.name.clone(),
+            description: self.description.clone(),
+            avatar_id: self.avatar_id,
+            banner_id: self.banner_id,
+            member_count: self.activity.member_count,
+            channel_count: self.activity.channel_count,
+            gate: self.gate.clone(),
+            moderation_flags: self.moderation_flags.bits(),
+            primary_language: self.primary_language.clone(),
         }
     }
 }

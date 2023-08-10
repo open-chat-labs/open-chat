@@ -5,7 +5,7 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, Cycles, NotificationEnvelope, TimestampMillis, Timestamped, Version};
+use types::{BuildVersion, CanisterId, Cycles, NotificationEnvelope, TimestampMillis, Timestamped};
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 
@@ -17,7 +17,7 @@ mod queries;
 mod updates;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -51,6 +51,8 @@ impl RuntimeState {
             latest_notification_index: self.data.notifications.latest_event_index(),
             subscriptions: self.data.subscriptions.total(),
             push_service_principals: self.data.push_service_principals.iter().copied().collect(),
+            principals_authorized: self.data.authorized_principals.count_authorized() as u64,
+            principals_blocked: self.data.authorized_principals.count_blocked() as u64,
             canister_ids: CanisterIds {
                 notifications_index: self.data.notifications_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -95,12 +97,14 @@ pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub queued_notifications: u32,
     pub latest_notification_index: u64,
     pub subscriptions: u64,
     pub push_service_principals: Vec<Principal>,
+    pub principals_authorized: u64,
+    pub principals_blocked: u64,
     pub canister_ids: CanisterIds,
 }
 

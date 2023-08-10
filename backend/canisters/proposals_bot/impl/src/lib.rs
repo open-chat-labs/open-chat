@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
-use types::{CanisterId, Cycles, MessageId, MultiUserChat, ProposalId, TimestampMillis, Timestamped, Version};
+use types::{BuildVersion, CanisterId, Cycles, MessageId, MultiUserChat, ProposalId, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod governance_clients;
@@ -18,7 +18,7 @@ mod queries;
 mod updates;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -97,7 +97,7 @@ pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub nervous_systems: Vec<NervousSystemMetrics>,
     pub governance_principals: Vec<Principal>,

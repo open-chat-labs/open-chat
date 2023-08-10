@@ -185,14 +185,15 @@ fn commit(
             .events
             .push_main_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), 0, now);
 
-        let notification = Notification::AddedToChannelNotification(AddedToChannelNotification {
+        let notification = Notification::AddedToChannel(AddedToChannelNotification {
             community_id: state.env.canister_id().into(),
             community_name: state.data.name.clone(),
             channel_id,
             channel_name: channel.chat.name.clone(),
             added_by,
             added_by_name,
-            timestamp: now,
+            community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
+            channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
         });
 
         state.push_notification(users_added.clone(), notification);

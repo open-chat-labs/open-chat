@@ -69,7 +69,7 @@ pub enum ChatEventInternal {
     #[serde(rename = "ui")]
     UsersInvited(Box<UsersInvited>),
     #[serde(rename = "adc")]
-    MembersAddedToDefaultChannel(Box<MembersAddedToDefaultChannelInternal>),
+    MembersAddedToPublicChannel(Box<MembersAddedToPublicChannelInternal>),
     #[serde(rename = "e")]
     Empty,
 }
@@ -110,7 +110,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::EventsTimeToLiveUpdated(_)
                 | ChatEventInternal::GroupGateUpdated(_)
                 | ChatEventInternal::UsersInvited(_)
-                | ChatEventInternal::MembersAddedToDefaultChannel(_)
+                | ChatEventInternal::MembersAddedToPublicChannel(_)
         )
     }
 
@@ -225,6 +225,9 @@ impl MessageInternal {
                 Cryptocurrency::KINIC => {
                     incr(&mut metrics.kinic_messages);
                 }
+                Cryptocurrency::Other(_) => {
+                    incr(&mut metrics.other_crypto_messages);
+                }
             },
             MessageContentInternal::Deleted(_) => {}
             MessageContentInternal::Giphy(_) => {
@@ -321,13 +324,13 @@ impl From<DeletedBy> for DeletedByInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct MembersAddedToDefaultChannelInternal {
+pub struct MembersAddedToPublicChannelInternal {
     #[serde(rename = "u")]
     pub user_ids: Vec<UserId>,
 }
 
-impl From<&MembersAddedToDefaultChannelInternal> for MembersAddedToDefaultChannel {
-    fn from(value: &MembersAddedToDefaultChannelInternal) -> MembersAddedToDefaultChannel {
+impl From<&MembersAddedToPublicChannelInternal> for MembersAddedToDefaultChannel {
+    fn from(value: &MembersAddedToPublicChannelInternal) -> MembersAddedToDefaultChannel {
         MembersAddedToDefaultChannel {
             count: value.user_ids.len() as u32,
         }
@@ -522,7 +525,8 @@ impl From<&MessageContentInternal> for Document {
 
                 if let CryptoTransaction::Completed(c) = &c.transfer {
                     let amount = c.units();
-                    let decimals = c.token().decimals();
+                    // This is only used for string searching so it's better to default to 8 than to trap
+                    let decimals = c.token().decimals().unwrap_or(8);
                     let amount_string = format_crypto_amount(amount, decimals as u32);
                     document.add_field(amount_string, 1.0, false);
                 }
@@ -663,6 +667,8 @@ pub struct ChatMetricsInternal {
     pub chat_messages: u64,
     #[serde(rename = "kinic", default, skip_serializing_if = "is_default")]
     pub kinic_messages: u64,
+    #[serde(rename = "o", default, skip_serializing_if = "is_default")]
+    pub other_crypto_messages: u64,
     #[serde(rename = "d", default, skip_serializing_if = "is_default")]
     pub deleted_messages: u64,
     #[serde(rename = "g", default, skip_serializing_if = "is_default")]

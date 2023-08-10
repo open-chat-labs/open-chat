@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use tracing::trace;
 use types::{CanisterId, Error, UserId};
 
+#[derive(Clone)]
 pub struct IcAgent {
     agent: Agent,
 }

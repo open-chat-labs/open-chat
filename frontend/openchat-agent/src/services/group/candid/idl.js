@@ -74,6 +74,7 @@ export const idlFactory = ({ IDL }) => {
     'SNS1' : IDL.Null,
     'KINIC' : IDL.Null,
     'CKBTC' : IDL.Null,
+    'Other' : IDL.Text,
   });
   const TransactionHash = IDL.Vec(IDL.Nat8);
   const BlockIndex = IDL.Nat64;
@@ -97,18 +98,6 @@ export const idlFactory = ({ IDL }) => {
     'Mint' : IDL.Null,
     'Account' : Icrc1Account,
   });
-  const SnsCompletedCryptoTransaction = IDL.Record({
-    'to' : Icrc1AccountOrMint,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'block_index' : BlockIndex,
-    'from' : Icrc1AccountOrMint,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
   const Memo = IDL.Vec(IDL.Nat8);
   const Icrc1CompletedCryptoTransaction = IDL.Record({
     'to' : Icrc1AccountOrMint,
@@ -123,7 +112,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
-    'SNS' : SnsCompletedCryptoTransaction,
     'ICRC1' : Icrc1CompletedCryptoTransaction,
   });
   const NnsFailedCryptoTransaction = IDL.Record({
@@ -134,18 +122,6 @@ export const idlFactory = ({ IDL }) => {
     'transaction_hash' : TransactionHash,
     'from' : NnsCryptoAccount,
     'memo' : IDL.Nat64,
-    'error_message' : IDL.Text,
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
-  const SnsFailedCryptoTransaction = IDL.Record({
-    'to' : Icrc1AccountOrMint,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'from' : Icrc1AccountOrMint,
-    'memo' : IDL.Opt(IDL.Nat64),
     'error_message' : IDL.Text,
     'ledger' : CanisterId,
     'amount' : Tokens,
@@ -163,7 +139,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const FailedCryptoTransaction = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
-    'SNS' : SnsFailedCryptoTransaction,
     'ICRC1' : Icrc1FailedCryptoTransaction,
   });
   const ClaimPrizeResponse = IDL.Variant({
@@ -394,15 +369,6 @@ export const idlFactory = ({ IDL }) => {
     'ledger' : CanisterId,
     'amount' : Tokens,
   });
-  const SnsPendingCryptoTransaction = IDL.Record({
-    'to' : Icrc1Account,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'ledger' : CanisterId,
-    'amount' : Tokens,
-  });
   const Icrc1PendingCryptoTransaction = IDL.Record({
     'to' : Icrc1Account,
     'fee' : IDL.Nat,
@@ -414,7 +380,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const PendingCryptoTransaction = IDL.Variant({
     'NNS' : NnsPendingCryptoTransaction,
-    'SNS' : SnsPendingCryptoTransaction,
     'ICRC1' : Icrc1PendingCryptoTransaction,
   });
   const CryptoTransaction = IDL.Variant({
@@ -627,6 +592,7 @@ export const idlFactory = ({ IDL }) => {
     'old_permissions' : GroupPermissions,
     'new_permissions' : GroupPermissions,
   });
+  const MembersAddedToDefaultChannel = IDL.Record({ 'count' : IDL.Nat32 });
   const GroupFrozen = IDL.Record({
     'frozen_by' : UserId,
     'reason' : IDL.Opt(IDL.Text),
@@ -704,6 +670,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
+    'MembersAddedToDefaultChannel' : MembersAddedToDefaultChannel,
     'ChatFrozen' : GroupFrozen,
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
@@ -755,15 +722,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const LocalUserIndexArgs = IDL.Record({});
   const LocalUserIndexResponse = IDL.Variant({ 'Success' : CanisterId });
-  const MakePrivateArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
-  const MakePrivateResponse = IDL.Variant({
-    'ChatFrozen' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-    'AlreadyPrivate' : IDL.Null,
-    'InternalError' : IDL.Null,
-  });
   const MessagesByMessageIndexArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'messages' : IDL.Vec(MessageIndex),
@@ -1364,7 +1322,6 @@ export const idlFactory = ({ IDL }) => {
         [LocalUserIndexResponse],
         ['query'],
       ),
-    'make_private' : IDL.Func([MakePrivateArgs], [MakePrivateResponse], []),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],

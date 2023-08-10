@@ -3,7 +3,7 @@ use crate::RuntimeState;
 use canister_api_macros::query_candid_and_msgpack;
 use chat_events::Reader;
 use group_canister::public_summary::{Response::*, *};
-use types::{Document, PublicGroupSummary, Version};
+use types::{BuildVersion, Document, PublicGroupSummary};
 
 #[query_candid_and_msgpack]
 fn public_summary(args: Args) -> Response {
@@ -46,7 +46,7 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
         frozen: data.frozen.value.clone(),
         events_ttl: data.chat.events.get_events_time_to_live().value,
         gate: data.chat.gate.value.clone(),
-        wasm_version: Version::default(),
+        wasm_version: BuildVersion::default(),
     };
     Success(SuccessResult { summary })
 }

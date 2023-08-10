@@ -5,6 +5,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove SNS transaction types ([#4162](https://github.com/open-chat-labs/open-chat/pull/4162))
+
+## [[2.0.799](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.799-local_user_index)] - 2023-08-08
+
+### Changed
+
+- Switch referral payments over to using ICRC1 ([#4132](https://github.com/open-chat-labs/open-chat/pull/4132))
+- Bump number of cycles required for upgrade ([#4155](https://github.com/open-chat-labs/open-chat/pull/4155))
+
+## [[2.0.767](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.767-local_user_index)] - 2023-07-31
+
+### Changed
+
+- Replace links to OC groups with link to OC community in welcome messages ([#4060](https://github.com/open-chat-labs/open-chat/pull/4060))
+
+## [[2.0.761](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.761-local_user_index)] - 2023-07-28
+
 ### Changed
 
 - Mark channels as read after joining community or channel ([#4004](https://github.com/open-chat-labs/open-chat/pull/4004))

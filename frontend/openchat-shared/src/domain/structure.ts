@@ -13,3 +13,17 @@ export type DirectScope = { kind: "direct_chat" };
 export type FavouriteScope = { kind: "favourite"; communityId?: CommunityIdentifier };
 export type CommunityScope = { kind: "community"; id: CommunityIdentifier };
 export type NullScope = { kind: "none" };
+
+export function chatListScopesEqual(a: ChatListScope, b: ChatListScope): boolean {
+    if (a.kind !== a.kind) return false;
+    switch (a.kind) {
+        case "community":
+            return b.kind === "community" && b.id.communityId === a.id.communityId;
+        case "favourite":
+            return (
+                b.kind === "favourite" && b.communityId?.communityId === a.communityId?.communityId
+            );
+        default:
+            return true;
+    }
+}

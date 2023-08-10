@@ -48,7 +48,12 @@ pub(crate) fn build_summaries_args(disable_cache: bool, now: TimestampMillis, da
     }
 }
 
-pub(crate) async fn summaries(args: SummariesArgs) -> Result<Vec<GroupCanisterGroupChatSummary>, String> {
+pub(crate) struct SummariesResult {
+    pub summaries: Vec<GroupCanisterGroupChatSummary>,
+    pub deleted: Vec<DeletedGroupInfo>,
+}
+
+pub(crate) async fn summaries(args: SummariesArgs) -> Result<SummariesResult, String> {
     let updates_args = UpdatesArgs {
         group_index_canister_id: args.group_index_canister_id,
         updates_since: args
@@ -61,10 +66,10 @@ pub(crate) async fn summaries(args: SummariesArgs) -> Result<Vec<GroupCanisterGr
 
     let updates = updates(updates_args).await?;
 
-    let groups = if let Some(cached) = args.cached_group_summaries {
+    let summaries = if let Some(cached) = args.cached_group_summaries {
         let mut merged = merge_updates(cached.groups, updates.updated);
         if !updates.deleted.is_empty() {
-            let deleted: HashSet<_> = updates.deleted.into_iter().map(|d| d.id).collect();
+            let deleted: HashSet<_> = updates.deleted.iter().map(|d| d.id).collect();
             merged.retain(|g| !deleted.contains(&g.chat_id));
         }
         merged.extend(updates.added);
@@ -73,7 +78,10 @@ pub(crate) async fn summaries(args: SummariesArgs) -> Result<Vec<GroupCanisterGr
         updates.added
     };
 
-    Ok(groups)
+    Ok(SummariesResult {
+        summaries,
+        deleted: updates.deleted,
+    })
 }
 
 async fn updates(args: UpdatesArgs) -> Result<Updates, String> {

@@ -6,6 +6,7 @@ export type UpdateMarketMakerConfigArgs = {
     minOrderSize?: bigint;
     maxBuyPrice?: bigint;
     minSellPrice?: bigint;
+    spread?: bigint;
     minOrdersPerDirection?: number;
     maxOrdersPerDirection?: number;
     maxOrdersToMakePerIteration?: number;

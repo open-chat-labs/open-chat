@@ -53,6 +53,7 @@
             ledgerCanisterCHAT: process.env.LEDGER_CANISTER_CHAT!,
             ledgerCanisterKINIC: process.env.LEDGER_CANISTER_KINIC!,
             ledgerCanisterHOTORNOT: process.env.LEDGER_CANISTER_HOTORNOT!,
+            ledgerCanisterGHOST: process.env.LEDGER_CANISTER_GHOST!,
             userGeekApiKey: process.env.USERGEEK_APIKEY!,
             meteredApiKey: process.env.METERED_APIKEY!,
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,
@@ -90,10 +91,12 @@
         (<any>window).platformModerator = {
             addHotGroupExclusion,
             deleteFrozenGroup,
+            deleteMessage,
+            deleteChannelMessage,
             freezeGroup,
             removeHotGroupExclusion,
+            setCommunityModerationFlags,
             unfreezeGroup,
-            deleteMessage,
         };
         (<any>window).platformOperator = {
             setGroupUpgradeConcurrency,
@@ -144,6 +147,16 @@
         });
     }
 
+    function setCommunityModerationFlags(communityId: string, flags: number): void {
+        client.setCommunityModerationFlags(communityId, flags).then((success) => {
+            if (success) {
+                console.log("Community moderation flags updated", communityId);
+            } else {
+                console.log("Failed to set community moderation flags", communityId);
+            }
+        });
+    }
+
     function unfreezeGroup(chatId: string): void {
         client.unfreezeGroup({ kind: "group_chat", groupId: chatId }).then((success) => {
             if (success) {
@@ -152,6 +165,40 @@
                 console.log("Failed to unfreeze group", chatId);
             }
         });
+    }
+
+    function deleteChannelMessage(
+        communityId: string,
+        channelId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number | undefined
+    ): void {
+        client
+            .deleteMessage(
+                { kind: "channel", communityId, channelId },
+                threadRootMessageIndex,
+                messageId,
+                true
+            )
+            .then((success) => {
+                if (success) {
+                    console.log(
+                        "Message deleted",
+                        communityId,
+                        channelId,
+                        messageId,
+                        threadRootMessageIndex
+                    );
+                } else {
+                    console.log(
+                        "Failed to delete message",
+                        communityId,
+                        channelId,
+                        messageId,
+                        threadRootMessageIndex
+                    );
+                }
+            });
     }
 
     function deleteMessage(

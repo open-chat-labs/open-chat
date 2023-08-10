@@ -4,7 +4,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{CanisterId, Version};
+use types::{BuildVersion, CanisterId};
 use utils::canister::{install, FailedUpgrade};
 use utils::consts::MIN_CYCLES_BALANCE;
 
@@ -55,7 +55,7 @@ fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
         return GetNextResult::QueueEmpty;
     }
 
-    let canister_id = match state.data.canisters_requiring_upgrade.try_take_next() {
+    let (canister_id, force) = match state.data.canisters_requiring_upgrade.try_take_next() {
         Some(c) => c,
         None => return GetNextResult::Continue,
     };
@@ -66,7 +66,7 @@ fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
         .notifications_canisters
         .get(&canister_id)
         .map(|c| c.wasm_version())
-        .filter(|v| *v != new_wasm_version)
+        .filter(|v| *v != new_wasm_version || force)
     {
         Some(v) => v,
         None => {
@@ -106,7 +106,7 @@ async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
     }
 }
 
-fn on_success(canister_id: CanisterId, to_version: Version, state: &mut RuntimeState) {
+fn on_success(canister_id: CanisterId, to_version: BuildVersion, state: &mut RuntimeState) {
     if let Some(canister) = state.data.notifications_canisters.get_mut(&canister_id) {
         canister.set_wasm_version(to_version);
     }
@@ -114,7 +114,7 @@ fn on_success(canister_id: CanisterId, to_version: Version, state: &mut RuntimeS
     state.data.canisters_requiring_upgrade.mark_success(&canister_id);
 }
 
-fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Version, state: &mut RuntimeState) {
+fn on_failure(canister_id: CanisterId, from_version: BuildVersion, to_version: BuildVersion, state: &mut RuntimeState) {
     state.data.canisters_requiring_upgrade.mark_failure(FailedUpgrade {
         canister_id,
         from_version,

@@ -355,7 +355,7 @@
 </script>
 
 <Panel right {empty}>
-    {#if lastState.kind === "group_details" && $selectedChatId !== undefined}
+    {#if lastState.kind === "group_details" && $selectedChatId !== undefined && $multiUserChat !== undefined}
         <GroupDetails
             chat={$multiUserChat}
             memberCount={$currentChatMembers.length}
@@ -374,7 +374,7 @@
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             on:inviteUsers={inviteCommunityUsers}
             on:cancelInviteUsers={popRightPanelHistory} />
-    {:else if lastState.kind === "show_community_members" && $selectedCommunity}
+    {:else if lastState.kind === "show_community_members" && $selectedCommunity !== undefined}
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             collection={$selectedCommunity}
@@ -396,7 +396,7 @@
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             on:inviteUsers={inviteGroupUsers}
             on:cancelInviteUsers={popRightPanelHistory} />
-    {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined}
+    {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined}
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             collection={$multiUserChat}
@@ -410,7 +410,11 @@
             on:showInviteUsers={showInviteGroupUsers}
             on:removeMember={onRemoveGroupMember}
             on:changeRole={onChangeGroupRole} />
-    {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")}
+    {:else if lastState.kind === "show_pinned" &&
+        $selectedChatId !== undefined &&
+        ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") &&
+        $multiUserChat !== undefined
+    }
         <PinnedMessages
             on:chatWith
             on:goToMessageIndex={goToMessageIndex}
@@ -432,8 +436,8 @@
             rootEvent={threadRootEvent}
             chat={$selectedChat}
             on:closeThread={closeThread} />
-    {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
-        <ProposalGroupFilters on:close={popRightPanelHistory} />
+    {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}
+        <ProposalGroupFilters selectedChat={$selectedChat} on:close={popRightPanelHistory} />
     {:else if lastState.kind === "community_channels"}
         <CommunityChannels on:newChannel />
     {:else if lastState.kind === "community_details"}

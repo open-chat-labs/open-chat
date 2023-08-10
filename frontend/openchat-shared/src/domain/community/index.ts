@@ -13,6 +13,7 @@ import type {
     GroupCanisterThreadDetails,
     Mention,
     UpdatedEvent,
+    CanisterNotFound,
 } from "../chat";
 import type { DataContent } from "../data";
 import type { OptionUpdate } from "../optionUpdate";
@@ -196,7 +197,6 @@ export type CommunityCanisterChannelSummaryUpdates = {
     memberCount: number | undefined;
     latestMessage: EventWrapper<Message> | undefined;
     updatedEvents: UpdatedEvent[];
-    isDefault: boolean | undefined;
 };
 
 export type CommunityMembershipUpdates = {
@@ -218,7 +218,6 @@ export type ChannelMatch = {
     description: string;
     avatar: DataContent;
     memberCount: number;
-    isDefault: boolean;
 };
 
 export type CommunityDetailsResponse = "failure" | CommunityDetails;
@@ -250,7 +249,7 @@ export type CommunityDetailsUpdates = {
     invitedUsers?: Set<string>;
     lastUpdated: bigint;
 };
-export type ChannelSummaryResponse = Failure | ChannelSummary;
+export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;
 
 export type LeaveCommunityResponse = "success" | "failure";
 
@@ -265,5 +264,3 @@ export type LocalCommunitySummaryUpdates = {
 export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | Failure;
 
 export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | Failure;
-
-export type ManageDefaultChannelsResponse = Success | Failure;

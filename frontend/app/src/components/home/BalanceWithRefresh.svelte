@@ -1,15 +1,15 @@
 <script lang="ts">
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import type { Cryptocurrency, OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
     const dispatch = createEventDispatcher();
 
-    export let token: Cryptocurrency = "icp";
+    export let token: string = "ICP";
     export let value: bigint;
     export let label: string | undefined = undefined;
     export let minDecimals = 4;
@@ -38,7 +38,7 @@
             })
             .catch((err) => {
                 const errorMessage = $_("unableToRefreshAccountBalance", {
-                    values: { token: token.toUpperCase() },
+                    values: { token },
                 });
                 client.logError(`Failed to refresh ${token} account balance`, err);
                 dispatch("error", errorMessage);

@@ -1,3 +1,3 @@
-mod add_token;
-mod update_token;
-mod wallet_receive;
+pub mod add_token;
+pub mod update_token;
+pub mod wallet_receive;

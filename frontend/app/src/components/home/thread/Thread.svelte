@@ -36,7 +36,7 @@
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
     let creatingPoll = false;
-    let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
+    let creatingCryptoTransfer: { token: string; amount: bigint } | undefined = undefined;
     let selectingGif = false;
     let initialised = false;
     let messagesDiv: HTMLDivElement | undefined;

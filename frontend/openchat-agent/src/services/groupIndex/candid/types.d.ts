@@ -29,12 +29,15 @@ export type AddHotGroupExclusionResponse = { 'ChatAlreadyExcluded' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
-export interface AddedToGroupNotification {
+export interface AddedToChannelNotification {
+  'channel_id' : ChannelId,
+  'community_id' : CommunityId,
   'added_by_name' : string,
   'added_by' : UserId,
-  'timestamp' : TimestampMillis,
-  'chat_id' : ChatId,
-  'group_name' : string,
+  'channel_name' : string,
+  'community_avatar_id' : [] | [bigint],
+  'community_name' : string,
+  'channel_avatar_id' : [] | [bigint],
 }
 export interface AudioContent {
   'mime_type' : string,
@@ -70,7 +73,6 @@ export interface ChannelMatch {
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
-  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'member_count' : number,
 }
@@ -89,6 +91,37 @@ export interface ChannelMembershipUpdates {
   'mentions' : Array<Mention>,
   'my_metrics' : [] | [ChatMetrics],
 }
+export interface ChannelMessageNotification {
+  'channel_id' : ChannelId,
+  'community_id' : CommunityId,
+  'image_url' : [] | [string],
+  'sender' : UserId,
+  'channel_name' : string,
+  'community_avatar_id' : [] | [bigint],
+  'community_name' : string,
+  'sender_name' : string,
+  'message_text' : [] | [string],
+  'message_type' : string,
+  'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'channel_avatar_id' : [] | [bigint],
+  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
+  'message_index' : MessageIndex,
+}
+export interface ChannelReactionAddedNotification {
+  'channel_id' : ChannelId,
+  'community_id' : CommunityId,
+  'added_by_name' : string,
+  'message_event_index' : EventIndex,
+  'added_by' : UserId,
+  'channel_name' : string,
+  'community_avatar_id' : [] | [bigint],
+  'community_name' : string,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'channel_avatar_id' : [] | [bigint],
+  'reaction' : Reaction,
+  'message_index' : MessageIndex,
+}
 export type Chat = { 'Group' : ChatId } |
   { 'Channel' : [CommunityId, ChannelId] } |
   { 'Direct' : ChatId };
@@ -104,6 +137,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
+  { 'MembersAddedToDefaultChannel' : MembersAddedToDefaultChannel } |
   { 'ChatFrozen' : GroupFrozen } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'UsersUnblocked' : UsersUnblocked } |
@@ -164,7 +198,6 @@ export interface CommunityCanisterChannelSummary {
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
-  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'next_message_expiry' : [] | [TimestampMillis],
   'membership' : [] | [ChannelMembership],
@@ -187,7 +220,6 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
-  'is_default' : [] | [boolean],
   'avatar_id' : DocumentIdUpdate,
   'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
@@ -241,6 +273,7 @@ export interface CommunityMatch {
   'name' : string,
   'description' : string,
   'moderation_flags' : number,
+  'score' : number,
   'avatar_id' : [] | [bigint],
   'banner_id' : [] | [bigint],
   'member_count' : number,
@@ -273,7 +306,6 @@ export type CommunityRole = { 'Member' : null } |
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
-  { 'SNS' : SnsCompletedCryptoTransaction } |
   { 'ICRC1' : Icrc1CompletedCryptoTransaction };
 export interface CryptoContent {
   'recipient' : UserId,
@@ -287,7 +319,8 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CHAT' : null } |
   { 'SNS1' : null } |
   { 'KINIC' : null } |
-  { 'CKBTC' : null };
+  { 'CKBTC' : null } |
+  { 'Other' : string };
 export interface CustomMessageContent {
   'data' : Uint8Array | number[],
   'kind' : string,
@@ -360,17 +393,25 @@ export interface DirectChatSummaryUpdates {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface DirectMessageNotification {
+  'image_url' : [] | [string],
+  'sender_avatar_id' : [] | [bigint],
   'sender' : UserId,
-  'message' : MessageEventWrapper,
   'sender_name' : string,
+  'message_text' : [] | [string],
+  'message_type' : string,
+  'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
+  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
+  'message_index' : MessageIndex,
 }
 export interface DirectReactionAddedNotification {
   'username' : string,
+  'message_event_index' : EventIndex,
   'them' : UserId,
-  'message' : MessageEventWrapper,
-  'timestamp' : TimestampMillis,
-  'reaction' : string,
+  'user_avatar_id' : [] | [bigint],
+  'thread_root_message_index' : [] | [MessageIndex],
+  'reaction' : Reaction,
+  'message_index' : MessageIndex,
 }
 export interface Document {
   'id' : bigint,
@@ -399,9 +440,9 @@ export interface EventsTimeToLiveUpdated {
 }
 export interface ExploreCommunitiesArgs {
   'page_size' : number,
+  'include_moderation_flags' : number,
   'page_index' : number,
   'languages' : Array<string>,
-  'exclude_moderation_flags' : [] | [number],
   'search_term' : [] | [string],
 }
 export type ExploreCommunitiesResponse = { 'TermTooShort' : number } |
@@ -427,7 +468,6 @@ export interface ExploreGroupsSuccess {
   'matches' : Array<GroupMatch>,
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
-  { 'SNS' : SnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction };
 export interface FieldTooLongResult {
   'length_provided' : number,
@@ -641,14 +681,18 @@ export interface GroupMatch {
   'member_count' : number,
 }
 export interface GroupMessageNotification {
-  'hide' : boolean,
-  'mentioned' : Array<User>,
+  'image_url' : [] | [string],
+  'group_avatar_id' : [] | [bigint],
   'sender' : UserId,
-  'message' : MessageEventWrapper,
   'sender_name' : string,
+  'message_text' : [] | [string],
+  'message_type' : string,
   'chat_id' : ChatId,
+  'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
+  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
+  'message_index' : MessageIndex,
 }
 export interface GroupNameChanged {
   'changed_by' : UserId,
@@ -672,13 +716,14 @@ export interface GroupPermissions {
 }
 export interface GroupReactionAddedNotification {
   'added_by_name' : string,
+  'group_avatar_id' : [] | [bigint],
+  'message_event_index' : EventIndex,
   'added_by' : UserId,
-  'message' : MessageEventWrapper,
-  'timestamp' : TimestampMillis,
   'chat_id' : ChatId,
   'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
-  'reaction' : string,
+  'reaction' : Reaction,
+  'message_index' : MessageIndex,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
 export type GroupRole = { 'Participant' : null } |
@@ -763,6 +808,10 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
+export interface LookupChannelByGroupIdArgs { 'group_id' : ChatId }
+export type LookupChannelByGroupIdResponse = { 'NotFound' : null } |
+  { 'Success' : { 'channel_id' : ChannelId, 'community_id' : CommunityId } };
+export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
   'message_id' : MessageId,
@@ -918,15 +967,25 @@ export interface NnsProposal {
 export type NnsUserOrAccount = { 'User' : UserId } |
   { 'Account' : AccountIdentifier };
 export type Notification = {
-    'DirectReactionAddedNotification' : DirectReactionAddedNotification
+    'GroupReactionAdded' : GroupReactionAddedNotification
   } |
-  { 'DirectMessageNotification' : DirectMessageNotification } |
-  { 'GroupMessageNotification' : GroupMessageNotification } |
-  { 'GroupReactionAddedNotification' : GroupReactionAddedNotification } |
-  { 'AddedToGroupNotification' : AddedToGroupNotification };
+  { 'DirectMessage' : DirectMessageNotification } |
+  { 'ChannelReactionAdded' : ChannelReactionAddedNotification } |
+  { 'DirectReactionAdded' : DirectReactionAddedNotification } |
+  { 'GroupMessage' : GroupMessageNotification } |
+  { 'AddedToChannel' : AddedToChannelNotification } |
+  { 'ChannelMessage' : ChannelMessageNotification };
+export interface NotificationCryptoTransferDetails {
+  'recipient' : UserId,
+  'ledger' : CanisterId,
+  'recipient_username' : [] | [string],
+  'amount' : bigint,
+  'symbol' : string,
+}
 export interface NotificationEnvelope {
-  'notification' : Notification,
+  'notification_bytes' : Uint8Array | number[],
   'recipients' : Array<UserId>,
+  'timestamp' : TimestampMillis,
 }
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
@@ -978,7 +1037,6 @@ export interface ParticipantsRemoved {
   'removed_by' : UserId,
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
-  { 'SNS' : SnsPendingCryptoTransaction } |
   { 'ICRC1' : Icrc1PendingCryptoTransaction };
 export type PermissionRole = { 'Moderators' : null } |
   { 'Owner' : null } |
@@ -1068,6 +1126,7 @@ export interface PushEventResult {
   'index' : EventIndex,
   'expires_at' : [] | [TimestampMillis],
 }
+export type Reaction = string;
 export interface RecommendedGroupsArgs {
   'count' : number,
   'exclusions' : Array<ChatId>,
@@ -1134,45 +1193,12 @@ export interface SetUpgradeConcurrencyArgs { 'value' : number }
 export type SetUpgradeConcurrencyResponse = { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
-export interface SnsCompletedCryptoTransaction {
-  'to' : Icrc1AccountOrMint,
-  'fee' : Tokens,
-  'created' : TimestampNanos,
-  'token' : Cryptocurrency,
-  'transaction_hash' : TransactionHash,
-  'block_index' : BlockIndex,
-  'from' : Icrc1AccountOrMint,
-  'memo' : [] | [bigint],
-  'ledger' : CanisterId,
-  'amount' : Tokens,
-}
-export interface SnsFailedCryptoTransaction {
-  'to' : Icrc1AccountOrMint,
-  'fee' : Tokens,
-  'created' : TimestampNanos,
-  'token' : Cryptocurrency,
-  'transaction_hash' : TransactionHash,
-  'from' : Icrc1AccountOrMint,
-  'memo' : [] | [bigint],
-  'error_message' : string,
-  'ledger' : CanisterId,
-  'amount' : Tokens,
-}
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
   'governance_canister_id' : CanisterId,
 }
 export type SnsNeuronId = Uint8Array | number[];
-export interface SnsPendingCryptoTransaction {
-  'to' : Icrc1Account,
-  'fee' : Tokens,
-  'created' : TimestampNanos,
-  'token' : Cryptocurrency,
-  'memo' : [] | [bigint],
-  'ledger' : CanisterId,
-  'amount' : Tokens,
-}
 export interface SnsProposal {
   'id' : ProposalId,
   'url' : string,
@@ -1322,6 +1348,10 @@ export interface _SERVICE {
     FreezeCommunityResponse
   >,
   'freeze_group' : ActorMethod<[FreezeGroupArgs], FreezeGroupResponse>,
+  'lookup_channel_by_group_id' : ActorMethod<
+    [LookupChannelByGroupIdArgs],
+    LookupChannelByGroupIdResponse
+  >,
   'recommended_groups' : ActorMethod<
     [RecommendedGroupsArgs],
     RecommendedGroupsResponse

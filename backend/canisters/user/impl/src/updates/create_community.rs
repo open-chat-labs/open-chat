@@ -3,6 +3,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, COMMUNITY_
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community;
 use ic_cdk_macros::update;
+use std::collections::HashSet;
 use tracing::error;
 use types::{CanisterId, CommunityId};
 use user_canister::create_community::{Response::*, *};
@@ -111,7 +112,17 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
 }
 
 fn default_channels_valid(default_channels: &Vec<String>) -> bool {
-    !default_channels.is_empty() && default_channels.iter().all(|channel| validate_name(channel, true).is_ok())
+    if default_channels.is_empty() || default_channels.iter().any(|channel| validate_name(channel, true).is_err()) {
+        return false;
+    }
+
+    let names: HashSet<String> = default_channels.iter().map(|name| name.to_lowercase()).collect();
+
+    if names.len() != default_channels.len() {
+        return false;
+    }
+
+    true
 }
 
 fn commit(community_id: CommunityId, state: &mut RuntimeState) {

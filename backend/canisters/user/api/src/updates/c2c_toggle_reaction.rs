@@ -8,6 +8,7 @@ pub struct Args {
     pub reaction: Reaction,
     pub added: bool,
     pub username: String,
+    pub user_avatar_id: Option<u128>,
     pub correlation_id: u64,
 }
 

@@ -40,8 +40,8 @@ fn c2c_toggle_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             match chat.events.add_reaction(add_remove_reaction_args) {
                 AddRemoveReactionResult::Success => {
                     if !state.data.suspended.value {
-                        if let Some((recipients, notification)) = build_notification(args, chat, now) {
-                            state.push_notification(recipients, notification);
+                        if let Some((recipient, notification)) = build_notification(args, chat, now) {
+                            state.push_notification(recipient, notification);
                         }
                     }
                     Added
@@ -65,29 +65,32 @@ fn build_notification(
         message_id,
         reaction,
         username,
+        user_avatar_id,
         ..
     }: Args,
     chat: &DirectChat,
     now: TimestampMillis,
-) -> Option<(Vec<UserId>, Notification)> {
+) -> Option<(UserId, Notification)> {
     if username.is_empty() || chat.notifications_muted.value {
         return None;
     }
 
-    chat.events
+    let message_event = chat
+        .events
         .main_events_reader(now)
         .message_event(message_id.into(), None)
-        .filter(|m| m.event.sender != chat.them)
-        .map(|message| {
-            (
-                vec![message.event.sender],
-                Notification::DirectReactionAddedNotification(DirectReactionAddedNotification {
-                    them: chat.them,
-                    username,
-                    message,
-                    reaction,
-                    timestamp: now,
-                }),
-            )
-        })
+        .filter(|m| m.event.sender != chat.them)?;
+
+    Some((
+        message_event.event.sender,
+        Notification::DirectReactionAdded(DirectReactionAddedNotification {
+            them: chat.them,
+            thread_root_message_index: None,
+            message_index: message_event.event.message_index,
+            message_event_index: message_event.index,
+            username,
+            reaction,
+            user_avatar_id,
+        }),
+    ))
 }

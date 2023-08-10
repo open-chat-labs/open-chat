@@ -23,7 +23,7 @@
 </script>
 
 <Panel middle>
-    {#if $pathParams.kind === "hot_groups_route"}
+    {#if $pathParams.kind === "explore_groups_route"}
         <RecommendedGroups {joining} on:joinGroup on:leaveGroup on:upgrade />
     {:else if $pathParams.kind === "communities_route"}
         <ExploreCommunities on:upgrade on:createCommunity />

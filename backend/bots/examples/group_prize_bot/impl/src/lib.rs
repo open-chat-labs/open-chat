@@ -4,7 +4,9 @@ use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CompletedCryptoTransaction, Cryptocurrency, Cycles, Document, TimestampMillis, Timestamped, Version};
+use types::{
+    BuildVersion, CanisterId, CompletedCryptoTransaction, Cryptocurrency, Cycles, Document, TimestampMillis, Timestamped,
+};
 use utils::env::Environment;
 
 mod guards;
@@ -15,7 +17,7 @@ mod queries;
 mod updates;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -45,7 +47,7 @@ impl RuntimeState {
             mean_time_between_prizes: self.data.mean_time_between_prizes,
             started: self.data.started,
             username: self.data.username.clone(),
-            token: self.data.prize_data.as_ref().map(|p| p.token),
+            token: self.data.prize_data.as_ref().map(|p| p.token.clone()),
             ledger_canister_id: self.data.prize_data.as_ref().map(|p| p.ledger_canister_id),
             end_date: self.data.prize_data.as_ref().map(|p| p.end_date),
             group_count: self.data.groups.len(),
@@ -121,7 +123,7 @@ pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub mean_time_between_prizes: TimestampMillis,
     pub started: bool,

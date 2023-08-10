@@ -175,6 +175,12 @@ impl NervousSystems {
         }
     }
 
+    pub fn update_chat_id(&mut self, governance_canister_id: CanisterId, chat_id: MultiUserChat) {
+        if let Some(ns) = self.nervous_systems.get_mut(&governance_canister_id) {
+            ns.chat_id = chat_id;
+        }
+    }
+
     pub fn metrics(&self) -> Vec<NervousSystemMetrics> {
         self.nervous_systems
             .values()

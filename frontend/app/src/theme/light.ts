@@ -35,6 +35,7 @@ export function lightTheme(): Theme {
 
         unread: {
             mute: "rgba(0,0,0,0.1",
+            "mute-solid": "rgb(55,127,195)",
         },
 
         progress: {

@@ -1,7 +1,6 @@
 import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
-import type { Cryptocurrency } from "../crypto";
 import type { AccessGate, AccessControlled, AccessRules } from "../access";
 import type {
     ChatPermissionRole,
@@ -32,6 +31,7 @@ export const KinicGovernanceCanisterId = "74ncn-fqaaa-aaaaq-aaasa-cai";
 
 export type InternalError = { kind: "internal_error" };
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
+export type CanisterNotFound = { kind: "canister_not_found" };
 
 export type MessageContent =
     | FileContent
@@ -59,7 +59,7 @@ export interface PlaceholderContent {
 }
 
 export type CryptocurrencyDeposit = {
-    token: Cryptocurrency;
+    token: string;
     amountE8s: bigint;
     feeE8s: bigint;
     memo: bigint;
@@ -70,7 +70,7 @@ export type CryptocurrencyDeposit = {
 export type PendingCryptocurrencyWithdrawal = {
     kind: "pending";
     ledger: string;
-    token: Cryptocurrency;
+    token: string;
     to: string;
     amountE8s: bigint;
     feeE8s?: bigint;
@@ -80,7 +80,7 @@ export type PendingCryptocurrencyWithdrawal = {
 
 export type CompletedCryptocurrencyWithdrawal = {
     kind: "completed";
-    token: Cryptocurrency;
+    token: string;
     to: string;
     amountE8s: bigint;
     feeE8s: bigint;
@@ -91,7 +91,7 @@ export type CompletedCryptocurrencyWithdrawal = {
 
 export type FailedCryptocurrencyWithdrawal = {
     kind: "failed";
-    token: Cryptocurrency;
+    token: string;
     to: string;
     amountE8s: bigint;
     feeE8s: bigint;
@@ -111,7 +111,7 @@ export type CryptocurrencyWithdrawal =
 
 export type CompletedCryptocurrencyTransfer = {
     kind: "completed";
-    token: Cryptocurrency;
+    token: string;
     recipient: string;
     sender: string;
     amountE8s: bigint;
@@ -124,7 +124,7 @@ export type CompletedCryptocurrencyTransfer = {
 export type PendingCryptocurrencyTransfer = {
     kind: "pending";
     ledger: string;
-    token: Cryptocurrency;
+    token: string;
     recipient: string;
     amountE8s: bigint;
     feeE8s?: bigint;
@@ -134,7 +134,7 @@ export type PendingCryptocurrencyTransfer = {
 
 export type FailedCryptocurrencyTransfer = {
     kind: "failed";
-    token: Cryptocurrency;
+    token: string;
     recipient: string;
     amountE8s: bigint;
     feeE8s: bigint;
@@ -217,7 +217,7 @@ export interface PrizeContent {
     prizesRemaining: number;
     prizesPending: number;
     winners: string[];
-    token: Cryptocurrency;
+    token: string;
     endDate: bigint;
     caption?: string;
 }
@@ -543,6 +543,7 @@ export type GroupChatEvent =
     | ChatUnfrozenEvent
     | EventsTimeToLiveUpdated
     | UsersInvitedEvent
+    | MembersAddedToDefaultChannel
     | EmptyEvent;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
@@ -775,7 +776,6 @@ export type ChatStateFull = {
     communities: CommunitySummary[];
     avatarId: bigint | undefined;
     blockedUsers: string[];
-    pinnedChats: ChatIdentifier[];
     pinnedGroupChats: GroupChatIdentifier[];
     pinnedDirectChats: DirectChatIdentifier[];
     pinnedFavouriteChats: ChatIdentifier[];
@@ -1148,7 +1148,6 @@ export type ChannelSummary = DataContent &
         memberCount: number;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
-        isDefault: boolean;
     };
 
 export type DirectChatSummary = ChatSummaryCommon & {
@@ -1176,7 +1175,6 @@ export type GroupChatSummary = DataContent &
         previewed: boolean;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
-        isDefault: boolean;
     };
 
 export function nullMembership(): ChatMembership {
@@ -1203,7 +1201,7 @@ export type ChatMembership = {
     archived: boolean;
 };
 
-export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup;
+export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup | CanisterNotFound;
 
 export type GroupCanisterSummaryUpdatesResponse =
     | GroupCanisterGroupChatSummaryUpdates
@@ -1300,7 +1298,6 @@ export type CandidateGroupChat = AccessControlled &
         rules: AccessRules;
         members: CandidateMember[];
         avatar?: DataContent;
-        isDefault: boolean;
     };
 
 export type CandidateChannel = CandidateGroupChat;
@@ -1322,7 +1319,8 @@ export type CreateGroupResponse =
     | UnauthorizedToCreatePublicGroup
     | NotAuthorised
     | CommunityFrozen
-    | UserSuspended;
+    | UserSuspended
+    | DefaultMustBePublic;
 
 export type CreateGroupSuccess = {
     kind: "success";
@@ -1381,6 +1379,10 @@ export type UnauthorizedToCreatePublicGroup = {
 
 export type MemberLimitReached = {
     kind: "member_limit_reached";
+};
+
+export type DefaultMustBePublic = {
+    kind: "default_must_be_public";
 };
 
 export type EditMessageResponse = "success" | "failure";
@@ -1508,6 +1510,11 @@ export type EventsTimeToLiveUpdated = {
     kind: "events_ttl_updated";
     updatedBy: string;
     newTimeToLive: bigint | undefined;
+};
+
+export type MembersAddedToDefaultChannel = {
+    kind: "members_added_to_default_channel";
+    count: number;
 };
 
 export type EmptyEvent = {
@@ -1702,6 +1709,10 @@ export type RegisterProposalVoteResponse =
     | "success"
     | "already_voted"
     | "caller_not_in_group"
+    | "user_not_in_channel"
+    | "channel_not_found"
+    | "user_not_in_community"
+    | "community_frozen"
     | "no_eligible_neurons"
     | "proposal_message_not_found"
     | "proposal_not_found"
@@ -1779,6 +1790,12 @@ export type RemoveHotGroupExclusionResponse =
     | "internal_error";
 
 export type SetGroupUpgradeConcurrencyResponse = "success" | "not_authorized" | "internal_error";
+export type SetCommunityModerationFlagsResponse =
+    | "success"
+    | "community_not_found"
+    | "not_authorized"
+    | "invalid_flags"
+    | "internal_error";
 
 export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
 
@@ -1797,3 +1814,10 @@ export type ClaimPrizeResponse =
 export type ReportMessageResponse = "success" | "failure";
 
 export type DeclineInvitationResponse = "success" | "failure";
+
+export type PublicGroupSummaryResponse =
+    | (Success & { group: GroupChatSummary })
+    | Failure
+    | GroupMoved;
+
+export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };

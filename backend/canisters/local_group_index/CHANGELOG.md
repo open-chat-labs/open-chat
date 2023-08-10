@@ -5,6 +5,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.800](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.800-local_group_index)] - 2023-08-08
+
+### Changed
+
+- Bump number of cycles required for upgrade ([#4155](https://github.com/open-chat-labs/open-chat/pull/4155))
+
+## [[2.0.785](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.785-local_group_index)] - 2023-08-03
+
+### Changed
+
+- Authorize community canisters to push notifications ([#4126](https://github.com/open-chat-labs/open-chat/pull/4126))
+
+## [[2.0.765](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.765-local_group_index)] - 2023-07-29
+
+### Removed
+
+- Consolidate remove and block community permissions ([#4030](https://github.com/open-chat-labs/open-chat/pull/4030))
+
 ## [[2.0.751](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.751-local_group_index)] - 2023-07-20
 
 ### Added

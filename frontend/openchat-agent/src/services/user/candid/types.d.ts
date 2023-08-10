@@ -29,12 +29,15 @@ export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'UserSuspended' : null } |
   { 'InvalidReaction' : null } |
   { 'SuccessV2' : PushEventResult };
-export interface AddedToGroupNotification {
+export interface AddedToChannelNotification {
+  'channel_id' : ChannelId,
+  'community_id' : CommunityId,
   'added_by_name' : string,
   'added_by' : UserId,
-  'timestamp' : TimestampMillis,
-  'chat_id' : ChatId,
-  'group_name' : string,
+  'channel_name' : string,
+  'community_avatar_id' : [] | [bigint],
+  'community_name' : string,
+  'channel_avatar_id' : [] | [bigint],
 }
 export interface ArchiveUnarchiveChatsArgs {
   'to_archive' : Array<Chat>,
@@ -91,7 +94,6 @@ export interface ChannelMatch {
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
-  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'member_count' : number,
 }
@@ -110,11 +112,42 @@ export interface ChannelMembershipUpdates {
   'mentions' : Array<Mention>,
   'my_metrics' : [] | [ChatMetrics],
 }
+export interface ChannelMessageNotification {
+  'channel_id' : ChannelId,
+  'community_id' : CommunityId,
+  'image_url' : [] | [string],
+  'sender' : UserId,
+  'channel_name' : string,
+  'community_avatar_id' : [] | [bigint],
+  'community_name' : string,
+  'sender_name' : string,
+  'message_text' : [] | [string],
+  'message_type' : string,
+  'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'channel_avatar_id' : [] | [bigint],
+  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
+  'message_index' : MessageIndex,
+}
 export interface ChannelMessagesRead {
   'channel_id' : ChannelId,
   'threads' : Array<ThreadRead>,
   'read_up_to' : [] | [MessageIndex],
   'date_read_pinned' : [] | [TimestampMillis],
+}
+export interface ChannelReactionAddedNotification {
+  'channel_id' : ChannelId,
+  'community_id' : CommunityId,
+  'added_by_name' : string,
+  'message_event_index' : EventIndex,
+  'added_by' : UserId,
+  'channel_name' : string,
+  'community_avatar_id' : [] | [bigint],
+  'community_name' : string,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'channel_avatar_id' : [] | [bigint],
+  'reaction' : Reaction,
+  'message_index' : MessageIndex,
 }
 export type Chat = { 'Group' : ChatId } |
   { 'Channel' : [CommunityId, ChannelId] } |
@@ -131,6 +164,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
+  { 'MembersAddedToDefaultChannel' : MembersAddedToDefaultChannel } |
   { 'ChatFrozen' : GroupFrozen } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'UsersUnblocked' : UsersUnblocked } |
@@ -209,7 +243,6 @@ export interface CommunityCanisterChannelSummary {
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
-  'is_default' : boolean,
   'avatar_id' : [] | [bigint],
   'next_message_expiry' : [] | [TimestampMillis],
   'membership' : [] | [ChannelMembership],
@@ -232,7 +265,6 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
-  'is_default' : [] | [boolean],
   'avatar_id' : DocumentIdUpdate,
   'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
@@ -286,6 +318,7 @@ export interface CommunityMatch {
   'name' : string,
   'description' : string,
   'moderation_flags' : number,
+  'score' : number,
   'avatar_id' : [] | [bigint],
   'banner_id' : [] | [bigint],
   'member_count' : number,
@@ -322,7 +355,6 @@ export type CommunityRole = { 'Member' : null } |
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
-  { 'SNS' : SnsCompletedCryptoTransaction } |
   { 'ICRC1' : Icrc1CompletedCryptoTransaction };
 export interface Contact { 'nickname' : [] | [string], 'user_id' : UserId }
 export type ContactsArgs = {};
@@ -395,7 +427,8 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CHAT' : null } |
   { 'SNS1' : null } |
   { 'KINIC' : null } |
-  { 'CKBTC' : null };
+  { 'CKBTC' : null } |
+  { 'Other' : string };
 export interface CustomMessageContent {
   'data' : Uint8Array | number[],
   'kind' : string,
@@ -487,17 +520,25 @@ export interface DirectChatsUpdates {
   'updated' : Array<DirectChatSummaryUpdates>,
 }
 export interface DirectMessageNotification {
+  'image_url' : [] | [string],
+  'sender_avatar_id' : [] | [bigint],
   'sender' : UserId,
-  'message' : MessageEventWrapper,
   'sender_name' : string,
+  'message_text' : [] | [string],
+  'message_type' : string,
+  'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
+  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
+  'message_index' : MessageIndex,
 }
 export interface DirectReactionAddedNotification {
   'username' : string,
+  'message_event_index' : EventIndex,
   'them' : UserId,
-  'message' : MessageEventWrapper,
-  'timestamp' : TimestampMillis,
-  'reaction' : string,
+  'user_avatar_id' : [] | [bigint],
+  'thread_root_message_index' : [] | [MessageIndex],
+  'reaction' : Reaction,
+  'message_index' : MessageIndex,
 }
 export interface Document {
   'id' : bigint,
@@ -563,7 +604,6 @@ export interface EventsWindowArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
-  { 'SNS' : SnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction };
 export interface FavouriteChatsInitial {
   'chats' : Array<Chat>,
@@ -756,14 +796,18 @@ export interface GroupMatch {
   'member_count' : number,
 }
 export interface GroupMessageNotification {
-  'hide' : boolean,
-  'mentioned' : Array<User>,
+  'image_url' : [] | [string],
+  'group_avatar_id' : [] | [bigint],
   'sender' : UserId,
-  'message' : MessageEventWrapper,
   'sender_name' : string,
+  'message_text' : [] | [string],
+  'message_type' : string,
   'chat_id' : ChatId,
+  'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
+  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
+  'message_index' : MessageIndex,
 }
 export interface GroupNameChanged {
   'changed_by' : UserId,
@@ -787,13 +831,14 @@ export interface GroupPermissions {
 }
 export interface GroupReactionAddedNotification {
   'added_by_name' : string,
+  'group_avatar_id' : [] | [bigint],
+  'message_event_index' : EventIndex,
   'added_by' : UserId,
-  'message' : MessageEventWrapper,
-  'timestamp' : TimestampMillis,
   'chat_id' : ChatId,
   'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
-  'reaction' : string,
+  'reaction' : Reaction,
+  'message_index' : MessageIndex,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
 export type GroupRole = { 'Participant' : null } |
@@ -926,6 +971,7 @@ export interface MarkReadArgs {
   'messages_read' : Array<ChatMessagesRead>,
 }
 export type MarkReadResponse = { 'Success' : null };
+export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
   'message_id' : MessageId,
@@ -1107,15 +1153,25 @@ export interface NnsProposal {
 export type NnsUserOrAccount = { 'User' : UserId } |
   { 'Account' : AccountIdentifier };
 export type Notification = {
-    'DirectReactionAddedNotification' : DirectReactionAddedNotification
+    'GroupReactionAdded' : GroupReactionAddedNotification
   } |
-  { 'DirectMessageNotification' : DirectMessageNotification } |
-  { 'GroupMessageNotification' : GroupMessageNotification } |
-  { 'GroupReactionAddedNotification' : GroupReactionAddedNotification } |
-  { 'AddedToGroupNotification' : AddedToGroupNotification };
+  { 'DirectMessage' : DirectMessageNotification } |
+  { 'ChannelReactionAdded' : ChannelReactionAddedNotification } |
+  { 'DirectReactionAdded' : DirectReactionAddedNotification } |
+  { 'GroupMessage' : GroupMessageNotification } |
+  { 'AddedToChannel' : AddedToChannelNotification } |
+  { 'ChannelMessage' : ChannelMessageNotification };
+export interface NotificationCryptoTransferDetails {
+  'recipient' : UserId,
+  'ledger' : CanisterId,
+  'recipient_username' : [] | [string],
+  'amount' : bigint,
+  'symbol' : string,
+}
 export interface NotificationEnvelope {
-  'notification' : Notification,
+  'notification_bytes' : Uint8Array | number[],
   'recipients' : Array<UserId>,
+  'timestamp' : TimestampMillis,
 }
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
@@ -1168,7 +1224,6 @@ export interface ParticipantsRemoved {
   'removed_by' : UserId,
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
-  { 'SNS' : SnsPendingCryptoTransaction } |
   { 'ICRC1' : Icrc1PendingCryptoTransaction };
 export type PermissionRole = { 'Moderators' : null } |
   { 'Owner' : null } |
@@ -1179,9 +1234,6 @@ export interface PermissionsChanged {
   'old_permissions' : GroupPermissions,
   'new_permissions' : GroupPermissions,
 }
-export interface PinChatRequest { 'chat_id' : ChatId }
-export type PinChatResponse = { 'Success' : null } |
-  { 'PinnedLimitReached' : number };
 export interface PinChatV2Request { 'chat' : ChatInList }
 export type PinChatV2Response = { 'ChatNotFound' : null } |
   { 'Success' : null };
@@ -1274,6 +1326,7 @@ export interface PushEventResult {
   'index' : EventIndex,
   'expires_at' : [] | [TimestampMillis],
 }
+export type Reaction = string;
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemoveReactionArgs {
@@ -1456,45 +1509,12 @@ export interface SetMessageReminderV2Args {
   'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export interface SnsCompletedCryptoTransaction {
-  'to' : Icrc1AccountOrMint,
-  'fee' : Tokens,
-  'created' : TimestampNanos,
-  'token' : Cryptocurrency,
-  'transaction_hash' : TransactionHash,
-  'block_index' : BlockIndex,
-  'from' : Icrc1AccountOrMint,
-  'memo' : [] | [bigint],
-  'ledger' : CanisterId,
-  'amount' : Tokens,
-}
-export interface SnsFailedCryptoTransaction {
-  'to' : Icrc1AccountOrMint,
-  'fee' : Tokens,
-  'created' : TimestampNanos,
-  'token' : Cryptocurrency,
-  'transaction_hash' : TransactionHash,
-  'from' : Icrc1AccountOrMint,
-  'memo' : [] | [bigint],
-  'error_message' : string,
-  'ledger' : CanisterId,
-  'amount' : Tokens,
-}
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
   'governance_canister_id' : CanisterId,
 }
 export type SnsNeuronId = Uint8Array | number[];
-export interface SnsPendingCryptoTransaction {
-  'to' : Icrc1Account,
-  'fee' : Tokens,
-  'created' : TimestampNanos,
-  'token' : Cryptocurrency,
-  'memo' : [] | [bigint],
-  'ledger' : CanisterId,
-  'amount' : Tokens,
-}
 export interface SnsProposal {
   'id' : ProposalId,
   'url' : string,
@@ -1577,8 +1597,6 @@ export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
 export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
-export interface UnpinChatRequest { 'chat_id' : ChatId }
-export type UnpinChatResponse = { 'Success' : null };
 export interface UnpinChatV2Request { 'chat' : ChatInList }
 export type UnpinChatV2Response = { 'ChatNotFound' : null } |
   { 'Success' : null };
@@ -1739,7 +1757,6 @@ export interface _SERVICE {
     [MuteNotificationsArgs],
     MuteNotificationsResponse
   >,
-  'pin_chat' : ActorMethod<[PinChatRequest], PinChatResponse>,
   'pin_chat_v2' : ActorMethod<[PinChatV2Request], PinChatV2Response>,
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
@@ -1769,7 +1786,6 @@ export interface _SERVICE {
     [UnmuteNotificationsArgs],
     UnmuteNotificationsResponse
   >,
-  'unpin_chat' : ActorMethod<[UnpinChatRequest], UnpinChatResponse>,
   'unpin_chat_v2' : ActorMethod<[UnpinChatV2Request], UnpinChatV2Response>,
   'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
   'withdraw_crypto_v2' : ActorMethod<

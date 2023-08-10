@@ -87,7 +87,7 @@
     }
 
     function onVote(adopt: boolean) {
-        if (votingDisabled || chatId.kind !== "group_chat") {
+        if (votingDisabled || (chatId.kind !== "group_chat" && chatId.kind !== "channel")) {
             return;
         }
 

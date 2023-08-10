@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageIndex, ProposalContent, TimestampMillis,
-    TotalVotes, UserId, VoteOperation,
+    CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
+    ProposalContent, TimestampMillis, TotalVotes, User, UserId, VoteOperation,
 };
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
@@ -108,9 +108,91 @@ impl MessageContent {
         references
     }
 
-    pub fn trim(&mut self, max_chars: usize) {
-        if let MessageContent::Text(TextContent { text }) = self {
-            text.truncate(max_chars)
+    pub fn message_type(&self) -> &'static str {
+        match self {
+            MessageContent::Text(_) => "Text",
+            MessageContent::Image(_) => "Image",
+            MessageContent::Video(_) => "Video",
+            MessageContent::Audio(_) => "Audio",
+            MessageContent::File(_) => "File",
+            MessageContent::Poll(_) => "Poll",
+            MessageContent::Crypto(_) => "Crypto",
+            MessageContent::Deleted(_) => "Deleted",
+            MessageContent::Giphy(_) => "Giphy",
+            MessageContent::GovernanceProposal(_) => "GovernanceProposal",
+            MessageContent::Prize(_) => "Prize",
+            MessageContent::PrizeWinner(_) => "PrizeWinner",
+            MessageContent::MessageReminderCreated(_) => "MessageReminderCreated",
+            MessageContent::MessageReminder(_) => "MessageReminder",
+            MessageContent::ReportedMessage(_) => "ReportedMessage",
+            MessageContent::Custom(_) => "Custom",
+        }
+    }
+
+    pub fn notification_text(&self, mentioned: &[User]) -> Option<String> {
+        let mut text = match self {
+            MessageContent::Text(t) => Some(t.text.clone()),
+            MessageContent::Image(i) => i.caption.clone(),
+            MessageContent::Video(v) => v.caption.clone(),
+            MessageContent::Audio(a) => a.caption.clone(),
+            MessageContent::File(f) => f.caption.clone(),
+            MessageContent::Poll(p) => p.config.text.clone(),
+            MessageContent::Crypto(c) => c.caption.clone(),
+            MessageContent::Giphy(g) => g.caption.clone(),
+            MessageContent::GovernanceProposal(gp) => Some(gp.proposal.title().to_string()),
+            MessageContent::Prize(p) => p.caption.clone(),
+            MessageContent::Deleted(_)
+            | MessageContent::PrizeWinner(_)
+            | MessageContent::MessageReminderCreated(_)
+            | MessageContent::MessageReminder(_)
+            | MessageContent::ReportedMessage(_)
+            | MessageContent::Custom(_) => None,
+        }?;
+
+        // Populate usernames for mentioned users
+        for User { user_id, username } in mentioned {
+            text = text.replace(&format!("@UserId({user_id})"), &format!("@{username}"));
+        }
+
+        const MAX_CHARS: usize = 200;
+        Some(text.chars().take(MAX_CHARS).collect())
+    }
+
+    pub fn notification_image_url(&self) -> Option<String> {
+        match self {
+            MessageContent::Image(i) => i.blob_reference.as_ref().map(|b| b.url()),
+            MessageContent::Video(v) => v.image_blob_reference.as_ref().map(|b| b.url()),
+            MessageContent::Text(_)
+            | MessageContent::Audio(_)
+            | MessageContent::File(_)
+            | MessageContent::Poll(_)
+            | MessageContent::Crypto(_)
+            | MessageContent::Deleted(_)
+            | MessageContent::Giphy(_)
+            | MessageContent::GovernanceProposal(_)
+            | MessageContent::Prize(_)
+            | MessageContent::PrizeWinner(_)
+            | MessageContent::MessageReminderCreated(_)
+            | MessageContent::MessageReminder(_)
+            | MessageContent::ReportedMessage(_)
+            | MessageContent::Custom(_) => None,
+        }
+    }
+
+    pub fn notification_crypto_transfer_details(&self, mentioned: &[User]) -> Option<CryptoTransferDetails> {
+        if let MessageContent::Crypto(c) = self {
+            Some(CryptoTransferDetails {
+                recipient: c.recipient,
+                recipient_username: mentioned
+                    .iter()
+                    .find(|u| u.user_id == c.recipient)
+                    .map(|u| u.username.clone()),
+                ledger: c.transfer.ledger(),
+                symbol: c.transfer.token().token_symbol().to_string(),
+                amount: c.transfer.units(),
+            })
+        } else {
+            None
         }
     }
 }
@@ -208,7 +290,6 @@ impl MessageContentInitial {
         if is_empty {
             Err(ContentValidationError::Empty)
         // Allow GovernanceProposal messages to exceed the max length since they are collapsed on the UI
-        // TODO only allow GovernanceProposal messages which are sent by the proposals_bot
         } else if self.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(self, MessageContentInitial::GovernanceProposal(_)) {
             Err(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH))
         } else {
@@ -217,24 +298,24 @@ impl MessageContentInitial {
     }
 
     pub fn text_length(&self) -> usize {
-        fn opt_string_len(input: &Option<String>) -> usize {
-            input.as_ref().map_or(0, |s| s.len())
-        }
+        self.text().map_or(0, |t| t.chars().count())
+    }
 
+    pub fn text(&self) -> Option<&str> {
         match self {
-            MessageContentInitial::Text(t) => t.text.len(),
-            MessageContentInitial::Image(i) => opt_string_len(&i.caption),
-            MessageContentInitial::Video(v) => opt_string_len(&v.caption),
-            MessageContentInitial::Audio(a) => opt_string_len(&a.caption),
-            MessageContentInitial::File(f) => opt_string_len(&f.caption),
-            MessageContentInitial::Poll(p) => opt_string_len(&p.config.text),
-            MessageContentInitial::Crypto(c) => opt_string_len(&c.caption),
-            MessageContentInitial::Giphy(g) => opt_string_len(&g.caption),
-            MessageContentInitial::GovernanceProposal(p) => p.proposal.summary().len(),
-            MessageContentInitial::Prize(p) => opt_string_len(&p.caption),
-            MessageContentInitial::MessageReminderCreated(r) => opt_string_len(&r.notes),
-            MessageContentInitial::MessageReminder(r) => opt_string_len(&r.notes),
-            MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => 0,
+            MessageContentInitial::Text(t) => Some(t.text.as_str()),
+            MessageContentInitial::Image(i) => i.caption.as_deref(),
+            MessageContentInitial::Video(v) => v.caption.as_deref(),
+            MessageContentInitial::Audio(a) => a.caption.as_deref(),
+            MessageContentInitial::File(f) => f.caption.as_deref(),
+            MessageContentInitial::Poll(p) => p.config.text.as_deref(),
+            MessageContentInitial::Crypto(c) => c.caption.as_deref(),
+            MessageContentInitial::Giphy(g) => g.caption.as_deref(),
+            MessageContentInitial::GovernanceProposal(p) => Some(p.proposal.summary()),
+            MessageContentInitial::Prize(p) => p.caption.as_deref(),
+            MessageContentInitial::MessageReminderCreated(r) => r.notes.as_deref(),
+            MessageContentInitial::MessageReminder(r) => r.notes.as_deref(),
+            MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
     }
 }
@@ -551,6 +632,12 @@ pub struct DeletedBy {
 pub struct BlobReference {
     pub canister_id: CanisterId,
     pub blob_id: u128,
+}
+
+impl BlobReference {
+    pub fn url(&self) -> String {
+        format!("https://{}.raw.icp0.io/files/{}", self.canister_id, self.blob_id)
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]

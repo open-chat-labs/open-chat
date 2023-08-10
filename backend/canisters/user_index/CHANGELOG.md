@@ -5,9 +5,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.792](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.792-user_index)] - 2023-08-08
+
+### Changed
+
+- Validate text length based on number of chars rather than bytes ([#4154](https://github.com/open-chat-labs/open-chat/pull/4154))
+- Bump number of cycles required for upgrade ([#4155](https://github.com/open-chat-labs/open-chat/pull/4155))
+
+## [[2.0.783](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.783-user_index)] - 2023-08-02
+
+### Changed
+
+- Add an `UNDER_REVIEW` moderation flag ([#4104](https://github.com/open-chat-labs/open-chat/pull/4104))
+
+### Fixed
+
+- Handle `set_moderation_flags` in `inspect_message` ([#4058](https://github.com/open-chat-labs/open-chat/pull/4058))
+
+## [[2.0.759](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.759-user_index)] - 2023-07-28
+
 ### Changed
 
 - Mark channels as read after joining community or channel ([#4004](https://github.com/open-chat-labs/open-chat/pull/4004))
+- Store `moderation_flags_enabled` on each user's profile ([#4050](https://github.com/open-chat-labs/open-chat/pull/4050))
 
 ## [[2.0.758](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.758-user_index)] - 2023-07-20
 

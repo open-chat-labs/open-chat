@@ -119,19 +119,25 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         chat_events::ClaimPrizeResult::Success(message_event) => {
             // Send a notification to group participants
             let notification_recipients = channel.chat.members.users_to_notify(None).into_iter().collect();
+            let content = &message_event.event.content;
 
-            let notification = Notification::ChannelMessageNotification(ChannelMessageNotification {
+            let notification = Notification::ChannelMessage(ChannelMessageNotification {
                 community_id: state.env.canister_id().into(),
                 channel_id: args.channel_id,
                 thread_root_message_index: None,
+                message_index: message_event.event.message_index,
+                event_index: message_event.index,
                 community_name: state.data.name.clone(),
                 channel_name: channel.chat.name.clone(),
                 sender: OPENCHAT_BOT_USER_ID,
                 sender_name: OPENCHAT_BOT_USERNAME.to_string(),
-                message: message_event,
-                mentioned: Vec::new(),
+                message_type: content.message_type().to_string(),
+                message_text: content.notification_text(&[]),
+                image_url: content.notification_image_url(),
+                community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
+                channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
+                crypto_transfer: None,
             });
-
             state.push_notification(notification_recipients, notification);
 
             handle_activity_notification(state);

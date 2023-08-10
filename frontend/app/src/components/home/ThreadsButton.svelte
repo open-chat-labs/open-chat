@@ -14,4 +14,4 @@
     on:click
     {selected}
     title={$_("thread.previewTitle")}
-    unread={$staleThreadsCount} />
+    unread={{ unmuted: $staleThreadsCount, muted: 0, mentions: false }} />

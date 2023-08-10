@@ -11,12 +11,13 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
-    AccessGate, AccessRules, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
-    CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
-    Version,
+    AccessGate, AccessRules, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
+    CommunityMembership, CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis,
+    Timestamped, UserId,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -33,7 +34,7 @@ mod timer_job_types;
 mod updates;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -74,7 +75,7 @@ impl RuntimeState {
             let args = c2c_push_notification::Args {
                 recipients,
                 authorizer: Some(self.data.local_group_index_canister_id),
-                notification_bytes: candid::encode_one(notification).unwrap(),
+                notification_bytes: ByteBuf::from(candid::encode_one(notification).unwrap()),
             };
             ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
         }
@@ -103,11 +104,11 @@ impl RuntimeState {
 
             (channels, Some(membership))
         } else {
-            // Return all default channels
+            // Return all public channels
             let channels: Vec<_> = self
                 .data
                 .channels
-                .default_channels()
+                .public_channels()
                 .iter()
                 .filter_map(|c| c.summary(None, false, data.is_public, now))
                 .collect();
@@ -221,7 +222,7 @@ impl Data {
         now: TimestampMillis,
     ) -> Data {
         let channels = Channels::new(created_by_user_id, default_channels, now);
-        let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.default_channel_ids(), now);
+        let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.public_channel_ids(), now);
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
         Data {
@@ -303,7 +304,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub public: bool,
     pub date_created: TimestampMillis,

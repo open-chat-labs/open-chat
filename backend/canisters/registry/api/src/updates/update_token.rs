@@ -6,6 +6,8 @@ use types::CanisterId;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub ledger_canister_id: CanisterId,
+    pub name: Option<String>,
+    pub symbol: Option<String>,
     pub info_url: Option<String>,
     pub how_to_buy_url: Option<String>,
     pub transaction_url_format: Option<String>,
@@ -21,6 +23,8 @@ pub enum Response {
 #[derive(Serialize)]
 pub struct HumanReadableArgs {
     ledger_canister_id: HumanReadablePrincipal,
+    name: Option<String>,
+    symbol: Option<String>,
     info_url: Option<String>,
     how_to_buy_url: Option<String>,
     transaction_url_format: Option<String>,
@@ -33,6 +37,8 @@ impl ToHumanReadable for Args {
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
             ledger_canister_id: self.ledger_canister_id.into(),
+            name: self.name.clone(),
+            symbol: self.symbol.clone(),
             info_url: self.info_url.clone(),
             how_to_buy_url: self.how_to_buy_url.clone(),
             transaction_url_format: self.transaction_url_format.clone(),

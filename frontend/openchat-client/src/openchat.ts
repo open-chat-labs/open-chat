@@ -59,6 +59,8 @@ import {
     serialiseMessageForRtc,
     canConvertToCommunity,
     canImportToCommunity,
+    buildIdenticonUrl,
+    isEventKindHidden,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -200,7 +202,6 @@ import {
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
-import { toTitleCase } from "./utils/string";
 import { formatRelativeTime, formatTimeRemaining } from "./utils/time";
 import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
@@ -334,6 +335,16 @@ import {
     CommunityInvite,
     isSnsGate,
     ChannelSummary,
+    CHAT_SYMBOL,
+    CKBTC_SYMBOL,
+    HOTORNOT_SYMBOL,
+    ICP_SYMBOL,
+    KINIC_SYMBOL,
+    SNS1_SYMBOL,
+    ModerationFlag,
+    GroupMoved,
+    GHOST_SYMBOL,
+    toTitleCase
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -365,8 +376,10 @@ import {
     unreadFavouriteChats,
     unreadCommunityChannels,
     globalUnreadCount,
+    getAllChats,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
+import { hasFlag, moderationFlags } from "./stores/flagStore";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -379,7 +392,6 @@ const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
-const communitiesEnabled = localStorage.getItem("openchat_communities_enabled") === "true";
 
 export class OpenChat extends OpenChatAgentWorker {
     private _authClient: Promise<AuthClient>;
@@ -627,6 +639,7 @@ export class OpenChat extends OpenChatAgentWorker {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
         this._user = user;
+        moderationFlags.set(user.moderationFlagsEnabled);
         this.setDiamondMembership(user.diamondMembership);
         const id = this._identity;
         // TODO remove this once the principal migration can be done via the UI
@@ -766,32 +779,29 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    previewChat(chatId: MultiUserChatIdentifier): Promise<boolean> {
+    previewChat(
+        chatId: MultiUserChatIdentifier
+    ): Promise<{ kind: "success" } | { kind: "failure" } | GroupMoved> {
         switch (chatId.kind) {
             case "group_chat":
-                return this.sendRequest({ kind: "getPublicGroupSummary", chatId }).then(
-                    (maybeChat) => {
-                        if (maybeChat === undefined || maybeChat.frozen) {
-                            return false;
-                        }
-                        addGroupPreview(maybeChat);
-                        return true;
+                return this.sendRequest({ kind: "getPublicGroupSummary", chatId }).then((resp) => {
+                    if (resp.kind === "success" && !resp.group.frozen) {
+                        addGroupPreview(resp.group);
+                        return { kind: "success" };
+                    } else if (resp.kind === "group_moved") {
+                        return resp;
                     }
-                );
+                    return { kind: "failure" };
+                });
             case "channel":
                 return this.sendRequest({ kind: "getChannelSummary", chatId }).then((resp) => {
-                    if (resp.kind === "failure") {
-                        return false;
+                    if (resp.kind === "channel") {
+                        addGroupPreview(resp);
+                        return { kind: "success" };
                     }
-                    addGroupPreview(resp);
-                    return true;
+                    return { kind: "failure" };
                 });
         }
-    }
-
-    private async addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
-        const users = this.userIdsFromEvents([message]);
-        await this.getMissingUsers(users);
     }
 
     toggleMuteNotifications(chatId: ChatIdentifier, muted: boolean): Promise<boolean> {
@@ -880,7 +890,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "pinChat",
             chatId,
-            communitiesEnabled,
             favourite: scope === "favourite",
         })
             .then((resp) => resp === "success")
@@ -897,7 +906,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "unpinChat",
             chatId,
-            communitiesEnabled,
             favourite: scope === "favourite",
         })
             .then((resp) => resp === "success")
@@ -1125,8 +1133,8 @@ export class OpenChat extends OpenChatAgentWorker {
     groupBy = groupBy;
     getTypingString = getTypingString;
 
-    communityAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
-        return dataContent?.blobUrl ?? "/assets/wink.svg";
+    communityAvatarUrl(id: string, avatar: DataContent): string {
+        return avatar?.blobUrl ?? buildIdenticonUrl(id);
     }
 
     communityBannerUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
@@ -3076,55 +3084,73 @@ export class OpenChat extends OpenChatAgentWorker {
     notificationReceived(notification: Notification): void {
         let chatId: ChatIdentifier;
         let threadRootMessageIndex: number | undefined = undefined;
-        let message: EventWrapper<Message>;
+        let eventIndex: number;
+        let isReaction = false;
         switch (notification.kind) {
+            case "channel_notification": {
+                chatId = notification.chatId;
+                threadRootMessageIndex = notification.threadRootMessageIndex;
+                eventIndex = notification.eventIndex;
+                break;
+            }
             case "direct_notification": {
                 chatId = notification.sender;
-                threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.eventIndex;
                 break;
             }
             case "group_notification": {
                 chatId = notification.chatId;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.eventIndex;
+                break;
+            }
+            case "channel_reaction": {
+                chatId = notification.chatId;
+                threadRootMessageIndex = notification.threadRootMessageIndex;
+                eventIndex = notification.messageEventIndex;
+                isReaction = true;
                 break;
             }
             case "direct_reaction": {
                 chatId = notification.them;
-                message = notification.message;
+                eventIndex = notification.messageEventIndex;
+                isReaction = true;
                 break;
             }
-            case "group_reaction":
+            case "group_reaction": {
                 chatId = notification.chatId;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
+                eventIndex = notification.messageEventIndex;
+                isReaction = true;
                 break;
-            case "added_to_group_notification":
+            }
+            case "added_to_channel_notification":
                 return;
         }
 
-        if (threadRootMessageIndex !== undefined) {
-            // TODO fix this for thread messages
-            return;
-        }
-
         const serverChat = this._liveState.serverChatSummaries.get(chatId);
-
-        if (serverChat === undefined || serverChat.latestEventIndex >= message.index) {
+        if (serverChat === undefined) {
             return;
         }
 
-        this.sendRequest({
-            kind: "setCachedMessageFromNotification",
-            chatId,
-            threadRootMessageIndex,
-            message,
-        });
+        const minVisibleEventIndex = serverChat.kind === "direct_chat" ? 0 : serverChat.minVisibleEventIndex;
+        const latestClientEventIndex = Math.max(eventIndex, serverChat.latestEventIndex);
 
-        this.addMissingUsersFromMessage(message).then(() => {
-            updateSummaryWithConfirmedMessage(chatId, message);
-            this.handleConfirmedMessageSentByOther(serverChat, message, threadRootMessageIndex);
+        if (isReaction) {
+            // TODO first clear the existing cache entry
+            return
+        }
+
+        // Load the event
+        this.sendRequest({
+            kind: "chatEvents",
+            chatType: serverChat.kind,
+            chatId,
+            eventIndexRange: [minVisibleEventIndex, latestClientEventIndex],
+            startIndex: eventIndex,
+            ascending: false,
+            threadRootMessageIndex,
+            latestClientEventIndex,
         });
     }
 
@@ -3512,7 +3538,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     registerProposalVote(
-        chatId: GroupChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         messageIndex: number,
         adopt: boolean
     ): Promise<RegisterProposalVoteResponse> {
@@ -3628,10 +3654,12 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
-        return this.sendRequest({ kind: "refreshAccountBalance", crypto, principal }).then(
+    refreshAccountBalance(token: string, principal: string): Promise<Tokens> {
+        const ledger = this.ledgerCanisterId(token);
+
+        return this.sendRequest({ kind: "refreshAccountBalance", ledger, principal }).then(
             (val) => {
-                cryptoBalance.set(crypto, val);
+                cryptoBalance.set(token, val);
                 return val;
             }
         );
@@ -3933,6 +3961,15 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    setCommunityModerationFlags(communityId: string, flags: number): Promise<boolean> {
+        return this.sendRequest({ kind: "setCommunityModerationFlags", communityId, flags })
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to set community moderation flags", err);
+                return false;
+            });
+    }
+
     setGroupUpgradeConcurrency(value: number): Promise<boolean> {
         return this.sendRequest({ kind: "setGroupUpgradeConcurrency", value })
             .then((resp) => resp === "success")
@@ -4058,7 +4095,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
 
                 this.updateReadUpToStore(updatedChats);
-                const chats = this._liveState.myServerChatSummaries.values();
+                const chats = getAllChats(this._liveState.globalState).values();
 
                 this._cachePrimer?.processChatUpdates(chats, updatedChats);
 
@@ -4089,18 +4126,12 @@ export class OpenChat extends OpenChatAgentWorker {
                     }
                 }
 
-                setGlobalState(
-                    chatsResponse.state.communities,
-                    updatedChats,
-                    chatsResponse.state.favouriteChats,
-                    {
-                        none: chatsResponse.state.pinnedChats,
-                        group_chat: chatsResponse.state.pinnedGroupChats,
-                        direct_chat: chatsResponse.state.pinnedDirectChats,
-                        favourite: chatsResponse.state.pinnedFavouriteChats,
-                        community: chatsResponse.state.pinnedChannels,
+                // If we are still previewing a community we are a member of then remove the preview
+                for (const community of chatsResponse.state.communities) {
+                    if (community?.membership !== undefined && this._liveState.communityPreviews.has(community.id)) {
+                        removeCommunityPreview(community.id);
                     }
-                );
+                }
 
                 if (this._liveState.uninitializedDirectChats.size > 0) {
                     for (const chat of updatedChats) {
@@ -4109,6 +4140,19 @@ export class OpenChat extends OpenChatAgentWorker {
                         }
                     }
                 }
+
+                setGlobalState(
+                    chatsResponse.state.communities,
+                    updatedChats,
+                    chatsResponse.state.favouriteChats,
+                    {
+                        group_chat: chatsResponse.state.pinnedGroupChats,
+                        direct_chat: chatsResponse.state.pinnedDirectChats,
+                        favourite: chatsResponse.state.pinnedFavouriteChats,
+                        community: chatsResponse.state.pinnedChannels,
+                        none: [],
+                    }
+                );
 
                 const selectedChatId = this._liveState.selectedChatId;
 
@@ -4418,26 +4462,60 @@ export class OpenChat extends OpenChatAgentWorker {
             : this.config.i18nFormatter("unknownUser");
     }
 
-    ledgerCanisterId(token: Cryptocurrency): string {
+    ledgerCanisterId(token: string): string {
         switch (token) {
-            case "chat":
+            case CHAT_SYMBOL:
                 return this.config.ledgerCanisterCHAT;
 
-            case "icp":
+            case ICP_SYMBOL:
                 return this.config.ledgerCanisterICP;
 
-            case "ckbtc":
+            case CKBTC_SYMBOL:
                 return this.config.ledgerCanisterBTC;
 
-            case "sns1":
+            case SNS1_SYMBOL:
                 return this.config.ledgerCanisterSNS1;
 
-            case "kinic":
+            case KINIC_SYMBOL:
                 return this.config.ledgerCanisterKINIC;
 
-            case "hotornot":
+            case HOTORNOT_SYMBOL:
                 return this.config.ledgerCanisterHOTORNOT;
+
+            case GHOST_SYMBOL:
+                return this.config.ledgerCanisterGHOST;
+
+            default:
+                throw new Error("Token not recognised: " + token);
         }
+    }
+
+    hasModerationFlag(flags: number, flag: ModerationFlag): boolean {
+        return hasFlag(flags, flag);
+    }
+
+    setModerationFlags(flags: number): Promise<number> {
+        const previousValue = this.user.moderationFlagsEnabled;
+        this.user = {
+            ...this.user,
+            moderationFlagsEnabled: flags,
+        };
+        moderationFlags.set(flags);
+
+        return this.sendRequest({
+            kind: "setModerationFlags",
+            flags,
+        })
+            .then((resp) => (resp === "success" ? flags : previousValue))
+            .catch((err) => {
+                this._logger.error("Error setting moderation flags", err);
+                this.user = {
+                    ...this.user,
+                    moderationFlagsEnabled: previousValue,
+                };
+                moderationFlags.set(previousValue);
+                return previousValue;
+            });
     }
 
     // **** Communities Stuff
@@ -4505,24 +4583,6 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch((err) => {
                 this._logger.error("Unable to import group to community", err);
                 return undefined;
-            });
-    }
-
-    manageDefaultChannels(
-        id: CommunityIdentifier,
-        toAdd: Set<string>,
-        toRemove: Set<string>
-    ): Promise<boolean> {
-        return this.sendRequest({
-            kind: "manageDefaultChannels",
-            id,
-            toAdd,
-            toRemove,
-        })
-            .then((resp) => resp.kind === "success")
-            .catch((err) => {
-                this._logger.error("Unable to update default channels", err);
-                return false;
             });
     }
 
@@ -4716,7 +4776,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setChatListScope(scope: ChatListScope): void {
-        if (communitiesEnabled && scope.kind === "none") {
+        if (scope.kind === "none") {
             chatListScopeStore.set(this.getDefaultScope());
         } else {
             chatListScopeStore.set(scope);
@@ -4729,7 +4789,6 @@ export class OpenChat extends OpenChatAgentWorker {
         // we actually need to direct the user to one of the global scopes "direct", "group" or "favourites"
         // which one we choose is kind of unclear and probably depends on the state
         const global = this._liveState.globalState;
-        if (!communitiesEnabled) return { kind: "none" };
         if (global.favourites.size > 0) return { kind: "favourite" };
         if (global.groupChats.size > 0) return { kind: "group_chat" };
         return { kind: "direct_chat" };
@@ -4820,4 +4879,6 @@ export class OpenChat extends OpenChatAgentWorker {
     unreadCommunityChannels = unreadCommunityChannels;
     globalUnreadCount = globalUnreadCount;
     staleThreadsCount = staleThreadsCount;
+    moderationFlags = moderationFlags;
+    isEventKindHidden = isEventKindHidden;
 }

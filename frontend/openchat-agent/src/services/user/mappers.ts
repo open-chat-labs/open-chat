@@ -29,8 +29,6 @@ import type {
     ApiUserCanisterGroupChatSummaryUpdates,
     ApiNnsFailedCryptoTransaction,
     ApiNnsCompletedCryptoTransaction,
-    ApiSnsFailedCryptoTransaction,
-    ApiSnsCompletedCryptoTransaction,
     ApiIcrc1FailedCryptoTransaction,
     ApiIcrc1CompletedCryptoTransaction,
     ApiIcrc1Account,
@@ -58,6 +56,7 @@ import type {
     ApiLeaveCommunityResponse,
     ApiDeleteCommunityResponse,
     ApiArchiveUnarchiveChatsResponse,
+    ApiSendMessageWithTransferToChannelResponse,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -288,6 +287,25 @@ export function archiveChatResponse(candid: ApiArchiveUnarchiveChatsResponse): A
     }
 }
 
+export function sendMessageWithTransferToChannelResponse(
+    candid: ApiSendMessageWithTransferToChannelResponse,
+    sender: string,
+    recipient: string
+): SendMessageResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "transfer_success",
+            timestamp: candid.Success.timestamp,
+            messageIndex: candid.Success.message_index,
+            eventIndex: candid.Success.event_index,
+            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
+        };
+    } else {
+        console.warn("SendMessageWithTransferToChannel failed with", candid);
+        return CommonResponses.failure();
+    }
+}
+
 export function sendMessageWithTransferToGroupResponse(
     candid: ApiSendMessageWithTransferToGroupResponse,
     sender: string,
@@ -301,50 +319,10 @@ export function sendMessageWithTransferToGroupResponse(
             eventIndex: candid.Success.event_index,
             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
         };
+    } else {
+        console.warn("SendMessageWithTransferToGroup failed with", candid);
+        return CommonResponses.failure();
     }
-    if ("TransferCannotBeZero" in candid) {
-        return { kind: "transfer_cannot_be_zero" };
-    }
-    if ("RecipientBlocked" in candid) {
-        return { kind: "recipient_blocked" };
-    }
-    if ("InvalidRequest" in candid) {
-        return { kind: "invalid_request", reason: candid.InvalidRequest };
-    }
-    if ("TextTooLong" in candid) {
-        return { kind: "text_too_long" };
-    }
-    if ("MessageEmpty" in candid) {
-        return { kind: "message_empty" };
-    }
-    if ("RecipientNotFound" in candid) {
-        return { kind: "recipient_not_found" };
-    }
-    if ("TransferFailed" in candid) {
-        return { kind: "transfer_failed" };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return { kind: "caller_not_in_group" };
-    }
-    if ("CryptocurrencyNotSupported" in candid) {
-        return { kind: "cryptocurrency_not_supported" };
-    }
-    if ("InternalError" in candid) {
-        return { kind: "internal_error" };
-    }
-    if ("TransferLimitExceeded" in candid) {
-        return { kind: "transfer_limit_exceeded" };
-    }
-    if ("InvalidPoll" in candid) {
-        return { kind: "invalid_poll" };
-    }
-    if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
 export function sendMessageResponse(
@@ -816,7 +794,6 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
             readByMeUpTo: optional(candid.read_by_me_up_to, identity),
             archived: candid.archived,
         },
-        isDefault: false,
     };
 }
 
@@ -869,20 +846,6 @@ function failedNnsCryptoWithdrawal(
     };
 }
 
-function failedSnsCryptoWithdrawal(
-    candid: ApiSnsFailedCryptoTransaction
-): FailedCryptocurrencyWithdrawal {
-    return {
-        kind: "failed",
-        token: token(candid.token),
-        to: "Account" in candid.to ? formatIcrc1Account(candid.to.Account) : "",
-        amountE8s: candid.amount.e8s,
-        feeE8s: candid.fee.e8s,
-        memo: candid.memo[0] ?? BigInt(0),
-        errorMessage: candid.error_message,
-    };
-}
-
 function failedIcrc1CryptoWithdrawal(
     candid: ApiIcrc1FailedCryptoTransaction
 ): FailedCryptocurrencyWithdrawal {
@@ -912,21 +875,6 @@ function completedNnsCryptoWithdrawal(
     };
 }
 
-function completedSnsCryptoWithdrawal(
-    candid: ApiSnsCompletedCryptoTransaction
-): CompletedCryptocurrencyWithdrawal {
-    return {
-        kind: "completed",
-        token: token(candid.token),
-        to: "Account" in candid.to ? formatIcrc1Account(candid.to.Account) : "",
-        amountE8s: candid.amount.e8s,
-        feeE8s: candid.fee.e8s,
-        memo: candid.memo[0] ?? BigInt(0),
-        blockIndex: candid.block_index,
-        transactionHash: bytesToHexString(candid.transaction_hash),
-    };
-}
-
 function completedIcrc1CryptoWithdrawal(
     candid: ApiIcrc1CompletedCryptoTransaction
 ): CompletedCryptocurrencyWithdrawal {
@@ -951,8 +899,6 @@ export function withdrawCryptoResponse(
     if ("TransactionFailed" in candid) {
         if ("NNS" in candid.TransactionFailed) {
             return failedNnsCryptoWithdrawal(candid.TransactionFailed.NNS);
-        } else if ("SNS" in candid.TransactionFailed) {
-            return failedSnsCryptoWithdrawal(candid.TransactionFailed.SNS);
         } else if ("ICRC1" in candid.TransactionFailed) {
             return failedIcrc1CryptoWithdrawal(candid.TransactionFailed.ICRC1);
         }
@@ -960,8 +906,6 @@ export function withdrawCryptoResponse(
     if ("Success" in candid) {
         if ("NNS" in candid.Success) {
             return completedNnsCryptoWithdrawal(candid.Success.NNS);
-        } else if ("SNS" in candid.Success) {
-            return completedSnsCryptoWithdrawal(candid.Success.SNS);
         } else if ("ICRC1" in candid.Success) {
             return completedIcrc1CryptoWithdrawal(candid.Success.ICRC1);
         }

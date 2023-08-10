@@ -17,7 +17,6 @@ pub struct Args {
     pub permissions: Option<GroupPermissions>,
     pub events_ttl: Option<Milliseconds>,
     pub gate: Option<AccessGate>,
-    pub is_default: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -39,7 +39,14 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             ) {
                 AddRemoveReactionResult::Success => {
                     if let Some(message) = should_push_notification(&args, user_id, &channel.chat, now) {
-                        push_notification(args, user_id, channel.chat.name.clone(), message, now, state);
+                        push_notification(
+                            args,
+                            user_id,
+                            channel.chat.name.clone(),
+                            channel.chat.avatar.as_ref().map(|d| d.id),
+                            message,
+                            state,
+                        );
                     }
                     handle_activity_notification(state);
                     Success
@@ -92,22 +99,24 @@ fn push_notification(
     args: Args,
     user_id: UserId,
     channel_name: String,
-    message: EventWrapper<Message>,
-    now: TimestampMillis,
+    channel_avatar_id: Option<u128>,
+    message_event: EventWrapper<Message>,
     state: &mut RuntimeState,
 ) {
-    let recipient = message.event.sender;
-    let notification = Notification::ChannelReactionAddedNotification(ChannelReactionAddedNotification {
+    let recipient = message_event.event.sender;
+    let notification = Notification::ChannelReactionAdded(ChannelReactionAddedNotification {
         community_id: state.env.canister_id().into(),
         channel_id: args.channel_id,
         thread_root_message_index: args.thread_root_message_index,
+        message_index: message_event.event.message_index,
+        message_event_index: message_event.index,
         community_name: state.data.name.clone(),
         channel_name,
         added_by: user_id,
         added_by_name: args.username,
-        message,
         reaction: args.reaction,
-        timestamp: now,
+        community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
+        channel_avatar_id,
     });
 
     state.push_notification(vec![recipient], notification);

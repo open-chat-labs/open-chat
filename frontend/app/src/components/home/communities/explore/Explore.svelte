@@ -6,7 +6,12 @@
     import page from "page";
     import CommunityCard from "./CommunityCard.svelte";
     import Search from "../../..//Search.svelte";
-    import { mobileWidth, screenWidth, ScreenWidth } from "../../../../stores/screenDimensions";
+    import {
+        ipadWidth,
+        mobileWidth,
+        screenWidth,
+        ScreenWidth,
+    } from "../../../../stores/screenDimensions";
     import { iconSize } from "../../../../stores/iconSize";
     import type { CommunityMatch, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
@@ -14,6 +19,7 @@
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { communityFiltersStore } from "../../../../stores/communityFilters";
     import Plus from "svelte-material-icons/Plus.svelte";
+    import { derived } from "svelte/store";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -28,6 +34,16 @@
     $: more = total > searchResults.length;
     $: isDiamond = client.isDiamond;
     $: loading = searching && searchResults.length === 0;
+
+    let filters = derived(
+        [communityFiltersStore, client.moderationFlags],
+        ([communityFilters, flags]) => {
+            return {
+                languages: Array.from(communityFilters.languages),
+                flags,
+            };
+        }
+    );
 
     function calculatePageSize(width: ScreenWidth): number {
         // make sure we get even rows of results
@@ -59,13 +75,14 @@
         } else {
             pageIndex += 1;
         }
+
         client
             .exploreCommunities(
                 searchTerm === "" ? undefined : searchTerm,
                 pageIndex,
                 pageSize,
-                $communityFiltersStore.flags,
-                Array.from($communityFiltersStore.languages)
+                $filters.flags ?? 0,
+                $filters.languages
             )
             .then((results) => {
                 if (results.kind === "success") {
@@ -85,8 +102,9 @@
     }
 
     onMount(() => {
-        const sub = communityFiltersStore.subscribe((_) => search(true));
-        return sub;
+        return filters.subscribe((f) => {
+            search(true);
+        });
     });
 </script>
 
@@ -100,7 +118,7 @@
                     <h4>{$_("communities.explore")}</h4>
                 {/if}
             </div>
-            {#if !$mobileWidth}
+            {#if !$ipadWidth}
                 <div class="search">
                     <Search
                         fill
@@ -114,24 +132,25 @@
                 </div>
             {/if}
             <div class="buttons">
-                {#if $mobileWidth}
+                {#if $ipadWidth}
                     <HoverIcon on:click={createCommunity}>
                         <Plus size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 {/if}
 
-                <HoverIcon on:click={showFilters}>
+                <HoverIcon title={$_("showFilters")} on:click={showFilters}>
                     <Tune size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
         </div>
         <div class="subtitle-row">
-            {#if $mobileWidth}
+            {#if $ipadWidth}
                 <div class="search">
                     <Search
                         searching={false}
                         fill
                         bind:searchTerm
+                        on:searchEntered={() => search(true)}
                         placeholder={$_("communities.search")} />
                 </div>
             {/if}
@@ -152,6 +171,7 @@
             {:else}
                 {#each searchResults as community, i (community.id.communityId)}
                     <CommunityCard
+                        id={community.id.communityId}
                         name={community.name}
                         description={community.description}
                         avatar={community.avatar}
@@ -196,7 +216,7 @@
             gap: $sp4;
             margin-bottom: $sp5;
 
-            @include mobile() {
+            @include size-below(lg) {
                 margin-bottom: $sp3;
                 justify-content: space-between;
             }
@@ -209,6 +229,10 @@
                 h4 {
                     @include font(bold, normal, fs-160, 38);
                     flex: auto;
+
+                    @include mobile() {
+                        @include font(bold, normal, fs-140, 38);
+                    }
                 }
             }
 
@@ -228,7 +252,7 @@
             justify-content: space-between;
             gap: $sp4;
 
-            @include mobile() {
+            @include size-below(lg) {
                 flex-direction: column;
             }
         }

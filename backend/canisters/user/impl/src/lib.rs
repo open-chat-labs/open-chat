@@ -1,6 +1,8 @@
 use crate::model::cached_group_summaries::CachedGroupSummaries;
 use crate::model::communities::Communities;
+use crate::model::community::Community;
 use crate::model::direct_chats::DirectChats;
+use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
 use crate::timer_job_types::TimerJob;
@@ -14,12 +16,13 @@ use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
 use types::{
-    CanisterId, Chat, ChatId, ChatMetrics, Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped,
-    UserId, Version,
+    BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Notification,
+    TimestampMillis, Timestamped, UserId,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -41,7 +44,7 @@ pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 40;
 pub const COMMUNITY_CREATION_LIMIT: u32 = 10;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -78,16 +81,16 @@ impl RuntimeState {
         self.data.group_chats.get(&caller.into()).is_some()
     }
 
-    pub fn is_caller_known_commuity_canister(&self) -> bool {
+    pub fn is_caller_known_community_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.communities.get(&caller.into()).is_some()
     }
 
-    pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
+    pub fn push_notification(&mut self, recipient: UserId, notification: Notification) {
         let args = c2c_push_notification::Args {
-            recipients,
+            recipients: vec![recipient],
             authorizer: Some(self.data.local_user_index_canister_id),
-            notification_bytes: candid::encode_one(notification).unwrap(),
+            notification_bytes: ByteBuf::from(candid::encode_one(notification).unwrap()),
         };
         ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
 
@@ -114,7 +117,7 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
-                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id(),
+                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
     }
@@ -142,8 +145,6 @@ struct Data {
     pub storage_limit: u64,
     pub phone_is_verified: bool,
     pub user_created: TimestampMillis,
-    // Remove pinned_chats after the next upgrade
-    pub pinned_chats: Timestamped<Vec<ChatId>>,
     pub pending_user_principal_migration: Option<Principal>,
     pub suspended: Timestamped<bool>,
     pub timer_jobs: TimerJobs<TimerJob>,
@@ -185,7 +186,6 @@ impl Data {
             storage_limit: 0,
             phone_is_verified: false,
             user_created: now,
-            pinned_chats: Timestamped::default(),
             pending_user_principal_migration: None,
             suspended: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
@@ -211,22 +211,27 @@ impl Data {
         }
     }
 
-    // TODO: Legacy - delete me once communities enabled
-    pub fn pin_chat(&mut self, chat_id: ChatId, now: TimestampMillis) {
-        let chat = if self.direct_chats.get(&chat_id).is_some() { Chat::Direct(chat_id) } else { Chat::Group(chat_id) };
-
-        self.favourite_chats.add(chat, now);
-    }
-
-    // TODO: Legacy - delete me once communities enabled
-    pub fn unpin_chat(&mut self, chat_id: ChatId, now: TimestampMillis) {
-        let chat = if self.direct_chats.get(&chat_id).is_some() { Chat::Direct(chat_id) } else { Chat::Group(chat_id) };
-
-        self.favourite_chats.remove(&chat, now);
-    }
-
     pub fn is_diamond_member(&self, now: TimestampMillis) -> bool {
         self.diamond_membership_expires_at.map_or(false, |ts| now < ts)
+    }
+
+    pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {
+        self.favourite_chats.remove(&Chat::Group(chat_id), now);
+        self.hot_group_exclusions.add(chat_id, None, now);
+
+        if let Some(cached_groups) = &mut self.cached_group_summaries {
+            cached_groups.remove_group(&chat_id);
+        }
+
+        self.group_chats.remove(chat_id, now)
+    }
+
+    pub fn remove_community(&mut self, community_id: CommunityId, now: TimestampMillis) -> Option<Community> {
+        let community = self.communities.remove(community_id, now)?;
+        for channel_id in community.channels.keys() {
+            self.favourite_chats.remove(&Chat::Channel(community_id, *channel_id), now);
+        }
+        Some(community)
     }
 }
 
@@ -235,7 +240,7 @@ pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub direct_chats: u32,
     pub group_chats: u32,

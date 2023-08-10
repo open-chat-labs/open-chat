@@ -27,6 +27,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "delete_frozen_group"
         | "freeze_group"
         | "remove_hot_group_exclusion"
+        | "set_community_moderation_flags"
         | "set_group_upgrade_concurrency"
         | "unfreeze_group" => true,
         _ => false,

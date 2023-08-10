@@ -15,8 +15,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{
-    CanisterId, CanisterWasm, ChatId, CommunityId, Cycles, FrozenGroupInfo, Milliseconds, TimestampMillis, Timestamped, UserId,
-    Version,
+    BuildVersion, CanisterId, CanisterWasm, ChatId, CommunityId, Cycles, FrozenGroupInfo, Milliseconds, TimestampMillis,
+    Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -35,7 +35,7 @@ const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
 const CACHED_HOT_GROUPS_COUNT: usize = 50;
 
 thread_local! {
-    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
 
 canister_state!(RuntimeState);
@@ -87,8 +87,8 @@ impl RuntimeState {
             active_private_communities: self.data.cached_metrics.active_private_communities,
             deleted_public_communities: self.data.cached_metrics.deleted_public_communities,
             deleted_private_communities: self.data.cached_metrics.deleted_private_communities,
-            group_deleted_notifications_pending: self.data.cached_metrics.group_deleted_notifications_pending,
-            community_deleted_notifications_pending: self.data.cached_metrics.community_deleted_notifications_pending,
+            group_deleted_notifications_pending: self.data.deleted_groups.notifications_pending() as u64,
+            community_deleted_notifications_pending: self.data.deleted_communities.notifications_pending() as u64,
             frozen_groups: self.data.cached_metrics.frozen_groups.clone(),
             frozen_communities: self.data.cached_metrics.frozen_communities.clone(),
             canister_upgrades_completed: canister_upgrades_metrics.completed,
@@ -198,7 +198,6 @@ impl Data {
             last_run: now,
             deleted_public_groups: deleted_group_metrics.public,
             deleted_private_groups: deleted_group_metrics.private,
-            group_deleted_notifications_pending: deleted_group_metrics.notifications_pending,
             ..Default::default()
         };
 
@@ -259,7 +258,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -283,8 +282,8 @@ pub struct Metrics {
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
-    pub group_wasm_version: Version,
-    pub local_group_index_wasm_version: Version,
+    pub group_wasm_version: BuildVersion,
+    pub local_group_index_wasm_version: BuildVersion,
     pub local_group_indexes: Vec<(CanisterId, LocalGroupIndex)>,
     pub canister_ids: CanisterIds,
 }
@@ -300,8 +299,6 @@ pub struct CachedMetrics {
     pub active_private_communities: u64,
     pub deleted_public_communities: u64,
     pub deleted_private_communities: u64,
-    pub group_deleted_notifications_pending: u64,
-    pub community_deleted_notifications_pending: u64,
     pub frozen_groups: Vec<ChatId>,
     pub frozen_communities: Vec<ChatId>,
 }

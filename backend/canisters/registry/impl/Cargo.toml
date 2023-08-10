@@ -27,6 +27,8 @@ icrc1_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc1_l
 serde = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
 sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
+sns_swap_canister = { path = "../../../external_canisters/sns_swap/api" }
+sns_swap_canister_c2c_client = { path = "../../../external_canisters/sns_swap/c2c_client" }
 sns_wasm_canister = { path = "../../../external_canisters/sns_wasm/api" }
 sns_wasm_canister_c2c_client = { path = "../../../external_canisters/sns_wasm/c2c_client" }
 tracing = { workspace = true }

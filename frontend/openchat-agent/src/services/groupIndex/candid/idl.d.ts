@@ -9,11 +9,13 @@ import {
     UnfreezeGroupResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
+    SetCommunityModerationFlagsResponse,
     SetUpgradeConcurrencyResponse,
     CommunityMatch,
     ActiveGroupsResponse,
     ExploreCommunitiesResponse,
     ExploreCommunitiesSuccess,
+    LookupChannelByGroupIdResponse,
 } from "./types";
 export {
     _SERVICE as GroupIndexService,
@@ -25,11 +27,13 @@ export {
     UnfreezeGroupResponse as ApiUnfreezeGroupResponse,
     AddHotGroupExclusionResponse as ApiAddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse as ApiRemoveHotGroupExclusionResponse,
+    SetCommunityModerationFlagsResponse as ApiSetCommunityModerationFlagsResponse,
     SetUpgradeConcurrencyResponse as ApiSetUpgradeConcurrencyResponse,
     CommunityMatch as ApiCommunityMatch,
     ActiveGroupsResponse as ApiActiveGroupsResponse,
     ExploreCommunitiesResponse as ApiExploreCommunitiesResponse,
     ExploreCommunitiesSuccess as ApiExploreCommunitiesSuccess,
+    LookupChannelByGroupIdResponse as ApiLookupChannelByGroupIdResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

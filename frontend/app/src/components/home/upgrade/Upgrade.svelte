@@ -9,7 +9,7 @@
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
     const client = getContext<OpenChat>("client");
-    const token: Cryptocurrency = "icp";
+    const token: Cryptocurrency = "ICP";
 
     let step: "features" | "payment" = "features";
     let error: string | undefined;
@@ -21,10 +21,8 @@
     $: canExtendDiamond = client.canExtendDiamond;
     $: cryptoBalance = client.cryptoBalance;
     $: tokenDetails = {
-        key: token,
-        symbol: cryptoLookup[token].symbol,
         balance: $cryptoBalance[token],
-        disabled: cryptoLookup[token].disabled,
+        disabled: cryptoLookup[token]?.disabled ?? true,
     };
 
     function onBalanceRefreshed() {
@@ -62,7 +60,7 @@
                 {#if step === "payment"}
                     <div class="balance">
                         <BalanceWithRefresh
-                            token={tokenDetails.key}
+                            {token}
                             value={tokenDetails.balance}
                             bind:refreshing={refreshingBalance}
                             on:refreshed={onBalanceRefreshed}

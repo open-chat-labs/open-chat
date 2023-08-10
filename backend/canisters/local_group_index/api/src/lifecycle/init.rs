@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, CanisterWasm, UserId, Version};
+use types::{BuildVersion, CanisterId, CanisterWasm, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -11,7 +11,7 @@ pub struct Args {
     pub community_canister_wasm: CanisterWasm,
 
     // The wasm version running on this canister
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
 
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,

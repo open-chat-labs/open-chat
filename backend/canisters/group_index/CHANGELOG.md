@@ -5,9 +5,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.793](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.793-group_index)] - 2023-08-08
+
+### Changed
+
+- Bump number of cycles required for upgrade ([#4155](https://github.com/open-chat-labs/open-chat/pull/4155))
+
+## [[2.0.788](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.788-group_index)] - 2023-08-04
+
+### Changed
+
+- Make `notifications_pending` metrics update instantly ([#4118](https://github.com/open-chat-labs/open-chat/pull/4118))
+- Renamed `other_default_channels` to `other_public_channels` ([#4137](https://github.com/open-chat-labs/open-chat/pull/4137))
+
+## [[2.0.782](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.782-group_index)] - 2023-08-02
+
+### Changed
+
+- Retry failed group deleted notifications ([#4101](https://github.com/open-chat-labs/open-chat/pull/4101))
+- Remove random factor in `explore_communities` ([#4102](https://github.com/open-chat-labs/open-chat/pull/4102))
+- Add `score` to `CommunityMatch` ([#4106](https://github.com/open-chat-labs/open-chat/pull/4106))
+- Prevent log(0) in hotness calculation ([#4110](https://github.com/open-chat-labs/open-chat/pull/4110))
+
+## [[2.0.769](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.769-group_index)] - 2023-07-31
+
+### Added
+
+- Add API endpoint `lookup_channel_by_group_id` ([#4066](https://github.com/open-chat-labs/open-chat/pull/4066))
+- Handle `set_community_moderation_flags` in `inspect_message` ([#4076](https://github.com/open-chat-labs/open-chat/pull/4076))
+
+## [[2.0.760](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.760-group_index)] - 2023-07-28
+
 ### Changed
 
 - Mark channels as read after joining community or channel ([#4004](https://github.com/open-chat-labs/open-chat/pull/4004))
+- Use `include_moderation_flags` rather than `exclude_moderation_flags` ([#4050](https://github.com/open-chat-labs/open-chat/pull/4050))
 
 ### Deprecated
 
@@ -16,7 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Consolidate remove and block community permissions ([#4030](https://github.com/open-chat-labs/open-chat/pull/4030))
-  
+
 ## [[2.0.748](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.748-group_index)] - 2023-07-20
 
 ### Changed

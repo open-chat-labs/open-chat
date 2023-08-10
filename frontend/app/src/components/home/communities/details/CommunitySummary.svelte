@@ -36,6 +36,7 @@
         level={"community"} />
     <div class="body">
         <CommunityCard
+            id={$selectedCommunity.id.communityId}
             name={$selectedCommunity.name}
             description={$selectedCommunity.description}
             banner={$selectedCommunity.banner}

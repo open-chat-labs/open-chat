@@ -28,7 +28,7 @@ fn c2c_mark_group_import_complete_impl(args: Args, state: &mut RuntimeState) -> 
             community_name: args.community_name,
             community_id,
             channel: args.channel,
-            other_default_channels: args.other_default_channels,
+            other_default_channels: args.other_public_channels,
         }),
         state,
     );

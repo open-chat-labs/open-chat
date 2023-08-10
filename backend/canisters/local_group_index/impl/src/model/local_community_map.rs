@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{CommunityId, CyclesTopUp, Version};
+use types::{BuildVersion, CommunityId, CyclesTopUp};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct LocalCommunityMap {
@@ -8,7 +8,7 @@ pub struct LocalCommunityMap {
 }
 
 impl LocalCommunityMap {
-    pub fn add(&mut self, community_id: CommunityId, wasm_version: Version) {
+    pub fn add(&mut self, community_id: CommunityId, wasm_version: BuildVersion) {
         let community = LocalCommunity::new(wasm_version);
         self.communities.insert(community_id, community);
     }
@@ -45,13 +45,13 @@ impl LocalCommunityMap {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct LocalCommunity {
-    pub wasm_version: Version,
+    pub wasm_version: BuildVersion,
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
 impl LocalCommunity {
-    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<Version>) {
+    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<BuildVersion>) {
         self.upgrade_in_progress = upgrade_in_progress;
         if let Some(version) = new_version {
             self.wasm_version = version;
@@ -64,7 +64,7 @@ impl LocalCommunity {
 }
 
 impl LocalCommunity {
-    pub fn new(wasm_version: Version) -> LocalCommunity {
+    pub fn new(wasm_version: BuildVersion) -> LocalCommunity {
         LocalCommunity {
             wasm_version,
             upgrade_in_progress: false,

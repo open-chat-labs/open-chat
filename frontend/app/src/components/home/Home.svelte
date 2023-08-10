@@ -37,6 +37,8 @@
         MultiUserChatIdentifier,
         GroupChatSummary,
         ChannelIdentifier,
+        compareChats,
+        ChatListScope,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -160,7 +162,10 @@
     $: globalUnreadCount = client.globalUnreadCount;
 
     $: {
-        document.title = $globalUnreadCount > 0 ? `OpenChat (${$globalUnreadCount})` : "OpenChat";
+        document.title =
+            $globalUnreadCount.unmuted > 0
+                ? `OpenChat (${$globalUnreadCount.unmuted})`
+                : "OpenChat";
     }
 
     onMount(() => {
@@ -189,6 +194,7 @@
         } else if (ev instanceof ChatsUpdated) {
             closeNotifications((notification: Notification) => {
                 if (
+                    notification.kind === "channel_notification" ||
                     notification.kind === "direct_notification" ||
                     notification.kind === "group_notification"
                 ) {
@@ -196,8 +202,8 @@
                         notification.kind === "direct_notification"
                             ? notification.sender
                             : notification.chatId,
-                        notification.message.event.messageIndex,
-                        notification.message.event.messageId
+                        notification.messageIndex,
+                        undefined
                     );
                 }
 
@@ -227,7 +233,10 @@
                         code,
                     };
                 }
-                if (!(await client.previewChat(chatId))) {
+                const preview = await client.previewChat(chatId);
+                if (preview.kind === "group_moved") {
+                    page.replace(routeForChatIdentifier($chatListScope.kind, preview.location));
+                } else if (preview.kind === "failure") {
                     page.replace(routeForScope(client.getDefaultScope()));
                     return;
                 }
@@ -276,6 +285,19 @@
             if ("scope" in pathParams) {
                 client.setChatListScope(pathParams.scope);
             }
+
+            // When we have a middle panel and this route is for a chat list then select the first chat
+            if (
+                !$mobileWidth &&
+                (pathParams.kind === "selected_community_route" ||
+                    pathParams.kind === "chat_list_route") &&
+                $chatSummariesListStore.length > 0
+            ) {
+                const first = $chatSummariesListStore[0];
+                page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
+                return;
+            }
+
             if (pathParams.kind === "home_route") {
                 client.clearSelectedChat();
                 closeThread();
@@ -526,11 +548,8 @@
         const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === ev.detail;
         });
-        if (chat) {
-            page(routeForChatIdentifier($chatListScope.kind, ev.detail));
-        } else {
-            createDirectChat(ev.detail);
-        }
+
+        page(routeForChatIdentifier(chat ? $chatListScope.kind : "direct_chat", ev.detail));
     }
 
     function showInviteGroupUsers(ev: CustomEvent<boolean>) {
@@ -796,7 +815,6 @@
                 ...nullMembership(),
                 role: "owner",
             },
-            isDefault: false,
         };
     }
 
@@ -821,7 +839,6 @@
             gate: chat.gate,
             level,
             membership: chat.membership,
-            isDefault: chat.isDefault,
         };
     }
 
@@ -851,7 +868,7 @@
             return false;
         }
 
-        page(routeForChatIdentifier($chatListScope.kind, chatId));
+        page(routeForChatIdentifier("direct_chat", chatId));
         return true;
     }
 
@@ -875,6 +892,7 @@
     }
 
     function convertGroupToCommunity(ev: CustomEvent<GroupChatSummary>) {
+        rightPanelHistory.set([]);
         convertGroup = ev.detail;
     }
 
@@ -916,7 +934,8 @@
             on:newChannel={newChannel}
             on:editCommunity={editCommunity}
             on:leaveCommunity={triggerConfirm}
-            on:deleteCommunity={triggerConfirm} />
+            on:deleteCommunity={triggerConfirm}
+            on:leaveGroup={triggerConfirm} />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel

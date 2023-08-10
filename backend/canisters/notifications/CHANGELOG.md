@@ -5,6 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.798](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.798-notifications)] - 2023-08-08
+
+### Added
+
+- Expose counts of principals authorized and blocked in metrics ([#4145](https://github.com/open-chat-labs/open-chat/pull/4145))
+
+### Changed
+
+- More efficient serialization of notifications ([#4134](https://github.com/open-chat-labs/open-chat/pull/4134))
+
+## [[2.0.786](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.786-notifications)] - 2023-08-03
+
+### Changed
+
+- Reset the list of blocked principals ([#4126](https://github.com/open-chat-labs/open-chat/pull/4126))
+
 ## [[2.0.754](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.754-notifications)] - 2023-07-20
 
 ### Changed

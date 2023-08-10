@@ -46,7 +46,7 @@
         gate: { ...candidateGroup.gate },
     };
     let rulesValid = true;
-    $: steps = getSteps(editing, detailsValid);
+    $: steps = getSteps(editing, detailsValid, hideInviteUsers);
     $: editing = !chatIdentifierUnset(candidateGroup.id);
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
@@ -70,8 +70,9 @@
     $: gateDirty = client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: chatListScope = client.chatListScope;
+    $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
 
-    function getSteps(editing: boolean, detailsValid: boolean) {
+    function getSteps(editing: boolean, detailsValid: boolean, hideInviteUsers: boolean) {
         let steps = [
             { labelKey: "group.details", valid: detailsValid },
             { labelKey: "access.visibility", valid: true },
@@ -79,7 +80,7 @@
             { labelKey: "permissions.permissions", valid: true },
         ];
 
-        if (!editing) {
+        if (!editing && !hideInviteUsers) {
             steps.push({ labelKey: "invite.invite", valid: true });
         }
         return steps;
@@ -100,13 +101,17 @@
         return interpolateLevel(error, candidateGroup.level, true);
     }
 
-    function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
+    function groupUpdateErrorMessage(
+        resp: UpdateGroupResponse,
+        isChannel: boolean
+    ): string | undefined {
         if (resp === "success") return undefined;
         if (resp === "unchanged") return undefined;
         if (resp === "name_too_short") return "groupNameTooShort";
         if (resp === "name_too_long") return "groupNameTooLong";
         if (resp === "name_reserved") return "groupNameReserved";
         if (resp === "desc_too_long") return "groupDescTooLong";
+        if (resp === "name_taken" && isChannel) return "channelAlreadyExists";
         if (resp === "name_taken") return "groupAlreadyExists";
         if (resp === "not_in_group") return "userNotInGroup";
         if (resp === "internal_error") return "groupUpdateFailed";
@@ -120,13 +125,17 @@
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
-    function groupCreationErrorMessage(resp: CreateGroupResponse): string | undefined {
+    function groupCreationErrorMessage(
+        resp: CreateGroupResponse,
+        isChannel: boolean
+    ): string | undefined {
         if (resp.kind === "success") return undefined;
         if (resp.kind === "internal_error") return "groupCreationFailed";
         if (resp.kind === "name_too_short") return "groupNameTooShort";
         if (resp.kind === "name_too_long") return "groupNameTooLong";
         if (resp.kind === "name_reserved") return "groupNameReserved";
         if (resp.kind === "description_too_long") return "groupDescTooLong";
+        if (resp.kind === "group_name_taken" && isChannel) return "channelAlreadyExists";
         if (resp.kind === "group_name_taken") return "groupAlreadyExists";
         if (resp.kind === "avatar_too_big") return "groupAvatarTooBig";
         if (resp.kind === "max_groups_created") return "maxGroupsCreated";
@@ -134,6 +143,7 @@
         if (resp.kind === "rules_too_short") return "groupRulesTooShort";
         if (resp.kind === "rules_too_long") return "groupRulesTooLong";
         if (resp.kind === "user_suspended") return "userSuspended";
+        if (resp.kind === "default_must_be_public") return "defaultMustBePublic";
         if (resp.kind === "unauthorized_to_create_public_group")
             return "unauthorizedToCreatePublicGroup";
         return "groupCreationFailed";
@@ -242,6 +252,8 @@
     function doUpdateGate(gate: AccessGate): Promise<void> {
         if (!editing) return Promise.resolve();
 
+        let isChannel = candidateGroup.id.kind === "channel";
+
         return client
             .updateGroup(
                 candidateGroup.id,
@@ -253,7 +265,7 @@
                 gate
             )
             .then((resp) => {
-                const err = groupUpdateErrorMessage(resp);
+                const err = groupUpdateErrorMessage(resp, isChannel);
                 if (err) {
                     toastStore.showFailureToast(interpolateError(err));
                 } else {
@@ -288,6 +300,8 @@
     function doUpdateInfo(): Promise<void> {
         if (!editing) return Promise.resolve();
 
+        let isChannel = candidateGroup.id.kind === "channel";
+
         return client
             .updateGroup(
                 candidateGroup.id,
@@ -299,7 +313,7 @@
                 undefined
             )
             .then((resp) => {
-                const err = groupUpdateErrorMessage(resp);
+                const err = groupUpdateErrorMessage(resp, isChannel);
                 if (err) {
                     toastStore.showFailureToast(interpolateError(err));
                 } else {
@@ -321,25 +335,29 @@
     function createGroup() {
         busy = true;
 
+        let isChannel = candidateGroup.id.kind === "channel";
+
         client
             .createGroupChat(candidateGroup)
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    const err = groupCreationErrorMessage(resp);
+                    const err = groupCreationErrorMessage(resp, isChannel);
                     if (err) toastStore.showFailureToast(interpolateError(err));
                     step = 0;
-                } else {
+                } else if (!hideInviteUsers) {
                     return optionallyInviteUsers(resp.canisterId)
                         .then(() => {
                             onGroupCreated(resp.canisterId);
                         })
-                        .catch((err) => {
+                        .catch((_err) => {
                             toastStore.showFailureToast("inviteUsersFailed");
                             step = 0;
                         });
+                } else {
+                    onGroupCreated(resp.canisterId);
                 }
             })
-            .catch((err) => {
+            .catch((_err) => {
                 toastStore.showFailureToast("groupCreationFailed");
                 step = 0;
             })
@@ -408,7 +426,7 @@
                             isPublic={candidateGroup.public} />
                     {/if}
                 </div>
-                {#if !editing}
+                {#if !editing && !hideInviteUsers}
                     <div class="members" class:visible={step === 4}>
                         <ChooseMembers
                             userLookup={searchUsers}

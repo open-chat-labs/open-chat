@@ -56,7 +56,7 @@
                 4em,
                 2em,
                 var(--button-spinner),
-                "/assets/twitter.svg",
+                "/assets/twitter.svg?x",
                 0.8s,
                 1
             );

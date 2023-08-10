@@ -4,7 +4,7 @@ use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk::api::management_canister;
 use ic_cdk::api::management_canister::main::{CanisterInstallMode, CanisterSettings, CreateCanisterArgument};
 use tracing::error;
-use types::{CanisterId, CanisterWasm, Cycles, Version};
+use types::{BuildVersion, CanisterId, CanisterWasm, Cycles};
 
 #[derive(Debug)]
 pub enum CreateAndInstallError {
@@ -34,7 +34,7 @@ pub async fn create_and_install<A: CandidType>(
 
     match install(CanisterToInstall {
         canister_id,
-        current_wasm_version: Version::default(),
+        current_wasm_version: BuildVersion::default(),
         new_wasm: wasm,
         deposit_cycles_if_needed: true,
         args: init_args,

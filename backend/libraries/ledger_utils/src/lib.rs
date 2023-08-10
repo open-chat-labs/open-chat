@@ -1,6 +1,5 @@
 pub mod icrc1;
 pub mod nns;
-pub mod sns;
 
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
@@ -20,7 +19,7 @@ pub fn create_pending_transaction(
 ) -> PendingCryptoTransaction {
     match token {
         Cryptocurrency::InternetComputer => PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
-            ledger: token.ledger_canister_id(),
+            ledger: token.ledger_canister_id().unwrap(),
             token,
             amount,
             to: UserOrAccount::User(user_id),
@@ -29,11 +28,11 @@ pub fn create_pending_transaction(
             created: now_nanos,
         }),
         _ => PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
-            ledger: token.ledger_canister_id(),
+            ledger: token.ledger_canister_id().unwrap(),
+            fee: token.fee().unwrap(),
             token,
             amount: amount.e8s().into(),
             to: Account::from(Principal::from(user_id)),
-            fee: token.fee(),
             memo: None,
             created: now_nanos,
         }),
@@ -46,7 +45,6 @@ pub async fn process_transaction(
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
     match transaction {
         PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, sender).await,
-        PendingCryptoTransaction::SNS(t) => sns::process_transaction(t, sender).await,
         PendingCryptoTransaction::ICRC1(t) => icrc1::process_transaction(t, sender).await,
     }
 }
