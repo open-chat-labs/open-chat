@@ -5,9 +5,9 @@
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
     import type { CreatedUser, OpenChat } from "openchat-client";
+    import { ICP_SYMBOL } from "openchat-client";
     import { copyToClipboard } from "../../utils/urls";
     import { getContext } from "svelte";
-    import { ICP_SYMBOL } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
 

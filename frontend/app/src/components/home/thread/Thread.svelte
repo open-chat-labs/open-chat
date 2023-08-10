@@ -12,6 +12,7 @@
         OpenChat,
         User,
     } from "openchat-client";
+    import { ICP_SYMBOL } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Loading from "../../Loading.svelte";
@@ -23,7 +24,6 @@
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
     import { randomSentence } from "../../../utils/randomMsg";
-    import { ICP_SYMBOL } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;

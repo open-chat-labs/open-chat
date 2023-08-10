@@ -21,6 +21,7 @@
         GroupChatSummary,
         CommunityMap,
         CommunitySummary,
+        ICP_SYMBOL,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -31,7 +32,6 @@
     import ImportToCommunity from "./communities/Import.svelte";
     import { randomSentence } from "../../utils/randomMsg";
     import { rightPanelHistory } from "../../stores/rightPanel";
-    import { ICP_SYMBOL } from "openchat-shared";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;

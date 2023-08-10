@@ -9,6 +9,7 @@
     import {
         DiamondMembershipDuration,
         E8S_PER_TOKEN,
+        ICP_SYMBOL,
     } from "openchat-client";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
@@ -16,7 +17,6 @@
     import Checkbox from "../../Checkbox.svelte";
     import { toastStore } from "stores/toast";
     import Expiry from "./Expiry.svelte";
-    import { ICP_SYMBOL } from "openchat-shared";
 
     export let accountBalance = 0;
     export let error: string | undefined;

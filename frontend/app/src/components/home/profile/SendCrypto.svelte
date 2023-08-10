@@ -2,7 +2,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import TokenInput from "../TokenInput.svelte";
     import type { OpenChat } from "openchat-client";
-    import { ICP_SYMBOL } from "openchat-shared";
+    import { ICP_SYMBOL } from "openchat-client";
     import Input from "../../Input.svelte";
     import { _ } from "svelte-i18n";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";

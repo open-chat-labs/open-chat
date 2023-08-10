@@ -154,27 +154,6 @@
             border-radius: 50%;
             background-repeat: no-repeat;
             background-position: top;
-            &.icp {
-                background-image: url("/assets/icp_token.svg");
-            }
-            &.sns1 {
-                background-image: url("/assets/sns1_token.png");
-            }
-            &.ckbtc {
-                background-image: url("/assets/ckbtc_nobackground.svg");
-            }
-            &.chat {
-                background-image: url("/assets/spinner.svg");
-            }
-            &.kinic {
-                background-image: url("/assets/kinic_token.png");
-            }
-            &.hot {
-                background-image: url("/assets/hot_token.svg");
-            }
-            &.ghost {
-                background-image: url("/assets/ghost_token.jpeg");
-            }
         }
     }
 </style>

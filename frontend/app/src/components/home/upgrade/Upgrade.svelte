@@ -5,7 +5,7 @@
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
     import type { OpenChat } from "openchat-client";
-    import { ICP_SYMBOL } from "openchat-shared";
+    import { ICP_SYMBOL } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
