@@ -8,7 +8,7 @@
         "build:prod_test": "./bin/portable-webpack",
         "build:prod": "./bin/portable-webpack",
         "dev": "./bin/portable-webpack -w",
-        "wait": "rm -rf ../app/build/_/raw/push_sw.js && wait-on ../app/build/_/raw/push_sw.js",
+        "wait": "rm -f ../app/build/_/raw/push_sw.js && wait-on ../app/build/_/raw/push_sw.js",
         "lint": "eslint ./src --fix"
     },
     "author": "julian.jelfs@gmail.com",
