@@ -168,8 +168,10 @@
         margin-bottom: 0;
         cursor: pointer;
 
-        &:hover {
-            background-color: var(--chatSummary-hv);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--chatSummary-hv);
+            }
         }
 
         &:last-child {

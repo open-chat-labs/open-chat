@@ -109,9 +109,11 @@
                 margin-bottom: 0;
             }
 
-            &.deleted:hover {
-                cursor: pointer;
-                text-decoration: underline;
+            @media (hover: hover) {
+                &.deleted:hover {
+                    cursor: pointer;
+                    text-decoration: underline;
+                }
             }
         }
     }

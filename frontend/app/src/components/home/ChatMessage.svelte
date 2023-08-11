@@ -396,7 +396,6 @@
     <div
         bind:this={msgElement}
         class="message"
-        use:longpress={() => messageMenu?.showMenu()}
         class:me
         data-index={failed ? "" : msg.messageIndex}
         data-id={failed ? "" : msg.messageId}
@@ -420,6 +419,7 @@
                 ? `width: ${msgBubbleCalculatedWidth}px`
                 : undefined}
             on:dblclick={doubleClickMessage}
+            use:longpress={() => messageMenu?.showMenu()}
             class="message-bubble"
             class:focused
             class:editing
@@ -742,8 +742,10 @@
             }
         }
 
-        &:hover .actions {
-            opacity: 1;
+        @media (hover: hover) {
+            &:hover .actions {
+                opacity: 1;
+            }
         }
     }
 

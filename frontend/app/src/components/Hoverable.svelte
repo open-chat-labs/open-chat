@@ -65,8 +65,11 @@
         }
     }
 
-    function handleTouchEnd() {
+    function handleTouchEnd(e: TouchEvent) {
         clearLongPressTimer();
+        if (longPressed) {
+            e.stopPropagation();
+        }
     }
 
     function clearLongPressTimer() {
@@ -113,12 +116,7 @@
 
 <style lang="scss">
     .noselect {
-        -webkit-touch-callout: none; // Safari
-        -webkit-user-select: none; // Safari
-        -khtml-user-select: none; // Konqueror HTML
-        -moz-user-select: none; // Old versions of Firefox
-        -ms-user-select: none; // Internet Explorer/Edge
-        user-select: none; // Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox
+        @include no_user_select();
 
         &.fill {
             width: 100%;
