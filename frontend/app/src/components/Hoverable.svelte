@@ -48,9 +48,12 @@
 
         longPressTimer = window.setTimeout(() => {
             if (longPressTimer !== undefined) {
+                document.addEventListener("touchstart", handleDocumentTouchStart, { once: true });
                 longPressed = true;
             }
         }, LONGPRESS_DELAY);
+
+        e.stopPropagation();
     }
 
     function handleTouchMove(e: TouchEvent) {
@@ -84,24 +87,36 @@
         longPressed = false;
     }
 
-    onMount(async () => {
+    function onContextMenu(e: MouseEvent) {
+        e.preventDefault();
+        if (!isTouchDevice) {
+            startHover(e);
+        }
+    }
+
+    onMount(() => {
         if (isTouchDevice) {
             if (enableLongPress) {
-                document.addEventListener("touchstart", handleDocumentTouchStart);
                 containerDiv.addEventListener("touchend", handleTouchEnd);
                 containerDiv.addEventListener("touchmove", handleTouchMove);
                 containerDiv.addEventListener("touchstart", handleTouchStart);
-                containerDiv.addEventListener("contextmenu", (e: MouseEvent) => {
-                    e.preventDefault();
-                });
+                containerDiv.addEventListener("contextmenu", onContextMenu);
             }
+            return () => {
+                containerDiv.removeEventListener("touchend", handleTouchEnd);
+                containerDiv.removeEventListener("touchmove", handleTouchMove);
+                containerDiv.removeEventListener("touchstart", handleTouchStart);
+                containerDiv.removeEventListener("contextmenu", onContextMenu);
+            };
         } else {
             containerDiv.addEventListener("mouseenter", startHover);
             containerDiv.addEventListener("mouseleave", endHover);
-            containerDiv.addEventListener("contextmenu", (e: MouseEvent) => {
-                e.preventDefault();
-                startHover(e);
-            });
+            containerDiv.addEventListener("contextmenu", onContextMenu);
+            return () => {
+                containerDiv.removeEventListener("mouseenter", startHover);
+                containerDiv.removeEventListener("mouseleave", endHover);
+                containerDiv.removeEventListener("contextmenu", onContextMenu);
+            };
         }
     });
 
