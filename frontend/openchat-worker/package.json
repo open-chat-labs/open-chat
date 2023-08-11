@@ -8,7 +8,7 @@
     "build:prod_test": "./bin/portable-webpack",
     "build:prod": "./bin/portable-webpack",
     "dev": "./bin/portable-webpack -w",
-    "wait": "rm -rf ../app/build/worker.js && wait-on ../app/build/worker.js",
+    "wait": "rm -f ../app/build/worker.js && wait-on ../app/build/worker.js",
     "lint": "eslint ./src --fix",
     "codegen": "sh ./codegen.sh"
   },

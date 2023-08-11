@@ -10,7 +10,7 @@
         "build:sw": "./bin/portable-webpack",
         "build:sw-dev": "FORCE_FETCH_ROOT_KEY=1 ./bin/portable-webpack --mode development",
         "dev": "npm run build:sw-dev && sh ./build_dev.sh -w",
-        "wait": "rm -f build && wait-on build/sw.js"
+        "wait": "rm -rf build && wait-on build/sw.js"
     },
     "devDependencies": {
         "@rollup/plugin-html": "^0.2.4",
