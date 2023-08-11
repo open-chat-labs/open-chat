@@ -51,6 +51,7 @@
     import { toastStore } from "../../stores/toast";
     import ReminderBuilder from "./ReminderBuilder.svelte";
     import ReportMessage from "./ReportMessage.svelte";
+    import { longpress } from "../../actions/longpress";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -102,6 +103,7 @@
     let canRevealDeleted = false;
     let showRemindMe = false;
     let showReport = false;
+    let messageMenu: ChatMessageMenu;
 
     $: chatListScope = client.chatListScope;
     $: inThread = threadRootMessage !== undefined;
@@ -394,6 +396,7 @@
     <div
         bind:this={msgElement}
         class="message"
+        use:longpress={() => messageMenu?.showMenu()}
         class:me
         data-index={failed ? "" : msg.messageIndex}
         data-id={failed ? "" : msg.messageId}
@@ -527,6 +530,7 @@
 
             {#if showChatMenu}
                 <ChatMessageMenu
+                    bind:this={messageMenu}
                     {chatId}
                     {isProposal}
                     inert={msg.deleted || collapsed}
@@ -582,7 +586,8 @@
         <ThreadSummary
             {chatId}
             threadRootMessageIndex={msg.messageIndex}
-            selected={($pathParams.kind === "global_chat_selected_route" || $pathParams.kind === "selected_channel_route") &&
+            selected={($pathParams.kind === "global_chat_selected_route" ||
+                $pathParams.kind === "selected_channel_route") &&
                 msg.messageIndex === $pathParams.messageIndex &&
                 $pathParams.open}
             {threadSummary}
@@ -610,28 +615,30 @@
     $avatar-width: 56px;
     $avatar-width-mob: 43px;
 
-    :global(.message-bubble:hover .menu-icon) {
-        opacity: 1;
-    }
+    @media (hover: hover) {
+        :global(.message-bubble:hover .menu-icon) {
+            opacity: 1;
+        }
 
-    :global(.message-bubble:hover .menu-icon .wrapper) {
-        background-color: var(--icon-msg-hv);
-    }
+        :global(.message-bubble:hover .menu-icon .wrapper) {
+            background-color: var(--icon-msg-hv);
+        }
 
-    :global(.message-bubble.me:hover .menu-icon .wrapper) {
-        background-color: var(--icon-inverted-hv);
-    }
+        :global(.message-bubble.me:hover .menu-icon .wrapper) {
+            background-color: var(--icon-inverted-hv);
+        }
 
-    :global(.message-bubble.crypto:hover .menu-icon .wrapper) {
-        background-color: rgba(255, 255, 255, 0.3);
-    }
+        :global(.message-bubble.crypto:hover .menu-icon .wrapper) {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
 
-    :global(.me .menu-icon:hover .wrapper) {
-        background-color: var(--icon-inverted-hv);
-    }
+        :global(.me .menu-icon:hover .wrapper) {
+            background-color: var(--icon-inverted-hv);
+        }
 
-    :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
-        background-color: var(--icon-hv);
+        :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
+            background-color: var(--icon-hv);
+        }
     }
 
     :global(.message .loading) {
