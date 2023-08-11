@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "turbo run build",
-    "build:ci": "turbo run build:ci",
-    "deploy:prod_test": "turbo run deploy:prod_test",
-    "deploy:prod": "turbo run deploy:prod",
-    "deploy:testnet": "turbo run deploy:testnet",
-    "dev": "turbo run dev",
+    "build": "npm i && turbo run build",
+    "build:ci": "npm i && turbo run build:ci",
+    "deploy:prod_test": "npm i && turbo run deploy:prod_test",
+    "deploy:prod": "npm i && turbo run deploy:prod",
+    "deploy:testnet": "npm i && turbo run deploy:testnet",
+    "dev": "npm i && turbo run dev",
     "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'"
   },
   "author": "julian.jelfs@gmail.com",
