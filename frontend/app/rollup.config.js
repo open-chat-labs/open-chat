@@ -158,6 +158,13 @@ function clean() {
     };
 }
 
+// Put external dependencies into their own bundle so that they get cached separately
+function manualChunks(id) {
+    if (id.includes('node_modules')) {
+        return 'vendor';
+    }
+}
+
 export default {
     input: `./src/main.ts`,
     output: {
@@ -166,6 +173,7 @@ export default {
         name: "app",
         dir: "build",
         entryFileNames: "[name]-[hash].js",
+        manualChunks,
     },
     plugins: [
         clean(),
