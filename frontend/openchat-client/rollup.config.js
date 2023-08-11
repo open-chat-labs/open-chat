@@ -30,7 +30,7 @@ export default {
     },
     external: ["url"],
     plugins: [
-        clean(),
+        production && clean(),
         resolve({
             preferBuiltins: false,
             browser: true,

@@ -8,6 +8,7 @@
         "build:prod_test": "./bin/portable-webpack",
         "build:prod": "./bin/portable-webpack",
         "dev": "./bin/portable-webpack -w",
+        "wait": "rm -f ../app/build/_/raw/push_sw.js && wait-on ../app/build/_/raw/push_sw.js",
         "lint": "eslint ./src --fix"
     },
     "author": "julian.jelfs@gmail.com",
@@ -22,6 +23,7 @@
         "eslint-plugin-prettier": "^3.4.1",
         "process": "^0.11.10",
         "ts-loader": "^9.2.8",
+        "wait-on": "^7.0.1",
         "webpack": "^5.70.0",
         "webpack-cli": "^4.9.2"
     }
