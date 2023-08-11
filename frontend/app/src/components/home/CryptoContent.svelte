@@ -14,8 +14,8 @@
     export let reply: boolean = false;
     export let senderId: string;
 
-    let token = content.transfer.token;
-
+    $: cryptoLookup = client.cryptoLookup;
+    $: logo = $cryptoLookup[content.transfer.ledger].logo;
     $: transferText = client.buildCryptoTransferText($_, user.userId, senderId, content, me);
     $: transactionLinkText = client.buildTransactionLink($_, content.transfer);
 </script>
@@ -23,7 +23,7 @@
 {#if transferText !== undefined}
     <div class="message">
         <div class="logo-wrapper">
-            <div class={`logo ${token.toLowerCase()}`} />
+            <img class="logo" src={logo} />
         </div>
         <div class="details">
             <div class="transfer-txt">{transferText}</div>
@@ -73,28 +73,6 @@
 
         -webkit-box-reflect: below 0
             linear-gradient(hsla(0, 0%, 100%, 0), hsla(0, 0%, 100%, 0) 45%, hsla(0, 0%, 100%, 0.2));
-
-        &.icp {
-            background-image: url("/assets/icp_token.svg");
-        }
-        &.sns1 {
-            background-image: url("/assets/sns1_medium.png");
-        }
-        &.ckbtc {
-            background-image: url("/assets/ckbtc_nobackground.svg");
-        }
-        &.chat {
-            background-image: url("/assets/spinner.svg");
-        }
-        &.kinic {
-            background-image: url("/assets/kinic_token.png");
-        }
-        &.hot {
-            background-image: url("/assets/hot_token.svg");
-        }
-        &.ghost {
-            background-image: url("/assets/ghost_token.jpeg");
-        }
     }
 
     .message {

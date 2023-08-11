@@ -24,9 +24,13 @@ impl<T> Timestamped<T> {
         }
     }
 
-    pub fn update<F: FnOnce(&mut T)>(&mut self, update_fn: F, now: TimestampMillis) {
-        update_fn(&mut self.value);
-        self.timestamp = now;
+    pub fn update<F: FnOnce(&mut T) -> bool>(&mut self, update_fn: F, now: TimestampMillis) -> bool {
+        if update_fn(&mut self.value) {
+            self.timestamp = now;
+            true
+        } else {
+            false
+        }
     }
 }
 

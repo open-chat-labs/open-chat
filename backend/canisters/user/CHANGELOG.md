@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add support for versioned access rules ([#4159](https://github.com/open-chat-labs/open-chat/pull/4159))
+
 ### Removed
 
 - Remove SNS transaction types ([#4162](https://github.com/open-chat-labs/open-chat/pull/4162))

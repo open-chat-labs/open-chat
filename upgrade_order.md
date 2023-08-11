@@ -1,3 +1,3 @@
-website -> community
+community -> local_user_index -> proposals_bot -> group -> user
 
-# This is because we haven't yet removed `is_default` from `community::create_channel::Args`
+# This is because `rules_accepted` has been added to `c2c_join_channel`

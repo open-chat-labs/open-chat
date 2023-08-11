@@ -44,6 +44,7 @@
             notificationsCanister: process.env.NOTIFICATIONS_CANISTER!,
             onlineCanister: process.env.ONLINE_CANISTER!,
             userIndexCanister: process.env.USER_INDEX_CANISTER!,
+            registryCanister: process.env.REGISTRY_CANISTER!,
             internetIdentityUrl: process.env.INTERNET_IDENTITY_URL!,
             nfidUrl: process.env.NFID_URL!,
             ledgerCanisterICP: process.env.LEDGER_CANISTER_ICP!,

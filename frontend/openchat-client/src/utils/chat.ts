@@ -27,7 +27,6 @@ import {
     LocalMessageUpdates,
     LocalReaction,
     emptyChatMetrics,
-    cryptoLookup,
     LocalPollVote,
     CryptocurrencyTransfer,
     Tally,
@@ -41,8 +40,7 @@ import {
     MultiUserChatIdentifier,
     MultiUserChat,
     ChatListScope,
-    CKBTC_SYMBOL,
-    ICP_SYMBOL,
+    CryptocurrencyDetails,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -60,6 +58,7 @@ import { currentChatUserIds } from "../stores/chat";
 import type { TypersByKey } from "../stores/typing";
 import { tallyKey } from "../stores/proposalTallies";
 import { hasOwnerRights, isPermitted } from "./permissions";
+import { cryptoLookup } from "../stores/crypto";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -279,7 +278,7 @@ function messageMentionsUser(
     userId: string,
     msg: EventWrapper<Message>
 ): boolean {
-    const txt = getContentAsText(formatter, msg.event.content);
+    const txt = getContentAsText(formatter, msg.event.content, get(cryptoLookup));
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
 
@@ -1318,29 +1317,23 @@ export function findMessageById(
 
 export function buildTransactionLink(
     formatter: MessageFormatter,
-    transfer: CryptocurrencyTransfer
+    transfer: CryptocurrencyTransfer,
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
 ): string | undefined {
-    const url = buildTransactionUrl(transfer);
+    const url = buildTransactionUrl(transfer, cryptoLookup);
     return url !== undefined
         ? formatter("tokenTransfer.viewTransaction", { values: { url } })
         : undefined;
 }
 
-export function buildTransactionUrl(transfer: CryptocurrencyTransfer): string | undefined {
+export function buildTransactionUrl(transfer: CryptocurrencyTransfer, cryptoLookup: Record<string, CryptocurrencyDetails>): string | undefined {
     if (transfer.kind !== "completed") {
         return undefined;
     }
 
-    const rootCanister = cryptoLookup[transfer.token].rootCanister;
+    const transactionUrlFormat = cryptoLookup[transfer.ledger].transactionUrlFormat;
 
-    switch (transfer.token) {
-        case ICP_SYMBOL:
-            return `https://dashboard.internetcomputer.org/transaction/${transfer.transactionHash}`;
-        case CKBTC_SYMBOL:
-            return `https://dashboard.internetcomputer.org/bitcoin/transaction/${transfer.blockIndex}`;
-        default:
-            return `https://dashboard.internetcomputer.org/sns/${rootCanister}/transaction/${transfer.blockIndex}`;
-    }
+    return transactionUrlFormat.replace("{block_index}", transfer.blockIndex.toString()).replace("{transaction_hash}", transfer.transactionHash ?? "");
 }
 
 export function buildCryptoTransferText(
@@ -1348,7 +1341,8 @@ export function buildCryptoTransferText(
     myUserId: string,
     senderId: string,
     content: CryptocurrencyContent,
-    me: boolean
+    me: boolean,
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
 ): string | undefined {
     if (content.transfer.kind !== "completed" && content.transfer.kind !== "pending") {
         return undefined;
@@ -1362,11 +1356,13 @@ export function buildCryptoTransferText(
             : `${lookup[userId]?.username ?? formatter("unknown")}`;
     }
 
+    const tokenDetails = cryptoLookup[content.transfer.ledger];
+
     const values = {
-        amount: formatTokens(content.transfer.amountE8s, 0),
+        amount: formatTokens(content.transfer.amountE8s, 0, tokenDetails.decimals),
         receiver: username(content.transfer.recipient),
         sender: username(senderId),
-        token: content.transfer.token,
+        token: tokenDetails.symbol,
     };
 
     const key =

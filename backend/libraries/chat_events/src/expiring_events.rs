@@ -56,6 +56,7 @@ impl ExpiringEvents {
                     for message_index in expired_messages {
                         ranges.insert(message_index);
                     }
+                    true
                 },
                 now,
             );

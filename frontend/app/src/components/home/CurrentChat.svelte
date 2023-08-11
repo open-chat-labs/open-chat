@@ -21,6 +21,7 @@
         GroupChatSummary,
         CommunityMap,
         CommunitySummary,
+        ICP_SYMBOL,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -45,7 +46,7 @@
     let unreadMessages = 0;
     let firstUnreadMention: Mention | undefined;
     let creatingPoll = false;
-    let creatingCryptoTransfer: { token: string; amount: bigint } | undefined = undefined;
+    let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
     let selectingGif = false;
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
@@ -134,9 +135,9 @@
         creatingPoll = true;
     }
 
-    function tokenTransfer(ev: CustomEvent<{ token: string; amount: bigint } | undefined>) {
+    function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
         creatingCryptoTransfer = ev.detail ?? {
-            token: $lastCryptoSent,
+            ledger: $lastCryptoSent ?? client.ledgerCanisterId(ICP_SYMBOL),
             amount: BigInt(0),
         };
     }
@@ -254,8 +255,8 @@
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
         {chat}
-        token={creatingCryptoTransfer.token}
-        draftAmountE8s={creatingCryptoTransfer.amount}
+        ledger={creatingCryptoTransfer.ledger}
+        draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
         on:sendTransfer={sendMessageWithContent}
         on:upgrade

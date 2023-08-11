@@ -178,7 +178,7 @@ type CreateGroupArgs = record {
     history_visible_to_new_joiners : bool;
     permissions : opt GroupPermissions;
     rules : AccessRules;
-    events_ttl: opt Milliseconds;
+    events_ttl : opt Milliseconds;
     gate : opt AccessGate;
 };
 
@@ -393,6 +393,7 @@ type SendMessageWithTransferToChannelArgs = record {
     sender_name : text;
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
+    rules_accepted : opt Version;
 };
 
 type SendMessageWithTransferToChannelResponse = variant {
@@ -414,6 +415,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     TransferCannotBeZero;
     UserSuspended;
     CommunityFrozen;
+    RulesNotAccepted;
     InternalError : record { text; CompletedCryptoTransaction };
 };
 

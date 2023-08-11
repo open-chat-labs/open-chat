@@ -13,25 +13,27 @@ use types::{
 
 pub fn create_pending_transaction(
     token: Cryptocurrency,
-    amount: Tokens,
+    ledger: CanisterId,
+    amount: u128,
+    fee: u128,
     user_id: UserId,
     now_nanos: TimestampNanos,
 ) -> PendingCryptoTransaction {
     match token {
         Cryptocurrency::InternetComputer => PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
-            ledger: token.ledger_canister_id().unwrap(),
+            ledger,
             token,
-            amount,
+            amount: Tokens::from_e8s(amount as u64),
             to: UserOrAccount::User(user_id),
             fee: None,
             memo: None,
             created: now_nanos,
         }),
         _ => PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
-            ledger: token.ledger_canister_id().unwrap(),
-            fee: token.fee().unwrap(),
+            ledger,
+            fee,
             token,
-            amount: amount.e8s().into(),
+            amount,
             to: Account::from(Principal::from(user_id)),
             memo: None,
             created: now_nanos,

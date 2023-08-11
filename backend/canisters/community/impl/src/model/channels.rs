@@ -201,6 +201,10 @@ impl Channel {
                 MAX_THREADS_IN_SUMMARY,
                 now,
             ),
+            rules_accepted: m
+                .rules_accepted
+                .as_ref()
+                .map_or(false, |version| version.value >= chat.rules.text.version),
         });
 
         Some(CommunityCanisterChannelSummary {
@@ -224,6 +228,7 @@ impl Channel {
             expired_messages: chat.events.expired_messages(now),
             next_message_expiry: chat.events.next_message_expiry(now),
             gate: chat.gate.value.clone(),
+            rules_enabled: chat.rules.enabled,
             membership,
         })
     }
@@ -255,18 +260,28 @@ impl Channel {
         let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);
         let updates_from_events = chat.summary_updates_from_events(since, user_id, now);
 
-        let membership = member.map(|m| ChannelMembershipUpdates {
-            role: updates_from_events.role_changed.then_some(m.role.into()),
-            mentions: updates_from_events.mentions,
-            notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
-            my_metrics: self.chat.events.user_metrics(&m.user_id, Some(since)).map(|m| m.hydrate()),
-            latest_threads: self.chat.events.latest_threads(
-                m.min_visible_event_index(),
-                m.threads.iter(),
-                Some(since),
-                MAX_THREADS_IN_SUMMARY,
-                now,
-            ),
+        let membership = member.map(|m| {
+            let mut rules_accepted = None;
+            if let Some(accepted) = &m.rules_accepted {
+                if updates_from_events.rules_changed || accepted.timestamp > since {
+                    rules_accepted = Some(accepted.value >= chat.rules.text.version);
+                }
+            }
+
+            ChannelMembershipUpdates {
+                role: updates_from_events.role_changed.then_some(m.role.into()),
+                mentions: updates_from_events.mentions,
+                notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
+                my_metrics: self.chat.events.user_metrics(&m.user_id, Some(since)).map(|m| m.hydrate()),
+                latest_threads: self.chat.events.latest_threads(
+                    m.min_visible_event_index(),
+                    m.threads.iter(),
+                    Some(since),
+                    MAX_THREADS_IN_SUMMARY,
+                    now,
+                ),
+                rules_accepted,
+            }
         });
 
         ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {
@@ -288,6 +303,7 @@ impl Channel {
             date_last_pinned: updates_from_events.date_last_pinned,
             events_ttl: updates_from_events.events_ttl,
             gate: updates_from_events.gate,
+            rules_enabled: updates_from_events.rules_changed.then_some(chat.rules.enabled),
             membership,
         })
     }

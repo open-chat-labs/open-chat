@@ -1,7 +1,8 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
     import TokenInput from "../TokenInput.svelte";
-    import { Cryptocurrency, OpenChat, cryptoLookup } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
+    import { ICP_SYMBOL } from "openchat-client";
     import Input from "../../Input.svelte";
     import { _ } from "svelte-i18n";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
@@ -9,8 +10,8 @@
     import { iconSize } from "../../../stores/iconSize";
     import Scanner from "./Scanner.svelte";
 
-    export let token: Cryptocurrency;
-    export let amountToSendE8s: bigint;
+    export let ledger: string;
+    export let amountToSend: bigint;
     export let sending = false;
     export let valid = false;
 
@@ -22,13 +23,17 @@
     let targetAccount: string = "";
     let scanner: Scanner;
 
-    $: account = token === "ICP" ? user.cryptoAccount : user.userId;
-    $: cryptoBalance = client.cryptoBalance;
-    $: transferFees = cryptoLookup[token].transferFeesE8s;
+    $: cryptoBalanceStore = client.cryptoBalance;
+    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = $cryptoLookup[ledger];
+    $: account = tokenDetails.symbol === ICP_SYMBOL ? user.cryptoAccount : user.userId;
+    $: transferFees = tokenDetails.transferFee;
+    $: symbol = tokenDetails.symbol;
     $: {
         valid =
             validAmount &&
-            amountToSendE8s > BigInt(0) &&
+            amountToSend > BigInt(0) &&
             targetAccount !== "" &&
             targetAccount !== account;
     }
@@ -45,31 +50,31 @@
         client
             .withdrawCryptocurrency({
                 kind: "pending",
-                ledger: client.ledgerCanisterId(token),
-                token,
+                ledger,
+                token: symbol,
                 to: targetAccount,
-                amountE8s: amountToSendE8s,
+                amountE8s: amountToSend,
                 feeE8s: transferFees,
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             })
             .then((resp) => {
                 if (resp.kind === "completed") {
-                    amountToSendE8s = BigInt(0);
+                    amountToSend = BigInt(0);
                     targetAccount = "";
                     dispatch("refreshBalance");
                     toastStore.showSuccessToast("cryptoAccount.sendSucceeded", {
-                        values: { symbol: token },
+                        values: { symbol },
                     });
                 } else {
                     dispatch("error", "cryptoAccount.sendFailed");
-                    client.logMessage(`Unable to withdraw ${token}`, resp);
-                    toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol: token } });
+                    client.logMessage(`Unable to withdraw ${symbol}`, resp);
+                    toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
                 }
             })
             .catch((err) => {
                 dispatch("error", "cryptoAccount.sendFailed");
-                client.logError(`Unable to withdraw ${token}`, err);
-                toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol: token } });
+                client.logError(`Unable to withdraw ${symbol}`, err);
+                toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
             })
             .finally(() => (sending = false));
     }
@@ -79,10 +84,10 @@
 
 <div class="token-input">
     <TokenInput
-        {token}
-        maxAmountE8s={BigInt(Math.max(0, Number($cryptoBalance[token] - transferFees)))}
+        {ledger}
+        maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
         bind:valid={validAmount}
-        bind:amountE8s={amountToSendE8s} />
+        bind:amount={amountToSend} />
 </div>
 <div class="target">
     <Input

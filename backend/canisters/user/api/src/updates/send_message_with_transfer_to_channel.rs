@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
     ChannelId, CommunityId, CompletedCryptoTransaction, Cryptocurrency, EventIndex, GroupReplyContext, MessageContentInitial,
-    MessageId, MessageIndex, TimestampMillis, User,
+    MessageId, MessageIndex, TimestampMillis, User, Version,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -15,6 +15,8 @@ pub struct Args {
     pub sender_name: String,
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
+    #[serde(default)]
+    pub rules_accepted: Option<Version>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -31,6 +33,7 @@ pub enum Response {
     TransferCannotBeZero,
     UserSuspended,
     CommunityFrozen,
+    RulesNotAccepted,
     InternalError(String, CompletedCryptoTransaction),
 }
 
