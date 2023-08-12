@@ -8,6 +8,7 @@
         "build:prod_test": "rollup -c",
         "build:prod": "rollup -c",
         "dev": "rollup -c -w",
+        "wait": "rm -rf lib && wait-on lib/index.js",
         "typecheck": "tsc --noEmit",
         "typecheck:watch": "tsc --noEmit -w",
         "test": "jest --detectOpenHandles --runInBand",
@@ -68,7 +69,8 @@
         "rollup-plugin-postcss": "^4.0.2",
         "rollup-plugin-svelte": "^7.0.0",
         "rollup-plugin-terser": "^7.0.0",
-        "ts-jest": "^29.0.0"
+        "ts-jest": "^29.0.0",
+        "wait-on": "^7.0.1"
     },
     "jest": {
         "testEnvironment": "jsdom",

@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+## [[2.0.806](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.806-proposals_bot)] - 2023-08-11
+
+- Add support for versioned access rules ([#4159](https://github.com/open-chat-labs/open-chat/pull/4159))
+
 ## [[2.0.796](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.796-proposals_bot)] - 2023-08-08
 
 ### Changed

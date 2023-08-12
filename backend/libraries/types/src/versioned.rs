@@ -16,11 +16,9 @@ impl<T> Versioned<T> {
         Versioned { value, version }
     }
 
-    pub fn update(&self, value: T) -> Versioned<T> {
-        Versioned {
-            value,
-            version: self.version.incr(),
-        }
+    pub fn update(&mut self, value: T) {
+        self.value = value;
+        self.version = self.version.incr();
     }
 }
 

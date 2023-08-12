@@ -4,6 +4,20 @@ https://oc.app
 
 OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain.
 
+## Prerequisites
+
+#### DFX 0.14.3
+
+To install, run `DFX_VERSION=0.14.3 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"`
+
+#### Rust
+
+To install, run `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+
+#### NPM
+
+Download from https://nodejs.org/en/download
+
 ## Testing locally
 - You must have DFX version 0.14.2 installed
   - `sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)" DFX_VERSION=0.14.2`
@@ -16,7 +30,7 @@ OpenChat is a fully featured chat application running end-to-end on the Internet
   - Under root path, open terminal#2, run `./scripts/deploy-local.sh`
 - To start dfx and all canisters, consider this part as starting back-end services
   - Under root path, open terminal#1, `dfx start`
-  - If sometimes there is some issues, run `rm -rf .dfx` and rerun `dfx start` may resolve them
+  - To start again with a fresh install, stop DFX, then run `rm -rf .dfx`, then start from the top of these instructions again.
 ![canister-dashboard](canister-dashboard.png)
 - To run the open-chat website, consider this part as starting front-end services
   - Under path `./frontend`, run `npm install`. If there are any other new dependencies needed, please install them accordingly
@@ -26,6 +40,7 @@ OpenChat is a fully featured chat application running end-to-end on the Internet
 - Create II and Enjoy it!
 - To upgrade a canister, but it's not mandatary in the bootstrap
   - run `./scripts/upgrade-canister-local.sh <DFX_IDENTITY_NAME> <CANISTER_NAME> <VERSION>` (eg. `./scripts/upgrade-canister-local.sh default user 1.0.0`)
+
 
 ## Deterministic builds
 
