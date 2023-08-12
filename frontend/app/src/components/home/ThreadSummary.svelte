@@ -136,8 +136,10 @@
         border: 1px solid var(--bd);
         color: var(--currentChat-msg-txt);
 
-        &:not(.selected):hover {
-            background: rgba(255, 255, 255, 0.1);
+        @media (hover: hover) {
+            &:not(.selected):hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
         }
 
         &.selected {

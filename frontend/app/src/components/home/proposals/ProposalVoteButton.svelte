@@ -63,12 +63,14 @@
             background-color: var(--vote-no-color);
         }
 
-        &.yes:not(.voted):not(.voting):not(.disabled):hover {
-            background-color: var(--vote-yes-color);
-        }
+        @media (hover: hover) {
+            &.yes:not(.voted):not(.voting):not(.disabled):hover {
+                background-color: var(--vote-yes-color);
+            }
 
-        &.no:not(.voted):not(.voting):not(.disabled):hover {
-            background-color: var(--vote-no-color);
+            &.no:not(.voted):not(.voting):not(.disabled):hover {
+                background-color: var(--vote-no-color);
+            }
         }
 
         &.disabled {

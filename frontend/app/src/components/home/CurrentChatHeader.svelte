@@ -213,8 +213,10 @@
 
     .user-link {
         cursor: pointer;
-        &:hover {
-            text-decoration: underline;
+        @media (hover: hover) {
+            &:hover {
+                text-decoration: underline;
+            }
         }
     }
 

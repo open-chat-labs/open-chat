@@ -50,8 +50,10 @@
             width: 100%;
         }
 
-        &:hover {
-            background-color: var(--button-hv);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--button-hv);
+            }
         }
 
         &.failure {

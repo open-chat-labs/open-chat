@@ -55,8 +55,10 @@
             margin-left: $sp2;
         }
 
-        &:hover {
-            text-decoration: underline;
+        @media (hover: hover) {
+            &:hover {
+                text-decoration: underline;
+            }
         }
     }
 

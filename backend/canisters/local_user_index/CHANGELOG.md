@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.805](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.805-local_user_index)] - 2023-08-11
+
 ### Changed
 
 - Add support for versioned access rules ([#4159](https://github.com/open-chat-labs/open-chat/pull/4159))

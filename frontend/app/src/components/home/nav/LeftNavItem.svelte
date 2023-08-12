@@ -40,8 +40,10 @@
             padding: 6px 10px;
         }
 
-        &:hover {
-            background-color: var(--chatSummary-hv);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--chatSummary-hv);
+            }
         }
 
         &.selected {

@@ -4,7 +4,11 @@
     export let centered = false;
 </script>
 
-<div transition:fade|local={{ duration: 100 }} class="menu" class:centered>
+<div
+    on:contextmenu|preventDefault
+    transition:fade|local={{ duration: 100 }}
+    class="menu"
+    class:centered>
     <slot />
 </div>
 
