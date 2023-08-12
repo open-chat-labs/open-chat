@@ -10,11 +10,11 @@
     export let align: Alignment = "start";
     export let fill = false;
     export let gutter = 8;
+    export let longPressed: boolean = false;
 
     let target: Hoverable;
     let tooltipContainer: HTMLElement;
     let hovering: boolean;
-    let longPressed: boolean;
 
     $: show = enable && (hovering || longPressed);
 

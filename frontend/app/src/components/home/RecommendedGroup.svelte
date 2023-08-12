@@ -114,9 +114,11 @@
         }
 
         @include size-above(sm) {
-            &:hover {
-                @include box-shadow(2);
-                // transform: scale(1.01);
+            @media (hover: hover) {
+                &:hover {
+                    @include box-shadow(2);
+                    // transform: scale(1.01);
+                }
             }
         }
 

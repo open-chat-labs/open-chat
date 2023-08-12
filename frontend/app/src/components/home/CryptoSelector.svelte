@@ -14,14 +14,13 @@
     $: cryptoBalance = client.cryptoBalance;
 
     $: cryptoLookup = client.cryptoLookup;
-    $: crypto = Object.values($cryptoLookup)
-        .map((t) => ({
-            ledger: t.ledger,
-            symbol: t.symbol,
-            name: t.name,
-            logo: t.logo,
-            balance: $cryptoBalance[t.ledger] ?? BigInt(0),
-        }));
+    $: crypto = Object.values($cryptoLookup).map((t) => ({
+        ledger: t.ledger,
+        symbol: t.symbol,
+        name: t.name,
+        logo: t.logo,
+        balance: $cryptoBalance[t.ledger] ?? BigInt(0),
+    }));
 
     $: {
         crypto.sort((a, b) => {
@@ -113,8 +112,10 @@
         @include font(bold, normal, fs-80);
         font-family: "Roboto", sans-serif;
 
-        &:hover {
-            background-color: var(--menu-hv);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--menu-hv);
+            }
         }
 
         .symbol {

@@ -553,6 +553,10 @@
                 min-height: 100vh;
                 height: unset;
             }
+
+            @media (hover: none) {
+                @include no_user_select();
+            }
         }
 
         h1,

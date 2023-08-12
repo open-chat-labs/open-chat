@@ -59,8 +59,10 @@
             min-width: 100px;
         }
 
-        &:hover {
-            background: var(--button-hv);
+        @media (hover: hover) {
+            &:hover {
+                background: var(--button-hv);
+            }
         }
 
         &.loading {
