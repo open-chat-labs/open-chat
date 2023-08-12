@@ -160,8 +160,8 @@ function clean() {
 
 // Put external dependencies into their own bundle so that they get cached separately
 function manualChunks(id) {
-    if (id.includes('node_modules')) {
-        return 'vendor';
+    if (id.includes("node_modules") || id.includes("vendor-")) {
+        return "vendor";
     }
 }
 
