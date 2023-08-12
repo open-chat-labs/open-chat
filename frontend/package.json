@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "npm ci && turbo run build",
+    "build": "npm i && turbo run build",
     "build:ci": "npm ci && turbo run build:ci",
     "deploy:prod_test": "npm ci && turbo run deploy:prod_test",
     "deploy:prod": "npm ci && turbo run deploy:prod",

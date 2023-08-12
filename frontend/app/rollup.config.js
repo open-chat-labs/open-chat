@@ -14,7 +14,7 @@ import dev from "rollup-plugin-dev";
 import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
 import filesize from "rollup-plugin-filesize";
-import postcss from "rollup-plugin-postcss";
+import styles from "rollup-plugin-styles";
 import autoprefixer from "autoprefixer";
 import { sha256 } from "js-sha256";
 import dotenv from "dotenv";
@@ -194,7 +194,7 @@ export default {
             },
         }),
 
-        postcss({ extract: true, plugins: [autoprefixer()] }),
+        styles({ mode: "extract", plugins: [autoprefixer()] }),
 
         resolve({
             preferBuiltins: false,
