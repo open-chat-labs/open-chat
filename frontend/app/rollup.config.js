@@ -330,7 +330,7 @@ export default {
                                 />
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>
                                 <script type="module" defer src="/${jsEntryFile}"></script>
-                                ${files.css.map((f) => `<link rel="stylesheet" href="/${f.fileName}" />`)}
+                                ${files.css.map((f) => `<link rel="stylesheet" href="/${f.fileName}" />`).join("")}
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
                             <body></body>
