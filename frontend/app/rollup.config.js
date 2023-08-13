@@ -14,7 +14,7 @@ import dev from "rollup-plugin-dev";
 import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
 import filesize from "rollup-plugin-filesize";
-import postcss from "rollup-plugin-postcss";
+import styles from "rollup-plugin-styles";
 import autoprefixer from "autoprefixer";
 import { sha256 } from "js-sha256";
 import dotenv from "dotenv";
@@ -158,6 +158,13 @@ function clean() {
     };
 }
 
+// Put external dependencies into their own bundle so that they get cached separately
+function manualChunks(id) {
+    if (id.includes("node_modules") || id.includes("vendor-")) {
+        return "vendor";
+    }
+}
+
 export default {
     input: `./src/main.ts`,
     output: {
@@ -166,6 +173,7 @@ export default {
         name: "app",
         dir: "build",
         entryFileNames: "[name]-[hash].js",
+        manualChunks,
     },
     plugins: [
         clean(),
@@ -186,7 +194,7 @@ export default {
             },
         }),
 
-        postcss({ extract: true, plugins: [autoprefixer()] }),
+        styles({ mode: "extract", plugins: [autoprefixer()] }),
 
         resolve({
             preferBuiltins: false,
