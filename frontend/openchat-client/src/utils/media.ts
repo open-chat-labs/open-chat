@@ -285,7 +285,7 @@ export async function messageContentFromFile(
 
 /** twitter link */
 export const twitterLinkRegex = (): RegExp =>
-    /https?:\/\/twitter\.com\/[^/]+\/status(es)?\/(\d+)[?^ ]*/i;
+    /https?:\/\/(twitter|x)\.com\/[^/]+\/status(es)?\/(\d+)[?^ ]*/i;
 
 /** Youtube link handling - various formats
  * https://youtu.be/SWgxgpGZerc
