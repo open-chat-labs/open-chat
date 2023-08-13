@@ -56,7 +56,7 @@
             </span>
         {:else}
             <IntersectionObserver let:intersecting>
-                <Tweet tweetId={twitterLinkMatch[2]} {intersecting} />
+                <Tweet tweetId={twitterLinkMatch[3]} {intersecting} />
             </IntersectionObserver>
         {/if}
     {/if}
