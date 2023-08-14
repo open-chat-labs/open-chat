@@ -5,6 +5,9 @@
   "scripts": {
     "build": "npm i && turbo run build",
     "build:ci": "npm ci && turbo run build:ci",
+    "build:prod": "npm ci && turbo run build:prod",
+    "build:prod_test": "npm ci && turbo run build:prod_test",
+    "build:testnet": "npm ci && turbo run build:testnet",
     "deploy:prod_test": "npm ci && turbo run deploy:prod_test",
     "deploy:prod": "npm ci && turbo run deploy:prod",
     "deploy:testnet": "npm ci && turbo run deploy:testnet",
