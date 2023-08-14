@@ -428,7 +428,8 @@ export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
     unconfirmed: UnconfirmedMessages,
-    localUpdates: MessageMap<LocalMessageUpdates>
+    localUpdates: MessageMap<LocalMessageUpdates>,
+    translations: MessageMap<string>,
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
@@ -453,10 +454,11 @@ export function mergeUnconfirmedIntoSummary(
     }
     if (latestMessage !== undefined) {
         const updates = localUpdates.get(latestMessage.event.messageId);
-        if (updates !== undefined) {
+        const translation = translations.get(latestMessage.event.messageId);
+        if (updates !== undefined || translation !== undefined) {
             latestMessage = {
                 ...latestMessage,
-                event: mergeLocalUpdates(latestMessage.event, updates, undefined, undefined),
+                event: mergeLocalUpdates(latestMessage.event, updates, undefined, undefined, translation),
             };
         }
     }

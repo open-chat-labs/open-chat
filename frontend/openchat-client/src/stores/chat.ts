@@ -138,8 +138,9 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         unconfirmed,
         currentUserStore,
         localMessageUpdates,
+        translationStore,
     ],
-    ([summaries, localSummaryUpdates, unconfirmed, currentUser, localUpdates]) => {
+    ([summaries, localSummaryUpdates, unconfirmed, currentUser, localUpdates, translations]) => {
         const mergedSummaries = mergeLocalSummaryUpdates(
             currentScope,
             summaries,
@@ -157,7 +158,8 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
                             currentUser.userId,
                             summary,
                             unconfirmed,
-                            localUpdates
+                            localUpdates,
+                            translations,
                         )
                     );
                 }
