@@ -258,7 +258,6 @@ export default {
         html({
             template: ({ files }) => {
                 const jsEntryFile = files.js.find((f) => f.isEntry).fileName;
-                const cssFile = files.css[0].fileName;
 
                 function generateCspHashValue(text) {
                     const hash = sha256.update(text).arrayBuffer();
@@ -323,7 +322,6 @@ export default {
                                 <link rel="apple-touch-startup-image" href="/_/raw/apple-touch-icon.png" />
                                 <link rel="apple-touch-icon" href="/_/raw/apple-touch-icon.png" />
                                 <link rel="icon" type="image/png" href="/icon.png" />
-                                <link rel="stylesheet" href="/${cssFile}" />
                                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
                                 <link
@@ -332,6 +330,7 @@ export default {
                                 />
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>
                                 <script type="module" defer src="/${jsEntryFile}"></script>
+                                ${files.css.map((f) => `<link rel="stylesheet" href="/${f.fileName}" />`).join("")}
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
                             <body></body>
