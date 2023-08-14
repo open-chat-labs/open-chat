@@ -13,7 +13,6 @@ pub mod public_summary;
 pub mod rules;
 pub mod search_messages;
 pub mod selected_initial;
-pub mod selected_updates;
 pub mod selected_updates_v2;
 pub mod summary;
 pub mod summary_updates;

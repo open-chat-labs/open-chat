@@ -361,29 +361,6 @@ type SelectedInitialResponse = variant {
     CallerNotInGroup;
 };
 
-type SelectedUpdatesArgs = record {
-    updates_since : EventIndex;
-};
-
-type SelectedUpdatesSuccess = record {
-    timestamp : TimestampMillis;
-    latest_event_index : EventIndex;
-    participants_added_or_updated : vec Participant;
-    participants_removed : vec UserId;
-    blocked_users_added : vec UserId;
-    blocked_users_removed : vec UserId;
-    invited_users : opt vec UserId;
-    pinned_messages_added : vec MessageIndex;
-    pinned_messages_removed : vec MessageIndex;
-    rules : opt AccessRules;
-};
-
-type SelectedUpdatesResponse = variant {
-    Success : SelectedUpdatesSuccess;
-    SuccessNoUpdates : EventIndex;
-    CallerNotInGroup;
-};
-
 type SelectedUpdatesV2Args = record {
     updates_since : TimestampMillis;
 };
@@ -615,7 +592,6 @@ service : {
     summary : (SummaryArgs) -> (SummaryResponse) query;
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     selected_initial : (SelectedInitialArgs) -> (SelectedInitialResponse) query;
-    selected_updates : (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
     selected_updates_v2 : (SelectedUpdatesV2Args) -> (SelectedUpdatesV2Response) query;
 
     events : (EventsArgs) -> (EventsResponse) query;
