@@ -5,7 +5,7 @@
     import "../utils/markdown";
     import "../utils/i18n";
     import { rtlStore } from "../stores/rtl";
-    import { _ } from "svelte-i18n";
+    import { _, isLoading } from "svelte-i18n";
     import Router from "./Router.svelte";
     import { notFound, pathParams } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
@@ -314,7 +314,9 @@
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
     <Upgrading />
 {:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering" || $identityState === "logged_in" || $identityState === "loading_user"}
-    <Router />
+    {#if !$isLoading}
+        <Router />
+    {/if}
 {/if}
 
 {#if profileTrace}
