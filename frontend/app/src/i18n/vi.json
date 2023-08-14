@@ -413,8 +413,6 @@
     "confirmMembers": "Xác nhận thành viên",
     "permissionsChangedBy": "{changedBy} đã thay đổi quyền của {level}",
     "filterMembers": "lọc thành viên",
-    "publicGroupWithN": "Nhóm công khai có {number} thành viên",
-    "privateGroupWithN": "Nhóm riêng tư với {number} thành viên",
     "groupWithN": "{number} thành viên",
     "members": "Các thành viên",
     "removeMemberFailed": "Không thể xóa thành viên",
@@ -967,5 +965,7 @@
     "attachFile": "Đính kèm hình ảnh/video/tập tin",
     "pickEmoji": "Chọn biểu tượng cảm xúc",
     "sendMessage": "Gửi tin nhắn",
-    "publicChannelInfo": "Các thành viên cộng đồng được tự động thêm vào các kênh công cộng (sau đó họ có thể rời đi)."
+    "publicChannelInfo": "Các thành viên cộng đồng được tự động thêm vào các kênh công cộng (sau đó họ có thể rời đi).",
+    "publicGroupWithN": "Công khai {level} với {number} thành viên",
+    "privateGroupWithN": "{level} riêng tư với {number} thành viên"
 }

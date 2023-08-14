@@ -4,13 +4,15 @@
     import type {
         ChatIdentifier,
         ChatSummary,
+        CommunityIdentifier,
+        CommunitySummary,
         DirectChatSummary,
-        GroupChatSummary,
         MultiUserChat,
         OpenChat,
     } from "openchat-client";
     import Avatar from "./Avatar.svelte";
-    import { AvatarSize, UserStatus } from "openchat-client";
+    import CollapsibleCard from "./CollapsibleCard.svelte";
+    import { AvatarSize, GlobalState, UserStatus, chatIdentifiersEqual } from "openchat-client";
     import Panel from "./Panel.svelte";
     import { iconSize } from "../stores/iconSize";
     import HoverIcon from "./HoverIcon.svelte";
@@ -19,39 +21,119 @@
     import SectionHeader from "./SectionHeader.svelte";
     import { _ } from "svelte-i18n";
     import { now } from "../stores/time";
+    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
+    import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
 
     const client = getContext<OpenChat>("client");
-
-    $: userStore = client.userStore;
-
-    export let chatsSummaries: ChatSummary[];
-
     const dispatch = createEventDispatcher();
 
-    type NormalisedChat = {
+    type ShareTo = {
+        directChats: ShareChat[];
+        groupChats: ShareChat[];
+        communities: ShareCommunity[];
+    };
+    type ShareChat = {
+        kind: "chat";
         id: ChatIdentifier;
         userId: string | undefined;
         name: string;
         avatarUrl: string;
         description: string;
     };
+    type ShareCommunity = {
+        kind: "community";
+        id: CommunityIdentifier;
+        name: string;
+        avatarUrl: string;
+        description: string;
+        channels: ShareChat[];
+    };
+
+    let openTargetGroup: string | undefined = undefined;
+
+    $: userStore = client.userStore;
+    $: selectedChatId = client.selectedChatId;
+    $: globalState = client.globalStateStore;
 
     $: {
-        Promise.all(chatsSummaries.map((c) => normaliseChatSummary($now, c))).then((c) => {
-            chats = c;
-        });
+        buildListOfTargets($globalState, $now, $selectedChatId).then((t) => (targets = t));
     }
-    $: chats = undefined as NormalisedChat[] | undefined;
+    $: targets = undefined as ShareTo | undefined;
+    $: noTargets = getNumberOfTargets(targets) === 0;
 
-    async function normaliseChatSummary(
+    function getNumberOfTargets(targets: ShareTo | undefined): number {
+        if (targets === undefined) return 0;
+        return (
+            targets.directChats.length +
+            targets.groupChats.length +
+            targets.communities.flatMap((c) => c.channels).length
+        );
+    }
+
+    async function targetsFromChatList(
         now: number,
-        chatSummary: ChatSummary
-    ): Promise<NormalisedChat> {
+        chats: ChatSummary[],
+        selectedChatId: ChatIdentifier | undefined
+    ): Promise<ShareChat[]> {
+        return Promise.all(
+            filterChatSelection(chats, selectedChatId).map((c) => normaliseChatSummary(now, c))
+        );
+    }
+
+    async function buildListOfTargets(
+        global: GlobalState,
+        now: number,
+        selectedChatId: ChatIdentifier | undefined
+    ): Promise<ShareTo | undefined> {
+        let targets: ShareTo | undefined = undefined;
+        try {
+            const directChats = await targetsFromChatList(
+                now,
+                global.directChats.values(),
+                selectedChatId
+            );
+            const groupChats = await targetsFromChatList(
+                now,
+                global.groupChats.values(),
+                selectedChatId
+            );
+            const communities = await Promise.all(
+                global.communities.values().map((c) => normaliseCommunity(now, selectedChatId, c))
+            );
+            return {
+                directChats,
+                groupChats,
+                communities,
+            };
+        } catch (err) {}
+        return targets;
+    }
+
+    async function normaliseCommunity(
+        now: number,
+        selectedChatId: ChatIdentifier | undefined,
+        { id, name, avatar, description, channels }: CommunitySummary
+    ): Promise<ShareCommunity> {
+        const normalisedChannels = await Promise.all(
+            filterChatSelection(channels, selectedChatId).map((c) => normaliseChatSummary(now, c))
+        );
+        return {
+            kind: "community",
+            id,
+            name,
+            avatarUrl: client.communityAvatarUrl(id.communityId, avatar),
+            description,
+            channels: normalisedChannels,
+        };
+    }
+
+    async function normaliseChatSummary(now: number, chatSummary: ChatSummary): Promise<ShareChat> {
         switch (chatSummary.kind) {
             case "direct_chat":
                 const description = await buildDirectChatDescription(chatSummary, now);
                 const them = $userStore[chatSummary.them.userId];
                 return {
+                    kind: "chat",
                     id: chatSummary.id,
                     userId: chatSummary.them.userId,
                     name: client.usernameAndIcon(them),
@@ -61,6 +143,7 @@
 
             default:
                 return {
+                    kind: "chat",
                     id: chatSummary.id,
                     userId: undefined,
                     name: chatSummary.name,
@@ -83,11 +166,22 @@
         if (group.description.length > 0) {
             return group.description;
         } else {
+            const level = $_(`level.${group.level}`).toLowerCase();
             const number = group.memberCount;
             return group.public
-                ? $_("publicGroupWithN", { values: { number } })
-                : $_("privateGroupWithN", { values: { number } });
+                ? $_("publicGroupWithN", { values: { number, level } })
+                : $_("privateGroupWithN", { values: { number, level } });
         }
+    }
+
+    function filterChatSelection(
+        chats: ChatSummary[],
+        selectedChatId: ChatIdentifier | undefined
+    ): ChatSummary[] {
+        if (selectedChatId === undefined) return chats;
+        return chats.filter(
+            (c) => !chatIdentifiersEqual(selectedChatId, c.id) && client.canSendMessages(c.id)
+        );
     }
 
     function selectChat(chatId: ChatIdentifier) {
@@ -107,29 +201,99 @@
             </HoverIcon>
         </span>
     </SectionHeader>
-    {#if chatsSummaries.length === 0}
+    {#if targets === undefined}
+        ...
+    {:else if noTargets}
         <div class="no-chats">{$_("noChatsAvailable")}</div>
-    {:else if chats !== undefined}
-        <div class="body">
-            {#each chats as chat}
-                <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(chat.id)}>
+    {:else}
+        <div class="selectable-chats">
+            <CollapsibleCard first headerText={$_("communities.directChats")}>
+                <div slot="titleSlot" class="card-header">
                     <div class="avatar">
-                        <Avatar
-                            url={chat.avatarUrl}
-                            userId={chat.userId}
-                            size={AvatarSize.Default} />
+                        <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
                     </div>
                     <div class="details">
-                        <div class="name">{chat.name}</div>
-                        <div class="description">{chat.description}</div>
+                        <h4 class="title">
+                            {$_("communities.directChats")}
+                        </h4>
                     </div>
                 </div>
+                {#each targets.directChats as target}
+                    <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(target.id)}>
+                        <div class="avatar">
+                            <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
+                        </div>
+                        <div class="details">
+                            <div class="name">{target.name}</div>
+                            <div class="description">{target.description}</div>
+                        </div>
+                    </div>
+                {/each}
+            </CollapsibleCard>
+            <CollapsibleCard headerText={$_("communities.groupChats")}>
+                <div slot="titleSlot" class="card-header">
+                    <div class="avatar">
+                        <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    </div>
+                    <div class="details">
+                        <h4 class="title">
+                            {$_("communities.groupChats")}
+                        </h4>
+                    </div>
+                </div>
+                {#each targets.groupChats as target}
+                    <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(target.id)}>
+                        <div class="avatar">
+                            <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
+                        </div>
+                        <div class="details">
+                            <div class="name">{target.name}</div>
+                            <div class="description">{target.description}</div>
+                        </div>
+                    </div>
+                {/each}
+            </CollapsibleCard>
+            {#each targets.communities as community}
+                <CollapsibleCard open={false} headerText={community.name}>
+                    <div slot="titleSlot" class="card-header">
+                        <div class="avatar">
+                            <Avatar url={community.avatarUrl} size={AvatarSize.Default} />
+                        </div>
+                        <div class="details">
+                            <h4 class="title">
+                                {community.name}
+                            </h4>
+                        </div>
+                    </div>
+                    {#each community.channels as target}
+                        <div
+                            class="row"
+                            class:rtl={$rtlStore}
+                            on:click={() => selectChat(target.id)}>
+                            <div class="avatar">
+                                <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
+                            </div>
+                            <div class="details">
+                                <div class="name">{target.name}</div>
+                                <div class="description">{target.description}</div>
+                            </div>
+                        </div>
+                    {/each}
+                </CollapsibleCard>
             {/each}
         </div>
     {/if}
 </Panel>
 
 <style lang="scss">
+    :global(.selectable-chats .body) {
+        padding: 0;
+    }
+
+    :global(.selectable-chats .header) {
+        padding: $sp3;
+    }
+
     h4 {
         flex: 1;
         margin: 0;
@@ -148,7 +312,7 @@
         flex: 0 0 30px;
     }
 
-    .body {
+    .selectable-chats {
         overflow: auto;
         @include nice-scrollbar();
         @include mobile() {
@@ -156,36 +320,44 @@
         }
     }
 
+    .card-header {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: calc(100% - 24px);
+        gap: toRem(12);
+
+        .avatar {
+            flex: 0 0 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 48px;
+            border-radius: 50%;
+            background-color: var(--chatSummary-bg-selected);
+
+            @include mobile() {
+                flex: 0 0 42px;
+                height: 42px;
+            }
+        }
+    }
+
     .row {
         position: relative;
         display: flex;
-        gap: 12px;
+        gap: toRem(12);
         justify-content: space-between;
         align-items: center;
-        padding: $sp3;
         background-color: var(--chatSummary-bg);
-        border-bottom: var(--chatSummary-bd);
-        margin-bottom: 0;
         cursor: pointer;
+        padding: $sp3;
 
         @media (hover: hover) {
             &:hover {
                 background-color: var(--chatSummary-hv);
             }
         }
-
-        &:last-child {
-            border-bottom: 0;
-        }
-
-        padding: $sp4;
-        @include mobile() {
-            padding: $sp3 toRem(10);
-        }
-    }
-
-    .avatar {
-        flex: 0 0 40px;
     }
 
     .details {
