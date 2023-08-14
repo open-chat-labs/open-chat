@@ -14,7 +14,6 @@ fn main() {
     generate_candid_method!(group, rules, query);
     generate_candid_method!(group, search_messages, query);
     generate_candid_method!(group, selected_initial, query);
-    generate_candid_method!(group, selected_updates, query);
     generate_candid_method!(group, selected_updates_v2, query);
     generate_candid_method!(group, summary, query);
     generate_candid_method!(group, summary_updates, query);
