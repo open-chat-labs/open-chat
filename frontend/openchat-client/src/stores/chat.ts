@@ -54,7 +54,7 @@ import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { communityPreviewsStore } from "./community";
-import {translationStore} from "./translation";
+import { translationStore } from "./translation";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 let currentScope: ChatListScope = { kind: "direct_chat" };
