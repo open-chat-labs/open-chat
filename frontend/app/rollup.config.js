@@ -249,6 +249,7 @@ export default {
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             "process.env.METERED_APIKEY": JSON.stringify(process.env.METERED_APIKEY),
             "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
+            "process.env.CORS_APIKEY": JSON.stringify(process.env.CORS_APIKEY),
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.PUBLIC_TRANSLATE_API_KEY
             ),
@@ -330,7 +331,9 @@ export default {
                                 />
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>
                                 <script type="module" defer src="/${jsEntryFile}"></script>
-                                ${files.css.map((f) => `<link rel="stylesheet" href="/${f.fileName}" />`).join("")}
+                                ${files.css
+                                    .map((f) => `<link rel="stylesheet" href="/${f.fileName}" />`)
+                                    .join("")}
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
                             <body></body>
