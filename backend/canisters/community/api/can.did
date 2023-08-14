@@ -153,6 +153,14 @@ type SelectedChannelUpdatesResponse = variant {
     PrivateChannel;
 };
 
+type SelectedChannelUpdatesV2Response = variant {
+    Success : SelectedGroupUpdates;
+    SuccessNoUpdates : TimestampMillis;
+    PrivateCommunity;
+    ChannelNotFound;
+    PrivateChannel;
+};
+
 type SelectedInitialArgs = record {
     invite_code : opt nat64;
 };
@@ -179,6 +187,12 @@ type SelectedUpdatesArgs = record {
 type SelectedUpdatesResponse = variant {
     Success : SelectedUpdatesSuccess;
     SuccessNoUpdates;
+    PrivateCommunity;
+};
+
+type SelectedUpdatesV2Response = variant {
+    Success : SelectedUpdatesSuccess;
+    SuccessNoUpdates : TimestampMillis;
     PrivateCommunity;
 };
 
@@ -827,8 +841,10 @@ service : {
     search_channel : (SearchChannelArgs) -> (SearchChannelResponse) query;
     selected_channel_initial : (SelectedChannelInitialArgs) -> (SelectedChannelInitialResponse) query;
     selected_channel_updates : (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesResponse) query;
+    selected_channel_updates_v2 : (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesV2Response) query;
     selected_initial : (SelectedInitialArgs) -> (SelectedInitialResponse) query;
     selected_updates : (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
+    selected_updates_v2 : (SelectedUpdatesArgs) -> (SelectedUpdatesV2Response) query;
     summary : (SummaryArgs) -> (SummaryResponse) query;
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     thread_previews : (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;

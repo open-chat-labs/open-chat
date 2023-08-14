@@ -6,7 +6,7 @@ generate_query_call!(events);
 generate_query_call!(events_by_index);
 generate_query_call!(local_user_index);
 generate_query_call!(selected_initial);
-generate_query_call!(selected_updates);
+generate_query_call!(selected_updates_v2);
 
 // Updates
 generate_update_call!(add_reaction);
