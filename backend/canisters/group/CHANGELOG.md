@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove `selected_updates` which has been superseded by `selected_updates_v2` ([#4182](https://github.com/open-chat-labs/open-chat/pull/4182))
+
 ## [[2.0.807](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.807-group)] - 2023-08-11
 
 ### Changed

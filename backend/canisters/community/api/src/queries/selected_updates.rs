@@ -1,6 +1,7 @@
+use crate::selected_updates_v2;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{AccessRules, CommunityMember, TimestampMillis, UserId};
+use types::TimestampMillis;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -11,18 +12,17 @@ pub struct Args {
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(SuccessResult),
+    Success(selected_updates_v2::SuccessResult),
     SuccessNoUpdates,
     PrivateCommunity,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub timestamp: TimestampMillis,
-    pub members_added_or_updated: Vec<CommunityMember>,
-    pub members_removed: Vec<UserId>,
-    pub blocked_users_added: Vec<UserId>,
-    pub blocked_users_removed: Vec<UserId>,
-    pub invited_users: Option<Vec<UserId>>,
-    pub rules: Option<AccessRules>,
+impl From<selected_updates_v2::Response> for Response {
+    fn from(value: selected_updates_v2::Response) -> Self {
+        match value {
+            selected_updates_v2::Response::Success(r) => Response::Success(r),
+            selected_updates_v2::Response::SuccessNoUpdates(_) => Response::SuccessNoUpdates,
+            selected_updates_v2::Response::PrivateCommunity => Response::PrivateCommunity,
+        }
+    }
 }

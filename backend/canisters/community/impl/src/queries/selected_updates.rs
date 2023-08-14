@@ -1,11 +1,16 @@
 use crate::{model::events::CommunityEventInternal, read_state, Data, RuntimeState};
-use community_canister::selected_updates::{Response::*, *};
+use community_canister::selected_updates_v2::{Response::*, *};
 use ic_cdk_macros::query;
 use std::{cmp::max, collections::HashSet};
 use types::UserId;
 
 #[query]
-fn selected_updates(args: Args) -> Response {
+fn selected_updates(args: Args) -> community_canister::selected_updates::Response {
+    read_state(|state| selected_updates_impl(args, state)).into()
+}
+
+#[query]
+fn selected_updates_v2(args: Args) -> Response {
     read_state(|state| selected_updates_impl(args, state))
 }
 
@@ -23,7 +28,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let events_last_updated = data.events.latest_event_timestamp();
     let latest_timestamp = max(events_last_updated, invited_users_last_updated);
     if latest_timestamp <= args.updates_since {
-        return SuccessNoUpdates;
+        return SuccessNoUpdates(args.updates_since);
     }
 
     let invited_users = if invited_users_last_updated > args.updates_since {
