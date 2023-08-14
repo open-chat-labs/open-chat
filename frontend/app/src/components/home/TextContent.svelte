@@ -35,7 +35,7 @@
     $: translationStore = client.translationStore;
     $: text = truncateText($translationStore.get(Number(messageId)) ?? content.text);
     $: containsCodeBlock = content.text.match(/```([\s\S]*)```/);
-    $: linkMatch = content.text.match(/(https?:\/\/[^\s]+)/g);
+    $: linkMatch = content.text.match(/(https?:\/\/[^\s\)]+)/g);
 </script>
 
 <Markdown inline={!containsCodeBlock} suppressLinks={pinned} {text} />
