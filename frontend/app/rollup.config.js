@@ -14,7 +14,7 @@ import dev from "rollup-plugin-dev";
 import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
 import filesize from "rollup-plugin-filesize";
-import postcss from "rollup-plugin-postcss";
+import styles from "rollup-plugin-styles";
 import autoprefixer from "autoprefixer";
 import { sha256 } from "js-sha256";
 import dotenv from "dotenv";
@@ -23,7 +23,7 @@ import * as fs from "fs-extra";
 import * as path from "path";
 import * as rimraf from "rimraf";
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, "../.env") });
 
 const dfxNetwork = process.env.DFX_NETWORK;
 
@@ -158,6 +158,13 @@ function clean() {
     };
 }
 
+// Put external dependencies into their own bundle so that they get cached separately
+function manualChunks(id) {
+    if (id.includes("node_modules") || id.includes("vendor-")) {
+        return "vendor";
+    }
+}
+
 export default {
     input: `./src/main.ts`,
     output: {
@@ -166,6 +173,7 @@ export default {
         name: "app",
         dir: "build",
         entryFileNames: "[name]-[hash].js",
+        manualChunks,
     },
     plugins: [
         clean(),
@@ -186,7 +194,7 @@ export default {
             },
         }),
 
-        postcss({ extract: true, plugins: [autoprefixer()] }),
+        styles({ mode: "extract", plugins: [autoprefixer()] }),
 
         resolve({
             preferBuiltins: false,
@@ -241,6 +249,7 @@ export default {
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             "process.env.METERED_APIKEY": JSON.stringify(process.env.METERED_APIKEY),
             "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
+            "process.env.CORS_APIKEY": JSON.stringify(process.env.CORS_APIKEY),
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.PUBLIC_TRANSLATE_API_KEY
             ),
@@ -250,7 +259,6 @@ export default {
         html({
             template: ({ files }) => {
                 const jsEntryFile = files.js.find((f) => f.isEntry).fileName;
-                const cssFile = files.css[0].fileName;
 
                 function generateCspHashValue(text) {
                     const hash = sha256.update(text).arrayBuffer();
@@ -315,7 +323,6 @@ export default {
                                 <link rel="apple-touch-startup-image" href="/_/raw/apple-touch-icon.png" />
                                 <link rel="apple-touch-icon" href="/_/raw/apple-touch-icon.png" />
                                 <link rel="icon" type="image/png" href="/icon.png" />
-                                <link rel="stylesheet" href="/${cssFile}" />
                                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
                                 <link
@@ -324,6 +331,9 @@ export default {
                                 />
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>
                                 <script type="module" defer src="/${jsEntryFile}"></script>
+                                ${files.css
+                                    .map((f) => `<link rel="stylesheet" href="/${f.fileName}" />`)
+                                    .join("")}
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
                             <body></body>

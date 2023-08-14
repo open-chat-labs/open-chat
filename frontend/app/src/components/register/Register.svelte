@@ -242,8 +242,10 @@
         text-decoration: underline;
         text-decoration-color: var(--accent);
         text-underline-offset: $sp1;
-        &:hover {
-            text-decoration-thickness: 2px;
+        @media (hover: hover) {
+            &:hover {
+                text-decoration-thickness: 2px;
+            }
         }
     }
 
@@ -294,8 +296,10 @@
         cursor: pointer;
         text-decoration: none;
 
-        &:hover {
-            text-decoration: underline;
+        @media (hover: hover) {
+            &:hover {
+                text-decoration: underline;
+            }
         }
     }
 </style>

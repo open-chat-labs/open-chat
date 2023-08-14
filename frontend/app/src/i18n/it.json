@@ -412,8 +412,6 @@
     "confirmMembers": "Conferma membri",
     "permissionsChangedBy": "{changedBy} ha modificato le autorizzazioni {level}",
     "filterMembers": "membri del filtro",
-    "publicGroupWithN": "Gruppo pubblico con {number} membri",
-    "privateGroupWithN": "Gruppo privato con {number} membri",
     "groupWithN": "{number} membro/i",
     "members": "Membri",
     "removeMemberFailed": "Impossibile rimuovere il membro",
@@ -966,5 +964,7 @@
     "attachFile": "Allega immagine/video/file",
     "pickEmoji": "Scegli le emoji",
     "sendMessage": "Invia messaggio",
-    "publicChannelInfo": "I membri della comunità vengono aggiunti automaticamente ai canali pubblici (possono successivamente uscire)."
+    "publicChannelInfo": "I membri della comunità vengono aggiunti automaticamente ai canali pubblici (possono successivamente uscire).",
+    "publicGroupWithN": "Pubblico {level} con {number} membri",
+    "privateGroupWithN": "{level} privato con {number} membri"
 }

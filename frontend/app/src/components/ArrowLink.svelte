@@ -31,12 +31,14 @@
             text-align: end;
         }
 
-        &:hover {
-            text-decoration: none;
-            color: var(--landing-txt-light);
+        @media (hover: hover) {
+            &:hover {
+                text-decoration: none;
+                color: var(--landing-txt-light);
 
-            .arrow {
-                flex: 0 0 toRem(24);
+                .arrow {
+                    flex: 0 0 toRem(24);
+                }
             }
         }
     }

@@ -7,9 +7,10 @@
     import TooltipPopup from "../TooltipPopup.svelte";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import type { OpenChat, UserLookup } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, createEventDispatcher } from "svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let finished: boolean;
     export let readonly: boolean;
@@ -21,6 +22,8 @@
     export let voters: string[] | undefined;
     export let numVotes: number;
     export let showVotes: boolean;
+
+    let longPressed: boolean = false;
 
     $: userStore = client.userStore;
     $: usernames = buildPollUsernames($userStore, voters, myUserId);
@@ -57,10 +60,16 @@
             }
         }
     }
+
+    function onClick(e: MouseEvent) {
+        if (!longPressed) {
+            dispatch("click");
+        }
+    }
 </script>
 
-<TooltipWrapper position={"right"} align={"center"} enable={showVotes}>
-    <div slot="target" class:readonly class="answer-text" class:finished on:click>
+<TooltipWrapper bind:longPressed position={"right"} align={"center"} enable={showVotes}>
+    <div slot="target" class:readonly class="answer-text" class:finished on:click={onClick}>
         <Progress bg={"button"} {percent}>
             <div class="label">
                 <span>{answer}</span>

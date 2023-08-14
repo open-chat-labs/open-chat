@@ -412,8 +412,6 @@
     "confirmMembers": "Подтвердить членов",
     "permissionsChangedBy": "{changedBy} изменил разрешения {level}",
     "filterMembers": "отфильтровать участников",
-    "publicGroupWithN": "Открытая группа с участниками: {number}",
-    "privateGroupWithN": "Частная группа с участниками: {number}",
     "groupWithN": "{number} участников",
     "members": "Члены",
     "removeMemberFailed": "Не удалось удалить участника",
@@ -966,5 +964,7 @@
     "attachFile": "Прикрепить изображение/видео/файл",
     "pickEmoji": "Выберите смайлик",
     "sendMessage": "Отправить сообщение",
-    "publicChannelInfo": "Участники сообщества автоматически добавляются в публичные каналы (впоследствии они могут выйти)."
+    "publicChannelInfo": "Участники сообщества автоматически добавляются в публичные каналы (впоследствии они могут выйти).",
+    "publicGroupWithN": "Общедоступный {level} с участниками: {number}",
+    "privateGroupWithN": "Частное {level} с участниками: {number}"
 }

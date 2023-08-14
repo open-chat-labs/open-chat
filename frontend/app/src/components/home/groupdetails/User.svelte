@@ -66,8 +66,10 @@
             cursor: pointer;
         }
 
-        &:not(.me):hover {
-            background-color: var(--members-hv);
+        @media (hover: hover) {
+            &:not(.me):hover {
+                background-color: var(--members-hv);
+            }
         }
 
         @include mobile() {

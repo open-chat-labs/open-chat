@@ -3,7 +3,9 @@
 const { Translate } = require("@google-cloud/translate").v2;
 const { merge, chunk } = require("lodash");
 const fs = require("fs");
-require("dotenv").config();
+const path = require("path");
+
+require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
 const translate = new Translate({
     key: process.env.TRANSLATE_API_KEY,

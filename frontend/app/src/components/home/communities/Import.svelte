@@ -106,8 +106,10 @@
             border: 1px solid var(--txt-light);
         }
 
-        &:hover {
-            background-color: var(--chatSummary-hv);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--chatSummary-hv);
+            }
         }
     }
 </style>

@@ -72,7 +72,7 @@ export default {
         entryFileNames: "[name]-[hash].js",
     },
     plugins: [
-        clean(),
+        production && clean(),
         typescript({
             sourceMap: !production,
             inlineSources: !production,

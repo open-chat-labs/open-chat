@@ -40,7 +40,8 @@
 
     $: {
         // Re-validate whenever maxAmount changes
-        if (maxAmount) {}
+        if (maxAmount) {
+        }
         validate();
     }
 
@@ -113,8 +114,10 @@
             border: none;
             @include font(book, normal, fs-50, 20);
 
-            &:hover {
-                background: var(--button-hv);
+            @media (hover: hover) {
+                &:hover {
+                    background: var(--button-hv);
+                }
             }
         }
     }

@@ -522,15 +522,17 @@
             padding: $sp3 toRem(10);
         }
 
-        &:hover {
-            background-color: var(--chatSummary-hv);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--chatSummary-hv);
 
-            @include size-above(sm) {
-                .delete-chat {
-                    right: 0px;
-                    &.rtl {
-                        right: unset;
-                        left: 0px;
+                @include size-above(sm) {
+                    .delete-chat {
+                        right: 0px;
+                        &.rtl {
+                            right: unset;
+                            left: 0px;
+                        }
                     }
                 }
             }

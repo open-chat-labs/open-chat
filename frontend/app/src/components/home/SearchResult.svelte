@@ -37,8 +37,10 @@
             border-top: var(--chatSummary-bd);
         }
 
-        &:hover {
-            background-color: var(--chatSummary-hv);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--chatSummary-hv);
+            }
         }
 
         @include mobile() {

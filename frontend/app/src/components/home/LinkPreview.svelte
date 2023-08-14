@@ -17,7 +17,6 @@
     export let pinned: boolean;
     export let fill: boolean;
     export let height: number | undefined;
-    export let loading: boolean;
 
     let previews: (LinkInfo | undefined)[] = [];
     let rendered = false;
@@ -33,7 +32,7 @@
     async function loadPreview(url: string): Promise<LinkInfo | undefined> {
         const response = await fetch(`https://proxy.cors.sh/${url}`, {
             headers: {
-                "x-cors-api-key": "temp_9f7ad96c6a7e9e22603435fe56fb5b2e",
+                "x-cors-api-key": process.env.CORS_APIKEY!,
             },
         });
 
@@ -54,7 +53,6 @@
 
     $: {
         if (!twitterLinkMatch && !youtubeMatch && intersecting && !rendered) {
-            loading = true;
             Promise.all(links.map(loadPreview))
                 .then((res) => {
                     previews = res;
@@ -63,14 +61,13 @@
                 .catch((err) => {
                     console.error("Error rendering link(s)", err);
                     rendered = false;
-                })
-                .finally(() => (loading = false));
+                });
         }
     }
 </script>
 
 {#if twitterLinkMatch}
-    <Tweet tweetId={twitterLinkMatch[2]} {intersecting} />
+    <Tweet tweetId={twitterLinkMatch[3]} {intersecting} />
 {:else if youtubeMatch}
     <iframe
         class:pinned

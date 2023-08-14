@@ -48,9 +48,12 @@
 
         longPressTimer = window.setTimeout(() => {
             if (longPressTimer !== undefined) {
+                document.addEventListener("touchstart", handleDocumentTouchStart, { once: true });
                 longPressed = true;
             }
         }, LONGPRESS_DELAY);
+
+        e.stopPropagation();
     }
 
     function handleTouchMove(e: TouchEvent) {
@@ -65,8 +68,11 @@
         }
     }
 
-    function handleTouchEnd() {
+    function handleTouchEnd(e: TouchEvent) {
         clearLongPressTimer();
+        if (longPressed) {
+            e.stopPropagation();
+        }
     }
 
     function clearLongPressTimer() {
@@ -81,24 +87,36 @@
         longPressed = false;
     }
 
-    onMount(async () => {
+    function onContextMenu(e: MouseEvent) {
+        e.preventDefault();
+        if (!isTouchDevice) {
+            startHover(e);
+        }
+    }
+
+    onMount(() => {
         if (isTouchDevice) {
             if (enableLongPress) {
-                document.addEventListener("touchstart", handleDocumentTouchStart);
                 containerDiv.addEventListener("touchend", handleTouchEnd);
                 containerDiv.addEventListener("touchmove", handleTouchMove);
                 containerDiv.addEventListener("touchstart", handleTouchStart);
-                containerDiv.addEventListener("contextmenu", (e: MouseEvent) => {
-                    e.preventDefault();
-                });
+                containerDiv.addEventListener("contextmenu", onContextMenu);
             }
+            return () => {
+                containerDiv.removeEventListener("touchend", handleTouchEnd);
+                containerDiv.removeEventListener("touchmove", handleTouchMove);
+                containerDiv.removeEventListener("touchstart", handleTouchStart);
+                containerDiv.removeEventListener("contextmenu", onContextMenu);
+            };
         } else {
             containerDiv.addEventListener("mouseenter", startHover);
             containerDiv.addEventListener("mouseleave", endHover);
-            containerDiv.addEventListener("contextmenu", (e: MouseEvent) => {
-                e.preventDefault();
-                startHover(e);
-            });
+            containerDiv.addEventListener("contextmenu", onContextMenu);
+            return () => {
+                containerDiv.removeEventListener("mouseenter", startHover);
+                containerDiv.removeEventListener("mouseleave", endHover);
+                containerDiv.removeEventListener("contextmenu", onContextMenu);
+            };
         }
     });
 
@@ -113,12 +131,7 @@
 
 <style lang="scss">
     .noselect {
-        -webkit-touch-callout: none; // Safari
-        -webkit-user-select: none; // Safari
-        -khtml-user-select: none; // Konqueror HTML
-        -moz-user-select: none; // Old versions of Firefox
-        -ms-user-select: none; // Internet Explorer/Edge
-        user-select: none; // Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox
+        @include no_user_select();
 
         &.fill {
             width: 100%;

@@ -60,6 +60,8 @@
     export let msg: Message;
     export let threadRootMessage: Message | undefined;
 
+    let menuIcon: MenuIcon;
+
     $: canRemind =
         msg.content.kind !== "message_reminder_content" &&
         msg.content.kind !== "message_reminder_created_content";
@@ -74,6 +76,10 @@
         msg.messageId === threadRootMessage?.messageId
             ? undefined
             : threadRootMessage?.messageIndex;
+
+    export function showMenu() {
+        menuIcon?.showMenu();
+    }
 
     function blockUser() {
         if (!canBlockUser || chatId.kind !== "group_chat") return;
@@ -101,7 +107,13 @@
     }
 
     function shareMessage() {
-        shareFunctions.shareMessage($_, user.userId, msg.sender === user.userId, msg, $cryptoLookup);
+        shareFunctions.shareMessage(
+            $_,
+            user.userId,
+            msg.sender === user.userId,
+            msg,
+            $cryptoLookup
+        );
     }
 
     function copyMessageUrl() {
@@ -205,7 +217,7 @@
 </script>
 
 <div class="menu" class:rtl={$rtlStore}>
-    <MenuIcon centered position={"right"} align={"end"}>
+    <MenuIcon bind:this={menuIcon} centered position={"right"} align={"end"}>
         <div class="menu-icon" slot="icon">
             <HoverIcon compact={true}>
                 <ChevronDown size="1.6em" color={me ? "#fff" : "var(--icon-txt)"} />
