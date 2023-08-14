@@ -14,7 +14,7 @@ fn selected_channel_updates_v2(args: Args) -> Response {
 
 fn selected_channel_updates_impl(args: Args, state: &RuntimeState) -> Response {
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
-        // Short circuit prior to calling `ic0.caller()` and `ic0.time()` to maximise query caching.
+        // Short circuit prior to calling `ic0.caller()` and to maximise query caching.
         let latest_event_timestamp = channel.chat.events.latest_event_timestamp().unwrap_or_default();
         if latest_event_timestamp <= args.updates_since {
             return SuccessNoUpdates(latest_event_timestamp);
@@ -27,10 +27,7 @@ fn selected_channel_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
         let user_id = state.data.members.lookup_user_id(caller);
 
-        match channel
-            .chat
-            .selected_group_updates_from_events(args.updates_since, user_id, state.env.now())
-        {
+        match channel.chat.selected_group_updates_from_events(args.updates_since, user_id) {
             Some(updates) if updates.has_updates() => Success(updates),
             Some(_) => SuccessNoUpdates(latest_event_timestamp),
             None => PrivateChannel,

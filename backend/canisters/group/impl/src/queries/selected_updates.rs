@@ -8,7 +8,7 @@ fn selected_updates_v2(args: Args) -> Response {
 }
 
 fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
-    // Short circuit prior to calling `ic0.caller()` and `ic0.time()` to maximise query caching.
+    // Short circuit prior to calling `ic0.caller()` to maximise query caching.
     let latest_event_timestamp = state.data.chat.events.latest_event_timestamp().unwrap_or_default();
     if latest_event_timestamp <= args.updates_since {
         return SuccessNoUpdates(latest_event_timestamp);
@@ -23,7 +23,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let updates = state
         .data
         .chat
-        .selected_group_updates_from_events(args.updates_since, Some(user_id), state.env.now())
+        .selected_group_updates_from_events(args.updates_since, Some(user_id))
         .unwrap();
 
     if updates.has_updates() {

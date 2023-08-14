@@ -257,7 +257,6 @@ impl GroupChatCore {
         &self,
         since: TimestampMillis,
         user_id: Option<UserId>,
-        now: TimestampMillis,
     ) -> Option<SelectedGroupUpdates> {
         struct UserUpdatesHandler<'a> {
             chat: &'a GroupChatCore,
@@ -297,13 +296,18 @@ impl GroupChatCore {
             return None;
         };
 
-        let events_reader = self.events.visible_main_events_reader(min_visible_event_index, now);
+        let latest_event_timestamp = self.events.latest_event_timestamp().unwrap_or_default();
+
+        let events_reader = self
+            .events
+            .visible_main_events_reader(min_visible_event_index, latest_event_timestamp);
+
         let latest_event_index = events_reader.latest_event_index().unwrap();
 
         let invited_users = if self.invited_users.last_updated() > since { Some(self.invited_users.users()) } else { None };
 
         let mut result = SelectedGroupUpdates {
-            timestamp: now,
+            timestamp: latest_event_timestamp,
             latest_event_index,
             invited_users,
             ..Default::default()
