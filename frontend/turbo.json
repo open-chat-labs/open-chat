@@ -32,7 +32,7 @@
     },
     "build:ci": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["build", "typecheck", "validate", "lint", "test"]
+      "dependsOn": ["^build", "typecheck", "validate", "lint", "test"]
     },
 
     "deploy:prod_test": {
@@ -46,7 +46,7 @@
     },
     "build:prod_test": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build:prod_test"]
+      "dependsOn": ["^build"]
     },
     "test:prod_test": {
       "dependsOn": ["build:prod_test"],
@@ -71,7 +71,7 @@
 
     "build:prod": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build:prod"]
+      "dependsOn": ["^build"]
     },
     "test:prod": {
       "dependsOn": ["build:prod"],
@@ -101,7 +101,7 @@
 
     "build:testnet": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build:testnet"]
+      "dependsOn": ["^build"]
     },
     "test:testnet": {
       "dependsOn": ["build:testnet"],

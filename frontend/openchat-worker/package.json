@@ -5,8 +5,6 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "./bin/portable-webpack",
-    "build:prod_test": "./bin/portable-webpack",
-    "build:prod": "./bin/portable-webpack",
     "dev": "./bin/portable-webpack -w",
     "wait": "rm -f ../app/build/worker.js && wait-on ../app/build/worker.js",
     "lint": "eslint ./src --fix",

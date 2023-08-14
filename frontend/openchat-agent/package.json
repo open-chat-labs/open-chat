@@ -5,8 +5,6 @@
     "main": "lib/index.js",
     "scripts": {
         "build": "tsc",
-        "build:prod_test": "tsc",
-        "build:prod": "tsc",
         "dev": "tsc -w",
         "wait": "rm -rf lib && wait-on lib/index.js",
         "typecheck": "tsc --noEmit",
