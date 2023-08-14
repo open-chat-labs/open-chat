@@ -54,6 +54,7 @@ import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { communityPreviewsStore } from "./community";
+import {translationStore} from "./translation";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 let currentScope: ChatListScope = { kind: "direct_chat" };
@@ -371,6 +372,7 @@ export const threadEvents = derived(
         selectedMessageContext,
         failedMessagesStore,
         proposalTallies,
+        translationStore,
     ],
     ([
         $serverEvents,
@@ -379,6 +381,7 @@ export const threadEvents = derived(
         $messageContext,
         $failedMessages,
         $proposalTallies,
+        $translationStore,
     ]) => {
         if ($messageContext === undefined || $messageContext.threadRootMessageIndex === undefined)
             return [];
@@ -391,7 +394,8 @@ export const threadEvents = derived(
             $serverEvents,
             [...unconfirmed, ...failed],
             $localUpdates,
-            $proposalTallies
+            $proposalTallies,
+            $translationStore,
         );
     }
 );
@@ -584,13 +588,14 @@ export function removeGroupPreview(chatId: ChatIdentifier): void {
 }
 
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
-    [serverEventsStore, unconfirmed, localMessageUpdates, failedMessagesStore, proposalTallies],
+    [serverEventsStore, unconfirmed, localMessageUpdates, failedMessagesStore, proposalTallies, translationStore],
     ([
         $serverEventsForSelectedChat,
         $unconfirmed,
         $localMessageUpdates,
         $failedMessages,
         $proposalTallies,
+        $translationStore,
     ]) => {
         const chatId = get(selectedChatId) ?? { kind: "group_chat", groupId: "" };
         const failedForChat = $failedMessages.get({ chatId });
@@ -601,7 +606,8 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
             $serverEventsForSelectedChat,
             [...unconfirmed, ...failed],
             $localMessageUpdates,
-            $proposalTallies
+            $proposalTallies,
+            $translationStore,
         );
     }
 );

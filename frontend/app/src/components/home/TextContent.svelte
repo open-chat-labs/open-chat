@@ -32,8 +32,7 @@
         return text;
     }
 
-    $: translationStore = client.translationStore;
-    $: text = truncateText($translationStore.get(Number(messageId)) ?? content.text);
+    $: text = truncateText(content.text);
     $: youtubeMatch = content.text.match(client.youtubeRegex());
     $: twitterLinkMatch = text.match(client.twitterLinkRegex());
     $: containsCodeBlock = content.text.match(/```([\s\S]*)```/);
