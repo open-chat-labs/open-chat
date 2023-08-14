@@ -44,7 +44,7 @@
         "buffer": "6.0.3",
         "core-js": "^3.21.1",
         "dompurify": "^2.3.10",
-        "dotenv": "^10.0.0",
+        "dotenv": "^16.3.1",
         "eslint": "^7.32.0",
         "eslint-config-prettier": "^8.5.0",
         "eslint-plugin-prettier": "^3.4.1",

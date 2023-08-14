@@ -3,15 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "npm i && turbo run build",
-    "build:ci": "npm ci && turbo run build:ci",
-    "build:prod": "npm ci && turbo run build:prod",
-    "build:prod_test": "npm ci && turbo run build:prod_test",
-    "build:testnet": "npm ci && turbo run build:testnet",
-    "deploy:prod_test": "npm ci && turbo run deploy:prod_test",
-    "deploy:prod": "npm ci && turbo run deploy:prod",
-    "deploy:testnet": "npm ci && turbo run deploy:testnet",
-    "dev": "npm i && turbo run dev",
+    "build": "npm i && dotenv -- turbo run build",
+    "build:ci": "npm ci && dotenv -- turbo run build:ci",
+    "build:prod": "npm ci && dotenv -- turbo run build:prod",
+    "build:prod_test": "npm ci && dotenv -- turbo run build:prod_test",
+    "build:testnet": "npm ci && dotenv -- turbo run build:testnet",
+    "deploy:prod_test": "npm ci && dotenv -- turbo run deploy:prod_test",
+    "deploy:prod": "npm ci && dotenv -- turbo run deploy:prod",
+    "deploy:testnet": "npm ci && dotenv -- turbo run deploy:testnet",
+    "dev": "npm i && dotenv -- turbo run dev",
     "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'"
   },
   "author": "julian.jelfs@gmail.com",
@@ -26,6 +26,7 @@
   ],
   "devDependencies": {
     "auto-changelog": "open-chat-labs/auto-changelog#master",
+    "dotenv-cli": "^7.2.1",
     "turbo": "^1.10.12"
   }
 }

@@ -16,7 +16,6 @@
     "LEDGER_CANISTER_HOTORNOT",
     "LEDGER_CANISTER_GHOST",
     "BLOB_URL_PATTERN",
-    "OPENCHAT_WEBSITE_VERSION",
     "NODE_ENV",
     "USERGEEK_APIKEY",
     "METERED_APIKEY",
@@ -32,7 +31,19 @@
     },
     "build:ci": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build", "typecheck", "validate", "lint", "test"]
+      "dependsOn": ["build:prod", "typecheck", "validate", "lint", "test"]
+    },
+    "build:prod": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": ["^build"]
+    },
+    "build:prod_test": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": ["^build"]
+    },
+    "build:testnet": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": ["^build"]
     },
 
     "deploy:prod_test": {
@@ -43,10 +54,6 @@
         "lint",
         "test:prod_test"
       ]
-    },
-    "build:prod_test": {
-      "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build"]
     },
     "test:prod_test": {
       "dependsOn": ["build:prod_test"],
@@ -69,10 +76,6 @@
       "dependsOn": ["typecheck:prod", "validate:prod", "lint", "test:prod"]
     },
 
-    "build:prod": {
-      "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build"]
-    },
     "test:prod": {
       "dependsOn": ["build:prod"],
       "outputs": [],
@@ -99,10 +102,6 @@
       ]
     },
 
-    "build:testnet": {
-      "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build"]
-    },
     "test:testnet": {
       "dependsOn": ["build:testnet"],
       "outputs": [],
