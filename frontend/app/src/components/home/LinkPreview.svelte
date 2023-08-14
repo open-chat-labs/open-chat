@@ -66,10 +66,9 @@
     }
 </script>
 
-<!-- {#if twitterLinkMatch}
+{#if twitterLinkMatch}
     <Tweet tweetId={twitterLinkMatch[3]} {intersecting} />
-{:else if youtubeMatch} -->
-{#if youtubeMatch}
+{:else if youtubeMatch}
     <iframe
         class:pinned
         class:fill
