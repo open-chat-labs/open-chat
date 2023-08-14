@@ -413,8 +413,6 @@
     "confirmMembers": "Xác nhận thành viên",
     "permissionsChangedBy": "{changedBy} đã thay đổi quyền của {level}",
     "filterMembers": "lọc thành viên",
-    "publicGroupWithN": "Nhóm công khai có {number} thành viên",
-    "privateGroupWithN": "Nhóm riêng tư với {number} thành viên",
     "groupWithN": "{number} thành viên",
     "members": "Các thành viên",
     "removeMemberFailed": "Không thể xóa thành viên",

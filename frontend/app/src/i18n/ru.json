@@ -412,8 +412,6 @@
     "confirmMembers": "Подтвердить членов",
     "permissionsChangedBy": "{changedBy} изменил разрешения {level}",
     "filterMembers": "отфильтровать участников",
-    "publicGroupWithN": "Открытая группа с участниками: {number}",
-    "privateGroupWithN": "Частная группа с участниками: {number}",
     "groupWithN": "{number} участников",
     "members": "Члены",
     "removeMemberFailed": "Не удалось удалить участника",

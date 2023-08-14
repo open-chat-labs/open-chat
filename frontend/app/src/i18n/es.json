@@ -413,8 +413,6 @@
     "confirmMembers": "Confirmar miembros",
     "permissionsChangedBy": "{changedBy} cambió los permisos de {level}",
     "filterMembers": "filtrar miembros",
-    "publicGroupWithN": "Grupo público con {número} miembro(s)",
-    "privateGroupWithN": "Grupo privado con {number} miembro(s)",
     "groupWithN": "{number} miembro(s)",
     "members": "miembros",
     "removeMemberFailed": "No se puede eliminar el miembro",

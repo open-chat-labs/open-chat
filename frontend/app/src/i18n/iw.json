@@ -129,8 +129,6 @@
     "toggleMuteNotificationsSucceeded": "הודעות בהצלחה {operation}",
     "filterMembers": "לסנן חברים",
     "markAllRead": "סמן הכל כנקרא",
-    "publicGroupWithN": "קבוצה ציבורית עם {number} חברים",
-    "privateGroupWithN": "קבוצה פרטית עם {number} חברים",
     "groupWithN": "{number} חברים",
     "muted": "מושתק",
     "unmuted": "בוטלה",

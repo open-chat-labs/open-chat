@@ -414,8 +414,6 @@
     "confirmMembers": "Mitglieder bestätigen",
     "permissionsChangedBy": "{changedBy} hat die {level}-Berechtigungen geändert",
     "filterMembers": "Mitglieder filtern",
-    "publicGroupWithN": "Öffentliche Gruppe mit {number} Mitglied(ern)",
-    "privateGroupWithN": "Private Gruppe mit {number} Mitglied(ern)",
     "groupWithN": "{number} Mitglied(er)",
     "members": "Mitglieder",
     "removeMemberFailed": "Mitglied kann nicht entfernt werden",

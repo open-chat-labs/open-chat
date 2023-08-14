@@ -412,8 +412,6 @@
     "permissionsChangedBy": "{changedBy} a modifié les autorisations {level}",
     "filterMembers": "filtrer les membres",
     "markAllRead": "tout marquer comme lu",
-    "publicGroupWithN": "Groupe public avec {number} membre(s)",
-    "privateGroupWithN": "Groupe privé avec {number} membre(s)",
     "groupWithN": "{number} membre(s)",
     "members": "Membres",
     "removeMemberFailed": "Impossible de supprimer le membre",

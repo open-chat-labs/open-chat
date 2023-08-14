@@ -412,8 +412,6 @@
     "confirmMembers": "メンバーを確認する",
     "permissionsChangedBy": "{changedBy} が {level} 権限を変更しました",
     "filterMembers": "フィルターメンバー",
-    "publicGroupWithN": "{number}メンバーのパブリックグループ",
-    "privateGroupWithN": "{number}メンバーのプライベートグループ",
     "groupWithN": "{number}メンバー",
     "members": "メンバー",
     "removeMembersFailed": "メンバーを削除できません",
