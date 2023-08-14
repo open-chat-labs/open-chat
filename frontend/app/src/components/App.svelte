@@ -296,8 +296,6 @@
     $: burstPath = $themeStore.name === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
     $: burstFixed = isScrollingRoute($pathParams);
-
-    $: console.log("i18n loading: ", $isLoading);
 </script>
 
 {#if $themeStore.burst || landingPage}
