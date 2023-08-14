@@ -58,8 +58,8 @@
                     previews = res;
                     rendered = true;
                 })
-                .catch((err) => {
-                    console.error("Error rendering link(s)", err);
+                .catch((_err) => {
+                    // let's not let any error bubble up and cause problems.
                     rendered = false;
                 });
         }
