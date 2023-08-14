@@ -202,14 +202,6 @@
         });
     }
 
-    function redirectHashRoutes(ctx: PageJS.Context, next: () => any) {
-        if (ctx.canonicalPath.startsWith("/#/")) {
-            page.redirect(ctx.canonicalPath.slice(2));
-        } else {
-            next();
-        }
-    }
-
     function track(ctx: PageJS.Context, next: () => any) {
         console.debug("GA: page_view", ctx.pathname);
         gtag("event", "page_view", {
