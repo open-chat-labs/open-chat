@@ -965,5 +965,7 @@
     "attachFile": "Đính kèm hình ảnh/video/tập tin",
     "pickEmoji": "Chọn biểu tượng cảm xúc",
     "sendMessage": "Gửi tin nhắn",
-    "publicChannelInfo": "Các thành viên cộng đồng được tự động thêm vào các kênh công cộng (sau đó họ có thể rời đi)."
+    "publicChannelInfo": "Các thành viên cộng đồng được tự động thêm vào các kênh công cộng (sau đó họ có thể rời đi).",
+    "publicGroupWithN": "Công khai {level} với {number} thành viên",
+    "privateGroupWithN": "{level} riêng tư với {number} thành viên"
 }

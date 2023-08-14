@@ -966,5 +966,7 @@
     "attachFile": "Bild/Video/Datei anhängen",
     "pickEmoji": "Wählen Sie Emoji",
     "sendMessage": "Nachricht senden",
-    "publicChannelInfo": "Community-Mitglieder werden automatisch zu öffentlichen Kanälen hinzugefügt (sie können sie anschließend verlassen)."
+    "publicChannelInfo": "Community-Mitglieder werden automatisch zu öffentlichen Kanälen hinzugefügt (sie können sie anschließend verlassen).",
+    "publicGroupWithN": "Öffentlich {level} mit {number} Mitgliedern",
+    "privateGroupWithN": "Privat {level} mit {number} Mitgliedern"
 }
