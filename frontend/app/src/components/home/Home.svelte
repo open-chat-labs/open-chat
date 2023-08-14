@@ -842,16 +842,6 @@
         };
     }
 
-    function filterChatSelection(
-        chats: ChatSummary[],
-        selectedChatId: ChatIdentifier | undefined
-    ): ChatSummary[] {
-        if (selectedChatId === undefined) return chats;
-        return chats.filter(
-            (c) => !chatIdentifiersEqual(selectedChatId, c.id) && client.canSendMessages(c.id)
-        );
-    }
-
     function toggleMuteNotifications(ev: CustomEvent<{ chatId: ChatIdentifier; mute: boolean }>) {
         const op = ev.detail.mute ? "muted" : "unmuted";
         client.toggleMuteNotifications(ev.detail.chatId, ev.detail.mute).then((success) => {
@@ -1021,10 +1011,7 @@
         alignLeft={modal === ModalType.SelectChat}
         on:close={closeModal}>
         {#if modal === ModalType.SelectChat}
-            <SelectChatModal
-                chatsSummaries={filterChatSelection($chatSummariesListStore, $selectedChatId)}
-                on:close={onCloseSelectChat}
-                on:select={onSelectChat} />
+            <SelectChatModal on:close={onCloseSelectChat} on:select={onSelectChat} />
         {:else if modal === ModalType.Suspended}
             <SuspendedModal on:close={closeModal} />
         {:else if modal === ModalType.NoAccess}

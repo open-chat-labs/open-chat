@@ -412,8 +412,6 @@
     "permissionsChangedBy": "{changedBy} a modifié les autorisations {level}",
     "filterMembers": "filtrer les membres",
     "markAllRead": "tout marquer comme lu",
-    "publicGroupWithN": "Groupe public avec {number} membre(s)",
-    "privateGroupWithN": "Groupe privé avec {number} membre(s)",
     "groupWithN": "{number} membre(s)",
     "members": "Membres",
     "removeMemberFailed": "Impossible de supprimer le membre",
@@ -966,5 +964,7 @@
     "attachFile": "Joindre image/vidéo/fichier",
     "pickEmoji": "Choisissez des émoticônes",
     "sendMessage": "Envoyer le message",
-    "publicChannelInfo": "Les membres de la communauté sont automatiquement ajoutés aux canaux publics (ils peuvent ensuite partir)."
+    "publicChannelInfo": "Les membres de la communauté sont automatiquement ajoutés aux canaux publics (ils peuvent ensuite partir).",
+    "publicGroupWithN": "Public {level} avec {number} membres",
+    "privateGroupWithN": "Privé {level} avec {number} membres"
 }

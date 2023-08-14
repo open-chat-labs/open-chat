@@ -411,8 +411,6 @@
     "confirmMembers": "确认成员",
     "permissionsChangedBy": "{changedBy} 更改了 {level} 权限",
     "filterMembers": "过滤成员",
-    "publicGroupWithN": "有 {number} 个成员的公共群聊",
-    "privateGroupWithN": "有 {number} 个成员的私人群聊",
     "groupWithN": "{number} 个成员",
     "members": "成员",
     "removeMembersFailed": "无法删除成员",
@@ -967,5 +965,7 @@
     "attachFile": "附加图像/视频/文件",
     "pickEmoji": "选择表情符号",
     "sendMessage": "发信息",
-    "publicChannelInfo": "社区成员会自动添加到公共频道（他们随后可以离开）。"
+    "publicChannelInfo": "社区成员会自动添加到公共频道（他们随后可以离开）。",
+    "publicGroupWithN": "具有 {level} 成员的公共 {number}",
+    "privateGroupWithN": "拥有 {level} 成员的私人 {number}"
 }
