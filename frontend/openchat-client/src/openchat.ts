@@ -61,6 +61,7 @@ import {
     canImportToCommunity,
     buildIdenticonUrl,
     isEventKindHidden,
+    getMessageText,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -1141,6 +1142,7 @@ export class OpenChat extends OpenChatAgentWorker {
     groupBySender = groupBySender;
     groupBy = groupBy;
     getTypingString = getTypingString;
+    getMessageText = getMessageText;
 
     communityAvatarUrl(id: string, avatar: DataContent): string {
         return avatar?.blobUrl ?? buildIdenticonUrl(id);

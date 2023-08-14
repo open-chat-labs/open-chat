@@ -69,9 +69,11 @@ export class SafeMap<K, V> {
         });
     }
     get(key: K): V | undefined {
+        if (this._map.size === 0) return undefined;
         return this._map.get(this.toString(key));
     }
     has(key: K): boolean {
+        if (this._map.size === 0) return false;
         return this._map.has(this.toString(key));
     }
     set(key: K, value: V): this {
@@ -143,10 +145,16 @@ export class CommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
 }
 
 export class MessageMap<V> extends SafeMap<bigint, V> {
-    constructor() {
+    constructor(entries?: readonly (readonly [bigint, V])[] | undefined) {
         super(
             (k: bigint) => k.toString(),
             (k: string) => BigInt(k)
-        );
+        )
+
+        if (entries !== undefined) {
+            for (const [k, v] of entries) {
+                this.set(k, v);
+            }
+        }
     }
 }

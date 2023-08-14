@@ -428,7 +428,8 @@ export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
     unconfirmed: UnconfirmedMessages,
-    localUpdates: MessageMap<LocalMessageUpdates>
+    localUpdates: MessageMap<LocalMessageUpdates>,
+    translations: MessageMap<string>,
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
@@ -453,10 +454,11 @@ export function mergeUnconfirmedIntoSummary(
     }
     if (latestMessage !== undefined) {
         const updates = localUpdates.get(latestMessage.event.messageId);
-        if (updates !== undefined) {
+        const translation = translations.get(latestMessage.event.messageId);
+        if (updates !== undefined || translation !== undefined) {
             latestMessage = {
                 ...latestMessage,
-                event: mergeLocalUpdates(latestMessage.event, updates, undefined, undefined),
+                event: mergeLocalUpdates(latestMessage.event, updates, undefined, undefined, translation),
             };
         }
     }
@@ -1084,7 +1086,8 @@ export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
     localUpdates: MessageMap<LocalMessageUpdates>,
-    proposalTallies: Record<string, Tally>
+    proposalTallies: Record<string, Tally>,
+    translations: MessageMap<string>,
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new Set<number>();
 
@@ -1093,6 +1096,8 @@ export function mergeEventsAndLocalUpdates(
 
         if (e.event.kind === "message") {
             const updates = localUpdates.get(e.event.messageId);
+            const translation = translations.get(e.event.messageId);
+
             const replyContextUpdates =
                 e.event.repliesTo?.kind === "rehydrated_reply_context"
                     ? localUpdates.get(e.event.repliesTo.messageId)
@@ -1111,11 +1116,12 @@ export function mergeEventsAndLocalUpdates(
             if (
                 updates !== undefined ||
                 replyContextUpdates !== undefined ||
-                tallyUpdate !== undefined
+                tallyUpdate !== undefined ||
+                translation !== undefined
             ) {
                 return {
                     ...e,
-                    event: mergeLocalUpdates(e.event, updates, replyContextUpdates, tallyUpdate),
+                    event: mergeLocalUpdates(e.event, updates, replyContextUpdates, tallyUpdate, translation),
                 };
             }
         }
@@ -1152,12 +1158,14 @@ function mergeLocalUpdates(
     message: Message,
     localUpdates: LocalMessageUpdates | undefined,
     replyContextLocalUpdates: LocalMessageUpdates | undefined,
-    tallyUpdate: Tally | undefined
+    tallyUpdate: Tally | undefined,
+    translation: string | undefined,
 ): Message {
     if (
         localUpdates === undefined &&
         replyContextLocalUpdates === undefined &&
-        tallyUpdate === undefined
+        tallyUpdate === undefined &&
+        translation === undefined
     )
         return message;
 
@@ -1268,6 +1276,40 @@ function mergeLocalUpdates(
                 tally: tallyUpdate,
             },
         };
+    }
+
+    if (translation !== undefined) {
+        switch (message.content.kind) {
+            case "text_content": {
+                message.content = {
+                    ...message.content,
+                    text: translation
+                };
+                break;
+            }
+            case "audio_content":
+            case "image_content":
+            case "video_content":
+            case "file_content":
+            case "crypto_content": {
+                message.content = {
+                    ...message.content,
+                    caption: translation
+                };
+                break;
+            }
+
+            case "poll_content": {
+                message.content = {
+                    ...message.content,
+                    config: {
+                        ...message.content.config,
+                        text: translation
+                    }
+                }
+                break;
+            }
+        }
     }
     return message;
 }
@@ -1424,4 +1466,24 @@ export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefine
         return undefined;
 
     return messagesRead.getFirstUnreadMessageIndex(chat.id, chat.latestMessage?.event.messageIndex);
+}
+
+export function getMessageText(content: MessageContent): string | undefined {
+    switch (content.kind) {
+        case "text_content":
+            return content.text;
+
+        case "audio_content":
+        case "image_content":
+        case "video_content":
+        case "file_content":
+        case "crypto_content":
+            return content.caption;
+
+        case "poll_content":
+            return content.config.text;
+
+        default:
+            return undefined;
+    }
 }

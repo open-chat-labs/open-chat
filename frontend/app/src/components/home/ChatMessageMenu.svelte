@@ -186,33 +186,37 @@
         if (!$isDiamond) {
             dispatch("upgrade");
         } else {
-            if (msg.content.kind === "text_content") {
-                const params = new URLSearchParams();
-                params.append("q", msg.content.text);
-                params.append("target", translationCodes[$locale || "en"] || "en");
-                params.append("format", "text");
-                params.append("key", process.env.PUBLIC_TRANSLATE_API_KEY!);
-                fetch(`https://translation.googleapis.com/language/translate/v2?${params}`, {
-                    method: "POST",
-                })
-                    .then((resp) => resp.json())
-                    .then(({ data: { translations } }) => {
-                        if (
-                            msg.content.kind === "text_content" &&
-                            Array.isArray(translations) &&
-                            translations.length > 0
-                        ) {
-                            translationStore.translate(
-                                msg.messageId,
-                                translations[0].translatedText
-                            );
-                        }
-                    })
-                    .catch((_err) => {
-                        toastStore.showFailureToast("unableToTranslate");
-                    });
+            const text = client.getMessageText(msg.content);
+            if (text !== undefined) {
+                getTranslation(text, msg.messageId);
             }
         }
+    }
+
+    function getTranslation(text: string, messageId: bigint) {
+        const params = new URLSearchParams();
+        params.append("q", text);
+        params.append("target", translationCodes[$locale || "en"] || "en");
+        params.append("format", "text");
+        params.append("key", process.env.PUBLIC_TRANSLATE_API_KEY!);
+        fetch(`https://translation.googleapis.com/language/translate/v2?${params}`, {
+        method: "POST",
+    })
+    .then((resp) => resp.json())
+        .then(({ data: { translations } }) => {
+            if (
+                Array.isArray(translations) &&
+                translations.length > 0
+            ) {
+                translationStore.translate(
+                    messageId,
+                    translations[0].translatedText
+                );
+            }
+        })
+        .catch((_err) => {
+            toastStore.showFailureToast("unableToTranslate");
+        });
     }
 </script>
 
@@ -312,7 +316,7 @@
                         <div slot="text">{$_("replyPrivately")}</div>
                     </MenuItem>
                 {/if}
-                {#if translatable && !failed}
+                {#if !me && translatable && !failed}
                     {#if translated}
                         <MenuItem on:click={untranslateMessage}>
                             <TranslateOff

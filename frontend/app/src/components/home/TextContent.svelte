@@ -5,12 +5,10 @@
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
-    import type { OpenChat, TextContent } from "openchat-client";
+    import type { TextContent } from "openchat-client";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import { lowBandwidth } from "../../stores/settings";
     import LinkPreview from "./LinkPreview.svelte";
-
-    const client = getContext<OpenChat>("client");
 
     const SIZE_LIMIT = 1000;
     export let content: TextContent;
@@ -32,8 +30,7 @@
         return text;
     }
 
-    $: translationStore = client.translationStore;
-    $: text = truncateText($translationStore.get(Number(messageId)) ?? content.text);
+    $: text = truncateText(content.text);
     $: containsCodeBlock = content.text.match(/```([\s\S]*)```/);
     $: linkMatch = content.text.match(/(https?:\/\/[^\s\)]+)/g);
 </script>

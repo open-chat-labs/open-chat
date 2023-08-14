@@ -119,7 +119,7 @@
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
     $: fill = client.fillMessage(msg);
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
-    $: translated = $translationStore.has(Number(msg.messageId));
+    $: translated = $translationStore.has(msg.messageId);
     $: threadSummary = msg.thread;
     $: msgUrl = `${routeForMessage($chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
@@ -554,7 +554,7 @@
                     {canUndelete}
                     {canRevealDeleted}
                     {crypto}
-                    translatable={msg.content.kind === "text_content"}
+                    translatable={client.getMessageText(msg.content) !== undefined}
                     {translated}
                     on:collapseMessage
                     on:forward
