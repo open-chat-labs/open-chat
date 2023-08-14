@@ -23,7 +23,7 @@ import * as fs from "fs-extra";
 import * as path from "path";
 import * as rimraf from "rimraf";
 
-dotenv.config({ path: path.join(__dirname, "../.env"), override: true });
+dotenv.config({ path: path.join(__dirname, "../.env") });
 
 const dfxNetwork = process.env.DFX_NETWORK;
 
