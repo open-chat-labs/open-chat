@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import QR from "svelte-qr";
+    import { QRCodeImage } from "svelte-qrcode-image";
     import { toastStore } from "../../stores/toast";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
@@ -45,7 +45,7 @@
 <div class="account-info">
     <div class="qr-wrapper" class:border>
         <div class="qr" class:smaller={qrSize === "smaller"} class:larger={qrSize === "larger"}>
-            <QR text={account} level="Q" />
+            <QRCodeImage text={account} errorCorrectionLevel="Q" />
             <img class="icon" src={tokenDetails.logo} />
         </div>
     </div>

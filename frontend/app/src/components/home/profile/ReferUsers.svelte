@@ -3,7 +3,7 @@
     import type { OpenChat } from "openchat-client";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import QR from "svelte-qr";
+    import { QRCodeImage } from "svelte-qrcode-image";
     import { _ } from "svelte-i18n";
     import Link from "../../Link.svelte";
     import { iconSize } from "../../../stores/iconSize";
@@ -59,7 +59,7 @@
     <div class="link">{link}</div>
     <div class="qr-wrapper">
         <div class="qr">
-            <QR text={link} />
+            <QRCodeImage text={link} errorCorrectionLevel="Q" />
         </div>
     </div>
     <div class="message">

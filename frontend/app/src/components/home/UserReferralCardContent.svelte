@@ -1,7 +1,7 @@
 <script lang="ts">
     import { getContext } from "svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import QR from "svelte-qr";
+    import { QRCodeImage } from "svelte-qrcode-image";
     import type { OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { toastStore } from "../../stores/toast";
@@ -25,7 +25,7 @@
         <CopyIcon size={"1em"} color={"var(--icon-txt)"} />
     </div>
     <div class="qr">
-        <QR text={link} />
+        <QRCodeImage text={link} errorCorrectionLevel="Q" />
     </div>
 </div>
 

@@ -2,7 +2,7 @@
     import { onMount, getContext } from "svelte";
     import RefreshIcon from "svelte-material-icons/Refresh.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
-    import QR from "svelte-qr";
+    import { QRCodeImage } from "svelte-qrcode-image";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../ErrorMessage.svelte";
@@ -191,7 +191,7 @@
             <div class="link">{link}</div>
             <div class="qr-wrapper">
                 <div class="qr">
-                    <QR text={link} />
+                    <QRCodeImage text={link} errorCorrectionLevel="Q" />
                 </div>
             </div>
             <div class="message">
