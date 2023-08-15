@@ -11,9 +11,9 @@
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import {
         AvatarSize,
+        CommunityMap,
         CommunitySummary,
         OpenChat,
-        emptyChatMetrics,
         emptyUnreadCounts,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
@@ -24,10 +24,14 @@
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
+    import { flip } from "svelte/animate";
+    import { DndEvent, dndzone } from "svelte-dnd-action";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
     const createdUser = client.user;
+    const flipDurationMs = 300;
+
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
@@ -39,8 +43,28 @@
     $: unreadFavouriteChats = client.unreadFavouriteChats;
     $: unreadCommunityChannels = client.unreadCommunityChannels;
     $: communityExplorer = $pathParams.kind === "communities_route";
+    $: globalState = client.globalStateStore;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
+
+    function handleDndConsider(e: CustomEvent<DndEvent<CommunitySummary>>) {
+        console.log("XXX: Considering: ", e.detail);
+        globalState.update((state) => {
+            return {
+                ...state,
+                communities: CommunityMap.fromList(e.detail.items),
+            };
+        });
+    }
+    function handleDndFinalize(e: CustomEvent<DndEvent<CommunitySummary>>) {
+        console.log("XXX: Finalizing: ", e.detail);
+        globalState.update((state) => {
+            return {
+                ...state,
+                communities: CommunityMap.fromList(e.detail.items),
+            };
+        });
+    }
 
     function toggleNav() {
         if ($navOpen) {
@@ -134,22 +158,33 @@
         </LeftNavItem>
     </div>
 
-    <div class="middle">
-        {#each $communities as community, i}
-            <LeftNavItem
-                selected={community === $selectedCommunity &&
-                    $chatListScope.kind !== "favourite" &&
-                    !communityExplorer}
-                unread={$unreadCommunityChannels.get(community.id) ?? emptyUnreadCounts()}
-                label={community.name}
-                on:click={() => selectCommunity(community)}>
-                <Avatar
+    <div
+        use:dndzone={{
+            items: $communities,
+            flipDurationMs,
+            dropTargetStyle: { outline: "var(--accent) solid 2px" },
+            dragDisabled: false,
+        }}
+        on:consider={handleDndConsider}
+        on:finalize={handleDndFinalize}
+        class="middle">
+        {#each $communities as community (community.id.communityId)}
+            <div animate:flip={{ duration: flipDurationMs }}>
+                <LeftNavItem
                     selected={community === $selectedCommunity &&
                         $chatListScope.kind !== "favourite" &&
                         !communityExplorer}
-                    url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
-                    size={avatarSize} />
-            </LeftNavItem>
+                    unread={$unreadCommunityChannels.get(community.id) ?? emptyUnreadCounts()}
+                    label={community.name}
+                    on:click={() => selectCommunity(community)}>
+                    <Avatar
+                        selected={community === $selectedCommunity &&
+                            $chatListScope.kind !== "favourite" &&
+                            !communityExplorer}
+                        url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
+                        size={avatarSize} />
+                </LeftNavItem>
+            </div>
         {/each}
     </div>
 

@@ -53,4 +53,11 @@ declare global {
     }
 }
 
+declare namespace svelteHTML {
+    interface HTMLAttributes<T> {
+        "on:consider"?: (event: CustomEvent) => void;
+        "on:finalize"?: (event: CustomEvent) => void;
+    }
+}
+
 declare function gtag(command: "event", name: "page_view", options?: any): void;

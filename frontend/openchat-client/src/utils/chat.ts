@@ -429,7 +429,7 @@ export function mergeUnconfirmedIntoSummary(
     chatSummary: ChatSummary,
     unconfirmed: UnconfirmedMessages,
     localUpdates: MessageMap<LocalMessageUpdates>,
-    translations: MessageMap<string>,
+    translations: MessageMap<string>
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
@@ -458,7 +458,13 @@ export function mergeUnconfirmedIntoSummary(
         if (updates !== undefined || translation !== undefined) {
             latestMessage = {
                 ...latestMessage,
-                event: mergeLocalUpdates(latestMessage.event, updates, undefined, undefined, translation),
+                event: mergeLocalUpdates(
+                    latestMessage.event,
+                    updates,
+                    undefined,
+                    undefined,
+                    translation
+                ),
             };
         }
     }
@@ -515,7 +521,10 @@ export function groupEvents(
     expandedDeletedMessages: Set<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][]
 ): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(sameDate, events.filter((e) => !isEventKindHidden(e.event.kind)))
+    return groupWhile(
+        sameDate,
+        events.filter((e) => !isEventKindHidden(e.event.kind))
+    )
         .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
         .map(groupInner ?? groupBySender);
 }
@@ -606,7 +615,10 @@ function messageIsHidden(message: Message, myUserId: string, expandedDeletedMess
 }
 
 export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapper<Message>[][] {
-    return groupWhile(sameDate, events.filter((e) => !isEventKindHidden(e.event.kind)));
+    return groupWhile(
+        sameDate,
+        events.filter((e) => !isEventKindHidden(e.event.kind))
+    );
 }
 
 export function getNextEventAndMessageIndexes(
@@ -1050,6 +1062,7 @@ export function buildBlobUrl(
 }
 
 export function buildIdenticonUrl(id: string): string {
+    if (!id) return "";
     const identicon = new Identicon(md5(id), {
         margin: 0,
         format: "svg",
@@ -1087,7 +1100,7 @@ export function mergeEventsAndLocalUpdates(
     unconfirmed: EventWrapper<Message>[],
     localUpdates: MessageMap<LocalMessageUpdates>,
     proposalTallies: Record<string, Tally>,
-    translations: MessageMap<string>,
+    translations: MessageMap<string>
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new Set<number>();
 
@@ -1121,7 +1134,13 @@ export function mergeEventsAndLocalUpdates(
             ) {
                 return {
                     ...e,
-                    event: mergeLocalUpdates(e.event, updates, replyContextUpdates, tallyUpdate, translation),
+                    event: mergeLocalUpdates(
+                        e.event,
+                        updates,
+                        replyContextUpdates,
+                        tallyUpdate,
+                        translation
+                    ),
                 };
             }
         }
@@ -1159,7 +1178,7 @@ function mergeLocalUpdates(
     localUpdates: LocalMessageUpdates | undefined,
     replyContextLocalUpdates: LocalMessageUpdates | undefined,
     tallyUpdate: Tally | undefined,
-    translation: string | undefined,
+    translation: string | undefined
 ): Message {
     if (
         localUpdates === undefined &&
@@ -1283,7 +1302,7 @@ function mergeLocalUpdates(
             case "text_content": {
                 message.content = {
                     ...message.content,
-                    text: translation
+                    text: translation,
                 };
                 break;
             }
@@ -1294,7 +1313,7 @@ function mergeLocalUpdates(
             case "crypto_content": {
                 message.content = {
                     ...message.content,
-                    caption: translation
+                    caption: translation,
                 };
                 break;
             }
@@ -1304,9 +1323,9 @@ function mergeLocalUpdates(
                     ...message.content,
                     config: {
                         ...message.content.config,
-                        text: translation
-                    }
-                }
+                        text: translation,
+                    },
+                };
                 break;
             }
         }
@@ -1360,7 +1379,7 @@ export function findMessageById(
 export function buildTransactionLink(
     formatter: MessageFormatter,
     transfer: CryptocurrencyTransfer,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: Record<string, CryptocurrencyDetails>
 ): string | undefined {
     const url = buildTransactionUrl(transfer, cryptoLookup);
     return url !== undefined
@@ -1368,14 +1387,19 @@ export function buildTransactionLink(
         : undefined;
 }
 
-export function buildTransactionUrl(transfer: CryptocurrencyTransfer, cryptoLookup: Record<string, CryptocurrencyDetails>): string | undefined {
+export function buildTransactionUrl(
+    transfer: CryptocurrencyTransfer,
+    cryptoLookup: Record<string, CryptocurrencyDetails>
+): string | undefined {
     if (transfer.kind !== "completed") {
         return undefined;
     }
 
     const transactionUrlFormat = cryptoLookup[transfer.ledger].transactionUrlFormat;
 
-    return transactionUrlFormat.replace("{block_index}", transfer.blockIndex.toString()).replace("{transaction_hash}", transfer.transactionHash ?? "");
+    return transactionUrlFormat
+        .replace("{block_index}", transfer.blockIndex.toString())
+        .replace("{transaction_hash}", transfer.transactionHash ?? "");
 }
 
 export function buildCryptoTransferText(
@@ -1384,7 +1408,7 @@ export function buildCryptoTransferText(
     senderId: string,
     content: CryptocurrencyContent,
     me: boolean,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: Record<string, CryptocurrencyDetails>
 ): string | undefined {
     if (content.transfer.kind !== "completed" && content.transfer.kind !== "pending") {
         return undefined;
