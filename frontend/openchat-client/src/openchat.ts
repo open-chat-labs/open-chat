@@ -463,7 +463,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         this.refreshUpdatedEvents(serverChat, updatedEvents);
-        this.updateChatDetails(serverChat);
+        this.loadChatDetails(serverChat);
         this.dispatchEvent(new ChatUpdated());
     }
 
@@ -1942,11 +1942,15 @@ export class OpenChat extends OpenChatAgentWorker {
         if (selectedChat !== undefined) {
             if (focusMessageIndex !== undefined) {
                 this.loadEventWindow(chatId, focusMessageIndex, undefined, true).then(() => {
-                    this.loadChatDetails(selectedChat);
+                    if (serverChat !== undefined) {
+                        this.loadChatDetails(serverChat);
+                    }
                 });
             } else {
                 this.loadPreviousMessages(chatId, undefined, true).then(() => {
-                    this.loadChatDetails(selectedChat);
+                    if (serverChat !== undefined) {
+                        this.loadChatDetails(serverChat);
+                    }
                 });
             }
             if (selectedChat.kind === "direct_chat") {
@@ -2382,56 +2386,22 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private async loadChatDetails(clientChat: ChatSummary): Promise<void> {
+    private async loadChatDetails(serverChat: ChatSummary): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
-        if (clientChat.kind === "group_chat" || clientChat.kind === "channel") {
-            if (!chatStateStore.getProp(clientChat.id, "detailsLoaded")) {
-                const resp = await this.sendRequest({
-                    kind: "getGroupDetails",
-                    chatId: clientChat.id,
-                    timestamp: clientChat.lastUpdated,
-                });
-                if (resp !== "failure") {
-                    chatStateStore.setProp(clientChat.id, "detailsLoaded", true);
-                    chatStateStore.setProp(clientChat.id, "members", resp.members);
-                    chatStateStore.setProp(clientChat.id, "blockedUsers", resp.blockedUsers);
-                    chatStateStore.setProp(clientChat.id, "invitedUsers", resp.invitedUsers);
-                    chatStateStore.setProp(clientChat.id, "pinnedMessages", resp.pinnedMessages);
-                    chatStateStore.setProp(clientChat.id, "rules", resp.rules);
-                    chatStateStore.setProp(clientChat.id, "lastUpdated", resp.timestamp);
-                }
-                await this.updateUserStore(clientChat.id, []);
-            } else {
-                await this.updateChatDetails(clientChat);
+        if (serverChat.kind === "group_chat" || serverChat.kind === "channel") {
+            const resp = await this.sendRequest({
+                kind: "getGroupDetails",
+                chatId: serverChat.id,
+                chatLastUpdated: serverChat.lastUpdated,
+            });
+            if (resp !== "failure") {
+                chatStateStore.setProp(serverChat.id, "members", resp.members);
+                chatStateStore.setProp(serverChat.id, "blockedUsers", resp.blockedUsers);
+                chatStateStore.setProp(serverChat.id, "invitedUsers", resp.invitedUsers);
+                chatStateStore.setProp(serverChat.id, "pinnedMessages", resp.pinnedMessages);
+                chatStateStore.setProp(serverChat.id, "rules", resp.rules);
             }
-        }
-    }
-
-    private async updateChatDetails(clientChat: ChatSummary): Promise<void> {
-        if (clientChat.kind === "group_chat" || clientChat.kind === "channel") {
-            const timestamp = chatStateStore.getProp(clientChat.id, "lastUpdated");
-            if (timestamp !== undefined && timestamp < clientChat.lastUpdated) {
-                const gd = await this.sendRequest({
-                    kind: "getGroupDetailsUpdates",
-                    chatId: clientChat.id,
-                    previous: {
-                        members: chatStateStore.getProp(clientChat.id, "members"),
-                        blockedUsers: chatStateStore.getProp(clientChat.id, "blockedUsers"),
-                        invitedUsers: chatStateStore.getProp(clientChat.id, "invitedUsers"),
-                        pinnedMessages: chatStateStore.getProp(clientChat.id, "pinnedMessages"),
-                        timestamp: chatStateStore.getProp(clientChat.id, "lastUpdated"),
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        rules: chatStateStore.getProp(clientChat.id, "rules")!,
-                    },
-                });
-                chatStateStore.setProp(clientChat.id, "members", gd.members);
-                chatStateStore.setProp(clientChat.id, "blockedUsers", gd.blockedUsers);
-                chatStateStore.setProp(clientChat.id, "invitedUsers", gd.invitedUsers);
-                chatStateStore.setProp(clientChat.id, "pinnedMessages", gd.pinnedMessages);
-                chatStateStore.setProp(clientChat.id, "rules", gd.rules);
-                chatStateStore.setProp(clientChat.id, "lastUpdated", gd.timestamp);
-                await this.updateUserStore(clientChat.id, []);
-            }
+            await this.updateUserStore(serverChat.id, []);
         }
     }
 

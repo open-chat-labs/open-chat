@@ -62,7 +62,6 @@ import {
     EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
-    GroupChatDetails,
     GroupChatDetailsResponse,
     GroupChatEvent,
     GroupChatSummary,
@@ -1848,30 +1847,15 @@ export class OpenChatAgent extends EventTarget {
 
     getGroupDetails(
         chatId: MultiUserChatIdentifier,
-        timestamp: bigint
+        chatLastUpdated: bigint
     ): Promise<GroupChatDetailsResponse> {
         switch (chatId.kind) {
             case "group_chat":
-                return this.getGroupClient(chatId.groupId).getGroupDetails(timestamp);
+                return this.getGroupClient(chatId.groupId).getGroupDetails(chatLastUpdated);
             case "channel":
                 return this.communityClient(chatId.communityId).getChannelDetails(
                     chatId,
-                    timestamp
-                );
-        }
-    }
-
-    async getGroupDetailsUpdates(
-        chatId: MultiUserChatIdentifier,
-        previous: GroupChatDetails
-    ): Promise<GroupChatDetails> {
-        switch (chatId.kind) {
-            case "group_chat":
-                return this.getGroupClient(chatId.groupId).getGroupDetailsUpdates(previous);
-            case "channel":
-                return this.communityClient(chatId.communityId).getChannelDetailsUpdates(
-                    chatId,
-                    previous
+                    chatLastUpdated
                 );
         }
     }

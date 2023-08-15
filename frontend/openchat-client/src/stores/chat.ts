@@ -352,7 +352,6 @@ export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
 );
 
 export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(() => ({
-    detailsLoaded: false,
     members: [],
     blockedUsers: new Set<string>(),
     invitedUsers: new Set<string>(),
@@ -362,7 +361,6 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
     confirmedEventIndexesLoaded: new DRange(),
     serverEvents: [],
     expandedDeletedMessages: new Set(),
-    lastUpdated: BigInt(0),
 }));
 
 export const threadServerEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
