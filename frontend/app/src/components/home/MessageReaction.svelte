@@ -2,18 +2,20 @@
     import { _ } from "svelte-i18n";
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import type { OpenChat, UserLookup } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onMount, createEventDispatcher } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let reaction: string;
     export let userIds: Set<string>;
     export let myUserId: string | undefined;
 
     let reactionCode = "unknown";
+    let longPressed: boolean = false;
 
     $: userStore = client.userStore;
     $: selected = myUserId !== undefined ? userIds.has(myUserId) : false;
@@ -45,10 +47,16 @@
                 : `"${emoji?.annotation}"`;
         return code ?? ":unknown:";
     }
+
+    function onClick(e: MouseEvent) {
+        if (!longPressed) {
+            dispatch("click");
+        }
+    }
 </script>
 
-<TooltipWrapper position={"top"} align={"start"}>
-    <div slot="target" on:click class:selected class="message-reaction">
+<TooltipWrapper bind:longPressed position={"top"} align={"start"}>
+    <div slot="target" on:click={onClick} class:selected class="message-reaction">
         {reaction}
         <span class="reaction-count">
             {userIds.size > 999 ? "999+" : userIds.size}

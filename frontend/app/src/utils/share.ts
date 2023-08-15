@@ -1,4 +1,4 @@
-import type { Message, MessageContent, MessageFormatter, ChatIdentifier } from "openchat-client";
+import type { Message, MessageContent, MessageFormatter, ChatIdentifier, CryptocurrencyDetails } from "openchat-client";
 import { buildCryptoTransferText, buildTransactionUrl, routeForMessage } from "openchat-client";
 import { toastStore } from "../stores/toast";
 import { get } from "svelte/store";
@@ -96,9 +96,10 @@ export function shareMessage(
     formatter: MessageFormatter,
     userId: string,
     me: boolean,
-    msg: Message
+    msg: Message,
+    cryptoLookup: Record<string, CryptocurrencyDetails>
 ): void {
-    buildShareFromMessage(formatter, userId, me, msg).then(
+    buildShareFromMessage(formatter, userId, me, msg, cryptoLookup).then(
         (share) =>
             navigator.share(share).catch((e: DOMException) => {
                 if (e.name !== "AbortError") {
@@ -129,7 +130,8 @@ async function buildShareFromMessage(
     formatter: MessageFormatter,
     userId: string,
     me: boolean,
-    msg: Message
+    msg: Message,
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
 ): Promise<Share> {
     const content = msg.content;
     if (content.kind === "deleted_content" || content.kind === "placeholder_content") {
@@ -192,7 +194,7 @@ async function buildShareFromMessage(
         // TODO:
         share.text = "TODO: Poll content";
     } else if (content.kind === "crypto_content") {
-        let text = buildCryptoTransferText(formatter, userId, msg.sender, content, me);
+        let text = buildCryptoTransferText(formatter, userId, msg.sender, content, me, cryptoLookup);
         if (content.caption !== undefined) {
             if (text !== undefined) {
                 text += "\n\n";
@@ -200,7 +202,7 @@ async function buildShareFromMessage(
             text += content.caption;
         }
 
-        const transactionUrl = buildTransactionUrl(content.transfer);
+        const transactionUrl = buildTransactionUrl(content.transfer, cryptoLookup);
         if (transactionUrl !== undefined) {
             if (text !== undefined) {
                 text += "\n\n";

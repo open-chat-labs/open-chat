@@ -216,18 +216,19 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
         }
     }
 
-    if let Some(rules) = args.rules {
-        if state.data.rules.enabled != rules.enabled || state.data.rules.text != rules.text {
+    if let Some(new_rules) = args.rules {
+        let enabled = new_rules.enabled;
+        let prev_enabled = state.data.rules.enabled;
+
+        if state.data.rules.update(new_rules) {
             events.push_event(
                 CommunityEventInternal::RulesChanged(Box::new(GroupRulesChanged {
-                    enabled: rules.enabled,
-                    prev_enabled: state.data.rules.enabled,
+                    enabled,
+                    prev_enabled,
                     changed_by: my_user_id,
                 })),
                 now,
             );
-
-            state.data.rules = rules;
         }
     }
 

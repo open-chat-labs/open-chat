@@ -5,6 +5,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Optimise `selected_updates` for query caching ([#4185](https://github.com/open-chat-labs/open-chat/pull/4185))
+
+### Removed
+
+- Remove `selected_updates` which has been superseded by `selected_updates_v2` ([#4182](https://github.com/open-chat-labs/open-chat/pull/4182))
+
+## [[2.0.809](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.809-group)] - 2023-08-15
+
+### Changed
+
+- Convert remaining SNS transactions to ICRC1 ([#4175](https://github.com/open-chat-labs/open-chat/pull/4175))
+
+## [[2.0.807](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.807-group)] - 2023-08-11
+
+### Changed
+
+- Access rules data structure changed ([#4159](https://github.com/open-chat-labs/open-chat/pull/4159))
+
 ### Removed
 
 - Remove SNS transaction types ([#4162](https://github.com/open-chat-labs/open-chat/pull/4162))

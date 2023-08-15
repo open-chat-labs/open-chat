@@ -33,13 +33,13 @@ function openRegistryCache(): RegistryDatabase {
     });
 }
 
-export async function getRegistry(): Promise<RegistryValue | undefined> {
+export async function getCachedRegistry(): Promise<RegistryValue | undefined> {
     const resolvedDb = await lazyOpenRegistryCache();
 
     return await resolvedDb.get(KEY, KEY);
 }
 
-export async function setRegistry(value: RegistryValue): Promise<void> {
+export async function setCachedRegistry(value: RegistryValue): Promise<void> {
     const resolvedDb = await lazyOpenRegistryCache();
 
     await resolvedDb.put(KEY, value, KEY);

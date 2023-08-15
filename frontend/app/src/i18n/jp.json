@@ -412,8 +412,6 @@
     "confirmMembers": "メンバーを確認する",
     "permissionsChangedBy": "{changedBy} が {level} 権限を変更しました",
     "filterMembers": "フィルターメンバー",
-    "publicGroupWithN": "{number}メンバーのパブリックグループ",
-    "privateGroupWithN": "{number}メンバーのプライベートグループ",
     "groupWithN": "{number}メンバー",
     "members": "メンバー",
     "removeMembersFailed": "メンバーを削除できません",
@@ -967,5 +965,7 @@
     "attachFile": "画像/動画/ファイルを添付する",
     "pickEmoji": "絵文字を選択してください",
     "sendMessage": "メッセージを送る",
-    "publicChannelInfo": "コミュニティ メンバーはパブリック チャネルに自動的に追加されます (その後、退会できます)。"
+    "publicChannelInfo": "コミュニティ メンバーはパブリック チャネルに自動的に追加されます (その後、退会できます)。",
+    "publicGroupWithN": "{level} メンバーによる公開 {number}",
+    "privateGroupWithN": "{level} メンバーとのプライベート {number}"
 }

@@ -10,7 +10,7 @@ import {
     UnsupportedValueError,
     ChatIdentifier,
     MessageContext,
-    ChatListScope,
+    ChatListScope, CryptocurrencyDetails,
 } from "../domain";
 import type { MessageFormatter } from "./i18n";
 
@@ -29,14 +29,14 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 ) {
                     userIds.add(e.event.repliesTo.senderId);
                     extractUserIdsFromMentions(
-                        getContentAsText(fakeFormatter, e.event.repliesTo.content)
+                        getContentAsText(fakeFormatter, e.event.repliesTo.content, {})
                     ).forEach((id) => userIds.add(id));
                 }
                 if (e.event.content.kind === "reported_message_content") {
                     e.event.content.reports.forEach((r) => userIds.add(r.reportedBy));
                 }
                 extractUserIdsFromMentions(
-                    getContentAsText(fakeFormatter, e.event.content)
+                    getContentAsText(fakeFormatter, e.event.content, {})
                 ).forEach((id) => userIds.add(id));
                 break;
             case "member_joined":
@@ -93,7 +93,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
     }, new Set<string>());
 }
 
-export function getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
+export function getContentAsText(formatter: MessageFormatter, content: MessageContent, cryptoLookup: Record<string, CryptocurrencyDetails>): string {
     let text;
     if (content.kind === "text_content") {
         text = content.text;
@@ -108,7 +108,7 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
     } else if (content.kind === "crypto_content") {
         text = captionedContent(
             formatter("tokenTransfer.transfer", {
-                values: { token: content.transfer.token },
+                values: { token: cryptoLookup[content.transfer.ledger]?.symbol ?? "Unknown" },
             }),
             content.caption
         );

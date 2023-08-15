@@ -23,6 +23,6 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
         members: members.iter().map(|p| p.into()).collect(),
         blocked_users: members.blocked(),
         invited_users: state.data.invited_users.users(),
-        rules: state.data.rules.clone(),
+        rules: state.data.rules.clone().into(),
     })
 }

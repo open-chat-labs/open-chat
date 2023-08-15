@@ -413,4 +413,4 @@ service : {
     list_neurons : (ListNeurons) -> (ListNeuronsResponse) query;
     list_proposals : (ListProposals) -> (ListProposalsResponse) query;
     manage_neuron : (ManageNeuron) -> (ManageNeuronResponse);
-}
+};

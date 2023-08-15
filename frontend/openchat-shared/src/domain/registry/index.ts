@@ -22,7 +22,7 @@ export type TokenDetails = {
     decimals: number;
     fee: bigint;
     logo: string;
-    snsCanisters?: {
+    nervousSystem?: {
         root: string
         governance: string
     };

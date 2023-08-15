@@ -27,7 +27,6 @@ import {
     LocalMessageUpdates,
     LocalReaction,
     emptyChatMetrics,
-    cryptoLookup,
     LocalPollVote,
     CryptocurrencyTransfer,
     Tally,
@@ -41,8 +40,7 @@ import {
     MultiUserChatIdentifier,
     MultiUserChat,
     ChatListScope,
-    CKBTC_SYMBOL,
-    ICP_SYMBOL,
+    CryptocurrencyDetails,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -60,6 +58,7 @@ import { currentChatUserIds } from "../stores/chat";
 import type { TypersByKey } from "../stores/typing";
 import { tallyKey } from "../stores/proposalTallies";
 import { hasOwnerRights, isPermitted } from "./permissions";
+import { cryptoLookup } from "../stores/crypto";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -279,7 +278,7 @@ function messageMentionsUser(
     userId: string,
     msg: EventWrapper<Message>
 ): boolean {
-    const txt = getContentAsText(formatter, msg.event.content);
+    const txt = getContentAsText(formatter, msg.event.content, get(cryptoLookup));
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
 
@@ -429,7 +428,8 @@ export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
     unconfirmed: UnconfirmedMessages,
-    localUpdates: MessageMap<LocalMessageUpdates>
+    localUpdates: MessageMap<LocalMessageUpdates>,
+    translations: MessageMap<string>,
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
@@ -454,10 +454,11 @@ export function mergeUnconfirmedIntoSummary(
     }
     if (latestMessage !== undefined) {
         const updates = localUpdates.get(latestMessage.event.messageId);
-        if (updates !== undefined) {
+        const translation = translations.get(latestMessage.event.messageId);
+        if (updates !== undefined || translation !== undefined) {
             latestMessage = {
                 ...latestMessage,
-                event: mergeLocalUpdates(latestMessage.event, updates, undefined, undefined),
+                event: mergeLocalUpdates(latestMessage.event, updates, undefined, undefined, translation),
             };
         }
     }
@@ -1085,7 +1086,8 @@ export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
     localUpdates: MessageMap<LocalMessageUpdates>,
-    proposalTallies: Record<string, Tally>
+    proposalTallies: Record<string, Tally>,
+    translations: MessageMap<string>,
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new Set<number>();
 
@@ -1094,6 +1096,8 @@ export function mergeEventsAndLocalUpdates(
 
         if (e.event.kind === "message") {
             const updates = localUpdates.get(e.event.messageId);
+            const translation = translations.get(e.event.messageId);
+
             const replyContextUpdates =
                 e.event.repliesTo?.kind === "rehydrated_reply_context"
                     ? localUpdates.get(e.event.repliesTo.messageId)
@@ -1112,11 +1116,12 @@ export function mergeEventsAndLocalUpdates(
             if (
                 updates !== undefined ||
                 replyContextUpdates !== undefined ||
-                tallyUpdate !== undefined
+                tallyUpdate !== undefined ||
+                translation !== undefined
             ) {
                 return {
                     ...e,
-                    event: mergeLocalUpdates(e.event, updates, replyContextUpdates, tallyUpdate),
+                    event: mergeLocalUpdates(e.event, updates, replyContextUpdates, tallyUpdate, translation),
                 };
             }
         }
@@ -1153,12 +1158,14 @@ function mergeLocalUpdates(
     message: Message,
     localUpdates: LocalMessageUpdates | undefined,
     replyContextLocalUpdates: LocalMessageUpdates | undefined,
-    tallyUpdate: Tally | undefined
+    tallyUpdate: Tally | undefined,
+    translation: string | undefined,
 ): Message {
     if (
         localUpdates === undefined &&
         replyContextLocalUpdates === undefined &&
-        tallyUpdate === undefined
+        tallyUpdate === undefined &&
+        translation === undefined
     )
         return message;
 
@@ -1270,6 +1277,40 @@ function mergeLocalUpdates(
             },
         };
     }
+
+    if (translation !== undefined) {
+        switch (message.content.kind) {
+            case "text_content": {
+                message.content = {
+                    ...message.content,
+                    text: translation
+                };
+                break;
+            }
+            case "audio_content":
+            case "image_content":
+            case "video_content":
+            case "file_content":
+            case "crypto_content": {
+                message.content = {
+                    ...message.content,
+                    caption: translation
+                };
+                break;
+            }
+
+            case "poll_content": {
+                message.content = {
+                    ...message.content,
+                    config: {
+                        ...message.content.config,
+                        text: translation
+                    }
+                }
+                break;
+            }
+        }
+    }
     return message;
 }
 
@@ -1318,29 +1359,23 @@ export function findMessageById(
 
 export function buildTransactionLink(
     formatter: MessageFormatter,
-    transfer: CryptocurrencyTransfer
+    transfer: CryptocurrencyTransfer,
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
 ): string | undefined {
-    const url = buildTransactionUrl(transfer);
+    const url = buildTransactionUrl(transfer, cryptoLookup);
     return url !== undefined
         ? formatter("tokenTransfer.viewTransaction", { values: { url } })
         : undefined;
 }
 
-export function buildTransactionUrl(transfer: CryptocurrencyTransfer): string | undefined {
+export function buildTransactionUrl(transfer: CryptocurrencyTransfer, cryptoLookup: Record<string, CryptocurrencyDetails>): string | undefined {
     if (transfer.kind !== "completed") {
         return undefined;
     }
 
-    const rootCanister = cryptoLookup[transfer.token].rootCanister;
+    const transactionUrlFormat = cryptoLookup[transfer.ledger].transactionUrlFormat;
 
-    switch (transfer.token) {
-        case ICP_SYMBOL:
-            return `https://dashboard.internetcomputer.org/transaction/${transfer.transactionHash}`;
-        case CKBTC_SYMBOL:
-            return `https://dashboard.internetcomputer.org/bitcoin/transaction/${transfer.blockIndex}`;
-        default:
-            return `https://dashboard.internetcomputer.org/sns/${rootCanister}/transaction/${transfer.blockIndex}`;
-    }
+    return transactionUrlFormat.replace("{block_index}", transfer.blockIndex.toString()).replace("{transaction_hash}", transfer.transactionHash ?? "");
 }
 
 export function buildCryptoTransferText(
@@ -1348,7 +1383,8 @@ export function buildCryptoTransferText(
     myUserId: string,
     senderId: string,
     content: CryptocurrencyContent,
-    me: boolean
+    me: boolean,
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
 ): string | undefined {
     if (content.transfer.kind !== "completed" && content.transfer.kind !== "pending") {
         return undefined;
@@ -1362,11 +1398,13 @@ export function buildCryptoTransferText(
             : `${lookup[userId]?.username ?? formatter("unknown")}`;
     }
 
+    const tokenDetails = cryptoLookup[content.transfer.ledger];
+
     const values = {
-        amount: formatTokens(content.transfer.amountE8s, 0),
+        amount: formatTokens(content.transfer.amountE8s, 0, tokenDetails.decimals),
         receiver: username(content.transfer.recipient),
         sender: username(senderId),
-        token: content.transfer.token,
+        token: tokenDetails.symbol,
     };
 
     const key =
@@ -1428,4 +1466,24 @@ export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefine
         return undefined;
 
     return messagesRead.getFirstUnreadMessageIndex(chat.id, chat.latestMessage?.event.messageIndex);
+}
+
+export function getMessageText(content: MessageContent): string | undefined {
+    switch (content.kind) {
+        case "text_content":
+            return content.text;
+
+        case "audio_content":
+        case "image_content":
+        case "video_content":
+        case "file_content":
+        case "crypto_content":
+            return content.caption;
+
+        case "poll_content":
+            return content.config.text;
+
+        default:
+            return undefined;
+    }
 }

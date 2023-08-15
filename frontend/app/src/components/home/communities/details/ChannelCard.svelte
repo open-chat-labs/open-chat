@@ -72,8 +72,10 @@
             padding: $sp3 toRem(10);
         }
 
-        &:hover {
-            background-color: var(--chatSummary-hv);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--chatSummary-hv);
+            }
         }
 
         .desc {

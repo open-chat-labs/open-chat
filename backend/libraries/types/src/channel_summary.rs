@@ -27,6 +27,8 @@ pub struct CommunityCanisterChannelSummary {
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
     pub gate: Option<AccessGate>,
+    #[serde(default)]
+    pub rules_enabled: bool,
     pub membership: Option<ChannelMembership>,
 }
 
@@ -38,6 +40,8 @@ pub struct ChannelMembership {
     pub notifications_muted: bool,
     pub my_metrics: ChatMetrics,
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
+    #[serde(default)]
+    pub rules_accepted: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -58,6 +62,8 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
+    #[serde(default)]
+    pub rules_enabled: Option<bool>,
     pub membership: Option<ChannelMembershipUpdates>,
 }
 
@@ -68,6 +74,8 @@ pub struct ChannelMembershipUpdates {
     pub notifications_muted: Option<bool>,
     pub my_metrics: Option<ChatMetrics>,
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
+    #[serde(default)]
+    pub rules_accepted: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

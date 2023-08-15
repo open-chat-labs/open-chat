@@ -732,11 +732,11 @@ export class CommunityClient extends CandidService {
 
     async getCommunityDetails(
         id: CommunityIdentifier,
-        lastUpdated: bigint
+        communityLastUpdated: bigint
     ): Promise<CommunityDetailsResponse> {
         const fromCache = await getCachedCommunityDetails(this.db, id.communityId);
         if (fromCache !== undefined) {
-            if (fromCache.lastUpdated >= lastUpdated) {
+            if (fromCache.lastUpdated >= communityLastUpdated) {
                 return fromCache;
             } else {
                 return this.getCommunityDetailsUpdates(id, fromCache);
@@ -760,7 +760,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    async getCommunityDetailsUpdates(
+    private async getCommunityDetailsUpdates(
         id: CommunityIdentifier,
         previous: CommunityDetails
     ): Promise<CommunityDetails> {
@@ -799,11 +799,11 @@ export class CommunityClient extends CandidService {
 
     async getChannelDetails(
         chatId: ChannelIdentifier,
-        timestamp: bigint
+        chatLastUpdated: bigint
     ): Promise<GroupChatDetailsResponse> {
         const fromCache = await getCachedGroupDetails(this.db, chatId.channelId);
         if (fromCache !== undefined) {
-            if (fromCache.timestamp >= timestamp) {
+            if (fromCache.timestamp >= chatLastUpdated) {
                 return fromCache;
             } else {
                 return this.getChannelDetailsUpdates(chatId, fromCache);
@@ -829,7 +829,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    async getChannelDetailsUpdates(
+    private async getChannelDetailsUpdates(
         chatId: ChannelIdentifier,
         previous: GroupChatDetails
     ): Promise<GroupChatDetails> {

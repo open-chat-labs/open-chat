@@ -25,7 +25,7 @@
         OpenChat,
         MultiUserChat,
     } from "openchat-client";
-    import { allQuestions, cryptoCurrencyList, cryptoLookup } from "openchat-client";
+    import { allQuestions } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
@@ -71,11 +71,6 @@
     let messageEntryHeight: number;
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
-    let tokens = cryptoCurrencyList
-        .filter((t) => cryptoLookup[t]?.disabled === false)
-        .map((t) => t.toLowerCase())
-        .join("|");
-    let tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\d*[.,]?\d*)$`);
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -86,6 +81,11 @@
     $: isBot = $userStore[userId]?.kind === "bot";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
     $: pollsAllowed = isMultiUser && !isBot && client.canCreatePolls(chat.id);
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokens = Object.values($cryptoLookup)
+        .map((t) => t.symbol.toLowerCase())
+        .join("|");
+    $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
 
     $: {
         if (inp) {
@@ -310,10 +310,14 @@
 
         const tokenMatch = txt.match(tokenMatchRegex);
         if (tokenMatch && tokenMatch[2] !== undefined) {
-            dispatch("tokenTransfer", {
-                token: tokenMatch[1],
-                amount: client.validateTokenInput(tokenMatch[2]).e8s,
-            });
+            const token = tokenMatch[1];
+            const tokenDetails = Object.values($cryptoLookup).find((t) => t.symbol.toLowerCase() === token);
+            if (tokenDetails !== undefined) {
+                dispatch("tokenTransfer", {
+                    ledger: tokenDetails.ledger,
+                    amount: client.validateTokenInput(tokenMatch[2], tokenDetails.decimals).amount,
+                });
+            }
             return true;
         }
         return false;

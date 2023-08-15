@@ -15,12 +15,15 @@ fn main() {
     generate_candid_method!(community, search_channel, query);
     generate_candid_method!(community, selected_channel_initial, query);
     generate_candid_method!(community, selected_channel_updates, query);
+    generate_candid_method!(community, selected_channel_updates_v2, query);
     generate_candid_method!(community, selected_initial, query);
     generate_candid_method!(community, selected_updates, query);
+    generate_candid_method!(community, selected_updates_v2, query);
     generate_candid_method!(community, summary, query);
     generate_candid_method!(community, summary_updates, query);
     generate_candid_method!(community, thread_previews, query);
 
+    generate_candid_method!(community, accept_rules, update);
     generate_candid_method!(community, add_members_to_channel, update);
     generate_candid_method!(community, add_reaction, update);
     generate_candid_method!(community, block_user, update);

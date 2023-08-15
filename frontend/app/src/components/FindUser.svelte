@@ -175,8 +175,10 @@
             padding: $sp3 toRem(10);
         }
 
-        &:hover {
-            background-color: var(--members-hv);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--members-hv);
+            }
         }
     }
     .avatar {

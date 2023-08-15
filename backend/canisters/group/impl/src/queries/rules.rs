@@ -15,7 +15,7 @@ fn rules_impl(args: Args, state: &RuntimeState) -> Response {
         return NotAuthorized;
     }
 
-    let data = &state.data;
-    let rules = data.chat.rules.enabled.then_some(data.chat.rules.text.clone());
+    let rules = state.data.chat.rules.text_if_enabled().map(|t| t.value.clone());
+
     Success(SuccessResult { rules })
 }

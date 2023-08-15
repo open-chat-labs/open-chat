@@ -5,7 +5,7 @@
     import "../utils/markdown";
     import "../utils/i18n";
     import { rtlStore } from "../stores/rtl";
-    import { _ } from "svelte-i18n";
+    import { _, isLoading } from "svelte-i18n";
     import Router from "./Router.svelte";
     import { notFound, pathParams } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
@@ -45,6 +45,7 @@
             notificationsCanister: process.env.NOTIFICATIONS_CANISTER!,
             onlineCanister: process.env.ONLINE_CANISTER!,
             userIndexCanister: process.env.USER_INDEX_CANISTER!,
+            registryCanister: process.env.REGISTRY_CANISTER!,
             internetIdentityUrl: process.env.INTERNET_IDENTITY_URL!,
             nfidUrl: process.env.NFID_URL!,
             ledgerCanisterICP: process.env.LEDGER_CANISTER_ICP!,
@@ -317,7 +318,9 @@
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
     <Upgrading />
 {:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering" || $identityState === "logged_in" || $identityState === "loading_user"}
-    <Router />
+    {#if !$isLoading}
+        <Router />
+    {/if}
 {/if}
 
 {#if profileTrace}
@@ -555,6 +558,10 @@
                 color: var(--landing-txt);
                 min-height: 100vh;
                 height: unset;
+            }
+
+            @media (hover: none) {
+                @include no_user_select();
             }
         }
 

@@ -1,3 +1,4 @@
+pub mod accept_rules;
 pub mod add_members_to_channel;
 pub mod add_reaction;
 pub mod block_user;

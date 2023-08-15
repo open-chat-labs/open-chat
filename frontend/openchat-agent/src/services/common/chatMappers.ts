@@ -631,7 +631,7 @@ export function completedCryptoTransfer(
         const trans = candid.NNS;
         return {
             kind: "completed",
-            token: token(trans.token),
+            ledger: trans.ledger.toString(),
             recipient,
             sender,
             amountE8s: trans.amount.e8s,
@@ -644,7 +644,7 @@ export function completedCryptoTransfer(
     if ("ICRC1" in candid) {
         return {
             kind: "completed",
-            token: token(candid.ICRC1.token),
+            ledger: candid.ICRC1.ledger.toString(),
             recipient,
             sender,
             amountE8s: candid.ICRC1.amount,
@@ -668,7 +668,7 @@ export function failedCryptoTransfer(
         const trans = candid.NNS;
         return {
             kind: "failed",
-            token: token(trans.token),
+            ledger: trans.ledger.toString(),
             recipient,
             amountE8s: trans.amount.e8s,
             feeE8s: trans.fee.e8s,
@@ -679,7 +679,7 @@ export function failedCryptoTransfer(
     if ("ICRC1" in candid) {
         return {
             kind: "failed",
-            token: token(candid.ICRC1.token),
+            ledger: candid.ICRC1.ledger.toString(),
             recipient,
             amountE8s: candid.ICRC1.amount,
             feeE8s: candid.ICRC1.fee,

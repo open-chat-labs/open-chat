@@ -5,7 +5,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use rand::RngCore;
 use satoshi_dice_canister::handle_direct_message::*;
-use types::{BotMessage, Cryptocurrency, MessageContent, TextContent, UserId};
+use types::{BotMessage, CanisterId, Cryptocurrency, MessageContent, TextContent, UserId};
 use utils::time::MINUTE_IN_MS;
 
 const MAX_TOTAL_WINNINGS: u64 = 50_000;
@@ -18,7 +18,7 @@ fn handle_direct_message(args: Args) -> Response {
 
 fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
     let mut messages = Vec::new();
-    if let Some(sats) = extract_ckbtc_amount(&args.content) {
+    if let Some(sats) = extract_ckbtc_amount(&args.content, state.data.ckbtc_ledger_canister_id) {
         let user_id: UserId = state.env.caller().into();
         let now = state.env.now();
         let fee = Cryptocurrency::CKBTC.fee().unwrap() as u64;
@@ -92,9 +92,9 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
     })
 }
 
-fn extract_ckbtc_amount(content: &MessageContent) -> Option<u64> {
+fn extract_ckbtc_amount(content: &MessageContent, ckbtc_ledger_canister_id: CanisterId) -> Option<u64> {
     if let MessageContent::Crypto(c) = content {
-        if c.transfer.token() == Cryptocurrency::CKBTC {
+        if c.transfer.ledger_canister_id() == ckbtc_ledger_canister_id {
             return Some(c.transfer.units() as u64);
         }
     }

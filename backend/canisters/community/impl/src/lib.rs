@@ -8,6 +8,7 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::ChatMetricsInternal;
 use fire_and_forget_handler::FireAndForgetHandler;
+use group_chat_core::AccessRulesInternal;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -168,7 +169,7 @@ struct Data {
     is_public: bool,
     name: String,
     description: String,
-    rules: AccessRules,
+    rules: AccessRulesInternal,
     avatar: Option<Document>,
     banner: Option<Document>,
     permissions: CommunityPermissions,
@@ -229,7 +230,7 @@ impl Data {
             is_public,
             name,
             description,
-            rules,
+            rules: AccessRulesInternal::new(rules),
             avatar,
             banner,
             permissions,

@@ -59,6 +59,7 @@ export interface PlaceholderContent {
 }
 
 export type CryptocurrencyDeposit = {
+    ledger: string;
     token: string;
     amountE8s: bigint;
     feeE8s: bigint;
@@ -80,7 +81,7 @@ export type PendingCryptocurrencyWithdrawal = {
 
 export type CompletedCryptocurrencyWithdrawal = {
     kind: "completed";
-    token: string;
+    ledger: string;
     to: string;
     amountE8s: bigint;
     feeE8s: bigint;
@@ -91,7 +92,7 @@ export type CompletedCryptocurrencyWithdrawal = {
 
 export type FailedCryptocurrencyWithdrawal = {
     kind: "failed";
-    token: string;
+    ledger: string;
     to: string;
     amountE8s: bigint;
     feeE8s: bigint;
@@ -111,7 +112,7 @@ export type CryptocurrencyWithdrawal =
 
 export type CompletedCryptocurrencyTransfer = {
     kind: "completed";
-    token: string;
+    ledger: string;
     recipient: string;
     sender: string;
     amountE8s: bigint;
@@ -134,7 +135,7 @@ export type PendingCryptocurrencyTransfer = {
 
 export type FailedCryptocurrencyTransfer = {
     kind: "failed";
-    token: string;
+    ledger: string;
     recipient: string;
     amountE8s: bigint;
     feeE8s: bigint;
@@ -146,11 +147,6 @@ export type CryptocurrencyTransfer =
     | CompletedCryptocurrencyTransfer
     | PendingCryptocurrencyTransfer
     | FailedCryptocurrencyTransfer;
-
-export type CryptocurrencyTransaction =
-    | CryptocurrencyTransfer
-    | CryptocurrencyWithdrawal
-    | CryptocurrencyDeposit;
 
 export interface CryptocurrencyContent {
     kind: "crypto_content";
@@ -1092,12 +1088,10 @@ export type GroupChatDetails = {
  * All properties are optional but individual derived stores can provide their own default values
  */
 export type ChatSpecificState = {
-    detailsLoaded: boolean;
     members: Member[];
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
-    lastUpdated: bigint;
     rules?: AccessRules;
     userIds: Set<string>;
     focusMessageIndex?: number;

@@ -12,12 +12,18 @@ const DEBUG = false;
 registerRoute(
     (route) => {
         return [
-            /assets\/.*png|jpg|svg|gif|mp4/,
+            /assets\/.*png|jpg|svg|gif|mp4|css/,
             /main-.*[css|js]$/,
+            /vendor-.*[css|js]$/,
             /ArchitecturePage-.*js$/,
             /HashLinkTarget-.*js$/,
             /Headline-.*js$/,
             /RoadmapPage-.*js$/,
+            /Miami-.*js$/,
+            /DiamondPage-.*js$/,
+            /FAQPage-.*js$/,
+            /GuidelinesPage-.*js$/,
+            /BlogPostPage-.*js$/,
             /SMSUpgrade-.*js$/,
             /WhitepaperPage-.*js$/,
             /worker.js/,
