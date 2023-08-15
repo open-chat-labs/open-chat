@@ -829,7 +829,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    async getChannelDetailsUpdates(
+    private async getChannelDetailsUpdates(
         chatId: ChannelIdentifier,
         previous: GroupChatDetails
     ): Promise<GroupChatDetails> {

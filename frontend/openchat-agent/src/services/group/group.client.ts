@@ -607,7 +607,7 @@ export class GroupClient extends CandidService {
         );
     }
 
-    async getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
+    private async getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
         const response = await this.getGroupDetailsUpdatesFromBackend(previous);
         if (response.timestamp > previous.timestamp) {
             await setCachedGroupDetails(this.db, this.chatId.groupId, response);

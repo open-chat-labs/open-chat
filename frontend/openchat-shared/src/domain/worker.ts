@@ -187,7 +187,6 @@ export type WorkerRequest =
     | LastOnline
     | MarkAsOnline
     | GetGroupDetails
-    | GetGroupDetailUpdates
     | MarkMessagesRead
     | GetAllCachedUsers
     | GetUsers
@@ -774,12 +773,6 @@ type GetGroupDetails = {
     kind: "getGroupDetails";
 };
 
-type GetGroupDetailUpdates = {
-    chatId: MultiUserChatIdentifier;
-    previous: GroupChatDetails;
-    kind: "getGroupDetailsUpdates";
-};
-
 type GetAllCachedUsers = {
     kind: "getAllCachedUsers";
 };
@@ -1240,8 +1233,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? MarkReadResponse
     : T extends GetGroupDetails
     ? GroupChatDetailsResponse
-    : T extends GetGroupDetailUpdates
-    ? GroupChatDetails
     : T extends CurrentUser
     ? CurrentUserResponse
     : T extends CreateUserClient

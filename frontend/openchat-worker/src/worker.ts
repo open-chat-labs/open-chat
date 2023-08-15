@@ -261,17 +261,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
-            case "getGroupDetailsUpdates":
-                agent
-                    .getGroupDetailsUpdates(payload.chatId, payload.previous)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
             case "lastOnline":
                 agent
                     .lastOnline(payload.userIds)
