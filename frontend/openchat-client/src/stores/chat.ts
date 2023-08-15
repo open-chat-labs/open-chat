@@ -352,7 +352,6 @@ export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
 );
 
 export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(() => ({
-    detailsLoaded: false,
     members: [],
     blockedUsers: new Set<string>(),
     invitedUsers: new Set<string>(),

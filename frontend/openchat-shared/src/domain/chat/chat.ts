@@ -1088,7 +1088,6 @@ export type GroupChatDetails = {
  * All properties are optional but individual derived stores can provide their own default values
  */
 export type ChatSpecificState = {
-    detailsLoaded: boolean;
     members: Member[];
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;

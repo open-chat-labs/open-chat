@@ -2396,7 +2396,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 timestamp: chatLastUpdated,
             });
             if (resp !== "failure") {
-                chatStateStore.setProp(serverChat.id, "detailsLoaded", true);
                 chatStateStore.setProp(serverChat.id, "members", resp.members);
                 chatStateStore.setProp(serverChat.id, "blockedUsers", resp.blockedUsers);
                 chatStateStore.setProp(serverChat.id, "invitedUsers", resp.invitedUsers);
