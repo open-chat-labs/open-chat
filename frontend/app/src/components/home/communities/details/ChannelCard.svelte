@@ -1,7 +1,7 @@
 <script lang="ts">
     import Avatar from "../../../Avatar.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import { type AvatarSize, type ChannelMatch, type OpenChat, routeForChatIdentifier } from "openchat-client";
+    import { AvatarSize, type ChannelMatch, type OpenChat, routeForChatIdentifier } from "openchat-client";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { getContext } from "svelte";
     import page from "page";

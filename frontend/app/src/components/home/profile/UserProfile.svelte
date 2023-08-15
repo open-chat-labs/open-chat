@@ -2,10 +2,10 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import {
         type PartialUserSummary,
-        OpenChat,
-        type AvatarSize,
+        type OpenChat,
+        AvatarSize,
         type ModerationFlag,
-        type ModerationFlags,
+        ModerationFlags,
     } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";

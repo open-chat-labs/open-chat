@@ -13,10 +13,6 @@
         AccessRules,
         Message,
         OpenChat,
-        ThreadSelected,
-        ThreadClosed,
-        SelectedChatInvalid,
-        SendMessageFailed,
         Notification,
         CandidateGroupChat,
         EventWrapper,
@@ -27,7 +23,6 @@
         DirectChatIdentifier,
         GroupChatIdentifier,
         CommunityIdentifier,
-        routeForChatIdentifier,
         MultiUserChat,
         MultiUserChatIdentifier,
         GroupChatSummary,
@@ -35,9 +30,14 @@
     } from "openchat-client";
     import {
         ChatsUpdated,
+        SelectedChatInvalid,
+        SendMessageFailed,
+        ThreadClosed,
+        ThreadSelected,
         defaultAccessRules,
         chatIdentifiersEqual,
         nullMembership,
+        routeForChatIdentifier,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
