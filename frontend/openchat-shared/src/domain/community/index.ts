@@ -74,12 +74,10 @@ export type DefaultChannel = {
 };
 
 export type CommunitySpecificState = {
-    detailsLoaded: boolean;
     members: Member[];
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     rules?: AccessRules;
-    lastUpdated: bigint;
 };
 
 export interface UserFailedGateCheck {

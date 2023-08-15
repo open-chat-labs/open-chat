@@ -256,7 +256,6 @@ export type WorkerRequest =
     | GetCommunitySummary
     | ExploreChannels
     | GetCommunityDetails
-    | GetCommunityDetailsUpdates
     | GetChannelSummary
     | AddToFavourites
     | RemoveFromFavourites
@@ -314,13 +313,7 @@ type GetChannelSummary = {
 type GetCommunityDetails = {
     kind: "getCommunityDetails";
     id: CommunityIdentifier;
-    lastUpdated: bigint;
-};
-
-type GetCommunityDetailsUpdates = {
-    kind: "getCommunityDetailsUpdates";
-    id: CommunityIdentifier;
-    previous: CommunityDetails;
+    communityLastUpdated: bigint;
 };
 
 type ExploreChannels = {
@@ -1451,8 +1444,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? ExploreChannelsResponse
     : T extends GetCommunityDetails
     ? CommunityDetailsResponse
-    : T extends GetCommunityDetailsUpdates
-    ? CommunityDetails
     : T extends GetChannelSummary
     ? ChannelSummaryResponse
     : T extends AddToFavourites
