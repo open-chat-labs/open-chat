@@ -1,4 +1,4 @@
-import DOMPurify, { DOMPurifyI } from "dompurify";
+import DOMPurify, { type DOMPurifyI } from "dompurify";
 
 export const DOMPurifyDefault = createDefault();
 export const DOMPurifyOneLine = createOneLine();

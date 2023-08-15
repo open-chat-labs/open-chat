@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { Writable, writable } from "svelte/store";
+import { type Writable, writable } from "svelte/store";
 
 type CommunityFilter = {
     languages: Set<string>;

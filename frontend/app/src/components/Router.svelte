@@ -7,7 +7,7 @@
     import {
         pathContextStore,
         notFound,
-        RouteParams,
+        type RouteParams,
         pathParams,
         communitesRoute,
         blogRoute,

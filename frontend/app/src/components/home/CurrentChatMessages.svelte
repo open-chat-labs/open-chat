@@ -9,18 +9,18 @@
     import { _ } from "svelte-i18n";
     import {
         AvatarSize,
-        EventWrapper,
-        EnhancedReplyContext,
-        ChatEvent as ChatEventType,
-        Message,
-        Mention,
-        ChatSummary,
-        OpenChat,
+        type EventWrapper,
+        type EnhancedReplyContext,
+        type ChatEvent as ChatEventType,
+        type Message,
+        type Mention,
+        type ChatSummary,
+        type OpenChat,
         FilteredProposals,
-        MessageReadState,
-        FailedMessages,
+        type MessageReadState,
+        type FailedMessages,
         chatIdentifiersEqual,
-        ChatIdentifier,
+        type ChatIdentifier,
         routeForChatIdentifier,
     } from "openchat-client";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";

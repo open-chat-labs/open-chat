@@ -4,7 +4,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
     import { _, locale } from "svelte-i18n";
-    import { E8S_PER_TOKEN, OpenChat, ReferralStats } from "openchat-client";
+    import { E8S_PER_TOKEN, type OpenChat, type ReferralStats } from "openchat-client";
     import { now500 } from "../../stores/time";
     import { mobileWidth } from "../../stores/screenDimensions";
     import Invaders from "./Invaders.svelte";

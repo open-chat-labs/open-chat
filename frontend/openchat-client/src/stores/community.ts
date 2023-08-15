@@ -1,11 +1,11 @@
-import { Writable, derived, writable } from "svelte/store";
+import { type Writable, derived, writable } from "svelte/store";
 import { setsAreEqual } from "../utils/set";
 import {
-    CommunitySpecificState,
-    CommunityIdentifier,
+    type CommunitySpecificState,
+    type CommunityIdentifier,
     defaultAccessRules,
     CommunityMap,
-    CommunitySummary,
+    type CommunitySummary,
 } from "openchat-shared";
 import { createCommunitySpecificObjectStore } from "./dataByCommunityFactory";
 import { createDerivedPropStore } from "./derived";

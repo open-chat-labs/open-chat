@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { Alignment, Position, derivePosition } from "../utils/alignment";
+import { type Alignment, type Position, derivePosition } from "../utils/alignment";
 
 const { subscribe, update } = writable<HTMLElement | undefined>(undefined);
 

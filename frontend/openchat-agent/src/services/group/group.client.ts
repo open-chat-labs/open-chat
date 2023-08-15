@@ -1,5 +1,5 @@
 import type { Identity } from "@dfinity/agent";
-import { idlFactory, GroupService } from "./candid/idl";
+import { idlFactory, type GroupService } from "./candid/idl";
 import type {
     EventsResponse,
     GroupChatEvent,
@@ -64,7 +64,7 @@ import {
     convertToCommunityReponse,
 } from "./mappers";
 import {
-    Database,
+    type Database,
     getCachedEvents,
     getCachedEventsByIndex,
     getCachedEventsWindow,

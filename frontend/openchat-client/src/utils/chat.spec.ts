@@ -1,11 +1,11 @@
 import {
-    GroupChatSummary,
-    PollConfig,
-    PollVotes,
-    PollContent,
-    PartialUserSummary,
-    UserLookup,
-    UserSummary,
+    type GroupChatSummary,
+    type PollConfig,
+    type PollVotes,
+    type PollContent,
+    type PartialUserSummary,
+    type UserLookup,
+    type UserSummary,
     emptyChatMetrics,
     MessageContextMap,
 } from "openchat-shared";

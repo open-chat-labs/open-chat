@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { idlFactory, OnlineService } from "./candid/idl";
+import { idlFactory, type OnlineService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { toVoid } from "../../utils/mapping";
 import type { AgentConfig } from "../../config";

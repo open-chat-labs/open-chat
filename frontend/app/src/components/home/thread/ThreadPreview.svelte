@@ -1,11 +1,11 @@
 <script lang="ts">
     import {
-        ThreadPreview,
-        EventWrapper,
-        Message,
+        type ThreadPreview,
+        type EventWrapper,
+        type Message,
         OpenChat,
         routeForChatIdentifier,
-        MultiUserChat,
+        type MultiUserChat,
     } from "openchat-client";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";

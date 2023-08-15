@@ -3,10 +3,9 @@
     import { _ } from "svelte-i18n";
     import Avatar from "../../Avatar.svelte";
     import Markdown from "../Markdown.svelte";
-    import { AvatarSize, PublicProfile } from "openchat-client";
+    import { AvatarSize, type PartialUserSummary, type PublicProfile } from "openchat-client";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import type { PartialUserSummary } from "openchat-client";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";

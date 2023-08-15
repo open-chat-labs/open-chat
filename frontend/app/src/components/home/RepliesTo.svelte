@@ -2,9 +2,9 @@
 
 <script lang="ts">
     import {
-        RehydratedReplyContext,
+        type RehydratedReplyContext,
         OpenChat,
-        ChatIdentifier,
+        type ChatIdentifier,
         routeForChatIdentifier,
         chatIdentifiersEqual,
     } from "openchat-client";

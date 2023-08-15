@@ -12,13 +12,13 @@
     import AreYouSure from "../AreYouSure.svelte";
     import { toastStore } from "../../stores/toast";
     import {
-        OpenChat,
-        GroupChatSummary,
+        type OpenChat,
+        type GroupChatSummary,
         routeForChatIdentifier,
-        CommunitySummary,
-        CommunityIdentifier,
-        GroupChatIdentifier,
-        ChatListScope,
+        type CommunitySummary,
+        type CommunityIdentifier,
+        type GroupChatIdentifier,
+        type ChatListScope,
     } from "openchat-client";
     import { canShare, shareLink } from "../../utils/share";
     import Markdown from "./Markdown.svelte";
@@ -86,8 +86,8 @@
             });
     }
 
-    /* we need to call this on mount but also when the chat changes. 
-       you would think we could do that in a $: block, but that seems to cause it 
+    /* we need to call this on mount but also when the chat changes.
+       you would think we could do that in a $: block, but that seems to cause it
        to run twice on initial mount (grrrr)
     */
     onMount(() => init(container));

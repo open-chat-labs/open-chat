@@ -1,11 +1,10 @@
-import {
+import type {
     CheckUsernameResponse,
     SetUsernameResponse,
     CurrentUserResponse,
     UsersResponse,
     UserSummary,
     PartialUserSummary,
-    UnsupportedValueError,
     SuspendUserResponse,
     UnsuspendUserResponse,
     SuspensionDetails,
@@ -15,6 +14,9 @@ import {
     PayForDiamondMembershipResponse,
     ReferralLeaderboardResponse,
     ReferralStats,
+} from "openchat-shared";
+import {
+    UnsupportedValueError
 } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,

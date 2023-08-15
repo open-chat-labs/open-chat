@@ -1,8 +1,8 @@
-import { Readable, derived, writable } from "svelte/store";
+import { type Readable, derived, writable } from "svelte/store";
 import { ScreenWidth, screenWidth } from "./screenDimensions";
 import { mobileWidth } from "./screenDimensions";
 import { rightPanelHistory } from "./rightPanel";
-import { RouteParams, pathParams } from "../routes";
+import { type RouteParams, pathParams } from "../routes";
 
 export const navOpen = writable<boolean>(false);
 

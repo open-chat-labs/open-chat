@@ -9,6 +9,8 @@
     import { popRightPanelHistory, rightPanelHistory } from "../../stores/rightPanel";
     import type {
         ChatEvent,
+        CommunityIdentifier,
+        GroupChatIdentifier,
         EventWrapper,
         AccessRules,
         MemberRole,
@@ -28,7 +30,7 @@
     import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
     import { pathParams } from "../../routes";
     import page from "page";
-    import { CommunityIdentifier, GroupChatIdentifier, compareRoles } from "openchat-shared";
+    import { compareRoles } from "openchat-client";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
     import CommunityChannels from "./communities/details/CommunityChannels.svelte";
     import { interpolateLevel } from "../../utils/i18n";

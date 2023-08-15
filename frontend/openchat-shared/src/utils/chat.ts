@@ -1,17 +1,17 @@
-import {
+import type {
     ChatEvent,
     Metrics,
     ChatSummary,
     EventWrapper,
-    extractUserIdsFromMentions,
     IndexRange,
     MemberRole,
     MessageContent,
-    UnsupportedValueError,
     ChatIdentifier,
     MessageContext,
-    ChatListScope, CryptocurrencyDetails,
+    ChatListScope,
+    CryptocurrencyDetails,
 } from "../domain";
+import { extractUserIdsFromMentions, UnsupportedValueError } from "../domain";
 import type { MessageFormatter } from "./i18n";
 
 export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string> {

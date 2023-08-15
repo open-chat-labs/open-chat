@@ -5,7 +5,7 @@ import {
     type ChatSummary,
     type MessageContent,
     type WebRtcMessage,
-    CommunityIdentifier,
+    type CommunityIdentifier,
 } from "openchat-shared";
 import { selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";

@@ -1,12 +1,12 @@
 import {
-    WorkerRequest,
+    type WorkerRequest,
     MessagesReadFromServer,
-    FromWorker,
+    type FromWorker,
     StorageUpdated,
     UsersLoaded,
-    WorkerResponse,
-    WorkerError,
-    WorkerResult,
+    type WorkerResponse,
+    type WorkerError,
+    type WorkerResult,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";

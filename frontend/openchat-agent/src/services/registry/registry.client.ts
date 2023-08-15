@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import type { RegistryUpdatesResponse } from "openchat-shared";
-import { idlFactory, RegistryService } from "./candid/idl";
+import { idlFactory, type RegistryService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { updatesResponse } from "./mappers";
 import type { AgentConfig } from "../../config";

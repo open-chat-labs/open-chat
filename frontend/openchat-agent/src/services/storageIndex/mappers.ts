@@ -1,13 +1,13 @@
 import type { CandidAllocatedBucketResponse, CandidCanForwardResponse, CandidProjectedAllowance, CandidUserResponse } from "./candid/idl";
-import {
+import type {
     AllocatedBucketResponse,
     AllowanceExceeded,
     CanForwardResponse,
     ProjectedAllowance,
     StorageUserNotFound,
     StorageUserResponse,
-    UnsupportedValueError
 } from "openchat-shared";
+import { UnsupportedValueError } from "openchat-shared";
 
 export function allocatedBucketResponse(
     candid: CandidAllocatedBucketResponse

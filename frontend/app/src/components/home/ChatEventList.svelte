@@ -1,28 +1,30 @@
 <script lang="ts">
-    import {
+    import type {
         ChatSummary,
         EventWrapper,
-        LoadedMessageWindow,
-        LoadedPreviousMessages,
         Message,
         ChatEvent as ChatEventType,
         OpenChat,
-        SentMessage,
-        LoadedNewMessages,
         Mention,
-        LoadedPreviousThreadMessages,
-        LoadedNewThreadMessages,
-        LoadedThreadMessageWindow,
-        ChatUpdated,
-        SentThreadMessage,
         ThreadSummary,
-        SendingMessage,
-        SendingThreadMessage,
-        ReactionSelected,
-        ThreadReactionSelected,
         ChatIdentifier,
         MessageContext,
-        chatIdentifiersEqual,
+    } from "openchat-client";
+    import {
+        ChatUpdated,
+        LoadedMessageWindow,
+        LoadedNewMessages,
+        LoadedNewThreadMessages,
+        LoadedPreviousMessages,
+        LoadedPreviousThreadMessages,
+        LoadedThreadMessageWindow,
+        ReactionSelected,
+        SendingMessage,
+        SendingThreadMessage,
+        SentMessage,
+        SentThreadMessage,
+        ThreadReactionSelected,
+        chatIdentifiersEqual
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";

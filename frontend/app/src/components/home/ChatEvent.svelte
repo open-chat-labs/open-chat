@@ -7,16 +7,16 @@
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import AggregateCommonEvents from "./AggregateCommonEvents.svelte";
     import {
-        CreatedUser,
-        UserSummary,
-        ChatEvent,
-        EventWrapper,
-        Message,
-        OpenChat,
-        ChatIdentifier,
-        ChatType,
+        type CreatedUser,
+        type UserSummary,
+        type ChatEvent,
+        type EventWrapper,
+        type Message,
+        type OpenChat,
+        type ChatIdentifier,
+        type ChatType,
         routeForChatIdentifier,
-        Level,
+        type Level,
     } from "openchat-client";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";

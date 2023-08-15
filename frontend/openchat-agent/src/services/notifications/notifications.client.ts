@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Identity } from "@dfinity/agent";
-import { idlFactory, NotificationsService } from "./candid/idl";
+import { idlFactory, type NotificationsService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { subscriptionExistsResponse } from "./mappers";
 import { toVoid } from "../../utils/mapping";

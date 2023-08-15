@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import {
+import type {
     ChatEvent,
     ChatSpecificState,
     ChatSummary,
@@ -10,18 +10,20 @@ import {
     MessageContent,
     ThreadSyncDetails,
     CreatedUser,
-    compareChats,
-    emptyChatMetrics,
     ChatIdentifier,
-    ChatMap,
     DirectChatIdentifier,
-    nullMembership,
-    chatIdentifiersEqual,
     MultiUserChat,
     ChatListScope,
 } from "openchat-shared";
+import {
+    compareChats,
+    emptyChatMetrics,
+    ChatMap,
+    nullMembership,
+    chatIdentifiersEqual,
+} from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
-import { derived, get, Readable, writable, Writable } from "svelte/store";
+import { derived, get, type Readable, writable, type Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
 import {
     getNextEventAndMessageIndexes,
