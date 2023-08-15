@@ -1,4 +1,4 @@
-import { Readable, derived, get } from "svelte/store";
+import { type Readable, derived, get } from "svelte/store";
 
 export function createDerivedPropStore<S, P extends keyof S>(
     store: Readable<S | undefined>,

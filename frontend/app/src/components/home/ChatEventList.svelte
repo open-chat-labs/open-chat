@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {
+    import type {
         ChatSummary,
         EventWrapper,
         LoadedMessageWindow,
@@ -22,8 +22,8 @@
         ThreadReactionSelected,
         ChatIdentifier,
         MessageContext,
-        chatIdentifiersEqual,
     } from "openchat-client";
+    import { chatIdentifiersEqual } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
     import { rtlStore } from "../../stores/rtl";

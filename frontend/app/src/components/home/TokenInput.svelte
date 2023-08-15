@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getContext, onMount } from "svelte";
-    import { E8S_PER_TOKEN, OpenChat } from "openchat-client";
+    import { E8S_PER_TOKEN, type OpenChat } from "openchat-client";
     import Alert from "svelte-material-icons/Alert.svelte";
     import { iconSize } from "stores/iconSize";
     import { _ } from "svelte-i18n";

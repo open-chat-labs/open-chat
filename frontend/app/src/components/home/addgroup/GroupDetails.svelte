@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { CandidateGroupChat } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";

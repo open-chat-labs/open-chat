@@ -7,10 +7,10 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import {
         AvatarSize,
+        type ChatIdentifier,
         type CommunityMap,
         type CommunitySummary,
         type OpenChat,
-        ChatIdentifier,
     } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
     import { toastStore } from "../../../stores/toast";

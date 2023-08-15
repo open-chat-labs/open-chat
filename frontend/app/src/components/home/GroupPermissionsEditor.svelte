@@ -1,7 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import SelectPermissionRole from "./SelectPermissionRole.svelte";
-    import { ChatPermissions, chatRoles } from "openchat-client";
+    import { type ChatPermissions, chatRoles } from "openchat-client";
 
     export let permissions: ChatPermissions;
     export let isPublic: boolean;

@@ -5,7 +5,7 @@
         type ChannelIdentifier,
         type GroupChatSummary,
         type OpenChat,
-        ChatListScope,
+        type ChatListScope,
     } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";

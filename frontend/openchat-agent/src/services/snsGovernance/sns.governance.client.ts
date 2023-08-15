@@ -4,7 +4,7 @@ import type {
     ManageNeuronResponse,
     ProposalVoteDetails,
 } from "openchat-shared";
-import { idlFactory, SnsGovernanceService } from "./candid/idl";
+import { idlFactory, type SnsGovernanceService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { getProposalVoteDetails, manageNeuronResponse, nervousSystemFunctions } from "./mappers";
 import type { AgentConfig } from "../../config";

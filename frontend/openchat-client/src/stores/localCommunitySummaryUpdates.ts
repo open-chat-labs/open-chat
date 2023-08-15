@@ -1,8 +1,8 @@
 import {
     CommunityMap,
-    CommunityIdentifier,
-    LocalCommunitySummaryUpdates,
-    CommunitySummary,
+    type CommunityIdentifier,
+    type LocalCommunitySummaryUpdates,
+    type CommunitySummary,
 } from "openchat-shared";
 import { LocalUpdatesStore } from "./localUpdatesStore";
 

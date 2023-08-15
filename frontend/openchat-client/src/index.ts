@@ -1,21 +1,21 @@
 export * from "openchat-shared";
 export * from "./stores";
 export { OpenChat } from "./openchat";
-export { OpenChatConfig } from "./config";
+export type { OpenChatConfig } from "./config";
 export * from "./events";
 
 export { ONE_GB } from "./stores/storage";
 export { FilteredProposals } from "./stores/filteredProposals";
-export { MessageReadState } from "./stores/markRead";
-export { TypersByKey } from "./stores/typing";
+export type { MessageReadState } from "./stores/markRead";
+export type { TypersByKey } from "./stores/typing";
 export { OPENCHAT_BOT_USER_ID } from "./stores/user";
 export { immutableStore } from "./stores/immutable";
-export { Dimensions } from "./utils/media";
-export { MessageFormatter, InterpolationValues } from "./utils/i18n";
+export type { Dimensions } from "./utils/media";
+export type { MessageFormatter, InterpolationValues } from "./utils/i18n";
 export { createMapStore } from "./stores/mapStore";
 export { createSetStore } from "./stores/setStore";
-export { GlobalState } from "./stores/global";
+export type { GlobalState } from "./stores/global";
 export { buildCryptoTransferText, buildTransactionUrl } from "./utils/chat";
 export { Poller } from "./utils/poller";
-export { FailedMessages } from "./stores/failedMessages";
+export type { FailedMessages } from "./stores/failedMessages";
 export { emptyUnreadCounts } from "./stores/global";

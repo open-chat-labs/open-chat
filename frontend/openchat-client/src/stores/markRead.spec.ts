@@ -1,5 +1,5 @@
 import { MessageReadTracker, MessagesRead } from "./markRead";
-import { UnconfirmedState, unconfirmed } from "./unconfirmed";
+import { type UnconfirmedState, unconfirmed } from "./unconfirmed";
 import {
     MessageContextMap,
     type EventWrapper,

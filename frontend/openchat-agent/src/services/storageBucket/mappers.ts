@@ -1,5 +1,6 @@
 import type { CandidDeleteFileResponse, CandidFileInfoResponse, CandidForwardFileResponse, CandidUploadChunkResponse } from "./candid/idl";
-import { DeleteFileResponse, FileInfoResponse, ForwardFileResponse, UnsupportedValueError, UploadChunkResponse } from "openchat-shared";
+import type { DeleteFileResponse, FileInfoResponse, ForwardFileResponse, UploadChunkResponse } from "openchat-shared";
+import { UnsupportedValueError } from "openchat-shared";
 
 export function uploadChunkResponse(candid: CandidUploadChunkResponse): UploadChunkResponse {
     if ("Success" in candid) {

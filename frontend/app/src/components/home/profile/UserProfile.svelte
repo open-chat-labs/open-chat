@@ -1,11 +1,11 @@
 <script lang="ts">
     import SectionHeader from "../../SectionHeader.svelte";
     import {
-        PartialUserSummary,
+        type PartialUserSummary,
         OpenChat,
-        AvatarSize,
-        ModerationFlag,
-        ModerationFlags,
+        type AvatarSize,
+        type ModerationFlag,
+        type ModerationFlags,
     } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";

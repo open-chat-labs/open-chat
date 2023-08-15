@@ -11,7 +11,7 @@
  * This writable wrapper will allow us to provide our own equality function
  */
 
-import { Updater, Writable, writable } from "svelte/store";
+import { type Updater, type Writable, writable } from "svelte/store";
 
 function referenceEqual<T>(a: T, b: T): boolean {
     return a === b;

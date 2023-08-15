@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import Loading from "../../Loading.svelte";
     import ThreadPreviewComponent from "./ThreadPreview.svelte";
     import { getContext } from "svelte";

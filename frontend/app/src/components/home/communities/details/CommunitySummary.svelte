@@ -1,8 +1,7 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import CommunityCard from "../explore/CommunityCard.svelte";
     import CommunityDetails from "./CommunityDetails.svelte";
-    import { OpenChat, defaultAccessRules } from "openchat-client";
+    import { type OpenChat, defaultAccessRules } from "openchat-client";
     import CommunityDetailsHeader from "./CommunityDetailsHeader.svelte";
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { getContext } from "svelte";

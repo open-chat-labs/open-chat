@@ -1,6 +1,6 @@
 import {
-    DiamondMembershipDetails,
-    DiamondMembershipDuration,
+    type DiamondMembershipDetails,
+    type DiamondMembershipDuration,
     UnsupportedValueError,
 } from "openchat-shared";
 import { derived, writable } from "svelte/store";

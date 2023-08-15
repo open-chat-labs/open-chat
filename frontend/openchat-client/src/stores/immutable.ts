@@ -1,4 +1,4 @@
-import { Updater, Writable, writable } from "svelte/store";
+import { type Updater, type Writable, writable } from "svelte/store";
 import { deepFreeze } from "../utils/object";
 
 export function immutableStore<T>(val: T): Writable<T> {

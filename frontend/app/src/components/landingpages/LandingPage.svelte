@@ -15,7 +15,7 @@
         pathParams,
     } from "../../routes";
     import { getContext, onMount } from "svelte";
-    import { CreatedUser, OPENCHAT_BOT_USER_ID, OpenChat } from "openchat-client";
+    import { type CreatedUser, OPENCHAT_BOT_USER_ID, type OpenChat } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
     import BlogPage from "./BlogPage.svelte";

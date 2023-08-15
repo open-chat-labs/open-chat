@@ -56,7 +56,7 @@ import {
     currentCommunityMembers,
     selectedCommunity,
 } from "./stores/community";
-import { GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
+import { type GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value

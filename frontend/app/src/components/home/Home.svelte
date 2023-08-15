@@ -8,8 +8,7 @@
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
     import EditCommunity from "./communities/edit/Edit.svelte";
-    import {
-        ChatSummary,
+    import type {
         EnhancedReplyContext,
         AccessRules,
         Message,
@@ -18,10 +17,8 @@
         ThreadClosed,
         SelectedChatInvalid,
         SendMessageFailed,
-        ChatsUpdated,
         Notification,
         CandidateGroupChat,
-        defaultAccessRules,
         EventWrapper,
         ChatType,
         CommunitySummary,
@@ -29,16 +26,18 @@
         ChatIdentifier,
         DirectChatIdentifier,
         GroupChatIdentifier,
-        chatIdentifiersEqual,
-        nullMembership,
         CommunityIdentifier,
         routeForChatIdentifier,
         MultiUserChat,
         MultiUserChatIdentifier,
         GroupChatSummary,
         ChannelIdentifier,
-        compareChats,
-        ChatListScope,
+    } from "openchat-client";
+    import {
+        ChatsUpdated,
+        defaultAccessRules,
+        chatIdentifiersEqual,
+        nullMembership,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";

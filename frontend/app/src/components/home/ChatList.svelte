@@ -6,14 +6,14 @@
     import ChatSummary from "./ChatSummary.svelte";
     import { _ } from "svelte-i18n";
     import {
-        ChatSummary as ChatSummaryType,
-        GroupMatch,
-        UserSummary,
+        type ChatSummary as ChatSummaryType,
+        type GroupMatch,
+        type UserSummary,
         OpenChat,
-        GroupSearchResponse,
+        type GroupSearchResponse,
         routeForChatIdentifier,
         chatIdentifiersEqual,
-        ChannelMatch,
+        type ChannelMatch,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";

@@ -1,17 +1,19 @@
 /* eslint-disable no-case-declarations */
-import {
+import type {
     ChannelSummary,
     ChatIdentifier,
     ChatListScope,
-    ChatMap,
     ChatSummary,
     CommunityIdentifier,
-    CommunityMap,
     CommunitySummary,
     DirectChatSummary,
     EventWrapper,
     GroupChatSummary,
     Message,
+} from "openchat-shared";
+import {
+    ChatMap,
+    CommunityMap,
     ObjectSet,
     chatScopesEqual,
 } from "openchat-shared";

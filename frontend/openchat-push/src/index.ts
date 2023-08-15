@@ -1,14 +1,16 @@
 import { IDL } from "@dfinity/candid";
 import { ApiNotification, NotificationIdl, notification as toNotification } from "openchat-agent";
-import {
+import type {
     Notification,
+    DirectChatIdentifier,
+    ChannelIdentifier,
+    CryptoTransferDetails,
+} from "openchat-shared";
+import {
     UnsupportedValueError,
     routeForMessage,
     routeForChatIdentifier,
     toTitleCase,
-    DirectChatIdentifier,
-    ChannelIdentifier,
-    CryptoTransferDetails,
 } from "openchat-shared";
 
 declare const self: ServiceWorkerGlobalScope;

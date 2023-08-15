@@ -1,7 +1,7 @@
 <script lang="ts">
     import Headline from "./Headline.svelte";
     import BlogSummary from "./blog/BlogSummary.svelte";
-    import { BlogPostInfo, postsBySlug } from "./blog/posts";
+    import { type BlogPostInfo, postsBySlug } from "./blog/posts";
 
     function sortByDate(a: BlogPostInfo, b: BlogPostInfo): number {
         return b.date.getTime() - a.date.getTime();

@@ -1,10 +1,9 @@
 <script lang="ts">
     import {
-        ChatListScope,
-        GroupChatIdentifier,
-        GroupChatSummary,
-        MultiUserChat,
-        OpenChat,
+        type GroupChatIdentifier,
+        type GroupChatSummary,
+        type MultiUserChat,
+        type OpenChat,
         chatIdentifiersEqual,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
@@ -20,7 +19,7 @@
     import { getContext, onMount } from "svelte";
     import { iconSize } from "../../stores/iconSize";
     import RecommendedGroup from "./RecommendedGroup.svelte";
-    import { RemoteData, mapRemoteData } from "../../utils/remoteData";
+    import { type RemoteData, mapRemoteData } from "../../utils/remoteData";
     import page from "page";
     import { routeForScope } from "../../routes";
 

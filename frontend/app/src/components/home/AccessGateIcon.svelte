@@ -2,7 +2,7 @@
     import { _ } from "svelte-i18n";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import { E8S_PER_TOKEN, AccessGate, isSnsGate } from "openchat-client";
+    import { E8S_PER_TOKEN, type AccessGate, isSnsGate } from "openchat-client";
     import { createEventDispatcher } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
     import { snsGateBindings } from "utils/access";

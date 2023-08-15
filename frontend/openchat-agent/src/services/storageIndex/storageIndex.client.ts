@@ -1,5 +1,5 @@
 import type { Identity } from "@dfinity/agent";
-import { idlFactory, StorageIndexService } from "./candid/idl";
+import { idlFactory, type StorageIndexService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { allocatedBucketResponse, canForwardResponse, userResponse } from "./mappers";
 import type {
