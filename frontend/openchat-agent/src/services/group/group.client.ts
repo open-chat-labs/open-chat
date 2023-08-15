@@ -583,10 +583,10 @@ export class GroupClient extends CandidService {
         );
     }
 
-    async getGroupDetails(timestamp: bigint): Promise<GroupChatDetailsResponse> {
+    async getGroupDetails(chatLastUpdated: bigint): Promise<GroupChatDetailsResponse> {
         const fromCache = await getCachedGroupDetails(this.db, this.chatId.groupId);
         if (fromCache !== undefined) {
-            if (fromCache.timestamp >= timestamp) {
+            if (fromCache.timestamp >= chatLastUpdated) {
                 return fromCache;
             } else {
                 return this.getGroupDetailsUpdates(fromCache);

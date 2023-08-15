@@ -361,7 +361,6 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
     confirmedEventIndexesLoaded: new DRange(),
     serverEvents: [],
     expandedDeletedMessages: new Set(),
-    lastUpdated: BigInt(0),
 }));
 
 export const threadServerEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);

@@ -252,7 +252,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "getGroupDetails":
                 agent
-                    .getGroupDetails(payload.chatId, payload.timestamp)
+                    .getGroupDetails(payload.chatId, payload.chatLastUpdated)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

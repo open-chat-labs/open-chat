@@ -1847,15 +1847,15 @@ export class OpenChatAgent extends EventTarget {
 
     getGroupDetails(
         chatId: MultiUserChatIdentifier,
-        timestamp: bigint
+        chatLastUpdated: bigint
     ): Promise<GroupChatDetailsResponse> {
         switch (chatId.kind) {
             case "group_chat":
-                return this.getGroupClient(chatId.groupId).getGroupDetails(timestamp);
+                return this.getGroupClient(chatId.groupId).getGroupDetails(chatLastUpdated);
             case "channel":
                 return this.communityClient(chatId.communityId).getChannelDetails(
                     chatId,
-                    timestamp
+                    chatLastUpdated
                 );
         }
     }

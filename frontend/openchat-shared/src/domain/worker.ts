@@ -769,7 +769,7 @@ type MarkMessagesRead = {
 
 type GetGroupDetails = {
     chatId: MultiUserChatIdentifier;
-    timestamp: bigint;
+    chatLastUpdated: bigint;
     kind: "getGroupDetails";
 };
 

@@ -1092,7 +1092,6 @@ export type ChatSpecificState = {
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
-    lastUpdated: bigint;
     rules?: AccessRules;
     userIds: Set<string>;
     focusMessageIndex?: number;

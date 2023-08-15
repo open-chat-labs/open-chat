@@ -2389,11 +2389,10 @@ export class OpenChat extends OpenChatAgentWorker {
     private async loadChatDetails(serverChat: ChatSummary): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (serverChat.kind === "group_chat" || serverChat.kind === "channel") {
-            const chatLastUpdated = serverChat.lastUpdated;
             const resp = await this.sendRequest({
                 kind: "getGroupDetails",
                 chatId: serverChat.id,
-                timestamp: chatLastUpdated,
+                chatLastUpdated: serverChat.lastUpdated,
             });
             if (resp !== "failure") {
                 chatStateStore.setProp(serverChat.id, "members", resp.members);
@@ -2401,7 +2400,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 chatStateStore.setProp(serverChat.id, "invitedUsers", resp.invitedUsers);
                 chatStateStore.setProp(serverChat.id, "pinnedMessages", resp.pinnedMessages);
                 chatStateStore.setProp(serverChat.id, "rules", resp.rules);
-                chatStateStore.setProp(serverChat.id, "lastUpdated", resp.timestamp);
             }
             await this.updateUserStore(serverChat.id, []);
         }
