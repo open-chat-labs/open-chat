@@ -4570,7 +4570,7 @@ export class OpenChat extends OpenChatAgentWorker {
             howToBuyUrl: t.howToBuyUrl,
             infoUrl: t.infoUrl,
             transactionUrlFormat: t.transactionUrlFormat,
-            rootCanister: t.nervousSystem?.governance,
+            rootCanister: t.nervousSystem?.root,
             governanceCanister: t.nervousSystem?.governance,
             lastUpdated: t.lastUpdated,
         })));
