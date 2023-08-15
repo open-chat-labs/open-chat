@@ -13,6 +13,8 @@ export const notFound = writable(false);
 
 export const pathContextStore = writable<PageJS.Context | undefined>(undefined);
 
+export const routerReady = writable(false);
+
 export const location = derived(pathContextStore, ($store) => {
     return $store ? $store.routePath : "";
 });

@@ -2,6 +2,7 @@ import { writable } from "svelte/store";
 import type { Theme } from "../theme/types";
 import page from "page";
 import { setModifiedTheme } from "../theme/themes";
+import { routerReady } from "routes";
 
 type XFrameMessage = UpdateTheme | ChangeRoute | OpenChatReady;
 
@@ -24,34 +25,50 @@ type OpenChatReady = {
 export const framed = writable(false);
 
 if (window.self !== window.top) {
-    console.log("xxx setting listeners");
+    console.debug("XFRAME_TARGET: setting listeners");
     window.addEventListener("message", externalMessage);
-    if (window.top) {
-        console.log("xxx sending ready message to host");
-        window.top.postMessage({ kind: "openchat_ready" }, "http://localhost:5173");
-    }
 }
+
+let queuedRoute: string | undefined = undefined;
+let isRouterReady = false;
+
+routerReady.subscribe((ready) => {
+    console.debug("XFRAME_TARGET: routerReady changed to ", ready, queuedRoute);
+    if (ready && queuedRoute !== undefined) {
+        page(queuedRoute);
+        queuedRoute = undefined;
+    }
+    isRouterReady = ready;
+});
 
 function externalMessage(ev: MessageEvent) {
     if (ev.origin !== "http://localhost:5173") {
         return;
     }
 
-    console.log("xxx message received from host", ev);
-
+    console.debug("XFRAME_TARGET: message received from host", ev);
     if (ev.data) {
         try {
             const payload = ev.data as XFrameMessage;
             switch (payload.kind) {
                 case "change_route":
-                    page(payload.path);
+                    if (isRouterReady) {
+                        console.debug("XFRAME_TARGET: changing path to ", payload.path);
+                        page(payload.path);
+                    } else {
+                        console.debug("XFRAME_TARGET: queueing route change ", payload.path);
+                        queuedRoute = payload.path;
+                    }
                     break;
                 case "update_theme":
                     setModifiedTheme(payload.base, payload.name, payload.overrides);
                     break;
             }
         } catch (err) {
-            console.log("Error handling an external message from another window", err);
+            console.debug(
+                "XFRAME_TARGET: Error handling an external message from another window",
+                err
+            );
         }
     }
 }

@@ -810,6 +810,10 @@
         &.me {
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
+
+            .username {
+                color: var(--currentChat-msg-me-txt);
+            }
         }
 
         &.rtl {

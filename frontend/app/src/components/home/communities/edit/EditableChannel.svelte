@@ -52,7 +52,7 @@
 
 <style lang="scss">
     :global(.channel-name .textbox) {
-        padding-left: 38px;
+        padding-left: 38px !important;
     }
 
     .channel {
