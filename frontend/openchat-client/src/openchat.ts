@@ -2342,48 +2342,18 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadCommunityDetails(community: CommunitySummary): Promise<void> {
-        if (!communityStateStore.getProp(community.id, "detailsLoaded")) {
-            const resp = await this.sendRequest({
-                kind: "getCommunityDetails",
-                id: community.id,
-                lastUpdated: community.lastUpdated,
-            });
-            if (resp !== "failure") {
-                communityStateStore.setProp(community.id, "detailsLoaded", true);
-                communityStateStore.setProp(community.id, "members", resp.members);
-                communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
-                communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
-                communityStateStore.setProp(community.id, "rules", resp.rules);
-                communityStateStore.setProp(community.id, "lastUpdated", resp.lastUpdated);
-            }
-            await this.updateUserStoreFromCommunityState(community.id);
-        } else {
-            await this.updateCommunityDetails(community);
+        const resp = await this.sendRequest({
+            kind: "getCommunityDetails",
+            id: community.id,
+            communityLastUpdated: community.lastUpdated,
+        });
+        if (resp !== "failure") {
+            communityStateStore.setProp(community.id, "members", resp.members);
+            communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
+            communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
+            communityStateStore.setProp(community.id, "rules", resp.rules);
         }
-    }
-
-    private async updateCommunityDetails(community: CommunitySummary): Promise<void> {
-        const lastUpdated = communityStateStore.getProp(community.id, "lastUpdated");
-        if (lastUpdated !== undefined && lastUpdated < community.lastUpdated) {
-            const gd = await this.sendRequest({
-                kind: "getCommunityDetailsUpdates",
-                id: community.id,
-                previous: {
-                    members: communityStateStore.getProp(community.id, "members"),
-                    blockedUsers: communityStateStore.getProp(community.id, "blockedUsers"),
-                    invitedUsers: communityStateStore.getProp(community.id, "invitedUsers"),
-                    lastUpdated: communityStateStore.getProp(community.id, "lastUpdated"),
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    rules: communityStateStore.getProp(community.id, "rules")!,
-                },
-            });
-            communityStateStore.setProp(community.id, "members", gd.members);
-            communityStateStore.setProp(community.id, "blockedUsers", gd.blockedUsers);
-            communityStateStore.setProp(community.id, "invitedUsers", gd.invitedUsers);
-            communityStateStore.setProp(community.id, "rules", gd.rules);
-            communityStateStore.setProp(community.id, "lastUpdated", gd.lastUpdated);
-            await this.updateUserStoreFromCommunityState(community.id);
-        }
+        await this.updateUserStoreFromCommunityState(community.id);
     }
 
     private async loadChatDetails(serverChat: ChatSummary): Promise<void> {
@@ -4129,7 +4099,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         updatedCommunity !== undefined &&
                         updatedCommunity.latestEventIndex > selectedCommunity.latestEventIndex
                     ) {
-                        this.updateCommunityDetails(updatedCommunity);
+                        this.loadCommunityDetails(updatedCommunity);
                     }
                 }
 

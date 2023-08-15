@@ -732,11 +732,11 @@ export class CommunityClient extends CandidService {
 
     async getCommunityDetails(
         id: CommunityIdentifier,
-        lastUpdated: bigint
+        communityLastUpdated: bigint
     ): Promise<CommunityDetailsResponse> {
         const fromCache = await getCachedCommunityDetails(this.db, id.communityId);
         if (fromCache !== undefined) {
-            if (fromCache.lastUpdated >= lastUpdated) {
+            if (fromCache.lastUpdated >= communityLastUpdated) {
                 return fromCache;
             } else {
                 return this.getCommunityDetailsUpdates(id, fromCache);
@@ -760,7 +760,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    async getCommunityDetailsUpdates(
+    private async getCommunityDetailsUpdates(
         id: CommunityIdentifier,
         previous: CommunityDetails
     ): Promise<CommunityDetails> {

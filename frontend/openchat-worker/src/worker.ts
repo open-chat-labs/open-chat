@@ -1544,19 +1544,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "getCommunityDetails":
                 agent
                     .communityClient(payload.id.communityId)
-                    .getCommunityDetails(payload.id, payload.lastUpdated)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
-                break;
-
-            case "getCommunityDetailsUpdates":
-                agent
-                    .communityClient(payload.id.communityId)
-                    .getCommunityDetailsUpdates(payload.id, payload.previous)
+                    .getCommunityDetails(payload.id, payload.communityLastUpdated)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
