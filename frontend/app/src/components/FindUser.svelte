@@ -31,7 +31,7 @@
     onMount(() => {
         // this focus seems to cause a problem with the animation of the right panel without
         // this setTimeout. Pretty horrible and who knows if 300 ms will be enough on other machines?
-        setTimeout(() => inp.focus(), 300);
+        window.setTimeout(() => inp.focus(), 300);
     });
 
     /**
@@ -47,8 +47,8 @@
     }
 
     function debounce(value: string) {
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(() => {
+        if (timer) window.clearTimeout(timer);
+        timer = window.setTimeout(() => {
             if (value === "") {
                 users = [];
                 return;

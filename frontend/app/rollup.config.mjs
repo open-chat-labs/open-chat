@@ -8,7 +8,7 @@ import copy from "rollup-plugin-copy";
 import livereload from "rollup-plugin-livereload";
 import { terser } from "rollup-plugin-terser";
 import typescript from "@rollup/plugin-typescript";
-import dfxJson from "../../dfx.json";
+import dfxJson from "../../dfx.json" assert { type: "json" };
 import inject from "rollup-plugin-inject";
 import dev from "rollup-plugin-dev";
 import json from "@rollup/plugin-json";
@@ -19,23 +19,26 @@ import autoprefixer from "autoprefixer";
 import { sha256 } from "js-sha256";
 import dotenv from "dotenv";
 import replace from "@rollup/plugin-replace";
-import * as fs from "fs-extra";
-import * as path from "path";
-import * as rimraf from "rimraf";
+import fs from "fs-extra";
+import path from "path";
+import rimraf from "rimraf";
+import { fileURLToPath } from "url";
 
-dotenv.config({ path: path.join(__dirname, "../.env") });
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+dotenv.config({ path: path.join(dirname, "../.env") });
 
 const dfxNetwork = process.env.DFX_NETWORK;
 
 console.log("DFX_NETWORK: ", dfxNetwork);
 
 if (dfxNetwork) {
-    const dfxJsonPath = path.join(__dirname, "../..", "dfx.json");
+    const dfxJsonPath = path.join(dirname, "../..", "dfx.json");
     const dfxJson = JSON.parse(fs.readFileSync(dfxJsonPath));
     const canisterPath =
         dfxJson["networks"][dfxNetwork]["type"] === "persistent"
-            ? path.join(__dirname, "../..", "canister_ids.json")
-            : path.join(__dirname, "../..", ".dfx", dfxNetwork, "canister_ids.json");
+            ? path.join(dirname, "../..", "canister_ids.json")
+            : path.join(dirname, "../..", ".dfx", dfxNetwork, "canister_ids.json");
 
     if (fs.existsSync(canisterPath)) {
         const canisters = JSON.parse(fs.readFileSync(canisterPath));
@@ -107,8 +110,8 @@ function serve() {
 }
 
 function copyFile(fromPath, toPath, file) {
-    const from = path.join(__dirname, fromPath, file);
-    const to = path.join(__dirname, toPath, file);
+    const from = path.join(dirname, fromPath, file);
+    const to = path.join(dirname, toPath, file);
     if (fs.existsSync(from)) {
         console.log("Copying file -> : ", from, to);
         fs.copySync(from, to, {
@@ -119,14 +122,14 @@ function copyFile(fromPath, toPath, file) {
 
 function cleanExcept(files) {
     if (fs.existsSync("_temp")) {
-        rimraf.sync(path.join(__dirname, "_temp"));
+        rimraf.sync(path.join(dirname, "_temp"));
     }
     fs.mkdirSync("_temp");
     files.forEach((file) => copyFile("build", "_temp", file));
-    rimraf.sync(path.join(__dirname, "build"));
+    rimraf.sync(path.join(dirname, "build"));
     fs.mkdirSync("build");
     files.forEach((file) => copyFile("_temp", "build", file));
-    rimraf.sync(path.join(__dirname, "_temp"));
+    rimraf.sync(path.join(dirname, "_temp"));
 }
 
 // this is a bit ridiculous but there we are ...

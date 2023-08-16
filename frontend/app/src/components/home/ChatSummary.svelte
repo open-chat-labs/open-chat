@@ -280,10 +280,6 @@
         class="chat-summary"
         class:selected
         tabindex="0"
-        use:swipe
-        on:swiping={swiping}
-        on:leftswipe={leftSwipe}
-        on:rightswipe={rightSwipe}
         class:empty={canDelete}
         class:rtl={$rtlStore}
         on:mouseenter={() => (hovering = true)}

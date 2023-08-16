@@ -41,9 +41,9 @@
         let parsed = replaceUserIds(replaceDatetimes(text));
         try {
             if (inline) {
-                parsed = marked.parseInline(parsed, options);
+                parsed = marked.parseInline(parsed, options) as string;
             } else {
-                parsed = marked.parse(parsed, options);
+                parsed = marked.parse(parsed, options) as string;
             }
         } catch (err: any) {
             client.logError("Error parsing markdown: ", err);

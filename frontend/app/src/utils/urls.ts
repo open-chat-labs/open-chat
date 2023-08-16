@@ -94,7 +94,7 @@ export function scrollToSection(section: string): number | undefined {
 
     const [_, one] = matches;
 
-    setTimeout(() => {
+    window.setTimeout(() => {
         const target = document.getElementById(section);
         if (!target) {
             console.log("target not found");

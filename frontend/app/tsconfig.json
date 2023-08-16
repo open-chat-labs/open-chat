@@ -6,6 +6,7 @@
         "moduleResolution": "node",
         "resolveJsonModule": true,
         "experimentalDecorators": true,
+        "verbatimModuleSyntax": true,
         "module": "es2020",
         "strict": true,
         "types": ["svelte", "jest", "node", "@types/dom-mediacapture-record"],

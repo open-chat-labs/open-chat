@@ -557,7 +557,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     " based on expiry in ",
                     durationUntilSessionExpireMS
                 );
-                setTimeout(timeout, Math.min(MAX_TIMEOUT_MS, durationUntilLogoutMs));
+                window.setTimeout(timeout, Math.min(MAX_TIMEOUT_MS, durationUntilLogoutMs));
             }
         });
     }

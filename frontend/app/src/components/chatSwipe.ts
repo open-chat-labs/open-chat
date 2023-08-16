@@ -7,11 +7,10 @@ export function clamp(min: number, max: number, val: number): number {
 export const swipe: Action<HTMLElement, { threshold: number }> = (
     node,
     param = { threshold: 20 }
-): ActionReturn => {
+): ActionReturn<{ threshold: number }> => {
     let start = 0;
     let end = 0;
     let swiping = false;
-    let diffx = 0;
 
     function handleGesture() {
         if (end < start && start - end > param.threshold) {
@@ -26,7 +25,7 @@ export const swipe: Action<HTMLElement, { threshold: number }> = (
     function touchMove(e: TouchEvent) {
         if (!swiping) return;
 
-        diffx = start - e.changedTouches[0].screenX;
+        const diffx = start - e.changedTouches[0].screenX;
         node.dispatchEvent(
             new CustomEvent<{ diffx: number }>("swiping", {
                 bubbles: true,

@@ -6,7 +6,7 @@
         "declaration": true,
         "experimentalDecorators": true,
         "esModuleInterop": true,
-        "importsNotUsedAsValues": "error",
+        "verbatimModuleSyntax": true,
         "lib": ["es2020", "WebWorker"],
         "module": "es2020",
         "moduleResolution": "node",
