@@ -14,6 +14,8 @@ export function deepMerge<T extends object>(target: T, source: Subset<T>): T {
         const k = key as keyof T;
         const val = source[k];
         if (typeof val === "object" && val !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
             merged[k] = deepMerge(merged[k], val);
         } else {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
