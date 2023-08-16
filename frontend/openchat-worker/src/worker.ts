@@ -2,13 +2,13 @@ import type { Identity } from "@dfinity/agent";
 import { AuthClient, IdbStorage } from "@dfinity/auth-client";
 import { OpenChatAgent } from "openchat-agent";
 import {
-    CorrelatedWorkerRequest,
-    Logger,
+    type CorrelatedWorkerRequest,
+    type Logger,
     MessagesReadFromServer,
     StorageUpdated,
     UsersLoaded,
-    WorkerEvent,
-    WorkerResponse,
+    type WorkerEvent,
+    type WorkerResponse,
     inititaliseLogger,
 } from "openchat-shared";
 

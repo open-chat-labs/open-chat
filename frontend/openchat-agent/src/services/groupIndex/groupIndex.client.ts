@@ -18,7 +18,7 @@ import type {
     ChannelIdentifier,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
-import { idlFactory, GroupIndexService } from "./candid/idl";
+import { idlFactory, type GroupIndexService } from "./candid/idl";
 import {
     addHotGroupExclusionResponse,
     deleteFrozenGroupResponse,

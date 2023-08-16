@@ -6,7 +6,7 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import UsernameInput from "../UsernameInput.svelte";
     import { createEventDispatcher, getContext } from "svelte";
-    import { writable, Writable } from "svelte/store";
+    import { writable, type Writable } from "svelte/store";
     import type { CreatedUser, OpenChat } from "openchat-client";
     import Button from "../Button.svelte";
     import Select from "../Select.svelte";

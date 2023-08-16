@@ -3,10 +3,9 @@
     import { _ } from "svelte-i18n";
     import Avatar from "../../Avatar.svelte";
     import Markdown from "../Markdown.svelte";
-    import { AvatarSize, PublicProfile } from "openchat-client";
+    import { AvatarSize, type PartialUserSummary, type PublicProfile } from "openchat-client";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import type { PartialUserSummary } from "openchat-client";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
@@ -85,7 +84,7 @@
 <svelte:window on:resize={onWindowResize} />
 
 {#if profile !== undefined}
-    <Overlay dismissible={true} on:close={onClose}>
+    <Overlay dismissible on:close={onClose}>
         <ModalContent
             closeIcon
             fill
@@ -131,11 +130,11 @@
             <div slot="footer" class="footer">
                 <ButtonGroup align={"fill"}>
                     {#if chatButton && !me}
-                        <Button on:click={handleOpenDirectChat} small={true}
+                        <Button on:click={handleOpenDirectChat} small
                             >{$_("profile.chat")}</Button>
                     {/if}
                     {#if me}
-                        <Button on:click={showUserProfile} small={true}
+                        <Button on:click={showUserProfile} small
                             >{$_("profile.settings")}</Button>
                     {/if}
                 </ButtonGroup>

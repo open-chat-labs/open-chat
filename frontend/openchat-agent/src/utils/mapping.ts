@@ -1,4 +1,4 @@
-import { ApiOptionUpdate, OptionUpdate, UnsupportedValueError } from "openchat-shared";
+import { type ApiOptionUpdate, type OptionUpdate, UnsupportedValueError } from "openchat-shared";
 
 // takes a type of the form [] | [A] and a mapper from A -> B and returns a B or undefined
 export function optional<A, B>(candid: [] | [A], mapper: (a: A) => B): B | undefined {

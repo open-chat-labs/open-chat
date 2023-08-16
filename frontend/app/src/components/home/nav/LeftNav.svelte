@@ -11,9 +11,8 @@
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import {
         AvatarSize,
-        CommunitySummary,
-        OpenChat,
-        emptyChatMetrics,
+        type CommunitySummary,
+        type OpenChat,
         emptyUnreadCounts,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";

@@ -37,7 +37,7 @@
     }
 </script>
 
-<SectionHeader border={false} flush={true}>
+<SectionHeader border={false} flush>
     <h4>{interpolateLevel("group.inviteUsers", level, true)}</h4>
     <span title={$_("close")} class="close" on:click={cancelInviteUsers}>
         <HoverIcon>
@@ -71,7 +71,7 @@
         loading={busy}
         square
         on:click={inviteUsers}
-        fill={true}>{interpolateLevel("group.inviteUsers", level, true)}</Button>
+        fill>{interpolateLevel("group.inviteUsers", level, true)}</Button>
 </div>
 
 <style lang="scss">

@@ -2,8 +2,8 @@ import { writable, get } from "svelte/store";
 import { navOpen } from "./layout";
 import { mobileWidth } from "./screenDimensions";
 import {
-    Alignment,
-    Position,
+    type Alignment,
+    type Position,
     boundsCheck,
     centerOfScreen,
     derivePosition,

@@ -1,5 +1,5 @@
 import { compareUsername, nullUser } from "./user";
-import {
+import type {
     ChatSummary,
     EventWrapper,
     GroupChatSummary,
@@ -26,21 +26,23 @@ import {
     LocalChatSummaryUpdates,
     LocalMessageUpdates,
     LocalReaction,
-    emptyChatMetrics,
     LocalPollVote,
     CryptocurrencyTransfer,
     Tally,
-    getContentAsText,
     AccessControlled,
-    nullMembership,
     HasMembershipRole,
     MessageContext,
-    ChatMap,
-    MessageMap,
     MultiUserChatIdentifier,
     MultiUserChat,
     ChatListScope,
     CryptocurrencyDetails,
+} from "openchat-shared";
+import {
+    emptyChatMetrics,
+    getContentAsText,
+    nullMembership,
+    ChatMap,
+    MessageMap,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";

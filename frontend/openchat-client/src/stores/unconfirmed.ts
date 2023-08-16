@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 import { createSetStore } from "./setStore";
-import { EventWrapper, Message, MessageContext, MessageContextMap } from "openchat-shared";
+import { type EventWrapper, type Message, type MessageContext, MessageContextMap } from "openchat-shared";
 import { revokeObjectUrls } from "../utils/chat";
 
 export type UnconfirmedState = {

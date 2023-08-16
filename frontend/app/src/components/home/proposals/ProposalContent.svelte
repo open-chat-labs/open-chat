@@ -3,10 +3,11 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../../stores/rtl";
     import {
-        ChatIdentifier,
-        ProposalContent,
+        type ChatIdentifier,
+        type OpenChat,
+        type ProposalContent,
         ProposalDecisionStatus,
-        RegisterProposalVoteResponse,
+        type RegisterProposalVoteResponse,
     } from "openchat-client";
     import Markdown from "../Markdown.svelte";
     import { now } from "../../../stores/time";
@@ -18,7 +19,6 @@
     import ModalContent from "../../ModalContent.svelte";
     import { proposalVotes } from "../../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
-    import type { OpenChat } from "openchat-client";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";

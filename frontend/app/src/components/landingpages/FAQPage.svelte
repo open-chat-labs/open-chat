@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { allQuestions, Questions } from "openchat-client";
+    import { allQuestions, type Questions } from "openchat-client";
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import Markdown from "../home/Markdown.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";

@@ -1,4 +1,4 @@
-import {
+import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
     ChangeCommunityRoleResponse,
@@ -7,7 +7,6 @@ import {
     ChannelMembershipUpdates,
     ChannelMessageMatch,
     ChannelSummaryResponse,
-    CommonResponses,
     CommunityCanisterChannelSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
     CommunityDetailsResponse,
@@ -26,12 +25,12 @@ import {
     SendMessageResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
-    UnsupportedValueError,
     UpdateCommunityResponse,
     UpdatedEvent,
     UserFailedError,
     UserFailedGateCheck,
 } from "openchat-shared";
+import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
     ApiAddMembersToChannelResponse,
     ApiBlockUserResponse,

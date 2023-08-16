@@ -1,7 +1,6 @@
-<svelte:options immutable={true} />
+<svelte:options immutable />
 
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import type { VideoContent } from "openchat-client";
     import ContentCaption from "./ContentCaption.svelte";

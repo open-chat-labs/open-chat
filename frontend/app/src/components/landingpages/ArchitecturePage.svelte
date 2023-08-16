@@ -39,7 +39,7 @@
 </script>
 
 {#if zooming}
-    <Overlay on:close={() => (zooming = undefined)} dismissible={true} alignBottomOnMobile={false}>
+    <Overlay on:close={() => (zooming = undefined)} dismissible alignBottomOnMobile={false}>
         <ModalContent hideHeader hideFooter fill fitToContent fixedWidth>
             <img slot="body" class="zoomed" src={zooming.url} alt={zooming.alt} />
         </ModalContent>

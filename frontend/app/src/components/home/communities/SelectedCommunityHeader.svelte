@@ -2,11 +2,10 @@
     import Avatar from "../../Avatar.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../../stores/rtl";
-    import { AvatarSize, OpenChat } from "openchat-client";
+    import { AvatarSize, type CommunitySummary, type OpenChat } from "openchat-client";
     import SectionHeader from "../../SectionHeader.svelte";
     import CommunityMenu from "./CommunityMenu.svelte";
     import { getContext } from "svelte";
-    import type { CommunitySummary } from "openchat-shared";
     import VisibilityLabel from "../VisibilityLabel.svelte";
     import { pushRightPanelHistory } from "../../../stores/rightPanel";
 

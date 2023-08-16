@@ -283,12 +283,12 @@
         {/if}
     </div>
     <div on:click={onNext}>
-        <HoverIcon compact={true}>
+        <HoverIcon compact>
             <ChevronUp size="1.8em" color={"var(--icon-txt)"} />
         </HoverIcon>
     </div>
     <div on:click={onPrevious}>
-        <HoverIcon compact={true}>
+        <HoverIcon compact>
             <ChevronDown size="1.8em" color={"var(--icon-txt)"} />
         </HoverIcon>
     </div>

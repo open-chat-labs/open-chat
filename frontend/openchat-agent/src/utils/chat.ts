@@ -1,4 +1,4 @@
-import {
+import type {
     ChatEvent,
     ChatSummary,
     ChatSummaryUpdates,
@@ -25,13 +25,15 @@ import {
     GroupCanisterSummaryUpdatesResponse,
     GroupCanisterThreadDetails,
     UpdatedEvent,
-    ChatMap,
     Metrics,
-    chatIdentifiersEqual,
     CommunityDetails,
     CommunityDetailsUpdates,
     CommunityCanisterCommunitySummaryUpdates,
     ChannelIdentifier,
+} from "openchat-shared";
+import {
+    ChatMap,
+    chatIdentifiersEqual,
 } from "openchat-shared";
 import { toRecord } from "./list";
 import { applyOptionUpdate, identity, mapOptionUpdate } from "./mapping";

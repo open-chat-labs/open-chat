@@ -4,18 +4,17 @@ import { v1 as uuidv1 } from "uuid";
 import { sha3_256 } from "js-sha3";
 import type { AgentConfig } from "../../config";
 import { buildBlobUrl } from "../../utils/chat";
-import {
+import type {
     StorageStatus,
     MessageContent,
     StoredMediaContent,
     BlobReference,
-    StorageUpdated,
-    random128,
     UploadFileResponse,
     AllowanceExceeded,
     ProjectedAllowance,
     StorageUserNotFound,
 } from "openchat-shared";
+import { random128, StorageUpdated } from "openchat-shared";
 import { StorageIndexClient } from "../storageIndex/storageIndex.client";
 import { StorageBucketClient } from "../storageBucket/storageBucket.client";
 

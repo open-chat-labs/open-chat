@@ -1,6 +1,6 @@
 import type { Identity, SignIdentity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { idlFactory, LocalUserIndexService } from "./candid/idl";
+import { idlFactory, type LocalUserIndexService } from "./candid/idl";
 import type {
     ChannelIdentifier,
     InviteUsersResponse,

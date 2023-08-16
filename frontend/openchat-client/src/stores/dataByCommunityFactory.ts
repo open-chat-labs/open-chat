@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { derived, get, Readable, writable, Writable } from "svelte/store";
+import { derived, get, type Readable, writable, type Writable } from "svelte/store";
 import { type CommunityIdentifier, CommunityMap } from "openchat-shared";
 import { chatListScopeStore } from "./global";
 

@@ -21,7 +21,7 @@ import type {
     ApiEventsResponse as ApiCommunityEventsResponse,
     ApiMessagesByMessageIndexResponse as ApiCommunityMessagesByMessageIndexResponse,
 } from "../community/candid/idl";
-import {
+import type {
     EventsResponse,
     EventWrapper,
     GroupChatEvent,
@@ -34,7 +34,6 @@ import {
     GroupInviteCodeChange,
     AccessRules,
     ChatPermissions,
-    UnsupportedValueError,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     GroupCanisterSummaryResponse,
@@ -44,7 +43,10 @@ import {
     ChatIdentifier,
     MultiUserChatIdentifier,
     ConvertToCommunityResponse,
+} from "openchat-shared";
+import {
     CommonResponses,
+    UnsupportedValueError,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {

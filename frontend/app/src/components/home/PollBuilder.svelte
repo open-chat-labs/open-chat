@@ -167,10 +167,10 @@
                             <Legend label={$_("poll.questionLabel")} />
                             <Input
                                 bind:value={poll.pollQuestion}
-                                autofocus={true}
+                                autofocus
                                 minlength={0}
                                 maxlength={MAX_QUESTION_LENGTH}
-                                countdown={true}
+                                countdown
                                 placeholder={$_("poll.optionalQuestion")} />
                         </div>
 
@@ -194,7 +194,7 @@
                                             disabled={poll.pollAnswers.size >= MAX_ANSWERS}
                                             minlength={1}
                                             maxlength={MAX_ANSWER_LENGTH}
-                                            countdown={true}
+                                            countdown
                                             on:enter={addAnswer}
                                             placeholder={$_(
                                                 poll.pollAnswers.size === MAX_ANSWERS
@@ -265,7 +265,7 @@
                     <Button
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        secondary={true}
+                        secondary
                         on:click={() => (open = false)}>{$_("cancel")}</Button>
                     <Button
                         small={!$mobileWidth}

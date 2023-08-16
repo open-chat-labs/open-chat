@@ -210,7 +210,7 @@
 {#if !landing}
     <div class="footer">
         <Footer>
-            <Button tiny={$mobileWidth} small={!$mobileWidth} secondary={true} on:click={cancel}
+            <Button tiny={$mobileWidth} small={!$mobileWidth} secondary on:click={cancel}
                 >{isDiamond ? $_("close") : $_("cancel")}</Button>
             {#if !isDiamond}
                 <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}

@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<svelte:options immutable />
 
 <script lang="ts">
     import Link from "../../Link.svelte";
@@ -8,7 +8,6 @@
     import Avatar from "../../Avatar.svelte";
     import { AvatarSize } from "openchat-client";
     import UnresolvedReply from "../UnresolvedReply.svelte";
-    import { _ } from "svelte-i18n";
     import { rtlStore } from "../../../stores/rtl";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { createEventDispatcher, getContext } from "svelte";

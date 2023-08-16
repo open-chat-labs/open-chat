@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Subscriber, Unsubscriber } from "svelte/store";
 import {
-    ChatIdentifier,
+    type ChatIdentifier,
     ChatMap,
-    MarkReadRequest,
-    MarkReadResponse,
-    ThreadRead,
-    ThreadSyncDetails,
+    type MarkReadRequest,
+    type MarkReadResponse,
+    type ThreadRead,
+    type ThreadSyncDetails,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { bigIntMax } from "../utils/bigint";

@@ -1,12 +1,11 @@
-import {
-    CommonResponses,
+import type {
     InviteUsersResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
     RegisterUserResponse,
     ReportMessageResponse,
-    UnsupportedValueError,
 } from "openchat-shared";
+import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
     ApiInviteUsersResponse,
     ApiInviteUsersToChannelResponse,

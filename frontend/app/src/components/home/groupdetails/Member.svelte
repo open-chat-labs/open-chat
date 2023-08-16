@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<svelte:options immutable />
 
 <script lang="ts">
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";

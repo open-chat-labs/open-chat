@@ -199,8 +199,8 @@
 </script>
 
 {#if open}
-    <Overlay dismissible={true}>
-        <ModalContent large={true} bind:actualWidth={modalWidth}>
+    <Overlay dismissible>
+        <ModalContent large bind:actualWidth={modalWidth}>
             <div class="header" slot="header">
                 <div class="title">
                     {$_("sendGif")}
@@ -209,8 +209,8 @@
                     <Input
                         maxlength={100}
                         type={"text"}
-                        autofocus={true}
-                        countdown={true}
+                        autofocus
+                        countdown
                         placeholder={$_("search")}
                         on:change={onChange}
                         value={searchTerm} />
@@ -248,7 +248,7 @@
                         maxlength={100}
                         type={"text"}
                         autofocus={false}
-                        countdown={true}
+                        countdown
                         placeholder={$_("tokenTransfer.messagePlaceholder")}
                         bind:value={message} />
                 </div>
@@ -262,9 +262,9 @@
                     </span>
                 {/if}
                 <ButtonGroup align={$mobileWidth ? "center" : "end"}>
-                    <Button tiny={true} disabled={selectedGif === undefined} on:click={send}
+                    <Button tiny disabled={selectedGif === undefined} on:click={send}
                         >{$_("send")}</Button>
-                    <Button tiny={true} secondary={true} on:click={() => (open = false)}
+                    <Button tiny secondary on:click={() => (open = false)}
                         >{$_("cancel")}</Button>
                 </ButtonGroup>
             </span>

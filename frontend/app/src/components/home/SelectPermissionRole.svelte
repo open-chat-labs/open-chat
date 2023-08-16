@@ -1,7 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import Legend from "../Legend.svelte";
-    import Kebab from "svelte-material-icons/DotsVertical.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import MenuIcon from "../MenuIcon.svelte";

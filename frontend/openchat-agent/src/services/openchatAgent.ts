@@ -1,7 +1,7 @@
 /* eslint-disable no-case-declarations */
 import type { Identity } from "@dfinity/agent";
 import {
-    Database,
+    type Database,
     getCachedChats,
     initDb,
     loadFailedMessages,
@@ -37,7 +37,7 @@ import {
 import { NnsGovernanceClient } from "./nnsGovernance/nns.governance.client";
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import type { AgentConfig } from "../config";
-import {
+import type {
     Logger,
     AddRemoveReactionResponse,
     ArchiveChatResponse,
@@ -104,7 +104,6 @@ import {
     UndeleteMessageResponse,
     UnpinChatResponse,
     UnpinMessageResponse,
-    UnsupportedValueError,
     UpdateGroupResponse,
     User,
     UserCanisterGroupChatSummary,
@@ -148,9 +147,7 @@ import {
     ChatIdentifier,
     DirectChatIdentifier,
     GroupChatIdentifier,
-    ChatMap,
     MessageContext,
-    chatIdentifiersEqual,
     CommunitySummary,
     ExploreCommunitiesResponse,
     ChannelIdentifier,
@@ -162,8 +159,13 @@ import {
     ExploreChannelsResponse,
     CommunityInvite,
     RegistryValue,
-    DestinationInvalidError,
     PublicGroupSummaryResponse,
+} from "openchat-shared";
+import {
+    UnsupportedValueError,
+    ChatMap,
+    chatIdentifiersEqual,
+    DestinationInvalidError,
     CommonResponses,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";

@@ -7,6 +7,7 @@
         EventWrapper,
         Message,
         MultiUserChatIdentifier,
+        OpenChat,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -14,7 +15,6 @@
     import type { RemoteData } from "../../../utils/remoteData";
     import Loading from "../../Loading.svelte";
     import PinnedMessage from "./PinnedMessage.svelte";
-    import type { OpenChat } from "openchat-client";
 
     export let pinned: Set<number>;
     export let chatId: MultiUserChatIdentifier;

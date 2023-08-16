@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { EventWrapper, Message, MessageContext, MessageContextMap } from "openchat-shared";
+import { type EventWrapper, type Message, type MessageContext, MessageContextMap } from "openchat-shared";
 
 type FailedMessageState = Record<number, EventWrapper<Message>>;
 export type FailedMessages = MessageContextMap<FailedMessageState>;

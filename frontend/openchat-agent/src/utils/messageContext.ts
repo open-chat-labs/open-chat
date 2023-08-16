@@ -1,4 +1,4 @@
-import { MessageContext, MessageContextMap } from "openchat-shared";
+import { type MessageContext, MessageContextMap } from "openchat-shared";
 import { waitAll } from "./promise";
 
 export class AsyncMessageContextMap<T> extends MessageContextMap<T[]> {

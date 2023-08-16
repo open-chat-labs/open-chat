@@ -2,7 +2,7 @@
     import { onMount, getContext } from "svelte";
     import RefreshIcon from "svelte-material-icons/Refresh.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
-    import QR from "svelte-qr";
+    import QRCode from "../QRCode.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../ErrorMessage.svelte";
@@ -12,13 +12,13 @@
     import AreYouSure from "../AreYouSure.svelte";
     import { toastStore } from "../../stores/toast";
     import {
-        OpenChat,
-        GroupChatSummary,
+        type OpenChat,
+        type GroupChatSummary,
         routeForChatIdentifier,
-        CommunitySummary,
-        CommunityIdentifier,
-        GroupChatIdentifier,
-        ChatListScope,
+        type CommunitySummary,
+        type CommunityIdentifier,
+        type GroupChatIdentifier,
+        type ChatListScope,
     } from "openchat-client";
     import { canShare, shareLink } from "../../utils/share";
     import Markdown from "./Markdown.svelte";
@@ -86,8 +86,8 @@
             });
     }
 
-    /* we need to call this on mount but also when the chat changes. 
-       you would think we could do that in a $: block, but that seems to cause it 
+    /* we need to call this on mount but also when the chat changes.
+       you would think we could do that in a $: block, but that seems to cause it
        to run twice on initial mount (grrrr)
     */
     onMount(() => init(container));
@@ -189,11 +189,7 @@
     {#if container.public || (code !== undefined && checked)}
         <div class="link-enabled">
             <div class="link">{link}</div>
-            <div class="qr-wrapper">
-                <div class="qr">
-                    <QR text={link} />
-                </div>
-            </div>
+            <QRCode text={link} border fullWidthOnMobile />
             <div class="message">
                 <Markdown
                     text={interpolateLevel("invite.shareMessage", container.level, true) +
@@ -239,19 +235,6 @@
 {/if}
 
 <style lang="scss">
-    .qr-wrapper {
-        border: 1px solid var(--bd);
-        .qr {
-            background-color: #fff;
-            margin: $sp5 auto;
-            width: 200px;
-
-            @include mobile() {
-                width: 100%;
-                margin: 0;
-            }
-        }
-    }
     .toggle-row {
         display: flex;
         justify-content: space-between;

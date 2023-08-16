@@ -223,7 +223,7 @@
 <div class="menu" class:rtl={$rtlStore}>
     <MenuIcon bind:this={menuIcon} centered position={"right"} align={"end"}>
         <div class="menu-icon" slot="icon">
-            <HoverIcon compact={true}>
+            <HoverIcon compact>
                 <ChevronDown size="1.6em" color={me ? "#fff" : "var(--icon-txt)"} />
             </HoverIcon>
         </div>

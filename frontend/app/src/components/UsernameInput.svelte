@@ -89,7 +89,7 @@
     {disabled}
     minlength={MIN_USERNAME_LENGTH}
     maxlength={MAX_USERNAME_LENGTH}
-    countdown={true}
+    countdown
     placeholder={$_("register.enterUsername")}>
     <slot />
 </Input>

@@ -53,7 +53,7 @@
             direction={"down"}
             on:close={() => (showMentionPicker = false)}
             on:mention={selectReceiver}
-            border={true}
+            border
             prefix={textValue}
             {members} />
     {/if}

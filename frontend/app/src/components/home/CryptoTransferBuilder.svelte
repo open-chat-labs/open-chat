@@ -208,7 +208,7 @@
         </form>
         <span slot="footer">
             <ButtonGroup>
-                <Button small={!$mobileWidth} tiny={$mobileWidth} secondary={true} on:click={cancel}
+                <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
                     >{$_("cancel")}</Button>
                 {#if toppingUp || zero}
                     <Button

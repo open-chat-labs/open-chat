@@ -11,16 +11,16 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ChooseMembers from "../ChooseMembers.svelte";
     import {
-        CandidateGroupChat,
-        CreateGroupResponse,
-        AccessGate,
-        OpenChat,
+        type CandidateGroupChat,
+        type CreateGroupResponse,
+        type AccessGate,
+        type OpenChat,
         UnsupportedValueError,
-        UpdateGroupResponse,
+        type UpdateGroupResponse,
         routeForChatIdentifier,
         chatIdentifierUnset,
-        MultiUserChatIdentifier,
-        UserSummary,
+        type MultiUserChatIdentifier,
+        type UserSummary,
     } from "openchat-client";
     import StageHeader from "../StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
@@ -406,7 +406,7 @@
                         on:upgrade
                         original={originalGroup}
                         {editing}
-                        history={true}
+                        history
                         bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
