@@ -77,7 +77,7 @@
             "enableGlobally": true
         },
         "transform": {
-            "^.+\\.ts$": ["ts-jest", { "useESM": true }],
+            "^.+\\.ts$": ["ts-jest", { "isolatedModules": true, "useESM": true }],
             "^.+\\.js$": "babel-jest"
         },
         "moduleFileExtensions": [
