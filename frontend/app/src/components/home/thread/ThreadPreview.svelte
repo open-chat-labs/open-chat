@@ -106,8 +106,8 @@
                     <div class="root-msg">
                         <Markdown
                             text={client.getContentAsText($_, thread.rootMessage.event.content)}
-                            oneLine={true}
-                            suppressLinks={true} />
+                            oneLine
+                            suppressLinks />
                     </div>
                 </div>
                 {#if unreadCount > 0}
@@ -128,18 +128,18 @@
                             sender={$userStore[thread.rootMessage.event.sender]}
                             focused={false}
                             {observer}
-                            confirmed={true}
+                            confirmed
                             failed={false}
                             senderTyping={false}
-                            readByMe={true}
-                            readByThem={true}
+                            readByMe
+                            readByThem
                             chatId={thread.chatId}
                             chatType={chat.kind}
                             {user}
                             me={thread.rootMessage.event.sender === user.userId}
-                            first={true}
-                            last={true}
-                            readonly={true}
+                            first
+                            last
+                            readonly
                             threadRootMessage={thread.rootMessage.event}
                             pinned={false}
                             supportsEdit={false}
@@ -170,18 +170,18 @@
                                 sender={$userStore[evt.event.sender]}
                                 focused={false}
                                 {observer}
-                                confirmed={true}
+                                confirmed
                                 failed={false}
                                 senderTyping={false}
-                                readByMe={true}
-                                readByThem={true}
+                                readByMe
+                                readByThem
                                 chatId={thread.chatId}
                                 chatType={chat.kind}
                                 {user}
                                 me={evt.event.sender === user.userId}
                                 first={i === 0}
                                 last={i === userGroup.length - 1}
-                                readonly={true}
+                                readonly
                                 threadRootMessage={thread.rootMessage.event}
                                 pinned={false}
                                 supportsEdit={false}

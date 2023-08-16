@@ -26,10 +26,10 @@
 
 <div class="tab-control">
     <div class="tab">
-        <slot isTitle={true} isContent={false} />
+        <slot isTitle isContent={false} />
     </div>
     <div class="tab-page">
-        <slot isTitle={false} isContent={true} />
+        <slot isTitle={false} isContent />
     </div>
 </div>
 

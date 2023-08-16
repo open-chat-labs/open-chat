@@ -34,7 +34,7 @@
         </h3>
         {#if channel.description !== ""}
             <div class="desc">
-                <Markdown text={channel.description} oneLine={true} suppressLinks={true} />
+                <Markdown text={channel.description} oneLine suppressLinks />
             </div>
         {/if}
         <div class="meta">

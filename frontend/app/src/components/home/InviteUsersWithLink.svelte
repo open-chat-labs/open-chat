@@ -189,7 +189,7 @@
     {#if container.public || (code !== undefined && checked)}
         <div class="link-enabled">
             <div class="link">{link}</div>
-            <QRCode text={link} border={true} fullWidthOnMobile={true} />
+            <QRCode text={link} border fullWidthOnMobile />
             <div class="message">
                 <Markdown
                     text={interpolateLevel("invite.shareMessage", container.level, true) +

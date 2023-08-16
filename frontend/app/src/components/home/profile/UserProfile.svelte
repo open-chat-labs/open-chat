@@ -174,7 +174,7 @@
     }
 </script>
 
-<SectionHeader flush={true} shadow={true}>
+<SectionHeader flush shadow>
     <h4 class="title">{$_("profile.title")}</h4>
     <span title={$_("close")} class="close" on:click={closeProfile}>
         <HoverIcon>
@@ -197,7 +197,7 @@
                         size={AvatarSize.Large} />
                 {:else}
                     <EditableAvatar
-                        overlayIcon={true}
+                        overlayIcon
                         image={client.userAvatarUrl(user)}
                         on:imageSelected={userAvatarSelected} />
                 {/if}
@@ -231,7 +231,7 @@
                 <Button
                     loading={saving || checkingUsername}
                     disabled={(!bioDirty && validUsername === undefined) || saving || readonly}
-                    fill={true}
+                    fill
                     small>{$_("update")}</Button>
             </div>
         </CollapsibleCard>

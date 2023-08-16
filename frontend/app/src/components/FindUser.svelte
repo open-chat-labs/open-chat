@@ -99,7 +99,7 @@
                 <span class="avatar">
                     <Avatar
                         statusBorder={hovering ? "var(--members-hv)" : "transparent"}
-                        showStatus={true}
+                        showStatus
                         userId={user.userId}
                         url={client.userAvatarUrl(user)}
                         size={AvatarSize.Default} />

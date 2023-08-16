@@ -80,7 +80,7 @@
             </span>
             <span slot="footer">
                 <ButtonGroup>
-                    <Button secondary={true} on:click={() => dispatch("cancel")}
+                    <Button secondary on:click={() => dispatch("cancel")}
                         >{$_("cancel")}</Button>
                     <Button loading={importing} disabled={importing} on:click={performImport}
                         >{$_("communities.importBtn")}</Button>

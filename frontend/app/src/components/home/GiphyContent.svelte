@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<svelte:options immutable />
 
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
@@ -59,10 +59,10 @@
             alt={content.caption ?? content.title} />
     {:else}
         <video
-            autoplay={true}
-            muted={true}
-            loop={true}
-            playsinline={true}
+            autoplay
+            muted
+            loop
+            playsinline
             class:landscape
             class:fill
             class:withCaption

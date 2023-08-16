@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<svelte:options immutable />
 
 <script lang="ts">
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
@@ -426,8 +426,8 @@
                         {canInvite}
                         {canReplyInThread}
                         collapsed={isCollapsed(evt, filteredProposals)}
-                        supportsEdit={true}
-                        supportsReply={true}
+                        supportsEdit
+                        supportsReply
                         threadRootMessage={undefined}
                         publicGroup={(chat.kind === "group_chat" || chat.kind === "channel") &&
                             chat.public}

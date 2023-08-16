@@ -84,7 +84,7 @@
 <svelte:window on:resize={onWindowResize} />
 
 {#if profile !== undefined}
-    <Overlay dismissible={true} on:close={onClose}>
+    <Overlay dismissible on:close={onClose}>
         <ModalContent
             closeIcon
             fill
@@ -130,11 +130,11 @@
             <div slot="footer" class="footer">
                 <ButtonGroup align={"fill"}>
                     {#if chatButton && !me}
-                        <Button on:click={handleOpenDirectChat} small={true}
+                        <Button on:click={handleOpenDirectChat} small
                             >{$_("profile.chat")}</Button>
                     {/if}
                     {#if me}
-                        <Button on:click={showUserProfile} small={true}
+                        <Button on:click={showUserProfile} small
                             >{$_("profile.settings")}</Button>
                     {/if}
                 </ButtonGroup>

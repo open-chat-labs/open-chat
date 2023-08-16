@@ -164,13 +164,13 @@
             disabled={confirming}
             tiny={$mobileWidth}
             small={!$mobileWidth}
-            secondary={true}
+            secondary
             on:click={cancel}>{$_("cancel")}</Button>
         <Button
             disabled={confirming}
             tiny={$mobileWidth}
             small={!$mobileWidth}
-            secondary={true}
+            secondary
             on:click={features}>{$_("upgrade.features")}</Button>
         <Button
             small={!$mobileWidth}
