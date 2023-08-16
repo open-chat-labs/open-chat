@@ -1,7 +1,7 @@
 <script lang="ts">
     import { getContext } from "svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import QR from "svelte-qr";
+    import QRCode from "../QRCode.svelte";
     import type { OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { toastStore } from "../../stores/toast";
@@ -24,22 +24,10 @@
         <div>{$_("tapForReferralLink")}</div>
         <CopyIcon size={"1em"} color={"var(--icon-txt)"} />
     </div>
-    <div class="qr">
-        <QR text={link} />
-    </div>
+    <QRCode text={link} size="larger" fullWidthOnMobile={true} />
 </div>
 
 <style lang="scss">
-    .qr {
-        background-color: #fff;
-        width: 250px;
-
-        @include mobile() {
-            width: 100%;
-            margin: 0;
-        }
-    }
-
     .link {
         display: flex;
         gap: $sp2;

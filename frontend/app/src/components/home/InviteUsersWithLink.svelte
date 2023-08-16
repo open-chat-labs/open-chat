@@ -2,7 +2,7 @@
     import { onMount, getContext } from "svelte";
     import RefreshIcon from "svelte-material-icons/Refresh.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
-    import QR from "svelte-qr";
+    import QRCode from "../QRCode.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../ErrorMessage.svelte";
@@ -189,11 +189,7 @@
     {#if container.public || (code !== undefined && checked)}
         <div class="link-enabled">
             <div class="link">{link}</div>
-            <div class="qr-wrapper">
-                <div class="qr">
-                    <QR text={link} />
-                </div>
-            </div>
+            <QRCode text={link} border={true} fullWidthOnMobile={true} />
             <div class="message">
                 <Markdown
                     text={interpolateLevel("invite.shareMessage", container.level, true) +
@@ -239,19 +235,6 @@
 {/if}
 
 <style lang="scss">
-    .qr-wrapper {
-        border: 1px solid var(--bd);
-        .qr {
-            background-color: #fff;
-            margin: $sp5 auto;
-            width: 200px;
-
-            @include mobile() {
-                width: 100%;
-                margin: 0;
-            }
-        }
-    }
     .toggle-row {
         display: flex;
         justify-content: space-between;
