@@ -57,7 +57,7 @@
 
 <div class="container">
     <div class="link">{link}</div>
-    <QRCode text={link} border={true} fullWidthOnMobile={true} />
+    <QRCode text={link} border fullWidthOnMobile />
     <div class="message">
         {$_("userReferralMessage")}
     </div>

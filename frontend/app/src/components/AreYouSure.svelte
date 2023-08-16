@@ -43,7 +43,7 @@
                 <Input
                     invalid={false}
                     disabled={inProgress}
-                    autofocus={true}
+                    autofocus
                     bind:value={response}
                     minlength={0}
                     maxlength={200}
@@ -54,13 +54,13 @@
             <ButtonGroup>
                 <Button
                     disabled={inProgress}
-                    small={true}
+                    small
                     on:click={() => onClick(false)}
-                    secondary={true}>{noLabel ?? $_("noThanks")}</Button>
+                    secondary>{noLabel ?? $_("noThanks")}</Button>
                 <Button
                     loading={inProgress}
                     disabled={!canConfirm}
-                    small={true}
+                    small
                     on:click={() => onClick(true)}>{yesLabel ?? $_("yesPlease")}</Button>
             </ButtonGroup>
         </span>

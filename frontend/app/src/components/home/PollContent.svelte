@@ -1,4 +1,4 @@
-<!-- <svelte:options immutable={true} /> -->
+<!-- <svelte:options immutable /> -->
 <script lang="ts">
     import Poll from "svelte-material-icons/Poll.svelte";
     import { _ } from "svelte-i18n";

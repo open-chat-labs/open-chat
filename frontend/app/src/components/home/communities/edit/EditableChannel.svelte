@@ -35,7 +35,7 @@
             bind:value={editingChannel.name}
             minlength={min}
             maxlength={max}
-            countdown={true}
+            countdown
             invalid={editingChannel.name.length < min || editingChannel.name.length > max}
             on:blur={stopEditing}
             on:enter={stopEditing}

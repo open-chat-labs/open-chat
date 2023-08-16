@@ -51,7 +51,7 @@
     }
 </script>
 
-<Overlay on:close dismissible={true}>
+<Overlay on:close dismissible>
     <ModalContent>
         <span class="header" slot="header">
             <div class="main-title">{title}</div>

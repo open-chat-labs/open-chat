@@ -43,8 +43,8 @@
     <div class="label">
         <Markdown
             text={$_("prizes.winner", { values: { recipient: winner, amount, token: symbol } })}
-            oneLine={true}
-            suppressLinks={true} />
+            oneLine
+            suppressLinks />
     </div>
     {#if transactionLinkText !== undefined}
         <div class="link">

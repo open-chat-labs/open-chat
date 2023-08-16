@@ -125,7 +125,7 @@
         <Avatar
             statusBorder={"var(--section-bg)"}
             {blocked}
-            showStatus={true}
+            showStatus
             userId={chat.userId}
             url={chat.avatarUrl}
             size={AvatarSize.Default} />

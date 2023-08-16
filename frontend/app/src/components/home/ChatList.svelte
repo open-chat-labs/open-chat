@@ -340,7 +340,7 @@
         <PreviewWrapper let:joiningCommunity let:joinCommunity>
             <div class="join">
                 <ButtonGroup align="center">
-                    <Button secondary={true} small={true} on:click={cancelPreview}>
+                    <Button secondary small on:click={cancelPreview}>
                         {$_("leave")}
                     </Button>
                     <Button

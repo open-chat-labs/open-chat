@@ -24,7 +24,7 @@
         <div>{$_("tapForReferralLink")}</div>
         <CopyIcon size={"1em"} color={"var(--icon-txt)"} />
     </div>
-    <QRCode text={link} size="larger" fullWidthOnMobile={true} />
+    <QRCode text={link} size="larger" fullWidthOnMobile />
 </div>
 
 <style lang="scss">

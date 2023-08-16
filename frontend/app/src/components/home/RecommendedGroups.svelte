@@ -95,8 +95,8 @@
         <h3 class="title">{$_("noGroupsFound")}</h3>
         <p class="subtitle">{$_("checkBackLater")}</p>
         <ButtonGroup align={"fill"}>
-            <Button small={true} on:click={cancelRecommendations}>{$_("close")}</Button>
-            <Button secondary={true} small={true} on:click={loadData}>{$_("refresh")}</Button>
+            <Button small on:click={cancelRecommendations}>{$_("close")}</Button>
+            <Button secondary small on:click={loadData}>{$_("refresh")}</Button>
         </ButtonGroup>
     </div>
 {/if}

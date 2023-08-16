@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<svelte:options immutable />
 
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
@@ -118,12 +118,12 @@
 <ContentCaption caption={content.caption} {edited} {reply} />
 
 {#if zoomable && zoom}
-    <Overlay on:close={() => (zoom = false)} dismissible={true} alignBottomOnMobile={false}>
+    <Overlay on:close={() => (zoom = false)} dismissible alignBottomOnMobile={false}>
         <ModalContent
-            hideHeader={true}
-            hideFooter={true}
-            fill={true}
-            fitToContent={true}
+            hideHeader
+            hideFooter
+            fill
+            fitToContent
             fixedWidth={false}>
             <span class="body" slot="body">
                 <img

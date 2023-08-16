@@ -83,7 +83,7 @@
             bind:value={nextChannelName}
             minlength={MIN_CHANNEL_LENGTH}
             maxlength={MAX_CHANNEL_LENGTH}
-            countdown={true}
+            countdown
             on:enter={addChannel}
             placeholder={$_("communities.channelPlaceholder")} />
     </div>
