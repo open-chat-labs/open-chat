@@ -39,10 +39,11 @@ impl Communities {
     }
 
     pub fn join(&mut self, community_id: CommunityId, now: TimestampMillis) -> (&mut Community, bool) {
+        let index = self.next_index();
         match self.communities.entry(community_id) {
             Vacant(e) => {
                 self.removed.retain(|c| c.community_id != community_id);
-                (e.insert(Community::new(community_id, now)), true)
+                (e.insert(Community::new(community_id, index, now)), true)
             }
             Occupied(e) => (e.into_mut(), false),
         }
@@ -90,5 +91,9 @@ impl Communities {
 
     pub fn has(&self, community_id: &CommunityId) -> bool {
         self.communities.contains_key(community_id)
+    }
+
+    fn next_index(&self) -> u32 {
+        self.communities.values().map(|c| c.index.value).max().unwrap_or_default() + 1
     }
 }

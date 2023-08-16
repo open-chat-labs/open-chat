@@ -46,6 +46,7 @@ pub struct GroupChatSummaryUpdates {
 pub struct CommunitySummary {
     pub community_id: CommunityId,
     pub channels: Vec<ChannelSummary>,
+    pub index: u32,
     pub archived: bool,
     pub pinned: Vec<ChannelId>,
 }
@@ -54,6 +55,7 @@ pub struct CommunitySummary {
 pub struct CommunitySummaryUpdates {
     pub community_id: CommunityId,
     pub channels: Vec<ChannelSummaryUpdates>,
+    pub index: Option<u32>,
     pub archived: Option<bool>,
     pub pinned: Option<Vec<ChannelId>>,
 }
