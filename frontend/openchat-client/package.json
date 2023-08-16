@@ -24,8 +24,8 @@
         "drange": "^2.0.1",
         "identicon.js": "^2.3.3",
         "md5": "^2.3.0",
-        "openchat-worker": "*",
         "openchat-shared": "*",
+        "openchat-worker": "*",
         "peerjs": "^1.4.7",
         "svelte": "^4.2.0",
         "svelte-i18n": "^3.7.0",
@@ -77,7 +77,7 @@
             "enableGlobally": true
         },
         "transform": {
-            "^.+\\.ts$": "ts-jest",
+            "^.+\\.ts$": ["ts-jest", { "useESM": true }],
             "^.+\\.js$": "babel-jest"
         },
         "moduleFileExtensions": [
@@ -89,6 +89,7 @@
             "openchat-shared": "<rootDir>/src/dummyModule.js",
             "idb": "<rootDir>/src/dummyModule.js",
             "../utils/notifications": "<rootDir>/src/dummyNotifications.js"
-        }
+        },
+        "extensionsToTreatAsEsm": [".ts"]
     }
 }

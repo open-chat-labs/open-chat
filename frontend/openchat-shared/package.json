@@ -52,7 +52,7 @@
             "enableGlobally": true
         },
         "transform": {
-            "^.+\\.ts$": "ts-jest",
+            "^.+\\.ts$": ["ts-jest", { "isolatedModules": true, "useESM": true }],
             "^.+\\.js$": "babel-jest"
         },
         "moduleFileExtensions": [
@@ -62,6 +62,7 @@
         "moduleNameMapper": {
             "idb": "<rootDir>/src/dummyModule.js",
             "../utils/notifications": "<rootDir>/src/dummyNotifications.js"
-        }
+        },
+        "extensionsToTreatAsEsm": [".ts"]
     }
 }
