@@ -17,6 +17,7 @@
         selectedCommunityRoute,
         selectedChannelRoute,
         chatListRoute,
+        routerReady,
     } from "../routes";
 
     let route: typeof SvelteComponent | undefined = undefined;
@@ -191,6 +192,8 @@
             }
         );
         page.start();
+
+        routerReady.set(true);
     });
 
     onDestroy(() => page.stop());

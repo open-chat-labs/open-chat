@@ -23,6 +23,8 @@
     import { showMenuForLandingRoute } from "../../utils/urls";
     import page from "page";
     import { saveSeletedTheme } from "../../theme/themes";
+    import { framed } from "../../stores/xframe";
+    import HostedLandingPage from "./HostedLandingPage.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -54,89 +56,93 @@
     </Overlay>
 {/if}
 
-{#if showMenu}
-    <Header on:login={() => client.login()} on:logout={logout} />
-{/if}
+{#if $framed}
+    <HostedLandingPage on:login={() => client.login()} />
+{:else}
+    {#if showMenu}
+        <Header on:login={() => client.login()} on:logout={logout} />
+    {/if}
 
-<main class:miami class="main">
-    {#if $pathParams.kind === "features_route"}
-        <FeaturesPage />
-    {:else if miami}
-        {#await import("./miami/Miami.svelte")}
-            <div class="loading">
-                <Loading />
-            </div>
-        {:then { default: Miami }}
-            <Miami on:login={() => client.login()} />
-        {/await}
-    {:else}
-        <Content>
-            {#if isBlogRoute($pathParams)}
-                {#if $pathParams.slug !== undefined}
-                    {#await import("./BlogPostPage.svelte")}
+    <main class:miami class="main">
+        {#if $pathParams.kind === "features_route"}
+            <FeaturesPage />
+        {:else if miami}
+            {#await import("./miami/Miami.svelte")}
+                <div class="loading">
+                    <Loading />
+                </div>
+            {:then { default: Miami }}
+                <Miami on:login={() => client.login()} />
+            {/await}
+        {:else}
+            <Content>
+                {#if isBlogRoute($pathParams)}
+                    {#if $pathParams.slug !== undefined}
+                        {#await import("./BlogPostPage.svelte")}
+                            <div class="loading">
+                                <Loading />
+                            </div>
+                        {:then { default: BlogPostPage }}
+                            <BlogPostPage slug={$pathParams.slug} />
+                        {/await}
+                    {:else}
+                        <BlogPage />
+                    {/if}
+                {:else if isRoadmapRoute($pathParams)}
+                    {#await import("./RoadmapPage.svelte")}
                         <div class="loading">
                             <Loading />
                         </div>
-                    {:then { default: BlogPostPage }}
-                        <BlogPostPage slug={$pathParams.slug} />
+                    {:then { default: RoadmapPage }}
+                        <RoadmapPage />
+                    {/await}
+                {:else if isWhitepaperRoute($pathParams)}
+                    {#await import("./WhitepaperPage.svelte")}
+                        <div class="loading">
+                            <Loading />
+                        </div>
+                    {:then { default: WhitepaperPage }}
+                        <WhitepaperPage />
+                    {/await}
+                {:else if isArchitectureRoute($pathParams)}
+                    {#await import("./ArchitecturePage.svelte")}
+                        <div class="loading">
+                            <Loading />
+                        </div>
+                    {:then { default: ArchitecturePage }}
+                        <ArchitecturePage />
+                    {/await}
+                {:else if isGuidelinesRoute($pathParams)}
+                    {#await import("./GuidelinesPage.svelte")}
+                        <div class="loading">
+                            <Loading />
+                        </div>
+                    {:then { default: GuidelinesPage }}
+                        <GuidelinesPage />
+                    {/await}
+                {:else if isFaqRoute($pathParams)}
+                    {#await import("./FAQPage.svelte")}
+                        <div class="loading">
+                            <Loading />
+                        </div>
+                    {:then { default: FAQPage }}
+                        <FAQPage />
+                    {/await}
+                {:else if isDiamondRoute($pathParams)}
+                    {#await import("./DiamondPage.svelte")}
+                        <div class="loading">
+                            <Loading />
+                        </div>
+                    {:then { default: DiamondPage }}
+                        <DiamondPage />
                     {/await}
                 {:else}
-                    <BlogPage />
+                    <HomePage on:login={() => client.login()} />
                 {/if}
-            {:else if isRoadmapRoute($pathParams)}
-                {#await import("./RoadmapPage.svelte")}
-                    <div class="loading">
-                        <Loading />
-                    </div>
-                {:then { default: RoadmapPage }}
-                    <RoadmapPage />
-                {/await}
-            {:else if isWhitepaperRoute($pathParams)}
-                {#await import("./WhitepaperPage.svelte")}
-                    <div class="loading">
-                        <Loading />
-                    </div>
-                {:then { default: WhitepaperPage }}
-                    <WhitepaperPage />
-                {/await}
-            {:else if isArchitectureRoute($pathParams)}
-                {#await import("./ArchitecturePage.svelte")}
-                    <div class="loading">
-                        <Loading />
-                    </div>
-                {:then { default: ArchitecturePage }}
-                    <ArchitecturePage />
-                {/await}
-            {:else if isGuidelinesRoute($pathParams)}
-                {#await import("./GuidelinesPage.svelte")}
-                    <div class="loading">
-                        <Loading />
-                    </div>
-                {:then { default: GuidelinesPage }}
-                    <GuidelinesPage />
-                {/await}
-            {:else if isFaqRoute($pathParams)}
-                {#await import("./FAQPage.svelte")}
-                    <div class="loading">
-                        <Loading />
-                    </div>
-                {:then { default: FAQPage }}
-                    <FAQPage />
-                {/await}
-            {:else if isDiamondRoute($pathParams)}
-                {#await import("./DiamondPage.svelte")}
-                    <div class="loading">
-                        <Loading />
-                    </div>
-                {:then { default: DiamondPage }}
-                    <DiamondPage />
-                {/await}
-            {:else}
-                <HomePage on:login={() => client.login()} />
-            {/if}
-        </Content>
-    {/if}
-</main>
+            </Content>
+        {/if}
+    </main>
+{/if}
 
 <style lang="scss">
     :global(.landing-page .card) {
