@@ -42,7 +42,7 @@ routerReady.subscribe((ready) => {
 });
 
 function externalMessage(ev: MessageEvent) {
-    if (ev.origin !== "http://localhost:5173") {
+    if (!process.env.FRAME_ANCESTORS?.includes(ev.origin)) {
         return;
     }
 
