@@ -10,7 +10,7 @@
 
 <div class="qr-wrapper" class:border>
     <div class="qr" class:smaller={size === "smaller"} class:larger={size === "larger"} class:full-width-on-mobile={fullWidthOnMobile}>
-        <QRCodeImage {text} errorCorrectionLevel="Q" margin=2 displayHeight="100%" displayWidth="100%" />
+        <QRCodeImage {text} errorCorrectionLevel="Q" margin={2} displayHeight="100%" displayWidth="100%" />
         {#if logo !== undefined}
             <img class="icon" src={logo} />
         {/if}
