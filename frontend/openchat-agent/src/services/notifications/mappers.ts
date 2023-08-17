@@ -1,7 +1,6 @@
-import {
+import type {
     SubscriptionExistsResponse,
     ToggleMuteNotificationResponse,
-    UnsupportedValueError,
     Notification,
     AddedToChannelNotification,
     ChannelNotification,
@@ -12,6 +11,7 @@ import {
     DirectReaction,
     CryptoTransferDetails,
 } from "openchat-shared";
+import { UnsupportedValueError } from "openchat-shared";
 import { identity, optional } from "../../utils/mapping";
 import type {
     ApiMuteNotificationsResponse,

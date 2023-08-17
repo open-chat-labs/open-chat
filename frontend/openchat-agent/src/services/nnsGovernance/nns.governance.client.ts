@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import type { ManageNeuronResponse, ProposalVoteDetails } from "openchat-shared";
-import { idlFactory, NnsGovernanceService } from "./candid/idl";
+import { idlFactory, type NnsGovernanceService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { getProposalVoteDetails, manageNeuronResponse } from "./mappers";
 import type { AgentConfig } from "../../config";

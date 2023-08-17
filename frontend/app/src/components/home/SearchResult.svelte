@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { AvatarSize, UserStatus } from "openchat-client";
+    import { AvatarSize } from "openchat-client";
     import Avatar from "../Avatar.svelte";
-    import { _ } from "svelte-i18n";
 
     export let showSpinner: boolean | undefined = false;
     export let avatarUrl: string;

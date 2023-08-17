@@ -5,22 +5,22 @@
     import { closeNotificationsForChat } from "../../utils/notifications";
     import { getContext, onMount, tick } from "svelte";
     import {
-        ChatEvent,
-        ChatSummary,
-        EnhancedReplyContext,
-        EventWrapper,
-        Mention,
-        Message,
-        MessageContent,
-        OpenChat,
-        FilteredProposals,
-        User,
-        ChatIdentifier,
+        type ChatEvent,
+        type ChatSummary,
+        type EnhancedReplyContext,
+        type EventWrapper,
+        type Mention,
+        type Message,
+        type MessageContent,
+        type OpenChat,
+        type FilteredProposals,
+        type User,
+        type ChatIdentifier,
         chatIdentifiersEqual,
-        MultiUserChat,
-        GroupChatSummary,
+        type MultiUserChat,
+        type GroupChatSummary,
         CommunityMap,
-        CommunitySummary,
+        type CommunitySummary,
         ICP_SYMBOL,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
@@ -28,9 +28,10 @@
     import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
     import GiphySelector from "./GiphySelector.svelte";
     import { messageToForwardStore } from "../../stores/messageToForward";
-    import { toastStore } from "stores/toast";
+    import { toastStore } from "../../stores/toast";
     import ImportToCommunity from "./communities/Import.svelte";
     import { randomSentence } from "../../utils/randomMsg";
+    import { framed } from "../../stores/xframe";
     import { rightPanelHistory } from "../../stores/rightPanel";
 
     export let joining: MultiUserChat | undefined;
@@ -275,7 +276,7 @@
             bind:searchTerm
             on:goToMessageIndex
             on:close={() => (showSearchHeader = false)} />
-    {:else}
+    {:else if !$framed}
         <CurrentChatHeader
             on:clearSelection
             on:markAllRead={onMarkAllRead}

@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import {
+import type {
     ApiChannelMessagesRead,
     ApiChat,
     ApiChatInList,
@@ -9,9 +9,9 @@ import {
     ApiSendMessageArgs,
     ApiSendMessageWithTransferToChannelArgs,
     ApiSendMessageWithTransferToGroupArgs,
-    idlFactory,
     UserService,
 } from "./candid/idl";
+import { idlFactory } from "./candid/idl";
 import type {
     InitialStateResponse,
     UpdatesResponse,
@@ -94,7 +94,7 @@ import {
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
-    Database,
+    type Database,
     getCachedEvents,
     getCachedEventsByIndex,
     getCachedEventsWindow,

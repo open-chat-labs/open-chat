@@ -58,7 +58,7 @@
 
 <div on:mousedown={startDrag} class="profiler" {style}>
     <Select bind:value={selectedMethod}>
-        <option value={""} selected={true} disabled={true}>Choose metric</option>
+        <option value={""} selected disabled>Choose metric</option>
         {#each methods as method}
             <option value={method}>{method}</option>
         {/each}

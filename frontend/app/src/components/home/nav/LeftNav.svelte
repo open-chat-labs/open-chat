@@ -12,8 +12,8 @@
     import {
         AvatarSize,
         CommunityMap,
-        CommunitySummary,
-        OpenChat,
+        type CommunitySummary,
+        type OpenChat,
         emptyUnreadCounts,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";

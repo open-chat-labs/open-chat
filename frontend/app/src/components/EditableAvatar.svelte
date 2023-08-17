@@ -119,7 +119,7 @@
 
 {#if showModal}
     <Overlay>
-        <ModalContent fill={true}>
+        <ModalContent fill>
             <span slot="header">Crop image</span>
             <span slot="body">
                 <div class="cropper">
@@ -133,7 +133,7 @@
             </span>
             <span slot="footer">
                 <ButtonGroup>
-                    <Button tiny secondary={true} on:click={() => (showModal = false)}
+                    <Button tiny secondary on:click={() => (showModal = false)}
                         >{$_("cancel")}</Button>
                     <Button tiny on:click={cropImage}>{$_("apply")}</Button>
                 </ButtonGroup>
@@ -143,7 +143,7 @@
 {/if}
 
 <input
-    hidden={true}
+    hidden
     type="file"
     accept=".jpg, .jpeg, .png, .gif, .svg"
     on:change={onFileSelected}

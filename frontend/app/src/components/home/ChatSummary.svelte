@@ -294,7 +294,7 @@
                 statusBorder={selected || hovering ? "var(--chatSummary-hv)" : "transparent"}
                 {blocked}
                 url={chat.avatarUrl}
-                showStatus={true}
+                showStatus
                 userId={chat.userId?.userId}
                 size={AvatarSize.Default} />
         </div>
@@ -306,7 +306,7 @@
                 {#if chat.typing !== undefined}
                     {chat.typing} <Typing />
                 {:else}
-                    <Markdown text={lastMessage} oneLine={true} suppressLinks={true} />
+                    <Markdown text={lastMessage} oneLine suppressLinks />
                 {/if}
             </div>
         </div>

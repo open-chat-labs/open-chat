@@ -7,13 +7,13 @@
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
     import {
-        DiamondMembershipDuration,
+        type DiamondMembershipDuration,
+        type OpenChat,
         E8S_PER_TOKEN,
         ICP_SYMBOL,
     } from "openchat-client";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import type { OpenChat } from "openchat-client";
     import Checkbox from "../../Checkbox.svelte";
     import { toastStore } from "stores/toast";
     import Expiry from "./Expiry.svelte";
@@ -164,13 +164,13 @@
             disabled={confirming}
             tiny={$mobileWidth}
             small={!$mobileWidth}
-            secondary={true}
+            secondary
             on:click={cancel}>{$_("cancel")}</Button>
         <Button
             disabled={confirming}
             tiny={$mobileWidth}
             small={!$mobileWidth}
-            secondary={true}
+            secondary
             on:click={features}>{$_("upgrade.features")}</Button>
         <Button
             small={!$mobileWidth}

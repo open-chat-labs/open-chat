@@ -72,28 +72,28 @@
         {#if isFrozen}
             <Button
                 loading={freezingInProgress}
-                secondary={true}
-                small={true}
+                secondary
+                small
                 on:click={unfreezeGroup}>
                 {$_("unfreezeGroup")}
             </Button>
         {:else}
             <Button
                 loading={freezingInProgress}
-                secondary={true}
-                small={true}
+                secondary
+                small
                 on:click={freezeGroup}>
                 {$_("freezeGroup")}
             </Button>
         {/if}
     {/if}
-    <Button secondary={true} small={true} on:click={cancelPreview}>
+    <Button secondary small on:click={cancelPreview}>
         {$_("leave")}
     </Button>
     <Button
         loading={joining !== undefined}
         disabled={joining !== undefined}
-        small={true}
+        small
         on:click={joinGroup}>
         {interpolateLevel("joinGroup", chat.level, true)}
     </Button>

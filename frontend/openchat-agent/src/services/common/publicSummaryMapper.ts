@@ -8,7 +8,7 @@ import { apiGroupSubtype, accessGate, message } from "./chatMappers";
 import {
     nullMembership,
     type GroupChatSummary,
-    PublicGroupSummaryResponse,
+    type PublicGroupSummaryResponse,
     CommonResponses,
 } from "openchat-shared";
 

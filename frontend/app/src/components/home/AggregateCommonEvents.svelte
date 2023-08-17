@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<svelte:options immutable />
 
 <script lang="ts">
     import type { ChatIdentifier, Level, OpenChat, UserLookup, UserSummary } from "openchat-client";
@@ -78,7 +78,7 @@
 {#if joinedText !== undefined || deletedText !== undefined}
     <div class="timeline-event">
         {#if joinedText !== undefined}
-            <Markdown oneLine={true} suppressLinks={true} text={joinedText} />
+            <Markdown oneLine suppressLinks text={joinedText} />
         {/if}
         {#if deletedText !== undefined}
             <p

@@ -68,7 +68,7 @@
                     loading={joiningCommunity}
                     disabled={joiningCommunity}
                     on:click={() => joinCommunity(false)}>{$_("communities.joinCommunity")}</Button>
-                <Button secondary={true} small={true} on:click={cancelPreview}>
+                <Button secondary small on:click={cancelPreview}>
                     {$_("leave")}
                 </Button>
             </div>

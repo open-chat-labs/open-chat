@@ -58,7 +58,7 @@ import type {
     ApiArchiveUnarchiveChatsResponse,
     ApiSendMessageWithTransferToChannelResponse,
 } from "./candid/idl";
-import {
+import type {
     EventsResponse,
     EventWrapper,
     DirectChatEvent,
@@ -89,12 +89,10 @@ import {
     SearchDirectChatResponse,
     SetBioResponse,
     UnpinChatResponse,
-    UnsupportedValueError,
     DirectChatSummaryUpdates,
     DeletedDirectMessageResponse,
     UpdatedEvent,
     SetMessageReminderResponse,
-    CommonResponses,
     CreateCommunityResponse,
     GroupChatsInitial,
     CachedGroupChatSummaries,
@@ -111,10 +109,14 @@ import {
     GroupChatsUpdates,
     DirectChatsUpdates,
     DirectChatIdentifier,
-    nullMembership,
     ManageFavouritesResponse,
     LeaveCommunityResponse,
     DeleteCommunityResponse,
+} from "openchat-shared";
+import {
+    nullMembership,
+    CommonResponses,
+    UnsupportedValueError,
 } from "openchat-shared";
 import {
     bytesToBigint,

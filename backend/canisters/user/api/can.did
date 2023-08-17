@@ -344,6 +344,14 @@ type SetBioResponse = variant {
     UserSuspended;
 };
 
+type SetCommunityIndexesArgs = record {
+    indexes : vec record { CommunityId; nat32 };
+};
+
+type SetCommunityIndexesResponse = variant {
+    Success;
+};
+
 type SetContactArgs = record {
     contact : OptionalContact;
 };
@@ -626,6 +634,7 @@ type UserCanisterGroupChatSummaryUpdates = record {
 type UserCanisterCommunitySummary = record {
     community_id : CommunityId;
     channels : vec UserCanisterChannelSummary;
+    index : nat32;
     archived : bool;
     pinned : vec ChannelId;
 };
@@ -633,6 +642,7 @@ type UserCanisterCommunitySummary = record {
 type UserCanisterCommunitySummaryUpdates = record {
     community_id : CommunityId;
     channels : vec UserCanisterChannelSummaryUpdates;
+    index : opt nat32;
     archived : opt bool;
     pinned : opt vec ChannelId;
 };
@@ -796,6 +806,7 @@ service : {
     unmute_notifications : (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
     add_hot_group_exclusions : (AddHotGroupExclusionsArgs) -> (AddHotGroupExclusionsResponse);
     set_bio : (SetBioArgs) -> (SetBioResponse);
+    set_community_indexes : (SetCommunityIndexesArgs) -> (SetCommunityIndexesResponse);
     set_contact : (SetContactArgs) -> (SetContactResponse);
     set_message_reminder_v2 : (SetMessageReminderV2Args) -> (SetMessageReminderResponse);
     cancel_message_reminder : (CancelMessageReminderArgs) -> (CancelMessageReminderResponse);

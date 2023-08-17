@@ -4,11 +4,11 @@
     import Checkbox from "../Checkbox.svelte";
     import {
         E8S_PER_TOKEN,
-        AccessControlled,
-        OpenChat,
-        Permissioned,
-        HasLevel,
-        HasMembershipRole,
+        type AccessControlled,
+        type OpenChat,
+        type Permissioned,
+        type HasLevel,
+        type HasMembershipRole,
         isSnsGate,
     } from "openchat-client";
     import { _ } from "svelte-i18n";

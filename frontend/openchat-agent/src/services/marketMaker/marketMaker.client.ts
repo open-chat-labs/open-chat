@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "openchat-shared";
-import { idlFactory, MarketMakerService } from "./candid/idl";
+import { idlFactory, type MarketMakerService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { updateConfigResponse } from "./mappers";
 import type { AgentConfig } from "../../config";

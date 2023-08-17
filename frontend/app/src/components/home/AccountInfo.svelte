@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import QR from "svelte-qr";
+    import QRCode from "../QRCode.svelte";
     import { toastStore } from "../../stores/toast";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
@@ -43,12 +43,7 @@
 </script>
 
 <div class="account-info">
-    <div class="qr-wrapper" class:border>
-        <div class="qr" class:smaller={qrSize === "smaller"} class:larger={qrSize === "larger"}>
-            <QR text={account} level="Q" />
-            <img class="icon" src={tokenDetails.logo} />
-        </div>
-    </div>
+    <QRCode text={account} size={qrSize} logo={tokenDetails.logo} {border} />
     <p class:centered>{$_("tokenTransfer.yourAccount", { values: { token: symbol } })}</p>
     <div class="receiver" class:centered>
         <div class="account">
@@ -61,56 +56,6 @@
 </div>
 
 <style lang="scss">
-    .qr-wrapper {
-        padding: $sp5;
-        display: flex;
-        justify-content: center;
-        width: 100%;
-        margin-bottom: $sp4;
-        position: relative;
-
-        &.border {
-            border: 1px solid var(--bd);
-        }
-    }
-
-    .qr {
-        background-color: #fff;
-        width: 140px;
-        height: 140px;
-
-        .icon {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-size: contain;
-            height: 35px;
-            width: 35px;
-            border-radius: 50%;
-            background-repeat: no-repeat;
-            background-position: top;
-        }
-
-        &.smaller {
-            width: 120px;
-            height: 120px;
-            .icon {
-                height: 30px;
-                width: 30px;
-            }
-        }
-
-        &.larger {
-            width: 180px;
-            height: 180px;
-            .icon {
-                height: 45px;
-                width: 45px;
-            }
-        }
-    }
-
     .centered {
         text-align: center;
     }

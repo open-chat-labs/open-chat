@@ -70,11 +70,11 @@
     }
 </script>
 
-<SectionHeader gap={true} flush={true} shadow={true}>
+<SectionHeader gap flush shadow>
     <div class="avatar">
         <Avatar
             statusBorder={"var(--section-bg)"}
-            showStatus={true}
+            showStatus
             userId={chat.userId}
             url={chat.avatarUrl}
             size={AvatarSize.Default} />
@@ -87,7 +87,7 @@
             {#if chat.typing}
                 {chat.subtext} <Typing />
             {:else}
-                <Markdown text={chat.subtext} oneLine={true} suppressLinks={true} />
+                <Markdown text={chat.subtext} oneLine suppressLinks />
             {/if}
         </div>
     </div>

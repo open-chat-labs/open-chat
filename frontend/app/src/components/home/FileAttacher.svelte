@@ -51,6 +51,6 @@
         {:else}
             <Paperclip />
         {/if}
-        <input bind:this={fileinput} hidden={true} type="file" on:change={onFileSelected} />
+        <input bind:this={fileinput} hidden type="file" on:change={onFileSelected} />
     </HoverIcon>
 </div>

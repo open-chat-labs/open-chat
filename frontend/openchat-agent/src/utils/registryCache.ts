@@ -1,4 +1,4 @@
-import { openDB, DBSchema, IDBPDatabase } from "idb";
+import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { RegistryValue } from "openchat-shared";
 
 const CACHE_VERSION = 1;

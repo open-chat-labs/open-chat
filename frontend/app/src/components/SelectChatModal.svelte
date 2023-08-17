@@ -7,12 +7,13 @@
         CommunityIdentifier,
         CommunitySummary,
         DirectChatSummary,
+        GlobalState,
         MultiUserChat,
         OpenChat,
     } from "openchat-client";
     import Avatar from "./Avatar.svelte";
     import CollapsibleCard from "./CollapsibleCard.svelte";
-    import { AvatarSize, GlobalState, UserStatus, chatIdentifiersEqual } from "openchat-client";
+    import { AvatarSize, UserStatus, chatIdentifiersEqual } from "openchat-client";
     import Panel from "./Panel.svelte";
     import { iconSize } from "../stores/iconSize";
     import HoverIcon from "./HoverIcon.svelte";

@@ -1,5 +1,5 @@
 import type { Identity } from "@dfinity/agent";
-import { idlFactory, LedgerService } from "./candid/idl";
+import { idlFactory, type LedgerService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { AgentConfig } from "../../config";
 import { Principal } from "@dfinity/principal";

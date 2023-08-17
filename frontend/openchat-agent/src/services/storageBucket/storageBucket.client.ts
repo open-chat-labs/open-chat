@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
-import { idlFactory, StorageBucketService } from "./candid/idl";
+import { idlFactory, type StorageBucketService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import {
     deleteFileResponse,

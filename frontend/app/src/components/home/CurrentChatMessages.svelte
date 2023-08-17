@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<svelte:options immutable />
 
 <script lang="ts">
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
@@ -9,18 +9,18 @@
     import { _ } from "svelte-i18n";
     import {
         AvatarSize,
-        EventWrapper,
-        EnhancedReplyContext,
-        ChatEvent as ChatEventType,
-        Message,
-        Mention,
-        ChatSummary,
-        OpenChat,
+        type EventWrapper,
+        type EnhancedReplyContext,
+        type ChatEvent as ChatEventType,
+        type Message,
+        type Mention,
+        type ChatSummary,
+        type OpenChat,
         FilteredProposals,
-        MessageReadState,
-        FailedMessages,
+        type MessageReadState,
+        type FailedMessages,
         chatIdentifiersEqual,
-        ChatIdentifier,
+        type ChatIdentifier,
         routeForChatIdentifier,
     } from "openchat-client";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
@@ -426,8 +426,8 @@
                         {canInvite}
                         {canReplyInThread}
                         collapsed={isCollapsed(evt, filteredProposals)}
-                        supportsEdit={true}
-                        supportsReply={true}
+                        supportsEdit
+                        supportsReply
                         threadRootMessage={undefined}
                         publicGroup={(chat.kind === "group_chat" || chat.kind === "channel") &&
                             chat.public}

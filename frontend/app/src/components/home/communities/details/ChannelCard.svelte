@@ -1,9 +1,8 @@
 <script lang="ts">
     import Avatar from "../../../Avatar.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import { AvatarSize, ChannelMatch, OpenChat, routeForChatIdentifier } from "openchat-client";
+    import { AvatarSize, type ChannelMatch, type OpenChat, routeForChatIdentifier } from "openchat-client";
     import { mobileWidth } from "../../../../stores/screenDimensions";
-    import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import page from "page";
     import AccessGateIcon from "../../AccessGateIcon.svelte";
@@ -35,7 +34,7 @@
         </h3>
         {#if channel.description !== ""}
             <div class="desc">
-                <Markdown text={channel.description} oneLine={true} suppressLinks={true} />
+                <Markdown text={channel.description} oneLine suppressLinks />
             </div>
         {/if}
         <div class="meta">

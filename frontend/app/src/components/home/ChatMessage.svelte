@@ -1,23 +1,23 @@
-<svelte:options immutable={true} />
+<svelte:options immutable />
 
 <script lang="ts">
     import Link from "../Link.svelte";
     import {
-        CreatedUser,
-        Message,
-        EnhancedReplyContext,
-        Dimensions,
-        MessageContent,
+        AvatarSize,
+        type CreatedUser,
+        type Message,
+        type EnhancedReplyContext,
+        type Dimensions,
+        type MessageContent,
         OpenChat,
-        PartialUserSummary,
-        MessageReminderCreatedContent,
-        ChatIdentifier,
-        ChatType,
+        type PartialUserSummary,
+        type MessageReminderCreatedContent,
+        type ChatIdentifier,
+        type ChatType,
         routeForMessage,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -810,6 +810,10 @@
         &.me {
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
+
+            .username {
+                color: var(--currentChat-msg-me-txt);
+            }
         }
 
         &.rtl {

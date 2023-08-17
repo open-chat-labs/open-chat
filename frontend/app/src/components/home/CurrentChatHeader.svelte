@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, TypersByKey } from "openchat-client";
+    import { AvatarSize, type OpenChat, type TypersByKey } from "openchat-client";
     import { mobileWidth } from "../../stores/screenDimensions";
     import CurrentChatMenu from "./CurrentChatMenu.svelte";
     import SectionHeader from "../SectionHeader.svelte";
@@ -125,7 +125,7 @@
         <Avatar
             statusBorder={"var(--section-bg)"}
             {blocked}
-            showStatus={true}
+            showStatus
             userId={chat.userId}
             url={chat.avatarUrl}
             size={AvatarSize.Default} />

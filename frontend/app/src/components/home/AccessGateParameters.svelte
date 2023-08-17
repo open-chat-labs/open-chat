@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { E8S_PER_TOKEN, SNSAccessGate } from "openchat-client";
+    import { E8S_PER_TOKEN, type SNSAccessGate } from "openchat-client";
     import { snsGateBindings } from "utils/access";
 
     export let gate: SNSAccessGate;

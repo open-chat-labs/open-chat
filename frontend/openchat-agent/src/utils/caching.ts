@@ -1,27 +1,29 @@
 import { MAX_EVENTS, MAX_MESSAGES } from "../constants";
-import { openDB, DBSchema, IDBPDatabase } from "idb";
+import { openDB, type DBSchema, type IDBPDatabase } from "idb";
+import type {
+    ChatEvent,
+    ChatIdentifier,
+    ChatStateFull,
+    ChatSummary,
+    EventsResponse,
+    EventsSuccessResult,
+    EventWrapper,
+    GroupChatDetails,
+    IndexRange,
+    Message,
+    MessageContent,
+    ReplyContext,
+    SendMessageResponse,
+    SendMessageSuccess,
+    UpdatedEvent,
+    MessageContext,
+    CommunityDetails,
+} from "openchat-shared";
 import {
     chatIdentifiersEqual,
-    type ChatEvent,
-    type ChatIdentifier,
-    type ChatStateFull,
-    type ChatSummary,
-    type EventsResponse,
-    type EventsSuccessResult,
-    type EventWrapper,
-    type GroupChatDetails,
-    type IndexRange,
-    type Message,
-    type MessageContent,
-    type ReplyContext,
-    type SendMessageResponse,
-    type SendMessageSuccess,
-    type UpdatedEvent,
     ChatMap,
     UnsupportedValueError,
-    MessageContext,
     MessageContextMap,
-    CommunityDetails,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";

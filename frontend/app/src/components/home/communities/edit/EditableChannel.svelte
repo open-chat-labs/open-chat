@@ -35,7 +35,7 @@
             bind:value={editingChannel.name}
             minlength={min}
             maxlength={max}
-            countdown={true}
+            countdown
             invalid={editingChannel.name.length < min || editingChannel.name.length > max}
             on:blur={stopEditing}
             on:enter={stopEditing}
@@ -52,7 +52,7 @@
 
 <style lang="scss">
     :global(.channel-name .textbox) {
-        padding-left: 38px;
+        padding-left: 38px !important;
     }
 
     .channel {

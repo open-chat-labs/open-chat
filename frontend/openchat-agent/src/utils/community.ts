@@ -1,18 +1,20 @@
-import {
+import type {
     CommunityCanisterCommunitySummaryUpdates,
-    CommunityMap,
     UserCanisterCommunitySummaryUpdates,
-    type CommunitySummary,
-    type CommunitySummaryResponse,
-    type UserCanisterCommunitySummary,
+    CommunitySummary,
+    CommunitySummaryResponse,
+    UserCanisterCommunitySummary,
     CommunitySummaryUpdatesResponse,
     ChannelSummary,
     UserCanisterChannelSummaryUpdates,
     CommunityCanisterChannelSummaryUpdates,
-    ChatMap,
     ThreadSyncDetails,
     GroupCanisterThreadDetails,
     UserCanisterChannelSummary,
+} from "openchat-shared";
+import {
+    CommunityMap,
+    ChatMap,
 } from "openchat-shared";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
 import { toRecord } from "./list";

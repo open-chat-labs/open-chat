@@ -1,7 +1,9 @@
 import { identity, optional } from "../../utils/mapping";
 import type {
     AddHotGroupExclusionResponse,
+    DeleteFrozenGroupResponse,
     FreezeGroupResponse,
+    GroupChatSummary,
     GroupMatch,
     RemoveHotGroupExclusionResponse,
     SetCommunityModerationFlagsResponse,
@@ -13,6 +15,7 @@ import type {
     ExploreCommunitiesResponse,
     ChannelIdentifier,
 } from "openchat-shared";
+import { UnsupportedValueError } from "openchat-shared";
 import type {
     ApiActiveGroupsResponse,
     ApiAddHotGroupExclusionResponse,
@@ -29,11 +32,6 @@ import type {
     ApiExploreCommunitiesResponse,
     ApiLookupChannelByGroupIdResponse,
 } from "./candid/idl";
-import {
-    DeleteFrozenGroupResponse,
-    GroupChatSummary,
-    UnsupportedValueError,
-} from "openchat-shared";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
 import { accessGate } from "../common/chatMappers";
 

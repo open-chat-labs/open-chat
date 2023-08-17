@@ -36,7 +36,7 @@
     class:rtl={$rtlStore}
     class:crypto={replyingTo.content.kind === "crypto_content"}>
     <div class="close-icon" on:click={cancelReply}>
-        <HoverIcon compact={true}>
+        <HoverIcon compact>
             <Close size={$iconSize} color={me ? "#fff" : "#aaa"} />
         </HoverIcon>
     </div>
@@ -51,11 +51,11 @@
         messageId={replyingTo.messageId}
         messageIndex={replyingTo.messageIndex}
         senderId={replyingTo.senderId}
-        truncate={true}
+        truncate
         edited={replyingTo.edited}
         content={replyingTo.content}
         myUserId={user.userId}
-        reply={true} />
+        reply />
 </div>
 
 <style lang="scss">

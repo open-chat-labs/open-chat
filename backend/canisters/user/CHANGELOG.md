@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support manual ordering of communities ([#4201](https://github.com/open-chat-labs/open-chat/pull/4201))
+
 ### Changed
 
 - Add support for versioned access rules ([#4159](https://github.com/open-chat-labs/open-chat/pull/4159))

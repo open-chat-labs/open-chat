@@ -2,9 +2,9 @@
     import Avatar from "../Avatar.svelte";
     import {
         AvatarSize,
-        GroupChatSummary,
-        MultiUserChat,
-        OpenChat,
+        type GroupChatSummary,
+        type MultiUserChat,
+        type OpenChat,
         routeForChatIdentifier,
     } from "openchat-client";
     import { _ } from "svelte-i18n";

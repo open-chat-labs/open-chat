@@ -1,4 +1,4 @@
-import { Actor, HttpAgent, Identity } from "@dfinity/agent";
+import { Actor, HttpAgent, type Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import type { Principal } from "@dfinity/principal";
 import { AuthError, DestinationInvalidError, SessionExpiryError } from "openchat-shared";

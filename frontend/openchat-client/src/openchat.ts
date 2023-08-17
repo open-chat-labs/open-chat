@@ -196,7 +196,7 @@ import {
     fillMessage,
     FREE_MAX_SIZES,
     isSocialVideoLink,
-    MaxMediaSizes,
+    type MaxMediaSizes,
     messageContentFromFile,
     twitterLinkRegex,
     youtubeRegex,
@@ -232,56 +232,96 @@ import { getTypingString, startTyping, stopTyping } from "./utils/chat";
 import type { MessageFormatter } from "./utils/i18n";
 import { indexIsInRanges } from "./utils/range";
 import { OpenChatAgentWorker } from "./agentWorker";
+import type {
+    CreatedUser,
+    IdentityState,
+    ThreadSyncDetails,
+    WebRtcMessage,
+    ChatSummary,
+    EventWrapper,
+    Message,
+    GroupChatSummary,
+    MemberRole,
+    AccessRules,
+    EventsResponse,
+    ChatEvent,
+    ThreadSummary,
+    DataContent,
+    SendMessageSuccess,
+    TransferSuccess,
+    User,
+    MessageContent,
+    EnhancedReplyContext,
+    RemoteUserToggledReaction,
+    RemoteUserSentMessage,
+    CheckUsernameResponse,
+    UserSummary,
+    RegisterUserResponse,
+    CurrentUserResponse,
+    RemoveMemberResponse,
+    RegisterProposalVoteResponse,
+    GroupInvite,
+    SearchDirectChatResponse,
+    SearchGroupChatResponse,
+    ThreadPreview,
+    UsersArgs,
+    UsersResponse,
+    PartialUserSummary,
+    PublicProfile,
+    SetUsernameResponse,
+    SetBioResponse,
+    PendingCryptocurrencyWithdrawal,
+    WithdrawCryptocurrencyResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
+    UpdateGroupResponse,
+    CandidateGroupChat,
+    CreateGroupResponse,
+    Notification,
+    Logger,
+    ChatFrozenEvent,
+    ChatUnfrozenEvent,
+    UserStatus,
+    ThreadRead,
+    DiamondMembershipDuration,
+    DiamondMembershipDetails,
+    UpdateMarketMakerConfigArgs,
+    UpdateMarketMakerConfigResponse,
+    UpdatedEvent,
+    AccessGate,
+    ProposalVoteDetails,
+    MessageReminderCreatedContent,
+    InviteUsersResponse,
+    ReferralLeaderboardRange,
+    ReferralLeaderboardResponse,
+    CommunityPermissions,
+    CommunitySummary,
+    CreateCommunityResponse,
+    GroupSearchResponse,
+    ChatPermissions,
+    ChatIdentifier,
+    GroupChatIdentifier,
+    DirectChatIdentifier,
+    CommunityIdentifier,
+    ExploreCommunitiesResponse,
+    MultiUserChatIdentifier,
+    MultiUserChat,
+    ChatListScope,
+    ChannelIdentifier,
+    ExploreChannelsResponse,
+    CommunityInvite,
+    ModerationFlag,
+    ChannelSummary,
+    GroupMoved,
+    CryptocurrencyContent,
+    CryptocurrencyDetails,
+    CryptocurrencyTransfer,
+} from "openchat-shared";
 import {
-    type CreatedUser,
-    type IdentityState,
     AuthProvider,
-    type ThreadSyncDetails,
-    type WebRtcMessage,
-    type ChatSummary,
-    type EventWrapper,
-    type Message,
-    type GroupChatSummary,
-    type MemberRole,
-    type AccessRules,
     missingUserIds,
-    type EventsResponse,
-    type ChatEvent,
-    type ThreadSummary,
-    type DataContent,
-    type SendMessageSuccess,
-    type TransferSuccess,
-    type User,
-    type MessageContent,
-    type EnhancedReplyContext,
-    type RemoteUserToggledReaction,
-    type RemoteUserSentMessage,
-    type CheckUsernameResponse,
-    type UserSummary,
-    type RegisterUserResponse,
-    type CurrentUserResponse,
-    type RemoveMemberResponse,
-    type RegisterProposalVoteResponse,
-    type GroupInvite,
-    type SearchDirectChatResponse,
-    type SearchGroupChatResponse,
-    type ThreadPreview,
-    type UsersArgs,
-    type UsersResponse,
-    type PartialUserSummary,
-    type PublicProfile,
-    type SetUsernameResponse,
-    type SetBioResponse,
-    type PendingCryptocurrencyWithdrawal,
-    type WithdrawCryptocurrencyResponse,
-    type InviteCodeResponse,
-    type EnableInviteCodeResponse,
-    type DisableInviteCodeResponse,
-    type ResetInviteCodeResponse,
-    type UpdateGroupResponse,
-    type CandidateGroupChat,
-    type CreateGroupResponse,
-    type Notification,
     getTimeUntilSessionExpiryMs,
     userIdsFromEvents,
     getContentAsText,
@@ -290,50 +330,15 @@ import {
     MessagesReadFromServer,
     StorageUpdated,
     UsersLoaded,
-    type Logger,
-    type ChatFrozenEvent,
-    type ChatUnfrozenEvent,
-    type UserStatus,
     userStatus,
-    ThreadRead,
-    DiamondMembershipDuration,
-    DiamondMembershipDetails,
-    UpdateMarketMakerConfigArgs,
-    UpdateMarketMakerConfigResponse,
-    UpdatedEvent,
     compareRoles,
-    AccessGate,
-    ProposalVoteDetails,
-    MessageReminderCreatedContent,
-    InviteUsersResponse,
-    ReferralLeaderboardRange,
-    ReferralLeaderboardResponse,
-    CommunityPermissions,
     E8S_PER_TOKEN,
-    CommunitySummary,
-    CreateCommunityResponse,
-    GroupSearchResponse,
-    ChatPermissions,
-    ChatIdentifier,
     ChatMap,
     chatIdentifiersEqual,
-    GroupChatIdentifier,
-    DirectChatIdentifier,
-    type CommunityIdentifier,
     chatIdentifierToString,
     MessageContextMap,
     messageContextsEqual,
-    ExploreCommunitiesResponse,
-    MultiUserChatIdentifier,
-    MultiUserChat,
     communityRoles,
-    ChatListScope,
-    ChannelIdentifier,
-    ExploreChannelsResponse,
-    CommunityInvite,
-    ModerationFlag,
-    ChannelSummary,
-    GroupMoved,
     isSnsGate,
     toTitleCase,
     CHAT_SYMBOL,
@@ -343,9 +348,6 @@ import {
     KINIC_SYMBOL,
     SNS1_SYMBOL,
     GHOST_SYMBOL,
-    CryptocurrencyContent,
-    CryptocurrencyDetails,
-    CryptocurrencyTransfer,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -2342,48 +2344,18 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadCommunityDetails(community: CommunitySummary): Promise<void> {
-        if (!communityStateStore.getProp(community.id, "detailsLoaded")) {
-            const resp = await this.sendRequest({
-                kind: "getCommunityDetails",
-                id: community.id,
-                lastUpdated: community.lastUpdated,
-            });
-            if (resp !== "failure") {
-                communityStateStore.setProp(community.id, "detailsLoaded", true);
-                communityStateStore.setProp(community.id, "members", resp.members);
-                communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
-                communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
-                communityStateStore.setProp(community.id, "rules", resp.rules);
-                communityStateStore.setProp(community.id, "lastUpdated", resp.lastUpdated);
-            }
-            await this.updateUserStoreFromCommunityState(community.id);
-        } else {
-            await this.updateCommunityDetails(community);
+        const resp = await this.sendRequest({
+            kind: "getCommunityDetails",
+            id: community.id,
+            communityLastUpdated: community.lastUpdated,
+        });
+        if (resp !== "failure") {
+            communityStateStore.setProp(community.id, "members", resp.members);
+            communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
+            communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
+            communityStateStore.setProp(community.id, "rules", resp.rules);
         }
-    }
-
-    private async updateCommunityDetails(community: CommunitySummary): Promise<void> {
-        const lastUpdated = communityStateStore.getProp(community.id, "lastUpdated");
-        if (lastUpdated !== undefined && lastUpdated < community.lastUpdated) {
-            const gd = await this.sendRequest({
-                kind: "getCommunityDetailsUpdates",
-                id: community.id,
-                previous: {
-                    members: communityStateStore.getProp(community.id, "members"),
-                    blockedUsers: communityStateStore.getProp(community.id, "blockedUsers"),
-                    invitedUsers: communityStateStore.getProp(community.id, "invitedUsers"),
-                    lastUpdated: communityStateStore.getProp(community.id, "lastUpdated"),
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    rules: communityStateStore.getProp(community.id, "rules")!,
-                },
-            });
-            communityStateStore.setProp(community.id, "members", gd.members);
-            communityStateStore.setProp(community.id, "blockedUsers", gd.blockedUsers);
-            communityStateStore.setProp(community.id, "invitedUsers", gd.invitedUsers);
-            communityStateStore.setProp(community.id, "rules", gd.rules);
-            communityStateStore.setProp(community.id, "lastUpdated", gd.lastUpdated);
-            await this.updateUserStoreFromCommunityState(community.id);
-        }
+        await this.updateUserStoreFromCommunityState(community.id);
     }
 
     private async loadChatDetails(serverChat: ChatSummary): Promise<void> {
@@ -4129,7 +4101,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         updatedCommunity !== undefined &&
                         updatedCommunity.latestEventIndex > selectedCommunity.latestEventIndex
                     ) {
-                        this.updateCommunityDetails(updatedCommunity);
+                        this.loadCommunityDetails(updatedCommunity);
                     }
                 }
 
