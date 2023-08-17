@@ -300,7 +300,7 @@
     {#if loading}
         <Loading />
     {:else}
-        {#each messages as dayGroup, _di (dateGroupKey(dayGroup))}
+        {#each messages as dayGroup (dateGroupKey(dayGroup))}
             <div class="day-group">
                 <div class="date-label">
                     {client.formatMessageDate(

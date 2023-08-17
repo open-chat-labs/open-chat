@@ -102,7 +102,7 @@
     }
 
     onMount(() => {
-        return filters.subscribe((f) => {
+        return filters.subscribe((_) => {
             search(true);
         });
     });
@@ -169,7 +169,7 @@
                     <p class="sub-header">try refining your search</p>
                 </div>
             {:else}
-                {#each searchResults as community, i (community.id.communityId)}
+                {#each searchResults as community (community.id.communityId)}
                     <CommunityCard
                         id={community.id.communityId}
                         name={community.name}

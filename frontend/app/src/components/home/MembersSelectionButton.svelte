@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import { pop } from "../../utils/transition";
     import { mobileWidth } from "../../stores/screenDimensions";
     import Button from "../Button.svelte";
 

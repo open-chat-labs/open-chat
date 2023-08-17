@@ -31,7 +31,7 @@
         </span>
         <span slot="menu">
             <Menu>
-                {#each roles as r, _i (r)}
+                {#each roles as r (r)}
                     <MenuItem on:click={() => select(r)}>
                         <Check
                             viewBox={"0 -3 24 24"}

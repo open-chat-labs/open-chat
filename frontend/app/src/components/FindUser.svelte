@@ -90,7 +90,7 @@
     {#if searching}
         <Loading />
     {:else}
-        {#each users as user, _i (user.userId)}
+        {#each users as user (user.userId)}
             <div
                 class="user"
                 on:click={() => onSelect(user)}

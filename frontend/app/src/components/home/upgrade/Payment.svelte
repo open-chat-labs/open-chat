@@ -62,7 +62,6 @@
     $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
-    $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: selectedDuration = indexToDuration[selectedOption?.index ?? 0] ?? "one_month";
 

@@ -1,7 +1,6 @@
 <script lang="ts">
     import ModalContent from "../../ModalContent.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
-    import { iconSize } from "../../../stores/iconSize";
     import { _ } from "svelte-i18n";
     import Accounts from "./Accounts.svelte";
 </script>
