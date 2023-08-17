@@ -69,25 +69,5 @@
         "rollup-plugin-terser": "^7.0.0",
         "ts-jest": "^29.0.0",
         "wait-on": "^7.0.1"
-    },
-    "jest": {
-        "testEnvironment": "jsdom",
-        "fakeTimers": {
-            "enableGlobally": true
-        },
-        "transform": {
-            "^.+\\.ts$": "ts-jest",
-            "^.+\\.js$": "babel-jest"
-        },
-        "moduleFileExtensions": [
-            "js",
-            "ts"
-        ],
-        "moduleNameMapper": {
-            "peerjs": "<rootDir>/src/dummyModule.js",
-            "openchat-shared": "<rootDir>/src/dummyModule.js",
-            "idb": "<rootDir>/src/dummyModule.js",
-            "../utils/notifications": "<rootDir>/src/dummyNotifications.js"
-        }
     }
 }
