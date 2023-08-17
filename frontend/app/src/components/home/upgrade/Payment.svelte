@@ -15,7 +15,7 @@
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import Checkbox from "../../Checkbox.svelte";
-    import { toastStore } from "stores/toast";
+    import { toastStore } from "../../../stores/toast";
     import Expiry from "./Expiry.svelte";
 
     export let accountBalance = 0;

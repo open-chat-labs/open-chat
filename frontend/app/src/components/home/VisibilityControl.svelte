@@ -16,7 +16,7 @@
     import { afterUpdate, createEventDispatcher, getContext, onMount } from "svelte";
     import Button from "../Button.svelte";
     import Select from "../Select.svelte";
-    import { iconSize } from "stores/iconSize";
+    import { iconSize } from "../../stores/iconSize";
     import Legend from "../Legend.svelte";
     import Input from "../Input.svelte";
     import { gateBindings, snsGateBindings } from "../../utils/access";

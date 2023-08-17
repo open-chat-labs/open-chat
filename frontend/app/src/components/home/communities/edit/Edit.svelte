@@ -22,7 +22,7 @@
     import { createCandidateCommunity } from "../../../../stores/community";
     import VisibilityControl from "../../VisibilityControl.svelte";
     import ChooseChannels from "./ChooseChannels.svelte";
-    import { toastStore } from "stores/toast";
+    import { toastStore } from "../../../../stores/toast";
     import { interpolateLevel } from "../../../../utils/i18n";
     import page from "page";
     import AreYouSure from "../../../AreYouSure.svelte";

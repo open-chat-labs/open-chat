@@ -10,7 +10,7 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import LinkButton from "../LinkButton.svelte";
     import CollapsibleCard from "../CollapsibleCard.svelte";
-    import { proposalActionCategories, type ProposalActionCategory } from "stores/proposalSections";
+    import { proposalActionCategories, type ProposalActionCategory } from "../../stores/proposalSections";
 
     export let selectedChat: ChatSummary;
 

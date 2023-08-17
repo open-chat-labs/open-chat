@@ -2,7 +2,7 @@
     import { AvatarSize, OpenChat, UserStatus } from "openchat-client";
     import { rtlStore } from "../stores/rtl";
     import { getContext } from "svelte";
-    import { now } from "stores/time";
+    import { now } from "../stores/time";
 
     const client = getContext<OpenChat>("client");
 
