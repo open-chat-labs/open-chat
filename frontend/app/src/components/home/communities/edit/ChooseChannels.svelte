@@ -57,7 +57,7 @@
     }
 
     function deleteChannel(createdAt: number) {
-        channels = channels.filter((c, i) => c.createdAt !== createdAt);
+        channels = channels.filter((c) => c.createdAt !== createdAt);
     }
 
     function addChannel() {
@@ -70,7 +70,7 @@
 <p class="info">
     {$_("communities.channelsInfo")}
 </p>
-{#each channels as channel, i (channel.createdAt)}
+{#each channels as channel (channel.createdAt)}
     <EditableChannel
         min={MIN_CHANNEL_LENGTH}
         max={MAX_CHANNEL_LENGTH}

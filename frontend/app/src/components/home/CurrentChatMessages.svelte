@@ -1,7 +1,7 @@
 <svelte:options immutable />
 
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import Avatar from "../Avatar.svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import Robot from "../Robot.svelte";
@@ -395,12 +395,12 @@
     {#if privatePreview}
         <PrivatePreview />
     {/if}
-    {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
+    {#each groupedEvents as dayGroup (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
                 {client.formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
             </div>
-            {#each dayGroup as innerGroup, _ui (userGroupKey(innerGroup))}
+            {#each dayGroup as innerGroup (userGroupKey(innerGroup))}
                 {#each innerGroup as evt, i (eventKey(evt))}
                     <ChatEvent
                         {observer}

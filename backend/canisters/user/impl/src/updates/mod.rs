@@ -40,6 +40,7 @@ pub mod send_message;
 pub mod send_message_with_transfer;
 pub mod set_avatar;
 pub mod set_bio;
+pub mod set_community_indexes;
 pub mod set_contact;
 pub mod set_message_reminder;
 pub mod unblock_user;

@@ -134,7 +134,7 @@
     </div>
 
     <div class="middle">
-        {#each $communities as community, i}
+        {#each $communities as community}
             <LeftNavItem
                 selected={community === $selectedCommunity &&
                     $chatListScope.kind !== "favourite" &&

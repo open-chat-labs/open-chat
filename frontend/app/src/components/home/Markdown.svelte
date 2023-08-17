@@ -32,7 +32,7 @@
     }
 
     function replaceDatetimes(text: string): string {
-        return text.replace(/@DateTime\((\d+)\)/g, (match, p1) => {
+        return text.replace(/@DateTime\((\d+)\)/g, (_, p1) => {
             return client.toDatetimeString(new Date(Number(p1)));
         });
     }

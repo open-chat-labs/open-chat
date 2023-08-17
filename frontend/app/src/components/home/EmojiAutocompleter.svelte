@@ -6,7 +6,7 @@
     import { _ } from "svelte-i18n";
     import { emojiDatabase } from "../../utils/emojis";
     import type { NativeEmoji } from "emoji-picker-element/shared";
-    import { mobileWidth } from "stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
 
     type EmojiSummary = {
         unicode: string;

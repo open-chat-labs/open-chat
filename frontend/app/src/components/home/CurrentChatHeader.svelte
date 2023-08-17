@@ -58,7 +58,7 @@
         dispatch("showGroupMembers");
     }
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
+    function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         switch (chatSummary.kind) {
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];

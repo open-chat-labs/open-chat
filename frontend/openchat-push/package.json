@@ -2,7 +2,7 @@
     "name": "openchat-push",
     "version": "1.0.0",
     "description": "Service worker for handling the push notifications",
-    "main": "lib/index.js",
+    "main": "lib/push_sw.js",
     "scripts": {
         "build": "./bin/portable-webpack",
         "dev": "./bin/portable-webpack -w",

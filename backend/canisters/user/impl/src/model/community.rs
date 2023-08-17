@@ -8,6 +8,8 @@ pub struct Community {
     pub community_id: CommunityId,
     pub date_joined: TimestampMillis,
     pub channels: HashMap<ChannelId, Channel>,
+    #[serde(default)]
+    pub index: Timestamped<u32>,
     pub last_read: TimestampMillis,
     pub last_changed_for_my_data: TimestampMillis,
     pub archived: Timestamped<bool>,
@@ -15,11 +17,12 @@ pub struct Community {
 }
 
 impl Community {
-    pub fn new(community_id: CommunityId, now: TimestampMillis) -> Community {
+    pub fn new(community_id: CommunityId, index: u32, now: TimestampMillis) -> Community {
         Community {
             community_id,
             date_joined: now,
             channels: HashMap::new(),
+            index: Timestamped::new(index, now),
             last_read: now,
             last_changed_for_my_data: now,
             archived: Timestamped::default(),
@@ -32,6 +35,7 @@ impl Community {
             self.date_joined,
             self.last_read,
             self.last_changed_for_my_data,
+            self.index.timestamp,
             self.archived.timestamp,
             self.pinned.timestamp,
             self.channels.values().map(|c| c.last_updated()).max().unwrap_or_default(),
@@ -84,6 +88,7 @@ impl Community {
                     date_read_pinned: c.messages_read.date_read_pinned.value,
                 })
                 .collect(),
+            index: self.index.value,
             archived: self.archived.value,
             pinned: self.pinned.value.to_vec(),
         }
@@ -109,6 +114,7 @@ impl Community {
                     }
                 })
                 .collect(),
+            index: self.index.if_set_after(updates_since).copied(),
             archived: self.archived.if_set_after(updates_since).copied(),
             pinned: self.pinned.if_set_after(updates_since).cloned(),
         }

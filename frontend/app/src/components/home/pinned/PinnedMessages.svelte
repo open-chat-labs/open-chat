@@ -115,12 +115,12 @@
     {#if messages.kind !== "success"}
         <Loading />
     {:else}
-        {#each messages.data as dayGroup, _di (dateGroupKey(dayGroup))}
+        {#each messages.data as dayGroup (dateGroupKey(dayGroup))}
             <div class="day-group">
                 <div class="date-label">
                     {client.formatMessageDate(dayGroup[0]?.timestamp, $_("today"), $_("yesterday"))}
                 </div>
-                {#each dayGroup as message, _i (message.event.messageId)}
+                {#each dayGroup as message (message.event.messageId)}
                     <PinnedMessage
                         {chatId}
                         {user}

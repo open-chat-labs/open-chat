@@ -11,12 +11,11 @@
     import TrayRemove from "svelte-material-icons/Close.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { rtlStore } from "../../stores/rtl";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { MessageAction, MessageContent, OpenChat } from "openchat-client";
+    import type { MessageAction, MessageContent } from "openchat-client";
 
     const dispatch = createEventDispatcher();
-    const client = getContext<OpenChat>("client");
 
     export let messageAction: MessageAction = undefined;
     export let editing: boolean; // are we in edit mode - if so we must restrict what's available
@@ -28,7 +27,6 @@
 
     $: useDrawer = (mode == "thread" || $mobileWidth) && !editing;
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
-    $: isDiamond = client.isDiamond;
     $: iconColour = editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)";
 
     export function close() {

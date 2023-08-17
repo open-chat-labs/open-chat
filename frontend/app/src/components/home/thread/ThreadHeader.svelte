@@ -19,7 +19,7 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import { mobileWidth } from "stores/screenDimensions";
+    import { mobileWidth } from "../../../stores/screenDimensions";
     import { createEventDispatcher, getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
@@ -37,7 +37,7 @@
         dispatch("closeThread", chatSummary.id);
     }
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
+    function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const someoneTyping = client.getTypingString(
             $_,
             $userStore,

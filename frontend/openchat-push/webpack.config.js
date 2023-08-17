@@ -3,7 +3,7 @@ const webpack = require("webpack");
 
 module.exports = {
     entry: {
-        ww: path.join(__dirname, "src/index.ts"),
+        ww: path.join(__dirname, "src/push_sw.ts"),
     },
     mode: "production",
     target: "web",

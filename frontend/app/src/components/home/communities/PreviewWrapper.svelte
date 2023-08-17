@@ -4,12 +4,11 @@
     import Overlay from "../../Overlay.svelte";
     import { interpolateLevel } from "../../../utils/i18n";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import type { OpenChat } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     $: selectedCommunity = client.selectedCommunity;
     $: currentCommunityRules = client.currentCommunityRules;
