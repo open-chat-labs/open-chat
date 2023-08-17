@@ -10,7 +10,7 @@ import {
 import { selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
 import { blockedUsers } from "../stores/blockedUsers";
-import { globalStateStore } from "src/stores/global";
+import { globalStateStore } from "../stores/global";
 
 export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
     const chat = findChatByChatType(msg);

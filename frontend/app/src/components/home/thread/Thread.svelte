@@ -20,7 +20,7 @@
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
-    import { toastStore } from "stores/toast";
+    import { toastStore } from "../../../stores/toast";
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
     import { randomSentence } from "../../../utils/randomMsg";

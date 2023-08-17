@@ -6,7 +6,7 @@
     import type { Metrics, OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { writable } from "svelte/store";
-    import { iconSize } from "stores/iconSize";
+    import { iconSize } from "../../stores/iconSize";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
 

@@ -2,7 +2,7 @@
     import { fade } from "svelte/transition";
     import type { OpenChat } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import { iconSize } from "stores/iconSize";
+    import { iconSize } from "../../stores/iconSize";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
