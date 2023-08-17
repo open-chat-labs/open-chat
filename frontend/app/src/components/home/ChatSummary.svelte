@@ -22,7 +22,6 @@
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
-    import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
     import MenuIcon from "../MenuIcon.svelte";
@@ -55,7 +54,7 @@
     let unreadMessages: number;
     let unreadMentions: number;
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
+    function normaliseChatSummary(chatSummary: ChatSummary, typing: TypersByKey) {
         const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
         switch (chatSummary.kind) {
             case "direct_chat":
@@ -145,7 +144,7 @@
         delOffset = -60;
     }
 
-    $: chat = normaliseChatSummary($now, chatSummary, $typersByContext);
+    $: chat = normaliseChatSummary(chatSummary, $typersByContext);
     $: lastMessage = formatLatestMessage(chatSummary, $userStore);
 
     $: {

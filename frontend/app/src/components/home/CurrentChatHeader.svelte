@@ -14,7 +14,6 @@
     import type { ChatSummary } from "openchat-client";
     import Typing from "../Typing.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import SuspendModal from "./SuspendModal.svelte";
     import { rightPanelHistory } from "../../stores/rightPanel";
@@ -58,7 +57,7 @@
         dispatch("showGroupMembers");
     }
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
+    function normaliseChatSummary(chatSummary: ChatSummary, typing: TypersByKey) {
         switch (chatSummary.kind) {
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
@@ -98,7 +97,7 @@
         viewProfile = false;
     }
 
-    $: chat = normaliseChatSummary($now, selectedChatSummary, $typersByContext);
+    $: chat = normaliseChatSummary(selectedChatSummary, $typersByContext);
 </script>
 
 {#if showSuspendUserModal}

@@ -5,7 +5,7 @@
     import { E8S_PER_TOKEN, type AccessGate, isSnsGate } from "openchat-client";
     import { createEventDispatcher } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
-    import { snsGateBindings } from "utils/access";
+    import { snsGateBindings } from "../../utils/access";
 
     export let gate: AccessGate;
     export let position: Position = "top";

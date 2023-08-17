@@ -28,7 +28,7 @@
 <div class="faq">
     <Headline>OpenChat FAQs</Headline>
 
-    {#each allQuestions as q, i}
+    {#each allQuestions as q}
         <CollapsibleCard
             open={question === q}
             transition={false}

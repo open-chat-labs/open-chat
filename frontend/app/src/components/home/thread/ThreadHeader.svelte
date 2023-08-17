@@ -10,7 +10,6 @@
     import Avatar from "../../Avatar.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { rtlStore } from "../../../stores/rtl";
-    import { now } from "../../../stores/time";
     import { _ } from "svelte-i18n";
     import Typing from "../../Typing.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
@@ -31,13 +30,13 @@
 
     $: byContext = client.typersByContext;
     $: userStore = client.userStore;
-    $: chat = normaliseChatSummary($now, chatSummary, $byContext);
+    $: chat = normaliseChatSummary(chatSummary, $byContext);
 
     function close() {
         dispatch("closeThread", chatSummary.id);
     }
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
+    function normaliseChatSummary(chatSummary: ChatSummary, typing: TypersByKey) {
         const someoneTyping = client.getTypingString(
             $_,
             $userStore,

@@ -36,7 +36,7 @@
     {#if loading && !initialised}
         <Loading />
     {:else}
-        {#each threads as thread, _i (thread.rootMessage.event.messageId)}
+        {#each threads as thread (thread.rootMessage.event.messageId)}
             <ThreadPreviewComponent {observer} {thread} />
         {/each}
     {/if}

@@ -38,9 +38,9 @@
         userInfoOpen,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { saveSeletedTheme, themeNameStore } from "theme/themes";
+    import { saveSeletedTheme, themeNameStore } from "../../../theme/themes";
     import Toggle from "../../Toggle.svelte";
-    import { setLocale, supportedLanguages } from "i18n/i18n";
+    import { setLocale, supportedLanguages } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ReferUsers from "./ReferUsers.svelte";
