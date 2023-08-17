@@ -70,7 +70,7 @@
     import NoAccess from "./NoAccess.svelte";
     import NewGroup from "./addgroup/NewGroup.svelte";
     import AccountsModal from "./profile/AccountsModal.svelte";
-    import { querystring } from "routes";
+    import { querystring } from "../../routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./AccessGateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";

@@ -103,7 +103,7 @@
         });
     });
 
-    function importToCommunity(ev: CustomEvent<GroupChatSummary>) {
+    function importToCommunity() {
         importToCommunities = $communities.filter((c) => c.membership.role === "owner");
         if (importToCommunities.size === 0) {
             toastStore.showFailureToast("communities.noOwned");
