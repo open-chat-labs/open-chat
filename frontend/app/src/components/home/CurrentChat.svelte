@@ -18,7 +18,6 @@
         type ChatIdentifier,
         chatIdentifiersEqual,
         type MultiUserChat,
-        type GroupChatSummary,
         CommunityMap,
         type CommunitySummary,
         ICP_SYMBOL,
