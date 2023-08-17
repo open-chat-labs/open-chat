@@ -52,25 +52,5 @@
         "wait-on": "^7.0.1",
         "webpack": "^5.88.2",
         "webpack-cli": "^5.1.4"
-    },
-    "jest": {
-        "testEnvironment": "jsdom",
-        "fakeTimers": {
-            "enableGlobally": true
-        },
-        "transform": {
-            "^.+\\.ts$": ["ts-jest", { "isolatedModules": true, "useESM": true }],
-            "^.+\\.js$": "babel-jest"
-        },
-        "moduleFileExtensions": [
-            "js",
-            "ts"
-        ],
-        "moduleNameMapper": {
-            "openchat-shared": "<rootDir>/src/dummyModule.js",
-            "idb": "<rootDir>/src/dummyModule.js",
-            "../utils/notifications": "<rootDir>/src/dummyNotifications.js"
-        },
-        "extensionsToTreatAsEsm": [".ts"]
     }
 }
