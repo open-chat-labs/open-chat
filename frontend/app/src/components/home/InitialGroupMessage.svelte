@@ -8,7 +8,6 @@
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import Markdown from "./Markdown.svelte";
-    import { interpolateLevel } from "utils/i18n";
 
     const client = getContext<OpenChat>("client");
 

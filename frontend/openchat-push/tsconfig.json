@@ -1,26 +1,9 @@
 {
+    "extends": "../tsconfig",
     "compilerOptions": {
-        "allowJs": true,
-        "checkJs": false,
-        "baseUrl": "./",
-        "declaration": true,
-        "experimentalDecorators": true,
-        "esModuleInterop": true,
-        "importsNotUsedAsValues": "error",
-        "lib": ["es2020", "WebWorker"],
-        "module": "es2020",
-        "moduleResolution": "node",
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "outDir": "lib",
-        "paths": {},
-        "resolveJsonModule": true,
-        "rootDir": "./src",
-        "sourceMap": true,
-        "strict": true,
-        "target": "es2020",
-        "types": ["node"]
+        "module": "System",
+        "outFile": "../app/build/_/raw/push_sw.js",
+        "resolveJsonModule": false
     },
-    "exclude": ["node_modules/*", "../node_modules/*", "lib/*"],
     "include": ["src/**/*"]
 }
