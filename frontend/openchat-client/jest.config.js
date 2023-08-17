@@ -15,8 +15,7 @@ module.exports = {
     moduleNameMapper: {
         "peerjs": "<rootDir>/openchat-client/src/dummyModule.js",
         "openchat-shared": "<rootDir>/openchat-client/src/dummyModule.js",
-        "idb": "<rootDir>/src/dummyModule.js",
-        "../utils/notifications": "<rootDir>/src/dummyNotifications.js"
+        "../utils/notifications": "<rootDir>/openchat-client/src/dummyNotifications.js"
     },
     extensionsToTreatAsEsm: [".ts"]
 }

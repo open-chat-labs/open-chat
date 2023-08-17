@@ -20,7 +20,6 @@
         "@dfinity/candid": "^0.18.1",
         "@dfinity/identity": "^0.18.1",
         "@dfinity/principal": "^0.18.1",
-        "drange": "^2.0.1",
         "idb": "^7.1.1",
         "identicon.js": "^2.3.3",
         "md5": "^2.3.0",
