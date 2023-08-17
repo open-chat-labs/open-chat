@@ -1,9 +1,7 @@
 {
     "extends": "../tsconfig",
     "compilerOptions": {
-        "module": "System",
-        "outFile": "../app/build/worker.js",
-        "resolveJsonModule": false
+        "outDir": "../app/build",
     },
     "include": ["src/**/*"]
 }

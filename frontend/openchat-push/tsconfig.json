@@ -1,9 +1,7 @@
 {
     "extends": "../tsconfig",
     "compilerOptions": {
-        "module": "System",
-        "outFile": "../app/build/_/raw/push_sw.js",
-        "resolveJsonModule": false
+        "outDir": "../app/build/_/raw",
     },
     "include": ["src/**/*"]
 }
