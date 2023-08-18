@@ -47,7 +47,6 @@ import {
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
 import { v1 as uuidv1 } from "uuid";
-import { messagesRead } from "../stores/markRead";
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../stores/user";
 import Identicon from "identicon.js";
 import md5 from "md5";
@@ -672,14 +671,6 @@ function sortByTimestampThenEventIndex(
     return Number(a.timestamp - b.timestamp);
 }
 
-export function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
-    if (event?.event.kind === "message") {
-        if ("blobUrl" in event.event.content && event.event.content.blobUrl !== undefined) {
-            URL.revokeObjectURL(event.event.content.blobUrl);
-        }
-    }
-}
-
 export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): EventWrapper<Message> {
     if (blobbyContentTypes.includes(messageEvent.event.content.kind)) {
         return {
@@ -1016,12 +1007,6 @@ export function metricsEqual(a: Metrics, b: Metrics): boolean {
     );
 }
 
-export function getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
-    return chat.membership.mentions.find(
-        (m) => !messagesRead.isRead(chat.id, m.messageIndex, m.messageId)
-    );
-}
-
 export function canForward(content: MessageContent): boolean {
     return (
         content.kind !== "crypto_content" &&
@@ -1075,13 +1060,6 @@ export function mergeSendMessageResponse(
                     : msg.content,
         },
     };
-}
-
-export function markAllRead(chat: ChatSummary): void {
-    const latestMessageIndex = chat.latestMessage?.event.messageIndex;
-    if (latestMessageIndex !== undefined) {
-        messagesRead.markReadUpTo(chat.id, latestMessageIndex);
-    }
 }
 
 export function mergeEventsAndLocalUpdates(
@@ -1461,13 +1439,6 @@ export function getTypingString(
         const username = users[userIds[0]]?.username ?? formatter("unknown");
         return formatter("memberIsTyping", { values: { username } });
     }
-}
-
-export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
-    if ((chat.kind === "group_chat" || chat.kind === "channel") && chat.membership.role === "none")
-        return undefined;
-
-    return messagesRead.getFirstUnreadMessageIndex(chat.id, chat.latestMessage?.event.messageIndex);
 }
 
 export function getMessageText(content: MessageContent): string | undefined {

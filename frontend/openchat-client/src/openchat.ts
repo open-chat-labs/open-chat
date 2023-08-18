@@ -37,7 +37,6 @@ import {
     containsReaction,
     createMessage,
     findMessageById,
-    getFirstUnreadMention,
     getMembersString,
     getMessageContent,
     groupBySender,
@@ -45,7 +44,6 @@ import {
     groupEvents,
     groupMessagesByDate,
     makeRtcConnections,
-    markAllRead,
     mergeServerEvents,
     messageIsReadByThem,
     metricsEqual,
@@ -2991,8 +2989,14 @@ export class OpenChat extends OpenChatAgentWorker {
         return buildTransactionLink(formatter, transfer, get(cryptoLookup));
     }
 
-    getFirstUnreadMention = getFirstUnreadMention;
-    markAllRead = markAllRead;
+    getFirstUnreadMention(chat: ChatSummary) {
+        messagesRead.getFirstUnreadMention(chat);
+    }
+
+    markAllRead(chat:ChatSummary) {
+        messagesRead.markAllRead(chat);
+    }
+
     getDisplayDate = getDisplayDate;
     isSocialVideoLink = isSocialVideoLink;
     containsSocialVideoLink = containsSocialVideoLink;

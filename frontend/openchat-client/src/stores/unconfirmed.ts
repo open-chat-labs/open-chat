@@ -1,7 +1,6 @@
 import { writable } from "svelte/store";
 import { createSetStore } from "./setStore";
 import { type EventWrapper, type Message, type MessageContext, MessageContextMap } from "openchat-shared";
-import { revokeObjectUrls } from "../utils/chat";
 
 export type UnconfirmedState = {
     messages: EventWrapper<Message>[];
@@ -98,6 +97,12 @@ function createUnconfirmedStore() {
         clear: (initialVal: UnconfirmedMessages = {} as UnconfirmedMessages): void =>
             store.set(initialVal),
     };
+}
+
+function revokeObjectUrls(message: EventWrapper<Message>): void {
+    if ("blobUrl" in message.event.content && message.event.content.blobUrl !== undefined) {
+        URL.revokeObjectURL(message.event.content.blobUrl);
+    }
 }
 
 export const unconfirmedReadByThem = createUnconfirmedReadByThemStore();
