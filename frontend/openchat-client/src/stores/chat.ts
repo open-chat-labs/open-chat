@@ -27,10 +27,10 @@ import { derived, get, type Readable, writable, type Writable } from "svelte/sto
 import { immutableStore } from "./immutable";
 import {
     getNextEventAndMessageIndexes,
+    isPreviewing,
     mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
     mergeChatMetrics,
-    getFirstUnreadMessageIndex,
     mergeLocalSummaryUpdates,
 } from "../utils/chat";
 import { userStore } from "./user";
@@ -353,7 +353,7 @@ export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
     countThreads(threads)
 );
 
-export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(() => ({
+export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(selectedChatId, () => ({
     members: [],
     blockedUsers: new Set<string>(),
     invitedUsers: new Set<string>(),
@@ -511,7 +511,9 @@ export function setSelectedChat(
     }
 
     if (messageIndex === undefined) {
-        messageIndex = getFirstUnreadMessageIndex(clientChat);
+        messageIndex = isPreviewing(clientChat)
+            ? undefined
+            : messagesRead.getFirstUnreadMessageIndex(clientChat.id, clientChat.latestMessage?.event.messageIndex);
 
         if (messageIndex !== undefined) {
             const latestServerMessageIndex = serverChat?.latestMessage?.event.messageIndex ?? 0;
@@ -652,7 +654,7 @@ export function clearServerEvents(id: ChatIdentifier): void {
  * You might think that this belongs in the chatStateStore, but this needs to persist across chat selection boundary
  * so it has a different scope.
  */
-const draftMessages = createChatSpecificObjectStore<DraftMessage>(() => ({}));
+const draftMessages = createChatSpecificObjectStore<DraftMessage>(selectedChatId, () => ({}));
 
 export const currentChatDraftMessage = {
     ...draftMessages,
