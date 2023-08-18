@@ -1,7 +1,1 @@
-/node_modules/
-/public/build/
-/public/bundle*
-/public/sw*
-/build
-
-.DS_Store
+build
