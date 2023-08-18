@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { derived, get, type Readable, writable, type Writable } from "svelte/store";
-import { selectedChatId } from "./chat";
 import { type ChatIdentifier, ChatMap } from "openchat-shared";
 
 function setDataForChat<T>(store: Writable<ChatMap<T>>, chatId: ChatIdentifier, data: T): void {
@@ -27,7 +26,10 @@ export type UpdatableChatStore<T> = {
     set: (chatId: string, data: T) => void;
 };
 
-export function createChatSpecificObjectStore<T extends Record<string, unknown>>(init: () => T) {
+export function createChatSpecificObjectStore<T extends Record<string, unknown>>(
+    selectedChatId: Readable<ChatIdentifier | undefined>,
+    init: () => T)
+{
     const all: Writable<ChatMap<T>> = writable<ChatMap<T>>(new ChatMap());
     const byChat: Readable<T> = derived([selectedChatId, all], ([$selectedChatId, $all]) => {
         if ($selectedChatId === undefined) return init();

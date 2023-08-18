@@ -14,7 +14,6 @@ import type {
     Member,
     Mention,
     Message,
-    ThreadRead,
     ThreadSyncDetails,
     ThreadSyncDetailsUpdates,
     GroupCanisterGroupChatSummary,
@@ -497,21 +496,6 @@ export function getUpdatedEvents(
         .forEach((c) => result.set(c.id, c.updatedEvents));
 
     return result;
-}
-
-export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
-    if (chat.id.kind === "group_chat" && chat.membership.role === "none") return undefined;
-    return chat.membership.readByMeUpTo;
-}
-
-export function threadsReadFromChat(chat: ChatSummary): ThreadRead[] {
-    return chat.membership.latestThreads
-        .filter((t) => t.readUpTo !== undefined)
-        .map((t) => ({
-            threadRootMessageIndex: t.threadRootMessageIndex,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            readUpTo: t.readUpTo!,
-        }));
 }
 
 export function buildBlobUrl(
