@@ -13,7 +13,7 @@ const defaultPermissions: CommunityPermissions = {
     createPrivateChannel: "admin",
 };
 
-export function createCandidateCommunity(id: string): CommunitySummary {
+export function createCandidateCommunity(id: string, index: number): CommunitySummary {
     return {
         id: { kind: "community", communityId: id },
         name: "",
@@ -35,6 +35,7 @@ export function createCandidateCommunity(id: string): CommunitySummary {
             joined: BigInt(0),
             archived: false,
             pinned: [],
+            index,
         },
         primaryLanguage: "en",
         metrics: emptyChatMetrics(),
