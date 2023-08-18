@@ -650,6 +650,7 @@ export class UserClient extends CandidService {
             message_id: event.event.messageId,
             community_id: Principal.fromText(id.communityId),
             channel_id: BigInt(id.channelId),
+            rules_accepted: [] as [] | [number], // TODO come back to this
             replies_to: apiOptional(
                 (replyContext) => apiReplyContextArgs(id, replyContext),
                 event.event.repliesTo
@@ -1040,6 +1041,17 @@ export class UserClient extends CandidService {
             this.userService.cancel_message_reminder({
                 reminder_id: reminderId,
             }),
+            (_) => true
+        );
+    }
+
+    setCommunityIndexes(communityIndexes: Record<string, number>): Promise<boolean> {
+        const indexes: [Principal, number][] = Object.entries(communityIndexes).map(([id, idx]) => [
+            Principal.fromText(id),
+            idx,
+        ]);
+        return this.handleResponse(
+            this.userService.set_community_indexes({ indexes }),
             (_) => true
         );
     }

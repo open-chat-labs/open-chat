@@ -11,7 +11,6 @@
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import {
         AvatarSize,
-        CommunityMap,
         type CommunitySummary,
         type OpenChat,
         emptyUnreadCounts,
@@ -20,12 +19,13 @@
     import { _ } from "svelte-i18n";
     import { pathParams } from "../../../routes";
     import page from "page";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
     import { flip } from "svelte/animate";
     import { DndEvent, dndzone } from "svelte-dnd-action";
+    import { isTouchDevice } from "../../../utils/devices";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -43,27 +43,47 @@
     $: unreadFavouriteChats = client.unreadFavouriteChats;
     $: unreadCommunityChannels = client.unreadCommunityChannels;
     $: communityExplorer = $pathParams.kind === "communities_route";
-    $: globalState = client.globalStateStore;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
-    function handleDndConsider(e: CustomEvent<DndEvent<CommunitySummary>>) {
-        console.log("XXX: Considering: ", e.detail);
-        globalState.update((state) => {
-            return {
-                ...state,
-                communities: CommunityMap.fromList(e.detail.items),
-            };
-        });
+    // we don't want drag n drop to monkey around with the key
+    type CommunityItem = CommunitySummary & { _id: string };
+    let communityItems: CommunityItem[] = [];
+    let dragging = false;
+
+    onMount(() => {
+        return communities.subscribe(initCommunitiesList);
+    });
+
+    function initCommunitiesList(communities: CommunitySummary[]) {
+        // we don't want to allow the list to update if we're in the middle of dragging
+        if (dragging) return;
+
+        communityItems = communities.map((c) => ({
+            ...c,
+            _id: c.id.communityId,
+        }));
     }
-    function handleDndFinalize(e: CustomEvent<DndEvent<CommunitySummary>>) {
-        console.log("XXX: Finalizing: ", e.detail);
-        globalState.update((state) => {
-            return {
-                ...state,
-                communities: CommunityMap.fromList(e.detail.items),
-            };
-        });
+
+    function reindex(communities: CommunitySummary[]): CommunitySummary[] {
+        return communities.map((item, i) => ({
+            ...item,
+            membership: {
+                ...item.membership,
+                index: communities.length - i,
+            },
+        }));
+    }
+
+    function handleDndConsider(e: CustomEvent<DndEvent<CommunityItem>>) {
+        dragging = true;
+        communityItems = e.detail.items;
+    }
+
+    function handleDndFinalize(e: CustomEvent<DndEvent<CommunityItem>>) {
+        dragging = false;
+        communityItems = e.detail.items;
+        client.updateCommunityIndexes(reindex(e.detail.items));
     }
 
     function toggleNav() {
@@ -160,15 +180,15 @@
 
     <div
         use:dndzone={{
-            items: $communities,
+            items: communityItems,
             flipDurationMs,
             dropTargetStyle: { outline: "var(--accent) solid 2px" },
-            dragDisabled: false,
+            dragDisabled: isTouchDevice,
         }}
         on:consider={handleDndConsider}
         on:finalize={handleDndFinalize}
         class="middle">
-        {#each $communities as community (community.id.communityId)}
+        {#each communityItems as community (community._id)}
             <div animate:flip={{ duration: flipDurationMs }}>
                 <LeftNavItem
                     selected={community === $selectedCommunity &&

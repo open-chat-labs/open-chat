@@ -360,6 +360,7 @@ import {
     addCommunityPreview,
     communities,
     communitiesList,
+    communityPreviewsStore,
     communityStateStore,
     currentCommunityBlockedUsers,
     currentCommunityInvitedUsers,
@@ -700,7 +701,12 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private startRegistryPoller() {
-        new Poller(() => this.updateRegistry(), REGISTRY_UPDATE_INTERVAL, REGISTRY_UPDATE_INTERVAL, true);
+        new Poller(
+            () => this.updateRegistry(),
+            REGISTRY_UPDATE_INTERVAL,
+            REGISTRY_UPDATE_INTERVAL,
+            true
+        );
     }
 
     logout(): Promise<void> {
@@ -1119,6 +1125,13 @@ export class OpenChat extends OpenChatAgentWorker {
                 this._logger.error("Update permissions failed: ", err);
                 return false;
             });
+    }
+
+    setCommunityIndexes(indexes: Record<string, number>): Promise<boolean> {
+        return this.sendRequest({ kind: "setCommunityIndexes", indexes }).catch((err) => {
+            this._logger.error("Failed to set community indexes: ", err);
+            return false;
+        });
     }
 
     getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
@@ -2908,7 +2921,10 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            this.refreshAccountBalance(msg.content.transfer.ledger, this.user.userId);
+                            this.refreshAccountBalance(
+                                msg.content.transfer.ledger,
+                                this.user.userId
+                            );
                         }
                         if (threadRootMessageIndex !== undefined) {
                             trackEvent("sent_threaded_message");
@@ -2981,12 +2997,19 @@ export class OpenChat extends OpenChatAgentWorker {
         content: CryptocurrencyContent,
         me: boolean
     ): string | undefined {
-        return buildCryptoTransferText(formatter, myUserId, senderId, content, me, get(cryptoLookup));
+        return buildCryptoTransferText(
+            formatter,
+            myUserId,
+            senderId,
+            content,
+            me,
+            get(cryptoLookup)
+        );
     }
 
     buildTransactionLink(
         formatter: MessageFormatter,
-        transfer: CryptocurrencyTransfer,
+        transfer: CryptocurrencyTransfer
     ): string | undefined {
         return buildTransactionLink(formatter, transfer, get(cryptoLookup));
     }
@@ -3100,12 +3123,13 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
-        const minVisibleEventIndex = serverChat.kind === "direct_chat" ? 0 : serverChat.minVisibleEventIndex;
+        const minVisibleEventIndex =
+            serverChat.kind === "direct_chat" ? 0 : serverChat.minVisibleEventIndex;
         const latestClientEventIndex = Math.max(eventIndex, serverChat.latestEventIndex);
 
         if (isReaction) {
             // TODO first clear the existing cache entry
-            return
+            return;
         }
 
         // Load the event
@@ -3631,7 +3655,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getTokenByGovernanceCanister(governanceCanister: string): CryptocurrencyDetails {
-        const tokenDetails = Object.values(get(cryptoLookup)).find((t) => t.governanceCanister === governanceCanister);
+        const tokenDetails = Object.values(get(cryptoLookup)).find(
+            (t) => t.governanceCanister === governanceCanister
+        );
         if (tokenDetails === undefined) {
             throw new Error(`Unknown governance canister: ${governanceCanister}`);
         } else {
@@ -4107,7 +4133,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
                 // If we are still previewing a community we are a member of then remove the preview
                 for (const community of chatsResponse.state.communities) {
-                    if (community?.membership !== undefined && this._liveState.communityPreviews.has(community.id)) {
+                    if (
+                        community?.membership !== undefined &&
+                        this._liveState.communityPreviews.has(community.id)
+                    ) {
                         removeCommunityPreview(community.id);
                     }
                 }
@@ -4499,26 +4528,71 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private async updateRegistry() {
         const registry = await this.sendRequest({
-            kind: "updateRegistry"
+            kind: "updateRegistry",
         });
 
-        cryptoLookup.set(toRecord2(registry.tokenDetails, (t) => t.ledgerCanisterId, (t) => ({
-            name: t.name,
-            symbol: t.symbol,
-            ledger: t.ledgerCanisterId,
-            decimals: t.decimals,
-            transferFee: t.fee,
-            logo: t.logo,
-            howToBuyUrl: t.howToBuyUrl,
-            infoUrl: t.infoUrl,
-            transactionUrlFormat: t.transactionUrlFormat,
-            rootCanister: t.nervousSystem?.root,
-            governanceCanister: t.nervousSystem?.governance,
-            lastUpdated: t.lastUpdated,
-        })));
+        cryptoLookup.set(
+            toRecord2(
+                registry.tokenDetails,
+                (t) => t.ledgerCanisterId,
+                (t) => ({
+                    name: t.name,
+                    symbol: t.symbol,
+                    ledger: t.ledgerCanisterId,
+                    decimals: t.decimals,
+                    transferFee: t.fee,
+                    logo: t.logo,
+                    howToBuyUrl: t.howToBuyUrl,
+                    infoUrl: t.infoUrl,
+                    transactionUrlFormat: t.transactionUrlFormat,
+                    rootCanister: t.nervousSystem?.root,
+                    governanceCanister: t.nervousSystem?.governance,
+                    lastUpdated: t.lastUpdated,
+                })
+            )
+        );
     }
 
     // **** Communities Stuff
+
+    // takes a list of communities that may contain communities that we are a member of and/or preview communities
+    // and overwrites them in the correct place
+    updateCommunityIndexes(communities: CommunitySummary[]): void {
+        const [previews, member] = communities.reduce(
+            ([previews, member], c) => {
+                if (this._liveState.communityPreviews.has(c.id)) {
+                    previews.push(c);
+                } else {
+                    member.push(c);
+                }
+                return [previews, member];
+            },
+            [[], []] as [CommunitySummary[], CommunitySummary[]]
+        );
+        if (previews.length > 0) {
+            communityPreviewsStore.update((state) => {
+                previews.forEach((p) => state.set(p.id, p));
+                return state;
+            });
+        }
+
+        if (member.length > 0) {
+            globalStateStore.update((state) => {
+                const communities = state.communities.clone();
+                member.forEach((m) => communities.set(m.id, m));
+                return {
+                    ...state,
+                    communities,
+                };
+            });
+        }
+        this.setCommunityIndexes(
+            member.reduce((idxs, c) => {
+                idxs[c.id.communityId] = c.membership.index;
+                return idxs;
+            }, {} as Record<string, number>)
+        );
+    }
 
     async setSelectedCommunity(
         id: CommunityIdentifier,

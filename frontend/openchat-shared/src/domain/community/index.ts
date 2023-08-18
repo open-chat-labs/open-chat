@@ -43,6 +43,7 @@ export type CommunityMembership = {
     role: MemberRole;
     archived: boolean;
     pinned: ChannelIdentifier[];
+    index: number;
 };
 
 export type CommunityIdentifier = {

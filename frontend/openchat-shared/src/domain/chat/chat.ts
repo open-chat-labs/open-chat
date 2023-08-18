@@ -914,6 +914,7 @@ export type UserCanisterChannelSummary = {
 
 export type UserCanisterCommunitySummary = {
     id: CommunityIdentifier;
+    index: number;
     channels: UserCanisterChannelSummary[];
     pinned: ChannelIdentifier[];
     archived: boolean;
@@ -974,6 +975,7 @@ export type UserCanisterCommunitySummaryUpdates = {
     id: CommunityIdentifier;
     channels: UserCanisterChannelSummaryUpdates[];
     pinned?: ChannelIdentifier[];
+    index?: number;
     archived?: boolean;
 };
 
@@ -1195,7 +1197,10 @@ export type ChatMembership = {
     archived: boolean;
 };
 
-export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup | CanisterNotFound;
+export type GroupCanisterSummaryResponse =
+    | GroupCanisterGroupChatSummary
+    | CallerNotInGroup
+    | CanisterNotFound;
 
 export type GroupCanisterSummaryUpdatesResponse =
     | GroupCanisterGroupChatSummaryUpdates

@@ -265,7 +265,13 @@ export type WorkerRequest =
     | ImportGroupToCommunity
     | SetModerationFlags
     | ChangeCommunityRole
+    | SetCommunityIndexes
     | UpdateRegistry;
+
+type SetCommunityIndexes = {
+    kind: "setCommunityIndexes";
+    indexes: Record<string, number>;
+};
 
 type SetModerationFlags = {
     kind: "setModerationFlags";
@@ -1460,4 +1466,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? ImportGroupResponse
     : T extends UpdateRegistry
     ? RegistryValue
+    : T extends SetCommunityIndexes
+    ? boolean
     : never;

@@ -565,12 +565,18 @@ export function token(candid: ApiCryptocurrency): string {
 
 export function apiToken(token: string): ApiCryptocurrency {
     switch (token) {
-        case ICP_SYMBOL: return { InternetComputer: null };
-        case SNS1_SYMBOL: return { SNS1: null };
-        case CKBTC_SYMBOL: return { CKBTC: null };
-        case CHAT_SYMBOL: return { CHAT: null };
-        case KINIC_SYMBOL: return { KINIC: null };
-        default: return { Other: token };
+        case ICP_SYMBOL:
+            return { InternetComputer: null };
+        case SNS1_SYMBOL:
+            return { SNS1: null };
+        case CKBTC_SYMBOL:
+            return { CKBTC: null };
+        case CHAT_SYMBOL:
+            return { CHAT: null };
+        case KINIC_SYMBOL:
+            return { KINIC: null };
+        default:
+            return { Other: token };
     }
 }
 
@@ -1493,6 +1499,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
             role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
             archived: false,
             pinned: [],
+            index: 0,
         },
         channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: candid.primary_language,
@@ -2184,5 +2191,8 @@ export function registerProposalVoteResponse(
     if ("InternalError" in candid) {
         return "internal_error";
     }
-    throw new UnsupportedValueError("Unexpected ApiRegisterProposalVoteResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiRegisterProposalVoteResponse type received",
+        candid
+    );
 }
