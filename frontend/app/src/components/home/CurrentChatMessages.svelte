@@ -115,7 +115,7 @@
                         messageReadTimers[idx] = timer;
                     }
                     if (!isIntersecting && messageReadTimers[idx] !== undefined) {
-                        clearTimeout(messageReadTimers[idx]);
+                        window.clearTimeout(messageReadTimers[idx]);
                         delete messageReadTimers[idx];
                     }
                 }

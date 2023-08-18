@@ -209,10 +209,10 @@
                 dispatch("startTyping");
             }
             if (typingTimer !== undefined) {
-                clearTimeout(typingTimer);
+                window.clearTimeout(typingTimer);
             }
 
-            typingTimer = setTimeout(() => dispatch("stopTyping"), MARK_TYPING_STOPPED_INTERVAL_MS);
+            typingTimer = window.setTimeout(() => dispatch("stopTyping"), MARK_TYPING_STOPPED_INTERVAL_MS);
         });
     }
 

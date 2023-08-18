@@ -171,7 +171,7 @@
 
             sendMessageWithAttachment(randomSentence(), [], undefined);
 
-            setTimeout(() => send(n + 1), 500);
+            window.setTimeout(() => send(n + 1), 500);
         }
 
         send(0);

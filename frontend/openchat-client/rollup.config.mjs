@@ -5,9 +5,11 @@ import typescript from "@rollup/plugin-typescript";
 import inject from "rollup-plugin-inject";
 import json from "@rollup/plugin-json";
 import replace from "@rollup/plugin-replace";
-import * as path from "path";
-import * as rimraf from "rimraf";
+import path from "path";
+import rimraf from "rimraf";
+import { fileURLToPath } from "url";
 
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 const production = !process.env.ROLLUP_WATCH;
 const env = process.env.NODE_ENV ?? (production ? "production" : "development");
 console.log("PROD", production);
@@ -17,7 +19,7 @@ function clean() {
         name: "clean-build",
         buildStart() {
             console.log("cleaning up the lib directory");
-            rimraf.sync(path.join(__dirname, "lib"));
+            rimraf.sync(path.join(dirname, "lib"));
         },
     };
 }

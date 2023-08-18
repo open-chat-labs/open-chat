@@ -32,7 +32,7 @@
     },
     "build:ci": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["build:prod", "typecheck", "validate", "lint", "test"]
+      "dependsOn": ["build:prod", "typecheck:prod", "validate:prod", "lint", "test:prod"]
     },
     "build:prod": {
       "outputs": ["lib/**", "build/**"],

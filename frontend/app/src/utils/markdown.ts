@@ -2,7 +2,7 @@ import { isAbsoluteUrl, synonymousUrlRegex } from "./urls";
 import { marked } from "marked";
 
 const renderer = {
-    link(href: string | null, title: string | null, text: string) {
+    link(href: string, title: string | null | undefined, text: string) {
         let target = "";
         if (href !== null) {
             const abs = isAbsoluteUrl(href);
