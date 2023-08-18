@@ -356,7 +356,6 @@ export default {
 
         // Pull in the worker and push_sw
         copy({
-            verbose: true,
             targets: [{
                 src: "../openchat-worker/lib/*",
                 dest: "build",
@@ -370,7 +369,6 @@ export default {
 
         // Copy source maps to '_/raw' so that they can be loaded without going through the certifying service worker
         copy({
-            verbose: true,
             targets: [{
                 src: "build/*.map",
                 dest: "build/_/raw",
