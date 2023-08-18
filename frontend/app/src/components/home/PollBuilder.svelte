@@ -176,7 +176,7 @@
 
                         <div class="section">
                             <Legend label={$_("poll.answersLabel")} rules={$_("poll.atLeastTwo")} />
-                            {#each [...poll.pollAnswers] as answer, _i (answer)}
+                            {#each [...poll.pollAnswers] as answer (answer)}
                                 <div class="answer">
                                     <div class="answer-text">
                                         {answer}

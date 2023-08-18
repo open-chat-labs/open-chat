@@ -4,7 +4,6 @@
     import Markdown from "./Markdown.svelte";
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
     import type { TextContent } from "openchat-client";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import { lowBandwidth } from "../../stores/settings";

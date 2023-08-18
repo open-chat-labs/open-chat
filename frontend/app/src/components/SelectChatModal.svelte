@@ -50,8 +50,6 @@
         channels: ShareChat[];
     };
 
-    let openTargetGroup: string | undefined = undefined;
-
     $: userStore = client.userStore;
     $: selectedChatId = client.selectedChatId;
     $: globalState = client.globalStateStore;

@@ -45,23 +45,5 @@
         "process": "^0.11.10",
         "ts-jest": "^29.0.0",
         "wait-on": "^7.0.1"
-    },
-    "jest": {
-        "testEnvironment": "jsdom",
-        "fakeTimers": {
-            "enableGlobally": true
-        },
-        "transform": {
-            "^.+\\.ts$": "ts-jest",
-            "^.+\\.js$": "babel-jest"
-        },
-        "moduleFileExtensions": [
-            "js",
-            "ts"
-        ],
-        "moduleNameMapper": {
-            "idb": "<rootDir>/src/dummyModule.js",
-            "../utils/notifications": "<rootDir>/src/dummyNotifications.js"
-        }
     }
 }

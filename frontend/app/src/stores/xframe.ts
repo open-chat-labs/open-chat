@@ -2,7 +2,7 @@ import { writable } from "svelte/store";
 import type { Theme } from "../theme/types";
 import page from "page";
 import { setModifiedTheme } from "../theme/themes";
-import { routerReady } from "routes";
+import { routerReady } from "../routes";
 
 type XFrameMessage = UpdateTheme | ChangeRoute | OpenChatReady;
 

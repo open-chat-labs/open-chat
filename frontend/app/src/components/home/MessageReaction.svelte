@@ -48,7 +48,7 @@
         return code ?? ":unknown:";
     }
 
-    function onClick(e: MouseEvent) {
+    function onClick() {
         if (!longPressed) {
             dispatch("click");
         }

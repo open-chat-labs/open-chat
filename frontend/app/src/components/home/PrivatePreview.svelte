@@ -23,7 +23,7 @@
     <div class="bubble">
         <div class="avatar" />
         <div class="fake-message" style={`width: ${percentage}%`}>
-            {#each lines as line}
+            {#each lines as _}
                 <div class="line" />
             {/each}
         </div>

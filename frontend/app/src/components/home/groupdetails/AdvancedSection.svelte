@@ -4,7 +4,7 @@
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import type { MultiUserChat } from "openchat-client";
-    import { interpolateLevel } from "utils/i18n";
+    import { interpolateLevel } from "../../../utils/i18n";
 
     export let group: MultiUserChat;
 

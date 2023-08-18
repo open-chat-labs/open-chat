@@ -55,7 +55,7 @@
     let unreadMessages: number;
     let unreadMentions: number;
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
+    function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
         switch (chatSummary.kind) {
             case "direct_chat":

@@ -8,7 +8,7 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import type { Level } from "openchat-client";
-    import { interpolateLevel } from "utils/i18n";
+    import { interpolateLevel } from "../../../utils/i18n";
 
     export let closeIcon: "close" | "back";
     export let canInvite: boolean;

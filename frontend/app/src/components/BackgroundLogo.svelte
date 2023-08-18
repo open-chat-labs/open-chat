@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ScreenWidth, screenWidth } from "stores/screenDimensions";
+    import { ScreenWidth, screenWidth } from "../stores/screenDimensions";
 
     export let width: string;
     export let bottom: string;

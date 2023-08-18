@@ -3,8 +3,10 @@ import type { Subscriber, Unsubscriber } from "svelte/store";
 import {
     type ChatIdentifier,
     ChatMap,
+    type ChatSummary,
     type MarkReadRequest,
     type MarkReadResponse,
+    type Mention,
     type ThreadRead,
     type ThreadSyncDetails,
 } from "openchat-shared";
@@ -299,6 +301,19 @@ export class MessageReadTracker {
             }
         }
         return undefined;
+    }
+
+    getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
+        return chat.membership.mentions.find(
+            (m) => !this.isRead(chat.id, m.messageIndex, m.messageId)
+        );
+    }
+
+    markAllRead(chat: ChatSummary) {
+        const latestMessageIndex = chat.latestMessage?.event.messageIndex;
+        if (latestMessageIndex !== undefined) {
+            this.markReadUpTo(chat.id, latestMessageIndex);
+        }
     }
 
     // some operations can be called in a loop. We only want to publish at the end of the

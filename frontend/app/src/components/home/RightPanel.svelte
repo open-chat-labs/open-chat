@@ -146,7 +146,6 @@
             ($multiUserChat.id.kind === "group_chat" || $multiUserChat.id.kind === "channel")
         ) {
             const userIds = ev.detail.map((u) => u.userId);
-            const level = $multiUserChat.level;
 
             invitingUsers = true;
 
@@ -338,7 +337,7 @@
         dispatch("showInviteGroupUsers", ev.detail);
     }
 
-    function showInviteCommunityUsers(ev: CustomEvent<boolean>) {
+    function showInviteCommunityUsers() {
         if ($selectedCommunity !== undefined) {
             rightPanelHistory.set([{ kind: "invite_community_users" }]);
         }
