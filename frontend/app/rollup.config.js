@@ -154,6 +154,12 @@ function manualChunks(id) {
     }
 }
 
+function transformSourceMappingUrl(contents) {
+    return contents
+        .toString()
+        .replace("//# sourceMappingURL=", "//# sourceMappingURL=./_/raw/");
+}
+
 export default {
     input: `./src/main.ts`,
     output: {
@@ -352,15 +358,18 @@ export default {
         copy({
             verbose: true,
             targets: [{
-                src: "../openchat-(push|worker)/lib/*",
+                src: "../openchat-worker/lib/*",
                 dest: "build",
+            }, {
+                src: "../openchat-push/lib/*",
+                dest: "build/_/raw",
+                transform: transformSourceMappingUrl,
             }],
             hook: "generateBundle",
         }),
 
-        // If we're building for production, copy source maps to '_/raw' so that they
-        // can be loaded without going through the certifying service worker
-        production && copy({
+        // Copy source maps to '_/raw' so that they can be loaded without going through the certifying service worker
+        copy({
             verbose: true,
             targets: [{
                 src: "build/*.map",
@@ -368,10 +377,7 @@ export default {
             }, {
                 src: "build/*.js",
                 dest: "build",
-                transform: (contents) =>
-                    contents
-                        .toString()
-                        .replace("//# sourceMappingURL=", "//# sourceMappingURL=./_/raw/"),
+                transform: transformSourceMappingUrl,
             }],
             hook: "writeBundle",
         }),
