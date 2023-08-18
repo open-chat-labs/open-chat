@@ -9,7 +9,7 @@ module.exports = {
     target: "web",
     devtool: "source-map",
     output: {
-        path: path.join(__dirname, "../app/build"),
+        path: path.join(__dirname, "lib"),
         filename: "worker.js",
         publicPath: "/",
     },

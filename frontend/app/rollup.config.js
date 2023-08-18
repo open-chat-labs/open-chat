@@ -117,25 +117,14 @@ function copyFile(fromPath, toPath, file) {
     }
 }
 
-function cleanExcept(files) {
-    if (fs.existsSync("_temp")) {
-        rimraf.sync(path.join(__dirname, "_temp"));
-    }
-    fs.mkdirSync("_temp");
-    files.forEach((file) => copyFile("build", "_temp", file));
-    rimraf.sync(path.join(__dirname, "build"));
-    fs.mkdirSync("build");
-    files.forEach((file) => copyFile("_temp", "build", file));
-    rimraf.sync(path.join(__dirname, "_temp"));
-}
-
 // this is a bit ridiculous but there we are ...
 function clean() {
     return {
         name: "clean-build",
         renderStart() {
             console.log("cleaning up the build directory");
-            cleanExcept(["worker.js", "worker.js.map", "_/raw/push_sw.js", "_/raw/push_sw.js.map"]);
+            rimraf.sync(path.join(__dirname, "build"));
+            fs.mkdirSync("build");
             if (version) {
                 fs.writeFileSync("build/version", JSON.stringify({ version }));
             }
@@ -163,6 +152,12 @@ function manualChunks(id) {
     if (id.includes("node_modules") || id.includes("vendor-")) {
         return "vendor";
     }
+}
+
+function transformSourceMappingUrl(contents) {
+    return contents
+        .toString()
+        .replace("//# sourceMappingURL=", "//# sourceMappingURL=./_/raw/");
 }
 
 export default {
@@ -359,26 +354,31 @@ export default {
 
         production && filesize(),
 
-        // If we're building for production, copy sourcemaps to '_/raw'
-        // and update the js files to point to the new sourcemap locations
-        production &&
-            copy({
-                targets: [
-                    {
-                        src: "build/*.map",
-                        dest: "build/_/raw",
-                    },
-                    {
-                        src: "build/*.js",
-                        dest: "build",
-                        transform: (contents, filename) =>
-                            contents
-                                .toString()
-                                .replace("//# sourceMappingURL=", "//# sourceMappingURL=./_/raw/"),
-                    },
-                ],
-                hook: "writeBundle",
-            }),
+        // Pull in the worker and push_sw
+        copy({
+            targets: [{
+                src: "../openchat-worker/lib/*",
+                dest: "build",
+            }, {
+                src: "../openchat-push/lib/*",
+                dest: "build/_/raw",
+                transform: transformSourceMappingUrl,
+            }],
+            hook: "generateBundle",
+        }),
+
+        // Copy source maps to '_/raw' so that they can be loaded without going through the certifying service worker
+        copy({
+            targets: [{
+                src: "build/*.map",
+                dest: "build/_/raw",
+            }, {
+                src: "build/*.js",
+                dest: "build",
+                transform: transformSourceMappingUrl,
+            }],
+            hook: "writeBundle",
+        }),
     ],
     watch: {
         clearScreen: false,

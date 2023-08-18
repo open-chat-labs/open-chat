@@ -6,7 +6,7 @@
   "scripts": {
     "build": "./bin/portable-webpack",
     "dev": "./bin/portable-webpack -w",
-    "wait": "rm -f ../app/build/worker.js && wait-on ../app/build/worker.js",
+    "wait": "rm -f lib/worker.js && wait-on lib/worker.js",
     "lint": "eslint ./src --fix",
     "codegen": "sh ./codegen.sh"
   },
