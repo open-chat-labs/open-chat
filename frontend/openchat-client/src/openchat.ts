@@ -316,6 +316,7 @@ import type {
     CryptocurrencyContent,
     CryptocurrencyDetails,
     CryptocurrencyTransfer,
+    Mention,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -2989,8 +2990,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return buildTransactionLink(formatter, transfer, get(cryptoLookup));
     }
 
-    getFirstUnreadMention(chat: ChatSummary) {
-        messagesRead.getFirstUnreadMention(chat);
+    getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
+        return messagesRead.getFirstUnreadMention(chat);
     }
 
     markAllRead(chat:ChatSummary) {
