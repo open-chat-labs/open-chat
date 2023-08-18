@@ -9,7 +9,7 @@ module.exports = {
     target: "web",
     devtool: "source-map",
     output: {
-        path: path.join(__dirname, "../app/build/_/raw"),
+        path: path.join(__dirname, "lib"),
         filename: "push_sw.js",
         publicPath: "/",
     },
