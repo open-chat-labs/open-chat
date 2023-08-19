@@ -25,7 +25,6 @@
         "identicon.js": "^2.3.3",
         "md5": "^2.3.0",
         "openchat-shared": "*",
-        "openchat-worker": "*",
         "peerjs": "^1.4.7",
         "svelte": "^4.2.0",
         "svelte-i18n": "^3.7.0",
