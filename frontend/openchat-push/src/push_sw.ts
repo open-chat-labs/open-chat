@@ -9,6 +9,7 @@ import type {
 import {
     UnsupportedValueError,
     routeForMessage,
+    routeForMessageContext,
     routeForChatIdentifier,
     toTitleCase,
 } from "openchat-shared";
@@ -138,7 +139,7 @@ async function showNotification(notification: Notification, id: string): Promise
             icon = FILE_ICON;
         }
         image = notification.imageUrl;
-        path = routeForMessage("direct_chat", { chatId }, notification.messageIndex);
+        path = routeForChatIdentifier("direct_chat", chatId);
         tag = notification.sender.userId;
         timestamp = Number(notification.timestamp);
         closeExistingNotifications = true;
@@ -151,13 +152,12 @@ async function showNotification(notification: Notification, id: string): Promise
             icon = FILE_ICON;
         }
         image = notification.imageUrl;
-        path = routeForMessage(
+        path = routeForMessageContext(
             "group_chat",
             {
                 chatId: notification.chatId,
                 threadRootMessageIndex: notification.threadRootMessageIndex,
-            },
-            notification.messageIndex
+            }
         );
         tag = notification.chatId.groupId;
         if (notification.threadRootMessageIndex !== undefined) {
@@ -176,13 +176,12 @@ async function showNotification(notification: Notification, id: string): Promise
             icon = FILE_ICON;
         }
         image = notification.imageUrl;
-        path = routeForMessage(
+        path = routeForMessageContext(
             "community",
             {
                 chatId: notification.chatId,
                 threadRootMessageIndex: notification.threadRootMessageIndex,
-            },
-            notification.messageIndex
+            }
         );
         tag = `${notification.chatId.communityId}_${notification.chatId.channelId}}`;
         if (notification.threadRootMessageIndex !== undefined) {
