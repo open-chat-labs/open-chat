@@ -47,6 +47,7 @@ pub struct UpgradesFilter {
 pub struct HumanReadableUpgradeCanisterWasmArgs {
     wasm: CanisterWasmTrimmed,
     filter: Option<HumanReadableUpgradesFilter>,
+    use_for_new_canisters: Option<bool>,
 }
 
 #[derive(Serialize)]
@@ -63,6 +64,7 @@ impl ToHumanReadable for UpgradeCanisterWasmArgs {
         HumanReadableUpgradeCanisterWasmArgs {
             wasm: (&self.wasm).into(),
             filter: self.filter.as_ref().map(|f| f.into()),
+            use_for_new_canisters: self.use_for_new_canisters,
         }
     }
 }
