@@ -7,6 +7,9 @@ import html from "@rollup/plugin-html";
 import * as fs from "fs";
 import * as path from "path";
 import * as rimraf from "rimraf";
+import { fileURLToPath } from "url";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -20,32 +23,26 @@ function serve() {
 
 function cleanExcept(files) {
     if (fs.existsSync("_temp")) {
-        rimraf.sync(path.join(__dirname, "_temp"));
+        rimraf.sync(path.join(dirname, "_temp"));
     }
     fs.mkdirSync("_temp");
 
     files.forEach((file) => {
-        if (fs.existsSync(path.join(__dirname, "build", file))) {
-            fs.copyFileSync(
-                path.join(__dirname, "build", file),
-                path.join(__dirname, "_temp", file)
-            );
+        if (fs.existsSync(path.join(dirname, "build", file))) {
+            fs.copyFileSync(path.join(dirname, "build", file), path.join(dirname, "_temp", file));
         }
     });
 
-    rimraf.sync(path.join(__dirname, "build"));
+    rimraf.sync(path.join(dirname, "build"));
     fs.mkdirSync("build");
 
     files.forEach((file) => {
-        if (fs.existsSync(path.join(__dirname, "_temp", file))) {
-            fs.copyFileSync(
-                path.join(__dirname, "_temp", file),
-                path.join(__dirname, "build", file)
-            );
+        if (fs.existsSync(path.join(dirname, "_temp", file))) {
+            fs.copyFileSync(path.join(dirname, "_temp", file), path.join(dirname, "build", file));
         }
     });
 
-    rimraf.sync(path.join(__dirname, "_temp"));
+    rimraf.sync(path.join(dirname, "_temp"));
 }
 
 function clean() {
