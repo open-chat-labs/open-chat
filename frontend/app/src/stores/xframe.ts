@@ -24,10 +24,14 @@ type OpenChatReady = {
 
 export const framed = writable(false);
 
-if (window.self !== window.top) {
-    console.debug("XFRAME_TARGET: setting listeners");
-    window.addEventListener("message", externalMessage);
+export function init() {
+    if (window.self !== window.top) {
+        console.debug("XFRAME_TARGET: setting listeners");
+        window.addEventListener("message", externalMessage);
+    }
 }
+
+init();
 
 let queuedRoute: string | undefined = undefined;
 let isRouterReady = false;
@@ -67,7 +71,7 @@ function externalMessage(ev: MessageEvent) {
         } catch (err) {
             console.debug(
                 "XFRAME_TARGET: Error handling an external message from another window",
-                err
+                err,
             );
         }
     }
