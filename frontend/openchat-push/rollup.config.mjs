@@ -9,7 +9,7 @@ import del from "rollup-plugin-delete";
 // Put external dependencies into their own bundle so that they get cached separately
 function manualChunks(id) {
     if (id.includes("node_modules")) {
-        return "worker-vendor";
+        return "push-vendor";
     }
 }
 
