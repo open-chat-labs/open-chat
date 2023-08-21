@@ -1,0 +1,7 @@
+// This is a trimmed down version of the full ICRC1 ledger candid file which can be found here -
+// https://dashboard.internetcomputer.org/canister/zfcdd-tqaaa-aaaaq-aaaga-cai
+
+type Account = record { owner : principal; subaccount : opt vec nat8 };
+service : {
+  icrc1_balance_of : (Account) -> (nat) query;
+}

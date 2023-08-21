@@ -1,0 +1,42 @@
+// This is a trimmed down version of the full NNS governance candid file which can be found here -
+// https://github.com/dfinity/ic/blob/master/rs/nns/governance/canister/governance.did
+
+type Ballot = record { vote : int32; voting_power : nat64 };
+type Command = variant {
+  RegisterVote : RegisterVote;
+};
+type Command_1 = variant {
+  Error : GovernanceError;
+  RegisterVote : record {};
+};
+type GovernanceError = record { error_message : text; error_type : int32 };
+type ListProposalInfo = record {
+  include_reward_status : vec int32;
+  before_proposal : opt NeuronId;
+  limit : nat32;
+  exclude_topic : vec int32;
+  include_status : vec int32;
+};
+type ListProposalInfoResponse = record { proposal_info : vec ProposalInfo };
+type ManageNeuron = record {
+  id : opt NeuronId;
+  command : opt Command;
+};
+type ManageNeuronResponse = record { command : opt Command_1 };
+type NeuronId = record { id : nat64 };
+type ProposalInfo = record {
+  id : opt NeuronId;
+  ballots : vec record { nat64; Ballot };
+  latest_tally : opt Tally;
+};
+type RegisterVote = record { vote : int32; proposal : opt NeuronId };
+type Tally = record {
+  no : nat64;
+  yes : nat64;
+  total : nat64;
+  timestamp_seconds : nat64;
+};
+service : {
+  list_proposals : (ListProposalInfo) -> (ListProposalInfoResponse) query;
+  manage_neuron : (ManageNeuron) -> (ManageNeuronResponse);
+}
