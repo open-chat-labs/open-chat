@@ -108,7 +108,7 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
     }
 
     try {
-        return await navigator.serviceWorker.register("process.env.WEBPUSH_SERVICE_WORKER_PATH");
+        return await navigator.serviceWorker.register("process.env.WEBPUSH_SERVICE_WORKER_PATH", { type: "module" });
     } catch (e) {
         console.log(e);
         return undefined;
