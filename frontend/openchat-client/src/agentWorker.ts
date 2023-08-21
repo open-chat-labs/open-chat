@@ -41,7 +41,7 @@ export class OpenChatAgentWorker extends EventTarget {
 
     protected connectToWorker(): Promise<boolean> {
         console.debug("WORKER_CLIENT: loading worker with version: ", this.config.websiteVersion);
-        this._worker = new Worker(`/worker.js?v=${this.config.websiteVersion}`);
+        this._worker = new Worker(`/worker.js?v=${this.config.websiteVersion}`, { type: "module" });
         const ready = new Promise<boolean>((resolve) => {
             this.sendRequest(
                 {
