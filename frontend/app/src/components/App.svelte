@@ -26,7 +26,7 @@
     } from "../utils/urls";
     import page from "page";
     import { menuStore } from "../stores/menu";
-    import { framed } from "../stores/xframe";
+    import { framed, init as initxframe } from "../stores/xframe";
 
     let viewPortContent = "width=device-width, initial-scale=1";
 
@@ -106,6 +106,7 @@
         };
 
         framed.set(window.self !== window.top);
+        initxframe();
     });
 
     function addHotGroupExclusion(chatId: string): void {

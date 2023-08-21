@@ -5,7 +5,7 @@
     "private": true,
     "scripts": {
         "build": "sh ./build_dev.sh",
-        "build:prod": "sh ./build_prod.sh && ./bin/portable-webpack",
+        "build:prod": "./bin/portable-webpack",
         "build:prod_test": "sh ./build_prod_test.sh && ./bin/portable-webpack",
         "build:sw": "./bin/portable-webpack",
         "build:sw-dev": "FORCE_FETCH_ROOT_KEY=1 ./bin/portable-webpack --mode development",

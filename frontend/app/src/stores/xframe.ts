@@ -24,9 +24,11 @@ type OpenChatReady = {
 
 export const framed = writable(false);
 
-if (window.self !== window.top) {
-    console.debug("XFRAME_TARGET: setting listeners");
-    window.addEventListener("message", externalMessage);
+export function init() {
+    if (window.self !== window.top) {
+        console.debug("XFRAME_TARGET: setting listeners");
+        window.addEventListener("message", externalMessage);
+    }
 }
 
 let queuedRoute: string | undefined = undefined;
@@ -44,6 +46,8 @@ routerReady.subscribe((ready) => {
 function externalMessage(ev: MessageEvent) {
     if (!process.env.FRAME_ANCESTORS?.includes(ev.origin)) {
         return;
+    } else {
+        console.debug("XFRAME_TARGET: message received from an unknown origin", ev.origin);
     }
 
     console.debug("XFRAME_TARGET: message received from host", ev);
