@@ -21,6 +21,7 @@
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import type { ChatIdentifier, MessageContent } from "openchat-client";
     import { _ } from "svelte-i18n";
+    import MemeFighterContent from "./MemeFighterContent.svelte";
 
     export let content: MessageContent;
     export let me: boolean = false;
@@ -84,6 +85,10 @@
     <MessageReminderContent {content} />
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
+{:else if content.kind === "meme_fighter_content"}
+    <IntersectionObserver let:intersecting>
+        <MemeFighterContent {reply} {height} {intersecting} {content} />
+    </IntersectionObserver>
 {:else if content.kind === "custom_content"}
     {#if content.subtype === "user_referral_card"}
         <UserReferralCardContent />

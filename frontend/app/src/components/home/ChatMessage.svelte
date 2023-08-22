@@ -264,6 +264,11 @@
                 width: content.width,
                 height: content.height,
             };
+        } else if (content.kind === "meme_fighter_content") {
+            return {
+                width: content.width,
+                height: content.height,
+            };
         } else if (content.kind === "giphy_content") {
             return $mobileWidth
                 ? { width: content.mobile.width, height: content.mobile.height }

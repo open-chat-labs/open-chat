@@ -50,7 +50,8 @@ export type MessageContent =
     | MessageReminderCreatedContent
     | MessageReminderContent
     | ReportedMessageContent
-    | CustomContent;
+    | CustomContent
+    | MemeFighterContent;
 
 export type IndexRange = [number, number];
 
@@ -316,6 +317,13 @@ export interface ImageContent extends DataContent {
     thumbnailData: string;
     caption?: string;
     mimeType: string;
+}
+
+export interface MemeFighterContent {
+    kind: "meme_fighter_content";
+    height: number;
+    width: number;
+    url: string;
 }
 
 export interface VideoContent {
@@ -812,14 +820,14 @@ export function chatIdentifierToString(id: ChatIdentifier): string {
             return id.groupId;
         default:
             throw new Error(
-                "TODO Channel chat identifiers should not serialised - get rid of the calling code"
+                "TODO Channel chat identifiers should not serialised - get rid of the calling code",
             );
     }
 }
 
 export function messageContextsEqual(
     a: MessageContext | undefined,
-    b: MessageContext | undefined
+    b: MessageContext | undefined,
 ): boolean {
     if (a === undefined && b === undefined) {
         return true;
@@ -855,7 +863,7 @@ export function chatScopesEqual(a: ChatListScope, b: ChatListScope): boolean {
 
 export function chatIdentifiersEqual(
     a: ChatIdentifier | undefined,
-    b: ChatIdentifier | undefined
+    b: ChatIdentifier | undefined,
 ): boolean {
     if (a === undefined && b === undefined) {
         return true;
@@ -1195,7 +1203,10 @@ export type ChatMembership = {
     archived: boolean;
 };
 
-export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup | CanisterNotFound;
+export type GroupCanisterSummaryResponse =
+    | GroupCanisterGroupChatSummary
+    | CallerNotInGroup
+    | CanisterNotFound;
 
 export type GroupCanisterSummaryUpdatesResponse =
     | GroupCanisterGroupChatSummaryUpdates
