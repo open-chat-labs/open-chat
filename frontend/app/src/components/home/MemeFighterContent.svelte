@@ -27,8 +27,6 @@
     $: hidden = $lowBandwidth;
     $: zoomable = !reply;
 
-    $: console.log("Height: ", content.height);
-
     function onClick() {
         if (!isTouchDevice) {
             toggleZoom();
