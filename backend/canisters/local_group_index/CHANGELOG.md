@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Improve upgrade version check to support multiple active versions ([#4215](https://github.com/open-chat-labs/open-chat/pull/4215))
+
 ## [[2.0.800](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.800-local_group_index)] - 2023-08-08
 
 ### Changed
