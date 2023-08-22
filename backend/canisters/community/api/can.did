@@ -823,7 +823,6 @@ type UpdateCommunityResponse = variant {
     RulesTooShort : FieldTooShortResult;
     UserSuspended;
     CommunityFrozen;
-    CannotMakeCommunityPublic;
     InvalidLanguage;
 };
 

@@ -25,7 +25,7 @@ impl PublicCommunities {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn handle_community_created(
+    pub fn add(
         &mut self,
         community_id: CommunityId,
         name: String,
@@ -35,7 +35,7 @@ impl PublicCommunities {
         gate: Option<AccessGate>,
         primary_language: String,
         channel_count: u32,
-        now: TimestampMillis,
+        created: TimestampMillis,
     ) {
         self.communities.insert(
             community_id,
@@ -48,7 +48,7 @@ impl PublicCommunities {
                 gate,
                 primary_language,
                 channel_count,
-                now,
+                created,
             ),
         );
     }

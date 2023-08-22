@@ -109,6 +109,44 @@ fn update_permissions_summary_updates_succeeds() {
     }
 }
 
+#[test]
+fn make_private_community_public_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+
+    let community_id = client::user::happy_path::create_community(env, &user, &random_string(), false, vec!["abc".to_string()]);
+
+    let args = community_canister::update_community::Args {
+        name: None,
+        description: None,
+        rules: None,
+        avatar: OptionUpdate::NoChange,
+        banner: OptionUpdate::NoChange,
+        permissions: None,
+        gate: OptionUpdate::NoChange,
+        public: Some(true),
+        primary_language: None,
+    };
+
+    client::community::happy_path::update_community(env, &user, community_id, &args);
+
+    let result = client::community::happy_path::summary(env, &user, community_id);
+
+    assert!(result.is_public);
+
+    assert!(
+        client::group_index::happy_path::explore_communities(env, &user, canister_ids.group_index)
+            .into_iter()
+            .any(|c| c.id == community_id)
+    );
+}
+
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
 
