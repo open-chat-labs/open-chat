@@ -10,6 +10,7 @@ pub struct Args {
     pub banner_id: Option<u128>,
     pub gate: Option<AccessGate>,
     pub primary_language: String,
+    pub channel_count: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
