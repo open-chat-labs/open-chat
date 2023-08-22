@@ -16,7 +16,9 @@ pub struct Args {
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
     #[serde(default)]
-    pub rules_accepted: Option<Version>,
+    pub community_rules_accepted: Option<Version>,
+    #[serde(default)]
+    pub channel_rules_accepted: Option<Version>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

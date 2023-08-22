@@ -14,11 +14,12 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::ops::Deref;
 use types::{
     AccessGate, AccessRules, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
     CommunityMembership, CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis,
-    Timestamped, UserId,
+    Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -134,6 +135,7 @@ impl RuntimeState {
             channels,
             membership,
             metrics: data.cached_chat_metrics.value.clone(),
+            rules_enabled: data.rules.enabled,
         }
     }
 
@@ -259,6 +261,18 @@ impl Data {
         }
     }
 
+    pub fn one_time_set_bot_flag(&mut self, bots: &HashSet<UserId>) {
+        for member in self.members.iter_mut() {
+            if bots.contains(&member.user_id) {
+                member.is_bot = true;
+            }
+        }
+
+        for channel in self.channels.iter_mut() {
+            channel.chat.members.one_time_set_bot_flag(bots);
+        }
+    }
+
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
     }
@@ -281,6 +295,45 @@ impl Data {
         }
 
         self.cached_chat_metrics = Timestamped::new(metrics.hydrate(), now);
+    }
+
+    pub fn check_rules(
+        &mut self,
+        caller: Principal,
+        rules_accepted: Option<Version>,
+        now: TimestampMillis,
+    ) -> CheckRulesResult {
+        use CheckRulesResult::*;
+
+        if let Some(member) = self.members.get_mut(caller) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+
+            if let Some(version) = rules_accepted {
+                let already_accepted = member
+                    .rules_accepted
+                    .as_ref()
+                    .map_or(false, |accepted| version <= accepted.value);
+
+                if !already_accepted {
+                    member.rules_accepted = Some(Timestamped::new(version, now));
+                }
+            }
+
+            match !self.rules.enabled
+                || member.is_bot
+                || (member
+                    .rules_accepted
+                    .as_ref()
+                    .map_or(false, |accepted| accepted.value >= self.rules.text.version))
+            {
+                true => Success,
+                false => NotAccepted,
+            }
+        } else {
+            UserNotInCommunity
+        }
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
@@ -326,4 +379,11 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
+}
+
+pub enum CheckRulesResult {
+    Success,
+    UserSuspended,
+    UserNotInCommunity,
+    NotAccepted,
 }

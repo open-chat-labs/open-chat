@@ -152,6 +152,7 @@ impl Channel {
                 GroupPermissions::default(),
                 None,
                 None,
+                false,
                 now,
             ),
             date_imported: None,

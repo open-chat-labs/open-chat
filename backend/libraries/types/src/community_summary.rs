@@ -21,6 +21,8 @@ pub struct CommunityCanisterCommunitySummary {
     pub primary_language: String,
     pub latest_event_index: EventIndex,
     pub channels: Vec<CommunityCanisterChannelSummary>,
+    #[serde(default)]
+    pub rules_enabled: bool,
     pub membership: Option<CommunityMembership>,
     pub metrics: ChatMetrics,
 }
@@ -49,6 +51,8 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub channels_added: Vec<CommunityCanisterChannelSummary>,
     pub channels_updated: Vec<CommunityCanisterChannelSummaryUpdates>,
     pub channels_removed: Vec<ChannelId>,
+    #[serde(default)]
+    pub rules_enabled: Option<bool>,
     pub membership: Option<CommunityMembershipUpdates>,
     pub metrics: Option<ChatMetrics>,
 }

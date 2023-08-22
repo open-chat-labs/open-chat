@@ -2,6 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
     EventIndex, GroupReplyContext, InvalidPollReason, MessageContentInitial, MessageId, MessageIndex, TimestampMillis, User,
+    Version,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -13,6 +14,8 @@ pub struct Args {
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
     pub forwarding: bool,
+    #[serde(default)]
+    pub rules_accepted: Option<Version>,
     pub correlation_id: u64,
 }
 
@@ -28,6 +31,7 @@ pub enum Response {
     UserSuspended,
     InvalidRequest(String),
     ChatFrozen,
+    RulesNotAccepted,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

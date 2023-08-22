@@ -33,6 +33,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.replies_to,
             args.mentioned.clone(),
             args.forwarding,
+            args.rules_accepted,
             state.data.proposals_bot_user_id,
             now,
         ) {
@@ -81,6 +82,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             SendMessageResult::NotAuthorized => NotAuthorized,
             SendMessageResult::UserNotInGroup => CallerNotInGroup,
             SendMessageResult::UserSuspended => UserSuspended,
+            SendMessageResult::RulesNotAccepted => RulesNotAccepted,
             SendMessageResult::InvalidRequest(error) => InvalidRequest(error),
         }
     } else {

@@ -111,6 +111,7 @@ fn send_message_with_transfer_to_group_succeeds() {
             sender_name: user1.username(),
             replies_to: None,
             mentioned: Vec::new(),
+            rules_accepted: None,
             correlation_id: 0,
         },
     );

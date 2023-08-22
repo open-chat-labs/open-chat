@@ -401,7 +401,8 @@ type SendMessageWithTransferToChannelArgs = record {
     sender_name : text;
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
-    rules_accepted : opt Version;
+    community_rules_accepted : opt Version;
+    channel_rules_accepted : opt Version;
 };
 
 type SendMessageWithTransferToChannelResponse = variant {
@@ -435,6 +436,7 @@ type SendMessageWithTransferToGroupArgs = record {
     sender_name : text;
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
+    rules_accepted : opt Version;
     correlation_id : nat64;
 };
 
@@ -455,6 +457,7 @@ type SendMessageWithTransferToGroupResponse = variant {
     TransferCannotBeZero;
     UserSuspended;
     ChatFrozen;
+    RulesNotAccepted;
     InternalError : record { text; CompletedCryptoTransaction };
 };
 

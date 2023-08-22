@@ -37,6 +37,7 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
                 principal: caller,
                 invite_code: None,
                 is_platform_moderator: false,
+                is_bot: true,
             },
             state,
         )
@@ -108,6 +109,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                 args.permissions.unwrap_or_default(),
                 args.gate,
                 args.events_ttl,
+                member.is_bot,
                 now,
             );
 
@@ -121,7 +123,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
 
             if args.is_public && channel.chat.gate.is_none() {
                 for m in state.data.members.iter_mut() {
-                    join_channel_unchecked(&mut channel, m, true, None, now);
+                    join_channel_unchecked(&mut channel, m, true, now);
                 }
             }
 

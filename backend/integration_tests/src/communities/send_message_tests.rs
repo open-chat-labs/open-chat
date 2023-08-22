@@ -83,7 +83,8 @@ fn send_crypto_in_channel() {
             sender_name: user1.username(),
             replies_to: None,
             mentioned: Vec::new(),
-            rules_accepted: None,
+            community_rules_accepted: None,
+            channel_rules_accepted: None,
         },
     );
 
