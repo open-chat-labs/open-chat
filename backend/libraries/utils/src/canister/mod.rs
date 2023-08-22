@@ -1,3 +1,6 @@
+use std::cmp::Ordering;
+use types::BuildVersion;
+
 mod canisters_requiring_upgrade;
 mod create;
 mod delete;
@@ -21,3 +24,11 @@ pub use raw_rand::*;
 pub use start::*;
 pub use stop::*;
 pub use update_settings::*;
+
+pub fn should_perform_upgrade(current: BuildVersion, next: BuildVersion, test_mode: bool) -> bool {
+    match current.cmp(&next) {
+        Ordering::Less => true,
+        Ordering::Greater if test_mode => true,
+        _ => false,
+    }
+}

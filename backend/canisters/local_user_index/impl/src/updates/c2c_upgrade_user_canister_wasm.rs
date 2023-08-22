@@ -1,11 +1,12 @@
 use crate::guards::caller_is_user_index_canister;
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, Data, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_upgrade_user_canister_wasm::{Response::*, *};
 use std::collections::HashSet;
 use tracing::info;
-use types::CanisterId;
+use types::{BuildVersion, CanisterId};
+use utils::canister::should_perform_upgrade;
 
 #[update_msgpack(guard = "caller_is_user_index_canister")]
 #[trace]
@@ -16,7 +17,7 @@ fn c2c_upgrade_user_canister_wasm(args: Args) -> Response {
 fn c2c_upgrade_user_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> Response {
     let version = args.wasm.version;
 
-    if !state.data.test_mode && version < state.data.user_canister_wasm_for_new_canisters.version {
+    if !state.data.test_mode && Some(version) <= min_canister_version(&state.data) {
         VersionNotHigher
     } else {
         state.data.canisters_requiring_upgrade.clear();
@@ -34,7 +35,10 @@ fn c2c_upgrade_user_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> 
             .data
             .local_users
             .iter()
-            .filter(|(user_id, user)| user.wasm_version != version && !state.data.global_users.is_bot(user_id))
+            .filter(|(user_id, user)| {
+                should_perform_upgrade(user.wasm_version, version, state.data.test_mode)
+                    && !state.data.global_users.is_bot(user_id)
+            })
             .map(|(user_id, _)| CanisterId::from(*user_id))
             .filter(|c| include_all || include.contains(c))
             .filter(|c| !exclude.contains(c))
@@ -47,4 +51,8 @@ fn c2c_upgrade_user_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> 
         info!(%version, canisters_queued_for_upgrade, "User canister wasm upgraded");
         Success
     }
+}
+
+fn min_canister_version(data: &Data) -> Option<BuildVersion> {
+    data.local_users.iter().map(|(_, u)| u.wasm_version).min()
 }
