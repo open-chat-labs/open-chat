@@ -16,13 +16,12 @@ fn upgrade_local_group_index_canister_wasm(args: Args) -> Response {
 
 fn upgrade_local_group_index_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> Response {
     let version = args.wasm.version;
-    let use_for_new_canisters = args.use_for_new_canisters.unwrap_or(true);
 
-    if !is_version_valid(version, use_for_new_canisters, &state.data) {
+    if !is_version_valid(version, &state.data) {
         VersionNotHigher
     } else {
         state.data.canisters_requiring_upgrade.clear();
-        if use_for_new_canisters {
+        if args.use_for_new_canisters.unwrap_or(true) {
             state.data.local_group_index_canister_wasm_for_new_canisters = args.wasm.clone();
         }
         state.data.local_group_index_canister_wasm_for_upgrades = args.wasm;
@@ -51,16 +50,8 @@ fn upgrade_local_group_index_canister_wasm_impl(args: Args, state: &mut RuntimeS
     }
 }
 
-fn is_version_valid(version: BuildVersion, use_for_new_canisters: bool, data: &Data) -> bool {
-    if data.test_mode {
-        true
-    } else if use_for_new_canisters && version < data.local_group_index_canister_wasm_for_new_canisters.version {
-        false
-    } else if version < min_canister_version(data).unwrap_or_default() {
-        false
-    } else {
-        true
-    }
+fn is_version_valid(version: BuildVersion, data: &Data) -> bool {
+    data.test_mode || version > min_canister_version(data).unwrap_or_default()
 }
 
 fn min_canister_version(data: &Data) -> Option<BuildVersion> {
