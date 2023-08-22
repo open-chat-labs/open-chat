@@ -48,6 +48,7 @@
     let rulesValid = true;
     $: steps = getSteps(editing, detailsValid, hideInviteUsers);
     $: editing = !chatIdentifierUnset(candidateGroup.id);
+    $: canMakePublic = !editing;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.id);
@@ -403,6 +404,7 @@
                 </div>
                 <div class="visibility" class:visible={step === 1}>
                     <VisibilityControl
+                        {canMakePublic}
                         on:upgrade
                         original={originalGroup}
                         {editing}
