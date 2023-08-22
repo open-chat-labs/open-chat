@@ -17,7 +17,7 @@ fn c2c_upgrade_group_canister_wasm(args: Args) -> Response {
 fn c2c_upgrade_group_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> Response {
     let version = args.wasm.version;
 
-    if !is_version_valid(version, &state.data) {
+    if !state.data.test_mode && Some(version) <= min_canister_version(&state.data) {
         VersionNotHigher
     } else {
         state.data.groups_requiring_upgrade.clear();
@@ -47,10 +47,6 @@ fn c2c_upgrade_group_canister_wasm_impl(args: Args, state: &mut RuntimeState) ->
         info!(%version, canisters_queued_for_upgrade, "Group canister wasm upgraded");
         Success
     }
-}
-
-fn is_version_valid(version: BuildVersion, data: &Data) -> bool {
-    data.test_mode || version > min_canister_version(data).unwrap_or_default()
 }
 
 fn min_canister_version(data: &Data) -> Option<BuildVersion> {

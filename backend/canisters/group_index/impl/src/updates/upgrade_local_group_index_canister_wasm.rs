@@ -17,7 +17,7 @@ fn upgrade_local_group_index_canister_wasm(args: Args) -> Response {
 fn upgrade_local_group_index_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> Response {
     let version = args.wasm.version;
 
-    if !is_version_valid(version, &state.data) {
+    if !state.data.test_mode && Some(version) <= min_canister_version(&state.data) {
         VersionNotHigher
     } else {
         state.data.canisters_requiring_upgrade.clear();
@@ -48,10 +48,6 @@ fn upgrade_local_group_index_canister_wasm_impl(args: Args, state: &mut RuntimeS
         info!(%version, canisters_queued_for_upgrade, "Local group index canister wasm upgraded");
         Success
     }
-}
-
-fn is_version_valid(version: BuildVersion, data: &Data) -> bool {
-    data.test_mode || version > min_canister_version(data).unwrap_or_default()
 }
 
 fn min_canister_version(data: &Data) -> Option<BuildVersion> {
