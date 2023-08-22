@@ -134,7 +134,7 @@
             </HoverIcon>
         </div>
         <div class="meme" on:click|stopPropagation={makeMeme}>
-            <HoverIcon title={$_("makeMeme")}>
+            <HoverIcon title={"Meme Fighter"}>
                 <MemeFighter size={$iconSize} color={iconColour} />
             </HoverIcon>
         </div>

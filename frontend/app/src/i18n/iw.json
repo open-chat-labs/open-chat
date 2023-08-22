@@ -650,8 +650,6 @@
     "revealDeletedMessage": "לחשוף הודעה",
     "retryMessage": "נסה שוב את ההודעה",
     "lowBandwidth": "רוחב פס נמוך",
-    "loadImage": "טען תמונה",
-    "loadGif": "טען gif",
     "showTweet": "הצג ציוץ",
     "showVideo": "הצג וידאו",
     "wallet": "ארנק",
@@ -964,5 +962,10 @@
     "sendMessage": "לשלוח הודעה",
     "publicChannelInfo": "חברי הקהילה מתווספים אוטומטית לערוצים ציבוריים (הם יכולים לעזוב לאחר מכן).",
     "publicGroupWithN": "{level} ציבורי עם חברי {number}",
-    "privateGroupWithN": "פרטי {level} עם חברי {number}"
+    "privateGroupWithN": "פרטי {level} עם חברי {number}",
+    "loadImage": "הצג תמונה",
+    "loadMeme": "הראה מם",
+    "loadGif": "הצג gif",
+    "reset": "אִתחוּל",
+    "send": "לִשְׁלוֹחַ"
 }

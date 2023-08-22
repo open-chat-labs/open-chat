@@ -653,8 +653,6 @@
     "revealDeletedMessage": "Tiết lộ tin nhắn",
     "retryMessage": "Thử lại tin nhắn",
     "lowBandwidth": "Băng thông thấp",
-    "loadImage": "Tải hình ảnh",
-    "loadGif": "tải gif",
     "showTweet": "Hiển thị tweet",
     "showVideo": "Hiển thị video",
     "wallet": "Cái ví",
@@ -967,5 +965,10 @@
     "sendMessage": "Gửi tin nhắn",
     "publicChannelInfo": "Các thành viên cộng đồng được tự động thêm vào các kênh công cộng (sau đó họ có thể rời đi).",
     "publicGroupWithN": "Công khai {level} với {number} thành viên",
-    "privateGroupWithN": "{level} riêng tư với {number} thành viên"
+    "privateGroupWithN": "{level} riêng tư với {number} thành viên",
+    "loadImage": "Hiển thị hình ảnh",
+    "loadMeme": "Hiển thị meme",
+    "loadGif": "Hiển thị ảnh gif",
+    "reset": "Cài lại",
+    "send": "Gửi"
 }

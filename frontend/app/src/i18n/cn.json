@@ -652,8 +652,6 @@
     "revealDeletedMessage": "显示消息",
     "retryMessage": "重试消息",
     "lowBandwidth": "低带宽",
-    "loadImage": "载入图片",
-    "loadGif": "载入动图",
     "showTweet": "显示推文",
     "showVideo": "显示视频",
     "wallet": "钱包",
@@ -967,5 +965,10 @@
     "sendMessage": "发信息",
     "publicChannelInfo": "社区成员会自动添加到公共频道（他们随后可以离开）。",
     "publicGroupWithN": "具有 {level} 成员的公共 {number}",
-    "privateGroupWithN": "拥有 {level} 成员的私人 {number}"
+    "privateGroupWithN": "拥有 {level} 成员的私人 {number}",
+    "loadImage": "显示图片",
+    "loadMeme": "显示模因",
+    "loadGif": "显示动图",
+    "reset": "重置",
+    "send": "发送"
 }

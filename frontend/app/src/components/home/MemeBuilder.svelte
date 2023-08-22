@@ -75,9 +75,7 @@
         <ModalContent fill closeIcon on:close={close}>
             <div class="header" slot="header">
                 <MemeFighter size={$iconSize} color={"var(--icon-txt)"} />
-                <div class="title">
-                    {$_("makeMeme")}
-                </div>
+                <div class="title">Meme Fighter</div>
             </div>
             <div slot="body" class="meme-body">
                 {#if memeUrl}

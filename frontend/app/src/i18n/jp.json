@@ -653,8 +653,6 @@
     "revealDeletedMessage": "メッセージを表示",
     "retryMessage": "再試行メッセージ",
     "lowBandwidth": "低帯域幅",
-    "loadImage": "画像を読み込む",
-    "loadGif": "gif を読み込む",
     "showTweet": "ツイートを表示",
     "showVideo": "ビデオを表示",
     "wallet": "ウォレット",
@@ -967,5 +965,10 @@
     "sendMessage": "メッセージを送る",
     "publicChannelInfo": "コミュニティ メンバーはパブリック チャネルに自動的に追加されます (その後、退会できます)。",
     "publicGroupWithN": "{level} メンバーによる公開 {number}",
-    "privateGroupWithN": "{level} メンバーとのプライベート {number}"
+    "privateGroupWithN": "{level} メンバーとのプライベート {number}",
+    "loadImage": "画像を表示",
+    "loadMeme": "ミームを表示",
+    "loadGif": "gifを表示",
+    "reset": "リセット",
+    "send": "送信"
 }

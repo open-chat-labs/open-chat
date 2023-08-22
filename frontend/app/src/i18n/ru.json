@@ -652,8 +652,6 @@
     "revealDeletedMessage": "Показать сообщение",
     "retryMessage": "Повторить сообщение",
     "lowBandwidth": "Низкая пропускная способность",
-    "loadImage": "Загрузить изображение",
-    "loadGif": "Загрузить гифку",
     "showTweet": "Показать твит",
     "showVideo": "Показать видео",
     "wallet": "Бумажник",
@@ -966,5 +964,10 @@
     "sendMessage": "Отправить сообщение",
     "publicChannelInfo": "Участники сообщества автоматически добавляются в публичные каналы (впоследствии они могут выйти).",
     "publicGroupWithN": "Общедоступный {level} с участниками: {number}",
-    "privateGroupWithN": "Частное {level} с участниками: {number}"
+    "privateGroupWithN": "Частное {level} с участниками: {number}",
+    "loadImage": "Показать изображение",
+    "loadMeme": "Показать мем",
+    "loadGif": "Показать гифку",
+    "reset": "Перезагрузить",
+    "send": "Отправлять"
 }
