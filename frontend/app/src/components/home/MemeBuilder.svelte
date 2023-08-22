@@ -36,7 +36,7 @@
     }
 
     const styleVariables = {
-        "--background-color": $themeStore.bg,
+        "--background-color": "#1b1c21",
         "--foreground-color": $themeStore.txt,
         "--button-color": $themeStore.button.bg,
     };
