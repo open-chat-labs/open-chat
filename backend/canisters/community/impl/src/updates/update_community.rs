@@ -51,6 +51,7 @@ async fn update_community(mut args: Args) -> Response {
             || args.description.is_some()
             || args.avatar.has_update()
             || args.banner.has_update()
+            || args.public == Some(true)
             || args.primary_language.is_some())
     {
         let c2c_update_community_args = c2c_update_community::Args {
@@ -60,6 +61,7 @@ async fn update_community(mut args: Args) -> Response {
             banner_id: prepare_result.banner_id,
             gate: prepare_result.gate,
             primary_language: prepare_result.primary_language,
+            channel_count: prepare_result.channel_count,
         };
 
         match group_index_canister_c2c_client::c2c_update_community(group_index_canister_id, &c2c_update_community_args).await {
@@ -99,6 +101,7 @@ struct PrepareResult {
     banner_id: Option<u128>,
     gate: Option<AccessGate>,
     primary_language: String,
+    channel_count: u32,
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -161,8 +164,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             || (args.public.is_some() && !member.role.can_change_community_visibility())
         {
             Err(NotAuthorized)
-        } else if args.public == Some(true) && !state.data.is_public {
-            Err(CannotMakeCommunityPublic)
         } else {
             Ok(PrepareResult {
                 my_user_id: member.user_id,
@@ -175,6 +176,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 banner_id: banner_update.map_or(Document::id(&state.data.banner), |banner| banner.map(|a| a.id)),
                 gate: gate.cloned(),
                 primary_language: args.primary_language.as_ref().unwrap_or(&state.data.primary_language).clone(),
+                channel_count: state.data.channels.public_channel_ids().len() as u32,
             })
         }
     } else {
