@@ -1,11 +1,12 @@
 use crate::guards::caller_is_group_index_canister;
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, Data, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use local_group_index_canister::c2c_upgrade_community_canister_wasm::{Response::*, *};
 use std::collections::HashSet;
 use tracing::info;
-use types::CanisterId;
+use types::{BuildVersion, CanisterId};
+use utils::canister::should_perform_upgrade;
 
 #[update_msgpack(guard = "caller_is_group_index_canister")]
 #[trace]
@@ -16,7 +17,7 @@ fn c2c_upgrade_community_canister_wasm(args: Args) -> Response {
 fn c2c_upgrade_community_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> Response {
     let version = args.wasm.version;
 
-    if !state.data.test_mode && version < state.data.community_canister_wasm_for_new_canisters.version {
+    if !state.data.test_mode && Some(version) <= min_canister_version(&state.data) {
         VersionNotHigher
     } else {
         state.data.communities_requiring_upgrade.clear();
@@ -34,7 +35,7 @@ fn c2c_upgrade_community_canister_wasm_impl(args: Args, state: &mut RuntimeState
             .data
             .local_communities
             .iter()
-            .filter(|(_, community)| community.wasm_version != version)
+            .filter(|(_, community)| should_perform_upgrade(community.wasm_version, version, state.data.test_mode))
             .map(|(community_id, _)| CanisterId::from(*community_id))
             .filter(|c| include_all || include.contains(c))
             .filter(|c| !exclude.contains(c))
@@ -46,4 +47,8 @@ fn c2c_upgrade_community_canister_wasm_impl(args: Args, state: &mut RuntimeState
         info!(%version, canisters_queued_for_upgrade, "Community canister wasm upgraded");
         Success
     }
+}
+
+fn min_canister_version(data: &Data) -> Option<BuildVersion> {
+    data.local_communities.iter().map(|(_, c)| c.wasm_version).min()
 }
