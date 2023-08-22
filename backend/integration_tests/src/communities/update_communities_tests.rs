@@ -145,8 +145,7 @@ fn make_private_community_public_succeeds() {
     assert!(
         client::group_index::happy_path::explore_communities(env, &user2, canister_ids.group_index)
             .into_iter()
-            .find(|c| c.id == community_id)
-            .is_some()
+            .any(|c| c.id == community_id)
     );
 }
 
