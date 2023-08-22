@@ -7,6 +7,5 @@ pub type Args = UpgradeCanisterWasmArgs;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    VersionNotHigher,
     InternalError(String),
 }
