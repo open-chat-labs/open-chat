@@ -20,7 +20,7 @@ fn update_permissions_succeeds() {
         user1,
         user2,
         community_id,
-    } = init_test_data(env, canister_ids, *controller, true);
+    } = init_test_data(env, canister_ids, *controller);
 
     let args = community_canister::update_community::Args {
         name: None,
@@ -65,7 +65,7 @@ fn update_permissions_summary_updates_succeeds() {
         user1,
         user2,
         community_id,
-    } = init_test_data(env, canister_ids, *controller, true);
+    } = init_test_data(env, canister_ids, *controller);
 
     let summary = client::community::happy_path::summary(env, &user2, community_id);
 
@@ -118,11 +118,9 @@ fn make_private_community_public_succeeds() {
         controller,
     } = wrapper.env();
 
-    let TestData {
-        user1,
-        user2,
-        community_id,
-    } = init_test_data(env, canister_ids, *controller, false);
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+
+    let community_id = client::user::happy_path::create_community(env, &user, &random_string(), false, vec!["abc".to_string()]);
 
     let args = community_canister::update_community::Args {
         name: None,
@@ -136,26 +134,26 @@ fn make_private_community_public_succeeds() {
         primary_language: None,
     };
 
-    client::community::happy_path::update_community(env, &user1, community_id, &args);
+    client::community::happy_path::update_community(env, &user, community_id, &args);
 
-    let result = client::community::happy_path::summary(env, &user2, community_id);
+    let result = client::community::happy_path::summary(env, &user, community_id);
 
     assert!(result.is_public);
 
     assert!(
-        client::group_index::happy_path::explore_communities(env, &user2, canister_ids.group_index)
+        client::group_index::happy_path::explore_communities(env, &user, canister_ids.group_index)
             .into_iter()
             .any(|c| c.id == community_id)
     );
 }
 
-fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
+fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
 
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     let community_id =
-        client::user::happy_path::create_community(env, &user1, &random_string(), public, vec!["general".to_string()]);
+        client::user::happy_path::create_community(env, &user1, &random_string(), true, vec!["general".to_string()]);
 
     client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
 
