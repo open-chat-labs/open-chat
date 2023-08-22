@@ -31,6 +31,7 @@
     export let original: AccessControlled;
     export let editing: boolean;
     export let history: boolean;
+    export let canMakePublic: boolean;
 
     let minDissolveDelay = client.getMinDissolveDelayDays(original.gate);
     let minStake = client.getMinStakeInTokens(original.gate);
@@ -102,14 +103,14 @@
             checked={candidate.public}
             id={"public"}
             align={"start"}
-            disabled={editing && !original.public}
+            disabled={!canMakePublic}
             group={"visibility"}>
             <div class="section-title">
                 <div class={"img public"} />
                 <p>{interpolateLevel("group.publicGroup", candidate.level, true)}</p>
             </div>
             <div class="info">
-                {#if editing && !original.public}
+                {#if !canMakePublic}
                     <p>{interpolateLevel("access.cannotMakePublic", candidate.level, true)}</p>
                 {:else}
                     <p>{interpolateLevel("publicGroupUnique", candidate.level, true)}</p>
