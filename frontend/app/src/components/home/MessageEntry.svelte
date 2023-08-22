@@ -212,7 +212,10 @@
                 window.clearTimeout(typingTimer);
             }
 
-            typingTimer = window.setTimeout(() => dispatch("stopTyping"), MARK_TYPING_STOPPED_INTERVAL_MS);
+            typingTimer = window.setTimeout(
+                () => dispatch("stopTyping"),
+                MARK_TYPING_STOPPED_INTERVAL_MS
+            );
         });
     }
 
@@ -311,7 +314,9 @@
         const tokenMatch = txt.match(tokenMatchRegex);
         if (tokenMatch && tokenMatch[2] !== undefined) {
             const token = tokenMatch[1];
-            const tokenDetails = Object.values($cryptoLookup).find((t) => t.symbol.toLowerCase() === token);
+            const tokenDetails = Object.values($cryptoLookup).find(
+                (t) => t.symbol.toLowerCase() === token
+            );
             if (tokenDetails !== undefined) {
                 dispatch("tokenTransfer", {
                     ledger: tokenDetails.ledger,
@@ -518,6 +523,7 @@
                 editing={editingEvent !== undefined}
                 on:tokenTransfer
                 on:attachGif
+                on:makeMeme
                 on:createPoll
                 on:upgrade
                 on:clearAttachment

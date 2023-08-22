@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
-    import type { ImageContent } from "openchat-client";
+    import type { ImageContent, MemeFighterContent } from "openchat-client";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import ContentCaption from "./ContentCaption.svelte";
@@ -13,7 +13,7 @@
     import Button from "../Button.svelte";
     import { _ } from "svelte-i18n";
 
-    export let content: ImageContent;
+    export let content: ImageContent | MemeFighterContent;
     export let fill: boolean;
     export let draft: boolean = false;
     export let reply: boolean = false;
@@ -24,14 +24,35 @@
 
     let imgElement: HTMLImageElement;
     let zoom = false;
-    let withCaption = content.caption !== undefined && content.caption !== "";
+    let withCaption =
+        content.kind === "image_content" && content.caption !== undefined && content.caption !== "";
     let landscape = content.height < content.width;
     let zoomedWidth: number;
     let zoomedHeight: number;
+    let normalised = normaliseContent(content);
 
     $: hidden = $lowBandwidth && !draft;
 
     $: zoomable = !draft && !reply && !pinned;
+
+    function normaliseContent(content: ImageContent | MemeFighterContent) {
+        switch (content.kind) {
+            case "image_content":
+                return {
+                    url: content.blobUrl,
+                    caption: content.caption,
+                    fallback: content.thumbnailData,
+                    loadMsg: "loadImage",
+                };
+            case "meme_fighter_content":
+                return {
+                    url: content.url,
+                    caption: undefined,
+                    fallback: "/assets/memefighter.svg",
+                    loadMsg: "loadMeme",
+                };
+        }
+    }
 
     function onClick() {
         if (!isTouchDevice) {
@@ -80,13 +101,13 @@
     on:resize={recalculateZoomedDimensions}
     on:orientationchange={recalculateZoomedDimensions} />
 
-{#if content.blobUrl !== undefined}
+{#if normalised.url !== undefined}
     <div class="img-wrapper">
         {#if hidden}
             <div class="mask">
                 {#if !reply && !draft}
                     <div class="reveal">
-                        <Button on:click={() => (hidden = false)}>{$_("loadImage")}</Button>
+                        <Button on:click={() => (hidden = false)}>{$_(normalised.loadMsg)}</Button>
                     </div>
                 {/if}
             </div>
@@ -95,7 +116,7 @@
             bind:this={imgElement}
             on:click={onClick}
             on:dblclick|stopPropagation={onDoubleClick}
-            on:error={() => (imgElement.src = content.thumbnailData)}
+            on:error={() => (imgElement.src = normalised.fallback)}
             class:landscape
             class:fill
             class:withCaption
@@ -104,8 +125,8 @@
             class:zoomable={zoomable && !hidden}
             class:rtl={$rtlStore}
             style={height === undefined ? undefined : `height: ${height}px`}
-            src={intersecting && !hidden ? content.blobUrl : content.thumbnailData}
-            alt={content.caption} />
+            src={intersecting && !hidden ? normalised.url : normalised.fallback}
+            alt={normalised.caption} />
 
         {#if zoomable && !hidden}
             <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} on:click={toggleZoom}>
@@ -115,16 +136,11 @@
     </div>
 {/if}
 
-<ContentCaption caption={content.caption} {edited} {reply} />
+<ContentCaption caption={normalised.caption} {edited} {reply} />
 
 {#if zoomable && zoom}
     <Overlay on:close={() => (zoom = false)} dismissible alignBottomOnMobile={false}>
-        <ModalContent
-            hideHeader
-            hideFooter
-            fill
-            fitToContent
-            fixedWidth={false}>
+        <ModalContent hideHeader hideFooter fill fitToContent fixedWidth={false}>
             <span class="body" slot="body">
                 <img
                     class="zoomed"
@@ -133,9 +149,9 @@
                     height={zoomedHeight}
                     on:click={onClick}
                     on:dblclick={onDoubleClick}
-                    on:error={() => (imgElement.src = content.thumbnailData)}
-                    src={content.blobUrl}
-                    alt={content.caption} />
+                    on:error={() => (imgElement.src = normalised.fallback)}
+                    src={normalised.url}
+                    alt={normalised.caption} />
                 <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} on:click={toggleZoom}>
                     <ArrowCollapse size={"1em"} color={"#fff"} />
                 </div>

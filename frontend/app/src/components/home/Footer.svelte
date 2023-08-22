@@ -133,6 +133,7 @@
         on:searchChat
         on:tokenTransfer
         on:attachGif
+        on:makeMeme
         on:clearAttachment
         on:fileSelected
         on:audioCaptured

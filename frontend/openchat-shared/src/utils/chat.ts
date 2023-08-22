@@ -29,14 +29,14 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 ) {
                     userIds.add(e.event.repliesTo.senderId);
                     extractUserIdsFromMentions(
-                        getContentAsText(fakeFormatter, e.event.repliesTo.content, {})
+                        getContentAsText(fakeFormatter, e.event.repliesTo.content, {}),
                     ).forEach((id) => userIds.add(id));
                 }
                 if (e.event.content.kind === "reported_message_content") {
                     e.event.content.reports.forEach((r) => userIds.add(r.reportedBy));
                 }
                 extractUserIdsFromMentions(
-                    getContentAsText(fakeFormatter, e.event.content, {})
+                    getContentAsText(fakeFormatter, e.event.content, {}),
                 ).forEach((id) => userIds.add(id));
                 break;
             case "member_joined":
@@ -93,7 +93,11 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
     }, new Set<string>());
 }
 
-export function getContentAsText(formatter: MessageFormatter, content: MessageContent, cryptoLookup: Record<string, CryptocurrencyDetails>): string {
+export function getContentAsText(
+    formatter: MessageFormatter,
+    content: MessageContent,
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
+): string {
     let text;
     if (content.kind === "text_content") {
         text = content.text;
@@ -110,7 +114,7 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
             formatter("tokenTransfer.transfer", {
                 values: { token: cryptoLookup[content.transfer.ledger]?.symbol ?? "Unknown" },
             }),
-            content.caption
+            content.caption,
         );
     } else if (content.kind === "deleted_content") {
         text = "deleted message";
@@ -138,6 +142,8 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
         }
     } else if (content.kind === "reported_message_content") {
         text = "reported message";
+    } else if (content.kind === "meme_fighter_content") {
+        text = "Meme fighter message";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
@@ -220,7 +226,7 @@ export function compareRoles(a: MemberRole, b: MemberRole): number {
 export function routeForMessage(
     scope: ChatListScope["kind"],
     ctx: MessageContext,
-    messageIndex: number
+    messageIndex: number,
 ): string {
     return ctx.threadRootMessageIndex === undefined
         ? `${routeForMessageContext(scope, ctx)}/${messageIndex}`
@@ -229,7 +235,7 @@ export function routeForMessage(
 
 export function routeForMessageContext(
     scope: ChatListScope["kind"],
-    { chatId, threadRootMessageIndex }: MessageContext
+    { chatId, threadRootMessageIndex }: MessageContext,
 ): string {
     return threadRootMessageIndex === undefined
         ? routeForChatIdentifier(scope, chatId)

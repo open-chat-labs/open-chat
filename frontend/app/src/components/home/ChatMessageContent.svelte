@@ -84,6 +84,10 @@
     <MessageReminderContent {content} />
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
+{:else if content.kind === "meme_fighter_content"}
+    <IntersectionObserver let:intersecting>
+        <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
+    </IntersectionObserver>
 {:else if content.kind === "custom_content"}
     {#if content.subtype === "user_referral_card"}
         <UserReferralCardContent />
