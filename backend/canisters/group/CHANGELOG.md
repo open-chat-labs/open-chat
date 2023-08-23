@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support making private groups / channels public ([#4223](https://github.com/open-chat-labs/open-chat/pull/4223))
+
 ### Changed
 
 - Optimise `selected_updates` for query caching ([#4185](https://github.com/open-chat-labs/open-chat/pull/4185))
