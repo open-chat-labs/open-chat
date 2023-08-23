@@ -792,7 +792,6 @@ type UpdateChannelResponse = variant {
     RulesTooShort : FieldTooShortResult;
     UserSuspended;
     CommunityFrozen;
-    CannotMakeChannelPublic;
 };
 
 type UpdateCommunityArgs = record {

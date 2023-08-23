@@ -46,6 +46,8 @@ pub struct GroupChatCore {
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
+    #[serde(default)]
+    pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -84,6 +86,7 @@ impl GroupChatCore {
             date_last_pinned: None,
             gate: Timestamped::new(gate, now),
             invited_users: InvitedUsers::default(),
+            min_visible_indexes_for_new_members: None,
         }
     }
 
@@ -98,12 +101,12 @@ impl GroupChatCore {
     }
 
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
-        if self.is_public && self.history_visible_to_new_joiners {
-            Some(EventIndex::default())
+        if let Some(user) = user_id.and_then(|u| self.members.get(&u)) {
+            Some(user.min_visible_event_index())
+        } else if self.is_public {
+            Some(self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default())
         } else {
-            user_id
-                .and_then(|u| self.members.get(&u))
-                .map(|m| m.min_visible_event_index())
+            None
         }
     }
 
@@ -1106,7 +1109,12 @@ impl GroupChatCore {
                 // Find the latest event and message that the invited users are allowed to see
                 let mut min_visible_event_index = EventIndex::default();
                 let mut min_visible_message_index = MessageIndex::default();
-                if !self.history_visible_to_new_joiners {
+                if self.history_visible_to_new_joiners {
+                    let (e, m) = self.min_visible_indexes_for_new_members.unwrap_or_default();
+
+                    min_visible_event_index = e;
+                    min_visible_message_index = m;
+                } else {
                     // If there is only an initial "group created" event then allow these users
                     // to see the "group created" event by starting min_visible_* at zero
                     let events_reader = self.events.main_events_reader(now);
@@ -1321,8 +1329,6 @@ impl GroupChatCore {
                 || (public.is_some() && !member.role.can_change_group_visibility())
             {
                 NotAuthorized
-            } else if *public == Some(true) {
-                CannotMakePublic
             } else {
                 Success
             }
@@ -1459,8 +1465,14 @@ impl GroupChatCore {
                     changed_by: user_id,
                 };
 
-                self.events
-                    .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
+                let push_event_result =
+                    self.events
+                        .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
+
+                if self.is_public {
+                    self.min_visible_indexes_for_new_members =
+                        Some((push_event_result.index, self.events.main_events_list().next_message_index()));
+                }
             }
         }
     }
@@ -1680,7 +1692,6 @@ pub enum UpdateResult {
     RulesTooShort(FieldTooShortResult),
     RulesTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
-    CannotMakePublic,
 }
 
 enum EventsReaderResult<'r> {

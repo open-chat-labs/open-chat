@@ -34,5 +34,4 @@ pub enum Response {
     UserSuspended,
     ChatFrozen,
     InternalError,
-    CannotMakeGroupPublic,
 }
