@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.816](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.816-group_index)] - 2023-08-23
+
 ### Changed
 
 - Allow making private communities public ([#4217](https://github.com/open-chat-labs/open-chat/pull/4217))
