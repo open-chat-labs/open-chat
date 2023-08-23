@@ -6,6 +6,7 @@
     import Smiley from "./Smiley.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
+    import MemeFighter from "../icons/MemeFighter.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
     import TrayPlus from "svelte-material-icons/DotsVertical.svelte";
     import TrayRemove from "svelte-material-icons/Close.svelte";
@@ -74,6 +75,11 @@
         dispatch("attachGif", "");
         drawOpen = false;
     }
+
+    function makeMeme() {
+        dispatch("makeMeme");
+        drawOpen = false;
+    }
 </script>
 
 <svelte:body
@@ -127,6 +133,11 @@
                 <StickerEmoji size={$iconSize} color={iconColour} />
             </HoverIcon>
         </div>
+        <div class="meme" on:click|stopPropagation={makeMeme}>
+            <HoverIcon title={"Meme Fighter"}>
+                <MemeFighter size={$iconSize} color={iconColour} />
+            </HoverIcon>
+        </div>
         {#if pollsAllowed}
             <div class="poll" on:click|stopPropagation={createPoll}>
                 <HoverIcon title={$_("poll.create")}>
@@ -178,6 +189,7 @@
             .emoji,
             .attach,
             .gif,
+            .meme,
             .send-icp,
             .poll {
                 top: -18px;
@@ -192,6 +204,7 @@
                 .emoji,
                 .attach,
                 .gif,
+                .meme,
                 .send-icp,
                 .poll {
                     left: unset;
@@ -223,9 +236,14 @@
                     top: -210px;
                     transition-delay: 50ms;
                 }
-                .poll {
+                .meme {
                     opacity: 1;
                     top: -255px;
+                    transition-delay: 50ms;
+                }
+                .poll {
+                    opacity: 1;
+                    top: -300px;
                 }
             }
         }

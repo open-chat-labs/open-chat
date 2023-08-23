@@ -53,7 +53,7 @@ function scaleToFit(toScale: Dimensions, maxDimensions: Dimensions): Dimensions 
 
 export async function extractImageThumbnail(
     blobUrl: string,
-    mimeType: string
+    mimeType: string,
 ): Promise<MediaExtract> {
     return new Promise<MediaExtract>((resolve, _) => {
         const img = new Image();
@@ -65,7 +65,7 @@ export async function extractImageThumbnail(
 
 export async function extractVideoThumbnail(
     blobUrl: string,
-    mimeType: string
+    mimeType: string,
 ): Promise<[MediaExtract, MediaExtract]> {
     return new Promise<[MediaExtract, MediaExtract]>((resolve, _) => {
         const video = document.createElement("video");
@@ -85,15 +85,15 @@ export async function extractVideoThumbnail(
                         changeDimensions(
                             video,
                             mimeType,
-                            dimensions(video.videoWidth, video.videoHeight)
+                            dimensions(video.videoWidth, video.videoHeight),
                         ),
                         changeDimensions(
                             video,
                             mimeType,
                             dimensions(video.videoWidth, video.videoHeight),
-                            dimensions(video.videoWidth, video.videoHeight)
+                            dimensions(video.videoWidth, video.videoHeight),
                         ),
-                    ])
+                    ]),
                 );
             });
         });
@@ -105,7 +105,7 @@ export function changeDimensions(
     original: HTMLImageElement | HTMLVideoElement,
     mimeType: string,
     originalDimensions: Dimensions,
-    newDimensions: Dimensions = THUMBNAIL_DIMS
+    newDimensions: Dimensions = THUMBNAIL_DIMS,
 ): Promise<MediaExtract> {
     const { width, height } = scaleToFit(originalDimensions, newDimensions);
     const canvas = document.createElement("canvas");
@@ -143,7 +143,7 @@ export function fillMessage(msg: Message): boolean {
         return false;
     }
 
-    if (msg.content.kind === "prize_content") {
+    if (msg.content.kind === "prize_content" || msg.content.kind === "meme_fighter_content") {
         return true;
     }
 
@@ -164,7 +164,7 @@ export function fillMessage(msg: Message): boolean {
 export function resizeImage(
     blobUrl: string,
     mimeType: string,
-    isDiamond: boolean
+    isDiamond: boolean,
 ): Promise<MediaExtract> {
     // if our image is too big, we'll just create a new version with fixed dimensions
     // there's no very easy way to reduce it to a specific file size
@@ -177,8 +177,8 @@ export function resizeImage(
                     img,
                     mimeType,
                     dimensions(img.width, img.height),
-                    dimensions(maxSizes.resize, maxSizes.resize)
-                )
+                    dimensions(maxSizes.resize, maxSizes.resize),
+                ),
             );
         };
         img.src = blobUrl;
@@ -197,7 +197,7 @@ export function audioRecordingMimeType(): "audio/webm" | "audio/mp4" | undefined
 
 export async function messageContentFromFile(
     file: File,
-    isDiamond: boolean
+    isDiamond: boolean,
 ): Promise<MessageContent> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();

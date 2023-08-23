@@ -652,8 +652,6 @@
     "revealDeletedMessage": "Rivela messaggio",
     "retryMessage": "Riprova messaggio",
     "lowBandwidth": "Bassa larghezza di banda",
-    "loadImage": "Carica immagine",
-    "loadGif": "Carica gif",
     "showTweet": "Mostra tweet",
     "showVideo": "Mostra filmato",
     "wallet": "Portafoglio",
@@ -966,5 +964,10 @@
     "sendMessage": "Invia messaggio",
     "publicChannelInfo": "I membri della comunità vengono aggiunti automaticamente ai canali pubblici (possono successivamente uscire).",
     "publicGroupWithN": "Pubblico {level} con {number} membri",
-    "privateGroupWithN": "{level} privato con {number} membri"
+    "privateGroupWithN": "{level} privato con {number} membri",
+    "loadImage": "Mostra immagine",
+    "loadMeme": "Mostra meme",
+    "loadGif": "Mostra gif",
+    "reset": "Ripristina",
+    "send": "Inviare"
 }

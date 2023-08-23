@@ -19,6 +19,7 @@
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
+    import MemeBuilder from "../MemeBuilder.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
     import { toastStore } from "../../../stores/toast";
     import ChatEvent from "../ChatEvent.svelte";
@@ -35,9 +36,11 @@
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
+    let memeBuilder: MemeBuilder;
     let creatingPoll = false;
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
     let selectingGif = false;
+    let buildingMeme = false;
     let initialised = false;
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
@@ -208,6 +211,13 @@
         }
     }
 
+    function makeMeme() {
+        buildingMeme = true;
+        if (memeBuilder !== undefined) {
+            memeBuilder.reset();
+        }
+    }
+
     function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
         sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
@@ -262,6 +272,11 @@
     bind:this={giphySelector}
     bind:open={selectingGif}
     on:sendGiphy={sendMessageWithContent} />
+
+<MemeBuilder
+    bind:this={memeBuilder}
+    bind:open={buildingMeme}
+    on:sendMeme={sendMessageWithContent} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
@@ -385,6 +400,7 @@
         on:audioCaptured={fileSelected}
         on:sendMessage={sendMessage}
         on:attachGif={attachGif}
+        on:makeMeme={makeMeme}
         on:tokenTransfer={tokenTransfer}
         on:createTestMessages={createTestMessages}
         on:createPoll={createPoll} />
