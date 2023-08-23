@@ -24,7 +24,7 @@
         SentMessage,
         SentThreadMessage,
         ThreadReactionSelected,
-        chatIdentifiersEqual
+        chatIdentifiersEqual,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -36,7 +36,7 @@
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
     import { iconSize } from "../../stores/iconSize";
-    import { eventListScrollTop } from "../../stores/scrollPos";
+    import { eventListLastScrolled, eventListScrollTop } from "../../stores/scrollPos";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const LOADING_THRESHOLD = 400;
@@ -460,6 +460,7 @@
         }
         menuStore.hideMenu();
         tooltipStore.hide();
+        eventListLastScrolled.set(Date.now());
 
         if (!initialised || interrupt || loadingFromUserScroll) return;
 
