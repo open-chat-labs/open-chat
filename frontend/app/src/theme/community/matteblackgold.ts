@@ -47,6 +47,7 @@ export function getTheme(base: Theme): Theme {
     base.placeholder = txtLight;
     base.entry.input.bg = matteBlack;
     base.input.bg = matteBlack;
+    base.input.accent = gold;
     base.chatSearch.bg = matteBlack;
     base.currentChat.msg.bg = friendsMessageBackground;
     base.currentChat.msg.me.bg = yourMessageBackground;
@@ -64,7 +65,7 @@ export function getTheme(base: Theme): Theme {
     base.icon.inverted.txt = lightGold;
     base.menu.hv = offBlack3;
     base.reaction.me = white;
-    base.primary = white;
+    base.primary = gold;
     base.link.underline = base.primary;
     base.scrollbar.bg = base.button.hv;
     base.toast.success.bg = base.notificationBar.bg;
