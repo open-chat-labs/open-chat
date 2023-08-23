@@ -86,7 +86,7 @@ export function isUpToDate(chat: ChatSummary, events: EventWrapper<ChatEvent>[])
 export function getRecentlyActiveUsers(
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
-    maxUsers: number
+    maxUsers: number,
 ): Set<string> {
     const users = new Set<string>();
     if (isUpToDate(chat, events)) {
@@ -111,7 +111,7 @@ export function getRecentlyActiveUsers(
 export function getUsersToMakeRtcConnectionsWith(
     myUserId: string,
     chat: ChatSummary,
-    events: EventWrapper<ChatEvent>[]
+    events: EventWrapper<ChatEvent>[],
 ): string[] {
     if (chat.kind === "direct_chat") {
         return [chat.id.userId];
@@ -126,7 +126,7 @@ export function makeRtcConnections(
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
     lookup: UserLookup,
-    meteredApiKey: string
+    meteredApiKey: string,
 ): void {
     const userIds = getUsersToMakeRtcConnectionsWith(myUserId, chat, events);
     if (userIds.length === 0) return;
@@ -207,7 +207,7 @@ export function getMembersString(
     unknownUser: string,
     you: string,
     compareUsersFn?: (u1: PartialUserSummary, u2: PartialUserSummary) => number,
-    truncate = true
+    truncate = true,
 ): string {
     if (truncate && memberIds.length > 5) {
         return `${memberIds.length} members`;
@@ -233,6 +233,7 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "message_reminder_content" &&
         content.kind !== "message_reminder_created_content" &&
         content.kind !== "custom_content" &&
+        content.kind !== "meme_fighter_content" &&
         content.kind !== "reported_message_content" &&
         content.kind !== "crypto_content"
         ? { ...content, caption }
@@ -241,7 +242,7 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
 
 export function getMessageContent(
     content: string | undefined,
-    fileToAttach: MessageContent | undefined
+    fileToAttach: MessageContent | undefined,
 ): MessageContent {
     return fileToAttach
         ? addCaption(content, fileToAttach)
@@ -258,7 +259,7 @@ export function createMessage(
     messageIndex: number,
     content: string | undefined,
     replyingTo: ReplyContext | undefined,
-    fileToAttach: MessageContent | undefined
+    fileToAttach: MessageContent | undefined,
 ): Message {
     return {
         kind: "message",
@@ -277,7 +278,7 @@ export function createMessage(
 function messageMentionsUser(
     formatter: MessageFormatter,
     userId: string,
-    msg: EventWrapper<Message>
+    msg: EventWrapper<Message>,
 ): boolean {
     const txt = getContentAsText(formatter, msg.event.content, get(cryptoLookup));
     return txt.indexOf(`@UserId(${userId})`) >= 0;
@@ -286,7 +287,7 @@ function messageMentionsUser(
 function mentionsFromMessages(
     formatter: MessageFormatter,
     userId: string,
-    messages: EventWrapper<Message>[]
+    messages: EventWrapper<Message>[],
 ): Mention[] {
     return messages.reduce((mentions, msg) => {
         if (messageMentionsUser(formatter, userId, msg)) {
@@ -303,7 +304,7 @@ function mentionsFromMessages(
 
 export function mergeUnconfirmedThreadsIntoSummary(
     chat: GroupChatSummary,
-    unconfirmed: UnconfirmedMessages
+    unconfirmed: UnconfirmedMessages,
 ): GroupChatSummary {
     if (chat.membership === undefined) return chat;
     return {
@@ -356,7 +357,7 @@ function scopeMatchesChat(scope: ChatListScope, chat: ChatSummary): boolean {
 export function mergeLocalSummaryUpdates(
     scope: ChatListScope,
     server: ChatMap<ChatSummary>,
-    localUpdates: ChatMap<LocalChatSummaryUpdates>
+    localUpdates: ChatMap<LocalChatSummaryUpdates>,
 ): ChatMap<ChatSummary> {
     if (Object.keys(localUpdates).length === 0) return server;
 
@@ -459,7 +460,13 @@ export function mergeUnconfirmedIntoSummary(
         if (updates !== undefined || translation !== undefined) {
             latestMessage = {
                 ...latestMessage,
-                event: mergeLocalUpdates(latestMessage.event, updates, undefined, undefined, translation),
+                event: mergeLocalUpdates(
+                    latestMessage.event,
+                    updates,
+                    undefined,
+                    undefined,
+                    translation,
+                ),
             };
         }
     }
@@ -491,7 +498,7 @@ function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {
     return [
         ...existing,
         ...incoming.filter(
-            (m1) => existing.find((m2) => m1.messageId === m2.messageId) === undefined
+            (m1) => existing.find((m2) => m1.messageId === m2.messageId) === undefined,
         ),
     ];
 }
@@ -514,9 +521,12 @@ export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
     expandedDeletedMessages: Set<number>,
-    groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][]
+    groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
 ): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(sameDate, events.filter((e) => !isEventKindHidden(e.event.kind)))
+    return groupWhile(
+        sameDate,
+        events.filter((e) => !isEventKindHidden(e.event.kind)),
+    )
         .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
         .map(groupInner ?? groupBySender);
 }
@@ -539,10 +549,10 @@ export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
 function reduceJoinedOrLeft(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
-    expandedDeletedMessages: Set<number>
+    expandedDeletedMessages: Set<number>,
 ): EventWrapper<ChatEvent>[] {
     function getLatestAggregateEventIfExists(
-        events: EventWrapper<ChatEvent>[]
+        events: EventWrapper<ChatEvent>[],
     ): AggregateCommonEvents | undefined {
         if (events.length === 0) return undefined;
         const latest = events[events.length - 1];
@@ -607,12 +617,15 @@ function messageIsHidden(message: Message, myUserId: string, expandedDeletedMess
 }
 
 export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapper<Message>[][] {
-    return groupWhile(sameDate, events.filter((e) => !isEventKindHidden(e.event.kind)));
+    return groupWhile(
+        sameDate,
+        events.filter((e) => !isEventKindHidden(e.event.kind)),
+    );
 }
 
 export function getNextEventAndMessageIndexes(
     chat: ChatSummary,
-    localMessages: EventWrapper<Message>[]
+    localMessages: EventWrapper<Message>[],
 ): [number, number] {
     let eventIndex = chat.latestEventIndex;
     let messageIndex = chat.latestMessage?.event.messageIndex ?? -1;
@@ -656,7 +669,7 @@ export function containsReaction(userId: string, reaction: string, reactions: Re
 // The current events list must already be sorted by ascending event index
 export function mergeServerEvents(
     events: EventWrapper<ChatEvent>[],
-    newEvents: EventWrapper<ChatEvent>[]
+    newEvents: EventWrapper<ChatEvent>[],
 ): EventWrapper<ChatEvent>[] {
     const merged = distinctBy([...newEvents, ...events], (e) => e.index);
     merged.sort(sortByTimestampThenEventIndex);
@@ -665,7 +678,7 @@ export function mergeServerEvents(
 
 function sortByTimestampThenEventIndex(
     a: EventWrapper<ChatEvent>,
-    b: EventWrapper<ChatEvent>
+    b: EventWrapper<ChatEvent>,
 ): number {
     if (a.timestamp === b.timestamp) return a.index - b.index;
     return Number(a.timestamp - b.timestamp);
@@ -688,7 +701,7 @@ export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): Eve
 
 export function groupChatFromCandidate(
     chatId: MultiUserChatIdentifier,
-    candidate: CandidateGroupChat
+    candidate: CandidateGroupChat,
 ): MultiUserChat {
     return {
         kind: chatId.kind,
@@ -735,7 +748,7 @@ export function updatePollVotes(
     userId: string,
     poll: PollContent,
     answerIdx: number,
-    type: "register" | "delete"
+    type: "register" | "delete",
 ): PollVotes {
     return type === "delete"
         ? removeVoteFromPoll(userId, answerIdx, poll.votes)
@@ -745,7 +758,7 @@ export function updatePollVotes(
 export function addVoteToPoll(
     userId: string,
     answerIdx: number,
-    { votes, config }: PollContent
+    { votes, config }: PollContent,
 ): PollVotes {
     if (votes.user.includes(answerIdx)) {
         // can't vote for the same thing twice
@@ -818,7 +831,7 @@ export function canChangePermissions(chat: ChatSummary): boolean {
 export function canChangeRoles(
     chat: ChatSummary,
     currRole: MemberRole,
-    newRole: MemberRole
+    newRole: MemberRole,
 ): boolean {
     if (chat.kind === "direct_chat" || currRole === newRole || chat.frozen) {
         return false;
@@ -911,7 +924,7 @@ export function canCreatePolls(chat: ChatSummary): boolean {
 export function canSendMessages(
     chat: ChatSummary,
     userLookup: UserLookup,
-    proposalsBotUserId: string
+    proposalsBotUserId: string,
 ): boolean {
     if (chat.kind !== "direct_chat") {
         return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.sendMessages);
@@ -1003,7 +1016,7 @@ export function mergeChatMetrics(a: Metrics, b: Metrics): Metrics {
 export function metricsEqual(a: Metrics, b: Metrics): boolean {
     return Object.keys(a).reduce<boolean>(
         (same, k) => same && a[k as keyof Metrics] === b[k as keyof Metrics],
-        true
+        true,
     );
 }
 
@@ -1029,7 +1042,7 @@ export function buildBlobUrl(
     pattern: string,
     canisterId: string,
     blobId: bigint,
-    blobType: "blobs" | "avatar"
+    blobType: "blobs" | "avatar",
 ): string {
     return `${pattern
         .replace("{canisterId}", canisterId)
@@ -1046,7 +1059,7 @@ export function buildIdenticonUrl(id: string): string {
 
 export function mergeSendMessageResponse(
     msg: Message,
-    resp: SendMessageSuccess | TransferSuccess
+    resp: SendMessageSuccess | TransferSuccess,
 ): EventWrapper<Message> {
     return {
         index: resp.eventIndex,
@@ -1088,7 +1101,7 @@ export function mergeEventsAndLocalUpdates(
                     ? proposalTallies[
                           tallyKey(
                               e.event.content.governanceCanisterId,
-                              e.event.content.proposal.id
+                              e.event.content.proposal.id,
                           )
                       ]
                     : undefined;
@@ -1101,7 +1114,13 @@ export function mergeEventsAndLocalUpdates(
             ) {
                 return {
                     ...e,
-                    event: mergeLocalUpdates(e.event, updates, replyContextUpdates, tallyUpdate, translation),
+                    event: mergeLocalUpdates(
+                        e.event,
+                        updates,
+                        replyContextUpdates,
+                        tallyUpdate,
+                        translation,
+                    ),
                 };
             }
         }
@@ -1238,7 +1257,7 @@ function mergeLocalUpdates(
             ) {
                 message.repliesTo.content = updatePollContent(
                     message.repliesTo.content,
-                    replyContextLocalUpdates.pollVotes
+                    replyContextLocalUpdates.pollVotes,
                 );
             }
         }
@@ -1263,7 +1282,7 @@ function mergeLocalUpdates(
             case "text_content": {
                 message.content = {
                     ...message.content,
-                    text: translation
+                    text: translation,
                 };
                 break;
             }
@@ -1274,7 +1293,7 @@ function mergeLocalUpdates(
             case "crypto_content": {
                 message.content = {
                     ...message.content,
-                    caption: translation
+                    caption: translation,
                 };
                 break;
             }
@@ -1284,9 +1303,9 @@ function mergeLocalUpdates(
                     ...message.content,
                     config: {
                         ...message.content.config,
-                        text: translation
-                    }
-                }
+                        text: translation,
+                    },
+                };
                 break;
             }
         }
@@ -1327,7 +1346,7 @@ export function applyLocalReaction(local: LocalReaction, reactions: Reaction[]):
 
 export function findMessageById(
     messageId: bigint,
-    events: EventWrapper<ChatEvent>[]
+    events: EventWrapper<ChatEvent>[],
 ): EventWrapper<Message> | undefined {
     for (const event of events) {
         if (event.event.kind === "message" && event.event.messageId === messageId) {
@@ -1348,14 +1367,19 @@ export function buildTransactionLink(
         : undefined;
 }
 
-export function buildTransactionUrl(transfer: CryptocurrencyTransfer, cryptoLookup: Record<string, CryptocurrencyDetails>): string | undefined {
+export function buildTransactionUrl(
+    transfer: CryptocurrencyTransfer,
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
+): string | undefined {
     if (transfer.kind !== "completed") {
         return undefined;
     }
 
     const transactionUrlFormat = cryptoLookup[transfer.ledger].transactionUrlFormat;
 
-    return transactionUrlFormat.replace("{block_index}", transfer.blockIndex.toString()).replace("{transaction_hash}", transfer.transactionHash ?? "");
+    return transactionUrlFormat
+        .replace("{block_index}", transfer.blockIndex.toString())
+        .replace("{transaction_hash}", transfer.transactionHash ?? "");
 }
 
 export function buildCryptoTransferText(
@@ -1400,7 +1424,7 @@ export function buildCryptoTransferText(
 export function stopTyping(
     { id }: ChatSummary,
     userId: string,
-    threadRootMessageIndex?: number
+    threadRootMessageIndex?: number,
 ): void {
     rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
         kind: "remote_user_stopped_typing",
@@ -1413,7 +1437,7 @@ export function stopTyping(
 export function startTyping(
     { id }: ChatSummary,
     userId: string,
-    threadRootMessageIndex?: number
+    threadRootMessageIndex?: number,
 ): void {
     rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
         kind: "remote_user_typing",
@@ -1427,7 +1451,7 @@ export function getTypingString(
     formatter: MessageFormatter,
     users: UserLookup,
     key: MessageContext,
-    typing: TypersByKey
+    typing: TypersByKey,
 ): string | undefined {
     const typers = typing.get(key);
     if (typers === undefined || typers.size === 0) return undefined;
