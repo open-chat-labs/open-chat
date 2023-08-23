@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove `selected_updates` which has been superseded by `selected_updates_v2` ([#4182](https://github.com/open-chat-labs/open-chat/pull/4182))
 
+### Fixed
+
+- Fix for owners not being able to demote other owners ([#4227](https://github.com/open-chat-labs/open-chat/pull/4227))
+
 ## [[2.0.809](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.809-group)] - 2023-08-15
 
 ### Changed
