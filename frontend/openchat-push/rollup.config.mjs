@@ -6,25 +6,17 @@ import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import del from "rollup-plugin-delete";
 
-// Put external dependencies into their own bundle so that they get cached separately
-function manualChunks(id) {
-    if (id.includes("node_modules")) {
-        return "push-vendor";
-    }
-}
-
 export default {
     input: `./src/push_sw.ts`,
     output: {
         dir: "./lib",
         sourcemap: true,
         compact: true,
-        manualChunks
     },
     plugins: [
         del({ targets: "lib/*" }),
         typescript({
-            sourceMap: true
+            sourceMap: true,
         }),
         commonjs(),
         inject({
@@ -36,6 +28,6 @@ export default {
             preferBuiltins: false,
             dedupe: ["@dfinity/candid"],
         }),
-        terser()
-    ]
+        terser(),
+    ],
 };

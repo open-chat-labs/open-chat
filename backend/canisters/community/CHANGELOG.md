@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.815](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.815-community)] - 2023-08-23
+
 ### Changed
 
 - Add timestamp to `selected_updates` and `selected_channel_updates` ([#4182](https://github.com/open-chat-labs/open-chat/pull/4182))
