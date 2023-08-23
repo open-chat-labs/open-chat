@@ -489,8 +489,8 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
 }
 
 fn get_community_rules(env: &mut StateMachine, user: &User, community_id: CommunityId) -> Rules {
-    let summary = client::community::happy_path::summary(env, &user, community_id);
-    let selected = client::community::happy_path::selected_initial(env, &user, community_id);
+    let summary = client::community::happy_path::summary(env, user, community_id);
+    let selected = client::community::happy_path::selected_initial(env, user, community_id);
 
     Rules {
         enabled: summary.rules_enabled,
@@ -501,8 +501,8 @@ fn get_community_rules(env: &mut StateMachine, user: &User, community_id: Commun
 }
 
 fn get_channel_rules(env: &mut StateMachine, user: &User, community_id: CommunityId, channel_id: ChannelId) -> Rules {
-    let summary = client::community::happy_path::channel_summary(env, &user, community_id, channel_id);
-    let selected = client::community::happy_path::selected_channel_initial(env, &user, community_id, channel_id);
+    let summary = client::community::happy_path::channel_summary(env, user, community_id, channel_id);
+    let selected = client::community::happy_path::selected_channel_initial(env, user, community_id, channel_id);
 
     Rules {
         enabled: summary.rules_enabled,
@@ -580,7 +580,7 @@ fn set_community_rules(env: &mut StateMachine, user: &User, community_id: Commun
         primary_language: None,
     };
 
-    client::community::happy_path::update_community(env, &user, community_id.into(), &args);
+    client::community::happy_path::update_community(env, user, community_id.into(), &args);
 }
 
 fn set_channel_rules(env: &mut StateMachine, user: &User, community_id: CommunityId, channel_id: ChannelId, text: String) {
@@ -595,7 +595,7 @@ fn set_channel_rules(env: &mut StateMachine, user: &User, community_id: Communit
         channel_id,
     };
 
-    client::community::happy_path::update_channel(env, &user, community_id.into(), &args);
+    client::community::happy_path::update_channel(env, user, community_id.into(), &args);
 }
 
 #[allow(dead_code)]
