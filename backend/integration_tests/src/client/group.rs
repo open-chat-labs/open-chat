@@ -31,10 +31,11 @@ generate_update_call!(update_group_v2);
 pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
+    use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
     use types::{
-        ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates,
-        MessageContentInitial, MessageId, MessageIndex, PollVotes, TextContent, TimestampMillis, VoteOperation,
+        ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, GroupRole,
+        MessageContentInitial, MessageId, MessageIndex, PollVotes, TextContent, TimestampMillis, UserId, VoteOperation,
     };
 
     pub fn send_text_message(
@@ -64,6 +65,24 @@ pub mod happy_path {
         match response {
             group_canister::send_message_v2::Response::Success(result) => result,
             response => panic!("'send_message' error: {response:?}"),
+        }
+    }
+
+    pub fn change_role(env: &mut StateMachine, sender: Principal, group_chat_id: ChatId, user_id: UserId, new_role: GroupRole) {
+        let response = super::change_role(
+            env,
+            sender,
+            group_chat_id.into(),
+            &group_canister::change_role::Args {
+                user_id,
+                new_role,
+                correlation_id: 0,
+            },
+        );
+
+        match response {
+            group_canister::change_role::Response::Success => {}
+            response => panic!("'change_role' error: {response:?}"),
         }
     }
 
