@@ -94,6 +94,10 @@ impl RuntimeState {
             let membership = CommunityMembership {
                 joined: m.date_added,
                 role: m.role,
+                rules_accepted: m
+                    .rules_accepted
+                    .as_ref()
+                    .map_or(false, |version| version.value >= self.data.rules.text.version),
             };
 
             // Return all the channels that the user is a member of

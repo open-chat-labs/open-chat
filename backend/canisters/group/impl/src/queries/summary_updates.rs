@@ -36,13 +36,6 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let newly_expired_messages = chat.events.expired_messages_since(updates_since, now);
     let updates_from_events = chat.summary_updates_from_events(updates_since, Some(member.user_id), now);
 
-    let mut rules_accepted = None;
-    if let Some(accepted) = &member.rules_accepted {
-        if updates_from_events.rules_changed || accepted.timestamp > updates_since {
-            rules_accepted = Some(accepted.value >= chat.rules.text.version);
-        }
-    }
-
     let updates = GroupCanisterGroupChatSummaryUpdates {
         chat_id: state.env.canister_id().into(),
         last_updated: now,
@@ -86,7 +79,10 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         next_message_expiry: OptionUpdate::from_update(chat.events.next_message_expiry(now)),
         gate: updates_from_events.gate,
         rules_enabled: updates_from_events.rules_changed.then_some(chat.rules.enabled),
-        rules_accepted,
+        rules_accepted: member.rules_accepted.as_ref().map(|accepted| {
+            (updates_from_events.rules_changed || accepted.timestamp > args.updates_since)
+                && accepted.value >= chat.rules.text.version
+        }),
     };
     Success(SuccessResult { updates })
 }
