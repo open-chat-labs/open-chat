@@ -26,8 +26,12 @@ export const framed = writable(false);
 
 export function init() {
     if (window.self !== window.top) {
-        console.debug("XFRAME_TARGET: setting listeners");
+        console.debug("XFRAME_TARGET: setting listeners", window.top);
         window.addEventListener("message", externalMessage);
+        if (window.top) {
+            console.debug("XFRAME_TARGET: sending ready message");
+            window.top.postMessage("openchat_ready");
+        }
     }
 }
 
