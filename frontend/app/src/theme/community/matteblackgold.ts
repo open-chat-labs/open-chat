@@ -7,7 +7,7 @@ const black = "#000000"
 const offBlack1 = "#101010"
 const offBlack2 = "#121415"
 const offBlack3 = "#191919"
-const mattBlack = "#333333"
+const matteBlack = "#333333"
 const gold = "#FFBF00";
 const lightGold = "#ffcd36";
 
@@ -15,13 +15,13 @@ const txtLight = offWhite;
 const txt = white;
 
 const notificationAccent = gold;
-const yourMessageBackground = mattBlack;
+const yourMessageBackground = matteBlack;
 const friendsMessageBackground = "#111111";
 
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
-    base.name = "mattblackgold";
-    base.label = "Matt Black Gold";
+    base.name = "matteblackgold";
+    base.label = "Matte Black Gold";
     base.burst = false;
     base.bg = "radial-gradient(circle, rgba(28,28,28,1) 10%, rgba(22,22,22,1) 79%)";
     base.bd = black;
@@ -32,7 +32,7 @@ export function getTheme(base: Theme): Theme {
     base.button.bg = gold;
     base.button.hv = lightGold;
     base.button.txt = "rgba(255 255 255 / 80%)";
-    base.button.disabled = mattBlack;
+    base.button.disabled = matteBlack;
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = white;
     base.accent = gold;
@@ -45,9 +45,9 @@ export function getTheme(base: Theme): Theme {
     base.chatSummary.del = base.button.bg;
     base.members.hv = base.chatSummary.hv;
     base.placeholder = txtLight;
-    base.entry.input.bg = mattBlack;
-    base.input.bg = mattBlack;
-    base.chatSearch.bg = mattBlack;
+    base.entry.input.bg = matteBlack;
+    base.input.bg = matteBlack;
+    base.chatSearch.bg = matteBlack;
     base.currentChat.msg.bg = friendsMessageBackground;
     base.currentChat.msg.me.bg = yourMessageBackground;
     base.currentChat.msg.txt = white;
