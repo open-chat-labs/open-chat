@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { isTouchDevice } from "../utils/devices";
+import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
 import { eventListLastScrolled } from "../stores/scrollPos";
 import { get } from "svelte/store";
 
-const SCROLL_PROXIMITY = 1000;
+const SCROLL_PROXIMITY = 750;
 
 export function longpress(node: HTMLElement, onlongpress: () => void) {
     let longPressTimer: number | undefined;
@@ -22,7 +22,7 @@ export function longpress(node: HTMLElement, onlongpress: () => void) {
         longPressTimer = window.setTimeout(() => {
             const lastScroll = get(eventListLastScrolled);
             const diff = Date.now() - lastScroll;
-            if (diff > SCROLL_PROXIMITY) {
+            if (mobileOperatingSystem === "iOS" || diff > SCROLL_PROXIMITY) {
                 onlongpress();
             }
         }, 500);
