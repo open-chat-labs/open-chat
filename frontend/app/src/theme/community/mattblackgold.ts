@@ -23,7 +23,7 @@ export function getTheme(base: Theme): Theme {
     base.name = "mattblackgold";
     base.label = "Matt Black Gold";
     base.burst = false;
-    base.bg = "radial-gradient(circle, rgba(42,42,42,1) 10%, rgba(20,20,20,1) 79%)";
+    base.bg = "radial-gradient(circle, rgba(28,28,28,1) 10%, rgba(22,22,22,1) 79%)";
     base.bd = black;
     base.txt = txt;
     base["txt-light"] = txtLight;
