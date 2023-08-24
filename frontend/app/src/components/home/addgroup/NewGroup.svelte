@@ -169,17 +169,16 @@
     function updateGroup(yes: boolean = true): Promise<void> {
         busy = true;
 
-        const makePrivate = visDirty && !candidateGroup.public && originalGroup.public;
+        const changeVisibility = visDirty && candidateGroup.public !== originalGroup.public;
 
-        if (makePrivate && !confirming) {
+        if (changeVisibility && !confirming) {
             confirming = true;
             return Promise.resolve();
         }
 
-        if (makePrivate && confirming && !yes) {
+        if (changeVisibility && confirming && !yes) {
             confirming = false;
             busy = false;
-            candidateGroup.public = true;
             return Promise.resolve();
         }
 
@@ -188,7 +187,7 @@
         const p1 = infoDirty ? doUpdateInfo() : Promise.resolve();
         const p2 = permissionsDirty ? doUpdatePermissions() : Promise.resolve();
         const p3 = rulesDirty && rulesValid ? doUpdateRules() : Promise.resolve();
-        const p4 = makePrivate ? doMakeGroupPrivate() : Promise.resolve();
+        const p4 = changeVisibility ? doChangeVisibility() : Promise.resolve();
         const p5 = gateDirty ? doUpdateGate(candidateGroup.gate) : Promise.resolve();
 
         return Promise.all([p1, p2, p3, p4, p5])
@@ -201,7 +200,7 @@
             });
     }
 
-    function doMakeGroupPrivate(): Promise<void> {
+    function doChangeVisibility(): Promise<void> {
         if (!editing) return Promise.resolve();
 
         return client
@@ -213,7 +212,7 @@
                 undefined,
                 undefined,
                 undefined,
-                false
+                candidateGroup.public
             )
             .then((success) => {
                 if (success) {
@@ -385,7 +384,7 @@
 
 {#if confirming}
     <AreYouSure
-        message={interpolateLevel("confirmMakeGroupPrivate", candidateGroup.level, true)}
+        message={interpolateLevel(`confirmMakeGroup${candidateGroup.public ? "Public" : "Private"}`, candidateGroup.level, true)}
         action={updateGroup} />
 {/if}
 

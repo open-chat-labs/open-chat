@@ -27,7 +27,7 @@ import {
     canForward,
     canInviteUsers,
     canLeaveGroup,
-    canMakePrivate,
+    canChangeVisibility,
     canPinMessages,
     canReactToMessages,
     canRemoveMembers,
@@ -1302,19 +1302,11 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.multiUserChatPredicate(chatId, canDeleteGroup);
     }
 
-    canMakePrivate = canMakePrivate;
+    canChangeVisibility = canChangeVisibility;
     hasOwnerRights = hasOwnerRights;
-
-    canMakeGroupPrivate(chatId: MultiUserChatIdentifier): boolean {
-        return this.multiUserChatPredicate(chatId, canMakePrivate);
-    }
 
     canConvertGroupToCommunity(chatId: GroupChatIdentifier): boolean {
         return this.multiUserChatPredicate(chatId, canConvertToCommunity);
-    }
-
-    canMakeCommunityPrivate(id: CommunityIdentifier): boolean {
-        return this.communityPredicate(id, canMakePrivate);
     }
 
     canLeaveGroup(chatId: MultiUserChatIdentifier): boolean {

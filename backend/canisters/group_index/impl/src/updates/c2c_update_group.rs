@@ -32,6 +32,26 @@ fn c2c_update_group_impl(args: Args, state: &mut RuntimeState) -> Response {
             .public_groups
             .update_group(&chat_id, args.name, args.description, args.avatar_id, args.gate);
         Success
+    } else if let Some(group) = state.data.private_groups.get(&chat_id) {
+        if state.data.public_group_and_community_names.is_name_taken(&args.name) {
+            return NameTaken;
+        }
+
+        let date_created = group.created();
+
+        state.data.private_groups.delete(&chat_id);
+        state.data.public_group_and_community_names.insert(&args.name, chat_id.into());
+
+        state.data.public_groups.add(
+            chat_id,
+            args.name,
+            args.description,
+            None,
+            args.avatar_id,
+            args.gate,
+            date_created,
+        );
+        Success
     } else {
         ChatNotFound
     }
