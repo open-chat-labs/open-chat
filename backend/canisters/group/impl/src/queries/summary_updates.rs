@@ -79,10 +79,11 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         next_message_expiry: OptionUpdate::from_update(chat.events.next_message_expiry(now)),
         gate: updates_from_events.gate,
         rules_enabled: updates_from_events.rules_changed.then_some(chat.rules.enabled),
-        rules_accepted: member.rules_accepted.as_ref().map(|accepted| {
-            (updates_from_events.rules_changed || accepted.timestamp > args.updates_since)
-                && accepted.value >= chat.rules.text.version
-        }),
+        rules_accepted: member
+            .rules_accepted
+            .as_ref()
+            .filter(|accepted| updates_from_events.rules_changed || accepted.timestamp > args.updates_since)
+            .map(|accepted| accepted.value >= chat.rules.text.version),
     };
     Success(SuccessResult { updates })
 }

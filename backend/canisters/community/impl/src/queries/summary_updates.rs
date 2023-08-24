@@ -86,10 +86,11 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
     let membership = member.map(|m| CommunityMembershipUpdates {
         role: updates_from_events.role_changed.then_some(m.role),
-        rules_accepted: m.rules_accepted.as_ref().map(|accepted| {
-            (updates_from_events.rules_changed || accepted.timestamp > args.updates_since)
-                && accepted.value >= state.data.rules.text.version
-        }),
+        rules_accepted: m
+            .rules_accepted
+            .as_ref()
+            .filter(|accepted| updates_from_events.rules_changed || accepted.timestamp > args.updates_since)
+            .map(|accepted| accepted.value >= state.data.rules.text.version),
     });
 
     Success(CommunityCanisterCommunitySummaryUpdates {

@@ -273,9 +273,11 @@ impl Channel {
                 MAX_THREADS_IN_SUMMARY,
                 now,
             ),
-            rules_accepted: m.rules_accepted.as_ref().map(|accepted| {
-                (updates_from_events.rules_changed || accepted.timestamp > since) && accepted.value >= chat.rules.text.version
-            }),
+            rules_accepted: m
+                .rules_accepted
+                .as_ref()
+                .filter(|accepted| updates_from_events.rules_changed || accepted.timestamp > since)
+                .map(|accepted| accepted.value >= chat.rules.text.version),
         });
 
         ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {
