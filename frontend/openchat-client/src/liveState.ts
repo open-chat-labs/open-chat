@@ -43,6 +43,7 @@ import {
     confirmedThreadEventIndexesLoadedStore,
     selectedThreadRootEvent,
     selectedMessageContext,
+    allChats,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -56,7 +57,7 @@ import {
     currentCommunityMembers,
     selectedCommunity,
 } from "./stores/community";
-import { type GlobalState, chatListScopeStore, globalStateStore, allChats } from "./stores/global";
+import { type GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
