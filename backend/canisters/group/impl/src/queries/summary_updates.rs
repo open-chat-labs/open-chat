@@ -23,19 +23,18 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     };
     let updates_since = max(args.updates_since, member.date_added);
 
+    let chat = &state.data.chat;
+
     // Short circuit prior to calling `ic0.time()` so that query caching works effectively.
     // This doesn't account for expired events, but they aren't used yet and should probably just be
     // handled by the FE anyway.
-    if !state.data.chat.has_updates_since(Some(member.user_id), updates_since) {
+    if !chat.has_updates_since(Some(member.user_id), updates_since) {
         return SuccessNoUpdates;
     }
 
     let now = state.env.now();
-    let newly_expired_messages = state.data.chat.events.expired_messages_since(updates_since, now);
-    let updates_from_events = state
-        .data
-        .chat
-        .summary_updates_from_events(updates_since, Some(member.user_id), now);
+    let newly_expired_messages = chat.events.expired_messages_since(updates_since, now);
+    let updates_from_events = chat.summary_updates_from_events(updates_since, Some(member.user_id), now);
 
     let updates = GroupCanisterGroupChatSummaryUpdates {
         chat_id: state.env.canister_id().into(),
@@ -46,12 +45,12 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         avatar_id: updates_from_events.avatar_id,
         latest_message: updates_from_events.latest_message,
         latest_event_index: updates_from_events.latest_event_index,
-        participant_count: updates_from_events.members_changed.then_some(state.data.chat.members.len()),
+        participant_count: updates_from_events.members_changed.then_some(chat.members.len()),
         role: updates_from_events.role_changed.then_some(member.role.into()),
         mentions: updates_from_events.mentions,
         permissions: updates_from_events.permissions,
         updated_events: updates_from_events.updated_events,
-        metrics: Some(state.data.chat.events.metrics().hydrate()),
+        metrics: Some(chat.events.metrics().hydrate()),
         my_metrics: state
             .data
             .chat
@@ -59,7 +58,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .user_metrics(&member.user_id, Some(args.updates_since))
             .map(|m| m.hydrate()),
         is_public: updates_from_events.is_public,
-        latest_threads: state.data.chat.events.latest_threads(
+        latest_threads: chat.events.latest_threads(
             member.min_visible_event_index(),
             member.threads.iter(),
             Some(args.updates_since),
@@ -77,8 +76,14 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         date_last_pinned: updates_from_events.date_last_pinned,
         events_ttl: updates_from_events.events_ttl,
         newly_expired_messages,
-        next_message_expiry: OptionUpdate::from_update(state.data.chat.events.next_message_expiry(now)),
+        next_message_expiry: OptionUpdate::from_update(chat.events.next_message_expiry(now)),
         gate: updates_from_events.gate,
+        rules_enabled: updates_from_events.rules_changed.then_some(chat.rules.enabled),
+        rules_accepted: member
+            .rules_accepted
+            .as_ref()
+            .filter(|accepted| updates_from_events.rules_changed || accepted.timestamp > args.updates_since)
+            .map(|accepted| accepted.value >= chat.rules.text.version),
     };
     Success(SuccessResult { updates })
 }

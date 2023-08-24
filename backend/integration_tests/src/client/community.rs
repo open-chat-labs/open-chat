@@ -6,6 +6,7 @@ generate_query_call!(channel_summary);
 generate_query_call!(events);
 generate_query_call!(events_by_index);
 generate_query_call!(search_channel);
+generate_query_call!(selected_channel_initial);
 generate_query_call!(selected_initial);
 generate_query_call!(selected_updates_v2);
 generate_query_call!(summary);
@@ -37,7 +38,7 @@ pub mod happy_path {
     use types::{
         AccessRules, ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        MessageIndex, TextContent, TimestampMillis, Version,
+        MessageIndex, TextContent, TimestampMillis,
     };
 
     pub fn create_channel(
@@ -106,7 +107,8 @@ pub mod happy_path {
                 replies_to: None,
                 mentioned: Vec::new(),
                 forwarding: false,
-                rules_accepted: Some(Version::zero()),
+                community_rules_accepted: None,
+                channel_rules_accepted: None,
             },
         );
 
@@ -241,6 +243,25 @@ pub mod happy_path {
         match response {
             community_canister::channel_summary::Response::Success(result) => result,
             response => panic!("'channel_summary' error: {response:?}"),
+        }
+    }
+
+    pub fn selected_channel_initial(
+        env: &StateMachine,
+        sender: &User,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+    ) -> community_canister::selected_channel_initial::SuccessResult {
+        let response = super::selected_channel_initial(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::selected_channel_initial::Args { channel_id },
+        );
+
+        match response {
+            community_canister::selected_channel_initial::Response::Success(result) => result,
+            response => panic!("'selected_channel_initial' error: {response:?}"),
         }
     }
 }

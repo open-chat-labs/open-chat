@@ -57,6 +57,7 @@ async fn add_members_to_channel(args: Args) -> Response {
             prepare_result.users_already_in_channel,
             users_failed_gate_check,
             users_failed_with_error,
+            prepare_result.is_bot,
             state,
         )
     })
@@ -68,6 +69,7 @@ struct PrepareResult {
     users_already_in_channel: Vec<UserId>,
     gate: Option<AccessGate>,
     user_index_canister_id: CanisterId,
+    is_bot: bool,
 }
 
 #[allow(clippy::result_large_err)]
@@ -106,6 +108,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     users_already_in_channel,
                     gate: channel.chat.gate.as_ref().cloned(),
                     user_index_canister_id: state.data.user_index_canister_id,
+                    is_bot: member.is_bot,
                 })
             } else {
                 Err(UserNotInChannel)
@@ -127,6 +130,7 @@ fn commit(
     mut users_already_in_channel: Vec<UserId>,
     users_failed_gate_check: Vec<UserFailedGateCheck>,
     mut users_failed_with_error: Vec<UserFailedError>,
+    is_bot: bool,
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
@@ -151,7 +155,7 @@ fn commit(
                 min_visible_event_index,
                 min_visible_message_index,
                 channel.chat.is_public,
-                None,
+                is_bot,
             ) {
                 AddResult::Success(_) => {
                     users_added.push(user_id);

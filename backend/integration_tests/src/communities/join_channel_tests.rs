@@ -5,7 +5,7 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use ic_test_state_machine_client::StateMachine;
 use std::ops::Deref;
-use types::{ChannelId, CommunityId, MessageContent, Version};
+use types::{ChannelId, CommunityId, MessageContent};
 
 #[test]
 fn join_public_channel_succeeds() {
@@ -73,7 +73,6 @@ fn join_private_channel_fails() {
             community_id,
             channel_id,
             invite_code: None,
-            rules_accepted: Some(Version::zero()),
         },
     );
 
@@ -149,7 +148,6 @@ fn join_community_and_channel_in_single_call_succeeds() {
             community_id,
             channel_id,
             invite_code: None,
-            rules_accepted: Some(Version::zero()),
         },
     );
 
@@ -201,7 +199,6 @@ fn invite_non_community_member_to_channel_succeeds() {
             community_id,
             channel_id,
             invite_code: None,
-            rules_accepted: Some(Version::zero()),
         },
     );
 

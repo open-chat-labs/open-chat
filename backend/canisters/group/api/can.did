@@ -8,6 +8,7 @@ type SendMessageV2Args = record {
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     forwarding : bool;
+    rules_accepted : opt Version;
     correlation_id : nat64;
 };
 
@@ -27,6 +28,7 @@ type SendMessageResponse = variant {
     ThreadMessageNotFound;
     UserSuspended;
     ChatFrozen;
+    RulesNotAccepted;
 };
 
 type EditMessageV2Args = record {
@@ -353,6 +355,7 @@ type SelectedInitialSuccess = record {
     invited_users : vec UserId;
     pinned_messages : vec MessageIndex;
     rules : AccessRules;
+    access_rules : VersionedRules;
 };
 
 type SelectedInitialResponse = variant {

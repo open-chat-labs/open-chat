@@ -45,6 +45,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         blocked_users_removed: vec![],
         invited_users,
         rules: None,
+        access_rules: None,
     };
 
     let mut user_updates_handler = UserUpdatesHandler {
@@ -85,6 +86,9 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             CommunityEventInternal::RulesChanged(_) => {
                 if result.rules.is_none() {
                     result.rules = Some(data.rules.clone().into());
+                }
+                if result.access_rules.is_none() {
+                    result.access_rules = Some(data.rules.clone().into());
                 }
             }
             CommunityEventInternal::GroupImported(g) => {

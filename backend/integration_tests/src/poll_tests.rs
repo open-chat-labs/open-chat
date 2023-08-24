@@ -121,6 +121,7 @@ fn polls_ended_correctly() {
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            rules_accepted: None,
             correlation_id: 0,
         },
     );
@@ -244,6 +245,7 @@ fn init_test_data(env: &mut StateMachine, local_user_index: CanisterId, poll_con
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            rules_accepted: None,
             correlation_id: 0,
         },
     );

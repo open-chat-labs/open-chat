@@ -86,6 +86,11 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
     let membership = member.map(|m| CommunityMembershipUpdates {
         role: updates_from_events.role_changed.then_some(m.role),
+        rules_accepted: m
+            .rules_accepted
+            .as_ref()
+            .filter(|accepted| updates_from_events.rules_changed || accepted.timestamp > args.updates_since)
+            .map(|accepted| accepted.value >= state.data.rules.text.version),
     });
 
     Success(CommunityCanisterCommunitySummaryUpdates {
@@ -107,6 +112,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         channels_removed,
         membership,
         metrics: state.data.cached_chat_metrics.if_set_after(args.updates_since).cloned(),
+        rules_enabled: updates_from_events.rules_changed.then_some(state.data.rules.enabled),
     })
 }
 
@@ -124,6 +130,7 @@ struct UpdatesFromEvents {
     frozen: OptionUpdate<FrozenGroupInfo>,
     gate: OptionUpdate<AccessGate>,
     primary_language: Option<String>,
+    rules_changed: bool,
 }
 
 fn process_events(since: TimestampMillis, member: Option<&CommunityMemberInternal>, data: &Data) -> UpdatesFromEvents {
@@ -189,6 +196,9 @@ fn process_events(since: TimestampMillis, member: Option<&CommunityMemberInterna
                 if updates.primary_language.is_none() {
                     updates.primary_language = Some(l.new.clone());
                 }
+            }
+            CommunityEventInternal::RulesChanged(_) => {
+                updates.rules_changed = true;
             }
             _ => {}
         }

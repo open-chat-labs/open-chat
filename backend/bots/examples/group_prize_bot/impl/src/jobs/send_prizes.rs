@@ -192,6 +192,7 @@ async fn send_prize_message_to_group(
         replies_to: None,
         mentioned: Vec::new(),
         forwarding: false,
+        rules_accepted: None,
         correlation_id: 0,
     };
 
@@ -202,6 +203,7 @@ async fn send_prize_message_to_group(
             group_canister::send_message_v2::Response::UserSuspended => Err("Bot suspended".to_string()),
             group_canister::send_message_v2::Response::ChatFrozen => Err("Group frozen".to_string()),
             group_canister::send_message_v2::Response::MessageEmpty
+            | group_canister::send_message_v2::Response::RulesNotAccepted
             | group_canister::send_message_v2::Response::InvalidPoll(_)
             | group_canister::send_message_v2::Response::NotAuthorized
             | group_canister::send_message_v2::Response::ThreadMessageNotFound
