@@ -188,12 +188,12 @@ mod tests {
         let mut env = TestEnv::default();
         let mut data = Data::default();
 
-        let usernames = vec![
+        let usernames = [
             "Martin", "marcus", "matty", "julian", "hamish", "mohammad", "amar", "muhamMad", "amabcdef",
         ];
 
         for (index, username) in usernames.iter().enumerate() {
-            let bytes = vec![index as u8, 1];
+            let bytes = [index as u8, 1];
             let p = Principal::from_slice(&bytes[..]);
 
             data.users.add_test_user(User {
