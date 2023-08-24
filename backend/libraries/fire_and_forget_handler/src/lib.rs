@@ -152,6 +152,7 @@ struct C2cCall {
     id: u64,
     canister_id: CanisterId,
     method_name: String,
+    #[serde(with = "serde_bytes")]
     payload: Vec<u8>,
     attempt: u32,
 }
