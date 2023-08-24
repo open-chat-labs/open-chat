@@ -971,5 +971,7 @@
     "loadMeme": "Meme anzeigen",
     "loadGif": "GIF anzeigen",
     "reset": "Zurücksetzen",
-    "send": "Schicken"
+    "send": "Schicken",
+    "confirmMakeGroupPublic": "Möchten Sie diesen {level} unbedingt öffentlich machen?\n\nBestehende Nachrichten bleiben privat, alle neuen Nachrichten sind öffentlich.",
+    "makeGroupPublicFailed": "{level} konnte nicht veröffentlicht werden"
 }

@@ -970,5 +970,7 @@
     "loadMeme": "Hiển thị meme",
     "loadGif": "Hiển thị ảnh gif",
     "reset": "Cài lại",
-    "send": "Gửi"
+    "send": "Gửi",
+    "confirmMakeGroupPublic": "Bạn có chắc chắn muốn công khai {level} này không?\n\nTin nhắn hiện tại sẽ vẫn ở chế độ riêng tư, tất cả tin nhắn mới sẽ được công khai.",
+    "makeGroupPublicFailed": "Không công khai được {level}"
 }

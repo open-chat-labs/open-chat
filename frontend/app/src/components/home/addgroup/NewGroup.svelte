@@ -222,7 +222,11 @@
                     };
                 } else {
                     toastStore.showFailureToast(
-                        interpolateLevel("makeGroupPrivateFailed", candidateGroup.level, true)
+                        interpolateLevel(
+                            `makeGroup${candidateGroup.public ? "Public" : "Private"}Failed`,
+                            candidateGroup.level,
+                            true
+                        )
                     );
                 }
             });
