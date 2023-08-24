@@ -225,7 +225,6 @@ type UpdateGroupV2Response = variant {
     RulesTooShort : FieldTooShortResult;
     UserSuspended;
     ChatFrozen;
-    CannotMakeGroupPublic;
 };
 
 type PinMessageArgs = record {
