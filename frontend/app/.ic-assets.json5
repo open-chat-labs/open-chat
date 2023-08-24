@@ -8,7 +8,7 @@
             "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
             "X-Content-Type-Options": "nosniff",
             "X-XSS-Protection": "1; mode=block",
-            "Content-Security-Policy": "frame-ancestors https://64e34548f16f060312d70e10--calm-pasca-49d7be.netlify.app http://localhost:5173 https://zexzi-jyaaa-aaaam-abj3q-cai.icp0.io https://xw4dq-4yaaa-aaaam-abeuq-cai.ic0.app;",
+            "Content-Security-Policy": "frame-ancestors https://calm-pasca-49d7be.netlify.app http://localhost:5173 https://zexzi-jyaaa-aaaam-abj3q-cai.icp0.io https://xw4dq-4yaaa-aaaam-abeuq-cai.ic0.app;",
         },
         allow_raw_access: false,
     },
