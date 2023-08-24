@@ -30,21 +30,20 @@ impl PublicGroups {
         self.groups.get_mut(chat_id)
     }
 
-    pub fn handle_group_created(
+    #[allow(clippy::too_many_arguments)]
+    pub fn add(
         &mut self,
-        GroupCreatedArgs {
-            chat_id,
-            name,
-            description,
-            subtype,
-            avatar_id,
-            gate,
-            now,
-        }: GroupCreatedArgs,
+        chat_id: ChatId,
+        name: String,
+        description: String,
+        subtype: Option<GroupSubtype>,
+        avatar_id: Option<u128>,
+        gate: Option<AccessGate>,
+        created: TimestampMillis,
     ) {
         self.groups.insert(
             chat_id,
-            PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, gate, now),
+            PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, gate, created),
         );
     }
 
@@ -282,16 +281,6 @@ impl From<PublicGroupInfo> for PrivateGroupInfo {
         private_group_info.set_frozen(public_group_info.frozen);
         private_group_info
     }
-}
-
-pub struct GroupCreatedArgs {
-    pub chat_id: ChatId,
-    pub name: String,
-    pub description: String,
-    pub subtype: Option<GroupSubtype>,
-    pub avatar_id: Option<u128>,
-    pub now: TimestampMillis,
-    pub gate: Option<AccessGate>,
 }
 
 #[derive(PartialEq, Eq, Debug)]

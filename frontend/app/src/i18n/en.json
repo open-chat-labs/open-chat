@@ -585,7 +585,8 @@
         "cryptoTransfers": "Crypto message"
     },
     "andNMore": ", and {n} more",
-    "confirmMakeGroupPrivate": "Do you definitely want to make this {level} private? Currently this operation cannot be reversed!",
+    "confirmMakeGroupPrivate": "Do you definitely want to make this {level} private?",
+    "confirmMakeGroupPublic": "Do you definitely want to make this {level} public?\n\nExisting messages will remain private, all new messages will be public.",
     "makeGroupPrivate": "Make group private",
     "makeGroupPrivateFailed": "Failed to make {level} private",
     "groupVisibilityChangedBy": "{changedBy} made the {level} {visibility}",
