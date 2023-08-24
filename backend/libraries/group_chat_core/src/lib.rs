@@ -46,7 +46,6 @@ pub struct GroupChatCore {
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
-    #[serde(default)]
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
 }
 
@@ -1765,38 +1764,12 @@ pub struct SummaryUpdatesFromEvents {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-#[serde(from = "AccessRulesCombined")]
 pub struct AccessRulesInternal {
     // TODO: Make this an alias once users, groups, and communities have been upgraded
     // THEN in the subsequent release can delete the serde attribute altogether!
-    #[serde(rename = "versioned_text")]
+    #[serde(alias = "versioned_text")]
     pub text: Versioned<String>,
     pub enabled: bool,
-}
-
-// TODO: Remove this once users, groups, and communities have been upgraded
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct AccessRulesCombined {
-    #[serde(default)]
-    pub text: String,
-    #[serde(default)]
-    pub versioned_text: Versioned<String>,
-    pub enabled: bool,
-}
-
-impl From<AccessRulesCombined> for AccessRulesInternal {
-    fn from(value: AccessRulesCombined) -> Self {
-        let text = if value.text.is_empty() {
-            value.versioned_text
-        } else {
-            Versioned::new(value.text, Version::zero())
-        };
-
-        AccessRulesInternal {
-            text,
-            enabled: value.enabled,
-        }
-    }
 }
 
 impl AccessRulesInternal {

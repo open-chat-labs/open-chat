@@ -9,7 +9,6 @@ pub struct Args {
     pub channel_id: ChannelId,
     pub invite_code: Option<u64>,
     pub is_platform_moderator: bool,
-    #[serde(default)]
     pub is_bot: bool,
 }
 

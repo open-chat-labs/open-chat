@@ -135,9 +135,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
     pub gate: Option<AccessGate>,
-    #[serde(default)]
     pub rules_enabled: bool,
-    #[serde(default)]
     pub rules_accepted: bool,
 }
 
@@ -232,9 +230,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub newly_expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: OptionUpdate<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
-    #[serde(default)]
     pub rules_enabled: Option<bool>,
-    #[serde(default)]
     pub rules_accepted: Option<bool>,
 }
 
@@ -251,7 +247,6 @@ pub struct SelectedGroupUpdates {
     pub pinned_messages_removed: Vec<MessageIndex>,
     // TODO: remove this field once the website is using `access_rules` instead
     pub rules: Option<AccessRules>,
-    #[serde(default)]
     pub access_rules: Option<VersionedRules>,
 }
 

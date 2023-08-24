@@ -14,7 +14,6 @@ pub struct Args {
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
     pub forwarding: bool,
-    #[serde(default)]
     pub rules_accepted: Option<Version>,
     pub correlation_id: u64,
 }
