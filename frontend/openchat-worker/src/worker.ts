@@ -1202,6 +1202,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
+            case "setCommunityUpgradeConcurrency":
+                agent
+                    .setCommunityUpgradeConcurrency(payload.value)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+    
             case "setUserUpgradeConcurrency":
                 agent
                     .setUserUpgradeConcurrency(payload.value)
