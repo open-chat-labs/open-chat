@@ -168,7 +168,12 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                 let default_channel_ids = state.data.channels.public_channel_ids();
 
                 for (user_id, principal) in users {
-                    match state.data.members.add(user_id, principal, members_to_add[&user_id], now) {
+                    match state.data.members.add(
+                        user_id,
+                        principal,
+                        members_to_add.get(&user_id).copied().unwrap_or_default(),
+                        now,
+                    ) {
                         AddResult::Success(_) => {
                             state.data.invited_users.remove(&user_id, now);
 
