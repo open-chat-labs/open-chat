@@ -1348,7 +1348,7 @@ export class OpenChat extends OpenChatAgentWorker {
         chatId: ChatIdentifier,
         predicate: (chat: ChatSummary) => boolean,
     ): boolean {
-        const chat = this._liveState.chatSummaries.get(chatId);
+        const chat = this._liveState.allChats.get(chatId);
         return chat !== undefined && predicate(chat);
     }
 
