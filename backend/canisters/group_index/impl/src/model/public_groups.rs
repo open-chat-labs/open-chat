@@ -30,6 +30,7 @@ impl PublicGroups {
         self.groups.get_mut(chat_id)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
         chat_id: ChatId,
