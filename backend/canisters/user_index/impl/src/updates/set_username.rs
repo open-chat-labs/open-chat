@@ -200,10 +200,10 @@ mod tests {
 
     #[test]
     fn valid_usernames() {
-        assert!(matches!(validate_username("abcde"), Ok(_)));
-        assert!(matches!(validate_username("12345"), Ok(_)));
-        assert!(matches!(validate_username("SNSABC"), Ok(_)));
-        assert!(matches!(validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3"), Ok(_)));
+        assert!(validate_username("abcde").is_ok());
+        assert!(validate_username("12345").is_ok());
+        assert!(validate_username("SNSABC").is_ok());
+        assert!(validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3").is_ok());
     }
 
     #[test]

@@ -193,7 +193,7 @@ mod tests {
         ];
 
         for (index, username) in usernames.iter().enumerate() {
-            let bytes = vec![index as u8, 1];
+            let bytes = [index as u8, 1];
             let p = Principal::from_slice(&bytes[..]);
 
             data.users.add_test_user(User {
