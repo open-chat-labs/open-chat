@@ -3,15 +3,15 @@ use async_channel::{Receiver, Sender};
 use tracing::{error, info};
 use types::{Error, UserId};
 use web_push::{
-    ContentEncoding, PartialVapidSignatureBuilder, SubscriptionInfo, Urgency, VapidSignature, VapidSignatureBuilder,
-    WebPushClient, WebPushError, WebPushMessage, WebPushMessageBuilder,
+    ContentEncoding, HyperWebPushClient, PartialVapidSignatureBuilder, SubscriptionInfo, Urgency, VapidSignature,
+    VapidSignatureBuilder, WebPushClient, WebPushError, WebPushMessage, WebPushMessageBuilder,
 };
 
 const MAX_PAYLOAD_LENGTH_BYTES: usize = 3 * 1000; // Just under 3KB
 
 pub struct Pusher {
     receiver: Receiver<Notification>,
-    web_push_client: WebPushClient,
+    web_push_client: HyperWebPushClient,
     sig_builder: PartialVapidSignatureBuilder,
     subscriptions_to_remove_sender: Sender<(UserId, String)>,
 }
@@ -24,7 +24,7 @@ impl Pusher {
     ) -> Self {
         Self {
             receiver,
-            web_push_client: WebPushClient::new().unwrap(),
+            web_push_client: HyperWebPushClient::new(),
             sig_builder: VapidSignatureBuilder::from_pem_no_sub(vapid_private_pem.as_bytes()).unwrap(),
             subscriptions_to_remove_sender,
         }
@@ -85,7 +85,7 @@ fn build_web_push_message(
     subscription: &SubscriptionInfo,
     vapid_signature: VapidSignature,
 ) -> Result<WebPushMessage, WebPushError> {
-    let mut message_builder = WebPushMessageBuilder::new(subscription)?;
+    let mut message_builder = WebPushMessageBuilder::new(subscription);
     message_builder.set_payload(ContentEncoding::Aes128Gcm, payload);
     message_builder.set_vapid_signature(vapid_signature);
     message_builder.set_ttl(3600); // 1 hour
