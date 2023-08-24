@@ -293,6 +293,17 @@ impl CommunityMemberInternal {
             self.channels_removed.push(Timestamped::new(channel_id, now));
         }
     }
+
+    pub fn accept_rules(&mut self, version: Version, now: TimestampMillis) {
+        let already_accepted = self
+            .rules_accepted
+            .as_ref()
+            .map_or(false, |accepted| version <= accepted.value);
+
+        if !already_accepted {
+            self.rules_accepted = Some(Timestamped::new(version, now));
+        }
+    }
 }
 
 #[allow(clippy::large_enum_variant)]

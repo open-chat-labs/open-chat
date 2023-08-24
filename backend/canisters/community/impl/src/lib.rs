@@ -19,7 +19,7 @@ use std::ops::Deref;
 use types::{
     AccessGate, AccessRules, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
     CommunityMembership, CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis,
-    Timestamped, UserId, Version,
+    Timestamped, UserId,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -301,43 +301,13 @@ impl Data {
         self.cached_chat_metrics = Timestamped::new(metrics.hydrate(), now);
     }
 
-    pub fn check_rules(
-        &mut self,
-        caller: Principal,
-        rules_accepted: Option<Version>,
-        now: TimestampMillis,
-    ) -> CheckRulesResult {
-        use CheckRulesResult::*;
-
-        if let Some(member) = self.members.get_mut(caller) {
-            if member.suspended.value {
-                return UserSuspended;
-            }
-
-            if let Some(version) = rules_accepted {
-                let already_accepted = member
-                    .rules_accepted
-                    .as_ref()
-                    .map_or(false, |accepted| version <= accepted.value);
-
-                if !already_accepted {
-                    member.rules_accepted = Some(Timestamped::new(version, now));
-                }
-            }
-
-            match !self.rules.enabled
-                || member.is_bot
-                || (member
-                    .rules_accepted
-                    .as_ref()
-                    .map_or(false, |accepted| accepted.value >= self.rules.text.version))
-            {
-                true => Success,
-                false => NotAccepted,
-            }
-        } else {
-            UserNotInCommunity
-        }
+    pub fn check_rules(&self, member: &CommunityMemberInternal) -> bool {
+        !self.rules.enabled
+            || member.is_bot
+            || (member
+                .rules_accepted
+                .as_ref()
+                .map_or(false, |accepted| accepted.value >= self.rules.text.version))
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
@@ -383,11 +353,4 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
-}
-
-pub enum CheckRulesResult {
-    Success,
-    UserSuspended,
-    UserNotInCommunity,
-    NotAccepted,
 }

@@ -644,12 +644,23 @@ impl GroupChatCore {
     ) -> SendMessageResult {
         use SendMessageResult::*;
 
-        // TODO: Once the FE has been updated with "send message" rules checks then fail if the rules haven't been accepted.
-        match self.check_rules(sender, rules_accepted, now) {
-            CheckRulesResult::NotAccepted | CheckRulesResult::Success => (),
-            //CheckRulesResult::NotAccepted => return RulesNotAccepted,
-            CheckRulesResult::UserSuspended => return UserSuspended,
-            CheckRulesResult::UserNotInGroup => return UserNotInGroup,
+        match self.members.get_mut(&sender) {
+            Some(m) => {
+                if m.suspended.value {
+                    return UserSuspended;
+                }
+                if let Some(version) = rules_accepted {
+                    m.accept_rules(version, now);
+                }
+            }
+            None => return UserNotInGroup,
+        };
+
+        let member = self.members.get(&sender).unwrap();
+
+        if !self.check_rules(member) {
+            // TODO: Uncomment this once the FE has been updated with "send message" rules checks
+            //return RulesNotAccepted;
         }
 
         let member = self.members.get(&sender).unwrap();
@@ -1469,38 +1480,13 @@ impl GroupChatCore {
         }
     }
 
-    pub fn check_rules(&mut self, user_id: UserId, rules_accepted: Option<Version>, now: TimestampMillis) -> CheckRulesResult {
-        use CheckRulesResult::*;
-
-        if let Some(member) = self.members.get_mut(&user_id) {
-            if member.suspended.value {
-                return UserSuspended;
-            }
-
-            if let Some(version) = rules_accepted {
-                let already_accepted = member
-                    .rules_accepted
-                    .as_ref()
-                    .map_or(false, |accepted| version <= accepted.value);
-
-                if !already_accepted {
-                    member.rules_accepted = Some(Timestamped::new(version, now));
-                }
-            }
-
-            match !self.rules.enabled
-                || member.is_bot
-                || (member
-                    .rules_accepted
-                    .as_ref()
-                    .map_or(false, |accepted| accepted.value >= self.rules.text.version))
-            {
-                true => Success,
-                false => NotAccepted,
-            }
-        } else {
-            UserNotInGroup
-        }
+    pub fn check_rules(&self, member: &GroupMemberInternal) -> bool {
+        !self.rules.enabled
+            || member.is_bot
+            || (member
+                .rules_accepted
+                .as_ref()
+                .map_or(false, |accepted| accepted.value >= self.rules.text.version))
     }
 
     fn events_reader(
@@ -1765,13 +1751,6 @@ pub struct SummaryUpdatesFromEvents {
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_changed: bool,
-}
-
-pub enum CheckRulesResult {
-    Success,
-    UserSuspended,
-    UserNotInGroup,
-    NotAccepted,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

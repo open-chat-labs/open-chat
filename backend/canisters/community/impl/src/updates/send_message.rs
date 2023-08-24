@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, TimerJob};
-use crate::{mutate_state, run_regular_jobs, CheckRulesResult, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
@@ -27,15 +27,24 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
 
-    // TODO: Once the FE has been updated with "send message" rules checks then fail if the rules haven't been accepted.
-    match state.data.check_rules(caller, args.community_rules_accepted, now) {
-        CheckRulesResult::NotAccepted | CheckRulesResult::Success => (),
-        //CheckRulesResult::NotAccepted => return RulesNotAccepted,
-        CheckRulesResult::UserSuspended => return UserSuspended,
-        CheckRulesResult::UserNotInCommunity => return UserNotInCommunity,
-    }
+    match state.data.members.get_mut(caller) {
+        Some(m) => {
+            if m.suspended.value {
+                return UserSuspended;
+            }
+            if let Some(version) = args.community_rules_accepted {
+                m.accept_rules(version, now);
+            }
+        }
+        None => return UserNotInCommunity,
+    };
 
     let member = state.data.members.get(caller).unwrap();
+
+    if !state.data.check_rules(member) {
+        // TODO: Uncomment this once the FE has been updated with "send message" rules checks
+        //return RulesNotAccepted;
+    }
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         let user_id = member.user_id;
