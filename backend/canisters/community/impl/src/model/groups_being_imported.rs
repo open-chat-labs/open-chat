@@ -5,6 +5,7 @@ use types::{ChannelId, ChatId, TimestampMillis, Timestamped, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupsBeingImported {
+    #[serde(skip_deserializing)]
     groups: HashMap<ChatId, GroupBeingImported>,
 }
 
