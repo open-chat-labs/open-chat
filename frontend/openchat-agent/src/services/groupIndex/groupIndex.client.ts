@@ -179,4 +179,11 @@ export class GroupIndexClient extends CandidService {
             setUpgradeConcurrencyResponse
         );
     }
+
+    setCommunityUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
+        return this.handleResponse(
+            this.groupIndexService.set_community_upgrade_concurrency({ value }),
+            setUpgradeConcurrencyResponse
+        );
+    }
 }

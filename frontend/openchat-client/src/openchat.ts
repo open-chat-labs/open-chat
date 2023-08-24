@@ -3970,6 +3970,15 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    setCommunityUpgradeConcurrency(value: number): Promise<boolean> {
+        return this.sendRequest({ kind: "setCommunityUpgradeConcurrency", value })
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to set group community concurrency", err);
+                return false;
+            });
+    }
+
     setUserUpgradeConcurrency(value: number): Promise<boolean> {
         return this.sendRequest({ kind: "setUserUpgradeConcurrency", value })
             .then((resp) => resp === "success")
