@@ -971,5 +971,7 @@
     "loadMeme": "Mostrar meme",
     "loadGif": "Mostrar gif",
     "reset": "Reiniciar",
-    "send": "Enviar"
+    "send": "Enviar",
+    "confirmMakeGroupPublic": "¿Definitivamente quieres hacer público este {level}?\n\nLos mensajes existentes seguirán siendo privados, todos los mensajes nuevos serán públicos.",
+    "makeGroupPublicFailed": "No se pudo hacer público {level}"
 }
