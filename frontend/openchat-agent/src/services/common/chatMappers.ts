@@ -101,7 +101,6 @@ import type {
     AccessGate,
     MessageReminderCreatedContent,
     MessageReminderContent,
-    CustomContent,
     MessageContext,
     ReportedMessageContent,
     GroupChatSummary,
@@ -145,7 +144,6 @@ import type {
     ResetInviteCodeResponse,
     ThreadSyncDetails,
     RegisterProposalVoteResponse,
-    MemeFighterContent,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -332,7 +330,7 @@ function reportedMessage(candid: ApiReportedMessage): ReportedMessageContent {
     };
 }
 
-function customContent(candid: ApiCustomMessageContent): CustomContent | MemeFighterContent {
+function customContent(candid: ApiCustomMessageContent): MessageContent {
     if (candid.kind === "meme_fighter") {
         const data = candid.data as Uint8Array;
         const decoder = new TextDecoder();
@@ -343,11 +341,13 @@ function customContent(candid: ApiCustomMessageContent): CustomContent | MemeFig
             ...decoded,
         };
     }
-    return {
-        kind: "custom_content",
-        subtype: candid.kind,
-        data: candid.data,
-    };
+    if (candid.kind === "user_referral_card") {
+        return {
+            kind: "user_referral_card",
+        };
+    }
+
+    throw new Error(`Unknown custom content kind received: ${candid.kind}`);
 }
 
 function messageReminderCreated(candid: ApiMessageReminderCreated): MessageReminderCreatedContent {
@@ -1061,29 +1061,29 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
             );
 
         case "meme_fighter_content":
+            // eslint-disable-next-line no-case-declarations
+            const encoder = new TextEncoder();
             return {
-                Custom: apiCustomContent({
-                    kind: "custom_content",
-                    subtype: "meme_fighter",
-                    data: {
-                        url: domain.url,
-                        width: domain.width,
-                        height: domain.height,
-                    },
-                }),
+                Custom: {
+                    kind: "meme_fighter",
+                    data: encoder.encode(
+                        JSON.stringify({
+                            url: domain.url,
+                            width: domain.width,
+                            height: domain.height,
+                        }),
+                    ),
+                },
             };
 
-        case "custom_content":
-            return { Custom: apiCustomContent(domain) };
+        case "user_referral_card":
+            return {
+                Custom: {
+                    kind: "user_referral_card",
+                    data: [],
+                },
+            };
     }
-}
-
-function apiCustomContent(domain: CustomContent): ApiCustomMessageContent {
-    const encoder = new TextEncoder();
-    return {
-        kind: domain.subtype,
-        data: encoder.encode(JSON.stringify(domain.data)),
-    };
 }
 
 function apiProposalContent(_: ProposalContent): ApiProposalContent {

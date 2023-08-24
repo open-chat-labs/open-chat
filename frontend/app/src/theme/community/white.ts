@@ -1,5 +1,5 @@
 import type { Theme } from "../types";
-import { hexPercent } from "../themes";
+import { hexPercent } from "../utils";
 
 const textBox = "rgba(226,226,226,0.5)";
 const txt = "#242834";

@@ -28,18 +28,6 @@ communityThemes.forEach((theme) => {
     themes[theme.name] = theme;
 });
 
-export function hexPercent(hex: string, alpha: number | undefined): string {
-    const r = parseInt(hex.slice(1, 3), 16),
-        g = parseInt(hex.slice(3, 5), 16),
-        b = parseInt(hex.slice(5, 7), 16);
-
-    if (alpha !== undefined) {
-        return `rgba(${r}, ${g}, ${b}, ${alpha / 100})`;
-    } else {
-        return `rgb(${r}, ${g}, ${b})`;
-    }
-}
-
 function cloneTheme(theme: Theme): Theme {
     return JSON.parse(JSON.stringify(theme));
 }
@@ -68,7 +56,7 @@ const osDarkStore = readable(window.matchMedia(prefersDarkQuery).matches, (set) 
 export const themeNameStore = writable<string>(getCurrentThemeName());
 
 export const themeStore = derived([osDarkStore, themeNameStore], ([$dark, $themeName]) =>
-    themeByName($themeName ?? null, $dark)
+    themeByName($themeName ?? null, $dark),
 );
 
 themeStore.subscribe((theme) => writeCssVars("--", theme));
@@ -92,7 +80,7 @@ export function saveSeletedTheme(themeName: string): void {
 export function setModifiedTheme(
     baseName: string,
     newName: string,
-    overrides: Partial<Theme>
+    overrides: Partial<Theme>,
 ): void {
     const base = themes[baseName];
     if (base) {
