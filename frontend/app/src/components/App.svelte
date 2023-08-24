@@ -101,6 +101,7 @@
         };
         (<any>window).platformOperator = {
             setGroupUpgradeConcurrency,
+            setCommunityUpgradeConcurrency,
             setUserUpgradeConcurrency,
             updateMarketMakerConfig,
         };
@@ -234,6 +235,16 @@
                 console.log("Group upgrade concurrency set", value);
             } else {
                 console.log("Failed to set group upgrade concurrency", value);
+            }
+        });
+    }
+
+    function setCommunityUpgradeConcurrency(value: number): void {
+        client.setCommunityUpgradeConcurrency(value).then((success) => {
+            if (success) {
+                console.log("Community upgrade concurrency set", value);
+            } else {
+                console.log("Failed to set community upgrade concurrency", value);
             }
         });
     }
