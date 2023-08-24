@@ -769,6 +769,8 @@
         min-width: 90px;
         overflow: hidden;
         overflow-wrap: break-word;
+        border: var(--currentChat-msg-bd);
+        box-shadow: var(--currentChat-msg-sh);
 
         @include size-above(xl) {
             max-width: 70%;

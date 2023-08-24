@@ -178,12 +178,15 @@ export interface Theme {
         date: {
             bg: string;
             txt: string;
+            bd: string;
         };
         msg: {
             bg: string;
+            bd: string;
             muted: string;
             txt: string;
             inert: string;
+            sh: string;
 
             me: {
                 bg: string;
@@ -192,6 +195,11 @@ export interface Theme {
                 bd: string;
             };
         };
+    };
+
+    time: {
+        txt: string;
+        icon: string;
     };
 
     icon: {

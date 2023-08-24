@@ -413,6 +413,8 @@
         .date-label {
             padding: $sp2;
             background-color: var(--currentChat-date-bg);
+            border: var(--currentChat-date-bd);
+            color: var(--currentChat-date-txt);
             position: sticky;
             top: 0;
             width: 200px;

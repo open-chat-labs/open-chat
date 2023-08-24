@@ -152,6 +152,10 @@
     :global(.message-actions.useDrawer.visible .wrapper) {
         background-color: var(--button-bg);
         @include box-shadow(1);
+
+        &:hover {
+            background-color: var(--button-hv);
+        }
     }
 
     :global(.message-actions.useDrawer.visible .wrapper path) {
