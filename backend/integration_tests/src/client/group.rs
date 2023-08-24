@@ -58,6 +58,7 @@ pub mod happy_path {
                 replies_to: None,
                 mentioned: Vec::new(),
                 forwarding: false,
+                rules_accepted: None,
                 correlation_id: 0,
             },
         );

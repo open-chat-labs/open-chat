@@ -10,9 +10,10 @@ use group_canister::c2c_export_group::{Args, Response};
 use group_chat_core::GroupChatCore;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
+use std::collections::HashMap;
 use std::time::Duration;
 use tracing::{info, trace};
-use types::{ChannelId, ChannelLatestMessageIndex, ChatId, Empty};
+use types::{ChannelId, ChannelLatestMessageIndex, ChatId, Empty, UserId};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -141,12 +142,12 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
 
     let (members_to_add, local_user_index_canister_id) = mutate_state(|state| {
         let channel = state.data.channels.get(&channel_id).unwrap();
-        let mut to_add = Vec::new();
-        for user_id in channel.chat.members.iter().map(|m| m.user_id) {
+        let mut to_add: HashMap<UserId, bool> = HashMap::new();
+        for (user_id, is_bot) in channel.chat.members.iter().map(|m| (m.user_id, m.is_bot)) {
             if let Some(member) = state.data.members.get_by_user_id_mut(&user_id) {
                 member.channels.insert(channel_id);
             } else {
-                to_add.push(user_id);
+                to_add.insert(user_id, is_bot);
             }
         }
 
@@ -157,7 +158,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
 
     if !members_to_add.is_empty() {
         let c2c_args = local_user_index_canister::c2c_user_principals::Args {
-            user_ids: members_to_add,
+            user_ids: members_to_add.keys().copied().collect(),
         };
         if let Ok(local_user_index_canister::c2c_user_principals::Response::Success(users)) =
             local_user_index_canister_c2c_client::c2c_user_principals(local_user_index_canister_id, &c2c_args).await
@@ -167,7 +168,12 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                 let default_channel_ids = state.data.channels.public_channel_ids();
 
                 for (user_id, principal) in users {
-                    match state.data.members.add(user_id, principal, now) {
+                    match state.data.members.add(
+                        user_id,
+                        principal,
+                        members_to_add.get(&user_id).copied().unwrap_or_default(),
+                        now,
+                    ) {
                         AddResult::Success(_) => {
                             state.data.invited_users.remove(&user_id, now);
 
@@ -175,7 +181,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                             for default_channel_id in default_channel_ids.iter() {
                                 if let Some(channel) = state.data.channels.get_mut(default_channel_id) {
                                     if channel.chat.gate.is_none() {
-                                        join_channel_unchecked(channel, member, true, None, now);
+                                        join_channel_unchecked(channel, member, true, now);
                                     }
                                 }
                             }

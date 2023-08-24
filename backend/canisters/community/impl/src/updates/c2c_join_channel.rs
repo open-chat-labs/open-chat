@@ -11,7 +11,7 @@ use chat_events::ChatEventInternal;
 use community_canister::c2c_join_channel::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_chat_core::AddResult;
-use types::{AccessGate, CanisterId, ChannelId, MemberJoined, TimestampMillis, UserId, Version};
+use types::{AccessGate, CanisterId, ChannelId, MemberJoined, TimestampMillis, UserId};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
@@ -23,11 +23,12 @@ async fn c2c_join_channel(args: Args) -> Response {
         principal: args.principal,
         invite_code: args.invite_code,
         is_platform_moderator: args.is_platform_moderator,
+        is_bot: args.is_bot,
     })
     .await
     {
         community_canister::c2c_join_community::Response::Success(_) => {
-            let response = join_channel_impl(args.channel_id, args.principal, args.rules_accepted).await;
+            let response = join_channel_impl(args.channel_id, args.principal).await;
             if matches!(response, Success(_) | AlreadyInChannel(_)) {
                 let summary = read_state(|state| {
                     let member = state.data.members.get_by_user_id(&args.user_id);
@@ -39,7 +40,7 @@ async fn c2c_join_channel(args: Args) -> Response {
             }
         }
         community_canister::c2c_join_community::Response::AlreadyInCommunity(_) => {
-            join_channel_impl(args.channel_id, args.principal, args.rules_accepted).await
+            join_channel_impl(args.channel_id, args.principal).await
         }
         community_canister::c2c_join_community::Response::GateCheckFailed(r) => GateCheckFailed(r),
         community_canister::c2c_join_community::Response::NotInvited => NotInvited,
@@ -50,11 +51,7 @@ async fn c2c_join_channel(args: Args) -> Response {
     }
 }
 
-pub(crate) async fn join_channel_impl(
-    channel_id: ChannelId,
-    user_principal: Principal,
-    rules_accepted: Option<Version>,
-) -> Response {
+pub(crate) async fn join_channel_impl(channel_id: ChannelId, user_principal: Principal) -> Response {
     match read_state(|state| is_permitted_to_join(channel_id, user_principal, state)) {
         Ok(Some((gate, user_index_canister_id, user_id))) => {
             match check_if_passes_gate(&gate, user_id, user_index_canister_id).await {
@@ -67,7 +64,7 @@ pub(crate) async fn join_channel_impl(
         Err(response) => return response,
     };
 
-    mutate_state(|state| commit(channel_id, user_principal, rules_accepted, state))
+    mutate_state(|state| commit(channel_id, user_principal, state))
 }
 
 fn is_permitted_to_join(
@@ -110,16 +107,11 @@ fn is_permitted_to_join(
     }
 }
 
-fn commit(
-    channel_id: ChannelId,
-    user_principal: Principal,
-    rules_accepted: Option<Version>,
-    state: &mut RuntimeState,
-) -> Response {
+fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeState) -> Response {
     if let Some(member) = state.data.members.get_mut(user_principal) {
         if let Some(channel) = state.data.channels.get_mut(&channel_id) {
             let now = state.env.now();
-            match join_channel_unchecked(channel, member, state.data.is_public, rules_accepted, now) {
+            match join_channel_unchecked(channel, member, state.data.is_public, now) {
                 AddResult::Success(_) => {
                     let summary = channel
                         .summary(Some(member.user_id), true, state.data.is_public, now)
@@ -148,7 +140,6 @@ pub(crate) fn join_channel_unchecked(
     channel: &mut Channel,
     member: &mut CommunityMemberInternal,
     notifications_muted: bool,
-    rules_accepted: Option<Version>,
     now: TimestampMillis,
 ) -> AddResult {
     let min_visible_event_index;
@@ -174,7 +165,7 @@ pub(crate) fn join_channel_unchecked(
         min_visible_event_index,
         min_visible_message_index,
         notifications_muted,
-        rules_accepted,
+        member.is_bot,
     );
 
     match &result {

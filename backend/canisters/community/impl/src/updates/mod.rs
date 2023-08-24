@@ -1,4 +1,3 @@
-pub mod accept_rules;
 pub mod add_members_to_channel;
 pub mod add_reaction;
 pub mod c2c_delete_community;

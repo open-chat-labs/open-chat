@@ -4,7 +4,6 @@ type JoinChannelArgs = record {
     community_id : CommunityId;
     channel_id : ChannelId;
     invite_code : opt nat64;
-    rules_accepted : opt Version;
 };
 
 type JoinChannelResponse = variant {
@@ -20,7 +19,6 @@ type JoinChannelResponse = variant {
     UserSuspended;
     CommunityFrozen;
     NotInvited;
-    RulesNotAccepted;
     InternalError : text;
 };
 

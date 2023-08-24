@@ -25,91 +25,103 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
-            return UserSuspended;
-        }
+    let now = state.env.now();
 
-        let user_id = member.user_id;
-        let now = state.env.now();
-
-        if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            // TODO: Call channel.chat.accept_rules and fail if the user has not accepted the rules
-
-            match channel.chat.send_message(
-                user_id,
-                args.thread_root_message_index,
-                args.message_id,
-                args.content,
-                args.replies_to,
-                args.mentioned.clone(),
-                args.forwarding,
-                state.data.proposals_bot_user_id,
-                now,
-            ) {
-                SendMessageResult::Success(result) => {
-                    let event_index = result.message_event.index;
-                    let message_index = result.message_event.event.message_index;
-                    let expires_at = result.message_event.expires_at;
-
-                    register_timer_jobs(
-                        args.channel_id,
-                        args.thread_root_message_index,
-                        &result.message_event,
-                        now,
-                        &mut state.data.timer_jobs,
-                    );
-
-                    // Exclude suspended members from notification
-                    let users_to_notify: Vec<UserId> = result
-                        .users_to_notify
-                        .into_iter()
-                        .filter(|u| state.data.members.get_by_user_id(u).map_or(false, |m| !m.suspended.value))
-                        .collect();
-
-                    let content = &result.message_event.event.content;
-                    let notification = Notification::ChannelMessage(ChannelMessageNotification {
-                        community_id: state.env.canister_id().into(),
-                        channel_id: args.channel_id,
-                        thread_root_message_index: args.thread_root_message_index,
-                        message_index: result.message_event.event.message_index,
-                        event_index: result.message_event.index,
-                        community_name: state.data.name.clone(),
-                        channel_name: channel.chat.name.clone(),
-                        sender: user_id,
-                        sender_name: args.sender_name,
-                        message_type: content.message_type().to_string(),
-                        message_text: content.notification_text(&args.mentioned),
-                        image_url: content.notification_image_url(),
-                        community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
-                        channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
-                        crypto_transfer: content.notification_crypto_transfer_details(&args.mentioned),
-                    });
-                    state.push_notification(users_to_notify, notification);
-
-                    handle_activity_notification(state);
-
-                    Success(SuccessResult {
-                        event_index,
-                        message_index,
-                        timestamp: now,
-                        expires_at,
-                    })
-                }
-                SendMessageResult::ThreadMessageNotFound => ThreadMessageNotFound,
-                SendMessageResult::MessageEmpty => MessageEmpty,
-                SendMessageResult::TextTooLong(max_length) => TextTooLong(max_length),
-                SendMessageResult::InvalidPoll(reason) => InvalidPoll(reason),
-                SendMessageResult::NotAuthorized => NotAuthorized,
-                SendMessageResult::UserNotInGroup => UserNotInChannel,
-                SendMessageResult::UserSuspended => UserSuspended,
-                SendMessageResult::InvalidRequest(error) => InvalidRequest(error),
+    match state.data.members.get_mut(caller) {
+        Some(m) => {
+            if m.suspended.value {
+                return UserSuspended;
             }
-        } else {
-            ChannelNotFound
+            if let Some(version) = args.community_rules_accepted {
+                m.accept_rules(version, now);
+            }
+        }
+        None => return UserNotInCommunity,
+    };
+
+    let member = state.data.members.get(caller).unwrap();
+
+    if !state.data.check_rules(member) {
+        // TODO: Uncomment this once the FE has been updated with "send message" rules checks
+        //return RulesNotAccepted;
+    }
+
+    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
+        let user_id = member.user_id;
+
+        match channel.chat.send_message(
+            user_id,
+            args.thread_root_message_index,
+            args.message_id,
+            args.content,
+            args.replies_to,
+            args.mentioned.clone(),
+            args.forwarding,
+            args.channel_rules_accepted,
+            state.data.proposals_bot_user_id,
+            now,
+        ) {
+            SendMessageResult::Success(result) => {
+                let event_index = result.message_event.index;
+                let message_index = result.message_event.event.message_index;
+                let expires_at = result.message_event.expires_at;
+
+                register_timer_jobs(
+                    args.channel_id,
+                    args.thread_root_message_index,
+                    &result.message_event,
+                    now,
+                    &mut state.data.timer_jobs,
+                );
+
+                // Exclude suspended members from notification
+                let users_to_notify: Vec<UserId> = result
+                    .users_to_notify
+                    .into_iter()
+                    .filter(|u| state.data.members.get_by_user_id(u).map_or(false, |m| !m.suspended.value))
+                    .collect();
+
+                let content = &result.message_event.event.content;
+                let notification = Notification::ChannelMessage(ChannelMessageNotification {
+                    community_id: state.env.canister_id().into(),
+                    channel_id: args.channel_id,
+                    thread_root_message_index: args.thread_root_message_index,
+                    message_index: result.message_event.event.message_index,
+                    event_index: result.message_event.index,
+                    community_name: state.data.name.clone(),
+                    channel_name: channel.chat.name.clone(),
+                    sender: user_id,
+                    sender_name: args.sender_name,
+                    message_type: content.message_type().to_string(),
+                    message_text: content.notification_text(&args.mentioned),
+                    image_url: content.notification_image_url(),
+                    community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
+                    channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
+                    crypto_transfer: content.notification_crypto_transfer_details(&args.mentioned),
+                });
+                state.push_notification(users_to_notify, notification);
+
+                handle_activity_notification(state);
+
+                Success(SuccessResult {
+                    event_index,
+                    message_index,
+                    timestamp: now,
+                    expires_at,
+                })
+            }
+            SendMessageResult::ThreadMessageNotFound => ThreadMessageNotFound,
+            SendMessageResult::MessageEmpty => MessageEmpty,
+            SendMessageResult::TextTooLong(max_length) => TextTooLong(max_length),
+            SendMessageResult::InvalidPoll(reason) => InvalidPoll(reason),
+            SendMessageResult::NotAuthorized => NotAuthorized,
+            SendMessageResult::UserNotInGroup => UserNotInChannel,
+            SendMessageResult::UserSuspended => UserSuspended,
+            SendMessageResult::RulesNotAccepted => RulesNotAccepted,
+            SendMessageResult::InvalidRequest(error) => InvalidRequest(error),
         }
     } else {
-        UserNotInCommunity
+        ChannelNotFound
     }
 }
 

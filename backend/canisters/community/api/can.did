@@ -177,6 +177,7 @@ type SelectedInitialSuccess = record {
     blocked_users : vec UserId;
     invited_users : vec UserId;
     rules : AccessRules;
+    access_rules : VersionedRules;
 };
 
 type SelectedUpdatesArgs = record {
@@ -204,6 +205,7 @@ type SelectedUpdatesSuccess = record {
     blocked_users_removed : vec UserId;
     invited_users : opt vec UserId;
     rules : opt AccessRules;
+    access_rules : opt VersionedRules;
 };
 
 type ChannelSummaryArgs = record {
@@ -268,22 +270,6 @@ type ThreadPreviewsResponse = variant {
     ChannelNotFound;
     UserNotInChannel;
     ReplicaNotUpToDate : TimestampMillis;
-};
-
-type AcceptRulesArgs = record {
-    channel_id : ChannelId;
-    version : Version;
-};
-
-type AcceptRulesResponse = variant {
-    Success;
-    CommunityFrozen;
-    UserSuspended;
-    UserNotInCommunity;
-    UserNotInChannel;
-    ChannelNotFound;
-    OldVersion;
-    RulesAlreadyAccepted;
 };
 
 type AddMembersToChannelArgs = record {
@@ -695,7 +681,8 @@ type SendMessageArgs = record {
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     forwarding : bool;
-    rules_accepted : opt Version;
+    community_rules_accepted : opt Version;
+    channel_rules_accepted : opt Version;
 };
 
 type SendMessageResponse = variant {
@@ -847,7 +834,6 @@ service : {
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     thread_previews : (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
 
-    accept_rules : (AcceptRulesArgs) -> (AcceptRulesResponse);
     add_members_to_channel : (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     block_user : (BlockUserArgs) -> (BlockUserResponse);

@@ -106,6 +106,7 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
         min_visible_event_index,
         min_visible_message_index,
         mute_notifications: state.data.chat.is_public,
+        is_bot: args.is_bot,
     }) {
         AddResult::Success(participant) => {
             let invitation = state.data.chat.invited_users.remove(&args.user_id, now);

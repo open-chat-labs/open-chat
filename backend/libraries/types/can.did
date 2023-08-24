@@ -292,6 +292,8 @@ type GroupCanisterGroupChatSummary = record {
     expired_messages : vec MessageIndexRange;
     next_message_expiry : opt TimestampMillis;
     gate : opt AccessGate;
+    rules_enabled : bool;
+    rules_accepted : bool;
 };
 
 type GroupCanisterGroupChatSummaryUpdates = record {
@@ -320,6 +322,8 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     newly_expired_messages : vec MessageIndexRange;
     next_message_expiry : TimestampUpdate;
     gate : AccessGateUpdate;
+    rules_enabled : opt bool;
+    rules_accepted : opt bool;
 };
 
 type CommunityCanisterCommunitySummary = record {
@@ -337,6 +341,7 @@ type CommunityCanisterCommunitySummary = record {
     last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     channels : vec CommunityCanisterChannelSummary;
+    rules_enabled : bool;
     membership : opt CommunityMembership;
     metrics : ChatMetrics;
 };
@@ -344,6 +349,7 @@ type CommunityCanisterCommunitySummary = record {
 type CommunityMembership = record {
     joined : TimestampMillis;
     role : CommunityRole;
+    rules_accepted : bool;
 };
 
 type CommunityCanisterChannelSummary = record {
@@ -398,12 +404,14 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     channels_added : vec CommunityCanisterChannelSummary;
     channels_updated : vec CommunityCanisterChannelSummaryUpdates;
     channels_removed : vec ChannelId;
+    rules_enabled : opt bool;
     membership : opt CommunityMembershipUpdates;
     metrics : opt ChatMetrics;
 };
 
 type CommunityMembershipUpdates = record {
     role : opt CommunityRole;
+    rules_accepted : opt bool;
 };
 
 type CommunityCanisterChannelSummaryUpdates = record {

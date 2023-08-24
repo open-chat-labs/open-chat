@@ -135,6 +135,10 @@ pub struct GroupCanisterGroupChatSummary {
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
     pub gate: Option<AccessGate>,
+    #[serde(default)]
+    pub rules_enabled: bool,
+    #[serde(default)]
+    pub rules_accepted: bool,
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -195,6 +199,8 @@ impl GroupCanisterGroupChatSummary {
             expired_messages: self.expired_messages.merge(updates.newly_expired_messages),
             next_message_expiry: updates.next_message_expiry.apply_to(self.next_message_expiry),
             gate: updates.gate.apply_to(self.gate),
+            rules_enabled: updates.rules_enabled.unwrap_or(self.rules_enabled),
+            rules_accepted: updates.rules_accepted.unwrap_or(self.rules_accepted),
         }
     }
 }
@@ -226,6 +232,10 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub newly_expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: OptionUpdate<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
+    #[serde(default)]
+    pub rules_enabled: Option<bool>,
+    #[serde(default)]
+    pub rules_accepted: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]

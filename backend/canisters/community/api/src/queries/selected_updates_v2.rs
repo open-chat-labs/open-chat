@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{AccessRules, CommunityMember, TimestampMillis, UserId};
+use types::{AccessRules, CommunityMember, TimestampMillis, UserId, VersionedRules};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -24,7 +24,9 @@ pub struct SuccessResult {
     pub blocked_users_added: Vec<UserId>,
     pub blocked_users_removed: Vec<UserId>,
     pub invited_users: Option<Vec<UserId>>,
+    // TODO: remove this field once the website is using `access_rules` instead
     pub rules: Option<AccessRules>,
+    pub access_rules: Option<VersionedRules>,
 }
 
 impl SuccessResult {

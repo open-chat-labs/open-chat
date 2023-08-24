@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Optimise `selected_updates` for query caching ([#4185](https://github.com/open-chat-labs/open-chat/pull/4185))
+- Extend versioned rules to communities and groups ([#4219](https://github.com/open-chat-labs/open-chat/pull/4219))
 
 ### Removed
 

@@ -1,5 +1,6 @@
 use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
+use candid::Principal;
 use chat_events::ChatEvents;
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
@@ -24,9 +25,23 @@ pub struct GroupMembers {
     pub owner_count: u32,
 }
 
+pub fn build_bots_lookup() -> HashSet<UserId> {
+    let bots = vec![
+        "neggc-nqaaa-aaaar-ad5nq-cai", // PrizeBot
+        "s4nvb-dqaaa-aaaar-adtiq-cai", // PrizeBot test
+        "wznbi-caaaa-aaaar-anvea-cai", // SatoshiDice
+        "uuw5d-uiaaa-aaaar-anzeq-cai", // SatoshiDice test
+        "pa5wn-hqaaa-aaaaf-az7rq-cai", // SNS1 Airdrop
+        "iywa7-ayaaa-aaaaf-aemga-cai", // ProposalsBot
+        "qu3kn-6qaaa-aaaaf-ahn7q-cai", // ProposalsBot test
+    ];
+
+    HashSet::from_iter(bots.iter().map(|s| Principal::from_text(s).unwrap().into()))
+}
+
 #[allow(clippy::too_many_arguments)]
 impl GroupMembers {
-    pub fn new(creator_user_id: UserId, now: TimestampMillis) -> GroupMembers {
+    pub fn new(creator_user_id: UserId, is_bot: bool, now: TimestampMillis) -> GroupMembers {
         let member = GroupMemberInternal {
             user_id: creator_user_id,
             date_added: now,
@@ -39,6 +54,7 @@ impl GroupMembers {
             proposal_votes: BTreeMap::default(),
             suspended: Timestamped::default(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
+            is_bot,
         };
 
         GroupMembers {
@@ -50,6 +66,14 @@ impl GroupMembers {
         }
     }
 
+    pub fn one_time_set_bot_flag(&mut self, bots: &HashSet<UserId>) {
+        for member in self.members.values_mut() {
+            if bots.contains(&member.user_id) {
+                member.is_bot = true;
+            }
+        }
+    }
+
     pub fn add(
         &mut self,
         user_id: UserId,
@@ -57,7 +81,7 @@ impl GroupMembers {
         min_visible_event_index: EventIndex,
         min_visible_message_index: MessageIndex,
         notifications_muted: bool,
-        rules_accepted: Option<Version>,
+        is_bot: bool,
     ) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
@@ -77,7 +101,8 @@ impl GroupMembers {
                         threads: HashSet::new(),
                         proposal_votes: BTreeMap::default(),
                         suspended: Timestamped::default(),
-                        rules_accepted: rules_accepted.map(|version| Timestamped::new(version, now)),
+                        rules_accepted: None,
+                        is_bot,
                     };
                     e.insert(member.clone());
                     AddResult::Success(member)
@@ -315,6 +340,8 @@ pub struct GroupMemberInternal {
     pub suspended: Timestamped<bool>,
     #[serde(rename = "ra", default = "default_version", skip_serializing_if = "is_default")]
     pub rules_accepted: Option<Timestamped<Version>>,
+    #[serde(rename = "b", default, skip_serializing_if = "is_default")]
+    pub is_bot: bool,
 
     #[serde(rename = "me", default, skip_serializing_if = "is_default")]
     min_visible_event_index: EventIndex,
@@ -324,7 +351,7 @@ pub struct GroupMemberInternal {
 
 // TODO: remove this when users, groups and communities are released
 fn default_version() -> Option<Timestamped<Version>> {
-    Some(Timestamped::new(Version::zero(), 0))
+    Some(Timestamped::default())
 }
 
 impl GroupMemberInternal {
@@ -357,6 +384,17 @@ impl GroupMemberInternal {
             .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, &m, now))
             .take(MAX_RETURNED_MENTIONS)
             .collect()
+    }
+
+    pub fn accept_rules(&mut self, version: Version, now: TimestampMillis) {
+        let already_accepted = self
+            .rules_accepted
+            .as_ref()
+            .map_or(false, |accepted| version <= accepted.value);
+
+        if !already_accepted {
+            self.rules_accepted = Some(Timestamped::new(version, now));
+        }
     }
 }
 
@@ -439,6 +477,7 @@ mod tests {
             min_visible_event_index: 0.into(),
             min_visible_message_index: 0.into(),
             rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
+            is_bot: false,
         };
 
         let member_bytes = msgpack::serialize_then_unwrap(&member);
@@ -467,15 +506,16 @@ mod tests {
             suspended: Timestamped::new(true, 1),
             min_visible_event_index: 1.into(),
             min_visible_message_index: 1.into(),
-            rules_accepted: None,
+            rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
+            is_bot: true,
         };
 
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        // Before optimisation: 278
-        // After optimisation: 97
-        assert_eq!(member_bytes_len, 97);
+        // Before optimisation: 278 (? - this has now changed)
+        // After optimisation: 110
+        assert_eq!(member_bytes_len, 110);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }

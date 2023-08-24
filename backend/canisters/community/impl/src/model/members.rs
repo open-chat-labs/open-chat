@@ -2,7 +2,7 @@ use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId};
+use types::{ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId, Version};
 
 const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 
@@ -30,6 +30,8 @@ impl CommunityMembers {
             suspended: Timestamped::default(),
             channels: public_channels.into_iter().collect(),
             channels_removed: Vec::new(),
+            rules_accepted: Some(Timestamped::new(Version::zero(), now)),
+            is_bot: false,
         };
 
         CommunityMembers {
@@ -41,7 +43,7 @@ impl CommunityMembers {
         }
     }
 
-    pub fn add(&mut self, user_id: UserId, principal: Principal, now: TimestampMillis) -> AddResult {
+    pub fn add(&mut self, user_id: UserId, principal: Principal, is_bot: bool, now: TimestampMillis) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
         } else {
@@ -54,6 +56,8 @@ impl CommunityMembers {
                         suspended: Timestamped::default(),
                         channels: HashSet::new(),
                         channels_removed: Vec::new(),
+                        rules_accepted: None,
+                        is_bot,
                     };
                     e.insert(member.clone());
                     self.add_user_id(principal, user_id);
@@ -263,6 +267,15 @@ pub struct CommunityMemberInternal {
     pub suspended: Timestamped<bool>,
     pub channels: HashSet<ChannelId>,
     pub channels_removed: Vec<Timestamped<ChannelId>>,
+    #[serde(default = "default_version")]
+    pub rules_accepted: Option<Timestamped<Version>>,
+    #[serde(default)]
+    pub is_bot: bool,
+}
+
+// TODO: remove this when users, groups and communities are released
+fn default_version() -> Option<Timestamped<Version>> {
+    Some(Timestamped::default())
 }
 
 impl CommunityMemberInternal {
@@ -278,6 +291,17 @@ impl CommunityMemberInternal {
     pub fn leave(&mut self, channel_id: ChannelId, now: TimestampMillis) {
         if self.channels.remove(&channel_id) {
             self.channels_removed.push(Timestamped::new(channel_id, now));
+        }
+    }
+
+    pub fn accept_rules(&mut self, version: Version, now: TimestampMillis) {
+        let already_accepted = self
+            .rules_accepted
+            .as_ref()
+            .map_or(false, |accepted| version <= accepted.value);
+
+        if !already_accepted {
+            self.rules_accepted = Some(Timestamped::new(version, now));
         }
     }
 }
