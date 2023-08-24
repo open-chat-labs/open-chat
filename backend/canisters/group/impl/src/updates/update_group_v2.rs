@@ -36,7 +36,9 @@ async fn update_group_v2(mut args: Args) -> Response {
             },
             Err(_) => return InternalError,
         }
-    } else if prepare_result.is_public && (args.name.is_some() || args.description.is_some() || args.avatar.has_update()) {
+    } else if prepare_result.is_public
+        && (args.name.is_some() || args.description.is_some() || args.avatar.has_update() || args.public == Some(true))
+    {
         let c2c_update_group_args = c2c_update_group::Args {
             name: prepare_result.name,
             description: prepare_result.description,
@@ -123,7 +125,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             UpdateResult::RulesTooShort(v) => Err(RulesTooShort(v)),
             UpdateResult::RulesTooLong(v) => Err(RulesTooLong(v)),
             UpdateResult::AvatarTooBig(v) => Err(AvatarTooBig(v)),
-            UpdateResult::CannotMakePublic => Err(CannotMakeGroupPublic),
         }
     } else {
         Err(CallerNotInGroup)

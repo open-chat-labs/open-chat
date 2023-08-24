@@ -232,7 +232,7 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "prize_winner_content" &&
         content.kind !== "message_reminder_content" &&
         content.kind !== "message_reminder_created_content" &&
-        content.kind !== "custom_content" &&
+        content.kind !== "user_referral_card" &&
         content.kind !== "meme_fighter_content" &&
         content.kind !== "reported_message_content" &&
         content.kind !== "crypto_content"
@@ -1174,8 +1174,9 @@ function mergeLocalUpdates(
         tallyUpdate === undefined &&
         translation === undefined &&
         replyTranslation === undefined
-    )
+    ) {
         return message;
+    }
 
     if (localUpdates?.deleted !== undefined) {
         return {
