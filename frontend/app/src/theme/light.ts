@@ -1,4 +1,4 @@
-import { hexPercent } from "./themes";
+import { hexPercent } from "./utils";
 import type { Theme } from "./types";
 
 const orangeAccent = "#ff9505";
@@ -114,7 +114,7 @@ export function lightTheme(): Theme {
             left: {
                 bg: `linear-gradient(${hexPercent("#22A7F2", 31.3)}, ${hexPercent(
                     "#5f2583",
-                    31.3
+                    31.3,
                 )})`,
             },
 

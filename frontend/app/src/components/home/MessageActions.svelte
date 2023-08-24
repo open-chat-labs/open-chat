@@ -166,6 +166,7 @@
     .attach,
     .open-draw,
     .gif,
+    .meme,
     .send-icp {
         flex: 0 0 15px;
     }

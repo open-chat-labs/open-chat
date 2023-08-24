@@ -16,7 +16,8 @@ import {
 
 declare const self: ServiceWorkerGlobalScope;
 
-const FILE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==";
+const FILE_ICON =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==";
 
 // Always install updated SW immediately
 self.addEventListener("install", (ev) => {
@@ -77,7 +78,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
 
     // If notifications are disabled or an OC browser window already has the focus then don't show a notification
     const isClientFocused = windowClients.some(
-        (wc) => wc.focused && wc.visibilityState === "visible"
+        (wc) => wc.focused && wc.visibilityState === "visible",
     );
     if (isClientFocused && isMessageNotification(notification)) {
         console.debug("PUSH: suppressing notification because client focused", id);
@@ -132,7 +133,11 @@ async function showNotification(notification: Notification, id: string): Promise
             userId: notification.sender.userId,
         };
         title = notification.senderName;
-        body = messageText(notification.messageText, notification.messageType, notification.cryptoTransfer);
+        body = messageText(
+            notification.messageText,
+            notification.messageType,
+            notification.cryptoTransfer,
+        );
         if (notification.senderAvatarId !== undefined) {
             icon = avatarUrl(notification.sender.userId, notification.senderAvatarId);
         } else if (notification.messageType === "File") {
@@ -145,20 +150,21 @@ async function showNotification(notification: Notification, id: string): Promise
         closeExistingNotifications = true;
     } else if (notification.kind === "group_notification") {
         title = notification.groupName;
-        body = `${notification.senderName}: ${messageText(notification.messageText, notification.messageType, notification.cryptoTransfer)}`;
+        body = `${notification.senderName}: ${messageText(
+            notification.messageText,
+            notification.messageType,
+            notification.cryptoTransfer,
+        )}`;
         if (notification.groupAvatarId !== undefined) {
             icon = avatarUrl(notification.chatId.groupId, notification.groupAvatarId);
         } else if (notification.messageType === "File") {
             icon = FILE_ICON;
         }
         image = notification.imageUrl;
-        path = routeForMessageContext(
-            "group_chat",
-            {
-                chatId: notification.chatId,
-                threadRootMessageIndex: notification.threadRootMessageIndex,
-            }
-        );
+        path = routeForMessageContext("group_chat", {
+            chatId: notification.chatId,
+            threadRootMessageIndex: notification.threadRootMessageIndex,
+        });
         tag = notification.chatId.groupId;
         if (notification.threadRootMessageIndex !== undefined) {
             tag += `_${notification.threadRootMessageIndex}`;
@@ -167,7 +173,11 @@ async function showNotification(notification: Notification, id: string): Promise
         closeExistingNotifications = true;
     } else if (notification.kind === "channel_notification") {
         title = `${notification.communityName} / ${notification.channelName}`;
-        body = `${notification.senderName}: ${messageText(notification.messageText, notification.messageType, notification.cryptoTransfer)}`;
+        body = `${notification.senderName}: ${messageText(
+            notification.messageText,
+            notification.messageType,
+            notification.cryptoTransfer,
+        )}`;
         if (notification.channelAvatarId !== undefined) {
             icon = channelAvatarUrl(notification.chatId, notification.channelAvatarId);
         } else if (notification.communityAvatarId !== undefined) {
@@ -176,13 +186,10 @@ async function showNotification(notification: Notification, id: string): Promise
             icon = FILE_ICON;
         }
         image = notification.imageUrl;
-        path = routeForMessageContext(
-            "community",
-            {
-                chatId: notification.chatId,
-                threadRootMessageIndex: notification.threadRootMessageIndex,
-            }
-        );
+        path = routeForMessageContext("community", {
+            chatId: notification.chatId,
+            threadRootMessageIndex: notification.threadRootMessageIndex,
+        });
         tag = `${notification.chatId.communityId}_${notification.chatId.channelId}}`;
         if (notification.threadRootMessageIndex !== undefined) {
             tag += `_${notification.threadRootMessageIndex}`;
@@ -198,7 +205,7 @@ async function showNotification(notification: Notification, id: string): Promise
         path = routeForMessage(
             "direct_chat",
             { chatId: notification.them },
-            notification.messageIndex
+            notification.messageIndex,
         );
         tag = path;
         timestamp = Number(notification.timestamp);
@@ -216,7 +223,7 @@ async function showNotification(notification: Notification, id: string): Promise
                 chatId: notification.chatId,
                 threadRootMessageIndex: notification.threadRootMessageIndex,
             },
-            notification.messageIndex
+            notification.messageIndex,
         );
         tag = path;
         timestamp = Number(notification.timestamp);
@@ -232,7 +239,7 @@ async function showNotification(notification: Notification, id: string): Promise
                 chatId: notification.chatId,
                 threadRootMessageIndex: notification.threadRootMessageIndex,
             },
-            notification.messageIndex
+            notification.messageIndex,
         );
         tag = path;
         timestamp = Number(notification.timestamp);
@@ -278,7 +285,7 @@ async function showNotification(notification: Notification, id: string): Promise
 function messageText(
     messageText: string | undefined,
     messageType: string,
-    cryptoTransfer: CryptoTransferDetails | undefined
+    cryptoTransfer: CryptoTransferDetails | undefined,
 ): string {
     if (messageText !== undefined && messageText.length > 0) {
         return messageText;
@@ -294,7 +301,8 @@ function messageText(
 function defaultMessage(messageType: string): string {
     const messageTypeLower = messageType.toLowerCase();
     switch (messageTypeLower) {
-        case "poll": return "Created a poll";
+        case "poll":
+            return "Created a poll";
         default: {
             return `${toTitleCase(messageType)} message`;
         }
@@ -310,14 +318,14 @@ function isMessageNotification(notification: Notification): boolean {
 }
 
 function avatarUrl(canisterId: string, avatarId: bigint): string {
-    return `https://${canisterId}.raw.icp0.io/avatar/${avatarId}`
+    return `https://${canisterId}.raw.icp0.io/avatar/${avatarId}`;
 }
 
 function channelAvatarUrl(channel: ChannelIdentifier, avatarId: bigint): string {
-    return `https://${channel.communityId}.raw.icp0.io/channel/${channel.channelId}/avatar/${avatarId}`
+    return `https://${channel.communityId}.raw.icp0.io/channel/${channel.channelId}/avatar/${avatarId}`;
 }
 
 type TimestampedNotification = {
     t: bigint; // timestamp
     v: string; // value
-}
+};

@@ -1,4 +1,4 @@
-import { hexPercent } from "./themes";
+import { hexPercent } from "./utils";
 import type { Theme } from "./types";
 
 const backgroundBlack = "#1B1C21";

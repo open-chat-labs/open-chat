@@ -29,10 +29,9 @@
     let landscape = content.height < content.width;
     let zoomedWidth: number;
     let zoomedHeight: number;
-    let normalised = normaliseContent(content);
 
+    $: normalised = normaliseContent(content);
     $: hidden = $lowBandwidth && !draft;
-
     $: zoomable = !draft && !reply && !pinned;
 
     function normaliseContent(content: ImageContent | MemeFighterContent) {

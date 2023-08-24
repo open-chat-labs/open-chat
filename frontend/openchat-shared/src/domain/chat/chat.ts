@@ -50,7 +50,7 @@ export type MessageContent =
     | MessageReminderCreatedContent
     | MessageReminderContent
     | ReportedMessageContent
-    | CustomContent
+    | UserReferralCard
     | MemeFighterContent;
 
 export type IndexRange = [number, number];
@@ -170,10 +170,8 @@ export interface GiphyContent {
     mobile: GiphyImage; //will be "downsized_large" from the giphy api
 }
 
-export type CustomContent = {
-    kind: "custom_content";
-    subtype: string;
-    data: unknown;
+export type UserReferralCard = {
+    kind: "user_referral_card";
 };
 
 export type ReportedMessageContent = {
