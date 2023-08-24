@@ -22,6 +22,7 @@ export function getTheme(base: Theme): Theme {
     base.progress.bd = "rgba(0,0,0,0.2)";
     base.collapsible.closed.header.txt = txt70;
     base.timeline.txt = txt70;
+    base.time.txt = txt60;
     base.input.bg = textBox;
     base.entry.input.bg = white;
     base.entry.input.sh = "inset 0px 2px 4px rgba(138, 138, 138, 0.5)";
