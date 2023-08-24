@@ -1174,8 +1174,9 @@ function mergeLocalUpdates(
         tallyUpdate === undefined &&
         translation === undefined &&
         replyTranslation === undefined
-    )
+    ) {
         return message;
+    }
 
     if (localUpdates?.deleted !== undefined) {
         return {
