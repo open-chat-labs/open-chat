@@ -177,7 +177,6 @@
         chats: ChatSummary[],
         selectedChatId: ChatIdentifier | undefined
     ): ChatSummary[] {
-        if (selectedChatId === undefined) return chats;
         return chats.filter(
             (c) => !chatIdentifiersEqual(selectedChatId, c.id) && client.canSendMessages(c.id)
         );
