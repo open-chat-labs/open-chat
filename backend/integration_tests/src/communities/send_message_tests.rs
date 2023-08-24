@@ -121,6 +121,7 @@ fn send_message_with_community_rules_not_accepted_fails() {
 
     let _response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
+    // TODO: Re-enable check once RulesNotAccepted is returned
     // if !matches!(response, community_canister::send_message::Response::RulesNotAccepted) {
     //     panic!("{response:?}");
     // }
@@ -147,6 +148,7 @@ fn send_message_with_channel_rules_not_accepted_fails() {
 
     let _response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
+    // TODO: Re-enable check once RulesNotAccepted is returned
     // if !matches!(response, community_canister::send_message::Response::RulesNotAccepted) {
     //     panic!("{response:?}");
     // }
@@ -226,6 +228,7 @@ fn send_message_with_community_rules_but_not_channel_rules_accepted_fails() {
 
     let _response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, Some(Version::from(1)), None);
 
+    // TODO: Re-enable check once RulesNotAccepted is returned
     // if !matches!(response, community_canister::send_message::Response::RulesNotAccepted) {
     //     panic!("{response:?}");
     // }
@@ -253,6 +256,7 @@ fn send_message_with_channel_rules_but_not_community_rules_accepted_fails() {
 
     let _response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
+    // TODO: Re-enable check once RulesNotAccepted is returned
     // if !matches!(response, community_canister::send_message::Response::RulesNotAccepted) {
     //     panic!("{response:?}");
     // }
@@ -357,6 +361,7 @@ fn send_message_with_old_community_rules_accepted_fails() {
         Some(Version::from(1)),
     );
 
+    // TODO: Re-enable check once RulesNotAccepted is returned
     // if !matches!(response, community_canister::send_message::Response::RulesNotAccepted) {
     //     panic!("{response:?}");
     // }
@@ -384,6 +389,7 @@ fn send_message_with_old_channel_rules_accepted_fails() {
 
     let _response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
+    // TODO: Re-enable check once RulesNotAccepted is returned
     // if !matches!(response, community_canister::send_message::Response::RulesNotAccepted) {
     //     panic!("{response:?}");
     // }
