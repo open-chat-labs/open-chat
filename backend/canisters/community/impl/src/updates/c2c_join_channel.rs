@@ -11,7 +11,7 @@ use chat_events::ChatEventInternal;
 use community_canister::c2c_join_channel::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_chat_core::AddResult;
-use types::{AccessGate, CanisterId, ChannelId, EventIndex, MemberJoined, MessageIndex, TimestampMillis, UserId, Version};
+use types::{AccessGate, CanisterId, ChannelId, MemberJoined, TimestampMillis, UserId, Version};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
@@ -158,8 +158,10 @@ pub(crate) fn join_channel_unchecked(
         min_visible_event_index = invitation.min_visible_event_index;
         min_visible_message_index = invitation.min_visible_message_index;
     } else if channel.chat.history_visible_to_new_joiners {
-        min_visible_event_index = EventIndex::default();
-        min_visible_message_index = MessageIndex::default();
+        let (e, m) = channel.chat.min_visible_indexes_for_new_members.unwrap_or_default();
+
+        min_visible_event_index = e;
+        min_visible_message_index = m;
     } else {
         let events_reader = channel.chat.events.main_events_reader(now);
         min_visible_event_index = events_reader.next_event_index();
