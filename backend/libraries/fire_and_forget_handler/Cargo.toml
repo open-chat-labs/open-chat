@@ -11,6 +11,7 @@ futures = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../types" }
 utils = { path = "../utils" }
