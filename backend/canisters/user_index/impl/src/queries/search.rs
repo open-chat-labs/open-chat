@@ -188,7 +188,7 @@ mod tests {
         let mut env = TestEnv::default();
         let mut data = Data::default();
 
-        let usernames = vec![
+        let usernames = [
             "Martin", "marcus", "matty", "julian", "hamish", "mohammad", "amar", "muhamMad", "amabcdef",
         ];
 
