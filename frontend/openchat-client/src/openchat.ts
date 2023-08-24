@@ -378,7 +378,7 @@ import {
     unreadFavouriteChats,
     unreadCommunityChannels,
     globalUnreadCount,
-    getAllChats,
+    getAllServerChats,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag, moderationFlags } from "./stores/flagStore";
@@ -4100,7 +4100,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
 
                 this.updateReadUpToStore(updatedChats);
-                const chats = getAllChats(this._liveState.globalState).values();
+                const chats = getAllServerChats(this._liveState.globalState).values();
 
                 this._cachePrimer?.processChatUpdates(chats, updatedChats);
 
