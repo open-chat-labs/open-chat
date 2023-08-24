@@ -230,6 +230,7 @@ export type WorkerRequest =
     | PayForDiamondMembership
     | SetCommunityModerationFlags
     | SetGroupUpgradeConcurrency
+    | SetCommunityUpgradeConcurrency
     | SetUserUpgradeConcurrency
     | UpdateMarketMakerConfig
     | SetMessageReminder
@@ -827,6 +828,11 @@ type SetGroupUpgradeConcurrency = {
     kind: "setGroupUpgradeConcurrency";
 };
 
+type SetCommunityUpgradeConcurrency = {
+    value: number;
+    kind: "setCommunityUpgradeConcurrency";
+};
+
 type SetUserUpgradeConcurrency = {
     value: number;
     kind: "setUserUpgradeConcurrency";
@@ -1381,6 +1387,8 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends SetCommunityModerationFlags
     ? SetCommunityModerationFlagsResponse
     : T extends SetGroupUpgradeConcurrency
+    ? SetGroupUpgradeConcurrencyResponse
+    : T extends SetCommunityUpgradeConcurrency
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetUserUpgradeConcurrency
     ? SetUserUpgradeConcurrencyResponse
