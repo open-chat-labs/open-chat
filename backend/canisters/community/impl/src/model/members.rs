@@ -275,7 +275,7 @@ pub struct CommunityMemberInternal {
 
 // TODO: remove this when users, groups and communities are released
 fn default_version() -> Option<Timestamped<Version>> {
-    Some(Timestamped::new(Version::zero(), 0))
+    Some(Timestamped::default())
 }
 
 impl CommunityMemberInternal {
