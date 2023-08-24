@@ -88,8 +88,6 @@
     <IntersectionObserver let:intersecting>
         <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
     </IntersectionObserver>
-{:else if content.kind === "custom_content"}
-    {#if content.subtype === "user_referral_card"}
-        <UserReferralCardContent />
-    {/if}
+{:else if content.kind === "user_referral_card"}
+    <UserReferralCardContent />
 {/if}

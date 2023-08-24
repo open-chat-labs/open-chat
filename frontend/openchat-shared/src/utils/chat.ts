@@ -134,12 +134,8 @@ export function getContentAsText(
         text = content.notes ?? "Message reminder";
     } else if (content.kind === "message_reminder_created_content") {
         text = content.notes ?? "Message reminder";
-    } else if (content.kind === "custom_content") {
-        if (content.subtype === "user_referral_card") {
-            text = formatter("referralHeader");
-        } else {
-            text = "custom_content";
-        }
+    } else if (content.kind === "user_referral_card") {
+        text = formatter("referralHeader");
     } else if (content.kind === "reported_message_content") {
         text = "reported message";
     } else if (content.kind === "meme_fighter_content") {

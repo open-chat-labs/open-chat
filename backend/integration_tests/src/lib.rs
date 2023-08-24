@@ -5,6 +5,7 @@ use candid::Principal;
 use ic_test_state_machine_client::StateMachine;
 use types::{CanisterId, Cycles, UserId};
 
+mod change_group_role_tests;
 mod client;
 mod communities;
 mod cycles_dispenser_tests;
