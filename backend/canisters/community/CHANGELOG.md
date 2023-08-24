@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Extend versioned rules to communities and groups ([#4219](https://github.com/open-chat-labs/open-chat/pull/4219))
+- One time hack to clear the map of groups being imported ([#4235](https://github.com/open-chat-labs/open-chat/pull/4235))
 
 ### Fixed
 

@@ -3,7 +3,7 @@ FROM ubuntu:22.04 as builder
 SHELL ["bash", "-c"]
 
 ARG git_commit_id
-ARG rust_version=1.71.0
+ARG rust_version=1.72.0
 
 ENV GIT_COMMIT_ID=$git_commit_id
 ENV TZ=UTC

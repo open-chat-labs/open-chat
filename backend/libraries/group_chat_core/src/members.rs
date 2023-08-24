@@ -26,7 +26,7 @@ pub struct GroupMembers {
 }
 
 pub fn build_bots_lookup() -> HashSet<UserId> {
-    let bots = vec![
+    let bots = [
         "neggc-nqaaa-aaaar-ad5nq-cai", // PrizeBot
         "s4nvb-dqaaa-aaaar-adtiq-cai", // PrizeBot test
         "wznbi-caaaa-aaaar-anvea-cai", // SatoshiDice
