@@ -14,6 +14,7 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::ops::Deref;
 use types::{
     AccessGate, AccessRules, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
@@ -93,6 +94,10 @@ impl RuntimeState {
             let membership = CommunityMembership {
                 joined: m.date_added,
                 role: m.role,
+                rules_accepted: m
+                    .rules_accepted
+                    .as_ref()
+                    .map_or(false, |version| version.value >= self.data.rules.text.version),
             };
 
             // Return all the channels that the user is a member of
@@ -134,6 +139,7 @@ impl RuntimeState {
             channels,
             membership,
             metrics: data.cached_chat_metrics.value.clone(),
+            rules_enabled: data.rules.enabled,
         }
     }
 
@@ -259,6 +265,18 @@ impl Data {
         }
     }
 
+    pub fn one_time_set_bot_flag(&mut self, bots: &HashSet<UserId>) {
+        for member in self.members.iter_mut() {
+            if bots.contains(&member.user_id) {
+                member.is_bot = true;
+            }
+        }
+
+        for channel in self.channels.iter_mut() {
+            channel.chat.members.one_time_set_bot_flag(bots);
+        }
+    }
+
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
     }
@@ -281,6 +299,15 @@ impl Data {
         }
 
         self.cached_chat_metrics = Timestamped::new(metrics.hydrate(), now);
+    }
+
+    pub fn check_rules(&self, member: &CommunityMemberInternal) -> bool {
+        !self.rules.enabled
+            || member.is_bot
+            || (member
+                .rules_accepted
+                .as_ref()
+                .map_or(false, |accepted| accepted.value >= self.rules.text.version))
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {

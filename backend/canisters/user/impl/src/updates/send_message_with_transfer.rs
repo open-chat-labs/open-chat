@@ -55,7 +55,8 @@ async fn send_message_with_transfer_to_channel(
         replies_to: args.replies_to,
         mentioned: args.mentioned,
         forwarding: false,
-        rules_accepted: args.rules_accepted,
+        community_rules_accepted: args.community_rules_accepted,
+        channel_rules_accepted: args.channel_rules_accepted,
     };
 
     // Send the message to the community
@@ -128,6 +129,7 @@ async fn send_message_with_transfer_to_group(
         replies_to: args.replies_to,
         mentioned: args.mentioned,
         forwarding: false,
+        rules_accepted: args.rules_accepted,
         correlation_id: args.correlation_id,
     };
 
@@ -144,6 +146,7 @@ async fn send_message_with_transfer_to_group(
             send_message_v2::Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
             send_message_v2::Response::UserSuspended => UserSuspended,
             send_message_v2::Response::ChatFrozen => ChatFrozen,
+            send_message_v2::Response::RulesNotAccepted => RulesNotAccepted,
             send_message_v2::Response::MessageEmpty
             | send_message_v2::Response::InvalidPoll(_)
             | send_message_v2::Response::NotAuthorized

@@ -46,6 +46,8 @@ pub struct GroupChatCore {
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
+    #[serde(default)]
+    pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -62,9 +64,10 @@ impl GroupChatCore {
         permissions: GroupPermissions,
         gate: Option<AccessGate>,
         events_ttl: Option<Milliseconds>,
+        is_bot: bool,
         now: TimestampMillis,
     ) -> GroupChatCore {
-        let members = GroupMembers::new(created_by, now);
+        let members = GroupMembers::new(created_by, is_bot, now);
         let events = ChatEvents::new_group_chat(name.clone(), description.clone(), created_by, events_ttl, now);
 
         GroupChatCore {
@@ -84,6 +87,7 @@ impl GroupChatCore {
             date_last_pinned: None,
             gate: Timestamped::new(gate, now),
             invited_users: InvitedUsers::default(),
+            min_visible_indexes_for_new_members: None,
         }
     }
 
@@ -98,12 +102,12 @@ impl GroupChatCore {
     }
 
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
-        if self.is_public && self.history_visible_to_new_joiners {
-            Some(EventIndex::default())
+        if let Some(user) = user_id.and_then(|u| self.members.get(&u)) {
+            Some(user.min_visible_event_index())
+        } else if self.is_public {
+            Some(self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default())
         } else {
-            user_id
-                .and_then(|u| self.members.get(&u))
-                .map(|m| m.min_visible_event_index())
+            None
         }
     }
 
@@ -637,135 +641,149 @@ impl GroupChatCore {
         replies_to: Option<GroupReplyContext>,
         mentioned: Vec<User>,
         forwarding: bool,
+        rules_accepted: Option<Version>,
         proposals_bot_user_id: UserId,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
 
-        if let Some(member) = self.members.get(&sender) {
-            if member.suspended.value {
-                return UserSuspended;
-            }
-
-            if let Err(error) = content.validate_for_new_group_message(member.user_id, forwarding, proposals_bot_user_id, now) {
-                return match error {
-                    ContentValidationError::Empty => MessageEmpty,
-                    ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
-                    ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
-                    ContentValidationError::TransferCannotBeZero => {
-                        unreachable!()
-                    }
-                    ContentValidationError::InvalidTypeForForwarding => {
-                        InvalidRequest("Cannot forward this type of message".to_string())
-                    }
-                    ContentValidationError::PrizeEndDateInThePast => InvalidRequest("Prize ended in the past".to_string()),
-                    ContentValidationError::UnauthorizedToSendProposalMessages => {
-                        InvalidRequest("User unauthorized to send proposal messages".to_string())
-                    }
-                    ContentValidationError::Unauthorized => {
-                        InvalidRequest("User unauthorized to send messages of this type".to_string())
-                    }
-                };
-            }
-
-            if let Some(transfer) = match &content {
-                MessageContentInitial::Crypto(c) => Some(&c.transfer),
-                MessageContentInitial::Prize(c) => Some(&c.transfer),
-                _ => None,
-            } {
-                if !matches!(transfer, CryptoTransaction::Completed(_)) {
-                    return InvalidRequest("The crypto transaction must be completed".to_string());
+        match self.members.get_mut(&sender) {
+            Some(m) => {
+                if m.suspended.value {
+                    return UserSuspended;
+                }
+                if let Some(version) = rules_accepted {
+                    m.accept_rules(version, now);
                 }
             }
+            None => return UserNotInGroup,
+        };
 
-            let permissions = &self.permissions;
+        let member = self.members.get(&sender).unwrap();
 
-            if thread_root_message_index.is_some() {
-                if !member.role.can_reply_in_thread(permissions) {
-                    return NotAuthorized;
-                }
-            } else if !member.role.can_send_messages(permissions) {
-                return NotAuthorized;
-            }
-
-            if matches!(content, MessageContentInitial::Poll(_)) && !member.role.can_create_polls(permissions) {
-                return NotAuthorized;
-            }
-
-            if let Some(root_message_index) = thread_root_message_index {
-                if !self
-                    .events
-                    .is_accessible(member.min_visible_event_index(), None, root_message_index.into(), now)
-                {
-                    return ThreadMessageNotFound;
-                }
-            }
-
-            let min_visible_event_index = member.min_visible_event_index();
-            let user_being_replied_to = replies_to
-                .as_ref()
-                .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index, now));
-
-            let push_message_args = PushMessageArgs {
-                sender,
-                thread_root_message_index,
-                message_id,
-                content: content.into(),
-                replies_to: replies_to.as_ref().map(|r| r.into()),
-                forwarded: forwarding,
-                correlation_id: 0,
-                now,
-            };
-
-            let message_event = self.events.push_message(push_message_args);
-            let message_index = message_event.event.message_index;
-
-            let mut mentions: HashSet<_> = mentioned.iter().map(|m| m.user_id).chain(user_being_replied_to).collect();
-
-            let mut users_to_notify = HashSet::new();
-            let mut thread_participants = None;
-
-            if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
-                self.events
-                    .visible_main_events_reader(min_visible_event_index, now)
-                    .message_internal(root_message_index.into())
-                    .cloned()
-            }) {
-                users_to_notify.insert(thread_root_message.sender);
-
-                if let Some(thread_summary) = thread_root_message.thread_summary {
-                    thread_participants = Some(thread_summary.participant_ids);
-
-                    let is_first_reply = thread_summary.reply_count == 1;
-                    if is_first_reply {
-                        mentions.insert(thread_root_message.sender);
-                    }
-                }
-
-                for user_id in mentions.iter().copied().chain([sender]) {
-                    self.members.add_thread(&user_id, thread_root_message.message_index);
-                }
-            }
-
-            mentions.remove(&sender);
-            for user_id in mentions.iter() {
-                if let Some(mentioned) = self.members.get_mut(user_id) {
-                    mentioned.mentions.add(thread_root_message_index, message_index, now);
-                }
-            }
-
-            users_to_notify.extend(self.members.users_to_notify(thread_participants));
-            users_to_notify.extend(&mentions);
-            users_to_notify.remove(&sender);
-
-            Success(SendMessageSuccess {
-                message_event,
-                users_to_notify: users_to_notify.into_iter().collect(),
-                mentions,
-            })
-        } else {
-            UserNotInGroup
+        if !self.check_rules(member) {
+            // TODO: Uncomment this once the FE has been updated with "send message" rules checks
+            //return RulesNotAccepted;
         }
+
+        let member = self.members.get(&sender).unwrap();
+
+        if let Err(error) = content.validate_for_new_group_message(member.user_id, forwarding, proposals_bot_user_id, now) {
+            return match error {
+                ContentValidationError::Empty => MessageEmpty,
+                ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
+                ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
+                ContentValidationError::TransferCannotBeZero => {
+                    unreachable!()
+                }
+                ContentValidationError::InvalidTypeForForwarding => {
+                    InvalidRequest("Cannot forward this type of message".to_string())
+                }
+                ContentValidationError::PrizeEndDateInThePast => InvalidRequest("Prize ended in the past".to_string()),
+                ContentValidationError::UnauthorizedToSendProposalMessages => {
+                    InvalidRequest("User unauthorized to send proposal messages".to_string())
+                }
+                ContentValidationError::Unauthorized => {
+                    InvalidRequest("User unauthorized to send messages of this type".to_string())
+                }
+            };
+        }
+
+        if let Some(transfer) = match &content {
+            MessageContentInitial::Crypto(c) => Some(&c.transfer),
+            MessageContentInitial::Prize(c) => Some(&c.transfer),
+            _ => None,
+        } {
+            if !matches!(transfer, CryptoTransaction::Completed(_)) {
+                return InvalidRequest("The crypto transaction must be completed".to_string());
+            }
+        }
+
+        let permissions = &self.permissions;
+
+        if thread_root_message_index.is_some() {
+            if !member.role.can_reply_in_thread(permissions) {
+                return NotAuthorized;
+            }
+        } else if !member.role.can_send_messages(permissions) {
+            return NotAuthorized;
+        }
+
+        if matches!(content, MessageContentInitial::Poll(_)) && !member.role.can_create_polls(permissions) {
+            return NotAuthorized;
+        }
+
+        if let Some(root_message_index) = thread_root_message_index {
+            if !self
+                .events
+                .is_accessible(member.min_visible_event_index(), None, root_message_index.into(), now)
+            {
+                return ThreadMessageNotFound;
+            }
+        }
+
+        let min_visible_event_index = member.min_visible_event_index();
+        let user_being_replied_to = replies_to
+            .as_ref()
+            .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index, now));
+
+        let push_message_args = PushMessageArgs {
+            sender,
+            thread_root_message_index,
+            message_id,
+            content: content.into(),
+            replies_to: replies_to.as_ref().map(|r| r.into()),
+            forwarded: forwarding,
+            correlation_id: 0,
+            now,
+        };
+
+        let message_event = self.events.push_message(push_message_args);
+        let message_index = message_event.event.message_index;
+
+        let mut mentions: HashSet<_> = mentioned.iter().map(|m| m.user_id).chain(user_being_replied_to).collect();
+
+        let mut users_to_notify = HashSet::new();
+        let mut thread_participants = None;
+
+        if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
+            self.events
+                .visible_main_events_reader(min_visible_event_index, now)
+                .message_internal(root_message_index.into())
+                .cloned()
+        }) {
+            users_to_notify.insert(thread_root_message.sender);
+
+            if let Some(thread_summary) = thread_root_message.thread_summary {
+                thread_participants = Some(thread_summary.participant_ids);
+
+                let is_first_reply = thread_summary.reply_count == 1;
+                if is_first_reply {
+                    mentions.insert(thread_root_message.sender);
+                }
+            }
+
+            for user_id in mentions.iter().copied().chain([sender]) {
+                self.members.add_thread(&user_id, thread_root_message.message_index);
+            }
+        }
+
+        mentions.remove(&sender);
+        for user_id in mentions.iter() {
+            if let Some(mentioned) = self.members.get_mut(user_id) {
+                mentioned.mentions.add(thread_root_message_index, message_index, now);
+            }
+        }
+
+        users_to_notify.extend(self.members.users_to_notify(thread_participants));
+        users_to_notify.extend(&mentions);
+        users_to_notify.remove(&sender);
+
+        Success(SendMessageSuccess {
+            message_event,
+            users_to_notify: users_to_notify.into_iter().collect(),
+            mentions,
+        })
     }
 
     pub fn add_reaction(
@@ -1106,7 +1124,12 @@ impl GroupChatCore {
                 // Find the latest event and message that the invited users are allowed to see
                 let mut min_visible_event_index = EventIndex::default();
                 let mut min_visible_message_index = MessageIndex::default();
-                if !self.history_visible_to_new_joiners {
+                if self.history_visible_to_new_joiners {
+                    let (e, m) = self.min_visible_indexes_for_new_members.unwrap_or_default();
+
+                    min_visible_event_index = e;
+                    min_visible_message_index = m;
+                } else {
                     // If there is only an initial "group created" event then allow these users
                     // to see the "group created" event by starting min_visible_* at zero
                     let events_reader = self.events.main_events_reader(now);
@@ -1321,8 +1344,6 @@ impl GroupChatCore {
                 || (public.is_some() && !member.role.can_change_group_visibility())
             {
                 NotAuthorized
-            } else if *public == Some(true) {
-                CannotMakePublic
             } else {
                 Success
             }
@@ -1459,36 +1480,25 @@ impl GroupChatCore {
                     changed_by: user_id,
                 };
 
-                self.events
-                    .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
+                let push_event_result =
+                    self.events
+                        .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
+
+                if self.is_public {
+                    self.min_visible_indexes_for_new_members =
+                        Some((push_event_result.index, self.events.main_events_list().next_message_index()));
+                }
             }
         }
     }
 
-    pub fn accept_rules(&mut self, user_id: UserId, version: Version, now: TimestampMillis) -> AcceptRulesResult {
-        use AcceptRulesResult::*;
-
-        if version < self.rules.text.version {
-            return OldVersion;
-        }
-
-        if let Some(member) = self.members.get_mut(&user_id) {
-            if member.suspended.value {
-                return UserSuspended;
-            }
-
-            if let Some(rules_accepted) = &member.rules_accepted {
-                if version <= rules_accepted.value {
-                    return AlreadyAccepted;
-                }
-            }
-
-            member.rules_accepted = Some(Timestamped::new(version, now));
-
-            Success
-        } else {
-            UserNotInGroup
-        }
+    pub fn check_rules(&self, member: &GroupMemberInternal) -> bool {
+        !self.rules.enabled
+            || member.is_bot
+            || (member
+                .rules_accepted
+                .as_ref()
+                .map_or(false, |accepted| accepted.value >= self.rules.text.version))
     }
 
     fn events_reader(
@@ -1600,6 +1610,7 @@ pub enum SendMessageResult {
     NotAuthorized,
     UserNotInGroup,
     UserSuspended,
+    RulesNotAccepted,
     InvalidRequest(String),
 }
 
@@ -1680,7 +1691,6 @@ pub enum UpdateResult {
     RulesTooShort(FieldTooShortResult),
     RulesTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
-    CannotMakePublic,
 }
 
 enum EventsReaderResult<'r> {
@@ -1752,14 +1762,6 @@ pub struct SummaryUpdatesFromEvents {
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_changed: bool,
-}
-
-pub enum AcceptRulesResult {
-    Success,
-    UserSuspended,
-    UserNotInGroup,
-    AlreadyAccepted,
-    OldVersion,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
