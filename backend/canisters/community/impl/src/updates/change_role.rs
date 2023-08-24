@@ -34,14 +34,16 @@ async fn change_role(args: Args) -> Response {
     if lookup_caller || lookup_target {
         let user_id = if lookup_caller { caller_id } else { args.user_id };
         match lookup_user(user_id.into(), user_index_canister_id).await {
-            Ok(user) if user.is_platform_moderator => {
-                if lookup_caller {
-                    is_caller_platform_moderator = true;
-                } else {
-                    is_user_platform_moderator = true;
+            Ok(user) => {
+                if user.is_platform_moderator {
+                    if lookup_caller {
+                        is_caller_platform_moderator = true;
+                    } else {
+                        is_user_platform_moderator = true;
+                    }
                 }
             }
-            Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
+            Err(LookupUserError::UserNotFound) => return NotAuthorized,
             Err(LookupUserError::InternalError(error)) => return InternalError(error),
         };
     }
