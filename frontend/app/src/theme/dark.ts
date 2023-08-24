@@ -199,6 +199,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             date: {
                 bg: textBlack,
                 txt: "inherit",
+                bd: "none",
             },
 
             msg: {
@@ -206,6 +207,8 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 muted: txtLow,
                 txt: "rgba(255,255,255,0.8)",
                 inert: textBlack,
+                bd: "none",
+                sh: "none",
 
                 me: {
                     bg: blueAccent,
@@ -214,6 +217,11 @@ export function darkTheme(defaultTheme: Theme): Theme {
                     bd: "rgba(255,255,255,0.2)",
                 },
             },
+        },
+
+        time: {
+            txt: "#ffffff",
+            icon: "#ffffff",
         },
 
         icon: {

@@ -186,6 +186,7 @@ export function lightTheme(): Theme {
             date: {
                 bg: "rgba(0,0,0,0.1)",
                 txt: "inherit",
+                bd: "none",
             },
 
             msgs: {
@@ -197,6 +198,8 @@ export function lightTheme(): Theme {
                 muted: "rgba(255,255,255,0.6)",
                 txt: "#ffffff",
                 inert: "rgba(0,0,0,0.1)",
+                bd: "none",
+                sh: "none",
 
                 me: {
                     bg: hexPercent(primary, 50),
@@ -205,6 +208,11 @@ export function lightTheme(): Theme {
                     bd: "rgba(255,255,255,0.3)",
                 },
             },
+        },
+
+        time: {
+            txt: "#ffffff",
+            icon: "#ffffff",
         },
 
         icon: {

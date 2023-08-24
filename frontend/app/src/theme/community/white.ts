@@ -1,7 +1,7 @@
 import type { Theme } from "../types";
 import { hexPercent } from "../utils";
 
-const textBox = "rgba(226,226,226,0.5)";
+const textBox = "rgba(226,226,226,0.4)";
 const txt = "#242834";
 const txt70 = hexPercent(txt, 70);
 const txt60 = hexPercent(txt, 60);
@@ -39,7 +39,7 @@ export function getTheme(base: Theme): Theme {
     base.modal.bd = "none";
     base.modalPage.bg = "rgba(255, 255, 255, 0.5)";
     base.modalPage.txt = txt;
-    base.currentChat.msg.bg = "rgba(226,226,226,0.5)";
+    base.currentChat.msg.bg = "rgba(0,0,0,0.025)";
     base.currentChat.msg.muted = "rgba(255,255,255,0.6)";
     base.currentChat.msg.txt = txt70;
     base.currentChat.msg.inert = "rgba(226,226,226,0.8)";
