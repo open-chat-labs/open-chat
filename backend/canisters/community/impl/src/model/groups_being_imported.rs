@@ -100,6 +100,7 @@ pub struct GroupBeingImported {
     import_started: TimestampMillis,
     current_batch_started: Option<TimestampMillis>,
     total_bytes: u64,
+    #[serde(with = "serde_bytes")]
     bytes: Vec<u8>,
     error_message: Option<String>,
     is_default: Timestamped<bool>,
