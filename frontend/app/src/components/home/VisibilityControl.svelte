@@ -31,7 +31,6 @@
     export let original: AccessControlled;
     export let editing: boolean;
     export let history: boolean;
-    export let canMakePublic: boolean;
 
     let minDissolveDelay = client.getMinDissolveDelayDays(original.gate);
     let minStake = client.getMinStakeInTokens(original.gate);
@@ -62,7 +61,7 @@
 
     $: isDiamond = client.isDiamond;
 
-    $: canMakePrivate = !editing ? client.canMakePrivate(candidate) : true;
+    $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
 
     function toggleScope() {
         candidate.public = !candidate.public;
@@ -83,7 +82,7 @@
         on:change={toggleScope}
         checked={!candidate.public}
         id={"private"}
-        disabled={!canMakePrivate}
+        disabled={!canChangeVisibility}
         align={"start"}
         group={"visibility"}>
         <div class="section-title">
@@ -102,24 +101,20 @@
             on:change={toggleScope}
             checked={candidate.public}
             id={"public"}
+            disabled={!canChangeVisibility}
             align={"start"}
-            disabled={!canMakePublic}
             group={"visibility"}>
             <div class="section-title">
                 <div class={"img public"} />
                 <p>{interpolateLevel("group.publicGroup", candidate.level, true)}</p>
             </div>
             <div class="info">
-                {#if !canMakePublic}
-                    <p>{interpolateLevel("access.cannotMakePublic", candidate.level, true)}</p>
-                {:else}
-                    <p>{interpolateLevel("publicGroupUnique", candidate.level, true)}</p>
-                    <p>
-                        {candidate.level === "channel"
-                            ? $_("publicChannelInfo")
-                            : interpolateLevel("publicGroupInfo", candidate.level, true)}
-                    </p>
-                {/if}
+                <p>{interpolateLevel("publicGroupUnique", candidate.level, true)}</p>
+                <p>
+                    {candidate.level === "channel"
+                        ? $_("publicChannelInfo")
+                        : interpolateLevel("publicGroupInfo", candidate.level, true)}
+                </p>
             </div>
         </Radio>
     </div>

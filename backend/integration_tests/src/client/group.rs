@@ -69,6 +69,20 @@ pub mod happy_path {
         }
     }
 
+    pub fn update_group(
+        env: &mut StateMachine,
+        sender: Principal,
+        group_chat_id: ChatId,
+        args: &group_canister::update_group_v2::Args,
+    ) {
+        let response = super::update_group_v2(env, sender, group_chat_id.into(), args);
+
+        match response {
+            group_canister::update_group_v2::Response::Success => {}
+            response => panic!("'update_group_v2' error: {response:?}"),
+        }
+    }
+
     pub fn change_role(env: &mut StateMachine, sender: Principal, group_chat_id: ChatId, user_id: UserId, new_role: GroupRole) {
         let response = super::change_role(
             env,

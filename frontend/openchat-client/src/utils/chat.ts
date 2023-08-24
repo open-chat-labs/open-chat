@@ -985,12 +985,8 @@ export function canConvertToCommunity(thing: AccessControlled & HasMembershipRol
     }
 }
 
-export function canMakePrivate(thing: AccessControlled & HasMembershipRole): boolean {
-    if (!thing.frozen) {
-        return thing.public && hasOwnerRights(thing.membership.role);
-    } else {
-        return false;
-    }
+export function canChangeVisibility(thing: AccessControlled & HasMembershipRole): boolean {
+    return !thing.frozen && hasOwnerRights(thing.membership.role);
 }
 
 export function mergeChatMetrics(a: Metrics, b: Metrics): Metrics {
