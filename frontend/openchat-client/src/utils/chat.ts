@@ -466,6 +466,7 @@ export function mergeUnconfirmedIntoSummary(
                     undefined,
                     undefined,
                     translation,
+                    undefined,
                 ),
             };
         }
@@ -1091,10 +1092,14 @@ export function mergeEventsAndLocalUpdates(
             const updates = localUpdates.get(e.event.messageId);
             const translation = translations.get(e.event.messageId);
 
-            const replyContextUpdates =
-                e.event.repliesTo?.kind === "rehydrated_reply_context"
-                    ? localUpdates.get(e.event.repliesTo.messageId)
-                    : undefined;
+            const repliesTo = e.event.repliesTo?.kind === "rehydrated_reply_context"
+                ? e.event.repliesTo.messageId
+                : undefined;
+
+            const [replyContextUpdates, replyTranslation] =
+                repliesTo !== undefined
+                    ? [localUpdates.get(repliesTo), translations.get(repliesTo)]
+                    : [undefined, undefined];
 
             const tallyUpdate =
                 e.event.content.kind === "proposal_content"
@@ -1110,7 +1115,8 @@ export function mergeEventsAndLocalUpdates(
                 updates !== undefined ||
                 replyContextUpdates !== undefined ||
                 tallyUpdate !== undefined ||
-                translation !== undefined
+                translation !== undefined ||
+                replyTranslation !== undefined
             ) {
                 return {
                     ...e,
@@ -1120,6 +1126,7 @@ export function mergeEventsAndLocalUpdates(
                         replyContextUpdates,
                         tallyUpdate,
                         translation,
+                        replyTranslation,
                     ),
                 };
             }
@@ -1159,12 +1166,14 @@ function mergeLocalUpdates(
     replyContextLocalUpdates: LocalMessageUpdates | undefined,
     tallyUpdate: Tally | undefined,
     translation: string | undefined,
+    replyTranslation: string | undefined,
 ): Message {
     if (
         localUpdates === undefined &&
         replyContextLocalUpdates === undefined &&
         tallyUpdate === undefined &&
-        translation === undefined
+        translation === undefined &&
+        replyTranslation === undefined
     )
         return message;
 
@@ -1231,7 +1240,7 @@ function mergeLocalUpdates(
 
     if (
         message.repliesTo?.kind === "rehydrated_reply_context" &&
-        replyContextLocalUpdates !== undefined
+        (replyContextLocalUpdates !== undefined || replyTranslation !== undefined)
     ) {
         if (replyContextLocalUpdates?.deleted !== undefined) {
             message.repliesTo = {
@@ -1245,20 +1254,23 @@ function mergeLocalUpdates(
         } else {
             message.repliesTo = { ...message.repliesTo };
 
-            if (replyContextLocalUpdates.editedContent !== undefined) {
+            if (replyContextLocalUpdates?.editedContent !== undefined) {
                 message.repliesTo.content = replyContextLocalUpdates.editedContent;
             }
-            if (replyContextLocalUpdates.revealedContent !== undefined) {
+            if (replyContextLocalUpdates?.revealedContent !== undefined) {
                 message.repliesTo.content = replyContextLocalUpdates.revealedContent;
             }
             if (
-                replyContextLocalUpdates.pollVotes !== undefined &&
+                replyContextLocalUpdates?.pollVotes !== undefined &&
                 message.repliesTo.content.kind === "poll_content"
             ) {
                 message.repliesTo.content = updatePollContent(
                     message.repliesTo.content,
                     replyContextLocalUpdates.pollVotes,
                 );
+            }
+            if (replyTranslation !== undefined) {
+                message.repliesTo.content = applyTranslation(message.repliesTo.content, replyTranslation);
             }
         }
     }
@@ -1278,39 +1290,43 @@ function mergeLocalUpdates(
     }
 
     if (translation !== undefined) {
-        switch (message.content.kind) {
-            case "text_content": {
-                message.content = {
-                    ...message.content,
-                    text: translation,
-                };
-                break;
-            }
-            case "audio_content":
-            case "image_content":
-            case "video_content":
-            case "file_content":
-            case "crypto_content": {
-                message.content = {
-                    ...message.content,
-                    caption: translation,
-                };
-                break;
-            }
-
-            case "poll_content": {
-                message.content = {
-                    ...message.content,
-                    config: {
-                        ...message.content.config,
-                        text: translation,
-                    },
-                };
-                break;
-            }
-        }
+        message.content = applyTranslation(message.content, translation);
     }
     return message;
+}
+
+function applyTranslation(content: MessageContent, translation: string): MessageContent {
+    switch (content.kind) {
+        case "text_content": {
+            return {
+                ...content,
+                text: translation,
+            };
+        }
+        case "audio_content":
+        case "image_content":
+        case "video_content":
+        case "file_content":
+        case "crypto_content": {
+            return {
+                ...content,
+                caption: translation,
+            };
+        }
+
+        case "poll_content": {
+            return {
+                ...content,
+                config: {
+                    ...content.config,
+                    text: translation,
+                },
+            };
+        }
+
+        default:
+            return content;
+    }
 }
 
 export function mergeThreadSummaries(a: ThreadSummary, b: ThreadSummary): ThreadSummary {
