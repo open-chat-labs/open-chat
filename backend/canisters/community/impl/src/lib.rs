@@ -11,10 +11,9 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use notifications_canister::c2c_push_notification;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
-use std::collections::HashSet;
 use std::ops::Deref;
 use types::{
     AccessGate, AccessRules, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
@@ -25,7 +24,6 @@ use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 
 mod activity_notifications;
-mod data_deserialize;
 mod guards;
 mod jobs;
 mod lifecycle;
@@ -171,7 +169,7 @@ impl RuntimeState {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 struct Data {
     is_public: bool,
     name: String,
@@ -199,11 +197,8 @@ struct Data {
     timer_jobs: TimerJobs<TimerJob>,
     fire_and_forget_handler: FireAndForgetHandler,
     activity_notification_state: ActivityNotificationState,
-    #[serde(default)]
     groups_being_imported: GroupsBeingImported,
-    #[serde(default)]
     test_mode: bool,
-    #[serde(default)]
     cached_chat_metrics: Timestamped<ChatMetrics>,
 }
 
@@ -266,18 +261,6 @@ impl Data {
             groups_being_imported: GroupsBeingImported::default(),
             test_mode,
             cached_chat_metrics: Timestamped::default(),
-        }
-    }
-
-    pub fn one_time_set_bot_flag(&mut self, bots: &HashSet<UserId>) {
-        for member in self.members.iter_mut() {
-            if bots.contains(&member.user_id) {
-                member.is_bot = true;
-            }
-        }
-
-        for channel in self.channels.iter_mut() {
-            channel.chat.members.one_time_set_bot_flag(bots);
         }
     }
 

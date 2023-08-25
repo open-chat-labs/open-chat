@@ -5,11 +5,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Changed
-
-- One time hack to clear the map of groups being imported ([#4235](https://github.com/open-chat-labs/open-chat/pull/4235))
-- Reinstate code that is still needed to upgrade OC community ([#4246](https://github.com/open-chat-labs/open-chat/pull/4246))
-
 ## [[2.0.817](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.817-community)] - 2023-08-24
 
 ### Added
@@ -20,7 +15,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Extend versioned rules to communities and groups ([#4219](https://github.com/open-chat-labs/open-chat/pull/4219))
 - Make importing groups more efficient ([#4239](https://github.com/open-chat-labs/open-chat/pull/4239))
-- Hack to allow upgrading the OpenChat community without exceeding the instruction limit ([#4245](https://github.com/open-chat-labs/open-chat/pull/4245))
 
 ### Fixed
 
