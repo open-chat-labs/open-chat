@@ -34,14 +34,12 @@ pub struct GroupPermissions {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct OptionalGroupPermissions {
     #[deprecated]
-    #[serde(default)]
     pub change_permissions: Option<GroupPermissionRole>,
     pub change_roles: Option<GroupPermissionRole>,
     pub update_group: Option<GroupPermissionRole>,
     pub invite_users: Option<GroupPermissionRole>,
     pub remove_members: Option<GroupPermissionRole>,
     #[deprecated]
-    #[serde(default)]
     pub block_users: Option<GroupPermissionRole>,
     pub delete_messages: Option<GroupPermissionRole>,
     pub pin_messages: Option<GroupPermissionRole>,

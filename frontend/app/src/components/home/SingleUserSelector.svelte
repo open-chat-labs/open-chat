@@ -37,10 +37,13 @@
     }
 
     function blur() {
-        if (selectedReceiver === undefined) {
-            selectedReceiver = mentionPicker?.userFromUsername(textValue);
-        }
-        showMentionPicker = false;
+        // we need a short timeout here so that any click event is handled before the blur
+        window.setTimeout(() => {
+            if (selectedReceiver === undefined) {
+                selectedReceiver = mentionPicker?.userFromUsername(textValue);
+            }
+            showMentionPicker = false;
+        }, 100);
     }
 </script>
 

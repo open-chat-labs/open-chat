@@ -15,9 +15,7 @@ pub struct Args {
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
     pub forwarding: bool,
-    #[serde(default)]
     pub community_rules_accepted: Option<Version>,
-    #[serde(default)]
     pub channel_rules_accepted: Option<Version>,
 }
 
