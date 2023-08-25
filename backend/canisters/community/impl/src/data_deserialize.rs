@@ -907,7 +907,7 @@ impl<'de> _serde::Deserialize<'de> for Data {
             }
         }
         #[doc(hidden)]
-        const FIELDS: &'static [&'static str] = &[
+        const FIELDS: &[&str] = &[
             "is_public",
             "name",
             "description",
