@@ -14,6 +14,7 @@ use notifications_canister::c2c_push_notification;
 use serde::Serialize;
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::ops::Deref;
 use types::{
     AccessGate, AccessRules, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
@@ -265,6 +266,18 @@ impl Data {
             groups_being_imported: GroupsBeingImported::default(),
             test_mode,
             cached_chat_metrics: Timestamped::default(),
+        }
+    }
+
+    pub fn one_time_set_bot_flag(&mut self, bots: &HashSet<UserId>) {
+        for member in self.members.iter_mut() {
+            if bots.contains(&member.user_id) {
+                member.is_bot = true;
+            }
+        }
+
+        for channel in self.channels.iter_mut() {
+            channel.chat.members.one_time_set_bot_flag(bots);
         }
     }
 

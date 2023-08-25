@@ -4,6 +4,7 @@ use crate::memory::get_upgrades_memory;
 use crate::{read_state, Data};
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
+use group_chat_core::build_bots_lookup;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
 use std::io::Read;
@@ -18,7 +19,10 @@ fn post_upgrade(args: Args) {
     let mut reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
     let mut tuple_len_byte = [0u8];
     reader.read_exact(&mut tuple_len_byte).unwrap();
-    let data: Data = serializer::deserialize(reader).unwrap();
+    let mut data: Data = serializer::deserialize(reader).unwrap();
+
+    // TODO: Remove this after next upgrade
+    data.one_time_set_bot_flag(&build_bots_lookup());
 
     canister_logger::init_with_logs(data.test_mode, Vec::new(), Vec::new());
 
