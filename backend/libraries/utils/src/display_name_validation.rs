@@ -1,5 +1,5 @@
 const MAX_DISPLAY_NAME_LENGTH: u16 = 25;
-const MIN_DISPLAY_NAME_LENGTH: u16 = 5;
+const MIN_DISPLAY_NAME_LENGTH: u16 = 3;
 
 pub enum DisplayNameValidationError {
     TooLong(u16),
