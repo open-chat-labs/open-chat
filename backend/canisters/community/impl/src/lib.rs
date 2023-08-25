@@ -11,7 +11,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use notifications_canister::c2c_push_notification;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
@@ -24,7 +24,6 @@ use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 
 mod activity_notifications;
-mod data_deserialize;
 mod guards;
 mod jobs;
 mod lifecycle;
@@ -170,7 +169,7 @@ impl RuntimeState {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 struct Data {
     is_public: bool,
     name: String,
@@ -198,11 +197,8 @@ struct Data {
     timer_jobs: TimerJobs<TimerJob>,
     fire_and_forget_handler: FireAndForgetHandler,
     activity_notification_state: ActivityNotificationState,
-    #[serde(default)]
     groups_being_imported: GroupsBeingImported,
-    #[serde(default)]
     test_mode: bool,
-    #[serde(default)]
     cached_chat_metrics: Timestamped<ChatMetrics>,
 }
 
