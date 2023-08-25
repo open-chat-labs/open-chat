@@ -267,15 +267,8 @@ pub struct CommunityMemberInternal {
     pub suspended: Timestamped<bool>,
     pub channels: HashSet<ChannelId>,
     pub channels_removed: Vec<Timestamped<ChannelId>>,
-    #[serde(default = "default_version")]
     pub rules_accepted: Option<Timestamped<Version>>,
-    #[serde(default)]
     pub is_bot: bool,
-}
-
-// TODO: remove this when users, groups and communities are released
-fn default_version() -> Option<Timestamped<Version>> {
-    Some(Timestamped::default())
 }
 
 impl CommunityMemberInternal {
