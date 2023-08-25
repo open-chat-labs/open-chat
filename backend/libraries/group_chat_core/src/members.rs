@@ -1,6 +1,5 @@
 use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
-use candid::Principal;
 use chat_events::ChatEvents;
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
@@ -23,20 +22,6 @@ pub struct GroupMembers {
     pub moderator_count: u32,
     pub admin_count: u32,
     pub owner_count: u32,
-}
-
-pub fn build_bots_lookup() -> HashSet<UserId> {
-    let bots = [
-        "neggc-nqaaa-aaaar-ad5nq-cai", // PrizeBot
-        "s4nvb-dqaaa-aaaar-adtiq-cai", // PrizeBot test
-        "wznbi-caaaa-aaaar-anvea-cai", // SatoshiDice
-        "uuw5d-uiaaa-aaaar-anzeq-cai", // SatoshiDice test
-        "pa5wn-hqaaa-aaaaf-az7rq-cai", // SNS1 Airdrop
-        "iywa7-ayaaa-aaaaf-aemga-cai", // ProposalsBot
-        "qu3kn-6qaaa-aaaaf-ahn7q-cai", // ProposalsBot test
-    ];
-
-    HashSet::from_iter(bots.iter().map(|s| Principal::from_text(s).unwrap().into()))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -63,14 +48,6 @@ impl GroupMembers {
             moderator_count: 0,
             admin_count: 0,
             owner_count: 1,
-        }
-    }
-
-    pub fn one_time_set_bot_flag(&mut self, bots: &HashSet<UserId>) {
-        for member in self.members.values_mut() {
-            if bots.contains(&member.user_id) {
-                member.is_bot = true;
-            }
         }
     }
 
@@ -338,7 +315,7 @@ pub struct GroupMemberInternal {
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     pub suspended: Timestamped<bool>,
-    #[serde(rename = "ra", default = "default_version", skip_serializing_if = "is_default")]
+    #[serde(rename = "ra", default, skip_serializing_if = "is_default")]
     pub rules_accepted: Option<Timestamped<Version>>,
     #[serde(rename = "b", default, skip_serializing_if = "is_default")]
     pub is_bot: bool,
@@ -347,11 +324,6 @@ pub struct GroupMemberInternal {
     min_visible_event_index: EventIndex,
     #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
     min_visible_message_index: MessageIndex,
-}
-
-// TODO: remove this when users, groups and communities are released
-fn default_version() -> Option<Timestamped<Version>> {
-    Some(Timestamped::default())
 }
 
 impl GroupMemberInternal {
