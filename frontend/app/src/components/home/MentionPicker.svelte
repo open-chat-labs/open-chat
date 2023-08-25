@@ -148,6 +148,6 @@
         }
     }
     .avatar {
-        margin-right: $sp4;
+        margin-right: $sp3;
     }
 </style>
