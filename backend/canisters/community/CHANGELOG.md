@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - One time hack to clear the map of groups being imported ([#4235](https://github.com/open-chat-labs/open-chat/pull/4235))
+- Reinstate code that is still needed to upgrade OC community ([#4246](https://github.com/open-chat-labs/open-chat/pull/4246))
 
 ## [[2.0.817](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.817-community)] - 2023-08-24
 
