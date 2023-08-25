@@ -104,6 +104,7 @@ pub mod happy_path {
                 message_id: message_id.unwrap_or_else(random_message_id),
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 sender_name: sender.username(),
+                sender_display_name: None,
                 replies_to: None,
                 mentioned: Vec::new(),
                 forwarding: false,

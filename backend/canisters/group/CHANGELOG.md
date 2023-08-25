@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add optional user `display name` ([#4247](https://github.com/open-chat-labs/open-chat/pull/4247))
+
 ## [[2.0.818](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.818-group)] - 2023-08-24
 
 ### Added

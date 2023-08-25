@@ -11,6 +11,8 @@ pub struct Args {
     pub notifications_canister_id: CanisterId,
     pub wasm_version: BuildVersion,
     pub username: String,
+    #[serde(default)]
+    pub display_name: Option<String>,
     pub openchat_bot_messages: Vec<MessageContent>,
     pub test_mode: bool,
 }

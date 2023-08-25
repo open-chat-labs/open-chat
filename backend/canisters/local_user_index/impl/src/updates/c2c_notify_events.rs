@@ -8,8 +8,8 @@ use local_user_index_canister::c2c_notify_events::{Response::*, *};
 use local_user_index_canister::Event;
 use tracing::info;
 use user_canister::{
-    DiamondMembershipPaymentReceived, Event as UserEvent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded,
-    UserJoinedCommunityOrChannel, UserJoinedGroup, UserSuspended, UsernameChanged,
+    DiamondMembershipPaymentReceived, DisplayNameChanged, Event as UserEvent, PhoneNumberConfirmed, ReferredUserRegistered,
+    StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup, UserSuspended, UsernameChanged,
 };
 
 #[update_msgpack(guard = "caller_is_user_index_canister")]
@@ -37,6 +37,14 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::UsernameChanged(Box::new(UsernameChanged { username: ev.username })),
+            );
+        }
+        Event::DisplayNameChanged(ev) => {
+            state.push_event_to_user(
+                ev.user_id,
+                UserEvent::DisplayNameChanged(Box::new(DisplayNameChanged {
+                    display_name: ev.display_name,
+                })),
             );
         }
         Event::UserSuspended(ev) => {
