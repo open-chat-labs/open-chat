@@ -30,6 +30,8 @@
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
     import { now } from "../../stores/time";
+    import { copyToClipboard } from "../../utils/urls";
+    import { isTouchDevice } from "../../utils/devices";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -120,6 +122,10 @@
         shareFunctions.copyMessageUrl(chatId, msg.messageIndex, threadRootMessageIndex);
     }
 
+    function copyMessage() {
+        copyToClipboard(client.getContentAsText($_, msg.content));
+    }
+
     function pinMessage() {
         if (!canPin || inThread || chatId.kind === "direct_chat") return;
         client.pinMessage(chatId, msg.messageIndex).then((success) => {
@@ -200,23 +206,17 @@
         params.append("format", "text");
         params.append("key", process.env.PUBLIC_TRANSLATE_API_KEY!);
         fetch(`https://translation.googleapis.com/language/translate/v2?${params}`, {
-        method: "POST",
-    })
-    .then((resp) => resp.json())
-        .then(({ data: { translations } }) => {
-            if (
-                Array.isArray(translations) &&
-                translations.length > 0
-            ) {
-                translationStore.translate(
-                    messageId,
-                    translations[0].translatedText
-                );
-            }
+            method: "POST",
         })
-        .catch((_err) => {
-            toastStore.showFailureToast("unableToTranslate");
-        });
+            .then((resp) => resp.json())
+            .then(({ data: { translations } }) => {
+                if (Array.isArray(translations) && translations.length > 0) {
+                    translationStore.translate(messageId, translations[0].translatedText);
+                }
+            })
+            .catch((_err) => {
+                toastStore.showFailureToast("unableToTranslate");
+            });
     }
 </script>
 
@@ -251,6 +251,15 @@
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <div slot="text">{$_("copyMessageUrl")}</div>
+                    </MenuItem>
+                {/if}
+                {#if isTouchDevice}
+                    <MenuItem on:click={copyMessage}>
+                        <ContentCopy
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
+                        <div slot="text">{$_("copy")}</div>
                     </MenuItem>
                 {/if}
                 {#if canRemind && confirmed && !inert && !failed}
