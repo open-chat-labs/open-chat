@@ -139,11 +139,11 @@ type MediaExtract = {
 };
 
 export function fillMessage(msg: Message): boolean {
-    if (msg.forwarded) {
+    if (msg.forwarded || msg.content.kind === "meme_fighter_content") {
         return false;
     }
 
-    if (msg.content.kind === "prize_content" || msg.content.kind === "meme_fighter_content") {
+    if (msg.content.kind === "prize_content") {
         return true;
     }
 
