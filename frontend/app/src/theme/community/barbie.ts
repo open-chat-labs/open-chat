@@ -4,11 +4,7 @@ import type { Theme } from "../types";
 const white = "#FFFFFF"
 const pink1 = "#f29ad8";
 const pink2 = "#ee71c3";
-const pink3 = "#f658b8";
-const pink4 = "#f039b1";
-const pink5 = "#e305ad";
-const pink6 = "#e75480";
-const pink7 = "#AA336A";
+const pink3 = "#e448a3";
 const barbieYellow = "#f9dd9a";
 const barbieBlue = "#87ced0";
 
@@ -25,7 +21,7 @@ export function getTheme(base: Theme): Theme {
     base.label = "Barbie";
     base.burst = false;
     base.bg = "radial-gradient(circle, rgba(242,154,216,1) 10%, rgba(238,113,195,1) 80%)";
-    base.bd = pink5;
+    base.bd = "#e305ad";
     base.txt = txt;
     base["txt-light"] = txtLight;
     base.icon.txt = white;
@@ -37,18 +33,16 @@ export function getTheme(base: Theme): Theme {
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = white;
     base.accent = barbieYellow;
-    base.panel.left.bg = "#e448a3";
-    // base.panel.left.bg = "linear-gradient(#e1349a, #e448a3)";
+    base.panel.left.bg = pink3;
     base.panel.right.modal = "#e1349a";
-    base.panel.right.bg = "#ff0000";
     base.modal.bd = base.bd;
-    base.modal.bg = "#e448a3";
+    base.modal.bg = pink3;
     base.chatSummary["bg-selected"] = "rgb(225, 52, 154 / 80%)";
     base.chatSummary.hv = "rgb(225, 52, 154 / 80%)";
     base.chatSummary.del = base.button.bg;
     base.members.hv = base.chatSummary.hv;
     base.placeholder = txtLight;
-    base.entry.bg = "#e448a3";
+    base.entry.bg = pink3;
     base.entry.input.bg = pink1;
     base.input.bg = pink1;
     base.input.accent = barbieBlue;

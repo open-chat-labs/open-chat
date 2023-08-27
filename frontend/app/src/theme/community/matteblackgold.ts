@@ -1,13 +1,13 @@
 import type { Theme } from "../types";
 
 // Colors
-const white = "#FFFFFF"
-const offWhite = "#DFDFDF"
-const black = "#000000"
-const offBlack1 = "#101010"
-const offBlack2 = "#121415"
-const offBlack3 = "#191919"
-const matteBlack = "#333333"
+const white = "#FFFFFF";
+const offWhite = "#DFDFDF";
+const black = "#000000";
+const offBlack1 = "#101010";
+const offBlack2 = "#121415";
+const offBlack3 = "#191919";
+const matteBlack = "#333333";
 const gold = "#FFBF00";
 const lightGold = "#ffcd36";
 
@@ -69,6 +69,7 @@ export function getTheme(base: Theme): Theme {
     base.link.underline = base.primary;
     base.scrollbar.bg = base.button.hv;
     base.toast.success.bg = base.notificationBar.bg;
+    base.code = gold;
 
     return base;
 }
