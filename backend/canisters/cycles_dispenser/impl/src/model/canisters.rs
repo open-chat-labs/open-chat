@@ -68,11 +68,9 @@ impl Canisters {
         }) {
             if heap.len() < count {
                 heap.push(top_up);
-            } else {
-                if top_up > *heap.peek().unwrap() {
-                    heap.pop();
-                    heap.push(top_up);
-                }
+            } else if top_up > *heap.peek().unwrap() {
+                heap.pop();
+                heap.push(top_up);
             }
         }
 
