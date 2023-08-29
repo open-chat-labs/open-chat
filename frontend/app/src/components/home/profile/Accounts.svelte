@@ -142,11 +142,6 @@
             padding-left: $sp3;
         }
 
-        .coming-soon {
-            color: var(--txt-light);
-            @include font(light, normal, fs-60);
-        }
-
         .icon {
             background-size: contain;
             height: 24px;

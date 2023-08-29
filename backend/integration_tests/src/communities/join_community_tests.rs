@@ -14,6 +14,7 @@ fn join_public_community_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -42,6 +43,7 @@ fn join_private_community_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -73,6 +75,7 @@ fn join_private_community_with_invitation_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -109,6 +112,7 @@ fn join_private_community_using_invite_code_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -158,6 +162,7 @@ fn invite_to_community_oc_bot_message_received() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -194,6 +199,7 @@ fn default_channels_marked_as_read_after_joining() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {

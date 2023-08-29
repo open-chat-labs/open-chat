@@ -18,6 +18,7 @@ fn send_text_in_channel() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -51,6 +52,7 @@ fn send_crypto_in_channel() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -109,6 +111,7 @@ fn send_message_with_community_rules_not_accepted_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -136,6 +139,7 @@ fn send_message_with_channel_rules_not_accepted_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -163,6 +167,7 @@ fn send_message_with_community_rules_accepted_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -189,6 +194,7 @@ fn send_message_with_channel_rules_accepted_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -215,6 +221,7 @@ fn send_message_with_community_rules_but_not_channel_rules_accepted_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -243,6 +250,7 @@ fn send_message_with_channel_rules_but_not_community_rules_accepted_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -271,6 +279,7 @@ fn send_message_with_community_rules_and_channel_rules_accepted_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -305,6 +314,7 @@ fn send_message_with_previously_accepted_rules_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -341,6 +351,7 @@ fn send_message_with_old_community_rules_accepted_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -376,6 +387,7 @@ fn send_message_with_old_channel_rules_accepted_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -404,6 +416,7 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {

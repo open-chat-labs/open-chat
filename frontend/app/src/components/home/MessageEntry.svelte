@@ -597,29 +597,6 @@
 
     .blocked,
     .disabled,
-    .preview {
-        height: 42px;
-        color: var(--txt);
-        @include font(book, normal, fs-100);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-    }
-
-    .preview {
-        position: relative;
-        justify-content: flex-end;
-        gap: $sp3;
-        @include mobile() {
-            justify-content: center;
-        }
-
-        .gate {
-            position: absolute;
-            left: 0;
-        }
-    }
 
     .recording {
         padding: 0 $sp3;

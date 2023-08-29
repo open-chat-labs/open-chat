@@ -15,6 +15,7 @@ fn freeze_then_unfreeze() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user1, group_id, .. } = init_test_data(env, canister_ids, *controller);
@@ -63,6 +64,7 @@ fn can_only_be_called_by_platform_moderator() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -109,6 +111,7 @@ fn search_excludes_frozen_groups() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -158,6 +161,7 @@ fn freeze_and_suspend_users() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -192,6 +196,7 @@ fn delete_frozen_group() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user1, group_id, .. } = init_test_data(env, canister_ids, *controller);

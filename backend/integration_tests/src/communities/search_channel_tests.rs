@@ -13,6 +13,7 @@ fn search_channel_returns_expected_message() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {

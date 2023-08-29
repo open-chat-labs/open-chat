@@ -22,6 +22,7 @@ pub fn setup_new_env() -> TestEnv {
         env,
         canister_ids,
         controller,
+        usage_counter: 0,
     }
 }
 

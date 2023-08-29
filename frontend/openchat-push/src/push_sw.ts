@@ -1,5 +1,5 @@
 import { IDL } from "@dfinity/candid";
-import { ApiNotification, NotificationIdl, notification as toNotification } from "openchat-agent";
+import { type ApiNotification, NotificationIdl, notification as toNotification } from "openchat-agent";
 import type {
     Notification,
     DirectChatIdentifier,

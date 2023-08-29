@@ -215,10 +215,6 @@
         color: #fff;
     }
 
-    img.zoomable.zoomed {
-        cursor: zoom-out;
-    }
-
     img.zoomable:not(.zoomed) {
         cursor: zoom-in;
     }

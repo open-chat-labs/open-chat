@@ -14,6 +14,7 @@ fn update_permissions_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -59,6 +60,7 @@ fn update_permissions_summary_updates_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -116,6 +118,7 @@ fn make_private_community_public_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_diamond_user(env, canister_ids, *controller);
