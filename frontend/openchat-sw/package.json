@@ -42,9 +42,9 @@
         "webpack-cli": "^5.1.4"
     },
     "dependencies": {
-        "@dfinity/agent": "^0.18.1",
-        "@dfinity/candid": "^0.18.1",
-        "@dfinity/principal": "^0.18.1",
+        "@dfinity/agent": "^0.19.2",
+        "@dfinity/candid": "^0.19.2",
+        "@dfinity/principal": "^0.19.2",
         "base64-arraybuffer": "^1.0.2",
         "pako": "^2.1.0",
         "siema": "^1.5.1",
