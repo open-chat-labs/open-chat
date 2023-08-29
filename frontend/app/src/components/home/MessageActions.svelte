@@ -171,6 +171,7 @@
     .open-draw,
     .gif,
     .meme,
+    .poll,
     .send-icp {
         flex: 0 0 15px;
     }
@@ -224,22 +225,22 @@
                 .emoji {
                     opacity: 1;
                     top: -75px;
-                    transition-delay: 200ms;
+                    transition-delay: 250ms;
                 }
                 .attach {
                     opacity: 1;
                     top: -120px;
-                    transition-delay: 150ms;
+                    transition-delay: 200ms;
                 }
                 .send-icp {
                     opacity: 1;
                     top: -165px;
-                    transition-delay: 100ms;
+                    transition-delay: 150ms;
                 }
                 .gif {
                     opacity: 1;
                     top: -210px;
-                    transition-delay: 50ms;
+                    transition-delay: 100ms;
                 }
                 .meme {
                     opacity: 1;
@@ -249,6 +250,7 @@
                 .poll {
                     opacity: 1;
                     top: -300px;
+                    transition-delay: 0ms;
                 }
             }
         }
