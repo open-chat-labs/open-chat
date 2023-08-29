@@ -14,6 +14,7 @@ fn join_public_channel_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -56,6 +57,7 @@ fn join_private_channel_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -89,6 +91,7 @@ fn join_private_community_with_invitation_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -129,6 +132,7 @@ fn join_community_and_channel_in_single_call_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -164,6 +168,7 @@ fn invite_non_community_member_to_channel_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -215,6 +220,7 @@ fn invite_to_channel_oc_bot_message_received() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -253,6 +259,7 @@ fn channel_marked_as_read_after_joining() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {

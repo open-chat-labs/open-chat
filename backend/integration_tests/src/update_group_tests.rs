@@ -14,6 +14,7 @@ fn update_group_name_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller);
@@ -55,6 +56,7 @@ fn update_group_privacy_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller);
@@ -101,6 +103,7 @@ fn make_private_group_public_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);

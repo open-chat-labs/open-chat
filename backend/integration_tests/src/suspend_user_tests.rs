@@ -12,6 +12,7 @@ fn suspend_user() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
@@ -146,6 +147,7 @@ fn suspend_user_for_duration() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
