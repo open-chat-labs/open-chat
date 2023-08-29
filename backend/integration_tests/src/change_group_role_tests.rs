@@ -13,6 +13,7 @@ fn owner_can_promote_to_and_demote_from_owner() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller);

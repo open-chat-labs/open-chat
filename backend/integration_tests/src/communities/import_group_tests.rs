@@ -16,6 +16,7 @@ fn import_group_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -80,6 +81,7 @@ fn read_up_to_data_maintained_after_import() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {

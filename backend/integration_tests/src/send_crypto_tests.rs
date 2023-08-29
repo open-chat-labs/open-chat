@@ -13,6 +13,7 @@ fn send_direct_message_with_transfer_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
@@ -72,6 +73,7 @@ fn send_message_with_transfer_to_group_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);

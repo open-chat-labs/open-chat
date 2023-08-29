@@ -14,6 +14,7 @@ fn block_user_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -70,6 +71,7 @@ fn block_user_fails_for_private_communities() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -99,6 +101,7 @@ fn remove_user_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
