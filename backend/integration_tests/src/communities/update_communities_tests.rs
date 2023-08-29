@@ -206,7 +206,7 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     let community_id =
-        client::user::happy_path::create_community(env, &user1, &community_name, true, vec!["general".to_string()]);
+        client::user::happy_path::create_community(env, &user1, community_name, true, vec!["general".to_string()]);
 
     client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
 
