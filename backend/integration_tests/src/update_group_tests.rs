@@ -59,7 +59,7 @@ fn change_casing_of_group_name_succeeds() {
         ..
     } = wrapper.env();
 
-    let group_name = "change_group_casing_test".to_string();
+    let group_name = "group_change_casing".to_string();
     let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, &group_name);
 
     // Update the group name

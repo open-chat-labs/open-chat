@@ -18,7 +18,7 @@ fn change_casing_of_community_name_succeeds() {
         ..
     } = wrapper.env();
 
-    let community_name = "change_community_casing_test".to_string();
+    let community_name = "community_change_casing".to_string();
     let TestData {
         user1,
         user2,
