@@ -447,9 +447,6 @@
 
     .para {
         margin-bottom: $sp4;
-        &.last {
-            margin-bottom: $sp4;
-        }
     }
 
     .user-form {
