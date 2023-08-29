@@ -140,6 +140,8 @@ struct Data {
     pub is_platform_moderator: bool,
     pub hot_group_exclusions: HotGroupExclusions,
     pub username: String,
+    #[serde(default)]
+    pub display_name: Option<String>,
     pub bio: String,
     pub cached_group_summaries: Option<CachedGroupSummaries>,
     pub storage_limit: u64,
@@ -162,6 +164,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         username: String,
+        display_name: Option<String>,
         test_mode: bool,
         now: TimestampMillis,
     ) -> Data {
@@ -181,6 +184,7 @@ impl Data {
             is_platform_moderator: false,
             hot_group_exclusions: HotGroupExclusions::default(),
             username,
+            display_name,
             bio: "".to_string(),
             cached_group_summaries: None,
             storage_limit: 0,

@@ -53,7 +53,6 @@ pub mod happy_path {
                 recipient,
                 thread_root_message_index: None,
                 message_id: message_id.unwrap_or_else(random_message_id),
-                sender_name: sender.username(),
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 replies_to: None,
                 forwarding: false,
@@ -145,7 +144,6 @@ pub mod happy_path {
                 thread_root_message_index: None,
                 message_id,
                 reaction: Reaction::new(reaction.to_string()),
-                username: sender.username(),
                 correlation_id: 0,
             },
         );

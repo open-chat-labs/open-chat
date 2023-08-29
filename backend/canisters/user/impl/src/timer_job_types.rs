@@ -57,7 +57,7 @@ impl Job for TimerJob {
 
 impl Job for RetrySendingFailedMessagesJob {
     fn execute(&self) {
-        let (pending_messages, sender_name, sender_avatar_id) = read_state(|state| {
+        let (pending_messages, sender_name, sender_display_name, sender_avatar_id) = read_state(|state| {
             (
                 state
                     .data
@@ -66,12 +66,13 @@ impl Job for RetrySendingFailedMessagesJob {
                     .map(|c| c.get_pending_messages())
                     .unwrap_or_default(),
                 state.data.username.clone(),
+                state.data.display_name.clone(),
                 state.data.avatar.value.as_ref().map(|d| d.id),
             )
         });
 
         if !pending_messages.is_empty() {
-            let args = c2c_send_messages::Args::new(pending_messages, sender_name, sender_avatar_id);
+            let args = c2c_send_messages::Args::new(pending_messages, sender_name, sender_display_name, sender_avatar_id);
             ic_cdk::spawn(send_to_recipients_canister(self.recipient, args, self.attempt));
         }
     }

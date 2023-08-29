@@ -45,7 +45,8 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                         args.user_id.into(),
                         args.message_id,
                         args.reaction,
-                        args.username,
+                        state.data.username.clone(),
+                        state.data.display_name.clone(),
                         state.data.avatar.value.as_ref().map(|d| d.id),
                         &state.data.fire_and_forget_handler,
                     );
@@ -65,6 +66,7 @@ fn add_reaction_on_recipients_canister(
     message_id: MessageId,
     reaction: Reaction,
     username: String,
+    display_name: Option<String>,
     user_avatar_id: Option<u128>,
     fire_and_forget_handler: &FireAndForgetHandler,
 ) {
@@ -73,6 +75,7 @@ fn add_reaction_on_recipients_canister(
         reaction,
         added: true,
         username,
+        display_name,
         user_avatar_id,
         correlation_id: 0,
     };

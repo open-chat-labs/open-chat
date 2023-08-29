@@ -19,6 +19,7 @@ fn accept_if_valid(state: &RuntimeState) {
         "create_canister"
         | "mark_as_online"
         | "pay_for_diamond_membership"
+        | "set_display_name"
         | "set_moderation_flags"
         | "set_username"
         | "mark_suspected_bot" => {

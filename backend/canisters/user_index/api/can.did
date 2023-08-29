@@ -18,6 +18,18 @@ type SetUsernameResponse = variant {
     UsernameTooLong : nat16;
 };
 
+type SetDisplayNameArgs = record {
+    display_name : opt text;
+};
+
+type SetDisplayNameResponse = variant {
+    Success;
+    UserNotFound;
+    DisplayNameInvalid;
+    DisplayNameTooShort : nat16;
+    DisplayNameTooLong : nat16;
+};
+
 type CheckUsernameArgs = record {
     username : text;
 };
@@ -87,6 +99,20 @@ type UsersArgs = record {
 type UsersResponse = variant {
     Success : record {
         users : vec PartialUserSummary;
+        timestamp : TimestampMillis;
+    };
+};
+
+type UsersV2Args = record {
+    user_groups : vec record {
+        users : vec UserId;
+        updated_since : TimestampMillis;
+    };
+};
+
+type UsersV2Response = variant {
+    Success : record {
+        users : vec UserSummary;
         timestamp : TimestampMillis;
     };
 };
@@ -295,6 +321,9 @@ service : {
     // This is used to set the initial username and subsequently to change it
     set_username : (SetUsernameArgs) -> (SetUsernameResponse);
 
+    // Set the caller's "display name" which is shown alongside their username
+    set_display_name : (SetDisplayNameArgs) -> (SetDisplayNameResponse);
+
     // Sets which moderation flags (eg. Adult) are enabled for the user when exploring groups/communities
     set_moderation_flags : (SetModerationFlagsArgs) -> (SetModerationFlagsResponse);
 
@@ -309,6 +338,7 @@ service : {
 
     // Gets some users by id
     users : (UsersArgs) -> (UsersResponse) query;
+    users_v2 : (UsersV2Args) -> (UsersV2Response) query;
 
     // Search for users matching some query
     search : (SearchArgs) -> (SearchResponse) query;

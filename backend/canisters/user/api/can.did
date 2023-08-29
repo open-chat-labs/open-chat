@@ -4,7 +4,6 @@ type SendMessageV2Args = record {
     recipient : UserId;
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
-    sender_name : text;
     content : MessageContentInitial;
     replies_to : opt ReplyContext;
     forwarding : bool;
@@ -88,7 +87,6 @@ type AddReactionArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
     reaction : text;
-    username : text;
     correlation_id : nat64;
 };
 
@@ -399,6 +397,7 @@ type SendMessageWithTransferToChannelArgs = record {
     message_id : MessageId;
     content : MessageContentInitial;
     sender_name : text;
+    sender_display_name : opt text;
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     community_rules_accepted : opt Version;
@@ -434,6 +433,7 @@ type SendMessageWithTransferToGroupArgs = record {
     message_id : MessageId;
     content : MessageContentInitial;
     sender_name : text;
+    sender_display_name : opt text;
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     rules_accepted : opt Version;
