@@ -14,6 +14,7 @@ fn remove_group_member_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, true);
@@ -45,6 +46,7 @@ fn block_user_who_is_no_longer_group_member_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, true);

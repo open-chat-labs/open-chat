@@ -11,6 +11,7 @@ fn make_private_channel_public_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);

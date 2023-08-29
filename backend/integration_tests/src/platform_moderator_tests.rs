@@ -14,6 +14,7 @@ fn new_platform_moderators_added_to_moderators_group() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -47,6 +48,7 @@ fn report_message_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
