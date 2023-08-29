@@ -6,9 +6,9 @@ OpenChat is a fully featured chat application running end-to-end on the Internet
 
 ## Prerequisites
 
-#### DFX 0.14.3
+#### DFX 0.14.4
 
-To install, run `DFX_VERSION=0.14.3 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"`
+To install, run `DFX_VERSION=0.14.4 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"`
 
 #### Rust
 
