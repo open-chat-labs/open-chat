@@ -34,8 +34,8 @@ function manualChunks(id) {
 export default {
     input: `./src/index.ts`,
     output: {
-        format: "es",
         dir: "./lib",
+        sourcemap: true,
         manualChunks,
     },
     external: ["url"],
@@ -47,10 +47,7 @@ export default {
             dedupe: ["svelte"],
         }),
         commonjs(),
-        typescript({
-            sourceMap: !production,
-            inlineSources: !production,
-        }),
+        typescript(),
         inject({
             Buffer: ["buffer", "Buffer"],
             process: "process/browser",

@@ -112,6 +112,7 @@ members = [
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
 ]
+resolver = "2"
 
 [workspace.dependencies]
 async-channel = "1.9.0"

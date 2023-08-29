@@ -1,5 +1,5 @@
 import type { WebRtcMessage } from "openchat-shared";
-import Peer, { DataConnection } from "peerjs";
+import Peer, { type DataConnection } from "peerjs";
 
 export class RtcConnectionsManager {
     private connections: Map<string, DataConnection> = new Map<string, DataConnection>();

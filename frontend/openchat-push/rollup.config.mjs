@@ -15,9 +15,7 @@ export default {
     },
     plugins: [
         del({ targets: "lib/*" }),
-        typescript({
-            sourceMap: true,
-        }),
+        typescript(),
         commonjs(),
         inject({
             process: "process/browser",
