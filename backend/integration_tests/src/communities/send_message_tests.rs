@@ -601,7 +601,7 @@ fn set_community_rules(env: &mut StateMachine, user: &User, community_id: Commun
         primary_language: None,
     };
 
-    client::community::happy_path::update_community(env, user, community_id, &args);
+    client::community::happy_path::update_community(env, user.principal, community_id, &args);
 }
 
 fn set_channel_rules(env: &mut StateMachine, user: &User, community_id: CommunityId, channel_id: ChannelId, text: String) {
