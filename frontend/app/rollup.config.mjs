@@ -177,7 +177,7 @@ export default {
         clean(),
         svelte({
             preprocess: sveltePreprocess({
-                sourceMap: !production,
+                sourceMap: true,
                 scss: {
                     prependData: `@use 'sass:math'; @import 'src/styles/mixins.scss';`,
                 },
@@ -200,10 +200,7 @@ export default {
             dedupe: ["svelte"],
         }),
         commonjs(),
-        typescript({
-            sourceMap: !production,
-            inlineSources: !production,
-        }),
+        typescript(),
         inject({
             Buffer: ["buffer", "Buffer"],
             process: "process/browser",
