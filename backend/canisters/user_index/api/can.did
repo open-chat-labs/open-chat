@@ -46,6 +46,7 @@ type CurrentUserResponse = variant {
     Success : record {
         user_id : UserId;
         username : text;
+        display_name : opt text;
         canister_upgrade_status : CanisterUpgradeStatus;
         avatar_id : opt nat;
         wasm_version : BuildVersion;

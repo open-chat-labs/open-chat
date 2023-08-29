@@ -35,6 +35,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
         Success(SuccessResult {
             user_id: u.user_id,
             username: u.username.clone(),
+            display_name: u.display_name.clone(),
             canister_upgrade_status,
             avatar_id: u.avatar_id,
             wasm_version: BuildVersion::default(),
