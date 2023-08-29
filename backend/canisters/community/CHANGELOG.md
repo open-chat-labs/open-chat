@@ -9,12 +9,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add optional user `display name` ([#4247](https://github.com/open-chat-labs/open-chat/pull/4247))
 
-## [[2.0.824](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.824-community)] - 2023-08-25
-
-### Changed
-
-- One time hack to clear the map of groups being imported ([#4235](https://github.com/open-chat-labs/open-chat/pull/4235))
-
 ## [[2.0.817](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.817-community)] - 2023-08-24
 
 ### Added
