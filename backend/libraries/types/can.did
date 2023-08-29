@@ -777,15 +777,6 @@ type NotificationCryptoTransferDetails = record {
     amount : nat;
 };
 
-type PartialUserSummary = record {
-    user_id : UserId;
-    username : opt text;
-    avatar_id : opt nat;
-    is_bot : bool;
-    suspended : bool;
-    diamond_member : bool;
-};
-
 type Participant = record {
     user_id : UserId;
     date_added : TimestampMillis;
@@ -993,10 +984,20 @@ type TextContent = record {
 type UserSummary = record {
     user_id : UserId;
     username : text;
+    display_name : opt text;
     avatar_id : opt nat;
     is_bot : bool;
     suspended : bool;
     seconds_since_last_online : nat32;
+    diamond_member : bool;
+};
+
+type PartialUserSummary = record {
+    user_id : UserId;
+    username : opt text;
+    avatar_id : opt nat;
+    is_bot : bool;
+    suspended : bool;
     diamond_member : bool;
 };
 

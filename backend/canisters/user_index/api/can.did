@@ -103,6 +103,20 @@ type UsersResponse = variant {
     };
 };
 
+type UsersV2Args = record {
+    user_groups : vec record {
+        users : vec UserId;
+        updated_since : TimestampMillis;
+    };
+};
+
+type UsersV2Response = variant {
+    Success : record {
+        users : vec UserSummary;
+        timestamp : TimestampMillis;
+    };
+};
+
 type SearchArgs = record {
     search_term : text;
     max_results : nat8;
@@ -324,6 +338,7 @@ service : {
 
     // Gets some users by id
     users : (UsersArgs) -> (UsersResponse) query;
+    users_v2 : (UsersV2Args) -> (UsersV2Response) query;
 
     // Search for users matching some query
     search : (SearchArgs) -> (SearchResponse) query;

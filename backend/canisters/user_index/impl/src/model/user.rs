@@ -2,9 +2,7 @@ use crate::model::account_billing::AccountBilling;
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{
-    CyclesTopUp, Milliseconds, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary,
-};
+use types::{CyclesTopUp, Milliseconds, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
@@ -82,22 +80,12 @@ impl User {
         UserSummary {
             user_id: self.user_id,
             username: self.username.clone(),
+            display_name: self.display_name.clone(),
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
             suspended: self.suspension_details.is_some(),
+            diamond_member: self.diamond_membership_details.is_active(now),
             seconds_since_last_online: 0,
-            diamond_member: self.diamond_membership_details.is_active(now),
-        }
-    }
-
-    pub fn to_partial_summary(&self, now: TimestampMillis) -> PartialUserSummary {
-        PartialUserSummary {
-            user_id: self.user_id,
-            username: Some(self.username.clone()),
-            avatar_id: self.avatar_id,
-            is_bot: self.is_bot,
-            suspended: self.suspension_details.is_some(),
-            diamond_member: self.diamond_membership_details.is_active(now),
         }
     }
 }

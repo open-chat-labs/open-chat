@@ -20,7 +20,7 @@ fn register_users() {
         users[0].principal,
         canister_ids.user_index,
         &user_index_canister::users::Args {
-            user_groups: vec![user_index_canister::users::UserGroup {
+            user_groups: vec![user_index_canister::users_v2::UserGroup {
                 users: users.iter().map(|u| u.user_id).collect(),
                 updated_since: 0,
             }],
@@ -71,7 +71,7 @@ fn register_user_with_duplicate_username_appends_suffix() {
         first_user_principal.unwrap(),
         canister_ids.user_index,
         &user_index_canister::users::Args {
-            user_groups: vec![user_index_canister::users::UserGroup {
+            user_groups: vec![user_index_canister::users_v2::UserGroup {
                 users: user_ids,
                 updated_since: 0,
             }],
