@@ -22,6 +22,7 @@ fn import_group_succeeds() {
     let TestData {
         user1,
         user2,
+        user3,
         group_id,
         group_name,
         community_id,
@@ -62,6 +63,12 @@ fn import_group_succeeds() {
         expected_channel_names
     );
 
+    let community_summary3 = client::community::happy_path::summary(env, &user3, community_id);
+    assert_eq!(
+        community_summary3.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
+        expected_channel_names
+    );
+
     let initial_state1 = client::user::happy_path::initial_state(env, &user1);
     assert!(initial_state1.group_chats.summaries.is_empty());
     assert_eq!(initial_state1.communities.summaries.len(), 1);
@@ -88,9 +95,8 @@ fn read_up_to_data_maintained_after_import() {
         user1,
         user2,
         group_id,
-        group_name: _,
         community_id,
-        default_channels: _,
+        ..
     } = init_test_data(env, canister_ids, *controller);
 
     for _ in 1..5 {
@@ -142,6 +148,7 @@ fn read_up_to_data_maintained_after_import() {
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     let group_name = random_string();
     let community_name = random_string();
@@ -152,12 +159,14 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
     let default_channels: Vec<_> = (1..5).map(|_| random_string()).collect();
 
     let community_id = client::user::happy_path::create_community(env, &user1, &community_name, true, default_channels.clone());
+    client::local_user_index::happy_path::join_community(env, user3.principal, canister_ids.local_user_index, community_id);
 
     tick_many(env, 3);
 
     TestData {
         user1,
         user2,
+        user3,
         group_id,
         group_name,
         community_id,
@@ -168,6 +177,7 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
 struct TestData {
     user1: User,
     user2: User,
+    user3: User,
     group_id: ChatId,
     group_name: String,
     community_id: CommunityId,
