@@ -64,6 +64,10 @@ impl PrivateGroupInfo {
         self.id
     }
 
+    pub fn created(&self) -> TimestampMillis {
+        self.created
+    }
+
     pub fn mark_active(&mut self, until: TimestampMillis) {
         self.marked_active_until = until;
     }

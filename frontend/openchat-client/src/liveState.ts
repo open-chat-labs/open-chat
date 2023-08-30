@@ -43,6 +43,7 @@ import {
     confirmedThreadEventIndexesLoadedStore,
     selectedThreadRootEvent,
     selectedMessageContext,
+    allChats,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -97,12 +98,13 @@ export class LiveState {
     communities!: CommunityMap<CommunitySummary>;
     chatListScope!: ChatListScope;
     globalState!: GlobalState;
+    allChats!: ChatMap<ChatSummary>;
     selectedCommunity!: CommunitySummary | undefined;
     currentCommunityMembers!: Member[];
 
     constructor() {
         confirmedThreadEventIndexesLoadedStore.subscribe(
-            (data) => (this.confirmedThreadEventIndexesLoaded = data)
+            (data) => (this.confirmedThreadEventIndexesLoaded = data),
         );
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
         userStore.subscribe((data) => (this.userStore = data));
@@ -129,7 +131,7 @@ export class LiveState {
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
         currentChatUserIds.subscribe((data) => (this.currentChatUserIds = data));
         selectedThreadRootMessageIndex.subscribe(
-            (data) => (this.selectedThreadRootMessageIndex = data)
+            (data) => (this.selectedThreadRootMessageIndex = data),
         );
         chatsInitialised.subscribe((data) => (this.chatsInitialised = data));
         chatsLoading.subscribe((data) => (this.chatsLoading = data));
@@ -139,6 +141,7 @@ export class LiveState {
         communities.subscribe((data) => (this.communities = data));
         chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
         globalStateStore.subscribe((data) => (this.globalState = data));
+        allChats.subscribe((data) => (this.allChats = data));
         selectedCommunity.subscribe((data) => (this.selectedCommunity = data));
         currentCommunityMembers.subscribe((data) => (this.currentCommunityMembers = data));
     }

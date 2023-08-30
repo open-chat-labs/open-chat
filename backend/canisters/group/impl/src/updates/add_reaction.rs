@@ -54,6 +54,7 @@ fn handle_notification(
         message_id,
         reaction,
         username,
+        display_name,
         ..
     }: Args,
     user_id: UserId,
@@ -88,6 +89,7 @@ fn handle_notification(
                         group_name: state.data.chat.name.clone(),
                         added_by: user_id,
                         added_by_name: username,
+                        added_by_display_name: display_name,
                         reaction,
                         group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
                     }),

@@ -41,7 +41,7 @@
 </script>
 
 {#if content.kind === "text_content"}
-    <TextContent {fill} {truncate} {pinned} {messageId} {content} {edited} {height} />
+    <TextContent {fill} {truncate} {pinned} {content} {edited} {height} />
 {:else if content.kind === "image_content"}
     <IntersectionObserver let:intersecting>
         <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
@@ -84,8 +84,10 @@
     <MessageReminderContent {content} />
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
-{:else if content.kind === "custom_content"}
-    {#if content.subtype === "user_referral_card"}
-        <UserReferralCardContent />
-    {/if}
+{:else if content.kind === "meme_fighter_content"}
+    <IntersectionObserver let:intersecting>
+        <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
+    </IntersectionObserver>
+{:else if content.kind === "user_referral_card"}
+    <UserReferralCardContent />
 {/if}

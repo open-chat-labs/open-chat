@@ -31,7 +31,7 @@ export const toastStore = {
         }));
     },
     showSuccessToast: (text: string, args?: MessageObject): void => {
-        setTimeout(() => update(() => undefined), 2500);
+        window.setTimeout(() => update(() => undefined), 2500);
         return update(() => ({
             type: ToastType.Success,
             text,

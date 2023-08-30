@@ -82,6 +82,8 @@
         border-radius: $sp2;
         border: 1px solid var(--menu-bd);
         cursor: pointer;
+        max-height: 330px;
+        overflow: auto;
     }
 
     .icon {
@@ -104,7 +106,7 @@
     }
 
     .token {
-        padding: $sp4;
+        padding: $sp3 $sp4;
         display: flex;
         align-items: center;
         gap: $sp3;

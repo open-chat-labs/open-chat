@@ -20,7 +20,7 @@
         routerReady,
     } from "../routes";
 
-    let route: typeof SvelteComponent | undefined = undefined;
+    let route: typeof SvelteComponent<object> | undefined = undefined;
 
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => any) => {

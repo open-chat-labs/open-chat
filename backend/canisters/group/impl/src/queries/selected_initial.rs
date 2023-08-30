@@ -27,6 +27,7 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
                 .copied()
                 .collect(),
             rules: chat.rules.clone().into(),
+            access_rules: chat.rules.clone().into(),
         })
     } else {
         CallerNotInGroup

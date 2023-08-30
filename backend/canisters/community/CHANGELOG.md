@@ -5,10 +5,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add optional user `display name` ([#4247](https://github.com/open-chat-labs/open-chat/pull/4247))
+
+### Fixed
+
+- Add existing community members to newly imported public channels ([#4260](https://github.com/open-chat-labs/open-chat/pull/4260))
+- One time job to add community members to all imported public channels ([#4262](https://github.com/open-chat-labs/open-chat/pull/4262))
+
+## [[2.0.817](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.817-community)] - 2023-08-24
+
+### Added
+
+- Support making private groups / channels public ([#4223](https://github.com/open-chat-labs/open-chat/pull/4223))
+
+### Changed
+
+- Extend versioned rules to communities and groups ([#4219](https://github.com/open-chat-labs/open-chat/pull/4219))
+- Make importing groups more efficient ([#4239](https://github.com/open-chat-labs/open-chat/pull/4239))
+
+### Fixed
+
+- Fix for owners not being able to demote other owners ([#4227](https://github.com/open-chat-labs/open-chat/pull/4227))
+
+## [[2.0.815](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.815-community)] - 2023-08-23
+
 ### Changed
 
 - Add timestamp to `selected_updates` and `selected_channel_updates` ([#4182](https://github.com/open-chat-labs/open-chat/pull/4182))
 - Optimise `selected_channel_updates` for query caching ([#4185](https://github.com/open-chat-labs/open-chat/pull/4185))
+- Allow making private communities public ([#4217](https://github.com/open-chat-labs/open-chat/pull/4217))
 
 ## [[2.0.808](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.808-community)] - 2023-08-11
 

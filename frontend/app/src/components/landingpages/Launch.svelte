@@ -28,14 +28,18 @@
     .launch {
         display: inline-block;
         transition: background-color ease-in-out 200ms;
-        color: #fff;
-        background-color: var(--primary);
+        color: var(--button-txt);
+        background-color: var(--button-bg);
         border: none;
         border-radius: toRem(4);
         cursor: pointer;
         text-decoration: none;
         @include font(bold, normal, fs-100);
         padding: toRem(12) toRem(16) toRem(12) toRem(16);
+
+        &:hover {
+            background-color: var(--button-hv);
+        }
 
         @include mobile() {
             @include font(bold, normal, fs-120);

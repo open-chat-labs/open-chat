@@ -1,6 +1,5 @@
 use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, read_state, RuntimeState};
-use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::join_group::{Response::*, *};
@@ -11,7 +10,7 @@ use user_index_canister::Event as UserIndexEvent;
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
 async fn join_group(args: Args) -> Response {
-    let user_details = read_state(user_details);
+    let user_details = read_state(|state| state.calling_user());
 
     let c2c_args = group_canister::c2c_join_group::Args {
         user_id: user_details.user_id,
@@ -19,6 +18,7 @@ async fn join_group(args: Args) -> Response {
         invite_code: args.invite_code,
         correlation_id: args.correlation_id,
         is_platform_moderator: user_details.is_platform_moderator,
+        is_bot: user_details.is_bot,
     };
     match group_canister_c2c_client::c2c_join_group(args.chat_id.into(), &c2c_args).await {
         Ok(response) => match response {
@@ -44,22 +44,6 @@ async fn join_group(args: Args) -> Response {
             group_canister::c2c_join_group::Response::InternalError(error) => InternalError(error),
         },
         Err(error) => InternalError(format!("Failed to call 'group::c2c_join_group': {error:?}")),
-    }
-}
-
-struct UserDetails {
-    user_id: UserId,
-    principal: Principal,
-    is_platform_moderator: bool,
-}
-
-fn user_details(state: &RuntimeState) -> UserDetails {
-    let user = state.calling_user();
-
-    UserDetails {
-        user_id: user.user_id,
-        principal: user.principal,
-        is_platform_moderator: user.is_platform_moderator,
     }
 }
 

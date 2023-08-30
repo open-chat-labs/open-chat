@@ -8,6 +8,7 @@ pub struct Args {
     pub principal: Principal,
     pub invite_code: Option<u64>,
     pub is_platform_moderator: bool,
+    pub is_bot: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

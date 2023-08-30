@@ -188,9 +188,11 @@ mod push_proposals {
                 my_vote: None,
             }),
             sender_name: "ProposalsBot".to_string(),
+            sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            rules_accepted: None,
             correlation_id: 0,
         };
 
@@ -217,11 +219,13 @@ mod push_proposals {
                 my_vote: None,
             }),
             sender_name: "ProposalsBot".to_string(),
+            sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
             channel_id,
-            rules_accepted: None,
+            community_rules_accepted: None,
+            channel_rules_accepted: None,
         };
 
         let failed = community_canister_c2c_client::send_message(community_id.into(), &send_message_args)

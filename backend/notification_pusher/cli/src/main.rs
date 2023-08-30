@@ -15,7 +15,7 @@ async fn main() -> Result<(), Error> {
     info!("Initializing notification pusher");
 
     let args: Vec<String> = std::env::args().collect();
-    let index = args[1].parse::<u64>().unwrap();
+    let index = args.get(1).map(|a| a.parse::<u64>().unwrap()).unwrap_or_default();
     let vapid_private_pem = dotenv::var("VAPID_PRIVATE_PEM")?;
     let index_canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_INDEX_CANISTER_ID")?)?;
     let notifications_canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_CANISTER_ID")?)?;

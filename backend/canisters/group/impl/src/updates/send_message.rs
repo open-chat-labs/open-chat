@@ -33,6 +33,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.replies_to,
             args.mentioned.clone(),
             args.forwarding,
+            args.rules_accepted,
             state.data.proposals_bot_user_id,
             now,
         ) {
@@ -57,6 +58,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     group_name: state.data.chat.name.clone(),
                     sender: user_id,
                     sender_name: args.sender_name,
+                    sender_display_name: args.sender_display_name,
                     message_type: content.message_type().to_string(),
                     message_text: content.notification_text(&args.mentioned),
                     image_url: content.notification_image_url(),
@@ -81,6 +83,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             SendMessageResult::NotAuthorized => NotAuthorized,
             SendMessageResult::UserNotInGroup => CallerNotInGroup,
             SendMessageResult::UserSuspended => UserSuspended,
+            SendMessageResult::RulesNotAccepted => RulesNotAccepted,
             SendMessageResult::InvalidRequest(error) => InvalidRequest(error),
         }
     } else {

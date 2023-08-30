@@ -2328,6 +2328,10 @@ export class OpenChatAgent extends EventTarget {
         return this._groupIndexClient.setGroupUpgradeConcurrency(value);
     }
 
+    setCommunityUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
+        return this._groupIndexClient.setCommunityUpgradeConcurrency(value);
+    }
+
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
         return this._userIndexClient.setUserUpgradeConcurrency(value);
     }

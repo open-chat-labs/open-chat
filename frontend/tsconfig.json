@@ -6,7 +6,6 @@
         "esModuleInterop": true,
         "experimentalDecorators": true,
         "forceConsistentCasingInFileNames": true,
-        "importsNotUsedAsValues": "error",
         "lib": ["DOM", "DOM.Iterable", "es2020", "WebWorker"],
         "module": "es2020",
         "moduleResolution": "node",
@@ -18,6 +17,7 @@
         "sourceMap": true,
         "strict": true,
         "target": "es2020",
-        "types": ["jest", "node", "svelte"]
+        "types": ["jest", "node", "svelte"],
+        "verbatimModuleSyntax": true
     }
 }

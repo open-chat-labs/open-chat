@@ -118,9 +118,11 @@ fn polls_ended_correctly() {
                 ended: false,
             }),
             sender_name: user1.username(),
+            sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            rules_accepted: None,
             correlation_id: 0,
         },
     );
@@ -241,9 +243,11 @@ fn init_test_data(env: &mut StateMachine, local_user_index: CanisterId, poll_con
                 ended: false,
             }),
             sender_name: user1.username(),
+            sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            rules_accepted: None,
             correlation_id: 0,
         },
     );

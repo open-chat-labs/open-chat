@@ -76,8 +76,8 @@
     }
 
     function scheduleCheck(username: string) {
-        clearTimeout(timer);
-        timer = setTimeout(() => checkUsername(username), 350);
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => checkUsername(username), 350);
     }
 </script>
 

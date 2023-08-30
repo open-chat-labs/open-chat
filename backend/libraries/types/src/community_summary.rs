@@ -21,6 +21,7 @@ pub struct CommunityCanisterCommunitySummary {
     pub primary_language: String,
     pub latest_event_index: EventIndex,
     pub channels: Vec<CommunityCanisterChannelSummary>,
+    pub rules_enabled: bool,
     pub membership: Option<CommunityMembership>,
     pub metrics: ChatMetrics,
 }
@@ -29,6 +30,7 @@ pub struct CommunityCanisterCommunitySummary {
 pub struct CommunityMembership {
     pub joined: TimestampMillis,
     pub role: CommunityRole,
+    pub rules_accepted: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -49,6 +51,7 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub channels_added: Vec<CommunityCanisterChannelSummary>,
     pub channels_updated: Vec<CommunityCanisterChannelSummaryUpdates>,
     pub channels_removed: Vec<ChannelId>,
+    pub rules_enabled: Option<bool>,
     pub membership: Option<CommunityMembershipUpdates>,
     pub metrics: Option<ChatMetrics>,
 }
@@ -56,4 +59,5 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityMembershipUpdates {
     pub role: Option<CommunityRole>,
+    pub rules_accepted: Option<bool>,
 }

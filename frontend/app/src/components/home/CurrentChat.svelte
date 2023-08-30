@@ -26,6 +26,7 @@
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
     import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
     import GiphySelector from "./GiphySelector.svelte";
+    import MemeBuilder from "./MemeBuilder.svelte";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { toastStore } from "../../stores/toast";
     import ImportToCommunity from "./communities/Import.svelte";
@@ -48,8 +49,10 @@
     let creatingPoll = false;
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
     let selectingGif = false;
+    let buildingMeme = false;
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
+    let memeBuilder: MemeBuilder;
     let showSearchHeader = false;
     let searchTerm = "";
     let importToCommunities: CommunityMap<CommunitySummary> | undefined;
@@ -153,6 +156,13 @@
         }
     }
 
+    function makeMeme() {
+        buildingMeme = true;
+        if (memeBuilder !== undefined) {
+            memeBuilder.reset();
+        }
+    }
+
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         showSearchHeader = false;
         currentChatDraftMessage.setReplyingTo(chat.id, ev.detail);
@@ -171,7 +181,7 @@
 
             sendMessageWithAttachment(randomSentence(), [], undefined);
 
-            setTimeout(() => send(n + 1), 500);
+            window.setTimeout(() => send(n + 1), 500);
         }
 
         send(0);
@@ -268,6 +278,11 @@
     bind:open={selectingGif}
     on:sendGiphy={sendMessageWithContent} />
 
+<MemeBuilder
+    bind:this={memeBuilder}
+    bind:open={buildingMeme}
+    on:sendMeme={sendMessageWithContent} />
+
 <div class="wrapper">
     {#if showSearchHeader}
         <CurrentChatSearchHeader
@@ -343,6 +358,7 @@
             on:sendMessage={sendMessage}
             on:createTestMessages={createTestMessages}
             on:attachGif={attachGif}
+            on:makeMeme={makeMeme}
             on:tokenTransfer={tokenTransfer}
             on:searchChat={searchChat}
             on:createPoll={createPoll} />

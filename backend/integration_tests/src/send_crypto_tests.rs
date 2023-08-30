@@ -13,6 +13,7 @@ fn send_direct_message_with_transfer_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
@@ -47,7 +48,6 @@ fn send_direct_message_with_transfer_succeeds() {
                 )),
                 caption: None,
             }),
-            sender_name: user1.username(),
             replies_to: None,
             forwarding: false,
             correlation_id: 0,
@@ -72,6 +72,7 @@ fn send_message_with_transfer_to_group_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
@@ -109,8 +110,10 @@ fn send_message_with_transfer_to_group_succeeds() {
                 caption: None,
             }),
             sender_name: user1.username(),
+            sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
+            rules_accepted: None,
             correlation_id: 0,
         },
     );

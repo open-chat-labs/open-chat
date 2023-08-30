@@ -12,6 +12,7 @@ fn suspend_user() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
@@ -52,7 +53,6 @@ fn suspend_user() {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id: random_message_id(),
-            sender_name: user1.username(),
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             forwarding: false,
@@ -72,10 +72,12 @@ fn suspend_user() {
             thread_root_message_index: None,
             message_id: random_message_id(),
             sender_name: user1.username(),
+            sender_display_name: None,
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            rules_accepted: None,
             correlation_id: 0,
         },
     );
@@ -104,7 +106,6 @@ fn suspend_user() {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id: random_message_id(),
-            sender_name: user1.username(),
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             forwarding: false,
@@ -124,10 +125,12 @@ fn suspend_user() {
             thread_root_message_index: None,
             message_id: random_message_id(),
             sender_name: user1.username(),
+            sender_display_name: None,
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            rules_accepted: None,
             correlation_id: 0,
         },
     );
@@ -144,6 +147,7 @@ fn suspend_user_for_duration() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);

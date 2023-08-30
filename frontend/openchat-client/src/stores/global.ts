@@ -11,12 +11,7 @@ import type {
     GroupChatSummary,
     Message,
 } from "openchat-shared";
-import {
-    ChatMap,
-    CommunityMap,
-    ObjectSet,
-    chatScopesEqual,
-} from "openchat-shared";
+import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
 import { immutableStore } from "./immutable";
 import { derived } from "svelte/store";
 import { messagesRead } from "./markRead";
@@ -74,7 +69,7 @@ function hasUnreadMentions(chat: ChatSummary): boolean {
     if (chat.kind === "direct_chat") return false;
     return (
         chat.membership.mentions.filter(
-            (m) => !messagesRead.isRead(chat.id, m.messageIndex, m.messageId)
+            (m) => !messagesRead.isRead(chat.id, m.messageIndex, m.messageId),
         ).length > 0
     );
 }
@@ -85,7 +80,7 @@ function unreadCountForChatList(chats: (ChatSummary | undefined)[]): UnreadCount
             if (chat === undefined) return counts;
             const unread = messagesRead.unreadMessageCount(
                 chat.id,
-                chat.latestMessage?.event.messageIndex
+                chat.latestMessage?.event.messageIndex,
             );
             const increment = unread > 0 ? 1 : 0;
             return {
@@ -96,7 +91,7 @@ function unreadCountForChatList(chats: (ChatSummary | undefined)[]): UnreadCount
                 muted: chat.membership.notificationsMuted ? counts.muted + increment : counts.muted,
             };
         },
-        { muted: 0, unmuted: 0, mentions: false } as UnreadCounts
+        { muted: 0, unmuted: 0, mentions: false } as UnreadCounts,
     );
 }
 
@@ -105,34 +100,34 @@ export const unreadGroupChats = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
         return unreadCountForChatList($global.groupChats.values());
-    }
+    },
 );
 
 export const unreadDirectChats = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
         return unreadCountForChatList($global.directChats.values());
-    }
+    },
 );
 
-export function getAllChats(global: GlobalState): ChatMap<ChatSummary> {
+export function getAllServerChats(global: GlobalState): ChatMap<ChatSummary> {
     const groupChats = global.groupChats.values();
     const directChats = global.directChats.values();
     const channels = global.communities.values().flatMap((c) => c.channels);
     return ChatMap.fromList([...groupChats, ...directChats, ...channels]);
 }
 
-export const allChats = derived(globalStateStore, ($global) => {
-    return getAllChats($global);
+export const allServerChats = derived(globalStateStore, ($global) => {
+    return getAllServerChats($global);
 });
 
 export const unreadFavouriteChats = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
-        const allChats = getAllChats($global);
+        const allChats = getAllServerChats($global);
         const chats = $global.favourites.values().map((id) => allChats.get(id));
         return unreadCountForChatList(chats);
-    }
+    },
 );
 
 export const unreadCommunityChannels = derived(
@@ -142,7 +137,7 @@ export const unreadCommunityChannels = derived(
             map.set(community.id, unreadCountForChatList(community.channels));
             return map;
         }, new CommunityMap<UnreadCounts>());
-    }
+    },
 );
 
 export const globalUnreadCount = derived(
@@ -156,14 +151,14 @@ export const globalUnreadCount = derived(
                     mentions: agg.mentions || counts.mentions,
                 };
             },
-            { muted: 0, unmuted: 0, mentions: false }
+            { muted: 0, unmuted: 0, mentions: false },
         );
         return {
             unmuted: groupCounts.unmuted + directCounts.unmuted + communityCounts.unmuted,
             muted: groupCounts.muted + directCounts.muted + communityCounts.muted,
             mentions: groupCounts.mentions || directCounts.mentions || communityCounts.mentions,
         };
-    }
+    },
 );
 
 function updateLastMessage<T extends ChatSummary>(chat: T, message: EventWrapper<Message>): T {
@@ -185,7 +180,7 @@ function updateLastMessage<T extends ChatSummary>(chat: T, message: EventWrapper
 
 export function updateSummaryWithConfirmedMessage(
     chatId: ChatIdentifier,
-    message: EventWrapper<Message>
+    message: EventWrapper<Message>,
 ): void {
     globalStateStore.update((state) => {
         switch (chatId.kind) {
@@ -226,7 +221,7 @@ export function setGlobalState(
     communities: CommunitySummary[],
     allChats: ChatSummary[],
     favourites: ChatIdentifier[],
-    pinnedChats: PinnedByScope
+    pinnedChats: PinnedByScope,
 ): void {
     const [channels, directChats, groupChats] = partitionChats(allChats);
 
@@ -252,7 +247,7 @@ export function setGlobalState(
 }
 
 function partitionChats(
-    allChats: ChatSummary[]
+    allChats: ChatSummary[],
 ): [Record<string, ChannelSummary[]>, DirectChatSummary[], GroupChatSummary[]] {
     const [channels, direct, group] = allChats.reduce(
         ([channels, direct, group], chat) => {
@@ -269,19 +264,22 @@ function partitionChats(
             }
             return [channels, direct, group];
         },
-        [[], [], []] as [ChannelSummary[], DirectChatSummary[], GroupChatSummary[]]
+        [[], [], []] as [ChannelSummary[], DirectChatSummary[], GroupChatSummary[]],
     );
     return [channelsByCommunityId(channels), direct, group];
 }
 
 function channelsByCommunityId(chats: ChannelSummary[]): Record<string, ChannelSummary[]> {
-    return chats.reduce((acc, chat) => {
-        const communityId = chat.id.communityId;
-        const channels = acc[communityId] ?? [];
-        channels.push(chat);
-        return {
-            ...acc,
-            [communityId]: channels,
-        };
-    }, {} as Record<string, ChannelSummary[]>);
+    return chats.reduce(
+        (acc, chat) => {
+            const communityId = chat.id.communityId;
+            const channels = acc[communityId] ?? [];
+            channels.push(chat);
+            return {
+                ...acc,
+                [communityId]: channels,
+            };
+        },
+        {} as Record<string, ChannelSummary[]>,
+    );
 }

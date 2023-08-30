@@ -1,5 +1,4 @@
 use crate::model::private_groups::PrivateGroupInfo;
-use crate::model::public_groups::GroupCreatedArgs;
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
@@ -125,15 +124,16 @@ fn commit(args: CommitArgs, state: &mut RuntimeState) {
             .data
             .public_group_and_community_names
             .insert(&args.name, args.chat_id.into());
-        state.data.public_groups.handle_group_created(GroupCreatedArgs {
-            chat_id: args.chat_id,
-            name: args.name,
-            description: args.description,
-            subtype: args.subtype,
-            avatar_id: args.avatar_id,
-            gate: args.gate,
+
+        state.data.public_groups.add(
+            args.chat_id,
+            args.name,
+            args.description,
+            args.subtype,
+            args.avatar_id,
+            args.gate,
             now,
-        });
+        );
     } else {
         state.data.private_groups.add(PrivateGroupInfo::new(args.chat_id, now));
     }

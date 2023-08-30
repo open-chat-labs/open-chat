@@ -264,6 +264,11 @@
                 width: content.width,
                 height: content.height,
             };
+        } else if (content.kind === "meme_fighter_content") {
+            return {
+                width: content.width,
+                height: content.height,
+            };
         } else if (content.kind === "giphy_content") {
             return $mobileWidth
                 ? { width: content.mobile.width, height: content.mobile.height }
@@ -764,6 +769,8 @@
         min-width: 90px;
         overflow: hidden;
         overflow-wrap: break-word;
+        border: var(--currentChat-msg-bd);
+        box-shadow: var(--currentChat-msg-sh);
 
         @include size-above(xl) {
             max-width: 70%;

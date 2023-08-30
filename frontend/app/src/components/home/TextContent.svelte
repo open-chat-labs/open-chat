@@ -13,7 +13,6 @@
     export let content: TextContent;
     export let truncate: boolean = false;
     export let pinned: boolean = false;
-    export let messageId: bigint;
     export let edited: boolean;
     export let height: number | undefined = undefined;
     export let fill: boolean;

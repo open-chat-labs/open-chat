@@ -9,7 +9,7 @@ export type BlogPostInfo = {
     title: string;
     author: string;
     date: Date;
-    component: typeof SvelteComponent;
+    component: typeof SvelteComponent<object>;
 };
 
 export const postsBySlug: Record<string, BlogPostInfo> = {

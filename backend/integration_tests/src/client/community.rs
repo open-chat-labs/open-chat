@@ -2,9 +2,11 @@ use crate::{generate_query_call, generate_update_call};
 use community_canister::*;
 
 // Queries
+generate_query_call!(channel_summary);
 generate_query_call!(events);
 generate_query_call!(events_by_index);
 generate_query_call!(search_channel);
+generate_query_call!(selected_channel_initial);
 generate_query_call!(selected_initial);
 generate_query_call!(selected_updates_v2);
 generate_query_call!(summary);
@@ -25,6 +27,7 @@ generate_update_call!(remove_reaction);
 generate_update_call!(send_message);
 generate_update_call!(unblock_user);
 generate_update_call!(undelete_messages);
+generate_update_call!(update_channel);
 generate_update_call!(update_community);
 
 pub mod happy_path {
@@ -33,8 +36,9 @@ pub mod happy_path {
     use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
     use types::{
-        AccessRules, ChannelId, CommunityCanisterCommunitySummary, CommunityCanisterCommunitySummaryUpdates, CommunityId,
-        EventIndex, EventsResponse, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis, Version,
+        AccessRules, ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
+        CommunityCanisterCommunitySummaryUpdates, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId,
+        MessageIndex, TextContent, TimestampMillis,
     };
 
     pub fn create_channel(
@@ -100,10 +104,12 @@ pub mod happy_path {
                 message_id: message_id.unwrap_or_else(random_message_id),
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 sender_name: sender.username(),
+                sender_display_name: None,
                 replies_to: None,
                 mentioned: Vec::new(),
                 forwarding: false,
-                rules_accepted: Some(Version::zero()),
+                community_rules_accepted: None,
+                channel_rules_accepted: None,
             },
         );
 
@@ -115,15 +121,29 @@ pub mod happy_path {
 
     pub fn update_community(
         env: &mut StateMachine,
-        sender: &User,
+        sender: Principal,
         community_id: CommunityId,
         args: &community_canister::update_community::Args,
     ) {
-        let response = super::update_community(env, sender.principal, community_id.into(), args);
+        let response = super::update_community(env, sender, community_id.into(), args);
 
         match response {
             community_canister::update_community::Response::Success => {}
             response => panic!("'update_community' error: {response:?}"),
+        }
+    }
+
+    pub fn update_channel(
+        env: &mut StateMachine,
+        sender: &User,
+        community_id: CommunityId,
+        args: &community_canister::update_channel::Args,
+    ) {
+        let response = super::update_channel(env, sender.principal, community_id.into(), args);
+
+        match response {
+            community_canister::update_channel::Response::Success => {}
+            response => panic!("'update_channel' error: {response:?}"),
         }
     }
 
@@ -202,6 +222,47 @@ pub mod happy_path {
         match response {
             community_canister::selected_initial::Response::Success(result) => result,
             response => panic!("'selected_initial' error: {response:?}"),
+        }
+    }
+
+    pub fn channel_summary(
+        env: &StateMachine,
+        sender: &User,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+    ) -> CommunityCanisterChannelSummary {
+        let response = super::channel_summary(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::channel_summary::Args {
+                channel_id,
+                invite_code: None,
+            },
+        );
+
+        match response {
+            community_canister::channel_summary::Response::Success(result) => result,
+            response => panic!("'channel_summary' error: {response:?}"),
+        }
+    }
+
+    pub fn selected_channel_initial(
+        env: &StateMachine,
+        sender: &User,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+    ) -> community_canister::selected_channel_initial::SuccessResult {
+        let response = super::selected_channel_initial(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::selected_channel_initial::Args { channel_id },
+        );
+
+        match response {
+            community_canister::selected_channel_initial::Response::Success(result) => result,
+            response => panic!("'selected_channel_initial' error: {response:?}"),
         }
     }
 }

@@ -34,5 +34,4 @@ pub enum Response {
     RulesTooShort(FieldTooShortResult),
     UserSuspended,
     CommunityFrozen,
-    CannotMakeChannelPublic,
 }

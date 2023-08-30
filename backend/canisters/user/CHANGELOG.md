@@ -7,11 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add optional user `display name` ([#4247](https://github.com/open-chat-labs/open-chat/pull/4247))
+  
+## [[2.0.821](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.821-user)] - 2023-08-24
+
+### Added
+
 - Support manual ordering of communities ([#4201](https://github.com/open-chat-labs/open-chat/pull/4201))
 
 ### Changed
 
 - Add support for versioned access rules ([#4159](https://github.com/open-chat-labs/open-chat/pull/4159))
+- Extend versioned rules to communities and groups ([#4219](https://github.com/open-chat-labs/open-chat/pull/4219))
 
 ### Removed
 

@@ -37,14 +37,6 @@ declare module "svelte-qr";
 
 declare module "svelte-confetti";
 
-declare namespace svelte.JSX {
-    interface HTMLAttributes<T> {
-        onleftswipe?: any;
-        onrightswipe?: any;
-        onswiping?: any;
-    }
-}
-
 declare global {
     interface Window {
         twttr: any;
@@ -57,6 +49,9 @@ declare namespace svelteHTML {
     interface HTMLAttributes<T> {
         "on:consider"?: (event: CustomEvent) => void;
         "on:finalize"?: (event: CustomEvent) => void;
+        "on:swiping"?: (event: CustomEvent) => void;
+        "on:leftswipe"?: (event: CustomEvent) => void;
+        "on:rightswipe"?: (event: CustomEvent) => void;
     }
 }
 

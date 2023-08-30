@@ -4,7 +4,7 @@ import page from "page";
 import { setModifiedTheme } from "../theme/themes";
 import { routerReady } from "../routes";
 
-type XFrameMessage = UpdateTheme | ChangeRoute | OpenChatReady;
+type XFrameMessage = UpdateTheme | ChangeRoute;
 
 type UpdateTheme = {
     kind: "update_theme";
@@ -18,16 +18,20 @@ type ChangeRoute = {
     path: string;
 };
 
-type OpenChatReady = {
-    kind: "openchat_ready";
-};
-
 export const framed = writable(false);
 
-if (window.self !== window.top) {
-    console.debug("XFRAME_TARGET: setting listeners");
-    window.addEventListener("message", externalMessage);
+export function init() {
+    if (window.self !== window.top) {
+        console.debug("XFRAME_TARGET: setting listeners", window.top);
+        window.addEventListener("message", externalMessage);
+        if (window.top) {
+            console.debug("XFRAME_TARGET: sending ready message");
+            window.top.postMessage("openchat_ready", "*");
+        }
+    }
 }
+
+init();
 
 let queuedRoute: string | undefined = undefined;
 let isRouterReady = false;
@@ -67,7 +71,7 @@ function externalMessage(ev: MessageEvent) {
         } catch (err) {
             console.debug(
                 "XFRAME_TARGET: Error handling an external message from another window",
-                err
+                err,
             );
         }
     }

@@ -19,7 +19,7 @@ use std::ops::Deref;
 use types::{
     AccessGate, AccessRules, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, EventIndex,
     FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification,
-    TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
+    TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
@@ -144,6 +144,11 @@ impl RuntimeState {
             expired_messages: chat.events.expired_messages(now),
             next_message_expiry: chat.events.next_message_expiry(now),
             gate: chat.gate.value.clone(),
+            rules_enabled: chat.rules.enabled,
+            rules_accepted: member
+                .rules_accepted
+                .as_ref()
+                .map_or(false, |version| version.value >= chat.rules.text.version),
         }
     }
 
@@ -154,7 +159,7 @@ impl RuntimeState {
             args.min_visible_event_index,
             args.min_visible_message_index,
             args.mute_notifications,
-            Some(Version::zero()),
+            args.is_bot,
         );
 
         if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
@@ -325,6 +330,7 @@ impl Data {
             permissions.unwrap_or_default(),
             gate,
             events_ttl,
+            proposals_bot_user_id == creator_user_id,
             now,
         );
 
@@ -489,6 +495,7 @@ struct AddMemberArgs {
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,
     mute_notifications: bool,
+    is_bot: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

@@ -52,11 +52,13 @@ async fn add_members_to_channel(args: Args) -> Response {
         commit(
             prepare_result.user_id,
             args.added_by_name,
+            args.added_by_display_name,
             args.channel_id,
             users_to_add,
             prepare_result.users_already_in_channel,
             users_failed_gate_check,
             users_failed_with_error,
+            prepare_result.is_bot,
             state,
         )
     })
@@ -68,6 +70,7 @@ struct PrepareResult {
     users_already_in_channel: Vec<UserId>,
     gate: Option<AccessGate>,
     user_index_canister_id: CanisterId,
+    is_bot: bool,
 }
 
 #[allow(clippy::result_large_err)]
@@ -106,6 +109,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     users_already_in_channel,
                     gate: channel.chat.gate.as_ref().cloned(),
                     user_index_canister_id: state.data.user_index_canister_id,
+                    is_bot: member.is_bot,
                 })
             } else {
                 Err(UserNotInChannel)
@@ -122,11 +126,13 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 fn commit(
     added_by: UserId,
     added_by_name: String,
+    added_by_display_name: Option<String>,
     channel_id: ChannelId,
     users_to_add: Vec<UserId>,
     mut users_already_in_channel: Vec<UserId>,
     users_failed_gate_check: Vec<UserFailedGateCheck>,
     mut users_failed_with_error: Vec<UserFailedError>,
+    is_bot: bool,
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
@@ -151,7 +157,7 @@ fn commit(
                 min_visible_event_index,
                 min_visible_message_index,
                 channel.chat.is_public,
-                None,
+                is_bot,
             ) {
                 AddResult::Success(_) => {
                     users_added.push(user_id);
@@ -193,6 +199,7 @@ fn commit(
             channel_name: channel.chat.name.clone(),
             added_by,
             added_by_name,
+            added_by_display_name,
             community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
             channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
         });

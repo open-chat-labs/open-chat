@@ -101,7 +101,6 @@ import type {
     AccessGate,
     MessageReminderCreatedContent,
     MessageReminderContent,
-    CustomContent,
     MessageContext,
     ReportedMessageContent,
     GroupChatSummary,
@@ -331,12 +330,24 @@ function reportedMessage(candid: ApiReportedMessage): ReportedMessageContent {
     };
 }
 
-function customContent(candid: ApiCustomMessageContent): CustomContent {
-    return {
-        kind: "custom_content",
-        subtype: candid.kind,
-        data: candid.data,
-    };
+function customContent(candid: ApiCustomMessageContent): MessageContent {
+    if (candid.kind === "meme_fighter") {
+        const data = candid.data as Uint8Array;
+        const decoder = new TextDecoder();
+        const json = decoder.decode(data);
+        const decoded = JSON.parse(json) as { url: string; width: number; height: number };
+        return {
+            kind: "meme_fighter_content",
+            ...decoded,
+        };
+    }
+    if (candid.kind === "user_referral_card") {
+        return {
+            kind: "user_referral_card",
+        };
+    }
+
+    throw new Error(`Unknown custom content kind received: ${candid.kind}`);
 }
 
 function messageReminderCreated(candid: ApiMessageReminderCreated): MessageReminderCreatedContent {
@@ -363,7 +374,7 @@ function prizeWinnerContent(senderId: string, candid: ApiPrizeWinnerContent): Pr
         transaction: completedCryptoTransfer(
             candid.transaction,
             senderId,
-            candid.winner.toString()
+            candid.winner.toString(),
         ),
         prizeMessageIndex: candid.prize_message,
     };
@@ -513,19 +524,25 @@ function totalPollVotes(candid: ApiTotalPollVotes): TotalPollVotes {
     if ("Anonymous" in candid) {
         return {
             kind: "anonymous_poll_votes",
-            votes: candid.Anonymous.reduce((agg, [idx, num]) => {
-                agg[idx] = num;
-                return agg;
-            }, {} as Record<number, number>),
+            votes: candid.Anonymous.reduce(
+                (agg, [idx, num]) => {
+                    agg[idx] = num;
+                    return agg;
+                },
+                {} as Record<number, number>,
+            ),
         };
     }
     if ("Visible" in candid) {
         return {
             kind: "visible_poll_votes",
-            votes: candid.Visible.reduce((agg, [idx, userIds]) => {
-                agg[idx] = userIds.map((p) => p.toString());
-                return agg;
-            }, {} as Record<number, string[]>),
+            votes: candid.Visible.reduce(
+                (agg, [idx, userIds]) => {
+                    agg[idx] = userIds.map((p) => p.toString());
+                    return agg;
+                },
+                {} as Record<number, string[]>,
+            ),
         };
     }
     if ("Hidden" in candid) {
@@ -583,7 +600,7 @@ export function apiToken(token: string): ApiCryptocurrency {
 function cryptoTransfer(
     candid: ApiCryptoTransaction,
     sender: string,
-    recipient: string
+    recipient: string,
 ): CryptocurrencyTransfer {
     if ("Pending" in candid) {
         return pendingCryptoTransfer(candid.Pending, recipient);
@@ -599,7 +616,7 @@ function cryptoTransfer(
 
 function pendingCryptoTransfer(
     candid: ApiPendingCryptoTransaction,
-    recipient: string
+    recipient: string,
 ): PendingCryptocurrencyTransfer {
     if ("NNS" in candid) {
         const trans = candid.NNS;
@@ -633,7 +650,7 @@ function pendingCryptoTransfer(
 export function completedCryptoTransfer(
     candid: ApiCompletedCryptoTransaction,
     sender: string,
-    recipient: string
+    recipient: string,
 ): CompletedCryptocurrencyTransfer {
     if ("NNS" in candid) {
         const trans = candid.NNS;
@@ -664,13 +681,13 @@ export function completedCryptoTransfer(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiCompletedCryptoTransaction type received",
-        candid
+        candid,
     );
 }
 
 export function failedCryptoTransfer(
     candid: ApiFailedCryptoTransaction,
-    recipient: string
+    recipient: string,
 ): FailedCryptocurrencyTransfer {
     if ("NNS" in candid) {
         const trans = candid.NNS;
@@ -831,7 +848,7 @@ export function communityPermissions(candid: ApiCommunityPermissions): Community
 }
 
 export function communityPermissionRole(
-    candid: ApiCommunityPermissionRole | ApiCommunityRole
+    candid: ApiCommunityPermissionRole | ApiCommunityRole,
 ): CommunityPermissionRole {
     if ("Owners" in candid) return "owner";
     if ("Admins" in candid) return "admin";
@@ -839,7 +856,7 @@ export function communityPermissionRole(
 }
 
 export function apiCommunityPermissions(
-    permissions: CommunityPermissions
+    permissions: CommunityPermissions,
 ): ApiCommunityPermissions {
     return {
         create_public_channel: apiCommunityPermissionRole(permissions.createPublicChannel),
@@ -852,7 +869,7 @@ export function apiCommunityPermissions(
 }
 
 export function apiCommunityPermissionRole(
-    permissionRole: CommunityPermissionRole
+    permissionRole: CommunityPermissionRole,
 ): ApiCommunityPermissionRole {
     switch (permissionRole) {
         case "owner":
@@ -1030,29 +1047,43 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
 
         case "message_reminder_content":
             throw new Error(
-                "Incorrectly attempting to send message reminder content to the server"
+                "Incorrectly attempting to send message reminder content to the server",
             );
 
         case "message_reminder_created_content":
             throw new Error(
-                "Incorrectly attempting to send message reminder created content to the server"
+                "Incorrectly attempting to send message reminder created content to the server",
             );
 
         case "reported_message_content":
             throw new Error(
-                "Incorrectly attempting to send reported message content to the server"
+                "Incorrectly attempting to send reported message content to the server",
             );
 
-        case "custom_content":
-            return { Custom: apiCustomContent(domain) };
-    }
-}
+        case "meme_fighter_content":
+            // eslint-disable-next-line no-case-declarations
+            const encoder = new TextEncoder();
+            return {
+                Custom: {
+                    kind: "meme_fighter",
+                    data: encoder.encode(
+                        JSON.stringify({
+                            url: domain.url,
+                            width: domain.width,
+                            height: domain.height,
+                        }),
+                    ),
+                },
+            };
 
-function apiCustomContent(domain: CustomContent): ApiCustomMessageContent {
-    return {
-        kind: domain.subtype,
-        data: [], // TODO - we'll come back to this a bit later
-    };
+        case "user_referral_card":
+            return {
+                Custom: {
+                    kind: "user_referral_card",
+                    data: [],
+                },
+            };
+    }
 }
 
 function apiProposalContent(_: ProposalContent): ApiProposalContent {
@@ -1279,7 +1310,7 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
             };
         }
         throw new Error(
-            `An SnsNeuron gate was received with an unexpected governance canister id: ${candid.SnsNeuron.governance_canister_id}`
+            `An SnsNeuron gate was received with an unexpected governance canister id: ${candid.SnsNeuron.governance_canister_id}`,
         );
     }
     if ("DiamondMember" in candid) {
@@ -1296,7 +1327,7 @@ function apiBlobReference(domain?: BlobReference): [] | [ApiBlobReference] {
             blob_id: b.blobId,
             canister_id: Principal.fromText(b.canisterId),
         }),
-        domain
+        domain,
     );
 }
 
@@ -1356,7 +1387,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
 }
 
 export function apiPendingCryptocurrencyWithdrawal(
-    domain: PendingCryptocurrencyWithdrawal
+    domain: PendingCryptocurrencyWithdrawal,
 ): WithdrawCryptoArgs {
     if (domain.token === ICP_SYMBOL) {
         return {
@@ -1508,7 +1539,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
 
 export function communityChannelSummary(
     candid: ApiCommunityCanisterChannelSummary,
-    communityId: string
+    communityId: string,
 ): ChannelSummary {
     const latestMessage = optional(candid.latest_message, (ev) => ({
         index: ev.index,
@@ -1587,7 +1618,7 @@ export function addRemoveReactionResponse(
         | ApiAddGroupReactionResponse
         | ApiRemoveGroupReactionResponse
         | ApiAddChannelReactionResponse
-        | ApiRemoveChannelReactionResponse
+        | ApiRemoveChannelReactionResponse,
 ): AddRemoveReactionResponse {
     if ("Success" in candid || "SuccessV2" in candid) {
         return CommonResponses.success();
@@ -1634,7 +1665,7 @@ export function mention(candid: ApiMention): Mention {
 }
 
 export function updateGroupResponse(
-    candid: ApiUpdateGroupResponse | ApiUpdateChannelResponse
+    candid: ApiUpdateGroupResponse | ApiUpdateChannelResponse,
 ): UpdateGroupResponse {
     if ("Success" in candid) {
         return "success";
@@ -1698,7 +1729,7 @@ export function updateGroupResponse(
 
 export function createGroupResponse(
     candid: ApiCreateGroupResponse | ApiCreateChannelResponse,
-    id: MultiUserChatIdentifier
+    id: MultiUserChatIdentifier,
 ): CreateGroupResponse {
     if ("Success" in candid) {
         if ("channel_id" in candid.Success && id.kind === "channel") {
@@ -1788,7 +1819,7 @@ export function createGroupResponse(
 }
 
 export function deleteGroupResponse(
-    candid: ApiDeleteGroupResponse | ApiDeleteChannelResponse
+    candid: ApiDeleteGroupResponse | ApiDeleteChannelResponse,
 ): DeleteGroupResponse {
     if ("Success" in candid) {
         return "success";
@@ -1799,7 +1830,7 @@ export function deleteGroupResponse(
 }
 
 export function pinMessageResponse(
-    candid: ApiPinMessageResponse | ApiPinChannelMessageResponse
+    candid: ApiPinMessageResponse | ApiPinChannelMessageResponse,
 ): PinMessageResponse {
     if ("Success" in candid) {
         return {
@@ -1816,7 +1847,7 @@ export function pinMessageResponse(
 }
 
 export function unpinMessageResponse(
-    candid: ApiUnpinMessageResponse | ApiPinChannelMessageResponse
+    candid: ApiUnpinMessageResponse | ApiPinChannelMessageResponse,
 ): UnpinMessageResponse {
     if ("Success" in candid || "SuccessV2" in candid || "NoChange" in candid) {
         return "success";
@@ -1827,7 +1858,7 @@ export function unpinMessageResponse(
 }
 
 export function groupDetailsResponse(
-    candid: ApiSelectedInitialResponse | ApiSelectedChannelInitialResponse
+    candid: ApiSelectedInitialResponse | ApiSelectedChannelInitialResponse,
 ): GroupChatDetailsResponse {
     if (
         "CallerNotInGroup" in candid ||
@@ -1856,7 +1887,7 @@ export function groupDetailsResponse(
 }
 
 export function groupDetailsUpdatesResponse(
-    candid: ApiSelectedUpdatesResponse | ApiSelectedChannelUpdatesResponse
+    candid: ApiSelectedUpdatesResponse | ApiSelectedChannelUpdatesResponse,
 ): GroupChatDetailsUpdatesResponse {
     if ("Success" in candid) {
         return {
@@ -1865,14 +1896,14 @@ export function groupDetailsUpdatesResponse(
             membersRemoved: new Set(candid.Success.members_removed.map((u) => u.toString())),
             blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
             blockedUsersRemoved: new Set(
-                candid.Success.blocked_users_removed.map((u) => u.toString())
+                candid.Success.blocked_users_removed.map((u) => u.toString()),
             ),
             pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
             pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
             rules: optional(candid.Success.rules, groupRules),
             invitedUsers: optional(
                 candid.Success.invited_users,
-                (invited_users) => new Set(invited_users.map((u) => u.toString()))
+                (invited_users) => new Set(invited_users.map((u) => u.toString())),
             ),
             timestamp: candid.Success.timestamp,
         };
@@ -1902,7 +1933,7 @@ export function groupRules(candid: ApiGroupRules): AccessRules {
 }
 
 export function editMessageResponse(
-    candid: ApiEditMessageResponse | ApiEditChannelMessageResponse | ApiEditDirectMessageResponse
+    candid: ApiEditMessageResponse | ApiEditChannelMessageResponse | ApiEditDirectMessageResponse,
 ): EditMessageResponse {
     if ("Success" in candid) {
         return "success";
@@ -1913,7 +1944,7 @@ export function editMessageResponse(
 }
 
 export function declineInvitationResponse(
-    candid: ApiDeclineInvitationResponse | ApiDeclineChannelInvitationResponse
+    candid: ApiDeclineInvitationResponse | ApiDeclineChannelInvitationResponse,
 ): DeclineInvitationResponse {
     if ("Success" in candid) {
         return "success";
@@ -1924,7 +1955,7 @@ export function declineInvitationResponse(
 }
 
 export function leaveGroupResponse(
-    candid: ApiLeaveGroupResponse | ApiLeaveChannelResponse
+    candid: ApiLeaveGroupResponse | ApiLeaveChannelResponse,
 ): LeaveGroupResponse {
     if (
         "Success" in candid ||
@@ -1942,7 +1973,7 @@ export function leaveGroupResponse(
 }
 
 export function deleteMessageResponse(
-    candid: ApiDeleteMessageResponse | ApiDeleteChannelMessageResponse
+    candid: ApiDeleteMessageResponse | ApiDeleteChannelMessageResponse,
 ): DeleteMessageResponse {
     if ("Success" in candid) {
         return "success";
@@ -1953,7 +1984,7 @@ export function deleteMessageResponse(
 }
 
 export function deletedMessageResponse(
-    candid: ApiDeletedGroupMessageResponse | ApiDeletedChannelMessageResponse
+    candid: ApiDeletedGroupMessageResponse | ApiDeletedChannelMessageResponse,
 ): DeletedGroupMessageResponse {
     if ("Success" in candid) {
         return {
@@ -1967,7 +1998,7 @@ export function deletedMessageResponse(
 }
 
 export function undeleteMessageResponse(
-    candid: ApiUndeleteMessageResponse | ApiUndeleteChannelMessageResponse
+    candid: ApiUndeleteMessageResponse | ApiUndeleteChannelMessageResponse,
 ): UndeleteMessageResponse {
     if ("Success" in candid) {
         if (candid.Success.messages.length == 0) {
@@ -1987,7 +2018,7 @@ export function undeleteMessageResponse(
 export function threadPreviewsResponse(
     candid: ApiThreadPreviewsResponse | ApiChannelThreadPreviewsResponse,
     chatId: ChatIdentifier,
-    latestClientThreadUpdate: bigint | undefined
+    latestClientThreadUpdate: bigint | undefined,
 ): ThreadPreviewsResponse {
     if ("Success" in candid) {
         return {
@@ -1998,7 +2029,7 @@ export function threadPreviewsResponse(
     if ("ReplicaNotUpToDate" in candid) {
         throw ReplicaNotUpToDateError.byTimestamp(
             candid.ReplicaNotUpToDate,
-            latestClientThreadUpdate ?? BigInt(-1)
+            latestClientThreadUpdate ?? BigInt(-1),
         );
     }
     console.warn("ThreadPreviewsResponse failed with: ", candid);
@@ -2017,7 +2048,7 @@ export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview):
 }
 
 export function changeRoleResponse(
-    candid: ApiChangeRoleResponse | ApiChangeChannelRoleResponse
+    candid: ApiChangeRoleResponse | ApiChangeChannelRoleResponse,
 ): ChangeRoleResponse {
     if ("Success" in candid) {
         return "success";
@@ -2028,7 +2059,7 @@ export function changeRoleResponse(
 }
 
 export function registerPollVoteResponse(
-    candid: ApiRegisterPollVoteResponse | ApiRegisterChannelPollVoteResponse
+    candid: ApiRegisterPollVoteResponse | ApiRegisterChannelPollVoteResponse,
 ): RegisterPollVoteResponse {
     if ("Success" in candid) {
         return "success";
@@ -2066,7 +2097,7 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
 
 export function searchGroupChatResponse(
     candid: ApiSearchGroupChatResponse | ApiSearchChannelResponse,
-    chatId: MultiUserChatIdentifier
+    chatId: MultiUserChatIdentifier,
 ): SearchGroupChatResponse {
     if ("Success" in candid) {
         return {
@@ -2080,7 +2111,7 @@ export function searchGroupChatResponse(
 }
 
 export function inviteCodeResponse(
-    candid: ApiInviteCodeResponse | ApiCommunityInviteCodeResponse
+    candid: ApiInviteCodeResponse | ApiCommunityInviteCodeResponse,
 ): InviteCodeResponse {
     if ("Success" in candid) {
         return {
@@ -2098,7 +2129,7 @@ export function inviteCodeResponse(
 }
 
 export function enableInviteCodeResponse(
-    candid: ApiEnableInviteCodeResponse | ApiCommunityEnableInviteCodeResponse
+    candid: ApiEnableInviteCodeResponse | ApiCommunityEnableInviteCodeResponse,
 ): EnableInviteCodeResponse {
     if ("Success" in candid) {
         return {
@@ -2116,7 +2147,7 @@ export function enableInviteCodeResponse(
 }
 
 export function disableInviteCodeResponse(
-    candid: ApiDisableInviteCodeResponse | ApiCommunityDisableInviteCodeResponse
+    candid: ApiDisableInviteCodeResponse | ApiCommunityDisableInviteCodeResponse,
 ): DisableInviteCodeResponse {
     if ("Success" in candid) {
         return "success";
@@ -2129,7 +2160,7 @@ export function disableInviteCodeResponse(
 }
 
 export function resetInviteCodeResponse(
-    candid: ApiResetInviteCodeResponse | ApiCommunityEnableInviteCodeResponse
+    candid: ApiResetInviteCodeResponse | ApiCommunityEnableInviteCodeResponse,
 ): ResetInviteCodeResponse {
     if ("Success" in candid) {
         return {
@@ -2147,7 +2178,7 @@ export function resetInviteCodeResponse(
 }
 
 export function registerProposalVoteResponse(
-    candid: ApiGroupRegisterProposalVoteResponse | ApiCommunityRegisterProposalVoteResponse
+    candid: ApiGroupRegisterProposalVoteResponse | ApiCommunityRegisterProposalVoteResponse,
 ): RegisterProposalVoteResponse {
     if ("Success" in candid) {
         return "success";
@@ -2193,6 +2224,6 @@ export function registerProposalVoteResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiRegisterProposalVoteResponse type received",
-        candid
+        candid,
     );
 }

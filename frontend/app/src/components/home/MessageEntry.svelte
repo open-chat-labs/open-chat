@@ -209,10 +209,13 @@
                 dispatch("startTyping");
             }
             if (typingTimer !== undefined) {
-                clearTimeout(typingTimer);
+                window.clearTimeout(typingTimer);
             }
 
-            typingTimer = setTimeout(() => dispatch("stopTyping"), MARK_TYPING_STOPPED_INTERVAL_MS);
+            typingTimer = window.setTimeout(
+                () => dispatch("stopTyping"),
+                MARK_TYPING_STOPPED_INTERVAL_MS
+            );
         });
     }
 
@@ -311,7 +314,9 @@
         const tokenMatch = txt.match(tokenMatchRegex);
         if (tokenMatch && tokenMatch[2] !== undefined) {
             const token = tokenMatch[1];
-            const tokenDetails = Object.values($cryptoLookup).find((t) => t.symbol.toLowerCase() === token);
+            const tokenDetails = Object.values($cryptoLookup).find(
+                (t) => t.symbol.toLowerCase() === token
+            );
             if (tokenDetails !== undefined) {
                 dispatch("tokenTransfer", {
                     ledger: tokenDetails.ledger,
@@ -518,6 +523,7 @@
                 editing={editingEvent !== undefined}
                 on:tokenTransfer
                 on:attachGif
+                on:makeMeme
                 on:createPoll
                 on:upgrade
                 on:clearAttachment
@@ -591,29 +597,6 @@
 
     .blocked,
     .disabled,
-    .preview {
-        height: 42px;
-        color: var(--txt);
-        @include font(book, normal, fs-100);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-    }
-
-    .preview {
-        position: relative;
-        justify-content: flex-end;
-        gap: $sp3;
-        @include mobile() {
-            justify-content: center;
-        }
-
-        .gate {
-            position: absolute;
-            left: 0;
-        }
-    }
 
     .recording {
         padding: 0 $sp3;

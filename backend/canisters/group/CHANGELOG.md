@@ -5,13 +5,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add optional user `display name` ([#4247](https://github.com/open-chat-labs/open-chat/pull/4247))
+
+## [[2.0.818](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.818-group)] - 2023-08-24
+
+### Added
+
+- Support making private groups / channels public ([#4223](https://github.com/open-chat-labs/open-chat/pull/4223))
+
 ### Changed
 
 - Optimise `selected_updates` for query caching ([#4185](https://github.com/open-chat-labs/open-chat/pull/4185))
+- Extend versioned rules to communities and groups ([#4219](https://github.com/open-chat-labs/open-chat/pull/4219))
 
 ### Removed
 
 - Remove `selected_updates` which has been superseded by `selected_updates_v2` ([#4182](https://github.com/open-chat-labs/open-chat/pull/4182))
+
+### Fixed
+
+- Fix for owners not being able to demote other owners ([#4227](https://github.com/open-chat-labs/open-chat/pull/4227))
 
 ## [[2.0.809](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.809-group)] - 2023-08-15
 

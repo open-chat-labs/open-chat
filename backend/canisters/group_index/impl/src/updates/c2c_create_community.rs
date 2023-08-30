@@ -135,7 +135,7 @@ fn commit(
     let now = state.env.now();
     if is_public {
         state.data.public_group_and_community_names.insert(&name, community_id.into());
-        state.data.public_communities.handle_community_created(
+        state.data.public_communities.add(
             community_id,
             name,
             description,

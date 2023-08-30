@@ -5,6 +5,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Support changing casing of public groups / communities ([#4258](https://github.com/open-chat-labs/open-chat/pull/4258))
+
+## [[2.0.816](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.816-group_index)] - 2023-08-23
+
+### Changed
+
+- Allow making private communities public ([#4217](https://github.com/open-chat-labs/open-chat/pull/4217))
+
+## [[2.0.813](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.813-group_index)] - 2023-08-22
+
+### Changed
+
+- Improve upgrade version check to support multiple active versions ([#4215](https://github.com/open-chat-labs/open-chat/pull/4215))
+
+## [[2.0.811](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.811-group_index)] - 2023-08-21
+
+### Changed
+
+- Include `use_for_new_canisters` when displaying upgrade proposals ([#4214](https://github.com/open-chat-labs/open-chat/pull/4214))
+
 ## [[2.0.793](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.793-group_index)] - 2023-08-08
 
 ### Changed

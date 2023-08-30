@@ -115,7 +115,7 @@
                         messageReadTimers[idx] = timer;
                     }
                     if (!isIntersecting && messageReadTimers[idx] !== undefined) {
-                        clearTimeout(messageReadTimers[idx]);
+                        window.clearTimeout(messageReadTimers[idx]);
                         delete messageReadTimers[idx];
                     }
                 }
@@ -457,6 +457,8 @@
         .date-label {
             padding: $sp2 10px;
             background-color: var(--currentChat-date-bg);
+            border: var(--currentChat-date-bd);
+            color: var(--currentChat-date-txt);
             position: sticky;
             top: 0;
             width: fit-content;

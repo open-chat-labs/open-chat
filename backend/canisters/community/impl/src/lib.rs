@@ -93,6 +93,10 @@ impl RuntimeState {
             let membership = CommunityMembership {
                 joined: m.date_added,
                 role: m.role,
+                rules_accepted: m
+                    .rules_accepted
+                    .as_ref()
+                    .map_or(false, |version| version.value >= self.data.rules.text.version),
             };
 
             // Return all the channels that the user is a member of
@@ -134,6 +138,7 @@ impl RuntimeState {
             channels,
             membership,
             metrics: data.cached_chat_metrics.value.clone(),
+            rules_enabled: data.rules.enabled,
         }
     }
 
@@ -281,6 +286,15 @@ impl Data {
         }
 
         self.cached_chat_metrics = Timestamped::new(metrics.hydrate(), now);
+    }
+
+    pub fn check_rules(&self, member: &CommunityMemberInternal) -> bool {
+        !self.rules.enabled
+            || member.is_bot
+            || (member
+                .rules_accepted
+                .as_ref()
+                .map_or(false, |accepted| accepted.value >= self.rules.text.version))
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {

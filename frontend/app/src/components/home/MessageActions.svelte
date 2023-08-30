@@ -6,6 +6,7 @@
     import Smiley from "./Smiley.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
+    import MemeFighter from "../icons/MemeFighter.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
     import TrayPlus from "svelte-material-icons/DotsVertical.svelte";
     import TrayRemove from "svelte-material-icons/Close.svelte";
@@ -74,6 +75,11 @@
         dispatch("attachGif", "");
         drawOpen = false;
     }
+
+    function makeMeme() {
+        dispatch("makeMeme");
+        drawOpen = false;
+    }
 </script>
 
 <svelte:body
@@ -127,6 +133,11 @@
                 <StickerEmoji size={$iconSize} color={iconColour} />
             </HoverIcon>
         </div>
+        <div class="meme" on:click|stopPropagation={makeMeme}>
+            <HoverIcon title={"Meme Fighter"}>
+                <MemeFighter size={$iconSize} color={iconColour} />
+            </HoverIcon>
+        </div>
         {#if pollsAllowed}
             <div class="poll" on:click|stopPropagation={createPoll}>
                 <HoverIcon title={$_("poll.create")}>
@@ -141,6 +152,10 @@
     :global(.message-actions.useDrawer.visible .wrapper) {
         background-color: var(--button-bg);
         @include box-shadow(1);
+
+        &:hover {
+            background-color: var(--button-hv);
+        }
     }
 
     :global(.message-actions.useDrawer.visible .wrapper path) {
@@ -155,6 +170,8 @@
     .attach,
     .open-draw,
     .gif,
+    .meme,
+    .poll,
     .send-icp {
         flex: 0 0 15px;
     }
@@ -178,6 +195,7 @@
             .emoji,
             .attach,
             .gif,
+            .meme,
             .send-icp,
             .poll {
                 top: -18px;
@@ -192,6 +210,7 @@
                 .emoji,
                 .attach,
                 .gif,
+                .meme,
                 .send-icp,
                 .poll {
                     left: unset;
@@ -206,26 +225,32 @@
                 .emoji {
                     opacity: 1;
                     top: -75px;
-                    transition-delay: 200ms;
+                    transition-delay: 250ms;
                 }
                 .attach {
                     opacity: 1;
                     top: -120px;
-                    transition-delay: 150ms;
+                    transition-delay: 200ms;
                 }
                 .send-icp {
                     opacity: 1;
                     top: -165px;
-                    transition-delay: 100ms;
+                    transition-delay: 150ms;
                 }
                 .gif {
                     opacity: 1;
                     top: -210px;
+                    transition-delay: 100ms;
+                }
+                .meme {
+                    opacity: 1;
+                    top: -255px;
                     transition-delay: 50ms;
                 }
                 .poll {
                     opacity: 1;
-                    top: -255px;
+                    top: -300px;
+                    transition-delay: 0ms;
                 }
             }
         }

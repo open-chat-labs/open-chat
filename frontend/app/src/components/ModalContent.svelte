@@ -37,11 +37,10 @@
         menuStore.hideMenu();
     }
 
-    onMount(async () => {
+    onMount(() => {
         try {
             if (useAlignTo) {
-                await tick();
-                calculatePosition();
+                tick().then(calculatePosition);
             }
             tick().then(() => (actualWidth = divElement?.clientWidth));
             divElement.addEventListener("click", closeMenus);

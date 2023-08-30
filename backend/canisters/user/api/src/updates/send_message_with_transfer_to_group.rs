@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
     ChatId, CompletedCryptoTransaction, Cryptocurrency, EventIndex, GroupReplyContext, MessageContentInitial, MessageId,
-    MessageIndex, TimestampMillis, User,
+    MessageIndex, TimestampMillis, User, Version,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -12,9 +12,12 @@ pub struct Args {
     pub message_id: MessageId,
     pub content: MessageContentInitial,
     pub sender_name: String,
+    #[serde(default)]
+    pub sender_display_name: Option<String>,
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
     pub correlation_id: u64,
+    pub rules_accepted: Option<Version>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -29,6 +32,7 @@ pub enum Response {
     TransferCannotBeZero,
     UserSuspended,
     ChatFrozen,
+    RulesNotAccepted,
     InternalError(String, CompletedCryptoTransaction),
 }
 
