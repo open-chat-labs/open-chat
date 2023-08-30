@@ -24,7 +24,7 @@
     import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
     import { flip } from "svelte/animate";
-    import { DndEvent, dndzone } from "svelte-dnd-action";
+    import { type DndEvent, dndzone } from "svelte-dnd-action";
     import { isTouchDevice } from "../../../utils/devices";
 
     const client = getContext<OpenChat>("client");
