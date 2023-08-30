@@ -9,7 +9,7 @@ import { hasOwnerRights, isPermitted } from "./permissions";
 export function canChangeRoles(
     { membership, permissions }: CommunitySummary,
     currRole: MemberRole,
-    newRole: MemberRole
+    newRole: MemberRole,
 ): boolean {
     if (currRole === newRole) {
         return false;
@@ -49,18 +49,23 @@ export function canDeleteCommunity({ membership }: CommunitySummary): boolean {
 
 export function canBlockUsers(community: CommunitySummary): boolean {
     return (
-        community.public && isPermitted(community.membership.role, community.permissions.removeMembers)
+        community.public &&
+        isPermitted(community.membership.role, community.permissions.removeMembers)
     );
 }
 
 export function canUnblockUsers(community: CommunitySummary): boolean {
     return (
-        community.public && isPermitted(community.membership.role, community.permissions.removeMembers)
+        community.public &&
+        isPermitted(community.membership.role, community.permissions.removeMembers)
     );
 }
 
 export function canInviteUsers(community: CommunitySummary): boolean {
-    return community.public || isPermitted(community.membership.role, community.permissions.inviteUsers);
+    return (
+        community.public ||
+        isPermitted(community.membership.role, community.permissions.inviteUsers)
+    );
 }
 
 export function canRemoveMembers(community: CommunitySummary): boolean {
@@ -72,7 +77,7 @@ export function canRemoveMembers(community: CommunitySummary): boolean {
 
 export function mergeLocalUpdates(
     server: CommunityMap<CommunitySummary>,
-    localUpdates: CommunityMap<LocalCommunitySummaryUpdates>
+    localUpdates: CommunityMap<LocalCommunitySummaryUpdates>,
 ): CommunityMap<CommunitySummary> {
     if (Object.keys(localUpdates).length === 0) return server;
 
@@ -92,6 +97,18 @@ export function mergeLocalUpdates(
                 community.membership.joined < localUpdate.removedAtTimestamp
             ) {
                 merged.delete(chatId);
+            }
+        }
+        if (localUpdate.index !== undefined) {
+            const community = merged.get(chatId);
+            if (community !== undefined) {
+                merged.set(chatId, {
+                    ...community,
+                    membership: {
+                        ...community.membership,
+                        index: localUpdate.index,
+                    },
+                });
             }
         }
     }
