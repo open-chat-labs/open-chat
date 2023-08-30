@@ -34,7 +34,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const EmptyArgs = IDL.Record({});
-  const Version = IDL.Record({
+  const BuildVersion = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
@@ -65,7 +65,7 @@ export const idlFactory = ({ IDL }) => {
   const CurrentUserResponse = IDL.Variant({
     'Success' : IDL.Record({
       'username' : IDL.Text,
-      'wasm_version' : Version,
+      'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
       'referrals' : IDL.Vec(UserId),
       'user_id' : UserId,

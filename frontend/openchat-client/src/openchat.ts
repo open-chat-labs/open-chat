@@ -359,6 +359,7 @@ import {
     addCommunityPreview,
     communities,
     communitiesList,
+    communityPreviewsStore,
     communityStateStore,
     currentCommunityBlockedUsers,
     currentCommunityInvitedUsers,
@@ -1124,6 +1125,13 @@ export class OpenChat extends OpenChatAgentWorker {
                 this._logger.error("Update permissions failed: ", err);
                 return false;
             });
+    }
+
+    setCommunityIndexes(indexes: Record<string, number>): Promise<boolean> {
+        return this.sendRequest({ kind: "setCommunityIndexes", indexes }).catch((err) => {
+            this._logger.error("Failed to set community indexes: ", err);
+            return false;
+        });
     }
 
     getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
@@ -4560,6 +4568,48 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     // **** Communities Stuff
+
+    // takes a list of communities that may contain communities that we are a member of and/or preview communities
+    // and overwrites them in the correct place
+    updateCommunityIndexes(communities: CommunitySummary[]): void {
+        const [previews, member] = communities.reduce(
+            ([previews, member], c) => {
+                if (this._liveState.communityPreviews.has(c.id)) {
+                    previews.push(c);
+                } else {
+                    member.push(c);
+                }
+                return [previews, member];
+            },
+            [[], []] as [CommunitySummary[], CommunitySummary[]],
+        );
+        if (previews.length > 0) {
+            communityPreviewsStore.update((state) => {
+                previews.forEach((p) => state.set(p.id, p));
+                return state;
+            });
+        }
+
+        if (member.length > 0) {
+            globalStateStore.update((state) => {
+                const communities = state.communities.clone();
+                member.forEach((m) => communities.set(m.id, m));
+                return {
+                    ...state,
+                    communities,
+                };
+            });
+        }
+        this.setCommunityIndexes(
+            member.reduce(
+                (idxs, c) => {
+                    idxs[c.id.communityId] = c.membership.index;
+                    return idxs;
+                },
+                {} as Record<string, number>,
+            ),
+        );
+    }
 
     async setSelectedCommunity(
         id: CommunityIdentifier,

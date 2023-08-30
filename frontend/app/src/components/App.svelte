@@ -27,6 +27,8 @@
     import page from "page";
     import { menuStore } from "../stores/menu";
     import { framed } from "../stores/xframe";
+    import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
+    overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     let viewPortContent = "width=device-width, initial-scale=1";
 
@@ -548,6 +550,7 @@
             display: flex;
             height: 100vh;
             height: calc(var(--vh, 1vh) * 100);
+            height: 100dvh; // firefox will ignore this
 
             @include size-below(lg) {
                 padding: $sp3;

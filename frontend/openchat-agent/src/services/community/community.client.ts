@@ -116,10 +116,7 @@ import type {
     ResetInviteCodeResponse,
     RegisterProposalVoteResponse,
 } from "openchat-shared";
-import {
-    textToCode,
-    DestinationInvalidError,
-} from "openchat-shared";
+import { textToCode, DestinationInvalidError } from "openchat-shared";
 import {
     apiGroupRules,
     apiOptionalGroupPermissions,
@@ -259,7 +256,6 @@ export class CommunityClient extends CandidService {
                 permissions: [apiGroupPermissions(channel.permissions)],
                 rules: apiGroupRules(channel.rules),
                 gate: apiMaybeAccessGate(channel.gate),
-                is_default: false,
             }),
             (resp) => createGroupResponse(resp, channel.id)
         );
@@ -899,6 +895,7 @@ export class CommunityClient extends CandidService {
                 ),
                 mentioned: mentioned.map(apiUser),
                 forwarding: event.event.forwarded,
+                rules_accepted: [] as [] | [number], // TODO come back to this
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             };
             return this.handleResponse(this.service.send_message(args), sendMessageResponse)
@@ -949,8 +946,7 @@ export class CommunityClient extends CandidService {
                     invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
             (resp) => communityChannelSummaryResponse(resp, this.communityId)
-        )
-        .catch((err) => {
+        ).catch((err) => {
             if (err instanceof DestinationInvalidError) {
                 return { kind: "canister_not_found" };
             } else {
