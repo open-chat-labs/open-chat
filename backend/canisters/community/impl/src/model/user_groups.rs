@@ -61,7 +61,7 @@ impl UserGroups {
 
     pub fn remove_user_from_all(&mut self, user_id: &UserId, now: TimestampMillis) {
         for group in self.groups.iter_mut() {
-            if group.members.update(|u| u.remove(&user_id), now) {
+            if group.members.update(|u| u.remove(user_id), now) {
                 self.last_updated = now;
             }
         }
