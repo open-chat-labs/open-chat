@@ -3,7 +3,10 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { themeStore } from "../../theme/themes";
-    import { onMount } from "svelte";
+    import { createEventDispatcher, onMount } from "svelte";
+    import { lowBandwidth } from "../../stores/settings";
+
+    const dispatch = createEventDispatcher();
 
     export let intersecting: boolean;
     export let tweetId: string;
@@ -24,7 +27,12 @@
                     conversation: "none",
                     theme: $themeStore.name,
                 })
-                .then(() => (tweetRendered = true))
+                .then(() => {
+                    tweetRendered = true;
+                    if (!$lowBandwidth) {
+                        dispatch("loaded", [tweetWrapper, tweetWrapper?.offsetHeight]);
+                    }
+                })
                 .catch((err: any) => {
                     console.log("Failed to render tweet: ", err);
                 });
@@ -33,41 +41,3 @@
 </script>
 
 <div class:rendered={tweetRendered} class="tweet" bind:this={tweetWrapper} />
-
-{#if !tweetRendered && supported}
-    <div class="preview">
-        <div class="logo" />
-        <p class="label">
-            {$_("loadingTweetPreview")}
-        </p>
-    </div>
-{/if}
-
-<style lang="scss">
-    .preview {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-evenly;
-        align-items: center;
-        min-height: toRem(150);
-
-        .logo {
-            @include loading-spinner(
-                4em,
-                2em,
-                var(--button-spinner),
-                "/assets/twitter.svg?x",
-                0.8s,
-                1
-            );
-            &::after {
-                @include pulse();
-            }
-        }
-
-        .label {
-            text-align: center;
-            opacity: 0.9;
-        }
-    }
-</style>

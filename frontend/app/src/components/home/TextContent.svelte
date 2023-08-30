@@ -14,7 +14,6 @@
     export let truncate: boolean = false;
     export let pinned: boolean = false;
     export let edited: boolean;
-    export let height: number | undefined = undefined;
     export let fill: boolean;
 
     $: expanded = !$lowBandwidth;
@@ -26,6 +25,10 @@
             text = text.slice(0, SIZE_LIMIT) + "...";
         }
         return text;
+    }
+
+    function expand() {
+        expanded = true;
     }
 
     $: text = truncateText(content.text);
@@ -40,18 +43,12 @@
 
 {#if linkMatch}
     {#if !expanded}
-        <span on:click={() => (expanded = true)} class="expand" title={$_("showPreview")}>
+        <span on:click={expand} class="expand" title={$_("showPreview")}>
             <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={"var(--txt)"} />
         </span>
     {:else}
         <IntersectionObserver let:intersecting>
-            <LinkPreview
-                {pinned}
-                {fill}
-                {height}
-                text={content.text}
-                links={linkMatch}
-                {intersecting} />
+            <LinkPreview {pinned} {fill} text={content.text} links={linkMatch} {intersecting} />
         </IntersectionObserver>
     {/if}
 {/if}
