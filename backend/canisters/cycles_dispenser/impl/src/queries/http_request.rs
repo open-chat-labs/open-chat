@@ -16,6 +16,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         "logs" => encode_logs(canister_logger::export_logs()),
         "metrics" => read_state(|state| to_json_response(&state.metrics())),
         "trace" => encode_logs(canister_logger::export_traces()),
+        "latest_top_ups" => read_state(get_latest_top_ups_impl),
         _ => HttpResponse::not_found(),
     }
 }
@@ -66,4 +67,10 @@ fn get_ledger_account_impl(state: &State) -> HttpResponse {
         body: ByteBuf::from(body),
         streaming_strategy: None,
     }
+}
+
+fn get_latest_top_ups_impl(state: &State) -> HttpResponse {
+    let top_ups = state.data.canisters.latest_top_ups(200);
+
+    to_json_response(&top_ups)
 }
