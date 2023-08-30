@@ -27,6 +27,8 @@
     import page from "page";
     import { menuStore } from "../stores/menu";
     import { framed } from "../stores/xframe";
+    import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
+    overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     let viewPortContent = "width=device-width, initial-scale=1";
 

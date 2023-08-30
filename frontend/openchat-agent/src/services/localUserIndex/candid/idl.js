@@ -55,10 +55,12 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'TooManyInvites' : IDL.Nat32,
   });
+  const Version = IDL.Nat32;
   const JoinChannelArgs = IDL.Record({
     'channel_id' : ChannelId,
     'community_id' : CommunityId,
     'invite_code' : IDL.Opt(IDL.Nat64),
+    'rules_accepted' : IDL.Opt(Version),
   });
   const PermissionRole = IDL.Variant({
     'Moderators' : IDL.Null,
@@ -151,6 +153,7 @@ export const idlFactory = ({ IDL }) => {
     'role' : GroupRole,
     'notifications_muted' : IDL.Bool,
     'joined' : TimestampMillis,
+    'rules_accepted' : IDL.Bool,
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'mentions' : IDL.Vec(Mention),
     'my_metrics' : ChatMetrics,
@@ -314,6 +317,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
     'from' : NnsCryptoAccount,
@@ -334,6 +338,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : Icrc1AccountOrMint,
     'fee' : IDL.Nat,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'block_index' : BlockIndex,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
@@ -358,6 +363,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : NnsCryptoAccount,
     'memo' : IDL.Nat64,
@@ -369,6 +375,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : Icrc1AccountOrMint,
     'fee' : IDL.Nat,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
     'error_message' : IDL.Text,
@@ -509,6 +516,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
     'min_visible_message_index' : MessageIndex,
+    'rules_enabled' : IDL.Bool,
     'member_count' : IDL.Nat32,
     'expired_messages' : IDL.Vec(MessageIndexRange),
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -577,6 +585,7 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
     'InternalError' : IDL.Text,
+    'RulesNotAccepted' : IDL.Null,
     'UserBlocked' : IDL.Null,
   });
   const JoinCommunityArgs = IDL.Record({
@@ -601,7 +610,7 @@ export const idlFactory = ({ IDL }) => {
     'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
   });
-  const Version = IDL.Record({
+  const BuildVersion = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
@@ -616,7 +625,7 @@ export const idlFactory = ({ IDL }) => {
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'role' : GroupRole,
-    'wasm_version' : Version,
+    'wasm_version' : BuildVersion,
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),

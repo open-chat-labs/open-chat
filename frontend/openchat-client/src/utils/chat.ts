@@ -1047,6 +1047,7 @@ export function buildBlobUrl(
 }
 
 export function buildIdenticonUrl(id: string): string {
+    if (!id) return "";
     const identicon = new Identicon(md5(id), {
         margin: 0,
         format: "svg",
@@ -1088,9 +1089,10 @@ export function mergeEventsAndLocalUpdates(
             const updates = localUpdates.get(e.event.messageId);
             const translation = translations.get(e.event.messageId);
 
-            const repliesTo = e.event.repliesTo?.kind === "rehydrated_reply_context"
-                ? e.event.repliesTo.messageId
-                : undefined;
+            const repliesTo =
+                e.event.repliesTo?.kind === "rehydrated_reply_context"
+                    ? e.event.repliesTo.messageId
+                    : undefined;
 
             const [replyContextUpdates, replyTranslation] =
                 repliesTo !== undefined
@@ -1267,7 +1269,10 @@ function mergeLocalUpdates(
                 );
             }
             if (replyTranslation !== undefined) {
-                message.repliesTo.content = applyTranslation(message.repliesTo.content, replyTranslation);
+                message.repliesTo.content = applyTranslation(
+                    message.repliesTo.content,
+                    replyTranslation,
+                );
             }
         }
     }

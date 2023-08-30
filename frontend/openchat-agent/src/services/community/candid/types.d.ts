@@ -1,6 +1,18 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export interface AcceptRulesArgs {
+  'channel_id' : ChannelId,
+  'version' : Version,
+}
+export type AcceptRulesResponse = { 'RulesAlreadyAccepted' : null } |
+  { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'OldVersion' : null };
 export type AccessGate = { 'SnsNeuron' : SnsNeuronGate } |
   { 'DiamondMember' : null };
 export type AccessGateUpdate = { 'NoChange' : null } |
@@ -97,12 +109,17 @@ export type BlockUserResponse = { 'NotAuthorized' : null } |
   { 'InternalError' : string } |
   { 'CannotBlockSelf' : null } |
   { 'CannotBlockUser' : null };
+export interface BuildVersion {
+  'major' : number,
+  'minor' : number,
+  'patch' : number,
+}
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
 export interface CanisterWasm {
   'compressed' : boolean,
-  'version' : Version,
+  'version' : BuildVersion,
   'module' : Uint8Array | number[],
 }
 export interface ChangeChannelRoleArgs {
@@ -144,6 +161,7 @@ export interface ChannelMembership {
   'role' : GroupRole,
   'notifications_muted' : boolean,
   'joined' : TimestampMillis,
+  'rules_accepted' : boolean,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'mentions' : Array<Mention>,
   'my_metrics' : ChatMetrics,
@@ -151,6 +169,7 @@ export interface ChannelMembership {
 export interface ChannelMembershipUpdates {
   'role' : [] | [GroupRole],
   'notifications_muted' : [] | [boolean],
+  'rules_accepted' : [] | [boolean],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'mentions' : Array<Mention>,
   'my_metrics' : [] | [ChatMetrics],
@@ -305,6 +324,7 @@ export interface CommunityCanisterChannelSummary {
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
+  'rules_enabled' : boolean,
   'member_count' : number,
   'expired_messages' : Array<MessageIndexRange>,
   'latest_message' : [] | [MessageEventWrapper],
@@ -325,6 +345,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
   'updated_events' : Array<[[] | [number], number, bigint]>,
+  'rules_enabled' : [] | [boolean],
   'member_count' : [] | [number],
   'latest_message' : [] | [MessageEventWrapper],
 }
@@ -416,7 +437,6 @@ export interface CreateChannelArgs {
   'name' : string,
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
-  'is_default' : boolean,
   'history_visible_to_new_joiners' : boolean,
   'rules' : AccessRules,
   'avatar' : [] | [Document],
@@ -702,7 +722,7 @@ export interface GroupCanisterGroupChatSummary {
   'gate' : [] | [AccessGate],
   'name' : string,
   'role' : GroupRole,
-  'wasm_version' : Version,
+  'wasm_version' : BuildVersion,
   'notifications_muted' : boolean,
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
@@ -731,7 +751,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'role' : [] | [GroupRole],
-  'wasm_version' : [] | [Version],
+  'wasm_version' : [] | [BuildVersion],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
@@ -770,7 +790,7 @@ export interface GroupChatSummary {
   'gate' : [] | [AccessGate],
   'name' : string,
   'role' : GroupRole,
-  'wasm_version' : Version,
+  'wasm_version' : BuildVersion,
   'notifications_muted' : boolean,
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
@@ -902,6 +922,7 @@ export interface Icrc1CompletedCryptoTransaction {
   'to' : Icrc1AccountOrMint,
   'fee' : bigint,
   'created' : TimestampNanos,
+  'token' : Cryptocurrency,
   'block_index' : BlockIndex,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
@@ -912,6 +933,7 @@ export interface Icrc1FailedCryptoTransaction {
   'to' : Icrc1AccountOrMint,
   'fee' : bigint,
   'created' : TimestampNanos,
+  'token' : Cryptocurrency,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
   'error_message' : string,
@@ -1088,6 +1110,7 @@ export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
   'created' : TimestampNanos,
+  'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'from' : NnsCryptoAccount,
@@ -1101,6 +1124,7 @@ export interface NnsFailedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
   'created' : TimestampNanos,
+  'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : NnsCryptoAccount,
   'memo' : bigint,
@@ -1290,7 +1314,7 @@ export interface PublicGroupSummary {
   'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
-  'wasm_version' : Version,
+  'wasm_version' : BuildVersion,
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
@@ -1426,6 +1450,7 @@ export type SelectedChannelInitialResponse = { 'ChannelNotFound' : null } |
       'members' : Array<Participant>,
       'invited_users' : Array<UserId>,
       'blocked_users' : Array<UserId>,
+      'access_rules' : VersionedRules,
       'timestamp' : TimestampMillis,
       'pinned_messages' : Uint32Array | number[],
       'latest_event_index' : EventIndex,
@@ -1443,6 +1468,11 @@ export type SelectedChannelUpdatesResponse = { 'ChannelNotFound' : null } |
   { 'SuccessNoUpdates' : null } |
   { 'PrivateCommunity' : null } |
   { 'PrivateChannel' : null };
+export type SelectedChannelUpdatesV2Response = { 'ChannelNotFound' : null } |
+  { 'Success' : SelectedGroupUpdates } |
+  { 'SuccessNoUpdates' : TimestampMillis } |
+  { 'PrivateCommunity' : null } |
+  { 'PrivateChannel' : null };
 export interface SelectedGroupUpdates {
   'blocked_users_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],
@@ -1450,6 +1480,7 @@ export interface SelectedGroupUpdates {
   'members_added_or_updated' : Array<Participant>,
   'pinned_messages_added' : Uint32Array | number[],
   'members_removed' : Array<UserId>,
+  'access_rules' : [] | [VersionedRules],
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'rules' : [] | [AccessRules],
@@ -1482,11 +1513,15 @@ export interface SelectedUpdatesSuccess {
   'rules' : [] | [AccessRules],
   'blocked_users_added' : Array<UserId>,
 }
+export type SelectedUpdatesV2Response = { 'Success' : SelectedUpdatesSuccess } |
+  { 'SuccessNoUpdates' : TimestampMillis } |
+  { 'PrivateCommunity' : null };
 export interface SendMessageArgs {
   'channel_id' : ChannelId,
   'content' : MessageContentInitial,
   'mentioned' : Array<User>,
   'forwarding' : boolean,
+  'rules_accepted' : [] | [Version],
   'sender_name' : string,
   'message_id' : MessageId,
   'replies_to' : [] | [GroupReplyContext],
@@ -1510,7 +1545,8 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
-  { 'InvalidRequest' : string };
+  { 'InvalidRequest' : string } |
+  { 'RulesNotAccepted' : null };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -1720,11 +1756,8 @@ export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
 }
-export interface Version {
-  'major' : number,
-  'minor' : number,
-  'patch' : number,
-}
+export type Version = number;
+export interface VersionedRules { 'text' : string, 'version' : Version }
 export interface VideoContent {
   'height' : number,
   'image_blob_reference' : [] | [BlobReference],
@@ -1737,6 +1770,7 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'accept_rules' : ActorMethod<[AcceptRulesArgs], AcceptRulesResponse>,
   'add_members_to_channel' : ActorMethod<
     [AddMembersToChannelArgs],
     AddMembersToChannelResponse
@@ -1809,6 +1843,10 @@ export interface _SERVICE {
     [SelectedChannelUpdatesArgs],
     SelectedChannelUpdatesResponse
   >,
+  'selected_channel_updates_v2' : ActorMethod<
+    [SelectedChannelUpdatesArgs],
+    SelectedChannelUpdatesV2Response
+  >,
   'selected_initial' : ActorMethod<
     [SelectedInitialArgs],
     SelectedInitialResponse
@@ -1816,6 +1854,10 @@ export interface _SERVICE {
   'selected_updates' : ActorMethod<
     [SelectedUpdatesArgs],
     SelectedUpdatesResponse
+  >,
+  'selected_updates_v2' : ActorMethod<
+    [SelectedUpdatesArgs],
+    SelectedUpdatesV2Response
   >,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
   'summary' : ActorMethod<[SummaryArgs], SummaryResponse>,

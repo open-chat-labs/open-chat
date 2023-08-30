@@ -1,5 +1,4 @@
-import { type MessageContext, MessageContextMap } from "openchat-shared";
-import { waitAll } from "./promise";
+import { type MessageContext, MessageContextMap, waitAll } from "openchat-shared";
 
 export class AsyncMessageContextMap<T> extends MessageContextMap<T[]> {
     insert(context: MessageContext, val: T): void {
@@ -18,7 +17,7 @@ export class AsyncMessageContextMap<T> extends MessageContextMap<T[]> {
     }
 
     async asyncMap<A>(
-        fn: (k: MessageContext, t: T[]) => Promise<[MessageContext, A[]]>
+        fn: (k: MessageContext, t: T[]) => Promise<[MessageContext, A[]]>,
     ): Promise<AsyncMessageContextMap<A>> {
         const intermediate = this.entries().map(([key, val]) => fn(key, val));
         const result = await waitAll(intermediate);
@@ -30,7 +29,7 @@ export class AsyncMessageContextMap<T> extends MessageContextMap<T[]> {
                 res.set(messageContext, (res.get(messageContext) ?? []).concat(messages));
                 return res;
             },
-            new AsyncMessageContextMap<A>()
+            new AsyncMessageContextMap<A>(),
         );
     }
 }

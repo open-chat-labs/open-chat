@@ -41,7 +41,7 @@
 </script>
 
 {#if content.kind === "text_content"}
-    <TextContent {fill} {truncate} {pinned} {content} {edited} {height} />
+    <TextContent {fill} {truncate} {pinned} {content} {edited} />
 {:else if content.kind === "image_content"}
     <IntersectionObserver let:intersecting>
         <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />

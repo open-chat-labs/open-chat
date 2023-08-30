@@ -1530,6 +1530,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
             role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
             archived: false,
             pinned: [],
+            index: 0,
         },
         channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: candid.primary_language,

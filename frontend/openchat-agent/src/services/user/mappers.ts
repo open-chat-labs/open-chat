@@ -113,11 +113,7 @@ import type {
     LeaveCommunityResponse,
     DeleteCommunityResponse,
 } from "openchat-shared";
-import {
-    nullMembership,
-    CommonResponses,
-    UnsupportedValueError,
-} from "openchat-shared";
+import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
     bytesToBigint,
     bytesToHexString,
@@ -513,6 +509,7 @@ function userCanisterCommunitySummary(
     const communityId = candid.community_id.toString();
     return {
         id: { kind: "community", communityId },
+        index: candid.index,
         channels: candid.channels.map((c) => userCanisterChannelSummary(c, communityId)),
         pinned: candid.pinned.map((p) => ({
             kind: "channel",
@@ -591,6 +588,7 @@ export function userCanisterCommunitySummaryUpdates(
     const communityId = candid.community_id.toString();
     return {
         id: { kind: "community", communityId },
+        index: optional(candid.index, identity),
         channels: candid.channels.map((c) => userCanisterChannelSummaryUpdates(c, communityId)),
         pinned: optional(candid.pinned, (p) =>
             p.map((p) => ({ kind: "channel", communityId, channelId: p.toString() }))
