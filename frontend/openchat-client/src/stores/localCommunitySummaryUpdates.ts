@@ -14,6 +14,12 @@ class LocalCommunitySummaryUpdatesStore extends LocalUpdatesStore<
         super(new CommunityMap<LocalCommunitySummaryUpdates>());
     }
 
+    updateIndex(id: CommunityIdentifier, index: number): void {
+        this.applyUpdate(id, (_) => ({
+            index,
+        }));
+    }
+
     markAdded(summary: CommunitySummary): void {
         this.applyUpdate(summary.id, (_) => ({
             added: summary,

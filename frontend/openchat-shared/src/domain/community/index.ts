@@ -258,6 +258,7 @@ export type LocalCommunitySummaryUpdates = {
     added?: CommunitySummary;
     removedAtTimestamp?: bigint;
     lastUpdated: number;
+    index?: number;
 };
 
 export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | Failure;

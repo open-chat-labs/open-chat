@@ -1128,6 +1128,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setCommunityIndexes(indexes: Record<string, number>): Promise<boolean> {
+        Object.entries(indexes).forEach(([k, v]) =>
+            localCommunitySummaryUpdates.updateIndex({ kind: "community", communityId: k }, v),
+        );
         return this.sendRequest({ kind: "setCommunityIndexes", indexes }).catch((err) => {
             this._logger.error("Failed to set community indexes: ", err);
             return false;
