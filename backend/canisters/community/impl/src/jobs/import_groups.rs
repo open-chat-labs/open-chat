@@ -134,13 +134,15 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
     info!(%group_id, instruction_count, "'finalize_group_import' completed");
 }
 
-// For each user already in the community, add the new channel to their set of channels.
-// For users who are not members, lookup their principals, then join them to the community, then add
-// them to the default channels, then add the new channel to their set of channels.
+// 1. For channel members already in the community, add the new channel to their set of channels.
+// 2. If the channel is public, for community members not in the channel, add them to the channel.
+// 3. For channel members who are not yet community members, lookup their principals, then join them
+// to the community, then add them to the public channels, then add the new channel to their set of
+// channels.
 pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attempt: u32) {
     info!(%group_id, attempt, "'process_channel_members' starting");
 
-    let (members_to_add, local_user_index_canister_id) = mutate_state(|state| {
+    let (members_to_add_to_community, local_user_index_canister_id) = mutate_state(|state| {
         let channel = state.data.channels.get(&channel_id).unwrap();
         let mut to_add: HashMap<UserId, bool> = HashMap::new();
         for (user_id, is_bot) in channel.chat.members.iter().map(|m| (m.user_id, m.is_bot)) {
@@ -156,30 +158,33 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
 
     let mut members_added = Vec::new();
 
-    if !members_to_add.is_empty() {
+    if !members_to_add_to_community.is_empty() {
         let c2c_args = local_user_index_canister::c2c_user_principals::Args {
-            user_ids: members_to_add.keys().copied().collect(),
+            user_ids: members_to_add_to_community.keys().copied().collect(),
         };
         if let Ok(local_user_index_canister::c2c_user_principals::Response::Success(users)) =
             local_user_index_canister_c2c_client::c2c_user_principals(local_user_index_canister_id, &c2c_args).await
         {
             mutate_state(|state| {
                 let now = state.env.now();
-                let default_channel_ids = state.data.channels.public_channel_ids();
 
+                // Add existing community members to the channel if it is public
+                add_community_members_to_channel_if_public(channel_id, state);
+
+                let public_channel_ids = state.data.channels.public_channel_ids();
                 for (user_id, principal) in users {
                     match state.data.members.add(
                         user_id,
                         principal,
-                        members_to_add.get(&user_id).copied().unwrap_or_default(),
+                        members_to_add_to_community.get(&user_id).copied().unwrap_or_default(),
                         now,
                     ) {
                         AddResult::Success(_) => {
                             state.data.invited_users.remove(&user_id, now);
 
                             let member = state.data.members.get_by_user_id_mut(&user_id).unwrap();
-                            for default_channel_id in default_channel_ids.iter() {
-                                if let Some(channel) = state.data.channels.get_mut(default_channel_id) {
+                            for channel_id in public_channel_ids.iter() {
+                                if let Some(channel) = state.data.channels.get_mut(channel_id) {
                                     if channel.chat.gate.is_none() {
                                         join_channel_unchecked(channel, member, true, now);
                                     }
@@ -211,6 +216,9 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
             });
             return;
         }
+    } else {
+        // Add community members to the channel if it is public
+        mutate_state(|state| add_community_members_to_channel_if_public(channel_id, state));
     }
 
     mutate_state(|state| {
@@ -226,6 +234,19 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
 
     ic_cdk_timers::set_timer(Duration::ZERO, move || mark_import_complete(group_id, channel_id));
     info!(%group_id, attempt, "'process_channel_members' completed");
+}
+
+fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut RuntimeState) {
+    if let Some(channel) = state.data.channels.get_mut(&channel_id) {
+        // If this is a public channel, add all community members to it
+        if channel.chat.is_public && channel.chat.gate.is_none() {
+            let now = state.env.now();
+            let channel = state.data.channels.get_mut(&channel_id).unwrap();
+            for member in state.data.members.iter_mut() {
+                join_channel_unchecked(channel, member, true, now);
+            }
+        }
+    }
 }
 
 pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
