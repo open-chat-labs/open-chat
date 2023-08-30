@@ -373,6 +373,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
     'from' : NnsCryptoAccount,
@@ -393,6 +394,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : Icrc1AccountOrMint,
     'fee' : IDL.Nat,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'block_index' : BlockIndex,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
@@ -417,6 +419,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : NnsCryptoAccount,
     'memo' : IDL.Nat64,
@@ -428,6 +431,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : Icrc1AccountOrMint,
     'fee' : IDL.Nat,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
     'error_message' : IDL.Text,
@@ -776,6 +780,7 @@ export const idlFactory = ({ IDL }) => {
     'community_id' : CommunityId,
     'channels' : IDL.Vec(UserCanisterChannelSummary),
     'pinned' : IDL.Vec(ChannelId),
+    'index' : IDL.Nat32,
     'archived' : IDL.Bool,
   });
   const CommunitiesInitial = IDL.Record({
@@ -825,7 +830,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupSubtype = IDL.Variant({
     'GovernanceProposals' : GovernanceProposalsSubtype,
   });
-  const Version = IDL.Record({
+  const BuildVersion = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
@@ -870,7 +875,7 @@ export const idlFactory = ({ IDL }) => {
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'role' : GroupRole,
-    'wasm_version' : Version,
+    'wasm_version' : BuildVersion,
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
@@ -1120,12 +1125,14 @@ export const idlFactory = ({ IDL }) => {
     'RecipientNotFound' : IDL.Null,
   });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
+  const Version = IDL.Nat32;
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageWithTransferToChannelArgs = IDL.Record({
     'channel_id' : ChannelId,
     'community_id' : CommunityId,
     'content' : MessageContentInitial,
     'mentioned' : IDL.Vec(User),
+    'rules_accepted' : IDL.Opt(Version),
     'sender_name' : IDL.Text,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(GroupReplyContext),
@@ -1150,6 +1157,7 @@ export const idlFactory = ({ IDL }) => {
     'InvalidRequest' : IDL.Text,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
+    'RulesNotAccepted' : IDL.Null,
     'CryptocurrencyNotSupported' : Cryptocurrency,
   });
   const SendMessageWithTransferToGroupArgs = IDL.Record({
@@ -1193,6 +1201,10 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
+  const SetCommunityIndexesArgs = IDL.Record({
+    'indexes' : IDL.Vec(IDL.Tuple(CommunityId, IDL.Nat32)),
+  });
+  const SetCommunityIndexesResponse = IDL.Variant({ 'Success' : IDL.Null });
   const TextUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
@@ -1262,6 +1274,7 @@ export const idlFactory = ({ IDL }) => {
     'community_id' : CommunityId,
     'channels' : IDL.Vec(UserCanisterChannelSummaryUpdates),
     'pinned' : IDL.Opt(IDL.Vec(ChannelId)),
+    'index' : IDL.Opt(IDL.Nat32),
     'archived' : IDL.Opt(IDL.Bool),
   });
   const CommunitiesUpdates = IDL.Record({
@@ -1464,6 +1477,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
     'set_bio' : IDL.Func([SetBioArgs], [SetBioResponse], []),
+    'set_community_indexes' : IDL.Func(
+        [SetCommunityIndexesArgs],
+        [SetCommunityIndexesResponse],
+        [],
+      ),
     'set_contact' : IDL.Func([SetContactArgs], [SetContactResponse], []),
     'set_message_reminder_v2' : IDL.Func(
         [SetMessageReminderV2Args],

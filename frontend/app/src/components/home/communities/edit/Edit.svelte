@@ -27,7 +27,7 @@
     import page from "page";
     import AreYouSure from "../../../AreYouSure.svelte";
 
-    export let original: CommunitySummary = createCandidateCommunity("");
+    export let original: CommunitySummary = createCandidateCommunity("", 0);
     export let originalRules: AccessRules;
 
     const client = getContext<OpenChat>("client");

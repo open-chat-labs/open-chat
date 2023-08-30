@@ -88,6 +88,7 @@ export class LocalUserIndexClient extends CandidService {
                 community_id: Principal.fromText(id.communityId),
                 channel_id: BigInt(id.channelId),
                 invite_code: apiOptional(textToCode, inviteCode),
+                rules_accepted: [], //TODO come back to this
             }),
             (resp) => joinChannelResponse(resp, id.communityId)
         );
