@@ -10,7 +10,6 @@ pub struct Args {
     pub recipient: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub sender_name: String,
     pub content: MessageContentInitial,
     pub replies_to: Option<ReplyContext>,
     pub forwarding: bool,

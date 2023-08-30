@@ -1,11 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{PartialUserSummary, TimestampMillis, UserId};
+use types::{PartialUserSummary, TimestampMillis};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub user_groups: Vec<UserGroup>,
-}
+pub type Args = crate::users_v2::Args;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
@@ -16,10 +13,4 @@ pub enum Response {
 pub struct Result {
     pub users: Vec<PartialUserSummary>,
     pub timestamp: TimestampMillis,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct UserGroup {
-    pub users: Vec<UserId>,
-    pub updated_since: TimestampMillis,
 }

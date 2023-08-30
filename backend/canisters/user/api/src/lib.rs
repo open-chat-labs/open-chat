@@ -81,6 +81,7 @@ pub struct ChannelSummaryUpdates {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
     UsernameChanged(Box<UsernameChanged>),
+    DisplayNameChanged(Box<DisplayNameChanged>),
     PhoneNumberConfirmed(Box<PhoneNumberConfirmed>),
     StorageUpgraded(Box<StorageUpgraded>),
     ReferredUserRegistered(Box<ReferredUserRegistered>),
@@ -94,6 +95,11 @@ pub enum Event {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UsernameChanged {
     pub username: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct DisplayNameChanged {
+    pub display_name: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

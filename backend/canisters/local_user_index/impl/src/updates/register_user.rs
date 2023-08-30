@@ -49,7 +49,17 @@ async fn register_user(args: Args) -> Response {
     {
         Ok(canister_id) => {
             let user_id = canister_id.into();
-            mutate_state(|state| commit(caller, user_id, args.username, wasm_version, referral_code, state));
+            mutate_state(|state| {
+                commit(
+                    caller,
+                    user_id,
+                    args.username,
+                    args.display_name,
+                    wasm_version,
+                    referral_code,
+                    state,
+                )
+            });
             Success(SuccessResult {
                 user_id,
                 icp_account: default_ledger_account(user_id.into()),
@@ -151,6 +161,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         notifications_canister_id: state.data.notifications_canister_id,
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
+        display_name: args.display_name.clone(),
         openchat_bot_messages,
         test_mode: state.data.test_mode,
     };
@@ -171,6 +182,7 @@ fn commit(
     principal: Principal,
     user_id: UserId,
     username: String,
+    display_name: Option<String>,
     wasm_version: BuildVersion,
     referral_code: Option<ReferralCode>,
     state: &mut RuntimeState,
@@ -183,6 +195,7 @@ fn commit(
         principal,
         user_id,
         username: username.clone(),
+        display_name: display_name.clone(),
         referred_by: referral_code.as_ref().and_then(|r| r.user()),
     })));
 

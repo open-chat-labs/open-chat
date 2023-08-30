@@ -13,6 +13,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);

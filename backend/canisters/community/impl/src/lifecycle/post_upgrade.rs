@@ -1,7 +1,8 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
-use crate::{read_state, Data};
+use crate::updates::c2c_join_channel::join_channel_unchecked;
+use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
@@ -28,6 +29,18 @@ fn post_upgrade(args: Args) {
     for group_id in completed_imports {
         finalize_group_import(group_id);
     }
+
+    // One time job to add community members to all imported public channels
+    mutate_state(|state| {
+        let now = state.env.now();
+        for channel in state.data.channels.iter_mut().filter(|c| c.date_imported.is_some()) {
+            if channel.chat.is_public && channel.chat.gate.is_none() {
+                for member in state.data.members.iter_mut() {
+                    join_channel_unchecked(channel, member, true, now);
+                }
+            }
+        }
+    });
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }

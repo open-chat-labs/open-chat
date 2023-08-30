@@ -12,6 +12,7 @@ fn icp_is_burned_into_cycles() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     client::icrc1::happy_path::transfer(

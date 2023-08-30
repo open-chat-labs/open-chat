@@ -11,3 +11,4 @@ pub mod suspected_bots;
 pub mod user;
 pub mod user_registration_canister;
 pub mod users;
+pub mod users_v2;

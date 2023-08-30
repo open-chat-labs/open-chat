@@ -17,6 +17,7 @@ pub use updates::*;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
     UsernameChanged(UsernameChanged),
+    DisplayNameChanged(DisplayNameChanged),
     PhoneNumberConfirmed(PhoneNumberConfirmed),
     StorageUpgraded(StorageUpgraded),
     UserRegistered(UserRegistered),
@@ -35,6 +36,12 @@ pub enum Event {
 pub struct UsernameChanged {
     pub user_id: UserId,
     pub username: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DisplayNameChanged {
+    pub user_id: UserId,
+    pub display_name: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

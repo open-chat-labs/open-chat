@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Support changing casing of public groups / communities ([#4258](https://github.com/open-chat-labs/open-chat/pull/4258))
+
 ## [[2.0.816](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.816-group_index)] - 2023-08-23
 
 ### Changed

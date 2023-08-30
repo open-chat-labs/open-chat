@@ -18,6 +18,7 @@ fn send_text_in_channel() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -51,6 +52,7 @@ fn send_crypto_in_channel() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -82,6 +84,7 @@ fn send_crypto_in_channel() {
                 caption: None,
             }),
             sender_name: user1.username(),
+            sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
             community_rules_accepted: None,
@@ -108,6 +111,7 @@ fn send_message_with_community_rules_not_accepted_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -135,6 +139,7 @@ fn send_message_with_channel_rules_not_accepted_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -162,6 +167,7 @@ fn send_message_with_community_rules_accepted_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -188,6 +194,7 @@ fn send_message_with_channel_rules_accepted_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -214,6 +221,7 @@ fn send_message_with_community_rules_but_not_channel_rules_accepted_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -242,6 +250,7 @@ fn send_message_with_channel_rules_but_not_community_rules_accepted_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -270,6 +279,7 @@ fn send_message_with_community_rules_and_channel_rules_accepted_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -304,6 +314,7 @@ fn send_message_with_previously_accepted_rules_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -340,6 +351,7 @@ fn send_message_with_old_community_rules_accepted_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -375,6 +387,7 @@ fn send_message_with_old_channel_rules_accepted_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -403,6 +416,7 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -544,6 +558,7 @@ fn send_dummy_message_with_rules(
             message_id: random_message_id(),
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             sender_name: sender.username(),
+            sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
@@ -586,7 +601,7 @@ fn set_community_rules(env: &mut StateMachine, user: &User, community_id: Commun
         primary_language: None,
     };
 
-    client::community::happy_path::update_community(env, user, community_id, &args);
+    client::community::happy_path::update_community(env, user.principal, community_id, &args);
 }
 
 fn set_channel_rules(env: &mut StateMachine, user: &User, community_id: CommunityId, channel_id: ChannelId, text: String) {

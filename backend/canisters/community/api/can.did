@@ -276,6 +276,7 @@ type AddMembersToChannelArgs = record {
     channel_id : ChannelId;
     user_ids : vec UserId;
     added_by_name : text;
+    added_by_display_name : opt text;
 };
 
 type AddMembersToChannelResponse = variant {
@@ -322,6 +323,7 @@ type AddReactionArgs = record {
     message_id : MessageId;
     reaction : text;
     username : text;
+    display_name : opt text;
 };
 
 type AddReactionResponse = variant {
@@ -678,6 +680,7 @@ type SendMessageArgs = record {
     message_id : MessageId;
     content : MessageContentInitial;
     sender_name : text;
+    sender_display_name : opt text;
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     forwarding : bool;

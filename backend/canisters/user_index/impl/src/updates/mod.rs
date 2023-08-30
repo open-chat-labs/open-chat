@@ -15,6 +15,7 @@ pub mod mark_suspected_bot;
 pub mod pay_for_diamond_membership;
 pub mod remove_platform_moderator;
 pub mod remove_platform_operator;
+pub mod set_display_name;
 pub mod set_max_concurrent_user_canister_upgrades;
 pub mod set_moderation_flags;
 pub mod set_user_upgrade_concurrency;

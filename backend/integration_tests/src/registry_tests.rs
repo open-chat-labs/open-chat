@@ -14,6 +14,7 @@ fn add_token_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let ledger_canister_id = install_icrc1_ledger(

@@ -8,6 +8,7 @@ fn main() {
         message_index: 0.into(),
         event_index: 0.into(),
         sender_name: "".to_string(),
+        sender_display_name: None,
         message_type: "".to_string(),
         message_text: None,
         image_url: None,
