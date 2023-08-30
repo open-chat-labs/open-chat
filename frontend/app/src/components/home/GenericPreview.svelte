@@ -46,12 +46,6 @@
     let numberOfImagesLoaded = 0;
     let imageCount = 0;
 
-    function resize() {
-        if (previewsWrapper) {
-            console.log("Resizing to: ", previewsWrapper.offsetHeight);
-        }
-    }
-
     function imageLoaded() {
         numberOfImagesLoaded += 1;
         if (numberOfImagesLoaded >= imageCount && previewsWrapper && !$lowBandwidth) {
@@ -66,7 +60,7 @@
     });
 </script>
 
-<div on:resize={resize} bind:this={previewsWrapper} class="previews">
+<div bind:this={previewsWrapper} class="previews">
     {#each previews as preview}
         {#if preview !== undefined}
             {#if preview.title}
