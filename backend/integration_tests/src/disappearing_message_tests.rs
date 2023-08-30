@@ -15,6 +15,7 @@ fn disappearing_messages_in_group_chats() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user, group_id } = init_test_data(env, canister_ids, *controller, true);
@@ -78,6 +79,7 @@ fn group_chat_summary_contains_expired_messages() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user, group_id } = init_test_data(env, canister_ids, *controller, true);

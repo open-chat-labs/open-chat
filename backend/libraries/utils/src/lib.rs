@@ -3,6 +3,7 @@ pub mod canister_event_sync_queue;
 pub mod case_insensitive_hash_map;
 pub mod consts;
 pub mod cycles;
+pub mod display_name_validation;
 pub mod document_validation;
 pub mod env;
 pub mod event_stream;

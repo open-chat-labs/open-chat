@@ -34,6 +34,7 @@ pub mod happy_path {
             canister_id,
             &local_user_index_canister::register_user::Args {
                 username: principal_to_username(principal),
+                display_name: None,
                 referral_code,
                 public_key,
             },

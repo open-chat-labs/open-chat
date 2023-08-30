@@ -18,6 +18,7 @@ fn can_upgrade_to_diamond() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let init_treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
@@ -76,6 +77,7 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let start_time = now_millis(env);
@@ -116,6 +118,7 @@ fn membership_payment_shared_with_referrer() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     // Register referrer and upgrade to Diamond

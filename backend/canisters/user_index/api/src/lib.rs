@@ -24,6 +24,8 @@ pub struct UserRegistered {
     pub principal: Principal,
     pub user_id: UserId,
     pub username: String,
+    #[serde(default)]
+    pub display_name: Option<String>,
     pub referred_by: Option<UserId>,
 }
 

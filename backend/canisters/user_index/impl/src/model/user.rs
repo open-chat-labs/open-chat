@@ -2,15 +2,15 @@ use crate::model::account_billing::AccountBilling;
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{
-    CyclesTopUp, Milliseconds, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary,
-};
+use types::{CyclesTopUp, Milliseconds, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
     pub username: String,
+    #[serde(default)]
+    pub display_name: Option<String>,
     pub date_created: TimestampMillis,
     pub date_updated: TimestampMillis,
     pub upgrade_in_progress: bool,
@@ -50,6 +50,7 @@ impl User {
         principal: Principal,
         user_id: UserId,
         username: String,
+        display_name: Option<String>,
         now: TimestampMillis,
         referred_by: Option<UserId>,
         is_bot: bool,
@@ -58,6 +59,7 @@ impl User {
             principal,
             user_id,
             username,
+            display_name,
             date_created: now,
             date_updated: now,
             upgrade_in_progress: false,
@@ -78,22 +80,12 @@ impl User {
         UserSummary {
             user_id: self.user_id,
             username: self.username.clone(),
+            display_name: self.display_name.clone(),
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
             suspended: self.suspension_details.is_some(),
+            diamond_member: self.diamond_membership_details.is_active(now),
             seconds_since_last_online: 0,
-            diamond_member: self.diamond_membership_details.is_active(now),
-        }
-    }
-
-    pub fn to_partial_summary(&self, now: TimestampMillis) -> PartialUserSummary {
-        PartialUserSummary {
-            user_id: self.user_id,
-            username: Some(self.username.clone()),
-            avatar_id: self.avatar_id,
-            is_bot: self.is_bot,
-            suspended: self.suspension_details.is_some(),
-            diamond_member: self.diamond_membership_details.is_active(now),
         }
     }
 }
@@ -127,6 +119,7 @@ impl Default for User {
             principal: Principal::anonymous(),
             user_id: Principal::anonymous().into(),
             username: String::new(),
+            display_name: None,
             date_created: 0,
             date_updated: 0,
             upgrade_in_progress: false,

@@ -20,6 +20,7 @@ fn init(args: Args) {
         args.group_index_canister_id,
         args.notifications_canister_id,
         args.username,
+        args.display_name,
         args.test_mode,
         env.now(),
     );

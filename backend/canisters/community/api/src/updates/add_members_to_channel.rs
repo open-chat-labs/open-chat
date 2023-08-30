@@ -7,6 +7,8 @@ pub struct Args {
     pub channel_id: ChannelId,
     pub user_ids: Vec<UserId>,
     pub added_by_name: String,
+    #[serde(default)]
+    pub added_by_display_name: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

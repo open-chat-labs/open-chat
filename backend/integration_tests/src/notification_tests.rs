@@ -13,6 +13,7 @@ fn direct_message_notification_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
@@ -41,6 +42,7 @@ fn group_message_notification_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
@@ -79,6 +81,7 @@ fn direct_message_notification_muted() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
@@ -116,6 +119,7 @@ fn group_message_notification_muted() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
