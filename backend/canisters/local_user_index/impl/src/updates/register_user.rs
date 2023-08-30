@@ -14,7 +14,7 @@ use user_index_canister::{Event as UserIndexEvent, JoinUserToGroup, UserRegister
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
-use utils::text_validation::{validate_username, UsernameValidationError};
+use utils::text_validation::{validate_display_name, validate_username, UsernameValidationError};
 use x509_parser::prelude::FromDer;
 use x509_parser::x509::SubjectPublicKeyInfo;
 
@@ -114,7 +114,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         }
     }
 
-    match validate_username(&args.username, true) {
+    match validate_username(&args.username) {
         Ok(_) => {}
         Err(UsernameValidationError::TooShort(min_length)) => return Err(UsernameTooShort(min_length)),
         Err(UsernameValidationError::TooLong(max_length)) => return Err(UsernameTooLong(max_length)),
@@ -122,7 +122,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     };
 
     if let Some(display_name) = args.display_name.as_ref() {
-        match validate_username(display_name, false) {
+        match validate_display_name(display_name) {
             Ok(_) => {}
             Err(UsernameValidationError::TooShort(min_length)) => return Err(DisplayNameTooShort(min_length)),
             Err(UsernameValidationError::TooLong(max_length)) => return Err(DisplayNameTooLong(max_length)),

@@ -17,7 +17,7 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let username = args.username;
 
-    match validate_username(&username, true) {
+    match validate_username(&username) {
         Ok(_) => {}
         Err(UsernameValidationError::TooShort(min_length)) => return UsernameTooShort(min_length),
         Err(UsernameValidationError::TooLong(max_length)) => return UsernameTooLong(max_length),
