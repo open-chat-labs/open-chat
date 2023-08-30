@@ -116,7 +116,6 @@ fn init_test_data(env: &mut StateMachine, local_user_index: CanisterId) -> TestD
     }
 }
 
-#[allow(dead_code)]
 struct TestData {
     user1: User,
     user2: User,

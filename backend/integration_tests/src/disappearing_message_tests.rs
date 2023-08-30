@@ -159,7 +159,6 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
     TestData { user, group_id }
 }
 
-#[allow(dead_code)]
 struct TestData {
     user: User,
     group_id: ChatId,
