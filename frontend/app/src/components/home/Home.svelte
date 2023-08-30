@@ -159,6 +159,7 @@
     $: currentCommunityRules = client.currentCommunityRules;
     $: currentChatRules = client.currentChatRules;
     $: globalUnreadCount = client.globalUnreadCount;
+    $: communities = client.communities;
 
     $: {
         document.title =
@@ -869,7 +870,10 @@
     }
 
     function createCommunity() {
-        candidateCommunity = createCandidateCommunity("");
+        const maxIndex = $communities
+            .values()
+            .reduce((m, c) => (c.membership.index > m ? c.membership.index : m), 0);
+        candidateCommunity = createCandidateCommunity("", maxIndex + 1);
         candidateCommunityRules = defaultAccessRules("community");
         modal = ModalType.EditCommunity;
     }

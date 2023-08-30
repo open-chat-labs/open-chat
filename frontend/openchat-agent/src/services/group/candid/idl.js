@@ -68,12 +68,21 @@ export const idlFactory = ({ IDL }) => {
   });
   const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
   const TimestampNanos = IDL.Nat64;
+  const Cryptocurrency = IDL.Variant({
+    'InternetComputer' : IDL.Null,
+    'CHAT' : IDL.Null,
+    'SNS1' : IDL.Null,
+    'KINIC' : IDL.Null,
+    'CKBTC' : IDL.Null,
+    'Other' : IDL.Text,
+  });
   const TransactionHash = IDL.Vec(IDL.Nat8);
   const BlockIndex = IDL.Nat64;
   const NnsCompletedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
     'from' : NnsCryptoAccount,
@@ -94,6 +103,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : Icrc1AccountOrMint,
     'fee' : IDL.Nat,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'block_index' : BlockIndex,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
@@ -108,6 +118,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : NnsCryptoAccount,
     'memo' : IDL.Nat64,
@@ -119,6 +130,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : Icrc1AccountOrMint,
     'fee' : IDL.Nat,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
     'error_message' : IDL.Text,
@@ -263,14 +275,6 @@ export const idlFactory = ({ IDL }) => {
     'thumbnail_data' : IDL.Text,
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
-  });
-  const Cryptocurrency = IDL.Variant({
-    'InternetComputer' : IDL.Null,
-    'CHAT' : IDL.Null,
-    'SNS1' : IDL.Null,
-    'KINIC' : IDL.Null,
-    'CKBTC' : IDL.Null,
-    'Other' : IDL.Text,
   });
   const PrizeContent = IDL.Record({
     'token' : Cryptocurrency,
@@ -766,7 +770,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupSubtype = IDL.Variant({
     'GovernanceProposals' : GovernanceProposalsSubtype,
   });
-  const Version = IDL.Record({
+  const BuildVersion = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
@@ -781,7 +785,7 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : IDL.Opt(GroupSubtype),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
-    'wasm_version' : Version,
+    'wasm_version' : BuildVersion,
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
@@ -925,27 +929,11 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'Success' : SelectedInitialSuccess,
   });
-  const SelectedUpdatesArgs = IDL.Record({ 'updates_since' : EventIndex });
-  const SelectedUpdatesSuccess = IDL.Record({
-    'blocked_users_removed' : IDL.Vec(UserId),
-    'participants_added_or_updated' : IDL.Vec(Participant),
-    'pinned_messages_removed' : IDL.Vec(MessageIndex),
-    'invited_users' : IDL.Opt(IDL.Vec(UserId)),
-    'participants_removed' : IDL.Vec(UserId),
-    'pinned_messages_added' : IDL.Vec(MessageIndex),
-    'timestamp' : TimestampMillis,
-    'latest_event_index' : EventIndex,
-    'rules' : IDL.Opt(AccessRules),
-    'blocked_users_added' : IDL.Vec(UserId),
-  });
-  const SelectedUpdatesResponse = IDL.Variant({
-    'CallerNotInGroup' : IDL.Null,
-    'Success' : SelectedUpdatesSuccess,
-    'SuccessNoUpdates' : EventIndex,
-  });
   const SelectedUpdatesV2Args = IDL.Record({
     'updates_since' : TimestampMillis,
   });
+  const Version = IDL.Nat32;
+  const VersionedRules = IDL.Record({ 'text' : IDL.Text, 'version' : Version });
   const SelectedGroupUpdates = IDL.Record({
     'blocked_users_removed' : IDL.Vec(UserId),
     'pinned_messages_removed' : IDL.Vec(MessageIndex),
@@ -953,6 +941,7 @@ export const idlFactory = ({ IDL }) => {
     'members_added_or_updated' : IDL.Vec(Participant),
     'pinned_messages_added' : IDL.Vec(MessageIndex),
     'members_removed' : IDL.Vec(UserId),
+    'access_rules' : IDL.Opt(VersionedRules),
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
     'rules' : IDL.Opt(AccessRules),
@@ -1054,7 +1043,7 @@ export const idlFactory = ({ IDL }) => {
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'role' : GroupRole,
-    'wasm_version' : Version,
+    'wasm_version' : BuildVersion,
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
@@ -1118,7 +1107,7 @@ export const idlFactory = ({ IDL }) => {
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(GroupRole),
-    'wasm_version' : IDL.Opt(Version),
+    'wasm_version' : IDL.Opt(BuildVersion),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'description' : IDL.Opt(IDL.Text),
     'events_ttl' : EventsTimeToLiveUpdate,
@@ -1368,11 +1357,6 @@ export const idlFactory = ({ IDL }) => {
     'selected_initial' : IDL.Func(
         [SelectedInitialArgs],
         [SelectedInitialResponse],
-        ['query'],
-      ),
-    'selected_updates' : IDL.Func(
-        [SelectedUpdatesArgs],
-        [SelectedUpdatesResponse],
         ['query'],
       ),
     'selected_updates_v2' : IDL.Func(

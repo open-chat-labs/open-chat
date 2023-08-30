@@ -59,12 +59,17 @@ export interface BlobReference {
   'canister_id' : CanisterId,
 }
 export type BlockIndex = bigint;
+export interface BuildVersion {
+  'major' : number,
+  'minor' : number,
+  'patch' : number,
+}
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
 export interface CanisterWasm {
   'compressed' : boolean,
-  'version' : Version,
+  'version' : BuildVersion,
   'module' : Uint8Array | number[],
 }
 export type ChannelId = bigint;
@@ -80,6 +85,7 @@ export interface ChannelMembership {
   'role' : GroupRole,
   'notifications_muted' : boolean,
   'joined' : TimestampMillis,
+  'rules_accepted' : boolean,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'mentions' : Array<Mention>,
   'my_metrics' : ChatMetrics,
@@ -87,6 +93,7 @@ export interface ChannelMembership {
 export interface ChannelMembershipUpdates {
   'role' : [] | [GroupRole],
   'notifications_muted' : [] | [boolean],
+  'rules_accepted' : [] | [boolean],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'mentions' : Array<Mention>,
   'my_metrics' : [] | [ChatMetrics],
@@ -204,6 +211,7 @@ export interface CommunityCanisterChannelSummary {
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
+  'rules_enabled' : boolean,
   'member_count' : number,
   'expired_messages' : Array<MessageIndexRange>,
   'latest_message' : [] | [MessageEventWrapper],
@@ -224,6 +232,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'membership' : [] | [ChannelMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
   'updated_events' : Array<[[] | [number], number, bigint]>,
+  'rules_enabled' : [] | [boolean],
   'member_count' : [] | [number],
   'latest_message' : [] | [MessageEventWrapper],
 }
@@ -563,7 +572,7 @@ export interface GroupCanisterGroupChatSummary {
   'gate' : [] | [AccessGate],
   'name' : string,
   'role' : GroupRole,
-  'wasm_version' : Version,
+  'wasm_version' : BuildVersion,
   'notifications_muted' : boolean,
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
@@ -592,7 +601,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'role' : [] | [GroupRole],
-  'wasm_version' : [] | [Version],
+  'wasm_version' : [] | [BuildVersion],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
@@ -631,7 +640,7 @@ export interface GroupChatSummary {
   'gate' : [] | [AccessGate],
   'name' : string,
   'role' : GroupRole,
-  'wasm_version' : Version,
+  'wasm_version' : BuildVersion,
   'notifications_muted' : boolean,
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
@@ -763,6 +772,7 @@ export interface Icrc1CompletedCryptoTransaction {
   'to' : Icrc1AccountOrMint,
   'fee' : bigint,
   'created' : TimestampNanos,
+  'token' : Cryptocurrency,
   'block_index' : BlockIndex,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
@@ -773,6 +783,7 @@ export interface Icrc1FailedCryptoTransaction {
   'to' : Icrc1AccountOrMint,
   'fee' : bigint,
   'created' : TimestampNanos,
+  'token' : Cryptocurrency,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
   'error_message' : string,
@@ -916,6 +927,7 @@ export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
   'created' : TimestampNanos,
+  'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'from' : NnsCryptoAccount,
@@ -929,6 +941,7 @@ export interface NnsFailedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
   'created' : TimestampNanos,
+  'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : NnsCryptoAccount,
   'memo' : bigint,
@@ -1105,7 +1118,7 @@ export interface PublicGroupSummary {
   'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
-  'wasm_version' : Version,
+  'wasm_version' : BuildVersion,
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
@@ -1168,6 +1181,7 @@ export interface SelectedGroupUpdates {
   'members_added_or_updated' : Array<Participant>,
   'pinned_messages_added' : Uint32Array | number[],
   'members_removed' : Array<UserId>,
+  'access_rules' : [] | [VersionedRules],
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'rules' : [] | [AccessRules],
@@ -1308,11 +1322,8 @@ export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
 }
-export interface Version {
-  'major' : number,
-  'minor' : number,
-  'patch' : number,
-}
+export type Version = number;
+export interface VersionedRules { 'text' : string, 'version' : Version }
 export interface VideoContent {
   'height' : number,
   'image_blob_reference' : [] | [BlobReference],

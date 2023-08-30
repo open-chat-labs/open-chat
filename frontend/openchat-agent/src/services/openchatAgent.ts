@@ -2421,4 +2421,8 @@ export class OpenChatAgent extends EventTarget {
             throw new Error("Registry is empty... this should never happen!");
         }
     }
+
+    setCommunityIndexes(communityIndexes: Record<string, number>): Promise<boolean> {
+        return this.userClient.setCommunityIndexes(communityIndexes);
+    }
 }
