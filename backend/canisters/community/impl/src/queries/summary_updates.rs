@@ -57,6 +57,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         && channels_removed.is_empty()
         && state.data.events.latest_event_timestamp() <= args.updates_since
         && state.data.cached_chat_metrics.timestamp <= args.updates_since
+        && state.data.members.user_groups_last_updated() <= args.updates_since
     {
         return SuccessNoUpdates;
     }
@@ -111,6 +112,13 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         channels_updated,
         channels_removed,
         membership,
+        user_groups: state
+            .data
+            .members
+            .iter_user_groups()
+            .filter(|u| u.name.timestamp > args.updates_since)
+            .map(|u| u.into())
+            .collect(),
         metrics: state.data.cached_chat_metrics.if_set_after(args.updates_since).cloned(),
         rules_enabled: updates_from_events.rules_changed.then_some(state.data.rules.enabled),
     })

@@ -137,6 +137,7 @@ impl RuntimeState {
             primary_language: data.primary_language.clone(),
             channels,
             membership,
+            user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
             metrics: data.cached_chat_metrics.value.clone(),
             rules_enabled: data.rules.enabled,
         }

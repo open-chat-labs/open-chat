@@ -1,7 +1,7 @@
 use crate::{model::events::CommunityEventInternal, read_state, Data, RuntimeState};
 use community_canister::selected_updates_v2::{Response::*, *};
 use ic_cdk_macros::query;
-use std::{cmp::max, collections::HashSet};
+use std::collections::HashSet;
 use types::UserId;
 
 #[query]
@@ -26,8 +26,14 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     // Short circuit prior to calling `ic0.time()` so that query caching works effectively.
     let invited_users_last_updated = data.invited_users.last_updated();
     let events_last_updated = data.events.latest_event_timestamp();
-    let latest_timestamp = max(events_last_updated, invited_users_last_updated);
-    if latest_timestamp <= args.updates_since {
+    let user_groups_last_updated = data.members.user_groups_last_updated();
+
+    let last_updated = [invited_users_last_updated, events_last_updated, user_groups_last_updated]
+        .into_iter()
+        .max()
+        .unwrap();
+
+    if last_updated <= args.updates_since {
         return SuccessNoUpdates(args.updates_since);
     }
 
@@ -38,7 +44,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     };
 
     let mut result = SuccessResult {
-        timestamp: state.env.now(),
+        timestamp: last_updated,
         members_added_or_updated: vec![],
         members_removed: vec![],
         blocked_users_added: vec![],
@@ -46,6 +52,12 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         invited_users,
         rules: None,
         access_rules: None,
+        user_group_members: data
+            .members
+            .iter_user_groups()
+            .filter(|u| u.members.timestamp > args.updates_since)
+            .map(|u| u.into())
+            .collect(),
     };
 
     let mut user_updates_handler = UserUpdatesHandler {

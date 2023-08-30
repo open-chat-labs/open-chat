@@ -346,5 +346,6 @@ fn merge_permissions(new: OptionalCommunityPermissions, old: &CommunityPermissio
         update_details: new.update_details.unwrap_or(old.update_details),
         create_public_channel: new.create_public_channel.unwrap_or(old.create_public_channel),
         create_private_channel: new.create_private_channel.unwrap_or(old.create_private_channel),
+        manage_user_groups: new.manage_user_groups.unwrap_or(old.manage_user_groups),
     }
 }
