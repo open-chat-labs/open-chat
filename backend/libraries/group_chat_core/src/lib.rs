@@ -16,7 +16,9 @@ use types::{
     Versioned, VersionedRules,
 };
 use utils::document_validation::validate_avatar;
-use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
+use utils::text_validation::{
+    validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
+};
 
 mod invited_users;
 mod members;
@@ -1304,7 +1306,7 @@ impl GroupChatCore {
         let avatar_update = avatar.as_ref().expand();
 
         if let Some(name) = name {
-            if let Err(error) = validate_name(name, self.is_public) {
+            if let Err(error) = validate_group_name(name, self.is_public, self.subtype.value.as_ref()) {
                 return match error {
                     NameValidationError::TooShort(s) => NameTooShort(s),
                     NameValidationError::TooLong(l) => NameTooLong(l),

@@ -12,7 +12,9 @@ use types::{
     OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
 };
 use utils::document_validation::{validate_avatar, validate_banner};
-use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
+use utils::text_validation::{
+    validate_community_name, validate_description, validate_rules, NameValidationError, RulesValidationError,
+};
 
 #[update]
 #[trace]
@@ -115,7 +117,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     let gate = args.gate.as_ref().apply_to(state.data.gate.value.as_ref());
 
     if let Some(name) = &args.name {
-        if let Err(error) = validate_name(name, state.data.is_public) {
+        if let Err(error) = validate_community_name(name, state.data.is_public) {
             return Err(match error {
                 NameValidationError::TooShort(s) => NameTooShort(s),
                 NameValidationError::TooLong(l) => NameTooLong(l),

@@ -9,7 +9,9 @@ use tracing::error;
 use types::{CanisterId, ChatId};
 use user_canister::create_group::{Response::*, *};
 use utils::document_validation::validate_avatar;
-use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
+use utils::text_validation::{
+    validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
+};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -71,7 +73,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
         Err(MaxGroupsCreated(group_creation_limit))
     } else if is_throttled() {
         Err(Throttled)
-    } else if let Err(error) = validate_name(&args.name, args.is_public) {
+    } else if let Err(error) = validate_group_name(&args.name, args.is_public, None) {
         Err(match error {
             NameValidationError::TooShort(s) => NameTooShort(s),
             NameValidationError::TooLong(l) => NameTooLong(l),

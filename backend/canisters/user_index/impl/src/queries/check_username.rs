@@ -1,7 +1,7 @@
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
 use user_index_canister::check_username::{Response::*, *};
-use utils::username_validation::{validate_username, UsernameValidationError};
+use utils::text_validation::{validate_username, UsernameValidationError};
 
 #[query]
 fn check_username(args: Args) -> Response {
@@ -9,7 +9,7 @@ fn check_username(args: Args) -> Response {
 }
 
 fn check_username_impl(args: Args, state: &RuntimeState) -> Response {
-    match validate_username(&args.username) {
+    match validate_username(&args.username, true) {
         Ok(_) => {
             if state.data.users.does_username_exist(&args.username) {
                 UsernameTaken

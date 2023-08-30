@@ -13,7 +13,9 @@ use ic_cdk_macros::update;
 use rand::Rng;
 use types::ChannelId;
 use utils::document_validation::validate_avatar;
-use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
+use utils::text_validation::{
+    validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
+};
 
 #[update]
 #[trace]
@@ -74,7 +76,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
 
             if !is_authorized {
                 return NotAuthorized;
-            } else if let Err(error) = validate_name(&args.name, args.is_public) {
+            } else if let Err(error) = validate_group_name(&args.name, args.is_public, args.subtype.as_ref()) {
                 return match error {
                     NameValidationError::TooShort(s) => NameTooShort(s),
                     NameValidationError::TooLong(l) => NameTooLong(l),
@@ -103,7 +105,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                 args.name,
                 args.description,
                 args.rules,
-                None,
+                args.subtype,
                 args.avatar,
                 args.history_visible_to_new_joiners,
                 args.permissions.unwrap_or_default(),

@@ -4,7 +4,7 @@ use ic_cdk_macros::update;
 use local_user_index_canister::{Event, UserRegistered};
 use types::{Cycles, UserId};
 use user_index_canister::c2c_register_bot::{Response::*, *};
-use utils::username_validation::{validate_username, UsernameValidationError};
+use utils::text_validation::{validate_username, UsernameValidationError};
 
 const BOT_REGISTRATION_FEE: Cycles = 10_000_000_000_000; // 10T
 
@@ -27,7 +27,7 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         return UserLimitReached;
     }
 
-    match validate_username(&args.username) {
+    match validate_username(&args.username, true) {
         Ok(_) => {}
         Err(UsernameValidationError::TooShort(min_length)) => return UsernameTooShort(min_length),
         Err(UsernameValidationError::TooLong(max_length)) => return UsernameTooLong(max_length),
