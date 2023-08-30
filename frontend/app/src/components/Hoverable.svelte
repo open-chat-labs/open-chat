@@ -95,29 +95,27 @@
     }
 
     onMount(() => {
-        if (isTouchDevice) {
-            if (enableLongPress) {
-                containerDiv.addEventListener("touchend", handleTouchEnd);
-                containerDiv.addEventListener("touchmove", handleTouchMove);
-                containerDiv.addEventListener("touchstart", handleTouchStart);
-                containerDiv.addEventListener("contextmenu", onContextMenu);
-            }
-            return () => {
+        if (isTouchDevice && enableLongPress) {
+            containerDiv.addEventListener("touchend", handleTouchEnd);
+            containerDiv.addEventListener("touchmove", handleTouchMove);
+            containerDiv.addEventListener("touchstart", handleTouchStart);
+            containerDiv.addEventListener("contextmenu", onContextMenu);
+        }
+        containerDiv.addEventListener("mouseenter", startHover);
+        containerDiv.addEventListener("mouseleave", endHover);
+        containerDiv.addEventListener("contextmenu", onContextMenu);
+
+        return () => {
+            if (isTouchDevice) {
                 containerDiv.removeEventListener("touchend", handleTouchEnd);
                 containerDiv.removeEventListener("touchmove", handleTouchMove);
                 containerDiv.removeEventListener("touchstart", handleTouchStart);
                 containerDiv.removeEventListener("contextmenu", onContextMenu);
-            };
-        } else {
-            containerDiv.addEventListener("mouseenter", startHover);
-            containerDiv.addEventListener("mouseleave", endHover);
-            containerDiv.addEventListener("contextmenu", onContextMenu);
-            return () => {
-                containerDiv.removeEventListener("mouseenter", startHover);
-                containerDiv.removeEventListener("mouseleave", endHover);
-                containerDiv.removeEventListener("contextmenu", onContextMenu);
-            };
-        }
+            }
+            containerDiv.removeEventListener("mouseenter", startHover);
+            containerDiv.removeEventListener("mouseleave", endHover);
+            containerDiv.removeEventListener("contextmenu", onContextMenu);
+        };
     });
 
     export function getBoundingClientRect() {
