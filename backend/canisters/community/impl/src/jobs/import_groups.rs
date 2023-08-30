@@ -241,7 +241,6 @@ fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut
         // If this is a public channel, add all community members to it
         if channel.chat.is_public && channel.chat.gate.is_none() {
             let now = state.env.now();
-            let channel = state.data.channels.get_mut(&channel_id).unwrap();
             for member in state.data.members.iter_mut() {
                 join_channel_unchecked(channel, member, true, now);
             }
