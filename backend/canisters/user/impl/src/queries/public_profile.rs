@@ -7,6 +7,7 @@ fn public_profile(_args: Args) -> Response {
     read_state(|state| {
         Success(PublicProfile {
             username: state.data.username.clone(),
+            display_name: state.data.display_name.clone(),
             avatar_id: state.data.avatar.value.as_ref().map(|a| a.id),
             bio: state.data.bio.clone(),
             is_premium: state.data.phone_is_verified || state.data.storage_limit > 0,
