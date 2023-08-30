@@ -84,6 +84,7 @@ fn send_crypto_in_channel() {
                 caption: None,
             }),
             sender_name: user1.username(),
+            sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
             community_rules_accepted: None,
@@ -557,6 +558,7 @@ fn send_dummy_message_with_rules(
             message_id: random_message_id(),
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             sender_name: sender.username(),
+            sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
@@ -599,7 +601,7 @@ fn set_community_rules(env: &mut StateMachine, user: &User, community_id: Commun
         primary_language: None,
     };
 
-    client::community::happy_path::update_community(env, user, community_id, &args);
+    client::community::happy_path::update_community(env, user.principal, community_id, &args);
 }
 
 fn set_channel_rules(env: &mut StateMachine, user: &User, community_id: CommunityId, channel_id: ChannelId, text: String) {

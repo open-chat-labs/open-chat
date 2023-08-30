@@ -12,10 +12,7 @@ import type {
     GroupCanisterThreadDetails,
     UserCanisterChannelSummary,
 } from "openchat-shared";
-import {
-    CommunityMap,
-    ChatMap,
-} from "openchat-shared";
+import { CommunityMap, ChatMap } from "openchat-shared";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
 import { toRecord } from "./list";
 
@@ -34,6 +31,7 @@ export function mergeCommunities(
                 ...community.membership,
                 archived: u?.archived ?? community.membership.archived,
                 pinned: u?.pinned ?? community.membership.pinned,
+                index: u?.index ?? community.membership.index,
             },
             channels: mergeChannels(u?.channels ?? [], community.channels),
         };
@@ -113,6 +111,7 @@ export function mergeCommunityUpdates(
                 role: c?.membership?.role ?? community.membership.role,
                 archived: u?.archived ?? community.membership.archived,
                 pinned: u?.pinned ?? community.membership.pinned,
+                index: u?.index ?? community.membership.index,
             },
             channels: mergeChannelUpdates(
                 currentChannels,

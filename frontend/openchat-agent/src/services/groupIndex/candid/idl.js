@@ -179,7 +179,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupSubtype = IDL.Variant({
     'GovernanceProposals' : GovernanceProposalsSubtype,
   });
-  const Version = IDL.Record({
+  const BuildVersion = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
@@ -344,6 +344,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
     'from' : NnsCryptoAccount,
@@ -364,6 +365,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : Icrc1AccountOrMint,
     'fee' : IDL.Nat,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'block_index' : BlockIndex,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
@@ -389,6 +391,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : NnsCryptoAccount,
     'memo' : IDL.Nat64,
@@ -400,6 +403,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : Icrc1AccountOrMint,
     'fee' : IDL.Nat,
     'created' : TimestampNanos,
+    'token' : Cryptocurrency,
     'from' : Icrc1AccountOrMint,
     'memo' : IDL.Opt(Memo),
     'error_message' : IDL.Text,
@@ -527,7 +531,7 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : IDL.Opt(GroupSubtype),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
-    'wasm_version' : Version,
+    'wasm_version' : BuildVersion,
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,

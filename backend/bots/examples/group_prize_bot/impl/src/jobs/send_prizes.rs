@@ -189,6 +189,7 @@ async fn send_prize_message_to_group(
         thread_root_message_index: None,
         content,
         sender_name: bot_name,
+        sender_display_name: None,
         replies_to: None,
         mentioned: Vec::new(),
         forwarding: false,

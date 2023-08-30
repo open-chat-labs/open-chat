@@ -39,7 +39,6 @@ fn empty_message_fails() {
         recipient: user2.user_id,
         thread_root_message_index: None,
         message_id: random_message_id(),
-        sender_name: user1.username(),
         content: MessageContentInitial::Text(TextContent { text: String::default() }),
         replies_to: None,
         forwarding: false,
@@ -63,7 +62,6 @@ fn text_too_long_fails() {
         recipient: user2.user_id,
         thread_root_message_index: None,
         message_id: random_message_id(),
-        sender_name: user1.username(),
         content: MessageContentInitial::Text(TextContent {
             text: (0..5001).map(|_| '1').collect(),
         }),

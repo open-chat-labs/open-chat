@@ -47,6 +47,8 @@ declare global {
 
 declare namespace svelteHTML {
     interface HTMLAttributes<T> {
+        "on:consider"?: (event: CustomEvent) => void;
+        "on:finalize"?: (event: CustomEvent) => void;
         "on:swiping"?: (event: CustomEvent) => void;
         "on:leftswipe"?: (event: CustomEvent) => void;
         "on:rightswipe"?: (event: CustomEvent) => void;

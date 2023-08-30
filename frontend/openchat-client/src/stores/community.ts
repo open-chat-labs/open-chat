@@ -43,7 +43,7 @@ export const communities = derived(
 );
 
 export const communitiesList = derived(communities, ($communities) => {
-    return $communities.values().sort((a, b) => b.memberCount - a.memberCount);
+    return $communities.values().sort((a, b) => b.membership.index - a.membership.index);
 });
 
 export const communityStateStore = createCommunitySpecificObjectStore<CommunitySpecificState>(

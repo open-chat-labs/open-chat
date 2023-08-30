@@ -6,3 +6,4 @@ export * from "./rng";
 export * from "./map";
 export * from "./set";
 export * from "./string";
+export * from "./promise";

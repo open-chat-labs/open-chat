@@ -123,6 +123,7 @@ type InviteUsersToGroupResponse = variant {
 
 type RegisterUserArgs = record {
     username : text;
+    display_name : opt text;
     referral_code : opt text;
     public_key : blob;
 };

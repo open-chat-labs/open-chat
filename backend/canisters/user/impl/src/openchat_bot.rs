@@ -137,6 +137,7 @@ pub(crate) fn send_message_with_reply(
         message_id: None,
         sender_message_index: None,
         sender_name: OPENCHAT_BOT_USERNAME.to_string(),
+        sender_display_name: None,
         content,
         replies_to,
         forwarding: false,

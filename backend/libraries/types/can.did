@@ -43,6 +43,7 @@ type AddedToChannelNotification = record {
     channel_name : text;
     added_by : UserId;
     added_by_name : text;
+    added_by_display_name : opt text;
     community_avatar_id : opt nat;
     channel_avatar_id : opt nat;
 };
@@ -151,6 +152,7 @@ type DirectMessageNotification = record {
     message_index : MessageIndex;
     event_index : EventIndex;
     sender_name : text;
+    sender_display_name : opt text;
     message_type : text;
     message_text : opt text;
     image_url : opt text;
@@ -164,6 +166,7 @@ type DirectReactionAddedNotification = record {
     message_index : MessageIndex;
     message_event_index : EventIndex;
     username : text;
+    display_name : opt text;
     reaction : Reaction;
     user_avatar_id : opt nat;
 };
@@ -551,6 +554,7 @@ type ChannelMessageNotification = record {
     channel_name : text;
     sender : UserId;
     sender_name : text;
+    sender_display_name : opt text;
     message_type : text;
     message_text : opt text;
     image_url : opt text;
@@ -567,6 +571,7 @@ type GroupMessageNotification = record {
     group_name : text;
     sender : UserId;
     sender_name : text;
+    sender_display_name : opt text;
     message_type : text;
     message_text : opt text;
     image_url : opt text;
@@ -590,6 +595,7 @@ type ChannelReactionAddedNotification = record {
     channel_name : text;
     added_by : UserId;
     added_by_name : text;
+    added_by_display_name : opt text;
     reaction : Reaction;
     community_avatar_id : opt nat;
     channel_avatar_id : opt nat;
@@ -603,6 +609,7 @@ type GroupReactionAddedNotification = record {
     group_name : text;
     added_by : UserId;
     added_by_name : text;
+    added_by_display_name : opt text;
     reaction : Reaction;
     group_avatar_id : opt nat;
 };
@@ -768,15 +775,6 @@ type NotificationCryptoTransferDetails = record {
     ledger : CanisterId;
     symbol : text;
     amount : nat;
-};
-
-type PartialUserSummary = record {
-    user_id : UserId;
-    username : opt text;
-    avatar_id : opt nat;
-    is_bot : bool;
-    suspended : bool;
-    diamond_member : bool;
 };
 
 type Participant = record {
@@ -986,10 +984,20 @@ type TextContent = record {
 type UserSummary = record {
     user_id : UserId;
     username : text;
+    display_name : opt text;
     avatar_id : opt nat;
     is_bot : bool;
     suspended : bool;
     seconds_since_last_online : nat32;
+    diamond_member : bool;
+};
+
+type PartialUserSummary = record {
+    user_id : UserId;
+    username : opt text;
+    avatar_id : opt nat;
+    is_bot : bool;
+    suspended : bool;
     diamond_member : bool;
 };
 

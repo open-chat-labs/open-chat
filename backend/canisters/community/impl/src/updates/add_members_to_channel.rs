@@ -52,6 +52,7 @@ async fn add_members_to_channel(args: Args) -> Response {
         commit(
             prepare_result.user_id,
             args.added_by_name,
+            args.added_by_display_name,
             args.channel_id,
             users_to_add,
             prepare_result.users_already_in_channel,
@@ -125,6 +126,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 fn commit(
     added_by: UserId,
     added_by_name: String,
+    added_by_display_name: Option<String>,
     channel_id: ChannelId,
     users_to_add: Vec<UserId>,
     mut users_already_in_channel: Vec<UserId>,
@@ -197,6 +199,7 @@ fn commit(
             channel_name: channel.chat.name.clone(),
             added_by,
             added_by_name,
+            added_by_display_name,
             community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
             channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
         });
