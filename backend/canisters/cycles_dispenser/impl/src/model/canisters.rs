@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::HashMap;
+use std::collections::{BinaryHeap, HashMap};
 use types::{CanisterId, Cycles, TimestampMillis};
 
 #[derive(Serialize, Deserialize)]
@@ -55,6 +55,36 @@ impl Canisters {
             })
             .collect()
     }
+
+    pub fn latest_top_ups(&self, count: usize) -> Vec<CanisterTopUp> {
+        let mut heap = BinaryHeap::with_capacity(count);
+
+        for top_up in self.canisters.iter().flat_map(|(id, c)| {
+            c.top_ups.iter().map(|t| CanisterTopUp {
+                timestamp: t.date,
+                canister_id: *id,
+                amount: t.amount,
+            })
+        }) {
+            if heap.len() < count {
+                heap.push(top_up);
+            } else if top_up > *heap.peek().unwrap() {
+                heap.pop();
+                heap.push(top_up);
+            }
+        }
+
+        let mut vec = heap.into_sorted_vec();
+        vec.reverse();
+        vec
+    }
+}
+
+#[derive(Serialize, Deserialize, Eq, PartialEq, Ord, PartialOrd)]
+pub struct CanisterTopUp {
+    pub timestamp: TimestampMillis,
+    pub canister_id: CanisterId,
+    pub amount: Cycles,
 }
 
 #[derive(Serialize, Deserialize)]
