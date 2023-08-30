@@ -3,12 +3,14 @@ use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
 use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{mutate_state, read_state, Data};
+use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
 use tracing::info;
+use types::{CanisterId, ChannelId, GovernanceProposalsSubtype, GroupSubtype, Timestamped};
 
 #[post_upgrade]
 #[trace]
@@ -41,6 +43,26 @@ fn post_upgrade(args: Args) {
             }
         }
     });
+
+    let modclub_community_id = Principal::from_text("zmr66-uyaaa-aaaar-askta-cai").unwrap();
+
+    if ic_cdk::id() == modclub_community_id {
+        // One time job to set the subtype on the Modclub Proposals channel
+        let modclub_proposals_channel: ChannelId = 264527918243702239627246885749636036136u128;
+        let modclub_governance_canister = CanisterId::from_text("xvj4b-paaaa-aaaaq-aabfa-cai").unwrap();
+
+        mutate_state(|state| {
+            if let Some(channel) = state.data.channels.get_mut(&modclub_proposals_channel) {
+                channel.chat.subtype = Timestamped::new(
+                    Some(GroupSubtype::GovernanceProposals(GovernanceProposalsSubtype {
+                        is_nns: false,
+                        governance_canister_id: modclub_governance_canister,
+                    })),
+                    state.env.now(),
+                );
+            }
+        });
+    }
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
