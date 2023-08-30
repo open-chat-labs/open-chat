@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::{Event, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
-use utils::username_validation::{validate_username, UsernameValidationError};
+use utils::text_validation::{validate_username, UsernameValidationError};
 
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
@@ -196,32 +196,5 @@ mod tests {
         };
         let result = set_username_impl(args, &mut state);
         assert!(matches!(result, Response::UsernameTooLong(_)));
-    }
-
-    #[test]
-    fn valid_usernames() {
-        assert!(validate_username("abcde").is_ok());
-        assert!(validate_username("12345").is_ok());
-        assert!(validate_username("SNSABC").is_ok());
-        assert!(validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3").is_ok());
-    }
-
-    #[test]
-    fn invalid_usernames() {
-        assert!(matches!(validate_username("abcde "), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("ab cde"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("_abcde"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("abcde_"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("ab__cde"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("ab,cde"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("abcéd"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("abcṷd"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("abc王d"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(
-            validate_username("OpenChat_Bot"),
-            Err(UsernameValidationError::Invalid)
-        ));
-        assert!(matches!(validate_username("SNS1Bot"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("SNS2_B0T"), Err(UsernameValidationError::Invalid)));
     }
 }

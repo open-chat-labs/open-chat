@@ -13,7 +13,9 @@ use ic_cdk_macros::update;
 use rand::Rng;
 use types::ChannelId;
 use utils::document_validation::validate_avatar;
-use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
+use utils::text_validation::{
+    validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
+};
 
 #[update]
 #[trace]
@@ -65,6 +67,8 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
             return UserSuspended;
         }
 
+        let subtype = is_proposals_channel.then_some(args.subtype).flatten();
+
         if !is_proposals_channel {
             let is_authorized = if args.is_public {
                 member.role.can_create_public_channel(&state.data.permissions)
@@ -74,7 +78,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
 
             if !is_authorized {
                 return NotAuthorized;
-            } else if let Err(error) = validate_name(&args.name, args.is_public) {
+            } else if let Err(error) = validate_group_name(&args.name, args.is_public, subtype.as_ref()) {
                 return match error {
                     NameValidationError::TooShort(s) => NameTooShort(s),
                     NameValidationError::TooLong(l) => NameTooLong(l),
@@ -103,7 +107,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                 args.name,
                 args.description,
                 args.rules,
-                None,
+                subtype,
                 args.avatar,
                 args.history_visible_to_new_joiners,
                 args.permissions.unwrap_or_default(),
