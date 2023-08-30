@@ -271,6 +271,7 @@ async function showNotification(notification: Notification, id: string): Promise
         image,
         tag,
         timestamp,
+        requireInteraction: true,
         data: {
             path,
             notification,
