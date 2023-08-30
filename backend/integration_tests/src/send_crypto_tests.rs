@@ -75,7 +75,7 @@ fn send_message_with_transfer_to_group_succeeds() {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_diamond_user(env, &canister_ids, *controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
