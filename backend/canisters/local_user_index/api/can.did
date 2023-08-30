@@ -138,6 +138,9 @@ type RegisterUserResponse = variant {
     UsernameInvalid;
     UsernameTooShort : nat16;
     UsernameTooLong : nat16;
+    DisplayNameInvalid;
+    DisplayNameTooShort : nat16;
+    DisplayNameTooLong : nat16;
     CyclesBalanceTooLow;
     InternalError : text;
     PublicKeyInvalid : text;

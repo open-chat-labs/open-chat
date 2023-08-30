@@ -759,6 +759,7 @@ type PublicProfileResponse = variant {
 
 type PublicProfile = record {
     username : text;
+    display_name : opt text;
     avatar_id : opt nat;
     bio : text;
     is_premium : bool;
