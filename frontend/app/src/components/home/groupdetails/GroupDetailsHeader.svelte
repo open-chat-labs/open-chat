@@ -35,7 +35,7 @@
         </HoverIcon>
     </span>
     {#if canEdit}
-        <span title={$_("group.edit")} class="edit" on:click={editGroup}>
+        <span title={$_("group.edit", { values: { level }})} class="edit" on:click={editGroup}>
             <HoverIcon>
                 <PencilOutline size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
