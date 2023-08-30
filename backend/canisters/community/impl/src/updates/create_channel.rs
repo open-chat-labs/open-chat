@@ -67,6 +67,8 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
             return UserSuspended;
         }
 
+        let subtype = is_proposals_channel.then_some(args.subtype).flatten();
+
         if !is_proposals_channel {
             let is_authorized = if args.is_public {
                 member.role.can_create_public_channel(&state.data.permissions)
@@ -76,7 +78,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
 
             if !is_authorized {
                 return NotAuthorized;
-            } else if let Err(error) = validate_group_name(&args.name, args.is_public, args.subtype.as_ref()) {
+            } else if let Err(error) = validate_group_name(&args.name, args.is_public, subtype.as_ref()) {
                 return match error {
                     NameValidationError::TooShort(s) => NameTooShort(s),
                     NameValidationError::TooLong(l) => NameTooLong(l),
@@ -105,7 +107,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                 args.name,
                 args.description,
                 args.rules,
-                args.subtype,
+                subtype,
                 args.avatar,
                 args.history_visible_to_new_joiners,
                 args.permissions.unwrap_or_default(),
