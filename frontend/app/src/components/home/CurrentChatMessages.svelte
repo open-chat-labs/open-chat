@@ -192,12 +192,9 @@
 
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
-    $: groupedEvents = client.groupEvents(
-        events,
-        user.userId,
-        $expandedDeletedMessages,
-        groupInner(filteredProposals)
-    );
+    $: groupedEvents = client
+        .groupEvents(events, user.userId, $expandedDeletedMessages, groupInner(filteredProposals))
+        .reverse();
 
     $: privateCommunityPreview =
         $selectedCommunity !== undefined &&
@@ -376,25 +373,6 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight>
-    {#if showAvatar}
-        {#if $isProposalGroup}
-            <ProposalBot />
-        {:else if chat.kind === "group_chat" || chat.kind === "channel"}
-            <InitialGroupMessage group={chat} />
-        {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
-            <Robot />
-        {:else if chat.kind === "direct_chat"}
-            <div class="big-avatar">
-                <Avatar
-                    url={client.userAvatarUrl($userStore[chat.them.userId])}
-                    userId={chat.them.userId}
-                    size={AvatarSize.Large} />
-            </div>
-        {/if}
-    {/if}
-    {#if privatePreview}
-        <PrivatePreview />
-    {/if}
     {#each groupedEvents as dayGroup (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
@@ -448,6 +426,25 @@
             {/each}
         </div>
     {/each}
+    {#if showAvatar}
+        {#if $isProposalGroup}
+            <ProposalBot />
+        {:else if chat.kind === "group_chat" || chat.kind === "channel"}
+            <InitialGroupMessage group={chat} />
+        {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
+            <Robot />
+        {:else if chat.kind === "direct_chat"}
+            <div class="big-avatar">
+                <Avatar
+                    url={client.userAvatarUrl($userStore[chat.them.userId])}
+                    userId={chat.them.userId}
+                    size={AvatarSize.Large} />
+            </div>
+        {/if}
+    {/if}
+    {#if privatePreview}
+        <PrivatePreview />
+    {/if}
 </ChatEventList>
 
 <style lang="scss">

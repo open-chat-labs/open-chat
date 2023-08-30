@@ -170,7 +170,7 @@ import {
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
-import { waitAll } from "../utils/promise";
+import { waitAll } from "openchat-shared";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 import { CommunityClient } from "./community/community.client";
 import {
@@ -196,7 +196,10 @@ export class OpenChatAgent extends EventTarget {
     private db: Database;
     private _logger: Logger;
 
-    constructor(private identity: Identity, private config: AgentConfig) {
+    constructor(
+        private identity: Identity,
+        private config: AgentConfig,
+    ) {
         super();
         this._logger = config.logger;
         this.db = initDb(this.principal);
@@ -219,7 +222,7 @@ export class OpenChatAgent extends EventTarget {
         return measure("getAllUsers", () => getAllUsers()).then((users) => {
             const lookup = toRecord(
                 users.map((user) => this.rehydrateUserSummary(user)),
-                (u) => u.userId
+                (u) => u.userId,
             );
             return lookup;
         });
@@ -250,7 +253,7 @@ export class OpenChatAgent extends EventTarget {
                 this.identity,
                 this.config,
                 this.db,
-                inviteCode
+                inviteCode,
             );
         }
         return this._communityClients[communityId];
@@ -267,7 +270,7 @@ export class OpenChatAgent extends EventTarget {
                 this.identity,
                 this.config,
                 this.db,
-                inviteCode
+                inviteCode,
             );
         }
         return this._groupClients[chatId];
@@ -308,7 +311,7 @@ export class OpenChatAgent extends EventTarget {
     editMessage(
         chatId: ChatIdentifier,
         msg: Message,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<EditMessageResponse> {
         switch (chatId.kind) {
             case "direct_chat":
@@ -325,7 +328,7 @@ export class OpenChatAgent extends EventTarget {
         user: CreatedUser,
         mentioned: User[],
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
         if (chatId.kind === "channel") {
             if (event.event.content.kind === "crypto_content") {
@@ -334,7 +337,7 @@ export class OpenChatAgent extends EventTarget {
                     event.event.content.transfer.recipient,
                     user,
                     event,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
             }
             return this.sendChannelMessage(
@@ -342,7 +345,7 @@ export class OpenChatAgent extends EventTarget {
                 user.username,
                 mentioned,
                 event,
-                threadRootMessageIndex
+                threadRootMessageIndex,
             );
         }
         if (chatId.kind === "group_chat") {
@@ -352,7 +355,7 @@ export class OpenChatAgent extends EventTarget {
                     event.event.content.transfer.recipient,
                     user,
                     event,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
             }
             return this.sendGroupMessage(
@@ -360,7 +363,7 @@ export class OpenChatAgent extends EventTarget {
                 user.username,
                 mentioned,
                 event,
-                threadRootMessageIndex
+                threadRootMessageIndex,
             );
         }
         if (chatId.kind === "direct_chat") {
@@ -374,14 +377,14 @@ export class OpenChatAgent extends EventTarget {
         senderName: string,
         mentioned: User[],
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
         return this.communityClient(chatId.communityId).sendMessage(
             chatId,
             senderName,
             mentioned,
             event,
-            threadRootMessageIndex
+            threadRootMessageIndex,
         );
     }
 
@@ -390,20 +393,20 @@ export class OpenChatAgent extends EventTarget {
         senderName: string,
         mentioned: User[],
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
         return this.getGroupClient(chatId.groupId).sendMessage(
             senderName,
             mentioned,
             event,
-            threadRootMessageIndex
+            threadRootMessageIndex,
         );
     }
 
     private editGroupMessage(
         chatId: GroupChatIdentifier,
         message: Message,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<EditMessageResponse> {
         return this.getGroupClient(chatId.groupId).editMessage(message, threadRootMessageIndex);
     }
@@ -411,12 +414,12 @@ export class OpenChatAgent extends EventTarget {
     private editChannelMessage(
         chatId: ChannelIdentifier,
         message: Message,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<EditMessageResponse> {
         return this.communityClient(chatId.communityId).editMessage(
             chatId,
             message,
-            threadRootMessageIndex
+            threadRootMessageIndex,
         );
     }
 
@@ -424,7 +427,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: DirectChatIdentifier,
         sender: CreatedUser,
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
         return this.userClient.sendMessage(chatId, sender, event, threadRootMessageIndex);
     }
@@ -432,7 +435,7 @@ export class OpenChatAgent extends EventTarget {
     private editDirectMessage(
         recipientId: DirectChatIdentifier,
         message: Message,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<EditMessageResponse> {
         return this.userClient.editMessage(recipientId.userId, message, threadRootMessageIndex);
     }
@@ -453,7 +456,7 @@ export class OpenChatAgent extends EventTarget {
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
         gate?: AccessGate,
-        isPublic?: boolean
+        isPublic?: boolean,
     ): Promise<UpdateGroupResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -465,7 +468,7 @@ export class OpenChatAgent extends EventTarget {
                     avatar,
                     undefined,
                     gate,
-                    isPublic
+                    isPublic,
                 );
             case "channel":
                 return this.communityClient(chatId.communityId).updateChannel(
@@ -476,14 +479,14 @@ export class OpenChatAgent extends EventTarget {
                     permissions,
                     avatar,
                     gate,
-                    isPublic
+                    isPublic,
                 );
         }
     }
 
     async inviteUsersToCommunity(
         id: CommunityIdentifier,
-        userIds: string[]
+        userIds: string[],
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
@@ -492,13 +495,13 @@ export class OpenChatAgent extends EventTarget {
         const communityLocalUserIndex = await this.communityClient(id.communityId).localUserIndex();
         return this.createLocalUserIndexClient(communityLocalUserIndex).inviteUsersToCommunity(
             id.communityId,
-            userIds
+            userIds,
         );
     }
 
     async inviteUsers(
         chatId: MultiUserChatIdentifier,
-        userIds: string[]
+        userIds: string[],
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
@@ -507,18 +510,18 @@ export class OpenChatAgent extends EventTarget {
         switch (chatId.kind) {
             case "group_chat":
                 const groupLocalUserIndex = await this.getGroupClient(
-                    chatId.groupId
+                    chatId.groupId,
                 ).localUserIndex();
                 return this.createLocalUserIndexClient(groupLocalUserIndex).inviteUsersToGroup(
                     chatId.groupId,
-                    userIds
+                    userIds,
                 );
             case "channel":
                 const communityLocalUserIndex = await this.communityClient(
-                    chatId.communityId
+                    chatId.communityId,
                 ).localUserIndex();
                 return this.createLocalUserIndexClient(
-                    communityLocalUserIndex
+                    communityLocalUserIndex,
                 ).inviteUsersToChannel(chatId.communityId, chatId.channelId, userIds);
         }
     }
@@ -528,7 +531,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChatIdentifier,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
-        latestClientMainEventIndex: number | undefined
+        latestClientMainEventIndex: number | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         switch (chatId.kind) {
             case "direct_chat":
@@ -536,7 +539,7 @@ export class OpenChatAgent extends EventTarget {
                     eventIndexRange,
                     chatId,
                     messageIndex,
-                    latestClientMainEventIndex
+                    latestClientMainEventIndex,
                 );
             case "group_chat":
                 return this.groupChatEventsWindow(
@@ -544,7 +547,7 @@ export class OpenChatAgent extends EventTarget {
                     chatId,
                     messageIndex,
                     threadRootMessageIndex,
-                    latestClientMainEventIndex
+                    latestClientMainEventIndex,
                 );
             case "channel":
                 return this.channelEventsWindow(
@@ -552,7 +555,7 @@ export class OpenChatAgent extends EventTarget {
                     chatId,
                     messageIndex,
                     threadRootMessageIndex,
-                    latestClientMainEventIndex
+                    latestClientMainEventIndex,
                 );
         }
     }
@@ -561,7 +564,7 @@ export class OpenChatAgent extends EventTarget {
         eventIndexRange: IndexRange,
         chatId: DirectChatIdentifier,
         messageIndex: number,
-        latestClientMainEventIndex: number | undefined
+        latestClientMainEventIndex: number | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
@@ -569,10 +572,10 @@ export class OpenChatAgent extends EventTarget {
                 eventIndexRange,
                 chatId,
                 messageIndex,
-                latestClientMainEventIndex
+                latestClientMainEventIndex,
             ),
             undefined,
-            latestClientMainEventIndex
+            latestClientMainEventIndex,
         );
     }
 
@@ -583,7 +586,7 @@ export class OpenChatAgent extends EventTarget {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         if (chatId.kind === "group_chat") {
             return this.groupChatEvents(
@@ -592,7 +595,7 @@ export class OpenChatAgent extends EventTarget {
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
-                latestClientEventIndex
+                latestClientEventIndex,
             );
         } else if (chatId.kind === "direct_chat") {
             return this.directChatEvents(
@@ -601,7 +604,7 @@ export class OpenChatAgent extends EventTarget {
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
-                latestClientEventIndex
+                latestClientEventIndex,
             );
         } else if (chatId.kind === "channel") {
             return this.channelEvents(
@@ -610,7 +613,7 @@ export class OpenChatAgent extends EventTarget {
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
-                latestClientEventIndex
+                latestClientEventIndex,
             );
         }
         throw new UnsupportedValueError("Unexpect chat type", chatId);
@@ -622,7 +625,7 @@ export class OpenChatAgent extends EventTarget {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
@@ -632,10 +635,10 @@ export class OpenChatAgent extends EventTarget {
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
-                latestClientEventIndex
+                latestClientEventIndex,
             ),
             threadRootMessageIndex,
-            latestClientEventIndex
+            latestClientEventIndex,
         );
     }
 
@@ -644,7 +647,7 @@ export class OpenChatAgent extends EventTarget {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
@@ -652,10 +655,10 @@ export class OpenChatAgent extends EventTarget {
                 eventIndexes,
                 chatId,
                 threadRootMessageIndex,
-                latestClientEventIndex
+                latestClientEventIndex,
             ),
             threadRootMessageIndex,
-            latestClientEventIndex
+            latestClientEventIndex,
         );
     }
 
@@ -664,7 +667,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChannelIdentifier,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
-        latestClientMainEventIndex: number | undefined
+        latestClientMainEventIndex: number | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
@@ -673,10 +676,10 @@ export class OpenChatAgent extends EventTarget {
                 eventIndexRange,
                 messageIndex,
                 threadRootMessageIndex,
-                latestClientMainEventIndex
+                latestClientMainEventIndex,
             ),
             threadRootMessageIndex,
-            latestClientMainEventIndex
+            latestClientMainEventIndex,
         );
     }
 
@@ -685,7 +688,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: GroupChatIdentifier,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
-        latestClientMainEventIndex: number | undefined
+        latestClientMainEventIndex: number | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
@@ -693,10 +696,10 @@ export class OpenChatAgent extends EventTarget {
                 eventIndexRange,
                 messageIndex,
                 threadRootMessageIndex,
-                latestClientMainEventIndex
+                latestClientMainEventIndex,
             ),
             threadRootMessageIndex,
-            latestClientMainEventIndex
+            latestClientMainEventIndex,
         );
     }
 
@@ -706,7 +709,7 @@ export class OpenChatAgent extends EventTarget {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
@@ -716,10 +719,10 @@ export class OpenChatAgent extends EventTarget {
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
-                latestClientEventIndex
+                latestClientEventIndex,
             ),
             threadRootMessageIndex,
-            latestClientEventIndex
+            latestClientEventIndex,
         );
     }
 
@@ -729,7 +732,7 @@ export class OpenChatAgent extends EventTarget {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
@@ -738,10 +741,10 @@ export class OpenChatAgent extends EventTarget {
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
-                latestClientEventIndex
+                latestClientEventIndex,
             ),
             threadRootMessageIndex,
-            latestClientEventIndex
+            latestClientEventIndex,
         );
     }
 
@@ -750,7 +753,7 @@ export class OpenChatAgent extends EventTarget {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         switch (chatId.kind) {
             case "group_chat":
@@ -758,21 +761,21 @@ export class OpenChatAgent extends EventTarget {
                     chatId,
                     eventIndexes,
                     threadRootMessageIndex,
-                    latestClientEventIndex
+                    latestClientEventIndex,
                 );
             case "direct_chat":
                 return this.directChatEventsByEventIndex(
                     chatId,
                     eventIndexes,
                     threadRootMessageIndex,
-                    latestClientEventIndex
+                    latestClientEventIndex,
                 );
             case "channel":
                 return this.channelEventsByEventIndex(
                     chatId,
                     eventIndexes,
                     threadRootMessageIndex,
-                    latestClientEventIndex
+                    latestClientEventIndex,
                 );
         }
     }
@@ -781,7 +784,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChannelIdentifier,
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
@@ -789,10 +792,10 @@ export class OpenChatAgent extends EventTarget {
                 chatId,
                 eventIndexes,
                 threadRootMessageIndex,
-                latestClientEventIndex
+                latestClientEventIndex,
             ),
             threadRootMessageIndex,
-            latestClientEventIndex
+            latestClientEventIndex,
         );
     }
 
@@ -801,30 +804,30 @@ export class OpenChatAgent extends EventTarget {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.getGroupClient(chatId.groupId).chatEventsByIndex(
                 eventIndexes,
                 threadRootMessageIndex,
-                latestClientEventIndex
+                latestClientEventIndex,
             ),
             threadRootMessageIndex,
-            latestClientEventIndex
+            latestClientEventIndex,
         );
     }
 
     async getDeletedGroupMessage(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<DeletedGroupMessageResponse> {
         switch (chatId.kind) {
             case "group_chat":
                 const groupResp = await this.getGroupClient(chatId.groupId).getDeletedMessage(
                     messageId,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
                 if (groupResp.kind === "success") {
                     groupResp.content = this.rehydrateMessageContent(groupResp.content);
@@ -832,7 +835,7 @@ export class OpenChatAgent extends EventTarget {
                 return groupResp;
             case "channel":
                 const channelResp = await this.communityClient(
-                    chatId.communityId
+                    chatId.communityId,
                 ).getDeletedMessage(chatId, messageId, threadRootMessageIndex);
                 if (channelResp.kind === "success") {
                     channelResp.content = this.rehydrateMessageContent(channelResp.content);
@@ -843,7 +846,7 @@ export class OpenChatAgent extends EventTarget {
 
     async getDeletedDirectMessage(
         userId: string,
-        messageId: bigint
+        messageId: bigint,
     ): Promise<DeletedDirectMessageResponse> {
         const response = await this.userClient.getDeletedMessage(userId, messageId);
         if (response.kind === "success") {
@@ -878,7 +881,7 @@ export class OpenChatAgent extends EventTarget {
     private findMissingEventIndexesByChat<T extends ChatEvent>(
         defaultChatId: ChatIdentifier,
         events: EventWrapper<T>[],
-        threadRootMessageIndex: number | undefined
+        threadRootMessageIndex: number | undefined,
     ): AsyncMessageContextMap<number> {
         return events.reduce<AsyncMessageContextMap<number>>((result, ev) => {
             if (
@@ -891,7 +894,7 @@ export class OpenChatAgent extends EventTarget {
                         chatId: { ...defaultChatId },
                         threadRootMessageIndex,
                     },
-                    ev.event.repliesTo.eventIndex
+                    ev.event.repliesTo.eventIndex,
                 );
             }
             return result;
@@ -900,7 +903,7 @@ export class OpenChatAgent extends EventTarget {
 
     private messagesFromEventsResponse<T extends ChatEvent>(
         context: MessageContext,
-        resp: EventsResponse<T>
+        resp: EventsResponse<T>,
     ): [MessageContext, EventWrapper<Message>[]] {
         if (resp !== "events_failed") {
             return [
@@ -921,12 +924,12 @@ export class OpenChatAgent extends EventTarget {
         currentChatId: ChatIdentifier,
         events: EventWrapper<T>[],
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
     ): Promise<AsyncMessageContextMap<EventWrapper<Message>>> {
         const contextMap = this.findMissingEventIndexesByChat(
             currentChatId,
             events,
-            threadRootMessageIndex
+            threadRootMessageIndex,
         );
 
         if (contextMap.length === 0) return Promise.resolve(new AsyncMessageContextMap());
@@ -968,7 +971,7 @@ export class OpenChatAgent extends EventTarget {
         ev: EventWrapper<T>,
         defaultChatId: ChatIdentifier,
         missingReplies: AsyncMessageContextMap<EventWrapper<Message>>,
-        threadRootMessageIndex: number | undefined
+        threadRootMessageIndex: number | undefined,
     ): EventWrapper<T> {
         if (ev.event.kind === "message") {
             const originalContent = ev.event.content;
@@ -1006,7 +1009,7 @@ export class OpenChatAgent extends EventTarget {
                             messageContext,
                             messageEvents,
                             repliesTo: ev.event.repliesTo,
-                        }
+                        },
                     );
                 }
             }
@@ -1029,7 +1032,7 @@ export class OpenChatAgent extends EventTarget {
         currentChatId: ChatIdentifier,
         eventsPromise: Promise<EventsResponse<T>>,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
 
@@ -1041,11 +1044,11 @@ export class OpenChatAgent extends EventTarget {
             currentChatId,
             resp.events,
             threadRootMessageIndex,
-            latestClientEventIndex
+            latestClientEventIndex,
         );
 
         resp.events = resp.events.map((e) =>
-            this.rehydrateEvent(e, currentChatId, missing, threadRootMessageIndex)
+            this.rehydrateEvent(e, currentChatId, missing, threadRootMessageIndex),
         );
         return resp;
     }
@@ -1058,7 +1061,7 @@ export class OpenChatAgent extends EventTarget {
             blobUrl: buildUserAvatarUrl(
                 this.config.blobUrlPattern,
                 userSummary.userId,
-                ref?.blobId ?? undefined
+                ref?.blobId ?? undefined,
             ),
         };
     }
@@ -1066,7 +1069,7 @@ export class OpenChatAgent extends EventTarget {
     private rehydrateDataContent<T extends DataContent>(
         dataContent: T,
         blobType: "blobs" | "avatar" | "banner" = "blobs",
-        channelId?: ChannelIdentifier
+        channelId?: ChannelIdentifier,
     ): T {
         const ref = dataContent.blobReference;
         return ref !== undefined
@@ -1078,7 +1081,7 @@ export class OpenChatAgent extends EventTarget {
                       ref.canisterId,
                       ref.blobId,
                       blobType,
-                      channelId
+                      channelId,
                   ),
               }
             : dataContent;
@@ -1088,13 +1091,13 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChatIdentifier,
         message: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
     ): Promise<EventWrapper<Message>> {
         const missing = await this.resolveMissingIndexes(
             chatId,
             [message],
             threadRootMessageIndex,
-            latestClientEventIndex
+            latestClientEventIndex,
         );
         return this.rehydrateEvent(message, chatId, missing, threadRootMessageIndex);
     }
@@ -1109,7 +1112,7 @@ export class OpenChatAgent extends EventTarget {
         id: CommunityIdentifier,
         searchTerm: string | undefined,
         pageIndex: number,
-        pageSize = 10
+        pageSize = 10,
     ): Promise<ExploreChannelsResponse> {
         return this.communityClient(id.communityId)
             .exploreChannels(searchTerm, pageIndex, pageSize)
@@ -1132,7 +1135,7 @@ export class OpenChatAgent extends EventTarget {
         pageIndex: number,
         pageSize = 10,
         flags: number,
-        languages: string[]
+        languages: string[],
     ): Promise<ExploreCommunitiesResponse> {
         return this._groupIndexClient
             .exploreCommunities(searchTerm, pageIndex, pageSize, flags, languages)
@@ -1167,21 +1170,21 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         searchTerm: string,
         userIds: string[],
-        maxResults = 10
+        maxResults = 10,
     ): Promise<SearchGroupChatResponse> {
         switch (chatId.kind) {
             case "group_chat":
                 return this.getGroupClient(chatId.groupId).searchGroupChat(
                     searchTerm,
                     userIds,
-                    maxResults
+                    maxResults,
                 );
             case "channel":
                 return this.communityClient(chatId.communityId).searchChannel(
                     chatId,
                     maxResults,
                     userIds,
-                    searchTerm
+                    searchTerm,
                 );
         }
     }
@@ -1189,7 +1192,7 @@ export class OpenChatAgent extends EventTarget {
     searchDirectChat(
         chatId: DirectChatIdentifier,
         searchTerm: string,
-        maxResults = 10
+        maxResults = 10,
     ): Promise<SearchDirectChatResponse> {
         return this.userClient.searchDirectChat(chatId, searchTerm, maxResults);
     }
@@ -1204,7 +1207,7 @@ export class OpenChatAgent extends EventTarget {
                     },
                 ],
             },
-            allowStale
+            allowStale,
         );
 
         if (response.users.length == 0) {
@@ -1223,7 +1226,7 @@ export class OpenChatAgent extends EventTarget {
 
     private getUpdatedPinnedChannels(
         currentPinnedChannels: ChannelIdentifier[],
-        userResponse: UpdatesSuccessResponse
+        userResponse: UpdatesSuccessResponse,
     ): ChannelIdentifier[] {
         const byCommunity = currentPinnedChannels.reduce((map, channel) => {
             const channels = map.get(channel.communityId) ?? [];
@@ -1311,7 +1314,7 @@ export class OpenChatAgent extends EventTarget {
             latestActiveGroupsCheck = current.latestActiveGroupsCheck;
 
             const userResponse = await this.userClient.getUpdates(
-                current.latestUserCanisterUpdates
+                current.latestUserCanisterUpdates,
             );
 
             numberOfAsyncCalls++;
@@ -1327,7 +1330,7 @@ export class OpenChatAgent extends EventTarget {
 
             if (userResponse.kind === "success") {
                 directChats = userResponse.directChats.added.concat(
-                    mergeDirectChatUpdates(directChats, userResponse.directChats.updated)
+                    mergeDirectChatUpdates(directChats, userResponse.directChats.updated),
                 );
                 directChatUpdates = userResponse.directChats.updated;
 
@@ -1339,7 +1342,7 @@ export class OpenChatAgent extends EventTarget {
                 communitiesAdded = userResponse.communities.added;
                 userCanisterCommunityUpdates = userResponse.communities.updated;
                 userCanisterCommunityUpdates.forEach((c) =>
-                    communitiesToCheckForUpdates.add(c.id.communityId)
+                    communitiesToCheckForUpdates.add(c.id.communityId),
                 );
                 userResponse.communities.removed.forEach((c) => communitiesRemoved.add(c));
 
@@ -1362,7 +1365,7 @@ export class OpenChatAgent extends EventTarget {
             const groupIndexResponse = await this._groupIndexClient.activeGroups(
                 currentCommunityIds,
                 currentGroupChatIds,
-                latestActiveGroupsCheck
+                latestActiveGroupsCheck,
             );
             numberOfAsyncCalls++;
 
@@ -1370,7 +1373,7 @@ export class OpenChatAgent extends EventTarget {
             groupIndexResponse.deletedGroups.forEach((g) => groupsRemoved.add(g.id));
 
             groupIndexResponse.activeCommunities.forEach((c) =>
-                communitiesToCheckForUpdates.add(c)
+                communitiesToCheckForUpdates.add(c),
             );
             groupIndexResponse.deletedCommunities.forEach((c) => groupsRemoved.add(c.id));
 
@@ -1378,11 +1381,11 @@ export class OpenChatAgent extends EventTarget {
         }
 
         const addedGroupsPromises = groupsAdded.map((g) =>
-            this.getGroupClient(g.id.groupId).summary()
+            this.getGroupClient(g.id.groupId).summary(),
         );
 
         const addedCommunitiesPromises = communitiesAdded.map((c) =>
-            this.communityClient(c.id.communityId).summary()
+            this.communityClient(c.id.communityId).summary(),
         );
 
         const updatedGroupPromises = currentGroups
@@ -1406,17 +1409,17 @@ export class OpenChatAgent extends EventTarget {
         const communityUpdatePromiseResults = await waitAll(updatedCommunitiesPromises);
 
         const groupCanisterGroupSummaries = groupPromiseResults.success.filter(
-            isSuccessfulGroupSummaryResponse
+            isSuccessfulGroupSummaryResponse,
         );
         const communityCanisterCommunitySummaries = communityPromiseResults.success.filter(
-            isSuccessfulCommunitySummaryResponse
+            isSuccessfulCommunitySummaryResponse,
         );
 
         const groupUpdates = groupUpdatePromiseResults.success.filter(
-            isSuccessfulGroupSummaryUpdatesResponse
+            isSuccessfulGroupSummaryUpdatesResponse,
         );
         const communityUpdates = communityUpdatePromiseResults.success.filter(
-            isSuccessfulCommunitySummaryUpdatesResponse
+            isSuccessfulCommunitySummaryUpdatesResponse,
         );
 
         if (groupUpdates.length > 0 || communityUpdates.length > 0) {
@@ -1438,8 +1441,8 @@ export class OpenChatAgent extends EventTarget {
                 mergeCommunityUpdates(
                     currentCommunities,
                     userCanisterCommunityUpdates,
-                    communityUpdates
-                )
+                    communityUpdates,
+                ),
             )
             .filter((c) => !communitiesRemoved.has(c.id.communityId));
 
@@ -1467,7 +1470,7 @@ export class OpenChatAgent extends EventTarget {
         const end = Date.now();
         const duration = end - start;
         console.debug(
-            `GetUpdates completed in ${duration}ms. Number of async calls: ${numberOfAsyncCalls}`
+            `GetUpdates completed in ${duration}ms. Number of async calls: ${numberOfAsyncCalls}`,
         );
 
         return {
@@ -1540,7 +1543,7 @@ export class OpenChatAgent extends EventTarget {
     changeRole(
         chatId: MultiUserChatIdentifier,
         userId: string,
-        newRole: MemberRole
+        newRole: MemberRole,
     ): Promise<ChangeRoleResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -1549,7 +1552,7 @@ export class OpenChatAgent extends EventTarget {
                 return this.communityClient(chatId.communityId).changeChannelRole(
                     chatId,
                     userId,
-                    newRole
+                    newRole,
                 );
         }
     }
@@ -1570,7 +1573,7 @@ export class OpenChatAgent extends EventTarget {
             case "channel":
                 return this.communityClient(chatId.communityId).removeMemberFromChannel(
                     chatId,
-                    userId
+                    userId,
                 );
         }
     }
@@ -1581,7 +1584,7 @@ export class OpenChatAgent extends EventTarget {
 
     blockUserFromGroupChat(
         chatId: MultiUserChatIdentifier,
-        userId: string
+        userId: string,
     ): Promise<BlockUserResponse> {
         if (chatId.kind === "channel")
             throw new Error("TODO - blockUserFromChannel not implemented");
@@ -1590,7 +1593,7 @@ export class OpenChatAgent extends EventTarget {
 
     unblockUserFromGroupChat(
         chatId: MultiUserChatIdentifier,
-        userId: string
+        userId: string,
     ): Promise<UnblockUserResponse> {
         if (chatId.kind === "channel")
             throw new Error("TODO - unblockUserFromChannel not implemented");
@@ -1618,20 +1621,20 @@ export class OpenChatAgent extends EventTarget {
             case "group_chat":
                 const groupInviteCode = this.getProvidedGroupInviteCode(chatId);
                 const groupLocalUserIndex = await this.getGroupClient(
-                    chatId.groupId
+                    chatId.groupId,
                 ).localUserIndex();
                 return this.createLocalUserIndexClient(groupLocalUserIndex).joinGroup(
                     chatId.groupId,
-                    groupInviteCode
+                    groupInviteCode,
                 );
             case "channel":
                 const communityInviteCode = this.getProvidedCommunityInviteCode(chatId.communityId);
                 const communityLocalIndex = await this.communityClient(
-                    chatId.communityId
+                    chatId.communityId,
                 ).localUserIndex();
                 return this.createLocalUserIndexClient(communityLocalIndex).joinChannel(
                     chatId,
-                    communityInviteCode
+                    communityInviteCode,
                 );
         }
     }
@@ -1641,7 +1644,7 @@ export class OpenChatAgent extends EventTarget {
         const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).joinCommunity(
             id.communityId,
-            inviteCode
+            inviteCode,
         );
     }
 
@@ -1658,7 +1661,7 @@ export class OpenChatAgent extends EventTarget {
         messageId: bigint,
         reaction: string,
         username: string,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<AddRemoveReactionResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -1666,7 +1669,7 @@ export class OpenChatAgent extends EventTarget {
                     messageId,
                     reaction,
                     username,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
 
             case "direct_chat":
@@ -1675,7 +1678,7 @@ export class OpenChatAgent extends EventTarget {
                     messageId,
                     reaction,
                     username,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
 
             case "channel":
@@ -1684,7 +1687,7 @@ export class OpenChatAgent extends EventTarget {
                     username,
                     messageId,
                     reaction,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
         }
     }
@@ -1693,14 +1696,14 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChatIdentifier,
         messageId: bigint,
         reaction: string,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<AddRemoveReactionResponse> {
         switch (chatId.kind) {
             case "group_chat":
                 return this.getGroupClient(chatId.groupId).removeReaction(
                     messageId,
                     reaction,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
 
             case "direct_chat":
@@ -1708,7 +1711,7 @@ export class OpenChatAgent extends EventTarget {
                     chatId.userId,
                     messageId,
                     reaction,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
 
             case "channel":
@@ -1716,7 +1719,7 @@ export class OpenChatAgent extends EventTarget {
                     chatId,
                     messageId,
                     reaction,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
         }
     }
@@ -1725,7 +1728,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChatIdentifier,
         messageId: bigint,
         threadRootMessageIndex?: number,
-        asPlatformModerator?: boolean
+        asPlatformModerator?: boolean,
     ): Promise<DeleteMessageResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -1733,7 +1736,7 @@ export class OpenChatAgent extends EventTarget {
                     chatId.groupId,
                     messageId,
                     threadRootMessageIndex,
-                    asPlatformModerator
+                    asPlatformModerator,
                 );
 
             case "direct_chat":
@@ -1744,7 +1747,7 @@ export class OpenChatAgent extends EventTarget {
                     chatId,
                     messageId,
                     threadRootMessageIndex,
-                    asPlatformModerator
+                    asPlatformModerator,
                 );
         }
     }
@@ -1753,13 +1756,13 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChannelIdentifier,
         messageId: bigint,
         threadRootMessageIndex?: number,
-        asPlatformModerator?: boolean
+        asPlatformModerator?: boolean,
     ): Promise<DeleteMessageResponse> {
         return this.communityClient(chatId.communityId).deleteMessages(
             chatId,
             [messageId],
             threadRootMessageIndex,
-            asPlatformModerator
+            asPlatformModerator,
         );
     }
 
@@ -1767,19 +1770,19 @@ export class OpenChatAgent extends EventTarget {
         chatId: string,
         messageId: bigint,
         threadRootMessageIndex?: number,
-        asPlatformModerator?: boolean
+        asPlatformModerator?: boolean,
     ): Promise<DeleteMessageResponse> {
         return this.getGroupClient(chatId).deleteMessage(
             messageId,
             threadRootMessageIndex,
-            asPlatformModerator
+            asPlatformModerator,
         );
     }
 
     private deleteDirectMessage(
         otherUserId: string,
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<DeleteMessageResponse> {
         return this.userClient.deleteMessage(otherUserId, messageId, threadRootMessageIndex);
     }
@@ -1787,25 +1790,25 @@ export class OpenChatAgent extends EventTarget {
     undeleteMessage(
         chatId: ChatIdentifier,
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<UndeleteMessageResponse> {
         switch (chatId.kind) {
             case "group_chat":
                 return this.getGroupClient(chatId.groupId).undeleteMessage(
                     messageId,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
             case "direct_chat":
                 return this.userClient.undeleteMessage(
                     chatId.userId,
                     messageId,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
             case "channel":
                 return this.communityClient(chatId.communityId).undeleteMessage(
                     chatId,
                     messageId,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
         }
     }
@@ -1832,7 +1835,7 @@ export class OpenChatAgent extends EventTarget {
 
     toggleMuteNotifications(
         chatId: ChatIdentifier,
-        muted: boolean
+        muted: boolean,
     ): Promise<ToggleMuteNotificationResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -1842,14 +1845,14 @@ export class OpenChatAgent extends EventTarget {
             case "channel":
                 return this.communityClient(chatId.communityId).toggleMuteChannelNotifications(
                     chatId,
-                    muted
+                    muted,
                 );
         }
     }
 
     getGroupDetails(
         chatId: MultiUserChatIdentifier,
-        chatLastUpdated: bigint
+        chatLastUpdated: bigint,
     ): Promise<GroupChatDetailsResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -1857,7 +1860,7 @@ export class OpenChatAgent extends EventTarget {
             case "channel":
                 return this.communityClient(chatId.communityId).getChannelDetails(
                     chatId,
-                    chatLastUpdated
+                    chatLastUpdated,
                 );
         }
     }
@@ -1914,7 +1917,7 @@ export class OpenChatAgent extends EventTarget {
 
     async registerUser(
         username: string,
-        referralCode: string | undefined
+        referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
         const localUserIndex = await this._userIndexClient.userRegistrationCanister();
         return this.createLocalUserIndexClient(localUserIndex).registerUser(username, referralCode);
@@ -1931,7 +1934,7 @@ export class OpenChatAgent extends EventTarget {
     getGroupMessagesByMessageIndex(
         chatId: MultiUserChatIdentifier,
         messageIndexes: Set<number>,
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<Message>> {
         switch (chatId.kind) {
             case "group_chat":
@@ -1939,10 +1942,10 @@ export class OpenChatAgent extends EventTarget {
                     chatId,
                     this.getGroupClient(chatId.groupId).getMessagesByMessageIndex(
                         messageIndexes,
-                        latestClientEventIndex
+                        latestClientEventIndex,
                     ),
                     undefined,
-                    latestClientEventIndex
+                    latestClientEventIndex,
                 );
             case "channel":
                 return this.rehydrateEventResponse(
@@ -1950,10 +1953,10 @@ export class OpenChatAgent extends EventTarget {
                     this.communityClient(chatId.communityId).getMessagesByMessageIndex(
                         chatId,
                         messageIndexes,
-                        latestClientEventIndex
+                        latestClientEventIndex,
                     ),
                     undefined,
-                    latestClientEventIndex
+                    latestClientEventIndex,
                 );
         }
     }
@@ -1969,7 +1972,7 @@ export class OpenChatAgent extends EventTarget {
 
     unpinMessage(
         chatId: MultiUserChatIdentifier,
-        messageIndex: number
+        messageIndex: number,
     ): Promise<UnpinMessageResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -1984,7 +1987,7 @@ export class OpenChatAgent extends EventTarget {
         messageIdx: number,
         answerIdx: number,
         voteType: "register" | "delete",
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<RegisterPollVoteResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -1992,7 +1995,7 @@ export class OpenChatAgent extends EventTarget {
                     messageIdx,
                     answerIdx,
                     voteType,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
             case "channel":
                 return this.communityClient(chatId.communityId).registerPollVote(
@@ -2000,13 +2003,13 @@ export class OpenChatAgent extends EventTarget {
                     messageIdx,
                     answerIdx,
                     voteType,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
         }
     }
 
     withdrawCryptocurrency(
-        domain: PendingCryptocurrencyWithdrawal
+        domain: PendingCryptocurrencyWithdrawal,
     ): Promise<WithdrawCryptocurrencyResponse> {
         return this.userClient.withdrawCryptocurrency(domain);
     }
@@ -2021,7 +2024,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     enableInviteCode(
-        id: GroupChatIdentifier | CommunityIdentifier
+        id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<EnableInviteCodeResponse> {
         switch (id.kind) {
             case "community":
@@ -2032,7 +2035,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     disableInviteCode(
-        id: GroupChatIdentifier | CommunityIdentifier
+        id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<DisableInviteCodeResponse> {
         switch (id.kind) {
             case "community":
@@ -2043,7 +2046,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     resetInviteCode(
-        id: GroupChatIdentifier | CommunityIdentifier
+        id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<ResetInviteCodeResponse> {
         switch (id.kind) {
             case "community":
@@ -2072,19 +2075,19 @@ export class OpenChatAgent extends EventTarget {
     registerProposalVote(
         chatId: MultiUserChatIdentifier,
         messageIndex: number,
-        adopt: boolean
+        adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
         switch (chatId.kind) {
             case "group_chat":
                 return this.getGroupClient(chatId.groupId).registerProposalVote(
                     messageIndex,
-                    adopt
+                    adopt,
                 );
             case "channel":
                 return this.communityClient(chatId.communityId).registerProposalVote(
                     chatId.channelId,
                     messageIndex,
-                    adopt
+                    adopt,
                 );
         }
     }
@@ -2101,35 +2104,35 @@ export class OpenChatAgent extends EventTarget {
     getProposalVoteDetails(
         governanceCanisterId: string,
         proposalId: bigint,
-        isNns: boolean
+        isNns: boolean,
     ): Promise<ProposalVoteDetails> {
         if (isNns) {
             return NnsGovernanceClient.create(
                 this.identity,
                 this.config,
-                governanceCanisterId
+                governanceCanisterId,
             ).getProposalVoteDetails(proposalId);
         } else {
             return SnsGovernanceClient.create(
                 this.identity,
                 this.config,
-                governanceCanisterId
+                governanceCanisterId,
             ).getProposalVoteDetails(proposalId);
         }
     }
 
     listNervousSystemFunctions(
-        snsGovernanceCanisterId: string
+        snsGovernanceCanisterId: string,
     ): Promise<ListNervousSystemFunctionsResponse> {
         return SnsGovernanceClient.create(
             this.identity,
             this.config,
-            snsGovernanceCanisterId
+            snsGovernanceCanisterId,
         ).listNervousSystemFunctions();
     }
 
     async threadPreviews(
-        threadsByChat: Map<string, [ThreadSyncDetails[], number | undefined]>
+        threadsByChat: Map<string, [ThreadSyncDetails[], number | undefined]>,
     ): Promise<ThreadPreview[]> {
         function latestMessageTimestamp(messages: EventWrapper<Message>[]): bigint {
             return messages[messages.length - 1]?.timestamp ?? BigInt(0);
@@ -2141,7 +2144,7 @@ export class OpenChatAgent extends EventTarget {
                 .map(([chatId, [threadSyncs, latestClientMainEventIndex]]) => {
                     const latestClientThreadUpdate = threadSyncs.reduce(
                         (curr, next) => (next.lastUpdated > curr ? next.lastUpdated : curr),
-                        BigInt(0)
+                        BigInt(0),
                     );
 
                     switch (chatId.kind) {
@@ -2149,14 +2152,14 @@ export class OpenChatAgent extends EventTarget {
                             return this.getGroupClient(chatId.groupId)
                                 .threadPreviews(
                                     threadSyncs.map((t) => t.threadRootMessageIndex),
-                                    latestClientThreadUpdate
+                                    latestClientThreadUpdate,
                                 )
                                 .then(
                                     (response) =>
                                         [response, latestClientMainEventIndex] as [
                                             ThreadPreviewsResponse,
-                                            number | undefined
-                                        ]
+                                            number | undefined,
+                                        ],
                                 );
 
                         case "channel":
@@ -2164,60 +2167,60 @@ export class OpenChatAgent extends EventTarget {
                                 .threadPreviews(
                                     chatId,
                                     threadSyncs.map((t) => t.threadRootMessageIndex),
-                                    latestClientThreadUpdate
+                                    latestClientThreadUpdate,
                                 )
                                 .then(
                                     (response) =>
                                         [response, latestClientMainEventIndex] as [
                                             ThreadPreviewsResponse,
-                                            number | undefined
-                                        ]
+                                            number | undefined,
+                                        ],
                                 );
 
                         case "direct_chat":
                             throw new Error("direct chat thread previews not supported");
                     }
-                })
+                }),
         ).then((responses) =>
             Promise.all(
                 responses.map(([r, latestClientMainEventIndex]) => {
                     return r.kind === "thread_previews_success"
                         ? Promise.all(
                               r.threads.map((t) =>
-                                  this.rehydrateThreadPreview(t, latestClientMainEventIndex)
-                              )
+                                  this.rehydrateThreadPreview(t, latestClientMainEventIndex),
+                              ),
                           )
                         : [];
-                })
+                }),
             ).then((threads) =>
                 threads
                     .flat()
                     .sort((a, b) =>
                         Number(
                             latestMessageTimestamp(b.latestReplies) -
-                                latestMessageTimestamp(a.latestReplies)
-                        )
-                    )
-            )
+                                latestMessageTimestamp(a.latestReplies),
+                        ),
+                    ),
+            ),
         );
     }
 
     private async rehydrateThreadPreview(
         thread: ThreadPreview,
-        latestClientMainEventIndex: number | undefined
+        latestClientMainEventIndex: number | undefined,
     ): Promise<ThreadPreview> {
         const threadMissing = await this.resolveMissingIndexes(
             thread.chatId,
             thread.latestReplies,
             thread.rootMessage.event.messageIndex,
-            thread.rootMessage.event.thread?.latestEventIndex
+            thread.rootMessage.event.thread?.latestEventIndex,
         );
 
         const rootMissing = await this.resolveMissingIndexes(
             thread.chatId,
             [thread.rootMessage],
             undefined,
-            latestClientMainEventIndex
+            latestClientMainEventIndex,
         );
 
         const latestReplies = thread.latestReplies.map((r) =>
@@ -2225,14 +2228,14 @@ export class OpenChatAgent extends EventTarget {
                 r,
                 thread.chatId,
                 threadMissing,
-                thread.rootMessage.event.messageIndex
-            )
+                thread.rootMessage.event.messageIndex,
+            ),
         );
         const rootMessage = this.rehydrateEvent(
             thread.rootMessage,
             thread.chatId,
             rootMissing,
-            undefined
+            undefined,
         );
 
         return {
@@ -2245,14 +2248,14 @@ export class OpenChatAgent extends EventTarget {
     setCachedMessageFromNotification(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
-        message: EventWrapper<Message>
+        message: EventWrapper<Message>,
     ): Promise<void> {
         return setCachedMessageIfNotExists(this.db, chatId, message, threadRootMessageIndex);
     }
 
     freezeGroup(
         chatId: GroupChatIdentifier,
-        reason: string | undefined
+        reason: string | undefined,
     ): Promise<FreezeGroupResponse> {
         return this._groupIndexClient.freezeGroup(chatId.groupId, reason);
     }
@@ -2292,7 +2295,7 @@ export class OpenChatAgent extends EventTarget {
     deleteFailedMessage(
         chatId: ChatIdentifier,
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<void> {
         return removeFailedMessage(this.db, chatId, messageId, threadRootMessageIndex);
     }
@@ -2306,20 +2309,20 @@ export class OpenChatAgent extends EventTarget {
         token: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
-        expectedPriceE8s: bigint
+        expectedPriceE8s: bigint,
     ): Promise<PayForDiamondMembershipResponse> {
         return this._userIndexClient.payForDiamondMembership(
             userId,
             token,
             duration,
             recurring,
-            expectedPriceE8s
+            expectedPriceE8s,
         );
     }
 
     setCommunityModerationFlags(
         communityId: string,
-        flags: number
+        flags: number,
     ): Promise<SetCommunityModerationFlagsResponse> {
         return this._groupIndexClient.setCommunityModerationFlags(communityId, flags);
     }
@@ -2337,7 +2340,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     updateMarketMakerConfig(
-        config: UpdateMarketMakerConfigArgs
+        config: UpdateMarketMakerConfigArgs,
     ): Promise<UpdateMarketMakerConfigResponse> {
         return this._marketMakerClient.updateConfig(config);
     }
@@ -2347,14 +2350,14 @@ export class OpenChatAgent extends EventTarget {
         eventIndex: number,
         remindAt: number,
         notes?: string,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<SetMessageReminderResponse> {
         return this.userClient.setMessageReminder(
             chatId,
             eventIndex,
             remindAt,
             notes,
-            threadRootMessageIndex
+            threadRootMessageIndex,
         );
     }
 
@@ -2371,7 +2374,7 @@ export class OpenChatAgent extends EventTarget {
         eventIndex: number,
         reasonCode: number,
         notes: string | undefined,
-        threadRootMessageIndex: number | undefined
+        threadRootMessageIndex: number | undefined,
     ): Promise<ReportMessageResponse> {
         const modGroupId = await this._userIndexClient.getPlatformModeratorGroup();
         const localUserIndex = await this.getGroupClient(modGroupId).localUserIndex();
@@ -2380,7 +2383,7 @@ export class OpenChatAgent extends EventTarget {
             eventIndex,
             reasonCode,
             notes,
-            threadRootMessageIndex
+            threadRootMessageIndex,
         );
     }
     declineInvitation(chatId: MultiUserChatIdentifier): Promise<DeclineInvitationResponse> {
@@ -2395,7 +2398,7 @@ export class OpenChatAgent extends EventTarget {
     convertGroupToCommunity(
         chatId: GroupChatIdentifier,
         historyVisible: boolean,
-        rules: AccessRules
+        rules: AccessRules,
     ): Promise<ConvertToCommunityResponse> {
         return this.getGroupClient(chatId.groupId).convertToCommunity(historyVisible, rules);
     }
