@@ -528,11 +528,17 @@ export const idlFactory = ({ IDL }) => {
   });
   const CommunityPermissions = IDL.Record({
     'create_public_channel' : CommunityPermissionRole,
+    'manage_user_groups' : CommunityPermissionRole,
     'update_details' : CommunityPermissionRole,
     'remove_members' : CommunityPermissionRole,
     'invite_users' : CommunityPermissionRole,
     'change_roles' : CommunityPermissionRole,
     'create_private_channel' : CommunityPermissionRole,
+  });
+  const UserGroup = IDL.Record({
+    'members' : IDL.Nat32,
+    'name' : IDL.Text,
+    'user_group_id' : IDL.Nat32,
   });
   const CommunityRole = IDL.Variant({
     'Member' : IDL.Null,
@@ -558,6 +564,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
     'channels' : IDL.Vec(CommunityCanisterChannelSummary),
+    'user_groups' : IDL.Vec(UserGroup),
     'avatar_id' : IDL.Opt(IDL.Nat),
     'membership' : IDL.Opt(CommunityMembership),
     'frozen' : IDL.Opt(FrozenGroupInfo),

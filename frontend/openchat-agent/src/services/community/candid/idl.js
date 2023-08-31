@@ -1266,8 +1266,13 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
+  const UserGroupMembers = IDL.Record({
+    'members' : IDL.Vec(UserId),
+    'user_group_id' : IDL.Nat32,
+  });
   const SelectedInitialSuccess = IDL.Record({
     'members' : IDL.Vec(CommunityMember),
+    'user_group_members' : IDL.Vec(UserGroupMembers),
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
@@ -1284,6 +1289,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SelectedUpdatesSuccess = IDL.Record({
     'blocked_users_removed' : IDL.Vec(UserId),
+    'user_group_members' : IDL.Vec(UserGroupMembers),
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'members_added_or_updated' : IDL.Vec(CommunityMember),
     'members_removed' : IDL.Vec(UserId),
@@ -1350,11 +1356,17 @@ export const idlFactory = ({ IDL }) => {
   });
   const CommunityPermissions = IDL.Record({
     'create_public_channel' : CommunityPermissionRole,
+    'manage_user_groups' : CommunityPermissionRole,
     'update_details' : CommunityPermissionRole,
     'remove_members' : CommunityPermissionRole,
     'invite_users' : CommunityPermissionRole,
     'change_roles' : CommunityPermissionRole,
     'create_private_channel' : CommunityPermissionRole,
+  });
+  const UserGroup = IDL.Record({
+    'members' : IDL.Nat32,
+    'name' : IDL.Text,
+    'user_group_id' : IDL.Nat32,
   });
   const CommunityMembership = IDL.Record({
     'role' : CommunityRole,
@@ -1375,6 +1387,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
     'channels' : IDL.Vec(CommunityCanisterChannelSummary),
+    'user_groups' : IDL.Vec(UserGroup),
     'avatar_id' : IDL.Opt(IDL.Nat),
     'membership' : IDL.Opt(CommunityMembership),
     'frozen' : IDL.Opt(FrozenGroupInfo),
@@ -1410,6 +1423,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
     'channels_removed' : IDL.Vec(ChannelId),
+    'user_groups' : IDL.Vec(UserGroup),
     'avatar_id' : DocumentIdUpdate,
     'channels_added' : IDL.Vec(CommunityCanisterChannelSummary),
     'membership' : IDL.Opt(CommunityMembershipUpdates),
@@ -1529,6 +1543,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const OptionalCommunityPermissions = IDL.Record({
     'create_public_channel' : IDL.Opt(CommunityPermissionRole),
+    'manage_user_groups' : IDL.Opt(CommunityPermissionRole),
     'update_details' : IDL.Opt(CommunityPermissionRole),
     'remove_members' : IDL.Opt(CommunityPermissionRole),
     'invite_users' : IDL.Opt(CommunityPermissionRole),
