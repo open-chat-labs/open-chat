@@ -1,3 +1,4 @@
+use crate::user_groups::UserGroupSummary;
 use crate::{
     AccessGate, ChannelId, ChatMetrics, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     CommunityPermissions, CommunityRole, EventIndex, FrozenGroupInfo, OptionUpdate, TimestampMillis,
@@ -23,6 +24,7 @@ pub struct CommunityCanisterCommunitySummary {
     pub channels: Vec<CommunityCanisterChannelSummary>,
     pub rules_enabled: bool,
     pub membership: Option<CommunityMembership>,
+    pub user_groups: Vec<UserGroupSummary>,
     pub metrics: ChatMetrics,
 }
 
@@ -53,6 +55,7 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub channels_removed: Vec<ChannelId>,
     pub rules_enabled: Option<bool>,
     pub membership: Option<CommunityMembershipUpdates>,
+    pub user_groups: Vec<UserGroupSummary>,
     pub metrics: Option<ChatMetrics>,
 }
 

@@ -88,7 +88,6 @@ fn init_test_data(
     TestData { user, community_id }
 }
 
-#[allow(dead_code)]
 struct TestData {
     user: User,
     community_id: CommunityId,

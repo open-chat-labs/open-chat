@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement ability to create and update `user_groups` ([#4271](https://github.com/open-chat-labs/open-chat/pull/4271))
+
 ### Fixed
 
 - Support changing casing of public groups / communities ([#4258](https://github.com/open-chat-labs/open-chat/pull/4258))

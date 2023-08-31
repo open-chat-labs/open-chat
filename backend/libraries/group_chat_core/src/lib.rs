@@ -12,8 +12,8 @@ use types::{
     GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse,
     Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged,
-    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked, UsersInvited, Version,
-    Versioned, VersionedRules,
+    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UserId, UsersBlocked, UsersInvited, Version, Versioned,
+    VersionedRules,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -640,7 +640,7 @@ impl GroupChatCore {
         message_id: MessageId,
         content: MessageContentInitial,
         replies_to: Option<GroupReplyContext>,
-        mentioned: Vec<User>,
+        mentioned: Vec<UserId>,
         forwarding: bool,
         rules_accepted: Option<Version>,
         proposals_bot_user_id: UserId,
@@ -742,7 +742,7 @@ impl GroupChatCore {
         let message_event = self.events.push_message(push_message_args);
         let message_index = message_event.event.message_index;
 
-        let mut mentions: HashSet<_> = mentioned.iter().map(|m| m.user_id).chain(user_being_replied_to).collect();
+        let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
 
         let mut users_to_notify = HashSet::new();
         let mut thread_participants = None;

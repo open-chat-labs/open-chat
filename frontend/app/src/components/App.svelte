@@ -551,6 +551,7 @@
             height: 100vh;
             height: calc(var(--vh, 1vh) * 100);
             height: 100dvh; // firefox will ignore this
+            position: fixed;
 
             @include size-below(lg) {
                 padding: $sp3;
@@ -572,6 +573,7 @@
                 color: var(--landing-txt);
                 min-height: 100vh;
                 height: unset;
+                position: unset;
             }
 
             @media (hover: none) {

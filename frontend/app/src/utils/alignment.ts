@@ -30,7 +30,7 @@ export function derivePosition(
     elementRect: DOMRect,
     position: Position,
     align: Alignment,
-    gutter: number
+    gutter: number,
 ): Dimensions {
     const triggerCenter = center(triggerRect);
     const [flippedPosition, flippedAlign] = rtlCheck([position, align]);
@@ -66,7 +66,7 @@ export function derivePosition(
 function horizontalPosition(
     triggerCenter: { x: number; y: number },
     elementRect: DOMRect,
-    align: Alignment
+    align: Alignment,
 ): number {
     switch (align) {
         case "center":
@@ -81,7 +81,7 @@ function horizontalPosition(
 function verticalPosition(
     triggerCenter: { x: number; y: number },
     elementRect: DOMRect,
-    align: Alignment
+    align: Alignment,
 ): number {
     switch (align) {
         case "center":
@@ -127,36 +127,30 @@ export function boundsCheck(trigger: DOMRect, dim: Dimensions): Dimensions {
     const rightOverflow = right > viewport.w;
     const offsetH = trigger.height / 2;
     const offsetW = trigger.width / 2;
+    let x = dim.x;
+    let y = dim.y;
 
     if (topOverflow) {
-        return {
-            ...dim,
-            y: dim.y + dim.h - offsetH,
-        };
+        y = dim.y + dim.h - offsetH;
     }
 
     if (bottomOverflow) {
-        return {
-            ...dim,
-            y: dim.y - dim.h + offsetH,
-        };
+        y = dim.y - dim.h + offsetH;
     }
 
     if (rightOverflow) {
-        return {
-            ...dim,
-            x: dim.x - dim.w + offsetW,
-        };
+        x = dim.x - dim.w - offsetW;
     }
 
     if (leftOverflow) {
-        return {
-            ...dim,
-            x: dim.x + dim.w - offsetW,
-        };
+        x = dim.x + dim.w + offsetW;
     }
 
-    return dim;
+    return {
+        ...dim,
+        x,
+        y,
+    };
 }
 
 export function centerOfScreen(elementRect: DOMRect): Dimensions {

@@ -22,7 +22,7 @@ export const tooltipStore = {
         triggerRect: DOMRect,
         position: Position = "top",
         align: Alignment = "start",
-        gutter = 8
+        gutter = 8,
     ): void =>
         update((tooltip) => {
             if (tooltip === undefined) return tooltip;
@@ -32,7 +32,7 @@ export const tooltipStore = {
                 tooltip.getBoundingClientRect(),
                 position,
                 align,
-                gutter
+                gutter,
             );
 
             tooltip.style.setProperty("left", `${pos.x}px`);
