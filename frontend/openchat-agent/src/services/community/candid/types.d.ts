@@ -359,6 +359,7 @@ export interface CommunityCanisterCommunitySummary {
   'description' : string,
   'last_updated' : TimestampMillis,
   'channels' : Array<CommunityCanisterChannelSummary>,
+  'user_groups' : Array<UserGroup>,
   'avatar_id' : [] | [bigint],
   'membership' : [] | [CommunityMembership],
   'frozen' : [] | [FrozenGroupInfo],
@@ -378,6 +379,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'channels_removed' : Array<ChannelId>,
+  'user_groups' : Array<UserGroup>,
   'avatar_id' : DocumentIdUpdate,
   'channels_added' : Array<CommunityCanisterChannelSummary>,
   'membership' : [] | [CommunityMembershipUpdates],
@@ -416,6 +418,7 @@ export type CommunityPermissionRole = { 'Owners' : null } |
   { 'Members' : null };
 export interface CommunityPermissions {
   'create_public_channel' : CommunityPermissionRole,
+  'manage_user_groups' : CommunityPermissionRole,
   'update_details' : CommunityPermissionRole,
   'remove_members' : CommunityPermissionRole,
   'invite_users' : CommunityPermissionRole,
@@ -1181,6 +1184,7 @@ export interface NotificationEnvelope {
 }
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
+  'manage_user_groups' : [] | [CommunityPermissionRole],
   'update_details' : [] | [CommunityPermissionRole],
   'remove_members' : [] | [CommunityPermissionRole],
   'invite_users' : [] | [CommunityPermissionRole],
@@ -1491,6 +1495,7 @@ export type SelectedInitialResponse = { 'Success' : SelectedInitialSuccess } |
   { 'PrivateCommunity' : null };
 export interface SelectedInitialSuccess {
   'members' : Array<CommunityMember>,
+  'user_group_members' : Array<UserGroupMembers>,
   'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
   'timestamp' : TimestampMillis,
@@ -1506,6 +1511,7 @@ export type SelectedUpdatesResponse = { 'Success' : SelectedUpdatesSuccess } |
   { 'PrivateCommunity' : null };
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
+  'user_group_members' : Array<UserGroupMembers>,
   'invited_users' : [] | [Array<UserId>],
   'members_added_or_updated' : Array<CommunityMember>,
   'members_removed' : Array<UserId>,
@@ -1733,6 +1739,15 @@ export interface UserFailedError { 'user_id' : UserId, 'error' : string }
 export interface UserFailedGateCheck {
   'user_id' : UserId,
   'reason' : GateCheckFailedReason,
+}
+export interface UserGroup {
+  'members' : number,
+  'name' : string,
+  'user_group_id' : number,
+}
+export interface UserGroupMembers {
+  'members' : Array<UserId>,
+  'user_group_id' : number,
 }
 export type UserId = CanisterId;
 export interface UserSummary {
