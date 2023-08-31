@@ -1,4 +1,4 @@
-LocalGroupIndex -> Community + LocalUserIndex -> Website + GroupIndex + Group -> User
+LocalGroupIndex -> Community + LocalUserIndex -> Website + GroupIndex + UserIndex + Group -> User
 
 This is because of the new `manage_user_groups` permission.
 LocalGroupIndex installs Communities using Candid so LGI before C.
