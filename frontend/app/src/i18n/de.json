@@ -281,7 +281,11 @@
         "proceed": "Fortfahren",
         "doYouWantToProceed": "Wenn Sie fortfahren, erhalten Sie keine 50.000 Satoshis. Alternativ können Sie ein Mitglied des DFINITY-Teams finden, um einen neuen Code zu erhalten.",
         "enterUsername": "Wählen Sie einen OpenChat-Benutzernamen",
-        "disclaimer": "Durch die Registrierung bei OpenChat erklären Sie sich damit einverstanden, die Community-Richtlinien einzuhalten"
+        "disclaimer": "Durch die Registrierung bei OpenChat erklären Sie sich damit einverstanden, die Community-Richtlinien einzuhalten",
+        "enterDisplayName": "Wähle einen Anzeigenamen",
+        "displayNameInvalid": "Ungültiger Anzeigename, bitte versuchen Sie es erneut",
+        "displayNameTooShort": "Dieser Anzeigename ist zu kurz",
+        "displayNameTooLong": "Dieser Anzeigename ist zu lang"
     },
     "roleChanged": "{changedBy} hat die Rolle von {changed} von {oldRole} zu {newRole} geändert",
     "yourRoleChanged": "{changedBy} hat Ihre Rolle von {oldRole} zu {newRole} geändert",

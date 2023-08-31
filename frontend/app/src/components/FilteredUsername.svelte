@@ -1,7 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
 
-    export let me: boolean;
+    export let me = false;
     export let searchTerm = "";
     export let username: string | undefined;
 

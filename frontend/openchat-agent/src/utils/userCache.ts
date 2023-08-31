@@ -78,6 +78,19 @@ export async function setUsernameInCache(userId: string, username: string): Prom
     await tx.done;
 }
 
+export async function setDisplayNameInCache(userId: string, displayName: string | undefined): Promise<void> {
+    const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
+        durability: "relaxed",
+    });
+    const store = tx.objectStore("users");
+    const user = await store.get(userId);
+    if (user !== undefined) {
+        user.displayName = displayName;
+        await store.put(user, userId);
+    }
+    await tx.done;
+}
+
 export async function setUserDiamondStatusToTrueInCache(userId: string): Promise<void> {
     const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
         durability: "relaxed",

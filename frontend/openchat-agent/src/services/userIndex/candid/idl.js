@@ -69,6 +69,7 @@ export const idlFactory = ({ IDL }) => {
       'icp_account' : AccountIdentifier,
       'referrals' : IDL.Vec(UserId),
       'user_id' : UserId,
+      'display_name' : IDL.Opt(IDL.Text),
       'avatar_id' : IDL.Opt(IDL.Nat),
       'moderation_flags_enabled' : IDL.Nat32,
       'is_suspected_bot' : IDL.Bool,
@@ -170,8 +171,8 @@ export const idlFactory = ({ IDL }) => {
     'diamond_member' : IDL.Bool,
     'user_id' : UserId,
     'is_bot' : IDL.Bool,
+    'display_name' : IDL.Opt(IDL.Text),
     'avatar_id' : IDL.Opt(IDL.Nat),
-    'seconds_since_last_online' : IDL.Nat32,
     'suspended' : IDL.Bool,
   });
   const SearchResponse = IDL.Variant({
@@ -179,6 +180,14 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
       'users' : IDL.Vec(UserSummary),
     }),
+  });
+  const SetDisplayNameArgs = IDL.Record({ 'display_name' : IDL.Opt(IDL.Text) });
+  const SetDisplayNameResponse = IDL.Variant({
+    'DisplayNameInvalid' : IDL.Null,
+    'Success' : IDL.Null,
+    'DisplayNameTooLong' : IDL.Nat16,
+    'DisplayNameTooShort' : IDL.Nat16,
+    'UserNotFound' : IDL.Null,
   });
   const SetModerationFlagsArgs = IDL.Record({
     'moderation_flags_enabled' : IDL.Nat32,
@@ -257,6 +266,20 @@ export const idlFactory = ({ IDL }) => {
       'users' : IDL.Vec(PartialUserSummary),
     }),
   });
+  const UsersV2Args = IDL.Record({
+    'user_groups' : IDL.Vec(
+      IDL.Record({
+        'users' : IDL.Vec(UserId),
+        'updated_since' : TimestampMillis,
+      })
+    ),
+  });
+  const UsersV2Response = IDL.Variant({
+    'Success' : IDL.Record({
+      'timestamp' : TimestampMillis,
+      'users' : IDL.Vec(UserSummary),
+    }),
+  });
   return IDL.Service({
     'add_platform_moderator' : IDL.Func(
         [AddPlatformModeratorArgs],
@@ -330,6 +353,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'set_display_name' : IDL.Func(
+        [SetDisplayNameArgs],
+        [SetDisplayNameResponse],
+        [],
+      ),
     'set_moderation_flags' : IDL.Func(
         [SetModerationFlagsArgs],
         [SetModerationFlagsResponse],
@@ -359,6 +387,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'users' : IDL.Func([UsersArgs], [UsersResponse], ['query']),
+    'users_v2' : IDL.Func([UsersV2Args], [UsersV2Response], ['query']),
   });
 };
 export const init = ({ IDL }) => { return []; };

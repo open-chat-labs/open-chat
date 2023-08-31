@@ -15,6 +15,7 @@
     import Legend from "../Legend.svelte";
     import GuidelinesContent from "../landingpages/GuidelinesContent.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
+    import DisplayNameInput from "../DisplayNameInput.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -27,17 +28,21 @@
 
     let state: Writable<RegisterState> = writable({ kind: "awaiting_username" });
     let error: Writable<string | undefined> = writable(undefined);
-    let username: Writable<string | undefined> = writable(undefined);
+    let usernameStore: Writable<string | undefined> = writable(undefined);
+    let displayNameStore: Writable<string | undefined> = writable(undefined);
     let createdUser: CreatedUser | undefined = undefined;
     let closed: boolean = false;
     let showGuidelines = false;
-    let validUsername: string | undefined = undefined;
+    let username = "";
+    let usernameValid = false;
+    let displayName: string | undefined = undefined;
+    let displayNameValid = false;
     let checkingUsername: boolean;
     let badCode = false;
 
     function clearCodeAndRegister() {
         client.clearReferralCode();
-        submitUsername();
+        register();
     }
 
     function clearCodeAndLogout() {
@@ -45,16 +50,18 @@
         client.logout();
     }
 
-    function submitUsername() {
-        if (validUsername !== undefined) {
-            username.set(validUsername);
-            registerUser(validUsername);
+    function register() {
+        if (usernameValid && displayNameValid) {
+            usernameStore.set(username);
+            displayNameStore.set(displayName);
+            // TODO: Ask user for a display name
+            registerUser(username, displayName);
         }
     }
 
-    function registerUser(username: string): void {
+    function registerUser(username: string, displayName: string | undefined): void {
         state.set({ kind: "spinning" });
-        client.registerUser(username).then((resp) => {
+        client.registerUser(username, displayName).then((resp) => {
             badCode = false;
             state.set({ kind: "awaiting_username" });
             if (resp.kind === "username_taken") {
@@ -65,6 +72,12 @@
                 error.set("register.usernameTooLong");
             } else if (resp.kind === "username_invalid") {
                 error.set("register.usernameInvalid");
+            } else if (resp.kind === "display_name_too_short") {
+                error.set("register.displayNameTooShort");
+            } else if (resp.kind === "display_name_too_long") {
+                error.set("register.displayNameTooLong");
+            } else if (resp.kind === "display_name_invalid") {
+                error.set("register.displayNameInvalid");
             } else if (resp.kind === "user_limit_reached") {
                 error.set("register.userLimitReached");
             } else if (resp.kind === "internal_error") {
@@ -83,6 +96,7 @@
                 createdUser = {
                     kind: "created_user",
                     username,
+                    displayName,
                     cryptoAccount: resp.icpAccount,
                     userId: resp.userId,
                     canisterUpgradeStatus: "not_required",
@@ -146,15 +160,23 @@
                 </div>
             </div>
         {:else}
-            <Legend label={$_("username")} rules={$_("usernameRules")} />
-            <form class="username-wrapper" on:submit|preventDefault={submitUsername}>
+            <form class="username-wrapper" on:submit|preventDefault={register}>
+                <Legend label={$_("username")} rules={$_("usernameRules")} />
                 <UsernameInput
                     {client}
                     disabled={busy}
-                    bind:originalUsername={$username}
-                    bind:validUsername
+                    originalUsername={$usernameStore ?? ""}
+                    bind:username
+                    bind:usernameValid
                     bind:checking={checkingUsername}
                     bind:error={$error} />
+
+                <Legend label={$_("displayName")} rules={$_("displayNameRules")} />
+                <DisplayNameInput
+                    originalDisplayName={$displayNameStore}
+                    disabled={busy}
+                    bind:displayName
+                    bind:displayNameValid />
             </form>
 
             {#if $error}
@@ -173,14 +195,14 @@
                 <Button secondary on:click={clearCodeAndLogout}>{$_("cancel")}</Button>
                 <Button
                     loading={checkingUsername || busy}
-                    disabled={validUsername === undefined || busy}
+                    disabled={!usernameValid || !displayNameValid || busy}
                     on:click={clearCodeAndRegister}>{$_("register.proceed")}</Button>
             </ButtonGroup>
         {:else}
             <Button
                 loading={checkingUsername || busy}
-                disabled={validUsername === undefined || busy}
-                on:click={submitUsername}>
+                disabled={!usernameValid || !displayNameValid || busy}
+                on:click={register}>
                 {$_("register.createUser")}
             </Button>
         {/if}

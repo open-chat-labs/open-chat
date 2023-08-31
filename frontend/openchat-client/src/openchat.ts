@@ -264,7 +264,6 @@ import type {
     ThreadPreview,
     UsersArgs,
     UsersResponse,
-    PartialUserSummary,
     PublicProfile,
     SetUsernameResponse,
     SetBioResponse,
@@ -317,6 +316,7 @@ import type {
     CryptocurrencyDetails,
     CryptocurrencyTransfer,
     Mention,
+    SetDisplayNameResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1570,6 +1570,7 @@ export class OpenChat extends OpenChatAgentWorker {
         messageId: bigint,
         reaction: string,
         username: string,
+        displayName: string | undefined,
         kind: "add" | "remove",
     ): Promise<boolean> {
         const chat = this._liveState.chatSummaries.get(chatId);
@@ -1602,6 +1603,7 @@ export class OpenChat extends OpenChatAgentWorker {
                       messageId,
                       reaction,
                       username,
+                      displayName,
                       threadRootMessageIndex,
                   })
                 : this.sendRequest({
@@ -3339,10 +3341,12 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     searchCommunityUsers(term: string): Promise<UserSummary[]> {
+        const termLower = term.toLowerCase();
         const matches = this._liveState.currentCommunityMembers.filter((m) => {
             const user = this._liveState.userStore[m.userId];
             if (user?.username === undefined) return false;
-            return user.username.toLowerCase().includes(term.toLowerCase());
+            return user.username.toLowerCase().includes(termLower) || 
+                (user.displayName !== undefined && user.displayName.toLowerCase().includes(termLower));
         });
         return Promise.resolve(
             matches.map((m) => this._liveState.userStore[m.userId] as UserSummary),
@@ -3366,10 +3370,11 @@ export class OpenChat extends OpenChatAgentWorker {
         return captured;
     }
 
-    registerUser(username: string): Promise<RegisterUserResponse> {
+    registerUser(username: string, displayName: string | undefined): Promise<RegisterUserResponse> {
         return this.sendRequest({
             kind: "registerUser",
             username,
+            displayName,
             referralCode: this._referralCode,
         }).then((res) => {
             if (res.kind === "success") {
@@ -3735,7 +3740,7 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
+    getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
         return this.sendRequest({ kind: "getUser", userId, allowStale }).then((resp) => {
             if (resp !== undefined) {
                 userStore.add(resp);
@@ -3773,6 +3778,16 @@ export class OpenChat extends OpenChatAgentWorker {
             if (resp === "success" && this._user !== undefined) {
                 this._user = { ...this._user, username };
                 this.overwriteUserInStore(userId, (user) => ({ ...user, username }));
+            }
+            return resp;
+        });
+    }
+
+    setDisplayName(userId: string, displayName: string | undefined): Promise<SetDisplayNameResponse> {
+        return this.sendRequest({ kind: "setDisplayName", userId, displayName }).then((resp) => {
+            if (resp === "success" && this._user !== undefined) {
+                this._user = { ...this._user, displayName };
+                this.overwriteUserInStore(userId, (user) => ({ ...user, displayName }));
             }
             return resp;
         });
@@ -4321,7 +4336,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private overwriteUserInStore(
         userId: string,
-        updater: (user: PartialUserSummary) => PartialUserSummary | undefined,
+        updater: (user: UserSummary) => UserSummary | undefined,
     ): void {
         const user = this._liveState.userStore[userId];
         if (user !== undefined) {
@@ -4481,9 +4496,9 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "getReferralLeaderboard", args });
     }
 
-    usernameAndIcon(user?: PartialUserSummary): string {
+    displayNameAndIcon(user?: UserSummary): string {
         return user !== undefined
-            ? `${user?.username}  ${user?.diamond ? "💎" : ""}`
+            ? `${user?.displayName ?? user?.username}  ${user?.diamond ? "💎" : ""}`
             : this.config.i18nFormatter("unknownUser");
     }
 

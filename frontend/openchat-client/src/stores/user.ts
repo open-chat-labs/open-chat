@@ -1,14 +1,15 @@
-import type { PartialUserSummary, UserLookup } from "openchat-shared";
+import type { UserSummary, UserLookup } from "openchat-shared";
 import { derived, writable } from "svelte/store";
 
 export const currentUserKey = Symbol();
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
 export const OPENCHAT_BOT_AVATAR_URL = "/assets/robot.svg";
-export const openChatBotUser: PartialUserSummary = {
+export const openChatBotUser: UserSummary = {
     kind: "bot",
     userId: OPENCHAT_BOT_USER_ID,
     username: OPENCHAT_BOT_USERNAME,
+    displayName: undefined,
     updated: BigInt(0),
     suspended: false,
     blobUrl: OPENCHAT_BOT_AVATAR_URL,
@@ -19,11 +20,12 @@ export const openChatBotUser: PartialUserSummary = {
 export const PROPOSALS_BOT_USERNAME = "ProposalsBot";
 export const PROPOSALS_BOT_AVATAR_URL = "/assets/proposal-robot.svg";
 
-export function proposalsBotUser(userId: string): PartialUserSummary {
+export function proposalsBotUser(userId: string): UserSummary {
     return {
         kind: "bot",
         userId,
         username: PROPOSALS_BOT_USERNAME,
+        displayName: undefined,
         updated: BigInt(0),
         suspended: false,
         blobUrl: PROPOSALS_BOT_AVATAR_URL,
@@ -41,24 +43,21 @@ const allUsers = derived([specialUsers, normalUsers], ([$specialUsers, $normalUs
     }, $normalUsers);
 });
 
-export function overwriteUser(lookup: UserLookup, user: PartialUserSummary): UserLookup {
-    lookup[user.userId] = {
-        ...user,
-        username: user.username ?? lookup[user.userId]?.username,
-    };
+export function overwriteUser(lookup: UserLookup, user: UserSummary): UserLookup {
+    lookup[user.userId] = { ...user };
     return lookup;
 }
 
 export const userStore = {
     subscribe: allUsers.subscribe,
     set: (users: UserLookup): void => normalUsers.set(users),
-    add: (user: PartialUserSummary): void => {
+    add: (user: UserSummary): void => {
         normalUsers.update((users) => {
             const clone = { ...users };
             return overwriteUser(clone, user);
         });
     },
-    addMany: (newUsers: PartialUserSummary[]): void => {
+    addMany: (newUsers: UserSummary[]): void => {
         normalUsers.update((users) => {
             const clone = { ...users };
             return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);

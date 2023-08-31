@@ -1,26 +1,12 @@
 export const idlFactory = ({ IDL }) => {
   const ChannelId = IDL.Nat;
-  const Version = IDL.Nat32;
-  const AcceptRulesArgs = IDL.Record({
-    'channel_id' : ChannelId,
-    'version' : Version,
-  });
-  const AcceptRulesResponse = IDL.Variant({
-    'RulesAlreadyAccepted' : IDL.Null,
-    'UserNotInChannel' : IDL.Null,
-    'ChannelNotFound' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserNotInCommunity' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-    'CommunityFrozen' : IDL.Null,
-    'OldVersion' : IDL.Null,
-  });
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
   const AddMembersToChannelArgs = IDL.Record({
     'channel_id' : ChannelId,
     'user_ids' : IDL.Vec(UserId),
     'added_by_name' : IDL.Text,
+    'added_by_display_name' : IDL.Opt(IDL.Text),
   });
   const GateCheckFailedReason = IDL.Variant({
     'NotDiamondMember' : IDL.Null,
@@ -66,6 +52,7 @@ export const idlFactory = ({ IDL }) => {
   const AddReactionArgs = IDL.Record({
     'channel_id' : ChannelId,
     'username' : IDL.Text,
+    'display_name' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'reaction' : IDL.Text,
@@ -1211,6 +1198,7 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
+  const Version = IDL.Nat32;
   const VersionedRules = IDL.Record({ 'text' : IDL.Text, 'version' : Version });
   const SelectedChannelInitialResponse = IDL.Variant({
     'ChannelNotFound' : IDL.Null,
@@ -1270,6 +1258,7 @@ export const idlFactory = ({ IDL }) => {
     'members' : IDL.Vec(CommunityMember),
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
+    'access_rules' : VersionedRules,
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
     'rules' : AccessRules,
@@ -1287,6 +1276,7 @@ export const idlFactory = ({ IDL }) => {
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'members_added_or_updated' : IDL.Vec(CommunityMember),
     'members_removed' : IDL.Vec(UserId),
+    'access_rules' : IDL.Opt(VersionedRules),
     'timestamp' : TimestampMillis,
     'rules' : IDL.Opt(AccessRules),
     'blocked_users_added' : IDL.Vec(UserId),
@@ -1305,10 +1295,12 @@ export const idlFactory = ({ IDL }) => {
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'channel_rules_accepted' : IDL.Opt(Version),
     'content' : MessageContentInitial,
+    'community_rules_accepted' : IDL.Opt(Version),
     'mentioned' : IDL.Vec(User),
+    'sender_display_name' : IDL.Opt(IDL.Text),
     'forwarding' : IDL.Bool,
-    'rules_accepted' : IDL.Opt(Version),
     'sender_name' : IDL.Text,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(GroupReplyContext),
@@ -1359,6 +1351,7 @@ export const idlFactory = ({ IDL }) => {
   const CommunityMembership = IDL.Record({
     'role' : CommunityRole,
     'joined' : TimestampMillis,
+    'rules_accepted' : IDL.Bool,
   });
   const FrozenGroupInfo = IDL.Record({
     'timestamp' : TimestampMillis,
@@ -1380,6 +1373,7 @@ export const idlFactory = ({ IDL }) => {
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
     'banner_id' : IDL.Opt(IDL.Nat),
+    'rules_enabled' : IDL.Bool,
     'member_count' : IDL.Nat32,
     'primary_language' : IDL.Text,
   });
@@ -1393,6 +1387,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CommunityMembershipUpdates = IDL.Record({
     'role' : IDL.Opt(CommunityRole),
+    'rules_accepted' : IDL.Opt(IDL.Bool),
   });
   const FrozenGroupUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
@@ -1416,6 +1411,7 @@ export const idlFactory = ({ IDL }) => {
     'frozen' : FrozenGroupUpdate,
     'latest_event_index' : IDL.Opt(EventIndex),
     'banner_id' : DocumentIdUpdate,
+    'rules_enabled' : IDL.Opt(IDL.Bool),
     'member_count' : IDL.Opt(IDL.Nat32),
     'primary_language' : IDL.Opt(IDL.Text),
   });
@@ -1510,7 +1506,6 @@ export const idlFactory = ({ IDL }) => {
     'avatar' : DocumentUpdate,
   });
   const UpdateChannelResponse = IDL.Variant({
-    'CannotMakeChannelPublic' : IDL.Null,
     'NameReserved' : IDL.Null,
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
@@ -1548,7 +1543,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const UpdateCommunityResponse = IDL.Variant({
     'NameReserved' : IDL.Null,
-    'CannotMakeCommunityPublic' : IDL.Null,
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
     'InvalidLanguage' : IDL.Null,
@@ -1566,7 +1560,6 @@ export const idlFactory = ({ IDL }) => {
     'BannerTooBig' : FieldTooLongResult,
   });
   return IDL.Service({
-    'accept_rules' : IDL.Func([AcceptRulesArgs], [AcceptRulesResponse], []),
     'add_members_to_channel' : IDL.Func(
         [AddMembersToChannelArgs],
         [AddMembersToChannelResponse],

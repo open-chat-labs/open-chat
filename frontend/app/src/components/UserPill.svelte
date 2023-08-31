@@ -2,13 +2,13 @@
     import Avatar from "./Avatar.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { createEventDispatcher, getContext } from "svelte";
-    import type { OpenChat, PartialUserSummary } from "openchat-client";
+    import type { OpenChat, UserSummary } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     const dispatch = createEventDispatcher();
 
     const client = getContext<OpenChat>("client");
 
-    export let user: PartialUserSummary;
+    export let user: UserSummary;
 
     function deleteUser() {
         dispatch("deleteUser", user);

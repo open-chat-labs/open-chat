@@ -275,7 +275,11 @@
         "proceed": "Proceder",
         "doYouWantToProceed": "Si continúa, no recibirá 50,000 satoshis. Alternativamente, busque a un miembro del equipo de DFINITY para obtener un nuevo código.",
         "enterUsername": "Elija un nombre de usuario de OpenChat",
-        "disclaimer": "Al registrarse en OpenChat, acepta cumplir con las pautas de la comunidad"
+        "disclaimer": "Al registrarse en OpenChat, acepta cumplir con las pautas de la comunidad",
+        "enterDisplayName": "Elegir un nombre para mostrar",
+        "displayNameInvalid": "Nombre para mostrar no válido. Inténtelo de nuevo.",
+        "displayNameTooShort": "Ese nombre para mostrar es demasiado corto.",
+        "displayNameTooLong": "Ese nombre para mostrar es demasiado largo."
     },
     "tellMeMore": "Más información",
     "insufficientFunds": "Asegúrese de que la cuenta anterior tenga un saldo de al menos {amount} ICP para cubrir el almacenamiento solicitado, luego presione el botón \"Actualizar\".",

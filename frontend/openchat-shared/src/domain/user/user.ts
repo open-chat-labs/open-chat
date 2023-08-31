@@ -9,31 +9,27 @@ export type IdentityState =
     | "upgrading_user"
     | "upgrade_user";
 
-export type UserCommon = DataContent & {
+export type UserSummary = DataContent & {
     kind: "user" | "bot";
     userId: string;
+    username: string;
+    displayName: string | undefined;
     updated: bigint;
     suspended: boolean;
     diamond: boolean;
 };
 
-export type UserSummary = UserCommon & {
-    username: string;
-};
-
-export type PartialUserSummary = UserCommon & {
-    username?: string;
-};
-
-export type UserLookup = Record<string, PartialUserSummary>;
+export type UserLookup = Record<string, UserSummary>;
 
 export type User = {
     userId: string;
     username: string;
+    displayName: string | undefined;
 };
 
 export type PublicProfile = {
     username: string;
+    displayName: string | undefined;
     avatarId?: bigint;
     bio: string;
     isPremium: boolean;
@@ -50,7 +46,7 @@ export type UsersArgs = {
 
 export type UsersResponse = {
     serverTimestamp?: bigint;
-    users: PartialUserSummary[];
+    users: UserSummary[];
 };
 
 export enum UserStatus {
@@ -75,6 +71,7 @@ export type UpgradeInProgress = {
 export type CreatedUser = {
     kind: "created_user";
     username: string;
+    displayName: string | undefined;
     cryptoAccount: string;
     userId: string;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
@@ -130,6 +127,13 @@ export type SetUsernameResponse =
     | "username_too_long"
     | "username_invalid";
 
+export type SetDisplayNameResponse =
+    | "success"
+    | "user_not_found"
+    | "display_name_too_short"
+    | "display_name_too_long"
+    | "display_name_invalid";
+    
 export type InvalidCurrency = { kind: "invalid_currency" };
 
 export type SetBioResponse = "success" | "bio_too_long" | "user_suspended";
@@ -149,6 +153,9 @@ export type RegisterUserResponse =
     | { kind: "username_too_short" }
     | { kind: "username_too_long" }
     | { kind: "username_invalid" }
+    | { kind: "display_name_too_short" }
+    | { kind: "display_name_too_long" }
+    | { kind: "display_name_invalid" }
     | { kind: "public_key_invalid" }
     | { kind: "referral_code_invalid" }
     | { kind: "referral_code_already_claimed" }

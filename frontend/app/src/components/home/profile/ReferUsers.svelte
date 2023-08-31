@@ -88,7 +88,7 @@
                                 size={AvatarSize.Default} />
                         </div>
                         <LinkButton underline="hover">
-                            {client.usernameAndIcon($userStore[userId])}
+                            {client.displayNameAndIcon($userStore[userId])}
                         </LinkButton>
                     </div>
                 {/each}

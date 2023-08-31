@@ -3,6 +3,7 @@ export const idlFactory = ({ IDL }) => {
   const MessageIndex = IDL.Nat32;
   const AddReactionArgs = IDL.Record({
     'username' : IDL.Text,
+    'display_name' : IDL.Opt(IDL.Text),
     'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -916,10 +917,13 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
+  const Version = IDL.Nat32;
+  const VersionedRules = IDL.Record({ 'text' : IDL.Text, 'version' : Version });
   const SelectedInitialSuccess = IDL.Record({
     'participants' : IDL.Vec(Participant),
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
+    'access_rules' : VersionedRules,
     'timestamp' : TimestampMillis,
     'pinned_messages' : IDL.Vec(MessageIndex),
     'latest_event_index' : EventIndex,
@@ -932,8 +936,6 @@ export const idlFactory = ({ IDL }) => {
   const SelectedUpdatesV2Args = IDL.Record({
     'updates_since' : TimestampMillis,
   });
-  const Version = IDL.Nat32;
-  const VersionedRules = IDL.Record({ 'text' : IDL.Text, 'version' : Version });
   const SelectedGroupUpdates = IDL.Record({
     'blocked_users_removed' : IDL.Vec(UserId),
     'pinned_messages_removed' : IDL.Vec(MessageIndex),
@@ -957,7 +959,9 @@ export const idlFactory = ({ IDL }) => {
   const SendMessageV2Args = IDL.Record({
     'content' : MessageContentInitial,
     'mentioned' : IDL.Vec(User),
+    'sender_display_name' : IDL.Opt(IDL.Text),
     'forwarding' : IDL.Bool,
+    'rules_accepted' : IDL.Opt(Version),
     'sender_name' : IDL.Text,
     'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
@@ -988,6 +992,7 @@ export const idlFactory = ({ IDL }) => {
     'InvalidPoll' : InvalidPollReason,
     'UserSuspended' : IDL.Null,
     'InvalidRequest' : IDL.Text,
+    'RulesNotAccepted' : IDL.Null,
   });
   const SummaryArgs = IDL.Record({});
   const ChatMetrics = IDL.Record({
@@ -1050,6 +1055,7 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'rules_accepted' : IDL.Bool,
     'next_message_expiry' : IDL.Opt(TimestampMillis),
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
@@ -1058,6 +1064,7 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
+    'rules_enabled' : IDL.Bool,
     'expired_messages' : IDL.Vec(MessageIndexRange),
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
@@ -1113,6 +1120,7 @@ export const idlFactory = ({ IDL }) => {
     'events_ttl' : EventsTimeToLiveUpdate,
     'last_updated' : TimestampMillis,
     'avatar_id' : DocumentIdUpdate,
+    'rules_accepted' : IDL.Opt(IDL.Bool),
     'next_message_expiry' : TimestampUpdate,
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : FrozenGroupUpdate,
@@ -1122,6 +1130,7 @@ export const idlFactory = ({ IDL }) => {
     ),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
+    'rules_enabled' : IDL.Opt(IDL.Bool),
     'newly_expired_messages' : IDL.Vec(MessageIndexRange),
     'participant_count' : IDL.Opt(IDL.Nat32),
     'my_metrics' : IDL.Opt(ChatMetrics),
@@ -1242,7 +1251,6 @@ export const idlFactory = ({ IDL }) => {
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
-    'CannotMakeGroupPublic' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,

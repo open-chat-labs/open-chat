@@ -9,7 +9,7 @@
         FullMember,
         Member as MemberType,
         OpenChat,
-        PartialUserSummary,
+        UserSummary,
         UserLookup,
         CommunitySummary,
         MultiUserChat,
@@ -33,14 +33,14 @@
     $: knownUsers = getKnownUsers($userStore, members);
     $: me = knownUsers.find((u) => u.userId === userId);
     $: fullMembers = knownUsers
-        .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId)
+        .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId)
         .sort(compareMembers);
     $: blockedUsers = Array.from(blocked)
         .map((userId) => $userStore[userId])
-        .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId);
+        .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId);
     $: invitedUsers = Array.from(invited)
         .map((userId) => $userStore[userId])
-        .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId);
+        .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId);
     $: publicCollection = collection.public;
     $: showBlocked = publicCollection && blocked.size > 0;
     $: showInvited = !publicCollection && invited.size > 0;
@@ -51,6 +51,8 @@
     let membersList: VirtualList;
     let view: "members" | "blocked" | "invited" = "members";
     let profileUserId: string | undefined = undefined;
+
+    $: searchTermLower = searchTerm.toLowerCase();
 
     $: {
         if (collection.id !== id) {
@@ -76,10 +78,14 @@
         dispatch("showInviteUsers");
     }
 
-    function matchesSearch(searchTerm: string, user: PartialUserSummary): boolean {
+    function matchesSearch(searchTermLower: string, user: UserSummary): boolean {
         if (searchTerm === "") return true;
         if (user.username === undefined) return true;
-        return user.username.toLowerCase().includes(searchTerm.toLowerCase());
+        return (
+            user.username.toLowerCase().includes(searchTermLower) ||
+            (user.displayName !== undefined &&
+                user.displayName.toLowerCase().includes(searchTermLower))
+        );
     }
 
     function getKnownUsers(userStore: UserLookup, members: MemberType[]): FullMember[] {

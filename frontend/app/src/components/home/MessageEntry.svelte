@@ -12,7 +12,7 @@
     import MentionPicker from "./MentionPicker.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import type {
-        PartialUserSummary,
+        UserSummary,
         User,
         ChatSummary,
         EnhancedReplyContext,
@@ -230,7 +230,7 @@
 
     function formatMentions(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = $userStore[p1] as PartialUserSummary | undefined;
+            const u = $userStore[p1] as UserSummary | undefined;
             if (u?.username !== undefined) {
                 const username = u.username;
                 reverseUserLookup[username] = u.userId;
@@ -243,12 +243,19 @@
     // replace anything of the form @username with @UserId(xyz) where xyz is the userId
     // if we don't have the mapping, just leave it as is (we *will* have the mapping)
     function expandMentions(text?: string): [string | undefined, User[]] {
-        let mentionedMap = new Map<string, string>();
+        let mentionedMap = new Map<string, User>();
         let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
             const userId = reverseUserLookup[p1];
             if (userId !== undefined) {
-                mentionedMap.set(userId, p1);
-                return `@UserId(${userId})`;
+                const user = $userStore[userId];
+                if (user !== undefined) {
+                    mentionedMap.set(userId, user);
+                    return `@UserId(${userId})`;
+                } else {
+                    console.log(
+                        `Could not find the user for userId: ${userId}, this should not really happen`
+                    );
+                }
             } else {
                 console.log(
                     `Could not find the userId for user: ${p1}, this should not really happen`
@@ -257,7 +264,7 @@
             return match;
         });
 
-        let mentioned = Array.from(mentionedMap, ([userId, username]) => ({ userId, username }));
+        let mentioned = Array.from(mentionedMap, ([_, user]) => user);
 
         return [expandedText, mentioned];
     }
@@ -597,7 +604,6 @@
 
     .blocked,
     .disabled,
-
     .recording {
         padding: 0 $sp3;
         flex: auto;

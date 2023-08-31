@@ -275,7 +275,11 @@
         "proceed": "Tiếp tục",
         "doYouWantToProceed": "Nếu tiếp tục, bạn sẽ không nhận được 50.000 satoshi. Ngoài ra, hãy tìm một thành viên của nhóm DFINITY để nhận mã mới.",
         "enterUsername": "Chọn tên người dùng OpenChat",
-        "disclaimer": "Bằng cách đăng ký với OpenChat, bạn đồng ý tuân thủ các nguyên tắc cộng đồng"
+        "disclaimer": "Bằng cách đăng ký với OpenChat, bạn đồng ý tuân thủ các nguyên tắc cộng đồng",
+        "enterDisplayName": "lựa chọn tên hiển thị",
+        "displayNameInvalid": "Tên hiển thị không hợp lệ, vui lòng thử lại",
+        "displayNameTooShort": "Tên hiển thị đó quá ngắn",
+        "displayNameTooLong": "Tên hiển thị đó quá dài"
     },
     "tellMeMore": "Thêm thông tin",
     "insufficientFunds": "Vui lòng đảm bảo rằng tài khoản ở trên có số dư ít nhất là {amount} ICP để trang trải bộ nhớ được yêu cầu, sau đó nhấn nút \"Làm mới\".",

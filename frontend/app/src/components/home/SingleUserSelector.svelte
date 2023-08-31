@@ -1,7 +1,7 @@
 <script lang="ts">
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
-    import type { Member, OpenChat, PartialUserSummary } from "openchat-client";
+    import type { Member, OpenChat, UserSummary } from "openchat-client";
     import { getContext } from "svelte";
     import UserPill from "../UserPill.svelte";
 
@@ -9,7 +9,7 @@
     export let blockedUsers: Set<string>;
     export let members: Member[];
     export let autofocus: boolean;
-    export let selectedReceiver: PartialUserSummary | undefined = undefined;
+    export let selectedReceiver: UserSummary | undefined = undefined;
 
     let showMentionPicker = false;
     let textValue: string = "";

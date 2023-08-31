@@ -62,17 +62,26 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     if ("UsernameTooShort" in candid) {
         return { kind: "username_too_short" };
     }
+    if ("UsernameTooLong" in candid) {
+        return { kind: "username_too_long" };
+    }
     if ("UsernameInvalid" in candid) {
         return { kind: "username_invalid" };
+    }
+    if ("DisplayNameTooShort" in candid) {
+        return { kind: "display_name_too_short" };
+    }
+    if ("DisplayNameTooLong" in candid) {
+        return { kind: "display_name_too_long" };
+    }
+    if ("DisplayNameInvalid" in candid) {
+        return { kind: "display_name_invalid" };
     }
     if ("AlreadyRegistered" in candid) {
         return { kind: "already_registered" };
     }
     if ("UserLimitReached" in candid) {
         return { kind: "user_limit_reached" };
-    }
-    if ("UsernameTooLong" in candid) {
-        return { kind: "username_too_long" };
     }
     if ("NotSupported" in candid) {
         return { kind: "not_supported" };

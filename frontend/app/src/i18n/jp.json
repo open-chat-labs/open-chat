@@ -243,7 +243,11 @@
         "proceed": "続行",
         "doYouWantToProceed": "進むと50,000サトシはもらえません。または、DFINITY チームのメンバーを見つけて、新しいコードを入手してください。",
         "enterUsername": "OpenChat ユーザー名を選択してください",
-        "disclaimer": "OpenChat に登録することにより、コミュニティ ガイドラインに従うことに同意したことになります"
+        "disclaimer": "OpenChat に登録することにより、コミュニティ ガイドラインに従うことに同意したことになります",
+        "enterDisplayName": "表示名を選択してください",
+        "displayNameInvalid": "表示名が無効です。もう一度お試しください。",
+        "displayNameTooShort": "その表示名は短すぎます",
+        "displayNameTooLong": "その表示名は長すぎます"
     },
     "faq": {
         "menu": "FAQ",

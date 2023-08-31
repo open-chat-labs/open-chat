@@ -1,7 +1,7 @@
 <script lang="ts">
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import type { ChatSummary, OpenChat, PartialUserSummary } from "openchat-client";
+    import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
     import type { CryptocurrencyContent } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
@@ -41,7 +41,7 @@
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
-    let receiver: PartialUserSummary | undefined = undefined;
+    let receiver: UserSummary | undefined = undefined;
     let validAmount: boolean = false;
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
@@ -50,9 +50,7 @@
     $: transferFees = tokenDetails.transferFee;
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalance =
-        draftAmount > BigInt(0)
-            ? cryptoBalance - draftAmount - transferFees
-            : cryptoBalance;
+        draftAmount > BigInt(0) ? cryptoBalance - draftAmount - transferFees : cryptoBalance;
     $: valid = error === undefined && validAmount && receiver !== undefined && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
 

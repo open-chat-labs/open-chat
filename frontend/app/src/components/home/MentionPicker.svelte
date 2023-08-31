@@ -3,7 +3,7 @@
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
 
-    import type { Member, PartialUserSummary, OpenChat } from "openchat-client";
+    import type { Member, UserSummary, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Avatar from "../Avatar.svelte";
@@ -38,7 +38,7 @@
             lookup[user.username.toLowerCase()] = user;
         }
         return lookup;
-    }, {} as Record<string, PartialUserSummary>);
+    }, {} as Record<string, UserSummary>);
 
     $: filtered = unblocked.filter(
         (p) =>
@@ -57,7 +57,7 @@
 
     const dispatch = createEventDispatcher();
 
-    export function userFromUsername(username: string): PartialUserSummary | undefined {
+    export function userFromUsername(username: string): UserSummary | undefined {
         return reverseLookup[username.toLowerCase()];
     }
 

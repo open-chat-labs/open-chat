@@ -172,13 +172,15 @@ export class CommunityClient extends CandidService {
     addMembersToChannel(
         chatId: ChannelIdentifier,
         userIds: string[],
-        username: string
+        username: string,
+        displayName: string | undefined
     ): Promise<AddMembersToChannelResponse> {
         return this.handleResponse(
             this.service.add_members_to_channel({
                 channel_id: BigInt(chatId.channelId),
                 user_ids: userIds.map((u) => Principal.fromText(u)),
                 added_by_name: username,
+                added_by_display_name: apiOptional(identity, displayName),
             }),
             addMembersToChannelResponse
         );
@@ -187,6 +189,7 @@ export class CommunityClient extends CandidService {
     addReaction(
         chatId: ChannelIdentifier,
         username: string,
+        displayName: string | undefined,
         messageId: bigint,
         reaction: string,
         threadRootMessageIndex: number | undefined
@@ -195,6 +198,7 @@ export class CommunityClient extends CandidService {
             this.service.add_reaction({
                 channel_id: BigInt(chatId.channelId),
                 username,
+                display_name: apiOptional(identity, displayName),
                 message_id: messageId,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 reaction,
@@ -868,6 +872,7 @@ export class CommunityClient extends CandidService {
     sendMessage(
         chatId: ChannelIdentifier,
         senderName: string,
+        senderDisplayName: string | undefined,
         mentioned: User[],
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
@@ -880,6 +885,8 @@ export class CommunityClient extends CandidService {
             ? dataClient.forwardData(event.event.content, [chatId.communityId])
             : dataClient.uploadData(event.event.content, [chatId.communityId]);
 
+        const emptyRulesAccepted: [] | [number] = [];
+
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
             const args = {
@@ -887,6 +894,9 @@ export class CommunityClient extends CandidService {
                 content: apiMessageContent(newContent),
                 message_id: event.event.messageId,
                 sender_name: senderName,
+                sender_display_name: apiOptional(identity, senderDisplayName),
+                community_rules_accepted: emptyRulesAccepted,
+                channel_rules_accepted: emptyRulesAccepted,
                 replies_to: apiOptional(
                     (replyContext) => ({
                         event_index: replyContext.eventIndex,

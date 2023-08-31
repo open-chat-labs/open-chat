@@ -5,6 +5,7 @@
     import type { OpenChat, UserSummary, RoleChanged } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
+    import { buildDisplayName } from "../../utils/user";
 
     const client = getContext<OpenChat>("client");
 
@@ -14,7 +15,7 @@
 
     $: userStore = client.userStore;
     $: me = event.changedBy === user?.userId;
-    $: changedByStr = me ? $_("you") : $userStore[event.changedBy]?.username ?? $_("unknownUser");
+    $: changedByStr = buildDisplayName($userStore, event.changedBy, me);
     $: members = client.getMembersString(
         user!,
         $userStore,

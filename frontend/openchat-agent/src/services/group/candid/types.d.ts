@@ -11,6 +11,7 @@ export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
 export interface AddReactionArgs {
   'username' : string,
+  'display_name' : [] | [string],
   'correlation_id' : bigint,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -31,6 +32,7 @@ export interface AddedToChannelNotification {
   'added_by' : UserId,
   'channel_name' : string,
   'community_avatar_id' : [] | [bigint],
+  'added_by_display_name' : [] | [string],
   'community_name' : string,
   'channel_avatar_id' : [] | [bigint],
 }
@@ -121,6 +123,7 @@ export interface ChannelMessageNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
   'image_url' : [] | [string],
+  'sender_display_name' : [] | [string],
   'sender' : UserId,
   'channel_name' : string,
   'community_avatar_id' : [] | [bigint],
@@ -142,6 +145,7 @@ export interface ChannelReactionAddedNotification {
   'added_by' : UserId,
   'channel_name' : string,
   'community_avatar_id' : [] | [bigint],
+  'added_by_display_name' : [] | [string],
   'community_name' : string,
   'thread_root_message_index' : [] | [MessageIndex],
   'channel_avatar_id' : [] | [bigint],
@@ -284,6 +288,7 @@ export interface CommunityCanisterCommunitySummary {
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
+  'rules_enabled' : boolean,
   'member_count' : number,
   'primary_language' : string,
 }
@@ -304,6 +309,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'banner_id' : DocumentIdUpdate,
+  'rules_enabled' : [] | [boolean],
   'member_count' : [] | [number],
   'primary_language' : [] | [string],
 }
@@ -329,8 +335,12 @@ export interface CommunityMember {
 export interface CommunityMembership {
   'role' : CommunityRole,
   'joined' : TimestampMillis,
+  'rules_accepted' : boolean,
 }
-export interface CommunityMembershipUpdates { 'role' : [] | [CommunityRole] }
+export interface CommunityMembershipUpdates {
+  'role' : [] | [CommunityRole],
+  'rules_accepted' : [] | [boolean],
+}
 export type CommunityPermissionRole = { 'Owners' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
@@ -455,6 +465,7 @@ export interface DirectChatSummaryUpdates {
 }
 export interface DirectMessageNotification {
   'image_url' : [] | [string],
+  'sender_display_name' : [] | [string],
   'sender_avatar_id' : [] | [bigint],
   'sender' : UserId,
   'sender_name' : string,
@@ -469,6 +480,7 @@ export interface DirectReactionAddedNotification {
   'username' : string,
   'message_event_index' : EventIndex,
   'them' : UserId,
+  'display_name' : [] | [string],
   'user_avatar_id' : [] | [bigint],
   'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : Reaction,
@@ -607,6 +619,7 @@ export interface GroupCanisterGroupChatSummary {
   'last_updated' : TimestampMillis,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'rules_accepted' : boolean,
   'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : [] | [FrozenGroupInfo],
@@ -615,6 +628,7 @@ export interface GroupCanisterGroupChatSummary {
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'rules_enabled' : boolean,
   'expired_messages' : Array<MessageIndexRange>,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
@@ -635,6 +649,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
   'avatar_id' : DocumentIdUpdate,
+  'rules_accepted' : [] | [boolean],
   'next_message_expiry' : TimestampUpdate,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : FrozenGroupUpdate,
@@ -642,6 +657,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'updated_events' : Array<[[] | [number], number, bigint]>,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'rules_enabled' : [] | [boolean],
   'newly_expired_messages' : Array<MessageIndexRange>,
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
@@ -720,6 +736,7 @@ export interface GroupMatch {
 export interface GroupMessageNotification {
   'image_url' : [] | [string],
   'group_avatar_id' : [] | [bigint],
+  'sender_display_name' : [] | [string],
   'sender' : UserId,
   'sender_name' : string,
   'message_text' : [] | [string],
@@ -756,6 +773,7 @@ export interface GroupReactionAddedNotification {
   'group_avatar_id' : [] | [bigint],
   'message_event_index' : EventIndex,
   'added_by' : UserId,
+  'added_by_display_name' : [] | [string],
   'chat_id' : ChatId,
   'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
@@ -1316,6 +1334,7 @@ export interface SelectedInitialSuccess {
   'participants' : Array<Participant>,
   'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
+  'access_rules' : VersionedRules,
   'timestamp' : TimestampMillis,
   'pinned_messages' : Uint32Array | number[],
   'latest_event_index' : EventIndex,
@@ -1341,11 +1360,14 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'MessageEmpty' : null } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'UserSuspended' : null } |
-  { 'InvalidRequest' : string };
+  { 'InvalidRequest' : string } |
+  { 'RulesNotAccepted' : null };
 export interface SendMessageV2Args {
   'content' : MessageContentInitial,
   'mentioned' : Array<User>,
+  'sender_display_name' : [] | [string],
   'forwarding' : boolean,
+  'rules_accepted' : [] | [Version],
   'sender_name' : string,
   'correlation_id' : bigint,
   'message_id' : MessageId,
@@ -1491,7 +1513,6 @@ export type UpdateGroupV2Response = { 'NameReserved' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
-  { 'CannotMakeGroupPublic' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -1509,8 +1530,8 @@ export interface UserSummary {
   'diamond_member' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
+  'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
-  'seconds_since_last_online' : number,
   'suspended' : boolean,
 }
 export interface UsersBlocked {

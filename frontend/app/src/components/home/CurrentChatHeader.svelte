@@ -63,7 +63,7 @@
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
                 return {
-                    name: client.usernameAndIcon(them),
+                    name: client.displayNameAndIcon(them),
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them.userId,
                     typing: client.getTypingString(
@@ -72,12 +72,14 @@
                         { chatId: chatSummary.id },
                         typing
                     ),
+                    username: "@" + them.username,
                 };
             default:
                 return {
                     name: chatSummary.name,
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     userId: undefined,
+                    username: undefined,
                     typing: client.getTypingString(
                         $_,
                         $userStore,
@@ -140,6 +142,7 @@
                 <span on:click={openUserProfile} class="user-link">
                     {chat.name}
                 </span>
+                <span class="username">{chat.username}</span>
             {:else}
                 {chat.name}
             {/if}
@@ -218,6 +221,11 @@
                 text-decoration: underline;
             }
         }
+    }
+
+    .username {
+        font-weight: 200;
+        color: var(--txt-light);
     }
 
     .chat-details {

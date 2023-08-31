@@ -1,7 +1,7 @@
 <script lang="ts">
     import SectionHeader from "../../SectionHeader.svelte";
     import {
-        type PartialUserSummary,
+        type UserSummary,
         type OpenChat,
         AvatarSize,
         type ModerationFlag,
@@ -45,23 +45,30 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ReferUsers from "./ReferUsers.svelte";
     import Expiry from "../upgrade/Expiry.svelte";
+    import DisplayNameInput from "../../DisplayNameInput.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
     const MAX_BIO_LENGTH = 2000;
 
-    export let user: PartialUserSummary;
+    export let user: UserSummary;
 
     let originalBio = "";
     let userbio = "";
     let selectedLocale = ($locale as string).substring(0, 2);
     let usernameError: string | undefined = undefined;
+    let displayNameError: string | undefined = undefined;
     let bioError: string | undefined = undefined;
     let saving = false;
-    let validUsername: string | undefined = undefined;
+    let username = "";
+    let usernameValid = false;
+    let displayName: string | undefined = undefined;
+    let displayNameValid = false;
     let checkingUsername: boolean;
     let readonly = client.isReadOnly();
 
+    $: originalUsername = user?.username ?? "";
+    $: originalDisplayName = user?.displayName ?? undefined;
     $: moderationFlags = client.moderationFlags;
     $: adultEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Adult);
     $: offensiveEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Offensive);
@@ -79,6 +86,15 @@
     }
 
     $: bioDirty = userbio !== originalBio;
+    $: usernameDirty = username !== originalUsername;
+    $: displayNameDirty = displayName !== originalDisplayName;
+    $: buttonEnabled =
+        usernameValid &&
+        displayNameValid &&
+        bioError === undefined &&
+        (bioDirty || usernameDirty || displayNameDirty) &&
+        !saving &&
+        !readonly;
 
     onMount(() => {
         client.getBio().then((bio) => {
@@ -114,14 +130,12 @@
             );
         }
 
-        if (validUsername !== undefined) {
+        if (usernameDirty) {
             promises.push(
                 client
-                    .setUsername(user.userId, validUsername)
+                    .setUsername(user.userId, username)
                     .then((resp) => {
-                        if (resp === "success") {
-                            validUsername = undefined;
-                        } else {
+                        if (resp !== "success") {
                             if (resp === "username_taken") {
                                 usernameError = "register.usernameTaken";
                             } else if (resp === "user_not_found") {
@@ -138,6 +152,30 @@
                     .catch((err) => {
                         toastStore.showFailureToast($_("unableToSaveUserProfile"));
                         client.logError("Unable to save username: ", err);
+                    })
+            );
+        }
+
+        if (displayNameDirty) {
+            promises.push(
+                client
+                    .setDisplayName(user.userId, displayName)
+                    .then((resp) => {
+                        if (resp !== "success") {
+                            if (resp === "user_not_found") {
+                                usernameError = "register.userNotFound";
+                            } else if (resp === "display_name_too_short") {
+                                usernameError = "register.displayNameTooShort";
+                            } else if (resp === "display_name_too_long") {
+                                usernameError = "register.displayNameTooLong";
+                            } else if (resp === "display_name_invalid") {
+                                usernameError = "register.displayNameInvalid";
+                            }
+                        }
+                    })
+                    .catch((err) => {
+                        toastStore.showFailureToast($_("unableToSaveUserProfile"));
+                        client.logError("Unable to save display name: ", err);
                     })
             );
         }
@@ -205,16 +243,26 @@
             <Legend label={$_("username")} rules={$_("usernameRules")} />
             <UsernameInput
                 {client}
-                originalUsername={user?.username ?? ""}
+                {originalUsername}
                 disabled={readonly}
-                bind:validUsername
+                bind:username
+                bind:usernameValid
                 bind:checking={checkingUsername}
                 bind:error={usernameError}>
                 {#if usernameError !== undefined}
                     <ErrorMessage>{$_(usernameError)}</ErrorMessage>
                 {/if}
             </UsernameInput>
-
+            <Legend label={$_("displayName")} rules={$_("displayNameRules")} />
+            <DisplayNameInput
+                {originalDisplayName}
+                disabled={readonly}
+                bind:displayName
+                bind:displayNameValid>
+                {#if displayNameError !== undefined}
+                    <ErrorMessage>{$_(displayNameError)}</ErrorMessage>
+                {/if}
+            </DisplayNameInput>
             <Legend label={$_("bio")} rules={$_("supportsMarkdown")} />
             <TextArea
                 rows={3}
@@ -228,11 +276,8 @@
                 {/if}
             </TextArea>
             <div class="full-width-btn">
-                <Button
-                    loading={saving || checkingUsername}
-                    disabled={(!bioDirty && validUsername === undefined) || saving || readonly}
-                    fill
-                    small>{$_("update")}</Button>
+                <Button loading={saving || checkingUsername} disabled={!buttonEnabled} fill small
+                    >{$_("update")}</Button>
             </div>
         </CollapsibleCard>
     </div>
