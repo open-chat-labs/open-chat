@@ -116,7 +116,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .data
             .members
             .iter_user_groups()
-            .filter(|u| u.name.timestamp > args.updates_since)
+            .filter(|u| u.last_updated() > args.updates_since)
             .map(|u| u.into())
             .collect(),
         metrics: state.data.cached_chat_metrics.if_set_after(args.updates_since).cloned(),

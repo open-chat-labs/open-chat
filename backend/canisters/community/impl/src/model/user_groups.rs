@@ -1,5 +1,6 @@
 use rand::{Rng, RngCore};
 use serde::{Deserialize, Serialize};
+use std::cmp::max;
 use std::collections::HashSet;
 use types::{TimestampMillis, Timestamped, UserGroupMembers, UserGroupSummary, UserId};
 
@@ -88,6 +89,12 @@ pub struct UserGroup {
     pub id: u32,
     pub name: Timestamped<String>,
     pub members: Timestamped<HashSet<UserId>>,
+}
+
+impl UserGroup {
+    pub fn last_updated(&self) -> TimestampMillis {
+        max(self.name.timestamp, self.members.timestamp)
+    }
 }
 
 impl From<&UserGroup> for UserGroupSummary {
