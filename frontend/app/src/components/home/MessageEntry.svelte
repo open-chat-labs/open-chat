@@ -50,7 +50,6 @@
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
-    const reverseUserLookup: Record<string, string> = {};
     const mentionRegex = /@([\d\w_]*)$/;
     const emojiRegex = /:([\w_]+):?$/;
     const dispatch = createEventDispatcher();
@@ -233,7 +232,6 @@
             const u = $userStore[p1] as PartialUserSummary | undefined;
             if (u?.username !== undefined) {
                 const username = u.username;
-                reverseUserLookup[username] = u.userId;
                 return `@${username}`;
             }
             return match;
@@ -245,7 +243,7 @@
     function expandMentions(text?: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, string>();
         let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const userId = reverseUserLookup[p1];
+            const userId = tryFindUserIdByName(p1);
             if (userId !== undefined) {
                 mentionedMap.set(userId, p1);
                 return `@UserId(${userId})`;
@@ -260,6 +258,20 @@
         let mentioned = Array.from(mentionedMap, ([userId, username]) => ({ userId, username }));
 
         return [expandedText, mentioned];
+    }
+
+    function tryFindUserIdByName(username: string): string | undefined {
+        for (const member of members) {
+            const userId = member.userId;
+            if (blockedUsers.has(userId)) {
+                continue;
+            }
+            const otherUsername = $userStore[userId]?.username;
+            if (otherUsername !== undefined && username.localeCompare(otherUsername, undefined, { sensitivity: "base" }) === 0) {
+                return userId;
+            }
+        }
+        return undefined;
     }
 
     /**
@@ -423,9 +435,6 @@
         replaceTextWith(userLabel);
 
         showMentionPicker = false;
-        if (user !== undefined) {
-            reverseUserLookup[username] = user.userId;
-        }
     }
 
     function cancelMention() {
