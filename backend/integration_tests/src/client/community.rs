@@ -17,6 +17,7 @@ generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(change_role);
 generate_update_call!(create_channel);
+generate_update_call!(create_user_group);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message);
 generate_update_call!(enable_invite_code);
@@ -30,6 +31,7 @@ generate_update_call!(unblock_user);
 generate_update_call!(undelete_messages);
 generate_update_call!(update_channel);
 generate_update_call!(update_community);
+generate_update_call!(update_user_group);
 
 pub mod happy_path {
     use crate::rng::random_message_id;

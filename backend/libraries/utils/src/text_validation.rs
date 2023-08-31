@@ -8,6 +8,8 @@ const MIN_GROUP_NAME_LENGTH: u32 = 3;
 const MAX_GROUP_NAME_LENGTH: u32 = 25;
 const MAX_GROUP_DESCRIPTION_LENGTH: u32 = 1024;
 const MAX_GROUP_RULES_LENGTH: u32 = 1024;
+const MIN_USER_GROUP_NAME_LENGTH: u32 = 3;
+const MAX_USER_GROUP_NAME_LENGTH: u32 = 25;
 
 pub enum UsernameValidationError {
     TooLong(u16),
@@ -84,6 +86,10 @@ pub fn validate_group_name(name: &str, is_public: bool, subtype: Option<&GroupSu
         Err(StringLengthValidationError::TooShort(f)) => Err(NameValidationError::TooShort(f)),
         Err(StringLengthValidationError::TooLong(f)) => Err(NameValidationError::TooLong(f)),
     }
+}
+
+pub fn validate_user_group_name(name: &str) -> Result<(), StringLengthValidationError> {
+    validate_string_length(name, MIN_USER_GROUP_NAME_LENGTH, MAX_USER_GROUP_NAME_LENGTH)
 }
 
 pub fn validate_description(description: &str) -> Result<(), FieldTooLongResult> {
