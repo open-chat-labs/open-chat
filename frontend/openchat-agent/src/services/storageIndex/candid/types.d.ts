@@ -256,6 +256,7 @@ export interface CommunityCanisterCommunitySummary {
   'description' : string,
   'last_updated' : TimestampMillis,
   'channels' : Array<CommunityCanisterChannelSummary>,
+  'user_groups' : Array<UserGroup>,
   'avatar_id' : [] | [bigint],
   'membership' : [] | [CommunityMembership],
   'frozen' : [] | [FrozenGroupInfo],
@@ -275,6 +276,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'channels_removed' : Array<ChannelId>,
+  'user_groups' : Array<UserGroup>,
   'avatar_id' : DocumentIdUpdate,
   'channels_added' : Array<CommunityCanisterChannelSummary>,
   'membership' : [] | [CommunityMembershipUpdates],
@@ -1174,6 +1176,11 @@ export type UpdateUserIdResponse = { 'UserIdAlreadyExists' : null } |
 export interface User { 'username' : string, 'user_id' : UserId }
 export type UserArgs = {};
 export interface UserConfig { 'byte_limit' : bigint, 'user_id' : UserId }
+export interface UserGroup {
+  'members' : number,
+  'name' : string,
+  'user_group_id' : number,
+}
 export type UserId = CanisterId;
 export interface UserRecord { 'byte_limit' : bigint, 'bytes_used' : bigint }
 export type UserResponse = { 'Success' : UserRecord } |
