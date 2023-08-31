@@ -10,8 +10,6 @@ pub struct UserSummary {
     pub avatar_id: Option<u128>,
     pub is_bot: bool,
     pub suspended: bool,
-    // TODO: Remove this once the website no longer expects this
-    pub seconds_since_last_online: u32,
     pub diamond_member: bool,
 }
 
