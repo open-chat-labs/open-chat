@@ -977,5 +977,7 @@
     "reset": "Zurücksetzen",
     "send": "Schicken",
     "confirmMakeGroupPublic": "Möchten Sie diesen {level} unbedingt öffentlich machen?\n\nBestehende Nachrichten bleiben privat, alle neuen Nachrichten sind öffentlich.",
-    "makeGroupPublicFailed": "{level} konnte nicht veröffentlicht werden"
+    "makeGroupPublicFailed": "{level} konnte nicht veröffentlicht werden",
+    "displayNameRules": "Wird optional anstelle des Benutzernamens angezeigt",
+    "displayName": "Anzeigename"
 }

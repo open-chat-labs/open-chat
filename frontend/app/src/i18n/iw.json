@@ -973,5 +973,7 @@
     "reset": "אִתחוּל",
     "send": "לִשְׁלוֹחַ",
     "confirmMakeGroupPublic": "האם אתה בהחלט רוצה להפוך את ה-{level} הזה לציבורי?\n\nהודעות קיימות יישארו פרטיות, כל ההודעות החדשות יהיו ציבוריות.",
-    "makeGroupPublicFailed": "הפיכת {level} לציבורי נכשלה"
+    "makeGroupPublicFailed": "הפיכת {level} לציבורי נכשלה",
+    "displayNameRules": "אופציונלי להציג במקום שם משתמש",
+    "displayName": "הצג שם"
 }

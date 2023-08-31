@@ -976,5 +976,7 @@
     "reset": "Cài lại",
     "send": "Gửi",
     "confirmMakeGroupPublic": "Bạn có chắc chắn muốn công khai {level} này không?\n\nTin nhắn hiện tại sẽ vẫn ở chế độ riêng tư, tất cả tin nhắn mới sẽ được công khai.",
-    "makeGroupPublicFailed": "Không công khai được {level}"
+    "makeGroupPublicFailed": "Không công khai được {level}",
+    "displayNameRules": "tùy chọn hiển thị thay cho tên người dùng",
+    "displayName": "Tên hiển thị"
 }

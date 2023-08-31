@@ -976,5 +976,7 @@
     "reset": "重置",
     "send": "发送",
     "confirmMakeGroupPublic": "您确定要公开此 {level} 吗？\n\n现有消息将保持私密，所有新消息将公开。",
-    "makeGroupPublicFailed": "未能公开 {level}"
+    "makeGroupPublicFailed": "未能公开 {level}",
+    "displayNameRules": "可选择显示代替用户名",
+    "displayName": "显示名称"
 }

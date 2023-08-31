@@ -976,5 +976,7 @@
     "reset": "リセット",
     "send": "送信",
     "confirmMakeGroupPublic": "この {level} を公開してもよろしいですか?\n\n既存のメッセージは非公開のままですが、新しいメッセージはすべて公開されます。",
-    "makeGroupPublicFailed": "{level} を公開できませんでした"
+    "makeGroupPublicFailed": "{level} を公開できませんでした",
+    "displayNameRules": "オプションでユーザー名の代わりに表示します",
+    "displayName": "表示名"
 }

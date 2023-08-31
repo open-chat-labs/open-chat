@@ -975,5 +975,7 @@
     "reset": "Réinitialiser",
     "send": "Envoyer",
     "confirmMakeGroupPublic": "Voulez-vous vraiment rendre ce {level} public ?\n\nLes messages existants resteront privés, tous les nouveaux messages seront publics.",
-    "makeGroupPublicFailed": "Échec de la publication de {level}"
+    "makeGroupPublicFailed": "Échec de la publication de {level}",
+    "displayNameRules": "afficher éventuellement à la place du nom d'utilisateur",
+    "displayName": "Afficher un nom"
 }
