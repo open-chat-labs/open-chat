@@ -306,6 +306,8 @@ pub struct CommunityMemberInternal {
     pub date_added: TimestampMillis,
     pub role: CommunityRole,
     pub suspended: Timestamped<bool>,
+    // TODO remove this
+    #[serde(skip_deserializing)]
     pub channels: HashSet<ChannelId>,
     pub channels_removed: Vec<Timestamped<ChannelId>>,
     pub rules_accepted: Option<Timestamped<Version>>,

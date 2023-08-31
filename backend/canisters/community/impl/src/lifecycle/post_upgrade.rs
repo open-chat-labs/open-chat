@@ -64,5 +64,16 @@ fn post_upgrade(args: Args) {
         });
     }
 
+    // One time hack to fix any incorrect links between members and channels
+    mutate_state(|state| {
+        for channel in state.data.channels.iter() {
+            for user_id in channel.chat.members.iter().map(|m| m.user_id) {
+                if let Some(member) = state.data.members.get_by_user_id_mut(&user_id) {
+                    member.channels.insert(channel.id);
+                }
+            }
+        }
+    });
+
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
