@@ -24,6 +24,7 @@
         Questions,
         OpenChat,
         MultiUserChat,
+        UserSummary,
     } from "openchat-client";
     import { allQuestions } from "openchat-client";
     import { enterSend } from "../../stores/settings";
@@ -70,6 +71,7 @@
     let messageEntryHeight: number;
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
+    let userLookupByUsername: Record<string, UserSummary> | undefined = undefined;
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -105,6 +107,7 @@
                 // the start of the textbox on some devices.
                 if (inp.textContent !== text) {
                     inp.textContent = text;
+                    userLookupByUsername = undefined;
                     // TODO - figure this out
                     // setCaretToEnd();
                 }
@@ -191,6 +194,7 @@
                 if (matches.index !== undefined) {
                     rangeToReplace = [matches.index, pos];
                     mentionPrefix = matches[1].toLowerCase() || undefined;
+                    getOrBuildUserLookupByUsername();
                     showMentionPicker = true;
                 }
             } else {
@@ -243,10 +247,10 @@
     function expandMentions(text?: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, string>();
         let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const userId = tryFindUserIdByName(p1);
-            if (userId !== undefined) {
-                mentionedMap.set(userId, p1);
-                return `@UserId(${userId})`;
+            const user = getOrBuildUserLookupByUsername()[p1.toLowerCase()];
+            if (user !== undefined) {
+                mentionedMap.set(user.userId, p1);
+                return `@UserId(${user.userId})`;
             } else {
                 console.log(
                     `Could not find the userId for user: ${p1}, this should not really happen`
@@ -258,20 +262,6 @@
         let mentioned = Array.from(mentionedMap, ([userId, username]) => ({ userId, username }));
 
         return [expandedText, mentioned];
-    }
-
-    function tryFindUserIdByName(username: string): string | undefined {
-        for (const member of members) {
-            const userId = member.userId;
-            if (blockedUsers.has(userId)) {
-                continue;
-            }
-            const otherUsername = $userStore[userId]?.username;
-            if (otherUsername !== undefined && username.localeCompare(otherUsername, undefined, { sensitivity: "base" }) === 0) {
-                return userId;
-            }
-        }
-        return undefined;
     }
 
     /**
@@ -446,16 +436,22 @@
         replaceTextWith(ev.detail);
         showEmojiSearch = false;
     }
+
+    function getOrBuildUserLookupByUsername(): Record<string, UserSummary> {
+        if (userLookupByUsername === undefined) {
+            userLookupByUsername = client.buildUserLookupByUsername(members, blockedUsers);
+        }
+        return userLookupByUsername;
+    }
 </script>
 
 {#if showMentionPicker}
     <MentionPicker
-        {blockedUsers}
+        {userLookupByUsername}
         offset={messageEntryHeight}
         on:close={cancelMention}
         on:mention={mention}
-        prefix={mentionPrefix}
-        {members} />
+        prefix={mentionPrefix} />
 {/if}
 
 {#if showEmojiSearch}

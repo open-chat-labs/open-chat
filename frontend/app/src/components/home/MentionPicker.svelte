@@ -3,18 +3,16 @@
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
 
-    import type { Member, PartialUserSummary, OpenChat } from "openchat-client";
+    import type { UserSummary, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
-    import { _ } from "svelte-i18n";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "openchat-client";
     import { mobileWidth } from "../../stores/screenDimensions";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
+    const currentUser = client.user;
 
-    export let blockedUsers: Set<string>;
-    export let members: Member[];
+    export let userLookupByUsername: Record<string, UserSummary>;
     export let prefix: string | undefined;
     export let offset: number;
     export let direction: "up" | "down" = "up";
@@ -28,22 +26,11 @@
     $: maxHeight =
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)";
 
-    $: unblocked = members.filter(
-        (m) => !blockedUsers.has(m.userId) && (mentionSelf || m.userId !== user.userId)
-    );
-
-    $: reverseLookup = unblocked.reduce((lookup, u) => {
-        const user = $userStore[u.userId];
-        if (user !== undefined && user.username !== undefined) {
-            lookup[user.username.toLowerCase()] = user;
-        }
-        return lookup;
-    }, {} as Record<string, PartialUserSummary>);
-
-    $: filtered = unblocked.filter(
-        (p) =>
-            prefix === undefined ||
-            $userStore[p.userId]?.username?.toLowerCase().startsWith(prefix?.toLowerCase())
+    $: prefixLower = prefix?.toLowerCase();
+    $: filtered = Object.values(userLookupByUsername).filter(
+        (user) =>
+            (mentionSelf || user.userId !== currentUser.userId) &&
+            (prefixLower === undefined || user.username.toLowerCase().startsWith(prefixLower))
     );
 
     $: style =
@@ -56,10 +43,6 @@
               }px; max-height: ${maxHeight}`;
 
     const dispatch = createEventDispatcher();
-
-    export function userFromUsername(username: string): PartialUserSummary | undefined {
-        return reverseLookup[username.toLowerCase()];
-    }
 
     function mention(userId: string) {
         dispatch("mention", userId);
@@ -110,7 +93,7 @@
                         size={AvatarSize.Small} />
                 </div>
                 <div slot="text">
-                    {$userStore[item.userId]?.username ?? $_("unknown")}
+                    {item.username}
                 </div>
             </MenuItem>
         </VirtualList>

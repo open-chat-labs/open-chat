@@ -316,6 +316,7 @@ import type {
     CryptocurrencyContent,
     CryptocurrencyDetails,
     CryptocurrencyTransfer,
+    Member,
     Mention,
 } from "openchat-shared";
 import {
@@ -4568,6 +4569,21 @@ export class OpenChat extends OpenChatAgentWorker {
                 }),
             ),
         );
+    }
+
+    buildUserLookupByUsername(members: Member[], blocked: Set<string>): Record<string, UserSummary> {
+        const map = {} as Record<string, UserSummary>;
+        const userStore = this._liveState.userStore;
+        for (const user of members) {
+            const userId = user.userId;
+            if (!blocked.has(userId)) {
+                const user = userStore[userId];
+                if (user !== undefined && user.username !== undefined) {
+                    map[user.username.toLowerCase()] = user as UserSummary;
+                }
+            }
+        }
+        return map;
     }
 
     // **** Communities Stuff

@@ -5,7 +5,7 @@
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type { MessageMatch, ChatSummary, OpenChat } from "openchat-client";
+    import type { MessageMatch, ChatSummary, OpenChat, UserSummary } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
     import MentionPicker from "./MentionPicker.svelte";
@@ -28,6 +28,7 @@
     let searchBoxHeight: number | undefined;
     let rangeToReplace: [number, number] | undefined = undefined;
     let timer: number | undefined;
+    let userLookupByUsername: Record<string, UserSummary> | undefined = undefined;
 
     $: userStore = client.userStore;
     $: count = matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "";
@@ -186,6 +187,7 @@
             if (matches.index !== undefined) {
                 rangeToReplace = [matches.index, pos];
                 mentionPrefix = matches[1].toLowerCase() || undefined;
+                getOrBuildUserLookupByUsername();
                 showMentionPicker = true;
             }
         } else {
@@ -243,18 +245,24 @@
         showMentionPicker = false;
         setCaretToEnd();
     }
+
+    function getOrBuildUserLookupByUsername(): Record<string, UserSummary> {
+        if (userLookupByUsername === undefined) {
+            userLookupByUsername = client.buildUserLookupByUsername($members, $blockedUsers);
+        }
+        return userLookupByUsername;
+    }
 </script>
 
 <svelte:window on:keydown={onWindowKeyDown} />
 
 {#if showMentionPicker}
     <MentionPicker
+        {userLookupByUsername}
         offset={searchBoxHeight ?? 80}
         direction={"down"}
         mentionSelf
         prefix={mentionPrefix}
-        members={$members}
-        blockedUsers={$blockedUsers}
         on:close={cancelMention}
         on:mention={mention} />
 {/if}
