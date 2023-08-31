@@ -17,26 +17,33 @@ pub enum UsernameValidationError {
     Invalid,
 }
 
-pub fn validate_username(username: &str) -> Result<(), UsernameValidationError> {
-    validate_username_internal(username, true, MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH)
-}
-
 pub fn validate_display_name(display_name: &str) -> Result<(), UsernameValidationError> {
-    validate_username_internal(display_name, false, MIN_DISPLAY_NAME_LENGTH, MAX_DISPLAY_NAME_LENGTH)
+    const FORBIDDEN_CHARS: [char; 10] = ['@', '<', '>', '/', '\\', '#', '"', '\'', '`', '💎'];
+    match validate_string_length(display_name, MIN_DISPLAY_NAME_LENGTH as u32, MAX_DISPLAY_NAME_LENGTH as u32) {
+        Ok(()) => {
+            if display_name.starts_with(' ')
+                || display_name.ends_with(' ')
+                || display_name.contains(|c: char| c.is_ascii_whitespace() && c != ' ')
+                || display_name.contains("  ")
+                || (display_name.chars().any(|c| FORBIDDEN_CHARS.contains(&c)))
+            {
+                Err(UsernameValidationError::Invalid)
+            } else {
+                Ok(())
+            }
+        }
+        Err(StringLengthValidationError::TooShort(_)) => Err(UsernameValidationError::TooShort(MIN_DISPLAY_NAME_LENGTH)),
+        Err(StringLengthValidationError::TooLong(_)) => Err(UsernameValidationError::TooLong(MAX_DISPLAY_NAME_LENGTH)),
+    }
 }
 
-fn validate_username_internal(
-    username: &str,
-    ascii_only: bool,
-    min_length: u16,
-    max_length: u16,
-) -> Result<(), UsernameValidationError> {
-    match validate_string_length(username, min_length as u32, max_length as u32) {
+pub fn validate_username(username: &str) -> Result<(), UsernameValidationError> {
+    match validate_string_length(username, MIN_USERNAME_LENGTH as u32, MAX_USERNAME_LENGTH as u32) {
         Ok(()) => {
             if username.starts_with('_')
                 || username.ends_with('_')
                 || username.contains("__")
-                || (ascii_only && username.chars().any(|c| !c.is_ascii_alphanumeric() && c != '_'))
+                || (username.chars().any(|c| !c.is_ascii_alphanumeric() && c != '_'))
                 || is_username_reserved(username)
             {
                 Err(UsernameValidationError::Invalid)
