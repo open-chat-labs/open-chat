@@ -24,6 +24,7 @@ generate_update_call!(enable_invite_code);
 generate_update_call!(import_group);
 generate_update_call!(leave_channel);
 generate_update_call!(remove_member);
+generate_update_call!(remove_member_from_channel);
 generate_update_call!(remove_reaction);
 generate_update_call!(send_message);
 generate_update_call!(unblock_user);
