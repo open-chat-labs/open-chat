@@ -32,7 +32,7 @@
     },
     "build:ci": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["build:prod", "typecheck:prod", "validate:prod", "lint", "test:prod"]
+      "dependsOn": ["build:prod", "typecheck:prod", "validate", "lint", "test:prod"]
     },
     "build:prod": {
       "outputs": ["lib/**", "build/**"],
@@ -49,12 +49,7 @@
 
     "deploy:prod_test": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": [
-        "typecheck:prod_test",
-        "validate:prod_test",
-        "lint",
-        "test:prod_test"
-      ]
+      "dependsOn": ["typecheck:prod_test", "validate", "lint", "test:prod_test"]
     },
     "test:prod_test": {
       "dependsOn": ["build:prod_test"],
@@ -66,15 +61,10 @@
       "outputs": [],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
-    "validate:prod_test": {
-      "dependsOn": ["build:prod_test"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-    },
 
     "deploy:prod": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["typecheck:prod", "validate:prod", "lint", "test:prod"]
+      "dependsOn": ["typecheck:prod", "validate", "lint", "test:prod"]
     },
 
     "test:prod": {
@@ -87,20 +77,10 @@
       "outputs": [],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
-    "validate:prod": {
-      "dependsOn": ["build:prod"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-    },
 
     "deploy:testnet": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": [
-        "typecheck:testnet",
-        "validate:testnet",
-        "lint",
-        "test:testnet"
-      ]
+      "dependsOn": ["typecheck:testnet", "validate", "lint", "test:testnet"]
     },
 
     "test:testnet": {
@@ -109,11 +89,6 @@
       "inputs": ["src/**/*.ts"]
     },
     "typecheck:testnet": {
-      "dependsOn": ["build:testnet"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-    },
-    "validate:testnet": {
       "dependsOn": ["build:testnet"],
       "outputs": [],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
@@ -140,7 +115,7 @@
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
     "validate": {
-      "dependsOn": ["build"],
+      "dependsOn": ["^build"],
       "outputs": [],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
