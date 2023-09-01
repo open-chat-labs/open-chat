@@ -163,6 +163,15 @@ function transformSourceMappingUrl(contents) {
         .replace("//# sourceMappingURL=", "//# sourceMappingURL=./_/raw/");
 }
 
+function watchForWorkerChanges() {
+    return {
+        name: "watch-worker",
+        buildStart(){
+            this.addWatchFile(path.resolve(dirname, "../openchat-worker/lib/worker.js"))
+        }
+    };
+}
+
 export default {
     input: `./src/main.ts`,
     output: {
@@ -337,6 +346,9 @@ export default {
                     `;
             },
         }),
+
+        // In dev mode, watch for changes to the worker
+        !production && watchForWorkerChanges(),
 
         // In dev mode, call `npm run start` once
         // the bundle has been generated
