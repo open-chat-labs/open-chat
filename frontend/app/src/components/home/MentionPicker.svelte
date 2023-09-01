@@ -29,7 +29,10 @@
     $: filtered = Object.values(client.getUserLookupForMentions()).filter(
         (user) =>
             (mentionSelf || user.userId !== currentUser.userId) &&
-            (prefixLower === undefined || user.username.toLowerCase().startsWith(prefixLower))
+            (prefixLower === undefined ||
+                user.username.toLowerCase().startsWith(prefixLower) ||
+                (user.displayName !== undefined &&
+                    user.displayName.toLowerCase().startsWith(prefixLower)))
     );
 
     $: style =
@@ -92,7 +95,7 @@
                         size={AvatarSize.Small} />
                 </div>
                 <div slot="text">
-                    {item.username}
+                    {(item.displayName ?? item.username) + "@" + item.username}
                 </div>
             </MenuItem>
         </VirtualList>
