@@ -44,10 +44,9 @@ export const communities = derived(
 
 export const communitiesList = derived(communities, ($communities) => {
     return $communities.values().sort((a, b) => {
-        if (b.membership.index === a.membership.index) {
-            return b.memberCount - a.memberCount;
-        }
-        return b.membership.index - a.membership.index
+        return b.membership.index === a.membership.index
+            ? b.memberCount - a.memberCount
+            : b.membership.index - a.membership.index;
     });
 });
 
