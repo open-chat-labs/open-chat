@@ -148,19 +148,26 @@ pub enum StringLengthValidationError {
     TooLong(FieldTooLongResult),
 }
 
-#[cfg(tests)]
+#[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn valid_usernames() {
         assert!(validate_username("abcde").is_ok());
         assert!(validate_username("12345").is_ok());
         assert!(validate_username("SNSABC").is_ok());
-        assert!(validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3").is_ok());
+        assert!(validate_username("1_2_3_4_5_6_7_8").is_ok());
     }
 
     #[test]
     fn invalid_usernames() {
-        assert!(matches!(validate_username("abcde "), Err(UsernameValidationError::Invalid)));
+        assert!(matches!(
+            validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3_4"),
+            Err(UsernameValidationError::TooLong(_))
+        ));
+        assert!(matches!(validate_username("abcd"), Err(UsernameValidationError::TooShort(_))));
+        assert!(matches!(validate_username("ab cde"), Err(UsernameValidationError::Invalid)));
         assert!(matches!(validate_username("ab cde"), Err(UsernameValidationError::Invalid)));
         assert!(matches!(validate_username("_abcde"), Err(UsernameValidationError::Invalid)));
         assert!(matches!(validate_username("abcde_"), Err(UsernameValidationError::Invalid)));
@@ -175,5 +182,35 @@ mod tests {
         ));
         assert!(matches!(validate_username("SNS1Bot"), Err(UsernameValidationError::Invalid)));
         assert!(matches!(validate_username("SNS2_B0T"), Err(UsernameValidationError::Invalid)));
+    }
+
+    #[test]
+    fn valid_display_names() {
+        assert!(validate_display_name("John* $Smith--(*)").is_ok());
+        assert!(validate_display_name("John 👍️ Smith").is_ok());
+        assert!(validate_display_name("早期用户有保证奖励").is_ok());
+        assert!(validate_display_name("Jon").is_ok());
+        assert!(validate_display_name("The fox jumps over John S").is_ok());
+    }
+
+    #[test]
+    fn invalid_display_names() {
+        assert!(validate_display_name("JS").is_err());
+        assert!(validate_display_name("The fox jumps over John Smith").is_err());
+        assert!(validate_display_name(" John Smith").is_err());
+        assert!(validate_display_name("John Smith ").is_err());
+        assert!(validate_display_name("John    Smith").is_err());
+        assert!(validate_display_name("John  Smith").is_err());
+        assert!(validate_display_name("John\nSmith").is_err());
+        assert!(validate_display_name("John\tSmith").is_err());
+        assert!(validate_display_name("John/Smith").is_err());
+        assert!(validate_display_name("John@Smith").is_err());
+        assert!(validate_display_name("John<Smith").is_err());
+        assert!(validate_display_name("John>Smith").is_err());
+        assert!(validate_display_name("John'Smith").is_err());
+        assert!(validate_display_name("John\"Smith").is_err());
+        assert!(validate_display_name("John`Smith").is_err());
+        assert!(validate_display_name("John#Smith").is_err());
+        assert!(validate_display_name("John💎Smith").is_err());
     }
 }
