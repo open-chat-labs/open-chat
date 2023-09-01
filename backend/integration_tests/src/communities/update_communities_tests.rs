@@ -86,6 +86,7 @@ fn update_permissions_succeeds() {
             update_details: None,
             create_public_channel: Some(CommunityPermissionRole::Owners),
             create_private_channel: None,
+            manage_user_groups: None,
         }),
         gate: OptionUpdate::NoChange,
         public: None,
@@ -136,6 +137,7 @@ fn update_permissions_summary_updates_succeeds() {
             update_details: None,
             create_public_channel: Some(CommunityPermissionRole::Owners),
             create_private_channel: None,
+            manage_user_groups: None,
         }),
         gate: OptionUpdate::NoChange,
         public: None,
@@ -217,7 +219,6 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
     }
 }
 
-#[allow(dead_code)]
 struct TestData {
     user1: User,
     user2: User,

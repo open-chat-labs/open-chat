@@ -5,9 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.827](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.827-community)] - 2023-09-01
+
 ### Added
 
 - Add optional user `display name` ([#4247](https://github.com/open-chat-labs/open-chat/pull/4247))
+- Implement ability to create and update `user_groups` ([#4271](https://github.com/open-chat-labs/open-chat/pull/4271))
 
 ### Changed
 
@@ -18,6 +21,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add existing community members to newly imported public channels ([#4260](https://github.com/open-chat-labs/open-chat/pull/4260))
 - One time job to add community members to all imported public channels ([#4262](https://github.com/open-chat-labs/open-chat/pull/4262))
 - One time job to set the subtype on the Modclub Proposals channel ([#4267](https://github.com/open-chat-labs/open-chat/pull/4267))
+- Fix `remove_member_from_channel` ([#4275](https://github.com/open-chat-labs/open-chat/pull/4275))
+- One time hack to fix any incorrect links between members and channels ([#4277](https://github.com/open-chat-labs/open-chat/pull/4277))
 
 ## [[2.0.817](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.817-community)] - 2023-08-24
 

@@ -160,6 +160,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CommunityPermissions = IDL.Record({
     'create_public_channel' : CommunityPermissionRole,
+    'manage_user_groups' : CommunityPermissionRole,
     'update_details' : CommunityPermissionRole,
     'remove_members' : CommunityPermissionRole,
     'invite_users' : CommunityPermissionRole,

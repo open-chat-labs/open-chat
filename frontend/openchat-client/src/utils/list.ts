@@ -92,20 +92,7 @@ export function toRecord<T, K extends string | number | symbol>(
     xs: T[],
     keyFn: (x: T) => K
 ): Record<K, T> {
-    return toRecordFiltered(xs, keyFn, _ => true);
-}
-
-export function toRecordFiltered<T, K extends string | number | symbol>(
-    xs: T[],
-    keyFn: (x: T) => K,
-    filterFn: (x: T) => boolean,
-): Record<K, T> {
-    return xs.reduce((rec, x) => {
-        if (filterFn(x)) {
-            rec[keyFn(x)] = x;
-        }
-        return rec;
-    }, {} as Record<K, T>);
+    return toRecord2(xs, keyFn, (x) => x);
 }
 
 export function toRecord2<T, K extends string | number | symbol, V>(
@@ -113,8 +100,19 @@ export function toRecord2<T, K extends string | number | symbol, V>(
     keyFn: (x: T) => K,
     valFn: (x: T) => V
 ): Record<K, V> {
+    return toRecordFiltered(xs, keyFn, valFn, _ => true);
+}
+
+export function toRecordFiltered<T, K extends string | number | symbol, V>(
+    xs: T[],
+    keyFn: (x: T) => K,
+    valueFn: (x: T) => V,
+    filterFn: (x: T) => boolean,
+): Record<K, V> {
     return xs.reduce((rec, x) => {
-        rec[keyFn(x)] = valFn(x);
+        if (filterFn(x)) {
+            rec[keyFn(x)] = valueFn(x);
+        }
         return rec;
     }, {} as Record<K, V>);
 }

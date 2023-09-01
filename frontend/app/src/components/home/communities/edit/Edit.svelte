@@ -45,7 +45,6 @@
     let channelsValid = true;
     let detailsValid = true;
     let rulesValid = true;
-    let canMakePublic = !editing || client.hasOwnerRights(original.membership.role);
     $: steps = getSteps(editing, detailsValid, channelsValid, rulesValid);
     $: canEditPermissions = !editing || client.canChangeCommunityPermissions(candidate.id);
     $: permissionsDirty = client.havePermissionsChanged(
@@ -214,7 +213,6 @@
                 </div>
                 <div class="visibility" class:visible={step === 1}>
                     <VisibilityControl
-                        {canMakePublic}
                         bind:candidate
                         {original}
                         {editing}

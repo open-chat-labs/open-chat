@@ -1,0 +1,51 @@
+use crate::activity_notifications::handle_activity_notification;
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_tracing_macros::trace;
+use community_canister::update_user_group::{Response::*, *};
+use ic_cdk_macros::update;
+use utils::text_validation::{validate_user_group_name, StringLengthValidationError};
+
+#[update]
+#[trace]
+fn update_user_group(args: Args) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| update_user_group_impl(args, state))
+}
+
+fn update_user_group_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
+        return CommunityFrozen;
+    }
+
+    let caller = state.env.caller();
+    if let Some(member) = state.data.members.get_mut(caller) {
+        if member.suspended.value {
+            return UserSuspended;
+        }
+
+        if !member.role.can_manage_user_groups(&state.data.permissions) {
+            NotAuthorized
+        } else if let Err(error) = args.name.as_ref().map_or(Ok(()), |n| validate_user_group_name(n)) {
+            match error {
+                StringLengthValidationError::TooShort(s) => NameTooShort(s),
+                StringLengthValidationError::TooLong(l) => NameTooLong(l),
+            }
+        } else {
+            let now = state.env.now();
+
+            if state
+                .data
+                .members
+                .update_user_group(args.user_group_id, args.name, args.users_to_add, args.users_to_remove, now)
+            {
+                handle_activity_notification(state);
+                Success
+            } else {
+                UserGroupNotFound
+            }
+        }
+    } else {
+        NotAuthorized
+    }
+}

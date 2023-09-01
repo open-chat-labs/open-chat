@@ -5,9 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.826](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.826-local_user_index)] - 2023-09-01
+
 ### Added
 
 - Add optional user `display name` ([#4247](https://github.com/open-chat-labs/open-chat/pull/4247))
+- Implement ability to create and update `user_groups` ([#4271](https://github.com/open-chat-labs/open-chat/pull/4271))
 
 ### Changed
 

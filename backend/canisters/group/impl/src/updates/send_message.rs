@@ -31,7 +31,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.message_id,
             args.content,
             args.replies_to,
-            args.mentioned.clone(),
+            args.mentioned.iter().map(|u| u.user_id).collect(),
             args.forwarding,
             args.rules_accepted,
             state.data.proposals_bot_user_id,

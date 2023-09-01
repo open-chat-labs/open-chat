@@ -49,7 +49,6 @@
 
     $: selectedMessageContext = client.selectedMessageContext;
     $: focusMessageIndex = client.focusThreadMessageIndex;
-    $: currentChatMembers = client.currentChatMembers;
     $: lastCryptoSent = client.lastCryptoSent;
     $: draftThreadMessages = client.draftThreadMessages;
     $: unconfirmed = client.unconfirmed;
@@ -373,8 +372,6 @@
         editingEvent={$editingEvent}
         replyingTo={$replyingTo}
         textContent={$textContent}
-        members={$currentChatMembers}
-        blockedUsers={$currentChatBlockedUsers}
         {user}
         joining={undefined}
         preview={false}
