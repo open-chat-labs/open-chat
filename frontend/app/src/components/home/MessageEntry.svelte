@@ -44,8 +44,6 @@
     export let editingEvent: EventWrapper<Message> | undefined;
     export let replyingTo: EnhancedReplyContext | undefined;
     export let textContent: string | undefined;
-    export let members: Member[];
-    export let blockedUsers: Set<string>;
     export let mode: "thread" | "message" = "message";
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
@@ -417,9 +415,9 @@
         rangeToReplace = undefined;
     }
 
-    function mention(ev: CustomEvent<string>): void {
-        const user = $userStore[ev.detail];
-        const username = user?.username ?? $_("unknown");
+    function mention(ev: CustomEvent<UserSummary>): void {
+        const user = ev.detail;
+        const username = user.username;
         const userLabel = `@${username}`;
 
         replaceTextWith(userLabel);
@@ -439,7 +437,7 @@
 
     function getOrBuildUserLookupByUsername(): Record<string, UserSummary> {
         if (userLookupByUsername === undefined) {
-            userLookupByUsername = client.buildUserLookupByUsername(members, blockedUsers);
+            userLookupByUsername = client.buildUserLookupForMentions(false);
         }
         return userLookupByUsername;
     }
@@ -601,7 +599,15 @@
     }
 
     .blocked,
-    .disabled,
+    .disabled {
+      height: 42px;
+      color: var(--txt);
+      @include font(book, normal, fs-100);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
 
     .recording {
         padding: 0 $sp3;

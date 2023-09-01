@@ -10,14 +10,12 @@
     import { mobileWidth } from "../../stores/screenDimensions";
 
     const client = getContext<OpenChat>("client");
-    const currentUser = client.user;
 
     export let userLookupByUsername: Record<string, UserSummary>;
     export let prefix: string | undefined;
     export let offset: number;
     export let direction: "up" | "down" = "up";
     export let border = false;
-    export let mentionSelf = false;
 
     let index = 0;
     $: userStore = client.userStore;
@@ -28,9 +26,7 @@
 
     $: prefixLower = prefix?.toLowerCase();
     $: filtered = Object.values(userLookupByUsername).filter(
-        (user) =>
-            (mentionSelf || user.userId !== currentUser.userId) &&
-            (prefixLower === undefined || user.username.toLowerCase().startsWith(prefixLower))
+        (user) => (prefixLower === undefined || user.username.toLowerCase().startsWith(prefixLower))
     );
 
     $: style =
@@ -44,8 +40,8 @@
 
     const dispatch = createEventDispatcher();
 
-    function mention(userId: string) {
-        dispatch("mention", userId);
+    function mention(user: UserSummary) {
+        dispatch("mention", user);
     }
 
     function onKeyDown(ev: KeyboardEvent): void {
@@ -68,7 +64,7 @@
             case "Enter":
                 const user = filtered[index];
                 if (user) {
-                    mention(user.userId);
+                    mention(user);
                 }
                 ev.preventDefault();
                 ev.stopPropagation();
@@ -85,7 +81,7 @@
     {style}>
     <Menu>
         <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
-            <MenuItem selected={itemIndex === index} on:click={() => mention(item.userId)}>
+            <MenuItem selected={itemIndex === index} on:click={() => mention(item)}>
                 <div class="avatar" slot="icon">
                     <Avatar
                         url={client.userAvatarUrl($userStore[item.userId])}

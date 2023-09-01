@@ -4571,12 +4571,13 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    buildUserLookupByUsername(members: Member[], blocked: Set<string>): Record<string, UserSummary> {
+    buildUserLookupForMentions(includeSelf: boolean): Record<string, UserSummary> {
         const map = {} as Record<string, UserSummary>;
         const userStore = this._liveState.userStore;
-        for (const user of members) {
-            const userId = user.userId;
-            if (!blocked.has(userId)) {
+        const currentUser = this._user?.userId;
+        for (const member of this._liveState.currentChatMembers) {
+            const userId = member.userId;
+            if (includeSelf || userId !== currentUser) {
                 const user = userStore[userId];
                 if (user !== undefined && user.username !== undefined) {
                     map[user.username.toLowerCase()] = user as UserSummary;

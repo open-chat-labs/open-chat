@@ -15,7 +15,6 @@
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-    const reverseUserLookup: Record<string, string> = {};
     const mentionRegex = /@([\d\w_]*)$/;
 
     let lastSearchTerm = "";
@@ -30,11 +29,8 @@
     let timer: number | undefined;
     let userLookupByUsername: Record<string, UserSummary> | undefined = undefined;
 
-    $: userStore = client.userStore;
     $: count = matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "";
     $: isGroup = chat.kind === "group_chat";
-    $: members = client.currentChatMembers;
-    $: blockedUsers = client.currentChatBlockedUsers;
 
     onMount(() => {
         inputElement.focus();
@@ -117,9 +113,9 @@
 
         let mentionedSet = new Set<string>();
         let expandedText = text.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const userId = reverseUserLookup[p1];
-            if (userId !== undefined) {
-                mentionedSet.add(userId);
+            const user = getOrBuildUserLookupByUsername()[p1.toLowerCase()];
+            if (user !== undefined) {
+                mentionedSet.add(user.userId);
                 return "";
             } else {
                 console.log(
@@ -227,17 +223,13 @@
         searchTerm = inputElement.value;
     }
 
-    function mention(ev: CustomEvent<string>): void {
-        const user = $userStore[ev.detail];
-        const username = user?.username ?? $_("unknown");
-        const userLabel = `@${username}`;
+    function mention(ev: CustomEvent<UserSummary>): void {
+        const user = ev.detail;
+        const userLabel = `@${user.username}`;
 
         replaceTextWith(userLabel);
 
         showMentionPicker = false;
-        if (user !== undefined) {
-            reverseUserLookup[username] = user.userId;
-        }
         performSearch();
     }
 
@@ -248,7 +240,7 @@
 
     function getOrBuildUserLookupByUsername(): Record<string, UserSummary> {
         if (userLookupByUsername === undefined) {
-            userLookupByUsername = client.buildUserLookupByUsername($members, $blockedUsers);
+            userLookupByUsername = client.buildUserLookupForMentions(true);
         }
         return userLookupByUsername;
     }
@@ -261,7 +253,6 @@
         {userLookupByUsername}
         offset={searchBoxHeight ?? 80}
         direction={"down"}
-        mentionSelf
         prefix={mentionPrefix}
         on:close={cancelMention}
         on:mention={mention} />
