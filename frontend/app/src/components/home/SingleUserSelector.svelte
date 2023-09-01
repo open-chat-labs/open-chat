@@ -1,8 +1,12 @@
 <script lang="ts">
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
-    import type { PartialUserSummary, UserSummary } from "openchat-client";
+    import type { OpenChat, PartialUserSummary, UserSummary } from "openchat-client";
+    import { getContext } from "svelte";
     import UserPill from "../UserPill.svelte";
+
+    const client = getContext<OpenChat>("client");
+    const currentUser = client.user;
 
     export let autofocus: boolean;
     export let selectedReceiver: PartialUserSummary | undefined = undefined;
@@ -35,7 +39,10 @@
         // we need a short timeout here so that any click event is handled before the blur
         window.setTimeout(() => {
             if (selectedReceiver === undefined) {
-                selectedReceiver = mentionPicker?.userFromUsername(textValue);
+                const user = client.getUserLookupForMentions()[textValue.toLowerCase()];
+                if (user !== undefined && user.userId !== currentUser.userId) {
+                    selectedReceiver = user;
+                }
             }
             showMentionPicker = false;
         }, 100);
