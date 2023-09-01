@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Validate `display_name` + match on `display_name` for user search ([#4282](https://github.com/open-chat-labs/open-chat/pull/4282))
+
 ## [[2.0.829](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.829-user_index)] - 2023-09-01
 
 ### Added
