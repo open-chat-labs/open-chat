@@ -125,7 +125,6 @@
             messagesRect = messagesDiv?.getBoundingClientRect();
         }
         const rect = el.getBoundingClientRect();
-        console.log("Checking label: ", el.innerHTML, rect.top);
         return rect.top < 95;
     }
 
