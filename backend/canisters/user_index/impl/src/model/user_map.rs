@@ -14,7 +14,7 @@ pub struct UserMap {
     #[serde(skip)]
     username_to_user_id: CaseInsensitiveHashMap<UserId>,
     #[serde(skip)]
-    display_name_to_user_id: CaseInsensitiveHashMap<UserId>,
+    user_id_to_display_name_upper: HashMap<UserId, String>,
     #[serde(skip)]
     principal_to_user_id: HashMap<Principal, UserId>,
     #[serde(skip)]
@@ -57,8 +57,8 @@ impl UserMap {
         self.username_to_user_id.insert(&username, user_id);
         self.principal_to_user_id.insert(principal, user_id);
 
-        if let Some(dn) = display_name.as_ref() {
-            self.display_name_to_user_id.insert(&dn, user_id);
+        if let Some(name) = display_name.as_ref() {
+            self.user_id_to_display_name_upper.insert(user_id, name.to_uppercase());
         }
 
         let user = User::new(principal, user_id, username, display_name, now, referred_by, is_bot);
@@ -103,14 +103,12 @@ impl UserMap {
                 self.username_to_user_id.insert(username, user_id);
             }
 
-            if previous.display_name.as_ref().map(|n| n.to_uppercase()) != user.display_name.as_ref().map(|n| n.to_uppercase())
-            {
-                if let Some(previous_display_name) = previous.display_name.as_ref() {
-                    self.display_name_to_user_id.remove(previous_display_name);
-                }
+            if previous.display_name != user.display_name {
+                self.user_id_to_display_name_upper.remove(&user_id);
 
                 if let Some(new_display_name) = user.display_name.as_ref() {
-                    self.display_name_to_user_id.insert(new_display_name, user_id);
+                    self.user_id_to_display_name_upper
+                        .insert(user_id, new_display_name.to_uppercase());
                 }
             }
 
@@ -206,9 +204,27 @@ impl UserMap {
     }
 
     pub fn search(&self, term: &str) -> impl Iterator<Item = (&User, bool)> {
-        self.username_to_user_id
-            .search(term)
-            .filter_map(move |(uid, p)| self.users.get(uid).map(|u| (u, p)))
+        let term = term.to_uppercase();
+
+        self.username_to_user_id.iter().filter_map(move |(username, user_id)| {
+            if let Some(user) = self.users.get(user_id) {
+                let username_match = username.find(&term).map(|s| s == 0);
+                let display_name_match = self
+                    .user_id_to_display_name_upper
+                    .get(user_id)
+                    .and_then(|name| name.find(&term).map(|s| s == 0));
+
+                if username_match == Some(true) || display_name_match == Some(true) {
+                    Some((user, true))
+                } else if username_match.is_some() || display_name_match.is_some() {
+                    Some((user, false))
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &User> {
@@ -307,8 +323,8 @@ impl From<UserMapTrimmed> for UserMap {
             user_map.username_to_user_id.insert(&user.username, *user_id);
             user_map.principal_to_user_id.insert(user.principal, *user_id);
 
-            if let Some(display_name) = user.display_name.as_ref() {
-                user_map.display_name_to_user_id.insert(&display_name, *user_id);
+            if let Some(name) = user.display_name.as_ref() {
+                user_map.user_id_to_display_name_upper.insert(*user_id, name.to_uppercase());
             }
         }
 
