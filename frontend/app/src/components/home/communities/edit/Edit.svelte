@@ -212,7 +212,11 @@
                     <Details bind:valid={detailsValid} bind:busy bind:candidate />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
-                    <VisibilityControl bind:candidate {original} {editing} history={false} />
+                    <VisibilityControl
+                        bind:candidate
+                        {original}
+                        {editing}
+                        history={false} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
                     <Rules

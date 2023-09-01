@@ -57,8 +57,6 @@
     let searchTerm = "";
     let importToCommunities: CommunityMap<CommunitySummary> | undefined;
 
-    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
-    $: currentChatMembers = client.currentChatMembers;
     $: currentChatTextContent = client.currentChatTextContent;
     $: currentChatReplyingTo = client.currentChatReplyingTo;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
@@ -338,8 +336,6 @@
             editingEvent={$currentChatEditingEvent}
             replyingTo={$currentChatReplyingTo}
             textContent={$currentChatTextContent}
-            members={$currentChatMembers}
-            blockedUsers={$currentChatBlockedUsers}
             {user}
             mode={"message"}
             {joining}

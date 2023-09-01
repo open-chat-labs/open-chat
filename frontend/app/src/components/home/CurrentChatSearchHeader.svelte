@@ -5,7 +5,7 @@
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type { MessageMatch, ChatSummary, OpenChat } from "openchat-client";
+    import type { MessageMatch, ChatSummary, OpenChat, UserSummary } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
     import MentionPicker from "./MentionPicker.svelte";
@@ -15,7 +15,6 @@
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-    const reverseUserLookup: Record<string, string> = {};
     const mentionRegex = /@([\d\w_]*)$/;
 
     let lastSearchTerm = "";
@@ -29,11 +28,8 @@
     let rangeToReplace: [number, number] | undefined = undefined;
     let timer: number | undefined;
 
-    $: userStore = client.userStore;
     $: count = matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "";
     $: isGroup = chat.kind === "group_chat";
-    $: members = client.currentChatMembers;
-    $: blockedUsers = client.currentChatBlockedUsers;
 
     onMount(() => {
         inputElement.focus();
@@ -116,9 +112,9 @@
 
         let mentionedSet = new Set<string>();
         let expandedText = text.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const userId = reverseUserLookup[p1];
-            if (userId !== undefined) {
-                mentionedSet.add(userId);
+            const user = client.lookupUserForMention(p1, true);
+            if (user !== undefined) {
+                mentionedSet.add(user.userId);
                 return "";
             } else {
                 console.log(
@@ -225,17 +221,13 @@
         searchTerm = inputElement.value;
     }
 
-    function mention(ev: CustomEvent<string>): void {
-        const user = $userStore[ev.detail];
-        const username = user?.username ?? $_("unknown");
-        const userLabel = `@${username}`;
+    function mention(ev: CustomEvent<UserSummary>): void {
+        const user = ev.detail;
+        const userLabel = `@${user.username}`;
 
         replaceTextWith(userLabel);
 
         showMentionPicker = false;
-        if (user !== undefined) {
-            reverseUserLookup[username] = user.userId;
-        }
         performSearch();
     }
 
@@ -251,12 +243,10 @@
     <MentionPicker
         offset={searchBoxHeight ?? 80}
         direction={"down"}
-        mentionSelf
         prefix={mentionPrefix}
-        members={$members}
-        blockedUsers={$blockedUsers}
         on:close={cancelMention}
-        on:mention={mention} />
+        on:mention={mention}
+        mentionSelf />
 {/if}
 
 <SectionHeader shadow flush entry bind:height={searchBoxHeight}>

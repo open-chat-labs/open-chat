@@ -229,6 +229,7 @@ export interface CommunityCanisterCommunitySummary {
   'description' : string,
   'last_updated' : TimestampMillis,
   'channels' : Array<CommunityCanisterChannelSummary>,
+  'user_groups' : Array<UserGroup>,
   'avatar_id' : [] | [bigint],
   'membership' : [] | [CommunityMembership],
   'frozen' : [] | [FrozenGroupInfo],
@@ -249,6 +250,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'channels_removed' : Array<ChannelId>,
+  'user_groups' : Array<UserGroup>,
   'avatar_id' : DocumentIdUpdate,
   'channels_added' : Array<CommunityCanisterChannelSummary>,
   'membership' : [] | [CommunityMembershipUpdates],
@@ -292,6 +294,7 @@ export type CommunityPermissionRole = { 'Owners' : null } |
   { 'Members' : null };
 export interface CommunityPermissions {
   'create_public_channel' : CommunityPermissionRole,
+  'manage_user_groups' : CommunityPermissionRole,
   'update_details' : CommunityPermissionRole,
   'remove_members' : CommunityPermissionRole,
   'invite_users' : CommunityPermissionRole,
@@ -997,6 +1000,7 @@ export interface NotificationEnvelope {
 }
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
+  'manage_user_groups' : [] | [CommunityPermissionRole],
   'update_details' : [] | [CommunityPermissionRole],
   'remove_members' : [] | [CommunityPermissionRole],
   'invite_users' : [] | [CommunityPermissionRole],
@@ -1270,6 +1274,11 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
 export interface User { 'username' : string, 'user_id' : UserId }
+export interface UserGroup {
+  'members' : number,
+  'name' : string,
+  'user_group_id' : number,
+}
 export type UserId = CanisterId;
 export interface UserSummary {
   'username' : string,

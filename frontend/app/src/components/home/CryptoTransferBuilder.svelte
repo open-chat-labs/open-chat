@@ -28,8 +28,6 @@
     export let chat: ChatSummary;
     export let defaultReceiver: string | undefined;
 
-    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
-    $: currentChatMembers = client.currentChatMembers;
     $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
@@ -166,8 +164,6 @@
                             <Legend label={$_("tokenTransfer.receiver")} />
                             <SingleUserSelector
                                 bind:selectedReceiver={receiver}
-                                members={$currentChatMembers}
-                                blockedUsers={$currentChatBlockedUsers}
                                 autofocus={multiUserChat} />
                         </div>
                     {/if}

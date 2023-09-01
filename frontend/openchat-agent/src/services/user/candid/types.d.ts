@@ -293,6 +293,7 @@ export interface CommunityCanisterCommunitySummary {
   'description' : string,
   'last_updated' : TimestampMillis,
   'channels' : Array<CommunityCanisterChannelSummary>,
+  'user_groups' : Array<UserGroup>,
   'avatar_id' : [] | [bigint],
   'membership' : [] | [CommunityMembership],
   'frozen' : [] | [FrozenGroupInfo],
@@ -313,6 +314,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'channels_removed' : Array<ChannelId>,
+  'user_groups' : Array<UserGroup>,
   'avatar_id' : DocumentIdUpdate,
   'channels_added' : Array<CommunityCanisterChannelSummary>,
   'membership' : [] | [CommunityMembershipUpdates],
@@ -360,6 +362,7 @@ export type CommunityPermissionRole = { 'Owners' : null } |
   { 'Members' : null };
 export interface CommunityPermissions {
   'create_public_channel' : CommunityPermissionRole,
+  'manage_user_groups' : CommunityPermissionRole,
   'update_details' : CommunityPermissionRole,
   'remove_members' : CommunityPermissionRole,
   'invite_users' : CommunityPermissionRole,
@@ -1200,6 +1203,7 @@ export interface NotificationEnvelope {
 }
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
+  'manage_user_groups' : [] | [CommunityPermissionRole],
   'update_details' : [] | [CommunityPermissionRole],
   'remove_members' : [] | [CommunityPermissionRole],
   'invite_users' : [] | [CommunityPermissionRole],
@@ -1692,6 +1696,11 @@ export interface UserCanisterGroupChatSummaryUpdates {
   'date_read_pinned' : [] | [TimestampMillis],
   'threads_read' : Array<[MessageIndex, MessageIndex]>,
   'archived' : [] | [boolean],
+}
+export interface UserGroup {
+  'members' : number,
+  'name' : string,
+  'user_group_id' : number,
 }
 export type UserId = CanisterId;
 export interface UserSummary {

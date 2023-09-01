@@ -411,6 +411,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _cachePrimer: CachePrimer | undefined = undefined;
     private _membershipCheck: number | undefined;
     private _referralCode: string | undefined = undefined;
+    private _userLookupForMentions: Record<string, UserSummary> | undefined = undefined;
 
     constructor(config: OpenChatConfig) {
         super(config);
@@ -1950,6 +1951,8 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         setSelectedChat(this, clientChat, serverChat, messageIndex, threadMessageIndex);
+
+        this._userLookupForMentions = undefined;
 
         const { selectedChat, focusMessageIndex } = this._liveState;
         if (selectedChat !== undefined) {
@@ -4583,6 +4586,32 @@ export class OpenChat extends OpenChatAgentWorker {
                 }),
             ),
         );
+    }
+
+    getUserLookupForMentions(): Record<string, UserSummary> {
+        if (this._userLookupForMentions === undefined) {
+            const lookup = {} as Record<string, UserSummary>;
+            const userStore = this._liveState.userStore;
+            for (const member of this._liveState.currentChatMembers) {
+                const userId = member.userId;
+                const user = userStore[userId];
+                if (user !== undefined && user.username !== undefined) {
+                    lookup[user.username.toLowerCase()] = user as UserSummary;
+                }
+            }
+            this._userLookupForMentions = lookup;
+        }
+        return this._userLookupForMentions;
+    }
+
+    lookupUserForMention(username: string, includeSelf: boolean): UserSummary | undefined {
+        const lookup = this.getUserLookupForMentions();
+
+        const user = lookup[username.toLowerCase()];
+
+        return user !== undefined && (includeSelf || user.userId !== this.user.userId)
+            ? user
+            : undefined;
     }
 
     // **** Communities Stuff
