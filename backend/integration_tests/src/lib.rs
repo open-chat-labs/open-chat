@@ -40,6 +40,7 @@ pub struct TestEnv {
     pub env: StateMachine,
     pub canister_ids: CanisterIds,
     pub controller: Principal,
+    pub usage_counter: u32,
 }
 
 #[derive(Debug)]

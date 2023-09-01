@@ -114,6 +114,7 @@ fn push_notification(
         channel_name,
         added_by: user_id,
         added_by_name: args.username,
+        added_by_display_name: args.display_name,
         reaction: args.reaction,
         community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
         channel_avatar_id,

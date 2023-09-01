@@ -15,6 +15,7 @@ fn users_automatically_joined_to_default_channels() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let default_channels: Vec<_> = (0..5).map(|_| random_string()).sorted().collect();
@@ -51,6 +52,7 @@ fn create_channel_succeeds(is_public: bool) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let default_channels = vec![random_string()];

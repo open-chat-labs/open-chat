@@ -285,6 +285,7 @@ fn platform_operators_can_delete_messages(is_platform_moderator: bool) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);

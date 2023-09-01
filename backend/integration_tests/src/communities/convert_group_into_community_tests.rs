@@ -15,6 +15,7 @@ fn convert_into_community_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -70,6 +71,7 @@ fn not_group_owner_returns_unauthorized() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {

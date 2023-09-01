@@ -1,9 +1,19 @@
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
-use user_index_canister::users::{Response::*, *};
+use user_index_canister::users_v2::{Response::*, *};
 
 #[query]
-fn users(args: Args) -> Response {
+fn users(args: user_index_canister::users::Args) -> user_index_canister::users::Response {
+    let Success(response) = read_state(|state| users_impl(args, state));
+
+    user_index_canister::users::Response::Success(user_index_canister::users::Result {
+        users: response.users.into_iter().map(|summary| summary.into()).collect(),
+        timestamp: response.timestamp,
+    })
+}
+
+#[query]
+fn users_v2(args: Args) -> Response {
     read_state(|state| users_impl(args, state))
 }
 
@@ -21,7 +31,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 .into_iter()
                 .filter_map(|user_id| state.data.users.get_by_user_id(&user_id))
                 .filter(move |u| u.date_updated > updated_since)
-                .map(|u| u.to_partial_summary(now))
+                .map(|u| u.to_summary(now))
         })
         .collect();
 
@@ -93,10 +103,10 @@ mod tests {
         assert_eq!(users.len(), 2);
 
         assert_eq!(users[0].user_id, user_id1);
-        assert_eq!(users[0].username, Some("abc".to_string()));
+        assert_eq!(users[0].username, "abc".to_string());
 
         assert_eq!(users[1].user_id, user_id3);
-        assert_eq!(users[1].username, Some("ghi".to_string()));
+        assert_eq!(users[1].username, "ghi".to_string());
     }
 
     #[test]
@@ -155,6 +165,6 @@ mod tests {
         assert_eq!(users.len(), 1);
 
         assert_eq!(users[0].user_id, user_id3);
-        assert_eq!(users[0].username, Some("ghi".to_string()));
+        assert_eq!(users[0].username, "ghi".to_string());
     }
 }

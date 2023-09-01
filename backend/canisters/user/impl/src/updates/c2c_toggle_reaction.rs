@@ -65,6 +65,7 @@ fn build_notification(
         message_id,
         reaction,
         username,
+        display_name,
         user_avatar_id,
         ..
     }: Args,
@@ -89,6 +90,7 @@ fn build_notification(
             message_index: message_event.event.message_index,
             message_event_index: message_event.index,
             username,
+            display_name,
             reaction,
             user_avatar_id,
         }),

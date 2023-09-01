@@ -194,6 +194,7 @@ fn send_message_impl(
             chat.mark_message_pending(send_message_args.clone());
 
             let sender_name = state.data.username.clone();
+            let sender_display_name = state.data.display_name.clone();
 
             if user_type.is_bot() {
                 ic_cdk::spawn(send_to_bot_canister(
@@ -206,7 +207,12 @@ fn send_message_impl(
                 let pending_messages = chat.get_pending_messages();
                 ic_cdk::spawn(send_to_recipients_canister(
                     recipient,
-                    c2c_send_messages::Args::new(pending_messages, sender_name, state.data.avatar.value.as_ref().map(|d| d.id)),
+                    c2c_send_messages::Args::new(
+                        pending_messages,
+                        sender_name,
+                        sender_display_name,
+                        state.data.avatar.value.as_ref().map(|d| d.id),
+                    ),
                     0,
                 ));
             }

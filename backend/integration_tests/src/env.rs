@@ -40,7 +40,10 @@ impl TestEnvWrapper {
 
 impl Drop for TestEnvWrapper {
     fn drop(&mut self) {
-        let env = std::mem::take(&mut self.env).unwrap();
-        ENV.deref().envs.lock().unwrap().push(env);
+        let mut env = std::mem::take(&mut self.env).unwrap();
+        env.usage_counter += 1;
+        if env.usage_counter < 25 {
+            ENV.deref().envs.lock().unwrap().push(env);
+        }
     }
 }

@@ -24,6 +24,9 @@ fn process_event(event: Event, state: &mut RuntimeState) {
         Event::UsernameChanged(ev) => {
             state.data.username = ev.username;
         }
+        Event::DisplayNameChanged(ev) => {
+            state.data.display_name = ev.display_name;
+        }
         Event::PhoneNumberConfirmed(ev) => {
             state.data.phone_is_verified = true;
             state.data.storage_limit = ev.new_storage_limit;

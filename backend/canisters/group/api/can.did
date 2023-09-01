@@ -5,6 +5,7 @@ type SendMessageV2Args = record {
     thread_root_message_index : opt MessageIndex;
     content : MessageContentInitial;
     sender_name : text;
+    sender_display_name : opt text;
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     forwarding : bool;
@@ -102,6 +103,7 @@ type AddReactionArgs = record {
     message_id : MessageId;
     reaction : text;
     username : text;
+    display_name : opt text;
     correlation_id : nat64;
 };
 

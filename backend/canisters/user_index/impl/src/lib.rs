@@ -242,6 +242,7 @@ impl Data {
             proposals_bot_user_id.into(),
             proposals_bot_user_id,
             "ProposalsBot".to_string(),
+            None,
             0,
             None,
             true,

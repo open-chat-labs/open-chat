@@ -30,6 +30,7 @@
                 start({
                     iframe,
                     styleVariables,
+                    skipInsertButton: true,
                 }).then(onMemeCreated);
             }
         });
