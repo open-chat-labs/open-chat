@@ -19,7 +19,7 @@
     <div class="avatar">
         <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Small} />
     </div>
-    <span class="username">{`@${user.username}`}</span>
+    <span class="username">{`${user.displayName ?? user.username}`}</span>
     <span class="close" on:click={deleteUser}>
         <Close size={"1.2em"} color={"var(--button-txt)"} />
     </span>
