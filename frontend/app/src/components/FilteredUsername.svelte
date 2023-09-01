@@ -7,10 +7,11 @@
 
     $: name = username ?? $_("unknownUser");
     $: lower = name.toLowerCase();
-    $: index = searchTerm === "" ? -1 : lower.indexOf(searchTerm);
+    $: searchTermLower = searchTerm.toLowerCase();
+    $: index = searchTermLower === "" ? -1 : lower.indexOf(searchTermLower);
     $: prefix = name.substring(0, index);
-    $: match = name.substring(index, index + searchTerm.length);
-    $: postfix = name.substring(index + searchTerm.length);
+    $: match = name.substring(index, index + searchTermLower.length);
+    $: postfix = name.substring(index + searchTermLower.length);
 </script>
 
 {#if me}
