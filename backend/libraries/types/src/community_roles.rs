@@ -16,6 +16,12 @@ pub struct CommunityPermissions {
     pub remove_members: CommunityPermissionRole,
     pub create_public_channel: CommunityPermissionRole,
     pub create_private_channel: CommunityPermissionRole,
+    #[serde(default = "admins")]
+    pub manage_user_groups: CommunityPermissionRole,
+}
+
+fn admins() -> CommunityPermissionRole {
+    CommunityPermissionRole::Admins
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -26,6 +32,8 @@ pub struct OptionalCommunityPermissions {
     pub remove_members: Option<CommunityPermissionRole>,
     pub create_public_channel: Option<CommunityPermissionRole>,
     pub create_private_channel: Option<CommunityPermissionRole>,
+    #[serde(default)]
+    pub manage_user_groups: Option<CommunityPermissionRole>,
 }
 
 impl Default for CommunityPermissions {
@@ -37,6 +45,7 @@ impl Default for CommunityPermissions {
             remove_members: CommunityPermissionRole::Admins,
             create_public_channel: CommunityPermissionRole::Admins,
             create_private_channel: CommunityPermissionRole::Admins,
+            manage_user_groups: CommunityPermissionRole::Admins,
         }
     }
 }
@@ -95,6 +104,10 @@ impl CommunityRole {
 
     pub fn can_create_private_channel(&self, permissions: &CommunityPermissions) -> bool {
         self.is_permitted(permissions.create_private_channel)
+    }
+
+    pub fn can_manage_user_groups(&self, permissions: &CommunityPermissions) -> bool {
+        self.is_permitted(permissions.manage_user_groups)
     }
 
     pub fn can_delete_community(&self) -> bool {

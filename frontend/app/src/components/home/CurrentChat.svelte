@@ -338,8 +338,6 @@
             editingEvent={$currentChatEditingEvent}
             replyingTo={$currentChatReplyingTo}
             textContent={$currentChatTextContent}
-            members={$currentChatMembers}
-            blockedUsers={$currentChatBlockedUsers}
             {user}
             mode={"message"}
             {joining}

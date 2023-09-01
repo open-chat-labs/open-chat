@@ -346,6 +346,7 @@ type CommunityCanisterCommunitySummary = record {
     channels : vec CommunityCanisterChannelSummary;
     rules_enabled : bool;
     membership : opt CommunityMembership;
+    user_groups : vec UserGroup;
     metrics : ChatMetrics;
 };
 
@@ -353,6 +354,12 @@ type CommunityMembership = record {
     joined : TimestampMillis;
     role : CommunityRole;
     rules_accepted : bool;
+};
+
+type UserGroup = record {
+    user_group_id : nat32;
+    name : text;
+    members : nat32;
 };
 
 type CommunityCanisterChannelSummary = record {
@@ -409,6 +416,7 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     channels_removed : vec ChannelId;
     rules_enabled : opt bool;
     membership : opt CommunityMembershipUpdates;
+    user_groups : vec UserGroup;
     metrics : opt ChatMetrics;
 };
 
@@ -1187,6 +1195,7 @@ type CommunityPermissions = record {
     remove_members : CommunityPermissionRole;
     create_public_channel : CommunityPermissionRole;
     create_private_channel : CommunityPermissionRole;
+    manage_user_groups : CommunityPermissionRole;
 };
 
 type OptionalCommunityPermissions = record {
@@ -1196,6 +1205,7 @@ type OptionalCommunityPermissions = record {
     remove_members : opt CommunityPermissionRole;
     create_public_channel : opt CommunityPermissionRole;
     create_private_channel : opt CommunityPermissionRole;
+    manage_user_groups : opt CommunityPermissionRole;
 };
 
 type CommunityPermissionRole = variant {

@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::{DisplayNameChanged, Event};
 use user_index_canister::set_display_name::{Response::*, *};
-use utils::display_name_validation::{validate_display_name, DisplayNameValidationError};
+use utils::text_validation::{validate_display_name, UsernameValidationError};
 
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
@@ -19,9 +19,9 @@ fn set_display_name_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(display_name) = args.display_name.as_ref() {
         match validate_display_name(display_name) {
             Ok(_) => {}
-            Err(DisplayNameValidationError::TooShort(min_length)) => return DisplayNameTooShort(min_length),
-            Err(DisplayNameValidationError::TooLong(max_length)) => return DisplayNameTooLong(max_length),
-            Err(DisplayNameValidationError::Invalid) => return DisplayNameInvalid,
+            Err(UsernameValidationError::TooShort(min_length)) => return DisplayNameTooShort(min_length),
+            Err(UsernameValidationError::TooLong(max_length)) => return DisplayNameTooLong(max_length),
+            Err(UsernameValidationError::Invalid) => return DisplayNameInvalid,
         };
     }
 

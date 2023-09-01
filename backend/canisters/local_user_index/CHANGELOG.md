@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add optional user `display name` ([#4247](https://github.com/open-chat-labs/open-chat/pull/4247))
+- Implement ability to create and update `user_groups` ([#4271](https://github.com/open-chat-labs/open-chat/pull/4271))
+
+### Changed
+
+- Consolidate and simplify user/group/community name validation ([#4265](https://github.com/open-chat-labs/open-chat/pull/4265))
 
 ## [[2.0.819](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.819-local_user_index)] - 2023-08-24
 

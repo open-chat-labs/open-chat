@@ -12,6 +12,7 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct PublicProfile {
     pub username: String,
+    pub display_name: Option<String>,
     pub avatar_id: Option<u128>,
     pub bio: String,
     pub is_premium: bool,

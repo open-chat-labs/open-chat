@@ -8,7 +8,10 @@ use tracing::error;
 use types::{CanisterId, CommunityId};
 use user_canister::create_community::{Response::*, *};
 use utils::document_validation::{validate_avatar, validate_banner};
-use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
+use utils::text_validation::{
+    validate_community_name, validate_description, validate_group_name, validate_rules, NameValidationError,
+    RulesValidationError,
+};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -71,7 +74,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
         Err(MaxCommunitiesCreated(COMMUNITY_CREATION_LIMIT))
     } else if is_throttled() {
         Err(Throttled)
-    } else if let Err(error) = validate_name(&args.name, args.is_public) {
+    } else if let Err(error) = validate_community_name(&args.name, args.is_public) {
         Err(match error {
             NameValidationError::TooShort(s) => NameTooShort(s),
             NameValidationError::TooLong(l) => NameTooLong(l),
@@ -112,7 +115,11 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
 }
 
 fn default_channels_valid(default_channels: &Vec<String>) -> bool {
-    if default_channels.is_empty() || default_channels.iter().any(|channel| validate_name(channel, true).is_err()) {
+    if default_channels.is_empty()
+        || default_channels
+            .iter()
+            .any(|channel| validate_group_name(channel, true, None).is_err())
+    {
         return false;
     }
 

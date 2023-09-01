@@ -619,7 +619,6 @@ fn set_channel_rules(env: &mut StateMachine, user: &User, community_id: Communit
     client::community::happy_path::update_channel(env, user, community_id, &args);
 }
 
-#[allow(dead_code)]
 struct TestData {
     user1: User,
     user2: User,

@@ -1,4 +1,6 @@
+use crate::model::user_groups::{UserGroup, UserGroups};
 use candid::Principal;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
@@ -9,6 +11,8 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
     members: HashMap<UserId, CommunityMemberInternal>,
+    #[serde(default)]
+    user_groups: UserGroups,
     // This includes the userIds of community members and also users invited to the community
     principal_to_user_id_map: HashMap<Principal, UserId>,
     blocked: HashSet<UserId>,
@@ -36,6 +40,7 @@ impl CommunityMembers {
 
         CommunityMembers {
             members: vec![(creator_user_id, member)].into_iter().collect(),
+            user_groups: UserGroups::default(),
             principal_to_user_id_map: vec![(creator_principal, creator_user_id)].into_iter().collect(),
             blocked: HashSet::new(),
             admin_count: 0,
@@ -72,12 +77,12 @@ impl CommunityMembers {
         self.principal_to_user_id_map.insert(principal, user_id);
     }
 
-    pub fn remove(&mut self, user_id: &UserId) -> Option<CommunityMemberInternal> {
+    pub fn remove(&mut self, user_id: &UserId, now: TimestampMillis) -> Option<CommunityMemberInternal> {
         self.get_principal(user_id)
-            .and_then(|principal| self.remove_by_principal(&principal))
+            .and_then(|principal| self.remove_by_principal(&principal, now))
     }
 
-    pub fn remove_by_principal(&mut self, principal: &Principal) -> Option<CommunityMemberInternal> {
+    pub fn remove_by_principal(&mut self, principal: &Principal, now: TimestampMillis) -> Option<CommunityMemberInternal> {
         if let Some(user_id) = self.principal_to_user_id_map.remove(principal) {
             if let Some(member) = self.members.remove(&user_id) {
                 match member.role {
@@ -85,6 +90,8 @@ impl CommunityMembers {
                     CommunityRole::Admin => self.admin_count -= 1,
                     _ => (),
                 }
+
+                self.user_groups.remove_user_from_all(&member.user_id, now);
 
                 return Some(member);
             }
@@ -161,6 +168,40 @@ impl CommunityMembers {
             caller_id: user_id,
             prev_role,
         })
+    }
+
+    pub fn create_user_group<R: RngCore>(
+        &mut self,
+        name: String,
+        mut users: Vec<UserId>,
+        rng: &mut R,
+        now: TimestampMillis,
+    ) -> Option<u32> {
+        users.retain(|u| self.members.contains_key(u));
+
+        self.user_groups.create(name, users, rng, now)
+    }
+
+    pub fn update_user_group(
+        &mut self,
+        user_group_id: u32,
+        name: Option<String>,
+        mut users_to_add: Vec<UserId>,
+        users_to_remove: Vec<UserId>,
+        now: TimestampMillis,
+    ) -> bool {
+        users_to_add.retain(|u| self.members.contains_key(u));
+
+        self.user_groups
+            .update(user_group_id, name, users_to_add, users_to_remove, now)
+    }
+
+    pub fn iter_user_groups(&self) -> impl Iterator<Item = &UserGroup> {
+        self.user_groups.iter()
+    }
+
+    pub fn user_groups_last_updated(&self) -> TimestampMillis {
+        self.user_groups.last_updated()
     }
 
     pub fn mark_member_joined_channel(&mut self, user_id: &UserId, channel_id: ChannelId) {
@@ -265,6 +306,8 @@ pub struct CommunityMemberInternal {
     pub date_added: TimestampMillis,
     pub role: CommunityRole,
     pub suspended: Timestamped<bool>,
+    // TODO remove this
+    #[serde(skip_deserializing)]
     pub channels: HashSet<ChannelId>,
     pub channels_removed: Vec<Timestamped<ChannelId>>,
     pub rules_accepted: Option<Timestamped<Version>>,

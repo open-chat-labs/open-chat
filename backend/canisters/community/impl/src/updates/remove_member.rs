@@ -104,7 +104,7 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
     let now = state.env.now();
 
     // Remove the user from the community
-    state.data.members.remove(&user_id).expect("user must be a member");
+    state.data.members.remove(&user_id, now).expect("user must be a member");
 
     // Remove the user from each group they are a member of
     state.data.channels.leave_all_channels(user_id, now);
