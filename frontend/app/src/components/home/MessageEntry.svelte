@@ -20,10 +20,10 @@
         Message,
         MessageAction,
         MessageContent,
-        Member,
         Questions,
         OpenChat,
         MultiUserChat,
+        UserSummary,
     } from "openchat-client";
     import { allQuestions } from "openchat-client";
     import { enterSend } from "../../stores/settings";
@@ -43,14 +43,11 @@
     export let editingEvent: EventWrapper<Message> | undefined;
     export let replyingTo: EnhancedReplyContext | undefined;
     export let textContent: string | undefined;
-    export let members: Member[];
-    export let blockedUsers: Set<string>;
     export let mode: "thread" | "message" = "message";
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
-    const reverseUserLookup: Record<string, string> = {};
     const mentionRegex = /@([\d\w_]*)$/;
     const emojiRegex = /:([\w_]+):?$/;
     const dispatch = createEventDispatcher();
@@ -233,7 +230,6 @@
             const u = $userStore[p1] as PartialUserSummary | undefined;
             if (u?.username !== undefined) {
                 const username = u.username;
-                reverseUserLookup[username] = u.userId;
                 return `@${username}`;
             }
             return match;
@@ -245,10 +241,10 @@
     function expandMentions(text?: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, string>();
         let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const userId = reverseUserLookup[p1];
-            if (userId !== undefined) {
-                mentionedMap.set(userId, p1);
-                return `@UserId(${userId})`;
+            const user = client.lookupUserForMention(p1, false);
+            if (user !== undefined) {
+                mentionedMap.set(user.userId, p1);
+                return `@UserId(${user.userId})`;
             } else {
                 console.log(
                     `Could not find the userId for user: ${p1}, this should not really happen`
@@ -415,17 +411,14 @@
         rangeToReplace = undefined;
     }
 
-    function mention(ev: CustomEvent<string>): void {
-        const user = $userStore[ev.detail];
-        const username = user?.username ?? $_("unknown");
+    function mention(ev: CustomEvent<UserSummary>): void {
+        const user = ev.detail;
+        const username = user.username;
         const userLabel = `@${username}`;
 
         replaceTextWith(userLabel);
 
         showMentionPicker = false;
-        if (user !== undefined) {
-            reverseUserLookup[username] = user.userId;
-        }
     }
 
     function cancelMention() {
@@ -441,12 +434,10 @@
 
 {#if showMentionPicker}
     <MentionPicker
-        {blockedUsers}
         offset={messageEntryHeight}
         on:close={cancelMention}
         on:mention={mention}
-        prefix={mentionPrefix}
-        {members} />
+        prefix={mentionPrefix} />
 {/if}
 
 {#if showEmojiSearch}
@@ -596,7 +587,15 @@
     }
 
     .blocked,
-    .disabled,
+    .disabled {
+      height: 42px;
+      color: var(--txt);
+      @include font(book, normal, fs-100);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
 
     .recording {
         padding: 0 $sp3;

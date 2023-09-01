@@ -44,6 +44,7 @@ import {
     selectedThreadRootEvent,
     selectedMessageContext,
     allChats,
+    currentChatMembers,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -87,6 +88,7 @@ export class LiveState {
     selectedMessageContext: MessageContext | undefined;
     selectedThreadRootEvent: EventWrapper<Message> | undefined;
     threadsFollowedByMe!: ChatMap<Set<number>>;
+    currentChatMembers!: Member[];
     currentChatUserIds!: Set<string>;
     selectedThreadRootMessageIndex: number | undefined;
     chatsInitialised!: boolean;
@@ -129,6 +131,7 @@ export class LiveState {
         selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));
         selectedThreadRootEvent.subscribe((data) => (this.selectedThreadRootEvent = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
+        currentChatMembers.subscribe((data) => (this.currentChatMembers = data));
         currentChatUserIds.subscribe((data) => (this.currentChatUserIds = data));
         selectedThreadRootMessageIndex.subscribe(
             (data) => (this.selectedThreadRootMessageIndex = data),
