@@ -97,6 +97,10 @@ impl UserMap {
                 self.username_to_user_id.insert(username, user_id);
             }
 
+            if previous.display_name != user.display_name {
+                user.display_name_upper = user.display_name.as_ref().map(|s| s.to_uppercase());
+            }
+
             self.users.insert(user_id, user);
             UpdateUserResult::Success
         } else {
@@ -189,9 +193,27 @@ impl UserMap {
     }
 
     pub fn search(&self, term: &str) -> impl Iterator<Item = (&User, bool)> {
-        self.username_to_user_id
-            .search(term)
-            .filter_map(move |(uid, p)| self.users.get(uid).map(|u| (u, p)))
+        let term = term.to_uppercase();
+
+        self.username_to_user_id.iter().filter_map(move |(username, user_id)| {
+            if let Some(user) = self.users.get(user_id) {
+                let username_match = username.find(&term).map(|s| s == 0);
+                let display_name_match = user
+                    .display_name_upper
+                    .as_ref()
+                    .and_then(|name| name.find(&term).map(|s| s == 0));
+
+                if username_match == Some(true) || display_name_match == Some(true) {
+                    Some((user, true))
+                } else if username_match.is_some() || display_name_match.is_some() {
+                    Some((user, false))
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &User> {

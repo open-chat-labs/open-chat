@@ -9,8 +9,9 @@ pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
     pub username: String,
-    #[serde(default)]
     pub display_name: Option<String>,
+    #[serde(default)]
+    pub display_name_upper: Option<String>,
     pub date_created: TimestampMillis,
     pub date_updated: TimestampMillis,
     pub upgrade_in_progress: bool,
@@ -55,11 +56,13 @@ impl User {
         referred_by: Option<UserId>,
         is_bot: bool,
     ) -> User {
+        let display_name_upper = display_name.as_ref().map(|s| s.to_uppercase());
         User {
             principal,
             user_id,
             username,
             display_name,
+            display_name_upper,
             date_created: now,
             date_updated: now,
             upgrade_in_progress: false,
@@ -120,6 +123,7 @@ impl Default for User {
             user_id: Principal::anonymous().into(),
             username: String::new(),
             display_name: None,
+            display_name_upper: None,
             date_created: 0,
             date_updated: 0,
             upgrade_in_progress: false,
