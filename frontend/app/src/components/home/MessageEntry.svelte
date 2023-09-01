@@ -242,7 +242,7 @@
         let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
             const user = client.lookupUserForMention(p1, false);
             if (user !== undefined) {
-                mentionedMap.set(user.userId, p1);
+                mentionedMap.set(user.userId, user);
                 return `@UserId(${user.userId})`;
             } else {
                 console.log(
