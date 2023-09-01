@@ -223,7 +223,8 @@
         "enterDisplayName": "选择一个显示的名称",
         "displayNameInvalid": "显示名称无效，请重试",
         "displayNameTooShort": "该显示名称太短",
-        "displayNameTooLong": "该显示名称太长"
+        "displayNameTooLong": "该显示名称太长",
+        "title": "注册 OpenChat"
     },
     "tellMeMore": "更多信息",
     "username": "用户名",
@@ -977,6 +978,6 @@
     "send": "发送",
     "confirmMakeGroupPublic": "您确定要公开此 {level} 吗？\n\n现有消息将保持私密，所有新消息将公开。",
     "makeGroupPublicFailed": "未能公开 {level}",
-    "displayNameRules": "可选择显示代替用户名",
+    "displayNameRules": "选修的",
     "displayName": "显示名称"
 }

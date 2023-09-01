@@ -2,7 +2,7 @@
     import Input from "./Input.svelte";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import type { OpenChat } from "openchat-client";
+    import { isUsernameValid, type OpenChat } from "openchat-client";
 
     const MIN_USERNAME_LENGTH = 5;
     const MAX_USERNAME_LENGTH = 15;
@@ -16,10 +16,9 @@
     export let disabled = false;
 
     let timer: number | undefined = undefined;
-    let input: Input;
     let currentPromise: Promise<unknown> | undefined;
 
-    $: invalid = originalUsername !== username && !usernameValid;
+    $: invalid = originalUsername !== username && !usernameValid && !checking;
 
     onMount(() => {
         username = originalUsername;
@@ -27,11 +26,6 @@
     });
 
     function checkUsername(value: string) {
-        if (value.length < MIN_USERNAME_LENGTH || value.length > MAX_USERNAME_LENGTH) {
-            checking = false;
-            return;
-        }
-
         const promise = client
             .checkUsername(value)
             .then((resp) => {
@@ -72,21 +66,23 @@
     }
 
     function onChange(ev: CustomEvent<string>) {
-        checking = true;
         username = ev.detail;
         usernameValid = false;
         error = undefined;
-        scheduleCheck(username);
+
+        if (isUsernameValid(username)) {
+            checking = true;
+            scheduleRemoteCheck(username);
+        }
     }
 
-    function scheduleCheck(username: string) {
+    function scheduleRemoteCheck(username: string) {
         window.clearTimeout(timer);
         timer = window.setTimeout(() => checkUsername(username), 350);
     }
 </script>
 
 <Input
-    bind:this={input}
     on:change={onChange}
     value={originalUsername}
     {disabled}

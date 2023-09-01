@@ -142,7 +142,7 @@
             {:else if badCode}
                 <h4>{$_("register.invalidCode")}</h4>
             {:else}
-                <h4>{$_("register.enterUsername")}</h4>
+                <h4>{$_("register.title")}</h4>
             {/if}
         </div>
     </div>

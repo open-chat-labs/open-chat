@@ -258,7 +258,8 @@
         "enterDisplayName": "בחר שם תצוגה",
         "displayNameInvalid": "שם תצוגה לא חוקי, אנא נסה שוב",
         "displayNameTooShort": "שם התצוגה קצר מדי",
-        "displayNameTooLong": "שם התצוגה ארוך מדי"
+        "displayNameTooLong": "שם התצוגה ארוך מדי",
+        "title": "הרשמה עם OpenChat"
     },
     "faq": {
         "menu": "שאלות נפוצות",
@@ -974,6 +975,6 @@
     "send": "לִשְׁלוֹחַ",
     "confirmMakeGroupPublic": "האם אתה בהחלט רוצה להפוך את ה-{level} הזה לציבורי?\n\nהודעות קיימות יישארו פרטיות, כל ההודעות החדשות יהיו ציבוריות.",
     "makeGroupPublicFailed": "הפיכת {level} לציבורי נכשלה",
-    "displayNameRules": "אופציונלי להציג במקום שם משתמש",
+    "displayNameRules": "אופציונאלי",
     "displayName": "הצג שם"
 }

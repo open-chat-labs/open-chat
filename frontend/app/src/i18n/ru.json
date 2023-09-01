@@ -283,7 +283,8 @@
         "enterDisplayName": "Выберите имя дисплея",
         "displayNameInvalid": "Недопустимое отображаемое имя. Повторите попытку.",
         "displayNameTooShort": "Это отображаемое имя слишком короткое",
-        "displayNameTooLong": "Это отображаемое имя слишком длинное"
+        "displayNameTooLong": "Это отображаемое имя слишком длинное",
+        "title": "Зарегистрируйтесь в OpenChat"
     },
     "roleChanged": "{changedBy} изменил роль {changed} с {oldRole} на {newRole}",
     "yourRoleChanged": "{changedBy} изменил вашу роль с {oldRole} на {newRole}",
@@ -976,6 +977,6 @@
     "send": "Отправлять",
     "confirmMakeGroupPublic": "Вы определенно хотите сделать этот {level} общедоступным?\n\nСуществующие сообщения останутся личными, все новые сообщения станут общедоступными.",
     "makeGroupPublicFailed": "Не удалось сделать {level} общедоступным.",
-    "displayNameRules": "опционально показывать вместо имени пользователя",
+    "displayNameRules": "необязательный",
     "displayName": "Отображаемое имя"
 }

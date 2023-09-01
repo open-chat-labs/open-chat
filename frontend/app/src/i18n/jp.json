@@ -247,7 +247,8 @@
         "enterDisplayName": "表示名を選択してください",
         "displayNameInvalid": "表示名が無効です。もう一度お試しください。",
         "displayNameTooShort": "その表示名は短すぎます",
-        "displayNameTooLong": "その表示名は長すぎます"
+        "displayNameTooLong": "その表示名は長すぎます",
+        "title": "オープンチャットに登録する"
     },
     "faq": {
         "menu": "FAQ",
@@ -977,6 +978,6 @@
     "send": "送信",
     "confirmMakeGroupPublic": "この {level} を公開してもよろしいですか?\n\n既存のメッセージは非公開のままですが、新しいメッセージはすべて公開されます。",
     "makeGroupPublicFailed": "{level} を公開できませんでした",
-    "displayNameRules": "オプションでユーザー名の代わりに表示します",
+    "displayNameRules": "オプション",
     "displayName": "表示名"
 }

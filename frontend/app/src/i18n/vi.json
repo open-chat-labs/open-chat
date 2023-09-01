@@ -279,7 +279,8 @@
         "enterDisplayName": "lựa chọn tên hiển thị",
         "displayNameInvalid": "Tên hiển thị không hợp lệ, vui lòng thử lại",
         "displayNameTooShort": "Tên hiển thị đó quá ngắn",
-        "displayNameTooLong": "Tên hiển thị đó quá dài"
+        "displayNameTooLong": "Tên hiển thị đó quá dài",
+        "title": "Đăng ký với OpenChat"
     },
     "tellMeMore": "Thêm thông tin",
     "insufficientFunds": "Vui lòng đảm bảo rằng tài khoản ở trên có số dư ít nhất là {amount} ICP để trang trải bộ nhớ được yêu cầu, sau đó nhấn nút \"Làm mới\".",
@@ -977,6 +978,6 @@
     "send": "Gửi",
     "confirmMakeGroupPublic": "Bạn có chắc chắn muốn công khai {level} này không?\n\nTin nhắn hiện tại sẽ vẫn ở chế độ riêng tư, tất cả tin nhắn mới sẽ được công khai.",
     "makeGroupPublicFailed": "Không công khai được {level}",
-    "displayNameRules": "tùy chọn hiển thị thay cho tên người dùng",
+    "displayNameRules": "không bắt buộc",
     "displayName": "Tên hiển thị"
 }

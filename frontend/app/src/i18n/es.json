@@ -279,7 +279,8 @@
         "enterDisplayName": "Elegir un nombre para mostrar",
         "displayNameInvalid": "Nombre para mostrar no válido. Inténtelo de nuevo.",
         "displayNameTooShort": "Ese nombre para mostrar es demasiado corto.",
-        "displayNameTooLong": "Ese nombre para mostrar es demasiado largo."
+        "displayNameTooLong": "Ese nombre para mostrar es demasiado largo.",
+        "title": "Regístrate en OpenChat"
     },
     "tellMeMore": "Más información",
     "insufficientFunds": "Asegúrese de que la cuenta anterior tenga un saldo de al menos {amount} ICP para cubrir el almacenamiento solicitado, luego presione el botón \"Actualizar\".",
@@ -978,6 +979,6 @@
     "send": "Enviar",
     "confirmMakeGroupPublic": "¿Definitivamente quieres hacer público este {level}?\n\nLos mensajes existentes seguirán siendo privados, todos los mensajes nuevos serán públicos.",
     "makeGroupPublicFailed": "No se pudo hacer público {level}",
-    "displayNameRules": "opcionalmente mostrar en lugar del nombre de usuario",
+    "displayNameRules": "opcional",
     "displayName": "Nombre para mostrar"
 }

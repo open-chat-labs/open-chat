@@ -2,12 +2,14 @@
     import { fade } from "svelte/transition";
 
     export let centered = false;
+    export let fit = false;
 </script>
 
 <div
     on:contextmenu|preventDefault
     transition:fade|local={{ duration: 100 }}
     class="menu"
+    class:fit
     class:centered>
     <slot />
 </div>
@@ -24,6 +26,10 @@
             &.centered {
                 width: 70vw;
             }
+        }
+
+        &.fit {
+            width: fit-content;
         }
     }
 </style>

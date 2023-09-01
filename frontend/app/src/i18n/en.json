@@ -13,7 +13,7 @@
     "showVideo": "Show video",
     "notificationsEnabled": "Notifications enabled",
     "usernameRules": "alphanumerics & underscores only",
-    "displayNameRules": "optionally show in place of username",
+    "displayNameRules": "optional",
     "enterBio": "Tell us something about yourself",
     "username": "Username",
     "displayName": "Display name",
@@ -323,7 +323,8 @@
         "invalidCode": "Invalid Code",
         "referralCodeInvalid": "Sorry the code you scanned has expired",
         "doYouWantToProceed": "If you proceed you will not receive 50,000 satoshis. Alternatively, find a member of the DFINITY team to get a new code.",
-        "proceed": "Proceed"
+        "proceed": "Proceed",
+        "title": "Register with OpenChat"
     },
     "faq": {
         "menu": "FAQ",

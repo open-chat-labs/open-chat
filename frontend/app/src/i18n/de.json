@@ -285,7 +285,8 @@
         "enterDisplayName": "Wähle einen Anzeigenamen",
         "displayNameInvalid": "Ungültiger Anzeigename, bitte versuchen Sie es erneut",
         "displayNameTooShort": "Dieser Anzeigename ist zu kurz",
-        "displayNameTooLong": "Dieser Anzeigename ist zu lang"
+        "displayNameTooLong": "Dieser Anzeigename ist zu lang",
+        "title": "Registrieren Sie sich bei OpenChat"
     },
     "roleChanged": "{changedBy} hat die Rolle von {changed} von {oldRole} zu {newRole} geändert",
     "yourRoleChanged": "{changedBy} hat Ihre Rolle von {oldRole} zu {newRole} geändert",
@@ -978,6 +979,6 @@
     "send": "Schicken",
     "confirmMakeGroupPublic": "Möchten Sie diesen {level} unbedingt öffentlich machen?\n\nBestehende Nachrichten bleiben privat, alle neuen Nachrichten sind öffentlich.",
     "makeGroupPublicFailed": "{level} konnte nicht veröffentlicht werden",
-    "displayNameRules": "Wird optional anstelle des Benutzernamens angezeigt",
+    "displayNameRules": "Optional",
     "displayName": "Anzeigename"
 }

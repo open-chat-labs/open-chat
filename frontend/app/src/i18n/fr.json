@@ -282,7 +282,8 @@
         "enterDisplayName": "Choisissez un nom d'affichage",
         "displayNameInvalid": "Nom d'affichage invalide, veuillez réessayer",
         "displayNameTooShort": "Ce nom d'affichage est trop court",
-        "displayNameTooLong": "Ce nom d'affichage est trop long"
+        "displayNameTooLong": "Ce nom d'affichage est trop long",
+        "title": "S'inscrire sur OpenChat"
     },
     "roleChanged": "{changedBy} a changé le rôle de {changed} de {oldRole} à {newRole}",
     "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}",
@@ -976,6 +977,6 @@
     "send": "Envoyer",
     "confirmMakeGroupPublic": "Voulez-vous vraiment rendre ce {level} public ?\n\nLes messages existants resteront privés, tous les nouveaux messages seront publics.",
     "makeGroupPublicFailed": "Échec de la publication de {level}",
-    "displayNameRules": "afficher éventuellement à la place du nom d'utilisateur",
+    "displayNameRules": "facultatif",
     "displayName": "Afficher un nom"
 }

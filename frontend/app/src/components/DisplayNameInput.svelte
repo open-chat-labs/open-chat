@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { isDisplayNameValid } from "openchat-client";
     import Input from "./Input.svelte";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -10,8 +11,6 @@
     export let displayName: string | undefined;
     export let displayNameValid: boolean;
     export let disabled: boolean;
-
-    let input: Input;
 
     $: invalid = originalDisplayName !== displayName && !displayNameValid;
 
@@ -29,14 +28,11 @@
             return;
         }
 
-        displayNameValid =
-            displayName.length >= MIN_DISPLAY_NAME_LENGTH &&
-            displayName.length <= MAX_DISPLAY_NAME_LENGTH;
+        displayNameValid = isDisplayNameValid(displayName);
     }
 </script>
 
 <Input
-    bind:this={input}
     on:change={onChange}
     value={originalDisplayName ?? ""}
     {disabled}
