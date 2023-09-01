@@ -753,6 +753,18 @@ export type DirectChatCreated = {
     kind: "direct_chat_created";
 };
 
+export type TimelineItem<T extends ChatEvent> = TimelineDate | TimelineEventGroup<T>;
+
+export type TimelineDate = {
+    kind: "timeline_date";
+    timestamp: bigint;
+};
+
+export type TimelineEventGroup<T extends ChatEvent> = {
+    kind: "timeline_event_group";
+    group: EventWrapper<T>[][];
+};
+
 export type EventWrapper<T extends ChatEvent> = {
     event: T;
     timestamp: bigint;

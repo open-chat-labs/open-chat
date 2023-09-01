@@ -37,6 +37,7 @@
     import { pop } from "../../utils/transition";
     import { iconSize } from "../../stores/iconSize";
     import { eventListLastScrolled, eventListScrollTop } from "../../stores/scrollPos";
+    import TimelineDate from "./TimelineDate.svelte";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const LOADING_THRESHOLD = 400;
@@ -67,6 +68,7 @@
     let scrollingToMessage = false;
     let scrollToBottomOnSend = false;
     let destroyed = false;
+    let labelObserver: IntersectionObserver;
 
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
@@ -76,6 +78,7 @@
         clientHeight: messagesDiv!.clientHeight,
         scrollTop: messagesDiv!.scrollTop,
         fromBottom: fromBottom(),
+        fromTop: fromTop(),
         insideBottomThreshold: insideBottomThreshold(),
         insideTopThreshold: insideTopThreshold(),
         loadingFromScroll: loadingFromUserScroll,
@@ -84,8 +87,14 @@
 
     const fromBottom = () => {
         if (messagesDiv) {
-            const bottom = messagesDiv.scrollHeight - messagesDiv.clientHeight;
-            return bottom - messagesDiv.scrollTop;
+            return -messagesDiv.scrollTop;
+        }
+        return 0;
+    };
+
+    const fromTop = () => {
+        if (messagesDiv) {
+            return messagesDiv.scrollHeight - messagesDiv.clientHeight - fromBottom();
         }
         return 0;
     };
@@ -95,10 +104,12 @@
     };
 
     const insideTopThreshold = () => {
-        return (messagesDiv?.scrollTop ?? 0) < LOADING_THRESHOLD;
+        return fromTop() < LOADING_THRESHOLD;
     };
 
     let showGoToBottom = false;
+    let messagesRect: DOMRect | undefined = undefined;
+    let floatingTimestamp: bigint | undefined = undefined;
 
     beforeUpdate(() => {
         previousScrollHeight = messagesDiv?.scrollHeight;
@@ -109,7 +120,39 @@
         showGoToBottom = fromBottom() > FROM_BOTTOM_THRESHOLD;
     });
 
+    function elementIsOffTheTop(el: Element): boolean {
+        if (messagesRect === undefined) {
+            messagesRect = messagesDiv?.getBoundingClientRect();
+        }
+        const rect = el.getBoundingClientRect();
+        console.log("Checking label: ", el.innerHTML, rect.top);
+        return rect.top < 95;
+    }
+
     onMount(() => {
+        const options = {
+            root: messagesDiv as Element,
+            rootMargin: "-15px 0px 0px 0px",
+            threshold: [0, 0.5, 1],
+        };
+
+        labelObserver = new IntersectionObserver((_entries: IntersectionObserverEntry[]) => {
+            const labels = document.querySelectorAll(".date-label[data-timestamp]:not(.floating)");
+            floatingTimestamp = undefined;
+            for (const label of labels) {
+                const float = elementIsOffTheTop(label);
+                if (float && floatingTimestamp === undefined) {
+                    (label as HTMLElement).style.opacity = "0";
+                    const timestamp = label.getAttribute("data-timestamp");
+                    if (timestamp != null) {
+                        floatingTimestamp = BigInt(timestamp);
+                    }
+                } else {
+                    (label as HTMLElement).style.opacity = "1";
+                }
+            }
+        }, options);
+
         if (messagesDiv !== undefined && $eventListScrollTop !== undefined && maintainScroll) {
             interruptScroll(() => {
                 if (messagesDiv !== undefined && $eventListScrollTop !== undefined) {
@@ -231,8 +274,8 @@
         retries: number = 0
     ): Promise<void> {
         if (messagesDiv) {
-            messagesDiv?.scrollTo({
-                top: messagesDiv.scrollHeight - messagesDiv.clientHeight,
+            messagesDiv.scrollTo({
+                top: 0,
                 behavior,
             });
         }
@@ -259,6 +302,7 @@
         const loadPromises = [];
         if (loadingNew) {
             console.debug("SCROLL: about to load new message");
+            previousScrollHeight = messagesDiv?.scrollHeight;
             loadPromises.push(client.loadNewMessages(chat.id, threadRootEvent));
         }
         if (loadingPrev) {
@@ -269,15 +313,6 @@
             await Promise.all(loadPromises);
         }
         return loadingNew || loadingPrev;
-    }
-
-    async function resetScroll(initialLoad: boolean) {
-        if (initialLoad) {
-            await scrollBottom("auto");
-        }
-        if (!initialised) {
-            initialised = true;
-        }
     }
 
     function scrollToMention(mention: Mention | undefined) {
@@ -396,9 +431,52 @@
 
     async function onLoadedPreviousMessages(initialLoad: boolean) {
         await tick();
-        await resetScroll(initialLoad);
+        initialised = true;
+
+        // Seems like we *must* interrupt the scroll to stop runaway loading even though we do not need to do any adjustment of the scrollTop in this direction
+        await interruptScroll(() => {
+            console.debug("SCROLL: onLoadedPrevious interrupt");
+        });
+
+        // if (
+        //     !initialLoad &&
+        //     messagesDiv !== undefined &&
+        //     previousScrollHeight !== undefined &&
+        //     previousScrollTop !== undefined
+        // ) {
+        //     const sensitivityThreshold = 100;
+        //     const scrollHeightDiff = messagesDiv.scrollHeight - previousScrollHeight;
+        //     const scrollTopDiff = messagesDiv.scrollTop - previousScrollTop;
+        //     const diffDiff = scrollHeightDiff - scrollTopDiff;
+        //     // sometimes chrome is *a little* out but it we only want to intervene if if's way off
+        //     if (diffDiff > sensitivityThreshold) {
+        //         interruptScroll(() => {
+        //             console.debug(
+        //                 "SCROLL: previous scroll adjusted",
+        //                 diffDiff,
+        //                 scrollHeightDiff,
+        //                 scrollTopDiff
+        //             );
+        //             // if (messagesDiv !== undefined && previousScrollTop !== undefined) {
+        //             //     // let adjusted = messagesDiv.scrollTop + scrollHeightDiff;
+        //             //     // // This is still not great on iphone particularly in the groups that have a high proportion of non-message events
+        //             //     // messagesDiv.scrollTop = adjusted;
+        //             //     console.debug("SCROLL: previous adjusted: ", {
+        //             //         ...keyMeasurements(),
+        //             //         scrollHeightDiff,
+        //             //         scrollTopDiff,
+        //             //     });
+        //             // }
+        //         });
+        //     }
+        // }
+        await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
+    }
+
+    async function onLoadedNewMessages() {
+        await tick();
+        // Seems like we *must* interrupt the scroll to stop runaway loading even though we do not need to do any adjustment of the scrollTop in this direction
         if (
-            !initialLoad &&
             messagesDiv !== undefined &&
             previousScrollHeight !== undefined &&
             previousScrollTop !== undefined
@@ -409,12 +487,12 @@
             const diffDiff = scrollHeightDiff - scrollTopDiff;
             // sometimes chrome is *a little* out but it we only want to intervene if if's way off
             if (diffDiff > sensitivityThreshold) {
-                interruptScroll(() => {
+                await interruptScroll(() => {
                     if (messagesDiv !== undefined && previousScrollTop !== undefined) {
-                        let adjusted = messagesDiv.scrollTop + scrollHeightDiff;
+                        let adjusted = messagesDiv.scrollTop - scrollHeightDiff;
                         // This is still not great on iphone particularly in the groups that have a high proportion of non-message events
                         messagesDiv.scrollTop = adjusted;
-                        console.debug("SCROLL: adjusted: ", {
+                        console.debug("SCROLL: new adjusted: ", {
                             ...keyMeasurements(),
                             scrollHeightDiff,
                             scrollTopDiff,
@@ -423,10 +501,7 @@
                 });
             }
         }
-        await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
-    }
 
-    async function onLoadedNewMessages() {
         if (
             !loadingFromUserScroll &&
             !client.moreNewMessagesAvailable(chat.id, threadRootEvent) &&
@@ -462,6 +537,8 @@
         tooltipStore.hide();
         eventListLastScrolled.set(Date.now());
 
+        console.debug("SCROLL: measurements: ", keyMeasurements());
+
         if (!initialised || interrupt || loadingFromUserScroll) return;
 
         loadMoreIfRequired(true);
@@ -481,13 +558,16 @@
     }
 </script>
 
+{#if floatingTimestamp !== undefined}
+    <TimelineDate observer={labelObserver} timestamp={BigInt(floatingTimestamp)} floating />
+{/if}
 <div
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
     on:scroll={onUserScroll}
     class:interrupt
     class={`scrollable-list ${rootSelector}`}>
-    <slot />
+    <slot {labelObserver} />
 </div>
 
 {#if !readonly}

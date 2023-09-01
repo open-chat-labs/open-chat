@@ -36,6 +36,7 @@ import type {
     MultiUserChat,
     ChatListScope,
     CryptocurrencyDetails,
+    TimelineItem,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -523,13 +524,30 @@ export function groupEvents(
     myUserId: string,
     expandedDeletedMessages: Set<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
-): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(
-        sameDate,
-        events.filter((e) => !isEventKindHidden(e.event.kind)),
-    )
-        .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
-        .map(groupInner ?? groupBySender);
+): TimelineItem<ChatEvent>[] {
+    return flattenTimeline(
+        groupWhile(
+            sameDate,
+            events.filter((e) => !isEventKindHidden(e.event.kind)),
+        )
+            .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
+            .map(groupInner ?? groupBySender),
+    );
+}
+
+export function flattenTimeline(grouped: EventWrapper<ChatEvent>[][][]): TimelineItem<ChatEvent>[] {
+    const timeline: TimelineItem<ChatEvent>[] = [];
+    grouped.forEach((dayGroup) => {
+        timeline.push({
+            kind: "timeline_event_group",
+            group: dayGroup,
+        });
+        timeline.push({
+            kind: "timeline_date",
+            timestamp: dayGroup[0][0]?.timestamp ?? 0,
+        });
+    });
+    return timeline;
 }
 
 export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {

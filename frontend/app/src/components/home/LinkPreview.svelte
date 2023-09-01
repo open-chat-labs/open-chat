@@ -36,7 +36,7 @@
     function previewLoaded(ev: CustomEvent<[HTMLElement, number]>): void {
         list = list || closestAncestor(ev.detail[0], ".scrollable-list");
         if (list) {
-            list.scrollTop = list.scrollTop + ev.detail[1];
+            // list.scrollTop = list.scrollTop + ev.detail[1];
         }
     }
 

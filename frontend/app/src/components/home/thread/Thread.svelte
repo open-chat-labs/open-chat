@@ -11,6 +11,7 @@
         MessageContent,
         OpenChat,
         User,
+        TimelineItem,
     } from "openchat-client";
     import { ICP_SYMBOL } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -70,11 +71,11 @@
     $: expandedDeletedMessages = client.expandedDeletedMessages;
     $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
-    $: messages = client.groupEvents(
-        events,
+    $: timeline = client.groupEvents(
+        [...events.reverse()],
         user.userId,
         $expandedDeletedMessages
-    ) as EventWrapper<Message>[][][];
+    ) as TimelineItem<Message>[];
     $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
     $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
@@ -106,11 +107,6 @@
         }
 
         send(0);
-    }
-
-    function dateGroupKey(group: EventWrapper<Message>[][]): string {
-        const first = group[0] && group[0][0] && group[0][0].timestamp;
-        return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
     function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
@@ -315,16 +311,13 @@
     {#if loading}
         <Loading />
     {:else}
-        {#each messages as dayGroup (dateGroupKey(dayGroup))}
-            <div class="day-group">
+        {#each timeline as timelineItem}
+            {#if timelineItem.kind === "timeline_date"}
                 <div class="date-label">
-                    {client.formatMessageDate(
-                        dayGroup[0][0]?.timestamp,
-                        $_("today"),
-                        $_("yesterday")
-                    )}
+                    {client.formatMessageDate(timelineItem.timestamp, $_("today"), $_("yesterday"))}
                 </div>
-                {#each dayGroup as userGroup}
+            {:else}
+                {#each timelineItem.group as userGroup}
                     {#each userGroup as evt, i (eventKey(evt))}
                         <ChatEvent
                             chatId={chat.id}
@@ -368,7 +361,7 @@
                             on:forward />
                     {/each}
                 {/each}
-            </div>
+            {/if}
         {/each}
     {/if}
 </ChatEventList>
@@ -407,23 +400,19 @@
 {/if}
 
 <style lang="scss">
-    .day-group {
-        position: relative;
-
-        .date-label {
-            padding: $sp2;
-            background-color: var(--currentChat-date-bg);
-            border: var(--currentChat-date-bd);
-            color: var(--currentChat-date-txt);
-            position: sticky;
-            top: 0;
-            width: 200px;
-            margin: auto;
-            border-radius: $sp4;
-            @include z-index("date-label");
-            @include font(book, normal, fs-70);
-            text-align: center;
-            margin-bottom: $sp4;
-        }
+    .date-label {
+        padding: $sp2;
+        background-color: var(--currentChat-date-bg);
+        border: var(--currentChat-date-bd);
+        color: var(--currentChat-date-txt);
+        // position: sticky;
+        // top: 0;
+        width: 200px;
+        margin: auto;
+        border-radius: $sp4;
+        @include z-index("date-label");
+        @include font(book, normal, fs-70);
+        text-align: center;
+        margin-bottom: $sp4;
     }
 </style>
