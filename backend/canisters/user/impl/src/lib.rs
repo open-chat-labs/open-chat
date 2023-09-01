@@ -140,7 +140,6 @@ struct Data {
     pub is_platform_moderator: bool,
     pub hot_group_exclusions: HotGroupExclusions,
     pub username: String,
-    #[serde(default)]
     pub display_name: Option<String>,
     pub bio: String,
     pub cached_group_summaries: Option<CachedGroupSummaries>,

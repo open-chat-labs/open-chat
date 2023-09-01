@@ -30,7 +30,6 @@ pub struct AddedToChannelNotification {
     pub channel_name: String,
     pub added_by: UserId,
     pub added_by_name: String,
-    #[serde(default)]
     pub added_by_display_name: Option<String>,
     pub community_avatar_id: Option<u128>,
     pub channel_avatar_id: Option<u128>,
@@ -43,7 +42,6 @@ pub struct DirectMessageNotification {
     pub message_index: MessageIndex,
     pub event_index: EventIndex,
     pub sender_name: String,
-    #[serde(default)]
     pub sender_display_name: Option<String>,
     pub message_type: String,
     pub message_text: Option<String>,
@@ -61,7 +59,6 @@ pub struct GroupMessageNotification {
     pub group_name: String,
     pub sender: UserId,
     pub sender_name: String,
-    #[serde(default)]
     pub sender_display_name: Option<String>,
     pub message_type: String,
     pub message_text: Option<String>,
@@ -81,7 +78,6 @@ pub struct ChannelMessageNotification {
     pub channel_name: String,
     pub sender: UserId,
     pub sender_name: String,
-    #[serde(default)]
     pub sender_display_name: Option<String>,
     pub message_type: String,
     pub message_text: Option<String>,
@@ -98,7 +94,6 @@ pub struct DirectReactionAddedNotification {
     pub message_index: MessageIndex,
     pub message_event_index: EventIndex,
     pub username: String,
-    #[serde(default)]
     pub display_name: Option<String>,
     pub reaction: Reaction,
     pub user_avatar_id: Option<u128>,
@@ -113,7 +108,6 @@ pub struct GroupReactionAddedNotification {
     pub group_name: String,
     pub added_by: UserId,
     pub added_by_name: String,
-    #[serde(default)]
     pub added_by_display_name: Option<String>,
     pub reaction: Reaction,
     pub group_avatar_id: Option<u128>,
@@ -130,7 +124,6 @@ pub struct ChannelReactionAddedNotification {
     pub channel_name: String,
     pub added_by: UserId,
     pub added_by_name: String,
-    #[serde(default)]
     pub added_by_display_name: Option<String>,
     pub reaction: Reaction,
     pub community_avatar_id: Option<u128>,
