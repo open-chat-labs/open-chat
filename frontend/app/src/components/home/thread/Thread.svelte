@@ -48,7 +48,6 @@
 
     $: selectedMessageContext = client.selectedMessageContext;
     $: focusMessageIndex = client.focusThreadMessageIndex;
-    $: currentChatMembers = client.currentChatMembers;
     $: lastCryptoSent = client.lastCryptoSent;
     $: draftThreadMessages = client.draftThreadMessages;
     $: unconfirmed = client.unconfirmed;

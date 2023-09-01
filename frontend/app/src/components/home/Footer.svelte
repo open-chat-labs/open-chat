@@ -8,7 +8,6 @@
         ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
-        Member,
         Message,
         MessageAction,
         MessageContent,
@@ -16,7 +15,6 @@
         OpenChat,
         MultiUserChat,
     } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
