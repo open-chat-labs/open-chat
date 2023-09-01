@@ -380,8 +380,6 @@
         editingEvent={$editingEvent}
         replyingTo={$replyingTo}
         textContent={$textContent}
-        members={$currentChatMembers}
-        blockedUsers={$currentChatBlockedUsers}
         {user}
         joining={undefined}
         preview={false}

@@ -29,8 +29,6 @@
     export let editingEvent: EventWrapper<Message> | undefined;
     export let replyingTo: EnhancedReplyContext | undefined;
     export let textContent: string | undefined;
-    export let members: Member[];
-    export let blockedUsers: Set<string>;
     export let user: CreatedUser;
     export let mode: "thread" | "message" = "message";
 
@@ -121,8 +119,6 @@
         {editingEvent}
         {replyingTo}
         {textContent}
-        {members}
-        {blockedUsers}
         {chat}
         on:sendMessage
         on:cancelEditEvent
