@@ -222,7 +222,7 @@
             kind === "add" &&
             insideBottomThreshold()
         ) {
-            await scrollBottom("smooth");
+            scrollBottom("smooth");
         }
     }
 
@@ -242,7 +242,7 @@
         ) {
             const lastMessage = findLastMessage();
             if (lastMessage?.messageId === messageId) {
-                await scrollBottom("smooth");
+                scrollBottom("smooth");
             }
         }
     }
@@ -263,24 +263,17 @@
 
     async function afterSendMessage() {
         if (!client.moreNewMessagesAvailable(chat.id, threadRootEvent) && scrollToBottomOnSend) {
-            await scrollBottom("smooth");
+            scrollBottom("smooth");
             scrollToBottomOnSend = false;
         }
     }
 
-    async function scrollBottom(
-        behavior: ScrollBehavior = "auto",
-        retries: number = 0
-    ): Promise<void> {
+    function scrollBottom(behavior: ScrollBehavior = "auto"): void {
         if (messagesDiv) {
             messagesDiv.scrollTo({
                 top: 0,
                 behavior,
             });
-        }
-        if (retries < 3) {
-            // this weird retry loop appears to be necessary on safari. Three ... is the magic number
-            window.setTimeout(() => scrollBottom(behavior, retries + 1), 0);
         }
     }
 
@@ -475,7 +468,7 @@
             insideBottomThreshold()
         ) {
             // only scroll if we are now within threshold from the bottom
-            await scrollBottom("smooth");
+            scrollBottom("smooth");
         }
 
         await loadMoreIfRequired(loadingFromUserScroll);
@@ -504,8 +497,6 @@
         tooltipStore.hide();
         eventListLastScrolled.set(Date.now());
 
-        console.debug("SCROLL: measurements: ", keyMeasurements());
-
         if (!initialised || interrupt || loadingFromUserScroll) return;
 
         loadMoreIfRequired(true);
@@ -513,7 +504,7 @@
 
     async function loadIndexThenScrollToBottom(messageIndex: number) {
         await scrollToMessageIndex(chat.id, messageIndex, false);
-        await scrollBottom();
+        scrollBottom();
     }
 
     function scrollToLast() {
