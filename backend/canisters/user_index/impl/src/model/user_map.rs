@@ -14,8 +14,6 @@ pub struct UserMap {
     #[serde(skip)]
     username_to_user_id: CaseInsensitiveHashMap<UserId>,
     #[serde(skip)]
-    user_id_to_display_name_upper: HashMap<UserId, String>,
-    #[serde(skip)]
     principal_to_user_id: HashMap<Principal, UserId>,
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
@@ -56,10 +54,6 @@ impl UserMap {
     ) {
         self.username_to_user_id.insert(&username, user_id);
         self.principal_to_user_id.insert(principal, user_id);
-
-        if let Some(name) = display_name.as_ref() {
-            self.user_id_to_display_name_upper.insert(user_id, name.to_uppercase());
-        }
 
         let user = User::new(principal, user_id, username, display_name, now, referred_by, is_bot);
         self.users.insert(user_id, user);
@@ -104,12 +98,7 @@ impl UserMap {
             }
 
             if previous.display_name != user.display_name {
-                self.user_id_to_display_name_upper.remove(&user_id);
-
-                if let Some(new_display_name) = user.display_name.as_ref() {
-                    self.user_id_to_display_name_upper
-                        .insert(user_id, new_display_name.to_uppercase());
-                }
+                user.display_name_upper = user.display_name.as_ref().map(|s| s.to_uppercase());
             }
 
             self.users.insert(user_id, user);
@@ -209,9 +198,9 @@ impl UserMap {
         self.username_to_user_id.iter().filter_map(move |(username, user_id)| {
             if let Some(user) = self.users.get(user_id) {
                 let username_match = username.find(&term).map(|s| s == 0);
-                let display_name_match = self
-                    .user_id_to_display_name_upper
-                    .get(user_id)
+                let display_name_match = user
+                    .display_name_upper
+                    .as_ref()
                     .and_then(|name| name.find(&term).map(|s| s == 0));
 
                 if username_match == Some(true) || display_name_match == Some(true) {
@@ -322,10 +311,6 @@ impl From<UserMapTrimmed> for UserMap {
 
             user_map.username_to_user_id.insert(&user.username, *user_id);
             user_map.principal_to_user_id.insert(user.principal, *user_id);
-
-            if let Some(name) = user.display_name.as_ref() {
-                user_map.user_id_to_display_name_upper.insert(*user_id, name.to_uppercase());
-            }
         }
 
         user_map
