@@ -438,38 +438,6 @@
             console.debug("SCROLL: onLoadedPrevious interrupt");
         });
 
-        // if (
-        //     !initialLoad &&
-        //     messagesDiv !== undefined &&
-        //     previousScrollHeight !== undefined &&
-        //     previousScrollTop !== undefined
-        // ) {
-        //     const sensitivityThreshold = 100;
-        //     const scrollHeightDiff = messagesDiv.scrollHeight - previousScrollHeight;
-        //     const scrollTopDiff = messagesDiv.scrollTop - previousScrollTop;
-        //     const diffDiff = scrollHeightDiff - scrollTopDiff;
-        //     // sometimes chrome is *a little* out but it we only want to intervene if if's way off
-        //     if (diffDiff > sensitivityThreshold) {
-        //         interruptScroll(() => {
-        //             console.debug(
-        //                 "SCROLL: previous scroll adjusted",
-        //                 diffDiff,
-        //                 scrollHeightDiff,
-        //                 scrollTopDiff
-        //             );
-        //             // if (messagesDiv !== undefined && previousScrollTop !== undefined) {
-        //             //     // let adjusted = messagesDiv.scrollTop + scrollHeightDiff;
-        //             //     // // This is still not great on iphone particularly in the groups that have a high proportion of non-message events
-        //             //     // messagesDiv.scrollTop = adjusted;
-        //             //     console.debug("SCROLL: previous adjusted: ", {
-        //             //         ...keyMeasurements(),
-        //             //         scrollHeightDiff,
-        //             //         scrollTopDiff,
-        //             //     });
-        //             // }
-        //         });
-        //     }
-        // }
         await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
     }
 

@@ -1,30 +1,16 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from "svelte";
-    import { lowBandwidth } from "../../stores/settings";
-
-    const dispatch = createEventDispatcher();
-
     export let pinned: boolean;
     export let fill: boolean;
     export let youtubeMatch: RegExpMatchArray;
-
-    let iframe: HTMLElement;
 
     $: youtubeCode =
         youtubeMatch && (youtubeMatch[1] ?? youtubeMatch[2] ?? youtubeMatch[3])?.split("?")[0];
     $: youtubeStartTime = youtubeMatch
         ? new URL(youtubeMatch[0]).searchParams.get("t") || "0"
         : "0";
-
-    onMount(() => {
-        if (!$lowBandwidth) {
-            dispatch("loaded", [iframe, 315]);
-        }
-    });
 </script>
 
 <iframe
-    bind:this={iframe}
     class:pinned
     class:fill
     width="100%"

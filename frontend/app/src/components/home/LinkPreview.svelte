@@ -14,31 +14,10 @@
     export let fill: boolean;
 
     let rendered = false;
-    let list: HTMLElement | null | undefined = undefined;
     let previews: LinkInfo[] = [];
 
     $: youtubeMatch = text.match(client.youtubeRegex());
     $: twitterLinkMatch = text.match(client.twitterLinkRegex());
-
-    function closestAncestor(
-        el: HTMLElement | null | undefined,
-        selector: string
-    ): HTMLElement | null | undefined {
-        while (el) {
-            if (el.matches(selector)) {
-                return el;
-            }
-            el = el.parentElement;
-        }
-        return null;
-    }
-
-    function previewLoaded(ev: CustomEvent<[HTMLElement, number]>): void {
-        list = list || closestAncestor(ev.detail[0], ".scrollable-list");
-        if (list) {
-            // list.scrollTop = list.scrollTop + ev.detail[1];
-        }
-    }
 
     $: {
         if (!twitterLinkMatch && !youtubeMatch && intersecting && !rendered) {
@@ -51,9 +30,9 @@
 </script>
 
 {#if twitterLinkMatch}
-    <Tweet on:loaded={previewLoaded} tweetId={twitterLinkMatch[3]} {intersecting} />
+    <Tweet tweetId={twitterLinkMatch[3]} {intersecting} />
 {:else if youtubeMatch}
-    <YouTubePreview on:loaded={previewLoaded} {pinned} {fill} {youtubeMatch} />
+    <YouTubePreview {pinned} {fill} {youtubeMatch} />
 {:else if rendered}
-    <GenericPreview {previews} on:loaded={previewLoaded} />
+    <GenericPreview {previews} />
 {/if}

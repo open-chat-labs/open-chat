@@ -3,10 +3,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { themeStore } from "../../theme/themes";
-    import { createEventDispatcher, onMount } from "svelte";
-    import { lowBandwidth } from "../../stores/settings";
-
-    const dispatch = createEventDispatcher();
+    import { onMount } from "svelte";
 
     export let intersecting: boolean;
     export let tweetId: string;
@@ -29,9 +26,6 @@
                 })
                 .then(() => {
                     tweetRendered = true;
-                    if (!$lowBandwidth) {
-                        dispatch("loaded", [tweetWrapper, tweetWrapper?.offsetHeight]);
-                    }
                 })
                 .catch((err: any) => {
                     console.log("Failed to render tweet: ", err);
