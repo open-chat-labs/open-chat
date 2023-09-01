@@ -10,12 +10,13 @@
     import { mobileWidth } from "../../stores/screenDimensions";
 
     const client = getContext<OpenChat>("client");
+    const currentUser = client.user;
 
-    export let userLookupByUsername: Record<string, UserSummary>;
     export let prefix: string | undefined;
     export let offset: number;
     export let direction: "up" | "down" = "up";
     export let border = false;
+    export let mentionSelf = false;
 
     let index = 0;
     $: userStore = client.userStore;
@@ -25,8 +26,10 @@
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)";
 
     $: prefixLower = prefix?.toLowerCase();
-    $: filtered = Object.values(userLookupByUsername).filter(
-        (user) => (prefixLower === undefined || user.username.toLowerCase().startsWith(prefixLower))
+    $: filtered = Object.values(client.getUserLookupForMentions()).filter(
+        (user) =>
+            (mentionSelf || user.userId !== currentUser.userId) &&
+            (prefixLower === undefined || user.username.toLowerCase().startsWith(prefixLower))
     );
 
     $: style =

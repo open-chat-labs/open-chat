@@ -20,7 +20,6 @@
         Message,
         MessageAction,
         MessageContent,
-        Member,
         Questions,
         OpenChat,
         MultiUserChat,
@@ -33,6 +32,7 @@
     import PreviewFooter from "./PreviewFooter.svelte";
 
     const client = getContext<OpenChat>("client");
+    const currentUser = client.user;
 
     export let chat: ChatSummary;
     export let blocked: boolean;
@@ -69,7 +69,6 @@
     let messageEntryHeight: number;
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
-    let userLookupByUsername: Record<string, UserSummary> | undefined = undefined;
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -105,7 +104,6 @@
                 // the start of the textbox on some devices.
                 if (inp.textContent !== text) {
                     inp.textContent = text;
-                    userLookupByUsername = undefined;
                     // TODO - figure this out
                     // setCaretToEnd();
                 }
@@ -192,7 +190,6 @@
                 if (matches.index !== undefined) {
                     rangeToReplace = [matches.index, pos];
                     mentionPrefix = matches[1].toLowerCase() || undefined;
-                    getOrBuildUserLookupByUsername();
                     showMentionPicker = true;
                 }
             } else {
@@ -245,8 +242,8 @@
     function expandMentions(text?: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, string>();
         let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const user = getOrBuildUserLookupByUsername()[p1.toLowerCase()];
-            if (user !== undefined) {
+            const user = client.getUserLookupForMentions()[p1.toLowerCase()];
+            if (user !== undefined && user.userId !== currentUser?.userId) {
                 mentionedMap.set(user.userId, p1);
                 return `@UserId(${user.userId})`;
             } else {
@@ -434,18 +431,10 @@
         replaceTextWith(ev.detail);
         showEmojiSearch = false;
     }
-
-    function getOrBuildUserLookupByUsername(): Record<string, UserSummary> {
-        if (userLookupByUsername === undefined) {
-            userLookupByUsername = client.buildUserLookupForMentions(false);
-        }
-        return userLookupByUsername;
-    }
 </script>
 
 {#if showMentionPicker}
     <MentionPicker
-        {userLookupByUsername}
         offset={messageEntryHeight}
         on:close={cancelMention}
         on:mention={mention}

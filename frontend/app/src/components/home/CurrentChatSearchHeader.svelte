@@ -27,7 +27,6 @@
     let searchBoxHeight: number | undefined;
     let rangeToReplace: [number, number] | undefined = undefined;
     let timer: number | undefined;
-    let userLookupByUsername: Record<string, UserSummary> | undefined = undefined;
 
     $: count = matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "";
     $: isGroup = chat.kind === "group_chat";
@@ -113,7 +112,7 @@
 
         let mentionedSet = new Set<string>();
         let expandedText = text.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const user = getOrBuildUserLookupByUsername()[p1.toLowerCase()];
+            const user = client.getUserLookupForMentions()[p1.toLowerCase()];
             if (user !== undefined) {
                 mentionedSet.add(user.userId);
                 return "";
@@ -183,7 +182,6 @@
             if (matches.index !== undefined) {
                 rangeToReplace = [matches.index, pos];
                 mentionPrefix = matches[1].toLowerCase() || undefined;
-                getOrBuildUserLookupByUsername();
                 showMentionPicker = true;
             }
         } else {
@@ -237,25 +235,18 @@
         showMentionPicker = false;
         setCaretToEnd();
     }
-
-    function getOrBuildUserLookupByUsername(): Record<string, UserSummary> {
-        if (userLookupByUsername === undefined) {
-            userLookupByUsername = client.buildUserLookupForMentions(true);
-        }
-        return userLookupByUsername;
-    }
 </script>
 
 <svelte:window on:keydown={onWindowKeyDown} />
 
 {#if showMentionPicker}
     <MentionPicker
-        {userLookupByUsername}
         offset={searchBoxHeight ?? 80}
         direction={"down"}
         prefix={mentionPrefix}
         on:close={cancelMention}
-        on:mention={mention} />
+        on:mention={mention}
+        mentionSelf />
 {/if}
 
 <SectionHeader shadow flush entry bind:height={searchBoxHeight}>
