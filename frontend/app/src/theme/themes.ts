@@ -5,6 +5,7 @@ import { derived, readable, writable } from "svelte/store";
 import { getTheme as getSubmarineTheme } from "./community/submarine";
 import { getTheme as getNightvisionTheme } from "./community/nightvision";
 import { getTheme as getMatteBlackGoldTheme } from "./community/matteblackgold";
+import { getTheme as getBarbieTheme } from "./community/barbie";
 import type { Theme, Themes } from "./types";
 import { deepMerge } from "./merge";
 
@@ -17,6 +18,7 @@ export const communityThemes = [
     getSubmarineTheme(cloneTheme(dark)),
     getNightvisionTheme(cloneTheme(dark)),
     getMatteBlackGoldTheme(cloneTheme(dark)),
+    getBarbieTheme(cloneTheme(dark)),
 ];
 
 export const themes: Themes = {
