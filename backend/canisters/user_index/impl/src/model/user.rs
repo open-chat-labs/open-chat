@@ -56,7 +56,7 @@ impl User {
         referred_by: Option<UserId>,
         is_bot: bool,
     ) -> User {
-        let display_name_upper = display_name.map(|s| s.to_uppercase());
+        let display_name_upper = display_name.as_ref().map(|s| s.to_uppercase());
         User {
             principal,
             user_id,
