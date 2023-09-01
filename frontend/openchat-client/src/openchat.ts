@@ -4589,6 +4589,16 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._userLookupForMentions;
     }
 
+    lookupUserForMention(username: string, includeSelf: boolean): UserSummary | undefined {
+        const lookup = this.getUserLookupForMentions();
+
+        const user = lookup[username.toLowerCase()];
+
+        return user !== undefined && (includeSelf || user.userId !== this.user.userId)
+            ? user
+            : undefined;
+    }
+
     // **** Communities Stuff
 
     // takes a list of communities that may contain communities that we are a member of and/or preview communities

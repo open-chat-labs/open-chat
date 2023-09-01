@@ -32,7 +32,6 @@
     import PreviewFooter from "./PreviewFooter.svelte";
 
     const client = getContext<OpenChat>("client");
-    const currentUser = client.user;
 
     export let chat: ChatSummary;
     export let blocked: boolean;
@@ -242,8 +241,8 @@
     function expandMentions(text?: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, string>();
         let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const user = client.getUserLookupForMentions()[p1.toLowerCase()];
-            if (user !== undefined && user.userId !== currentUser?.userId) {
+            const user = client.lookupUserForMention(p1, false);
+            if (user !== undefined) {
                 mentionedMap.set(user.userId, p1);
                 return `@UserId(${user.userId})`;
             } else {

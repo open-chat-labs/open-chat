@@ -6,7 +6,6 @@
     import UserPill from "../UserPill.svelte";
 
     const client = getContext<OpenChat>("client");
-    const currentUser = client.user;
 
     export let autofocus: boolean;
     export let selectedReceiver: PartialUserSummary | undefined = undefined;
@@ -39,10 +38,7 @@
         // we need a short timeout here so that any click event is handled before the blur
         window.setTimeout(() => {
             if (selectedReceiver === undefined) {
-                const user = client.getUserLookupForMentions()[textValue.toLowerCase()];
-                if (user !== undefined && user.userId !== currentUser.userId) {
-                    selectedReceiver = user;
-                }
+                selectedReceiver = client.lookupUserForMention(textValue, false);
             }
             showMentionPicker = false;
         }, 100);

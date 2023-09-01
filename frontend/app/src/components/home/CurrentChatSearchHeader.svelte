@@ -112,7 +112,7 @@
 
         let mentionedSet = new Set<string>();
         let expandedText = text.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const user = client.getUserLookupForMentions()[p1.toLowerCase()];
+            const user = client.lookupUserForMention(p1, true);
             if (user !== undefined) {
                 mentionedSet.add(user.userId);
                 return "";
