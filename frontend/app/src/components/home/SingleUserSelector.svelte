@@ -12,7 +12,6 @@
 
     let showMentionPicker = false;
     let textValue: string = "";
-    let mentionPicker: MentionPicker;
     let inputHeight: number;
 
     $: {
@@ -48,7 +47,6 @@
 <div class="selector">
     {#if showMentionPicker}
         <MentionPicker
-            bind:this={mentionPicker}
             offset={inputHeight}
             direction={"down"}
             on:close={() => (showMentionPicker = false)}
