@@ -150,11 +150,6 @@
         currentChatDraftMessage.setEditing(chat.id, ev.detail);
     }
 
-    // function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
-    //     const first = group[0] && group[0][0] && group[0][0].timestamp;
-    //     return first ? new Date(Number(first)).toDateString() : "unknown";
-    // }
-
     function eventKey(e: EventWrapper<ChatEventType>): string {
         if (e.event.kind === "message") {
             return e.event.messageId.toString();

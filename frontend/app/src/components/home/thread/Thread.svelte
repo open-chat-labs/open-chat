@@ -26,6 +26,7 @@
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
     import { randomSentence } from "../../../utils/randomMsg";
+    import TimelineDate from "../TimelineDate.svelte";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -306,15 +307,14 @@
     {chat}
     bind:initialised
     bind:messagesDiv
-    bind:messagesDivHeight>
+    bind:messagesDivHeight
+    let:labelObserver>
     {#if loading}
         <Loading />
     {:else}
         {#each timeline as timelineItem}
             {#if timelineItem.kind === "timeline_date"}
-                <div class="date-label">
-                    {client.formatMessageDate(timelineItem.timestamp, $_("today"), $_("yesterday"))}
-                </div>
+                <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
             {:else}
                 {#each timelineItem.group as userGroup}
                     {#each userGroup as evt, i (eventKey(evt))}
@@ -395,21 +395,3 @@
         on:createTestMessages={createTestMessages}
         on:createPoll={createPoll} />
 {/if}
-
-<style lang="scss">
-    .date-label {
-        padding: $sp2;
-        background-color: var(--currentChat-date-bg);
-        border: var(--currentChat-date-bd);
-        color: var(--currentChat-date-txt);
-        // position: sticky;
-        // top: 0;
-        width: 200px;
-        margin: auto;
-        border-radius: $sp4;
-        @include z-index("date-label");
-        @include font(book, normal, fs-70);
-        text-align: center;
-        margin-bottom: $sp4;
-    }
-</style>
