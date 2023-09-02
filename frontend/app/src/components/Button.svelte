@@ -42,6 +42,7 @@
         min-width: 150px;
         position: relative;
         @include font(book, normal, fs-100, 20);
+        text-shadow: var(--button-txt-sh);
 
         &.square {
             border-radius: 0;

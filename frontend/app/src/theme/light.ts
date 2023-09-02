@@ -159,6 +159,7 @@ export function lightTheme(): Theme {
             hv: "#52baf5",
             "hv-txt": txt,
             txt: txt,
+            "txt-sh": "none",
             disabled: "rgba(0,0,0,0.1)",
             spinner: "#ffffff",
             "disabled-txt": disabledTxt,

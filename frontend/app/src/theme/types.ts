@@ -147,6 +147,7 @@ export interface Theme {
         bg: string;
         hv: string;
         "hv-txt": string;
+        "txt-sh": string;
         txt: string;
         disabled: string;
         spinner: string;
