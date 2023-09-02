@@ -169,6 +169,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         button: {
             bg: blueAccent,
             hv: "#053d5c",
+            "hv-txt": "#053d5c",
             txt: txt,
             disabled: textBodyLight,
             spinner: dark60,

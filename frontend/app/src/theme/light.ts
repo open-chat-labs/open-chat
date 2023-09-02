@@ -157,6 +157,7 @@ export function lightTheme(): Theme {
         button: {
             bg: primary,
             hv: "#52baf5",
+            "hv-txt": "#52baf5",
             txt: txt,
             disabled: "rgba(0,0,0,0.1)",
             spinner: "#ffffff",

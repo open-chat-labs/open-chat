@@ -146,6 +146,7 @@ export interface Theme {
     button: {
         bg: string;
         hv: string;
+        "hv-txt": string;
         txt: string;
         disabled: string;
         spinner: string;

@@ -31,7 +31,7 @@
 
 <style lang="scss">
     button {
-        transition: background ease-in-out 200ms;
+        transition: background ease-in-out 200ms, color ease-in-out 200ms;
         background: var(--button-bg);
         color: var(--button-txt);
         padding: $sp3 $sp6;
@@ -62,6 +62,7 @@
         @media (hover: hover) {
             &:hover {
                 background: var(--button-hv);
+                color: var(--button-hv-txt);
             }
         }
 
