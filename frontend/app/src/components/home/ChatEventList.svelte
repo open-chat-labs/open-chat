@@ -38,6 +38,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { eventListLastScrolled, eventListScrollTop } from "../../stores/scrollPos";
     import TimelineDate from "./TimelineDate.svelte";
+    import { isSafari } from "../../utils/devices";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const LOADING_THRESHOLD = 400;
@@ -425,10 +426,14 @@
         await tick();
         initialised = true;
 
-        // Seems like we *must* interrupt the scroll to stop runaway loading even though we do not need to do any adjustment of the scrollTop in this direction
-        await interruptScroll(() => {
-            console.debug("SCROLL: onLoadedPrevious interrupt");
-        });
+        // Seems like we *must* interrupt the scroll to stop runaway loading
+        // even though we do not need to do any adjustment of the scrollTop in this direction.
+        // This seems to help on chrome but not on safari (God help us).
+        if (!isSafari) {
+            await interruptScroll(() => {
+                console.debug("SCROLL: onLoadedPrevious interrupt");
+            });
+        }
 
         await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
     }
