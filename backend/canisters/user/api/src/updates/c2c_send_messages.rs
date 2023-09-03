@@ -6,7 +6,6 @@ use types::{Chat, EventIndex, MessageContent, MessageId, MessageIndex};
 pub struct Args {
     pub messages: Vec<SendMessageArgs>,
     pub sender_name: String,
-    #[serde(default)]
     pub sender_display_name: Option<String>,
     pub sender_avatar_id: Option<u128>,
 }

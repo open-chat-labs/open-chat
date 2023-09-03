@@ -9,7 +9,6 @@ pub struct Args {
     pub message_id: MessageId,
     pub reaction: Reaction,
     pub username: String,
-    #[serde(default)]
     pub display_name: Option<String>,
 }
 

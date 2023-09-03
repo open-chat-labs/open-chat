@@ -1,16 +1,13 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
-use crate::updates::c2c_join_channel::join_channel_unchecked;
-use crate::{mutate_state, read_state, Data};
-use candid::Principal;
+use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
 use tracing::info;
-use types::{CanisterId, ChannelId, GovernanceProposalsSubtype, GroupSubtype, Timestamped};
 
 #[post_upgrade]
 #[trace]
@@ -31,49 +28,6 @@ fn post_upgrade(args: Args) {
     for group_id in completed_imports {
         finalize_group_import(group_id);
     }
-
-    // One time job to add community members to all imported public channels
-    mutate_state(|state| {
-        let now = state.env.now();
-        for channel in state.data.channels.iter_mut().filter(|c| c.date_imported.is_some()) {
-            if channel.chat.is_public && channel.chat.gate.is_none() {
-                for member in state.data.members.iter_mut() {
-                    join_channel_unchecked(channel, member, true, now);
-                }
-            }
-        }
-    });
-
-    let modclub_community_id = Principal::from_text("zmr66-uyaaa-aaaar-askta-cai").unwrap();
-
-    if ic_cdk::id() == modclub_community_id {
-        // One time job to set the subtype on the Modclub Proposals channel
-        let modclub_proposals_channel: ChannelId = 264527918243702239627246885749636036136u128;
-        let modclub_governance_canister = CanisterId::from_text("xvj4b-paaaa-aaaaq-aabfa-cai").unwrap();
-
-        mutate_state(|state| {
-            if let Some(channel) = state.data.channels.get_mut(&modclub_proposals_channel) {
-                channel.chat.subtype = Timestamped::new(
-                    Some(GroupSubtype::GovernanceProposals(GovernanceProposalsSubtype {
-                        is_nns: false,
-                        governance_canister_id: modclub_governance_canister,
-                    })),
-                    state.env.now(),
-                );
-            }
-        });
-    }
-
-    // One time hack to fix any incorrect links between members and channels
-    mutate_state(|state| {
-        for channel in state.data.channels.iter() {
-            for user_id in channel.chat.members.iter().map(|m| m.user_id) {
-                if let Some(member) = state.data.members.get_by_user_id_mut(&user_id) {
-                    member.channels.insert(channel.id);
-                }
-            }
-        }
-    });
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
