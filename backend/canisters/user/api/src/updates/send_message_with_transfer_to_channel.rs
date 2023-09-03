@@ -13,7 +13,6 @@ pub struct Args {
     pub message_id: MessageId,
     pub content: MessageContentInitial,
     pub sender_name: String,
-    #[serde(default)]
     pub sender_display_name: Option<String>,
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
