@@ -79,7 +79,6 @@ import type {
     Message,
     MessageContent,
     MigrateUserPrincipalResponse,
-    PartialUserSummary,
     PendingCryptocurrencyWithdrawal,
     PinChatResponse,
     PinMessageResponse,
@@ -160,6 +159,7 @@ import type {
     CommunityInvite,
     RegistryValue,
     PublicGroupSummaryResponse,
+    SetDisplayNameResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -343,6 +343,7 @@ export class OpenChatAgent extends EventTarget {
             return this.sendChannelMessage(
                 chatId,
                 user.username,
+                user.displayName,
                 mentioned,
                 event,
                 threadRootMessageIndex,
@@ -361,13 +362,14 @@ export class OpenChatAgent extends EventTarget {
             return this.sendGroupMessage(
                 chatId,
                 user.username,
+                user.displayName,
                 mentioned,
                 event,
                 threadRootMessageIndex,
             );
         }
         if (chatId.kind === "direct_chat") {
-            return this.sendDirectMessage(chatId, user, event, threadRootMessageIndex);
+            return this.sendDirectMessage(chatId, event, threadRootMessageIndex);
         }
         throw new UnsupportedValueError("Unexpect chat type", chatId);
     }
@@ -375,6 +377,7 @@ export class OpenChatAgent extends EventTarget {
     private sendChannelMessage(
         chatId: ChannelIdentifier,
         senderName: string,
+        senderDisplayName: string | undefined,
         mentioned: User[],
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number,
@@ -382,6 +385,7 @@ export class OpenChatAgent extends EventTarget {
         return this.communityClient(chatId.communityId).sendMessage(
             chatId,
             senderName,
+            senderDisplayName,
             mentioned,
             event,
             threadRootMessageIndex,
@@ -391,12 +395,14 @@ export class OpenChatAgent extends EventTarget {
     private sendGroupMessage(
         chatId: GroupChatIdentifier,
         senderName: string,
+        senderDisplayName: string | undefined,
         mentioned: User[],
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
         return this.getGroupClient(chatId.groupId).sendMessage(
             senderName,
+            senderDisplayName,
             mentioned,
             event,
             threadRootMessageIndex,
@@ -425,11 +431,10 @@ export class OpenChatAgent extends EventTarget {
 
     private sendDirectMessage(
         chatId: DirectChatIdentifier,
-        sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
-        return this.userClient.sendMessage(chatId, sender, event, threadRootMessageIndex);
+        return this.userClient.sendMessage(chatId, event, threadRootMessageIndex);
     }
 
     private editDirectMessage(
@@ -1053,7 +1058,7 @@ export class OpenChatAgent extends EventTarget {
         return resp;
     }
 
-    rehydrateUserSummary<T extends UserSummary | PartialUserSummary>(userSummary: T): T {
+    rehydrateUserSummary<T extends UserSummary>(userSummary: T): T {
         const ref = userSummary.blobReference;
         return {
             ...userSummary,
@@ -1197,7 +1202,7 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.searchDirectChat(chatId, searchTerm, maxResults);
     }
 
-    async getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
+    async getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
         const response = await this.getUsers(
             {
                 userGroups: [
@@ -1540,6 +1545,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setUsername(userId, username);
     }
 
+    setDisplayName(userId: string, displayName: string | undefined): Promise<SetDisplayNameResponse> {
+        return this._userIndexClient.setDisplayName(userId, displayName);
+    }
+
     changeRole(
         chatId: MultiUserChatIdentifier,
         userId: string,
@@ -1661,7 +1670,8 @@ export class OpenChatAgent extends EventTarget {
         messageId: bigint,
         reaction: string,
         username: string,
-        threadRootMessageIndex?: number,
+        displayName: string | undefined,
+        threadRootMessageIndex?: number
     ): Promise<AddRemoveReactionResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -1669,7 +1679,8 @@ export class OpenChatAgent extends EventTarget {
                     messageId,
                     reaction,
                     username,
-                    threadRootMessageIndex,
+                    displayName,
+                    threadRootMessageIndex
                 );
 
             case "direct_chat":
@@ -1677,14 +1688,14 @@ export class OpenChatAgent extends EventTarget {
                     chatId.userId,
                     messageId,
                     reaction,
-                    username,
-                    threadRootMessageIndex,
+                    threadRootMessageIndex
                 );
 
             case "channel":
                 return this.communityClient(chatId.communityId).addReaction(
                     chatId,
                     username,
+                    displayName,
                     messageId,
                     reaction,
                     threadRootMessageIndex,
@@ -1917,10 +1928,11 @@ export class OpenChatAgent extends EventTarget {
 
     async registerUser(
         username: string,
-        referralCode: string | undefined,
+        displayName: string | undefined,
+        referralCode: string | undefined
     ): Promise<RegisterUserResponse> {
         const localUserIndex = await this._userIndexClient.userRegistrationCanister();
-        return this.createLocalUserIndexClient(localUserIndex).registerUser(username, referralCode);
+        return this.createLocalUserIndexClient(localUserIndex).registerUser(username, displayName, referralCode);
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {

@@ -138,6 +138,7 @@ export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicP
     const profile = candid.Success;
     return {
         username: profile.username,
+        displayName: optional(profile.display_name, identity),
         avatarId: optional(profile.avatar_id, identity),
         bio: profile.bio,
         isPremium: profile.is_premium,

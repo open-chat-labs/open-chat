@@ -72,7 +72,6 @@ import type {
     CreatedUser,
     CurrentUserResponse,
     MigrateUserPrincipalResponse,
-    PartialUserSummary,
     PinChatResponse,
     PublicProfile,
     RegisterUserResponse,
@@ -93,6 +92,7 @@ import type {
     ReferralLeaderboardResponse,
     SetUserUpgradeConcurrencyResponse,
     ManageFavouritesResponse,
+    SetDisplayNameResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -203,6 +203,7 @@ export type WorkerRequest =
     | GetUser
     | GetPublicProfile
     | SetUsername
+    | SetDisplayName
     | SetBio
     | GetBio
     | WithdrawCrypto
@@ -401,6 +402,12 @@ type SetUsername = {
     kind: "setUsername";
 };
 
+type SetDisplayName = {
+    userId: string;
+    displayName: string | undefined;
+    kind: "setDisplayName";
+};
+
 type GetPublicProfile = {
     userId?: string;
     kind: "getPublicProfile";
@@ -527,6 +534,7 @@ type SubscriptionExists = {
 
 type RegisterUser = {
     username: string;
+    displayName: string | undefined;
     referralCode: string | undefined;
     kind: "registerUser";
 };
@@ -596,6 +604,7 @@ type AddReaction = {
     messageId: bigint;
     reaction: string;
     username: string;
+    displayName: string | undefined;
     threadRootMessageIndex?: number;
     kind: "addReaction";
 };
@@ -910,7 +919,7 @@ export type WorkerResponse =
     | Response<SetBioResponse>
     | Response<SetUsernameResponse>
     | Response<PublicProfile>
-    | Response<PartialUserSummary | undefined>
+    | Response<UserSummary | undefined>
     | Response<ThreadPreview[]>
     | Response<bigint>
     | Response<SearchDirectChatResponse>
@@ -1038,7 +1047,7 @@ export type RelayedStorageUpdated = WorkerEventCommon<{
 }>;
 export type RelayedUsersLoaded = WorkerEventCommon<{
     subkind: "users_loaded";
-    users: PartialUserSummary[];
+    users: UserSummary[];
 }>;
 
 type LoadFailedMessages = {
@@ -1104,6 +1113,7 @@ type AddMembersToChannel = {
     chatId: ChannelIdentifier;
     userIds: string[];
     username: string;
+    displayName: string | undefined;
 };
 
 type BlockCommunityUser = {
@@ -1351,11 +1361,13 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends GetThreadPreviews
     ? ThreadPreview[]
     : T extends GetUser
-    ? PartialUserSummary | undefined
+    ? UserSummary | undefined
     : T extends GetPublicProfile
     ? PublicProfile
     : T extends SetUsername
     ? SetUsernameResponse
+    : T extends SetDisplayName
+    ? SetDisplayNameResponse
     : T extends SetBio
     ? SetBioResponse
     : T extends GetBio

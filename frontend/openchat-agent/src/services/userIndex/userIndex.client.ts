@@ -17,7 +17,7 @@ import type {
     SetUserUpgradeConcurrencyResponse,
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
-    PartialUserSummary,
+    SetDisplayNameResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -32,15 +32,18 @@ import {
     payForDiamondMembershipResponse,
     referralLeaderboardResponse,
     userRegistrationCanisterResponse,
+    setDisplayNameResponse,
 } from "./mappers";
 import { apiOptional, apiToken } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
 import {
     getCachedUsers,
     setCachedUsers,
+    setDisplayNameInCache,
     setUserDiamondStatusToTrueInCache,
     setUsernameInCache,
 } from "../../utils/userCache";
+import { identity } from "../../utils/mapping";
 
 export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
@@ -111,7 +114,7 @@ export class UserIndexClient extends CandidService {
             fromCache
         );
 
-        setCachedUsers(mergedResponse.users.filter(this.isUserSummary)).catch((err) =>
+        setCachedUsers(mergedResponse.users).catch((err) =>
             console.error("Failed to save users to the cache", err)
         );
 
@@ -134,7 +137,7 @@ export class UserIndexClient extends CandidService {
             })),
         };
         return this.handleQueryResponse(
-            () => this.userIndexService.users(args),
+            () => this.userIndexService.users_v2(args),
             usersResponse,
             args
         );
@@ -186,11 +189,11 @@ export class UserIndexClient extends CandidService {
         }
 
         const fromCacheMap = new Map<string, UserSummary>(fromCache.map((u) => [u.userId, u]));
-        const responseMap = new Map<string, PartialUserSummary>(
+        const responseMap = new Map<string, UserSummary>(
             response.users.map((u) => [u.userId, u])
         );
 
-        const users: PartialUserSummary[] = [];
+        const users: UserSummary[] = [];
 
         for (const userId of allUsers) {
             const cached = fromCacheMap.get(userId);
@@ -199,7 +202,6 @@ export class UserIndexClient extends CandidService {
             if (userResponse !== undefined) {
                 users.push({
                     ...userResponse,
-                    username: userResponse.username ?? cached?.username,
                     blobReference: userResponse.blobReference ?? cached?.blobReference,
                 });
             } else if (cached !== undefined) {
@@ -223,10 +225,6 @@ export class UserIndexClient extends CandidService {
         };
     }
 
-    private isUserSummary(user: PartialUserSummary): user is UserSummary {
-        return user.username !== undefined;
-    }
-
     checkUsername(username: string): Promise<CheckUsernameResponse> {
         const args = {
             username: username,
@@ -247,6 +245,20 @@ export class UserIndexClient extends CandidService {
         ).then((res) => {
             if (res === "success") {
                 setUsernameInCache(userId, username);
+            }
+            return res;
+        });
+    }
+
+    setDisplayName(userId: string, displayName: string | undefined): Promise<SetDisplayNameResponse> {
+        return this.handleResponse(
+            this.userIndexService.set_display_name({
+                display_name: apiOptional(identity, displayName),
+            }),
+            setDisplayNameResponse
+        ).then((res) => {
+            if (res === "success") {
+                setDisplayNameInCache(userId, displayName);
             }
             return res;
         });

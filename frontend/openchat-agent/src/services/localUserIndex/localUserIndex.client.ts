@@ -46,11 +46,13 @@ export class LocalUserIndexClient extends CandidService {
 
     registerUser(
         username: string,
+        displayName: string | undefined,
         referralCode: string | undefined
     ): Promise<RegisterUserResponse> {
         return this.handleResponse(
             this.localUserIndexService.register_user({
                 username,
+                display_name: apiOptional(identity, displayName),
                 referral_code: apiOptional(identity, referralCode),
                 public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             }),
@@ -88,7 +90,6 @@ export class LocalUserIndexClient extends CandidService {
                 community_id: Principal.fromText(id.communityId),
                 channel_id: BigInt(id.channelId),
                 invite_code: apiOptional(textToCode, inviteCode),
-                rules_accepted: [], //TODO come back to this
             }),
             (resp) => joinChannelResponse(resp, id.communityId)
         );

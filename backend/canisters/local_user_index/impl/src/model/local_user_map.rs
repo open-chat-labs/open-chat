@@ -37,6 +37,10 @@ impl LocalUserMap {
     pub fn len(&self) -> usize {
         self.users.len()
     }
+
+    pub fn remove(&mut self, user_id: &UserId) {
+        self.users.remove(user_id);
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]

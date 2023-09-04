@@ -6,6 +6,7 @@
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import type { ChatFrozenEvent } from "openchat-shared";
+    import { buildDisplayName } from "../../utils/user";
 
     const client = getContext<OpenChat>("client");
 
@@ -15,7 +16,7 @@
 
     $: userStore = client.userStore;
     $: me = event.frozenBy === user?.userId;
-    $: frozenByStr = me ? $_("you") : $userStore[event.frozenBy]?.username ?? $_("unknownUser");
+    $: frozenByStr = buildDisplayName($userStore, event.frozenBy, me);
 
     $: chatFrozenByText = $_("chatFrozenBy", {
         values: {
@@ -23,7 +24,9 @@
         },
     });
 
-    $: text = event.reason ? `${chatFrozenByText}\n${$_("reason")}: ${event.reason}` : chatFrozenByText;
+    $: text = event.reason
+        ? `${chatFrozenByText}\n${$_("reason")}: ${event.reason}`
+        : chatFrozenByText;
 </script>
 
 <NonMessageEvent {text} {timestamp} />

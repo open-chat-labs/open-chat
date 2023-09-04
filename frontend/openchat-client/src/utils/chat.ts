@@ -20,7 +20,6 @@ import type {
     SendMessageSuccess,
     TransferSuccess,
     ThreadSummary,
-    PartialUserSummary,
     UserLookup,
     UserSummary,
     LocalChatSummaryUpdates,
@@ -206,7 +205,7 @@ export function getMembersString(
     memberIds: string[],
     unknownUser: string,
     you: string,
-    compareUsersFn?: (u1: PartialUserSummary, u2: PartialUserSummary) => number,
+    compareUsersFn?: (u1: UserSummary, u2: UserSummary) => number,
     truncate = true,
 ): string {
     if (truncate && memberIds.length > 5) {
@@ -215,7 +214,7 @@ export function getMembersString(
     const sorted = memberIds
         .map((id) => userLookup[id] ?? nullUser(unknownUser))
         .sort(compareUsersFn ?? compareUsername)
-        .map((p) => `**${p.userId === user.userId ? you : p.username}**`);
+        .map((p) => `**${p.userId === user.userId ? you : p.displayName ?? p.username}**`);
 
     // TODO Improve i18n, don't hardcode 'and'
     return sorted.length > 1

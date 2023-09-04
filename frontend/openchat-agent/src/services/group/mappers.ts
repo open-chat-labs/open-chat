@@ -349,6 +349,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
+    if ("RulesNotAccepted" in candid) {
+        return { kind: "rules_not_accepted" };
+    }
 
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }

@@ -11,7 +11,6 @@ export const idlFactory = ({ IDL }) => {
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
   const AddReactionArgs = IDL.Record({
-    'username' : IDL.Text,
     'user_id' : UserId,
     'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
@@ -1040,6 +1039,7 @@ export const idlFactory = ({ IDL }) => {
     'is_premium' : IDL.Bool,
     'created' : TimestampMillis,
     'username' : IDL.Text,
+    'display_name' : IDL.Opt(IDL.Text),
     'avatar_id' : IDL.Opt(IDL.Nat),
     'phone_is_verified' : IDL.Bool,
   });
@@ -1084,7 +1084,6 @@ export const idlFactory = ({ IDL }) => {
     'content' : MessageContentInitial,
     'recipient' : UserId,
     'forwarding' : IDL.Bool,
-    'sender_name' : IDL.Text,
     'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(ReplyContext),
@@ -1125,15 +1124,17 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'RecipientNotFound' : IDL.Null,
   });
-  const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const Version = IDL.Nat32;
+  const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageWithTransferToChannelArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'channel_rules_accepted' : IDL.Opt(Version),
     'community_id' : CommunityId,
     'content' : MessageContentInitial,
+    'community_rules_accepted' : IDL.Opt(Version),
     'mentioned' : IDL.Vec(User),
-    'rules_accepted' : IDL.Opt(Version),
+    'sender_display_name' : IDL.Opt(IDL.Text),
     'sender_name' : IDL.Text,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(GroupReplyContext),
@@ -1164,7 +1165,9 @@ export const idlFactory = ({ IDL }) => {
   const SendMessageWithTransferToGroupArgs = IDL.Record({
     'content' : MessageContentInitial,
     'mentioned' : IDL.Vec(User),
+    'sender_display_name' : IDL.Opt(IDL.Text),
     'group_id' : ChatId,
+    'rules_accepted' : IDL.Opt(Version),
     'sender_name' : IDL.Text,
     'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
@@ -1188,6 +1191,7 @@ export const idlFactory = ({ IDL }) => {
     'InvalidRequest' : IDL.Text,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
+    'RulesNotAccepted' : IDL.Null,
     'CryptocurrencyNotSupported' : Cryptocurrency,
   });
   const SetAvatarArgs = IDL.Record({ 'avatar' : IDL.Opt(Document) });

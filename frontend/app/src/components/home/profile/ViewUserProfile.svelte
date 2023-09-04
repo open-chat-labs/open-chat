@@ -3,7 +3,7 @@
     import { _ } from "svelte-i18n";
     import Avatar from "../../Avatar.svelte";
     import Markdown from "../Markdown.svelte";
-    import { AvatarSize, type PartialUserSummary, type PublicProfile } from "openchat-client";
+    import { AvatarSize, type UserSummary, type PublicProfile } from "openchat-client";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Overlay from "../../Overlay.svelte";
@@ -20,7 +20,7 @@
     export let chatButton = true;
 
     let profile: PublicProfile | undefined = undefined;
-    let user: PartialUserSummary | undefined;
+    let user: UserSummary | undefined;
     let lastOnline: number | undefined;
 
     $: me = userId === client.user.userId;
@@ -96,13 +96,19 @@
             {alignTo}
             on:close>
             <div class="header" slot="header">
-                {$_("profile.label")}
+                <div class="handle">
+                    <span class:diamond>
+                        {profile.displayName ?? profile.username}
+                    </span>
+                    <span class="username">
+                        @{profile.username}
+                    </span>
+                </div>
             </div>
             <div slot="body" class="body" class:modal>
                 <div class="avatar">
                     <Avatar url={avatarUrl} {userId} size={AvatarSize.Large} />
                 </div>
-                <h2 class:diamond>{profile.username}</h2>
                 {#if profile.bio.length > 0}
                     <p class="bio"><Markdown text={profile.bio} /></p>
                 {/if}
@@ -130,12 +136,10 @@
             <div slot="footer" class="footer">
                 <ButtonGroup align={"fill"}>
                     {#if chatButton && !me}
-                        <Button on:click={handleOpenDirectChat} small
-                            >{$_("profile.chat")}</Button>
+                        <Button on:click={handleOpenDirectChat} small>{$_("profile.chat")}</Button>
                     {/if}
                     {#if me}
-                        <Button on:click={showUserProfile} small
-                            >{$_("profile.settings")}</Button>
+                        <Button on:click={showUserProfile} small>{$_("profile.settings")}</Button>
                     {/if}
                 </ButtonGroup>
             </div>
@@ -159,15 +163,6 @@
 
         .avatar {
             padding: 0 0 $sp4 0;
-        }
-
-        h2 {
-            @include font(bold, normal, fs-100, 21);
-            margin-bottom: $sp3;
-
-            &.diamond {
-                @include diamond();
-            }
         }
 
         .bio {
@@ -216,6 +211,21 @@
     }
 
     .header {
-        @include font(bold, normal, fs-120, 29);
+        @include font(bold, normal, fs-100, 21);
+        width: 250px;
+
+        .handle {
+            display: inline;
+            overflow-wrap: anywhere;
+
+            .diamond {
+                @include diamond();
+            }
+
+            .username {
+                font-weight: 200;
+                color: var(--txt-light);
+            }
+        }
     }
 </style>

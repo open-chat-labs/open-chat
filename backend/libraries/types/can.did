@@ -996,7 +996,6 @@ type UserSummary = record {
     avatar_id : opt nat;
     is_bot : bool;
     suspended : bool;
-    seconds_since_last_online : nat32;
     diamond_member : bool;
 };
 
