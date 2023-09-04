@@ -31,7 +31,7 @@ pub mod remove_member;
 pub mod remove_member_from_channel;
 pub mod remove_reaction;
 pub mod send_message;
-pub mod set_user_display_name;
+pub mod set_member_display_name;
 pub mod toggle_mute_notifications;
 pub mod unblock_user;
 pub mod undelete_messages;

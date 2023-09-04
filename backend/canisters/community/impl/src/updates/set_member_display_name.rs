@@ -1,19 +1,19 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use community_canister::set_user_display_name::{Response::*, *};
+use community_canister::set_member_display_name::{Response::*, *};
 use ic_cdk_macros::update;
 use types::Timestamped;
 use utils::text_validation::{validate_display_name, UsernameValidationError};
 
 #[update]
 #[trace]
-fn set_user_display_name(args: Args) -> Response {
+fn set_member_display_name(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| set_user_display_name_impl(args, state))
+    mutate_state(|state| set_member_display_name_impl(args, state))
 }
 
-fn set_user_display_name_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return CommunityFrozen;
     }

@@ -716,11 +716,11 @@ type SendMessageResponse = variant {
     RulesNotAccepted;
 };
 
-type SetUserDisplayNameArgs = record {
+type SetMemberDisplayNameArgs = record {
     display_name : opt text;
 };
 
-type SetUserDisplayNameResponse = variant {
+type SetMemberDisplayNameResponse = variant {
     Success;
     CommunityFrozen;
     UserNotInCommunity;
@@ -882,7 +882,7 @@ service : {
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
     reset_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     send_message : (SendMessageArgs) -> (SendMessageResponse);
-    set_user_display_name : (SetUserDisplayNameArgs) -> (SetUserDisplayNameResponse);
+    set_member_display_name : (SetMemberDisplayNameArgs) -> (SetMemberDisplayNameResponse);
     toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
