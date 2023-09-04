@@ -1,4 +1,4 @@
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize};
 use std::error::Error;
 use std::io::{Read, Write};
 
@@ -18,4 +18,12 @@ where
 {
     let mut deserializer = rmp_serde::Deserializer::new(reader);
     T::deserialize(&mut deserializer)
+}
+
+pub fn ok_or_default<'de, V, D>(deserializer: D) -> Result<V, D::Error>
+where
+    V: Deserialize<'de> + Default,
+    D: Deserializer<'de>,
+{
+    Ok(V::deserialize(deserializer).unwrap_or_default())
 }
