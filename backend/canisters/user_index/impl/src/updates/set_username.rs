@@ -15,16 +15,18 @@ fn set_username(args: Args) -> Response {
 
 fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
-    let username = args.username;
-
-    match validate_username(&username) {
-        Ok(_) => {}
-        Err(UsernameValidationError::TooShort(min_length)) => return UsernameTooShort(min_length),
-        Err(UsernameValidationError::TooLong(max_length)) => return UsernameTooLong(max_length),
-        Err(UsernameValidationError::Invalid) => return UsernameInvalid,
-    };
 
     if let Some(user) = state.data.users.get_by_principal(&caller) {
+        let username = args.username;
+        if username.to_lowercase() != user.username.to_lowercase() {
+            match validate_username(&username) {
+                Ok(_) => {}
+                Err(UsernameValidationError::TooShort(min_length)) => return UsernameTooShort(min_length),
+                Err(UsernameValidationError::TooLong(max_length)) => return UsernameTooLong(max_length),
+                Err(UsernameValidationError::Invalid) => return UsernameInvalid,
+            };
+        }
+
         let mut user_to_update = user.clone();
         user_to_update.username = username.clone();
         let user_id = user.user_id;

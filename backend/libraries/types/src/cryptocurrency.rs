@@ -76,8 +76,16 @@ pub enum PendingCryptoTransaction {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "CompletedCryptoTransactionPrevious")]
 pub enum CompletedCryptoTransaction {
     NNS(nns::CompletedCryptoTransaction),
+    ICRC1(icrc1::CompletedCryptoTransaction),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum CompletedCryptoTransactionPrevious {
+    NNS(nns::CompletedCryptoTransaction),
+    SNS(sns::CompletedCryptoTransaction),
     ICRC1(icrc1::CompletedCryptoTransaction),
 }
 
@@ -273,6 +281,29 @@ pub mod nns {
     }
 }
 
+pub mod sns {
+    use super::*;
+    use ic_ledger_types::{BlockIndex, Memo, Tokens};
+
+    pub type CryptoAccount = icrc1::CryptoAccount;
+    pub type Account = icrc1::Account;
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct CompletedCryptoTransaction {
+        pub ledger: CanisterId,
+        pub token: Cryptocurrency,
+        pub amount: Tokens,
+        pub fee: Tokens,
+        pub from: CryptoAccount,
+        pub to: CryptoAccount,
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+        #[serde(default)]
+        pub transaction_hash: TransactionHash,
+        pub block_index: BlockIndex,
+    }
+}
+
 pub mod icrc1 {
     use super::*;
     use candid::Nat;
@@ -394,5 +425,31 @@ pub mod icrc1 {
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub error_message: String,
+    }
+}
+
+impl From<CompletedCryptoTransactionPrevious> for CompletedCryptoTransaction {
+    fn from(value: CompletedCryptoTransactionPrevious) -> Self {
+        match value {
+            CompletedCryptoTransactionPrevious::NNS(t) => CompletedCryptoTransaction::NNS(t),
+            CompletedCryptoTransactionPrevious::SNS(t) => CompletedCryptoTransaction::ICRC1(t.into()),
+            CompletedCryptoTransactionPrevious::ICRC1(t) => CompletedCryptoTransaction::ICRC1(t),
+        }
+    }
+}
+
+impl From<sns::CompletedCryptoTransaction> for icrc1::CompletedCryptoTransaction {
+    fn from(value: sns::CompletedCryptoTransaction) -> Self {
+        icrc1::CompletedCryptoTransaction {
+            ledger: value.ledger,
+            token: value.token,
+            amount: value.amount.e8s() as u128,
+            from: value.from,
+            to: value.to,
+            fee: value.fee.e8s() as u128,
+            memo: value.memo.map(|m| m.0.into()),
+            created: value.created,
+            block_index: value.block_index,
+        }
     }
 }

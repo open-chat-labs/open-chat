@@ -9,6 +9,13 @@ fn check_username(args: Args) -> Response {
 }
 
 fn check_username_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    if let Some(user) = state.data.users.get(&caller) {
+        if user.username.to_lowercase() == args.username.to_lowercase() {
+            return Success;
+        }
+    }
+
     match validate_username(&args.username) {
         Ok(_) => {
             if state.data.users.does_username_exist(&args.username) {
