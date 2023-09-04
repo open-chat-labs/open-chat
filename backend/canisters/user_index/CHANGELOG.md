@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Allow user to change the case of their username ([#4302](https://github.com/open-chat-labs/open-chat/pull/4302))
+
 ## [[2.0.833](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.833-user_index)] - 2023-09-02
 
 ### Changed
