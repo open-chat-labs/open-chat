@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.834](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.834-local_user_index)] - 2023-09-04
+
 ### Added
 
 - Expose `user_canister_versions` from LocalUserIndex canisters ([#4293](https://github.com/open-chat-labs/open-chat/pull/4293))
