@@ -4,6 +4,7 @@
     import YouTubePreview from "./YouTubePreview.svelte";
     import type { OpenChat } from "openchat-client";
     import GenericPreview, { loadPreviews, type LinkInfo } from "./GenericPreview.svelte";
+    import { eventListScrolling } from "../../stores/scrollPos";
 
     const client = getContext<OpenChat>("client");
 
@@ -20,12 +21,18 @@
     $: twitterLinkMatch = text.match(client.twitterLinkRegex());
 
     $: {
-        if (!twitterLinkMatch && !youtubeMatch && intersecting && !rendered) {
+        if (
+            !twitterLinkMatch &&
+            !youtubeMatch &&
+            intersecting &&
+            !$eventListScrolling &&
+            !rendered
+        ) {
             // make sure we only actually *load* the preview(s) once
             previewsPromise = previewsPromise ?? loadPreviews(links);
             previewsPromise.then(() => {
                 // only render the preview if we are *still* intersecting
-                if (intersecting) {
+                if (intersecting && !$eventListScrolling) {
                     rendered = true;
                 }
             });

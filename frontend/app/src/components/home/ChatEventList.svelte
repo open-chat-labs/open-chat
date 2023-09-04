@@ -36,12 +36,17 @@
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
     import { iconSize } from "../../stores/iconSize";
-    import { eventListLastScrolled, eventListScrollTop } from "../../stores/scrollPos";
+    import {
+        eventListLastScrolled,
+        eventListScrollTop,
+        eventListScrolling,
+    } from "../../stores/scrollPos";
     import TimelineDate from "./TimelineDate.svelte";
     import { isSafari } from "../../utils/devices";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const LOADING_THRESHOLD = 400;
+    const SCROLL_THRESHOLD = 500;
     const client = getContext<OpenChat>("client");
 
     export let rootSelector: string;
@@ -424,6 +429,9 @@
 
     async function onLoadedPreviousMessages(initialLoad: boolean) {
         await tick();
+        if (!initialised) {
+            scrollBottom();
+        }
         initialised = true;
 
         // Seems like we *must* interrupt the scroll to stop runaway loading
@@ -495,6 +503,7 @@
     }
 
     function onUserScroll() {
+        trackScrollStop(SCROLL_THRESHOLD);
         if (maintainScroll) {
             $eventListScrollTop = messagesDiv?.scrollTop;
         }
@@ -518,6 +527,17 @@
         } else {
             loadIndexThenScrollToBottom(chat.latestMessage?.event.messageIndex ?? -1);
         }
+    }
+
+    $: console.log("Scrolling: ", $eventListScrolling);
+
+    let scrollTimeout: number | undefined = undefined;
+    function trackScrollStop(delay: number) {
+        eventListScrolling.set(true);
+        clearTimeout(scrollTimeout);
+        scrollTimeout = window.setTimeout(() => {
+            eventListScrolling.set(false);
+        }, delay);
     }
 </script>
 
