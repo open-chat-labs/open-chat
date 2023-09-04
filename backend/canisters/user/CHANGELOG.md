@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Use empty Vec if unconfirmed messages fail to deserialize ([#4304](https://github.com/open-chat-labs/open-chat/pull/4304))
 
+### Fixed
+
+- Convert remaining SNS transactions to ICRC1 ([#4303](https://github.com/open-chat-labs/open-chat/pull/4303))
+
 ## [[2.0.832](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.832-user)] - 2023-09-01
 
 ### Added
