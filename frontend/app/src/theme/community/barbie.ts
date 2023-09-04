@@ -1,7 +1,7 @@
 import type { Theme } from "../types";
 
 // Colors
-const white = "#FFFFFF"
+const white = "#FFFFFF";
 const pink1 = "#f29ad8";
 const pink2 = "#ee71c3";
 const pink3 = "#e448a3";
@@ -22,12 +22,14 @@ export function getTheme(base: Theme): Theme {
     base.burst = false;
     base.bg = "radial-gradient(circle, rgba(242,154,216,1) 10%, rgba(238,113,195,1) 80%)";
     base.bd = "#e305ad";
+    base.bd = "rgba(255,255,255,0.2)";
     base.txt = txt;
     base["txt-light"] = txtLight;
     base.icon.txt = white;
     base.icon.selected = barbieBlue;
     base.button.bg = barbieBlue;
     base.button.hv = barbieYellow;
+    base.button["hv-txt"] = barbieBlue;
     base.button.txt = "rgba(255 255 255 / 80%)";
     base.button.disabled = pink1;
     base.collapsible.closed.header.txt = txt;
@@ -63,6 +65,7 @@ export function getTheme(base: Theme): Theme {
     base.icon.inverted.txt = barbieYellow;
     base.menu.hv = pink2;
     base.reaction.me = white;
+    base.reaction.bg = barbieBlue;
     base.primary = barbieBlue;
     base.link.underline = base.primary;
     base.scrollbar.bg = base.button.hv;
@@ -72,6 +75,7 @@ export function getTheme(base: Theme): Theme {
     base.input.sh = "none";
     base.chatSearch.sh = "none";
     base.recommended.bg = pink3;
+    base.unread["mute-solid"] = pink3;
 
     return base;
 }

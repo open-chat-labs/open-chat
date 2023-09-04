@@ -33,6 +33,7 @@ export function getTheme(base: Theme): Theme {
     base.button.hv = lightGold;
     base.button.txt = "rgba(255 255 255 / 80%)";
     base.button.disabled = matteBlack;
+    // base.button["txt-sh"] = "1px 1px 0px rgba(0,0,0,0.7)";   // commented out for now
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = white;
     base.accent = gold;
