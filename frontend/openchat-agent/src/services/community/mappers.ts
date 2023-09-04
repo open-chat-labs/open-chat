@@ -603,7 +603,7 @@ export function communityDetailsUpdatesResponse(
     } else if ("SuccessNoUpdates" in candid) {
         return {
             kind: "success_no_updates",
-            lastUpdated: candid.SuccessNoUpdates || BigInt(Date.now()),
+            lastUpdated: candid.SuccessNoUpdates,
         };
     } else {
         console.warn("Unexpected ApiSelectedUpdatesResponse type received", candid);
