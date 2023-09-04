@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
+use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
@@ -25,4 +25,11 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    // One time job to remove bot users from the list of local users
+    mutate_state(|state| {
+        for user_id in state.data.global_users.bots() {
+            state.data.local_users.remove(user_id);
+        }
+    })
 }
