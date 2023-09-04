@@ -28,6 +28,7 @@
     import ChatEventList from "./ChatEventList.svelte";
     import PrivatePreview from "./PrivatePreview.svelte";
     import TimelineDate from "./TimelineDate.svelte";
+    import { reverseScroll } from "../../stores/scrollPos";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_READ_THRESHOLD = 500;
@@ -189,9 +190,10 @@
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
     $: timeline = client.groupEvents(
-        [...events].reverse(),
+        reverseScroll ? [...events].reverse() : events,
         user.userId,
         $expandedDeletedMessages,
+        reverseScroll,
         groupInner(filteredProposals)
     );
 
@@ -373,6 +375,27 @@
     bind:messagesDiv
     bind:messagesDivHeight
     let:labelObserver>
+    {#if !reverseScroll}
+        {#if showAvatar}
+            {#if $isProposalGroup}
+                <ProposalBot />
+            {:else if chat.kind === "group_chat" || chat.kind === "channel"}
+                <InitialGroupMessage group={chat} />
+            {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
+                <Robot />
+            {:else if chat.kind === "direct_chat"}
+                <div class="big-avatar">
+                    <Avatar
+                        url={client.userAvatarUrl($userStore[chat.them.userId])}
+                        userId={chat.them.userId}
+                        size={AvatarSize.Large} />
+                </div>
+            {/if}
+        {/if}
+        {#if privatePreview}
+            <PrivatePreview />
+        {/if}
+    {/if}
     {#each timeline as timelineItem}
         {#if timelineItem.kind === "timeline_date"}
             <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
@@ -425,24 +448,26 @@
             {/each}
         {/if}
     {/each}
-    {#if showAvatar}
-        {#if $isProposalGroup}
-            <ProposalBot />
-        {:else if chat.kind === "group_chat" || chat.kind === "channel"}
-            <InitialGroupMessage group={chat} />
-        {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
-            <Robot />
-        {:else if chat.kind === "direct_chat"}
-            <div class="big-avatar">
-                <Avatar
-                    url={client.userAvatarUrl($userStore[chat.them.userId])}
-                    userId={chat.them.userId}
-                    size={AvatarSize.Large} />
-            </div>
+    {#if reverseScroll}
+        {#if showAvatar}
+            {#if $isProposalGroup}
+                <ProposalBot />
+            {:else if chat.kind === "group_chat" || chat.kind === "channel"}
+                <InitialGroupMessage group={chat} />
+            {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
+                <Robot />
+            {:else if chat.kind === "direct_chat"}
+                <div class="big-avatar">
+                    <Avatar
+                        url={client.userAvatarUrl($userStore[chat.them.userId])}
+                        userId={chat.them.userId}
+                        size={AvatarSize.Large} />
+                </div>
+            {/if}
         {/if}
-    {/if}
-    {#if privatePreview}
-        <PrivatePreview />
+        {#if privatePreview}
+            <PrivatePreview />
+        {/if}
     {/if}
 </ChatEventList>
 

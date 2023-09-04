@@ -522,6 +522,7 @@ export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
     expandedDeletedMessages: Set<number>,
+    reverse: boolean,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
 ): TimelineItem<ChatEvent>[] {
     return flattenTimeline(

@@ -27,6 +27,8 @@
     import ChatEventList from "../ChatEventList.svelte";
     import { randomSentence } from "../../../utils/randomMsg";
     import TimelineDate from "../TimelineDate.svelte";
+    import { mobileOperatingSystem } from "../../../utils/devices";
+    import { reverseScroll } from "../../../stores/scrollPos";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -72,9 +74,10 @@
     $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
     $: timeline = client.groupEvents(
-        [...events.reverse()],
+        reverseScroll ? [...events.reverse()] : events,
         user.userId,
-        $expandedDeletedMessages
+        $expandedDeletedMessages,
+        reverseScroll
     ) as TimelineItem<Message>[];
     $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
