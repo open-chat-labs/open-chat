@@ -10,7 +10,6 @@ pub struct User {
     pub user_id: UserId,
     pub username: String,
     pub display_name: Option<String>,
-    #[serde(default)]
     pub display_name_upper: Option<String>,
     pub date_created: TimestampMillis,
     pub date_updated: TimestampMillis,
