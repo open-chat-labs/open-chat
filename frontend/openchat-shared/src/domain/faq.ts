@@ -8,7 +8,6 @@ export const allQuestions = [
     "airdrop",
     "ios_app",
     "android_app",
-    "find_groups",
     "style_messages",
     "storage",
     "security",

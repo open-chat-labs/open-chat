@@ -4,7 +4,7 @@
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
 
-    const MIN_USERNAME_LENGTH = 5;
+    const MIN_EXTANT_USERNAME_LENGTH = 3;
     const MAX_USERNAME_LENGTH = 15;
 
     export let client: OpenChat;
@@ -35,25 +35,14 @@
 
                 checking = false;
 
-                if (value === originalUsername || resp === "success") {
+                if (value.toLowerCase() === originalUsername.toLowerCase() || resp === "success") {
                     usernameValid = true;
                     error = undefined;
                     return;
                 }
 
-                switch (resp) {
-                    case "username_taken":
-                        error = "register.usernameTaken";
-                        break;
-                    case "username_too_short":
-                        error = "register.usernameTooShort";
-                        break;
-                    case "username_too_long":
-                        error = "register.usernameTooLong";
-                        break;
-                    case "username_invalid":
-                        error = "register.usernameInvalid";
-                        break;
+                if (resp === "username_taken") {
+                    error = "register.usernameTaken";
                 }
             })
             .catch((err) => {
@@ -70,15 +59,16 @@
         usernameValid = false;
         error = undefined;
 
-        if (client.isUsernameValid(username)) {
-            checking = true;
-            scheduleRemoteCheck(username);
-        }
-    }
-
-    function scheduleRemoteCheck(username: string) {
         window.clearTimeout(timer);
-        timer = window.setTimeout(() => checkUsername(username), 350);
+        checking = false;
+
+        if (
+            client.isUsernameValid(username) ||
+            username.toLowerCase() === originalUsername.toLowerCase()
+        ) {
+            checking = true;
+            timer = window.setTimeout(() => checkUsername(username), 350);
+        }
     }
 </script>
 
@@ -87,7 +77,7 @@
     value={originalUsername}
     {disabled}
     {invalid}
-    minlength={MIN_USERNAME_LENGTH}
+    minlength={MIN_EXTANT_USERNAME_LENGTH}
     maxlength={MAX_USERNAME_LENGTH}
     countdown
     placeholder={$_("register.enterUsername")}>
