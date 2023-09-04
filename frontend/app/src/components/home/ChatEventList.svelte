@@ -42,7 +42,7 @@
         eventListScrolling,
     } from "../../stores/scrollPos";
     import TimelineDate from "./TimelineDate.svelte";
-    import { isSafari } from "../../utils/devices";
+    import { mobileOperatingSystem } from "../../utils/devices";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const LOADING_THRESHOLD = 400;
@@ -75,6 +75,7 @@
     let scrollToBottomOnSend = false;
     let destroyed = false;
     let labelObserver: IntersectionObserver;
+    let reverseRender = mobileOperatingSystem !== "iOS";
 
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
@@ -91,16 +92,35 @@
         eventCount: events.length,
     });
 
+    const bottom = () => {
+        if (messagesDiv) {
+            if (reverseRender) {
+                return 0;
+            } else {
+                return messagesDiv.scrollHeight - messagesDiv.clientHeight;
+            }
+        }
+        return 0;
+    };
+
     const fromBottom = () => {
         if (messagesDiv) {
-            return -messagesDiv.scrollTop;
+            if (reverseRender) {
+                return -messagesDiv.scrollTop;
+            } else {
+                return bottom() - messagesDiv.scrollTop;
+            }
         }
         return 0;
     };
 
     const fromTop = () => {
         if (messagesDiv) {
-            return messagesDiv.scrollHeight - messagesDiv.clientHeight - fromBottom();
+            if (reverseRender) {
+                return bottom() - fromBottom();
+            } else {
+                return messagesDiv.scrollTop;
+            }
         }
         return 0;
     };
@@ -228,7 +248,7 @@
             kind === "add" &&
             insideBottomThreshold()
         ) {
-            scrollBottom("smooth");
+            await scrollBottom("smooth");
         }
     }
 
@@ -248,7 +268,7 @@
         ) {
             const lastMessage = findLastMessage();
             if (lastMessage?.messageId === messageId) {
-                scrollBottom("smooth");
+                await scrollBottom("smooth");
             }
         }
     }
@@ -269,17 +289,24 @@
 
     async function afterSendMessage() {
         if (!client.moreNewMessagesAvailable(chat.id, threadRootEvent) && scrollToBottomOnSend) {
-            scrollBottom("smooth");
+            await scrollBottom("smooth");
             scrollToBottomOnSend = false;
         }
     }
 
-    function scrollBottom(behavior: ScrollBehavior = "auto"): void {
+    async function scrollBottom(
+        behavior: ScrollBehavior = "auto",
+        retries: number = 0
+    ): Promise<void> {
         if (messagesDiv) {
-            messagesDiv.scrollTo({
-                top: 0,
+            messagesDiv?.scrollTo({
+                top: bottom(),
                 behavior,
             });
+        }
+        if (retries < 3) {
+            // this weird retry loop appears to be necessary on safari. Three ... is the magic number
+            window.setTimeout(() => scrollBottom(behavior, retries + 1), 0);
         }
     }
 
@@ -300,7 +327,6 @@
         const loadPromises = [];
         if (loadingNew) {
             console.debug("SCROLL: about to load new message");
-            previousScrollHeight = messagesDiv?.scrollHeight;
             loadPromises.push(client.loadNewMessages(chat.id, threadRootEvent));
         }
         if (loadingPrev) {
@@ -311,6 +337,15 @@
             await Promise.all(loadPromises);
         }
         return loadingNew || loadingPrev;
+    }
+
+    async function resetScroll(initialLoad: boolean) {
+        if (initialLoad) {
+            await scrollBottom("auto");
+        }
+        if (!initialised) {
+            initialised = true;
+        }
     }
 
     function scrollToMention(mention: Mention | undefined) {
@@ -427,29 +462,51 @@
         await scrollToMessageIndex(chat.id, messageIndex, false);
     }
 
+    // async function onLoadedPreviousMessages(initialLoad: boolean) {
+    //     await tick();
+    //     if (!initialised) {
+    //         scrollBottom();
+    //     }
+    //     initialised = true;
+
+    //     // Seems like we *must* interrupt the scroll to stop runaway loading
+    //     // even though we do not need to do any adjustment of the scrollTop in this direction.
+    //     // This seems to help on chrome but not on safari (God help us).
+    //     if (!isSafari) {
+    //         await interruptScroll(() => {
+    //             console.debug("SCROLL: onLoadedPrevious interrupt");
+    //         });
+    //     }
+
+    //     await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
+    // }
+
     async function onLoadedPreviousMessages(initialLoad: boolean) {
         await tick();
-        if (!initialised) {
-            scrollBottom();
-        }
-        initialised = true;
-
-        // Seems like we *must* interrupt the scroll to stop runaway loading
-        // even though we do not need to do any adjustment of the scrollTop in this direction.
-        // This seems to help on chrome but not on safari (God help us).
-        if (!isSafari) {
-            await interruptScroll(() => {
-                console.debug("SCROLL: onLoadedPrevious interrupt");
-            });
-        }
-
+        await resetScroll(initialLoad);
+        await adjustScrollTopIfNecessary(initialLoad);
         await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
     }
 
     async function onLoadedNewMessages() {
         await tick();
-        // Seems like we *must* interrupt the scroll to stop runaway loading even though we do not need to do any adjustment of the scrollTop in this direction
+        await adjustScrollTopIfNecessary(false);
+
         if (
+            !loadingFromUserScroll &&
+            !client.moreNewMessagesAvailable(chat.id, threadRootEvent) &&
+            insideBottomThreshold()
+        ) {
+            // only scroll if we are now within threshold from the bottom
+            scrollBottom("smooth");
+        }
+
+        await loadMoreIfRequired(loadingFromUserScroll);
+    }
+
+    async function adjustScrollTopIfNecessary(initialLoad: boolean): Promise<void> {
+        if (
+            !initialLoad &&
             messagesDiv !== undefined &&
             previousScrollHeight !== undefined &&
             previousScrollTop !== undefined
@@ -462,29 +519,20 @@
             if (diffDiff > sensitivityThreshold) {
                 await interruptScroll(() => {
                     if (messagesDiv !== undefined && previousScrollTop !== undefined) {
-                        let adjusted = messagesDiv.scrollTop - scrollHeightDiff;
-                        // This is still not great on iphone particularly in the groups that have a high proportion of non-message events
+                        let adjusted = reverseRender
+                            ? messagesDiv.scrollTop - scrollHeightDiff
+                            : messagesDiv.scrollTop + scrollHeightDiff;
                         messagesDiv.scrollTop = adjusted;
-                        console.debug("SCROLL: new adjusted: ", {
+                        console.debug("SCROLL: adjusted: ", {
                             ...keyMeasurements(),
                             scrollHeightDiff,
                             scrollTopDiff,
+                            reverseRender,
                         });
                     }
                 });
             }
         }
-
-        if (
-            !loadingFromUserScroll &&
-            !client.moreNewMessagesAvailable(chat.id, threadRootEvent) &&
-            insideBottomThreshold()
-        ) {
-            // only scroll if we are now within threshold from the bottom
-            scrollBottom("smooth");
-        }
-
-        await loadMoreIfRequired(loadingFromUserScroll);
     }
 
     // this *looks* crazy - but the idea is that before we programmatically scroll the messages div
@@ -518,7 +566,7 @@
 
     async function loadIndexThenScrollToBottom(messageIndex: number) {
         await scrollToMessageIndex(chat.id, messageIndex, false);
-        scrollBottom();
+        await scrollBottom();
     }
 
     function scrollToLast() {
@@ -528,8 +576,6 @@
             loadIndexThenScrollToBottom(chat.latestMessage?.event.messageIndex ?? -1);
         }
     }
-
-    $: console.log("Scrolling: ", $eventListScrolling);
 
     let scrollTimeout: number | undefined = undefined;
     function trackScrollStop(delay: number) {
