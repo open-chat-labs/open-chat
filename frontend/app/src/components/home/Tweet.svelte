@@ -3,7 +3,9 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { themeStore } from "../../theme/themes";
-    import { onMount } from "svelte";
+    import { createEventDispatcher, onMount } from "svelte";
+
+    const dispatch = createEventDispatcher();
 
     export let intersecting: boolean;
     export let tweetId: string;
@@ -25,7 +27,11 @@
                     theme: $themeStore.name,
                 })
                 .then(() => {
-                    tweetRendered = true;
+                    // only render the preview if we are *still* intersecting
+                    if (intersecting) {
+                        tweetRendered = true;
+                        dispatch("rendered");
+                    }
                 })
                 .catch((err: any) => {
                     console.log("Failed to render tweet: ", err);

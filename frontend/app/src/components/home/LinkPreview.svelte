@@ -14,16 +14,20 @@
     export let fill: boolean;
 
     let rendered = false;
-    let previews: LinkInfo[] = [];
+    let previewsPromise: Promise<LinkInfo[]> | undefined = undefined;
 
     $: youtubeMatch = text.match(client.youtubeRegex());
     $: twitterLinkMatch = text.match(client.twitterLinkRegex());
 
     $: {
         if (!twitterLinkMatch && !youtubeMatch && intersecting && !rendered) {
-            loadPreviews(links).then((p) => {
-                rendered = true;
-                previews = p;
+            // make sure we only actually *load* the preview(s) once
+            previewsPromise = previewsPromise ?? loadPreviews(links);
+            previewsPromise.then(() => {
+                // only render the preview if we are *still* intersecting
+                if (intersecting) {
+                    rendered = true;
+                }
             });
         }
     }
@@ -34,5 +38,7 @@
 {:else if youtubeMatch}
     <YouTubePreview {pinned} {fill} {youtubeMatch} />
 {:else if rendered}
-    <GenericPreview {previews} />
+    {#await previewsPromise then previews}
+        <GenericPreview {previews} />
+    {/await}
 {/if}
