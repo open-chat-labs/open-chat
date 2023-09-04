@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- One time job to remove bot users from the set of local users ([#4301](https://github.com/open-chat-labs/open-chat/pull/4301))
+
 ## [[2.0.834](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.834-local_user_index)] - 2023-09-04
 
 ### Added
