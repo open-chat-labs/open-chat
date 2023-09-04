@@ -20,6 +20,7 @@ export type AddedToChannelNotification = {
     channelName: string;
     addedBy: string;
     addedByUsername: string;
+    addedByDisplayName: string | undefined;
     communityAvatarId: bigint | undefined;
     channelAvatarId: bigint | undefined;
     timestamp: bigint;
@@ -33,6 +34,7 @@ export type ChannelNotification = {
     messageIndex: number;
     eventIndex: number;
     senderName: string;
+    senderDisplayName: string | undefined;
     communityName: string;
     channelName: string;
     messageType: string;
@@ -50,6 +52,7 @@ export type DirectNotification = {
     messageIndex: number;
     eventIndex: number;
     senderName: string;
+    senderDisplayName: string | undefined;
     messageType: string;
     messageText: string | undefined;
     imageUrl: string | undefined;
@@ -65,6 +68,7 @@ export type GroupNotification = {
     messageIndex: number;
     eventIndex: number;
     senderName: string;
+    senderDisplayName: string | undefined;
     chatId: GroupChatIdentifier;
     groupName: string;
     messageType: string;
@@ -85,6 +89,7 @@ export type ChannelReaction = {
     channelName: string;
     addedBy: string;
     addedByName: string;
+    addedByDisplayName: string | undefined;
     reaction: string;
     communityAvatarId: bigint | undefined;
     channelAvatarId: bigint | undefined;
@@ -97,6 +102,7 @@ export type DirectReaction = {
     messageEventIndex: number;
     them: DirectChatIdentifier;
     username: string;
+    displayName: string | undefined;
     reaction: string;
     userAvatarId: bigint | undefined;
     timestamp: bigint;
@@ -111,6 +117,7 @@ export type GroupReaction = {
     groupName: string;
     addedBy: string;
     addedByName: string;
+    addedByDisplayName: string | undefined;
     reaction: string;
     groupAvatarId: bigint | undefined;
     timestamp: bigint;

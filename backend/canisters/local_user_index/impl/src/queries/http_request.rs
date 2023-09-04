@@ -24,8 +24,10 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         for (user_id, user) in state.data.local_users.iter() {
             let version = map.entry(user.wasm_version).or_insert(UserCanisterVersion {
                 version: user.wasm_version,
+                count: 0,
                 users: Vec::new(),
             });
+            version.count += 1;
             if version.users.len() < 100 {
                 version.users.push(*user_id);
             }
@@ -46,5 +48,6 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 #[derive(Serialize)]
 struct UserCanisterVersion {
     version: BuildVersion,
+    count: u32,
     users: Vec<UserId>,
 }

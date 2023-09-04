@@ -279,7 +279,12 @@
         "proceed": "Procedere",
         "doYouWantToProceed": "Se procedi non riceverai 50.000 satoshi. In alternativa, trova un membro del team DFINITY per ottenere un nuovo codice.",
         "enterUsername": "Scegli un nome utente OpenChat",
-        "disclaimer": "Registrandoti con OpenChat accetti di rispettare le linee guida della community"
+        "disclaimer": "Registrandoti con OpenChat accetti di rispettare le linee guida della community",
+        "enterDisplayName": "scegli un nome da mostrare",
+        "displayNameInvalid": "Nome visualizzato non valido, riprova",
+        "displayNameTooShort": "Il nome visualizzato è troppo corto",
+        "displayNameTooLong": "Il nome visualizzato è troppo lungo",
+        "title": "Registrati con OpenChat"
     },
     "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} da {oldRole} a {newRole}",
     "yourRoleChanged": "{changedBy} ha cambiato il tuo ruolo da {oldRole} a {newRole}",
@@ -971,5 +976,7 @@
     "reset": "Ripristina",
     "send": "Inviare",
     "confirmMakeGroupPublic": "Vuoi davvero rendere pubblico questo {level}?\n\nI messaggi esistenti rimarranno privati, tutti i nuovi messaggi saranno pubblici.",
-    "makeGroupPublicFailed": "Impossibile rendere pubblico {level}"
+    "makeGroupPublicFailed": "Impossibile rendere pubblico {level}",
+    "displayNameRules": "opzionale",
+    "displayName": "Nome da visualizzare"
 }

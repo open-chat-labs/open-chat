@@ -4,7 +4,6 @@ import type {
     CurrentUserResponse,
     UsersResponse,
     UserSummary,
-    PartialUserSummary,
     SuspendUserResponse,
     UnsuspendUserResponse,
     SuspensionDetails,
@@ -14,6 +13,7 @@ import type {
     PayForDiamondMembershipResponse,
     ReferralLeaderboardResponse,
     ReferralStats,
+    SetDisplayNameResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError
@@ -23,11 +23,11 @@ import type {
     ApiCurrentUserResponse,
     ApiDiamondMembershipDetails,
     ApiDiamondMembershipPlanDuration,
-    ApiPartialUserSummary,
     ApiPayForDiamondMembershipResponse,
     ApiReferralLeaderboardResponse,
     ApiReferralStats,
     ApiSearchResponse,
+    ApiSetDisplayNameResponse,
     ApiSetUsernameResponse,
     ApiSuspendUserResponse,
     ApiSuspensionAction,
@@ -52,29 +52,10 @@ export function usersResponse(candid: ApiUsersResponse): UsersResponse {
         const timestamp = candid.Success.timestamp;
         return {
             serverTimestamp: timestamp,
-            users: candid.Success.users.map((u) => partialUserSummary(u, timestamp)),
+            users: candid.Success.users.map((u) => userSummary(u, timestamp)),
         };
     }
     throw new Error(`Unknown UserIndex.UsersResponse of ${candid}`);
-}
-
-export function partialUserSummary(
-    candid: ApiPartialUserSummary,
-    timestamp: bigint
-): PartialUserSummary {
-    const userId = candid.user_id.toString();
-    return {
-        kind: candid.is_bot ? "bot" : "user",
-        userId,
-        username: optional(candid.username, identity),
-        blobReference: optional(candid.avatar_id, (id) => ({
-            blobId: id,
-            canisterId: userId,
-        })),
-        updated: timestamp,
-        suspended: candid.suspended,
-        diamond: candid.diamond_member,
-    };
 }
 
 export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSummary {
@@ -82,6 +63,7 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
         kind: candid.is_bot ? "bot" : "user",
         userId: candid.user_id.toString(),
         username: candid.username,
+        displayName: optional(candid.display_name, identity),
         blobReference: optional(candid.avatar_id, (id) => ({
             blobId: id,
             canisterId: candid.user_id.toString(),
@@ -110,6 +92,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             kind: "created_user",
             userId: r.user_id.toString(),
             username: r.username,
+            displayName: optional(r.display_name, identity),
             cryptoAccount: bytesToHexString(r.icp_account),
             canisterUpgradeStatus:
                 "Required" in r.canister_upgrade_status
@@ -218,6 +201,25 @@ export function setUsernameResponse(candid: ApiSetUsernameResponse): SetUsername
         return "username_invalid";
     }
     throw new UnsupportedValueError("Unexpected ApiSetUsernameResponse type received", candid);
+}
+
+export function setDisplayNameResponse(candid: ApiSetDisplayNameResponse): SetDisplayNameResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
+    }
+    if ("DisplayNameTooShort" in candid) {
+        return "display_name_too_short";
+    }
+    if ("DisplayNameTooLong" in candid) {
+        return "display_name_too_long";
+    }
+    if ("DisplayNameInvalid" in candid) {
+        return "display_name_invalid";
+    }
+    throw new UnsupportedValueError("Unexpected ApiSetDisplayNameResponse type received", candid);
 }
 
 export function suspendUserResponse(candid: ApiSuspendUserResponse): SuspendUserResponse {

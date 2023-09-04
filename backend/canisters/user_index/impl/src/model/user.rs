@@ -10,7 +10,6 @@ pub struct User {
     pub user_id: UserId,
     pub username: String,
     pub display_name: Option<String>,
-    #[serde(default)]
     pub display_name_upper: Option<String>,
     pub date_created: TimestampMillis,
     pub date_updated: TimestampMillis,
@@ -88,7 +87,6 @@ impl User {
             is_bot: self.is_bot,
             suspended: self.suspension_details.is_some(),
             diamond_member: self.diamond_membership_details.is_active(now),
-            seconds_since_last_online: 0,
         }
     }
 }

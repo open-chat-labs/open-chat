@@ -6,6 +6,7 @@
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import type { ChatUnfrozenEvent } from "openchat-shared";
+    import { buildDisplayName } from "../../utils/user";
 
     const client = getContext<OpenChat>("client");
 
@@ -15,7 +16,7 @@
 
     $: userStore = client.userStore;
     $: me = event.unfrozenBy === user?.userId;
-    $: unfrozenByStr = me ? $_("you") : $userStore[event.unfrozenBy]?.username ?? $_("unknownUser");
+    $: unfrozenByStr = buildDisplayName($userStore, event.unfrozenBy, me);
 
     $: text = $_("chatUnfrozenBy", {
         values: {

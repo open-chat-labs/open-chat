@@ -32,7 +32,6 @@ pub struct OptionalCommunityPermissions {
     pub remove_members: Option<CommunityPermissionRole>,
     pub create_public_channel: Option<CommunityPermissionRole>,
     pub create_private_channel: Option<CommunityPermissionRole>,
-    #[serde(default)]
     pub manage_user_groups: Option<CommunityPermissionRole>,
 }
 

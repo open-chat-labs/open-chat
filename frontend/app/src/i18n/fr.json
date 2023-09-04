@@ -278,7 +278,12 @@
         "proceed": "Procéder",
         "doYouWantToProceed": "Si vous continuez, vous ne recevrez pas 50 000 satoshis. Sinon, trouvez un membre de l'équipe DFINITY pour obtenir un nouveau code.",
         "enterUsername": "Choisissez un nom d'utilisateur OpenChat",
-        "disclaimer": "En vous inscrivant à OpenChat, vous acceptez de respecter les directives de la communauté"
+        "disclaimer": "En vous inscrivant à OpenChat, vous acceptez de respecter les directives de la communauté",
+        "enterDisplayName": "Choisissez un nom d'affichage",
+        "displayNameInvalid": "Nom d'affichage invalide, veuillez réessayer",
+        "displayNameTooShort": "Ce nom d'affichage est trop court",
+        "displayNameTooLong": "Ce nom d'affichage est trop long",
+        "title": "S'inscrire sur OpenChat"
     },
     "roleChanged": "{changedBy} a changé le rôle de {changed} de {oldRole} à {newRole}",
     "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}",
@@ -971,5 +976,7 @@
     "reset": "Réinitialiser",
     "send": "Envoyer",
     "confirmMakeGroupPublic": "Voulez-vous vraiment rendre ce {level} public ?\n\nLes messages existants resteront privés, tous les nouveaux messages seront publics.",
-    "makeGroupPublicFailed": "Échec de la publication de {level}"
+    "makeGroupPublicFailed": "Échec de la publication de {level}",
+    "displayNameRules": "facultatif",
+    "displayName": "Afficher un nom"
 }

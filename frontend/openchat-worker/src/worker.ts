@@ -605,6 +605,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.messageId,
                         payload.reaction,
                         payload.username,
+                        payload.displayName,
                         payload.threadRootMessageIndex
                     )
                     .then((response) =>
@@ -731,7 +732,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "registerUser":
                 agent
-                    .registerUser(payload.username, payload.referralCode)
+                    .registerUser(payload.username, payload.displayName, payload.referralCode)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -977,6 +978,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "setUsername":
                 agent
                     .setUsername(payload.userId, payload.username)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "setDisplayName":
+                agent
+                    .setDisplayName(payload.userId, payload.displayName)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1370,7 +1382,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "addMembersToChannel":
                 agent
                     .communityClient(payload.chatId.communityId)
-                    .addMembersToChannel(payload.chatId, payload.userIds, payload.username)
+                    .addMembersToChannel(payload.chatId, payload.userIds, payload.username, payload.displayName)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

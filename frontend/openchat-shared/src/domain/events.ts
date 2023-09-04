@@ -1,6 +1,6 @@
 import type { ChatIdentifier, ThreadRead } from "./chat";
 import type { StorageStatus } from "./data/data";
-import type { PartialUserSummary } from "./user";
+import type { UserSummary } from "./user";
 
 export class StorageUpdated extends CustomEvent<StorageStatus> {
     constructor(detail: StorageStatus) {
@@ -8,8 +8,8 @@ export class StorageUpdated extends CustomEvent<StorageStatus> {
     }
 }
 
-export class UsersLoaded extends CustomEvent<PartialUserSummary[]> {
-    constructor(detail: PartialUserSummary[]) {
+export class UsersLoaded extends CustomEvent<UserSummary[]> {
+    constructor(detail: UserSummary[]) {
         super("openchat_event", { detail });
     }
 }

@@ -1,5 +1,5 @@
 import type { BlobReference, DataContent } from "../data/data";
-import type { PartialUserSummary, UserSummary } from "../user/user";
+import type { UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { AccessGate, AccessControlled, AccessRules } from "../access";
 import type {
@@ -434,7 +434,7 @@ export type RehydratedReplyContext = {
 };
 
 export type EnhancedReplyContext = RehydratedReplyContext & {
-    sender?: PartialUserSummary;
+    sender?: UserSummary;
     content: MessageContent;
 };
 
@@ -1085,7 +1085,7 @@ export type Member = {
     userId: string;
 };
 
-export type FullMember = Member & PartialUserSummary;
+export type FullMember = Member & UserSummary;
 
 export type GroupChatDetailsResponse = "failure" | GroupChatDetails;
 
@@ -1424,7 +1424,8 @@ export type SendMessageResponse =
     | ThreadMessageNotFound
     | UserSuspended
     | Failure
-    | ChatFrozen;
+    | ChatFrozen
+    | RulesNotAccepted;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -1505,6 +1506,10 @@ export type ChatFrozenEvent = {
     kind: "chat_frozen";
     frozenBy: string;
     reason: string | undefined;
+};
+
+export type RulesNotAccepted = {
+    kind: "rules_not_accepted";
 };
 
 export type GateUpdatedEvent = {
