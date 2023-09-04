@@ -532,20 +532,29 @@ export function groupEvents(
         )
             .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
             .map(groupInner ?? groupBySender),
+        reverse,
     );
 }
 
-export function flattenTimeline(grouped: EventWrapper<ChatEvent>[][][]): TimelineItem<ChatEvent>[] {
+export function flattenTimeline(
+    grouped: EventWrapper<ChatEvent>[][][],
+    reverse: boolean,
+): TimelineItem<ChatEvent>[] {
     const timeline: TimelineItem<ChatEvent>[] = [];
     grouped.forEach((dayGroup) => {
-        timeline.push({
-            kind: "timeline_event_group",
-            group: dayGroup,
-        });
-        timeline.push({
+        const date: TimelineItem<ChatEvent> = {
             kind: "timeline_date",
             timestamp: dayGroup[0][0]?.timestamp ?? 0,
-        });
+        };
+        const group: TimelineItem<ChatEvent> = {
+            kind: "timeline_event_group",
+            group: dayGroup,
+        };
+        if (reverse) {
+            timeline.push(group, date);
+        } else {
+            timeline.push(date, group);
+        }
     });
     return timeline;
 }

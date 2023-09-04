@@ -133,7 +133,6 @@
     };
 
     let showGoToBottom = false;
-    let messagesRect: DOMRect | undefined = undefined;
     let floatingTimestamp: bigint | undefined = undefined;
 
     beforeUpdate(() => {
@@ -146,11 +145,7 @@
     });
 
     function elementIsOffTheTop(el: Element): boolean {
-        if (messagesRect === undefined) {
-            messagesRect = messagesDiv?.getBoundingClientRect();
-        }
-        const rect = el.getBoundingClientRect();
-        return rect.top < 95;
+        return el.getBoundingClientRect().top < 95;
     }
 
     onMount(() => {
@@ -161,7 +156,12 @@
         };
 
         labelObserver = new IntersectionObserver((_entries: IntersectionObserverEntry[]) => {
-            const labels = document.querySelectorAll(".date-label[data-timestamp]:not(.floating)");
+            const labels = [
+                ...document.querySelectorAll(".date-label[data-timestamp]:not(.floating)"),
+            ];
+            if (!reverseScroll) {
+                labels.reverse();
+            }
             floatingTimestamp = undefined;
             for (const label of labels) {
                 const float = elementIsOffTheTop(label);
@@ -461,25 +461,6 @@
         await scrollToMessageIndex(chat.id, messageIndex, false);
     }
 
-    // async function onLoadedPreviousMessages(initialLoad: boolean) {
-    //     await tick();
-    //     if (!initialised) {
-    //         scrollBottom();
-    //     }
-    //     initialised = true;
-
-    //     // Seems like we *must* interrupt the scroll to stop runaway loading
-    //     // even though we do not need to do any adjustment of the scrollTop in this direction.
-    //     // This seems to help on chrome but not on safari (God help us).
-    //     if (!isSafari) {
-    //         await interruptScroll(() => {
-    //             console.debug("SCROLL: onLoadedPrevious interrupt");
-    //         });
-    //     }
-
-    //     await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
-    // }
-
     async function onLoadedPreviousMessages(initialLoad: boolean) {
         await tick();
         await resetScroll(initialLoad);
@@ -490,6 +471,8 @@
             await interruptScroll(() => {
                 console.debug("SCROLL: onLoadedPrevious interrupt");
             });
+        } else {
+            await adjustScrollTopIfNecessary(initialLoad, true);
         }
         await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
     }
@@ -498,7 +481,7 @@
         await tick();
 
         if (reverseScroll) {
-            await adjustScrollTopIfNecessary();
+            await adjustScrollTopIfNecessary(false, false);
         }
 
         if (
@@ -513,8 +496,9 @@
         await loadMoreIfRequired(loadingFromUserScroll);
     }
 
-    async function adjustScrollTopIfNecessary(): Promise<void> {
+    async function adjustScrollTopIfNecessary(initialLoad: boolean, add: boolean): Promise<void> {
         if (
+            !initialLoad &&
             messagesDiv !== undefined &&
             previousScrollHeight !== undefined &&
             previousScrollTop !== undefined
@@ -527,7 +511,9 @@
             if (diffDiff > sensitivityThreshold) {
                 await interruptScroll(() => {
                     if (messagesDiv !== undefined && previousScrollTop !== undefined) {
-                        let adjusted = messagesDiv.scrollTop - scrollHeightDiff;
+                        let adjusted = add
+                            ? messagesDiv.scrollTop + scrollHeightDiff
+                            : messagesDiv.scrollTop - scrollHeightDiff;
                         messagesDiv.scrollTop = adjusted;
                         console.debug("SCROLL: adjusted: ", {
                             ...keyMeasurements(),

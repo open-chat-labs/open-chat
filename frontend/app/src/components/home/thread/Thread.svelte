@@ -27,7 +27,6 @@
     import ChatEventList from "../ChatEventList.svelte";
     import { randomSentence } from "../../../utils/randomMsg";
     import TimelineDate from "../TimelineDate.svelte";
-    import { mobileOperatingSystem } from "../../../utils/devices";
     import { reverseScroll } from "../../../stores/scrollPos";
 
     const client = getContext<OpenChat>("client");
