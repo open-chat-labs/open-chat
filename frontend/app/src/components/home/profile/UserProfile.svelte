@@ -255,6 +255,7 @@
             </UsernameInput>
             <Legend label={$_("displayName")} rules={$_("displayNameRules")} />
             <DisplayNameInput
+                {client}
                 {originalDisplayName}
                 disabled={readonly}
                 bind:displayName

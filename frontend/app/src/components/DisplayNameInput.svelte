@@ -1,12 +1,13 @@
 <script lang="ts">
-    import { isDisplayNameValid } from "openchat-client";
     import Input from "./Input.svelte";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
+    import type { OpenChat } from "openchat-client";
 
     const MIN_DISPLAY_NAME_LENGTH = 3;
     const MAX_DISPLAY_NAME_LENGTH = 25;
 
+    export let client: OpenChat;
     export let originalDisplayName: string | undefined;
     export let displayName: string | undefined;
     export let displayNameValid: boolean;
@@ -28,7 +29,7 @@
             return;
         }
 
-        displayNameValid = isDisplayNameValid(displayName);
+        displayNameValid = client.isDisplayNameValid(displayName);
     }
 </script>
 

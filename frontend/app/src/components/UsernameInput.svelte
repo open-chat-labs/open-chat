@@ -1,8 +1,8 @@
 <script lang="ts">
+    import type { OpenChat } from "openchat-client";
     import Input from "./Input.svelte";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import { isUsernameValid, type OpenChat } from "openchat-client";
 
     const MIN_USERNAME_LENGTH = 5;
     const MAX_USERNAME_LENGTH = 15;
@@ -70,7 +70,7 @@
         usernameValid = false;
         error = undefined;
 
-        if (isUsernameValid(username)) {
+        if (client.isUsernameValid(username)) {
             checking = true;
             scheduleRemoteCheck(username);
         }

@@ -384,6 +384,7 @@ import {
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag, moderationFlags } from "./stores/flagStore";
 import { hasOwnerRights } from "./utils/permissions";
+import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1923,6 +1924,9 @@ export class OpenChat extends OpenChatAgentWorker {
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
+    isDisplayNameValid = isDisplayNameValid;
+    isUsernameValid = isUsernameValid;
+
     async createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
         if (this._liveState.userStore[chatId.userId] === undefined) {
             const user = await this.getUser(chatId.userId);

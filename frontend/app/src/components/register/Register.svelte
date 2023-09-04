@@ -173,6 +173,7 @@
 
                 <Legend label={$_("displayName")} rules={$_("displayNameRules")} />
                 <DisplayNameInput
+                    {client}
                     originalDisplayName={$displayNameStore}
                     disabled={busy}
                     bind:displayName
