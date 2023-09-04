@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add optional user `display name` ([#4247](https://github.com/open-chat-labs/open-chat/pull/4247))
+- Validate `display_name` + search ([#4282](https://github.com/open-chat-labs/open-chat/pull/4282))
 
 ### Changed
 

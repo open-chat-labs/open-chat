@@ -409,6 +409,7 @@ export class GroupClient extends CandidService {
 
     sendMessage(
         senderName: string,
+        senderDisplayName: string | undefined,
         mentioned: User[],
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
@@ -421,12 +422,16 @@ export class GroupClient extends CandidService {
             ? dataClient.forwardData(event.event.content, [this.chatId.groupId])
             : dataClient.uploadData(event.event.content, [this.chatId.groupId]);
 
+        const emptyRulesAccepted: [] | [number] = [];
+
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
             const args = {
                 content: apiMessageContent(newContent),
                 message_id: event.event.messageId,
                 sender_name: senderName,
+                sender_display_name: apiOptional(identity, senderDisplayName),
+                rules_accepted: emptyRulesAccepted,
                 replies_to: apiOptional(
                     (replyContext) => ({
                         event_index: replyContext.eventIndex,
@@ -503,6 +508,7 @@ export class GroupClient extends CandidService {
         messageId: bigint,
         reaction: string,
         username: string,
+        displayName: string | undefined,
         threadRootMessageIndex?: number
     ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
@@ -511,6 +517,7 @@ export class GroupClient extends CandidService {
                 message_id: messageId,
                 reaction,
                 username,
+                display_name: apiOptional(identity, displayName),
                 correlation_id: generateUint64(),
             }),
             addRemoveReactionResponse

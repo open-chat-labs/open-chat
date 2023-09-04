@@ -7,6 +7,7 @@
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { interpolateLevel } from "../../utils/i18n";
+    import { buildDisplayName } from "../../utils/user";
 
     const client = getContext<OpenChat>("client");
 
@@ -19,9 +20,7 @@
 
     $: userStore = client.userStore;
     $: me = changedBy === user?.userId;
-    $: changedByStr = `**${
-        me ? $_("you") : $userStore[changedBy]?.username ?? $_("unknownUser")
-    }**`;
+    $: changedByStr = `**${buildDisplayName($userStore, changedBy, me)}**`;
     $: members = client.getMembersString(
         user!,
         $userStore,

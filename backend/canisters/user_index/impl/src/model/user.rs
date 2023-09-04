@@ -88,7 +88,6 @@ impl User {
             is_bot: self.is_bot,
             suspended: self.suspension_details.is_some(),
             diamond_member: self.diamond_membership_details.is_active(now),
-            seconds_since_last_online: 0,
         }
     }
 }

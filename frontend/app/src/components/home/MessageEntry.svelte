@@ -12,7 +12,7 @@
     import MentionPicker from "./MentionPicker.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import type {
-        PartialUserSummary,
+        UserSummary,
         User,
         ChatSummary,
         EnhancedReplyContext,
@@ -23,7 +23,6 @@
         Questions,
         OpenChat,
         MultiUserChat,
-        UserSummary,
     } from "openchat-client";
     import { allQuestions } from "openchat-client";
     import { enterSend } from "../../stores/settings";
@@ -227,7 +226,7 @@
 
     function formatMentions(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = $userStore[p1] as PartialUserSummary | undefined;
+            const u = $userStore[p1] as UserSummary | undefined;
             if (u?.username !== undefined) {
                 const username = u.username;
                 return `@${username}`;
@@ -239,11 +238,11 @@
     // replace anything of the form @username with @UserId(xyz) where xyz is the userId
     // if we don't have the mapping, just leave it as is (we *will* have the mapping)
     function expandMentions(text?: string): [string | undefined, User[]] {
-        let mentionedMap = new Map<string, string>();
+        let mentionedMap = new Map<string, User>();
         let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
             const user = client.lookupUserForMention(p1, false);
             if (user !== undefined) {
-                mentionedMap.set(user.userId, p1);
+                mentionedMap.set(user.userId, user);
                 return `@UserId(${user.userId})`;
             } else {
                 console.log(
@@ -253,7 +252,7 @@
             return match;
         });
 
-        let mentioned = Array.from(mentionedMap, ([userId, username]) => ({ userId, username }));
+        let mentioned = Array.from(mentionedMap, ([_, user]) => user);
 
         return [expandedText, mentioned];
     }
@@ -588,13 +587,13 @@
 
     .blocked,
     .disabled {
-      height: 42px;
-      color: var(--txt);
-      @include font(book, normal, fs-100);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
+        height: 42px;
+        color: var(--txt);
+        @include font(book, normal, fs-100);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
     }
 
     .recording {

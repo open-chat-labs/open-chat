@@ -1,4 +1,4 @@
-import type { PartialUserSummary, UserLookup } from "openchat-shared";
+import type { UserLookup, UserSummary } from "openchat-shared";
 import { init, addMessages, _ } from "svelte-i18n";
 import { buildUsernameList, compareUsername } from "./user";
 import { get } from "svelte/store";
@@ -22,6 +22,7 @@ const lookup: UserLookup = {
         kind: "user",
         userId: "a",
         username: "a",
+        displayName: undefined,
         updated: BigInt(0),
         suspended: false,
         diamond: false,
@@ -30,6 +31,7 @@ const lookup: UserLookup = {
         kind: "user",
         userId: "b",
         username: "b",
+        displayName: undefined,
         updated: BigInt(0),
         suspended: false,
         diamond: false,
@@ -38,6 +40,7 @@ const lookup: UserLookup = {
         kind: "user",
         userId: "xyz",
         username: "julian_jelfs",
+        displayName: undefined,
         updated: BigInt(0),
         suspended: false,
         diamond: false,
@@ -46,6 +49,7 @@ const lookup: UserLookup = {
         kind: "user",
         userId: "alpha",
         username: "alpha",
+        displayName: undefined,
         updated: BigInt(0),
         suspended: false,
         diamond: false,
@@ -89,11 +93,12 @@ describe("build username list", () => {
 });
 
 describe("compare username", () => {
-    function toUser(username: string | undefined): PartialUserSummary {
+    function toUser(username: string): UserSummary {
         return {
             kind: "user",
             userId: "a",
             username,
+            displayName: undefined,
             updated: BigInt(0),
             suspended: false,
             diamond: false,
@@ -103,18 +108,5 @@ describe("compare username", () => {
         const users = ["zulu", "yanky", "foxtrot", "lima"].map(toUser);
         const sorted = users.sort(compareUsername);
         expect(sorted.map((u) => u.username)).toEqual(["foxtrot", "lima", "yanky", "zulu"]);
-    });
-
-    test("works with non-null usernames", () => {
-        const users = ["zulu", undefined, "yanky", undefined, "foxtrot", "lima"].map(toUser);
-        const sorted = users.sort(compareUsername);
-        expect(sorted.map((u) => u.username)).toEqual([
-            "foxtrot",
-            "lima",
-            "yanky",
-            "zulu",
-            undefined,
-            undefined,
-        ]);
     });
 });

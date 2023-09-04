@@ -10,7 +10,7 @@
         type Dimensions,
         type MessageContent,
         OpenChat,
-        type PartialUserSummary,
+        type UserSummary,
         type MessageReminderCreatedContent,
         type ChatIdentifier,
         type ChatType,
@@ -59,7 +59,7 @@
     export let chatId: ChatIdentifier;
     export let chatType: ChatType;
     export let user: CreatedUser;
-    export let sender: PartialUserSummary | undefined;
+    export let sender: UserSummary | undefined;
     export let msg: Message;
     export let me: boolean;
     export let eventIndex: number;
@@ -113,7 +113,6 @@
             : threadRootMessage?.messageIndex;
     $: translationStore = client.translationStore;
     $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll;
-    $: username = sender?.username;
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
@@ -242,6 +241,7 @@
                     msg.messageId,
                     reaction,
                     user.username,
+                    user.displayName,
                     kind
                 )
                 .then((success) => {
@@ -418,6 +418,7 @@
             </div>
         {/if}
 
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div
             bind:this={msgBubbleElement}
             style={msgBubbleCalculatedWidth !== undefined
@@ -449,7 +450,7 @@
                             class:fill
                             class:crypto
                             class:diamond={sender?.diamond}>
-                            {username}
+                            {sender?.displayName ?? sender?.username}
                         </h4>
                     </Link>
                     {#if senderTyping}
@@ -889,11 +890,6 @@
         &.prizeWinner {
             // background-color: var(--prize);
         }
-    }
-
-    .username {
-        margin: 0;
-        color: #fff;
     }
 
     .emoji-header {

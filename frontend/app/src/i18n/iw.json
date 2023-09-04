@@ -254,7 +254,12 @@
         "proceed": "להמשיך",
         "doYouWantToProceed": "אם תמשיך לא תקבל 50,000 סאטושי. לחלופין, מצא חבר בצוות DFINITY כדי לקבל קוד חדש.",
         "enterUsername": "בחר שם משתמש OpenChat",
-        "disclaimer": "בהרשמה ל-OpenChat אתה מסכים לציית להנחיות הקהילה"
+        "disclaimer": "בהרשמה ל-OpenChat אתה מסכים לציית להנחיות הקהילה",
+        "enterDisplayName": "בחר שם תצוגה",
+        "displayNameInvalid": "שם תצוגה לא חוקי, אנא נסה שוב",
+        "displayNameTooShort": "שם התצוגה קצר מדי",
+        "displayNameTooLong": "שם התצוגה ארוך מדי",
+        "title": "הרשמה עם OpenChat"
     },
     "faq": {
         "menu": "שאלות נפוצות",
@@ -969,5 +974,7 @@
     "reset": "אִתחוּל",
     "send": "לִשְׁלוֹחַ",
     "confirmMakeGroupPublic": "האם אתה בהחלט רוצה להפוך את ה-{level} הזה לציבורי?\n\nהודעות קיימות יישארו פרטיות, כל ההודעות החדשות יהיו ציבוריות.",
-    "makeGroupPublicFailed": "הפיכת {level} לציבורי נכשלה"
+    "makeGroupPublicFailed": "הפיכת {level} לציבורי נכשלה",
+    "displayNameRules": "אופציונאלי",
+    "displayName": "הצג שם"
 }

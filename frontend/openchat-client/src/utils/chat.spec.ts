@@ -3,7 +3,6 @@ import {
     type PollConfig,
     type PollVotes,
     type PollContent,
-    type PartialUserSummary,
     type UserLookup,
     type UserSummary,
     emptyChatMetrics,
@@ -75,11 +74,12 @@ const defaultGroupChat: GroupChatSummary = {
     },
 };
 
-function createUser(userId: string, username: string): PartialUserSummary {
+function createUser(userId: string, username: string): UserSummary {
     return {
         kind: "user",
         userId,
         username,
+        displayName: undefined,
         updated: BigInt(0),
         suspended: false,
         diamond: false,

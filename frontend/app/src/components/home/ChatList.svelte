@@ -35,6 +35,7 @@
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
     import { routeForScope } from "../../routes";
     import ButtonGroup from "../ButtonGroup.svelte";
+    import FilteredUsername from "../FilteredUsername.svelte";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -122,8 +123,16 @@
         }
 
         if (chat.kind === "direct_chat") {
-            const username = $userStore[chat.them.userId]?.username;
-            return username ? username.toLowerCase().indexOf(lowercaseSearch) >= 0 : false;
+            const user = $userStore[chat.them.userId];
+            if (user !== undefined) {
+                return (
+                    user.username.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
+                    (user.displayName !== undefined &&
+                        user.displayName.toLowerCase().indexOf(lowercaseSearch) >= 0)
+                );
+            } else {
+                return false;
+            }
         }
         return false;
     }
@@ -284,9 +293,18 @@
                                         index={i}
                                         avatarUrl={client.userAvatarUrl(user)}
                                         on:click={() => chatWith(user.userId)}>
-                                        <h4 class="search-item-title">
-                                            @{user.username}
-                                        </h4>
+                                        <div class="user-result">
+                                            <h4 class:diamond={user.diamond}>
+                                                <FilteredUsername
+                                                    {searchTerm}
+                                                    username={user.displayName ?? user.username} />
+                                            </h4>
+                                            <div class="username">
+                                                <FilteredUsername
+                                                    {searchTerm}
+                                                    username={"@" + user.username} />
+                                            </div>
+                                        </div>
                                     </SearchResult>
                                 {/each}
                             {/if}
@@ -440,6 +458,21 @@
             &.hash {
                 @include font-size(fs-120);
             }
+        }
+    }
+
+    .user-result {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+
+        .diamond {
+            @include diamond();
+        }
+
+        .username {
+            font-weight: 200;
+            color: var(--txt-light);
         }
     }
 </style>

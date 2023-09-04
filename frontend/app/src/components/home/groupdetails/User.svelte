@@ -7,12 +7,12 @@
     import type { OpenChat } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import FilteredUsername from "../../FilteredUsername.svelte";
-    import type { PartialUserSummary } from "openchat-shared";
+    import type { UserSummary } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let user: PartialUserSummary;
+    export let user: UserSummary;
     export let me: boolean = false;
     export let searchTerm: string = "";
     export let role: string | undefined = undefined;
@@ -26,6 +26,7 @@
     }
 </script>
 
+<!-- svelte-ignore a11y-interactive-supports-focus -->
 <div
     class="member"
     class:me
@@ -41,14 +42,19 @@
             size={AvatarSize.Default} />
     </span>
     <div class="details">
-        <h4 class:diamond={user.diamond}>
-            <FilteredUsername {searchTerm} username={user.username} {me} />
-        </h4>
-        {#if role !== undefined}
-            <span class="role">
-                ({$_(role)})
-            </span>
-        {/if}
+        <div class="display-name">
+            <h4 class:diamond={user.diamond}>
+                <FilteredUsername {searchTerm} username={user.displayName ?? user.username} {me} />
+            </h4>
+            {#if role !== undefined}
+                <span class="role">
+                    ({$_(role)})
+                </span>
+            {/if}
+        </div>
+        <div class="username">
+            <FilteredUsername {searchTerm} username={"@" + user.username} />
+        </div>
     </div>
     <slot />
 </div>
@@ -82,11 +88,22 @@
     }
 
     .details {
-        flex: 1;
         display: flex;
-        align-items: center;
-        @include ellipsis();
+        flex: 1;
+        flex-direction: column;
         @include font(medium, normal, fs-100);
+
+        .display-name {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            @include ellipsis();
+        }
+
+        .username {
+            font-weight: 200;
+            color: var(--txt-light);
+        }
     }
 
     .diamond {

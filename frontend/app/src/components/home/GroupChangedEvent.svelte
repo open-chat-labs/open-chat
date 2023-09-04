@@ -5,6 +5,7 @@
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import type { OpenChat, UserSummary } from "openchat-client";
+    import { buildDisplayName } from "../../utils/user";
 
     const client = getContext<OpenChat>("client");
 
@@ -16,7 +17,7 @@
 
     $: userStore = client.userStore;
     $: me = changedBy === user?.userId;
-    $: changedByStr = me ? $_("you") : $userStore[changedBy]?.username ?? $_("unknownUser");
+    $: changedByStr = buildDisplayName($userStore, changedBy, me);
     $: text = $_("groupChangedBy", {
         values: {
             changed: property,

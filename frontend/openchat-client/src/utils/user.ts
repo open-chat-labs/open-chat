@@ -1,5 +1,5 @@
 import type { MessageFormatter } from "./i18n";
-import type { PartialUserSummary, UserLookup, UserSummary } from "openchat-shared";
+import type { UserLookup, UserSummary } from "openchat-shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
@@ -83,29 +83,26 @@ export function nullUser(username: string): UserSummary {
         kind: "user",
         userId: "null_user", // this might cause problems if we try to create a Principal from it
         username,
+        displayName: undefined,
         updated: BigInt(0),
         suspended: false,
         diamond: false,
     };
 }
 
-export function compareUsername(u1: PartialUserSummary, u2: PartialUserSummary): number {
-    if (u2.username === undefined) return -1;
-    if (u1.username === undefined) return 1;
+export function compareUsername(u1: UserSummary, u2: UserSummary): number {
     return u1.username === u2.username ? 0 : u2.username < u1.username ? 1 : -1;
 }
 
 export function compareIsNotYouThenUsername(
     yourUserId: string
-): (u1: PartialUserSummary, u2: PartialUserSummary) => number {
-    return (u1: PartialUserSummary, u2: PartialUserSummary) => {
+): (u1: UserSummary, u2: UserSummary) => number {
+    return (u1: UserSummary, u2: UserSummary) => {
         const u1IsYou = u1.userId === yourUserId;
         const u2IsYou = u2.userId === yourUserId;
         if (u1IsYou !== u2IsYou) {
             return u1IsYou ? 1 : -1;
         }
-        if (u2.username === undefined) return -1;
-        if (u1.username === undefined) return 1;
         return u1.username === u2.username ? 0 : u2.username < u1.username ? 1 : -1;
     };
 }

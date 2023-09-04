@@ -505,12 +505,11 @@ export class UserClient extends CandidService {
 
     sendMessage(
         chatId: DirectChatIdentifier,
-        sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
-        return this.sendMessageToBackend(chatId, sender, event, threadRootMessageIndex)
+        return this.sendMessageToBackend(chatId, event, threadRootMessageIndex)
             .then(
                 setCachedMessageFromSendResponse(
                     this.db,
@@ -527,7 +526,6 @@ export class UserClient extends CandidService {
 
     sendMessageToBackend(
         chatId: DirectChatIdentifier,
-        sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
@@ -541,7 +539,6 @@ export class UserClient extends CandidService {
             const req: ApiSendMessageArgs = {
                 content: apiMessageContent(newContent),
                 recipient: Principal.fromText(chatId.userId),
-                sender_name: sender.username,
                 message_id: event.event.messageId,
                 replies_to: apiOptional(
                     (replyContext) => apiReplyContextArgs(chatId, replyContext),
@@ -594,6 +591,8 @@ export class UserClient extends CandidService {
                 Crypto: content,
             },
             sender_name: sender.username,
+            sender_display_name: apiOptional(identity, sender.displayName),
+            rules_accepted: [],
             mentioned: [],
             message_id: event.event.messageId,
             group_id: Principal.fromText(groupId.groupId),
@@ -646,11 +645,13 @@ export class UserClient extends CandidService {
                 Crypto: content,
             },
             sender_name: sender.username,
+            sender_display_name: apiOptional(identity, sender.displayName),
+            community_rules_accepted: [],
+            channel_rules_accepted: [],
             mentioned: [],
             message_id: event.event.messageId,
             community_id: Principal.fromText(id.communityId),
             channel_id: BigInt(id.channelId),
-            rules_accepted: [] as [] | [number], // TODO come back to this
             replies_to: apiOptional(
                 (replyContext) => apiReplyContextArgs(id, replyContext),
                 event.event.repliesTo
@@ -775,7 +776,6 @@ export class UserClient extends CandidService {
         otherUserId: string,
         messageId: bigint,
         reaction: string,
-        username: string,
         threadRootMessageIndex?: number
     ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
@@ -784,7 +784,6 @@ export class UserClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 reaction,
-                username,
                 correlation_id: generateUint64(),
             }),
             addRemoveReactionResponse

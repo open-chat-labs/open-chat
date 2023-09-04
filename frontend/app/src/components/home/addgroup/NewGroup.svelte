@@ -387,7 +387,11 @@
 
 {#if confirming}
     <AreYouSure
-        message={interpolateLevel(`confirmMakeGroup${candidateGroup.public ? "Public" : "Private"}`, candidateGroup.level, true)}
+        message={interpolateLevel(
+            `confirmMakeGroup${candidateGroup.public ? "Public" : "Private"}`,
+            candidateGroup.level,
+            true
+        )}
         action={updateGroup} />
 {/if}
 

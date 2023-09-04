@@ -135,7 +135,7 @@
                     kind: "chat",
                     id: chatSummary.id,
                     userId: chatSummary.them.userId,
-                    name: client.usernameAndIcon(them),
+                    name: client.displayNameAndIcon(them),
                     avatarUrl: client.userAvatarUrl(them),
                     description,
                 };
