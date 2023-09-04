@@ -219,7 +219,12 @@
         "proceed": "继续",
         "doYouWantToProceed": "如果您继续，您将不会收到 50,000 聪。或者，找到 DFINITY 团队的成员以获取新代码。",
         "enterUsername": "选择一个 OpenChat 用户名",
-        "disclaimer": "注册 OpenChat 即表示您同意遵守社区准则"
+        "disclaimer": "注册 OpenChat 即表示您同意遵守社区准则",
+        "enterDisplayName": "选择一个显示的名称",
+        "displayNameInvalid": "显示名称无效，请重试",
+        "displayNameTooShort": "该显示名称太短",
+        "displayNameTooLong": "该显示名称太长",
+        "title": "注册 OpenChat"
     },
     "tellMeMore": "更多信息",
     "username": "用户名",
@@ -972,5 +977,7 @@
     "reset": "重置",
     "send": "发送",
     "confirmMakeGroupPublic": "您确定要公开此 {level} 吗？\n\n现有消息将保持私密，所有新消息将公开。",
-    "makeGroupPublicFailed": "未能公开 {level}"
+    "makeGroupPublicFailed": "未能公开 {level}",
+    "displayNameRules": "选修的",
+    "displayName": "显示名称"
 }

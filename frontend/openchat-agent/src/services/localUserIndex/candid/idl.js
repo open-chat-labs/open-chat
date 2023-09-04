@@ -55,12 +55,10 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'TooManyInvites' : IDL.Nat32,
   });
-  const Version = IDL.Nat32;
   const JoinChannelArgs = IDL.Record({
     'channel_id' : ChannelId,
     'community_id' : CommunityId,
     'invite_code' : IDL.Opt(IDL.Nat64),
-    'rules_accepted' : IDL.Opt(Version),
   });
   const PermissionRole = IDL.Variant({
     'Moderators' : IDL.Null,
@@ -548,6 +546,7 @@ export const idlFactory = ({ IDL }) => {
   const CommunityMembership = IDL.Record({
     'role' : CommunityRole,
     'joined' : TimestampMillis,
+    'rules_accepted' : IDL.Bool,
   });
   const FrozenGroupInfo = IDL.Record({
     'timestamp' : TimestampMillis,
@@ -570,6 +569,7 @@ export const idlFactory = ({ IDL }) => {
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
     'banner_id' : IDL.Opt(IDL.Nat),
+    'rules_enabled' : IDL.Bool,
     'member_count' : IDL.Nat32,
     'primary_language' : IDL.Text,
   });
@@ -592,7 +592,6 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
     'InternalError' : IDL.Text,
-    'RulesNotAccepted' : IDL.Null,
     'UserBlocked' : IDL.Null,
   });
   const JoinCommunityArgs = IDL.Record({
@@ -639,6 +638,7 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'rules_accepted' : IDL.Bool,
     'next_message_expiry' : IDL.Opt(TimestampMillis),
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
@@ -647,6 +647,7 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
+    'rules_enabled' : IDL.Bool,
     'expired_messages' : IDL.Vec(MessageIndexRange),
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
@@ -669,6 +670,7 @@ export const idlFactory = ({ IDL }) => {
   const RegisterUserArgs = IDL.Record({
     'username' : IDL.Text,
     'public_key' : IDL.Vec(IDL.Nat8),
+    'display_name' : IDL.Opt(IDL.Text),
     'referral_code' : IDL.Opt(IDL.Text),
   });
   const RegisterUserResponse = IDL.Variant({
@@ -676,11 +678,14 @@ export const idlFactory = ({ IDL }) => {
     'UsernameInvalid' : IDL.Null,
     'AlreadyRegistered' : IDL.Null,
     'UserLimitReached' : IDL.Null,
+    'DisplayNameInvalid' : IDL.Null,
     'UsernameTooLong' : IDL.Nat16,
     'Success' : IDL.Record({
       'icp_account' : AccountIdentifier,
       'user_id' : UserId,
     }),
+    'DisplayNameTooLong' : IDL.Nat16,
+    'DisplayNameTooShort' : IDL.Nat16,
     'PublicKeyInvalid' : IDL.Text,
     'ReferralCodeAlreadyClaimed' : IDL.Null,
     'ReferralCodeExpired' : IDL.Null,

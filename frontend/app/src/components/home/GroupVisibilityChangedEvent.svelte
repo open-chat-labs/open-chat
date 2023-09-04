@@ -6,6 +6,7 @@
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import { interpolateLevel } from "../../utils/i18n";
+    import { buildDisplayName } from "../../utils/user";
 
     const client = getContext<OpenChat>("client");
 
@@ -17,7 +18,7 @@
 
     $: userStore = client.userStore;
     $: me = changedBy === user?.userId;
-    $: changedByStr = me ? $_("you") : $userStore[changedBy]?.username ?? $_("unknownUser");
+    $: changedByStr = buildDisplayName($userStore, changedBy, me);
     $: visibility = (nowPublic ? $_("public") : $_("private")).toLowerCase();
     $: text = interpolateLevel("groupVisibilityChangedBy", level, true, {
         changedBy: changedByStr,

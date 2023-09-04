@@ -29,7 +29,10 @@
     $: filtered = Object.values(client.getUserLookupForMentions()).filter(
         (user) =>
             (mentionSelf || user.userId !== currentUser.userId) &&
-            (prefixLower === undefined || user.username.toLowerCase().startsWith(prefixLower))
+            (prefixLower === undefined ||
+                user.username.toLowerCase().startsWith(prefixLower) ||
+                (user.displayName !== undefined &&
+                    user.displayName.toLowerCase().startsWith(prefixLower)))
     );
 
     $: style =
@@ -82,7 +85,7 @@
     class:down={direction === "down"}
     class:border
     {style}>
-    <Menu>
+    <Menu fit>
         <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
             <MenuItem selected={itemIndex === index} on:click={() => mention(item)}>
                 <div class="avatar" slot="icon">
@@ -92,7 +95,12 @@
                         size={AvatarSize.Small} />
                 </div>
                 <div slot="text">
-                    {item.username}
+                    <span class="display-name">
+                        {item.displayName ?? item.username}
+                    </span>
+                    <span class="username">
+                        @{item.username}
+                    </span>
                 </div>
             </MenuItem>
         </VirtualList>
@@ -127,6 +135,15 @@
         &.border {
             border: 1px solid var(--bd);
             border-top: none;
+        }
+
+        .display-name {
+            font-weight: 500;
+        }
+
+        .username {
+            font-weight: 200;
+            color: var(--txt-light);
         }
     }
     .avatar {

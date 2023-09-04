@@ -91,6 +91,7 @@
         <Loading />
     {:else}
         {#each users as user (user.userId)}
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div
                 class="user"
                 on:click={() => onSelect(user)}
@@ -104,12 +105,17 @@
                         url={client.userAvatarUrl(user)}
                         size={AvatarSize.Default} />
                 </span>
-                <h4 class="details">
-                    <FilteredUsername
-                        {searchTerm}
-                        me={user.userId === client.user.userId}
-                        username={user.username} />
-                </h4>
+                <div class="details">
+                    <h4 class:diamond={user.diamond}>
+                        <FilteredUsername
+                            {searchTerm}
+                            me={user.userId === client.user.userId}
+                            username={user.displayName ?? user.username} />
+                    </h4>
+                    <div class="username">
+                        <FilteredUsername {searchTerm} username={"@" + user.username} />
+                    </div>
+                </div>
             </div>
         {/each}
     {/if}
@@ -186,7 +192,18 @@
     }
     .details {
         flex: 1;
+        display: flex;
+        flex-direction: column;
         padding: 0 5px;
+
+        .diamond {
+            @include diamond();
+        }
+
+        .username {
+            font-weight: 200;
+            color: var(--txt-light);
+        }
     }
 
     .results {

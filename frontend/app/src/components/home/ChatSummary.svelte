@@ -33,6 +33,7 @@
     import { routeForScope, pathParams } from "../../routes";
     import page from "page";
     import { interpolateLevel } from "../../utils/i18n";
+    import { buildDisplayName } from "../../utils/user";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -61,7 +62,7 @@
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
                 return {
-                    name: client.usernameAndIcon(them),
+                    name: client.displayNameAndIcon(them),
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
@@ -109,10 +110,12 @@
             return latestMessageText;
         }
 
-        const user =
-            chatSummary.latestMessage.event.sender === userId
-                ? client.toTitleCase($_("you"))
-                : users[chatSummary.latestMessage.event.sender]?.username ?? $_("unknownUser");
+        const user = buildDisplayName(
+            users,
+            chatSummary.latestMessage.event.sender,
+            chatSummary.latestMessage.event.sender === userId,
+            false
+        );
 
         return `${user}: ${latestMessageText}`;
     }

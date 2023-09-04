@@ -78,6 +78,7 @@
             kind: "user",
             userId: user.userId,
             username: user.username,
+            displayName: user.displayName,
             updated: BigInt(0),
             suspended: false,
             diamond: false,

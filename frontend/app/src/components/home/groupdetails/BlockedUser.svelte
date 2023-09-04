@@ -10,12 +10,12 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import type { PartialUserSummary } from "openchat-shared";
+    import type { UserSummary } from "openchat-shared";
     import User from "./User.svelte";
 
     const dispatch = createEventDispatcher();
 
-    export let user: PartialUserSummary;
+    export let user: UserSummary;
     export let canUnblockUser: boolean = false;
     export let searchTerm: string = "";
 
