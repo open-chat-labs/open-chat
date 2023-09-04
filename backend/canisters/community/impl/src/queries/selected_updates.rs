@@ -27,11 +27,17 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let invited_users_last_updated = data.invited_users.last_updated();
     let events_last_updated = data.events.latest_event_timestamp();
     let user_groups_last_updated = data.members.user_groups_last_updated();
+    let display_names_last_updated = data.members.display_names_last_updated();
 
-    let last_updated = [invited_users_last_updated, events_last_updated, user_groups_last_updated]
-        .into_iter()
-        .max()
-        .unwrap();
+    let last_updated = [
+        invited_users_last_updated,
+        events_last_updated,
+        user_groups_last_updated,
+        display_names_last_updated,
+    ]
+    .into_iter()
+    .max()
+    .unwrap();
 
     if last_updated <= args.updates_since {
         return SuccessNoUpdates(args.updates_since);
@@ -109,6 +115,12 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
                 }
             }
             _ => {}
+        }
+    }
+
+    for member in data.members.iter() {
+        if member.display_name.timestamp > args.updates_since {
+            user_updates_handler.mark_member_updated(&mut result, member.user_id, false);
         }
     }
 

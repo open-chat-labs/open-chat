@@ -374,6 +374,7 @@ type CommunityCanisterChannelSummary = record {
     min_visible_event_index : EventIndex;
     min_visible_message_index : MessageIndex;
     latest_message : opt MessageEventWrapper;
+    latest_message_sender_display_name : opt text;
     latest_event_index : EventIndex;
     member_count : nat32;
     permissions : GroupPermissions;
@@ -434,6 +435,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     avatar_id : DocumentIdUpdate;
     is_public : opt bool;
     latest_message : opt MessageEventWrapper;
+    latest_message_sender_display_name : opt text;
     latest_event_index : opt EventIndex;
     member_count : opt nat32;
     permissions : opt GroupPermissions;
@@ -1445,4 +1447,5 @@ type CommunityMember = record {
     user_id : UserId;
     date_added : TimestampMillis;
     role : CommunityRole;
+    display_name : opt text;
 };

@@ -35,6 +35,7 @@ impl CommunityMembers {
             channels_removed: Vec::new(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
             is_bot: false,
+            display_name: Timestamped::default(),
         };
 
         CommunityMembers {
@@ -62,6 +63,7 @@ impl CommunityMembers {
                         channels_removed: Vec::new(),
                         rules_accepted: None,
                         is_bot,
+                        display_name: Timestamped::default(),
                     };
                     e.insert(member.clone());
                     self.add_user_id(principal, user_id);
@@ -203,6 +205,14 @@ impl CommunityMembers {
         self.user_groups.last_updated()
     }
 
+    pub fn display_names_last_updated(&self) -> TimestampMillis {
+        self.members
+            .values()
+            .map(|m| m.display_name.timestamp)
+            .max()
+            .unwrap_or_default()
+    }
+
     pub fn mark_member_joined_channel(&mut self, user_id: &UserId, channel_id: ChannelId) {
         if let Some(member) = self.members.get_mut(user_id) {
             member.channels.insert(channel_id);
@@ -309,6 +319,7 @@ pub struct CommunityMemberInternal {
     pub channels_removed: Vec<Timestamped<ChannelId>>,
     pub rules_accepted: Option<Timestamped<Version>>,
     pub is_bot: bool,
+    pub display_name: Timestamped<Option<String>>,
 }
 
 impl CommunityMemberInternal {
@@ -336,6 +347,10 @@ impl CommunityMemberInternal {
         if !already_accepted {
             self.rules_accepted = Some(Timestamped::new(version, now));
         }
+    }
+
+    pub fn has_summary_updates_since(&self, since: TimestampMillis) -> bool {
+        self.rules_accepted.as_ref().map_or(false, |t| t.timestamp > since)
     }
 }
 
@@ -367,6 +382,7 @@ impl From<CommunityMemberInternal> for CommunityMember {
             user_id: p.user_id,
             date_added: p.date_added,
             role: p.role,
+            display_name: p.display_name.value,
         }
     }
 }
@@ -377,6 +393,7 @@ impl From<&CommunityMemberInternal> for CommunityMember {
             user_id: p.user_id,
             date_added: p.date_added,
             role: p.role,
+            display_name: p.display_name.value.clone(),
         }
     }
 }

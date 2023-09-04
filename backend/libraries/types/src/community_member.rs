@@ -9,4 +9,5 @@ pub struct CommunityMember {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
     pub role: CommunityRole,
+    pub display_name: Option<String>,
 }

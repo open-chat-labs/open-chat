@@ -20,7 +20,7 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
     Success(SuccessResult {
         timestamp: now,
         latest_event_index: state.data.events.latest_event_index(),
-        members: members.iter().map(|p| p.into()).collect(),
+        members: members.iter().map(|m| m.into()).collect(),
         blocked_users: members.blocked(),
         invited_users: state.data.invited_users.users(),
         rules: state.data.rules.clone().into(),
