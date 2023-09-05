@@ -151,7 +151,7 @@ fn send_message_mentioning_user_group() {
     let user_group_id = client::community::happy_path::create_user_group(
         env,
         user1.principal,
-        community_id.into(),
+        community_id,
         user_group_name.clone(),
         vec![user1.user_id, user2.user_id],
     );
