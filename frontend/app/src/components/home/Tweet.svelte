@@ -37,7 +37,7 @@
                     // only render the preview if we are *still* intersecting
                     if (intersecting && !$eventListScrolling) {
                         tweetRendered = true;
-                        dispatch("rendered");
+                        dispatch("rendered", tweetWrapper);
                     }
                 })
                 .catch((err: any) => {

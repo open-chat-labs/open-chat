@@ -1,5 +1,6 @@
 <script lang="ts" context="module">
     import { waitAll } from "openchat-client";
+    import { createEventDispatcher, onMount } from "svelte";
 
     export type LinkInfo = {
         title: string | null | undefined;
@@ -36,10 +37,29 @@
 </script>
 
 <script lang="ts">
+    const dispatch = createEventDispatcher();
+
     export let previews: (LinkInfo | undefined)[] = [];
+
+    let previewsWrapper: HTMLElement;
+    let numberOfImagesLoaded = 0;
+    let imageCount = 0;
+
+    function imageLoaded() {
+        numberOfImagesLoaded += 1;
+        if (numberOfImagesLoaded >= imageCount && previewsWrapper) {
+            dispatch("rendered", previewsWrapper);
+        }
+    }
+
+    onMount(() => {
+        imageCount = previews.reduce((count, p) => {
+            return p?.image ? count + 1 : count;
+        }, 0);
+    });
 </script>
 
-<div class="previews">
+<div bind:this={previewsWrapper} class="previews">
     {#each previews as preview}
         {#if preview !== undefined}
             {#if preview.title}
@@ -49,7 +69,12 @@
                 <p class="desc">{preview.description}</p>
             {/if}
             {#if preview.image}
-                <img class="image" src={preview.image} alt="link preview image" />
+                <img
+                    on:load={imageLoaded}
+                    on:error={imageLoaded}
+                    class="image"
+                    src={preview.image}
+                    alt="link preview image" />
             {/if}
         {/if}
     {/each}

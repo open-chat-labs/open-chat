@@ -4,7 +4,8 @@
     import YouTubePreview from "./YouTubePreview.svelte";
     import type { OpenChat } from "openchat-client";
     import GenericPreview, { loadPreviews, type LinkInfo } from "./GenericPreview.svelte";
-    import { eventListScrolling } from "../../stores/scrollPos";
+    import { eventListScrolling, reverseScroll } from "../../stores/scrollPos";
+    import { lowBandwidth } from "../../stores/settings";
 
     const client = getContext<OpenChat>("client");
 
@@ -17,8 +18,33 @@
     let rendered = false;
     let previewsPromise: Promise<LinkInfo[]> | undefined = undefined;
 
+    let list: HTMLElement | null | undefined = undefined;
+
     $: youtubeMatch = text.match(client.youtubeRegex());
     $: twitterLinkMatch = text.match(client.twitterLinkRegex());
+
+    function closestAncestor(
+        el: HTMLElement | null | undefined,
+        selector: string
+    ): HTMLElement | null | undefined {
+        while (el) {
+            if (el.matches(selector)) {
+                return el;
+            }
+            el = el.parentElement;
+        }
+        return null;
+    }
+
+    function previewLoaded(ev: CustomEvent<HTMLElement>): void {
+        // if we are using reverse scroll rendering there is no need to adjust the scroll top when rendering previews
+        if (reverseScroll || $lowBandwidth) return;
+
+        list = list || closestAncestor(ev.detail, ".scrollable-list");
+        if (list) {
+            list.scrollTop = list.scrollTop + ev.detail.offsetHeight;
+        }
+    }
 
     $: {
         if (
@@ -41,11 +67,11 @@
 </script>
 
 {#if twitterLinkMatch}
-    <Tweet tweetId={twitterLinkMatch[3]} {intersecting} />
+    <Tweet on:rendered={previewLoaded} tweetId={twitterLinkMatch[3]} {intersecting} />
 {:else if youtubeMatch}
     <YouTubePreview {pinned} {fill} {youtubeMatch} />
 {:else if rendered}
     {#await previewsPromise then previews}
-        <GenericPreview {previews} />
+        <GenericPreview {previews} on:rendered={previewLoaded} />
     {/await}
 {/if}
