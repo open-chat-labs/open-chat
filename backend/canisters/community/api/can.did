@@ -733,6 +733,20 @@ type SendMessageResponse = variant {
     RulesNotAccepted;
 };
 
+type SetMemberDisplayNameArgs = record {
+    display_name : opt text;
+};
+
+type SetMemberDisplayNameResponse = variant {
+    Success;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    DisplayNameInvalid;
+    DisplayNameTooShort : nat16;
+    DisplayNameTooLong : nat16;
+};
+
 type ToggleMuteNotificationsArgs = record {
     channel_id : opt ChannelId;
     mute : bool;
@@ -904,6 +918,7 @@ service : {
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
     reset_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     send_message : (SendMessageArgs) -> (SendMessageResponse);
+    set_member_display_name : (SetMemberDisplayNameArgs) -> (SetMemberDisplayNameResponse);
     toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);

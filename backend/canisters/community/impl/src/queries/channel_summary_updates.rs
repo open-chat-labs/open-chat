@@ -34,6 +34,7 @@ fn channel_summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             args.updates_since,
             is_community_member,
             state.data.is_public,
+            &state.data.members,
             state.env.now(),
         ) {
             ChannelUpdates::Added(s) => SuccessAdded(s),

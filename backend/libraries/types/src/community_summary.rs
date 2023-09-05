@@ -33,6 +33,7 @@ pub struct CommunityMembership {
     pub joined: TimestampMillis,
     pub role: CommunityRole,
     pub rules_accepted: bool,
+    pub display_name: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -63,4 +64,5 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
 pub struct CommunityMembershipUpdates {
     pub role: Option<CommunityRole>,
     pub rules_accepted: Option<bool>,
+    pub display_name: OptionUpdate<String>,
 }

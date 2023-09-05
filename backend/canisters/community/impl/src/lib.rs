@@ -97,6 +97,7 @@ impl RuntimeState {
                     .rules_accepted
                     .as_ref()
                     .map_or(false, |version| version.value >= self.data.rules.text.version),
+                display_name: m.display_name().value.clone(),
             };
 
             // Return all the channels that the user is a member of
@@ -104,7 +105,7 @@ impl RuntimeState {
                 .channels
                 .iter()
                 .filter_map(|c| self.data.channels.get(c))
-                .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public, now))
+                .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public, &data.members, now))
                 .collect();
 
             (channels, Some(membership))
@@ -115,7 +116,7 @@ impl RuntimeState {
                 .channels
                 .public_channels()
                 .iter()
-                .filter_map(|c| c.summary(None, false, data.is_public, now))
+                .filter_map(|c| c.summary(None, false, data.is_public, &data.members, now))
                 .collect();
 
             (channels, None)
