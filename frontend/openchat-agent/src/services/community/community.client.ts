@@ -778,7 +778,7 @@ export class CommunityClient extends CandidService {
     ): Promise<CommunityDetails> {
         const updatesResponse = await this.handleQueryResponse(
             () =>
-                this.service.selected_updates({
+                this.service.selected_updates_v2({
                     updates_since: previous.lastUpdated,
                     invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
@@ -848,7 +848,7 @@ export class CommunityClient extends CandidService {
     ): Promise<GroupChatDetails> {
         const updatesResponse = await this.handleQueryResponse(
             () =>
-                this.service.selected_channel_updates({
+                this.service.selected_channel_updates_v2({
                     channel_id: BigInt(chatId.channelId),
                     updates_since: previous.timestamp,
                 }),
