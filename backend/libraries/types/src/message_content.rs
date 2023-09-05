@@ -129,29 +129,38 @@ impl MessageContent {
         }
     }
 
-    pub fn notification_text(&self, mentioned: &[User]) -> Option<String> {
-        let mut text = match self {
-            MessageContent::Text(t) => Some(t.text.clone()),
-            MessageContent::Image(i) => i.caption.clone(),
-            MessageContent::Video(v) => v.caption.clone(),
-            MessageContent::Audio(a) => a.caption.clone(),
-            MessageContent::File(f) => f.caption.clone(),
-            MessageContent::Poll(p) => p.config.text.clone(),
-            MessageContent::Crypto(c) => c.caption.clone(),
-            MessageContent::Giphy(g) => g.caption.clone(),
-            MessageContent::GovernanceProposal(gp) => Some(gp.proposal.title().to_string()),
-            MessageContent::Prize(p) => p.caption.clone(),
+    pub fn text(&self) -> Option<&str> {
+        match self {
+            MessageContent::Text(t) => Some(t.text.as_str()),
+            MessageContent::Image(i) => i.caption.as_deref(),
+            MessageContent::Video(v) => v.caption.as_deref(),
+            MessageContent::Audio(a) => a.caption.as_deref(),
+            MessageContent::File(f) => f.caption.as_deref(),
+            MessageContent::Poll(p) => p.config.text.as_deref(),
+            MessageContent::Crypto(c) => c.caption.as_deref(),
+            MessageContent::Giphy(g) => g.caption.as_deref(),
+            MessageContent::GovernanceProposal(gp) => Some(gp.proposal.title()),
+            MessageContent::Prize(p) => p.caption.as_deref(),
             MessageContent::Deleted(_)
             | MessageContent::PrizeWinner(_)
             | MessageContent::MessageReminderCreated(_)
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
             | MessageContent::Custom(_) => None,
-        }?;
+        }
+    }
+
+    pub fn notification_text(&self, mentioned: &[User], user_groups_mentioned: &[(u32, String)]) -> Option<String> {
+        let mut text = self.text()?.to_string();
 
         // Populate usernames for mentioned users
         for User { user_id, username } in mentioned {
             text = text.replace(&format!("@UserId({user_id})"), &format!("@{username}"));
+        }
+
+        // Populate names for mentioned user groups
+        for (id, name) in user_groups_mentioned {
+            text = text.replace(&format!("@UserGroup({id})"), &format!("@{name}"));
         }
 
         const MAX_CHARS: usize = 200;
