@@ -8,7 +8,7 @@ export const navOpen = writable<boolean>(false);
 
 export const fullWidth = derived(
     screenWidth,
-    ($screenWidth) => $screenWidth === ScreenWidth.ExtraExtraLarge
+    ($screenWidth) => $screenWidth === ScreenWidth.ExtraExtraLarge,
 );
 
 type RightPanelState = "hidden" | "floating" | "inline";
@@ -60,5 +60,5 @@ export const layoutStore: Readable<Layout> = derived(
                     : "hidden") as RightPanelState,
             };
         }
-    }
+    },
 );

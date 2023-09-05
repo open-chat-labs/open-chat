@@ -35,6 +35,7 @@ import type {
     MultiUserChat,
     ChatListScope,
     CryptocurrencyDetails,
+    TimelineItem,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -521,14 +522,41 @@ export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
     expandedDeletedMessages: Set<number>,
+    reverse: boolean,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
-): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(
-        sameDate,
-        events.filter((e) => !isEventKindHidden(e.event.kind)),
-    )
-        .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
-        .map(groupInner ?? groupBySender);
+): TimelineItem<ChatEvent>[] {
+    return flattenTimeline(
+        groupWhile(
+            sameDate,
+            events.filter((e) => !isEventKindHidden(e.event.kind)),
+        )
+            .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
+            .map(groupInner ?? groupBySender),
+        reverse,
+    );
+}
+
+export function flattenTimeline(
+    grouped: EventWrapper<ChatEvent>[][][],
+    reverse: boolean,
+): TimelineItem<ChatEvent>[] {
+    const timeline: TimelineItem<ChatEvent>[] = [];
+    grouped.forEach((dayGroup) => {
+        const date: TimelineItem<ChatEvent> = {
+            kind: "timeline_date",
+            timestamp: dayGroup[0][0]?.timestamp ?? 0,
+        };
+        const group: TimelineItem<ChatEvent> = {
+            kind: "timeline_event_group",
+            group: dayGroup,
+        };
+        if (reverse) {
+            timeline.push(group, date);
+        } else {
+            timeline.push(date, group);
+        }
+    });
+    return timeline;
 }
 
 export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
