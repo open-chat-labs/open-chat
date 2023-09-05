@@ -124,6 +124,8 @@ import type {
     DeleteCommunityResponse,
     ConvertToCommunityResponse,
     ImportGroupResponse,
+    CreateUserGroupResponse,
+    UpdateUserGroupResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 import type { RegistryValue } from "./registry";
@@ -268,7 +270,9 @@ export type WorkerRequest =
     | SetModerationFlags
     | ChangeCommunityRole
     | SetCommunityIndexes
-    | UpdateRegistry;
+    | UpdateRegistry
+    | CreateUserGroup
+    | UpdateUserGroup;
 
 type SetCommunityIndexes = {
     kind: "setCommunityIndexes";
@@ -895,6 +899,22 @@ type GetDeletedDirectMessage = {
     kind: "getDeletedDirectMessage";
 };
 
+type CreateUserGroup = {
+    communityId: string;
+    name: string;
+    userIds: string[];
+    kind: "createUserGroup";
+};
+
+type UpdateUserGroup = {
+    communityId: string;
+    userGroupId: number;
+    name: string | undefined;
+    usersToAdd: string[];
+    usersToRemove: string[];
+    kind: "updateUserGroup";
+};
+
 /**
  * Worker error type
  */
@@ -1013,7 +1033,9 @@ export type WorkerResponse =
     | Response<ImportGroupResponse>
     | Response<PublicGroupSummaryResponse>
     | Response<AddMembersToChannelResponse>
-    | Response<RegistryValue>;
+    | Response<RegistryValue>
+    | Response<CreateUserGroupResponse>
+    | Response<UpdateUserGroupResponse>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -1488,4 +1510,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? RegistryValue
     : T extends SetCommunityIndexes
     ? boolean
+    : T extends CreateUserGroup
+    ? CreateUserGroupResponse
+    : T extends UpdateUserGroup
+    ? UpdateUserGroupResponse
     : never;
