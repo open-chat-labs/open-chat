@@ -1,4 +1,4 @@
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::set_member_display_name::{Response::*, *};
 use ic_cdk_macros::update;
@@ -34,6 +34,7 @@ fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> Respons
             }
 
             member.display_name = Timestamped::new(args.display_name, now);
+            handle_activity_notification(state);
             Success
         }
         None => UserNotInCommunity,
