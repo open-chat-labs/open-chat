@@ -456,6 +456,17 @@ export type CreateChannelResponse = { 'MaxChannelsCreated' : number } |
   { 'CommunityFrozen' : null } |
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null };
+export interface CreateUserGroupArgs {
+  'user_ids' : Array<UserId>,
+  'name' : string,
+}
+export type CreateUserGroupResponse = { 'NameTooShort' : FieldTooShortResult } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : { 'user_group_id' : number } } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'NameTooLong' : FieldTooLongResult } |
+  { 'NameTaken' : null };
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
@@ -1743,6 +1754,20 @@ export type UpdateCommunityResponse = { 'NameReserved' : null } |
   { 'NameTaken' : null } |
   { 'InternalError' : null } |
   { 'BannerTooBig' : FieldTooLongResult };
+export interface UpdateUserGroupArgs {
+  'name' : [] | [string],
+  'users_to_add' : Array<UserId>,
+  'users_to_remove' : Array<UserId>,
+  'user_group_id' : number,
+}
+export type UpdateUserGroupResponse = { 'NameTooShort' : FieldTooShortResult } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserGroupNotFound' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'NameTooLong' : FieldTooLongResult } |
+  { 'NameTaken' : null };
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserFailedError { 'user_id' : UserId, 'error' : string }
 export interface UserFailedGateCheck {
@@ -1812,6 +1837,10 @@ export interface _SERVICE {
   >,
   'claim_prize' : ActorMethod<[ClaimPrizeArgs], ClaimPrizeResponse>,
   'create_channel' : ActorMethod<[CreateChannelArgs], CreateChannelResponse>,
+  'create_user_group' : ActorMethod<
+    [CreateUserGroupArgs],
+    CreateUserGroupResponse
+  >,
   'decline_invitation' : ActorMethod<
     [DeclineInvitationArgs],
     DeclineInvitationResponse
@@ -1900,5 +1929,9 @@ export interface _SERVICE {
   'update_community' : ActorMethod<
     [UpdateCommunityArgs],
     UpdateCommunityResponse
+  >,
+  'update_user_group' : ActorMethod<
+    [UpdateUserGroupArgs],
+    UpdateUserGroupResponse
   >,
 }

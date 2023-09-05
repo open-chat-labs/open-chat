@@ -30,6 +30,7 @@ fn main() {
     generate_candid_method!(community, change_role, update);
     generate_candid_method!(community, claim_prize, update);
     generate_candid_method!(community, create_channel, update);
+    generate_candid_method!(community, create_user_group, update);
     generate_candid_method!(community, decline_invitation, update);
     generate_candid_method!(community, delete_channel, update);
     generate_candid_method!(community, delete_messages, update);
@@ -47,12 +48,14 @@ fn main() {
     generate_candid_method!(community, remove_reaction, update);
     generate_candid_method!(community, reset_invite_code, update);
     generate_candid_method!(community, send_message, update);
+    generate_candid_method!(community, set_member_display_name, update);
     generate_candid_method!(community, toggle_mute_notifications, update);
     generate_candid_method!(community, unblock_user, update);
     generate_candid_method!(community, undelete_messages, update);
     generate_candid_method!(community, unpin_message, update);
     generate_candid_method!(community, update_channel, update);
     generate_candid_method!(community, update_community, update);
+    generate_candid_method!(community, update_user_group, update);
 
     candid::export_service!();
     std::print!("{}", __export_service());

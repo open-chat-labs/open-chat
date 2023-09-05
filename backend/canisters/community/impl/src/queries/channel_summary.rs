@@ -19,7 +19,13 @@ fn summary_impl(args: Args, state: &RuntimeState) -> Response {
         let user_id = state.data.members.lookup_user_id(caller);
         let is_community_member = state.data.members.get(caller).is_some();
 
-        match channel.summary(user_id, is_community_member, state.data.is_public, state.env.now()) {
+        match channel.summary(
+            user_id,
+            is_community_member,
+            state.data.is_public,
+            &state.data.members,
+            state.env.now(),
+        ) {
             Some(summary) => Success(summary),
             None => PrivateChannel,
         }

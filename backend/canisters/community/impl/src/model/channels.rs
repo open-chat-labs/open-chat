@@ -1,3 +1,4 @@
+use crate::model::members::CommunityMembers;
 use chat_events::Reader;
 use group_chat_core::{GroupChatCore, GroupMemberInternal, LeaveResult};
 use search::*;
@@ -164,6 +165,7 @@ impl Channel {
         user_id: Option<UserId>,
         is_community_member: bool,
         is_public_community: bool,
+        community_members: &CommunityMembers,
         now: TimestampMillis,
     ) -> Option<CommunityCanisterChannelSummary> {
         let chat = &self.chat;
@@ -184,6 +186,11 @@ impl Channel {
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index, now);
         let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
         let latest_message = if can_view_latest_message { main_events_reader.latest_message_event(user_id) } else { None };
+
+        let latest_message_sender_display_name = latest_message
+            .as_ref()
+            .and_then(|m| community_members.get_by_user_id(&m.event.sender))
+            .and_then(|m| m.display_name().value.clone());
 
         let membership = member.map(|m| ChannelMembership {
             joined: m.date_added,
@@ -220,6 +227,7 @@ impl Channel {
             min_visible_event_index,
             min_visible_message_index,
             latest_message,
+            latest_message_sender_display_name,
             latest_event_index,
             member_count: chat.members.len(),
             permissions: chat.permissions.clone(),
@@ -244,6 +252,7 @@ impl Channel {
         since: TimestampMillis,
         is_community_member: bool,
         is_public_community: bool,
+        community_members: &CommunityMembers,
         now: TimestampMillis,
     ) -> ChannelUpdates {
         let chat = &self.chat;
@@ -252,7 +261,7 @@ impl Channel {
         if let Some(m) = member {
             if m.date_added > since {
                 return ChannelUpdates::Added(
-                    self.summary(user_id, is_community_member, is_public_community, now)
+                    self.summary(user_id, is_community_member, is_public_community, community_members, now)
                         .expect("Channel should be accessible"),
                 );
             }
@@ -260,6 +269,15 @@ impl Channel {
 
         let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);
         let updates_from_events = chat.summary_updates_from_events(since, user_id, now);
+
+        let latest_message = can_view_latest_message
+            .then_some(updates_from_events.latest_message)
+            .flatten();
+
+        let latest_message_sender_display_name = latest_message
+            .as_ref()
+            .and_then(|m| community_members.get_by_user_id(&m.event.sender))
+            .and_then(|m| m.display_name().value.clone());
 
         let membership = member.map(|m| ChannelMembershipUpdates {
             role: updates_from_events.role_changed.then_some(m.role.into()),
@@ -288,9 +306,8 @@ impl Channel {
             subtype: updates_from_events.subtype,
             avatar_id: updates_from_events.avatar_id,
             is_public: updates_from_events.is_public,
-            latest_message: can_view_latest_message
-                .then_some(updates_from_events.latest_message)
-                .flatten(),
+            latest_message,
+            latest_message_sender_display_name,
             latest_event_index: updates_from_events.latest_event_index,
             member_count: updates_from_events.members_changed.then_some(self.chat.members.len()),
             permissions: updates_from_events.permissions,

@@ -58,6 +58,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         && state.data.events.latest_event_timestamp() <= args.updates_since
         && state.data.cached_chat_metrics.timestamp <= args.updates_since
         && state.data.members.user_groups_last_updated() <= args.updates_since
+        && !member.map_or(false, |m| m.has_summary_updates_since(args.updates_since))
     {
         return SuccessNoUpdates;
     }
@@ -74,11 +75,19 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
     for channel in channels_with_updates {
         if channel.date_imported.map_or(false, |ts| ts > args.updates_since) {
-            if let Some(summary) = channel.summary(user_id, is_community_member, state.data.is_public, now) {
+            if let Some(summary) = channel.summary(user_id, is_community_member, state.data.is_public, &state.data.members, now)
+            {
                 channels_added.push(summary);
             }
         } else {
-            match channel.summary_updates(user_id, args.updates_since, is_community_member, state.data.is_public, now) {
+            match channel.summary_updates(
+                user_id,
+                args.updates_since,
+                is_community_member,
+                state.data.is_public,
+                &state.data.members,
+                now,
+            ) {
                 ChannelUpdates::Added(s) => channels_added.push(s),
                 ChannelUpdates::Updated(s) => channels_updated.push(s),
             }
@@ -92,6 +101,13 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .as_ref()
             .filter(|accepted| updates_from_events.rules_changed || accepted.timestamp > args.updates_since)
             .map(|accepted| accepted.value >= state.data.rules.text.version),
+        display_name: m
+            .display_name()
+            .if_set_after(args.updates_since)
+            .map_or(OptionUpdate::NoChange, |display_name| match display_name {
+                Some(display_name) => OptionUpdate::SetToSome(display_name.clone()),
+                None => OptionUpdate::SetToNone,
+            }),
     });
 
     Success(CommunityCanisterCommunitySummaryUpdates {
