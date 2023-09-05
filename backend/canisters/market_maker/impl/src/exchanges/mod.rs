@@ -1,7 +1,7 @@
-use crate::MarketState;
 use async_trait::async_trait;
 use ic_cdk::api::call::CallResult;
-use market_maker_canister::{CancelOrderRequest, ExchangeId, MakeOrderRequest};
+use market_maker_canister::ExchangeId;
+use types::{CancelOrderRequest, MakeOrderRequest, MarketState};
 
 pub mod icdex;
 

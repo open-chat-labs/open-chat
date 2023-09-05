@@ -1,11 +1,11 @@
 use crate::memory::{get_orders_log_data_memory, get_orders_log_index_memory, Memory};
 use ic_stable_structures::{StableLog, Storable};
-use market_maker_canister::{CancelOrderRequest, ExchangeId, MakeOrderRequest};
+use market_maker_canister::ExchangeId;
 use msgpack::{deserialize_then_unwrap, serialize_then_unwrap};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
-use types::TimestampMillis;
+use types::{CancelOrderRequest, MakeOrderRequest, TimestampMillis};
 
 #[derive(Serialize, Deserialize)]
 pub struct OrdersLog {

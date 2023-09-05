@@ -1,14 +1,14 @@
 use crate::exchanges::Exchange;
-use crate::{mutate_state, read_state, AggregatedOrders, Config, Order, RuntimeState};
+use crate::{mutate_state, read_state, Config, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use itertools::Itertools;
-use market_maker_canister::{CancelOrderRequest, ExchangeId, MakeOrderRequest, OrderType};
+use market_maker_canister::ExchangeId;
 use std::cmp::{max, min, Reverse};
 use std::collections::btree_map::Entry::Occupied;
 use std::collections::BTreeMap;
 use std::time::Duration;
 use tracing::trace;
-use types::Milliseconds;
+use types::{AggregatedOrders, CancelOrderRequest, MakeOrderRequest, Milliseconds, Order, OrderType};
 use utils::time::MINUTE_IN_MS;
 
 const RUN_MARKET_MAKER_INTERVAL: Milliseconds = MINUTE_IN_MS;

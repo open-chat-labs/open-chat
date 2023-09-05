@@ -2422,6 +2422,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "576c539151d4769fb4d1a0c25c4108dd18facd04c5695b02cf2d226ab4e43aa5"
 
 [[package]]
+name = "icdex_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "hex",
+ "ic-cdk",
+ "icrc1_ledger_canister_c2c_client",
+ "serde",
+ "types",
+]
+
+[[package]]
 name = "icp_dispenser_bot"
 version = "0.1.0"
 dependencies = [
@@ -2924,6 +2937,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "icdex_client",
  "icrc1_ledger_canister_c2c_client",
  "itertools",
  "market_maker_canister",
