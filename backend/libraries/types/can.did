@@ -354,6 +354,7 @@ type CommunityMembership = record {
     joined : TimestampMillis;
     role : CommunityRole;
     rules_accepted : bool;
+    display_name : opt text;
 };
 
 type UserGroup = record {
@@ -424,6 +425,7 @@ type CommunityCanisterCommunitySummaryUpdates = record {
 type CommunityMembershipUpdates = record {
     role : opt CommunityRole;
     rules_accepted : opt bool;
+    display_name : TextUpdate;
 };
 
 type CommunityCanisterChannelSummaryUpdates = record {

@@ -97,6 +97,7 @@ impl RuntimeState {
                     .rules_accepted
                     .as_ref()
                     .map_or(false, |version| version.value >= self.data.rules.text.version),
+                display_name: m.display_name.value.clone(),
             };
 
             // Return all the channels that the user is a member of

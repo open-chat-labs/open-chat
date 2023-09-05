@@ -350,7 +350,7 @@ impl CommunityMemberInternal {
     }
 
     pub fn has_summary_updates_since(&self, since: TimestampMillis) -> bool {
-        self.rules_accepted.as_ref().map_or(false, |t| t.timestamp > since)
+        self.rules_accepted.as_ref().map_or(false, |t| t.timestamp > since) || self.display_name.timestamp > since
     }
 }
 
