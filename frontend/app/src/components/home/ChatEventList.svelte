@@ -329,7 +329,7 @@
             loadPromises.push(client.loadNewMessages(chat.id, threadRootEvent));
         }
         if (loadingPrev) {
-            console.debug("SCROLL: about to load previous message", keyMeasurements());
+            console.debug("SCROLL: about to load previous message");
             loadPromises.push(client.loadPreviousMessages(chat.id, threadRootEvent, initialLoad));
         }
         if (loadPromises.length > 0) {
@@ -550,8 +550,6 @@
         menuStore.hideMenu();
         tooltipStore.hide();
         eventListLastScrolled.set(Date.now());
-
-        console.debug("SCROLL: userscroll: ", keyMeasurements());
 
         if (!initialised || interrupt || loadingFromUserScroll) return;
 
