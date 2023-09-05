@@ -150,12 +150,17 @@ impl MessageContent {
         }
     }
 
-    pub fn notification_text(&self, mentioned: &[User]) -> Option<String> {
+    pub fn notification_text(&self, mentioned: &[User], user_groups_mentioned: &[(u32, String)]) -> Option<String> {
         let mut text = self.text()?.to_string();
 
         // Populate usernames for mentioned users
         for User { user_id, username } in mentioned {
             text = text.replace(&format!("@UserId({user_id})"), &format!("@{username}"));
+        }
+
+        // Populate names for mentioned user groups
+        for (id, name) in user_groups_mentioned {
+            text = text.replace(&format!("@UserGroup({id})"), &format!("@{name}"));
         }
 
         const MAX_CHARS: usize = 200;

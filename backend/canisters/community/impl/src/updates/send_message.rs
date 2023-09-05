@@ -1,4 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::model::members::CommunityMembers;
+use crate::model::user_groups::UserGroup;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
@@ -53,17 +55,12 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         let user_id = member.user_id;
 
-        let user_groups_mentioned = extract_user_groups_mentioned(&args.content);
+        let user_groups_mentioned = extract_user_groups_mentioned(&args.content, &state.data.members);
         let mentioned: Vec<_> = args
             .mentioned
             .iter()
             .map(|u| u.user_id)
-            .chain(
-                user_groups_mentioned
-                    .into_iter()
-                    .filter_map(|ug| state.data.members.get_user_group(ug))
-                    .flat_map(|ug| ug.members.value.iter().copied()),
-            )
+            .chain(user_groups_mentioned.iter().flat_map(|ug| ug.members.value.iter().copied()))
             .unique()
             .collect();
 
@@ -112,7 +109,13 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     sender_name: args.sender_name,
                     sender_display_name: args.sender_display_name,
                     message_type: content.message_type().to_string(),
-                    message_text: content.notification_text(&args.mentioned),
+                    message_text: content.notification_text(
+                        &args.mentioned,
+                        &user_groups_mentioned
+                            .iter()
+                            .map(|ug| (ug.id, ug.name.value.clone()))
+                            .collect_vec(),
+                    ),
                     image_url: content.notification_image_url(),
                     community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
                     channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
@@ -177,7 +180,7 @@ thread_local! {
     static USER_GROUP_REGEX: RefCell<Regex> = RefCell::new(Regex::new(r"@UserGroup\((\d+)\)").unwrap());
 }
 
-fn extract_user_groups_mentioned(content: &MessageContentInitial) -> Vec<u32> {
+fn extract_user_groups_mentioned<'a>(content: &MessageContentInitial, members: &'a CommunityMembers) -> Vec<&'a UserGroup> {
     if let Some(text) = content.text() {
         USER_GROUP_REGEX.with(|regex| {
             regex
@@ -185,6 +188,7 @@ fn extract_user_groups_mentioned(content: &MessageContentInitial) -> Vec<u32> {
                 .captures_iter(text)
                 .filter_map(|c| c.get(1))
                 .filter_map(|m| u32::from_str(m.as_str()).ok())
+                .filter_map(|id| members.get_user_group(id))
                 .collect()
         })
     } else {
