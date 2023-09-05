@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.838](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.838-user)] - 2023-09-05
+
 ### Changed
 
 - Use empty Vec if unconfirmed messages fail to deserialize ([#4304](https://github.com/open-chat-labs/open-chat/pull/4304))
