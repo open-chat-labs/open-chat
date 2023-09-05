@@ -44,6 +44,7 @@ export type CommunityMembership = {
     archived: boolean;
     pinned: ChannelIdentifier[];
     index: number;
+    displayName: string | undefined;
 };
 
 export type CommunityIdentifier = {
@@ -200,6 +201,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
 
 export type CommunityMembershipUpdates = {
     role: MemberRole | undefined;
+    displayName: OptionUpdate<string>;
 };
 
 export type ChannelMembershipUpdates = {
@@ -259,8 +261,18 @@ export type LocalCommunitySummaryUpdates = {
     removedAtTimestamp?: bigint;
     lastUpdated: number;
     index?: number;
+    displayName: OptionUpdate<string>;
 };
 
 export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | Failure;
 
 export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | Failure;
+
+export type SetMemberDisplayNameResponse = 
+    "success" | 
+    "user_not_in_community" | 
+    "user_suspended" | 
+    "community_frozen" | 
+    "display_name_too_short" | 
+    "display_name_too_long" | 
+    "display_name_invalid";

@@ -160,6 +160,7 @@ import type {
     RegistryValue,
     PublicGroupSummaryResponse,
     SetDisplayNameResponse,
+    SetMemberDisplayNameResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2436,5 +2437,9 @@ export class OpenChatAgent extends EventTarget {
 
     setCommunityIndexes(communityIndexes: Record<string, number>): Promise<boolean> {
         return this.userClient.setCommunityIndexes(communityIndexes);
+    }
+
+    setMemberDisplayName(communityId: string, display_name: string | undefined): Promise<SetMemberDisplayNameResponse> {
+        return this.communityClient(communityId).setMemberDisplayName(display_name);
     }
 }

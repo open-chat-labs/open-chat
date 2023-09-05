@@ -23,6 +23,7 @@ import type {
     Message,
     RemoveMemberResponse,
     SendMessageResponse,
+    SetMemberDisplayNameResponse,
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
     UpdateCommunityResponse,
@@ -63,6 +64,7 @@ import type {
     ApiSelectedUpdatesResponse,
     ApiChannelSummaryResponse,
     ApiImportGroupResponse,
+    ApiSetMemberDisplayNameResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -416,6 +418,7 @@ export function communityMembershipUpdates(
 ): CommunityMembershipUpdates {
     return {
         role: optional(candid.role, memberRole),
+        displayName: optionUpdate(candid.display_name, identity),
     };
 }
 
@@ -566,6 +569,7 @@ export function communityDetailsResponse(
             members: candid.Success.members.map((m) => ({
                 role: memberRole(m.role),
                 userId: m.user_id.toString(),
+                displayName: optional(m.display_name, identity),
             })),
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
@@ -587,6 +591,7 @@ export function communityDetailsUpdatesResponse(
             membersAddedOrUpdated: candid.Success.members_added_or_updated.map((m) => ({
                 role: memberRole(m.role),
                 userId: m.user_id.toString(),
+                displayName: optional(m.display_name, identity),
             })),
             membersRemoved: new Set(candid.Success.members_removed.map((u) => u.toString())),
             blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
@@ -609,4 +614,32 @@ export function communityDetailsUpdatesResponse(
         console.warn("Unexpected ApiSelectedUpdatesResponse type received", candid);
         return CommonResponses.failure();
     }
+}
+
+export function setMemberDisplayNameResponse(candid: ApiSetMemberDisplayNameResponse): SetMemberDisplayNameResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("UserNotInCommunity" in candid) {
+        return "user_not_in_community";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
+    if ("CommunityFrozen" in candid) {
+        return "community_frozen";
+    }
+    if ("DisplayNameTooShort" in candid) {
+        return "display_name_too_short";
+    }
+    if ("DisplayNameTooLong" in candid) {
+        return "display_name_too_long";
+    }
+    if ("DisplayNameInvalid" in candid) {
+        return "display_name_invalid";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiSetMemberDisplayNameResponse type received",
+        candid
+    );
 }

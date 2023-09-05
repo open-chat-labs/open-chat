@@ -19,6 +19,11 @@ class LocalCommunitySummaryUpdatesStore extends LocalUpdatesStore<
             index,
         }));
     }
+    updateDisplayName(id: CommunityIdentifier, displayName: string | undefined): void {
+        this.applyUpdate(id, (_) => ({
+            displayName: displayName !== undefined ? { value: displayName } : undefined,
+        }));
+    }
 
     markAdded(summary: CommunitySummary): void {
         this.applyUpdate(summary.id, (_) => ({

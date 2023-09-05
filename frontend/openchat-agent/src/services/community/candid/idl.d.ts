@@ -67,6 +67,7 @@ import {
     ImportGroupResponse,
     GroupCanisterThreadDetails,
     RegisterProposalVoteResponse,
+    SetMemberDisplayNameResponse,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -136,6 +137,7 @@ export {
     ImportGroupResponse as ApiImportGroupResponse,
     GroupCanisterThreadDetails as ApiGroupCanisterThreadDetails,
     RegisterProposalVoteResponse as ApiRegisterProposalVoteResponse,
+    SetMemberDisplayNameResponse as ApiSetMemberDisplayNameResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

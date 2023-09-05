@@ -14,6 +14,7 @@
     "notificationsEnabled": "Notifications enabled",
     "usernameRules": "alphanumerics & underscores only",
     "displayNameRules": "optional",
+    "communityDisplayNameRules": "only within this community",
     "enterBio": "Tell us something about yourself",
     "username": "Username",
     "displayName": "Display name",
@@ -83,7 +84,9 @@
         "label": "Profile",
         "title": "Profile settings",
         "chat": "Chat",
-        "settings": "Settings"
+        "settings": "Settings",
+        "communities": "Communities",
+        "selectCommunity": "Select a community"
     },
     "durationDays": "{duration} days",
     "oneHour": "1 hour",

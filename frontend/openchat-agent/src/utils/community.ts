@@ -112,6 +112,7 @@ export function mergeCommunityUpdates(
                 archived: u?.archived ?? community.membership.archived,
                 pinned: u?.pinned ?? community.membership.pinned,
                 index: u?.index ?? community.membership.index,
+                displayName: applyOptionUpdate(community.membership.displayName, c?.membership?.displayName),
             },
             channels: mergeChannelUpdates(
                 currentChannels,

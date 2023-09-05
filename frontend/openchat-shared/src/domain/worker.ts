@@ -124,6 +124,7 @@ import type {
     DeleteCommunityResponse,
     ConvertToCommunityResponse,
     ImportGroupResponse,
+    SetMemberDisplayNameResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 import type { RegistryValue } from "./registry";
@@ -268,7 +269,8 @@ export type WorkerRequest =
     | SetModerationFlags
     | ChangeCommunityRole
     | SetCommunityIndexes
-    | UpdateRegistry;
+    | UpdateRegistry
+    | SetMemberDisplayName;
 
 type SetCommunityIndexes = {
     kind: "setCommunityIndexes";
@@ -1228,6 +1230,13 @@ type UpdateRegistry = {
     kind: "updateRegistry";
 };
 
+type SetMemberDisplayName = {
+    communityId: string;
+    displayName: string | undefined;
+    kind: "setMemberDisplayName";
+};
+
+
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
     : T extends UnpinMessage
@@ -1488,4 +1497,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? RegistryValue
     : T extends SetCommunityIndexes
     ? boolean
+    : T extends SetMemberDisplayName
+    ? SetMemberDisplayNameResponse
     : never;

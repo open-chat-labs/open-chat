@@ -196,6 +196,7 @@ export interface ChatMetrics {
   'prize_messages' : bigint,
 }
 export interface CommunityCanisterChannelSummary {
+  'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : boolean,
   'permissions' : GroupPermissions,
@@ -220,6 +221,7 @@ export interface CommunityCanisterChannelSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface CommunityCanisterChannelSummaryUpdates {
+  'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
@@ -298,15 +300,18 @@ export interface CommunityMatch {
 export interface CommunityMember {
   'role' : CommunityRole,
   'user_id' : UserId,
+  'display_name' : [] | [string],
   'date_added' : TimestampMillis,
 }
 export interface CommunityMembership {
   'role' : CommunityRole,
+  'display_name' : [] | [string],
   'joined' : TimestampMillis,
   'rules_accepted' : boolean,
 }
 export interface CommunityMembershipUpdates {
   'role' : [] | [CommunityRole],
+  'display_name' : TextUpdate,
   'rules_accepted' : [] | [boolean],
 }
 export type CommunityPermissionRole = { 'Owners' : null } |

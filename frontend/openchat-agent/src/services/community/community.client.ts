@@ -26,6 +26,7 @@ import {
     changeRoleResponse,
     communityChannelSummaryResponse,
     importGroupResponse,
+    setMemberDisplayNameResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -115,6 +116,7 @@ import type {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     RegisterProposalVoteResponse,
+    SetMemberDisplayNameResponse,
 } from "openchat-shared";
 import { textToCode, DestinationInvalidError } from "openchat-shared";
 import {
@@ -1176,6 +1178,15 @@ export class CommunityClient extends CandidService {
                           },
             }),
             updateCommunityResponse
+        );
+    }
+    
+    setMemberDisplayName(displayName: string | undefined): Promise<SetMemberDisplayNameResponse> {
+        return this.handleResponse(
+            this.service.set_member_display_name({
+                display_name: apiOptional(identity, displayName),
+            }),
+            setMemberDisplayNameResponse
         );
     }
 }

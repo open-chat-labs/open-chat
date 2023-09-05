@@ -1533,6 +1533,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
             archived: false,
             pinned: [],
             index: 0,
+            displayName: optional(candid.membership, (m) => optional(m.display_name, identity)),
         },
         channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: candid.primary_language,
@@ -1924,6 +1925,7 @@ export function member(candid: ApiParticipant): Member {
     return {
         role: memberRole(candid.role),
         userId: candid.user_id.toString(),
+        displayName: undefined
     };
 }
 

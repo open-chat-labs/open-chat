@@ -557,6 +557,7 @@ export const idlFactory = ({ IDL }) => {
     'expires_at' : IDL.Opt(TimestampMillis),
   });
   const CommunityCanisterChannelSummary = IDL.Record({
+    'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Bool,
     'permissions' : GroupPermissions,
@@ -620,6 +621,7 @@ export const idlFactory = ({ IDL }) => {
     'my_metrics' : IDL.Opt(ChatMetrics),
   });
   const CommunityCanisterChannelSummaryUpdates = IDL.Record({
+    'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Opt(IDL.Bool),
     'permissions' : IDL.Opt(GroupPermissions),
@@ -1252,6 +1254,7 @@ export const idlFactory = ({ IDL }) => {
   const CommunityMember = IDL.Record({
     'role' : CommunityRole,
     'user_id' : UserId,
+    'display_name' : IDL.Opt(IDL.Text),
     'date_added' : TimestampMillis,
   });
   const UserGroupMembers = IDL.Record({
@@ -1340,6 +1343,18 @@ export const idlFactory = ({ IDL }) => {
     'InvalidRequest' : IDL.Text,
     'RulesNotAccepted' : IDL.Null,
   });
+  const SetMemberDisplayNameArgs = IDL.Record({
+    'display_name' : IDL.Opt(IDL.Text),
+  });
+  const SetMemberDisplayNameResponse = IDL.Variant({
+    'DisplayNameInvalid' : IDL.Null,
+    'Success' : IDL.Null,
+    'DisplayNameTooLong' : IDL.Nat16,
+    'UserNotInCommunity' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+    'DisplayNameTooShort' : IDL.Nat16,
+  });
   const SummaryArgs = IDL.Record({ 'invite_code' : IDL.Opt(IDL.Nat64) });
   const CommunityPermissionRole = IDL.Variant({
     'Owners' : IDL.Null,
@@ -1362,6 +1377,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CommunityMembership = IDL.Record({
     'role' : CommunityRole,
+    'display_name' : IDL.Opt(IDL.Text),
     'joined' : TimestampMillis,
     'rules_accepted' : IDL.Bool,
   });
@@ -1398,8 +1414,14 @@ export const idlFactory = ({ IDL }) => {
     'updates_since' : TimestampMillis,
     'invite_code' : IDL.Opt(IDL.Nat64),
   });
+  const TextUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : IDL.Text,
+  });
   const CommunityMembershipUpdates = IDL.Record({
     'role' : IDL.Opt(CommunityRole),
+    'display_name' : TextUpdate,
     'rules_accepted' : IDL.Opt(IDL.Bool),
   });
   const FrozenGroupUpdate = IDL.Variant({
@@ -1724,6 +1746,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
+    'set_member_display_name' : IDL.Func(
+        [SetMemberDisplayNameArgs],
+        [SetMemberDisplayNameResponse],
+        [],
+      ),
     'summary' : IDL.Func([SummaryArgs], [SummaryResponse], ['query']),
     'summary_updates' : IDL.Func(
         [SummaryUpdatesArgs],

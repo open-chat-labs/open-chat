@@ -317,6 +317,7 @@ import type {
     CryptocurrencyTransfer,
     Mention,
     SetDisplayNameResponse,
+    SetMemberDisplayNameResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1139,6 +1140,21 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    setMemberDisplayName(id: CommunityIdentifier, displayName: string | undefined): Promise<SetMemberDisplayNameResponse> {
+        return this.sendRequest({ kind: "setMemberDisplayName", communityId: id.communityId, displayName }).then((resp) => {
+            if (resp === "success") {
+                if (this._user !== undefined) {
+                    communityStateStore.updateProp(id, "members", (ps) =>
+                        ps.map((p) => (p.userId === this._user?.userId ? { ...p, displayName } : p)),
+                    );
+                } 
+
+                localCommunitySummaryUpdates.updateDisplayName(id, displayName);
+            }
+            return resp;
+        });
+    }
+
     getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
         return getContentAsText(formatter, content, get(cryptoLookup));
     }
@@ -1810,7 +1826,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 {
                     role: "member",
                     userId,
-                    username: this._liveState.userStore[userId]?.username ?? "unknown",
+                    displayName: undefined,
                 },
             ]);
         }
@@ -1835,7 +1851,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 {
                     role: "member",
                     userId,
-                    username: this._liveState.userStore[userId]?.username ?? "unknown",
+                    displayName: undefined,
                 },
             ]);
         }
