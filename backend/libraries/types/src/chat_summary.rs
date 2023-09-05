@@ -135,7 +135,9 @@ pub struct GroupCanisterGroupChatSummary {
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
     pub gate: Option<AccessGate>,
+    #[serde(default)]
     pub rules_enabled: bool,
+    #[serde(default)]
     pub rules_accepted: bool,
 }
 
