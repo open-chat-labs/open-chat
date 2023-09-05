@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use types::icrc1::{Account, TransferArg};
 use types::{AggregatedOrders, CancelOrderRequest, CanisterId, MakeOrderRequest, Order, OrderType};
 
-pub struct ICDexClient<M: Fn(MakeOrderRequest) -> (), C: Fn(CancelOrderRequest) -> ()> {
+pub struct ICDexClient<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> {
     this_canister_id: CanisterId,
     dex_canister_id: CanisterId,
     icp_ledger_canister_id: CanisterId,
@@ -15,7 +15,7 @@ pub struct ICDexClient<M: Fn(MakeOrderRequest) -> (), C: Fn(CancelOrderRequest) 
     on_order_cancelled: C,
 }
 
-impl<M: Fn(MakeOrderRequest) -> (), C: Fn(CancelOrderRequest) -> ()> ICDexClient<M, C> {
+impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
     pub fn new(
         this_canister_id: CanisterId,
         dex_canister_id: CanisterId,

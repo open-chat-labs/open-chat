@@ -6,9 +6,7 @@ use market_maker_canister::{ExchangeId, ICDEX_EXCHANGE_ID};
 use types::{CancelOrderRequest, MakeOrderRequest, MarketState};
 
 #[async_trait]
-impl<M: Fn(MakeOrderRequest) -> () + Send + Sync, C: Fn(CancelOrderRequest) -> () + Send + Sync> Exchange
-    for ICDexClient<M, C>
-{
+impl<M: Fn(MakeOrderRequest) + Send + Sync, C: Fn(CancelOrderRequest) + Send + Sync> Exchange for ICDexClient<M, C> {
     fn exchange_id(&self) -> ExchangeId {
         ICDEX_EXCHANGE_ID
     }
