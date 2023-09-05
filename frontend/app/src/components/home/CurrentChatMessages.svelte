@@ -27,6 +27,8 @@
     import page from "page";
     import ChatEventList from "./ChatEventList.svelte";
     import PrivatePreview from "./PrivatePreview.svelte";
+    import TimelineDate from "./TimelineDate.svelte";
+    import { reverseScroll } from "../../stores/scrollPos";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_READ_THRESHOLD = 500;
@@ -149,11 +151,6 @@
         currentChatDraftMessage.setEditing(chat.id, ev.detail);
     }
 
-    function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
-        const first = group[0] && group[0][0] && group[0][0].timestamp;
-        return first ? new Date(Number(first)).toDateString() : "unknown";
-    }
-
     function eventKey(e: EventWrapper<ChatEventType>): string {
         if (e.event.kind === "message") {
             return e.event.messageId.toString();
@@ -192,10 +189,11 @@
 
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
-    $: groupedEvents = client.groupEvents(
-        events,
+    $: timeline = client.groupEvents(
+        reverseScroll ? [...events].reverse() : events,
         user.userId,
         $expandedDeletedMessages,
+        reverseScroll,
         groupInner(filteredProposals)
     );
 
@@ -375,32 +373,34 @@
     {chat}
     bind:initialised
     bind:messagesDiv
-    bind:messagesDivHeight>
-    {#if showAvatar}
-        {#if $isProposalGroup}
-            <ProposalBot />
-        {:else if chat.kind === "group_chat" || chat.kind === "channel"}
-            <InitialGroupMessage group={chat} />
-        {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
-            <Robot />
-        {:else if chat.kind === "direct_chat"}
-            <div class="big-avatar">
-                <Avatar
-                    url={client.userAvatarUrl($userStore[chat.them.userId])}
-                    userId={chat.them.userId}
-                    size={AvatarSize.Large} />
-            </div>
+    bind:messagesDivHeight
+    let:labelObserver>
+    {#if !reverseScroll}
+        {#if showAvatar}
+            {#if $isProposalGroup}
+                <ProposalBot />
+            {:else if chat.kind === "group_chat" || chat.kind === "channel"}
+                <InitialGroupMessage group={chat} />
+            {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
+                <Robot />
+            {:else if chat.kind === "direct_chat"}
+                <div class="big-avatar">
+                    <Avatar
+                        url={client.userAvatarUrl($userStore[chat.them.userId])}
+                        userId={chat.them.userId}
+                        size={AvatarSize.Large} />
+                </div>
+            {/if}
+        {/if}
+        {#if privatePreview}
+            <PrivatePreview />
         {/if}
     {/if}
-    {#if privatePreview}
-        <PrivatePreview />
-    {/if}
-    {#each groupedEvents as dayGroup (dateGroupKey(dayGroup))}
-        <div class="day-group">
-            <div class="date-label">
-                {client.formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
-            </div>
-            {#each dayGroup as innerGroup (userGroupKey(innerGroup))}
+    {#each timeline as timelineItem}
+        {#if timelineItem.kind === "timeline_date"}
+            <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
+        {:else}
+            {#each timelineItem.group as innerGroup (userGroupKey(innerGroup))}
                 {#each innerGroup as evt, i (eventKey(evt))}
                     <ChatEvent
                         {observer}
@@ -415,8 +415,8 @@
                         chatType={chat.kind}
                         {user}
                         me={isMe(evt)}
-                        first={i === 0}
-                        last={i + 1 === innerGroup.length}
+                        first={i + 1 === innerGroup.length}
+                        last={i === 0}
                         {readonly}
                         {canPin}
                         {canBlockUser}
@@ -446,32 +446,32 @@
                         event={evt} />
                 {/each}
             {/each}
-        </div>
+        {/if}
     {/each}
+    {#if reverseScroll}
+        {#if showAvatar}
+            {#if $isProposalGroup}
+                <ProposalBot />
+            {:else if chat.kind === "group_chat" || chat.kind === "channel"}
+                <InitialGroupMessage group={chat} />
+            {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
+                <Robot />
+            {:else if chat.kind === "direct_chat"}
+                <div class="big-avatar">
+                    <Avatar
+                        url={client.userAvatarUrl($userStore[chat.them.userId])}
+                        userId={chat.them.userId}
+                        size={AvatarSize.Large} />
+                </div>
+            {/if}
+        {/if}
+        {#if privatePreview}
+            <PrivatePreview />
+        {/if}
+    {/if}
 </ChatEventList>
 
 <style lang="scss">
-    .day-group {
-        position: relative;
-
-        .date-label {
-            padding: $sp2 10px;
-            background-color: var(--currentChat-date-bg);
-            border: var(--currentChat-date-bd);
-            color: var(--currentChat-date-txt);
-            position: sticky;
-            top: 0;
-            width: fit-content;
-            min-width: 100px;
-            margin: auto;
-            border-radius: 12px;
-            @include z-index("date-label");
-            @include font(book, normal, fs-70);
-            text-align: center;
-            margin-bottom: $sp4;
-        }
-    }
-
     .big-avatar {
         margin: 16px auto;
     }

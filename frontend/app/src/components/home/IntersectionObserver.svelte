@@ -1,6 +1,8 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte";
 
+    export let unobserveOnIntersect = true;
+
     const dispatch = createEventDispatcher();
 
     let intersecting = false;
@@ -13,7 +15,9 @@
                 intersecting = entries[0].isIntersecting;
                 if (intersecting) {
                     dispatch("intersecting");
-                    observer.unobserve(container);
+                    if (unobserveOnIntersect) {
+                        observer.unobserve(container);
+                    }
                 }
             });
 

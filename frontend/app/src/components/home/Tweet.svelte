@@ -4,7 +4,7 @@
     import { _ } from "svelte-i18n";
     import { themeStore } from "../../theme/themes";
     import { createEventDispatcher, onMount } from "svelte";
-    import { lowBandwidth } from "../../stores/settings";
+    import { eventListScrolling } from "../../stores/scrollPos";
 
     const dispatch = createEventDispatcher();
 
@@ -20,7 +20,13 @@
     });
 
     $: {
-        if (intersecting && tweetWrapper !== undefined && !tweetRendered && supported) {
+        if (
+            intersecting &&
+            !$eventListScrolling &&
+            tweetWrapper !== undefined &&
+            !tweetRendered &&
+            supported
+        ) {
             tweetWrapper.innerHTML = "";
             (<any>window).twttr?.widgets
                 .createTweet(tweetId, tweetWrapper, {
@@ -28,9 +34,10 @@
                     theme: $themeStore.name,
                 })
                 .then(() => {
-                    tweetRendered = true;
-                    if (!$lowBandwidth) {
-                        dispatch("loaded", [tweetWrapper, tweetWrapper?.offsetHeight]);
+                    // only render the preview if we are *still* intersecting
+                    if (intersecting && !$eventListScrolling) {
+                        tweetRendered = true;
+                        dispatch("rendered", tweetWrapper);
                     }
                 })
                 .catch((err: any) => {
@@ -40,4 +47,4 @@
     }
 </script>
 
-<div class:rendered={tweetRendered} class="tweet" bind:this={tweetWrapper} />
+<div bind:this={tweetWrapper} />

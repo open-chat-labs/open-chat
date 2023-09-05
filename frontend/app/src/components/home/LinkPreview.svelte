@@ -4,6 +4,8 @@
     import YouTubePreview from "./YouTubePreview.svelte";
     import type { OpenChat } from "openchat-client";
     import GenericPreview, { loadPreviews, type LinkInfo } from "./GenericPreview.svelte";
+    import { eventListScrolling, reverseScroll } from "../../stores/scrollPos";
+    import { lowBandwidth } from "../../stores/settings";
 
     const client = getContext<OpenChat>("client");
 
@@ -14,8 +16,9 @@
     export let fill: boolean;
 
     let rendered = false;
+    let previewsPromise: Promise<LinkInfo[]> | undefined = undefined;
+
     let list: HTMLElement | null | undefined = undefined;
-    let previews: LinkInfo[] = [];
 
     $: youtubeMatch = text.match(client.youtubeRegex());
     $: twitterLinkMatch = text.match(client.twitterLinkRegex());
@@ -33,27 +36,42 @@
         return null;
     }
 
-    function previewLoaded(ev: CustomEvent<[HTMLElement, number]>): void {
-        list = list || closestAncestor(ev.detail[0], ".scrollable-list");
+    function previewLoaded(ev: CustomEvent<HTMLElement>): void {
+        // if we are using reverse scroll rendering there is no need to adjust the scroll top when rendering previews
+        if (reverseScroll || $lowBandwidth) return;
+
+        list = list || closestAncestor(ev.detail, ".scrollable-list");
         if (list) {
-            list.scrollTop = list.scrollTop + ev.detail[1];
+            list.scrollTop = list.scrollTop + ev.detail.offsetHeight;
         }
     }
 
     $: {
-        if (!twitterLinkMatch && !youtubeMatch && intersecting && !rendered) {
-            loadPreviews(links).then((p) => {
-                rendered = true;
-                previews = p;
+        if (
+            !twitterLinkMatch &&
+            !youtubeMatch &&
+            intersecting &&
+            !$eventListScrolling &&
+            !rendered
+        ) {
+            // make sure we only actually *load* the preview(s) once
+            previewsPromise = previewsPromise ?? loadPreviews(links);
+            previewsPromise.then(() => {
+                // only render the preview if we are *still* intersecting
+                if (intersecting && !$eventListScrolling) {
+                    rendered = true;
+                }
             });
         }
     }
 </script>
 
 {#if twitterLinkMatch}
-    <Tweet on:loaded={previewLoaded} tweetId={twitterLinkMatch[3]} {intersecting} />
+    <Tweet on:rendered={previewLoaded} tweetId={twitterLinkMatch[3]} {intersecting} />
 {:else if youtubeMatch}
-    <YouTubePreview on:loaded={previewLoaded} {pinned} {fill} {youtubeMatch} />
+    <YouTubePreview {pinned} {fill} {youtubeMatch} />
 {:else if rendered}
-    <GenericPreview {previews} on:loaded={previewLoaded} />
+    {#await previewsPromise then previews}
+        <GenericPreview {previews} on:rendered={previewLoaded} />
+    {/await}
 {/if}

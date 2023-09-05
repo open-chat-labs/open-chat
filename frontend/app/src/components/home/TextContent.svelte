@@ -47,7 +47,7 @@
             <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={"var(--txt)"} />
         </span>
     {:else}
-        <IntersectionObserver let:intersecting>
+        <IntersectionObserver unobserveOnIntersect={false} let:intersecting>
             <LinkPreview {pinned} {fill} text={content.text} links={linkMatch} {intersecting} />
         </IntersectionObserver>
     {/if}

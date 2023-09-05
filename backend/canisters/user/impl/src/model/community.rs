@@ -8,7 +8,6 @@ pub struct Community {
     pub community_id: CommunityId,
     pub date_joined: TimestampMillis,
     pub channels: HashMap<ChannelId, Channel>,
-    #[serde(default)]
     pub index: Timestamped<u32>,
     pub last_read: TimestampMillis,
     pub last_changed_for_my_data: TimestampMillis,

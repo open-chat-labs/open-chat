@@ -37,19 +37,18 @@
 </script>
 
 <script lang="ts">
-    export let previews: (LinkInfo | undefined)[] = [];
-    import { lowBandwidth } from "../../stores/settings";
-
     const dispatch = createEventDispatcher();
 
-    let previewsWrapper: HTMLElement | undefined;
+    export let previews: (LinkInfo | undefined)[] = [];
+
+    let previewsWrapper: HTMLElement;
     let numberOfImagesLoaded = 0;
     let imageCount = 0;
 
     function imageLoaded() {
         numberOfImagesLoaded += 1;
-        if (numberOfImagesLoaded >= imageCount && previewsWrapper && !$lowBandwidth) {
-            dispatch("loaded", [previewsWrapper, previewsWrapper.offsetHeight]);
+        if (numberOfImagesLoaded >= imageCount && previewsWrapper) {
+            dispatch("rendered", previewsWrapper);
         }
     }
 

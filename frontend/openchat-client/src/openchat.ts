@@ -3352,8 +3352,11 @@ export class OpenChat extends OpenChatAgentWorker {
         const matches = this._liveState.currentCommunityMembers.filter((m) => {
             const user = this._liveState.userStore[m.userId];
             if (user?.username === undefined) return false;
-            return user.username.toLowerCase().includes(termLower) || 
-                (user.displayName !== undefined && user.displayName.toLowerCase().includes(termLower));
+            return (
+                user.username.toLowerCase().includes(termLower) ||
+                (user.displayName !== undefined &&
+                    user.displayName.toLowerCase().includes(termLower))
+            );
         });
         return Promise.resolve(
             matches.map((m) => this._liveState.userStore[m.userId] as UserSummary),
@@ -3790,7 +3793,10 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    setDisplayName(userId: string, displayName: string | undefined): Promise<SetDisplayNameResponse> {
+    setDisplayName(
+        userId: string,
+        displayName: string | undefined,
+    ): Promise<SetDisplayNameResponse> {
         return this.sendRequest({ kind: "setDisplayName", userId, displayName }).then((resp) => {
             if (resp === "success" && this._user !== undefined) {
                 this._user = { ...this._user, displayName };

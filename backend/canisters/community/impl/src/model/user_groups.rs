@@ -56,6 +56,9 @@ impl UserGroups {
         }
     }
 
+    pub fn get(&self, user_group_id: u32) -> Option<&UserGroup> {
+        self.groups.iter().find(|g| g.id == user_group_id)
+    }
     pub fn iter(&self) -> impl Iterator<Item = &UserGroup> {
         self.groups.iter()
     }

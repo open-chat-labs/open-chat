@@ -18,7 +18,6 @@
         type CommunitySummary,
         type CommunityIdentifier,
         type GroupChatIdentifier,
-        type ChatListScope,
     } from "openchat-client";
     import { canShare, shareLink } from "../../utils/share";
     import Markdown from "./Markdown.svelte";
@@ -38,21 +37,16 @@
     let loading = false;
     let confirmReset = false;
 
-    $: chatListScope = client.chatListScope;
-    $: link = getLink($chatListScope.kind, container.id, code);
+    $: link = getLink(container.id, code);
     $: spinner = loading && code === undefined;
 
-    function getLink(
-        scope: ChatListScope["kind"],
-        id: CommunityIdentifier | GroupChatIdentifier,
-        code: string | undefined
-    ) {
+    function getLink(id: CommunityIdentifier | GroupChatIdentifier, code: string | undefined) {
         const qs = `/?ref=${client.user.userId}` + (!container.public ? `&code=${code}` : "");
         switch (id.kind) {
             case "community":
                 return `${window.location.origin}/community/${id.communityId}${qs}`;
             case "group_chat":
-                return `${window.location.origin}${routeForChatIdentifier(scope, id)}${qs}`;
+                return `${window.location.origin}${routeForChatIdentifier("group_chat", id)}${qs}`;
         }
     }
 
