@@ -60,7 +60,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     sender_name: args.sender_name,
                     sender_display_name: args.sender_display_name,
                     message_type: content.message_type().to_string(),
-                    message_text: content.notification_text(&args.mentioned),
+                    message_text: content.notification_text(&args.mentioned, &[]),
                     image_url: content.notification_image_url(),
                     group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
                     crypto_transfer: content.notification_crypto_transfer_details(&args.mentioned),

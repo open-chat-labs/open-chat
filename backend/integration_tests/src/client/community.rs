@@ -41,7 +41,7 @@ pub mod happy_path {
     use types::{
         AccessRules, ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        MessageIndex, TextContent, TimestampMillis,
+        MessageIndex, TextContent, TimestampMillis, UserId,
     };
 
     pub fn create_channel(
@@ -147,6 +147,26 @@ pub mod happy_path {
         match response {
             community_canister::update_channel::Response::Success => {}
             response => panic!("'update_channel' error: {response:?}"),
+        }
+    }
+
+    pub fn create_user_group(
+        env: &mut StateMachine,
+        sender: Principal,
+        community_id: CommunityId,
+        name: String,
+        user_ids: Vec<UserId>,
+    ) -> u32 {
+        let response = super::create_user_group(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::create_user_group::Args { name, user_ids },
+        );
+
+        match response {
+            community_canister::create_user_group::Response::Success(r) => r.user_group_id,
+            response => panic!("'create_user_group' error: {response:?}"),
         }
     }
 

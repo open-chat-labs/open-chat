@@ -195,6 +195,10 @@ impl CommunityMembers {
             .update(user_group_id, name, users_to_add, users_to_remove, now)
     }
 
+    pub fn get_user_group(&self, user_group_id: u32) -> Option<&UserGroup> {
+        self.user_groups.get(user_group_id)
+    }
+
     pub fn iter_user_groups(&self) -> impl Iterator<Item = &UserGroup> {
         self.user_groups.iter()
     }

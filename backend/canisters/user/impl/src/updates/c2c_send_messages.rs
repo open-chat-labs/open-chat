@@ -213,7 +213,7 @@ pub(crate) fn handle_message_impl(
                 sender_name: args.sender_name,
                 sender_display_name: args.sender_display_name,
                 message_type: content.message_type().to_string(),
-                message_text: content.notification_text(&[]),
+                message_text: content.notification_text(&[], &[]),
                 image_url: content.notification_image_url(),
                 sender_avatar_id: args.sender_avatar_id,
                 crypto_transfer: content.notification_crypto_transfer_details(&[]),
