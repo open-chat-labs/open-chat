@@ -11,9 +11,9 @@
 
     // all the crazy calculations
     $: sectionHeight = $availableHeight;
-    $: phoneHeight = $mobileWidth ? $availableHeight * 0.7 : 600;
+    $: phoneHeight = $mobileWidth ? $availableHeight * 0.7 : 750;
     $: phoneTop = (sectionHeight - phoneHeight) / 2 + menuHeight;
-    $: phoneWidth = phoneHeight * 0.56;
+    $: phoneWidth = phoneHeight * 0.5333;
     $: cssHeight = phoneHeight + phoneBorder * 2;
     $: cssWidth = phoneWidth + phoneBorder * 2;
     $: scrollOffset = (sectionHeight - cssHeight) / 2;
@@ -34,14 +34,30 @@
 
     [...communityThemes, themes.dark, themes.light].forEach((theme) => {
         screenshotMap[theme.name] = [
-            { url: "/assets/screenshots/mobilefirst.png", alt: "mobile first" },
-            { url: "/assets/screenshots/creategroup1.png", alt: "create group" },
-            { url: "/assets/screenshots/permissions.png", alt: "group permissions" },
-            { url: "/assets/screenshots/whatshot.gif", alt: "find groups to join" },
-            { url: "/assets/screenshots/userprofile.gif", alt: "user profile" },
-            { url: "/assets/screenshots/messages.gif", alt: "sending messages" },
-            { url: "/assets/screenshots/search.gif", alt: "searching" },
-            { url: `/assets/screenshots/voting_${theme.mode}.png`, alt: "voting" },
+            {
+                url: `/assets/screenshots/features/communities_${theme.mode}.png`,
+                alt: "communities",
+            },
+            {
+                url: `/assets/screenshots/features/mobilefirst_${theme.mode}.png`,
+                alt: "mobile first",
+            },
+            {
+                url: `/assets/screenshots/features/creategroup_${theme.mode}.png`,
+                alt: "create group",
+            },
+            {
+                url: `/assets/screenshots/features/permissions_${theme.mode}.png`,
+                alt: "permissions",
+            },
+            { url: `/assets/screenshots/features/organise_${theme.mode}.png`, alt: "organise" },
+            { url: `/assets/screenshots/features/profile_${theme.mode}.png`, alt: "user profile" },
+            {
+                url: `/assets/screenshots/features/message_${theme.mode}.gif`,
+                alt: "sending messages",
+            },
+            { url: `/assets/screenshots/features/search_${theme.mode}.gif`, alt: "searching" },
+            { url: `/assets/screenshots/features/voting_${theme.mode}.png`, alt: "voting" },
         ];
     });
 
