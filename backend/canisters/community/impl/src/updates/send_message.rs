@@ -6,9 +6,13 @@ use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageResult;
+use itertools::Itertools;
+use regex::Regex;
+use std::cell::RefCell;
+use std::str::FromStr;
 use types::{
-    ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis,
-    UserId,
+    ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial, MessageIndex,
+    Notification, TimestampMillis, UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -49,13 +53,27 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         let user_id = member.user_id;
 
+        let user_groups_mentioned = extract_user_groups_mentioned(&args.content);
+        let mentioned: Vec<_> = args
+            .mentioned
+            .iter()
+            .map(|u| u.user_id)
+            .chain(
+                user_groups_mentioned
+                    .into_iter()
+                    .filter_map(|ug| state.data.members.get_user_group(ug))
+                    .flat_map(|ug| ug.members.value.iter().copied()),
+            )
+            .unique()
+            .collect();
+
         match channel.chat.send_message(
             user_id,
             args.thread_root_message_index,
             args.message_id,
             args.content,
             args.replies_to,
-            args.mentioned.iter().map(|u| u.user_id).collect(),
+            mentioned,
             args.forwarding,
             args.channel_rules_accepted,
             state.data.proposals_bot_user_id,
@@ -152,5 +170,24 @@ fn register_timer_jobs(
         if let Some(expiry) = message_event.expires_at {
             timer_jobs.enqueue_job(TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files }), expiry, now);
         }
+    }
+}
+
+thread_local! {
+    static USER_GROUP_REGEX: RefCell<Regex> = RefCell::new(Regex::new(r"@UserGroup\((\d+)\)").unwrap());
+}
+
+fn extract_user_groups_mentioned(content: &MessageContentInitial) -> Vec<u32> {
+    if let Some(text) = content.text() {
+        USER_GROUP_REGEX.with(|regex| {
+            regex
+                .borrow()
+                .captures_iter(text)
+                .filter_map(|c| c.get(1))
+                .filter_map(|m| u32::from_str(m.as_str()).ok())
+                .collect()
+        })
+    } else {
+        Vec::new()
     }
 }

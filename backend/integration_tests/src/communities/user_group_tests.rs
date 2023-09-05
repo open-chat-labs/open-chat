@@ -4,7 +4,7 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use ic_test_state_machine_client::StateMachine;
 use std::ops::Deref;
-use types::CommunityId;
+use types::{ChannelId, CommunityId};
 
 #[test]
 fn create_user_group_succeeds() {
@@ -21,6 +21,7 @@ fn create_user_group_succeeds() {
         user2,
         user3,
         community_id,
+        ..
     } = init_test_data(env, canister_ids, *controller);
 
     let user_group_name = random_string();
@@ -72,6 +73,7 @@ fn update_user_group_succeeds() {
         user2,
         user3,
         community_id,
+        ..
     } = init_test_data(env, canister_ids, *controller);
 
     let user_group_name = random_string();
@@ -127,6 +129,55 @@ fn update_user_group_succeeds() {
     assert!(user_group_members.members.contains(&user3.user_id));
 }
 
+#[test]
+fn send_message_mentioning_user_group() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        user3,
+        community_id,
+        channel_id,
+    } = init_test_data(env, canister_ids, *controller);
+
+    let user_group_name = random_string();
+    let user_group_id = client::community::happy_path::create_user_group(
+        env,
+        user1.principal,
+        community_id.into(),
+        user_group_name.clone(),
+        vec![user1.user_id, user2.user_id],
+    );
+
+    let text = format!("Hello @UserGroup({user_group_id})!");
+
+    let send_message_result =
+        client::community::happy_path::send_text_message(env, &user3, community_id, channel_id, None, text, None);
+
+    let user1_channel_summary = client::community::happy_path::channel_summary(env, &user1, community_id, channel_id);
+    let user1_mentions = user1_channel_summary.membership.unwrap().mentions;
+    assert_eq!(user1_mentions.len(), 1);
+    assert_eq!(
+        user1_mentions.first().unwrap().message_index,
+        send_message_result.message_index
+    );
+
+    let user2_channel_summary = client::community::happy_path::channel_summary(env, &user2, community_id, channel_id);
+    let user2_mentions = user2_channel_summary.membership.unwrap().mentions;
+    assert_eq!(user2_mentions.len(), 1);
+    assert_eq!(
+        user2_mentions.first().unwrap().message_index,
+        send_message_result.message_index
+    );
+}
+
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
@@ -138,11 +189,14 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
     client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
     client::local_user_index::happy_path::join_community(env, user3.principal, canister_ids.local_user_index, community_id);
 
+    let summary = client::community::happy_path::summary(env, &user1, community_id);
+
     TestData {
         user1,
         user2,
         user3,
         community_id,
+        channel_id: summary.channels.first().unwrap().channel_id,
     }
 }
 
@@ -151,4 +205,5 @@ struct TestData {
     user2: User,
     user3: User,
     community_id: CommunityId,
+    channel_id: ChannelId,
 }
