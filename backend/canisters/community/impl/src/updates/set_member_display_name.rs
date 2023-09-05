@@ -2,7 +2,6 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_tracing_macros::trace;
 use community_canister::set_member_display_name::{Response::*, *};
 use ic_cdk_macros::update;
-use types::Timestamped;
 use utils::text_validation::{validate_display_name, UsernameValidationError};
 
 #[update]
@@ -21,8 +20,8 @@ fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> Respons
     let caller = state.env.caller();
     let now = state.env.now();
 
-    match state.data.members.get_mut(caller) {
-        Some(member) if member.suspended.value => UserSuspended,
+    let user_id = match state.data.members.get(caller) {
+        Some(member) if member.suspended.value => return UserSuspended,
         Some(member) => {
             if let Some(display_name) = args.display_name.as_ref() {
                 match validate_display_name(display_name) {
@@ -32,11 +31,12 @@ fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> Respons
                     Err(UsernameValidationError::Invalid) => return DisplayNameInvalid,
                 };
             }
-
-            member.display_name = Timestamped::new(args.display_name, now);
-            handle_activity_notification(state);
-            Success
+            member.user_id
         }
-        None => UserNotInCommunity,
-    }
+        None => return UserNotInCommunity,
+    };
+
+    state.data.members.set_display_name(user_id, args.display_name, now);
+    handle_activity_notification(state);
+    Success
 }

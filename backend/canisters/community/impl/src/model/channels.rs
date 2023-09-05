@@ -191,7 +191,7 @@ impl Channel {
         let latest_message_sender_display_name = latest_message
             .as_ref()
             .and_then(|m| community_members.get_by_user_id(&m.event.sender))
-            .and_then(|m| m.display_name.as_ref().cloned());
+            .and_then(|m| m.display_name().value.clone());
 
         let membership = member.map(|m| ChannelMembership {
             joined: m.date_added,
@@ -278,7 +278,7 @@ impl Channel {
         let latest_message_sender_display_name = latest_message
             .as_ref()
             .and_then(|m| community_members.get_by_user_id(&m.event.sender))
-            .and_then(|m| m.display_name.as_ref().cloned());
+            .and_then(|m| m.display_name().value.clone());
 
         let membership = member.map(|m| ChannelMembershipUpdates {
             role: updates_from_events.role_changed.then_some(m.role.into()),

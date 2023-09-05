@@ -102,7 +102,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .filter(|accepted| updates_from_events.rules_changed || accepted.timestamp > args.updates_since)
             .map(|accepted| accepted.value >= state.data.rules.text.version),
         display_name: m
-            .display_name
+            .display_name()
             .if_set_after(args.updates_since)
             .map_or(OptionUpdate::NoChange, |display_name| match display_name {
                 Some(display_name) => OptionUpdate::SetToSome(display_name.clone()),

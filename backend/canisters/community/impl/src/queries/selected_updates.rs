@@ -119,7 +119,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     for member in data.members.iter() {
-        if member.display_name.timestamp > args.updates_since {
+        if member.display_name().timestamp > args.updates_since {
             user_updates_handler.mark_member_updated(&mut result, member.user_id, false);
         }
     }
