@@ -12,7 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Convert remaining SNS transactions to ICRC1 ([#4303](https://github.com/open-chat-labs/open-chat/pull/4303))
-- Add `serde(default)` attribute to fix upgrade
+- Add `serde(default)` attribute to fix upgrade ([#4307](https://github.com/open-chat-labs/open-chat/pull/4307))
+- Add more `serde(default)` attributes required for upgrade ([#4309](https://github.com/open-chat-labs/open-chat/pull/4309))
 
 ## [[2.0.832](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.832-user)] - 2023-09-01
 
