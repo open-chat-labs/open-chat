@@ -175,7 +175,7 @@ export function favouritesRoute(ctx: PageJS.Context): RouteParams {
 function chatSelectedRoute(
     ctx: PageJS.Context,
     chatType: "direct_chat" | "group_chat",
-    scope: ChatListScope
+    scope: ChatListScope,
 ): RouteParams {
     const $qs = qs(ctx);
 

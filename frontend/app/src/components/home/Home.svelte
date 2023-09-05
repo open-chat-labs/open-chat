@@ -223,6 +223,17 @@
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
+            // if the scope is favourite let's redirect to the non-favourite counterpart and try again
+            // this is necessary if the link is no longer in our favourites or came from another user and was *never* in our favourites.
+            if ($chatListScope.kind === "favourite") {
+                page.redirect(
+                    routeForChatIdentifier(
+                        $chatListScope.communityId === undefined ? "group_chat" : "community",
+                        chatId
+                    )
+                );
+                return;
+            }
             if (chatId.kind === "direct_chat") {
                 await createDirectChat(chatId);
             } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
