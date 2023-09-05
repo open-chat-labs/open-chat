@@ -1,3 +1,4 @@
+use crate::model::members::CommunityMembers;
 use chat_events::Reader;
 use group_chat_core::{GroupChatCore, GroupMemberInternal, LeaveResult};
 use search::*;
@@ -10,8 +11,6 @@ use types::{
     CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissions, MessageIndex, TimestampMillis, Timestamped, UserId,
     MAX_THREADS_IN_SUMMARY,
 };
-
-use super::members::CommunityMembers;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Channels {
