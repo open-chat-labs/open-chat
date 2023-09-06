@@ -38,30 +38,3 @@ impl Display for ExchangeId {
         write!(f, "{}", self.0)
     }
 }
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct MakeOrderRequest {
-    pub order_type: OrderType,
-    pub price: u64,
-    pub amount: u64,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CancelOrderRequest {
-    pub id: String,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
-pub enum OrderType {
-    Bid,
-    Ask,
-}
-
-impl Display for OrderType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            OrderType::Bid => f.write_str("Bid"),
-            OrderType::Ask => f.write_str("Ask"),
-        }
-    }
-}

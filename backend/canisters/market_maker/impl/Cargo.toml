@@ -23,6 +23,7 @@ ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true, features = ["candid"] }
+icdex_client = { path = "../../../libraries/icdex_client" }
 icrc1_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc1_ledger/c2c_client" }
 itertools = { workspace = true }
 market_maker_canister = { path = "../api" }
