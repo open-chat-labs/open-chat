@@ -1,12 +1,13 @@
 use rand::{Rng, RngCore};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use types::{TimestampMillis, Timestamped, UserGroupMembers, UserGroupSummary, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserGroups {
     groups: Vec<UserGroup>,
+    deleted: BTreeMap<TimestampMillis, Vec<u32>>,
     last_updated: TimestampMillis,
 }
 
@@ -56,6 +57,19 @@ impl UserGroups {
         }
     }
 
+    pub fn delete(&mut self, user_group_id: u32, now: TimestampMillis) -> bool {
+        let original_len = self.groups.len();
+        self.groups.retain(|ug| ug.id != user_group_id);
+
+        if self.groups.len() != original_len {
+            self.deleted.entry(now).or_default().push(user_group_id);
+            self.last_updated = now;
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn get(&self, user_group_id: u32) -> Option<&UserGroup> {
         self.groups.iter().find(|g| g.id == user_group_id)
     }
@@ -73,6 +87,16 @@ impl UserGroups {
 
     pub fn last_updated(&self) -> TimestampMillis {
         self.last_updated
+    }
+
+    pub fn deleted_since(&self, since: TimestampMillis) -> Vec<u32> {
+        self.deleted
+            .iter()
+            .rev()
+            .take_while(|(&k, _)| k > since)
+            .flat_map(|(_, v)| v)
+            .copied()
+            .collect()
     }
 
     fn generate_id<R: RngCore>(&self, rng: &mut R) -> u32 {
