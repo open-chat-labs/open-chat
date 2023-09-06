@@ -935,116 +935,115 @@ export type WorkerError = {
 /**
  * Worker response types
  */
-export type WorkerResponse =
-    | Response<CreateGroupResponse>
-    | Response<DisableInviteCodeResponse>
-    | Response<EnableInviteCodeResponse>
-    | Response<ResetInviteCodeResponse>
-    | Response<InviteCodeResponse>
-    | Response<EventsResponse<Message>>
-    | Response<WithdrawCryptocurrencyResponse>
-    | Response<string>
-    | Response<SetBioResponse>
-    | Response<SetUsernameResponse>
-    | Response<PublicProfile>
-    | Response<UserSummary | undefined>
-    | Response<ThreadPreview[]>
-    | Response<bigint>
-    | Response<SearchDirectChatResponse>
-    | Response<SearchGroupChatResponse>
-    | Response<AccessRules | undefined>
-    | Response<GroupChatSummary[]>
-    | Response<RegisterProposalVoteResponse>
-    | Response<ChangeRoleResponse>
-    | Response<InviteUsersResponse>
-    | Response<RemoveMemberResponse>
-    | Response<boolean>
-    | Response<RegisterUserResponse>
-    | Response<EditMessageResponse>
-    | Response<[SendMessageResponse, Message]>
-    | Response<UnpinMessageResponse>
-    | Response<PinMessageResponse>
-    | Response<ProposalVoteDetails>
-    | Response<ListNervousSystemFunctionsResponse>
-    | Response<AddRemoveReactionResponse>
-    | Response<DeleteMessageResponse>
-    | Response<UndeleteMessageResponse>
-    | Response<RegisterPollVoteResponse>
-    | Response<UpdateGroupResponse>
-    | Response<JoinGroupResponse>
-    | Response<DeleteGroupResponse>
-    | Response<LeaveGroupResponse>
-    | Response<BlobReference>
-    | Response<UnblockUserResponse>
-    | Response<BlockUserResponse>
-    | Response<UnpinChatResponse>
-    | Response<PinChatResponse>
-    | Response<ArchiveChatResponse>
-    | Response<ArchiveChatResponse>
-    | Response<ToggleMuteNotificationResponse>
-    | Response<GroupChatSummary | undefined>
-    | Response<StorageStatus>
-    | Response<undefined>
-    | Response<MigrateUserPrincipalResponse>
-    | Response<UserSummary[]>
-    | Response<CheckUsernameResponse>
-    | Response<EventWrapper<Message>>
-    | Response<EventsResponse<DirectChatEvent>>
-    | Response<EventsResponse<GroupChatEvent>>
-    | Response<EventsResponse<DirectChatEvent>>
-    | Response<EventsResponse<GroupChatEvent>>
-    | Response<Record<string, number>>
-    | Response<undefined>
-    | Response<GroupChatDetailsResponse>
-    | Response<GroupChatDetails>
-    | Response<MarkReadResponse>
-    | Response<UserLookup>
-    | Response<UsersResponse>
-    | Response<undefined>
-    | Response<CurrentUserResponse>
-    | Response<EventsResponse<ChatEvent>>
-    | Response<FreezeGroupResponse>
-    | Response<UnfreezeGroupResponse>
-    | Response<DeleteFrozenGroupResponse>
-    | Response<AddHotGroupExclusion>
-    | Response<RemoveHotGroupExclusion>
-    | Response<SuspendUserResponse>
-    | Response<UnsuspendUserResponse>
-    | Response<UpdatesResult>
-    | Response<DeletedDirectMessageResponse>
-    | Response<DeletedGroupMessageResponse>
-    | Response<undefined>
-    | Response<Map<string, Record<number, EventWrapper<Message>>>>
-    | Response<PayForDiamondMembershipResponse>
-    | Response<ClaimPrizeResponse>
-    | Response<UpdateMarketMakerConfigResponse>
-    | Response<SetMessageReminderResponse>
-    | Response<ReferralLeaderboardResponse>
-    | Response<ReportMessageResponse>
-    | Response<BlockCommunityUserResponse>
-    | Response<ChangeCommunityRoleResponse>
-    | Response<ToggleMuteCommunityNotificationsResponse>
-    | Response<UnblockCommunityUserResponse>
-    | Response<UpdateCommunityResponse>
-    | Response<CreateCommunityResponse>
-    | Response<JoinCommunityResponse>
-    | Response<CommunitySummaryResponse>
-    | Response<ChannelMatch[]>
-    | Response<CommunityDetailsResponse>
-    | Response<CommunityDetails>
-    | Response<ChannelSummaryResponse>
-    | Response<ManageFavouritesResponse>
-    | Response<LeaveCommunityResponse>
-    | Response<DeleteCommunityResponse>
-    | Response<ConvertToCommunityResponse>
-    | Response<ExploreChannelsResponse>
-    | Response<ImportGroupResponse>
-    | Response<PublicGroupSummaryResponse>
-    | Response<AddMembersToChannelResponse>
-    | Response<RegistryValue>
-    | Response<CreateUserGroupResponse>
-    | Response<UpdateUserGroupResponse>
-    | Response<DeleteUserGroupsResponse>;
+export type WorkerResponseInner =
+    | bigint
+    | boolean
+    | string
+    | undefined
+    | CreateGroupResponse
+    | DisableInviteCodeResponse
+    | EnableInviteCodeResponse
+    | ResetInviteCodeResponse
+    | InviteCodeResponse
+    | EventsResponse<Message>
+    | WithdrawCryptocurrencyResponse
+    | SetBioResponse
+    | SetUsernameResponse
+    | PublicProfile
+    | UserSummary | undefined
+    | ThreadPreview[]
+    | SearchDirectChatResponse
+    | SearchGroupChatResponse
+    | AccessRules | undefined
+    | GroupChatSummary[]
+    | RegisterProposalVoteResponse
+    | ChangeRoleResponse
+    | InviteUsersResponse
+    | RemoveMemberResponse
+    | RegisterUserResponse
+    | EditMessageResponse
+    | [SendMessageResponse, Message]
+    | UnpinMessageResponse
+    | PinMessageResponse
+    | ProposalVoteDetails
+    | ListNervousSystemFunctionsResponse
+    | AddRemoveReactionResponse
+    | DeleteMessageResponse
+    | UndeleteMessageResponse
+    | RegisterPollVoteResponse
+    | UpdateGroupResponse
+    | JoinGroupResponse
+    | DeleteGroupResponse
+    | LeaveGroupResponse
+    | BlobReference
+    | UnblockUserResponse
+    | BlockUserResponse
+    | UnpinChatResponse
+    | PinChatResponse
+    | ArchiveChatResponse
+    | ArchiveChatResponse
+    | ToggleMuteNotificationResponse
+    | GroupChatSummary | undefined
+    | StorageStatus
+    | MigrateUserPrincipalResponse
+    | UserSummary[]
+    | CheckUsernameResponse
+    | EventWrapper<Message>
+    | EventsResponse<DirectChatEvent>
+    | EventsResponse<GroupChatEvent>
+    | EventsResponse<DirectChatEvent>
+    | EventsResponse<GroupChatEvent>
+    | Record<string, number>
+    | GroupChatDetailsResponse
+    | GroupChatDetails
+    | MarkReadResponse
+    | UserLookup
+    | UsersResponse
+    | CurrentUserResponse
+    | EventsResponse<ChatEvent>
+    | FreezeGroupResponse
+    | UnfreezeGroupResponse
+    | DeleteFrozenGroupResponse
+    | AddHotGroupExclusion
+    | RemoveHotGroupExclusion
+    | SuspendUserResponse
+    | UnsuspendUserResponse
+    | UpdatesResult
+    | DeletedDirectMessageResponse
+    | DeletedGroupMessageResponse
+    | Map<string, Record<number, EventWrapper<Message>>>
+    | PayForDiamondMembershipResponse
+    | ClaimPrizeResponse
+    | UpdateMarketMakerConfigResponse
+    | SetMessageReminderResponse
+    | ReferralLeaderboardResponse
+    | ReportMessageResponse
+    | BlockCommunityUserResponse
+    | ChangeCommunityRoleResponse
+    | ToggleMuteCommunityNotificationsResponse
+    | UnblockCommunityUserResponse
+    | UpdateCommunityResponse
+    | CreateCommunityResponse
+    | JoinCommunityResponse
+    | CommunitySummaryResponse
+    | ChannelMatch[]
+    | CommunityDetailsResponse
+    | CommunityDetails
+    | ChannelSummaryResponse
+    | ManageFavouritesResponse
+    | LeaveCommunityResponse
+    | DeleteCommunityResponse
+    | ConvertToCommunityResponse
+    | ExploreChannelsResponse
+    | ImportGroupResponse
+    | PublicGroupSummaryResponse
+    | AddMembersToChannelResponse
+    | RegistryValue
+    | CreateUserGroupResponse
+    | UpdateUserGroupResponse
+    | DeleteUserGroupsResponse;
+
+export type WorkerResponse = Response<WorkerResponseInner>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -1259,7 +1258,7 @@ type UpdateRegistry = {
     kind: "updateRegistry";
 };
 
-export type WorkerResult<T> = T extends PinMessage
+export type WorkerResult<T extends WorkerRequest> = T extends PinMessage
     ? PinMessageResponse
     : T extends UnpinMessage
     ? UnpinMessageResponse
