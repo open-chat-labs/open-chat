@@ -1853,6 +1853,10 @@ export interface _SERVICE {
   >,
   'delete_channel' : ActorMethod<[DeleteChannelArgs], DeleteChannelResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
+  'delete_user_groups' : ActorMethod<
+    [DeleteUserGroupsArgs],
+    DeleteUserGroupsResponse
+  >,
   'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
   'disable_invite_code' : ActorMethod<[EmptyArgs], DisableInviteCodeResponse>,
   'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,

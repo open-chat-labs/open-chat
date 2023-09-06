@@ -299,6 +299,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'community_id' : CommunityId,
   'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
   'metrics' : [] | [ChatMetrics],
+  'user_groups_deleted' : Uint32Array | number[],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'description' : [] | [string],
