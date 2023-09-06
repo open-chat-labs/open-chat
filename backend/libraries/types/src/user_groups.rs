@@ -10,7 +10,8 @@ pub struct UserGroupSummary {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct UserGroupMembers {
+pub struct UserGroupDetails {
     pub user_group_id: u32,
+    pub name: String,
     pub members: Vec<UserId>,
 }
