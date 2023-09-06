@@ -617,7 +617,7 @@
         position: absolute;
         height: 100vh;
         min-height: 100%;
-
+        pointer-events: none;
         background-repeat: no-repeat;
         background-size: 1400px;
         background-origin: 50% 50%;
