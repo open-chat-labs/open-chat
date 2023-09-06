@@ -51,10 +51,16 @@ export type CommunityIdentifier = {
     communityId: string;
 };
 
-export type UserGroup = {
+export type UserGroupSummary = {
     memberCount: number;
     name: string;
     id: number;
+};
+
+export type UserGroupDetails = {
+    members: Set<string>;
+    id: number;
+    name: string;
 };
 
 export type CommunitySummary = AccessControlled &
@@ -73,7 +79,7 @@ export type CommunitySummary = AccessControlled &
         membership?: CommunityMembership;
         channels: ChannelSummary[]; // TODO - this might be better as a ChatMap - but that would have some serialisation complications
         primaryLanguage: string;
-        userGroups: UserGroup[];
+        userGroups: UserGroupSummary[];
     };
 
 export type DefaultChannel = {
@@ -83,6 +89,7 @@ export type DefaultChannel = {
 
 export type CommunitySpecificState = {
     members: Member[];
+    userGroups: UserGroupDetails[];
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     rules?: AccessRules;
@@ -184,6 +191,7 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     bannerId: OptionUpdate<bigint>;
     memberCount: number | undefined;
     primaryLanguage: string | undefined;
+    userGroups: UserGroupSummary[];
 };
 
 export type CommunityCanisterChannelSummaryUpdates = {
@@ -244,6 +252,7 @@ export type CommunityDetails = {
     invitedUsers: Set<string>;
     rules: AccessRules;
     lastUpdated: bigint;
+    userGroups: UserGroupDetails[];
 };
 
 export type CommunityDetailsUpdates = {
@@ -254,7 +263,9 @@ export type CommunityDetailsUpdates = {
     rules?: AccessRules;
     invitedUsers?: Set<string>;
     lastUpdated: bigint;
+    userGroups: UserGroupDetails[];
 };
+
 export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;
 
 export type LeaveCommunityResponse = "success" | "failure";

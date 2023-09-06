@@ -34,7 +34,6 @@
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
     import CommunityChannels from "./communities/details/CommunityChannels.svelte";
     import { interpolateLevel } from "../../utils/i18n";
-    import MemberGroups from "./communities/details/MemberGroups.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -442,9 +441,5 @@
         <CommunityDetails on:deleteCommunity on:editCommunity />
     {:else if lastState.kind === "community_filters"}
         <CommunityFilters on:close={popRightPanelHistory} />
-    {:else if lastState.kind === "member_groups_panel"}
-        <MemberGroups
-            closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
-            on:close={popRightPanelHistory} />
     {/if}
 </Panel>

@@ -63,12 +63,12 @@ if (dfxNetwork) {
         console.log(
             "Couldn't find canisters JSON at: ",
             canisterPath,
-            ". Falling back to original env vars."
+            ". Falling back to original env vars.",
         );
     }
 } else {
     console.log(
-        "DFX_NETWORK env var not set, cannot load correct canisterIds, falling back to original env vars."
+        "DFX_NETWORK env var not set, cannot load correct canisterIds, falling back to original env vars.",
     );
 }
 
@@ -138,11 +138,11 @@ function clean() {
                     "build/.well-known/ii-alternative-origins",
                     JSON.stringify({
                         alternativeOrigins: customDomains.split(",").map((d) => `https://${d}`),
-                    })
+                    }),
                 );
                 fs.writeFileSync(
                     "build/.well-known/ic-domains",
-                    customDomains.split(",").join("\n")
+                    customDomains.split(",").join("\n"),
                 );
             }
             copyFile(".", "build", ".ic-assets.json5");
@@ -158,18 +158,16 @@ function manualChunks(id) {
 }
 
 function transformSourceMappingUrl(contents) {
-    return contents
-        .toString()
-        .replace("//# sourceMappingURL=", "//# sourceMappingURL=./_/raw/");
+    return contents.toString().replace("//# sourceMappingURL=", "//# sourceMappingURL=./_/raw/");
 }
 
 function watchExternalFiles() {
     return {
         name: "watch-external-files",
-        buildStart(){
-            this.addWatchFile(path.resolve(dirname, "../openchat-push/lib/push_sw.js"))
-            this.addWatchFile(path.resolve(dirname, "../openchat-worker/lib/worker.js"))
-        }
+        buildStart() {
+            this.addWatchFile(path.resolve(dirname, "../openchat-push/lib/push_sw.js"));
+            this.addWatchFile(path.resolve(dirname, "../openchat-worker/lib/worker.js"));
+        },
     };
 }
 
@@ -230,14 +228,14 @@ export default {
             "process.env.USER_INDEX_CANISTER": JSON.stringify(process.env.USER_INDEX_CANISTER),
             "process.env.GROUP_INDEX_CANISTER": JSON.stringify(process.env.GROUP_INDEX_CANISTER),
             "process.env.NOTIFICATIONS_CANISTER": JSON.stringify(
-                process.env.NOTIFICATIONS_CANISTER
+                process.env.NOTIFICATIONS_CANISTER,
             ),
             "process.env.ONLINE_CANISTER": JSON.stringify(process.env.ONLINE_CANISTER),
             "process.env.PROPOSALS_BOT_CANISTER": JSON.stringify(
-                process.env.PROPOSALS_BOT_CANISTER
+                process.env.PROPOSALS_BOT_CANISTER,
             ),
             "process.env.STORAGE_INDEX_CANISTER": JSON.stringify(
-                process.env.STORAGE_INDEX_CANISTER
+                process.env.STORAGE_INDEX_CANISTER,
             ),
             "process.env.REGISTRY_CANISTER": JSON.stringify(process.env.REGISTRY_CANISTER),
             "process.env.MARKET_MAKER_CANISTER": JSON.stringify(process.env.MARKET_MAKER_CANISTER),
@@ -247,7 +245,7 @@ export default {
             "process.env.LEDGER_CANISTER_CHAT": JSON.stringify(process.env.LEDGER_CANISTER_CHAT),
             "process.env.LEDGER_CANISTER_KINIC": JSON.stringify(process.env.LEDGER_CANISTER_KINIC),
             "process.env.LEDGER_CANISTER_HOTORNOT": JSON.stringify(
-                process.env.LEDGER_CANISTER_HOTORNOT
+                process.env.LEDGER_CANISTER_HOTORNOT,
             ),
             "process.env.LEDGER_CANISTER_GHOST": JSON.stringify(process.env.LEDGER_CANISTER_GHOST),
             "process.env.BLOB_URL_PATTERN": JSON.stringify(process.env.BLOB_URL_PATTERN),
@@ -256,7 +254,7 @@ export default {
             "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
             "process.env.CORS_APIKEY": JSON.stringify(process.env.CORS_APIKEY),
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
-                process.env.PUBLIC_TRANSLATE_API_KEY
+                process.env.PUBLIC_TRANSLATE_API_KEY,
             ),
             "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
             "process.env.FRAME_ANCESTORS": JSON.stringify(process.env.FRAME_ANCESTORS),
@@ -286,7 +284,7 @@ export default {
                     form-action 'self';
                     upgrade-insecure-requests;
                     script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
-                        " "
+                        " ",
                     )}`;
                 if (!production) {
                     csp += " http://localhost:* http://127.0.0.1:*";
@@ -357,7 +355,11 @@ export default {
 
         // Watch the `public` directory and refresh the
         // browser on changes when not in production
-        !production && livereload("build"),
+        !production &&
+            livereload({
+                watch: "build",
+                delay: 1000,
+            }),
 
         // If we're building for production (npm run build
         // instead of npm run dev), minify
@@ -369,27 +371,33 @@ export default {
 
         // Pull in the worker and push_sw
         copy({
-            targets: [{
-                src: "../openchat-worker/lib/*",
-                dest: "build",
-            }, {
-                src: "../openchat-push/lib/*",
-                dest: "build/_/raw",
-                transform: transformSourceMappingUrl,
-            }],
+            targets: [
+                {
+                    src: "../openchat-worker/lib/*",
+                    dest: "build",
+                },
+                {
+                    src: "../openchat-push/lib/*",
+                    dest: "build/_/raw",
+                    transform: transformSourceMappingUrl,
+                },
+            ],
             hook: "generateBundle",
         }),
 
         // Copy source maps to '_/raw' so that they can be loaded without going through the certifying service worker
         copy({
-            targets: [{
-                src: "build/*.map",
-                dest: "build/_/raw",
-            }, {
-                src: "build/*.js",
-                dest: "build",
-                transform: transformSourceMappingUrl,
-            }],
+            targets: [
+                {
+                    src: "build/*.map",
+                    dest: "build/_/raw",
+                },
+                {
+                    src: "build/*.js",
+                    dest: "build",
+                    transform: transformSourceMappingUrl,
+                },
+            ],
             hook: "writeBundle",
         }),
     ],

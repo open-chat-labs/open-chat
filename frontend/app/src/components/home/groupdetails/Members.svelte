@@ -19,6 +19,7 @@
     import InvitedUser from "./InvitedUser.svelte";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
+    import UserGroups from "../communities/details/UserGroups.svelte";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -49,7 +50,8 @@
     let searchTerm = "";
     let id = collection.id;
     let membersList: VirtualList;
-    let view: "members" | "blocked" | "invited" = "members";
+    let memberView: "members" | "blocked" | "invited" = "members";
+    let selectedTab: "users" | "groups" = "users";
     let profileUserId: string | undefined = undefined;
 
     $: searchTermLower = searchTerm.toLowerCase();
@@ -57,14 +59,14 @@
     $: {
         if (collection.id !== id) {
             id = collection.id;
-            view = "members";
+            memberView = "members";
         }
 
         if (
-            (view === "blocked" && blocked.size === 0) ||
-            (view === "invited" && invited.size === 0)
+            (memberView === "blocked" && blocked.size === 0) ||
+            (memberView === "invited" && invited.size === 0)
         ) {
-            view = "members";
+            memberView = "members";
         }
     }
 
@@ -115,7 +117,7 @@
     }
 
     function setView(v: "members" | "blocked" | "invited"): void {
-        view = v;
+        memberView = v;
     }
 
     function openUserProfile(ev: CustomEvent<string>) {
@@ -140,93 +142,122 @@
     on:close={close}
     on:showInviteUsers={showInviteUsers} />
 
-<div class="search">
-    <Search
-        on:searchEntered={() => membersList.reset()}
-        searching={false}
-        bind:searchTerm
-        placeholder={"search"} />
+<div class="tabs">
+    <div
+        tabindex="0"
+        role="button"
+        on:click={() => (selectedTab = "users")}
+        class:selected={selectedTab === "users"}
+        class="tab">
+        {$_("communities.members")}
+    </div>
+    <div
+        tabindex="0"
+        role="button"
+        on:click={() => (selectedTab = "groups")}
+        class:selected={selectedTab === "groups"}
+        class="tab">
+        {$_("communities.userGroups")}
+    </div>
 </div>
 
-{#if showBlocked || showInvited}
-    <div class="section-selector">
-        <MembersSelectionButton
-            title={$_("members")}
-            on:click={() => setView("members")}
-            selected={view === "members"} />
-        {#if showBlocked}
-            <MembersSelectionButton
-                title={$_("blocked")}
-                on:click={() => setView("blocked")}
-                selected={view === "blocked"} />
-        {:else}
-            <MembersSelectionButton
-                title={$_("invited")}
-                on:click={() => setView("invited")}
-                selected={view === "invited"} />
-        {/if}
+{#if selectedTab === "users"}
+    <div class="search">
+        <Search
+            on:searchEntered={() => membersList.reset()}
+            searching={false}
+            bind:searchTerm
+            placeholder={"search"} />
     </div>
-{/if}
 
-{#if profileUserId !== undefined}
-    <ViewUserProfile
-        userId={profileUserId}
-        on:openDirectChat={userSelected}
-        on:close={closeUserProfile} />
-{/if}
-
-{#if view === "members"}
-    {#if me !== undefined}
-        <Member
-            me
-            member={me}
-            canPromoteToOwner={me.role !== "owner" && client.isPlatformModerator()}
-            canDemoteToAdmin={client.canDemote(collection.id, me.role, "admin")}
-            canDemoteToModerator={client.canDemote(collection.id, me.role, "moderator")}
-            canDemoteToMember={client.canDemote(collection.id, me.role, "member")}
-            on:openUserProfile={openUserProfile}
-            on:changeRole />
+    {#if showBlocked || showInvited}
+        <div class="section-selector">
+            <MembersSelectionButton
+                title={$_("members")}
+                on:click={() => setView("members")}
+                selected={memberView === "members"} />
+            {#if showBlocked}
+                <MembersSelectionButton
+                    title={$_("blocked")}
+                    on:click={() => setView("blocked")}
+                    selected={memberView === "blocked"} />
+            {:else}
+                <MembersSelectionButton
+                    title={$_("invited")}
+                    on:click={() => setView("invited")}
+                    selected={memberView === "invited"} />
+            {/if}
+        </div>
     {/if}
-    <VirtualList bind:this={membersList} keyFn={(user) => user.userId} items={fullMembers} let:item>
-        <Member
-            me={false}
-            member={item}
-            canPromoteToOwner={client.canPromote(collection.id, item.role, "owner")}
-            canPromoteToAdmin={client.canPromote(collection.id, item.role, "admin")}
-            canDemoteToAdmin={client.canDemote(collection.id, item.role, "admin")}
-            canPromoteToModerator={client.canPromote(collection.id, item.role, "moderator")}
-            canDemoteToModerator={client.canDemote(collection.id, item.role, "moderator")}
-            canDemoteToMember={client.canDemote(collection.id, item.role, "member")}
-            canBlockUser={client.canBlockUsers(collection.id)}
-            canRemoveMember={client.canRemoveMembers(collection.id)}
-            {searchTerm}
-            on:blockUser
-            on:chatWith
-            on:changeRole
-            on:removeMember
-            on:openUserProfile={openUserProfile} />
-    </VirtualList>
-{:else if view === "blocked"}
-    <div use:menuCloser class="user-list">
-        {#each blockedUsers as user}
-            <BlockedUser
-                {user}
-                {searchTerm}
-                canUnblockUser={client.canUnblockUsers(collection.id)}
+
+    {#if profileUserId !== undefined}
+        <ViewUserProfile
+            userId={profileUserId}
+            on:openDirectChat={userSelected}
+            on:close={closeUserProfile} />
+    {/if}
+
+    {#if memberView === "members"}
+        {#if me !== undefined}
+            <Member
+                me
+                member={me}
+                canPromoteToOwner={me.role !== "owner" && client.isPlatformModerator()}
+                canDemoteToAdmin={client.canDemote(collection.id, me.role, "admin")}
+                canDemoteToModerator={client.canDemote(collection.id, me.role, "moderator")}
+                canDemoteToMember={client.canDemote(collection.id, me.role, "member")}
                 on:openUserProfile={openUserProfile}
-                on:unblockUser />
-        {/each}
-    </div>
-{:else if view === "invited"}
-    <div use:menuCloser class="user-list">
-        {#each invitedUsers as user}
-            <InvitedUser
-                {user}
+                on:changeRole />
+        {/if}
+        <VirtualList
+            bind:this={membersList}
+            keyFn={(user) => user.userId}
+            items={fullMembers}
+            let:item>
+            <Member
+                me={false}
+                member={item}
+                canPromoteToOwner={client.canPromote(collection.id, item.role, "owner")}
+                canPromoteToAdmin={client.canPromote(collection.id, item.role, "admin")}
+                canDemoteToAdmin={client.canDemote(collection.id, item.role, "admin")}
+                canPromoteToModerator={client.canPromote(collection.id, item.role, "moderator")}
+                canDemoteToModerator={client.canDemote(collection.id, item.role, "moderator")}
+                canDemoteToMember={client.canDemote(collection.id, item.role, "member")}
+                canBlockUser={client.canBlockUsers(collection.id)}
+                canRemoveMember={client.canRemoveMembers(collection.id)}
                 {searchTerm}
-                canUninviteUser={false}
-                on:openUserProfile={openUserProfile}
-                on:uninviteUser />
-        {/each}
+                on:blockUser
+                on:chatWith
+                on:changeRole
+                on:removeMember
+                on:openUserProfile={openUserProfile} />
+        </VirtualList>
+    {:else if memberView === "blocked"}
+        <div use:menuCloser class="user-list">
+            {#each blockedUsers as user}
+                <BlockedUser
+                    {user}
+                    {searchTerm}
+                    canUnblockUser={client.canUnblockUsers(collection.id)}
+                    on:openUserProfile={openUserProfile}
+                    on:unblockUser />
+            {/each}
+        </div>
+    {:else if memberView === "invited"}
+        <div use:menuCloser class="user-list">
+            {#each invitedUsers as user}
+                <InvitedUser
+                    {user}
+                    {searchTerm}
+                    canUninviteUser={false}
+                    on:openUserProfile={openUserProfile}
+                    on:uninviteUser />
+            {/each}
+        </div>
+    {/if}
+{:else}
+    <div class="user-groups">
+        <UserGroups />
     </div>
 {/if}
 
@@ -245,5 +276,37 @@
     .user-list {
         height: 100%;
         @include nice-scrollbar();
+    }
+
+    .user-groups {
+        padding: 0 $sp4;
+    }
+
+    .tabs {
+        display: flex;
+        align-items: center;
+        @include font(book, normal, fs-80);
+        font-weight: 700;
+        color: var(--txt-light);
+        gap: $sp5;
+        border-bottom: 1px solid var(--bd);
+        cursor: pointer;
+        margin: 0 $sp4 $sp5 $sp4;
+
+        @include mobile() {
+            @include font(book, normal, fs-70);
+            gap: $sp4;
+        }
+
+        .tab {
+            padding-bottom: 10px;
+            margin-bottom: -2px;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            &.selected {
+                color: var(--txt);
+                border-bottom: 3px solid var(--txt);
+            }
+        }
     }
 </style>

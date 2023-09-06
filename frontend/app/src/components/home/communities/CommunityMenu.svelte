@@ -62,10 +62,6 @@
         rightPanelHistory.set([{ kind: "show_community_members" }]);
     }
 
-    function showMemberGroups() {
-        rightPanelHistory.set([{ kind: "member_groups_panel" }]);
-    }
-
     function invite() {
         canInvite && rightPanelHistory.set([{ kind: "invite_community_users" }]);
     }
@@ -98,10 +94,6 @@
             <MenuItem on:click={showMembers}>
                 <AccountMultiple size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                 <div slot="text">{$_("communities.members")}</div>
-            </MenuItem>
-            <MenuItem on:click={showMemberGroups}>
-                <AccountGroup size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                <div slot="text">{$_("communities.memberGroups")}</div>
             </MenuItem>
             {#if canInvite}
                 <MenuItem on:click={invite}>

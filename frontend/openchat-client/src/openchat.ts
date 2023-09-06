@@ -365,6 +365,7 @@ import {
     currentCommunityInvitedUsers,
     currentCommunityMembers,
     currentCommunityRules,
+    currentCommunityUserGroups,
     removeCommunityPreview,
     selectedCommunity,
 } from "./stores/community";
@@ -2372,6 +2373,7 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
             communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
             communityStateStore.setProp(community.id, "rules", resp.rules);
+            communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
         }
         await this.updateUserStoreFromCommunityState(community.id);
     }
@@ -5019,6 +5021,7 @@ export class OpenChat extends OpenChatAgentWorker {
     currentCommunityRules = currentCommunityRules;
     currentCommunityBlockedUsers = currentCommunityBlockedUsers;
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
+    currentCommunityUserGroups = currentCommunityUserGroups;
     communityStateStore = communityStateStore;
     favouritesStore = favouritesStore;
     globalStateStore = globalStateStore;

@@ -18,7 +18,7 @@ import { toRecord } from "./list";
 
 export function mergeCommunities(
     userCanisterCommunities: UserCanisterCommunitySummary[],
-    communityCanisterCommunities: CommunitySummary[]
+    communityCanisterCommunities: CommunitySummary[],
 ): CommunitySummary[] {
     const userCanisterCommunityLookup = CommunityMap.fromList(userCanisterCommunities);
 
@@ -40,7 +40,7 @@ export function mergeCommunities(
 
 export function mergeChannels(
     userCanisterChannels: UserCanisterChannelSummary[],
-    communityCanisterChannels: ChannelSummary[]
+    communityCanisterChannels: ChannelSummary[],
 ): ChannelSummary[] {
     const userCanisterGroupLookup = ChatMap.fromList(userCanisterChannels);
 
@@ -63,7 +63,7 @@ export function mergeChannels(
 export function mergeCommunityUpdates(
     communities: CommunitySummary[],
     userCanisterUpdates: UserCanisterCommunitySummaryUpdates[],
-    communityCanisterUpdates: CommunityCanisterCommunitySummaryUpdates[]
+    communityCanisterUpdates: CommunityCanisterCommunitySummaryUpdates[],
 ): CommunitySummary[] {
     const userLookup = CommunityMap.fromList(userCanisterUpdates);
     const communityLookup = CommunityMap.fromList(communityCanisterUpdates);
@@ -116,7 +116,7 @@ export function mergeCommunityUpdates(
             channels: mergeChannelUpdates(
                 currentChannels,
                 u?.channels ?? [],
-                c?.channelsUpdated ?? []
+                c?.channelsUpdated ?? [],
             ),
             gate: applyOptionUpdate(community.gate, c?.gate) ?? { kind: "no_gate" },
             level: "community",
@@ -125,6 +125,8 @@ export function mergeCommunityUpdates(
             historyVisible: community.historyVisible,
             permissions: c?.permissions ?? community.permissions,
             primaryLanguage: c?.primaryLanguage ?? community.primaryLanguage,
+            // TODO - this is going to change - but this will do for now just to keep us going
+            userGroups: [...(c?.userGroups ?? []), ...community.userGroups],
         };
     });
 }
@@ -132,7 +134,7 @@ export function mergeCommunityUpdates(
 export function mergeChannelUpdates(
     channels: ChannelSummary[],
     userCanisterUpdates: UserCanisterChannelSummaryUpdates[],
-    communityCanisterUpdates: CommunityCanisterChannelSummaryUpdates[]
+    communityCanisterUpdates: CommunityCanisterChannelSummaryUpdates[],
 ): ChannelSummary[] {
     const userLookup = ChatMap.fromList(userCanisterUpdates);
     const communityLookup = ChatMap.fromList(communityCanisterUpdates);
@@ -184,7 +186,7 @@ export function mergeChannelUpdates(
                 latestThreads: mergeThreads(
                     channel.membership.latestThreads,
                     c?.membership?.latestThreads ?? [],
-                    u?.threadsRead ?? {}
+                    u?.threadsRead ?? {},
                 ),
                 readByMeUpTo:
                     readByMeUpTo !== undefined && latestMessage !== undefined
@@ -202,7 +204,7 @@ export function mergeChannelUpdates(
 function mergeThreads(
     current: ThreadSyncDetails[],
     communityCanisterUpdates: GroupCanisterThreadDetails[],
-    readUpToUpdates: Record<number, number>
+    readUpToUpdates: Record<number, number>,
 ): ThreadSyncDetails[] {
     const threadsRecord = toRecord(current, (t) => t.threadRootMessageIndex);
 
@@ -222,13 +224,13 @@ function mergeThreads(
 }
 
 export function isSuccessfulCommunitySummaryResponse(
-    response: CommunitySummaryResponse
+    response: CommunitySummaryResponse,
 ): response is CommunitySummary {
     return "id" in response;
 }
 
 export function isSuccessfulCommunitySummaryUpdatesResponse(
-    response: CommunitySummaryUpdatesResponse
+    response: CommunitySummaryUpdatesResponse,
 ): response is CommunityCanisterCommunitySummaryUpdates {
     return "id" in response;
 }

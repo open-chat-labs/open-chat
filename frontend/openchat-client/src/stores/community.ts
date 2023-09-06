@@ -15,7 +15,7 @@ import { mergeLocalUpdates } from "../utils/community";
 
 // Communities which the current user is previewing
 export const communityPreviewsStore: Writable<CommunityMap<CommunitySummary>> = writable(
-    new CommunityMap<CommunitySummary>()
+    new CommunityMap<CommunitySummary>(),
 );
 
 export function addCommunityPreview(community: CommunitySummary): void {
@@ -39,7 +39,7 @@ export const communities = derived(
     ([$globalStateStore, $localUpdates, $previews]) => {
         const merged = mergeLocalUpdates($globalStateStore.communities, $localUpdates);
         return merged.merge($previews);
-    }
+    },
 );
 
 export const communitiesList = derived(communities, ($communities) => {
@@ -57,13 +57,19 @@ export const communityStateStore = createCommunitySpecificObjectStore<CommunityS
         blockedUsers: new Set<string>(),
         invitedUsers: new Set<string>(),
         lastUpdated: BigInt(0),
-    })
+        userGroups: [],
+    }),
 );
+
+export const currentCommunityUserGroups = createDerivedPropStore<
+    CommunitySpecificState,
+    "userGroups"
+>(communityStateStore, "userGroups", () => []);
 
 export const currentCommunityMembers = createDerivedPropStore<CommunitySpecificState, "members">(
     communityStateStore,
     "members",
-    () => []
+    () => [],
 );
 
 export const currentCommunityBlockedUsers = createDerivedPropStore<
@@ -79,7 +85,7 @@ export const currentCommunityInvitedUsers = createDerivedPropStore<
 export const currentCommunityRules = createDerivedPropStore<CommunitySpecificState, "rules">(
     communityStateStore,
     "rules",
-    () => defaultAccessRules("community")
+    () => defaultAccessRules("community"),
 );
 
 export const selectedCommunity = derived(
@@ -92,7 +98,7 @@ export const selectedCommunity = derived(
         } else {
             return undefined;
         }
-    }
+    },
 );
 
 export function setSelectedCommunity(id: CommunityIdentifier): void {
