@@ -14,23 +14,22 @@
         </div>
         <div class="body">
             <p>
-                When the OpenChat SNS is created control of OpenChat will be handed from the core
-                dev team to the SNS. A <em>decentralization sale</em> will be initiated by NNS proposal
-                which will decentralize the governance of OpenChat by distributing the CHAT utility token
-                to the wider community. It will also raise an endowment to fund the ongoing development
-                and growth of OpenChat.
+                When the OpenChat SNS was created control of OpenChat was handed from the core dev
+                team to the SNS. The <em>decentralization swap</em> initiated by NNS proposal decentralized
+                the governance of OpenChat by distributing the CHAT utility token to the wider community.
+                This has also raise an endowment to fund the ongoing development and growth of OpenChat.
             </p>
             <p>
-                This is a crucial step in the decentralisation journey. With this in place the
-                system will not be under any centralised control. We, the developement team, will be
-                here to provide direction and to implement the roadmap but we will only be able to
-                make changes to the system via an approved SNS proposal voted upon by those who have
+                This was a crucial step in the decentralisation journey. With this in place the
+                system is now not under any centralised control. We, the developement team, are here
+                to provide direction and to implement the roadmap but we are only able to make
+                changes to the system via an approved SNS proposal voted upon by those who have
                 demonstrated their commitment to the long term future of OpenChat by staking their
                 CHAT tokens.
             </p>
             <p>
-                Those users will be invested in the future of the system through the voting rewards
-                they receive. This way, we enlist an army of powerful advocates and we can be
+                Those users are invested in the future of the system through the voting rewards they
+                receive. This way, we have enlisted an army of powerful advocates and we can be
                 confident that the proposals the community approves will be in the long term
                 interest of OpenChat as a whole.
             </p>
@@ -44,9 +43,9 @@
         </div>
         <div class="body">
             <p>
-                The SNS launch will unlock the potential to reward users with CHAT tokens. This will
-                allow community leaders to shape the character of the system, to help build <em
-                    >great</em> communities and to supercharge adoption.
+                The SNS launch unlocks the potential to reward users with CHAT tokens. This allows
+                community leaders to shape the character of the system, to help build <em>great</em>
+                communities and to supercharge adoption.
             </p>
             <p>
                 It will become really important to empower community leaders to build, promote and
@@ -90,7 +89,7 @@
                 like Slack workspaces.
             </p>
             <p>
-                <Link path="blog/communities">Read more</Link>
+                <Link path="blog/communities_released">Read more</Link>
             </p>
         </div>
     </CollapsibleCard>
@@ -153,9 +152,9 @@
             </p>
             <p>
                 However, the native web apis available to us are a work in progress and not all
-                platforms develop at the same speed. For example, we are currently unable to provide
-                push notifications to users of iOS. Some people also simply prefer to get their apps
-                in the chosen app store.
+                platforms develop at the same speed. Furthermore, some people simply prefer to get
+                their apps in their chosen app store and there is an undeniable stickiness in this
+                approach.
             </p>
             <p>
                 In the medium term, the team will explore options to preserve the single codebase
@@ -194,9 +193,9 @@
         </div>
         <div class="body">
             <p>
-                As we will be governed by the SNS, we will be obliged to listen to our users along
-                the way as we develop the larger features described above and so our roadmap will
-                always be fluid.
+                As we are governed by the SNS, we are obliged to listen to our users along the way
+                as we develop the larger features described above and so our roadmap will always be
+                fluid.
             </p>
             <p>
                 We will continuously dedicate ourselves to performance and usability and there are

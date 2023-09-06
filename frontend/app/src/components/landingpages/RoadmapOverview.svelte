@@ -34,8 +34,8 @@
                 <div class="title">SNS launch</div>
                 <div class="detail">
                     Launching of a Service Nervous System and handing over control of OpenChat to
-                    the control of that SNS. From this point forward the system will be
-                    democratically controlled by the holders of the CHAT utility token.
+                    the control of that SNS. With this complete the system is now democratically
+                    controlled by the holders of the CHAT utility token.
                 </div>
             </div>
 
@@ -45,9 +45,9 @@
                 </div>
                 <div class="title">User rewards</div>
                 <div class="detail">
-                    The SNS launch will unlock the potential to reward users with CHAT tokens to
-                    shape the character of the system, to help build great communities and to
-                    supercharge adoption.
+                    The SNS launch unlocks the potential to reward users with CHAT tokens to shape
+                    the character of the system, to help build great communities and to supercharge
+                    adoption.
                 </div>
             </div>
 

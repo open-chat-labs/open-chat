@@ -11,9 +11,9 @@
 
     // all the crazy calculations
     $: sectionHeight = $availableHeight;
-    $: phoneHeight = $mobileWidth ? $availableHeight * 0.7 : 600;
+    $: phoneHeight = $mobileWidth ? $availableHeight * 0.7 : 750;
     $: phoneTop = (sectionHeight - phoneHeight) / 2 + menuHeight;
-    $: phoneWidth = phoneHeight * 0.56;
+    $: phoneWidth = phoneHeight * 0.5333;
     $: cssHeight = phoneHeight + phoneBorder * 2;
     $: cssWidth = phoneWidth + phoneBorder * 2;
     $: scrollOffset = (sectionHeight - cssHeight) / 2;
@@ -34,14 +34,30 @@
 
     [...communityThemes, themes.dark, themes.light].forEach((theme) => {
         screenshotMap[theme.name] = [
-            { url: "/assets/screenshots/mobilefirst.png", alt: "mobile first" },
-            { url: "/assets/screenshots/creategroup1.png", alt: "create group" },
-            { url: "/assets/screenshots/permissions.png", alt: "group permissions" },
-            { url: "/assets/screenshots/whatshot.gif", alt: "find groups to join" },
-            { url: "/assets/screenshots/userprofile.gif", alt: "user profile" },
-            { url: "/assets/screenshots/messages.gif", alt: "sending messages" },
-            { url: "/assets/screenshots/search.gif", alt: "searching" },
-            { url: `/assets/screenshots/voting_${theme.mode}.png`, alt: "voting" },
+            {
+                url: `/assets/screenshots/features/communities_${theme.mode}.webp`,
+                alt: "communities",
+            },
+            {
+                url: `/assets/screenshots/features/mobilefirst_${theme.mode}.webp`,
+                alt: "mobile first",
+            },
+            {
+                url: `/assets/screenshots/features/creategroup_${theme.mode}.webp`,
+                alt: "create group",
+            },
+            {
+                url: `/assets/screenshots/features/permissions_${theme.mode}.webp`,
+                alt: "permissions",
+            },
+            { url: `/assets/screenshots/features/organise_${theme.mode}.webp`, alt: "organise" },
+            { url: `/assets/screenshots/features/profile_${theme.mode}.webp`, alt: "user profile" },
+            {
+                url: `/assets/screenshots/features/message_${theme.mode}.gif`,
+                alt: "sending messages",
+            },
+            { url: `/assets/screenshots/features/search_${theme.mode}.gif`, alt: "searching" },
+            { url: `/assets/screenshots/features/voting_${theme.mode}.webp`, alt: "voting" },
         ];
     });
 
@@ -65,7 +81,20 @@
 </div>
 
 <div class="content">
-    <Feature height={sectionHeight} backgroundColor={"transparent"} title={"Mobile first"}>
+    <Feature height={sectionHeight} backgroundColor={"transparent"} title={"Communities"}>
+        <p>
+            Not just a chat app - OpenChat is a Community building power house. Find communities
+            that speak to you. Create a community of your own - you are in complete control using
+            our powerful system of roles, permissions and channels.
+        </p>
+        <p>Discord meets Slack in a decentralized package.</p>
+    </Feature>
+
+    <Feature
+        height={sectionHeight}
+        backgroundColor={"#FF005C"}
+        color={"#ffffff"}
+        title={"Mobile first"}>
         <p>
             A chat app should be used on the go and so OpenChat was designed from the beginning to
             work well first and foremost on your mobile device.
@@ -76,7 +105,7 @@
         </p>
     </Feature>
 
-    <Feature height={sectionHeight} backgroundColor={"#FF005C"} color={"#ffffff"} title={"Groups"}>
+    <Feature height={sectionHeight} backgroundColor={"#FEC000"} color={black} title={"Groups"}>
         <p>
             Create private groups with friends and family to coordinate and chat together. With a
             private group, you have full control over who is the group.
@@ -84,22 +113,11 @@
         <p>Or create a public group and share it with the world.</p>
     </Feature>
 
-    <Feature height={sectionHeight} backgroundColor={"#FEC000"} color={black} title={"Permissions"}>
+    <Feature height={sectionHeight} backgroundColor={"#08AEDB"} color={black} title={"Permissions"}>
         <p>
-            Permissions are assigned to different types of users. As the group owner you will decide
-            who gets admin or moderator privileges. This will allow them to help you moderate the
-            group to make sure it works the way you want.
-        </p>
-    </Feature>
-
-    <Feature
-        height={sectionHeight}
-        backgroundColor={"#08AEDB"}
-        color={black}
-        title={"Finding groups"}>
-        <p>Select the "What's hot" menu option to find popular groups.</p>
-        <p>
-            Or simply search from the universal search box to preview or join the group from there.
+            Permissions are assigned to different types of users. As a community or group owner you
+            will decide who gets owner, admin or moderator privileges. This allows delegate
+            responsibility as you grow your space.
         </p>
     </Feature>
 
@@ -107,6 +125,16 @@
         height={sectionHeight}
         backgroundColor={"#673BB7"}
         color={"#ffffff"}
+        title={"Organise"}>
+        <p>Add any chat to your favourites for easy access.</p>
+        <p>Pin any chat to the top of a chat list.</p>
+        <p>Arrange communities in any order that suits you.</p>
+    </Feature>
+
+    <Feature
+        height={sectionHeight}
+        backgroundColor={"#05B09F"}
+        color={black}
         title={"User profile"}>
         <p>Configure your personal information, UI settings and chat settings at any time.</p>
 
@@ -117,8 +145,8 @@
 
     <Feature
         height={sectionHeight}
-        backgroundColor={"#05B09F"}
-        color={black}
+        backgroundColor={"#FF8541"}
+        color={"#ffffff"}
         title={"Sending messages"}>
         <p>
             Sending messages is the heart of any chat app. OpenChat provides all of the features
@@ -126,18 +154,18 @@
         </p>
     </Feature>
 
-    <Feature height={sectionHeight} backgroundColor={"#FF8541"} color={"#ffffff"} title={"Search"}>
-        <p>
-            Search globally for users, messages or public groups right from the universal search box
-            below the user panel.
-        </p>
+    <Feature height={sectionHeight} backgroundColor={"#FF005C"} color={"#ffffff"} title={"Search"}>
+        <p>Search for Communities in the community explorer.</p>
+        <p>Search for global groups from the group chats section.</p>
+        <p>Search for any user in from the direct chats section.</p>
 
         <p>You can also search for messages within any selected chat.</p>
     </Feature>
 
     <Feature height={sectionHeight} backgroundColor={"transparent"} title={"Proposal voting"}>
         <p>
-            A unique feature of OpenChat is that it allows you to vote directly on NNS and (soon)
+            A unique feature of OpenChat is that it allows you to vote directly on NNS and <em
+                >any</em>
             SNS proposals.
         </p>
 
