@@ -35,29 +35,29 @@
     [...communityThemes, themes.dark, themes.light].forEach((theme) => {
         screenshotMap[theme.name] = [
             {
-                url: `/assets/screenshots/features/communities_${theme.mode}.png`,
+                url: `/assets/screenshots/features/communities_${theme.mode}.webp`,
                 alt: "communities",
             },
             {
-                url: `/assets/screenshots/features/mobilefirst_${theme.mode}.png`,
+                url: `/assets/screenshots/features/mobilefirst_${theme.mode}.webp`,
                 alt: "mobile first",
             },
             {
-                url: `/assets/screenshots/features/creategroup_${theme.mode}.png`,
+                url: `/assets/screenshots/features/creategroup_${theme.mode}.webp`,
                 alt: "create group",
             },
             {
-                url: `/assets/screenshots/features/permissions_${theme.mode}.png`,
+                url: `/assets/screenshots/features/permissions_${theme.mode}.webp`,
                 alt: "permissions",
             },
-            { url: `/assets/screenshots/features/organise_${theme.mode}.png`, alt: "organise" },
-            { url: `/assets/screenshots/features/profile_${theme.mode}.png`, alt: "user profile" },
+            { url: `/assets/screenshots/features/organise_${theme.mode}.webp`, alt: "organise" },
+            { url: `/assets/screenshots/features/profile_${theme.mode}.webp`, alt: "user profile" },
             {
                 url: `/assets/screenshots/features/message_${theme.mode}.gif`,
                 alt: "sending messages",
             },
             { url: `/assets/screenshots/features/search_${theme.mode}.gif`, alt: "searching" },
-            { url: `/assets/screenshots/features/voting_${theme.mode}.png`, alt: "voting" },
+            { url: `/assets/screenshots/features/voting_${theme.mode}.webp`, alt: "voting" },
         ];
     });
 
@@ -87,10 +87,14 @@
             that speak to you. Create a community of your own - you are in complete control using
             our powerful system of roles, permissions and channels.
         </p>
-        <p>Think Discord meets Slack meets Teams all in one decentralized package.</p>
+        <p>Discord meets Slack in a decentralized package.</p>
     </Feature>
 
-    <Feature height={sectionHeight} backgroundColor={"#FF005C"} title={"Mobile first"}>
+    <Feature
+        height={sectionHeight}
+        backgroundColor={"#FF005C"}
+        color={"#ffffff"}
+        title={"Mobile first"}>
         <p>
             A chat app should be used on the go and so OpenChat was designed from the beginning to
             work well first and foremost on your mobile device.
@@ -150,7 +154,7 @@
         </p>
     </Feature>
 
-    <Feature height={sectionHeight} backgroundColor={"#FF005C"} title={"Search"}>
+    <Feature height={sectionHeight} backgroundColor={"#FF005C"} color={"#ffffff"} title={"Search"}>
         <p>Search for Communities in the community explorer.</p>
         <p>Search for global groups from the group chats section.</p>
         <p>Search for any user in from the direct chats section.</p>
