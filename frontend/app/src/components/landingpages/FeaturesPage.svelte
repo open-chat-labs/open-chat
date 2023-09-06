@@ -3,6 +3,7 @@
     import { communityThemes, themeStore, themes } from "../../theme/themes";
 
     import { mobileWidth, toPixel, availableHeight } from "../../stores/screenDimensions";
+    import { menuStore } from "../../stores/menu";
 
     let scrollTop = 0;
     let phoneBorder = 5;
@@ -21,6 +22,7 @@
     const black = "#242834";
 
     function onScroll() {
+        menuStore.hideMenu();
         scrollTop = window.scrollY;
     }
 

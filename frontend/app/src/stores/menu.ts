@@ -37,7 +37,7 @@ export const menuStore = {
         centered: boolean,
         position: Position = "bottom",
         align: Alignment = "center",
-        gutter = 8
+        gutter = 8,
     ): void =>
         update((menu) => {
             if (menu === undefined) return menu;
@@ -49,11 +49,14 @@ export const menuStore = {
                     ? centerOfScreen(elementRect)
                     : boundsCheck(
                           triggerRect,
-                          derivePosition(triggerRect, elementRect, position, align, gutter)
+                          derivePosition(triggerRect, elementRect, position, align, gutter),
                       );
 
             menu.style.setProperty("left", `${dim.x}px`);
-            menu.style.setProperty("top", `${dim.y}px`);
+
+            // for landing pages we need to offset based on the window scroll
+            // for the main app this will always be 0 so it's a no-op
+            menu.style.setProperty("top", `${dim.y + window.scrollY}px`);
 
             return menu;
         }),
