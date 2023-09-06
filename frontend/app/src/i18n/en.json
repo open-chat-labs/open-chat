@@ -871,6 +871,7 @@
         "create": "Create a community",
         "edit": "Edit community",
         "members": "Members",
+        "memberGroups": "Member groups",
         "searchGroups": "Search community channels",
         "hideLeftNav": "Collapse communities menu",
         "mainMenu": "Main menu",

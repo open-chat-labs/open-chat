@@ -12,6 +12,7 @@ import {
     CommunityCanisterCommunitySummary,
     CommunityMembership,
     JoinChannelResponse,
+    UserGroup,
 } from "./types";
 export {
     _SERVICE as LocalUserIndexService,
@@ -26,6 +27,7 @@ export {
     CommunityCanisterCommunitySummary as ApiCommunityCanisterCommunitySummary,
     CommunityMembership as ApiCommunityMembership,
     JoinChannelResponse as ApiJoinChannelResponse,
+    UserGroup as ApiUserGroup,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

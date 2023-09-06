@@ -51,6 +51,12 @@ export type CommunityIdentifier = {
     communityId: string;
 };
 
+export type UserGroup = {
+    memberCount: number;
+    name: string;
+    id: number;
+};
+
 export type CommunitySummary = AccessControlled &
     HasLevel &
     HasMembershipRole &
@@ -67,6 +73,7 @@ export type CommunitySummary = AccessControlled &
         membership?: CommunityMembership;
         channels: ChannelSummary[]; // TODO - this might be better as a ChatMap - but that would have some serialisation complications
         primaryLanguage: string;
+        userGroups: UserGroup[];
     };
 
 export type DefaultChannel = {
@@ -265,5 +272,8 @@ export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) |
 
 export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | Failure;
 
-export type CreateUserGroupResponse = { kind: "success", userGroupId: number } | { kind: "name_taken" } | Failure;
+export type CreateUserGroupResponse =
+    | { kind: "success"; userGroupId: number }
+    | { kind: "name_taken" }
+    | Failure;
 export type UpdateUserGroupResponse = Success | { kind: "name_taken" } | Failure;

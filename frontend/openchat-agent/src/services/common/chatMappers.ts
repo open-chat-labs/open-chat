@@ -144,6 +144,7 @@ import type {
     ResetInviteCodeResponse,
     ThreadSyncDetails,
     RegisterProposalVoteResponse,
+    UserGroup,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -197,6 +198,7 @@ import type {
     ApiGateCheckFailedReason,
     ApiCommunityCanisterCommunitySummary,
     ApiJoinGroupResponse,
+    ApiUserGroup,
 } from "../localUserIndex/candid/idl";
 import type {
     ApiCommunityPermissionRole,
@@ -1536,6 +1538,15 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         },
         channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: candid.primary_language,
+        userGroups: candid.user_groups.map(userGroup),
+    };
+}
+
+export function userGroup(candid: ApiUserGroup): UserGroup {
+    return {
+        memberCount: candid.members,
+        name: candid.name,
+        id: candid.user_group_id,
     };
 }
 

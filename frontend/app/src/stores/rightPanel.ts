@@ -14,6 +14,7 @@ export type RightPanelState =
     | ProposalFilterPanel
     | CommunityFilters
     | CommunityDetails
+    | MemberGroupsPanel
     | NoPanel;
 
 export type NoPanel = {
@@ -28,6 +29,10 @@ export type MessageThreadPanel = {
 
 export type GroupDetailsPanel = {
     kind: "group_details";
+};
+
+export type MemberGroupsPanel = {
+    kind: "member_groups_panel";
 };
 
 export type UserProfilePanel = {
@@ -92,7 +97,7 @@ export function filterByChatType(chat: ChatSummary | undefined): void {
         if (chat.kind === "direct_chat") {
             return ["new_group_panel", "user_profile"].includes(panel.kind);
         }
-        
+
         if (
             chat.kind === "group_chat" &&
             (chat.previewed ||
@@ -104,7 +109,7 @@ export function filterByChatType(chat: ChatSummary | undefined): void {
         if (chat.kind !== "channel" && panel.kind === "community_channels") {
             return false;
         }
-        
+
         return true;
     });
 }

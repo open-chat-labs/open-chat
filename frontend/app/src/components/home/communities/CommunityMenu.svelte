@@ -9,6 +9,7 @@
     import FileDocument from "svelte-material-icons/FileDocument.svelte";
     import PlaylistPlus from "svelte-material-icons/PlaylistPlus.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import AccountGroup from "../../icons/AccountGroup.svelte";
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Menu from "../../Menu.svelte";
@@ -60,9 +61,15 @@
     function showMembers() {
         rightPanelHistory.set([{ kind: "show_community_members" }]);
     }
+
+    function showMemberGroups() {
+        rightPanelHistory.set([{ kind: "member_groups_panel" }]);
+    }
+
     function invite() {
         canInvite && rightPanelHistory.set([{ kind: "invite_community_users" }]);
     }
+
     function showChannels() {
         rightPanelHistory.set([
             {
@@ -91,6 +98,10 @@
             <MenuItem on:click={showMembers}>
                 <AccountMultiple size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                 <div slot="text">{$_("communities.members")}</div>
+            </MenuItem>
+            <MenuItem on:click={showMemberGroups}>
+                <AccountGroup size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                <div slot="text">{$_("communities.memberGroups")}</div>
             </MenuItem>
             {#if canInvite}
                 <MenuItem on:click={invite}>

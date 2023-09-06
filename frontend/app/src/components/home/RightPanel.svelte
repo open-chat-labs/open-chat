@@ -34,6 +34,7 @@
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
     import CommunityChannels from "./communities/details/CommunityChannels.svelte";
     import { interpolateLevel } from "../../utils/i18n";
+    import MemberGroups from "./communities/details/MemberGroups.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -411,11 +412,7 @@
             on:showInviteUsers={showInviteGroupUsers}
             on:removeMember={onRemoveGroupMember}
             on:changeRole={onChangeGroupRole} />
-    {:else if lastState.kind === "show_pinned" &&
-        $selectedChatId !== undefined &&
-        ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") &&
-        $multiUserChat !== undefined
-    }
+    {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
             on:chatWith
             on:goToMessageIndex={goToMessageIndex}
@@ -445,5 +442,9 @@
         <CommunityDetails on:deleteCommunity on:editCommunity />
     {:else if lastState.kind === "community_filters"}
         <CommunityFilters on:close={popRightPanelHistory} />
+    {:else if lastState.kind === "member_groups_panel"}
+        <MemberGroups
+            closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+            on:close={popRightPanelHistory} />
     {/if}
 </Panel>
