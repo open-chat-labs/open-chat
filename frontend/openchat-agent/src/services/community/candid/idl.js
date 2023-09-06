@@ -757,6 +757,15 @@ export const idlFactory = ({ IDL }) => {
     'NotPlatformModerator' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const DeleteUserGroupsArgs = IDL.Record({
+    'user_group_ids' : IDL.Vec(IDL.Nat32),
+  });
+  const DeleteUserGroupsResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+  });
   const DeletedMessageArgs = IDL.Record({
     'channel_id' : ChannelId,
     'message_id' : MessageId,
@@ -1426,6 +1435,7 @@ export const idlFactory = ({ IDL }) => {
     'community_id' : CommunityId,
     'channels_updated' : IDL.Vec(CommunityCanisterChannelSummaryUpdates),
     'metrics' : IDL.Opt(ChatMetrics),
+    'user_groups_deleted' : IDL.Vec(IDL.Nat32),
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
@@ -1651,6 +1661,11 @@ export const idlFactory = ({ IDL }) => {
     'delete_messages' : IDL.Func(
         [DeleteMessagesArgs],
         [DeleteMessagesResponse],
+        [],
+      ),
+    'delete_user_groups' : IDL.Func(
+        [DeleteUserGroupsArgs],
+        [DeleteUserGroupsResponse],
         [],
       ),
     'deleted_message' : IDL.Func(

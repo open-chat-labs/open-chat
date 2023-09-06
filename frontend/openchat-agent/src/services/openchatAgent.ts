@@ -162,6 +162,7 @@ import type {
     SetDisplayNameResponse,
     CreateUserGroupResponse,
     UpdateUserGroupResponse,
+    DeleteUserGroupsResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2452,5 +2453,12 @@ export class OpenChatAgent extends EventTarget {
         usersToRemove: string[]
     ): Promise<UpdateUserGroupResponse> {
         return this.communityClient(communityId).updateUserGroup(userGroupId, name, usersToAdd, usersToRemove);
+    }
+
+    deleteUserGroups(
+        communityId: string,
+        userGroupIds: number[],
+    ): Promise<DeleteUserGroupsResponse> {
+        return this.communityClient(communityId).deleteUserGroups(userGroupIds);
     }
 }
