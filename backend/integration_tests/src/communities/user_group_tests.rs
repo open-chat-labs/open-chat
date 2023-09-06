@@ -167,7 +167,7 @@ fn delete_user_group_succeeds() {
 
     env.advance_time(Duration::from_secs(60));
 
-    let delete_response = client::community::delete_user_group(
+    let delete_response = client::community::delete_user_groups(
         env,
         user1.principal,
         community_id.into(),

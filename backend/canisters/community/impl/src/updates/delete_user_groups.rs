@@ -25,7 +25,7 @@ fn delete_user_groups_impl(args: Args, state: &mut RuntimeState) -> Response {
 
             let mut updated = false;
             for user_group_id in args.user_group_ids {
-                if state.data.members.delete_user_groups(user_group_id, now) {
+                if state.data.members.delete_user_group(user_group_id, now) {
                     updated = true;
                 }
             }
