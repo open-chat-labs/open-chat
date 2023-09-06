@@ -107,7 +107,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     channel_name: channel.chat.name.clone(),
                     sender: user_id,
                     sender_name: args.sender_name,
-                    sender_display_name: args.sender_display_name,
+                    sender_display_name: member.display_name().value.clone().or(args.sender_display_name),
                     message_type: content.message_type().to_string(),
                     message_text: content.notification_text(
                         &args.mentioned,

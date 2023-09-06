@@ -7,9 +7,10 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-canister_client = { path = "../canister_client" }
 hex = { workspace = true }
 ic-cdk = { workspace = true }
+icdex_canister = { path = "../../external_canisters/icdex/api" }
+icdex_canister_c2c_client = { path = "../../external_canisters/icdex/c2c_client" }
 icrc1_ledger_canister_c2c_client = { path = "../../external_canisters/icrc1_ledger/c2c_client" }
 serde = { workspace = true }
 types = { path = "../types" }

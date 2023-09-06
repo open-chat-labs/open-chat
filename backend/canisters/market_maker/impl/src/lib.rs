@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use types::{
-    AggregatedOrders, BuildVersion, CancelOrderRequest, CanisterId, Cycles, MakeOrderRequest, TimestampMillis, Timestamped,
+    AggregatedOrders, BuildVersion, CancelOrderRequest, CanisterId, Cryptocurrency, Cycles, MakeOrderRequest, TimestampMillis,
+    Timestamped, TokenInfo,
 };
 use utils::env::Environment;
 
@@ -40,9 +41,17 @@ impl RuntimeState {
             ICDEX_EXCHANGE_ID => Some(Box::new(ICDexClient::new(
                 self.env.canister_id(),
                 CanisterId::from_text("3we4s-lyaaa-aaaak-aegrq-cai").unwrap(),
-                self.data.icp_ledger_canister_id,
-                self.data.chat_ledger_canister_id,
-                10000000,
+                TokenInfo {
+                    token: Cryptocurrency::InternetComputer,
+                    ledger: self.data.icp_ledger_canister_id,
+                    decimals: 8,
+                },
+                TokenInfo {
+                    token: Cryptocurrency::CHAT,
+                    ledger: self.data.chat_ledger_canister_id,
+                    decimals: 8,
+                },
+                10_000_000,
                 |order| on_order_made(ICDEX_EXCHANGE_ID, order),
                 |order| on_order_cancelled(ICDEX_EXCHANGE_ID, order),
             ))),
