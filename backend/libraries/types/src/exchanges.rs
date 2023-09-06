@@ -1,3 +1,4 @@
+use crate::{CanisterId, Cryptocurrency};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -13,6 +14,13 @@ pub struct MakeOrderRequest {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CancelOrderRequest {
     pub id: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct TokenInfo {
+    pub token: Cryptocurrency,
+    pub ledger: CanisterId,
+    pub decimals: u8,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]

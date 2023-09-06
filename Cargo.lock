@@ -2422,13 +2422,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "576c539151d4769fb4d1a0c25c4108dd18facd04c5695b02cf2d226ab4e43aa5"
 
 [[package]]
-name = "icdex_client"
+name = "icdex_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "icdex_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
+ "ic-cdk",
+ "icdex_canister",
+ "types",
+]
+
+[[package]]
+name = "icdex_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
  "hex",
  "ic-cdk",
+ "icdex_canister",
+ "icdex_canister_c2c_client",
  "icrc1_ledger_canister_c2c_client",
  "serde",
  "types",

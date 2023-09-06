@@ -73,8 +73,25 @@ macro_rules! generate_candid_c2c_call {
         ) -> ::ic_cdk::api::call::CallResult<$method_name::Response> {
             let method_name = stringify!($method_name);
 
-            canister_client::make_c2c_call(canister_id, method_name, (args,), ::candid::encode_args, |r| {
+            canister_client::make_c2c_call(canister_id, method_name, args, ::candid::encode_one, |r| {
                 ::candid::decode_one(r)
+            })
+            .await
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! generate_candid_c2c_call_tuple_args {
+    ($method_name:ident) => {
+        pub async fn $method_name(
+            canister_id: ::types::CanisterId,
+            args: $method_name::Args,
+        ) -> ::ic_cdk::api::call::CallResult<$method_name::Response> {
+            let method_name = stringify!($method_name);
+
+            canister_client::make_c2c_call(canister_id, method_name, args, ::candid::encode_args, |r| {
+                ::candid::decode_args(r)
             })
             .await
         }
