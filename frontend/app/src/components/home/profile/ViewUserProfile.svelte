@@ -18,6 +18,7 @@
     export let userId: string;
     export let alignTo: DOMRect | undefined = undefined;
     export let chatButton = true;
+    export let inCommunityContext = true;
 
     let profile: PublicProfile | undefined = undefined;
     let user: UserSummary | undefined;
@@ -39,6 +40,8 @@
     $: isPremium = profile?.isPremium ?? false;
     $: diamond = user?.diamond ?? false;
     $: phoneIsVerified = profile?.phoneIsVerified ?? false;
+    $: currentCommunityMembers = client.currentCommunityMembers;
+    $: communityMember = inCommunityContext ? $currentCommunityMembers.get(userId) : undefined;
 
     onMount(async () => {
         try {
@@ -98,7 +101,7 @@
             <div class="header" slot="header">
                 <div class="handle">
                     <span class:diamond>
-                        {profile.displayName ?? profile.username}
+                        {communityMember?.displayName ?? profile.displayName ?? profile.username}
                     </span>
                     <span class="username">
                         @{profile.username}

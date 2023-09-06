@@ -133,7 +133,8 @@
     $: currentCommunityMembers = client.currentCommunityMembers;
     $: senderCommunityMember =
         sender !== undefined ? $currentCommunityMembers.get(sender.userId) : undefined;
-    $: senderDisplayName = senderCommunityMember?.displayName ?? sender?.displayName ?? sender?.username;
+    $: senderDisplayName =
+        senderCommunityMember?.displayName ?? sender?.displayName ?? sender?.username;
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
