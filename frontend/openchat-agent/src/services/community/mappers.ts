@@ -15,6 +15,7 @@ import type {
     CommunityPermissions,
     CommunitySummaryResponse,
     CommunitySummaryUpdatesResponse,
+    CreateUserGroupResponse,
     EventsResponse,
     ExploreChannelsResponse,
     GateCheckFailedReason,
@@ -27,6 +28,7 @@ import type {
     UnblockCommunityUserResponse,
     UpdateCommunityResponse,
     UpdatedEvent,
+    UpdateUserGroupResponse,
     UserFailedError,
     UserFailedGateCheck,
 } from "openchat-shared";
@@ -63,6 +65,8 @@ import type {
     ApiSelectedUpdatesResponse,
     ApiChannelSummaryResponse,
     ApiImportGroupResponse,
+    ApiCreateUserGroupResponse,
+    ApiUpdateUserGroupResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -607,6 +611,35 @@ export function communityDetailsUpdatesResponse(
         };
     } else {
         console.warn("Unexpected ApiSelectedUpdatesResponse type received", candid);
+        return CommonResponses.failure();
+    }
+}
+
+export function createUserGroupResponse(candid: ApiCreateUserGroupResponse): CreateUserGroupResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            userGroupId: candid.Success.user_group_id,
+        };
+    } else if ("NameTaken" in candid) {
+        return {
+            kind: "name_taken",
+        };
+    } else {
+        console.warn("CreateUserGroup failed with", candid);
+        return CommonResponses.failure();
+    }
+}
+
+export function updateUserGroupResponse(candid: ApiUpdateUserGroupResponse): UpdateUserGroupResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    } else if ("NameTaken" in candid) {
+        return {
+            kind: "name_taken",
+        };
+    } else {
+        console.warn("CreateUserGroup failed with", candid);
         return CommonResponses.failure();
     }
 }

@@ -11,6 +11,8 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
     members: HashMap<UserId, CommunityMemberInternal>,
+    #[serde(default)]
+    display_names_last_updated: TimestampMillis,
     user_groups: UserGroups,
     // This includes the userIds of community members and also users invited to the community
     principal_to_user_id_map: HashMap<Principal, UserId>,
@@ -35,10 +37,12 @@ impl CommunityMembers {
             channels_removed: Vec::new(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
             is_bot: false,
+            display_name: Timestamped::default(),
         };
 
         CommunityMembers {
             members: vec![(creator_user_id, member)].into_iter().collect(),
+            display_names_last_updated: now,
             user_groups: UserGroups::default(),
             principal_to_user_id_map: vec![(creator_principal, creator_user_id)].into_iter().collect(),
             blocked: HashSet::new(),
@@ -62,6 +66,7 @@ impl CommunityMembers {
                         channels_removed: Vec::new(),
                         rules_accepted: None,
                         is_bot,
+                        display_name: Timestamped::default(),
                     };
                     e.insert(member.clone());
                     self.add_user_id(principal, user_id);
@@ -207,6 +212,10 @@ impl CommunityMembers {
         self.user_groups.last_updated()
     }
 
+    pub fn display_names_last_updated(&self) -> TimestampMillis {
+        self.display_names_last_updated
+    }
+
     pub fn mark_member_joined_channel(&mut self, user_id: &UserId, channel_id: ChannelId) {
         if let Some(member) = self.members.get_mut(user_id) {
             member.channels.insert(channel_id);
@@ -301,6 +310,13 @@ impl CommunityMembers {
     pub fn admin_count(&self) -> u32 {
         self.admin_count
     }
+
+    pub fn set_display_name(&mut self, user_id: UserId, display_name: Option<String>, now: TimestampMillis) {
+        if let Some(member) = self.members.get_mut(&user_id) {
+            member.display_name = Timestamped::new(display_name, now);
+            self.display_names_last_updated = now;
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -313,18 +329,11 @@ pub struct CommunityMemberInternal {
     pub channels_removed: Vec<Timestamped<ChannelId>>,
     pub rules_accepted: Option<Timestamped<Version>>,
     pub is_bot: bool,
+
+    display_name: Timestamped<Option<String>>,
 }
 
 impl CommunityMemberInternal {
-    pub fn channels_removed_since(&self, since: TimestampMillis) -> Vec<ChannelId> {
-        self.channels_removed
-            .iter()
-            .rev()
-            .take_while(|t| t.timestamp > since)
-            .map(|t| t.value)
-            .collect()
-    }
-
     pub fn leave(&mut self, channel_id: ChannelId, now: TimestampMillis) {
         if self.channels.remove(&channel_id) {
             self.channels_removed.push(Timestamped::new(channel_id, now));
@@ -340,6 +349,23 @@ impl CommunityMemberInternal {
         if !already_accepted {
             self.rules_accepted = Some(Timestamped::new(version, now));
         }
+    }
+
+    pub fn channels_removed_since(&self, since: TimestampMillis) -> Vec<ChannelId> {
+        self.channels_removed
+            .iter()
+            .rev()
+            .take_while(|t| t.timestamp > since)
+            .map(|t| t.value)
+            .collect()
+    }
+
+    pub fn has_summary_updates_since(&self, since: TimestampMillis) -> bool {
+        self.rules_accepted.as_ref().map_or(false, |t| t.timestamp > since) || self.display_name.timestamp > since
+    }
+
+    pub fn display_name(&self) -> &Timestamped<Option<String>> {
+        &self.display_name
     }
 }
 
@@ -371,6 +397,7 @@ impl From<CommunityMemberInternal> for CommunityMember {
             user_id: p.user_id,
             date_added: p.date_added,
             role: p.role,
+            display_name: p.display_name.value,
         }
     }
 }
@@ -381,6 +408,7 @@ impl From<&CommunityMemberInternal> for CommunityMember {
             user_id: p.user_id,
             date_added: p.date_added,
             role: p.role,
+            display_name: p.display_name.value.clone(),
         }
     }
 }

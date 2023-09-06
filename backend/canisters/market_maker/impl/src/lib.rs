@@ -1,12 +1,14 @@
-use crate::exchanges::icdex::ICDexClient;
 use crate::exchanges::Exchange;
 use crate::model::orders_log::OrdersLog;
 use canister_state_macros::canister_state;
-use market_maker_canister::{CancelOrderRequest, ExchangeId, MakeOrderRequest, OrderType, ICDEX_EXCHANGE_ID};
+use icdex_client::ICDexClient;
+use market_maker_canister::{ExchangeId, ICDEX_EXCHANGE_ID};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap};
-use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
+use std::collections::HashMap;
+use types::{
+    AggregatedOrders, BuildVersion, CancelOrderRequest, CanisterId, Cycles, MakeOrderRequest, TimestampMillis, Timestamped,
+};
 use utils::env::Environment;
 
 mod exchanges;
@@ -41,8 +43,8 @@ impl RuntimeState {
                 self.data.icp_ledger_canister_id,
                 self.data.chat_ledger_canister_id,
                 10000000,
-                on_order_made,
-                on_order_cancelled,
+                |order| on_order_made(ICDEX_EXCHANGE_ID, order),
+                |order| on_order_cancelled(ICDEX_EXCHANGE_ID, order),
             ))),
             _ => None,
         }
@@ -125,46 +127,6 @@ pub struct CanisterIds {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct MarketState {
-    latest_price: u64,
-    my_open_orders: Vec<Order>,
-    orderbook: AggregatedOrders,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct AggregatedOrders {
-    bids: BTreeMap<u64, u64>,
-    asks: BTreeMap<u64, u64>,
-}
-
-impl From<&[Order]> for AggregatedOrders {
-    fn from(orders: &[Order]) -> Self {
-        let mut aggregated_orders = AggregatedOrders::default();
-        for order in orders {
-            aggregated_orders.add(order.order_type, order.price, order.amount);
-        }
-        aggregated_orders
-    }
-}
-
-impl AggregatedOrders {
-    pub fn add(&mut self, order_type: OrderType, price: u64, amount: u64) {
-        match order_type {
-            OrderType::Bid => *self.bids.entry(price).or_default() += amount,
-            OrderType::Ask => *self.asks.entry(price).or_default() += amount,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Order {
-    order_type: OrderType,
-    id: String,
-    price: u64,
-    amount: u64,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
     enabled: bool,
     price_increment: u64,
@@ -172,16 +134,11 @@ pub struct Config {
     min_order_size: u64,
     max_buy_price: u64,
     min_sell_price: u64,
-    #[serde(default = "two")]
     spread: u64,
     min_orders_per_direction: u32,
     max_orders_per_direction: u32,
     max_orders_to_make_per_iteration: u32,
     max_orders_to_cancel_per_iteration: u32,
-}
-
-fn two() -> u64 {
-    2
 }
 
 fn on_order_made(exchange_id: ExchangeId, order: MakeOrderRequest) {

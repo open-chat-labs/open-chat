@@ -448,6 +448,23 @@ type CreateChannelResponse = variant {
     CommunityFrozen;
 };
 
+type CreateUserGroupArgs = record {
+    name : text;
+    user_ids : vec UserId;
+};
+
+type CreateUserGroupResponse = variant {
+    Success : record {
+        user_group_id : nat32;
+    };
+    NameTooShort : FieldTooShortResult;
+    NameTooLong : FieldTooLongResult;
+    NameTaken;
+    NotAuthorized;
+    CommunityFrozen;
+    UserSuspended;
+};
+
 type DeclineInvitationArgs = record {
     channel_id : opt ChannelId;
 };
@@ -716,6 +733,20 @@ type SendMessageResponse = variant {
     RulesNotAccepted;
 };
 
+type SetMemberDisplayNameArgs = record {
+    display_name : opt text;
+};
+
+type SetMemberDisplayNameResponse = variant {
+    Success;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    DisplayNameInvalid;
+    DisplayNameTooShort : nat16;
+    DisplayNameTooLong : nat16;
+};
+
 type ToggleMuteNotificationsArgs = record {
     channel_id : opt ChannelId;
     mute : bool;
@@ -822,6 +853,24 @@ type UpdateCommunityResponse = variant {
     InvalidLanguage;
 };
 
+type UpdateUserGroupArgs = record {
+    user_group_id : nat32;
+    name : opt text;
+    users_to_add : vec UserId;
+    users_to_remove : vec UserId;
+};
+
+type UpdateUserGroupResponse = variant {
+    Success;
+    UserGroupNotFound;
+    NameTooShort :  FieldTooShortResult;
+    NameTooLong : FieldTooLongResult;
+    NameTaken;
+    NotAuthorized;
+    CommunityFrozen;
+    UserSuspended;
+};
+
 service : {
     channel_summary : (ChannelSummaryArgs) -> (ChannelSummaryResponse) query;
     channel_summary_updates : (ChannelSummaryUpdatesArgs) -> (ChannelSummaryUpdatesResponse) query;
@@ -851,6 +900,7 @@ service : {
     change_role : (ChangeRoleArgs) -> (ChangeRoleResponse);
     claim_prize : (ClaimPrizeArgs) -> (ClaimPrizeResponse);
     create_channel : (CreateChannelArgs) -> (CreateChannelResponse);
+    create_user_group : (CreateUserGroupArgs) -> (CreateUserGroupResponse);
     decline_invitation : (DeclineInvitationArgs) -> (DeclineInvitationResponse);
     delete_channel : (DeleteChannelArgs) -> (DeleteChannelResponse);
     delete_messages : (DeleteMessagesArgs) -> (DeleteMessagesResponse);
@@ -868,10 +918,12 @@ service : {
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
     reset_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     send_message : (SendMessageArgs) -> (SendMessageResponse);
+    set_member_display_name : (SetMemberDisplayNameArgs) -> (SetMemberDisplayNameResponse);
     toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     unpin_message : (PinMessageArgs) -> (PinMessageResponse);
     update_channel : (UpdateChannelArgs) -> (UpdateChannelResponse);
     update_community : (UpdateCommunityArgs) -> (UpdateCommunityResponse);
+    update_user_group : (UpdateUserGroupArgs) -> (UpdateUserGroupResponse);
 };

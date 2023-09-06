@@ -1,7 +1,6 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
 use chat_events::{ChatEvents, Reader};
 use serde::{Deserialize, Serialize};
-use serializer::ok_or_default;
 use types::{
     DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
     Timestamped, UserId,
@@ -19,7 +18,6 @@ pub struct DirectChat {
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
     pub is_bot: bool,
-    #[serde(deserialize_with = "ok_or_default")]
     pub unconfirmed_v2: Vec<SendMessageArgs>,
 }
 
