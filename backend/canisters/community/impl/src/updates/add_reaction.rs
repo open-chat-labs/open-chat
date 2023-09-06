@@ -45,6 +45,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                             channel.chat.name.clone(),
                             channel.chat.avatar.as_ref().map(|d| d.id),
                             message,
+                            member.display_name().value.clone(),
                             state,
                         );
                     }
@@ -101,6 +102,7 @@ fn push_notification(
     channel_name: String,
     channel_avatar_id: Option<u128>,
     message_event: EventWrapper<Message>,
+    member_display_name: Option<String>,
     state: &mut RuntimeState,
 ) {
     let recipient = message_event.event.sender;
@@ -114,7 +116,7 @@ fn push_notification(
         channel_name,
         added_by: user_id,
         added_by_name: args.username,
-        added_by_display_name: args.display_name,
+        added_by_display_name: member_display_name.or(args.display_name),
         reaction: args.reaction,
         community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
         channel_avatar_id,
