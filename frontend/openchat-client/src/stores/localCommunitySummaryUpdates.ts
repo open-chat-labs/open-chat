@@ -21,7 +21,7 @@ class LocalCommunitySummaryUpdatesStore extends LocalUpdatesStore<
     }
     updateDisplayName(id: CommunityIdentifier, displayName: string | undefined): void {
         this.applyUpdate(id, (_) => ({
-            displayName: displayName !== undefined ? { value: displayName } : undefined,
+            displayName: displayName !== undefined ? { value: displayName } : "set_to_none",
         }));
     }
 
