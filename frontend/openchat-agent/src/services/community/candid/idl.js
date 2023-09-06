@@ -1267,13 +1267,8 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
-  const UserGroupMembers = IDL.Record({
-    'members' : IDL.Vec(UserId),
-    'user_group_id' : IDL.Nat32,
-  });
   const SelectedInitialSuccess = IDL.Record({
     'members' : IDL.Vec(CommunityMember),
-    'user_group_members' : IDL.Vec(UserGroupMembers),
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
     'access_rules' : VersionedRules,
@@ -1291,7 +1286,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const SelectedUpdatesSuccess = IDL.Record({
     'blocked_users_removed' : IDL.Vec(UserId),
-    'user_group_members' : IDL.Vec(UserGroupMembers),
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'members_added_or_updated' : IDL.Vec(CommunityMember),
     'members_removed' : IDL.Vec(UserId),

@@ -368,6 +368,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'community_id' : CommunityId,
   'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
   'metrics' : [] | [ChatMetrics],
+  'user_groups_deleted' : Uint32Array | number[],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'description' : [] | [string],
@@ -519,6 +520,13 @@ export type DeleteMessagesResponse = { 'UserNotInChannel' : null } |
   { 'CommunityFrozen' : null } |
   { 'NotPlatformModerator' : null } |
   { 'InternalError' : string };
+export interface DeleteUserGroupsArgs {
+  'user_group_ids' : Uint32Array | number[],
+}
+export type DeleteUserGroupsResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -1513,7 +1521,6 @@ export type SelectedInitialResponse = { 'Success' : SelectedInitialSuccess } |
   { 'PrivateCommunity' : null };
 export interface SelectedInitialSuccess {
   'members' : Array<CommunityMember>,
-  'user_group_members' : Array<UserGroupMembers>,
   'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
   'access_rules' : VersionedRules,
@@ -1530,7 +1537,6 @@ export type SelectedUpdatesResponse = { 'Success' : SelectedUpdatesSuccess } |
   { 'PrivateCommunity' : null };
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
-  'user_group_members' : Array<UserGroupMembers>,
   'invited_users' : [] | [Array<UserId>],
   'members_added_or_updated' : Array<CommunityMember>,
   'members_removed' : Array<UserId>,
