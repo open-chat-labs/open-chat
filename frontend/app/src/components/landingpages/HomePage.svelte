@@ -15,7 +15,7 @@
             OpenChat users can send messages to each other containing tokens like ICP and ckBTC.
         </h2>
         <p>
-            Soon OpenChat is governed by its community as a DAO with its own CHAT token. CHAT tokens
+            OpenChat is governed by its community as a DAO and has its own CHAT token. CHAT tokens
             are given as rewards to users to turbo-charge growth and to create a team of millions of
             advocates allowing OpenChat to become a viable challenger to centralized big tech
             competitors!
