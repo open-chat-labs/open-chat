@@ -1,4 +1,3 @@
-use crate::model::members::CommunityMembers;
 use chat_events::Reader;
 use group_chat_core::{GroupChatCore, GroupMemberInternal, LeaveResult};
 use search::*;

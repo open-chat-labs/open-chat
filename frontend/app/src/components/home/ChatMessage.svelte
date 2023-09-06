@@ -130,6 +130,11 @@
     $: showChatMenu = (!inert || canRevealDeleted) && !readonly;
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
 
+    $: currentCommunityMembers = client.currentCommunityMembers;
+    $: senderCommunityMember =
+        sender !== undefined ? $currentCommunityMembers.get(sender.userId) : undefined;
+    $: senderDisplayName = senderCommunityMember?.displayName ?? sender?.displayName ?? sender?.username;
+
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
             observer.unobserve(msgElement);
@@ -450,7 +455,7 @@
                             class:fill
                             class:crypto
                             class:diamond={sender?.diamond}>
-                            {sender?.displayName ?? sender?.username}
+                            {senderDisplayName}
                         </h4>
                     </Link>
                     {#if senderTyping}

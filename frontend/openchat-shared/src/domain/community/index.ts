@@ -76,7 +76,7 @@ export type DefaultChannel = {
 };
 
 export type CommunitySpecificState = {
-    members: Member[];
+    members: Map<string, Member>;
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     rules?: AccessRules;

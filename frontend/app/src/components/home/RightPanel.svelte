@@ -380,7 +380,7 @@
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             collection={$selectedCommunity}
             invited={$currentCommunityInvited}
-            members={$currentCommunityMembers}
+            members={[...$currentCommunityMembers.values()]}
             blocked={$currentCommunityBlocked}
             on:close={popRightPanelHistory}
             on:blockUser={onBlockCommunityUser}
@@ -411,11 +411,7 @@
             on:showInviteUsers={showInviteGroupUsers}
             on:removeMember={onRemoveGroupMember}
             on:changeRole={onChangeGroupRole} />
-    {:else if lastState.kind === "show_pinned" &&
-        $selectedChatId !== undefined &&
-        ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") &&
-        $multiUserChat !== undefined
-    }
+    {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
             on:chatWith
             on:goToMessageIndex={goToMessageIndex}
