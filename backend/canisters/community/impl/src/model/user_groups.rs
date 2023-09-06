@@ -2,7 +2,7 @@ use rand::{Rng, RngCore};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::{BTreeMap, HashSet};
-use types::{TimestampMillis, Timestamped, UserGroupMembers, UserGroupSummary, UserId};
+use types::{TimestampMillis, Timestamped, UserGroupDetails, UserGroupSummary, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserGroups {
@@ -134,10 +134,11 @@ impl From<&UserGroup> for UserGroupSummary {
     }
 }
 
-impl From<&UserGroup> for UserGroupMembers {
+impl From<&UserGroup> for UserGroupDetails {
     fn from(value: &UserGroup) -> Self {
-        UserGroupMembers {
+        UserGroupDetails {
             user_group_id: value.id,
+            name: value.name.value.clone(),
             members: value.members.iter().copied().collect(),
         }
     }

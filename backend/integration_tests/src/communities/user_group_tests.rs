@@ -54,10 +54,10 @@ fn create_user_group_succeeds() {
     assert_eq!(user_group.members, 3);
 
     let details = client::community::happy_path::selected_initial(env, &user1, community_id);
-    assert_eq!(details.user_group_members.len(), 1);
+    assert_eq!(details.user_groups.len(), 1);
 
-    let user_group_members = details.user_group_members.first().unwrap();
-    assert_eq!(user_group_members.members.len(), 3);
+    let user_groups = details.user_groups.first().unwrap();
+    assert_eq!(user_groups.members.len(), 3);
 }
 
 #[test]
@@ -123,12 +123,12 @@ fn update_user_group_succeeds() {
     assert_eq!(user_group.members, 2);
 
     let details = client::community::happy_path::selected_initial(env, &user1, community_id);
-    assert_eq!(details.user_group_members.len(), 1);
+    assert_eq!(details.user_groups.len(), 1);
 
-    let user_group_members = details.user_group_members.first().unwrap();
-    assert_eq!(user_group_members.members.len(), 2);
-    assert!(user_group_members.members.contains(&user1.user_id));
-    assert!(user_group_members.members.contains(&user3.user_id));
+    let user_groups = details.user_groups.first().unwrap();
+    assert_eq!(user_groups.members.len(), 2);
+    assert!(user_groups.members.contains(&user1.user_id));
+    assert!(user_groups.members.contains(&user3.user_id));
 }
 
 #[test]
