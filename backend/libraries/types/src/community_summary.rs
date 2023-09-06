@@ -57,6 +57,7 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub rules_enabled: Option<bool>,
     pub membership: Option<CommunityMembershipUpdates>,
     pub user_groups: Vec<UserGroupSummary>,
+    pub user_groups_deleted: Vec<u32>,
     pub metrics: Option<ChatMetrics>,
 }
 

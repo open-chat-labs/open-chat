@@ -509,6 +509,17 @@ type DeleteMessagesResponse = variant {
     InternalError : text;
 };
 
+type DeleteUserGroupsArgs = record {
+    user_group_ids : vec nat32;
+};
+
+type DeleteUserGroupsResponse = variant {
+    Success;
+    NotAuthorized;
+    CommunityFrozen;
+    UserSuspended;
+};
+
 type DisableInviteCodeResponse = variant {
     Success;
     NotAuthorized;
@@ -904,6 +915,7 @@ service : {
     decline_invitation : (DeclineInvitationArgs) -> (DeclineInvitationResponse);
     delete_channel : (DeleteChannelArgs) -> (DeleteChannelResponse);
     delete_messages : (DeleteMessagesArgs) -> (DeleteMessagesResponse);
+    delete_user_groups : (DeleteUserGroupsArgs) -> (DeleteUserGroupsResponse);
     disable_invite_code : (EmptyArgs) -> (DisableInviteCodeResponse);
     edit_message : (EditMessageArgs) -> (EditMessageResponse);
     enable_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
