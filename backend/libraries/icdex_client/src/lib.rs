@@ -3,14 +3,14 @@ use canister_client::make_c2c_call;
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use serde::{Deserialize, Serialize};
 use types::icrc1::{Account, TransferArg};
-use types::{AggregatedOrders, CancelOrderRequest, CanisterId, MakeOrderRequest, Order, OrderType};
+use types::{AggregatedOrders, CancelOrderRequest, CanisterId, MakeOrderRequest, Order, OrderType, TokenInfo};
 
 pub struct ICDexClient<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> {
     this_canister_id: CanisterId,
     dex_canister_id: CanisterId,
-    icp_ledger_canister_id: CanisterId,
-    chat_ledger_canister_id: CanisterId,
-    unit_size: u64,
+    quote_token: TokenInfo,
+    base_token: TokenInfo,
+    smallest_order_size: u64, // In base token units, all orders are multiples of this size
     on_order_made: M,
     on_order_cancelled: C,
 }
@@ -19,18 +19,18 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
     pub fn new(
         this_canister_id: CanisterId,
         dex_canister_id: CanisterId,
-        icp_ledger_canister_id: CanisterId,
-        chat_ledger_canister_id: CanisterId,
-        unit_size: u64,
+        quote_token: TokenInfo,
+        base_token: TokenInfo,
+        smallest_order_size: u64,
         on_order_made: M,
         on_order_cancelled: C,
     ) -> Self {
         ICDexClient {
             this_canister_id,
             dex_canister_id,
-            icp_ledger_canister_id,
-            chat_ledger_canister_id,
-            unit_size,
+            quote_token,
+            base_token,
+            smallest_order_size,
             on_order_made,
             on_order_cancelled,
         }
@@ -42,7 +42,7 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
         })
         .await?;
 
-        Ok((response.price * 100_000_000f64) as u64)
+        Ok((response.price * self.quote_token_units_per_whole() as f64) as u64)
     }
 
     pub async fn my_open_orders(&self) -> CallResult<Vec<Order>> {
@@ -55,7 +55,7 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
         })
         .await?;
 
-        Ok(orders.data.into_iter().map(|(_, o)| o.into()).collect())
+        Ok(orders.data.into_iter().map(|(_, o)| self.convert_order(o)).collect())
     }
 
     pub async fn orderbook(&self) -> CallResult<AggregatedOrders> {
@@ -70,8 +70,8 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
                 .into_iter()
                 .map(|p| {
                     (
-                        u64::try_from(p.price.0).unwrap() * 10,
-                        u64::try_from(p.quantity.0).unwrap() * 10,
+                        u64::try_from(p.price.0).unwrap() * self.base_token_units_per_whole() / self.smallest_order_size,
+                        u64::try_from(p.quantity.0).unwrap(),
                     )
                 })
                 .collect(),
@@ -80,8 +80,8 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
                 .into_iter()
                 .map(|p| {
                     (
-                        u64::try_from(p.price.0).unwrap() * 10,
-                        u64::try_from(p.quantity.0).unwrap() * 10,
+                        u64::try_from(p.price.0).unwrap() * self.base_token_units_per_whole() / self.smallest_order_size,
+                        u64::try_from(p.quantity.0).unwrap(),
                     )
                 })
                 .collect(),
@@ -101,8 +101,11 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
         let (account, nonce) = get_account_response.map(|(a, _, n, _)| (a, n))?;
 
         let (ledger_canister_id, amount) = match order.order_type {
-            OrderType::Bid => (self.icp_ledger_canister_id, order.amount * order.price / 100_000_000),
-            OrderType::Ask => (self.chat_ledger_canister_id, order.amount),
+            OrderType::Bid => (
+                self.quote_token.ledger,
+                order.amount * order.price / self.base_token_units_per_whole(),
+            ),
+            OrderType::Ask => (self.base_token.ledger, order.amount),
         };
         icrc1_ledger_canister_c2c_client::icrc1_transfer(
             ledger_canister_id,
@@ -122,8 +125,8 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
             OrderType::Bid => OrderQuantity::Buy(order.amount.into(), 0.into()),
             OrderType::Ask => OrderQuantity::Sell(order.amount.into()),
         };
-        // Convert the price per whole CHAT into the price per `unit_size` of CHAT
-        let price = (order.price * self.unit_size / 100_000_000).into();
+        // Convert the price per whole into the price per `smallest_order_size`
+        let price = (order.price * self.smallest_order_size / self.base_token_units_per_whole()).into();
 
         type TradeArgs = (
             OrderPrice,
@@ -167,6 +170,32 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
         (self.on_order_cancelled)(order);
         Ok(())
     }
+
+    fn convert_order(&self, order: TradingOrder) -> Order {
+        let (order_type, amount) = match order.remaining.quantity {
+            OrderQuantity::Buy(n, _) => (OrderType::Bid, n),
+            OrderQuantity::Sell(n) => (OrderType::Ask, n),
+        };
+        let price: u64 = order.remaining.price.0.try_into().unwrap();
+        Order {
+            order_type,
+            id: hex::encode(order.txid),
+            price: price * self.base_token_units_per_whole() / self.smallest_order_size,
+            amount: amount.0.try_into().unwrap(),
+        }
+    }
+
+    fn quote_token_units_per_whole(&self) -> u64 {
+        Self::units_per_whole(self.quote_token.decimals)
+    }
+
+    fn base_token_units_per_whole(&self) -> u64 {
+        Self::units_per_whole(self.base_token.decimals)
+    }
+
+    fn units_per_whole(decimals: u8) -> u64 {
+        10u64.pow(decimals as u32)
+    }
 }
 
 #[derive(CandidType, Deserialize)]
@@ -201,22 +230,6 @@ impl From<OrderType> for Side {
 struct TradingOrder {
     remaining: OrderPrice,
     txid: Vec<u8>,
-}
-
-impl From<TradingOrder> for Order {
-    fn from(value: TradingOrder) -> Self {
-        let (order_type, amount) = match value.remaining.quantity {
-            OrderQuantity::Buy(n, _) => (OrderType::Bid, n),
-            OrderQuantity::Sell(n) => (OrderType::Ask, n),
-        };
-        let price: u64 = value.remaining.price.0.try_into().unwrap();
-        Order {
-            order_type,
-            id: hex::encode(value.txid),
-            price: price * 10, // TODO remove the '* 10' once fixed on their side
-            amount: amount.0.try_into().unwrap(),
-        }
-    }
 }
 
 #[derive(CandidType, Deserialize)]
