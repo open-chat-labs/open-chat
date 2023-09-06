@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Split ICDex client code into its own library ([#4318](https://github.com/open-chat-labs/open-chat/pull/4318))
+
 ## [[2.0.780](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.780-market_maker)] - 2023-08-01
 
 ### Changed

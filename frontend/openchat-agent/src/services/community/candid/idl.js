@@ -710,6 +710,19 @@ export const idlFactory = ({ IDL }) => {
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
   });
+  const CreateUserGroupArgs = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'name' : IDL.Text,
+  });
+  const CreateUserGroupResponse = IDL.Variant({
+    'NameTooShort' : FieldTooShortResult,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Record({ 'user_group_id' : IDL.Nat32 }),
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+    'NameTooLong' : FieldTooLongResult,
+    'NameTaken' : IDL.Null,
+  });
   const DeclineInvitationArgs = IDL.Record({
     'channel_id' : IDL.Opt(ChannelId),
   });
@@ -1596,6 +1609,22 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Null,
     'BannerTooBig' : FieldTooLongResult,
   });
+  const UpdateUserGroupArgs = IDL.Record({
+    'name' : IDL.Opt(IDL.Text),
+    'users_to_add' : IDL.Vec(UserId),
+    'users_to_remove' : IDL.Vec(UserId),
+    'user_group_id' : IDL.Nat32,
+  });
+  const UpdateUserGroupResponse = IDL.Variant({
+    'NameTooShort' : FieldTooShortResult,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserGroupNotFound' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+    'NameTooLong' : FieldTooLongResult,
+    'NameTaken' : IDL.Null,
+  });
   return IDL.Service({
     'add_members_to_channel' : IDL.Func(
         [AddMembersToChannelArgs],
@@ -1624,6 +1653,11 @@ export const idlFactory = ({ IDL }) => {
     'create_channel' : IDL.Func(
         [CreateChannelArgs],
         [CreateChannelResponse],
+        [],
+      ),
+    'create_user_group' : IDL.Func(
+        [CreateUserGroupArgs],
+        [CreateUserGroupResponse],
         [],
       ),
     'decline_invitation' : IDL.Func(
@@ -1782,6 +1816,11 @@ export const idlFactory = ({ IDL }) => {
     'update_community' : IDL.Func(
         [UpdateCommunityArgs],
         [UpdateCommunityResponse],
+        [],
+      ),
+    'update_user_group' : IDL.Func(
+        [UpdateUserGroupArgs],
+        [UpdateUserGroupResponse],
         [],
       ),
   });

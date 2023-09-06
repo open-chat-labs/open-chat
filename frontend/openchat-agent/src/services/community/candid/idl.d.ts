@@ -67,6 +67,8 @@ import {
     ImportGroupResponse,
     GroupCanisterThreadDetails,
     RegisterProposalVoteResponse,
+    CreateUserGroupResponse,
+    UpdateUserGroupResponse,
     SetMemberDisplayNameResponse,
 } from "./types";
 export {
@@ -137,6 +139,8 @@ export {
     ImportGroupResponse as ApiImportGroupResponse,
     GroupCanisterThreadDetails as ApiGroupCanisterThreadDetails,
     RegisterProposalVoteResponse as ApiRegisterProposalVoteResponse,
+    CreateUserGroupResponse as ApiCreateUserGroupResponse,
+    UpdateUserGroupResponse as ApiUpdateUserGroupResponse,
     SetMemberDisplayNameResponse as ApiSetMemberDisplayNameResponse,
 };
 

@@ -268,6 +268,9 @@ export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) |
 
 export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | Failure;
 
+export type CreateUserGroupResponse = { kind: "success", userGroupId: number } | { kind: "name_taken" } | Failure;
+export type UpdateUserGroupResponse = Success | { kind: "name_taken" } | Failure;
+
 export type SetMemberDisplayNameResponse = 
     "success" | 
     "user_not_in_community" | 

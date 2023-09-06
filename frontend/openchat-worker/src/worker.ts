@@ -1676,6 +1676,34 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId, payload));
                 break;
 
+            case "createUserGroup":
+                agent
+                    .createUserGroup(payload.communityId, payload.name, payload.userIds)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
+            case "updateUserGroup":
+                agent
+                    .updateUserGroup(
+                        payload.communityId,
+                        payload.userGroupId,
+                        payload.name,
+                        payload.usersToAdd,
+                        payload.usersToRemove
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId, payload));
+                break;
+
             case "setMemberDisplayName":
                 agent
                     .setMemberDisplayName(payload.communityId, payload.displayName)

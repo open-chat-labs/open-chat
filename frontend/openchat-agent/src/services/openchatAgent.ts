@@ -160,6 +160,8 @@ import type {
     RegistryValue,
     PublicGroupSummaryResponse,
     SetDisplayNameResponse,
+    CreateUserGroupResponse,
+    UpdateUserGroupResponse,
     SetMemberDisplayNameResponse,
 } from "openchat-shared";
 import {
@@ -2439,6 +2441,20 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.setCommunityIndexes(communityIndexes);
     }
 
+    createUserGroup(communityId: string, name: string, userIds: string[]): Promise<CreateUserGroupResponse> {
+        return this.communityClient(communityId).createUserGroup(name, userIds);
+    }
+
+    updateUserGroup(
+        communityId: string,
+        userGroupId: number,
+        name: string | undefined,
+        usersToAdd: string[],
+        usersToRemove: string[]
+    ): Promise<UpdateUserGroupResponse> {
+        return this.communityClient(communityId).updateUserGroup(userGroupId, name, usersToAdd, usersToRemove);
+ 	}
+	
     setMemberDisplayName(communityId: string, display_name: string | undefined): Promise<SetMemberDisplayNameResponse> {
         return this.communityClient(communityId).setMemberDisplayName(display_name);
     }

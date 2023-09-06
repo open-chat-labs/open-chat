@@ -26,6 +26,8 @@ import {
     changeRoleResponse,
     communityChannelSummaryResponse,
     importGroupResponse,
+    createUserGroupResponse,
+    updateUserGroupResponse,
     setMemberDisplayNameResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
@@ -116,6 +118,8 @@ import type {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     RegisterProposalVoteResponse,
+    CreateUserGroupResponse,
+    UpdateUserGroupResponse,
     SetMemberDisplayNameResponse,
 } from "openchat-shared";
 import { textToCode, DestinationInvalidError } from "openchat-shared";
@@ -1180,7 +1184,29 @@ export class CommunityClient extends CandidService {
             updateCommunityResponse
         );
     }
-    
+
+    createUserGroup(name: string, users: string[]): Promise<CreateUserGroupResponse> {
+        return this.handleResponse(
+            this.service.create_user_group({
+                name,
+                user_ids: users.map((u) => Principal.fromText(u)),
+            }),
+            createUserGroupResponse
+        );
+    }
+
+    updateUserGroup(userGroupId: number, name: string | undefined, usersToAdd: string[], usersToRemove: string[]): Promise<UpdateUserGroupResponse> {
+        return this.handleResponse(
+            this.service.update_user_group({
+                user_group_id: userGroupId,
+                name: apiOptional(identity, name),
+                users_to_add: usersToAdd.map((u) => Principal.fromText(u)),
+                users_to_remove: usersToRemove.map((u) => Principal.fromText(u)),
+            }),
+            updateUserGroupResponse
+		);
+    }   
+ 
     setMemberDisplayName(displayName: string | undefined): Promise<SetMemberDisplayNameResponse> {
         return this.handleResponse(
             this.service.set_member_display_name({
