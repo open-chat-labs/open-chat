@@ -52,7 +52,7 @@ async fn add_members_to_channel(args: Args) -> Response {
         commit(
             prepare_result.user_id,
             args.added_by_name,
-            args.added_by_display_name,
+            prepare_result.member_display_name.or(args.added_by_display_name),
             args.channel_id,
             users_to_add,
             prepare_result.users_already_in_channel,
@@ -71,6 +71,7 @@ struct PrepareResult {
     gate: Option<AccessGate>,
     user_index_canister_id: CanisterId,
     is_bot: bool,
+    member_display_name: Option<String>,
 }
 
 #[allow(clippy::result_large_err)]
@@ -110,6 +111,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     gate: channel.chat.gate.as_ref().cloned(),
                     user_index_canister_id: state.data.user_index_canister_id,
                     is_bot: member.is_bot,
+                    member_display_name: member.display_name().value.clone(),
                 })
             } else {
                 Err(UserNotInChannel)
