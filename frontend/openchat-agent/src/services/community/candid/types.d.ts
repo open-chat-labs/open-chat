@@ -1521,7 +1521,6 @@ export type SelectedInitialResponse = { 'Success' : SelectedInitialSuccess } |
   { 'PrivateCommunity' : null };
 export interface SelectedInitialSuccess {
   'members' : Array<CommunityMember>,
-  'user_group_members' : Array<UserGroupMembers>,
   'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
   'access_rules' : VersionedRules,
@@ -1538,7 +1537,6 @@ export type SelectedUpdatesResponse = { 'Success' : SelectedUpdatesSuccess } |
   { 'PrivateCommunity' : null };
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
-  'user_group_members' : Array<UserGroupMembers>,
   'invited_users' : [] | [Array<UserId>],
   'members_added_or_updated' : Array<CommunityMember>,
   'members_removed' : Array<UserId>,

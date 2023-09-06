@@ -178,7 +178,7 @@ type SelectedInitialSuccess = record {
     invited_users : vec UserId;
     rules : AccessRules;
     access_rules : VersionedRules;
-    user_group_members : vec UserGroupMembers;
+    user_groups : vec UserGroupDetails;
 };
 
 type SelectedUpdatesArgs = record {
@@ -207,11 +207,12 @@ type SelectedUpdatesSuccess = record {
     invited_users : opt vec UserId;
     rules : opt AccessRules;
     access_rules : opt VersionedRules;
-    user_group_members : vec UserGroupMembers;
+    user_groups : vec UserGroupDetails;
 };
 
-type UserGroupMembers = record {
+type UserGroupDetails = record {
     user_group_id : nat32;
+    name : text;
     members : vec UserId;
 };
 
