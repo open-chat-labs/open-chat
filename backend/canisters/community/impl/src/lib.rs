@@ -1,6 +1,7 @@
 use crate::model::channels::Channels;
 use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
 use crate::model::members::CommunityMembers;
+use crate::model::upgrade_instruction_counts::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use crate::timer_job_types::TimerJob;
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
@@ -160,6 +161,7 @@ impl RuntimeState {
             invited: self.data.invited_users.len() as u32,
             frozen: self.data.is_frozen(),
             groups_being_imported: self.data.groups_being_imported.summaries(),
+            instruction_counts: self.data.instruction_counts_log.iter().collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -200,6 +202,8 @@ struct Data {
     fire_and_forget_handler: FireAndForgetHandler,
     activity_notification_state: ActivityNotificationState,
     groups_being_imported: GroupsBeingImported,
+    #[serde(default)]
+    instruction_counts_log: InstructionCountsLog,
     test_mode: bool,
     cached_chat_metrics: Timestamped<ChatMetrics>,
 }
@@ -261,6 +265,7 @@ impl Data {
             fire_and_forget_handler: FireAndForgetHandler::default(),
             activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             groups_being_imported: GroupsBeingImported::default(),
+            instruction_counts_log: InstructionCountsLog::default(),
             test_mode,
             cached_chat_metrics: Timestamped::default(),
         }
@@ -299,6 +304,15 @@ impl Data {
                 .map_or(false, |accepted| accepted.value >= self.rules.text.version))
     }
 
+    pub fn record_instructions_count(&self, function_id: InstructionCountFunctionId, now: TimestampMillis) {
+        let wasm_version = WASM_VERSION.with(|v| **v.borrow());
+        let instructions_count = ic_cdk::api::instruction_counter();
+
+        let _ = self
+            .instruction_counts_log
+            .record(function_id, instructions_count, wasm_version, now);
+    }
+
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
         if self.invite_code_enabled {
             if let Some(provided_code) = invite_code {
@@ -332,6 +346,7 @@ pub struct Metrics {
     pub invited: u32,
     pub frozen: bool,
     pub groups_being_imported: Vec<GroupBeingImportedSummary>,
+    pub instruction_counts: Vec<InstructionCountEntry>,
     pub canister_ids: CanisterIds,
 }
 
