@@ -325,8 +325,8 @@
                             chatType={chat.kind}
                             {user}
                             event={evt}
-                            first={i === 0}
-                            last={i + 1 === userGroup.length}
+                            first={reverseScroll ? i + 1 === userGroup.length : i === 0}
+                            last={reverseScroll ? i === 0 : i + 1 === userGroup.length}
                             me={evt.event.sender === user.userId}
                             confirmed={isConfirmed($unconfirmed, evt)}
                             failed={isFailed($failedMessagesStore, evt)}

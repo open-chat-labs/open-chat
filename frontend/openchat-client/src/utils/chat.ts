@@ -508,7 +508,8 @@ export function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>)
     if (a.event.kind === "message" && b.event.kind === "message") {
         return (
             a.event.sender === b.event.sender &&
-            b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
+            Math.abs(Number(b.timestamp - a.timestamp)) <
+                MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
         );
     }
     return false;
