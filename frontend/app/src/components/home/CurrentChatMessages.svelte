@@ -197,8 +197,6 @@
         groupInner(filteredProposals)
     );
 
-    $: console.log("Timeline: ", timeline);
-
     $: privateCommunityPreview =
         $selectedCommunity !== undefined &&
         !$selectedCommunity.public &&
