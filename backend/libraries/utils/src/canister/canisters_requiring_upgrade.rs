@@ -22,7 +22,11 @@ pub struct CanistersRequiringUpgrade {
 
 impl CanistersRequiringUpgrade {
     pub fn enqueue(&mut self, canister_id: CanisterId, force: bool) {
-        self.pending.push_back((canister_id, force));
+        if force {
+            self.pending.push_front((canister_id, true));
+        } else {
+            self.pending.push_back((canister_id, false));
+        }
     }
 
     pub fn try_take_next(&mut self) -> Option<(CanisterId, bool)> {
