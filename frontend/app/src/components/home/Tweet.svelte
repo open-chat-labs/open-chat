@@ -34,11 +34,8 @@
                     theme: $themeStore.name,
                 })
                 .then(() => {
-                    // only render the preview if we are *still* intersecting
-                    if (intersecting && !$eventListScrolling) {
-                        tweetRendered = true;
-                        dispatch("rendered", tweetWrapper);
-                    }
+                    tweetRendered = true;
+                    dispatch("rendered", tweetWrapper);
                 })
                 .catch((err: any) => {
                     console.log("Failed to render tweet: ", err);

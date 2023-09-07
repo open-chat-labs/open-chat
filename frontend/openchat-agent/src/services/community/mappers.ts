@@ -16,6 +16,7 @@ import type {
     CommunitySummaryResponse,
     CommunitySummaryUpdatesResponse,
     CreateUserGroupResponse,
+    DeleteUserGroupsResponse,
     EventsResponse,
     ExploreChannelsResponse,
     GateCheckFailedReason,
@@ -68,6 +69,7 @@ import type {
     ApiImportGroupResponse,
     ApiCreateUserGroupResponse,
     ApiUpdateUserGroupResponse,
+    ApiDeleteUserGroupsResponse,
     ApiSetMemberDisplayNameResponse,
 } from "./candid/idl";
 import {
@@ -644,7 +646,16 @@ export function updateUserGroupResponse(candid: ApiUpdateUserGroupResponse): Upd
             kind: "name_taken",
         };
     } else {
-        console.warn("CreateUserGroup failed with", candid);
+        console.warn("UpdateUserGroup failed with", candid);
+        return CommonResponses.failure();
+    }
+}
+
+export function deleteUserGroupsResponse(candid: ApiDeleteUserGroupsResponse): DeleteUserGroupsResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    } else {
+        console.warn("DeleteUserGroups failed with", candid);
         return CommonResponses.failure();
     }
 }

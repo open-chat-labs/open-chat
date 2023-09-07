@@ -759,6 +759,15 @@ export const idlFactory = ({ IDL }) => {
     'NotPlatformModerator' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const DeleteUserGroupsArgs = IDL.Record({
+    'user_group_ids' : IDL.Vec(IDL.Nat32),
+  });
+  const DeleteUserGroupsResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+  });
   const DeletedMessageArgs = IDL.Record({
     'channel_id' : ChannelId,
     'message_id' : MessageId,
@@ -1270,13 +1279,8 @@ export const idlFactory = ({ IDL }) => {
     'display_name' : IDL.Opt(IDL.Text),
     'date_added' : TimestampMillis,
   });
-  const UserGroupMembers = IDL.Record({
-    'members' : IDL.Vec(UserId),
-    'user_group_id' : IDL.Nat32,
-  });
   const SelectedInitialSuccess = IDL.Record({
     'members' : IDL.Vec(CommunityMember),
-    'user_group_members' : IDL.Vec(UserGroupMembers),
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
     'access_rules' : VersionedRules,
@@ -1294,7 +1298,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const SelectedUpdatesSuccess = IDL.Record({
     'blocked_users_removed' : IDL.Vec(UserId),
-    'user_group_members' : IDL.Vec(UserGroupMembers),
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'members_added_or_updated' : IDL.Vec(CommunityMember),
     'members_removed' : IDL.Vec(UserId),
@@ -1448,6 +1451,7 @@ export const idlFactory = ({ IDL }) => {
     'community_id' : CommunityId,
     'channels_updated' : IDL.Vec(CommunityCanisterChannelSummaryUpdates),
     'metrics' : IDL.Opt(ChatMetrics),
+    'user_groups_deleted' : IDL.Vec(IDL.Nat32),
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
@@ -1673,6 +1677,11 @@ export const idlFactory = ({ IDL }) => {
     'delete_messages' : IDL.Func(
         [DeleteMessagesArgs],
         [DeleteMessagesResponse],
+        [],
+      ),
+    'delete_user_groups' : IDL.Func(
+        [DeleteUserGroupsArgs],
+        [DeleteUserGroupsResponse],
         [],
       ),
     'deleted_message' : IDL.Func(

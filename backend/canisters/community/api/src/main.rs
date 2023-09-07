@@ -34,6 +34,7 @@ fn main() {
     generate_candid_method!(community, decline_invitation, update);
     generate_candid_method!(community, delete_channel, update);
     generate_candid_method!(community, delete_messages, update);
+    generate_candid_method!(community, delete_user_groups, update);
     generate_candid_method!(community, disable_invite_code, update);
     generate_candid_method!(community, edit_message, update);
     generate_candid_method!(community, enable_invite_code, update);

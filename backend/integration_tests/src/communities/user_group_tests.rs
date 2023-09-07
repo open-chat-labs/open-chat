@@ -1,9 +1,11 @@
 use crate::env::ENV;
 use crate::rng::random_string;
+use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use ic_test_state_machine_client::StateMachine;
 use std::ops::Deref;
+use std::time::Duration;
 use types::{ChannelId, CommunityId};
 
 #[test]
@@ -52,10 +54,10 @@ fn create_user_group_succeeds() {
     assert_eq!(user_group.members, 3);
 
     let details = client::community::happy_path::selected_initial(env, &user1, community_id);
-    assert_eq!(details.user_group_members.len(), 1);
+    assert_eq!(details.user_groups.len(), 1);
 
-    let user_group_members = details.user_group_members.first().unwrap();
-    assert_eq!(user_group_members.members.len(), 3);
+    let user_groups = details.user_groups.first().unwrap();
+    assert_eq!(user_groups.members.len(), 3);
 }
 
 #[test]
@@ -121,12 +123,69 @@ fn update_user_group_succeeds() {
     assert_eq!(user_group.members, 2);
 
     let details = client::community::happy_path::selected_initial(env, &user1, community_id);
-    assert_eq!(details.user_group_members.len(), 1);
+    assert_eq!(details.user_groups.len(), 1);
 
-    let user_group_members = details.user_group_members.first().unwrap();
-    assert_eq!(user_group_members.members.len(), 2);
-    assert!(user_group_members.members.contains(&user1.user_id));
-    assert!(user_group_members.members.contains(&user3.user_id));
+    let user_groups = details.user_groups.first().unwrap();
+    assert_eq!(user_groups.members.len(), 2);
+    assert!(user_groups.members.contains(&user1.user_id));
+    assert!(user_groups.members.contains(&user3.user_id));
+}
+
+#[test]
+fn delete_user_group_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        community_id,
+        ..
+    } = init_test_data(env, canister_ids, *controller);
+
+    let user_group_name = random_string();
+    let response = client::community::create_user_group(
+        env,
+        user1.principal,
+        community_id.into(),
+        &community_canister::create_user_group::Args {
+            name: user_group_name.clone(),
+            user_ids: vec![user1.user_id, user2.user_id],
+        },
+    );
+
+    let user_group_id = if let community_canister::create_user_group::Response::Success(result) = response {
+        result.user_group_id
+    } else {
+        panic!("'create_user_group' error: {response:?}");
+    };
+
+    env.advance_time(Duration::from_secs(60));
+
+    let delete_response = client::community::delete_user_groups(
+        env,
+        user1.principal,
+        community_id.into(),
+        &community_canister::delete_user_groups::Args {
+            user_group_ids: vec![user_group_id],
+        },
+    );
+
+    assert!(matches!(
+        delete_response,
+        community_canister::delete_user_groups::Response::Success
+    ));
+
+    let summary = client::community::happy_path::summary(env, &user1, community_id);
+    assert!(summary.user_groups.is_empty());
+
+    let summary_updates = client::community::happy_path::summary_updates(env, &user1, community_id, now_millis(env) - 1);
+    assert_eq!(summary_updates.unwrap().user_groups_deleted, vec![user_group_id]);
 }
 
 #[test]

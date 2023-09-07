@@ -135,6 +135,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .filter(|u| u.last_updated() > args.updates_since)
             .map(|u| u.into())
             .collect(),
+        user_groups_deleted: state.data.members.user_groups_deleted_since(args.updates_since),
         metrics: state.data.cached_chat_metrics.if_set_after(args.updates_since).cloned(),
         rules_enabled: updates_from_events.rules_changed.then_some(state.data.rules.enabled),
     })

@@ -162,6 +162,7 @@ import type {
     SetDisplayNameResponse,
     CreateUserGroupResponse,
     UpdateUserGroupResponse,
+    DeleteUserGroupsResponse,
     SetMemberDisplayNameResponse,
 } from "openchat-shared";
 import {
@@ -2457,5 +2458,12 @@ export class OpenChatAgent extends EventTarget {
 	
     setMemberDisplayName(communityId: string, display_name: string | undefined): Promise<SetMemberDisplayNameResponse> {
         return this.communityClient(communityId).setMemberDisplayName(display_name);
+    }
+
+    deleteUserGroups(
+        communityId: string,
+        userGroupIds: number[],
+    ): Promise<DeleteUserGroupsResponse> {
+        return this.communityClient(communityId).deleteUserGroups(userGroupIds);
     }
 }
