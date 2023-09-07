@@ -12,8 +12,9 @@
     export let tweetId: string;
 
     let tweetWrapper: HTMLDivElement | undefined;
-    let tweetRendered = false;
     let supported = false;
+
+    let rendering: Promise<any> | undefined = undefined;
 
     onMount(() => {
         supported = (<any>window).twttr !== undefined;
@@ -24,24 +25,23 @@
             intersecting &&
             !$eventListScrolling &&
             tweetWrapper !== undefined &&
-            !tweetRendered &&
+            !rendering &&
             supported
         ) {
             tweetWrapper.innerHTML = "";
-            (<any>window).twttr?.widgets
-                .createTweet(tweetId, tweetWrapper, {
-                    conversation: "none",
-                    theme: $themeStore.name,
-                })
+
+            rendering = (<any>window).twttr?.widgets.createTweet(tweetId, tweetWrapper, {
+                conversation: "none",
+                theme: $themeStore.name,
+            }) as Promise<any>;
+
+            rendering
                 .then(() => {
-                    // only render the preview if we are *still* intersecting
-                    if (intersecting && !$eventListScrolling) {
-                        tweetRendered = true;
-                        dispatch("rendered", tweetWrapper);
-                    }
+                    dispatch("rendered", tweetWrapper);
                 })
                 .catch((err: any) => {
                     console.log("Failed to render tweet: ", err);
+                    rendering = undefined;
                 });
         }
     }

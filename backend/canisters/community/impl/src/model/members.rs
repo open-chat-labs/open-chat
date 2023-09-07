@@ -200,12 +200,20 @@ impl CommunityMembers {
             .update(user_group_id, name, users_to_add, users_to_remove, now)
     }
 
+    pub fn delete_user_group(&mut self, user_group_id: u32, now: TimestampMillis) -> bool {
+        self.user_groups.delete(user_group_id, now)
+    }
+
     pub fn get_user_group(&self, user_group_id: u32) -> Option<&UserGroup> {
         self.user_groups.get(user_group_id)
     }
 
     pub fn iter_user_groups(&self) -> impl Iterator<Item = &UserGroup> {
         self.user_groups.iter()
+    }
+
+    pub fn user_groups_deleted_since(&self, since: TimestampMillis) -> Vec<u32> {
+        self.user_groups.deleted_since(since)
     }
 
     pub fn user_groups_last_updated(&self) -> TimestampMillis {
@@ -330,6 +338,7 @@ pub struct CommunityMemberInternal {
     pub rules_accepted: Option<Timestamped<Version>>,
     pub is_bot: bool,
 
+    #[serde(default)]
     display_name: Timestamped<Option<String>>,
 }
 

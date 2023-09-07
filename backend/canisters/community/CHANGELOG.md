@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support mentioning user groups ([#4308](https://github.com/open-chat-labs/open-chat/pull/4308))
 - Add optional user `display name` within community ([#4306](https://github.com/open-chat-labs/open-chat/pull/4306))
+- Add `delete_user_groups` ([#4326](https://github.com/open-chat-labs/open-chat/pull/4326))
+
+### Changed
+
+- Return user group names in `selected_updates` ([#4328](https://github.com/open-chat-labs/open-chat/pull/4328))
 
 ## [[2.0.827](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.827-community)] - 2023-09-01
 

@@ -557,6 +557,7 @@ export const idlFactory = ({ IDL }) => {
     'expires_at' : IDL.Opt(TimestampMillis),
   });
   const CommunityCanisterChannelSummary = IDL.Record({
+    'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Bool,
     'permissions' : GroupPermissions,
@@ -620,6 +621,7 @@ export const idlFactory = ({ IDL }) => {
     'my_metrics' : IDL.Opt(ChatMetrics),
   });
   const CommunityCanisterChannelSummaryUpdates = IDL.Record({
+    'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Opt(IDL.Bool),
     'permissions' : IDL.Opt(GroupPermissions),
@@ -756,6 +758,15 @@ export const idlFactory = ({ IDL }) => {
     'CommunityFrozen' : IDL.Null,
     'NotPlatformModerator' : IDL.Null,
     'InternalError' : IDL.Text,
+  });
+  const DeleteUserGroupsArgs = IDL.Record({
+    'user_group_ids' : IDL.Vec(IDL.Nat32),
+  });
+  const DeleteUserGroupsResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
   });
   const DeletedMessageArgs = IDL.Record({
     'channel_id' : ChannelId,
@@ -1265,17 +1276,19 @@ export const idlFactory = ({ IDL }) => {
   const CommunityMember = IDL.Record({
     'role' : CommunityRole,
     'user_id' : UserId,
+    'display_name' : IDL.Opt(IDL.Text),
     'date_added' : TimestampMillis,
   });
-  const UserGroupMembers = IDL.Record({
+  const UserGroupDetails = IDL.Record({
     'members' : IDL.Vec(UserId),
+    'name' : IDL.Text,
     'user_group_id' : IDL.Nat32,
   });
   const SelectedInitialSuccess = IDL.Record({
     'members' : IDL.Vec(CommunityMember),
-    'user_group_members' : IDL.Vec(UserGroupMembers),
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
+    'user_groups' : IDL.Vec(UserGroupDetails),
     'access_rules' : VersionedRules,
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
@@ -1291,9 +1304,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const SelectedUpdatesSuccess = IDL.Record({
     'blocked_users_removed' : IDL.Vec(UserId),
-    'user_group_members' : IDL.Vec(UserGroupMembers),
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'members_added_or_updated' : IDL.Vec(CommunityMember),
+    'user_groups' : IDL.Vec(UserGroupDetails),
     'members_removed' : IDL.Vec(UserId),
     'access_rules' : IDL.Opt(VersionedRules),
     'timestamp' : TimestampMillis,
@@ -1353,6 +1366,18 @@ export const idlFactory = ({ IDL }) => {
     'InvalidRequest' : IDL.Text,
     'RulesNotAccepted' : IDL.Null,
   });
+  const SetMemberDisplayNameArgs = IDL.Record({
+    'display_name' : IDL.Opt(IDL.Text),
+  });
+  const SetMemberDisplayNameResponse = IDL.Variant({
+    'DisplayNameInvalid' : IDL.Null,
+    'Success' : IDL.Null,
+    'DisplayNameTooLong' : IDL.Nat16,
+    'UserNotInCommunity' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+    'DisplayNameTooShort' : IDL.Nat16,
+  });
   const SummaryArgs = IDL.Record({ 'invite_code' : IDL.Opt(IDL.Nat64) });
   const CommunityPermissionRole = IDL.Variant({
     'Owners' : IDL.Null,
@@ -1375,6 +1400,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CommunityMembership = IDL.Record({
     'role' : CommunityRole,
+    'display_name' : IDL.Opt(IDL.Text),
     'joined' : TimestampMillis,
     'rules_accepted' : IDL.Bool,
   });
@@ -1411,8 +1437,14 @@ export const idlFactory = ({ IDL }) => {
     'updates_since' : TimestampMillis,
     'invite_code' : IDL.Opt(IDL.Nat64),
   });
+  const TextUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : IDL.Text,
+  });
   const CommunityMembershipUpdates = IDL.Record({
     'role' : IDL.Opt(CommunityRole),
+    'display_name' : TextUpdate,
     'rules_accepted' : IDL.Opt(IDL.Bool),
   });
   const FrozenGroupUpdate = IDL.Variant({
@@ -1426,6 +1458,7 @@ export const idlFactory = ({ IDL }) => {
     'community_id' : CommunityId,
     'channels_updated' : IDL.Vec(CommunityCanisterChannelSummaryUpdates),
     'metrics' : IDL.Opt(ChatMetrics),
+    'user_groups_deleted' : IDL.Vec(IDL.Nat32),
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
@@ -1653,6 +1686,11 @@ export const idlFactory = ({ IDL }) => {
         [DeleteMessagesResponse],
         [],
       ),
+    'delete_user_groups' : IDL.Func(
+        [DeleteUserGroupsArgs],
+        [DeleteUserGroupsResponse],
+        [],
+      ),
     'deleted_message' : IDL.Func(
         [DeletedMessageArgs],
         [DeletedMessageResponse],
@@ -1758,6 +1796,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
+    'set_member_display_name' : IDL.Func(
+        [SetMemberDisplayNameArgs],
+        [SetMemberDisplayNameResponse],
+        [],
+      ),
     'summary' : IDL.Func([SummaryArgs], [SummaryResponse], ['query']),
     'summary_updates' : IDL.Func(
         [SummaryUpdatesArgs],

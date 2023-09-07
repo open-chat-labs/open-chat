@@ -16,6 +16,7 @@ import type {
     CommunitySummaryResponse,
     CommunitySummaryUpdatesResponse,
     CreateUserGroupResponse,
+    DeleteUserGroupsResponse,
     EventsResponse,
     ExploreChannelsResponse,
     GateCheckFailedReason,
@@ -31,7 +32,7 @@ import type {
     UpdateUserGroupResponse,
     UserFailedError,
     UserFailedGateCheck,
-    UserGroupMembers,
+    UserGroupDetails,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
@@ -68,7 +69,8 @@ import type {
     ApiImportGroupResponse,
     ApiCreateUserGroupResponse,
     ApiUpdateUserGroupResponse,
-    ApiUserGroupMembers,
+    ApiUserGroupDetails,
+    ApiDeleteUserGroupsResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -579,7 +581,7 @@ export function communityDetailsResponse(
             invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
             rules: groupRules(candid.Success.rules),
             lastUpdated: candid.Success.timestamp,
-            userGroups: candid.Success.user_group_members.map(userGroupMembers),
+            userGroups: candid.Success.user_groups.map(userGroupDetails),
         };
     } else {
         console.warn("CommunityDetails failed with", candid);
@@ -587,11 +589,11 @@ export function communityDetailsResponse(
     }
 }
 
-export function userGroupMembers(candid: ApiUserGroupMembers): UserGroupMembers {
+export function userGroupDetails(candid: ApiUserGroupDetails): UserGroupDetails {
     return {
         id: candid.user_group_id,
         members: new Set<string>(candid.members.map((m) => m.toString())),
-        name: "TODO - we don't have this yet",
+        name: candid.name,
     };
 }
 
@@ -616,7 +618,7 @@ export function communityDetailsUpdatesResponse(
                 (invited_users) => new Set(invited_users.map((u) => u.toString())),
             ),
             lastUpdated: candid.Success.timestamp,
-            userGroups: candid.Success.user_group_members.map(userGroupMembers),
+            userGroups: candid.Success.user_groups.map(userGroupDetails),
         };
     } else if ("SuccessNoUpdates" in candid) {
         return {
@@ -657,7 +659,18 @@ export function updateUserGroupResponse(
             kind: "name_taken",
         };
     } else {
-        console.warn("CreateUserGroup failed with", candid);
+        console.warn("UpdateUserGroup failed with", candid);
+        return CommonResponses.failure();
+    }
+}
+
+export function deleteUserGroupsResponse(
+    candid: ApiDeleteUserGroupsResponse,
+): DeleteUserGroupsResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    } else {
+        console.warn("DeleteUserGroups failed with", candid);
         return CommonResponses.failure();
     }
 }

@@ -69,7 +69,8 @@ import {
     RegisterProposalVoteResponse,
     CreateUserGroupResponse,
     UpdateUserGroupResponse,
-    UserGroupMembers,
+    UserGroupDetails,
+    DeleteUserGroupsResponse,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -141,7 +142,8 @@ export {
     RegisterProposalVoteResponse as ApiRegisterProposalVoteResponse,
     CreateUserGroupResponse as ApiCreateUserGroupResponse,
     UpdateUserGroupResponse as ApiUpdateUserGroupResponse,
-    UserGroupMembers as ApiUserGroupMembers,
+    UserGroupDetails as ApiUserGroupDetails,
+    DeleteUserGroupsResponse as ApiDeleteUserGroupsResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

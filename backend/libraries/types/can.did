@@ -419,6 +419,7 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     rules_enabled : opt bool;
     membership : opt CommunityMembershipUpdates;
     user_groups : vec UserGroup;
+    user_groups_deleted : vec nat32;
     metrics : opt ChatMetrics;
 };
 

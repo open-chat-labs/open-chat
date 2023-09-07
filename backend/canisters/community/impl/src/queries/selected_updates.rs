@@ -58,10 +58,10 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         invited_users,
         rules: None,
         access_rules: None,
-        user_group_members: data
+        user_groups: data
             .members
             .iter_user_groups()
-            .filter(|u| u.members.timestamp > args.updates_since)
+            .filter(|u| u.last_updated() > args.updates_since)
             .map(|u| u.into())
             .collect(),
     };

@@ -299,6 +299,7 @@ export type ClaimPrizeResponse = { 'PrizeFullyClaimed' : null } |
   { 'FailedAfterTransfer' : [string, CompletedCryptoTransaction] } |
   { 'TransferFailed' : [string, FailedCryptoTransaction] };
 export interface CommunityCanisterChannelSummary {
+  'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : boolean,
   'permissions' : GroupPermissions,
@@ -323,6 +324,7 @@ export interface CommunityCanisterChannelSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface CommunityCanisterChannelSummaryUpdates {
+  'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
@@ -368,6 +370,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'community_id' : CommunityId,
   'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
   'metrics' : [] | [ChatMetrics],
+  'user_groups_deleted' : Uint32Array | number[],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'description' : [] | [string],
@@ -401,15 +404,18 @@ export interface CommunityMatch {
 export interface CommunityMember {
   'role' : CommunityRole,
   'user_id' : UserId,
+  'display_name' : [] | [string],
   'date_added' : TimestampMillis,
 }
 export interface CommunityMembership {
   'role' : CommunityRole,
+  'display_name' : [] | [string],
   'joined' : TimestampMillis,
   'rules_accepted' : boolean,
 }
 export interface CommunityMembershipUpdates {
   'role' : [] | [CommunityRole],
+  'display_name' : TextUpdate,
   'rules_accepted' : [] | [boolean],
 }
 export type CommunityPermissionRole = { 'Owners' : null } |
@@ -519,6 +525,13 @@ export type DeleteMessagesResponse = { 'UserNotInChannel' : null } |
   { 'CommunityFrozen' : null } |
   { 'NotPlatformModerator' : null } |
   { 'InternalError' : string };
+export interface DeleteUserGroupsArgs {
+  'user_group_ids' : Uint32Array | number[],
+}
+export type DeleteUserGroupsResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -1513,9 +1526,9 @@ export type SelectedInitialResponse = { 'Success' : SelectedInitialSuccess } |
   { 'PrivateCommunity' : null };
 export interface SelectedInitialSuccess {
   'members' : Array<CommunityMember>,
-  'user_group_members' : Array<UserGroupMembers>,
   'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
+  'user_groups' : Array<UserGroupDetails>,
   'access_rules' : VersionedRules,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
@@ -1530,9 +1543,9 @@ export type SelectedUpdatesResponse = { 'Success' : SelectedUpdatesSuccess } |
   { 'PrivateCommunity' : null };
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
-  'user_group_members' : Array<UserGroupMembers>,
   'invited_users' : [] | [Array<UserId>],
   'members_added_or_updated' : Array<CommunityMember>,
+  'user_groups' : Array<UserGroupDetails>,
   'members_removed' : Array<UserId>,
   'access_rules' : [] | [VersionedRules],
   'timestamp' : TimestampMillis,
@@ -1575,6 +1588,14 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'CommunityFrozen' : null } |
   { 'InvalidRequest' : string } |
   { 'RulesNotAccepted' : null };
+export interface SetMemberDisplayNameArgs { 'display_name' : [] | [string] }
+export type SetMemberDisplayNameResponse = { 'DisplayNameInvalid' : null } |
+  { 'Success' : null } |
+  { 'DisplayNameTooLong' : number } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'DisplayNameTooShort' : number };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -1779,8 +1800,9 @@ export interface UserGroup {
   'name' : string,
   'user_group_id' : number,
 }
-export interface UserGroupMembers {
+export interface UserGroupDetails {
   'members' : Array<UserId>,
+  'name' : string,
   'user_group_id' : number,
 }
 export type UserId = CanisterId;
@@ -1847,6 +1869,10 @@ export interface _SERVICE {
   >,
   'delete_channel' : ActorMethod<[DeleteChannelArgs], DeleteChannelResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
+  'delete_user_groups' : ActorMethod<
+    [DeleteUserGroupsArgs],
+    DeleteUserGroupsResponse
+  >,
   'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
   'disable_invite_code' : ActorMethod<[EmptyArgs], DisableInviteCodeResponse>,
   'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
@@ -1912,6 +1938,10 @@ export interface _SERVICE {
     SelectedUpdatesV2Response
   >,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
+  'set_member_display_name' : ActorMethod<
+    [SetMemberDisplayNameArgs],
+    SetMemberDisplayNameResponse
+  >,
   'summary' : ActorMethod<[SummaryArgs], SummaryResponse>,
   'summary_updates' : ActorMethod<[SummaryUpdatesArgs], SummaryUpdatesResponse>,
   'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,

@@ -288,3 +288,4 @@ export type CreateUserGroupResponse =
     | { kind: "name_taken" }
     | Failure;
 export type UpdateUserGroupResponse = Success | { kind: "name_taken" } | Failure;
+export type DeleteUserGroupsResponse = Success | Failure;
