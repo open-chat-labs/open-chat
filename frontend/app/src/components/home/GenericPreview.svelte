@@ -89,7 +89,8 @@
         margin-bottom: $sp3;
     }
     .image {
-        width: 100%;
         border-radius: $sp3;
+        max-height: 300px;
+        max-width: 100%;
     }
 </style>
