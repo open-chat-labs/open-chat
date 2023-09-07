@@ -34,7 +34,7 @@
 </script>
 
 {#if selectedGroup !== undefined}
-    <UserGroup userGroup={selectedGroup} />
+    <UserGroup original={selectedGroup} />
 {:else}
     <div class="search-row">
         <div class="search">
@@ -79,5 +79,10 @@
 
     .user-group {
         cursor: pointer;
+    }
+
+    .no-groups {
+        @include font-size(fs-80);
+        color: var(--txt-light);
     }
 </style>

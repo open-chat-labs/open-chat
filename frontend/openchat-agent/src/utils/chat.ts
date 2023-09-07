@@ -30,10 +30,7 @@ import type {
     CommunityCanisterCommunitySummaryUpdates,
     ChannelIdentifier,
 } from "openchat-shared";
-import {
-    ChatMap,
-    chatIdentifiersEqual,
-} from "openchat-shared";
+import { ChatMap, chatIdentifiersEqual } from "openchat-shared";
 import { toRecord } from "./list";
 import { applyOptionUpdate, identity, mapOptionUpdate } from "./mapping";
 import Identicon from "identicon.js";
@@ -46,7 +43,7 @@ function mergeThings<A, U>(
     keyFn: (a: A | U) => string,
     mergeFn: (existing: A | undefined, updated: U) => A | undefined,
     things: A[],
-    updates: { added: A[]; updated: U[]; removed: Set<string> }
+    updates: { added: A[]; updated: U[]; removed: Set<string> },
 ): A[] {
     // if there's nothing to do - do nothing
     if (updates.added.length === 0 && updates.updated.length === 0 && updates.removed.size === 0)
@@ -76,7 +73,7 @@ function mergeThings<A, U>(
 
 export function mergeUpdates(
     chat: ChatSummary | undefined,
-    updatedChat: ChatSummaryUpdates
+    updatedChat: ChatSummaryUpdates,
 ): ChatSummary | undefined {
     if (!chat) return undefined;
 
@@ -97,7 +94,7 @@ export function mergeUpdates(
 
 function mergeUpdatedDirectChat(
     chat: DirectChatSummary,
-    updatedChat: DirectChatSummaryUpdates
+    updatedChat: DirectChatSummaryUpdates,
 ): DirectChatSummary {
     return {
         ...chat,
@@ -118,7 +115,7 @@ function mergeUpdatedDirectChat(
 
 function mergeUpdatedGroupChat(
     chat: GroupChatSummary,
-    updatedChat: GroupChatSummaryUpdates
+    updatedChat: GroupChatSummaryUpdates,
 ): GroupChatSummary {
     const latestMessage = getLatestMessage(chat, updatedChat);
     const readByMeUpTo = updatedChat.readByMeUpTo ?? chat.membership.readByMeUpTo;
@@ -153,7 +150,7 @@ function mergeUpdatedGroupChat(
             myMetrics: updatedChat.myMetrics ?? chat.membership.myMetrics,
             latestThreads: mergeThreadSyncDetails(
                 updatedChat.latestThreads,
-                chat.membership.latestThreads
+                chat.membership.latestThreads,
             ),
             archived: updatedChat.archived ?? chat.membership.archived,
         },
@@ -162,7 +159,7 @@ function mergeUpdatedGroupChat(
 
 function mergeThreadSyncDetails(
     updated: ThreadSyncDetailsUpdates[] | undefined,
-    existing: ThreadSyncDetails[]
+    existing: ThreadSyncDetails[],
 ) {
     if (updated === undefined) return existing;
 
@@ -182,14 +179,14 @@ function mergeThreadSyncDetails(
                 }
                 return merged;
             },
-            toRecord(existing, (t) => t.threadRootMessageIndex)
-        )
+            toRecord(existing, (t) => t.threadRootMessageIndex),
+        ),
     );
 }
 
 function mergeSubtype(
     updated: GroupSubtypeUpdate | undefined,
-    existing: GroupSubtype
+    existing: GroupSubtype,
 ): GroupSubtype {
     if (updated === undefined || updated.kind === "no_change") {
         return existing;
@@ -204,7 +201,7 @@ function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {
     return [
         ...existing,
         ...incoming.filter(
-            (m1) => existing.find((m2) => m1.messageId === m2.messageId) === undefined
+            (m1) => existing.find((m2) => m1.messageId === m2.messageId) === undefined,
         ),
     ];
 }
@@ -215,7 +212,7 @@ function getLatestEventIndex(chat: ChatSummary, updatedChat: ChatSummaryUpdates)
 
 function getLatestMessage(
     chat: ChatSummary,
-    updatedChat: ChatSummaryUpdates
+    updatedChat: ChatSummaryUpdates,
 ): EventWrapper<Message> | undefined {
     if (chat.latestMessage === undefined) return updatedChat.latestMessage;
     if (updatedChat.latestMessage === undefined) return chat.latestMessage;
@@ -229,7 +226,7 @@ function getLatestMessage(
 
 export function mergeCommunityDetails(
     previous: CommunityDetails,
-    updates: CommunityDetailsUpdates
+    updates: CommunityDetailsUpdates,
 ): CommunityDetails {
     return {
         lastUpdated: updates.lastUpdated,
@@ -243,16 +240,17 @@ export function mergeCommunityDetails(
                 added: [...updates.blockedUsersAdded],
                 updated: [],
                 removed: updates.blockedUsersRemoved,
-            })
+            }),
         ),
         invitedUsers: updates.invitedUsers ?? previous.invitedUsers,
         rules: updates.rules ?? previous.rules,
+        userGroups: updates.userGroups.length > 0 ? updates.userGroups : previous.userGroups, // TODO revisit this
     };
 }
 
 export function mergeGroupChatDetails(
     previous: GroupChatDetails,
-    updates: GroupChatDetailsUpdates
+    updates: GroupChatDetailsUpdates,
 ): GroupChatDetails {
     return {
         timestamp: updates.timestamp,
@@ -266,13 +264,13 @@ export function mergeGroupChatDetails(
                 added: [...updates.blockedUsersAdded],
                 updated: [],
                 removed: updates.blockedUsersRemoved,
-            })
+            }),
         ),
         invitedUsers: updates.invitedUsers ?? previous.invitedUsers,
         pinnedMessages: mergePinnedMessages(
             previous.pinnedMessages,
             updates.pinnedMessagesAdded,
-            updates.pinnedMessagesRemoved
+            updates.pinnedMessagesRemoved,
         ),
         rules: updates.rules ?? previous.rules,
     };
@@ -281,7 +279,7 @@ export function mergeGroupChatDetails(
 function mergePinnedMessages(
     current: Set<number>,
     added: Set<number>,
-    removed: Set<number>
+    removed: Set<number>,
 ): Set<number> {
     removed.forEach((m) => current.delete(m));
     added.forEach((m) => current.add(m));
@@ -294,7 +292,7 @@ function mergeParticipants(_: Member | undefined, updated: Member) {
 
 export function mergeDirectChatUpdates(
     directChats: DirectChatSummary[],
-    updates: DirectChatSummaryUpdates[]
+    updates: DirectChatSummaryUpdates[],
 ): DirectChatSummary[] {
     const lookup = ChatMap.fromList(updates);
 
@@ -326,7 +324,7 @@ export function mergeDirectChatUpdates(
 export function mergeGroupChatUpdates(
     groupChats: GroupChatSummary[],
     userCanisterUpdates: UserCanisterGroupChatSummaryUpdates[],
-    groupCanisterUpdates: GroupCanisterGroupChatSummaryUpdates[]
+    groupCanisterUpdates: GroupCanisterGroupChatSummaryUpdates[],
 ): GroupChatSummary[] {
     const userLookup = ChatMap.fromList(userCanisterUpdates);
     const groupLookup = ChatMap.fromList(groupCanisterUpdates);
@@ -378,7 +376,7 @@ export function mergeGroupChatUpdates(
                 latestThreads: mergeThreads(
                     c.membership.latestThreads,
                     g?.latestThreads ?? [],
-                    u?.threadsRead ?? {}
+                    u?.threadsRead ?? {},
                 ),
                 readByMeUpTo:
                     readByMeUpTo !== undefined && latestMessage !== undefined
@@ -394,7 +392,7 @@ export function mergeGroupChatUpdates(
 
 export function mergeGroupChats(
     userCanisterGroups: UserCanisterGroupChatSummary[],
-    groupCanisterGroups: GroupCanisterGroupChatSummary[]
+    groupCanisterGroups: GroupCanisterGroupChatSummary[],
 ): GroupChatSummary[] {
     const userCanisterGroupLookup = ChatMap.fromList(userCanisterGroups);
 
@@ -444,7 +442,7 @@ export function mergeGroupChats(
 function mergeThreads(
     current: ThreadSyncDetails[],
     groupCanisterUpdates: GroupCanisterThreadDetails[],
-    readUpToUpdates: Record<number, number>
+    readUpToUpdates: Record<number, number>,
 ): ThreadSyncDetails[] {
     const threadsRecord = toRecord(current, (t) => t.threadRootMessageIndex);
 
@@ -464,13 +462,13 @@ function mergeThreads(
 }
 
 export function isSuccessfulGroupSummaryResponse(
-    response: GroupCanisterSummaryResponse
+    response: GroupCanisterSummaryResponse,
 ): response is GroupCanisterGroupChatSummary {
     return "id" in response;
 }
 
 export function isSuccessfulGroupSummaryUpdatesResponse(
-    response: GroupCanisterSummaryUpdatesResponse
+    response: GroupCanisterSummaryUpdatesResponse,
 ): response is GroupCanisterGroupChatSummaryUpdates {
     return "id" in response;
 }
@@ -478,7 +476,7 @@ export function isSuccessfulGroupSummaryUpdatesResponse(
 export function getUpdatedEvents(
     directChats: DirectChatSummaryUpdates[],
     groupChats: GroupCanisterGroupChatSummaryUpdates[],
-    communities: CommunityCanisterCommunitySummaryUpdates[]
+    communities: CommunityCanisterCommunitySummaryUpdates[],
 ): ChatMap<UpdatedEvent[]> {
     const result = new ChatMap<UpdatedEvent[]>();
 
@@ -503,7 +501,7 @@ export function buildBlobUrl(
     canisterId: string,
     blobId: bigint,
     blobType: "blobs" | "avatar" | "banner",
-    channelId?: ChannelIdentifier
+    channelId?: ChannelIdentifier,
 ): string {
     const blobTypeFragment =
         channelId === undefined ? blobType : `channel/${channelId.channelId}/${blobType}`;
@@ -552,7 +550,7 @@ export function emptyChatMetrics(): Metrics {
 
 export function nextIndex(
     ascending: boolean,
-    events: EventWrapper<ChatEvent>[]
+    events: EventWrapper<ChatEvent>[],
 ): number | undefined {
     if (events.length === 0) return undefined;
     return ascending ? events[events.length - 1].index + 1 : events[0].index - 1;

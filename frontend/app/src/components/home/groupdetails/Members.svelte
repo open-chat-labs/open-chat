@@ -279,7 +279,8 @@
     }
 
     .user-groups {
-        padding: 0 $sp4;
+        padding: 0 $sp4 $sp4 $sp4;
+        flex: auto;
     }
 
     .tabs {

@@ -19,7 +19,12 @@
 </script>
 
 <SectionHeader border={false}>
-    <div on:click={showCommunityMembers} class="current-selection" class:rtl={$rtlStore}>
+    <div
+        role="button"
+        tabindex="0"
+        on:click={showCommunityMembers}
+        class="current-selection"
+        class:rtl={$rtlStore}>
         <div class="avatar">
             <Avatar
                 url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
