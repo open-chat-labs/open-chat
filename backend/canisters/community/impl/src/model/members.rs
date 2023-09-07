@@ -338,6 +338,7 @@ pub struct CommunityMemberInternal {
     pub rules_accepted: Option<Timestamped<Version>>,
     pub is_bot: bool,
 
+    #[serde(default)]
     display_name: Timestamped<Option<String>>,
 }
 
