@@ -1,6 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
+use crate::model::upgrade_instruction_counts::InstructionCountFunctionId;
 use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -30,4 +31,11 @@ fn post_upgrade(args: Args) {
     }
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    read_state(|state| {
+        let now = state.env.now();
+        state
+            .data
+            .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
+    });
 }
