@@ -197,6 +197,8 @@
         groupInner(filteredProposals)
     );
 
+    $: console.log("Timeline: ", timeline);
+
     $: privateCommunityPreview =
         $selectedCommunity !== undefined &&
         !$selectedCommunity.public &&
@@ -415,8 +417,8 @@
                         chatType={chat.kind}
                         {user}
                         me={isMe(evt)}
-                        first={i + 1 === innerGroup.length}
-                        last={i === 0}
+                        first={reverseScroll ? i + 1 === innerGroup.length : i === 0}
+                        last={reverseScroll ? i === 0 : i + 1 === innerGroup.length}
                         {readonly}
                         {canPin}
                         {canBlockUser}
