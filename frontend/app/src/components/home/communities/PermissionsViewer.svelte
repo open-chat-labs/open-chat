@@ -1,9 +1,14 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
-    import { type CommunityPermissionRole, type CommunityPermissions, communityRoles } from "openchat-client";
+    import {
+        type CommunityPermissionRole,
+        type CommunityPermissions,
+        communityRoles,
+    } from "openchat-client";
 
     export let permissions: CommunityPermissions;
+    export let isPublic: boolean;
 
     type PermissionsByRole = Record<CommunityPermissionRole, Set<string>>;
     type PermissionsEntry = [keyof CommunityPermissions, CommunityPermissionRole];
@@ -19,7 +24,9 @@
     function partitionPermissions(permissions: CommunityPermissions): PermissionsByRole {
         return (Object.entries(permissions) as PermissionsEntry[]).reduce(
             (dict: PermissionsByRole, [key, val]) => {
-                dict[val].add($_(`permissions.${key}`));
+                if (key !== "inviteUsers" || !isPublic) {
+                    dict[val].add($_(`permissions.${key}`));
+                }
                 return dict;
             },
             {

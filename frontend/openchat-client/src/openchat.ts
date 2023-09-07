@@ -186,7 +186,7 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
+import { findLast, groupBy, groupWhile, keepMax, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -386,6 +386,8 @@ import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpda
 import { hasFlag, moderationFlags } from "./stores/flagStore";
 import { hasOwnerRights } from "./utils/permissions";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
+import type { Member } from "openchat-shared";
+import type { Level } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -3378,21 +3380,86 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    searchCommunityUsers(term: string): Promise<UserSummary[]> {
+    searchUsersForInvite(searchTerm: string, maxResults: number, level: Level, newGroup: boolean, canInviteUsers = true): Promise<UserSummary[]> {
+        if (level === "channel") {
+            // Put the existing channel members into a map for quick lookup
+            const channelMembers = newGroup ? undefined : new Map(this._liveState.currentChatMembers.map(m => [m.userId, m]));
+
+            // First try searching the community members and return immediately if there are already enough matches
+            // or if the caller does not have permission to invite users to the community
+            const communityMatches = this.searchCommunityUsersForChannelInvite(searchTerm, maxResults, channelMembers);
+            if (!canInviteUsers || communityMatches.length >= maxResults) {
+                return Promise.resolve(communityMatches);
+            }
+
+            // Search the global user list and overfetch if there are existing members we might need to remove
+            const maxToSearch = newGroup ? maxResults : maxResults * 2;
+            return this.searchUsers(searchTerm, maxToSearch).then((globalMatches) => {
+                if (!newGroup) {
+                    // Remove any existing members from the global matches until there are at most `maxResults`
+                    // TODO: Ideally we would return the total number of matches from the server and use that
+                    const maxToKeep = globalMatches.length < maxToSearch ? 0 : maxResults;
+                    keepMax(globalMatches, (u) => !channelMembers?.has(u.userId), maxToKeep);
+                }
+    
+                const matches = [...communityMatches];
+    
+                // Add the global matches to the results, but only if they are not already in the community matches
+                for (const match of globalMatches) {
+                    if (matches.length >= maxResults) {
+                        break;
+                    }
+                    if (!matches.some(m => m.userId === match.userId)) {
+                        matches.push(match);
+                    }
+                }
+    
+                return matches;    
+            });
+        } else {
+            // Search the global user list and overfetch if there are existing members we might need to remove
+            const maxToSearch = newGroup ? maxResults : maxResults * 2;
+            return this.searchUsers(searchTerm, maxToSearch).then((matches) => {
+                if (!newGroup) {
+                    // Put the existing users in a map for easy lookup - for communities the existing members
+                    // are already in a map
+                    const existing = level === "community" 
+                        ? this._liveState.currentCommunityMembers 
+                        : new Map(this._liveState.currentChatMembers.map(m => [m.userId, m]));
+    
+                    // Remove any existing members from the global matches until there are at most `maxResults`
+                    // TODO: Ideally we would return the total number of matches from the server and use that
+                    const maxToKeep = matches.length < maxToSearch ? 0 : maxResults;
+                    keepMax(matches, (u) => !existing.has(u.userId), maxToKeep);
+                }
+                return matches;
+            });
+        }
+    }
+
+    private searchCommunityUsersForChannelInvite(term: string, maxResults: number, channelMembers: Map<string, Member> | undefined): UserSummary[] {
         const termLower = term.toLowerCase();
         const matches: UserSummary[]  = [];
         for (const [userId, member] of this._liveState.currentCommunityMembers) {
-            const user = this._liveState.userStore[userId];            
+            let user = this._liveState.userStore[userId];            
             if (user?.username !== undefined) {
                 const displayName = member.displayName ?? user.displayName;
                 if (user.username.toLowerCase().includes(termLower) || 
                     (displayName !== undefined && 
                         displayName.toLowerCase().includes(termLower))) {
-                    matches.push(user);
+                    if (channelMembers === undefined || !channelMembers.has(userId)) {
+                        if (member.displayName !== undefined) {
+                            user = { ...user, displayName: member.displayName };
+                        }
+                        matches.push(user);
+                        if (matches.length >= maxResults) {
+                            break;
+                        }
+                    }
                 }
             }
         }
-        return Promise.resolve(matches);
+        return matches;
     }
 
     clearReferralCode(): void {

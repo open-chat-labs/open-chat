@@ -959,14 +959,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "setMemberDisplayName":
-                agent
-                    .setMemberDisplayName(payload.communityId, payload.displayName)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId, payload));
+                executeThenReply(payload, correlationId, agent
+                    .setMemberDisplayName(
+                        payload.communityId, 
+                        payload.displayName
+                    ));
                 break;
 
             default:

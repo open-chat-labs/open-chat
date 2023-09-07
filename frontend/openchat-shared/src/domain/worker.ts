@@ -1260,14 +1260,11 @@ type UpdateRegistry = {
     kind: "updateRegistry";
 };
 
-export type WorkerResult<T extends WorkerRequest> = T extends PinMessage
-
 type SetMemberDisplayName = {
     communityId: string;
     displayName: string | undefined;
     kind: "setMemberDisplayName";
 };
-
 
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse

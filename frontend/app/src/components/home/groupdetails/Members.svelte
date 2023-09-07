@@ -90,12 +90,13 @@
 
     function getKnownUsers(userStore: UserLookup, members: MemberType[]): FullMember[] {
         const users: FullMember[] = [];
-        members.forEach((p) => {
-            const user = userStore[p.userId];
+        members.forEach((m) => {
+            const user = userStore[m.userId];
             if (user) {
                 users.push({
                     ...user,
-                    ...p,
+                    ...m,
+                    displayName: m.displayName ?? user.displayName,
                 });
             }
         });

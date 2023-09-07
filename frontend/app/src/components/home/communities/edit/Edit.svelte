@@ -103,8 +103,8 @@
         step = ev.detail;
     }
 
-    function searchUsers(term: string, max?: number): Promise<UserSummary[]> {
-        return client.searchUsers(term, max);
+    function searchUsers(term: string): Promise<UserSummary[]> {
+        return client.searchUsersForInvite(term, 20, "community", !editing, true);
     }
 
     function optionallyInviteUsers(communityId: string): Promise<void> {
@@ -212,11 +212,7 @@
                     <Details bind:valid={detailsValid} bind:busy bind:candidate />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
-                    <VisibilityControl
-                        bind:candidate
-                        {original}
-                        {editing}
-                        history={false} />
+                    <VisibilityControl bind:candidate {original} {editing} history={false} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
                     <Rules
@@ -226,9 +222,13 @@
                 </div>
                 <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}
-                        <PermissionsEditor bind:permissions={candidate.permissions} />
+                        <PermissionsEditor
+                            isPublic={candidate.public}
+                            bind:permissions={candidate.permissions} />
                     {:else}
-                        <PermissionsViewer permissions={candidate.permissions} />
+                        <PermissionsViewer
+                            isPublic={candidate.public}
+                            permissions={candidate.permissions} />
                     {/if}
                 </div>
                 {#if !editing}
