@@ -3503,12 +3503,12 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getCurrentCommunityUserDisplayName(user: UserSummary | undefined): string | undefined {
+    getCurrentCommunityUserDisplayName(user: UserSummary | undefined, communityMembers: Map<string, Member>): string | undefined {
         if (user === undefined) {
             return undefined;
         }
 
-        const member = this._liveState.currentCommunityMembers.get(user.userId);
+        const member = communityMembers.get(user.userId);
         return member?.displayName ?? user.displayName ?? user.username;
     }
 

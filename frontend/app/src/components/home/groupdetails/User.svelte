@@ -21,7 +21,8 @@
 
     let hovering = false;
 
-    $: displayName = client.getCurrentCommunityUserDisplayName(user);
+    $: currentCommunityMembers = client.currentCommunityMembers;
+    $: displayName = client.getCurrentCommunityUserDisplayName(user, $currentCommunityMembers);
 
     function onClick() {
         dispatch("open", user.userId);
