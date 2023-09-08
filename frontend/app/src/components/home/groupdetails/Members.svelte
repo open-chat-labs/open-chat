@@ -142,24 +142,26 @@
     on:close={close}
     on:showInviteUsers={showInviteUsers} />
 
-<div class="tabs">
-    <div
-        tabindex="0"
-        role="button"
-        on:click={() => (selectedTab = "users")}
-        class:selected={selectedTab === "users"}
-        class="tab">
-        {$_("communities.members")}
+{#if collection.level === "community"}
+    <div class="tabs">
+        <div
+            tabindex="0"
+            role="button"
+            on:click={() => (selectedTab = "users")}
+            class:selected={selectedTab === "users"}
+            class="tab">
+            {$_("communities.members")}
+        </div>
+        <div
+            tabindex="0"
+            role="button"
+            on:click={() => (selectedTab = "groups")}
+            class:selected={selectedTab === "groups"}
+            class="tab">
+            {$_("communities.userGroups")}
+        </div>
     </div>
-    <div
-        tabindex="0"
-        role="button"
-        on:click={() => (selectedTab = "groups")}
-        class:selected={selectedTab === "groups"}
-        class="tab">
-        {$_("communities.userGroups")}
-    </div>
-</div>
+{/if}
 
 {#if selectedTab === "users"}
     <div class="search">
@@ -255,9 +257,9 @@
             {/each}
         </div>
     {/if}
-{:else}
+{:else if collection.level === "community"}
     <div class="user-groups">
-        <UserGroups />
+        <UserGroups community={collection} />
     </div>
 {/if}
 

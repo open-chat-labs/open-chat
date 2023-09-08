@@ -317,6 +317,9 @@ import type {
     CryptocurrencyTransfer,
     Mention,
     SetDisplayNameResponse,
+    UserGroupDetails,
+    CreateUserGroupResponse,
+    UpdateUserGroupResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -347,6 +350,7 @@ import {
     KINIC_SYMBOL,
     SNS1_SYMBOL,
     GHOST_SYMBOL,
+    CommonResponses,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -4922,6 +4926,90 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch((err) => {
                 this._logger.error("Error converting group to community", err);
                 return undefined;
+            });
+    }
+
+    private deleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
+        communityStateStore.updateProp(id, "userGroups", (groups) => {
+            return groups.filter((g) => g.id !== userGroup.id);
+        });
+    }
+
+    private undeleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
+        communityStateStore.updateProp(id, "userGroups", (groups) => {
+            return [...groups, userGroup];
+        });
+    }
+
+    deleteUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): Promise<boolean> {
+        this.deleteUserGroupLocally(id, userGroup);
+        return this.sendRequest({
+            kind: "deleteUserGroups",
+            communityId: id.communityId,
+            userGroupIds: [userGroup.id],
+        })
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    this.undeleteUserGroupLocally(id, userGroup);
+                }
+                return resp.kind === "success";
+            })
+            .catch((err) => {
+                this.undeleteUserGroupLocally(id, userGroup);
+                this._logger.error("Error deleting community user group", err);
+                return false;
+            });
+    }
+
+    createUserGroup(
+        id: CommunityIdentifier,
+        userGroup: UserGroupDetails,
+    ): Promise<CreateUserGroupResponse> {
+        return this.sendRequest({
+            kind: "createUserGroup",
+            communityId: id.communityId,
+            name: userGroup.name,
+            userIds: [...userGroup.members],
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    communityStateStore.updateProp(id, "userGroups", (groups) => {
+                        return [{ ...userGroup, id: resp.userGroupId }, ...groups];
+                    });
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this._logger.error("Error creating community user group", err);
+                return CommonResponses.failure();
+            });
+    }
+
+    updateUserGroup(
+        id: CommunityIdentifier,
+        userGroup: UserGroupDetails,
+        toAdd: Set<string>,
+        toRemove: Set<string>,
+    ): Promise<UpdateUserGroupResponse> {
+        return this.sendRequest({
+            kind: "updateUserGroup",
+            communityId: id.communityId,
+            userGroupId: userGroup.id,
+            name: userGroup.name,
+            usersToAdd: [...toAdd],
+            usersToRemove: [...toRemove],
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    communityStateStore.updateProp(id, "userGroups", (groups) => {
+                        return groups.map((g) => (g.id === userGroup.id ? userGroup : g));
+                    });
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this._logger.error("Error updating community user group", err);
+                return CommonResponses.failure();
             });
     }
 

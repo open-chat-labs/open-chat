@@ -427,7 +427,8 @@
         "notPermitted": "You are not permitted to {permission}",
         "replyInThread": "reply in thread",
         "createPublicChannel": "create public channels",
-        "createPrivateChannel": "create private channels"
+        "createPrivateChannel": "create private channels",
+        "manageUserGroups": "manage user groups"
     },
     "level": {
         "group": "Group",
@@ -874,6 +875,7 @@
         "userGroups": "User groups",
         "noUserGroups": "No user groups found",
         "userGroupMembers": "User group members",
+        "userGroupCount": "({count} members)",
         "enterUserGroupName": "Enter user group name",
         "searchGroups": "Search community channels",
         "hideLeftNav": "Collapse communities menu",
@@ -935,7 +937,8 @@
             "deleteFailed": "Sorry we were unable to delete this community",
             "importFailed": "Sorry we were unable to import your group",
             "leaveFailed": "Sorry we were unable to leave this community",
-            "convertFailed": "Sorry but we were unable to convert your groups to a community"
+            "convertFailed": "Sorry but we were unable to convert your groups to a community",
+            "deleteUserGroupFailed": "Sorry we were unable to delete the user group"
         },
         "memberCount": "member(s)",
         "channelCount": "channel(s)",

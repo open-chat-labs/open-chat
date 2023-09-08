@@ -846,6 +846,7 @@ export function communityPermissions(candid: ApiCommunityPermissions): Community
         removeMembers: communityPermissionRole(candid.remove_members),
         createPublicChannel: communityPermissionRole(candid.create_public_channel),
         createPrivateChannel: communityPermissionRole(candid.create_private_channel),
+        manageUserGroups: communityPermissionRole(candid.manage_user_groups),
     };
 }
 

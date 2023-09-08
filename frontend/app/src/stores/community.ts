@@ -11,6 +11,7 @@ const defaultPermissions: CommunityPermissions = {
     removeMembers: "admin",
     createPublicChannel: "admin",
     createPrivateChannel: "admin",
+    manageUserGroups: "admin",
 };
 
 export function createCandidateCommunity(id: string, index: number): CommunitySummary {
