@@ -120,7 +120,6 @@
 
     .mention-picker {
         position: absolute;
-        width: 100%;
         max-height: calc(var(--vh, 1vh) * 50);
         overflow: auto;
 
