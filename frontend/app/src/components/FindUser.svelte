@@ -38,8 +38,6 @@
 
     function onSelect(user: UserSummary) {
         dispatch("selectUser", user);
-        // TODO: I think this is unnecessary now
-        // userStore.add(user);
         searchTerm = "";
         users = [];
         inp.focus();
