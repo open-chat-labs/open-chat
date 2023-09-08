@@ -78,7 +78,7 @@
     $: offensiveEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Offensive);
     $: underReviewEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.UnderReview);
     $: communities = client.communitiesList;
-    $: selectedCommunity = client.selectedCommunity;
+    $: selectedCommunity = $communities.find((c) => c.id.communityId === selectedCommunityId);
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
