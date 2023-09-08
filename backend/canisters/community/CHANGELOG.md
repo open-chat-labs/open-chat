@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+- Return `user_groups_deleted` in `selected_updates` ([#4340](https://github.com/open-chat-labs/open-chat/pull/4340))
+
+## [[2.0.842](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.842-community)] - 2023-09-07
+
 ### Added
 
 - Support mentioning user groups ([#4308](https://github.com/open-chat-labs/open-chat/pull/4308))
