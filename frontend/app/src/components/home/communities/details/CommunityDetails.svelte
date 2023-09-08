@@ -71,7 +71,7 @@
         on:toggle={communityPermissionsOpen.toggle}
         open={$communityPermissionsOpen}
         headerText={$_("permissions.permissions")}>
-        <PermissionsViewer bind:permissions={community.permissions} />
+        <PermissionsViewer isPublic={community.public} bind:permissions={community.permissions} />
     </CollapsibleCard>
     <CollapsibleCard
         on:toggle={communityStatsOpen.toggle}

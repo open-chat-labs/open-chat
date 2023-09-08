@@ -16,7 +16,7 @@
 
     export let mode: "add" | "edit";
     export let enabled = true;
-    export let userLookup: (searchTerm: string, maxResults?: number) => Promise<UserSummary[]>;
+    export let userLookup: (searchTerm: string) => Promise<UserSummary[]>;
 
     const dispatch = createEventDispatcher();
     let inp: HTMLInputElement;
@@ -25,8 +25,6 @@
     let users: UserSummary[] = [];
     let searching: boolean = false;
     let hovering = false;
-
-    $: userStore = client.userStore;
 
     onMount(() => {
         // this focus seems to cause a problem with the animation of the right panel without
@@ -40,7 +38,8 @@
 
     function onSelect(user: UserSummary) {
         dispatch("selectUser", user);
-        userStore.add(user);
+        // TODO: I think this is unnecessary now
+        // userStore.add(user);
         searchTerm = "";
         users = [];
         inp.focus();

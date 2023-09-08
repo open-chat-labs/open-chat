@@ -21,6 +21,8 @@
 
     let hovering = false;
 
+    $: displayName = client.getUserDisplayName(user);
+
     function onClick() {
         dispatch("open", user.userId);
     }
@@ -44,7 +46,7 @@
     <div class="details">
         <div class="display-name">
             <h4 class:diamond={user.diamond}>
-                <FilteredUsername {searchTerm} username={user.displayName ?? user.username} {me} />
+                <FilteredUsername {searchTerm} username={displayName} {me} />
             </h4>
             {#if role !== undefined}
                 <span class="role">

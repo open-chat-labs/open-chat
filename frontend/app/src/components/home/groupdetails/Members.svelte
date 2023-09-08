@@ -15,7 +15,7 @@
         MultiUserChat,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
-    import MembersSelectionButton from "../MembersSelectionButton.svelte";
+    import SelectionButton from "../SelectionButton.svelte";
     import InvitedUser from "./InvitedUser.svelte";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
@@ -90,12 +90,13 @@
 
     function getKnownUsers(userStore: UserLookup, members: MemberType[]): FullMember[] {
         const users: FullMember[] = [];
-        members.forEach((p) => {
-            const user = userStore[p.userId];
+        members.forEach((m) => {
+            const user = userStore[m.userId];
             if (user) {
                 users.push({
                     ...user,
-                    ...p,
+                    ...m,
+                    displayName: m.displayName ?? user.displayName,
                 });
             }
         });
@@ -150,17 +151,17 @@
 
 {#if showBlocked || showInvited}
     <div class="section-selector">
-        <MembersSelectionButton
+        <SelectionButton
             title={$_("members")}
             on:click={() => setView("members")}
             selected={view === "members"} />
         {#if showBlocked}
-            <MembersSelectionButton
+            <SelectionButton
                 title={$_("blocked")}
                 on:click={() => setView("blocked")}
                 selected={view === "blocked"} />
         {:else}
-            <MembersSelectionButton
+            <SelectionButton
                 title={$_("invited")}
                 on:click={() => setView("invited")}
                 selected={view === "invited"} />

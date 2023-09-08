@@ -958,6 +958,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     ));
                 break;
 
+            case "setMemberDisplayName":
+                executeThenReply(payload, correlationId, agent
+                    .setMemberDisplayName(
+                        payload.communityId, 
+                        payload.displayName
+                    ));
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

@@ -19,6 +19,7 @@
         OpenChat,
         MultiUserChat,
         MultiUserChatIdentifier,
+        Level,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
@@ -50,7 +51,6 @@
     $: currentChatBlocked = client.currentChatBlockedUsers;
     $: currentChatRules = client.currentChatRules;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
-    $: chatListScope = client.chatListScope;
     $: currentCommunityMembers = client.currentCommunityMembers;
     $: currentCommunityInvited = client.currentCommunityInvitedUsers;
     $: currentCommunityBlocked = client.currentCommunityBlockedUsers;
@@ -63,21 +63,10 @@
     $: multiUserChat = selectedChat as Readable<MultiUserChat>;
     $: empty = $rightPanelHistory.length === 0;
 
-    /**
-     * if we're adding users to a channel we need to check whether or not the user has
-     * permission to invite users to the community. If not, then they can only search
-     * from the community's existing members
-     */
-    function searchUsers(term: string, max?: number): Promise<UserSummary[]> {
-        if (
-            $chatListScope.kind === "community" &&
-            $selectedCommunity !== undefined &&
-            !client.canInviteUsers($selectedCommunity.id) &&
-            lastState.kind === "invite_group_users"
-        ) {
-            return client.searchCommunityUsers(term);
-        }
-        return client.searchUsers(term, max);
+    function searchUsers(term: string): Promise<UserSummary[]> {
+        const canInvite =
+            $selectedCommunity !== undefined && client.canInviteUsers($selectedCommunity.id);
+        return client.searchUsersForInvite(term, 20, level, false, canInvite);
     }
 
     function onChangeGroupRole(
@@ -353,6 +342,14 @@
         lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
             ? findMessage($eventsStore, lastState.threadRootMessageId)
             : undefined;
+
+    $: level = (
+        lastState.kind === "invite_community_users"
+            ? "community"
+            : $selectedChat?.kind === "channel"
+            ? "channel"
+            : "group"
+    ) as Level;
 </script>
 
 <Panel right {empty}>
@@ -369,7 +366,7 @@
             on:showGroupMembers />
     {:else if lastState.kind === "invite_community_users"}
         <InviteUsers
-            level="community"
+            {level}
             userLookup={searchUsers}
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
@@ -380,7 +377,7 @@
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             collection={$selectedCommunity}
             invited={$currentCommunityInvited}
-            members={$currentCommunityMembers}
+            members={[...$currentCommunityMembers.values()]}
             blocked={$currentCommunityBlocked}
             on:close={popRightPanelHistory}
             on:blockUser={onBlockCommunityUser}
@@ -391,7 +388,7 @@
             on:changeRole={onChangeCommunityRole} />
     {:else if lastState.kind === "invite_group_users"}
         <InviteUsers
-            level={$selectedChat?.kind === "channel" ? "channel" : "group"}
+            {level}
             userLookup={searchUsers}
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
@@ -411,11 +408,7 @@
             on:showInviteUsers={showInviteGroupUsers}
             on:removeMember={onRemoveGroupMember}
             on:changeRole={onChangeGroupRole} />
-    {:else if lastState.kind === "show_pinned" &&
-        $selectedChatId !== undefined &&
-        ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") &&
-        $multiUserChat !== undefined
-    }
+    {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
             on:chatWith
             on:goToMessageIndex={goToMessageIndex}

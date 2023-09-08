@@ -60,6 +60,7 @@
     });
 
     $: isDiamond = client.isDiamond;
+    $: requiresUpgrade = !$isDiamond && candidate.level !== "channel";
 
     $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
 
@@ -95,7 +96,7 @@
     </Radio>
 </div>
 
-{#if $isDiamond}
+{#if !requiresUpgrade}
     <div class="section">
         <Radio
             on:change={toggleScope}
@@ -141,7 +142,7 @@
     </div>
 {/if}
 
-{#if $isDiamond && candidate.public}
+{#if !requiresUpgrade && candidate.public}
     <div transition:fade|local={{ duration: 250 }} class="wrapper">
         <div class="icon">
             <LockOutline size={$iconSize} color={"var(--icon-txt)"} />
@@ -186,7 +187,7 @@
     </div>
 {/if}
 
-{#if !$isDiamond}
+{#if requiresUpgrade}
     <div class="section">
         <div class="section-title">{$_("upgrade.featuresTitle")}</div>
         <div class="upgrade info">

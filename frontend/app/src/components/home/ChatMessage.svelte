@@ -129,6 +129,7 @@
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
     $: showChatMenu = (!inert || canRevealDeleted) && !readonly;
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
+    $: senderDisplayName = client.getUserDisplayName(sender);
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
@@ -450,7 +451,7 @@
                             class:fill
                             class:crypto
                             class:diamond={sender?.diamond}>
-                            {sender?.displayName ?? sender?.username}
+                            {senderDisplayName}
                         </h4>
                     </Link>
                     {#if senderTyping}

@@ -116,3 +116,16 @@ export function toRecordFiltered<T, K extends string | number | symbol, V>(
         return rec;
     }, {} as Record<K, V>);
 }
+
+export function keepMax<T>(items: T[], keep: (item: T) => boolean, max: number) {
+    let i = items.length;
+    while (i--) {
+        if (items.length <= max) {
+            break;
+        }
+
+        if (!keep(items[i])) {
+            items.splice(i, 1);
+        }
+    }
+}

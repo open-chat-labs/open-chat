@@ -496,6 +496,7 @@ export const idlFactory = ({ IDL }) => {
     'expires_at' : IDL.Opt(TimestampMillis),
   });
   const CommunityCanisterChannelSummary = IDL.Record({
+    'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Bool,
     'permissions' : GroupPermissions,
@@ -545,6 +546,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CommunityMembership = IDL.Record({
     'role' : CommunityRole,
+    'display_name' : IDL.Opt(IDL.Text),
     'joined' : TimestampMillis,
     'rules_accepted' : IDL.Bool,
   });

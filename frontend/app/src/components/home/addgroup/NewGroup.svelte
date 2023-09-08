@@ -86,15 +86,10 @@
         return steps;
     }
 
-    function searchUsers(term: string, max?: number): Promise<UserSummary[]> {
-        if (
-            $selectedCommunity !== undefined &&
-            !client.canInviteUsers($selectedCommunity.id) &&
-            candidateGroup.level === "channel"
-        ) {
-            return client.searchCommunityUsers(term);
-        }
-        return client.searchUsers(term, max);
+    function searchUsers(term: string): Promise<UserSummary[]> {
+        const canInvite =
+            $selectedCommunity === undefined || client.canInviteUsers($selectedCommunity.id);
+        return client.searchUsersForInvite(term, 20, candidateGroup.level, true, canInvite);
     }
 
     function interpolateError(error: string): string {

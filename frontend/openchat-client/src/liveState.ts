@@ -102,7 +102,7 @@ export class LiveState {
     globalState!: GlobalState;
     allChats!: ChatMap<ChatSummary>;
     selectedCommunity!: CommunitySummary | undefined;
-    currentCommunityMembers!: Member[];
+    currentCommunityMembers!: Map<string, Member>;
 
     constructor() {
         confirmedThreadEventIndexesLoadedStore.subscribe(
