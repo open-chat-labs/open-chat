@@ -3,7 +3,7 @@
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
 
-    import type { UserSummary, OpenChat } from "openchat-client";
+    import type { UserSummary, OpenChat, UserGroupSummary } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "openchat-client";
@@ -26,14 +26,20 @@
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)";
 
     $: prefixLower = prefix?.toLowerCase();
-    $: filtered = Object.values(client.getUserLookupForMentions()).filter(
-        (user) =>
-            (mentionSelf || user.userId !== currentUser.userId) &&
-            (prefixLower === undefined ||
-                user.username.toLowerCase().startsWith(prefixLower) ||
-                (user.displayName !== undefined &&
-                    user.displayName.toLowerCase().startsWith(prefixLower)))
-    );
+    $: filtered = Object.values(client.getUserLookupForMentions()).filter((userOrGroup) => {
+        if (prefixLower === undefined) return true;
+        switch (userOrGroup.kind) {
+            case "user_group":
+                return userOrGroup.name.toLowerCase().startsWith(prefixLower);
+            default:
+                return (
+                    (mentionSelf || userOrGroup.userId !== currentUser.userId) &&
+                    (userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
+                        (userOrGroup.displayName !== undefined &&
+                            userOrGroup.displayName.toLowerCase().startsWith(prefixLower)))
+                );
+        }
+    });
 
     $: style =
         direction === "up"
@@ -46,7 +52,7 @@
 
     const dispatch = createEventDispatcher();
 
-    function mention(user: UserSummary) {
+    function mention(user: UserSummary | UserGroupSummary) {
         dispatch("mention", user);
     }
 
@@ -95,12 +101,18 @@
                         size={AvatarSize.Small} />
                 </div>
                 <div slot="text">
-                    <span class="display-name">
-                        {item.displayName ?? item.username}
-                    </span>
-                    <span class="username">
-                        @{item.username}
-                    </span>
+                    {#if item.kind === "user_group"}
+                        <span class="display-name">
+                            {item.name}
+                        </span>
+                    {:else}
+                        <span class="display-name">
+                            {item.displayName ?? item.username}
+                        </span>
+                        <span class="username">
+                            @{item.username}
+                        </span>
+                    {/if}
                 </div>
             </MenuItem>
         </VirtualList>
@@ -120,7 +132,6 @@
 
     .mention-picker {
         position: absolute;
-        width: 100%;
         max-height: calc(var(--vh, 1vh) * 50);
         overflow: auto;
 
@@ -143,7 +154,7 @@
 
         .username {
             font-weight: 200;
-            color: var(--txt-light);
+            color: var(--menu-disabled-txt);
         }
     }
     .avatar {

@@ -321,6 +321,7 @@ import type {
     CreateUserGroupResponse,
     UpdateUserGroupResponse,
     SetMemberDisplayNameResponse,
+    UserGroupSummary,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -420,7 +421,8 @@ export class OpenChat extends OpenChatAgentWorker {
     private _cachePrimer: CachePrimer | undefined = undefined;
     private _membershipCheck: number | undefined;
     private _referralCode: string | undefined = undefined;
-    private _userLookupForMentions: Record<string, UserSummary> | undefined = undefined;
+    private _userLookupForMentions: Record<string, UserSummary | UserGroupSummary> | undefined =
+        undefined;
 
     constructor(config: OpenChatConfig) {
         super(config);
@@ -4763,16 +4765,35 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    getUserLookupForMentions(): Record<string, UserSummary> {
+    private getCommunityFromChat(chat: ChatSummary | undefined): CommunitySummary | undefined {
+        if (chat?.kind === "channel") {
+            const id: CommunityIdentifier = { kind: "community", communityId: chat.id.communityId };
+            return this._liveState.communities.get(id);
+        }
+        return undefined;
+    }
+
+    // the key might be a username or it might be a user group name
+    getUserLookupForMentions(): Record<string, UserSummary | UserGroupSummary> {
         if (this._userLookupForMentions === undefined) {
-            const lookup = {} as Record<string, UserSummary>;
+            const lookup = {} as Record<string, UserSummary | UserGroupSummary>;
             const userStore = this._liveState.userStore;
             for (const member of this._liveState.currentChatMembers) {
                 const userId = member.userId;
-                const user = userStore[userId];
+                let user = userStore[userId];
+                if (this._liveState.selectedChat?.kind === "channel") {
+                    user = {
+                        ...user,
+                        displayName: this.getDisplayName(user, false),
+                    };
+                }
                 if (user !== undefined && user.username !== undefined) {
                     lookup[user.username.toLowerCase()] = user as UserSummary;
                 }
+            }
+            const community = this.getCommunityFromChat(this._liveState.selectedChat);
+            if (community !== undefined) {
+                community.userGroups.forEach((ug) => (lookup[ug.name.toLowerCase()] = ug));
             }
             this._userLookupForMentions = lookup;
         }
@@ -4784,7 +4805,9 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const user = lookup[username.toLowerCase()];
 
-        return user !== undefined && (includeSelf || user.userId !== this.user.userId)
+        return user !== undefined &&
+            user.kind === "user" &&
+            (includeSelf || user.userId !== this.user.userId)
             ? user
             : undefined;
     }

@@ -597,6 +597,7 @@ export function communityDetailsResponse(
 export function userGroupDetails(candid: ApiUserGroupDetails): UserGroupDetails {
     return {
         id: candid.user_group_id,
+        kind: "user_group",
         members: new Set<string>(candid.members.map((m) => m.toString())),
         name: candid.name,
     };

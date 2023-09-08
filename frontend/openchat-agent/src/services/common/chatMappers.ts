@@ -144,7 +144,7 @@ import type {
     ResetInviteCodeResponse,
     ThreadSyncDetails,
     RegisterProposalVoteResponse,
-    UserGroup,
+    UserGroupSummary,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -1544,8 +1544,9 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
     };
 }
 
-export function userGroup(candid: ApiUserGroup): UserGroup {
+export function userGroup(candid: ApiUserGroup): UserGroupSummary {
     return {
+        kind: "user_group",
         memberCount: candid.members,
         name: candid.name,
         id: candid.user_group_id,
@@ -1937,7 +1938,7 @@ export function member(candid: ApiParticipant): Member {
     return {
         role: memberRole(candid.role),
         userId: candid.user_id.toString(),
-        displayName: undefined
+        displayName: undefined,
     };
 }
 

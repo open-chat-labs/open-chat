@@ -53,12 +53,14 @@ export type CommunityIdentifier = {
 };
 
 export type UserGroupSummary = {
+    kind: "user_group";
     memberCount: number;
     name: string;
     id: number;
 };
 
 export type UserGroupDetails = {
+    kind: "user_group";
     members: Set<string>;
     id: number;
     name: string;
