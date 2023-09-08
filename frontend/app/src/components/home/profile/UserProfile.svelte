@@ -46,7 +46,6 @@
     import ReferUsers from "./ReferUsers.svelte";
     import Expiry from "../upgrade/Expiry.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
-    import SelectionButton from "../SelectionButton.svelte";
     import CommunityProfile from "./CommunityProfile.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -216,13 +215,9 @@
     function closeProfile() {
         dispatch("closeProfile");
     }
-
-    function setView(v: "global" | "communities"): void {
-        view = v;
-    }
 </script>
 
-<SectionHeader flush shadow>
+<SectionHeader border={false} flush shadow>
     <h4 class="title">{$_("profile.title")}</h4>
     <span title={$_("close")} class="close" on:click={closeProfile}>
         <HoverIcon>
@@ -231,15 +226,23 @@
     </span>
 </SectionHeader>
 
-<div class="section-selector">
-    <SelectionButton
-        title={$_("global")}
-        on:click={() => setView("global")}
-        selected={view === "global"} />
-    <SelectionButton
-        title={$_("profile.communities")}
-        on:click={() => setView("communities")}
-        selected={view === "communities"} />
+<div class="tabs">
+    <div
+        tabindex="0"
+        role="button"
+        on:click={() => (view = "global")}
+        class:selected={view === "global"}
+        class="tab">
+        {$_("profile.global")}
+    </div>
+    <div
+        tabindex="0"
+        role="button"
+        on:click={() => (view = "communities")}
+        class:selected={view === "communities"}
+        class="tab">
+        {$_("profile.communities")}
+    </div>
 </div>
 
 {#if view === "global"}
@@ -467,17 +470,17 @@
         </div>
     </form>
 {:else}
-    <div class="communities">
+    <div class="community-selector">
         <Select bind:value={selectedCommunityId}>
             <option disabled selected value={""}>{$_("profile.selectCommunity")}</option>
             {#each $communities.filter((s) => s.membership?.role !== "none") as community}
                 <option value={community.id.communityId}>{community.name}</option>
             {/each}
         </Select>
-        {#if $selectedCommunity !== undefined}
-            <CommunityProfile community={$selectedCommunity} />
-        {/if}
     </div>
+    {#if $selectedCommunity !== undefined}
+        <CommunityProfile community={$selectedCommunity} />
+    {/if}
 {/if}
 
 <style lang="scss">
@@ -560,20 +563,40 @@
         flex: 0 0 30px;
     }
 
-    .section-selector {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        margin: $sp4 $sp4 0 $sp4;
-        gap: $sp3;
+    .tabs {
+        display: flex;
+        text-transform: capitalize;
+        align-items: center;
+        @include font(book, normal, fs-80);
+        font-weight: 500;
+        color: var(--txt-light);
+        gap: $sp5;
+        border-bottom: 1px solid var(--bd);
+        cursor: pointer;
+        margin: 0 $sp5;
+
         @include mobile() {
-            margin: 0 $sp3 $sp3 $sp3;
+            @include font(book, normal, fs-70);
+            gap: $sp4;
+            margin: 0 $sp4;
+        }
+
+        .tab {
+            padding-bottom: 10px;
+            margin-bottom: -2px;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            &.selected {
+                color: var(--txt);
+                border-bottom: 3px solid var(--txt);
+            }
         }
     }
 
-    .communities {
-        padding: $sp5 $sp4 0 $sp4;
+    .community-selector {
+        padding: $sp5 $sp5 0 $sp5;
         @include mobile() {
-            padding: $sp5 $sp3 0 $sp3;
+            padding: $sp4 $sp4 0 $sp4;
         }
     }
 </style>

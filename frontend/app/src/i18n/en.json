@@ -86,6 +86,7 @@
         "chat": "Chat",
         "settings": "Settings",
         "communities": "Communities",
+        "global": "Global",
         "selectCommunity": "Select a community"
     },
     "durationDays": "{duration} days",

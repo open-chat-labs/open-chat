@@ -420,6 +420,7 @@ export function communitySummaryUpdates(
         memberCount: optional(candid.member_count, identity),
         primaryLanguage: optional(candid.primary_language, identity),
         userGroups: candid.user_groups.map(userGroup),
+        // TODO we need to have deleted user groups here as well
     };
 }
 
@@ -680,7 +681,9 @@ export function deleteUserGroupsResponse(
     }
 }
 
-export function setMemberDisplayNameResponse(candid: ApiSetMemberDisplayNameResponse): SetMemberDisplayNameResponse {
+export function setMemberDisplayNameResponse(
+    candid: ApiSetMemberDisplayNameResponse,
+): SetMemberDisplayNameResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -704,6 +707,6 @@ export function setMemberDisplayNameResponse(candid: ApiSetMemberDisplayNameResp
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetMemberDisplayNameResponse type received",
-        candid
+        candid,
     );
 }

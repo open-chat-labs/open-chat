@@ -54,27 +54,40 @@
     }
 </script>
 
-<form on:submit|preventDefault={saveUser}>
-    <Legend label={$_("displayName")} rules={$_("commnunityDisplayNameRules")} />
-    <DisplayNameInput
-        {client}
-        {originalDisplayName}
-        disabled={false}
-        bind:displayName
-        bind:displayNameValid>
-        {#if displayNameError !== undefined}
-            <ErrorMessage>{$_(displayNameError)}</ErrorMessage>
-        {/if}
-    </DisplayNameInput>
-    <div class="full-width-btn">
-        <Button loading={saving} disabled={!buttonEnabled} fill small>{$_("update")}</Button>
+<form class="form" on:submit|preventDefault={saveUser}>
+    <div class="form-fields">
+        <Legend label={$_("displayName")} rules={$_("communityDisplayNameRules")} />
+        <DisplayNameInput
+            {client}
+            {originalDisplayName}
+            disabled={false}
+            bind:displayName
+            bind:displayNameValid>
+            {#if displayNameError !== undefined}
+                <ErrorMessage>{$_(displayNameError)}</ErrorMessage>
+            {/if}
+        </DisplayNameInput>
+    </div>
+    <div class="cta">
+        <Button fill loading={saving} disabled={!buttonEnabled}>{$_("update")}</Button>
     </div>
 </form>
 
 <style lang="scss">
-    .full-width-btn {
+    .form {
         display: flex;
-        justify-content: center;
-        margin-top: $sp4;
+        flex-direction: column;
+        height: 100%;
+        justify-content: space-between;
+    }
+
+    .form-fields {
+        padding: 0 $sp5 $sp3 $sp5;
+        @include mobile() {
+            padding: 0 $sp4 $sp3 $sp4;
+        }
+    }
+    .cta {
+        flex: 0 0 toRem(60);
     }
 </style>

@@ -99,11 +99,14 @@
         userGroup = userGroup; //:puke: trigger a reaction
     }
 
-    function createLookup(users: Member[], allUsers: UserLookup): Record<string, UserSummary> {
-        return users.reduce((map, u) => {
-            const user = allUsers[u.userId];
+    function createLookup(
+        users: Map<string, Member>,
+        allUsers: UserLookup
+    ): Record<string, UserSummary> {
+        return [...users.values()].reduce((map, m) => {
+            const user = allUsers[m.userId];
             if (user !== undefined) {
-                map[user.userId] = user;
+                map[user.userId] = { ...user, displayName: m.displayName ?? user.displayName };
             }
             return map;
         }, {} as Record<string, UserSummary>);

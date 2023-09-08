@@ -290,7 +290,7 @@
         display: flex;
         align-items: center;
         @include font(book, normal, fs-80);
-        font-weight: 700;
+        font-weight: 500;
         color: var(--txt-light);
         gap: $sp5;
         border-bottom: 1px solid var(--bd);
