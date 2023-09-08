@@ -54,7 +54,7 @@
     function getDisplayName(replyContext: RehydratedReplyContext): string {
         return me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayNameById(replyContext.senderId) ?? $_("unknownUser");
+            : client.getDisplayNameById(replyContext.senderId);
     }
 </script>
 

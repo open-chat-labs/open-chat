@@ -3500,18 +3500,21 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getDisplayNameById(userId: string, inGlobalContext = false) : string | undefined {
+    getDisplayNameById(userId: string, inGlobalContext = false) : string {
         const user = this._liveState.userStore[userId];
         return this.getDisplayName(user, inGlobalContext);
     }
 
-    getDisplayName(user: {userId: string, username: string, displayName?: string} | undefined, inGlobalContext = false): string | undefined {
-        if (user === undefined) {
-            return undefined;
+    getDisplayName(user: {userId: string, username: string, displayName?: string} | undefined, inGlobalContext = false): string {
+        if (user !== undefined) {
+            const member = inGlobalContext ? undefined : this._liveState.currentCommunityMembers.get(user.userId);
+            const displayName = member?.displayName ?? user.displayName ?? user.username;
+            if (displayName?.length > 0) {
+                return displayName;
+            }
         }
-        const member = inGlobalContext ? undefined : this._liveState.currentCommunityMembers.get(user.userId);
-        const displayName = member?.displayName ?? user.displayName ?? user.username;
-        return displayName.length > 0 ? displayName : undefined;
+
+        return this.config.i18nFormatter("unknownUser");
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {

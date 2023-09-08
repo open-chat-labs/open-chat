@@ -21,7 +21,7 @@
 
     let hovering = false;
 
-    $: displayName = client.getDisplayName(user) ?? $_("unknownUser");
+    $: displayName = client.getDisplayName(user);
 
     function onClick() {
         dispatch("open", user.userId);

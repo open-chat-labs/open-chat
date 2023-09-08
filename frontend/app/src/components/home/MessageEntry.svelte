@@ -412,7 +412,7 @@
 
     function mention(ev: CustomEvent<UserSummary>): void {
         const user = ev.detail;
-        const username = client.getDisplayName(user) ?? $_("unknownUser");
+        const username = client.getDisplayName(user);
         const userLabel = `@${username}`;
 
         replaceTextWith(userLabel);
