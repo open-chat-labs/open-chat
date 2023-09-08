@@ -77,9 +77,10 @@
     $: adultEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Adult);
     $: offensiveEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Offensive);
     $: underReviewEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.UnderReview);
-    $: communities = client.communitiesList;
-    $: selectedCommunity = $communities.find((c) => c.id.communityId === selectedCommunityId);
-
+    $: communities = client.communities;
+    $: communitiesList = client.communitiesList;
+    $: selectedCommunity = $communities.get({ kind: "community", communityId: selectedCommunityId });
+    
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
 
@@ -470,12 +471,12 @@
     <div class="communities">
         <Select bind:value={selectedCommunityId}>
             <option disabled selected value={""}>{$_("profile.selectCommunity")}</option>
-            {#each $communities.filter((s) => s.membership?.role !== "none") as community}
+            {#each $communitiesList.filter((s) => s.membership?.role !== "none") as community}
                 <option value={community.id.communityId}>{community.name}</option>
             {/each}
         </Select>
-        {#if $selectedCommunity !== undefined}
-            <CommunityProfile community={$selectedCommunity} />
+        {#if selectedCommunity !== undefined}
+            <CommunityProfile community={selectedCommunity} />
         {/if}
     </div>
 {/if}
