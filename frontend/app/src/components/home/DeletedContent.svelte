@@ -12,7 +12,7 @@
 
     $: date = new Date(Number(content.timestamp));
     $: timestampStr = `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`;
-    $: username = client.getDisplayNameById(content.deletedBy) ?? $_("unknownUser");
+    $: username = client.getDisplayNameById(content.deletedBy);
 </script>
 
 <div class="deleted">
