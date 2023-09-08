@@ -875,7 +875,6 @@
         "userGroups": "User groups",
         "noUserGroups": "No user groups found",
         "userGroupMembers": "User group members",
-        "userGroupCount": "({count} members)",
         "enterUserGroupName": "Enter user group name",
         "searchGroups": "Search community channels",
         "hideLeftNav": "Collapse communities menu",

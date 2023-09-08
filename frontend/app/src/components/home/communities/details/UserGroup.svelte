@@ -148,11 +148,13 @@
         {/each}
     </div>
 
-    <ButtonGroup align="fill">
-        <Button on:click={cancel} secondary>{$_("cancel")}</Button>
-        <Button on:click={save} disabled={!dirty || !valid || saving} loading={saving}
-            >{$_("save")}</Button>
-    </ButtonGroup>
+    <div class="buttons">
+        <ButtonGroup align="fill">
+            <Button on:click={cancel} secondary>{$_("cancel")}</Button>
+            <Button on:click={save} disabled={!dirty || !valid || saving} loading={saving}
+                >{$_("save")}</Button>
+        </ButtonGroup>
+    </div>
 </div>
 
 <style lang="scss">
@@ -164,17 +166,21 @@
         padding: 0 $sp3;
     }
 
+    .header,
+    .search,
+    .buttons {
+        padding: 0 $sp4;
+    }
+
     .user-group {
         display: flex;
         flex-direction: column;
-        gap: $sp3;
+        gap: toRem(12);
         height: 100%;
         justify-content: space-between;
 
         .users {
             flex: auto;
-            border: 1px solid var(--bd);
-            border-radius: $sp2;
 
             .legend {
                 @include font(book, normal, fs-80);

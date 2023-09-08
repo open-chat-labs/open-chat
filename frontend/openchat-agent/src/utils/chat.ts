@@ -29,6 +29,7 @@ import type {
     CommunityDetailsUpdates,
     CommunityCanisterCommunitySummaryUpdates,
     ChannelIdentifier,
+    UserGroupDetails,
 } from "openchat-shared";
 import { ChatMap, chatIdentifiersEqual } from "openchat-shared";
 import { toRecord } from "./list";
@@ -228,6 +229,7 @@ export function mergeCommunityDetails(
     previous: CommunityDetails,
     updates: CommunityDetailsUpdates,
 ): CommunityDetails {
+    console.log("updates: ", updates, previous);
     return {
         lastUpdated: updates.lastUpdated,
         members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
@@ -244,8 +246,19 @@ export function mergeCommunityDetails(
         ),
         invitedUsers: updates.invitedUsers ?? previous.invitedUsers,
         rules: updates.rules ?? previous.rules,
-        userGroups: updates.userGroups.length > 0 ? updates.userGroups : previous.userGroups, // TODO revisit this
+        userGroups: mergeUserGroups(previous.userGroups, updates.userGroups),
     };
+}
+
+function mergeUserGroups(
+    previous: UserGroupDetails[],
+    updated: UserGroupDetails[],
+): UserGroupDetails[] {
+    const map = new Map(previous.map((g) => [g.id, g]));
+    updated.forEach((g) => {
+        map.set(g.id, g);
+    });
+    return [...map.values()];
 }
 
 export function mergeGroupChatDetails(

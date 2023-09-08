@@ -281,7 +281,7 @@
     }
 
     .user-groups {
-        padding: 0 $sp4 $sp4 $sp4;
+        padding: 0 0 $sp4 0;
         flex: auto;
     }
 

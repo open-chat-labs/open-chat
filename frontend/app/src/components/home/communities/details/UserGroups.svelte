@@ -68,11 +68,11 @@
                 {#each matchingGroups as userGroup}
                     <div class="user-group" on:click={() => (selectedGroup = userGroup)}>
                         <h4 class="name">
-                            {userGroup.name}
-                            <span class="count"
-                                >{$_("communities.userGroupCount", {
-                                    values: { count: userGroup.members.size.toLocaleString() },
-                                })}</span>
+                            <span class="name-text">{userGroup.name}</span>
+                            <span class="members">
+                                <span class="num">{userGroup.members.size.toLocaleString()}</span>
+                                {$_("members")}
+                            </span>
                         </h4>
                         <div
                             on:click|stopPropagation={() => deleteUserGroup(userGroup)}
@@ -94,6 +94,7 @@
         display: flex;
         align-items: center;
         gap: $sp3;
+        padding: 0 $sp4;
 
         .search {
             flex: auto;
@@ -107,7 +108,7 @@
     .user-groups {
         display: flex;
         flex-direction: column;
-        gap: $sp3;
+        gap: toRem(12);
         height: 100%;
         justify-content: space-between;
 
@@ -119,22 +120,15 @@
 
         .groups {
             flex: auto;
-            border: 1px solid var(--bd);
-            border-radius: $sp2;
 
             .user-group {
                 cursor: pointer;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: $sp4;
+                padding: toRem(12) $sp4;
                 transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
                 gap: 12px;
-                border-bottom: 1px solid var(--bd);
-
-                &:last-child {
-                    border-bottom: none;
-                }
 
                 @media (hover: hover) {
                     &:not(.me):hover {
@@ -151,10 +145,21 @@
                     @include font(medium, normal, fs-100);
                     @include ellipsis();
 
-                    .count {
-                        margin-left: $sp2;
+                    .name-text {
+                        display: inline-block;
+                        padding: toRem(6);
+                        background-color: rgba(0, 0, 0, 0.05);
+                        border-radius: $sp3;
+                    }
+
+                    .members {
                         @include font-size(fs-70);
+                        margin-left: $sp2;
                         color: var(--txt-light);
+                        .num {
+                            color: var(--txt);
+                            font-weight: 700;
+                        }
                     }
                 }
 
