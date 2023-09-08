@@ -21,7 +21,7 @@
 
     let hovering = false;
 
-    $: displayName = client.getUserDisplayName(user);
+    $: displayName = client.getDisplayName(user);
 
     function onClick() {
         dispatch("open", user.userId);

@@ -40,17 +40,14 @@
     $: isPremium = profile?.isPremium ?? false;
     $: diamond = user?.diamond ?? false;
     $: phoneIsVerified = profile?.phoneIsVerified ?? false;
-    $: displayName =
-        profile !== undefined
-            ? client.getUserDisplayName(
-                  {
-                      userId,
-                      username: profile.username,
-                      displayName: profile.displayName,
-                  },
-                  inGlobalContext
-              )
-            : "";
+    $: displayName = client.getDisplayName(
+        {
+            userId,
+            username: profile?.username ?? "",
+            displayName: profile?.displayName ?? "",
+        },
+        inGlobalContext
+    );
 
     onMount(async () => {
         try {
