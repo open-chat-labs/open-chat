@@ -18,7 +18,7 @@
     export let userId: string;
     export let alignTo: DOMRect | undefined = undefined;
     export let chatButton = true;
-    export let inCommunityContext = true;
+    export let inGlobalContext = false;
 
     let profile: PublicProfile | undefined = undefined;
     let user: UserSummary | undefined;
@@ -41,7 +41,7 @@
     $: diamond = user?.diamond ?? false;
     $: phoneIsVerified = profile?.phoneIsVerified ?? false;
     $: currentCommunityMembers = client.currentCommunityMembers;
-    $: communityMember = inCommunityContext ? $currentCommunityMembers.get(userId) : undefined;
+    $: communityMember = inGlobalContext ? undefined : $currentCommunityMembers.get(userId);
 
     onMount(async () => {
         try {

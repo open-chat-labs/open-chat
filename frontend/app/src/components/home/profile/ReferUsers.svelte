@@ -100,7 +100,7 @@
 {#if viewedUserId !== undefined}
     <ViewUserProfile
         userId={viewedUserId}
-        inCommunityContext={false}
+        inGlobalContext
         on:openDirectChat={onChat}
         on:close={closeUserProfile} />
 {/if}
