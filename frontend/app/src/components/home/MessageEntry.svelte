@@ -182,6 +182,7 @@
     }
 
     function triggerMentionLookup(inputContent: string | null): void {
+        if (chat.kind === "direct_chat" || chat.memberCount <= 1) return;
         uptoCaret(inputContent, (slice: string, pos: number) => {
             const matches = slice.match(mentionRegex);
             if (matches !== null) {
