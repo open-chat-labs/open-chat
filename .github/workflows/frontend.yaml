@@ -19,7 +19,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
       - uses: actions/setup-node@v1
         with:
-          node-version: "16.x"
+          node-version: "18.17.1"
       - name: building frontend
         run: npm run build:ci
         env:
