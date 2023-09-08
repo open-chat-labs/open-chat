@@ -3380,7 +3380,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    searchUsersForInvite(searchTerm: string, maxResults: number, level: Level, newGroup: boolean, canInviteUsers = true): Promise<UserSummary[]> {
+    searchUsersForInvite(searchTerm: string, maxResults: number, level: Level, newGroup: boolean, canInviteUsers: boolean): Promise<UserSummary[]> {
         if (level === "channel") {
             // Put the existing channel members into a map for quick lookup
             const channelMembers = newGroup ? undefined : new Map(this._liveState.currentChatMembers.map(m => [m.userId, m]));
@@ -3503,6 +3503,15 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    getCurrentCommunityUserDisplayName(user: UserSummary | undefined): string | undefined {
+        if (user === undefined) {
+            return undefined;
+        }
+
+        const member = this._liveState.currentCommunityMembers.get(user.userId);
+        return member?.displayName ?? user.displayName ?? user.username;
+    }
+
     subscriptionExists(p256dh_key: string): Promise<boolean> {
         return this.sendRequest({ kind: "subscriptionExists", p256dh_key });
     }
@@ -3593,13 +3602,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
         // Update the local store
         communityStateStore.updateProp(id, "members", (ms) => {
-            const userId = this._user?.userId;
-            if (userId !== undefined) {
-                const m = ms.get(userId);
-                if (m !== undefined) {
-                    ms.set(userId, { ...m, role: newRole });
-                    return new Map(ms);
-                }
+            const m = ms.get(userId);
+            if (m !== undefined) {
+                ms.set(userId, { ...m, role: newRole });
+                return new Map(ms);
             }
             return ms;
         });
@@ -3616,13 +3622,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (!success) {
                     // Revert the local store
                     communityStateStore.updateProp(id, "members", (ms) => {
-                        const userId = this._user?.userId;
-                        if (userId !== undefined) {
-                            const m = ms.get(userId);
-                            if (m !== undefined) {
-                                ms.set(userId, { ...m, role: oldRole });
-                                return new Map(ms);
-                            }
+                        const m = ms.get(userId);
+                        if (m !== undefined) {
+                            ms.set(userId, { ...m, role: oldRole });
+                            return new Map(ms);
                         }
                         return ms;
                     });
