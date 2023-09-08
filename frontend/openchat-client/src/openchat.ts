@@ -1835,15 +1835,12 @@ export class OpenChat extends OpenChatAgentWorker {
         });
         if (addToMembers) {
             communityStateStore.updateProp(id, "members", (ms) => {
-                const userId = this._user?.userId;
-                if (userId !== undefined) {
-                    ms.set(userId, {
-                        role: "member",
-                        userId,
-                        displayName: undefined,
-                    })
-                    return new Map(ms);
-                }
+                ms.set(userId, {
+                    role: "member",
+                    userId,
+                    displayName: undefined,
+                })
+                return new Map(ms);
                 return ms;
             });
         }
@@ -3503,12 +3500,12 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getUserDisplayName(user: UserSummary | undefined): string | undefined {
+    getUserDisplayName(user: {userId: string, username: string, displayName?: string} | undefined, inGlobalContext = false): string | undefined {
         if (user === undefined) {
             return undefined;
         }
 
-        const member = this._liveState.currentCommunityMembers.get(user.userId);
+        const member = inGlobalContext ? undefined : this._liveState.currentCommunityMembers.get(user.userId);
         return member?.displayName ?? user.displayName ?? user.username;
     }
 

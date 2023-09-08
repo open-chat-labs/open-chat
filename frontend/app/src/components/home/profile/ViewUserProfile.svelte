@@ -40,8 +40,17 @@
     $: isPremium = profile?.isPremium ?? false;
     $: diamond = user?.diamond ?? false;
     $: phoneIsVerified = profile?.phoneIsVerified ?? false;
-    $: currentCommunityMembers = client.currentCommunityMembers;
-    $: communityMember = inGlobalContext ? undefined : $currentCommunityMembers.get(userId);
+    $: displayName =
+        profile !== undefined
+            ? client.getUserDisplayName(
+                  {
+                      userId,
+                      username: profile.username,
+                      displayName: profile.displayName,
+                  },
+                  inGlobalContext
+              )
+            : "";
 
     onMount(async () => {
         try {
@@ -101,7 +110,7 @@
             <div class="header" slot="header">
                 <div class="handle">
                     <span class:diamond>
-                        {communityMember?.displayName ?? profile.displayName ?? profile.username}
+                        {displayName}
                     </span>
                     <span class="username">
                         @{profile.username}
