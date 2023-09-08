@@ -470,7 +470,7 @@
     <div class="communities">
         <Select bind:value={selectedCommunityId}>
             <option disabled selected value={""}>{$_("profile.selectCommunity")}</option>
-            {#each $communities.filter((s) => s.membership !== undefined && s.membership.role !== "none") as community}
+            {#each $communities.filter((s) => s.membership?.role !== "none") as community}
                 <option value={community.id.communityId}>{community.name}</option>
             {/each}
         </Select>
