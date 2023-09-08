@@ -18,6 +18,7 @@
     export let userId: string;
     export let alignTo: DOMRect | undefined = undefined;
     export let chatButton = true;
+    export let inGlobalContext = false;
 
     let profile: PublicProfile | undefined = undefined;
     let user: UserSummary | undefined;
@@ -39,6 +40,14 @@
     $: isPremium = profile?.isPremium ?? false;
     $: diamond = user?.diamond ?? false;
     $: phoneIsVerified = profile?.phoneIsVerified ?? false;
+    $: displayName = client.getDisplayName(
+        {
+            userId,
+            username: profile?.username ?? "",
+            displayName: profile?.displayName ?? "",
+        },
+        inGlobalContext
+    );
 
     onMount(async () => {
         try {
@@ -98,7 +107,7 @@
             <div class="header" slot="header">
                 <div class="handle">
                     <span class:diamond>
-                        {profile.displayName ?? profile.username}
+                        {displayName}
                     </span>
                     <span class="username">
                         @{profile.username}

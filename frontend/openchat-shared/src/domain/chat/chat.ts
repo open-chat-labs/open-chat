@@ -1083,6 +1083,7 @@ export type ThreadSyncDetails = {
 export type Member = {
     role: MemberRole;
     userId: string;
+    displayName: string | undefined;
 };
 
 export type FullMember = Member & UserSummary;

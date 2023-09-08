@@ -4,11 +4,14 @@
     import { type CommunityPermissions, communityRoles } from "openchat-client";
 
     export let permissions: CommunityPermissions;
+    export let isPublic: boolean;
 
-    const selectors = Object.keys(permissions).map<[keyof CommunityPermissions, string]>((p) => [
-        p as keyof CommunityPermissions,
-        `permissions.${p}`,
-    ]);
+    const selectors = Object.keys(permissions)
+        .filter((p) => !isPublic || p !== "inviteUsers")
+        .map<[keyof CommunityPermissions, string]>((p) => [
+            p as keyof CommunityPermissions,
+            `permissions.${p}`,
+        ]);
 </script>
 
 {#each selectors as [key, i18nKey]}

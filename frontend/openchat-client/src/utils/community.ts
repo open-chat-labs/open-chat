@@ -111,6 +111,18 @@ export function mergeLocalUpdates(
                 });
             }
         }
+        if (localUpdate.displayName !== undefined) {
+            const community = merged.get(chatId);
+            if (community !== undefined) {
+                merged.set(chatId, {
+                    ...community,
+                    membership: {
+                        ...community.membership,
+                        displayName: localUpdate.displayName !== "set_to_none" ? localUpdate.displayName.value : undefined,
+                    },
+                });
+            }
+        }
     }
 
     return merged;

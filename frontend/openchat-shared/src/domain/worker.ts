@@ -127,6 +127,7 @@ import type {
     CreateUserGroupResponse,
     UpdateUserGroupResponse,
     DeleteUserGroupsResponse,
+    SetMemberDisplayNameResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 import type { RegistryValue } from "./registry";
@@ -274,7 +275,8 @@ export type WorkerRequest =
     | UpdateRegistry
     | CreateUserGroup
     | UpdateUserGroup
-    | DeleteUserGroups;
+    | DeleteUserGroups
+    | SetMemberDisplayName;
 
 type SetCommunityIndexes = {
     kind: "setCommunityIndexes";
@@ -1261,7 +1263,13 @@ type UpdateRegistry = {
     kind: "updateRegistry";
 };
 
-export type WorkerResult<T extends WorkerRequest> = T extends PinMessage
+type SetMemberDisplayName = {
+    communityId: string;
+    displayName: string | undefined;
+    kind: "setMemberDisplayName";
+};
+
+export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
     : T extends UnpinMessage
     ? UnpinMessageResponse
@@ -1527,4 +1535,6 @@ export type WorkerResult<T extends WorkerRequest> = T extends PinMessage
     ? UpdateUserGroupResponse
     : T extends DeleteUserGroups
     ? DeleteUserGroupsResponse
+    : T extends SetMemberDisplayName
+    ? SetMemberDisplayNameResponse
     : never;

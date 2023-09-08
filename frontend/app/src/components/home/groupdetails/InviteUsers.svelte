@@ -14,7 +14,7 @@
 
     export let closeIcon: "close" | "back";
     export let busy = false;
-    export let userLookup: (searchTerm: string, maxResults?: number) => Promise<UserSummary[]>;
+    export let userLookup: (searchTerm: string) => Promise<UserSummary[]>;
     export let level: Level;
 
     const dispatch = createEventDispatcher();

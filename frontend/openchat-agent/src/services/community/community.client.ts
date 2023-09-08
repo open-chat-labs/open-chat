@@ -29,6 +29,7 @@ import {
     createUserGroupResponse,
     updateUserGroupResponse,
     deleteUserGroupsResponse,
+    setMemberDisplayNameResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -121,6 +122,7 @@ import type {
     CreateUserGroupResponse,
     UpdateUserGroupResponse,
     DeleteUserGroupsResponse,
+    SetMemberDisplayNameResponse,
 } from "openchat-shared";
 import { textToCode, DestinationInvalidError } from "openchat-shared";
 import {
@@ -1212,6 +1214,15 @@ export class CommunityClient extends CandidService {
                 users_to_remove: usersToRemove.map((u) => Principal.fromText(u)),
             }),
             updateUserGroupResponse,
+        );
+    }
+
+    setMemberDisplayName(displayName: string | undefined): Promise<SetMemberDisplayNameResponse> {
+        return this.handleResponse(
+            this.service.set_member_display_name({
+                display_name: apiOptional(identity, displayName),
+            }),
+            setMemberDisplayNameResponse,
         );
     }
 

@@ -23,7 +23,7 @@
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
-    $: username = me ? client.toTitleCase($_("you")) : replyingTo.sender?.username ?? "unknownUser";
+    $: displayName = me ? client.toTitleCase($_("you")) : client.getDisplayName(replyingTo.sender);
 
     function cancelReply() {
         dispatch("cancelReply");
@@ -41,7 +41,7 @@
         </HoverIcon>
     </div>
     <h4 class="username">
-        {username}
+        {displayName}
     </h4>
     <ChatMessageContent
         {readonly}
