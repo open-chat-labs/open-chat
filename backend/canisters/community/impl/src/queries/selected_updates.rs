@@ -64,6 +64,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .filter(|u| u.last_updated() > args.updates_since)
             .map(|u| u.into())
             .collect(),
+        user_groups_deleted: data.members.user_groups_deleted_since(args.updates_since),
     };
 
     let mut user_updates_handler = UserUpdatesHandler {
