@@ -69,7 +69,7 @@
         </DisplayNameInput>
     </div>
     <div class="cta">
-        <Button fill loading={saving} disabled={!buttonEnabled}>{$_("update")}</Button>
+        <Button square fill loading={saving} disabled={!buttonEnabled}>{$_("update")}</Button>
     </div>
 </form>
 

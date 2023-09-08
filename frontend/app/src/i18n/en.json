@@ -14,7 +14,7 @@
     "notificationsEnabled": "Notifications enabled",
     "usernameRules": "alphanumerics & underscores only",
     "displayNameRules": "optional",
-    "communityDisplayNameRules": "only within this community",
+    "communityDisplayNameRules": "only within selected community",
     "enterBio": "Tell us something about yourself",
     "username": "Username",
     "displayName": "Display name",
@@ -965,7 +965,8 @@
         "chooseCommunity": "Choose a community",
         "saveChanges": "Save changes",
         "publicChannels": "Public channels",
-        "underReview": "Under review"
+        "underReview": "Under review",
+        "communityLabel": "Community"
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",
