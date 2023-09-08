@@ -42,7 +42,7 @@
     $: phoneIsVerified = profile?.phoneIsVerified ?? false;
     $: displayName =
         profile !== undefined
-            ? client.getUserDisplayName(
+            ? client.getDisplayName(
                   {
                       userId,
                       username: profile.username,
@@ -50,7 +50,7 @@
                   },
                   inGlobalContext
               )
-            : "";
+            : $_("unknownUser");
 
     onMount(async () => {
         try {

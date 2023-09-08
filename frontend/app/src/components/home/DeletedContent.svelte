@@ -10,10 +10,9 @@
     export let content: DeletedContent;
     export let undeleting: boolean;
 
-    $: userStore = client.userStore;
     $: date = new Date(Number(content.timestamp));
     $: timestampStr = `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`;
-    $: username = $userStore[content.deletedBy]?.username ?? $_("unknownUser");
+    $: username = client.getDisplayNameById(content.deletedBy) ?? $_("unknownUser");
 </script>
 
 <div class="deleted">

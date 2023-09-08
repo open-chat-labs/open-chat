@@ -1,6 +1,7 @@
 <svelte:options immutable />
 
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import Link from "../../Link.svelte";
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
     import ChatMessageContent from "../ChatMessageContent.svelte";
@@ -27,7 +28,7 @@
     let crypto = msg.content.kind === "crypto_content";
 
     $: sender = $userStore[senderId];
-    $: username = sender?.username;
+    $: username = client.getDisplayName(sender) ?? $_("unknownUser");
     $: userStore = client.userStore;
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = client.fillMessage(msg);

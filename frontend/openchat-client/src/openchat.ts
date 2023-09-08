@@ -3500,13 +3500,18 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getUserDisplayName(user: {userId: string, username: string, displayName?: string} | undefined, inGlobalContext = false): string | undefined {
+    getDisplayNameById(userId: string, inGlobalContext = false) : string | undefined {
+        const user = this._liveState.userStore[userId];
+        return this.getDisplayName(user, inGlobalContext);
+    }
+
+    getDisplayName(user: {userId: string, username: string, displayName?: string} | undefined, inGlobalContext = false): string | undefined {
         if (user === undefined) {
             return undefined;
         }
-
         const member = inGlobalContext ? undefined : this._liveState.currentCommunityMembers.get(user.userId);
-        return member?.displayName ?? user.displayName ?? user.username;
+        const displayName = member?.displayName ?? user.displayName ?? user.username;
+        return displayName.length > 0 ? displayName : undefined;
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {

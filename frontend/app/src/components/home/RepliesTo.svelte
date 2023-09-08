@@ -25,7 +25,6 @@
     export let readonly: boolean;
 
     let debug = false;
-    $: userStore = client.userStore;
     $: chatListScope = client.chatListScope;
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
@@ -52,10 +51,10 @@
         }
     }
 
-    function getUsernameFromReplyContext(replyContext: RehydratedReplyContext): string {
+    function getDisplayName(replyContext: RehydratedReplyContext): string {
         return me
             ? client.toTitleCase($_("you"))
-            : $userStore[replyContext.senderId]?.username ?? $_("unknownUser");
+            : client.getDisplayNameById(replyContext.senderId) ?? $_("unknownUser");
     }
 </script>
 
@@ -66,7 +65,7 @@
         class:rtl={$rtlStore}
         class:crypto={repliesTo.content.kind === "crypto_content"}>
         <h4 class="username" class:text-content={isTextContent}>
-            {getUsernameFromReplyContext(repliesTo)}
+            {getDisplayName(repliesTo)}
         </h4>
         {#if repliesTo.content !== undefined}
             <ChatMessageContent
