@@ -28,6 +28,7 @@ pub struct SuccessResult {
     pub rules: Option<AccessRules>,
     pub access_rules: Option<VersionedRules>,
     pub user_groups: Vec<UserGroupDetails>,
+    pub user_groups_deleted: Vec<u32>,
 }
 
 impl SuccessResult {

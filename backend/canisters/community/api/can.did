@@ -208,6 +208,7 @@ type SelectedUpdatesSuccess = record {
     rules : opt AccessRules;
     access_rules : opt VersionedRules;
     user_groups : vec UserGroupDetails;
+    user_groups_deleted : vec nat32;
 };
 
 type UserGroupDetails = record {
@@ -875,7 +876,7 @@ type UpdateUserGroupArgs = record {
 type UpdateUserGroupResponse = variant {
     Success;
     UserGroupNotFound;
-    NameTooShort :  FieldTooShortResult;
+    NameTooShort : FieldTooShortResult;
     NameTooLong : FieldTooLongResult;
     NameTaken;
     NotAuthorized;
