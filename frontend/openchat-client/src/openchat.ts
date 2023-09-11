@@ -14,6 +14,7 @@ import {
     canChangeCommunityPermissions,
     canCreatePublicChannel,
     canCreatePrivateChannel,
+    canManageUserGroups,
 } from "./utils/community";
 import {
     buildUserAvatarUrl,
@@ -321,7 +322,6 @@ import type {
     CreateUserGroupResponse,
     UpdateUserGroupResponse,
     SetMemberDisplayNameResponse,
-    UserGroupSummary,
     UserOrUserGroup,
 } from "openchat-shared";
 import {
@@ -422,8 +422,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _cachePrimer: CachePrimer | undefined = undefined;
     private _membershipCheck: number | undefined;
     private _referralCode: string | undefined = undefined;
-    private _userLookupForMentions: Record<string, UserSummary | UserGroupSummary> | undefined =
-        undefined;
+    private _userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
 
     constructor(config: OpenChatConfig) {
         super(config);
@@ -1338,6 +1337,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     canCreatePrivateChannel(id: CommunityIdentifier): boolean {
         return this.communityPredicate(id, canCreatePrivateChannel);
+    }
+
+    canManageUserGroups(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canManageUserGroups);
     }
 
     canChangeCommunityPermissions(id: CommunityIdentifier): boolean {
@@ -2422,8 +2425,6 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
             communityStateStore.setProp(community.id, "rules", resp.rules);
             communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
-
-            console.log("Loaded community details: ", resp);
         }
         await this.updateUserStoreFromCommunityState(community.id);
     }
@@ -4766,14 +4767,6 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    private getCommunityFromChat(chat: ChatSummary | undefined): CommunitySummary | undefined {
-        if (chat?.kind === "channel") {
-            const id: CommunityIdentifier = { kind: "community", communityId: chat.id.communityId };
-            return this._liveState.communities.get(id);
-        }
-        return undefined;
-    }
-
     // the key might be a username or it might be a user group name
     getUserLookupForMentions(
         communityMembers?: Map<string, Member>,
@@ -4794,10 +4787,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     lookup[user.username.toLowerCase()] = user as UserSummary;
                 }
             }
-            const community = this.getCommunityFromChat(this._liveState.selectedChat);
-            if (community !== undefined) {
-                community.userGroups.forEach((ug) => (lookup[ug.name.toLowerCase()] = ug));
-            }
+            const userGroups = this._liveState.currentCommunityUserGroups;
+            userGroups.forEach((ug) => (lookup[ug.name.toLowerCase()] = ug));
             this._userLookupForMentions = lookup;
         }
         return this._userLookupForMentions;

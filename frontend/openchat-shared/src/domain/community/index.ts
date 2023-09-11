@@ -37,7 +37,7 @@ import type {
     UserSuspended,
 } from "../response";
 import type { HasLevel } from "../structure";
-import type { UserGroupDetails, UserGroupSummary } from "../user";
+import type { UserGroupDetails } from "../user";
 
 export type CommunityMembership = {
     joined: bigint;
@@ -69,7 +69,6 @@ export type CommunitySummary = AccessControlled &
         membership?: CommunityMembership;
         channels: ChannelSummary[]; // TODO - this might be better as a ChatMap - but that would have some serialisation complications
         primaryLanguage: string;
-        userGroups: UserGroupSummary[];
     };
 
 export type DefaultChannel = {
@@ -181,7 +180,6 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     bannerId: OptionUpdate<bigint>;
     memberCount: number | undefined;
     primaryLanguage: string | undefined;
-    userGroups: UserGroupSummary[];
 };
 
 export type CommunityCanisterChannelSummaryUpdates = {

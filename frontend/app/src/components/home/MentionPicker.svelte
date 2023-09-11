@@ -38,10 +38,7 @@
                     return (
                         (mentionSelf || userOrGroup.userId !== currentUser.userId) &&
                         (userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
-                            client
-                                .getDisplayName(userOrGroup, $communityMembers)
-                                .toLowerCase()
-                                .startsWith(prefixLower))
+                            userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
                     );
             }
         }

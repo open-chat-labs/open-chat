@@ -22,6 +22,7 @@
 
     export let community: CommunitySummary;
     export let original: UserGroupDetails;
+    export let canManageUserGroups: boolean;
 
     let userGroup = { ...original };
     let added: Set<string> = new Set();
@@ -119,14 +120,17 @@
             bind:value={userGroup.name}
             minlength={MIN_LENGTH}
             maxlength={MAX_LENGTH}
+            disabled={!canManageUserGroups}
             countdown
             invalid={nameDirty && !nameValid}
             placeholder={$_("communities.enterUserGroupName")} />
     </div>
 
-    <div class="search">
-        <Search fill searching={false} bind:searchTerm placeholder={"searchUsersPlaceholder"} />
-    </div>
+    {#if canManageUserGroups}
+        <div class="search">
+            <Search fill searching={false} bind:searchTerm placeholder={"searchUsersPlaceholder"} />
+        </div>
+    {/if}
 
     {#if matchedUsers.length > 0}
         <div class="searched-users">
@@ -143,9 +147,11 @@
         {#each groupUsers as user}
             <div class="user">
                 <User {user} me={false} {searchTerm}>
-                    <div on:click={() => removeUserFromGroup(user)} class="delete">
-                        <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
-                    </div>
+                    {#if canManageUserGroups}
+                        <div on:click={() => removeUserFromGroup(user)} class="delete">
+                            <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
+                        </div>
+                    {/if}
                 </User>
             </div>
         {/each}
@@ -154,8 +160,10 @@
     <div class="buttons">
         <ButtonGroup align="fill">
             <Button on:click={cancel} secondary>{$_("cancel")}</Button>
-            <Button on:click={save} disabled={!dirty || !valid || saving} loading={saving}
-                >{$_("save")}</Button>
+            {#if canManageUserGroups}
+                <Button on:click={save} disabled={!dirty || !valid || saving} loading={saving}
+                    >{$_("save")}</Button>
+            {/if}
         </ButtonGroup>
     </div>
 </div>

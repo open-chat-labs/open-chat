@@ -21,6 +21,7 @@
     let groupToDelete: UserGroupDetails | undefined = undefined;
 
     $: userGroups = client.currentCommunityUserGroups;
+    $: canManageUserGroups = client.canManageUserGroups(community.id);
 
     $: matchingGroups = $userGroups.filter(matchesSearch);
 
@@ -64,6 +65,10 @@
         groupToDelete = userGroup;
         confirmingDelete = true;
     }
+
+    export function reset() {
+        selectedGroup = undefined;
+    }
 </script>
 
 {#if confirmingDelete}
@@ -71,18 +76,24 @@
 {/if}
 
 {#if selectedGroup !== undefined}
-    <UserGroup {community} on:cancel={() => (selectedGroup = undefined)} original={selectedGroup} />
+    <UserGroup
+        {canManageUserGroups}
+        {community}
+        on:cancel={() => (selectedGroup = undefined)}
+        original={selectedGroup} />
 {:else}
     <div class="user-groups">
         <div class="search-row">
             <div class="search">
                 <Search fill searching={false} bind:searchTerm placeholder={"search"} />
             </div>
-            <div class="add">
-                <HoverIcon on:click={createUserGroup}>
-                    <Plus size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            </div>
+            {#if canManageUserGroups}
+                <div class="add">
+                    <HoverIcon on:click={createUserGroup}>
+                        <Plus size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </div>
+            {/if}
         </div>
         <div class="groups">
             {#if matchingGroups.length === 0}
@@ -99,14 +110,16 @@
                                 {$_("members")}
                             </span>
                         </h4>
-                        <div
-                            on:click|stopPropagation={() => confirmDeleteUserGroup(userGroup)}
-                            class="delete">
-                            <DeleteOutline
-                                viewBox={"0 -3 24 24"}
-                                size={$iconSize}
-                                color={"var(--icon-txt)"} />
-                        </div>
+                        {#if canManageUserGroups}
+                            <div
+                                on:click|stopPropagation={() => confirmDeleteUserGroup(userGroup)}
+                                class="delete">
+                                <DeleteOutline
+                                    viewBox={"0 -3 24 24"}
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"} />
+                            </div>
+                        {/if}
                     </div>
                 {/each}
             {/if}

@@ -38,8 +38,16 @@ export function createCommunitySpecificObjectStore<T extends Record<string, unkn
     const byCommunity: Readable<T> = derived(
         [chatListScopeStore, all],
         ([$chatListScope, $all]) => {
-            if ($chatListScope.kind !== "community") return init();
-            return $all.get($chatListScope.id) ?? init();
+            switch ($chatListScope.kind) {
+                case "community":
+                    return $all.get($chatListScope.id) ?? init();
+                case "favourite":
+                    return $chatListScope.communityId === undefined
+                        ? init()
+                        : $all.get($chatListScope.communityId) ?? init();
+                default:
+                    return init();
+            }
         },
     );
     return {

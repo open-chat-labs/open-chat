@@ -35,6 +35,10 @@ export function canCreatePrivateChannel({ membership, permissions }: CommunitySu
     return isPermitted(membership.role, permissions.createPrivateChannel);
 }
 
+export function canManageUserGroups({ membership, permissions }: CommunitySummary): boolean {
+    return isPermitted(membership.role, permissions.manageUserGroups);
+}
+
 export function canChangeCommunityRoles({ membership, permissions }: CommunitySummary): boolean {
     return isPermitted(membership.role, permissions.changeRoles);
 }
@@ -118,7 +122,10 @@ export function mergeLocalUpdates(
                     ...community,
                     membership: {
                         ...community.membership,
-                        displayName: localUpdate.displayName !== "set_to_none" ? localUpdate.displayName.value : undefined,
+                        displayName:
+                            localUpdate.displayName !== "set_to_none"
+                                ? localUpdate.displayName.value
+                                : undefined,
                     },
                 });
             }

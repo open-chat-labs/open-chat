@@ -30,6 +30,8 @@
     export let members: MemberType[];
     export let blocked: Set<string>;
 
+    let userGroups: UserGroups | undefined;
+
     $: userStore = client.userStore;
     $: knownUsers = getKnownUsers($userStore, members);
     $: me = knownUsers.find((u) => u.userId === userId);
@@ -134,6 +136,11 @@
         dispatch("chatWith", { kind: "direct_chat", userId: profileUserId });
         closeUserProfile();
     }
+
+    function selectTab(tab: "users" | "groups") {
+        selectedTab = tab;
+        userGroups?.reset();
+    }
 </script>
 
 <MembersHeader
@@ -148,7 +155,7 @@
         <div
             tabindex="0"
             role="button"
-            on:click={() => (selectedTab = "users")}
+            on:click={() => selectTab("users")}
             class:selected={selectedTab === "users"}
             class="tab">
             {$_("communities.members")}
@@ -156,7 +163,7 @@
         <div
             tabindex="0"
             role="button"
-            on:click={() => (selectedTab = "groups")}
+            on:click={() => selectTab("groups")}
             class:selected={selectedTab === "groups"}
             class="tab">
             {$_("communities.userGroups")}
@@ -260,7 +267,7 @@
     {/if}
 {:else if collection.level === "community"}
     <div class="user-groups">
-        <UserGroups community={collection} />
+        <UserGroups bind:this={userGroups} community={collection} />
     </div>
 {/if}
 

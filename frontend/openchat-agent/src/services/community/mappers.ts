@@ -90,7 +90,6 @@ import {
     messageContent,
     messageEvent,
     threadDetails,
-    userGroup,
 } from "../common/chatMappers";
 import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 import { identity, optionUpdate, optional } from "../../utils/mapping";
@@ -419,8 +418,6 @@ export function communitySummaryUpdates(
         bannerId: optionUpdate(candid.banner_id, identity),
         memberCount: optional(candid.member_count, identity),
         primaryLanguage: optional(candid.primary_language, identity),
-        userGroups: candid.user_groups.map(userGroup),
-        // TODO we need to have deleted user groups here as well
     };
 }
 

@@ -112,7 +112,10 @@ export function mergeCommunityUpdates(
                 archived: u?.archived ?? community.membership.archived,
                 pinned: u?.pinned ?? community.membership.pinned,
                 index: u?.index ?? community.membership.index,
-                displayName: applyOptionUpdate(community.membership.displayName, c?.membership?.displayName),
+                displayName: applyOptionUpdate(
+                    community.membership.displayName,
+                    c?.membership?.displayName,
+                ),
             },
             channels: mergeChannelUpdates(
                 currentChannels,
@@ -126,8 +129,6 @@ export function mergeCommunityUpdates(
             historyVisible: community.historyVisible,
             permissions: c?.permissions ?? community.permissions,
             primaryLanguage: c?.primaryLanguage ?? community.primaryLanguage,
-            // TODO - this is going to change - but this will do for now just to keep us going
-            userGroups: [...(c?.userGroups ?? []), ...community.userGroups],
         };
     });
 }

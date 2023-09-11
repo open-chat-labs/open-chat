@@ -28,7 +28,6 @@
     let rangeToReplace: [number, number] | undefined = undefined;
     let timer: number | undefined;
 
-    $: communityMembers = client.currentCommunityMembers;
     $: count = matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "";
     $: isGroup = chat.kind === "group_chat";
 
@@ -113,9 +112,10 @@
 
         let mentionedSet = new Set<string>();
         let expandedText = text.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const user = client.lookupUserForMention(p1, true);
-            if (user !== undefined) {
-                mentionedSet.add(user.userId);
+            const userOrGroup = client.lookupUserForMention(p1, true);
+            if (userOrGroup !== undefined) {
+                if (userOrGroup.kind === "user_group") return "";
+                mentionedSet.add(userOrGroup.userId);
                 return "";
             } else {
                 console.log(

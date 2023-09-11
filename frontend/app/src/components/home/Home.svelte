@@ -160,8 +160,6 @@
     $: currentChatRules = client.currentChatRules;
     $: globalUnreadCount = client.globalUnreadCount;
     $: communities = client.communities;
-    $: selectedCommunity = client.selectedCommunity;
-    $: communityMembers = client.currentCommunityMembers;
 
     $: {
         document.title =
@@ -289,8 +287,6 @@
         }
         return found;
     }
-
-    $: console.log("Community: ", $selectedCommunity, $communityMembers);
 
     // extracting to a function to try to control more tightly what this reacts to
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {

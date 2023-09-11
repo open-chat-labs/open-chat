@@ -17,6 +17,7 @@ import type {
     MultiUserChat,
     ChatListScope,
     Member,
+    UserGroupDetails,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -56,6 +57,7 @@ import {
     communities,
     communityPreviewsStore,
     currentCommunityMembers,
+    currentCommunityUserGroups,
     selectedCommunity,
 } from "./stores/community";
 import { type GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
@@ -103,6 +105,7 @@ export class LiveState {
     allChats!: ChatMap<ChatSummary>;
     selectedCommunity!: CommunitySummary | undefined;
     currentCommunityMembers!: Map<string, Member>;
+    currentCommunityUserGroups!: UserGroupDetails[];
 
     constructor() {
         confirmedThreadEventIndexesLoadedStore.subscribe(
@@ -147,5 +150,6 @@ export class LiveState {
         allChats.subscribe((data) => (this.allChats = data));
         selectedCommunity.subscribe((data) => (this.selectedCommunity = data));
         currentCommunityMembers.subscribe((data) => (this.currentCommunityMembers = data));
+        currentCommunityUserGroups.subscribe((data) => (this.currentCommunityUserGroups = data));
     }
 }
