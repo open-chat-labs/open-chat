@@ -4,6 +4,7 @@
     import { rtlStore } from "../../stores/rtl";
     import type { VideoContent } from "openchat-client";
     import ContentCaption from "./ContentCaption.svelte";
+    import { pauseAnyPlayingMedia } from "../../utils/media";
 
     export let content: VideoContent;
     export let fill: boolean;
@@ -12,8 +13,13 @@
     export let height: number | undefined = undefined;
     export let edited: boolean;
 
+    let videoPlayer: HTMLVideoElement;
     let withCaption = content.caption !== undefined && content.caption !== "";
     let landscape = content.height < content.width;
+
+    function onPlay() {
+        pauseAnyPlayingMedia(videoPlayer);
+    }
 </script>
 
 <div class="video" class:reply class:rtl={$rtlStore}>
@@ -26,7 +32,9 @@
         class:draft
         class:reply
         style={height === undefined ? undefined : `height: ${height}px`}
-        controls>
+        controls
+        on:play={onPlay}
+        bind:this={videoPlayer}>
         <track kind="captions" />
         {#if content.videoData.blobUrl}
             <source src={content.videoData.blobUrl} />
