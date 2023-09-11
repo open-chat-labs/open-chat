@@ -145,7 +145,7 @@
 
         .username {
             font-weight: 200;
-            color: var(--txt-light);
+            color: var(--menu-disabled-txt);
         }
     }
     .avatar {

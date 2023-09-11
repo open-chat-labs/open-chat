@@ -10,6 +10,9 @@
 
     export let user: UserSummary;
 
+    $: communityMembers = client.currentCommunityMembers;
+    $: displayName = client.getDisplayName(user, $communityMembers);
+
     function deleteUser() {
         dispatch("deleteUser", user);
     }
@@ -19,7 +22,10 @@
     <div class="avatar">
         <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Small} />
     </div>
-    <span class="username">{`${user.displayName ?? user.username}`}</span>
+    <div class="name">
+        <span class="display-name">{displayName}</span>
+        <span class="username">@{user.username}</span>
+    </div>
     <span class="close" on:click={deleteUser}>
         <Close size={"1.2em"} color={"var(--button-txt)"} />
     </span>
@@ -36,9 +42,13 @@
         gap: $sp2;
         @include box-shadow(1);
 
-        .username {
+        .name {
             flex: auto;
             padding: $sp3;
+        }
+
+        .username {
+            color: var(--button-disabled-txt);
         }
 
         .close {
