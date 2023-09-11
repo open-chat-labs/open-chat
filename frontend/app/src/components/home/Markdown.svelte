@@ -17,7 +17,6 @@
 
     $: singleEmoji = isSingleEmoji(text);
     $: userStore = client.userStore;
-    $: communityMembers = client.currentCommunityMembers;
     $: options = {
         breaks: !oneLine,
     };
@@ -26,8 +25,7 @@
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
             const u = $userStore[p1];
             if (u !== undefined) {
-                const displayName = client.getDisplayName(u, $communityMembers);
-                return `**[@${displayName}](/user/${u.userId})**`;
+                return `**[@${u.username}](/user/${u.userId})**`;
             }
             return match;
         });
