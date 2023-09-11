@@ -259,7 +259,7 @@
             if (userOrGroup !== undefined) {
                 switch (userOrGroup.kind) {
                     case "user_group":
-                        return `@UserGroup(${userOrGroup.id})`;
+                        return `<span>@UserGroup(${userOrGroup.id})</span>`;
                     default:
                         mentionedMap.set(userOrGroup.userId, userOrGroup);
                         return `@UserId(${userOrGroup.userId})`;

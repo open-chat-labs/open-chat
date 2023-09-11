@@ -1305,6 +1305,7 @@ export const idlFactory = ({ IDL }) => {
   const SelectedUpdatesSuccess = IDL.Record({
     'blocked_users_removed' : IDL.Vec(UserId),
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
+    'user_groups_deleted' : IDL.Vec(IDL.Nat32),
     'members_added_or_updated' : IDL.Vec(CommunityMember),
     'user_groups' : IDL.Vec(UserGroupDetails),
     'members_removed' : IDL.Vec(UserId),

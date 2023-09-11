@@ -1544,6 +1544,7 @@ export type SelectedUpdatesResponse = { 'Success' : SelectedUpdatesSuccess } |
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'invited_users' : [] | [Array<UserId>],
+  'user_groups_deleted' : Uint32Array | number[],
   'members_added_or_updated' : Array<CommunityMember>,
   'user_groups' : Array<UserGroupDetails>,
   'members_removed' : Array<UserId>,

@@ -2422,6 +2422,8 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
             communityStateStore.setProp(community.id, "rules", resp.rules);
             communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
+
+            console.log("Loaded community details: ", resp);
         }
         await this.updateUserStoreFromCommunityState(community.id);
     }
