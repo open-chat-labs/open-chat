@@ -23,7 +23,7 @@
         <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Small} />
     </div>
     <div class="name">
-        <span class="display-name">{displayName}</span>
+        <span>{displayName}</span>
         <span class="username">@{user.username}</span>
     </div>
     <span class="close" on:click={deleteUser}>

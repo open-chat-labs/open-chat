@@ -174,7 +174,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             "txt-sh": "none",
             disabled: textBodyLight,
             spinner: dark60,
-            "disabled-txt": "#ffffff",
+            "disabled-txt": txtLow,
             "disabled-bd": "#999999",
         },
 
