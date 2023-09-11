@@ -20,7 +20,7 @@ export const communityThemes = [
     getNightvisionTheme(cloneTheme(dark)),
     getMatteBlackGoldTheme(cloneTheme(dark)),
     getBarbieTheme(cloneTheme(dark)),
-	getTokyoNightTheme(cloneTheme(dark)),
+    getTokyoNightTheme(cloneTheme(dark)),
 ];
 
 export const themes: Themes = {
