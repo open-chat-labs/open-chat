@@ -18,8 +18,8 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
     AccessGate, AccessRules, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
-    CommunityMembership, CommunityPermissions, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, TimestampMillis,
-    Timestamped, UserId,
+    CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification,
+    TimestampMillis, Timestamped, UserId,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -168,6 +168,8 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
+                proposals_bot: self.data.proposals_bot_user_id.into(),
+                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
     }
@@ -357,4 +359,6 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
+    pub proposals_bot: CanisterId,
+    pub icp_ledger: CanisterId,
 }
