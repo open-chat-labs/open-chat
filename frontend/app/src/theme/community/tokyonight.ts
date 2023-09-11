@@ -23,7 +23,7 @@ export function getTheme(base: Theme): Theme {
     base.button.bg = raspberry;
     base.button.hv = raspberry;
     base.button["hv-txt"] = white;
-    base.button["disabled-txt"] = darkGray
+    base.button["disabled-txt"] = darkGray;
     base.button.txt = "rgba(255 255 255 / 80%)";
     base.button.disabled = silver;
     base.collapsible.closed.header.txt = txt;
