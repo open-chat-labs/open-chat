@@ -82,6 +82,7 @@
         .map((t) => t.symbol.toLowerCase())
         .join("|");
     $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
+    $: communityMembers = client.currentCommunityMembers;
 
     $: {
         if (inp) {
@@ -413,7 +414,7 @@
 
     function mention(ev: CustomEvent<UserSummary>): void {
         const user = ev.detail;
-        const username = client.getDisplayName(user);
+        const username = client.getDisplayName(user, $communityMembers);
         const userLabel = `@${username}`;
 
         replaceTextWith(userLabel);
