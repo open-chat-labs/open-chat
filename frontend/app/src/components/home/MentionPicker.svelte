@@ -17,6 +17,7 @@
     export let direction: "up" | "down" = "up";
     export let border = false;
     export let mentionSelf = false;
+    export let supportsUserGroups = false;
 
     let index = 0;
     $: userStore = client.userStore;
@@ -30,14 +31,20 @@
 
     $: filtered = Object.values(client.getUserLookupForMentions($communityMembers)).filter(
         (userOrGroup) => {
-            if (prefixLower === undefined) return true;
+            console.log("Checking: ", userOrGroup);
+
             switch (userOrGroup.kind) {
                 case "user_group":
-                    return userOrGroup.name.toLowerCase().startsWith(prefixLower);
+                    return (
+                        prefixLower === undefined ||
+                        (supportsUserGroups &&
+                            userOrGroup.name.toLowerCase().startsWith(prefixLower))
+                    );
                 default:
                     return (
                         (mentionSelf || userOrGroup.userId !== currentUser.userId) &&
-                        (userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
+                        (prefixLower === undefined ||
+                            userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
                             userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
                     );
             }

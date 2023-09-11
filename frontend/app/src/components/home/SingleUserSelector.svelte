@@ -42,7 +42,7 @@
                 selectedReceiver = client.lookupUserForMention(textValue, false, $communityMembers);
             }
             showMentionPicker = false;
-        }, 100);
+        }, 200);
     }
 </script>
 

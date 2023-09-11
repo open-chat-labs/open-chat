@@ -457,6 +457,7 @@
 
 {#if showMentionPicker}
     <MentionPicker
+        supportsUserGroups
         offset={messageEntryHeight}
         on:close={cancelMention}
         on:mention={mention}
