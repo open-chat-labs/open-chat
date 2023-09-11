@@ -2,24 +2,30 @@
     import Avatar from "./Avatar.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { createEventDispatcher, getContext } from "svelte";
-    import type { OpenChat, UserSummary } from "openchat-client";
+    import type { OpenChat, UserMention } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     const dispatch = createEventDispatcher();
 
     const client = getContext<OpenChat>("client");
 
-    export let user: UserSummary;
+    export let userOrGroup: UserMention;
+
+    $: name =
+        userOrGroup.kind === "user_group" ? userOrGroup.name : client.getDisplayName(userOrGroup);
+    $: avatarUrl =
+        userOrGroup.kind === "user_group" ? undefined : client.userAvatarUrl(userOrGroup);
+    $: userId = userOrGroup.kind === "user_group" ? undefined : userOrGroup.userId;
 
     function deleteUser() {
-        dispatch("deleteUser", user);
+        dispatch("deleteUser", userOrGroup);
     }
 </script>
 
-<div class="user-pill" title={user.username}>
+<div class="user-pill" title={name}>
     <div class="avatar">
-        <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Small} />
+        <Avatar url={avatarUrl} {userId} size={AvatarSize.Small} />
     </div>
-    <span class="username">{`${user.displayName ?? user.username}`}</span>
+    <span class="username">{`${name}`}</span>
     <span class="close" on:click={deleteUser}>
         <Close size={"1.2em"} color={"var(--button-txt)"} />
     </span>

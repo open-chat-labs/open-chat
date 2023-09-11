@@ -55,7 +55,7 @@
             prefix={textValue} />
     {/if}
     {#if selectedReceiver !== undefined}
-        <UserPill on:deleteUser={removeReceiver} user={selectedReceiver} />
+        <UserPill on:deleteUser={removeReceiver} userOrGroup={selectedReceiver} />
     {:else}
         <div class="wrapper" bind:clientHeight={inputHeight}>
             <input
