@@ -28,6 +28,7 @@
     let rangeToReplace: [number, number] | undefined = undefined;
     let timer: number | undefined;
 
+    $: communityMembers = client.currentCommunityMembers;
     $: count = matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "";
     $: isGroup = chat.kind === "group_chat";
 

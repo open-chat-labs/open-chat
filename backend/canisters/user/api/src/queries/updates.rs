@@ -17,6 +17,8 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
+    pub username: Option<String>,
+    pub display_name: OptionUpdate<String>,
     pub direct_chats: DirectChatsUpdates,
     pub group_chats: GroupChatsUpdates,
     pub favourite_chats: FavouriteChatsUpdates,

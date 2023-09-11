@@ -83,6 +83,7 @@
         .map((t) => t.symbol.toLowerCase())
         .join("|");
     $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
+    $: communityMembers = client.currentCommunityMembers;
 
     $: {
         if (inp) {
@@ -255,7 +256,7 @@
     function expandMentions(text?: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, User>();
         let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const userOrGroup = client.lookupUserForMention(p1, false);
+            const userOrGroup = client.lookupUserForMention(p1, false, $communityMembers);
             if (userOrGroup !== undefined) {
                 switch (userOrGroup.kind) {
                     case "user_group":
@@ -435,7 +436,7 @@
         const username =
             userOrGroup.kind === "user_group"
                 ? userOrGroup.name
-                : client.getDisplayName(userOrGroup);
+                : client.getDisplayName(userOrGroup, $communityMembers);
         const userLabel = `@${username}`;
 
         replaceTextWith(userLabel);

@@ -3540,19 +3540,17 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getDisplayNameById(userId: string, inGlobalContext = false): string {
+    getDisplayNameById(userId: string, communityMembers?: Map<string, Member>): string {
         const user = this._liveState.userStore[userId];
-        return this.getDisplayName(user, inGlobalContext);
+        return this.getDisplayName(user, communityMembers);
     }
 
     getDisplayName(
         user: { userId: string; username: string; displayName?: string } | undefined,
-        inGlobalContext = false,
+        communityMembers?: Map<string, Member>,
     ): string {
         if (user !== undefined) {
-            const member = inGlobalContext
-                ? undefined
-                : this._liveState.currentCommunityMembers.get(user.userId);
+            const member = communityMembers?.get(user.userId);
             const displayName = member?.displayName ?? user.displayName ?? user.username;
             if (displayName?.length > 0) {
                 return displayName;
@@ -4777,7 +4775,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     // the key might be a username or it might be a user group name
-    getUserLookupForMentions(): Record<string, UserOrUserGroup> {
+    getUserLookupForMentions(
+        communityMembers?: Map<string, Member>,
+    ): Record<string, UserOrUserGroup> {
         if (this._userLookupForMentions === undefined) {
             const lookup = {} as Record<string, UserOrUserGroup>;
             const userStore = this._liveState.userStore;
@@ -4787,7 +4787,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (this._liveState.selectedChat?.kind === "channel") {
                     user = {
                         ...user,
-                        displayName: this.getDisplayName(user, false),
+                        displayName: this.getDisplayName(user, communityMembers),
                     };
                 }
                 if (user !== undefined && user.username !== undefined) {
@@ -4803,8 +4803,12 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._userLookupForMentions;
     }
 
-    lookupUserForMention(username: string, includeSelf: boolean): UserOrUserGroup | undefined {
-        const lookup = this.getUserLookupForMentions();
+    lookupUserForMention(
+        username: string,
+        includeSelf: boolean,
+        communityMembers?: Map<string, Member>,
+    ): UserOrUserGroup | undefined {
+        const lookup = this.getUserLookupForMentions(communityMembers);
 
         const userOrGroup = lookup[username.toLowerCase()];
         if (userOrGroup === undefined) return undefined;
@@ -4889,7 +4893,6 @@ export class OpenChat extends OpenChatAgentWorker {
             }
         }
 
-        communityStateStore.clear(id);
         if (clearChat) {
             this.clearSelectedChat();
         }

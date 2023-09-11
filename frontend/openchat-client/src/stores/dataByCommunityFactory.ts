@@ -6,7 +6,7 @@ import { chatListScopeStore } from "./global";
 function setDataForCommunity<T>(
     store: Writable<CommunityMap<T>>,
     communityId: CommunityIdentifier,
-    data: T
+    data: T,
 ): void {
     store.update((s) => {
         s.set(communityId, data);
@@ -18,7 +18,7 @@ function updateDataForCommunity<T>(
     store: Writable<CommunityMap<T>>,
     communityId: CommunityIdentifier,
     fn: (events: T) => T,
-    empty: T
+    empty: T,
 ): void {
     store.update((s) => {
         s.set(communityId, fn(s.get(communityId) ?? empty));
@@ -32,7 +32,7 @@ function updateDataForCommunity<T>(
 // };
 
 export function createCommunitySpecificObjectStore<T extends Record<string, unknown>>(
-    init: () => T
+    init: () => T,
 ) {
     const all: Writable<CommunityMap<T>> = writable<CommunityMap<T>>(new CommunityMap());
     const byCommunity: Readable<T> = derived(
@@ -40,7 +40,7 @@ export function createCommunitySpecificObjectStore<T extends Record<string, unkn
         ([$chatListScope, $all]) => {
             if ($chatListScope.kind !== "community") return init();
             return $all.get($chatListScope.id) ?? init();
-        }
+        },
     );
     return {
         all,
@@ -57,7 +57,7 @@ export function createCommunitySpecificObjectStore<T extends Record<string, unkn
         updateProp: <P extends keyof T>(
             communityId: CommunityIdentifier,
             prop: P,
-            updateFn: (data: T[P]) => T[P]
+            updateFn: (data: T[P]) => T[P],
         ) => {
             updateDataForCommunity(
                 all,
@@ -69,7 +69,7 @@ export function createCommunitySpecificObjectStore<T extends Record<string, unkn
                     }
                     return data;
                 },
-                init()
+                init(),
             );
         },
         setProp: <P extends keyof T>(communityId: CommunityIdentifier, prop: P, value: T[P]) => {
@@ -83,7 +83,7 @@ export function createCommunitySpecificObjectStore<T extends Record<string, unkn
                     }
                     return data;
                 },
-                init()
+                init(),
             );
         },
     };

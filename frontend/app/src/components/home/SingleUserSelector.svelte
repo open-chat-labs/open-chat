@@ -14,6 +14,8 @@
     let textValue: string = "";
     let inputHeight: number;
 
+    $: communityMembers = client.currentCommunityMembers;
+
     $: {
         if (textValue !== "") {
             showMentionPicker = true;
@@ -37,7 +39,7 @@
         // we need a short timeout here so that any click event is handled before the blur
         window.setTimeout(() => {
             if (selectedReceiver === undefined) {
-                selectedReceiver = client.lookupUserForMention(textValue, false);
+                selectedReceiver = client.lookupUserForMention(textValue, false, $communityMembers);
             }
             showMentionPicker = false;
         }, 100);

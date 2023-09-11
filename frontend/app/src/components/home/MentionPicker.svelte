@@ -20,26 +20,32 @@
 
     let index = 0;
     $: userStore = client.userStore;
+    $: communityMembers = client.currentCommunityMembers;
     $: itemHeight = $mobileWidth ? 53 : 55;
     $: borderWidth = direction === "up" ? 2 : 3;
     $: maxHeight =
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)";
 
     $: prefixLower = prefix?.toLowerCase();
-    $: filtered = Object.values(client.getUserLookupForMentions()).filter((userOrGroup) => {
-        if (prefixLower === undefined) return true;
-        switch (userOrGroup.kind) {
-            case "user_group":
-                return userOrGroup.name.toLowerCase().startsWith(prefixLower);
-            default:
-                return (
-                    (mentionSelf || userOrGroup.userId !== currentUser.userId) &&
-                    (userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
-                        (userOrGroup.displayName !== undefined &&
-                            userOrGroup.displayName.toLowerCase().startsWith(prefixLower)))
-                );
+
+    $: filtered = Object.values(client.getUserLookupForMentions($communityMembers)).filter(
+        (userOrGroup) => {
+            if (prefixLower === undefined) return true;
+            switch (userOrGroup.kind) {
+                case "user_group":
+                    return userOrGroup.name.toLowerCase().startsWith(prefixLower);
+                default:
+                    return (
+                        (mentionSelf || userOrGroup.userId !== currentUser.userId) &&
+                        (userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
+                            client
+                                .getDisplayName(userOrGroup, $communityMembers)
+                                .toLowerCase()
+                                .startsWith(prefixLower))
+                    );
+            }
         }
-    });
+    );
 
     $: style =
         direction === "up"
@@ -107,7 +113,7 @@
                         </span>
                     {:else}
                         <span class="display-name">
-                            {item.displayName ?? item.username}
+                            {client.getDisplayName(item, $communityMembers)}
                         </span>
                         <span class="username">
                             @{item.username}

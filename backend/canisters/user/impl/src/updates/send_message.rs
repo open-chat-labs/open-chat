@@ -193,8 +193,8 @@ fn send_message_impl(
         if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
             chat.mark_message_pending(send_message_args.clone());
 
-            let sender_name = state.data.username.clone();
-            let sender_display_name = state.data.display_name.clone();
+            let sender_name = state.data.username.value.clone();
+            let sender_display_name = state.data.display_name.value.clone();
 
             if user_type.is_bot() {
                 ic_cdk::spawn(send_to_bot_canister(
