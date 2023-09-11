@@ -53,7 +53,6 @@ export const communitiesList = derived(communities, ($communities) => {
 
 export const communityStateStore = createCommunitySpecificObjectStore<CommunitySpecificState>(
     () => ({
-        detailsLoaded: false,
         members: new Map<string, Member>(),
         blockedUsers: new Set<string>(),
         invitedUsers: new Set<string>(),

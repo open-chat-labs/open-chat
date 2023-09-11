@@ -129,7 +129,8 @@
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
     $: showChatMenu = (!inert || canRevealDeleted) && !readonly;
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
-    $: senderDisplayName = client.getDisplayName(sender);
+    $: communityMembers = client.currentCommunityMembers;
+    $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {

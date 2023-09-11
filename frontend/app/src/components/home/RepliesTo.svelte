@@ -28,6 +28,10 @@
     $: chatListScope = client.chatListScope;
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
+    $: communityMembers = client.currentCommunityMembers;
+    $: displayName = me
+        ? client.toTitleCase($_("you"))
+        : client.getDisplayNameById(repliesTo.senderId, $communityMembers);
 
     function getUrl() {
         const path = [
@@ -50,12 +54,6 @@
             page(getUrl());
         }
     }
-
-    function getDisplayName(replyContext: RehydratedReplyContext): string {
-        return me
-            ? client.toTitleCase($_("you"))
-            : client.getDisplayNameById(replyContext.senderId);
-    }
 </script>
 
 <Link on:click={zoomToMessage}>
@@ -65,7 +63,7 @@
         class:rtl={$rtlStore}
         class:crypto={repliesTo.content.kind === "crypto_content"}>
         <h4 class="username" class:text-content={isTextContent}>
-            {getDisplayName(repliesTo)}
+            {displayName}
         </h4>
         {#if repliesTo.content !== undefined}
             <ChatMessageContent

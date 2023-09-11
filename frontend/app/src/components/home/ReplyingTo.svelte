@@ -23,7 +23,10 @@
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
-    $: displayName = me ? client.toTitleCase($_("you")) : client.getDisplayName(replyingTo.sender);
+    $: communityMembers = client.currentCommunityMembers;
+    $: displayName = me
+        ? client.toTitleCase($_("you"))
+        : client.getDisplayName(replyingTo.sender, $communityMembers);
 
     function cancelReply() {
         dispatch("cancelReply");

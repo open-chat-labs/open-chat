@@ -40,13 +40,14 @@
     $: isPremium = profile?.isPremium ?? false;
     $: diamond = user?.diamond ?? false;
     $: phoneIsVerified = profile?.phoneIsVerified ?? false;
+    $: communityMembers = client.currentCommunityMembers;
     $: displayName = client.getDisplayName(
         {
             userId,
             username: profile?.username ?? "",
             displayName: profile?.displayName ?? "",
         },
-        inGlobalContext
+        inGlobalContext ? undefined : $communityMembers
     );
 
     onMount(async () => {
