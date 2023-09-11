@@ -43,14 +43,14 @@ export function getTheme(base: Theme): Theme {
     base.entry.bg = veryDarkGray;
     base.entry.input.bg = veryDarkGray;
     base.input.bg = raspberry;
-    base.input.accent = white;
+    base.input.accent = raspberry;
     base.chatSearch.bg = veryDarkGray;
-    base.currentChat.msg.bg = #383838;
+    base.currentChat.msg.bg = veryDarkGray;
     base.currentChat.msg.me.bg = raspberry;
     base.currentChat.msg.txt = white;
     base.currentChat.date.bg = base.currentChat.msg.bg;
     base.currentChat.msg.inert = base.currentChat.msg.bg;
-    base.notificationBar.bg = notificationAccent;
+    base.notificationBar.bg = veryDarkGray;
     base.notificationBar.txt = white;
     base.timeline.txt = base.notificationBar.txt;
     base.menu.bd = white;
