@@ -33,8 +33,8 @@ export function getTheme(base: Theme): Theme {
     base.accent = raspberry;
     base.panel.left.bg = veryDarkGray;
     base.panel.right.modal = lighterDarkGray;
-    base.modal.bd = raspberry;
-    base.modal.bg = raspberry;
+    base.modal.bd = darkGray;
+    base.modal.bg = lighterDarkGray;
     base.chatSummary["bg-selected"] = "rgb(24,24,24 / 40%)";
     base.chatSummary.hv = "rgb(24,24,24 / 80%)";
     base.chatSummary.del = base.button.bg;
@@ -63,7 +63,7 @@ export function getTheme(base: Theme): Theme {
     base.reaction.me = white;
     base.reaction.bg = veryDarkGray;
     base.primary = raspberry;
-    base.link.underline = raspberry;
+    base.link.underline = white;
     base.scrollbar.bg = raspberry;
     base.toast.success.bg = base.notificationBar.bg;
     base.code = white;
