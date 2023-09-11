@@ -102,6 +102,7 @@ members = [
     "backend/libraries/human_readable_derive",
     "backend/libraries/icdex_client",
     "backend/libraries/index_store",
+    "backend/libraries/instruction_counts_log",
     "backend/libraries/ledger_utils",
     "backend/libraries/msgpack",
     "backend/libraries/storage_bucket_client",
