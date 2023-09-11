@@ -16,7 +16,7 @@ export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
     base.name = "tokyonight";
     base.label = "Tokyo Night";
-    base.burst = false;
+    base.burst = true;
     base.bg = "radial-gradient(circle, rgba(242,154,216,1) 5%, rgba(10,10,10,1) 70%)";
     base.bd = darkGray;
     base.txt = white;
