@@ -73,6 +73,7 @@
 
     $: userStore = client.userStore;
     $: userGroups = client.currentCommunityUserGroups;
+    $: communityMembers = client.currentCommunityMembers;
     $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
     $: isMultiUser = chat.kind === "group_chat" || chat.kind === "channel";
     $: isBot = $userStore[userId]?.kind === "bot";
@@ -83,7 +84,6 @@
         .map((t) => t.symbol.toLowerCase())
         .join("|");
     $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
-    $: communityMembers = client.currentCommunityMembers;
 
     $: {
         if (inp) {

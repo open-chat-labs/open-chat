@@ -5,7 +5,7 @@ use crate::governance_clients::nns::governance_response_types::ProposalInfo;
 use crate::governance_clients::nns::{ListProposalInfo, TOPIC_EXCHANGE_RATE, TOPIC_NEURON_MANAGEMENT};
 use crate::model::nervous_systems::{ProposalToPush, ProposalsToUpdate};
 use crate::{mutate_state, RuntimeState};
-use ic_cdk::api::call::CallResult;
+use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk_macros::heartbeat;
 use std::collections::HashSet;
 use types::{
@@ -108,7 +108,16 @@ mod retrieve_proposals {
     fn handle_proposals_response<R: RawProposal>(governance_canister_id: &CanisterId, response: CallResult<Vec<R>>) {
         match response {
             Ok(raw_proposals) => {
-                let proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
+                let mut proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
+
+                // TODO Remove this!
+                // Temp hack for Dragginz
+                // Dfinity are fixing a bug in their governance canister which is causing it to
+                // return old proposals
+                let dragginz_governance_canister_id: CanisterId = CanisterId::from_text("zqfso-syaaa-aaaaq-aaafq-cai").unwrap();
+                if *governance_canister_id == dragginz_governance_canister_id {
+                    proposals.retain(|p| p.id() > 36)
+                }
 
                 mutate_state(|state| {
                     let previous_active_proposals = state.data.nervous_systems.active_proposals(governance_canister_id);
@@ -153,7 +162,6 @@ mod retrieve_proposals {
 
 mod push_proposals {
     use super::*;
-    use ic_cdk::api::call::RejectionCode;
 
     pub fn run() {
         if let Some(ProposalToPush {
@@ -197,11 +205,9 @@ mod push_proposals {
             correlation_id: 0,
         };
 
-        let failed = group_canister_c2c_client::send_message_v2(group_id.into(), &send_message_args)
-            .await
-            .is_err();
+        let response = group_canister_c2c_client::send_message_v2(group_id.into(), &send_message_args).await;
 
-        mark_proposal_pushed(governance_canister_id, proposal, message_id, failed);
+        mark_proposal_pushed(governance_canister_id, proposal, message_id, is_failure(response));
     }
 
     async fn push_channel_proposal(
@@ -229,14 +235,9 @@ mod push_proposals {
             channel_rules_accepted: None,
         };
 
-        let failed = match community_canister_c2c_client::send_message(community_id.into(), &send_message_args).await {
-            // If the messageId has already been used, treat that as success
-            Err((code, error)) if code == RejectionCode::CanisterError && error.contains("MessageId") => false,
-            Err(_) => true,
-            _ => false,
-        };
+        let response = community_canister_c2c_client::send_message(community_id.into(), &send_message_args).await;
 
-        mark_proposal_pushed(governance_canister_id, proposal, message_id, failed);
+        mark_proposal_pushed(governance_canister_id, proposal, message_id, is_failure(response));
     }
 
     fn mark_proposal_pushed(governance_canister_id: CanisterId, proposal: Proposal, message_id: MessageId, failed: bool) {
@@ -253,6 +254,15 @@ mod push_proposals {
                     .mark_proposal_pushed(&governance_canister_id, proposal, message_id);
             }
         });
+    }
+
+    fn is_failure<T>(response: CallResult<T>) -> bool {
+        match response {
+            // If the messageId has already been used, treat that as success
+            Err((code, error)) if code == RejectionCode::CanisterError && error.contains("MessageId") => false,
+            Err(_) => true,
+            _ => false,
+        }
     }
 }
 

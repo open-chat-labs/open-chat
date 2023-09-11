@@ -1,5 +1,5 @@
+use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
 use crate::model::new_joiner_rewards::{NewJoinerRewardMetrics, NewJoinerRewardStatus, NewJoinerRewards};
-use crate::model::upgrade_instruction_counts::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use crate::new_joiner_rewards::process_new_joiner_reward;
 use crate::timer_job_types::TimerJob;
 use crate::updates::c2c_freeze_group::freeze_group_impl;
@@ -10,6 +10,7 @@ use canister_timer_jobs::TimerJobs;
 use chat_events::{ChatEventInternal, Reader};
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation};
+use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -287,10 +288,15 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub activity_notification_state: ActivityNotificationState,
+    #[serde(skip, default = "init_instruction_counts_log")]
     pub instruction_counts_log: InstructionCountsLog,
     pub test_mode: bool,
     pub community_being_imported_into: Option<CommunityBeingImportedInto>,
     pub serialized_chat_state: Option<ByteBuf>,
+}
+
+fn init_instruction_counts_log() -> InstructionCountsLog {
+    InstructionCountsLog::init(get_instruction_counts_index_memory(), get_instruction_counts_data_memory())
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -351,7 +357,7 @@ impl Data {
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
-            instruction_counts_log: InstructionCountsLog::default(),
+            instruction_counts_log: init_instruction_counts_log(),
             community_being_imported_into: None,
             serialized_chat_state: None,
         }

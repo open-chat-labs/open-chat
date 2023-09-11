@@ -29,7 +29,7 @@
     let timer: number | undefined;
 
     $: count = matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "";
-    $: isGroup = chat.kind === "group_chat";
+    $: isGroup = chat.kind === "group_chat" || chat.kind === "channel";
 
     onMount(() => {
         inputElement.focus();

@@ -10,11 +10,16 @@
 
     export let userOrGroup: UserOrUserGroup;
 
-    $: name =
-        userOrGroup.kind === "user_group" ? userOrGroup.name : client.getDisplayName(userOrGroup);
     $: avatarUrl =
         userOrGroup.kind === "user_group" ? undefined : client.userAvatarUrl(userOrGroup);
     $: userId = userOrGroup.kind === "user_group" ? undefined : userOrGroup.userId;
+
+    $: communityMembers = client.currentCommunityMembers;
+    $: name = userOrGroup.kind === "user_group" ? userOrGroup.name : userOrGroup.username;
+    $: displayName =
+        userOrGroup.kind === "user_group"
+            ? undefined
+            : client.getDisplayName(userOrGroup, $communityMembers);
 
     function deleteUser() {
         dispatch("deleteUser", userOrGroup);
@@ -25,7 +30,12 @@
     <div class="avatar">
         <Avatar url={avatarUrl} {userId} size={AvatarSize.Small} />
     </div>
-    <span class="username">{`${name}`}</span>
+    <div class="name">
+        {#if displayName !== undefined}
+            <span>{displayName}</span>
+        {/if}
+        <span class="username">@{name}</span>
+    </div>
     <span class="close" on:click={deleteUser}>
         <Close size={"1.2em"} color={"var(--button-txt)"} />
     </span>
@@ -42,9 +52,13 @@
         gap: $sp2;
         @include box-shadow(1);
 
-        .username {
+        .name {
             flex: auto;
             padding: $sp3;
+        }
+
+        .username {
+            color: var(--button-disabled-txt);
         }
 
         .close {

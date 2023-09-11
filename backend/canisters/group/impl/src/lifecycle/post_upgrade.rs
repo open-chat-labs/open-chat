@@ -1,12 +1,12 @@
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
-use crate::model::upgrade_instruction_counts::InstructionCountFunctionId;
 use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
+use instruction_counts_log::InstructionCountFunctionId;
 use tracing::info;
 
 #[post_upgrade]
