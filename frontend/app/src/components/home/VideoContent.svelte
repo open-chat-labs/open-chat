@@ -4,7 +4,7 @@
     import { rtlStore } from "../../stores/rtl";
     import type { VideoContent } from "openchat-client";
     import ContentCaption from "./ContentCaption.svelte";
-    import { pauseAnyPlayingMedia } from "../../utils/media";
+    import { setPlayingMedia } from "../../utils/media";
 
     export let content: VideoContent;
     export let fill: boolean;
@@ -18,7 +18,7 @@
     let landscape = content.height < content.width;
 
     function onPlay() {
-        pauseAnyPlayingMedia(videoPlayer);
+        setPlayingMedia(videoPlayer);
     }
 </script>
 

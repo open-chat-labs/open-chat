@@ -5,7 +5,7 @@
     import ContentCaption from "./ContentCaption.svelte";
     import MusicNote from "svelte-material-icons/MusicNote.svelte";
     import Pause from "svelte-material-icons/Pause.svelte";
-    import { pauseAnyPlayingMedia } from "../../utils/media";
+    import { setPlayingMedia } from "../../utils/media";
 
     export let content: AudioContent;
     export let edited: boolean;
@@ -30,7 +30,7 @@
 
     function onPlay() {
         playing = true;
-        pauseAnyPlayingMedia(audioPlayer);
+        setPlayingMedia(audioPlayer);
     }
 </script>
 
