@@ -1,7 +1,7 @@
+use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
 use crate::model::channels::Channels;
 use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
 use crate::model::members::CommunityMembers;
-use crate::model::upgrade_instruction_counts::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use crate::timer_job_types::TimerJob;
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
@@ -10,6 +10,7 @@ use canister_timer_jobs::TimerJobs;
 use chat_events::ChatMetricsInternal;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
+use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -175,6 +176,10 @@ impl RuntimeState {
     }
 }
 
+fn init_instruction_counts_log() -> InstructionCountsLog {
+    InstructionCountsLog::init(get_instruction_counts_index_memory(), get_instruction_counts_data_memory())
+}
+
 #[derive(Serialize, Deserialize)]
 struct Data {
     is_public: bool,
@@ -204,7 +209,7 @@ struct Data {
     fire_and_forget_handler: FireAndForgetHandler,
     activity_notification_state: ActivityNotificationState,
     groups_being_imported: GroupsBeingImported,
-    #[serde(default)]
+    #[serde(skip, default = "init_instruction_counts_log")]
     instruction_counts_log: InstructionCountsLog,
     test_mode: bool,
     cached_chat_metrics: Timestamped<ChatMetrics>,
@@ -267,7 +272,7 @@ impl Data {
             fire_and_forget_handler: FireAndForgetHandler::default(),
             activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             groups_being_imported: GroupsBeingImported::default(),
-            instruction_counts_log: InstructionCountsLog::default(),
+            instruction_counts_log: init_instruction_counts_log(),
             test_mode,
             cached_chat_metrics: Timestamped::default(),
         }

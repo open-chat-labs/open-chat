@@ -1,17 +1,23 @@
-use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory, Memory};
 use ic_stable_structures::log::WriteError;
-use ic_stable_structures::{StableLog, Storable};
+use ic_stable_structures::memory_manager::VirtualMemory;
+use ic_stable_structures::{DefaultMemoryImpl, StableLog, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use types::{BuildVersion, TimestampMillis};
 
-#[derive(Serialize, Deserialize)]
+pub type Memory = VirtualMemory<DefaultMemoryImpl>;
+
 pub struct InstructionCountsLog {
-    #[serde(skip, default = "init_log")]
     log: StableLog<InstructionCountEntry, Memory, Memory>,
 }
 
 impl InstructionCountsLog {
+    pub fn init(index_memory: Memory, data_memory: Memory) -> InstructionCountsLog {
+        InstructionCountsLog {
+            log: init_log(index_memory, data_memory),
+        }
+    }
+
     pub fn record(
         &self,
         function_id: InstructionCountFunctionId,
@@ -48,8 +54,8 @@ pub enum InstructionCountFunctionId {
     PostUpgrade = 2,
 }
 
-fn init_log() -> StableLog<InstructionCountEntry, Memory, Memory> {
-    StableLog::init(get_instruction_counts_index_memory(), get_instruction_counts_data_memory()).unwrap()
+fn init_log(index_memory: Memory, data_memory: Memory) -> StableLog<InstructionCountEntry, Memory, Memory> {
+    StableLog::init(index_memory, data_memory).unwrap()
 }
 
 impl Storable for InstructionCountEntry {
@@ -59,12 +65,6 @@ impl Storable for InstructionCountEntry {
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
         msgpack::deserialize_then_unwrap(bytes.as_ref())
-    }
-}
-
-impl Default for InstructionCountsLog {
-    fn default() -> Self {
-        Self { log: init_log() }
     }
 }
 
