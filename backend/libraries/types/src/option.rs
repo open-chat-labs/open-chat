@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 // This is needed when we would otherwise use an Option<Option<T>> in which case it would not be
 // possible to tell which layer is None when represented as JSON
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub enum OptionUpdate<T> {
     #[default]
     NoChange,
