@@ -4819,7 +4819,6 @@ export class OpenChat extends OpenChatAgentWorker {
             }
         }
 
-        communityStateStore.clear(id);
         if (clearChat) {
             this.clearSelectedChat();
         }
