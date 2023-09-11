@@ -31,8 +31,6 @@
 
     $: filtered = Object.values(client.getUserLookupForMentions($communityMembers)).filter(
         (userOrGroup) => {
-            console.log("Checking: ", userOrGroup);
-
             switch (userOrGroup.kind) {
                 case "user_group":
                     return (
