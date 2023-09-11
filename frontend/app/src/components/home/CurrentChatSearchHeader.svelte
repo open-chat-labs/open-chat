@@ -5,7 +5,7 @@
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type { MessageMatch, ChatSummary, OpenChat, UserSummary } from "openchat-client";
+    import type { MessageMatch, ChatSummary, OpenChat, UserMention } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
     import MentionPicker from "./MentionPicker.svelte";
@@ -221,9 +221,13 @@
         searchTerm = inputElement.value;
     }
 
-    function mention(ev: CustomEvent<UserSummary>): void {
-        const user = ev.detail;
-        const userLabel = `@${user.username}`;
+    function mention(ev: CustomEvent<UserMention>): void {
+        const userMention = ev.detail;
+        const username =
+            userMention.kind === "user_group"
+                ? userMention.name
+                : client.getDisplayName(userMention);
+        const userLabel = `@${username}`;
 
         replaceTextWith(userLabel);
 

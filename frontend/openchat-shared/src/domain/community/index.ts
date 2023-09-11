@@ -37,6 +37,7 @@ import type {
     UserSuspended,
 } from "../response";
 import type { HasLevel } from "../structure";
+import type { UserGroupDetails, UserGroupSummary } from "../user";
 
 export type CommunityMembership = {
     joined: bigint;
@@ -50,20 +51,6 @@ export type CommunityMembership = {
 export type CommunityIdentifier = {
     kind: "community";
     communityId: string;
-};
-
-export type UserGroupSummary = {
-    kind: "user_group";
-    memberCount: number;
-    name: string;
-    id: number;
-};
-
-export type UserGroupDetails = {
-    kind: "user_group";
-    members: Set<string>;
-    id: number;
-    name: string;
 };
 
 export type CommunitySummary = AccessControlled &

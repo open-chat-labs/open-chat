@@ -3,7 +3,7 @@
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
 
-    import type { UserSummary, OpenChat, UserGroupSummary } from "openchat-client";
+    import type { OpenChat, UserMention } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "openchat-client";
@@ -52,8 +52,8 @@
 
     const dispatch = createEventDispatcher();
 
-    function mention(user: UserSummary | UserGroupSummary) {
-        dispatch("mention", user);
+    function mention(userMention: UserMention) {
+        dispatch("mention", userMention);
     }
 
     function onKeyDown(ev: KeyboardEvent): void {
@@ -74,9 +74,9 @@
                 ev.stopPropagation();
                 break;
             case "Enter":
-                const user = filtered[index];
-                if (user) {
-                    mention(user);
+                const userOrGroup = filtered[index];
+                if (userOrGroup) {
+                    mention(userOrGroup);
                 }
                 ev.preventDefault();
                 ev.stopPropagation();

@@ -23,6 +23,7 @@
         Questions,
         OpenChat,
         MultiUserChat,
+        UserMention,
     } from "openchat-client";
     import { allQuestions } from "openchat-client";
     import { enterSend } from "../../stores/settings";
@@ -410,9 +411,12 @@
         rangeToReplace = undefined;
     }
 
-    function mention(ev: CustomEvent<UserSummary>): void {
-        const user = ev.detail;
-        const username = client.getDisplayName(user);
+    function mention(ev: CustomEvent<UserMention>): void {
+        const userMention = ev.detail;
+        const username =
+            userMention.kind === "user_group"
+                ? userMention.name
+                : client.getDisplayName(userMention);
         const userLabel = `@${username}`;
 
         replaceTextWith(userLabel);
