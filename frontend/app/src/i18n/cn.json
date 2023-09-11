@@ -895,7 +895,10 @@
             "deleteFailed": "抱歉，我们无法删除此社区",
             "convertFailed": "抱歉，我们无法将您的群组转换为社区",
             "importFailed": "抱歉，我们无法导入您的群组",
-            "deleteUserGroupFailed": "抱歉，我们无法删除用户组"
+            "deleteUserGroupFailed": "抱歉，我们无法删除用户组",
+            "updateGroupFailed": "抱歉，我们无法更新用户组",
+            "createGroupFailed": "抱歉，我们无法创建用户组",
+            "userGroupNameTaken": "抱歉，用户组名已被占用"
         },
         "memberCount": "会员",
         "channelCount": "频道",

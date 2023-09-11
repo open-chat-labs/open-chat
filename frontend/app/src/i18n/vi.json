@@ -896,7 +896,10 @@
             "deleteFailed": "Xin lỗi, chúng tôi không thể xóa cộng đồng này",
             "convertFailed": "Xin lỗi nhưng chúng tôi không thể chuyển đổi nhóm của bạn thành cộng đồng",
             "importFailed": "Xin lỗi, chúng tôi không thể nhập nhóm của bạn",
-            "deleteUserGroupFailed": "Rất tiếc, chúng tôi không thể xóa nhóm người dùng"
+            "deleteUserGroupFailed": "Rất tiếc, chúng tôi không thể xóa nhóm người dùng",
+            "updateGroupFailed": "Rất tiếc, chúng tôi không thể cập nhật nhóm người dùng",
+            "createGroupFailed": "Rất tiếc, chúng tôi không thể tạo nhóm người dùng",
+            "userGroupNameTaken": "Rất tiếc, tên nhóm người dùng đã được sử dụng"
         },
         "memberCount": "các thành viên)",
         "channelCount": "kênh truyền hình)",

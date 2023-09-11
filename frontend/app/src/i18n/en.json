@@ -941,7 +941,10 @@
             "importFailed": "Sorry we were unable to import your group",
             "leaveFailed": "Sorry we were unable to leave this community",
             "convertFailed": "Sorry but we were unable to convert your groups to a community",
-            "deleteUserGroupFailed": "Sorry we were unable to delete the user group"
+            "deleteUserGroupFailed": "Sorry we were unable to delete the user group",
+            "updateGroupFailed": "Sorry we were unable to update the user group",
+            "createGroupFailed": "Sorry we were unable to create the user group",
+            "userGroupNameTaken": "Sorry that user group name is already taken"
         },
         "memberCount": "member(s)",
         "channelCount": "channel(s)",

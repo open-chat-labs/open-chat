@@ -897,7 +897,10 @@
             "deleteFailed": "Leider konnten wir diese Community nicht löschen",
             "convertFailed": "Leider konnten wir Ihre Gruppen nicht in eine Community umwandeln",
             "importFailed": "Leider konnten wir Ihre Gruppe nicht importieren",
-            "deleteUserGroupFailed": "Leider konnten wir die Benutzergruppe nicht löschen"
+            "deleteUserGroupFailed": "Leider konnten wir die Benutzergruppe nicht löschen",
+            "updateGroupFailed": "Leider konnten wir die Benutzergruppe nicht aktualisieren",
+            "createGroupFailed": "Leider konnten wir die Benutzergruppe nicht erstellen",
+            "userGroupNameTaken": "Es tut uns leid, dass der Name der Benutzergruppe bereits vergeben ist"
         },
         "memberCount": "Mitglied(er)",
         "channelCount": "Kanal(e)",

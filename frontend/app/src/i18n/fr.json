@@ -895,7 +895,10 @@
             "deleteFailed": "Désolé, nous n'avons pas pu supprimer cette communauté",
             "convertFailed": "Désolé, mais nous n'avons pas pu convertir vos groupes en communauté",
             "importFailed": "Désolé, nous n'avons pas pu importer votre groupe",
-            "deleteUserGroupFailed": "Désolé, nous n'avons pas pu supprimer le groupe d'utilisateurs"
+            "deleteUserGroupFailed": "Désolé, nous n'avons pas pu supprimer le groupe d'utilisateurs",
+            "updateGroupFailed": "Désolé, nous n'avons pas pu mettre à jour le groupe d'utilisateurs",
+            "createGroupFailed": "Désolé, nous n'avons pas pu créer le groupe d'utilisateurs",
+            "userGroupNameTaken": "Désolé, le nom du groupe d'utilisateurs est déjà pris"
         },
         "memberCount": "membres)",
         "channelCount": "chaîne(s)",

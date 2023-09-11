@@ -896,7 +896,10 @@
             "deleteFailed": "申し訳ありませんが、このコミュニティを削除できませんでした",
             "convertFailed": "申し訳ありませんが、グループをコミュニティに変換できませんでした",
             "importFailed": "申し訳ありませんが、グループをインポートできませんでした",
-            "deleteUserGroupFailed": "申し訳ありませんが、ユーザー グループを削除できませんでした"
+            "deleteUserGroupFailed": "申し訳ありませんが、ユーザー グループを削除できませんでした",
+            "updateGroupFailed": "申し訳ありませんが、ユーザー グループを更新できませんでした",
+            "createGroupFailed": "申し訳ありませんが、ユーザー グループを作成できませんでした",
+            "userGroupNameTaken": "申し訳ありませんが、ユーザー グループ名はすでに使用されています"
         },
         "memberCount": "メンバー",
         "channelCount": "チャンネル",

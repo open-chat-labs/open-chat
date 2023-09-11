@@ -897,7 +897,10 @@
             "deleteFailed": "Lo sentimos, no pudimos eliminar esta comunidad.",
             "convertFailed": "Lo sentimos, pero no pudimos convertir sus grupos en una comunidad.",
             "importFailed": "Lo sentimos, no pudimos importar tu grupo.",
-            "deleteUserGroupFailed": "Lo sentimos, no pudimos eliminar el grupo de usuarios."
+            "deleteUserGroupFailed": "Lo sentimos, no pudimos eliminar el grupo de usuarios.",
+            "updateGroupFailed": "Lo sentimos, no pudimos actualizar el grupo de usuarios.",
+            "createGroupFailed": "Lo sentimos, no pudimos crear el grupo de usuarios.",
+            "userGroupNameTaken": "Lo sentimos, el nombre del grupo de usuarios ya está en uso."
         },
         "memberCount": "miembro(s)",
         "channelCount": "canales",

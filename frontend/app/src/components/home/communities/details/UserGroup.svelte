@@ -16,6 +16,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import User from "../../groupdetails/User.svelte";
     import { iconSize } from "../../../../stores/iconSize";
+    import { toastStore } from "../../../../stores/toast";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -50,7 +51,8 @@
     // local updates since this is probably not a very common operation and it's much simpler this way
     function save() {
         saving = true;
-        (userGroup.id === -1
+        const creating = userGroup.id === -1;
+        (creating
             ? client.createUserGroup(community.id, userGroup)
             : client.updateUserGroup(community.id, userGroup, added, removed)
         )
@@ -58,7 +60,17 @@
                 if (resp.kind === "success") {
                     cancel();
                 } else {
-                    console.log("TODO - deal with errors", resp);
+                    if (resp.kind === "name_taken") {
+                        toastStore.showFailureToast($_("communities.errors.userGroupNameTaken"));
+                    } else {
+                        toastStore.showFailureToast(
+                            $_(
+                                `communities.errors.${
+                                    creating ? "createGroupFailed" : "updateGroupFailed"
+                                }`
+                            )
+                        );
+                    }
                 }
             })
             .finally(() => (saving = false));

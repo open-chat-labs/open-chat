@@ -895,7 +895,10 @@
             "deleteFailed": "Spiacenti, non siamo riusciti a eliminare questa community",
             "convertFailed": "Siamo spiacenti ma non siamo riusciti a convertire i tuoi gruppi in una community",
             "importFailed": "Spiacenti, non siamo riusciti a importare il tuo gruppo",
-            "deleteUserGroupFailed": "Siamo spiacenti, non siamo riusciti a eliminare il gruppo utenti"
+            "deleteUserGroupFailed": "Siamo spiacenti, non siamo riusciti a eliminare il gruppo utenti",
+            "updateGroupFailed": "Siamo spiacenti, non siamo riusciti ad aggiornare il gruppo utenti",
+            "createGroupFailed": "Siamo spiacenti, non siamo riusciti a creare il gruppo utenti",
+            "userGroupNameTaken": "Siamo spiacenti, il nome del gruppo utente è già in uso"
         },
         "memberCount": "membri)",
         "channelCount": "canale(i)",
