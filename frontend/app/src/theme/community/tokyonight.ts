@@ -2,30 +2,28 @@ import type { Theme } from "../types";
 
 // Colors
 const white = "#FFFFFF";
-const offWhite = "#DFDFDF";
 const black = "#000000";
 const raspberry = "#971E57";
 const darkGray = "#696969";
 const silver = "#C0C0C0";
 const veryDarkGray = "#1e2123";
 const lighterDarkGray = "#101010";
-const txtLight = offWhite;
-const notificationAccent = silver;
+const txt = white;
 
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
     base.name = "tokyonight";
     base.label = "Tokyo Night";
     base.burst = true;
-    base.bg = "radial-gradient(circle, rgba(242,154,216,1) 5%, rgba(10,10,10,1) 70%)";
+    base.bg = "radial-gradient(circle, #69173e 5%, rgb(6 1 22) 100%)";
     base.bd = darkGray;
     base.txt = white;
-    base["txt-light"] = txtLight;
     base.icon.txt = darkGray;
     base.icon.selected = raspberry;
     base.button.bg = raspberry;
-    base.button.hv = rasperry;
-    base.button["hv-txt"] = darkGray;
+    base.button.hv = raspberry;
+    base.button["hv-txt"] = white;
+    base.button["disabled-txt"] = darkGray
     base.button.txt = "rgba(255 255 255 / 80%)";
     base.button.disabled = silver;
     base.collapsible.closed.header.txt = txt;
@@ -35,7 +33,7 @@ export function getTheme(base: Theme): Theme {
     base.panel.right.modal = lighterDarkGray;
     base.modal.bd = darkGray;
     base.modal.bg = lighterDarkGray;
-    base.chatSummary["bg-selected"] = "rgb(24,24,24 / 40%)";
+    base.chatSummary["bg-selected"] = "rgb(54,59,62 / 50%)";
     base.chatSummary.hv = "rgb(24,24,24 / 80%)";
     base.chatSummary.del = base.button.bg;
     base.members.hv = base.chatSummary.hv;
