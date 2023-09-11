@@ -1,6 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import AreYouSure from "../../../AreYouSure.svelte";
     import type { CommunitySummary, OpenChat, UserGroupDetails } from "openchat-client";
     import Plus from "svelte-material-icons/Plus.svelte";
     import { iconSize } from "../../../../stores/iconSize";
@@ -16,12 +17,12 @@
 
     let searchTerm = "";
     let selectedGroup: UserGroupDetails | undefined = undefined;
+    let confirmingDelete = false;
+    let groupToDelete: UserGroupDetails | undefined = undefined;
 
     $: userGroups = client.currentCommunityUserGroups;
 
     $: matchingGroups = $userGroups.filter(matchesSearch);
-
-    $: console.log("UserGroups: ", $userGroups);
 
     function matchesSearch(userGroup: UserGroupDetails): boolean {
         if (searchTerm === "") return true;
@@ -30,20 +31,44 @@
 
     function createUserGroup() {
         selectedGroup = {
+            kind: "user_group",
             id: -1,
             name: "",
             members: new Set<string>(),
         };
     }
 
-    function deleteUserGroup(userGroup: UserGroupDetails) {
-        client.deleteUserGroup(community.id, userGroup).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast($_("communities.errors.deleteUserGroupFailed"));
-            }
-        });
+    function deleteUserGroup(yes: boolean = true): Promise<void> {
+        if (confirmingDelete && !yes) {
+            groupToDelete = undefined;
+            confirmingDelete = false;
+            return Promise.resolve();
+        }
+        if (groupToDelete === undefined) {
+            return Promise.resolve();
+        }
+
+        confirmingDelete = false;
+
+        return client
+            .deleteUserGroup(community.id, groupToDelete)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast($_("communities.errors.deleteUserGroupFailed"));
+                }
+            })
+            .finally(() => (groupToDelete = undefined));
+    }
+
+    function confirmDeleteUserGroup(userGroup: UserGroupDetails) {
+        groupToDelete = userGroup;
+        confirmingDelete = true;
     }
 </script>
+
+{#if confirmingDelete}
+    <AreYouSure message={$_("communities.confirmDeleteUserGroup")} action={deleteUserGroup} />
+{/if}
 
 {#if selectedGroup !== undefined}
     <UserGroup {community} on:cancel={() => (selectedGroup = undefined)} original={selectedGroup} />
@@ -75,7 +100,7 @@
                             </span>
                         </h4>
                         <div
-                            on:click|stopPropagation={() => deleteUserGroup(userGroup)}
+                            on:click|stopPropagation={() => confirmDeleteUserGroup(userGroup)}
                             class="delete">
                             <DeleteOutline
                                 viewBox={"0 -3 24 24"}

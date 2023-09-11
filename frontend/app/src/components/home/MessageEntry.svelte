@@ -12,7 +12,6 @@
     import MentionPicker from "./MentionPicker.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import type {
-        UserSummary,
         User,
         ChatSummary,
         EnhancedReplyContext,
@@ -23,7 +22,7 @@
         Questions,
         OpenChat,
         MultiUserChat,
-        UserMention,
+        UserOrUserGroup,
     } from "openchat-client";
     import { allQuestions } from "openchat-client";
     import { enterSend } from "../../stores/settings";
@@ -73,6 +72,7 @@
     let textboxId = Symbol();
 
     $: userStore = client.userStore;
+    $: userGroups = client.currentCommunityUserGroups;
     $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
     $: isMultiUser = chat.kind === "group_chat" || chat.kind === "channel";
     $: isBot = $userStore[userId]?.kind === "bot";
@@ -88,7 +88,9 @@
         if (inp) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
-                    inp.textContent = formatMentions(editingEvent.event.content.text);
+                    inp.textContent = formatUserGroupMentions(
+                        formatUserMentions(editingEvent.event.content.text)
+                    );
                     selectedRange = undefined;
                     restoreSelection();
                 } else if ("caption" in editingEvent.event.content) {
@@ -226,9 +228,9 @@
         }
     }
 
-    function formatMentions(text: string): string {
+    function formatUserMentions(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = $userStore[p1] as UserSummary | undefined;
+            const u = $userStore[p1];
             if (u?.username !== undefined) {
                 const username = u.username;
                 return `@${username}`;
@@ -237,15 +239,31 @@
         });
     }
 
-    // replace anything of the form @username with @UserId(xyz) where xyz is the userId
+    function formatUserGroupMentions(text: string): string {
+        return text.replace(/@UserGroup\(([\d\w-]+)\)/g, (match, p1) => {
+            const u = $userGroups.find((ug) => ug.id === Number(p1));
+            if (u !== undefined) {
+                return `@${u.name}`;
+            }
+            return match;
+        });
+    }
+
+    // replace anything of the form @username with @UserId(xyz) or @UserGroup(abc) where
+    // xyz is the userId or abc is the user group id
     // if we don't have the mapping, just leave it as is (we *will* have the mapping)
     function expandMentions(text?: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, User>();
         let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const user = client.lookupUserForMention(p1, false);
-            if (user !== undefined) {
-                mentionedMap.set(user.userId, user);
-                return `@UserId(${user.userId})`;
+            const userOrGroup = client.lookupUserForMention(p1, false);
+            if (userOrGroup !== undefined) {
+                switch (userOrGroup.kind) {
+                    case "user_group":
+                        return `@UserGroup(${userOrGroup.id})`;
+                    default:
+                        mentionedMap.set(userOrGroup.userId, userOrGroup);
+                        return `@UserId(${userOrGroup.userId})`;
+                }
             } else {
                 console.log(
                     `Could not find the userId for user: ${p1}, this should not really happen`
@@ -412,12 +430,12 @@
         rangeToReplace = undefined;
     }
 
-    function mention(ev: CustomEvent<UserMention>): void {
-        const userMention = ev.detail;
+    function mention(ev: CustomEvent<UserOrUserGroup>): void {
+        const userOrGroup = ev.detail;
         const username =
-            userMention.kind === "user_group"
-                ? userMention.name
-                : client.getDisplayName(userMention);
+            userOrGroup.kind === "user_group"
+                ? userOrGroup.name
+                : client.getDisplayName(userOrGroup);
         const userLabel = `@${username}`;
 
         replaceTextWith(userLabel);

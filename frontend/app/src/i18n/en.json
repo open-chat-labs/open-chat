@@ -966,7 +966,8 @@
         "saveChanges": "Save changes",
         "publicChannels": "Public channels",
         "underReview": "Under review",
-        "communityLabel": "Community"
+        "communityLabel": "Community",
+        "confirmDeleteUserGroup": "Are you sure you want to delete this user group?"
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",

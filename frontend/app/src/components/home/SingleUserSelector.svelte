@@ -1,14 +1,14 @@
 <script lang="ts">
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
-    import type { OpenChat, UserMention } from "openchat-client";
+    import type { OpenChat, UserOrUserGroup } from "openchat-client";
     import { getContext } from "svelte";
     import UserPill from "../UserPill.svelte";
 
     const client = getContext<OpenChat>("client");
 
     export let autofocus: boolean;
-    export let selectedReceiver: UserMention | undefined = undefined;
+    export let selectedReceiver: UserOrUserGroup | undefined = undefined;
 
     let showMentionPicker = false;
     let textValue: string = "";
@@ -22,7 +22,7 @@
         }
     }
 
-    function selectReceiver(ev: CustomEvent<UserMention>) {
+    function selectReceiver(ev: CustomEvent<UserOrUserGroup>) {
         selectedReceiver = ev.detail;
         showMentionPicker = false;
         textValue = "";

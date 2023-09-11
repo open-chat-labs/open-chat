@@ -1,6 +1,6 @@
 import type { DataContent } from "../data/data";
 
-export type UserMention = UserSummary | UserGroupSummary;
+export type UserOrUserGroup = UserSummary | UserGroupSummary;
 
 export type UserGroupSummary = {
     kind: "user_group";

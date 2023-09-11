@@ -322,6 +322,7 @@ import type {
     UpdateUserGroupResponse,
     SetMemberDisplayNameResponse,
     UserGroupSummary,
+    UserOrUserGroup,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -4774,9 +4775,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     // the key might be a username or it might be a user group name
-    getUserLookupForMentions(): Record<string, UserSummary | UserGroupSummary> {
+    getUserLookupForMentions(): Record<string, UserOrUserGroup> {
         if (this._userLookupForMentions === undefined) {
-            const lookup = {} as Record<string, UserSummary | UserGroupSummary>;
+            const lookup = {} as Record<string, UserOrUserGroup>;
             const userStore = this._liveState.userStore;
             for (const member of this._liveState.currentChatMembers) {
                 const userId = member.userId;
@@ -4800,16 +4801,20 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._userLookupForMentions;
     }
 
-    lookupUserForMention(username: string, includeSelf: boolean): UserSummary | undefined {
+    lookupUserForMention(username: string, includeSelf: boolean): UserOrUserGroup | undefined {
         const lookup = this.getUserLookupForMentions();
 
-        const user = lookup[username.toLowerCase()];
+        const userOrGroup = lookup[username.toLowerCase()];
+        if (userOrGroup === undefined) return undefined;
 
-        return user !== undefined &&
-            user.kind === "user" &&
-            (includeSelf || user.userId !== this.user.userId)
-            ? user
-            : undefined;
+        switch (userOrGroup.kind) {
+            case "user_group":
+                return userOrGroup;
+            default:
+                return includeSelf || userOrGroup.userId !== this.user.userId
+                    ? userOrGroup
+                    : undefined;
+        }
     }
 
     // **** Communities Stuff

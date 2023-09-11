@@ -17,6 +17,7 @@
 
     $: singleEmoji = isSingleEmoji(text);
     $: userStore = client.userStore;
+    $: userGroups = client.currentCommunityUserGroups;
     $: options = {
         breaks: !oneLine,
     };
@@ -32,6 +33,16 @@
         });
     }
 
+    function replaceUserGroupIds(text: string): string {
+        return text.replace(/@UserGroup\(([\d\w-]+)\)/g, (match, p1) => {
+            const u = $userGroups.find((ug) => ug.id === Number(p1));
+            if (u !== undefined) {
+                return `**@${u.name}**`;
+            }
+            return match;
+        });
+    }
+
     function replaceDatetimes(text: string): string {
         return text.replace(/@DateTime\((\d+)\)/g, (_, p1) => {
             return client.toDatetimeString(new Date(Number(p1)));
@@ -39,7 +50,7 @@
     }
 
     $: {
-        let parsed = replaceUserIds(replaceDatetimes(text));
+        let parsed = replaceUserGroupIds(replaceUserIds(replaceDatetimes(text)));
         try {
             if (inline) {
                 parsed = marked.parseInline(parsed, options) as string;

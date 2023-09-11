@@ -2,13 +2,13 @@
     import Avatar from "./Avatar.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { createEventDispatcher, getContext } from "svelte";
-    import type { OpenChat, UserMention } from "openchat-client";
+    import type { OpenChat, UserOrUserGroup } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     const dispatch = createEventDispatcher();
 
     const client = getContext<OpenChat>("client");
 
-    export let userOrGroup: UserMention;
+    export let userOrGroup: UserOrUserGroup;
 
     $: name =
         userOrGroup.kind === "user_group" ? userOrGroup.name : client.getDisplayName(userOrGroup);
