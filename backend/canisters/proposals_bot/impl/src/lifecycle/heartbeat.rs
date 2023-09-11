@@ -153,6 +153,7 @@ mod retrieve_proposals {
 
 mod push_proposals {
     use super::*;
+    use ic_cdk::api::call::RejectionCode;
 
     pub fn run() {
         if let Some(ProposalToPush {
@@ -228,9 +229,12 @@ mod push_proposals {
             channel_rules_accepted: None,
         };
 
-        let failed = community_canister_c2c_client::send_message(community_id.into(), &send_message_args)
-            .await
-            .is_err();
+        let failed = match community_canister_c2c_client::send_message(community_id.into(), &send_message_args).await {
+            // If the messageId has already been used, treat that as success
+            Err((code, error)) if code == RejectionCode::CanisterError && error.contains("MessageId") => false,
+            Err(_) => true,
+            _ => false,
+        };
 
         mark_proposal_pushed(governance_canister_id, proposal, message_id, failed);
     }
