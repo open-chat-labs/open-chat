@@ -65,8 +65,8 @@ impl Job for RetrySendingFailedMessagesJob {
                     .get(&self.recipient.into())
                     .map(|c| c.get_pending_messages())
                     .unwrap_or_default(),
-                state.data.username.clone(),
-                state.data.display_name.clone(),
+                state.data.username.value.clone(),
+                state.data.display_name.value.clone(),
                 state.data.avatar.value.as_ref().map(|d| d.id),
             )
         });

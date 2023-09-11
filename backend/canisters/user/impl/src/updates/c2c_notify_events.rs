@@ -2,6 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
+use types::Timestamped;
 use user_canister::c2c_notify_user_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::Event;
@@ -22,10 +23,12 @@ fn c2c_notify_events_impl(args: Args, state: &mut RuntimeState) -> Response {
 fn process_event(event: Event, state: &mut RuntimeState) {
     match event {
         Event::UsernameChanged(ev) => {
-            state.data.username = ev.username;
+            let now = state.env.now();
+            state.data.username = Timestamped::new(ev.username, now);
         }
         Event::DisplayNameChanged(ev) => {
-            state.data.display_name = ev.display_name;
+            let now = state.env.now();
+            state.data.display_name = Timestamped::new(ev.display_name, now);
         }
         Event::PhoneNumberConfirmed(ev) => {
             state.data.phone_is_verified = true;
