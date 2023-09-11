@@ -1120,6 +1120,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
+ "instruction_counts_log",
  "itertools",
  "ledger_utils",
  "local_user_index_canister",
@@ -1855,6 +1856,7 @@ dependencies = [
  "ic-ledger-types",
  "ic-stable-structures",
  "icp_ledger_canister_c2c_client",
+ "instruction_counts_log",
  "itertools",
  "lazy_static",
  "ledger_utils",
@@ -2592,6 +2594,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "instruction_counts_log"
+version = "0.1.0"
+dependencies = [
+ "ic-stable-structures",
+ "msgpack",
+ "serde",
+ "types",
 ]
 
 [[package]]

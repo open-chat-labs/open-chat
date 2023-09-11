@@ -10,6 +10,13 @@ fn updates(args: Args) -> Response {
 }
 
 fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Response {
+    let username = state.data.username.if_set_after(updates_since).cloned();
+    let display_name = state
+        .data
+        .display_name
+        .if_set_after(updates_since)
+        .map_or(OptionUpdate::NoChange, |update| OptionUpdate::from_update(update.clone()));
+
     let avatar_id = state
         .data
         .avatar
@@ -24,7 +31,9 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         .if_set_after(updates_since)
         .map(|user_ids| user_ids.iter().copied().collect());
 
-    let has_any_updates = avatar_id.has_update()
+    let has_any_updates = username.is_some()
+        || display_name.has_update()
+        || avatar_id.has_update()
         || blocked_users.is_some()
         || avatar_id.has_update()
         || state.data.direct_chats.any_updated(updates_since)
@@ -99,6 +108,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
 
     Success(SuccessResult {
         timestamp: now,
+        username,
+        display_name,
         direct_chats,
         group_chats,
         favourite_chats,

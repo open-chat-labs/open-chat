@@ -1,10 +1,10 @@
 use crate::lifecycle::UPGRADE_BUFFER_SIZE;
 use crate::memory::get_upgrades_memory;
-use crate::model::upgrade_instruction_counts::InstructionCountFunctionId;
 use crate::take_state;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::pre_upgrade;
 use ic_stable_structures::writer::{BufferedWriter, Writer};
+use instruction_counts_log::InstructionCountFunctionId;
 use tracing::info;
 
 #[pre_upgrade]

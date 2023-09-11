@@ -27,7 +27,8 @@
     let crypto = msg.content.kind === "crypto_content";
 
     $: sender = $userStore[senderId];
-    $: username = client.getDisplayName(sender);
+    $: communityMembers = client.currentCommunityMembers;
+    $: username = client.getDisplayName(sender, $communityMembers);
     $: userStore = client.userStore;
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = client.fillMessage(msg);

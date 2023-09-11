@@ -35,7 +35,7 @@ pub mod happy_path {
     use ic_test_state_machine_client::StateMachine;
     use types::{
         AccessRules, ChatId, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId, Reaction, TextContent,
-        UserId,
+        TimestampMillis, UserId,
     };
 
     pub fn send_text_message(
@@ -215,7 +215,7 @@ pub mod happy_path {
         let response = super::leave_group(
             env,
             user.principal,
-            user.user_id.into(),
+            user.canister(),
             &user_canister::leave_group::Args {
                 chat_id: group_id,
                 correlation_id: 0,
@@ -223,5 +223,23 @@ pub mod happy_path {
         );
 
         assert!(matches!(response, user_canister::leave_group::Response::Success));
+    }
+
+    pub fn updates(
+        env: &StateMachine,
+        user: &User,
+        updates_since: TimestampMillis,
+    ) -> Option<user_canister::updates::SuccessResult> {
+        let response = super::updates(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::updates::Args { updates_since },
+        );
+
+        match response {
+            user_canister::updates::Response::Success(result) => Some(result),
+            user_canister::updates::Response::SuccessNoUpdates => None,
+        }
     }
 }

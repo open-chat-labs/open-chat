@@ -25,8 +25,7 @@
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
             const u = $userStore[p1];
             if (u !== undefined) {
-                const displayName = client.getDisplayName(u);
-                return `**[@${displayName}](/user/${u.userId})**`;
+                return `**[@${u.username}](/user/${u.userId})**`;
             }
             return match;
         });

@@ -15,20 +15,14 @@ fn register_users() {
         .map(|_| client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index))
         .collect();
 
-    let response = client::user_index::users(
+    let user_summaries = client::user_index::happy_path::users(
         env,
         users[0].principal,
         canister_ids.user_index,
-        &user_index_canister::users::Args {
-            user_groups: vec![user_index_canister::users_v2::UserGroup {
-                users: users.iter().map(|u| u.user_id).collect(),
-                updated_since: 0,
-            }],
-        },
+        users.iter().map(|u| u.user_id).collect(),
     );
 
-    let user_index_canister::users::Response::Success(result) = response;
-    assert_eq!(result.users.len(), user_count);
+    assert_eq!(user_summaries.len(), user_count);
 }
 
 #[test]
@@ -66,21 +60,10 @@ fn register_user_with_duplicate_username_appends_suffix() {
 
     env.tick();
 
-    let response = client::user_index::users(
-        env,
-        first_user_principal.unwrap(),
-        canister_ids.user_index,
-        &user_index_canister::users::Args {
-            user_groups: vec![user_index_canister::users_v2::UserGroup {
-                users: user_ids,
-                updated_since: 0,
-            }],
-        },
-    );
+    let user_summaries =
+        client::user_index::happy_path::users(env, first_user_principal.unwrap(), canister_ids.user_index, user_ids);
 
-    let user_index_canister::users::Response::Success(result) = response;
-
-    let usernames: Vec<_> = result.users.into_iter().flat_map(|u| u.username).sorted_unstable().collect();
+    let usernames: Vec<_> = user_summaries.into_iter().map(|u| u.username).sorted_unstable().collect();
 
     let expected_usernames: Vec<_> = (1..=user_count)
         .map(|i| if i == 1 { username.clone() } else { format!("{username}{i}") })
