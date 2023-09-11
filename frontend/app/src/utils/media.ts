@@ -1,5 +1,5 @@
 export function pauseAnyPlayingMedia(except?: HTMLMediaElement) {
-    const mediaElements = [
+    const mediaElements: HTMLMediaElement[] = [
         ...window.document.getElementsByTagName("audio"),
         ...window.document.getElementsByTagName("video")
     ];
