@@ -38,6 +38,7 @@
         chatIdentifiersEqual,
         nullMembership,
         routeForChatIdentifier,
+        routeForMessage,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -246,7 +247,23 @@
                 }
                 const preview = await client.previewChat(chatId);
                 if (preview.kind === "group_moved") {
-                    page.replace(routeForChatIdentifier($chatListScope.kind, preview.location));
+                    if (messageIndex !== undefined) {
+                        if (threadMessageIndex !== undefined) {
+                            page.replace(routeForMessage(
+                                "community",
+                                { chatId: preview.location, threadRootMessageIndex: messageIndex },
+                                threadMessageIndex)
+                            );
+                        } else {
+                            page.replace(routeForMessage(
+                                "community",
+                                { chatId: preview.location },
+                                messageIndex)
+                            );
+                        }
+                    } else {
+                        page.replace(routeForChatIdentifier($chatListScope.kind, preview.location));
+                    }
                 } else if (preview.kind === "failure") {
                     page.replace(routeForScope(client.getDefaultScope()));
                     return;
