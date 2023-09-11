@@ -30,7 +30,7 @@ export function getTheme(base: Theme): Theme {
     base.button.disabled = silver;
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = white;
-    base.accent = silver;
+    base.accent = raspberry;
     base.panel.left.bg = veryDarkGray;
     base.panel.right.modal = lighterDarkGray;
     base.modal.bd = raspberry;
