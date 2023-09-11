@@ -584,6 +584,8 @@ type UpdatesArgs = record {
 type UpdatesResponse = variant {
     Success : record {
         timestamp : TimestampMillis;
+        username : opt text;
+        display_name : TextUpdate;
         direct_chats : DirectChatsUpdates;
         group_chats : GroupChatsUpdates;
         favourite_chats : FavouriteChatsUpdates;
