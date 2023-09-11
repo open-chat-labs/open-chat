@@ -354,7 +354,8 @@
         "ownerAndAdminsAndModerators": "Eigentümer, Administratoren und Moderatoren können",
         "updateDetails": "Bearbeiten Sie grundlegende Informationen",
         "createPublicChannel": "Erstellen Sie öffentliche Kanäle",
-        "createPrivateChannel": "Erstellen Sie private Kanäle"
+        "createPrivateChannel": "Erstellen Sie private Kanäle",
+        "manageUserGroups": "Benutzergruppen verwalten"
     },
     "rules": {
         "enable": "Regeln aktivieren",
@@ -622,7 +623,8 @@
         "settings": "Einstellungen",
         "label": "Profil",
         "communities": "Gemeinschaften",
-        "selectCommunity": "Wählen Sie eine Community aus"
+        "selectCommunity": "Wählen Sie eine Community aus",
+        "global": "Global"
     },
     "undeleteMessage": "Wiederherstellen",
     "undeletingMessage": "Nachricht von {username} auf {timestamp} wird gelöscht",
@@ -894,7 +896,8 @@
             "leaveFailed": "Es tut uns leid, dass wir diese Community nicht verlassen konnten",
             "deleteFailed": "Leider konnten wir diese Community nicht löschen",
             "convertFailed": "Leider konnten wir Ihre Gruppen nicht in eine Community umwandeln",
-            "importFailed": "Leider konnten wir Ihre Gruppe nicht importieren"
+            "importFailed": "Leider konnten wir Ihre Gruppe nicht importieren",
+            "deleteUserGroupFailed": "Leider konnten wir die Benutzergruppe nicht löschen"
         },
         "memberCount": "Mitglied(er)",
         "channelCount": "Kanal(e)",
@@ -927,7 +930,13 @@
         "saveChanges": "Änderungen speichern",
         "exploreMobile": "Erkunden",
         "publicChannels": "Öffentliche Kanäle",
-        "underReview": "Wird überprüft"
+        "underReview": "Wird überprüft",
+        "userGroups": "Benutzergruppen",
+        "noUserGroups": "Keine Benutzergruppen gefunden",
+        "userGroupMembers": "Mitglieder der Benutzergruppe",
+        "enterUserGroupName": "Geben Sie den Namen der Benutzergruppe ein",
+        "communityLabel": "Gemeinschaft",
+        "confirmDeleteUserGroup": "Sind Sie sicher, dass Sie diese Benutzergruppe löschen möchten?"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",

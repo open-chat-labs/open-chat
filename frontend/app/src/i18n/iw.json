@@ -360,7 +360,8 @@
         "ownerAndAdminsAndModerators": "בעלים, מנהלים ומנחים יכולים",
         "updateDetails": "לערוך מידע בסיסי",
         "createPublicChannel": "ליצור ערוצים ציבוריים",
-        "createPrivateChannel": "ליצור ערוצים פרטיים"
+        "createPrivateChannel": "ליצור ערוצים פרטיים",
+        "manageUserGroups": "לנהל קבוצות משתמשים"
     },
     "rules": {
         "enable": "אפשר כללים",
@@ -618,7 +619,8 @@
         "settings": "הגדרות",
         "label": "פּרוֹפִיל",
         "communities": "קהילות",
-        "selectCommunity": "בחר קהילה"
+        "selectCommunity": "בחר קהילה",
+        "global": "גלוֹבָּלִי"
     },
     "undeleteMessage": "בטל מחיקה",
     "undeletingMessage": "ביטול מחיקת הודעה מאת {username} ב-{timestamp}",
@@ -890,7 +892,8 @@
             "leaveFailed": "מצטערים שלא הצלחנו לעזוב את הקהילה הזו",
             "deleteFailed": "מצטערים שלא הצלחנו למחוק את הקהילה הזו",
             "convertFailed": "מצטערים אבל לא הצלחנו להמיר את הקבוצות שלך לקהילה",
-            "importFailed": "מצטערים שלא הצלחנו לייבא את הקבוצה שלך"
+            "importFailed": "מצטערים שלא הצלחנו לייבא את הקבוצה שלך",
+            "deleteUserGroupFailed": "מצטערים שלא הצלחנו למחוק את קבוצת המשתמשים"
         },
         "memberCount": "חבר/ים",
         "channelCount": "ערוץ(ים)",
@@ -923,7 +926,13 @@
         "saveChanges": "שמור שינויים",
         "exploreMobile": "לַחקוֹר",
         "publicChannels": "ערוצים ציבוריים",
-        "underReview": "בבדיקה"
+        "underReview": "בבדיקה",
+        "userGroups": "קבוצות משתמש",
+        "noUserGroups": "לא נמצאו קבוצות משתמשים",
+        "userGroupMembers": "חברי קבוצת משתמשים",
+        "enterUserGroupName": "הזן את שם קבוצת המשתמשים",
+        "communityLabel": "קהילה",
+        "confirmDeleteUserGroup": "האם אתה בטוח שברצונך למחוק את קבוצת המשתמשים הזו?"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",

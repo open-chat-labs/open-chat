@@ -43,8 +43,8 @@
     let usersDirty = false;
     let saving = false;
 
-    const MIN_LENGTH = 3; // TODO - check what this actually *is*
-    const MAX_LENGTH = 25; // TODO - check what this actually *is*
+    const MIN_LENGTH = 3;
+    const MAX_LENGTH = 25;
 
     // we are going to just wait for the save to succeed here rather than mess about with
     // local updates since this is probably not a very common operation and it's much simpler this way
@@ -101,10 +101,10 @@
     }
 
     function createLookup(
-        users: Map<string, Member>,
+        members: Map<string, Member>,
         allUsers: UserLookup
     ): Record<string, UserSummary> {
-        return [...users.values()].reduce((map, m) => {
+        return [...members.values()].reduce((map, m) => {
             const user = allUsers[m.userId];
             if (user !== undefined) {
                 map[user.userId] = { ...user, displayName: m.displayName ?? user.displayName };

@@ -351,7 +351,8 @@
         "ownerAndAdminsAndModerators": "所有者、管理员和版主可以",
         "updateDetails": "编辑基本信息",
         "createPublicChannel": "创建公共频道",
-        "createPrivateChannel": "创建私人频道"
+        "createPrivateChannel": "创建私人频道",
+        "manageUserGroups": "管理用户组"
     },
     "rules": {
         "enable": "启用群规",
@@ -620,7 +621,8 @@
         "settings": "设置",
         "label": "个人资料",
         "communities": "社区",
-        "selectCommunity": "选择一个社区"
+        "selectCommunity": "选择一个社区",
+        "global": "全球的"
     },
     "undeleteMessage": "取消删除",
     "undeletingMessage": "{username} 在 {timestamp} 上取消删除消息",
@@ -892,7 +894,8 @@
             "leaveFailed": "抱歉我们无法离开这个社区",
             "deleteFailed": "抱歉，我们无法删除此社区",
             "convertFailed": "抱歉，我们无法将您的群组转换为社区",
-            "importFailed": "抱歉，我们无法导入您的群组"
+            "importFailed": "抱歉，我们无法导入您的群组",
+            "deleteUserGroupFailed": "抱歉，我们无法删除用户组"
         },
         "memberCount": "会员",
         "channelCount": "频道",
@@ -925,7 +928,13 @@
         "saveChanges": "保存更改",
         "exploreMobile": "探索",
         "publicChannels": "公共频道",
-        "underReview": "审核中"
+        "underReview": "审核中",
+        "userGroups": "用户组",
+        "noUserGroups": "未找到用户组",
+        "userGroupMembers": "用户组成员",
+        "enterUserGroupName": "输入用户组名称",
+        "communityLabel": "社区",
+        "confirmDeleteUserGroup": "您确定要删除该用户组吗？"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",

@@ -434,9 +434,7 @@
     function mention(ev: CustomEvent<UserOrUserGroup>): void {
         const userOrGroup = ev.detail;
         const username =
-            userOrGroup.kind === "user_group"
-                ? userOrGroup.name
-                : client.getDisplayName(userOrGroup, $communityMembers);
+            userOrGroup.kind === "user_group" ? userOrGroup.name : userOrGroup.username;
         const userLabel = `@${username}`;
 
         replaceTextWith(userLabel);

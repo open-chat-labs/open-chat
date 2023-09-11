@@ -352,7 +352,8 @@
         "ownerAndAdminsAndModerators": "Proprietari, amministratori e moderatori possono farlo",
         "updateDetails": "modificare le informazioni di base",
         "createPublicChannel": "creare canali pubblici",
-        "createPrivateChannel": "creare canali privati"
+        "createPrivateChannel": "creare canali privati",
+        "manageUserGroups": "gestire i gruppi di utenti"
     },
     "rules": {
         "enable": "Abilita regole",
@@ -620,7 +621,8 @@
         "settings": "Impostazioni",
         "label": "Profilo",
         "communities": "Comunità",
-        "selectCommunity": "Seleziona una comunità"
+        "selectCommunity": "Seleziona una comunità",
+        "global": "Globale"
     },
     "undeleteMessage": "Annulla cancellazione",
     "undeletingMessage": "Annullamento dell'eliminazione del messaggio di {username} su {timestamp}",
@@ -892,7 +894,8 @@
             "leaveFailed": "Spiacenti, non siamo riusciti a lasciare questa community",
             "deleteFailed": "Spiacenti, non siamo riusciti a eliminare questa community",
             "convertFailed": "Siamo spiacenti ma non siamo riusciti a convertire i tuoi gruppi in una community",
-            "importFailed": "Spiacenti, non siamo riusciti a importare il tuo gruppo"
+            "importFailed": "Spiacenti, non siamo riusciti a importare il tuo gruppo",
+            "deleteUserGroupFailed": "Siamo spiacenti, non siamo riusciti a eliminare il gruppo utenti"
         },
         "memberCount": "membri)",
         "channelCount": "canale(i)",
@@ -925,7 +928,13 @@
         "saveChanges": "Salvare le modifiche",
         "exploreMobile": "Esplorare",
         "publicChannels": "Canali pubblici",
-        "underReview": "In corso di revisione"
+        "underReview": "In corso di revisione",
+        "userGroups": "Gruppi di utenti",
+        "noUserGroups": "Nessun gruppo utenti trovato",
+        "userGroupMembers": "Membri del gruppo utenti",
+        "enterUserGroupName": "Inserisci il nome del gruppo utenti",
+        "communityLabel": "Comunità",
+        "confirmDeleteUserGroup": "Sei sicuro di voler eliminare questo gruppo utenti?"
     },
     "groupCreatedBy": "{username} ha creato {level}",
     "groupName": "{level} nome",

@@ -352,7 +352,8 @@
         "ownerAndAdminsAndModerators": "Владельцы, администраторы и модераторы могут",
         "updateDetails": "изменить основную информацию",
         "createPublicChannel": "создавать публичные каналы",
-        "createPrivateChannel": "создавать приватные каналы"
+        "createPrivateChannel": "создавать приватные каналы",
+        "manageUserGroups": "управлять группами пользователей"
     },
     "rules": {
         "enable": "Включить правила",
@@ -620,7 +621,8 @@
         "settings": "Настройки",
         "label": "Профиль",
         "communities": "Сообщества",
-        "selectCommunity": "Выберите сообщество"
+        "selectCommunity": "Выберите сообщество",
+        "global": "Глобальный"
     },
     "undeleteMessage": "Восстановить",
     "undeletingMessage": "Восстановление сообщения от {username} на {timestamp}",
@@ -892,7 +894,8 @@
             "leaveFailed": "Извините, мы не смогли покинуть это сообщество",
             "deleteFailed": "К сожалению, мы не смогли удалить это сообщество",
             "convertFailed": "Извините, но нам не удалось преобразовать ваши группы в сообщество",
-            "importFailed": "К сожалению, нам не удалось импортировать вашу группу"
+            "importFailed": "К сожалению, нам не удалось импортировать вашу группу",
+            "deleteUserGroupFailed": "К сожалению, нам не удалось удалить группу пользователей."
         },
         "memberCount": "член (ы)",
         "channelCount": "каналы)",
@@ -925,7 +928,13 @@
         "saveChanges": "Сохранить изменения",
         "exploreMobile": "Исследовать",
         "publicChannels": "Общедоступные каналы",
-        "underReview": "На рассмотрении"
+        "underReview": "На рассмотрении",
+        "userGroups": "Группы пользователей",
+        "noUserGroups": "Группы пользователей не найдены",
+        "userGroupMembers": "Члены группы пользователей",
+        "enterUserGroupName": "Введите имя группы пользователей",
+        "communityLabel": "Сообщество",
+        "confirmDeleteUserGroup": "Вы уверены, что хотите удалить эту группу пользователей?"
     },
     "groupCreatedBy": "{username} создал {level}",
     "groupName": "{level} имя",
