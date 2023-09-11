@@ -12,7 +12,8 @@
 
     $: date = new Date(Number(content.timestamp));
     $: timestampStr = `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`;
-    $: username = client.getDisplayNameById(content.deletedBy);
+    $: communityMembers = client.currentCommunityMembers;
+    $: username = client.getDisplayNameById(content.deletedBy, $communityMembers);
 </script>
 
 <div class="deleted">

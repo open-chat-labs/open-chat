@@ -15,7 +15,7 @@ use ledger_utils::default_ledger_account;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use notifications_canister::c2c_push_notification;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -139,9 +139,12 @@ struct Data {
     pub test_mode: bool,
     pub is_platform_moderator: bool,
     pub hot_group_exclusions: HotGroupExclusions,
-    pub username: String,
-    pub display_name: Option<String>,
-    pub bio: String,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    pub username: Timestamped<String>,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    pub display_name: Timestamped<Option<String>>,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    pub bio: Timestamped<String>,
     pub cached_group_summaries: Option<CachedGroupSummaries>,
     pub storage_limit: u64,
     pub phone_is_verified: bool,
@@ -152,6 +155,14 @@ struct Data {
     pub contacts: Contacts,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub fire_and_forget_handler: FireAndForgetHandler,
+}
+
+fn deserialize_to_timestamped<'de, D: Deserializer<'de>, T: Deserialize<'de>>(
+    deserializer: D,
+) -> Result<Timestamped<T>, D::Error> {
+    let value: T = T::deserialize(deserializer)?;
+
+    Ok(Timestamped::new(value, 0))
 }
 
 impl Data {
@@ -182,9 +193,9 @@ impl Data {
             test_mode,
             is_platform_moderator: false,
             hot_group_exclusions: HotGroupExclusions::default(),
-            username,
-            display_name,
-            bio: "".to_string(),
+            username: Timestamped::new(username, now),
+            display_name: Timestamped::new(display_name, now),
+            bio: Timestamped::new("".to_string(), now),
             cached_group_summaries: None,
             storage_limit: 0,
             phone_is_verified: false,

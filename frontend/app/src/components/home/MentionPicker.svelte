@@ -20,6 +20,7 @@
 
     let index = 0;
     $: userStore = client.userStore;
+    $: communityMembers = client.currentCommunityMembers;
     $: itemHeight = $mobileWidth ? 53 : 55;
     $: borderWidth = direction === "up" ? 2 : 3;
     $: maxHeight =
@@ -31,8 +32,10 @@
             (mentionSelf || user.userId !== currentUser.userId) &&
             (prefixLower === undefined ||
                 user.username.toLowerCase().startsWith(prefixLower) ||
-                (user.displayName !== undefined &&
-                    user.displayName.toLowerCase().startsWith(prefixLower)))
+                client
+                    .getDisplayName(user, $communityMembers)
+                    .toLowerCase()
+                    .startsWith(prefixLower))
     );
 
     $: style =
@@ -96,7 +99,7 @@
                 </div>
                 <div slot="text">
                     <span class="display-name">
-                        {item.displayName ?? item.username}
+                        {client.getDisplayName(item, $communityMembers)}
                     </span>
                     <span class="username">
                         @{item.username}

@@ -3500,14 +3500,14 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getDisplayNameById(userId: string, inGlobalContext = false) : string {
+    getDisplayNameById(userId: string, communityMembers?: Map<string, Member>) : string {
         const user = this._liveState.userStore[userId];
-        return this.getDisplayName(user, inGlobalContext);
+        return this.getDisplayName(user, communityMembers);
     }
 
-    getDisplayName(user: {userId: string, username: string, displayName?: string} | undefined, inGlobalContext = false): string {
+    getDisplayName(user: {userId: string, username: string, displayName?: string} | undefined, communityMembers?: Map<string, Member>): string {
         if (user !== undefined) {
-            const member = inGlobalContext ? undefined : this._liveState.currentCommunityMembers.get(user.userId);
+            const member = communityMembers?.get(user.userId);
             const displayName = member?.displayName ?? user.displayName ?? user.username;
             if (displayName?.length > 0) {
                 return displayName;
@@ -4819,7 +4819,6 @@ export class OpenChat extends OpenChatAgentWorker {
             }
         }
 
-        communityStateStore.clear(id);
         if (clearChat) {
             this.clearSelectedChat();
         }

@@ -33,6 +33,7 @@ mod setup;
 mod storage;
 mod suspend_user_tests;
 mod update_group_tests;
+mod update_profile_tests;
 mod utils;
 mod wasms;
 

@@ -45,8 +45,8 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                         args.user_id.into(),
                         args.message_id,
                         args.reaction,
-                        state.data.username.clone(),
-                        state.data.display_name.clone(),
+                        state.data.username.value.clone(),
+                        state.data.display_name.value.clone(),
                         state.data.avatar.value.as_ref().map(|d| d.id),
                         &state.data.fire_and_forget_handler,
                     );
