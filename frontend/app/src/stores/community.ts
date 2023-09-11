@@ -41,6 +41,5 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
         },
         primaryLanguage: "en",
         metrics: emptyChatMetrics(),
-        userGroups: [],
     };
 }

@@ -1503,6 +1503,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
 export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): CommunitySummary {
     const communityId = candid.community_id.toString();
     return {
+        kind: "community",
         id: { kind: "community", communityId },
         name: candid.name,
         description: candid.description,

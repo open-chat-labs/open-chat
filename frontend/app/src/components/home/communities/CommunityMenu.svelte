@@ -9,7 +9,6 @@
     import FileDocument from "svelte-material-icons/FileDocument.svelte";
     import PlaylistPlus from "svelte-material-icons/PlaylistPlus.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import AccountGroup from "../../icons/AccountGroup.svelte";
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Menu from "../../Menu.svelte";

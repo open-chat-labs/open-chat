@@ -57,6 +57,7 @@ export type CommunitySummary = AccessControlled &
     HasLevel &
     HasMembershipRole &
     Permissioned<CommunityPermissions> & {
+        kind: "community";
         name: string;
         id: CommunityIdentifier;
         latestEventIndex: number;

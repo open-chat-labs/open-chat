@@ -265,7 +265,7 @@
             {/each}
         </div>
     {/if}
-{:else if collection.level === "community"}
+{:else if collection.kind === "community"}
     <div class="user-groups">
         <UserGroups bind:this={userGroups} community={collection} />
     </div>

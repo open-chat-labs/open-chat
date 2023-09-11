@@ -91,6 +91,7 @@ export function mergeCommunityUpdates(
             .concat(channelsAdded);
 
         return {
+            kind: community.kind,
             id: community.id,
             name: c?.name ?? community?.name,
             latestEventIndex: c?.latestEventIndex ?? community.latestEventIndex,
