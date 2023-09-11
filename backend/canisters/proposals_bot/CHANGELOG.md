@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.843](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.843-proposals_bot)] - 2023-09-11
+
 ### Changed
 
 - Mark proposal message as successfully sent if messageId already in use ([#4344](https://github.com/open-chat-labs/open-chat/pull/4344))
