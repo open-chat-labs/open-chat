@@ -16,6 +16,7 @@ const defaultPermissions: CommunityPermissions = {
 
 export function createCandidateCommunity(id: string, index: number): CommunitySummary {
     return {
+        kind: "community",
         id: { kind: "community", communityId: id },
         name: "",
         description: "",
