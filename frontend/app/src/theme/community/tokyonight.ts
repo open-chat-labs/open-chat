@@ -2,7 +2,6 @@ import type { Theme } from "../types";
 
 // Colors
 const white = "#FFFFFF";
-const black = "#000000";
 const raspberry = "#971E57";
 const darkGray = "#696969";
 const silver = "#C0C0C0";
@@ -34,8 +33,8 @@ export function getTheme(base: Theme): Theme {
     base.panel.right.modal = lighterDarkGray;
     base.modal.bd = darkGray;
     base.modal.bg = lighterDarkGray;
-    base.chatSummary["bg-selected"] = "rgb(54,59,62 / 50%)";
-    base.chatSummary.hv = "rgb(24,24,24 / 80%)";
+    base.chatSummary["bg-selected"] = "rgb(54 59 62 / 50%)";
+    base.chatSummary.hv = "rgb(24 24 24 / 80%)";
     base.chatSummary.del = base.button.bg;
     base.members.hv = base.chatSummary.hv;
     base.placeholder = silver;
