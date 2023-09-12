@@ -20,6 +20,8 @@
     let confirmingDelete = false;
     let groupToDelete: UserGroupDetails | undefined = undefined;
 
+    $: userStore = client.userStore;
+    $: communityMembers = client.currentCommunityMembers;
     $: userGroupsMap = client.currentCommunityUserGroups;
     $: userGroups = [...$userGroupsMap.values()];
     $: canManageUserGroups = client.canManageUserGroups(community.id);
@@ -80,6 +82,8 @@
     <UserGroup
         {canManageUserGroups}
         {community}
+        communityMembers={$communityMembers}
+        userStore={$userStore}
         on:cancel={() => (selectedGroup = undefined)}
         original={selectedGroup} />
 {:else}

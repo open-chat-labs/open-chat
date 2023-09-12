@@ -25,6 +25,8 @@
     export let community: CommunitySummary;
     export let original: UserGroupDetails;
     export let canManageUserGroups: boolean;
+    export let userStore: UserLookup;
+    export let communityMembers: Map<string, Member>;
 
     let userGroup = { ...original };
     let added: Set<string> = new Set();
@@ -34,12 +36,13 @@
     let searchVirtualList: VirtualList;
 
     onMount(() => {
-        communityUsers = createLookup($communityMembers, $allUsers);
+        const start = Date.now();
+        communityUsers = createLookup(communityMembers, userStore);
         communityUsersList = Object.values(communityUsers);
+        const end = Date.now();
+        console.log("Built member lookup: ", end - start);
     });
 
-    $: communityMembers = client.currentCommunityMembers;
-    $: allUsers = client.userStore;
     $: searchTermLower = searchTerm.toLowerCase();
     $: groupUsers = [...userGroup.members]
         .map((m) => communityUsers[m])
@@ -219,7 +222,7 @@
     }
 
     .searched-users {
-        max-height: 50%;
+        max-height: calc(var(--vh, 1vh) * 50);
     }
 
     .user-group {
