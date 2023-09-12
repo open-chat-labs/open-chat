@@ -13,10 +13,11 @@
         CommunitySummary,
     } from "openchat-client";
     import Search from "../../../Search.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import User from "../../groupdetails/User.svelte";
     import { iconSize } from "../../../../stores/iconSize";
     import { toastStore } from "../../../../stores/toast";
+    import VirtualList from "../../../VirtualList.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -28,13 +29,22 @@
     let userGroup = { ...original };
     let added: Set<string> = new Set();
     let removed: Set<string> = new Set();
+    let communityUsers: Record<string, UserSummary> = {};
+    let communityUsersList: UserSummary[] = [];
+    let searchVirtualList: VirtualList;
+
+    onMount(() => {
+        communityUsers = createLookup($communityMembers, $allUsers);
+        communityUsersList = Object.values(communityUsers);
+    });
 
     $: communityMembers = client.currentCommunityMembers;
     $: allUsers = client.userStore;
-
-    $: communityUsers = createLookup($communityMembers, $allUsers);
-    $: groupUsers = [...userGroup.members].map((m) => communityUsers[m]);
-    $: matchedUsers = Object.values(communityUsers).filter((u) => matchesSearch(searchTerm, u));
+    $: searchTermLower = searchTerm.toLowerCase();
+    $: groupUsers = [...userGroup.members]
+        .map((m) => communityUsers[m])
+        .filter((u) => u !== undefined);
+    $: matchedUsers = communityUsersList.filter((u) => matchesSearch(searchTermLower, u));
     $: nameDirty = original.name !== userGroup.name;
     $: dirty = nameDirty || usersDirty;
     $: nameValid = userGroup.name.length >= MIN_LENGTH && userGroup.name.length <= MAX_LENGTH;
@@ -90,7 +100,7 @@
     function matchesSearch(searchTerm: string, user: UserSummary): boolean {
         // TODO - exclude anyone who is already in the group
         if (searchTerm === "") return false;
-        return user.username.toLowerCase().includes(searchTerm.toLowerCase());
+        return user.username.includes(searchTerm);
     }
 
     function addUserToGroup(user: UserSummary) {
@@ -119,7 +129,11 @@
         return [...members.values()].reduce((map, m) => {
             const user = allUsers[m.userId];
             if (user !== undefined) {
-                map[user.userId] = { ...user, displayName: m.displayName ?? user.displayName };
+                map[user.userId] = {
+                    ...user,
+                    displayName: m.displayName ?? user.displayName,
+                    username: user.username.toLowerCase(),
+                };
             }
             return map;
         }, {} as Record<string, UserSummary>);
@@ -140,15 +154,24 @@
 
     {#if canManageUserGroups}
         <div class="search">
-            <Search fill searching={false} bind:searchTerm placeholder={"searchUsersPlaceholder"} />
+            <Search
+                on:searchEntered={() => searchVirtualList?.reset()}
+                fill
+                searching={false}
+                bind:searchTerm
+                placeholder={"searchUsersPlaceholder"} />
         </div>
     {/if}
 
     {#if matchedUsers.length > 0}
-        <div class="searched-users">
-            {#each matchedUsers as user}
-                <User on:open={() => addUserToGroup(user)} {user} me={false} {searchTerm} />
-            {/each}
+        <div style={`height: ${matchedUsers.length * 80}px`} class="searched-users">
+            <VirtualList
+                bind:this={searchVirtualList}
+                keyFn={(user) => user.userId}
+                items={matchedUsers}
+                let:item>
+                <User on:open={() => addUserToGroup(item)} user={item} me={false} {searchTerm} />
+            </VirtualList>
         </div>
     {/if}
 
@@ -193,6 +216,10 @@
     .search,
     .buttons {
         padding: 0 $sp4;
+    }
+
+    .searched-users {
+        max-height: 50%;
     }
 
     .user-group {
