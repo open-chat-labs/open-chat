@@ -85,7 +85,7 @@
                 class="deleted"
                 title={$_("expandDeletedMessages")}
                 bind:this={deletedMessagesElement}
-                data-index={Math.max(...messagesDeleted)}
+                data-index={messagesDeleted.join(" ")}
                 on:click={expandDeletedMessages}>
                 {deletedText}
             </p>
