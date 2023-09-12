@@ -562,7 +562,7 @@
                     {canUndelete}
                     {canRevealDeleted}
                     {crypto}
-                    translatable={client.getMessageText(msg.content) !== undefined}
+                    translatable={(client.getMessageText(msg.content) ?? "").length > 0}
                     {translated}
                     on:collapseMessage
                     on:forward
