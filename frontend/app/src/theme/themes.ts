@@ -6,6 +6,7 @@ import { getTheme as getSubmarineTheme } from "./community/submarine";
 import { getTheme as getNightvisionTheme } from "./community/nightvision";
 import { getTheme as getMatteBlackGoldTheme } from "./community/matteblackgold";
 import { getTheme as getBarbieTheme } from "./community/barbie";
+import { getTheme as getTokyoNightTheme } from "./community/tokyonight";
 import type { Theme, Themes } from "./types";
 import { deepMerge } from "./merge";
 
@@ -19,6 +20,7 @@ export const communityThemes = [
     getNightvisionTheme(cloneTheme(dark)),
     getMatteBlackGoldTheme(cloneTheme(dark)),
     getBarbieTheme(cloneTheme(dark)),
+    getTokyoNightTheme(cloneTheme(dark)),
 ];
 
 export const themes: Themes = {
