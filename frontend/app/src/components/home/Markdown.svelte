@@ -37,8 +37,6 @@
             const u = userGroups.get(Number(p1));
             if (u !== undefined) {
                 return `**@${u.name}**`;
-            } else {
-                console.log("Didn't find user group: ", Number(p1));
             }
             return match;
         });
