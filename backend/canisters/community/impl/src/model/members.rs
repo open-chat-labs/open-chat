@@ -11,7 +11,6 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
     members: HashMap<UserId, CommunityMemberInternal>,
-    #[serde(default)]
     display_names_last_updated: TimestampMillis,
     user_groups: UserGroups,
     // This includes the userIds of community members and also users invited to the community
@@ -337,8 +336,6 @@ pub struct CommunityMemberInternal {
     pub channels_removed: Vec<Timestamped<ChannelId>>,
     pub rules_accepted: Option<Timestamped<Version>>,
     pub is_bot: bool,
-
-    #[serde(default)]
     display_name: Timestamped<Option<String>>,
 }
 

@@ -7,7 +7,6 @@ use types::{TimestampMillis, Timestamped, UserGroupDetails, UserGroupSummary, Us
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserGroups {
     groups: Vec<UserGroup>,
-    #[serde(default)]
     deleted: BTreeMap<TimestampMillis, Vec<u32>>,
     last_updated: TimestampMillis,
 }
