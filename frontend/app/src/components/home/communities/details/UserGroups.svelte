@@ -20,10 +20,11 @@
     let confirmingDelete = false;
     let groupToDelete: UserGroupDetails | undefined = undefined;
 
-    $: userGroups = client.currentCommunityUserGroups;
+    $: userGroupsMap = client.currentCommunityUserGroups;
+    $: userGroups = [...$userGroupsMap.values()];
     $: canManageUserGroups = client.canManageUserGroups(community.id);
 
-    $: matchingGroups = $userGroups.filter(matchesSearch);
+    $: matchingGroups = userGroups.filter(matchesSearch);
 
     function matchesSearch(userGroup: UserGroupDetails): boolean {
         if (searchTerm === "") return true;
