@@ -224,7 +224,8 @@ export function getMembersString(
 }
 
 function addCaption(caption: string | undefined, content: MessageContent): MessageContent {
-    return content.kind !== "text_content" &&
+    return (caption ?? "").length > 0 &&
+        content.kind !== "text_content" &&
         content.kind !== "deleted_content" &&
         content.kind !== "placeholder_content" &&
         content.kind !== "poll_content" &&
