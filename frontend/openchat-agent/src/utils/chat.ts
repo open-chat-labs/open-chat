@@ -246,19 +246,22 @@ export function mergeCommunityDetails(
         ),
         invitedUsers: updates.invitedUsers ?? previous.invitedUsers,
         rules: updates.rules ?? previous.rules,
-        userGroups: mergeUserGroups(previous.userGroups, updates.userGroups),
+        userGroups: mergeUserGroups(
+            previous.userGroups,
+            updates.userGroups,
+            updates.userGroupsDeleted,
+        ),
     };
 }
 
 function mergeUserGroups(
-    previous: UserGroupDetails[],
+    previous: Map<number, UserGroupDetails>,
     updated: UserGroupDetails[],
-): UserGroupDetails[] {
-    const map = new Map(previous.map((g) => [g.id, g]));
-    updated.forEach((g) => {
-        map.set(g.id, g);
-    });
-    return [...map.values()];
+    deleted: Set<number>,
+): Map<number, UserGroupDetails> {
+    deleted.forEach((id) => previous.delete(id));
+    updated.forEach((g) => previous.set(g.id, g));
+    return new Map(previous);
 }
 
 export function mergeGroupChatDetails(

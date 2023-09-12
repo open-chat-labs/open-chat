@@ -4,7 +4,7 @@
     import VirtualList from "../VirtualList.svelte";
 
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "openchat-client";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -20,6 +20,8 @@
     export let supportsUserGroups = false;
 
     let index = 0;
+    let usersAndGroups: UserOrUserGroup[] = [];
+
     $: userStore = client.userStore;
     $: communityMembers = client.currentCommunityMembers;
     $: itemHeight = $mobileWidth ? 53 : 55;
@@ -29,25 +31,22 @@
 
     $: prefixLower = prefix?.toLowerCase();
 
-    $: filtered = Object.values(client.getUserLookupForMentions($communityMembers)).filter(
-        (userOrGroup) => {
-            switch (userOrGroup.kind) {
-                case "user_group":
-                    return (
-                        prefixLower === undefined ||
-                        (supportsUserGroups &&
-                            userOrGroup.name.toLowerCase().startsWith(prefixLower))
-                    );
-                default:
-                    return (
-                        (mentionSelf || userOrGroup.userId !== currentUser.userId) &&
-                        (prefixLower === undefined ||
-                            userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
-                            userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
-                    );
-            }
+    $: filtered = usersAndGroups.filter((userOrGroup) => {
+        switch (userOrGroup.kind) {
+            case "user_group":
+                return (
+                    prefixLower === undefined ||
+                    (supportsUserGroups && userOrGroup.name.toLowerCase().startsWith(prefixLower))
+                );
+            default:
+                return (
+                    (mentionSelf || userOrGroup.userId !== currentUser.userId) &&
+                    (prefixLower === undefined ||
+                        userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
+                        userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
+                );
         }
-    );
+    });
 
     $: style =
         direction === "up"
@@ -57,6 +56,10 @@
             : `top: ${offset}px; height: ${
                   filtered.length * itemHeight + borderWidth
               }px; max-height: ${maxHeight}`;
+
+    onMount(() => {
+        usersAndGroups = Object.values(client.getUserLookupForMentions());
+    });
 
     const dispatch = createEventDispatcher();
 

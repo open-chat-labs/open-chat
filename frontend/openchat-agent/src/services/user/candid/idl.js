@@ -1336,8 +1336,10 @@ export const idlFactory = ({ IDL }) => {
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({
       'communities' : CommunitiesUpdates,
+      'username' : IDL.Opt(IDL.Text),
       'blocked_users' : IDL.Opt(IDL.Vec(UserId)),
       'favourite_chats' : FavouriteChatsUpdates,
+      'display_name' : TextUpdate,
       'group_chats' : GroupChatsUpdates,
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,

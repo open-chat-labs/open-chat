@@ -1651,8 +1651,10 @@ export interface UpdatesArgs { 'updates_since' : TimestampMillis }
 export type UpdatesResponse = {
     'Success' : {
       'communities' : CommunitiesUpdates,
+      'username' : [] | [string],
       'blocked_users' : [] | [Array<UserId>],
       'favourite_chats' : FavouriteChatsUpdates,
+      'display_name' : TextUpdate,
       'group_chats' : GroupChatsUpdates,
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,

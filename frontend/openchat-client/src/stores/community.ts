@@ -12,7 +12,7 @@ import { createDerivedPropStore } from "./derived";
 import { chatListScopeStore, globalStateStore } from "./global";
 import { localCommunitySummaryUpdates } from "./localCommunitySummaryUpdates";
 import { mergeLocalUpdates } from "../utils/community";
-import type { Member } from "openchat-shared";
+import type { Member, UserGroupDetails, UserGroupSummary } from "openchat-shared";
 
 // Communities which the current user is previewing
 export const communityPreviewsStore: Writable<CommunityMap<CommunitySummary>> = writable(
@@ -43,6 +43,13 @@ export const communities = derived(
     },
 );
 
+export const userGroupSummaries = derived([communities], ([$communities]) => {
+    return $communities.values().reduce((map, community) => {
+        community.userGroups.forEach((ug) => map.set(ug.id, ug));
+        return map;
+    }, new Map<number, UserGroupSummary>());
+});
+
 export const communitiesList = derived(communities, ($communities) => {
     return $communities.values().sort((a, b) => {
         return b.membership.index === a.membership.index
@@ -57,14 +64,14 @@ export const communityStateStore = createCommunitySpecificObjectStore<CommunityS
         blockedUsers: new Set<string>(),
         invitedUsers: new Set<string>(),
         lastUpdated: BigInt(0),
-        userGroups: [],
+        userGroups: new Map<number, UserGroupDetails>(),
     }),
 );
 
 export const currentCommunityUserGroups = createDerivedPropStore<
     CommunitySpecificState,
     "userGroups"
->(communityStateStore, "userGroups", () => []);
+>(communityStateStore, "userGroups", () => new Map<number, UserGroupDetails>());
 
 export const currentCommunityMembers = createDerivedPropStore<CommunitySpecificState, "members">(
     communityStateStore,

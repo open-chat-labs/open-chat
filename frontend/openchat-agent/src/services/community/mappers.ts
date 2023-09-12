@@ -90,6 +90,7 @@ import {
     messageContent,
     messageEvent,
     threadDetails,
+    userGroup,
 } from "../common/chatMappers";
 import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 import { identity, optionUpdate, optional } from "../../utils/mapping";
@@ -418,6 +419,8 @@ export function communitySummaryUpdates(
         bannerId: optionUpdate(candid.banner_id, identity),
         memberCount: optional(candid.member_count, identity),
         primaryLanguage: optional(candid.primary_language, identity),
+        userGroups: candid.user_groups.map(userGroup).map(([_, g]) => g),
+        userGroupsDeleted: new Set(candid.user_groups_deleted),
     };
 }
 
@@ -583,7 +586,7 @@ export function communityDetailsResponse(
             invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
             rules: groupRules(candid.Success.rules),
             lastUpdated: candid.Success.timestamp,
-            userGroups: candid.Success.user_groups.map(userGroupDetails),
+            userGroups: new Map(candid.Success.user_groups.map(userGroupDetails)),
         };
     } else {
         console.warn("CommunityDetails failed with", candid);
@@ -591,13 +594,16 @@ export function communityDetailsResponse(
     }
 }
 
-export function userGroupDetails(candid: ApiUserGroupDetails): UserGroupDetails {
-    return {
-        id: candid.user_group_id,
-        kind: "user_group",
-        members: new Set<string>(candid.members.map((m) => m.toString())),
-        name: candid.name,
-    };
+export function userGroupDetails(candid: ApiUserGroupDetails): [number, UserGroupDetails] {
+    return [
+        candid.user_group_id,
+        {
+            id: candid.user_group_id,
+            kind: "user_group",
+            members: new Set<string>(candid.members.map((m) => m.toString())),
+            name: candid.name,
+        },
+    ];
 }
 
 export function communityDetailsUpdatesResponse(
@@ -622,7 +628,8 @@ export function communityDetailsUpdatesResponse(
                 (invited_users) => new Set(invited_users.map((u) => u.toString())),
             ),
             lastUpdated: candid.Success.timestamp,
-            userGroups: candid.Success.user_groups.map(userGroupDetails),
+            userGroups: candid.Success.user_groups.map(userGroupDetails).map(([_, g]) => g),
+            userGroupsDeleted: new Set(candid.Success.user_groups_deleted),
         };
     } else if ("SuccessNoUpdates" in candid) {
         return {

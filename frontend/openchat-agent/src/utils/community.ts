@@ -11,6 +11,7 @@ import type {
     ThreadSyncDetails,
     GroupCanisterThreadDetails,
     UserCanisterChannelSummary,
+    UserGroupSummary,
 } from "openchat-shared";
 import { CommunityMap, ChatMap } from "openchat-shared";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
@@ -130,8 +131,23 @@ export function mergeCommunityUpdates(
             historyVisible: community.historyVisible,
             permissions: c?.permissions ?? community.permissions,
             primaryLanguage: c?.primaryLanguage ?? community.primaryLanguage,
+            userGroups: mergeUserGroups(
+                community.userGroups,
+                c?.userGroups ?? [],
+                c?.userGroupsDeleted ?? new Set(),
+            ),
         };
     });
+}
+
+function mergeUserGroups(
+    existing: Map<number, UserGroupSummary>,
+    updated: UserGroupSummary[],
+    deleted: Set<number>,
+): Map<number, UserGroupSummary> {
+    deleted.forEach((id) => existing.delete(id));
+    updated.forEach((g) => existing.set(g.id, g));
+    return new Map(existing);
 }
 
 export function mergeChannelUpdates(

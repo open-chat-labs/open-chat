@@ -73,7 +73,6 @@
 
     $: userStore = client.userStore;
     $: userGroups = client.currentCommunityUserGroups;
-    $: communityMembers = client.currentCommunityMembers;
     $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
     $: isMultiUser = chat.kind === "group_chat" || chat.kind === "channel";
     $: isBot = $userStore[userId]?.kind === "bot";
@@ -242,7 +241,7 @@
 
     function formatUserGroupMentions(text: string): string {
         return text.replace(/@UserGroup\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = $userGroups.find((ug) => ug.id === Number(p1));
+            const u = $userGroups.get(Number(p1));
             if (u !== undefined) {
                 return `@${u.name}`;
             }
@@ -256,7 +255,7 @@
     function expandMentions(text?: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, User>();
         let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const userOrGroup = client.lookupUserForMention(p1, false, $communityMembers);
+            const userOrGroup = client.lookupUserForMention(p1, false);
             if (userOrGroup !== undefined) {
                 switch (userOrGroup.kind) {
                     case "user_group":

@@ -37,7 +37,7 @@ import type {
     UserSuspended,
 } from "../response";
 import type { HasLevel } from "../structure";
-import type { UserGroupDetails } from "../user";
+import type { UserGroupDetails, UserGroupSummary } from "../user";
 
 export type CommunityMembership = {
     joined: bigint;
@@ -70,6 +70,7 @@ export type CommunitySummary = AccessControlled &
         membership?: CommunityMembership;
         channels: ChannelSummary[]; // TODO - this might be better as a ChatMap - but that would have some serialisation complications
         primaryLanguage: string;
+        userGroups: Map<number, UserGroupSummary>;
     };
 
 export type DefaultChannel = {
@@ -78,7 +79,7 @@ export type DefaultChannel = {
 };
 
 export type CommunitySpecificState = {
-    userGroups: UserGroupDetails[];
+    userGroups: Map<number, UserGroupDetails>;
     members: Map<string, Member>;
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
@@ -181,6 +182,8 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     bannerId: OptionUpdate<bigint>;
     memberCount: number | undefined;
     primaryLanguage: string | undefined;
+    userGroups: UserGroupSummary[];
+    userGroupsDeleted: Set<number>;
 };
 
 export type CommunityCanisterChannelSummaryUpdates = {
@@ -242,7 +245,7 @@ export type CommunityDetails = {
     invitedUsers: Set<string>;
     rules: AccessRules;
     lastUpdated: bigint;
-    userGroups: UserGroupDetails[];
+    userGroups: Map<number, UserGroupDetails>;
 };
 
 export type CommunityDetailsUpdates = {
@@ -254,6 +257,7 @@ export type CommunityDetailsUpdates = {
     invitedUsers?: Set<string>;
     lastUpdated: bigint;
     userGroups: UserGroupDetails[];
+    userGroupsDeleted: Set<number>;
 };
 
 export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;
