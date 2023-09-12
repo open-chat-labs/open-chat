@@ -8,6 +8,7 @@ const darkGray = "#696969";
 const silver = "#C0C0C0";
 const veryDarkGray = "#1e2123";
 const lighterDarkGray = "#101010";
+const lightPurple = "#864893";
 const txt = white;
 
 export function getTheme(base: Theme): Theme {
@@ -60,7 +61,7 @@ export function getTheme(base: Theme): Theme {
     base.menu.hv = raspberry;
     base.reaction.me = white;
     base.reaction.bg = veryDarkGray;
-    base.primary = raspberry;
+    base.primary = lightPurple;
     base.link.underline = white;
     base.scrollbar.bg = raspberry;
     base.toast.success.bg = base.notificationBar.bg;
