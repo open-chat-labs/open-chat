@@ -576,7 +576,6 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
     'min_visible_message_index' : MessageIndex,
-    'rules_enabled' : IDL.Bool,
     'member_count' : IDL.Nat32,
     'expired_messages' : IDL.Vec(MessageIndexRange),
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -639,7 +638,6 @@ export const idlFactory = ({ IDL }) => {
     'updated_events' : IDL.Vec(
       IDL.Tuple(IDL.Opt(IDL.Nat32), IDL.Nat32, IDL.Nat64)
     ),
-    'rules_enabled' : IDL.Opt(IDL.Bool),
     'member_count' : IDL.Opt(IDL.Nat32),
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
@@ -1230,7 +1228,6 @@ export const idlFactory = ({ IDL }) => {
       'members' : IDL.Vec(Participant),
       'invited_users' : IDL.Vec(UserId),
       'blocked_users' : IDL.Vec(UserId),
-      'access_rules' : VersionedRules,
       'timestamp' : TimestampMillis,
       'pinned_messages' : IDL.Vec(MessageIndex),
       'latest_event_index' : EventIndex,
@@ -1250,7 +1247,6 @@ export const idlFactory = ({ IDL }) => {
     'members_added_or_updated' : IDL.Vec(Participant),
     'pinned_messages_added' : IDL.Vec(MessageIndex),
     'members_removed' : IDL.Vec(UserId),
-    'access_rules' : IDL.Opt(VersionedRules),
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
     'rules' : IDL.Opt(AccessRules),
@@ -1289,7 +1285,6 @@ export const idlFactory = ({ IDL }) => {
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
     'user_groups' : IDL.Vec(UserGroupDetails),
-    'access_rules' : VersionedRules,
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
     'rules' : AccessRules,
@@ -1309,7 +1304,6 @@ export const idlFactory = ({ IDL }) => {
     'members_added_or_updated' : IDL.Vec(CommunityMember),
     'user_groups' : IDL.Vec(UserGroupDetails),
     'members_removed' : IDL.Vec(UserId),
-    'access_rules' : IDL.Opt(VersionedRules),
     'timestamp' : TimestampMillis,
     'rules' : IDL.Opt(AccessRules),
     'blocked_users_added' : IDL.Vec(UserId),
@@ -1426,7 +1420,6 @@ export const idlFactory = ({ IDL }) => {
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
     'banner_id' : IDL.Opt(IDL.Nat),
-    'rules_enabled' : IDL.Bool,
     'member_count' : IDL.Nat32,
     'primary_language' : IDL.Text,
   });
@@ -1472,7 +1465,6 @@ export const idlFactory = ({ IDL }) => {
     'frozen' : FrozenGroupUpdate,
     'latest_event_index' : IDL.Opt(EventIndex),
     'banner_id' : DocumentIdUpdate,
-    'rules_enabled' : IDL.Opt(IDL.Bool),
     'member_count' : IDL.Opt(IDL.Nat32),
     'primary_language' : IDL.Opt(IDL.Text),
   });

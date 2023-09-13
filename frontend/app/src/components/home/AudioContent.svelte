@@ -5,6 +5,7 @@
     import ContentCaption from "./ContentCaption.svelte";
     import MusicNote from "svelte-material-icons/MusicNote.svelte";
     import Pause from "svelte-material-icons/Pause.svelte";
+    import { setPlayingMedia } from "../../utils/media";
 
     export let content: AudioContent;
     export let edited: boolean;
@@ -26,13 +27,18 @@
             audioPlayer.play();
         }
     }
+
+    function onPlay() {
+        playing = true;
+        setPlayingMedia(audioPlayer);
+    }
 </script>
 
 <audio
     on:timeupdate={timeupdate}
     preload="metadata"
     on:ended={() => (playing = false)}
-    on:play={() => (playing = true)}
+    on:play={onPlay}
     on:pause={() => (playing = false)}
     bind:this={audioPlayer}>
     <track kind="captions" />
