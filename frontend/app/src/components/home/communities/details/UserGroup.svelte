@@ -40,7 +40,7 @@
         communityUsers = createLookup(communityMembers, userStore);
         communityUsersList = Object.values(communityUsers);
         const end = Date.now();
-        console.log("Built member lookup: ", end - start);
+        console.debug("PERF: Built community member lookup: ", end - start);
     });
 
     $: searchTermLower = searchTerm.toLowerCase();
@@ -101,9 +101,11 @@
     }
 
     function matchesSearch(searchTerm: string, user: UserSummary): boolean {
-        // TODO - exclude anyone who is already in the group
         if (searchTerm === "") return false;
-        return user.username.includes(searchTerm);
+        return (
+            user.username.toLowerCase().includes(searchTerm) ||
+            (user.displayName !== undefined && user.displayName.toLowerCase().includes(searchTerm))
+        );
     }
 
     function addUserToGroup(user: UserSummary) {
@@ -135,7 +137,7 @@
                 map[user.userId] = {
                     ...user,
                     displayName: m.displayName ?? user.displayName,
-                    username: user.username.toLowerCase(),
+                    username: user.username,
                 };
             }
             return map;
