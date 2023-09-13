@@ -550,7 +550,6 @@
         "voteFailed": "ההצבעה נכשלה - אנא נסה מאוחר יותר",
         "alreadyVoted": "כבר הצבעת - נסה לטעון מחדש את העמוד",
         "noEligibleNeurons": "לא נמצאו נוירונים מתאימים",
-        "noEligibleNeuronsMessage": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את מזהה המשתמש שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם. מזהה המשתמש שלך ב-OpenChat הוא:",
         "proposalNotAceptingVotes": "הצעה זו אינה מקבלת הצבעות - נסה לטעון מחדש את הדף",
         "proposedBy": "הוצע על ידי",
         "topic": "נוֹשֵׂא",
@@ -577,7 +576,8 @@
         "cyclesDispenserAction": "פעולות מתקן מחזורים",
         "unknownActionCategory": "פעולות אחרות",
         "notificationsAction": "פעולות אינדקס התראות",
-        "registryAction": "פעולות הרישום"
+        "registryAction": "פעולות הרישום",
+        "noEligibleNeuronsMessage": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את מזהה המשתמש שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם.<br/><br/> מזהה המשתמש שלך ב-OpenChat הוא: {userId}.<br/><br/> למידע נוסף על הצבעה וממשל קרא <a target=\"_blank\" href=\"https://oc.app/blog/governance\">פוסט זה בבלוג</a> ."
     },
     "yes": "כן",
     "no": "לא",
