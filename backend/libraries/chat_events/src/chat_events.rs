@@ -185,11 +185,14 @@ impl ChatEvents {
     }
 
     pub fn has_updates_since(&self, since: TimestampMillis) -> bool {
-        self.main.latest_event_timestamp().map_or(false, |ts| ts > since)
-            || self
-                .iter_recently_updated_events()
-                .next()
-                .map_or(false, |(_, _, ts)| ts > since)
+        self.last_updated().unwrap_or_default() > since
+    }
+
+    pub fn last_updated(&self) -> Option<TimestampMillis> {
+        max(
+            self.main.latest_event_timestamp(),
+            self.iter_recently_updated_events().next().map(|(_, _, ts)| ts),
+        )
     }
 
     pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, DeleteMessageResult)> {

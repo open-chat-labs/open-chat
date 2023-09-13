@@ -12,6 +12,7 @@ pub const MAX_THREADS_IN_SUMMARY: usize = 20;
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummary {
     pub them: UserId,
+    pub last_updated: TimestampMillis,
     pub latest_message: EventWrapper<Message>,
     pub latest_event_index: EventIndex,
     pub date_created: TimestampMillis,
@@ -74,6 +75,7 @@ pub struct GroupChatSummary {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummaryUpdates {
     pub chat_id: ChatId,
+    pub last_updated: TimestampMillis,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me_up_to: Option<MessageIndex>,

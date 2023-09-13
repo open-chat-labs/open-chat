@@ -38,11 +38,20 @@ impl DirectChat {
     }
 
     pub fn has_updates_since(&self, since: TimestampMillis) -> bool {
-        self.events.has_updates_since(since)
-            || self.read_by_me_up_to.timestamp > since
-            || self.read_by_them_up_to.timestamp > since
-            || self.notifications_muted.timestamp > since
-            || self.archived.timestamp > since
+        self.last_updated() > since
+    }
+
+    pub fn last_updated(&self) -> TimestampMillis {
+        [
+            self.events.last_updated().unwrap_or_default(),
+            self.read_by_me_up_to.timestamp,
+            self.read_by_them_up_to.timestamp,
+            self.notifications_muted.timestamp,
+            self.archived.timestamp,
+        ]
+        .into_iter()
+        .max()
+        .unwrap()
     }
 
     pub fn mark_read_up_to(&mut self, message_index: MessageIndex, me: bool, now: TimestampMillis) -> bool {
@@ -74,6 +83,7 @@ impl DirectChat {
 
         DirectChatSummary {
             them: self.them,
+            last_updated: self.last_updated(),
             latest_message: events_reader.latest_message_event(Some(my_user_id)).unwrap(),
             latest_event_index: events_reader.latest_event_index().unwrap(),
             date_created: self.date_created,
@@ -114,6 +124,7 @@ impl DirectChat {
 
         DirectChatSummaryUpdates {
             chat_id: self.them.into(),
+            last_updated: self.last_updated(),
             latest_message,
             latest_event_index,
             read_by_me_up_to: self.read_by_me_up_to.if_set_after(updates_since).copied().flatten(),
