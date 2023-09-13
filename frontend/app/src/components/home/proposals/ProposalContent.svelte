@@ -196,10 +196,7 @@
                         {summaryExpanded ? $_("proposal.readless") : $_("proposal.readmore")}
                     </div>
                     <div class="icon" class:open={summaryExpanded}>
-                        <ChevronDown
-                            viewBox="0 -3 24 24"
-                            size="1.6em"
-                            color="var(--icon-txt)" />
+                        <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt)" />
                     </div>
                 </div>
             {/if}
@@ -256,9 +253,10 @@
         <ModalContent compactFooter on:close={() => (showNeuronInfo = false)}>
             <div slot="header">{$_("proposal.noEligibleNeurons")}</div>
             <div slot="body">
-                {$_("proposal.noEligibleNeuronsMessage")}
-                <br /><br />
-                <div class="value">{user.userId}</div>
+                <Markdown
+                    text={$_("proposal.noEligibleNeuronsMessage", {
+                        values: { userId: user.userId },
+                    })} />
             </div>
         </ModalContent>
     </Overlay>
