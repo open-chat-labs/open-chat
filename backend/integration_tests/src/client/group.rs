@@ -79,7 +79,7 @@ pub mod happy_path {
         let response = super::update_group_v2(env, sender, group_chat_id.into(), args);
 
         match response {
-            group_canister::update_group_v2::Response::Success => {}
+            group_canister::update_group_v2::Response::SuccessV2(_) => {}
             response => panic!("'update_group_v2' error: {response:?}"),
         }
     }

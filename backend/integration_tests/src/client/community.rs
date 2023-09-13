@@ -132,7 +132,7 @@ pub mod happy_path {
         let response = super::update_community(env, sender, community_id.into(), args);
 
         match response {
-            community_canister::update_community::Response::Success => {}
+            community_canister::update_community::Response::SuccessV2(_) => {}
             response => panic!("'update_community' error: {response:?}"),
         }
     }
@@ -146,7 +146,7 @@ pub mod happy_path {
         let response = super::update_channel(env, sender.principal, community_id.into(), args);
 
         match response {
-            community_canister::update_channel::Response::Success => {}
+            community_canister::update_channel::Response::SuccessV2(_) => {}
             response => panic!("'update_channel' error: {response:?}"),
         }
     }
