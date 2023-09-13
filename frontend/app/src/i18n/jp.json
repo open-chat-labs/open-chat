@@ -352,7 +352,8 @@
         "ownerAndAdminsAndModerators": "所有者、管理者、モデレータは次のことができます。",
         "updateDetails": "基本情報を編集する",
         "createPublicChannel": "パブリックチャンネルを作成する",
-        "createPrivateChannel": "プライベートチャンネルを作成する"
+        "createPrivateChannel": "プライベートチャンネルを作成する",
+        "manageUserGroups": "ユーザーグループを管理する"
     },
     "rules": {
         "enable": "ルールを有効にする",
@@ -621,7 +622,8 @@
         "settings": "設定",
         "label": "プロフィール",
         "communities": "コミュニティ",
-        "selectCommunity": "コミュニティを選択してください"
+        "selectCommunity": "コミュニティを選択してください",
+        "global": "グローバル"
     },
     "undeleteMessage": "削除を取り消す",
     "undeletingMessage": "{username} の {timestamp} によるメッセージの削除を取り消しています",
@@ -893,7 +895,11 @@
             "leaveFailed": "申し訳ありませんが、このコミュニティを離れることができませんでした",
             "deleteFailed": "申し訳ありませんが、このコミュニティを削除できませんでした",
             "convertFailed": "申し訳ありませんが、グループをコミュニティに変換できませんでした",
-            "importFailed": "申し訳ありませんが、グループをインポートできませんでした"
+            "importFailed": "申し訳ありませんが、グループをインポートできませんでした",
+            "deleteUserGroupFailed": "申し訳ありませんが、ユーザー グループを削除できませんでした",
+            "updateGroupFailed": "申し訳ありませんが、ユーザー グループを更新できませんでした",
+            "createGroupFailed": "申し訳ありませんが、ユーザー グループを作成できませんでした",
+            "userGroupNameTaken": "申し訳ありませんが、ユーザー グループ名はすでに使用されています"
         },
         "memberCount": "メンバー",
         "channelCount": "チャンネル",
@@ -926,7 +932,13 @@
         "saveChanges": "変更内容を保存",
         "exploreMobile": "探検",
         "publicChannels": "パブリックチャンネル",
-        "underReview": "検討中"
+        "underReview": "検討中",
+        "userGroups": "ユーザーグループ",
+        "noUserGroups": "ユーザーグループが見つかりませんでした",
+        "userGroupMembers": "ユーザーグループのメンバー",
+        "enterUserGroupName": "ユーザーグループ名を入力してください",
+        "communityLabel": "コミュニティ",
+        "confirmDeleteUserGroup": "このユーザー グループを削除してもよろしいですか?"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",

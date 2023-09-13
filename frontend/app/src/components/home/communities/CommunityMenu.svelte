@@ -60,9 +60,11 @@
     function showMembers() {
         rightPanelHistory.set([{ kind: "show_community_members" }]);
     }
+
     function invite() {
         canInvite && rightPanelHistory.set([{ kind: "invite_community_users" }]);
     }
+
     function showChannels() {
         rightPanelHistory.set([
             {

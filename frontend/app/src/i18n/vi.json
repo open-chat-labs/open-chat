@@ -353,7 +353,8 @@
         "ownerAndAdminsAndModerators": "Chủ sở hữu, quản trị viên và người điều hành có thể",
         "updateDetails": "chỉnh sửa thông tin cơ bản",
         "createPublicChannel": "tạo các kênh công cộng",
-        "createPrivateChannel": "tạo kênh riêng"
+        "createPrivateChannel": "tạo kênh riêng",
+        "manageUserGroups": "quản lý nhóm người dùng"
     },
     "rules": {
         "enable": "Bật quy tắc",
@@ -621,7 +622,8 @@
         "settings": "Cài đặt",
         "label": "Hồ sơ",
         "communities": "Cộng đồng",
-        "selectCommunity": "Chọn một cộng đồng"
+        "selectCommunity": "Chọn một cộng đồng",
+        "global": "Toàn cầu"
     },
     "undeleteMessage": "phục hồi xóa",
     "undeletingMessage": "Đang khôi phục tin nhắn của {username} trên {timestamp}",
@@ -893,7 +895,11 @@
             "leaveFailed": "Xin lỗi, chúng tôi không thể rời khỏi cộng đồng này",
             "deleteFailed": "Xin lỗi, chúng tôi không thể xóa cộng đồng này",
             "convertFailed": "Xin lỗi nhưng chúng tôi không thể chuyển đổi nhóm của bạn thành cộng đồng",
-            "importFailed": "Xin lỗi, chúng tôi không thể nhập nhóm của bạn"
+            "importFailed": "Xin lỗi, chúng tôi không thể nhập nhóm của bạn",
+            "deleteUserGroupFailed": "Rất tiếc, chúng tôi không thể xóa nhóm người dùng",
+            "updateGroupFailed": "Rất tiếc, chúng tôi không thể cập nhật nhóm người dùng",
+            "createGroupFailed": "Rất tiếc, chúng tôi không thể tạo nhóm người dùng",
+            "userGroupNameTaken": "Rất tiếc, tên nhóm người dùng đã được sử dụng"
         },
         "memberCount": "các thành viên)",
         "channelCount": "kênh truyền hình)",
@@ -926,7 +932,13 @@
         "saveChanges": "Lưu thay đổi",
         "exploreMobile": "Khám phá",
         "publicChannels": "Kênh công cộng",
-        "underReview": "Đang xem xét"
+        "underReview": "Đang xem xét",
+        "userGroups": "Các nhóm người sử dụng",
+        "noUserGroups": "Không tìm thấy nhóm người dùng",
+        "userGroupMembers": "Thành viên nhóm người dùng",
+        "enterUserGroupName": "Nhập tên nhóm người dùng",
+        "communityLabel": "Cộng đồng",
+        "confirmDeleteUserGroup": "Bạn có chắc chắn muốn xóa nhóm người dùng này?"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",

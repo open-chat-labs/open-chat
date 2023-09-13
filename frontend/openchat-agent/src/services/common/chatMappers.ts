@@ -144,6 +144,7 @@ import type {
     ResetInviteCodeResponse,
     ThreadSyncDetails,
     RegisterProposalVoteResponse,
+    UserGroupSummary,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -197,6 +198,7 @@ import type {
     ApiGateCheckFailedReason,
     ApiCommunityCanisterCommunitySummary,
     ApiJoinGroupResponse,
+    ApiUserGroup,
 } from "../localUserIndex/candid/idl";
 import type {
     ApiCommunityPermissionRole,
@@ -844,6 +846,7 @@ export function communityPermissions(candid: ApiCommunityPermissions): Community
         removeMembers: communityPermissionRole(candid.remove_members),
         createPublicChannel: communityPermissionRole(candid.create_public_channel),
         createPrivateChannel: communityPermissionRole(candid.create_private_channel),
+        manageUserGroups: communityPermissionRole(candid.manage_user_groups),
     };
 }
 
@@ -1502,6 +1505,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
 export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): CommunitySummary {
     const communityId = candid.community_id.toString();
     return {
+        kind: "community",
         id: { kind: "community", communityId },
         name: candid.name,
         description: candid.description,
@@ -1537,7 +1541,20 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         },
         channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: candid.primary_language,
+        userGroups: new Map(candid.user_groups.map(userGroup)),
     };
+}
+
+export function userGroup(candid: ApiUserGroup): [number, UserGroupSummary] {
+    return [
+        candid.user_group_id,
+        {
+            kind: "user_group",
+            id: candid.user_group_id,
+            name: candid.name,
+            memberCount: candid.members,
+        },
+    ];
 }
 
 export function communityChannelSummary(
@@ -1925,7 +1942,7 @@ export function member(candid: ApiParticipant): Member {
     return {
         role: memberRole(candid.role),
         userId: candid.user_id.toString(),
-        displayName: undefined
+        displayName: undefined,
     };
 }
 

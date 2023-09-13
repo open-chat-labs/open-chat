@@ -868,6 +868,7 @@ export function chatIdentifierUnset(id: ChatIdentifier | undefined): boolean {
 export function chatScopesEqual(a: ChatListScope, b: ChatListScope): boolean {
     if (a.kind === "community" && b.kind === "community")
         return a.id.communityId === b.id.communityId;
+    if (a.kind === "favourite" && b.kind === "favourite") return a.communityId === b.communityId;
     return a.kind === b.kind;
 }
 

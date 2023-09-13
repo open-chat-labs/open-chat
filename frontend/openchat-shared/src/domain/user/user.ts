@@ -1,5 +1,21 @@
 import type { DataContent } from "../data/data";
 
+export type UserOrUserGroup = UserSummary | UserGroupSummary;
+
+export type UserGroupSummary = {
+    kind: "user_group";
+    memberCount: number;
+    name: string;
+    id: number;
+};
+
+export type UserGroupDetails = {
+    kind: "user_group";
+    members: Set<string>;
+    id: number;
+    name: string;
+};
+
 export type IdentityState =
     | "requires_login"
     | "loading_user"
@@ -133,7 +149,7 @@ export type SetDisplayNameResponse =
     | "display_name_too_short"
     | "display_name_too_long"
     | "display_name_invalid";
-    
+
 export type InvalidCurrency = { kind: "invalid_currency" };
 
 export type SetBioResponse = "success" | "bio_too_long" | "user_suspended";

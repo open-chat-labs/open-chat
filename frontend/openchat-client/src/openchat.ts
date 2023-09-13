@@ -14,6 +14,7 @@ import {
     canChangeCommunityPermissions,
     canCreatePublicChannel,
     canCreatePrivateChannel,
+    canManageUserGroups,
 } from "./utils/community";
 import {
     buildUserAvatarUrl,
@@ -317,7 +318,11 @@ import type {
     CryptocurrencyTransfer,
     Mention,
     SetDisplayNameResponse,
+    UserGroupDetails,
+    CreateUserGroupResponse,
+    UpdateUserGroupResponse,
     SetMemberDisplayNameResponse,
+    UserOrUserGroup,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -348,6 +353,7 @@ import {
     KINIC_SYMBOL,
     SNS1_SYMBOL,
     GHOST_SYMBOL,
+    CommonResponses,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -366,8 +372,10 @@ import {
     currentCommunityInvitedUsers,
     currentCommunityMembers,
     currentCommunityRules,
+    currentCommunityUserGroups,
     removeCommunityPreview,
     selectedCommunity,
+    userGroupSummaries,
 } from "./stores/community";
 import {
     globalStateStore,
@@ -415,7 +423,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _cachePrimer: CachePrimer | undefined = undefined;
     private _membershipCheck: number | undefined;
     private _referralCode: string | undefined = undefined;
-    private _userLookupForMentions: Record<string, UserSummary> | undefined = undefined;
+    private _userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
 
     constructor(config: OpenChatConfig) {
         super(config);
@@ -1142,8 +1150,15 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    setMemberDisplayName(id: CommunityIdentifier, displayName: string | undefined): Promise<SetMemberDisplayNameResponse> {
-        return this.sendRequest({ kind: "setMemberDisplayName", communityId: id.communityId, displayName }).then((resp) => {
+    setMemberDisplayName(
+        id: CommunityIdentifier,
+        displayName: string | undefined,
+    ): Promise<SetMemberDisplayNameResponse> {
+        return this.sendRequest({
+            kind: "setMemberDisplayName",
+            communityId: id.communityId,
+            displayName,
+        }).then((resp) => {
             if (resp === "success") {
                 if (this._user !== undefined) {
                     communityStateStore.updateProp(id, "members", (ms) => {
@@ -1323,6 +1338,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     canCreatePrivateChannel(id: CommunityIdentifier): boolean {
         return this.communityPredicate(id, canCreatePrivateChannel);
+    }
+
+    canManageUserGroups(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canManageUserGroups);
     }
 
     canChangeCommunityPermissions(id: CommunityIdentifier): boolean {
@@ -1839,7 +1858,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     role: "member",
                     userId,
                     displayName: undefined,
-                })
+                });
                 return new Map(ms);
                 return ms;
             });
@@ -2398,10 +2417,15 @@ export class OpenChat extends OpenChatAgentWorker {
             communityLastUpdated: community.lastUpdated,
         });
         if (resp !== "failure") {
-            communityStateStore.setProp(community.id, "members", new Map(resp.members.map(m => [m.userId, m])));
+            communityStateStore.setProp(
+                community.id,
+                "members",
+                new Map(resp.members.map((m) => [m.userId, m])),
+            );
             communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
             communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
             communityStateStore.setProp(community.id, "rules", resp.rules);
+            communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
         }
         await this.updateUserStoreFromCommunityState(community.id);
     }
@@ -3377,14 +3401,26 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    searchUsersForInvite(searchTerm: string, maxResults: number, level: Level, newGroup: boolean, canInviteUsers: boolean): Promise<UserSummary[]> {
+    searchUsersForInvite(
+        searchTerm: string,
+        maxResults: number,
+        level: Level,
+        newGroup: boolean,
+        canInviteUsers: boolean,
+    ): Promise<UserSummary[]> {
         if (level === "channel") {
             // Put the existing channel members into a map for quick lookup
-            const channelMembers = newGroup ? undefined : new Map(this._liveState.currentChatMembers.map(m => [m.userId, m]));
+            const channelMembers = newGroup
+                ? undefined
+                : new Map(this._liveState.currentChatMembers.map((m) => [m.userId, m]));
 
             // First try searching the community members and return immediately if there are already enough matches
             // or if the caller does not have permission to invite users to the community
-            const communityMatches = this.searchCommunityUsersForChannelInvite(searchTerm, maxResults, channelMembers);
+            const communityMatches = this.searchCommunityUsersForChannelInvite(
+                searchTerm,
+                maxResults,
+                channelMembers,
+            );
             if (!canInviteUsers || communityMatches.length >= maxResults) {
                 return Promise.resolve(communityMatches);
             }
@@ -3406,7 +3442,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (matches.length >= maxResults) {
                         break;
                     }
-                    if (!matches.some(m => m.userId === match.userId)) {
+                    if (!matches.some((m) => m.userId === match.userId)) {
                         matches.push(match);
                     }
                 }
@@ -3420,9 +3456,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (!newGroup) {
                     // Put the existing users in a map for easy lookup - for communities the existing members
                     // are already in a map
-                    const existing = level === "community"
-                        ? this._liveState.currentCommunityMembers
-                        : new Map(this._liveState.currentChatMembers.map(m => [m.userId, m]));
+                    const existing =
+                        level === "community"
+                            ? this._liveState.currentCommunityMembers
+                            : new Map(this._liveState.currentChatMembers.map((m) => [m.userId, m]));
 
                     // Remove any existing members from the global matches until there are at most `maxResults`
                     // TODO: Ideally we would return the total number of matches from the server and use that
@@ -3434,16 +3471,21 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private searchCommunityUsersForChannelInvite(term: string, maxResults: number, channelMembers: Map<string, Member> | undefined): UserSummary[] {
+    private searchCommunityUsersForChannelInvite(
+        term: string,
+        maxResults: number,
+        channelMembers: Map<string, Member> | undefined,
+    ): UserSummary[] {
         const termLower = term.toLowerCase();
-        const matches: UserSummary[]  = [];
+        const matches: UserSummary[] = [];
         for (const [userId, member] of this._liveState.currentCommunityMembers) {
             let user = this._liveState.userStore[userId];
             if (user?.username !== undefined) {
                 const displayName = member.displayName ?? user.displayName;
-                if (user.username.toLowerCase().includes(termLower) ||
-                    (displayName !== undefined &&
-                        displayName.toLowerCase().includes(termLower))) {
+                if (
+                    user.username.toLowerCase().includes(termLower) ||
+                    (displayName !== undefined && displayName.toLowerCase().includes(termLower))
+                ) {
                     if (channelMembers === undefined || !channelMembers.has(userId)) {
                         if (member.displayName !== undefined) {
                             user = { ...user, displayName: member.displayName };
@@ -3500,12 +3542,15 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getDisplayNameById(userId: string, communityMembers?: Map<string, Member>) : string {
+    getDisplayNameById(userId: string, communityMembers?: Map<string, Member>): string {
         const user = this._liveState.userStore[userId];
         return this.getDisplayName(user, communityMembers);
     }
 
-    getDisplayName(user: {userId: string, username: string, displayName?: string} | undefined, communityMembers?: Map<string, Member>): string {
+    getDisplayName(
+        user: { userId: string; username: string; displayName?: string } | undefined,
+        communityMembers?: Map<string, Member>,
+    ): string {
         if (user !== undefined) {
             const member = communityMembers?.get(user.userId);
             const displayName = member?.displayName ?? user.displayName ?? user.username;
@@ -4246,12 +4291,11 @@ export class OpenChat extends OpenChatAgentWorker {
                 console.log("Current user not set, cannot load chats");
                 return;
             }
+
             const init = this._liveState.chatsInitialised;
             chatsLoading.set(!init);
 
-            const updateRegistryTask = !init
-                ? this.updateRegistry()
-                : undefined;
+            const updateRegistryTask = !init ? this.updateRegistry() : undefined;
 
             const chatsResponse = await this.sendRequest({
                 kind: "getUpdates",
@@ -4727,30 +4771,50 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    getUserLookupForMentions(): Record<string, UserSummary> {
+    // the key might be a username or it might be a user group name
+    getUserLookupForMentions(): Record<string, UserOrUserGroup> {
         if (this._userLookupForMentions === undefined) {
-            const lookup = {} as Record<string, UserSummary>;
+            const lookup = {} as Record<string, UserOrUserGroup>;
             const userStore = this._liveState.userStore;
             for (const member of this._liveState.currentChatMembers) {
                 const userId = member.userId;
-                const user = userStore[userId];
+                let user = userStore[userId];
+                if (this._liveState.selectedChat?.kind === "channel") {
+                    user = {
+                        ...user,
+                        displayName: this.getDisplayName(
+                            user,
+                            this._liveState.currentCommunityMembers,
+                        ),
+                    };
+                }
                 if (user !== undefined && user.username !== undefined) {
                     lookup[user.username.toLowerCase()] = user as UserSummary;
                 }
+            }
+            if (this._liveState.selectedCommunity !== undefined) {
+                const userGroups = [...this._liveState.selectedCommunity.userGroups.values()];
+                userGroups.forEach((ug) => (lookup[ug.name.toLowerCase()] = ug));
             }
             this._userLookupForMentions = lookup;
         }
         return this._userLookupForMentions;
     }
 
-    lookupUserForMention(username: string, includeSelf: boolean): UserSummary | undefined {
+    lookupUserForMention(username: string, includeSelf: boolean): UserOrUserGroup | undefined {
         const lookup = this.getUserLookupForMentions();
 
-        const user = lookup[username.toLowerCase()];
+        const userOrGroup = lookup[username.toLowerCase()];
+        if (userOrGroup === undefined) return undefined;
 
-        return user !== undefined && (includeSelf || user.userId !== this.user.userId)
-            ? user
-            : undefined;
+        switch (userOrGroup.kind) {
+            case "user_group":
+                return userOrGroup;
+            default:
+                return includeSelf || userOrGroup.userId !== this.user.userId
+                    ? userOrGroup
+                    : undefined;
+        }
     }
 
     // **** Communities Stuff
@@ -5051,6 +5115,94 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    private deleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
+        communityStateStore.updateProp(id, "userGroups", (groups) => {
+            groups.delete(userGroup.id);
+            return new Map(groups);
+        });
+    }
+
+    private undeleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
+        communityStateStore.updateProp(id, "userGroups", (groups) => {
+            groups.set(userGroup.id, userGroup);
+            return new Map(groups);
+        });
+    }
+
+    deleteUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): Promise<boolean> {
+        this.deleteUserGroupLocally(id, userGroup);
+        return this.sendRequest({
+            kind: "deleteUserGroups",
+            communityId: id.communityId,
+            userGroupIds: [userGroup.id],
+        })
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    this.undeleteUserGroupLocally(id, userGroup);
+                }
+                return resp.kind === "success";
+            })
+            .catch((err) => {
+                this.undeleteUserGroupLocally(id, userGroup);
+                this._logger.error("Error deleting community user group", err);
+                return false;
+            });
+    }
+
+    createUserGroup(
+        id: CommunityIdentifier,
+        userGroup: UserGroupDetails,
+    ): Promise<CreateUserGroupResponse> {
+        return this.sendRequest({
+            kind: "createUserGroup",
+            communityId: id.communityId,
+            name: userGroup.name,
+            userIds: [...userGroup.members],
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    communityStateStore.updateProp(id, "userGroups", (groups) => {
+                        groups.set(resp.userGroupId, { ...userGroup, id: resp.userGroupId });
+                        return new Map(groups);
+                    });
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this._logger.error("Error creating community user group", err);
+                return CommonResponses.failure();
+            });
+    }
+
+    updateUserGroup(
+        id: CommunityIdentifier,
+        userGroup: UserGroupDetails,
+        toAdd: Set<string>,
+        toRemove: Set<string>,
+    ): Promise<UpdateUserGroupResponse> {
+        return this.sendRequest({
+            kind: "updateUserGroup",
+            communityId: id.communityId,
+            userGroupId: userGroup.id,
+            name: userGroup.name,
+            usersToAdd: [...toAdd],
+            usersToRemove: [...toRemove],
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    communityStateStore.updateProp(id, "userGroups", (groups) => {
+                        groups.set(userGroup.id, userGroup);
+                        return new Map(groups);
+                    });
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this._logger.error("Error updating community user group", err);
+                return CommonResponses.failure();
+            });
+    }
+
     setChatListScope(scope: ChatListScope): void {
         if (scope.kind === "none") {
             chatListScopeStore.set(this.getDefaultScope());
@@ -5137,6 +5289,7 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedThreadRootEvent = selectedThreadRootEvent;
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
     selectedMessageContext = selectedMessageContext;
+    userGroupSummaries = userGroupSummaries;
 
     // current community stores
     chatListScope = chatListScopeStore;
@@ -5147,6 +5300,7 @@ export class OpenChat extends OpenChatAgentWorker {
     currentCommunityRules = currentCommunityRules;
     currentCommunityBlockedUsers = currentCommunityBlockedUsers;
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
+    currentCommunityUserGroups = currentCommunityUserGroups;
     communityStateStore = communityStateStore;
     favouritesStore = favouritesStore;
     globalStateStore = globalStateStore;

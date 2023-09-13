@@ -11,6 +11,7 @@ import type {
     ThreadSyncDetails,
     GroupCanisterThreadDetails,
     UserCanisterChannelSummary,
+    UserGroupSummary,
 } from "openchat-shared";
 import { CommunityMap, ChatMap } from "openchat-shared";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
@@ -18,7 +19,7 @@ import { toRecord } from "./list";
 
 export function mergeCommunities(
     userCanisterCommunities: UserCanisterCommunitySummary[],
-    communityCanisterCommunities: CommunitySummary[]
+    communityCanisterCommunities: CommunitySummary[],
 ): CommunitySummary[] {
     const userCanisterCommunityLookup = CommunityMap.fromList(userCanisterCommunities);
 
@@ -40,7 +41,7 @@ export function mergeCommunities(
 
 export function mergeChannels(
     userCanisterChannels: UserCanisterChannelSummary[],
-    communityCanisterChannels: ChannelSummary[]
+    communityCanisterChannels: ChannelSummary[],
 ): ChannelSummary[] {
     const userCanisterGroupLookup = ChatMap.fromList(userCanisterChannels);
 
@@ -63,7 +64,7 @@ export function mergeChannels(
 export function mergeCommunityUpdates(
     communities: CommunitySummary[],
     userCanisterUpdates: UserCanisterCommunitySummaryUpdates[],
-    communityCanisterUpdates: CommunityCanisterCommunitySummaryUpdates[]
+    communityCanisterUpdates: CommunityCanisterCommunitySummaryUpdates[],
 ): CommunitySummary[] {
     const userLookup = CommunityMap.fromList(userCanisterUpdates);
     const communityLookup = CommunityMap.fromList(communityCanisterUpdates);
@@ -91,6 +92,7 @@ export function mergeCommunityUpdates(
             .concat(channelsAdded);
 
         return {
+            kind: community.kind,
             id: community.id,
             name: c?.name ?? community?.name,
             latestEventIndex: c?.latestEventIndex ?? community.latestEventIndex,
@@ -112,12 +114,15 @@ export function mergeCommunityUpdates(
                 archived: u?.archived ?? community.membership.archived,
                 pinned: u?.pinned ?? community.membership.pinned,
                 index: u?.index ?? community.membership.index,
-                displayName: applyOptionUpdate(community.membership.displayName, c?.membership?.displayName),
+                displayName: applyOptionUpdate(
+                    community.membership.displayName,
+                    c?.membership?.displayName,
+                ),
             },
             channels: mergeChannelUpdates(
                 currentChannels,
                 u?.channels ?? [],
-                c?.channelsUpdated ?? []
+                c?.channelsUpdated ?? [],
             ),
             gate: applyOptionUpdate(community.gate, c?.gate) ?? { kind: "no_gate" },
             level: "community",
@@ -126,14 +131,29 @@ export function mergeCommunityUpdates(
             historyVisible: community.historyVisible,
             permissions: c?.permissions ?? community.permissions,
             primaryLanguage: c?.primaryLanguage ?? community.primaryLanguage,
+            userGroups: mergeUserGroups(
+                community.userGroups,
+                c?.userGroups ?? [],
+                c?.userGroupsDeleted ?? new Set(),
+            ),
         };
     });
+}
+
+function mergeUserGroups(
+    existing: Map<number, UserGroupSummary>,
+    updated: UserGroupSummary[],
+    deleted: Set<number>,
+): Map<number, UserGroupSummary> {
+    deleted.forEach((id) => existing.delete(id));
+    updated.forEach((g) => existing.set(g.id, g));
+    return new Map(existing);
 }
 
 export function mergeChannelUpdates(
     channels: ChannelSummary[],
     userCanisterUpdates: UserCanisterChannelSummaryUpdates[],
-    communityCanisterUpdates: CommunityCanisterChannelSummaryUpdates[]
+    communityCanisterUpdates: CommunityCanisterChannelSummaryUpdates[],
 ): ChannelSummary[] {
     const userLookup = ChatMap.fromList(userCanisterUpdates);
     const communityLookup = ChatMap.fromList(communityCanisterUpdates);
@@ -185,7 +205,7 @@ export function mergeChannelUpdates(
                 latestThreads: mergeThreads(
                     channel.membership.latestThreads,
                     c?.membership?.latestThreads ?? [],
-                    u?.threadsRead ?? {}
+                    u?.threadsRead ?? {},
                 ),
                 readByMeUpTo:
                     readByMeUpTo !== undefined && latestMessage !== undefined
@@ -203,7 +223,7 @@ export function mergeChannelUpdates(
 function mergeThreads(
     current: ThreadSyncDetails[],
     communityCanisterUpdates: GroupCanisterThreadDetails[],
-    readUpToUpdates: Record<number, number>
+    readUpToUpdates: Record<number, number>,
 ): ThreadSyncDetails[] {
     const threadsRecord = toRecord(current, (t) => t.threadRootMessageIndex);
 
@@ -223,13 +243,13 @@ function mergeThreads(
 }
 
 export function isSuccessfulCommunitySummaryResponse(
-    response: CommunitySummaryResponse
+    response: CommunitySummaryResponse,
 ): response is CommunitySummary {
     return "id" in response;
 }
 
 export function isSuccessfulCommunitySummaryUpdatesResponse(
-    response: CommunitySummaryUpdatesResponse
+    response: CommunitySummaryUpdatesResponse,
 ): response is CommunityCanisterCommunitySummaryUpdates {
     return "id" in response;
 }

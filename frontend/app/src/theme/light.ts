@@ -34,7 +34,7 @@ export function lightTheme(): Theme {
         code: orangeAccent,
 
         unread: {
-            mute: "rgba(0,0,0,0.1",
+            mute: "rgba(0,0,0,0.1)",
             "mute-solid": "rgb(55,127,195)",
         },
 

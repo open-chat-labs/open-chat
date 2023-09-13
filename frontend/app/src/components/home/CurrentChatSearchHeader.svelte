@@ -5,7 +5,7 @@
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type { MessageMatch, ChatSummary, OpenChat, UserSummary } from "openchat-client";
+    import type { MessageMatch, ChatSummary, OpenChat, UserOrUserGroup } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
     import MentionPicker from "./MentionPicker.svelte";
@@ -112,9 +112,10 @@
 
         let mentionedSet = new Set<string>();
         let expandedText = text.replace(/@([\w\d_]*)/g, (match, p1) => {
-            const user = client.lookupUserForMention(p1, true);
-            if (user !== undefined) {
-                mentionedSet.add(user.userId);
+            const userOrGroup = client.lookupUserForMention(p1, true);
+            if (userOrGroup !== undefined) {
+                if (userOrGroup.kind === "user_group") return "";
+                mentionedSet.add(userOrGroup.userId);
                 return "";
             } else {
                 console.log(
@@ -221,9 +222,11 @@
         searchTerm = inputElement.value;
     }
 
-    function mention(ev: CustomEvent<UserSummary>): void {
-        const user = ev.detail;
-        const userLabel = `@${user.username}`;
+    function mention(ev: CustomEvent<UserOrUserGroup>): void {
+        const userOrGroup = ev.detail;
+        const username =
+            userOrGroup.kind === "user_group" ? userOrGroup.name : userOrGroup.username;
+        const userLabel = `@${username}`;
 
         replaceTextWith(userLabel);
 

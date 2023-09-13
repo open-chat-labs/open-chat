@@ -3,7 +3,7 @@
 <script lang="ts">
     import { marked } from "marked";
     import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat, UserGroupSummary } from "openchat-client";
     import { DOMPurifyDefault, DOMPurifyOneLine } from "../../utils/domPurify";
     import { isSingleEmoji } from "../../utils/emojis";
 
@@ -17,6 +17,7 @@
 
     $: singleEmoji = isSingleEmoji(text);
     $: userStore = client.userStore;
+    $: userGroups = client.userGroupSummaries;
     $: options = {
         breaks: !oneLine,
     };
@@ -31,6 +32,16 @@
         });
     }
 
+    function replaceUserGroupIds(text: string, userGroups: Map<number, UserGroupSummary>): string {
+        return text.replace(/@UserGroup\(([\d]+)\)/g, (match, p1) => {
+            const u = userGroups.get(Number(p1));
+            if (u !== undefined) {
+                return `**@${u.name}**`;
+            }
+            return match;
+        });
+    }
+
     function replaceDatetimes(text: string): string {
         return text.replace(/@DateTime\((\d+)\)/g, (_, p1) => {
             return client.toDatetimeString(new Date(Number(p1)));
@@ -38,7 +49,7 @@
     }
 
     $: {
-        let parsed = replaceUserIds(replaceDatetimes(text));
+        let parsed = replaceUserGroupIds(replaceUserIds(replaceDatetimes(text)), $userGroups);
         try {
             if (inline) {
                 parsed = marked.parseInline(parsed, options) as string;

@@ -40,4 +40,5 @@ export type CommunityPermissions = {
     removeMembers: CommunityPermissionRole;
     createPublicChannel: CommunityPermissionRole;
     createPrivateChannel: CommunityPermissionRole;
+    manageUserGroups: CommunityPermissionRole;
 };
