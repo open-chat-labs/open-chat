@@ -4291,6 +4291,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 console.log("Current user not set, cannot load chats");
                 return;
             }
+
             const init = this._liveState.chatsInitialised;
             chatsLoading.set(!init);
 
