@@ -1142,8 +1142,15 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    setMemberDisplayName(id: CommunityIdentifier, displayName: string | undefined): Promise<SetMemberDisplayNameResponse> {
-        return this.sendRequest({ kind: "setMemberDisplayName", communityId: id.communityId, displayName }).then((resp) => {
+    setMemberDisplayName(
+        id: CommunityIdentifier,
+        displayName: string | undefined,
+    ): Promise<SetMemberDisplayNameResponse> {
+        return this.sendRequest({
+            kind: "setMemberDisplayName",
+            communityId: id.communityId,
+            displayName,
+        }).then((resp) => {
             if (resp === "success") {
                 if (this._user !== undefined) {
                     communityStateStore.updateProp(id, "members", (ms) => {
@@ -1839,7 +1846,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     role: "member",
                     userId,
                     displayName: undefined,
-                })
+                });
                 return new Map(ms);
                 return ms;
             });
@@ -2398,7 +2405,11 @@ export class OpenChat extends OpenChatAgentWorker {
             communityLastUpdated: community.lastUpdated,
         });
         if (resp !== "failure") {
-            communityStateStore.setProp(community.id, "members", new Map(resp.members.map(m => [m.userId, m])));
+            communityStateStore.setProp(
+                community.id,
+                "members",
+                new Map(resp.members.map((m) => [m.userId, m])),
+            );
             communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
             communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
             communityStateStore.setProp(community.id, "rules", resp.rules);
@@ -3377,14 +3388,26 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    searchUsersForInvite(searchTerm: string, maxResults: number, level: Level, newGroup: boolean, canInviteUsers: boolean): Promise<UserSummary[]> {
+    searchUsersForInvite(
+        searchTerm: string,
+        maxResults: number,
+        level: Level,
+        newGroup: boolean,
+        canInviteUsers: boolean,
+    ): Promise<UserSummary[]> {
         if (level === "channel") {
             // Put the existing channel members into a map for quick lookup
-            const channelMembers = newGroup ? undefined : new Map(this._liveState.currentChatMembers.map(m => [m.userId, m]));
+            const channelMembers = newGroup
+                ? undefined
+                : new Map(this._liveState.currentChatMembers.map((m) => [m.userId, m]));
 
             // First try searching the community members and return immediately if there are already enough matches
             // or if the caller does not have permission to invite users to the community
-            const communityMatches = this.searchCommunityUsersForChannelInvite(searchTerm, maxResults, channelMembers);
+            const communityMatches = this.searchCommunityUsersForChannelInvite(
+                searchTerm,
+                maxResults,
+                channelMembers,
+            );
             if (!canInviteUsers || communityMatches.length >= maxResults) {
                 return Promise.resolve(communityMatches);
             }
@@ -3406,7 +3429,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (matches.length >= maxResults) {
                         break;
                     }
-                    if (!matches.some(m => m.userId === match.userId)) {
+                    if (!matches.some((m) => m.userId === match.userId)) {
                         matches.push(match);
                     }
                 }
@@ -3420,9 +3443,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (!newGroup) {
                     // Put the existing users in a map for easy lookup - for communities the existing members
                     // are already in a map
-                    const existing = level === "community"
-                        ? this._liveState.currentCommunityMembers
-                        : new Map(this._liveState.currentChatMembers.map(m => [m.userId, m]));
+                    const existing =
+                        level === "community"
+                            ? this._liveState.currentCommunityMembers
+                            : new Map(this._liveState.currentChatMembers.map((m) => [m.userId, m]));
 
                     // Remove any existing members from the global matches until there are at most `maxResults`
                     // TODO: Ideally we would return the total number of matches from the server and use that
@@ -3434,16 +3458,21 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private searchCommunityUsersForChannelInvite(term: string, maxResults: number, channelMembers: Map<string, Member> | undefined): UserSummary[] {
+    private searchCommunityUsersForChannelInvite(
+        term: string,
+        maxResults: number,
+        channelMembers: Map<string, Member> | undefined,
+    ): UserSummary[] {
         const termLower = term.toLowerCase();
-        const matches: UserSummary[]  = [];
+        const matches: UserSummary[] = [];
         for (const [userId, member] of this._liveState.currentCommunityMembers) {
             let user = this._liveState.userStore[userId];
             if (user?.username !== undefined) {
                 const displayName = member.displayName ?? user.displayName;
-                if (user.username.toLowerCase().includes(termLower) ||
-                    (displayName !== undefined &&
-                        displayName.toLowerCase().includes(termLower))) {
+                if (
+                    user.username.toLowerCase().includes(termLower) ||
+                    (displayName !== undefined && displayName.toLowerCase().includes(termLower))
+                ) {
                     if (channelMembers === undefined || !channelMembers.has(userId)) {
                         if (member.displayName !== undefined) {
                             user = { ...user, displayName: member.displayName };
@@ -3500,12 +3529,15 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getDisplayNameById(userId: string, communityMembers?: Map<string, Member>) : string {
+    getDisplayNameById(userId: string, communityMembers?: Map<string, Member>): string {
         const user = this._liveState.userStore[userId];
         return this.getDisplayName(user, communityMembers);
     }
 
-    getDisplayName(user: {userId: string, username: string, displayName?: string} | undefined, communityMembers?: Map<string, Member>): string {
+    getDisplayName(
+        user: { userId: string; username: string; displayName?: string } | undefined,
+        communityMembers?: Map<string, Member>,
+    ): string {
         if (user !== undefined) {
             const member = communityMembers?.get(user.userId);
             const displayName = member?.displayName ?? user.displayName ?? user.username;
@@ -4246,12 +4278,11 @@ export class OpenChat extends OpenChatAgentWorker {
                 console.log("Current user not set, cannot load chats");
                 return;
             }
+
             const init = this._liveState.chatsInitialised;
             chatsLoading.set(!init);
 
-            const updateRegistryTask = !init
-                ? this.updateRegistry()
-                : undefined;
+            const updateRegistryTask = !init ? this.updateRegistry() : undefined;
 
             const chatsResponse = await this.sendRequest({
                 kind: "getUpdates",
