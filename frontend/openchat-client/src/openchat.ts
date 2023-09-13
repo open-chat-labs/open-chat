@@ -1157,7 +1157,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         }
                         return ms;
                     });
-                } 
+                }
 
                 localCommunitySummaryUpdates.updateDisplayName(id, displayName);
             }
@@ -3398,9 +3398,9 @@ export class OpenChat extends OpenChatAgentWorker {
                     const maxToKeep = globalMatches.length < maxToSearch ? 0 : maxResults;
                     keepMax(globalMatches, (u) => !channelMembers?.has(u.userId), maxToKeep);
                 }
-    
+
                 const matches = [...communityMatches];
-    
+
                 // Add the global matches to the results, but only if they are not already in the community matches
                 for (const match of globalMatches) {
                     if (matches.length >= maxResults) {
@@ -3410,8 +3410,8 @@ export class OpenChat extends OpenChatAgentWorker {
                         matches.push(match);
                     }
                 }
-    
-                return matches;    
+
+                return matches;
             });
         } else {
             // Search the global user list and overfetch if there are existing members we might need to remove
@@ -3420,10 +3420,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (!newGroup) {
                     // Put the existing users in a map for easy lookup - for communities the existing members
                     // are already in a map
-                    const existing = level === "community" 
-                        ? this._liveState.currentCommunityMembers 
+                    const existing = level === "community"
+                        ? this._liveState.currentCommunityMembers
                         : new Map(this._liveState.currentChatMembers.map(m => [m.userId, m]));
-    
+
                     // Remove any existing members from the global matches until there are at most `maxResults`
                     // TODO: Ideally we would return the total number of matches from the server and use that
                     const maxToKeep = matches.length < maxToSearch ? 0 : maxResults;
@@ -3438,11 +3438,11 @@ export class OpenChat extends OpenChatAgentWorker {
         const termLower = term.toLowerCase();
         const matches: UserSummary[]  = [];
         for (const [userId, member] of this._liveState.currentCommunityMembers) {
-            let user = this._liveState.userStore[userId];            
+            let user = this._liveState.userStore[userId];
             if (user?.username !== undefined) {
                 const displayName = member.displayName ?? user.displayName;
-                if (user.username.toLowerCase().includes(termLower) || 
-                    (displayName !== undefined && 
+                if (user.username.toLowerCase().includes(termLower) ||
+                    (displayName !== undefined &&
                         displayName.toLowerCase().includes(termLower))) {
                     if (channelMembers === undefined || !channelMembers.has(userId)) {
                         if (member.displayName !== undefined) {
@@ -4249,14 +4249,18 @@ export class OpenChat extends OpenChatAgentWorker {
             const init = this._liveState.chatsInitialised;
             chatsLoading.set(!init);
 
+            const updateRegistryTask = !init
+                ? this.updateRegistry()
+                : undefined;
+
             const chatsResponse = await this.sendRequest({
                 kind: "getUpdates",
             });
 
             if (!init || chatsResponse.anyUpdates) {
-                if (!init) {
+                if (updateRegistryTask !== undefined) {
                     // We need the registry to be loaded before we attempt to render chats / events
-                    await this.updateRegistry();
+                    await updateRegistryTask;
                 }
 
                 const updatedChats = (chatsResponse.state.directChats as ChatSummary[])

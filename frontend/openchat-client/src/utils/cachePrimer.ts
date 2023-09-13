@@ -6,6 +6,7 @@ import { messagesRead } from "../stores/markRead";
 import { userStore } from "../stores/user";
 import { get } from "svelte/store";
 import type { OpenChat } from "../openchat";
+import { runOnceIdle } from "./backgroundTasks";
 
 export class CachePrimer {
     private pending: ChatMap<ChatSummary> = new ChatMap();
@@ -28,7 +29,7 @@ export class CachePrimer {
             }
 
             if (this.runner === undefined) {
-                this.runner = new Poller(() => this.processNext(), 100);
+                this.runner = new Poller(() => runOnceIdle(() => this.processNext()), 0);
                 debug("runner started");
             }
         }
