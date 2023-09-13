@@ -40,9 +40,9 @@ pub mod happy_path {
     use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
     use types::{
-        AccessRules, ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
+        ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        MessageIndex, TextContent, TimestampMillis, UserId,
+        MessageIndex, Rules, TextContent, TimestampMillis, UserId,
     };
 
     pub fn create_channel(
@@ -60,7 +60,7 @@ pub mod happy_path {
                 is_public,
                 name: name.clone(),
                 description: format!("{name}_description"),
-                rules: AccessRules::default(),
+                rules: Rules::default(),
                 subtype: None,
                 avatar: None,
                 history_visible_to_new_joiners: is_public,

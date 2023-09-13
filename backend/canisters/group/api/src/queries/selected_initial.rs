@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{AccessRules, Empty, EventIndex, GroupMember, MessageIndex, TimestampMillis, UserId, VersionedRules};
+use types::{Empty, EventIndex, GroupMember, MessageIndex, Rules, TimestampMillis, UserId, VersionedRules};
 
 pub type Args = Empty;
 
@@ -18,7 +18,7 @@ pub struct SuccessResult {
     pub blocked_users: Vec<UserId>,
     pub invited_users: Vec<UserId>,
     pub pinned_messages: Vec<MessageIndex>,
-    // TODO: remove this field once the website is using `access_rules` instead
-    pub rules: AccessRules,
-    pub access_rules: VersionedRules,
+    // TODO: remove this field once the website is using `chat_rules` instead
+    pub rules: Rules,
+    pub chat_rules: VersionedRules,
 }

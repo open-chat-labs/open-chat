@@ -42,9 +42,11 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 OptionUpdate::NoChange,
                 state.env.now(),
             ) {
-                UpdateResult::Success => {
+                UpdateResult::Success(result) => {
                     handle_activity_notification(state);
-                    Success
+                    SuccessV2(SuccessResult {
+                        rules_version: result.rules_version,
+                    })
                 }
                 UpdateResult::UserSuspended => UserSuspended,
                 UpdateResult::UserNotInGroup => UserNotInChannel,
