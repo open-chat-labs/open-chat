@@ -1,9 +1,10 @@
 use candid::Principal;
 use canister_state_macros::canister_state;
+use icpswap_client::ICPSwapClient;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
+use types::{BuildVersion, CanisterId, Cryptocurrency, Cycles, TimestampMillis, Timestamped, TokenInfo};
 use utils::env::Environment;
 
 mod guards;
@@ -28,6 +29,23 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
+    }
+
+    pub fn get_icpswap_client(&self) -> ICPSwapClient {
+        ICPSwapClient::new(
+            self.env.canister_id(),
+            CanisterId::from_text("ne2vj-6yaaa-aaaag-qb3ia-cai").unwrap(),
+            TokenInfo {
+                token: Cryptocurrency::InternetComputer,
+                ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
+                decimals: 8,
+            },
+            TokenInfo {
+                token: Cryptocurrency::CHAT,
+                ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
+                decimals: 8,
+            },
+        )
     }
 
     pub fn is_caller_governance_principal(&self) -> bool {

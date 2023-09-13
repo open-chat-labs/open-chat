@@ -1,42 +1,23 @@
 import "../../../libraries/types/can.did";
 
-type AddGovernanceCanisterArgs = record {
-    governance_canister_id : CanisterId;
-    community_id : opt CommunityId;
-    name : text;
-    description : opt text;
-    avatar : opt Document;
+type ExchangeArgs = record {
+    amount : nat;
+    zero_for_one : bool;
 };
 
-type AddGovernanceCanisterResponse = variant {
-    Success;
-    AlreadyAdded;
-    InternalError : text;
+type ExchangeResponse = variant {
+    Ok : nat;
+    Err : text;
 };
 
-type RemoveGovernanceCanisterArgs = record {
-    governance_canister_id : CanisterId;
-    delete_group : bool;
+type InitArgs = record {
+    governance_principals : vec CanisterId;
+    local_user_index_canister_id : CanisterId;
+    cycles_dispenser_canister_id : CanisterId;
+    wasm_version : BuildVersion;
+    test_mode : bool;
 };
 
-type RemoveGovernanceCanisterResponse = variant {
-    Success;
-    NotFound;
-    InternalError : text;
-};
-
-type AppointAdminsArgs = record {
-    governance_canister_id : CanisterId;
-    users : vec UserId;
-};
-
-type AppointAdminsResponse = variant {
-    Success;
-    NotFound;
-};
-
-service : {
-    add_governance_canister : (AddGovernanceCanisterArgs) -> (AddGovernanceCanisterResponse);
-    remove_governance_canister : (RemoveGovernanceCanisterArgs) -> (RemoveGovernanceCanisterResponse);
-    appoint_admins : (AppointAdminsArgs) -> (AppointAdminsResponse);
+service : (InitArgs) -> {
+    exchange : (ExchangeArgs) -> (ExchangeResponse);
 };
