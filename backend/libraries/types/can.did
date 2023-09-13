@@ -118,6 +118,7 @@ type DirectChatCreated = record {};
 
 type DirectChatSummary = record {
     them : UserId;
+    last_updated : TimestampMillis;
     latest_message : MessageEventWrapper;
     latest_event_index : EventIndex;
     date_created : TimestampMillis;
@@ -133,6 +134,7 @@ type DirectChatSummary = record {
 
 type DirectChatSummaryUpdates = record {
     chat_id : ChatId;
+    last_updated : TimestampMillis;
     latest_message : opt MessageEventWrapper;
     latest_event_index : opt EventIndex;
     read_by_me_up_to : opt MessageIndex;
