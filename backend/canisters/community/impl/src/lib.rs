@@ -18,8 +18,8 @@ use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
-    AccessGate, AccessRules, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
-    CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification,
+    AccessGate, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
+    CommunityPermissions, Cryptocurrency, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, Rules,
     TimestampMillis, Timestamped, UserId,
 };
 use utils::env::Environment;
@@ -142,7 +142,6 @@ impl RuntimeState {
             membership,
             user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
             metrics: data.cached_chat_metrics.value.clone(),
-            rules_enabled: data.rules.enabled,
         }
     }
 
@@ -223,7 +222,7 @@ impl Data {
         is_public: bool,
         name: String,
         description: String,
-        rules: AccessRules,
+        rules: Rules,
         avatar: Option<Document>,
         banner: Option<Document>,
         permissions: CommunityPermissions,

@@ -6,7 +6,6 @@ export type AccessGate = { 'SnsNeuron' : SnsNeuronGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
-export interface AccessRules { 'text' : string, 'enabled' : boolean }
 export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
 export interface AddMembersToChannelArgs {
@@ -442,7 +441,7 @@ export interface CreateChannelArgs {
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'history_visible_to_new_joiners' : boolean,
-  'rules' : AccessRules,
+  'rules' : Rules,
   'avatar' : [] | [Document],
 }
 export type CreateChannelResponse = { 'MaxChannelsCreated' : number } |
@@ -1458,6 +1457,7 @@ export interface RoleChanged {
   'old_role' : GroupRole,
   'new_role' : GroupRole,
 }
+export interface Rules { 'text' : string, 'enabled' : boolean }
 export interface SearchChannelArgs {
   'channel_id' : ChannelId,
   'max_results' : number,
@@ -1482,7 +1482,7 @@ export type SelectedChannelInitialResponse = { 'ChannelNotFound' : null } |
       'timestamp' : TimestampMillis,
       'pinned_messages' : Uint32Array | number[],
       'latest_event_index' : EventIndex,
-      'rules' : AccessRules,
+      'rules' : Rules,
     }
   } |
   { 'PrivateCommunity' : null } |
@@ -1510,7 +1510,7 @@ export interface SelectedGroupUpdates {
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : [] | [AccessRules],
+  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export interface SelectedInitialArgs { 'invite_code' : [] | [bigint] }
@@ -1523,7 +1523,7 @@ export interface SelectedInitialSuccess {
   'user_groups' : Array<UserGroupDetails>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : AccessRules,
+  'rules' : Rules,
 }
 export interface SelectedUpdatesArgs {
   'updates_since' : TimestampMillis,
@@ -1540,7 +1540,7 @@ export interface SelectedUpdatesSuccess {
   'user_groups' : Array<UserGroupDetails>,
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
-  'rules' : [] | [AccessRules],
+  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export type SelectedUpdatesV2Response = { 'Success' : SelectedUpdatesSuccess } |
@@ -1721,7 +1721,7 @@ export interface UpdateChannelArgs {
   'name' : [] | [string],
   'description' : [] | [string],
   'public' : [] | [boolean],
-  'rules' : [] | [AccessRules],
+  'rules' : [] | [Rules],
   'avatar' : DocumentUpdate,
 }
 export type UpdateChannelResponse = { 'NameReserved' : null } |
@@ -1738,6 +1738,7 @@ export type UpdateChannelResponse = { 'NameReserved' : null } |
   { 'RulesTooShort' : FieldTooShortResult } |
   { 'CommunityFrozen' : null } |
   { 'NameTooLong' : FieldTooLongResult } |
+  { 'SuccessV2' : { 'rules_version' : [] | [Version] } } |
   { 'NameTaken' : null };
 export interface UpdateCommunityArgs {
   'permissions' : [] | [OptionalCommunityPermissions],
@@ -1746,7 +1747,7 @@ export interface UpdateCommunityArgs {
   'banner' : DocumentUpdate,
   'description' : [] | [string],
   'public' : [] | [boolean],
-  'rules' : [] | [AccessRules],
+  'rules' : [] | [Rules],
   'avatar' : DocumentUpdate,
   'primary_language' : [] | [string],
 }
@@ -1763,6 +1764,7 @@ export type UpdateCommunityResponse = { 'NameReserved' : null } |
   { 'RulesTooShort' : FieldTooShortResult } |
   { 'CommunityFrozen' : null } |
   { 'NameTooLong' : FieldTooLongResult } |
+  { 'SuccessV2' : { 'rules_version' : [] | [Version] } } |
   { 'NameTaken' : null } |
   { 'InternalError' : null } |
   { 'BannerTooBig' : FieldTooLongResult };

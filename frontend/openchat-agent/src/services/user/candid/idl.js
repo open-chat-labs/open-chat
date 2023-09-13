@@ -95,7 +95,7 @@ export const idlFactory = ({ IDL }) => {
     'data' : IDL.Vec(IDL.Nat8),
     'mime_type' : IDL.Text,
   });
-  const AccessRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
+  const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const CreateCommunityArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : IDL.Opt(CommunityPermissions),
@@ -105,7 +105,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'history_visible_to_new_joiners' : IDL.Bool,
     'default_channels' : IDL.Vec(IDL.Text),
-    'rules' : AccessRules,
+    'rules' : Rules,
     'avatar' : IDL.Opt(Document),
     'primary_language' : IDL.Text,
   });
@@ -167,7 +167,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'history_visible_to_new_joiners' : IDL.Bool,
-    'rules' : AccessRules,
+    'rules' : Rules,
     'avatar' : IDL.Opt(Document),
   });
   const CreateGroupSuccessResult = IDL.Record({ 'chat_id' : ChatId });

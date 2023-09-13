@@ -168,11 +168,11 @@ export const idlFactory = ({ IDL }) => {
     'change_roles' : CommunityPermissionRole,
     'create_private_channel' : CommunityPermissionRole,
   });
-  const AccessRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
+  const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const ConvertIntoCommunityArgs = IDL.Record({
     'permissions' : IDL.Opt(CommunityPermissions),
     'history_visible_to_new_joiners' : IDL.Bool,
-    'rules' : AccessRules,
+    'rules' : Rules,
     'primary_language' : IDL.Opt(IDL.Text),
   });
   const ChannelId = IDL.Nat;
@@ -927,7 +927,7 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
     'pinned_messages' : IDL.Vec(MessageIndex),
     'latest_event_index' : EventIndex,
-    'rules' : AccessRules,
+    'rules' : Rules,
   });
   const SelectedInitialResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
@@ -945,7 +945,7 @@ export const idlFactory = ({ IDL }) => {
     'members_removed' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
-    'rules' : IDL.Opt(AccessRules),
+    'rules' : IDL.Opt(Rules),
     'blocked_users_added' : IDL.Vec(UserId),
   });
   const SelectedUpdatesV2Response = IDL.Variant({
@@ -1232,7 +1232,7 @@ export const idlFactory = ({ IDL }) => {
     'events_ttl' : EventsTimeToLiveUpdate,
     'public' : IDL.Opt(IDL.Bool),
     'correlation_id' : IDL.Nat64,
-    'rules' : IDL.Opt(AccessRules),
+    'rules' : IDL.Opt(Rules),
     'avatar' : DocumentUpdate,
   });
   const FieldTooLongResult = IDL.Record({
@@ -1256,6 +1256,7 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'RulesTooShort' : FieldTooShortResult,
     'NameTooLong' : FieldTooLongResult,
+    'SuccessV2' : IDL.Record({ 'rules_version' : IDL.Opt(Version) }),
     'NameTaken' : IDL.Null,
     'InternalError' : IDL.Null,
   });

@@ -78,7 +78,6 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         newly_expired_messages,
         next_message_expiry: OptionUpdate::from_update(chat.events.next_message_expiry(now)),
         gate: updates_from_events.gate,
-        rules_enabled: updates_from_events.rules_changed.then_some(chat.rules.enabled),
         rules_accepted: member
             .rules_accepted
             .as_ref()

@@ -6,7 +6,7 @@ use candid::Principal;
 use ic_test_state_machine_client::StateMachine;
 use itertools::Itertools;
 use std::ops::Deref;
-use types::{AccessRules, ChatId};
+use types::{ChatId, Rules};
 
 #[test]
 fn convert_into_community_succeeds() {
@@ -36,7 +36,7 @@ fn convert_into_community_succeeds() {
         user1.principal,
         group_id.into(),
         &group_canister::convert_into_community::Args {
-            rules: AccessRules::default(),
+            rules: Rules::default(),
             permissions: None,
             primary_language: None,
             history_visible_to_new_joiners: true,
@@ -86,7 +86,7 @@ fn not_group_owner_returns_unauthorized() {
         user2.principal,
         group_id.into(),
         &group_canister::convert_into_community::Args {
-            rules: AccessRules::default(),
+            rules: Rules::default(),
             permissions: None,
             history_visible_to_new_joiners: true,
             primary_language: None,

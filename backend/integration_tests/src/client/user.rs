@@ -34,7 +34,7 @@ pub mod happy_path {
     use crate::User;
     use ic_test_state_machine_client::StateMachine;
     use types::{
-        AccessRules, ChatId, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId, Reaction, TextContent,
+        ChatId, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId, Reaction, Rules, TextContent,
         TimestampMillis, UserId,
     };
 
@@ -84,7 +84,7 @@ pub mod happy_path {
                 avatar: None,
                 history_visible_to_new_joiners,
                 permissions: None,
-                rules: AccessRules::default(),
+                rules: Rules::default(),
                 events_ttl: None,
                 gate: None,
             },
@@ -115,7 +115,7 @@ pub mod happy_path {
                 banner: None,
                 history_visible_to_new_joiners: is_public,
                 permissions: None,
-                rules: AccessRules::default(),
+                rules: Rules::default(),
                 gate: None,
                 default_channels,
                 primary_language: "en".to_string(),
