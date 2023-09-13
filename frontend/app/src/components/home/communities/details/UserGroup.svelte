@@ -105,8 +105,10 @@
     function matchesSearch(searchTerm: string, user: UserSummary): boolean {
         if (searchTerm === "") return false;
         return (
-            user.username.toLowerCase().includes(searchTerm) ||
-            (user.displayName !== undefined && user.displayName.toLowerCase().includes(searchTerm))
+            !userGroup.members.has(user.userId) &&
+            (user.username.toLowerCase().includes(searchTerm) ||
+                (user.displayName !== undefined &&
+                    user.displayName.toLowerCase().includes(searchTerm)))
         );
     }
 
