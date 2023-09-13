@@ -553,7 +553,6 @@
         "voteFailed": "Impossibile esprimere il voto. Riprova più tardi",
         "alreadyVoted": "Hai già votato: prova a ricaricare la pagina",
         "noEligibleNeurons": "Nessun neurone idoneo trovato",
-        "noEligibleNeuronsMessage": "Nessun neurone idoneo o collegato trovato. Per votare le proposte da OpenChat, devi prima aggiungere il tuo ID utente OpenChat come tasto di scelta rapida per tutti i neuroni con cui desideri votare. Il tuo ID utente OpenChat è:",
         "proposalNotAceptingVotes": "Questa proposta non accetta voti: prova a ricaricare la pagina",
         "proposedBy": "proposto da",
         "topic": "argomento",
@@ -580,7 +579,8 @@
         "cyclesDispenserAction": "Cicli Azioni Dispenser",
         "unknownActionCategory": "Altre azioni",
         "notificationsAction": "Notifiche Indice Azioni",
-        "registryAction": "Azioni di registro"
+        "registryAction": "Azioni di registro",
+        "noEligibleNeuronsMessage": "Nessun neurone idoneo o collegato trovato. Per votare proposte da OpenChat devi prima aggiungere il tuo ID utente OpenChat come tasto di scelta rapida a qualsiasi neurone con cui desideri votare.<br/><br/> Il tuo ID utente OpenChat è: {userId}.<br/><br/> Per ulteriori informazioni sul voto e sulla governance leggere <a target=\"_blank\" href=\"https://oc.app/blog/governance\">questo post del blog</a> ."
     },
     "yes": "sì",
     "no": "No",

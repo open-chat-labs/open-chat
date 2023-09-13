@@ -553,7 +553,6 @@
         "voteFailed": "投票失败 - 请稍后再试",
         "alreadyVoted": "您已经投票 - 尝试重新加载页面",
         "noEligibleNeurons": "未找到符合条件的神经元",
-        "noEligibleNeuronsMessage": "未找到符合条件或关联的神经元。为了在 OpenChat 中对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您希望与之投票的任何神经元。您的 OpenChat 用户 ID 是：",
         "proposalNotAceptingVotes": "此提案不接受投票 - 尝试重新加载页面",
         "proposedBy": "提议者",
         "topic": "话题",
@@ -580,7 +579,8 @@
         "cyclesDispenserAction": "循环分配器操作",
         "unknownActionCategory": "其他行为",
         "notificationsAction": "通知索引操作",
-        "registryAction": "注册表操作"
+        "registryAction": "注册表操作",
+        "noEligibleNeuronsMessage": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您想要投票的任何神经元。<br/><br/>您的 OpenChat 用户 ID 是：{userId}。<br/><br/>有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。"
     },
     "quoteReply": "引用",
     "groupNameTooShort": "{level} 名称太短",

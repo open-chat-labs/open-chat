@@ -557,7 +557,6 @@
         "voteFailed": "Stimmabgabe fehlgeschlagen - bitte versuchen Sie es später erneut",
         "alreadyVoted": "Sie haben bereits abgestimmt - versuchen Sie, die Seite neu zu laden",
         "noEligibleNeurons": "Keine geeigneten Neuronen gefunden",
-        "noEligibleNeuronsMessage": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge innerhalb von OpenChat abzustimmen, müssen Sie zuerst Ihre OpenChat-Benutzer-ID als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten. Ihre OpenChat-Benutzer-ID lautet:",
         "proposalNotAceptingVotes": "Für diesen Vorschlag werden keine Stimmen akzeptiert. Versuchen Sie, die Seite neu zu laden",
         "proposedBy": "vorgeschlagen von",
         "topic": "Thema",
@@ -584,7 +583,8 @@
         "cyclesDispenserAction": "Zyklen Spenderaktionen",
         "unknownActionCategory": "Andere Aktionen",
         "notificationsAction": "Indexaktionen für Benachrichtigungen",
-        "registryAction": "Registrierungsaktionen"
+        "registryAction": "Registrierungsaktionen",
+        "noEligibleNeuronsMessage": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge in OpenChat abzustimmen, müssen Sie zunächst Ihre OpenChat-Benutzer-ID als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten.<br/><br/> Ihre OpenChat-Benutzer-ID lautet: {userId}.<br/><br/> Weitere Informationen zu Abstimmungen und Governance finden Sie <a target=\"_blank\" href=\"https://oc.app/blog/governance\">in diesem Blogbeitrag</a> ."
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Name {level} ist zu kurz",
