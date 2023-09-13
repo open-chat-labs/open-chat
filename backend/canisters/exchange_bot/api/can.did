@@ -20,4 +20,5 @@ type InitArgs = record {
 
 service : (InitArgs) -> {
     exchange : (ExchangeArgs) -> (ExchangeResponse);
+    quote : (ExchangeArgs) -> (ExchangeResponse);
 };

@@ -42,7 +42,7 @@ impl RuntimeState {
             },
             TokenInfo {
                 token: Cryptocurrency::CHAT,
-                ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
+                ledger: Cryptocurrency::CHAT.ledger_canister_id().unwrap(),
                 decimals: 8,
             },
         )
