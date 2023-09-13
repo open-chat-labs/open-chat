@@ -135,7 +135,6 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         expired_messages: cached.expired_messages.clone(),
         next_message_expiry: cached.next_message_expiry,
         gate: cached.gate.clone(),
-        rules_enabled: cached.rules_enabled,
         rules_accepted: cached.rules_accepted,
     }
 }

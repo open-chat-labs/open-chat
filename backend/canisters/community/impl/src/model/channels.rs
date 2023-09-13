@@ -6,9 +6,9 @@ use std::cmp::Reverse;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{
-    AccessRules, ChannelId, ChannelMatch, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
-    CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissions, MessageIndex, TimestampMillis, Timestamped, UserId,
-    MAX_THREADS_IN_SUMMARY,
+    ChannelId, ChannelMatch, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
+    CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissions, MessageIndex, Rules, TimestampMillis, Timestamped,
+    UserId, MAX_THREADS_IN_SUMMARY,
 };
 
 use super::members::CommunityMembers;
@@ -147,7 +147,7 @@ impl Channel {
                 true,
                 name,
                 String::new(),
-                AccessRules::default(),
+                Rules::default(),
                 None,
                 None,
                 true,
@@ -238,7 +238,6 @@ impl Channel {
             expired_messages: chat.events.expired_messages(now),
             next_message_expiry: chat.events.next_message_expiry(now),
             gate: chat.gate.value.clone(),
-            rules_enabled: chat.rules.enabled,
             membership,
         })
     }
@@ -317,7 +316,6 @@ impl Channel {
             date_last_pinned: updates_from_events.date_last_pinned,
             events_ttl: updates_from_events.events_ttl,
             gate: updates_from_events.gate,
-            rules_enabled: updates_from_events.rules_changed.then_some(chat.rules.enabled),
             membership,
         })
     }

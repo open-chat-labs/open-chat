@@ -15,10 +15,12 @@ fn selected_updates_v2(args: Args) -> Response {
 }
 
 fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
-    let caller = state.env.caller();
-
-    if !state.data.is_accessible(caller, args.invite_code) {
-        return PrivateCommunity;
+    // Don't call `ic0.caller()` if the community is public or the invite_code is valid to maximise query caching
+    if !state.data.is_public || !state.data.is_invite_code_valid(args.invite_code) {
+        let caller = state.env.caller();
+        if !state.data.is_accessible(caller, None) {
+            return PrivateCommunity;
+        }
     }
 
     let data = &state.data;
@@ -57,7 +59,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         blocked_users_removed: vec![],
         invited_users,
         rules: None,
-        access_rules: None,
+        chat_rules: None,
         user_groups: data
             .members
             .iter_user_groups()
@@ -106,8 +108,8 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
                 if result.rules.is_none() {
                     result.rules = Some(data.rules.clone().into());
                 }
-                if result.access_rules.is_none() {
-                    result.access_rules = Some(data.rules.clone().into());
+                if result.chat_rules.is_none() {
+                    result.chat_rules = Some(data.rules.clone().into());
                 }
             }
             CommunityEventInternal::GroupImported(g) => {

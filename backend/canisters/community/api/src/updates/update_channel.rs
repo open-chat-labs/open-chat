@@ -1,8 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
-    AccessGate, AccessRules, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, OptionUpdate,
-    OptionalGroupPermissions,
+    AccessGate, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, OptionUpdate, OptionalGroupPermissions, Rules,
+    Version,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -10,7 +10,7 @@ pub struct Args {
     pub channel_id: ChannelId,
     pub name: Option<String>,
     pub description: Option<String>,
-    pub rules: Option<AccessRules>,
+    pub rules: Option<Rules>,
     pub avatar: OptionUpdate<Document>,
     pub permissions: Option<OptionalGroupPermissions>,
     pub gate: OptionUpdate<AccessGate>,
@@ -20,6 +20,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
+    SuccessV2(SuccessResult),
     NotAuthorized,
     UserNotInCommunity,
     ChannelNotFound,
@@ -34,4 +35,9 @@ pub enum Response {
     RulesTooShort(FieldTooShortResult),
     UserSuspended,
     CommunityFrozen,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct SuccessResult {
+    pub rules_version: Option<Version>,
 }

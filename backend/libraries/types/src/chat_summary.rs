@@ -67,8 +67,6 @@ pub struct GroupChatSummary {
     pub next_message_expiry: Option<TimestampMillis>,
     pub gate: Option<AccessGate>,
     #[serde(default)]
-    pub rules_enabled: bool,
-    #[serde(default)]
     pub rules_accepted: bool,
 }
 
@@ -141,7 +139,6 @@ pub struct GroupCanisterGroupChatSummary {
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
     pub gate: Option<AccessGate>,
-    pub rules_enabled: bool,
     pub rules_accepted: bool,
 }
 
@@ -203,7 +200,6 @@ impl GroupCanisterGroupChatSummary {
             expired_messages: self.expired_messages.merge(updates.newly_expired_messages),
             next_message_expiry: updates.next_message_expiry.apply_to(self.next_message_expiry),
             gate: updates.gate.apply_to(self.gate),
-            rules_enabled: updates.rules_enabled.unwrap_or(self.rules_enabled),
             rules_accepted: updates.rules_accepted.unwrap_or(self.rules_accepted),
         }
     }
@@ -236,7 +232,6 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub newly_expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: OptionUpdate<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
-    pub rules_enabled: Option<bool>,
     pub rules_accepted: Option<bool>,
 }
 
@@ -251,9 +246,9 @@ pub struct SelectedGroupUpdates {
     pub invited_users: Option<Vec<UserId>>,
     pub pinned_messages_added: Vec<MessageIndex>,
     pub pinned_messages_removed: Vec<MessageIndex>,
-    // TODO: remove this field once the website is using `access_rules` instead
-    pub rules: Option<AccessRules>,
-    pub access_rules: Option<VersionedRules>,
+    // TODO: remove this field once the website is using `chat_rules` instead
+    pub rules: Option<Rules>,
+    pub chat_rules: Option<VersionedRules>,
 }
 
 impl SelectedGroupUpdates {
@@ -338,7 +333,7 @@ pub struct GovernanceProposalsSubtype {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
-pub struct AccessRules {
+pub struct Rules {
     pub text: String,
     pub enabled: bool,
 }
@@ -347,4 +342,5 @@ pub struct AccessRules {
 pub struct VersionedRules {
     pub text: String,
     pub version: Version,
+    pub enabled: bool,
 }

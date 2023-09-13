@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - One time job to remove bot users from the set of local users ([#4301](https://github.com/open-chat-labs/open-chat/pull/4301))
+- Move rules enabled into Details response + related ([#4366](https://github.com/open-chat-labs/open-chat/pull/4366))
 
 ## [[2.0.834](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.834-local_user_index)] - 2023-09-04
 

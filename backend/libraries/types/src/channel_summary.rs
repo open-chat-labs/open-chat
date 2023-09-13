@@ -28,7 +28,6 @@ pub struct CommunityCanisterChannelSummary {
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
     pub gate: Option<AccessGate>,
-    pub rules_enabled: bool,
     pub membership: Option<ChannelMembership>,
 }
 
@@ -62,7 +61,6 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
-    pub rules_enabled: Option<bool>,
     pub membership: Option<ChannelMembershipUpdates>,
 }
 

@@ -79,8 +79,7 @@ async fn update_community(mut args: Args) -> Response {
         };
     }
 
-    mutate_state(|state| commit(prepare_result.my_user_id, args, state));
-    Success
+    SuccessV2(mutate_state(|state| commit(prepare_result.my_user_id, args, state)))
 }
 
 fn clean_args(args: &mut Args) {
@@ -186,7 +185,9 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     }
 }
 
-fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
+fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessResult {
+    let mut result = SuccessResult { rules_version: None };
+
     let now = state.env.now();
     let events = &mut state.data.events;
 
@@ -224,7 +225,13 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
         let enabled = new_rules.enabled;
         let prev_enabled = state.data.rules.enabled;
 
-        if state.data.rules.update(new_rules) {
+        if let Some(rules_version) = state.data.rules.update(new_rules) {
+            result.rules_version = Some(rules_version);
+
+            if let Some(member) = state.data.members.get_by_user_id_mut(&my_user_id) {
+                member.rules_accepted = Some(Timestamped::new(rules_version, now))
+            }
+
             events.push_event(
                 CommunityEventInternal::RulesChanged(Box::new(GroupRulesChanged {
                     enabled,
@@ -336,6 +343,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
     }
 
     handle_activity_notification(state);
+    result
 }
 
 fn merge_permissions(new: OptionalCommunityPermissions, old: &CommunityPermissions) -> CommunityPermissions {

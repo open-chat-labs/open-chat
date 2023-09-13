@@ -4,7 +4,7 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use proposals_bot_canister::add_governance_canister::{Response::*, *};
 use std::fmt::Write;
-use types::{AccessRules, GovernanceProposalsSubtype, GroupPermissionRole, GroupPermissions, GroupSubtype, MultiUserChat};
+use types::{GovernanceProposalsSubtype, GroupPermissionRole, GroupPermissions, GroupSubtype, MultiUserChat, Rules};
 
 // dfx --identity openchat canister --network ic call proposals_bot add_governance_canister '(record { governance_canister_id=principal "rrkah-fqaaa-aaaaa-aaaaq-cai"; name="NNS" })'
 #[proposal(guard = "caller_is_governance_principal")]
@@ -59,7 +59,7 @@ async fn create_group(args: &Args, is_nns: bool) -> Result<MultiUserChat, Respon
             .description
             .clone()
             .unwrap_or_else(|| default_description(&args.name, false)),
-        rules: AccessRules::default(),
+        rules: Rules::default(),
         subtype: Some(GroupSubtype::GovernanceProposals(GovernanceProposalsSubtype {
             governance_canister_id: args.governance_canister_id,
             is_nns,
@@ -92,7 +92,7 @@ async fn create_channel(args: &Args, is_nns: bool) -> Result<MultiUserChat, Resp
             .description
             .clone()
             .unwrap_or_else(|| default_description(&args.name, true)),
-        rules: AccessRules::default(),
+        rules: Rules::default(),
         subtype: Some(GroupSubtype::GovernanceProposals(GovernanceProposalsSubtype {
             governance_canister_id: args.governance_canister_id,
             is_nns,
