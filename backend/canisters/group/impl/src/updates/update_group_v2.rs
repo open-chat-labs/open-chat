@@ -59,8 +59,7 @@ async fn update_group_v2(mut args: Args) -> Response {
         };
     }
 
-    mutate_state(|state| commit(prepare_result.my_user_id, args, state));
-    Success
+    SuccessV2(mutate_state(|state| commit(prepare_result.my_user_id, args, state)))
 }
 
 fn clean_args(args: &mut Args) {
@@ -101,7 +100,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             &args.permissions,
             &args.public,
         ) {
-            UpdateResult::Success => {
+            Ok(_) => {
                 let avatar_update = args.avatar.as_ref().expand();
 
                 Ok(PrepareResult {
@@ -115,24 +114,27 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     gate: gate.cloned(),
                 })
             }
-            UpdateResult::UserSuspended => Err(UserSuspended),
-            UpdateResult::UserNotInGroup => Err(CallerNotInGroup),
-            UpdateResult::NotAuthorized => Err(NotAuthorized),
-            UpdateResult::NameTooShort(v) => Err(NameTooShort(v)),
-            UpdateResult::NameTooLong(v) => Err(NameTooLong(v)),
-            UpdateResult::NameReserved => Err(NameReserved),
-            UpdateResult::DescriptionTooLong(v) => Err(DescriptionTooLong(v)),
-            UpdateResult::RulesTooShort(v) => Err(RulesTooShort(v)),
-            UpdateResult::RulesTooLong(v) => Err(RulesTooLong(v)),
-            UpdateResult::AvatarTooBig(v) => Err(AvatarTooBig(v)),
+            Err(result) => match result {
+                UpdateResult::UserSuspended => Err(UserSuspended),
+                UpdateResult::UserNotInGroup => Err(CallerNotInGroup),
+                UpdateResult::NotAuthorized => Err(NotAuthorized),
+                UpdateResult::NameTooShort(v) => Err(NameTooShort(v)),
+                UpdateResult::NameTooLong(v) => Err(NameTooLong(v)),
+                UpdateResult::NameReserved => Err(NameReserved),
+                UpdateResult::DescriptionTooLong(v) => Err(DescriptionTooLong(v)),
+                UpdateResult::RulesTooShort(v) => Err(RulesTooShort(v)),
+                UpdateResult::RulesTooLong(v) => Err(RulesTooLong(v)),
+                UpdateResult::AvatarTooBig(v) => Err(AvatarTooBig(v)),
+                UpdateResult::Success(_) => unreachable!(),
+            },
         }
     } else {
         Err(CallerNotInGroup)
     }
 }
 
-fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
-    state.data.chat.do_update(
+fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessResult {
+    let result = state.data.chat.do_update(
         my_user_id,
         args.name,
         args.description,
@@ -146,4 +148,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
     );
 
     handle_activity_notification(state);
+    SuccessResult {
+        rules_version: result.rules_version,
+    }
 }

@@ -175,7 +175,7 @@ type CreateGroupArgs = record {
     avatar : opt Document;
     history_visible_to_new_joiners : bool;
     permissions : opt GroupPermissions;
-    rules : AccessRules;
+    rules : Rules;
     events_ttl : opt Milliseconds;
     gate : opt AccessGate;
 };
@@ -237,7 +237,7 @@ type CreateCommunityArgs = record {
     banner : opt Document;
     history_visible_to_new_joiners : bool;
     permissions : opt CommunityPermissions;
-    rules : AccessRules;
+    rules : Rules;
     gate : opt AccessGate;
     default_channels : vec text;
     primary_language : text;

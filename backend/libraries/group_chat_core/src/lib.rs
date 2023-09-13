@@ -6,14 +6,13 @@ use search::Query;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
-    AccessGate, AccessRules, AvatarChanged, ContentValidationError, CryptoTransaction, Document, EventIndex, EventWrapper,
-    EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
-    GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
-    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse,
-    Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged,
-    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UserId, UsersBlocked, UsersInvited, Version, Versioned,
-    VersionedRules,
+    AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, Document, EventIndex, EventWrapper, EventsResponse,
+    FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupPermissionRole,
+    GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
+    InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex,
+    MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions,
+    PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
+    Timestamped, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -58,7 +57,7 @@ impl GroupChatCore {
         is_public: bool,
         name: String,
         description: String,
-        rules: AccessRules,
+        rules: Rules,
         subtype: Option<GroupSubtype>,
         avatar: Option<Document>,
         history_visible_to_new_joiners: bool,
@@ -379,7 +378,7 @@ impl GroupChatCore {
                 ChatEventInternal::GroupRulesChanged(_) => {
                     if result.rules.is_none() {
                         result.rules = Some(self.rules.clone().into());
-                        result.access_rules = Some(self.rules.clone().into());
+                        result.chat_rules = Some(self.rules.clone().into());
                     }
                 }
                 _ => {}
@@ -1261,7 +1260,7 @@ impl GroupChatCore {
         user_id: UserId,
         name: Option<String>,
         description: Option<String>,
-        rules: Option<AccessRules>,
+        rules: Option<Rules>,
         avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
         gate: OptionUpdate<AccessGate>,
@@ -1269,12 +1268,8 @@ impl GroupChatCore {
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
     ) -> UpdateResult {
-        use UpdateResult::*;
-
-        let result = self.can_update(&user_id, &name, &description, &rules, &avatar, &permissions, &public);
-
-        if matches!(result, Success) {
-            self.do_update(
+        match self.can_update(&user_id, &name, &description, &rules, &avatar, &permissions, &public) {
+            Ok(_) => UpdateResult::Success(self.do_update(
                 user_id,
                 name,
                 description,
@@ -1285,10 +1280,9 @@ impl GroupChatCore {
                 public,
                 events_ttl,
                 now,
-            );
+            )),
+            Err(result) => result,
         }
-
-        result
     }
 
     pub fn can_update(
@@ -1296,47 +1290,47 @@ impl GroupChatCore {
         user_id: &UserId,
         name: &Option<String>,
         description: &Option<String>,
-        rules: &Option<AccessRules>,
+        rules: &Option<Rules>,
         avatar: &OptionUpdate<Document>,
         permissions: &Option<OptionalGroupPermissions>,
         public: &Option<bool>,
-    ) -> UpdateResult {
+    ) -> Result<(), UpdateResult> {
         use UpdateResult::*;
 
         let avatar_update = avatar.as_ref().expand();
 
         if let Some(name) = name {
             if let Err(error) = validate_group_name(name, self.is_public, self.subtype.value.as_ref()) {
-                return match error {
+                return Err(match error {
                     NameValidationError::TooShort(s) => NameTooShort(s),
                     NameValidationError::TooLong(l) => NameTooLong(l),
                     NameValidationError::Reserved => NameReserved,
-                };
+                });
             }
         }
 
         if let Some(description) = description {
             if let Err(error) = validate_description(description) {
-                return DescriptionTooLong(error);
+                return Err(DescriptionTooLong(error));
             }
         }
 
         if let Some(rules) = rules {
             if let Err(error) = validate_rules(rules.enabled, &rules.text) {
-                return match error {
+                return Err(match error {
                     RulesValidationError::TooShort(s) => RulesTooShort(s),
                     RulesValidationError::TooLong(l) => RulesTooLong(l),
-                };
+                });
             }
         }
 
         if let Err(error) = avatar_update.map_or(Ok(()), validate_avatar) {
-            return AvatarTooBig(error);
+            return Err(AvatarTooBig(error));
         }
 
         if let Some(member) = self.members.get(user_id) {
             if member.suspended.value {
-                return UserSuspended;
+                return Err(UserSuspended);
             }
 
             let group_permissions = &self.permissions;
@@ -1344,12 +1338,12 @@ impl GroupChatCore {
                 || (permissions.is_some() && !member.role.can_change_permissions())
                 || (public.is_some() && !member.role.can_change_group_visibility())
             {
-                NotAuthorized
+                Err(NotAuthorized)
             } else {
-                Success
+                Ok(())
             }
         } else {
-            UserNotInGroup
+            Err(UserNotInGroup)
         }
     }
 
@@ -1358,14 +1352,16 @@ impl GroupChatCore {
         user_id: UserId,
         name: Option<String>,
         description: Option<String>,
-        rules: Option<AccessRules>,
+        rules: Option<Rules>,
         avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
         gate: OptionUpdate<AccessGate>,
         public: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
-    ) {
+    ) -> UpdateSuccessResult {
+        let mut result = UpdateSuccessResult { rules_version: None };
+
         let events = &mut self.events;
 
         if let Some(name) = name {
@@ -1403,7 +1399,13 @@ impl GroupChatCore {
         if let Some(rules) = rules {
             let prev_enabled = self.rules.enabled;
 
-            if self.rules.update(rules) {
+            if let Some(rules_version) = self.rules.update(rules) {
+                result.rules_version = Some(rules_version);
+
+                if let Some(member) = self.members.get_mut(&user_id) {
+                    member.rules_accepted = Some(Timestamped::new(rules_version, now))
+                }
+
                 events.push_main_event(
                     ChatEventInternal::GroupRulesChanged(Box::new(GroupRulesChanged {
                         enabled: self.rules.enabled,
@@ -1491,6 +1493,8 @@ impl GroupChatCore {
                 }
             }
         }
+
+        result
     }
 
     pub fn check_rules(&self, member: &GroupMemberInternal) -> bool {
@@ -1681,7 +1685,7 @@ pub enum RemoveMemberResult {
 }
 
 pub enum UpdateResult {
-    Success,
+    Success(UpdateSuccessResult),
     UserSuspended,
     UserNotInGroup,
     NotAuthorized,
@@ -1692,6 +1696,10 @@ pub enum UpdateResult {
     RulesTooShort(FieldTooShortResult),
     RulesTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
+}
+
+pub struct UpdateSuccessResult {
+    pub rules_version: Option<Version>,
 }
 
 enum EventsReaderResult<'r> {
@@ -1767,31 +1775,28 @@ pub struct SummaryUpdatesFromEvents {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AccessRulesInternal {
-    // TODO: Make this an alias once users, groups, and communities have been upgraded
-    // THEN in the subsequent release can delete the serde attribute altogether!
-    #[serde(alias = "versioned_text")]
     pub text: Versioned<String>,
     pub enabled: bool,
 }
 
 impl AccessRulesInternal {
-    pub fn new(rules: AccessRules) -> Self {
+    pub fn new(rules: Rules) -> Self {
         Self {
             text: Versioned::new(rules.text, Version::zero()),
             enabled: rules.enabled,
         }
     }
 
-    pub fn update(&mut self, rules: AccessRules) -> bool {
+    pub fn update(&mut self, rules: Rules) -> Option<Version> {
         if rules.enabled != self.enabled || self.text.value != rules.text {
             if self.text.value != rules.text {
                 self.text.update(rules.text);
             }
 
             self.enabled = rules.enabled;
-            true
+            Some(self.text.version)
         } else {
-            false
+            None
         }
     }
 
@@ -1800,9 +1805,9 @@ impl AccessRulesInternal {
     }
 }
 
-impl From<AccessRulesInternal> for AccessRules {
+impl From<AccessRulesInternal> for Rules {
     fn from(rules: AccessRulesInternal) -> Self {
-        AccessRules {
+        Rules {
             text: rules.text.value,
             enabled: rules.enabled,
         }
@@ -1814,6 +1819,7 @@ impl From<AccessRulesInternal> for VersionedRules {
         VersionedRules {
             text: rules.text.value,
             version: rules.text.version,
+            enabled: rules.enabled,
         }
     }
 }

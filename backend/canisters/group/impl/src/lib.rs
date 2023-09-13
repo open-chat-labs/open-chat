@@ -18,9 +18,9 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    AccessGate, AccessRules, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, EventIndex,
+    AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, EventIndex,
     FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification,
-    TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
@@ -145,7 +145,6 @@ impl RuntimeState {
             expired_messages: chat.events.expired_messages(now),
             next_message_expiry: chat.events.next_message_expiry(now),
             gate: chat.gate.value.clone(),
-            rules_enabled: chat.rules.enabled,
             rules_accepted: member
                 .rules_accepted
                 .as_ref()
@@ -305,7 +304,7 @@ impl Data {
         is_public: bool,
         name: String,
         description: String,
-        rules: AccessRules,
+        rules: Rules,
         subtype: Option<GroupSubtype>,
         avatar: Option<Document>,
         history_visible_to_new_joiners: bool,

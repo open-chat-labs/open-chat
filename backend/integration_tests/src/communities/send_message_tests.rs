@@ -7,8 +7,8 @@ use ic_test_state_machine_client::StateMachine;
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
 use types::{
-    AccessRules, ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
-    MessageContentInitial, OptionUpdate, TextContent, Version,
+    ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent, MessageContentInitial,
+    OptionUpdate, Rules, TextContent, Version,
 };
 
 #[test]
@@ -431,7 +431,7 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
 
     assert_eq!(
         community_rules,
-        Rules {
+        ChatRules {
             enabled: false,
             accepted: false,
             text: "".to_string(),
@@ -441,7 +441,7 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
 
     assert_eq!(
         channel_rules,
-        Rules {
+        ChatRules {
             enabled: false,
             accepted: false,
             text: "".to_string(),
@@ -457,7 +457,7 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
 
     assert_eq!(
         community_rules,
-        Rules {
+        ChatRules {
             enabled: true,
             accepted: false,
             text: "No running".to_string(),
@@ -467,7 +467,7 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
 
     assert_eq!(
         channel_rules,
-        Rules {
+        ChatRules {
             enabled: true,
             accepted: false,
             text: "No jumping".to_string(),
@@ -489,7 +489,7 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
 
     assert_eq!(
         community_rules,
-        Rules {
+        ChatRules {
             enabled: true,
             accepted: true,
             text: "No running".to_string(),
@@ -499,7 +499,7 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
 
     assert_eq!(
         channel_rules,
-        Rules {
+        ChatRules {
             enabled: true,
             accepted: true,
             text: "No jumping".to_string(),
@@ -508,32 +508,32 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
     );
 }
 
-fn get_community_rules(env: &mut StateMachine, user: &User, community_id: CommunityId) -> Rules {
+fn get_community_rules(env: &mut StateMachine, user: &User, community_id: CommunityId) -> ChatRules {
     let summary = client::community::happy_path::summary(env, user, community_id);
     let selected = client::community::happy_path::selected_initial(env, user, community_id);
 
-    Rules {
-        enabled: summary.rules_enabled,
+    ChatRules {
+        enabled: selected.chat_rules.enabled,
         accepted: summary.membership.unwrap().rules_accepted,
-        text: selected.access_rules.text,
-        version: selected.access_rules.version,
+        text: selected.chat_rules.text,
+        version: selected.chat_rules.version,
     }
 }
 
-fn get_channel_rules(env: &mut StateMachine, user: &User, community_id: CommunityId, channel_id: ChannelId) -> Rules {
+fn get_channel_rules(env: &mut StateMachine, user: &User, community_id: CommunityId, channel_id: ChannelId) -> ChatRules {
     let summary = client::community::happy_path::channel_summary(env, user, community_id, channel_id);
     let selected = client::community::happy_path::selected_channel_initial(env, user, community_id, channel_id);
 
-    Rules {
-        enabled: summary.rules_enabled,
+    ChatRules {
+        enabled: selected.chat_rules.enabled,
         accepted: summary.membership.unwrap().rules_accepted,
-        text: selected.access_rules.text,
-        version: selected.access_rules.version,
+        text: selected.chat_rules.text,
+        version: selected.chat_rules.version,
     }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-struct Rules {
+struct ChatRules {
     enabled: bool,
     accepted: bool,
     text: String,
@@ -592,7 +592,7 @@ fn set_community_rules(env: &mut StateMachine, user: &User, community_id: Commun
     let args = community_canister::update_community::Args {
         name: None,
         description: None,
-        rules: Some(AccessRules { text, enabled: true }),
+        rules: Some(Rules { text, enabled: true }),
         avatar: OptionUpdate::NoChange,
         banner: OptionUpdate::NoChange,
         permissions: None,
@@ -608,7 +608,7 @@ fn set_channel_rules(env: &mut StateMachine, user: &User, community_id: Communit
     let args = community_canister::update_channel::Args {
         name: None,
         description: None,
-        rules: Some(AccessRules { text, enabled: true }),
+        rules: Some(Rules { text, enabled: true }),
         avatar: OptionUpdate::NoChange,
         permissions: None,
         gate: OptionUpdate::NoChange,

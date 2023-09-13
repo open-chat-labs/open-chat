@@ -266,7 +266,6 @@ type GroupChatSummary = record {
     expired_messages : vec MessageIndexRange;
     next_message_expiry : opt TimestampMillis;
     gate : opt AccessGate;
-    rules_enabled : bool;
     rules_accepted : bool;
 };
 
@@ -299,7 +298,6 @@ type GroupCanisterGroupChatSummary = record {
     expired_messages : vec MessageIndexRange;
     next_message_expiry : opt TimestampMillis;
     gate : opt AccessGate;
-    rules_enabled : bool;
     rules_accepted : bool;
 };
 
@@ -329,7 +327,6 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     newly_expired_messages : vec MessageIndexRange;
     next_message_expiry : TimestampUpdate;
     gate : AccessGateUpdate;
-    rules_enabled : opt bool;
     rules_accepted : opt bool;
 };
 
@@ -348,7 +345,6 @@ type CommunityCanisterCommunitySummary = record {
     last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     channels : vec CommunityCanisterChannelSummary;
-    rules_enabled : bool;
     membership : opt CommunityMembership;
     user_groups : vec UserGroup;
     metrics : ChatMetrics;
@@ -389,7 +385,6 @@ type CommunityCanisterChannelSummary = record {
     expired_messages : vec MessageIndexRange;
     next_message_expiry : opt TimestampMillis;
     gate : opt AccessGate;
-    rules_enabled : bool;
     membership : opt ChannelMembership;
 };
 
@@ -420,7 +415,6 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     channels_added : vec CommunityCanisterChannelSummary;
     channels_updated : vec CommunityCanisterChannelSummaryUpdates;
     channels_removed : vec ChannelId;
-    rules_enabled : opt bool;
     membership : opt CommunityMembershipUpdates;
     user_groups : vec UserGroup;
     user_groups_deleted : vec nat32;
@@ -451,7 +445,6 @@ type CommunityCanisterChannelSummaryUpdates = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
-    rules_enabled : opt bool;
     membership : opt ChannelMembershipUpdates;
 };
 
@@ -474,8 +467,8 @@ type SelectedGroupUpdates = record {
     invited_users : opt vec UserId;
     pinned_messages_added : vec MessageIndex;
     pinned_messages_removed : vec MessageIndex;
-    rules : opt AccessRules;
-    access_rules : opt VersionedRules;
+    rules : opt Rules;
+    chat_rules : opt VersionedRules;
 };
 
 type GroupDescriptionChanged = record {
@@ -1250,13 +1243,14 @@ type GroupCanisterThreadDetails = record {
     last_updated : TimestampMillis;
 };
 
-type AccessRules = record {
+type Rules = record {
     text : text;
     enabled : bool;
 };
 
 type VersionedRules = record {
     text : text;
+    enabled : bool;
     version : Version;
 };
 

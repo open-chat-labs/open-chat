@@ -32,7 +32,7 @@ fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> Response {
             invited_users: chat.invited_users.users(),
             pinned_messages: chat.pinned_messages.clone(),
             rules: chat.rules.clone().into(),
-            access_rules: chat.rules.clone().into(),
+            chat_rules: chat.rules.clone().into(),
         })
     } else {
         ChannelNotFound

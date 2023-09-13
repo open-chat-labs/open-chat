@@ -3,7 +3,7 @@ use crate::rng::random_string;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
-use types::{AccessGate, AccessRules, GateCheckFailedReason};
+use types::{AccessGate, GateCheckFailedReason, Rules};
 
 #[test_case(true; "diamond_member")]
 #[test_case(false; "not_diamond_member")]
@@ -31,7 +31,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
             avatar: None,
             history_visible_to_new_joiners: true,
             permissions: None,
-            rules: AccessRules::default(),
+            rules: Rules::default(),
             events_ttl: None,
             gate: Some(AccessGate::DiamondMember),
         },
