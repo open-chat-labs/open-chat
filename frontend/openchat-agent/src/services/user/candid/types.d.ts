@@ -6,7 +6,6 @@ export type AccessGate = { 'SnsNeuron' : SnsNeuronGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
-export interface AccessRules { 'text' : string, 'enabled' : boolean }
 export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
 export interface AddHotGroupExclusionsArgs {
@@ -390,7 +389,7 @@ export interface CreateCommunityArgs {
   'description' : string,
   'history_visible_to_new_joiners' : boolean,
   'default_channels' : Array<string>,
-  'rules' : AccessRules,
+  'rules' : Rules,
   'avatar' : [] | [Document],
   'primary_language' : string,
 }
@@ -419,7 +418,7 @@ export interface CreateGroupArgs {
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'history_visible_to_new_joiners' : boolean,
-  'rules' : AccessRules,
+  'rules' : Rules,
   'avatar' : [] | [Document],
 }
 export type CreateGroupResponse = { 'NameReserved' : null } |
@@ -1386,6 +1385,7 @@ export interface RoleChanged {
   'old_role' : GroupRole,
   'new_role' : GroupRole,
 }
+export interface Rules { 'text' : string, 'enabled' : boolean }
 export interface SearchMessagesArgs {
   'max_results' : number,
   'user_id' : UserId,
@@ -1406,7 +1406,7 @@ export interface SelectedGroupUpdates {
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : [] | [AccessRules],
+  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |

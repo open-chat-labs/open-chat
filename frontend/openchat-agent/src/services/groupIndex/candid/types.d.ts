@@ -6,7 +6,6 @@ export type AccessGate = { 'SnsNeuron' : SnsNeuronGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
-export interface AccessRules { 'text' : string, 'enabled' : boolean }
 export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
 export interface ActiveGroupsArgs {
@@ -1186,6 +1185,7 @@ export interface RoleChanged {
   'old_role' : GroupRole,
   'new_role' : GroupRole,
 }
+export interface Rules { 'text' : string, 'enabled' : boolean }
 export interface SearchArgs { 'max_results' : number, 'search_term' : string }
 export type SearchResponse = { 'TermTooShort' : number } |
   { 'Success' : SearchSuccessResult } |
@@ -1204,7 +1204,7 @@ export interface SelectedGroupUpdates {
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : [] | [AccessRules],
+  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export interface SetCommunityModerationFlagsArgs {

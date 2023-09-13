@@ -6,7 +6,6 @@ export type AccessGate = { 'SnsNeuron' : SnsNeuronGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
-export interface AccessRules { 'text' : string, 'enabled' : boolean }
 export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
 export interface AddReactionArgs {
@@ -367,7 +366,7 @@ export type CompletedCryptoTransaction = {
 export interface ConvertIntoCommunityArgs {
   'permissions' : [] | [CommunityPermissions],
   'history_visible_to_new_joiners' : boolean,
-  'rules' : AccessRules,
+  'rules' : Rules,
   'primary_language' : [] | [string],
 }
 export type ConvertIntoCommunityResponse = {
@@ -1302,6 +1301,7 @@ export interface RoleChanged {
   'old_role' : GroupRole,
   'new_role' : GroupRole,
 }
+export interface Rules { 'text' : string, 'enabled' : boolean }
 export interface RulesArgs { 'invite_code' : [] | [bigint] }
 export type RulesResponse = { 'NotAuthorized' : null } |
   { 'Success' : RulesSuccess };
@@ -1327,7 +1327,7 @@ export interface SelectedGroupUpdates {
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : [] | [AccessRules],
+  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export type SelectedInitialArgs = {};
@@ -1340,7 +1340,7 @@ export interface SelectedInitialSuccess {
   'timestamp' : TimestampMillis,
   'pinned_messages' : Uint32Array | number[],
   'latest_event_index' : EventIndex,
-  'rules' : AccessRules,
+  'rules' : Rules,
 }
 export interface SelectedUpdatesV2Args { 'updates_since' : TimestampMillis }
 export type SelectedUpdatesV2Response = { 'CallerNotInGroup' : null } |
@@ -1508,7 +1508,7 @@ export interface UpdateGroupV2Args {
   'events_ttl' : EventsTimeToLiveUpdate,
   'public' : [] | [boolean],
   'correlation_id' : bigint,
-  'rules' : [] | [AccessRules],
+  'rules' : [] | [Rules],
   'avatar' : DocumentUpdate,
 }
 export type UpdateGroupV2Response = { 'NameReserved' : null } |
@@ -1523,6 +1523,7 @@ export type UpdateGroupV2Response = { 'NameReserved' : null } |
   { 'UserSuspended' : null } |
   { 'RulesTooShort' : FieldTooShortResult } |
   { 'NameTooLong' : FieldTooLongResult } |
+  { 'SuccessV2' : { 'rules_version' : [] | [Version] } } |
   { 'NameTaken' : null } |
   { 'InternalError' : null };
 export interface User { 'username' : string, 'user_id' : UserId }
