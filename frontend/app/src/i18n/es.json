@@ -353,7 +353,8 @@
         "ownerAndAdminsAndModerators": "Los propietarios, administradores y moderadores pueden",
         "updateDetails": "editar información básica",
         "createPublicChannel": "crear canales públicos",
-        "createPrivateChannel": "crear canales privados"
+        "createPrivateChannel": "crear canales privados",
+        "manageUserGroups": "gestionar grupos de usuarios"
     },
     "rules": {
         "enable": "Habilitar reglas",
@@ -622,7 +623,8 @@
         "settings": "Ajustes",
         "label": "Perfil",
         "communities": "Comunidades",
-        "selectCommunity": "Seleccione una comunidad"
+        "selectCommunity": "Seleccione una comunidad",
+        "global": "Global"
     },
     "undeleteMessage": "recuperar",
     "undeletingMessage": "Recuperando mensaje de {username} en {timestamp}",
@@ -894,7 +896,11 @@
             "leaveFailed": "Lo sentimos, no pudimos salir de esta comunidad.",
             "deleteFailed": "Lo sentimos, no pudimos eliminar esta comunidad.",
             "convertFailed": "Lo sentimos, pero no pudimos convertir sus grupos en una comunidad.",
-            "importFailed": "Lo sentimos, no pudimos importar tu grupo."
+            "importFailed": "Lo sentimos, no pudimos importar tu grupo.",
+            "deleteUserGroupFailed": "Lo sentimos, no pudimos eliminar el grupo de usuarios.",
+            "updateGroupFailed": "Lo sentimos, no pudimos actualizar el grupo de usuarios.",
+            "createGroupFailed": "Lo sentimos, no pudimos crear el grupo de usuarios.",
+            "userGroupNameTaken": "Lo sentimos, el nombre del grupo de usuarios ya está en uso."
         },
         "memberCount": "miembro(s)",
         "channelCount": "canales",
@@ -927,7 +933,13 @@
         "saveChanges": "Guardar cambios",
         "exploreMobile": "Explorar",
         "publicChannels": "Canales públicos",
-        "underReview": "Bajo revisión"
+        "underReview": "Bajo revisión",
+        "userGroups": "Grupos de Usuarios",
+        "noUserGroups": "No se encontraron grupos de usuarios",
+        "userGroupMembers": "Miembros del grupo de usuarios",
+        "enterUserGroupName": "Introduzca el nombre del grupo de usuarios",
+        "communityLabel": "Comunidad",
+        "confirmDeleteUserGroup": "¿Está seguro de que desea eliminar este grupo de usuarios?"
     },
     "groupCreatedBy": "{username} creó el {level}",
     "groupName": "{level} nombre",

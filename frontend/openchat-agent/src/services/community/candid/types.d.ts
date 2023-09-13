@@ -1520,6 +1520,7 @@ export interface SelectedInitialSuccess {
   'members' : Array<CommunityMember>,
   'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
+  'user_groups' : Array<UserGroupDetails>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'rules' : AccessRules,
@@ -1534,7 +1535,9 @@ export type SelectedUpdatesResponse = { 'Success' : SelectedUpdatesSuccess } |
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'invited_users' : [] | [Array<UserId>],
+  'user_groups_deleted' : Uint32Array | number[],
   'members_added_or_updated' : Array<CommunityMember>,
+  'user_groups' : Array<UserGroupDetails>,
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'rules' : [] | [AccessRules],
@@ -1788,8 +1791,9 @@ export interface UserGroup {
   'name' : string,
   'user_group_id' : number,
 }
-export interface UserGroupMembers {
+export interface UserGroupDetails {
   'members' : Array<UserId>,
+  'name' : string,
   'user_group_id' : number,
 }
 export type UserId = CanisterId;

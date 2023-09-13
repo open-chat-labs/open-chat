@@ -40,7 +40,7 @@ export function getTheme(base: Theme): Theme {
     base.modal.bd = base.bd;
     base.modal.bg = pink3;
     base.chatSummary["bg-selected"] = "#e75aac";
-    base.chatSummary.hv = "rgb(225, 52, 154 / 80%)";
+    base.chatSummary.hv = "rgb(225 52 154 / 80%)";
     base.chatSummary.del = base.button.bg;
     base.members.hv = base.chatSummary.hv;
     base.placeholder = txtLight;

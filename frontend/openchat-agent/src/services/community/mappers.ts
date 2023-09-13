@@ -33,6 +33,7 @@ import type {
     UpdateUserGroupResponse,
     UserFailedError,
     UserFailedGateCheck,
+    UserGroupDetails,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
@@ -69,6 +70,7 @@ import type {
     ApiImportGroupResponse,
     ApiCreateUserGroupResponse,
     ApiUpdateUserGroupResponse,
+    ApiUserGroupDetails,
     ApiDeleteUserGroupsResponse,
     ApiSetMemberDisplayNameResponse,
 } from "./candid/idl";
@@ -88,6 +90,7 @@ import {
     messageContent,
     messageEvent,
     threadDetails,
+    userGroup,
 } from "../common/chatMappers";
 import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 import { identity, optionUpdate, optional } from "../../utils/mapping";
@@ -97,7 +100,7 @@ import { messageWrapper } from "../group/mappers";
 import { ReplicaNotUpToDateError } from "../error";
 
 export function addMembersToChannelResponse(
-    candid: ApiAddMembersToChannelResponse
+    candid: ApiAddMembersToChannelResponse,
 ): AddMembersToChannelResponse {
     if ("Failed" in candid) {
         return addToChannelFailed(candid.Failed);
@@ -131,7 +134,7 @@ export function addMembersToChannelResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiAddMembersToChannelResponse type received",
-        candid
+        candid,
     );
 }
 
@@ -176,7 +179,7 @@ function failedGateCheckReason(candid: ApiGateCheckFailedReason): GateCheckFaile
 }
 
 function addToChannelPartialSuccess(
-    candid: ApiAddMembersToChannelPartialSuccess
+    candid: ApiAddMembersToChannelPartialSuccess,
 ): AddMembersToChannelResponse {
     return {
         kind: "add_to_channel_partial_success",
@@ -215,7 +218,7 @@ export async function messagesByMessageIndexResponse(
     candid: ApiMessagesByMessageIndexResponse,
     chatId: ChannelIdentifier,
     threadRootMessageIndex: number | undefined,
-    latestClientEventIndexPreRequest: number | undefined
+    latestClientEventIndexPreRequest: number | undefined,
 ): Promise<EventsResponse<Message>> {
     if ("Success" in candid) {
         const latestEventIndex = candid.Success.latest_event_index;
@@ -225,7 +228,7 @@ export async function messagesByMessageIndexResponse(
             chatId,
             threadRootMessageIndex,
             latestClientEventIndexPreRequest,
-            latestEventIndex
+            latestEventIndex,
         );
 
         return {
@@ -247,12 +250,12 @@ export async function messagesByMessageIndexResponse(
         throw ReplicaNotUpToDateError.byEventIndex(
             candid.ReplicaNotUpToDate,
             latestClientEventIndexPreRequest ?? -1,
-            false
+            false,
         );
     }
     throw new UnsupportedValueError(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
-        candid
+        candid,
     );
 }
 
@@ -266,7 +269,7 @@ export function removeMemberResponse(candid: ApiRemoveMemberResponse): RemoveMem
 }
 
 export function removeMemberFromChannelResponse(
-    candid: ApiRemoveMemberFromChannelResponse
+    candid: ApiRemoveMemberFromChannelResponse,
 ): RemoveMemberResponse {
     if ("Success" in candid) {
         return "success";
@@ -302,7 +305,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
 
 export function exploreChannelsResponse(
     candid: ApiExploreChannelsResponse,
-    communityId: string
+    communityId: string,
 ): ExploreChannelsResponse {
     if ("Success" in candid) {
         return {
@@ -334,7 +337,7 @@ export function channelMatch(candid: ApiChannelMatch, communityId: string): Chan
 
 export function communityChannelSummaryResponse(
     candid: ApiChannelSummaryResponse,
-    communityId: string
+    communityId: string,
 ): ChannelSummaryResponse {
     if ("Success" in candid) {
         return communityChannelSummary(candid.Success, communityId);
@@ -346,7 +349,7 @@ export function communityChannelSummaryResponse(
 
 export function importGroupResponse(
     communityId: string,
-    candid: ApiImportGroupResponse
+    candid: ApiImportGroupResponse,
 ): ImportGroupResponse {
     if ("Success" in candid) {
         return {
@@ -373,7 +376,7 @@ export function summaryResponse(candid: ApiSummaryResponse): CommunitySummaryRes
 }
 
 export function summaryUpdatesResponse(
-    candid: ApiSummaryUpdatesResponse
+    candid: ApiSummaryUpdatesResponse,
 ): CommunitySummaryUpdatesResponse {
     if ("Success" in candid) {
         return communitySummaryUpdates(candid.Success);
@@ -388,7 +391,7 @@ export function summaryUpdatesResponse(
 }
 
 export function communitySummaryUpdates(
-    candid: ApiCommunityCanisterCommunitySummaryUpdates
+    candid: ApiCommunityCanisterCommunitySummaryUpdates,
 ): CommunityCanisterCommunitySummaryUpdates {
     const communityId = candid.community_id.toString();
     return {
@@ -396,7 +399,7 @@ export function communitySummaryUpdates(
         public: optional(candid.is_public, identity),
         permissions: optional(candid.permissions, communityPermissions),
         channelsUpdated: candid.channels_updated.map((c) =>
-            communityChannelUpdates(c, communityId)
+            communityChannelUpdates(c, communityId),
         ),
         metrics: optional(candid.metrics, chatMetrics),
         gate: optionUpdate(candid.gate, accessGate),
@@ -416,11 +419,13 @@ export function communitySummaryUpdates(
         bannerId: optionUpdate(candid.banner_id, identity),
         memberCount: optional(candid.member_count, identity),
         primaryLanguage: optional(candid.primary_language, identity),
+        userGroups: candid.user_groups.map(userGroup).map(([_, g]) => g),
+        userGroupsDeleted: new Set(candid.user_groups_deleted),
     };
 }
 
 export function communityMembershipUpdates(
-    candid: ApiCommunityMembershipUpdates
+    candid: ApiCommunityMembershipUpdates,
 ): CommunityMembershipUpdates {
     return {
         role: optional(candid.role, memberRole),
@@ -430,7 +435,7 @@ export function communityMembershipUpdates(
 
 export function communityChannelUpdates(
     candid: ApiCommunityCanisterChannelSummaryUpdates,
-    communityId: string
+    communityId: string,
 ): CommunityCanisterChannelSummaryUpdates {
     return {
         id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
@@ -455,7 +460,7 @@ export function communityChannelUpdates(
 function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
     [] | [number],
     number,
-    bigint
+    bigint,
 ]): UpdatedEvent {
     return {
         eventIndex,
@@ -465,7 +470,7 @@ function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
 }
 
 export function channelMembershipUpdates(
-    candid: ApiChannelMembershipUpdates
+    candid: ApiChannelMembershipUpdates,
 ): ChannelMembershipUpdates {
     return {
         role: optional(candid.role, memberRole),
@@ -479,7 +484,7 @@ export function channelMembershipUpdates(
 }
 
 export function toggleMuteNotificationsResponse(
-    candid: ApiToggleMuteNotificationsResponse
+    candid: ApiToggleMuteNotificationsResponse,
 ): ToggleMuteCommunityNotificationsResponse {
     if ("Success" in candid) {
         return CommonResponses.success();
@@ -499,7 +504,7 @@ export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockComm
 }
 
 export function updateCommunityResponse(
-    candid: ApiUpdateCommunityResponse
+    candid: ApiUpdateCommunityResponse,
 ): UpdateCommunityResponse {
     if ("Success" in candid) {
         return CommonResponses.success();
@@ -547,12 +552,12 @@ export function apiCommunityRole(newRole: MemberRole): ApiCommunityRole {
 }
 
 export function apiOptionalCommunityPermissions(
-    permissions: Partial<CommunityPermissions>
+    permissions: Partial<CommunityPermissions>,
 ): ApiOptionalCommunityPermissions {
     return {
         create_public_channel: apiOptional(
             apiCommunityPermissionRole,
-            permissions.createPublicChannel
+            permissions.createPublicChannel,
         ),
         update_details: apiOptional(apiCommunityPermissionRole, permissions.updateDetails),
         remove_members: apiOptional(apiCommunityPermissionRole, permissions.removeMembers),
@@ -560,15 +565,15 @@ export function apiOptionalCommunityPermissions(
         change_roles: apiOptional(apiCommunityPermissionRole, permissions.changeRoles),
         create_private_channel: apiOptional(
             apiCommunityPermissionRole,
-            permissions.createPrivateChannel
+            permissions.createPrivateChannel,
         ),
         // TODO
-        manage_user_groups: []
+        manage_user_groups: [],
     };
 }
 
 export function communityDetailsResponse(
-    candid: ApiSelectedInitialResponse
+    candid: ApiSelectedInitialResponse,
 ): CommunityDetailsResponse {
     if ("Success" in candid) {
         return {
@@ -581,6 +586,7 @@ export function communityDetailsResponse(
             invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
             rules: groupRules(candid.Success.rules),
             lastUpdated: candid.Success.timestamp,
+            userGroups: new Map(candid.Success.user_groups.map(userGroupDetails)),
         };
     } else {
         console.warn("CommunityDetails failed with", candid);
@@ -588,8 +594,20 @@ export function communityDetailsResponse(
     }
 }
 
+export function userGroupDetails(candid: ApiUserGroupDetails): [number, UserGroupDetails] {
+    return [
+        candid.user_group_id,
+        {
+            id: candid.user_group_id,
+            kind: "user_group",
+            members: new Set<string>(candid.members.map((m) => m.toString())),
+            name: candid.name,
+        },
+    ];
+}
+
 export function communityDetailsUpdatesResponse(
-    candid: ApiSelectedUpdatesResponse
+    candid: ApiSelectedUpdatesResponse,
 ): CommunityDetailsUpdatesResponse {
     if ("Success" in candid) {
         return {
@@ -602,14 +620,16 @@ export function communityDetailsUpdatesResponse(
             membersRemoved: new Set(candid.Success.members_removed.map((u) => u.toString())),
             blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
             blockedUsersRemoved: new Set(
-                candid.Success.blocked_users_removed.map((u) => u.toString())
+                candid.Success.blocked_users_removed.map((u) => u.toString()),
             ),
             rules: optional(candid.Success.rules, groupRules),
             invitedUsers: optional(
                 candid.Success.invited_users,
-                (invited_users) => new Set(invited_users.map((u) => u.toString()))
+                (invited_users) => new Set(invited_users.map((u) => u.toString())),
             ),
             lastUpdated: candid.Success.timestamp,
+            userGroups: candid.Success.user_groups.map(userGroupDetails).map(([_, g]) => g),
+            userGroupsDeleted: new Set(candid.Success.user_groups_deleted),
         };
     } else if ("SuccessNoUpdates" in candid) {
         return {
@@ -622,7 +642,9 @@ export function communityDetailsUpdatesResponse(
     }
 }
 
-export function createUserGroupResponse(candid: ApiCreateUserGroupResponse): CreateUserGroupResponse {
+export function createUserGroupResponse(
+    candid: ApiCreateUserGroupResponse,
+): CreateUserGroupResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
@@ -638,7 +660,9 @@ export function createUserGroupResponse(candid: ApiCreateUserGroupResponse): Cre
     }
 }
 
-export function updateUserGroupResponse(candid: ApiUpdateUserGroupResponse): UpdateUserGroupResponse {
+export function updateUserGroupResponse(
+    candid: ApiUpdateUserGroupResponse,
+): UpdateUserGroupResponse {
     if ("Success" in candid) {
         return CommonResponses.success();
     } else if ("NameTaken" in candid) {
@@ -651,7 +675,9 @@ export function updateUserGroupResponse(candid: ApiUpdateUserGroupResponse): Upd
     }
 }
 
-export function deleteUserGroupsResponse(candid: ApiDeleteUserGroupsResponse): DeleteUserGroupsResponse {
+export function deleteUserGroupsResponse(
+    candid: ApiDeleteUserGroupsResponse,
+): DeleteUserGroupsResponse {
     if ("Success" in candid) {
         return CommonResponses.success();
     } else {
@@ -660,7 +686,9 @@ export function deleteUserGroupsResponse(candid: ApiDeleteUserGroupsResponse): D
     }
 }
 
-export function setMemberDisplayNameResponse(candid: ApiSetMemberDisplayNameResponse): SetMemberDisplayNameResponse {
+export function setMemberDisplayNameResponse(
+    candid: ApiSetMemberDisplayNameResponse,
+): SetMemberDisplayNameResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -684,6 +712,6 @@ export function setMemberDisplayNameResponse(candid: ApiSetMemberDisplayNameResp
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetMemberDisplayNameResponse type received",
-        candid
+        candid,
     );
 }

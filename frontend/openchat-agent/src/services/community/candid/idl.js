@@ -1275,10 +1275,16 @@ export const idlFactory = ({ IDL }) => {
     'display_name' : IDL.Opt(IDL.Text),
     'date_added' : TimestampMillis,
   });
+  const UserGroupDetails = IDL.Record({
+    'members' : IDL.Vec(UserId),
+    'name' : IDL.Text,
+    'user_group_id' : IDL.Nat32,
+  });
   const SelectedInitialSuccess = IDL.Record({
     'members' : IDL.Vec(CommunityMember),
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
+    'user_groups' : IDL.Vec(UserGroupDetails),
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
     'rules' : AccessRules,
@@ -1294,7 +1300,9 @@ export const idlFactory = ({ IDL }) => {
   const SelectedUpdatesSuccess = IDL.Record({
     'blocked_users_removed' : IDL.Vec(UserId),
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
+    'user_groups_deleted' : IDL.Vec(IDL.Nat32),
     'members_added_or_updated' : IDL.Vec(CommunityMember),
+    'user_groups' : IDL.Vec(UserGroupDetails),
     'members_removed' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
     'rules' : IDL.Opt(AccessRules),

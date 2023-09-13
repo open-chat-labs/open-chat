@@ -11,10 +11,12 @@ const defaultPermissions: CommunityPermissions = {
     removeMembers: "admin",
     createPublicChannel: "admin",
     createPrivateChannel: "admin",
+    manageUserGroups: "admin",
 };
 
 export function createCandidateCommunity(id: string, index: number): CommunitySummary {
     return {
+        kind: "community",
         id: { kind: "community", communityId: id },
         name: "",
         description: "",
@@ -40,5 +42,6 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
         },
         primaryLanguage: "en",
         metrics: emptyChatMetrics(),
+        userGroups: new Map(),
     };
 }

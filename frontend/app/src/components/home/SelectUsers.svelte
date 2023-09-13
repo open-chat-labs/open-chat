@@ -16,7 +16,7 @@
 {#if selectedUsers.length > 0}
     <div class="selected">
         {#each selectedUsers as user (user.userId)}
-            <UserPill on:deleteUser {user} />
+            <UserPill on:deleteUser userOrGroup={user} />
         {/each}
     </div>
 {/if}

@@ -1,14 +1,14 @@
 <script lang="ts">
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
-    import type { OpenChat, UserSummary } from "openchat-client";
+    import type { OpenChat, UserOrUserGroup } from "openchat-client";
     import { getContext } from "svelte";
     import UserPill from "../UserPill.svelte";
 
     const client = getContext<OpenChat>("client");
 
     export let autofocus: boolean;
-    export let selectedReceiver: UserSummary | undefined = undefined;
+    export let selectedReceiver: UserOrUserGroup | undefined = undefined;
 
     let showMentionPicker = false;
     let textValue: string = "";
@@ -22,7 +22,7 @@
         }
     }
 
-    function selectReceiver(ev: CustomEvent<UserSummary>) {
+    function selectReceiver(ev: CustomEvent<UserOrUserGroup>) {
         selectedReceiver = ev.detail;
         showMentionPicker = false;
         textValue = "";
@@ -40,7 +40,7 @@
                 selectedReceiver = client.lookupUserForMention(textValue, false);
             }
             showMentionPicker = false;
-        }, 100);
+        }, 200);
     }
 </script>
 
@@ -55,7 +55,7 @@
             prefix={textValue} />
     {/if}
     {#if selectedReceiver !== undefined}
-        <UserPill on:deleteUser={removeReceiver} user={selectedReceiver} />
+        <UserPill on:deleteUser={removeReceiver} userOrGroup={selectedReceiver} />
     {:else}
         <div class="wrapper" bind:clientHeight={inputHeight}>
             <input

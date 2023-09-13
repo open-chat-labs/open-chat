@@ -952,11 +952,13 @@ export type WorkerResponseInner =
     | SetBioResponse
     | SetUsernameResponse
     | PublicProfile
-    | UserSummary | undefined
+    | UserSummary
+    | undefined
     | ThreadPreview[]
     | SearchDirectChatResponse
     | SearchGroupChatResponse
-    | AccessRules | undefined
+    | AccessRules
+    | undefined
     | GroupChatSummary[]
     | RegisterProposalVoteResponse
     | ChangeRoleResponse
@@ -985,7 +987,8 @@ export type WorkerResponseInner =
     | ArchiveChatResponse
     | ArchiveChatResponse
     | ToggleMuteNotificationResponse
-    | GroupChatSummary | undefined
+    | GroupChatSummary
+    | undefined
     | StorageStatus
     | MigrateUserPrincipalResponse
     | UserSummary[]

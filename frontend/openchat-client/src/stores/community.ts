@@ -12,11 +12,11 @@ import { createDerivedPropStore } from "./derived";
 import { chatListScopeStore, globalStateStore } from "./global";
 import { localCommunitySummaryUpdates } from "./localCommunitySummaryUpdates";
 import { mergeLocalUpdates } from "../utils/community";
-import type { Member } from "openchat-shared";
+import type { Member, UserGroupDetails, UserGroupSummary } from "openchat-shared";
 
 // Communities which the current user is previewing
 export const communityPreviewsStore: Writable<CommunityMap<CommunitySummary>> = writable(
-    new CommunityMap<CommunitySummary>()
+    new CommunityMap<CommunitySummary>(),
 );
 
 export function addCommunityPreview(community: CommunitySummary): void {
@@ -40,8 +40,15 @@ export const communities = derived(
     ([$globalStateStore, $localUpdates, $previews]) => {
         const merged = mergeLocalUpdates($globalStateStore.communities, $localUpdates);
         return merged.merge($previews);
-    }
+    },
 );
+
+export const userGroupSummaries = derived([communities], ([$communities]) => {
+    return $communities.values().reduce((map, community) => {
+        community.userGroups.forEach((ug) => map.set(ug.id, ug));
+        return map;
+    }, new Map<number, UserGroupSummary>());
+});
 
 export const communitiesList = derived(communities, ($communities) => {
     return $communities.values().sort((a, b) => {
@@ -57,13 +64,19 @@ export const communityStateStore = createCommunitySpecificObjectStore<CommunityS
         blockedUsers: new Set<string>(),
         invitedUsers: new Set<string>(),
         lastUpdated: BigInt(0),
-    })
+        userGroups: new Map<number, UserGroupDetails>(),
+    }),
 );
+
+export const currentCommunityUserGroups = createDerivedPropStore<
+    CommunitySpecificState,
+    "userGroups"
+>(communityStateStore, "userGroups", () => new Map<number, UserGroupDetails>());
 
 export const currentCommunityMembers = createDerivedPropStore<CommunitySpecificState, "members">(
     communityStateStore,
     "members",
-    () => new Map<string, Member>()
+    () => new Map<string, Member>(),
 );
 
 export const currentCommunityBlockedUsers = createDerivedPropStore<
@@ -79,7 +92,7 @@ export const currentCommunityInvitedUsers = createDerivedPropStore<
 export const currentCommunityRules = createDerivedPropStore<CommunitySpecificState, "rules">(
     communityStateStore,
     "rules",
-    () => defaultAccessRules("community")
+    () => defaultAccessRules("community"),
 );
 
 export const selectedCommunity = derived(
@@ -92,7 +105,7 @@ export const selectedCommunity = derived(
         } else {
             return undefined;
         }
-    }
+    },
 );
 
 export function setSelectedCommunity(id: CommunityIdentifier): void {

@@ -69,7 +69,8 @@ import {
     RegisterProposalVoteResponse,
     CreateUserGroupResponse,
     UpdateUserGroupResponse,
-    DeleteUserGroupResponse,
+    UserGroupDetails,
+    DeleteUserGroupsResponse,
     SetMemberDisplayNameResponse,
 } from "./types";
 export {
@@ -142,6 +143,7 @@ export {
     RegisterProposalVoteResponse as ApiRegisterProposalVoteResponse,
     CreateUserGroupResponse as ApiCreateUserGroupResponse,
     UpdateUserGroupResponse as ApiUpdateUserGroupResponse,
+    UserGroupDetails as ApiUserGroupDetails,
     DeleteUserGroupsResponse as ApiDeleteUserGroupsResponse,
     SetMemberDisplayNameResponse as ApiSetMemberDisplayNameResponse,
 };

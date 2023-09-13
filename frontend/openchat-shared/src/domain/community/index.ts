@@ -37,6 +37,7 @@ import type {
     UserSuspended,
 } from "../response";
 import type { HasLevel } from "../structure";
+import type { UserGroupDetails, UserGroupSummary } from "../user";
 
 export type CommunityMembership = {
     joined: bigint;
@@ -56,6 +57,7 @@ export type CommunitySummary = AccessControlled &
     HasLevel &
     HasMembershipRole &
     Permissioned<CommunityPermissions> & {
+        kind: "community";
         name: string;
         id: CommunityIdentifier;
         latestEventIndex: number;
@@ -68,6 +70,7 @@ export type CommunitySummary = AccessControlled &
         membership?: CommunityMembership;
         channels: ChannelSummary[]; // TODO - this might be better as a ChatMap - but that would have some serialisation complications
         primaryLanguage: string;
+        userGroups: Map<number, UserGroupSummary>;
     };
 
 export type DefaultChannel = {
@@ -76,6 +79,7 @@ export type DefaultChannel = {
 };
 
 export type CommunitySpecificState = {
+    userGroups: Map<number, UserGroupDetails>;
     members: Map<string, Member>;
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
@@ -178,6 +182,8 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     bannerId: OptionUpdate<bigint>;
     memberCount: number | undefined;
     primaryLanguage: string | undefined;
+    userGroups: UserGroupSummary[];
+    userGroupsDeleted: Set<number>;
 };
 
 export type CommunityCanisterChannelSummaryUpdates = {
@@ -239,6 +245,7 @@ export type CommunityDetails = {
     invitedUsers: Set<string>;
     rules: AccessRules;
     lastUpdated: bigint;
+    userGroups: Map<number, UserGroupDetails>;
 };
 
 export type CommunityDetailsUpdates = {
@@ -249,7 +256,10 @@ export type CommunityDetailsUpdates = {
     rules?: AccessRules;
     invitedUsers?: Set<string>;
     lastUpdated: bigint;
+    userGroups: UserGroupDetails[];
+    userGroupsDeleted: Set<number>;
 };
+
 export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;
 
 export type LeaveCommunityResponse = "success" | "failure";
@@ -268,15 +278,18 @@ export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) |
 
 export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | Failure;
 
-export type CreateUserGroupResponse = { kind: "success", userGroupId: number } | { kind: "name_taken" } | Failure;
+export type CreateUserGroupResponse =
+    | { kind: "success"; userGroupId: number }
+    | { kind: "name_taken" }
+    | Failure;
 export type UpdateUserGroupResponse = Success | { kind: "name_taken" } | Failure;
 export type DeleteUserGroupsResponse = Success | Failure;
 
-export type SetMemberDisplayNameResponse = 
-    "success" | 
-    "user_not_in_community" | 
-    "user_suspended" | 
-    "community_frozen" | 
-    "display_name_too_short" | 
-    "display_name_too_long" | 
-    "display_name_invalid";
+export type SetMemberDisplayNameResponse =
+    | "success"
+    | "user_not_in_community"
+    | "user_suspended"
+    | "community_frozen"
+    | "display_name_too_short"
+    | "display_name_too_long"
+    | "display_name_invalid";

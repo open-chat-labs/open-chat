@@ -3,8 +3,8 @@
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
 
-    import type { UserSummary, OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import type { OpenChat, UserOrUserGroup } from "openchat-client";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "openchat-client";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -17,8 +17,11 @@
     export let direction: "up" | "down" = "up";
     export let border = false;
     export let mentionSelf = false;
+    export let supportsUserGroups = false;
 
     let index = 0;
+    let usersAndGroups: UserOrUserGroup[] = [];
+
     $: userStore = client.userStore;
     $: communityMembers = client.currentCommunityMembers;
     $: itemHeight = $mobileWidth ? 53 : 55;
@@ -27,16 +30,23 @@
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)";
 
     $: prefixLower = prefix?.toLowerCase();
-    $: filtered = Object.values(client.getUserLookupForMentions()).filter(
-        (user) =>
-            (mentionSelf || user.userId !== currentUser.userId) &&
-            (prefixLower === undefined ||
-                user.username.toLowerCase().startsWith(prefixLower) ||
-                client
-                    .getDisplayName(user, $communityMembers)
-                    .toLowerCase()
-                    .startsWith(prefixLower))
-    );
+
+    $: filtered = usersAndGroups.filter((userOrGroup) => {
+        switch (userOrGroup.kind) {
+            case "user_group":
+                return (
+                    prefixLower === undefined ||
+                    (supportsUserGroups && userOrGroup.name.toLowerCase().startsWith(prefixLower))
+                );
+            default:
+                return (
+                    (mentionSelf || userOrGroup.userId !== currentUser.userId) &&
+                    (prefixLower === undefined ||
+                        userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
+                        userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
+                );
+        }
+    });
 
     $: style =
         direction === "up"
@@ -47,10 +57,14 @@
                   filtered.length * itemHeight + borderWidth
               }px; max-height: ${maxHeight}`;
 
+    onMount(() => {
+        usersAndGroups = Object.values(client.getUserLookupForMentions());
+    });
+
     const dispatch = createEventDispatcher();
 
-    function mention(user: UserSummary) {
-        dispatch("mention", user);
+    function mention(userOrGroup: UserOrUserGroup) {
+        dispatch("mention", userOrGroup);
     }
 
     function onKeyDown(ev: KeyboardEvent): void {
@@ -71,9 +85,9 @@
                 ev.stopPropagation();
                 break;
             case "Enter":
-                const user = filtered[index];
-                if (user) {
-                    mention(user);
+                const userOrGroup = filtered[index];
+                if (userOrGroup) {
+                    mention(userOrGroup);
                 }
                 ev.preventDefault();
                 ev.stopPropagation();
@@ -98,12 +112,18 @@
                         size={AvatarSize.Small} />
                 </div>
                 <div slot="text">
-                    <span class="display-name">
-                        {client.getDisplayName(item, $communityMembers)}
-                    </span>
-                    <span class="username">
-                        @{item.username}
-                    </span>
+                    {#if item.kind === "user_group"}
+                        <span class="display-name">
+                            {item.name}
+                        </span>
+                    {:else}
+                        <span class="display-name">
+                            {client.getDisplayName(item, $communityMembers)}
+                        </span>
+                        <span class="username">
+                            @{item.username}
+                        </span>
+                    {/if}
                 </div>
             </MenuItem>
         </VirtualList>

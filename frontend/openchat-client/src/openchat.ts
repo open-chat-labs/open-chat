@@ -14,6 +14,7 @@ import {
     canChangeCommunityPermissions,
     canCreatePublicChannel,
     canCreatePrivateChannel,
+    canManageUserGroups,
 } from "./utils/community";
 import {
     buildUserAvatarUrl,
@@ -317,7 +318,11 @@ import type {
     CryptocurrencyTransfer,
     Mention,
     SetDisplayNameResponse,
+    UserGroupDetails,
+    CreateUserGroupResponse,
+    UpdateUserGroupResponse,
     SetMemberDisplayNameResponse,
+    UserOrUserGroup,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -348,6 +353,7 @@ import {
     KINIC_SYMBOL,
     SNS1_SYMBOL,
     GHOST_SYMBOL,
+    CommonResponses,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -366,8 +372,10 @@ import {
     currentCommunityInvitedUsers,
     currentCommunityMembers,
     currentCommunityRules,
+    currentCommunityUserGroups,
     removeCommunityPreview,
     selectedCommunity,
+    userGroupSummaries,
 } from "./stores/community";
 import {
     globalStateStore,
@@ -415,7 +423,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _cachePrimer: CachePrimer | undefined = undefined;
     private _membershipCheck: number | undefined;
     private _referralCode: string | undefined = undefined;
-    private _userLookupForMentions: Record<string, UserSummary> | undefined = undefined;
+    private _userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
 
     constructor(config: OpenChatConfig) {
         super(config);
@@ -1330,6 +1338,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     canCreatePrivateChannel(id: CommunityIdentifier): boolean {
         return this.communityPredicate(id, canCreatePrivateChannel);
+    }
+
+    canManageUserGroups(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, canManageUserGroups);
     }
 
     canChangeCommunityPermissions(id: CommunityIdentifier): boolean {
@@ -2413,6 +2425,7 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
             communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
             communityStateStore.setProp(community.id, "rules", resp.rules);
+            communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
         }
         await this.updateUserStoreFromCommunityState(community.id);
     }
@@ -4758,30 +4771,50 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    getUserLookupForMentions(): Record<string, UserSummary> {
+    // the key might be a username or it might be a user group name
+    getUserLookupForMentions(): Record<string, UserOrUserGroup> {
         if (this._userLookupForMentions === undefined) {
-            const lookup = {} as Record<string, UserSummary>;
+            const lookup = {} as Record<string, UserOrUserGroup>;
             const userStore = this._liveState.userStore;
             for (const member of this._liveState.currentChatMembers) {
                 const userId = member.userId;
-                const user = userStore[userId];
+                let user = userStore[userId];
+                if (this._liveState.selectedChat?.kind === "channel") {
+                    user = {
+                        ...user,
+                        displayName: this.getDisplayName(
+                            user,
+                            this._liveState.currentCommunityMembers,
+                        ),
+                    };
+                }
                 if (user !== undefined && user.username !== undefined) {
                     lookup[user.username.toLowerCase()] = user as UserSummary;
                 }
+            }
+            if (this._liveState.selectedCommunity !== undefined) {
+                const userGroups = [...this._liveState.selectedCommunity.userGroups.values()];
+                userGroups.forEach((ug) => (lookup[ug.name.toLowerCase()] = ug));
             }
             this._userLookupForMentions = lookup;
         }
         return this._userLookupForMentions;
     }
 
-    lookupUserForMention(username: string, includeSelf: boolean): UserSummary | undefined {
+    lookupUserForMention(username: string, includeSelf: boolean): UserOrUserGroup | undefined {
         const lookup = this.getUserLookupForMentions();
 
-        const user = lookup[username.toLowerCase()];
+        const userOrGroup = lookup[username.toLowerCase()];
+        if (userOrGroup === undefined) return undefined;
 
-        return user !== undefined && (includeSelf || user.userId !== this.user.userId)
-            ? user
-            : undefined;
+        switch (userOrGroup.kind) {
+            case "user_group":
+                return userOrGroup;
+            default:
+                return includeSelf || userOrGroup.userId !== this.user.userId
+                    ? userOrGroup
+                    : undefined;
+        }
     }
 
     // **** Communities Stuff
@@ -5082,6 +5115,94 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    private deleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
+        communityStateStore.updateProp(id, "userGroups", (groups) => {
+            groups.delete(userGroup.id);
+            return new Map(groups);
+        });
+    }
+
+    private undeleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
+        communityStateStore.updateProp(id, "userGroups", (groups) => {
+            groups.set(userGroup.id, userGroup);
+            return new Map(groups);
+        });
+    }
+
+    deleteUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): Promise<boolean> {
+        this.deleteUserGroupLocally(id, userGroup);
+        return this.sendRequest({
+            kind: "deleteUserGroups",
+            communityId: id.communityId,
+            userGroupIds: [userGroup.id],
+        })
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    this.undeleteUserGroupLocally(id, userGroup);
+                }
+                return resp.kind === "success";
+            })
+            .catch((err) => {
+                this.undeleteUserGroupLocally(id, userGroup);
+                this._logger.error("Error deleting community user group", err);
+                return false;
+            });
+    }
+
+    createUserGroup(
+        id: CommunityIdentifier,
+        userGroup: UserGroupDetails,
+    ): Promise<CreateUserGroupResponse> {
+        return this.sendRequest({
+            kind: "createUserGroup",
+            communityId: id.communityId,
+            name: userGroup.name,
+            userIds: [...userGroup.members],
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    communityStateStore.updateProp(id, "userGroups", (groups) => {
+                        groups.set(resp.userGroupId, { ...userGroup, id: resp.userGroupId });
+                        return new Map(groups);
+                    });
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this._logger.error("Error creating community user group", err);
+                return CommonResponses.failure();
+            });
+    }
+
+    updateUserGroup(
+        id: CommunityIdentifier,
+        userGroup: UserGroupDetails,
+        toAdd: Set<string>,
+        toRemove: Set<string>,
+    ): Promise<UpdateUserGroupResponse> {
+        return this.sendRequest({
+            kind: "updateUserGroup",
+            communityId: id.communityId,
+            userGroupId: userGroup.id,
+            name: userGroup.name,
+            usersToAdd: [...toAdd],
+            usersToRemove: [...toRemove],
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    communityStateStore.updateProp(id, "userGroups", (groups) => {
+                        groups.set(userGroup.id, userGroup);
+                        return new Map(groups);
+                    });
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this._logger.error("Error updating community user group", err);
+                return CommonResponses.failure();
+            });
+    }
+
     setChatListScope(scope: ChatListScope): void {
         if (scope.kind === "none") {
             chatListScopeStore.set(this.getDefaultScope());
@@ -5168,6 +5289,7 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedThreadRootEvent = selectedThreadRootEvent;
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
     selectedMessageContext = selectedMessageContext;
+    userGroupSummaries = userGroupSummaries;
 
     // current community stores
     chatListScope = chatListScopeStore;
@@ -5178,6 +5300,7 @@ export class OpenChat extends OpenChatAgentWorker {
     currentCommunityRules = currentCommunityRules;
     currentCommunityBlockedUsers = currentCommunityBlockedUsers;
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
+    currentCommunityUserGroups = currentCommunityUserGroups;
     communityStateStore = communityStateStore;
     favouritesStore = favouritesStore;
     globalStateStore = globalStateStore;
