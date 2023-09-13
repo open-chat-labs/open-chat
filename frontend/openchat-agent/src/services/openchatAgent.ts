@@ -3,11 +3,13 @@ import type { Identity } from "@dfinity/agent";
 import {
     type Database,
     getCachedChats,
+    getCachePrimerTimestamps,
     initDb,
     loadFailedMessages,
     removeFailedMessage,
     setCachedChats,
     setCachedMessageIfNotExists,
+    setCachePrimerTimestamp,
 } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
@@ -2465,7 +2467,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<UpdateUserGroupResponse> {
         return this.communityClient(communityId).updateUserGroup(userGroupId, name, usersToAdd, usersToRemove);
  	}
-	
+
     setMemberDisplayName(communityId: string, display_name: string | undefined): Promise<SetMemberDisplayNameResponse> {
         return this.communityClient(communityId).setMemberDisplayName(display_name);
     }
@@ -2475,5 +2477,13 @@ export class OpenChatAgent extends EventTarget {
         userGroupIds: number[],
     ): Promise<DeleteUserGroupsResponse> {
         return this.communityClient(communityId).deleteUserGroups(userGroupIds);
+    }
+
+    getCachePrimerTimestamps(): Promise<Record<string, bigint>> {
+        return getCachePrimerTimestamps(this.db);
+    }
+
+    setCachePrimerTimestamp(chatIdentifierString: string, timestamp: bigint): Promise<void> {
+        return setCachePrimerTimestamp(this.db, chatIdentifierString, timestamp);
     }
 }

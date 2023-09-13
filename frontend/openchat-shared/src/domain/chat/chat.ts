@@ -823,19 +823,6 @@ export type DirectChatsInitial = {
 export type ChatIdentifier = ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier;
 export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
 
-export function chatIdentifierToString(id: ChatIdentifier): string {
-    switch (id.kind) {
-        case "direct_chat":
-            return id.userId;
-        case "group_chat":
-            return id.groupId;
-        default:
-            throw new Error(
-                "TODO Channel chat identifiers should not serialised - get rid of the calling code",
-            );
-    }
-}
-
 export function messageContextsEqual(
     a: MessageContext | undefined,
     b: MessageContext | undefined,
@@ -1027,6 +1014,7 @@ export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpda
 
 type ChatSummaryUpdatesCommon = {
     readByMeUpTo?: number;
+    lastUpdated: bigint;
     latestEventIndex?: number;
     latestMessage?: EventWrapper<Message>;
     notificationsMuted?: boolean;
@@ -1045,7 +1033,6 @@ export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     id: GroupChatIdentifier;
     kind: "group_chat";
-    lastUpdated: bigint;
     name?: string;
     description?: string;
     avatarBlobReferenceUpdate?: OptionUpdate<BlobReference>;
@@ -1143,6 +1130,7 @@ export type MultiUserChat = GroupChatSummary | ChannelSummary;
 export type ChatType = ChatSummary["kind"];
 
 type ChatSummaryCommon = HasMembershipRole & {
+    lastUpdated: bigint;
     latestEventIndex: number;
     latestMessage?: EventWrapper<Message>;
     metrics: Metrics;
@@ -1161,7 +1149,6 @@ export type ChannelSummary = DataContent &
         description: string;
         minVisibleEventIndex: number;
         minVisibleMessageIndex: number;
-        lastUpdated: bigint;
         memberCount: number;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
@@ -1186,7 +1173,6 @@ export type GroupChatSummary = DataContent &
         description: string;
         minVisibleEventIndex: number;
         minVisibleMessageIndex: number;
-        lastUpdated: bigint;
         memberCount: number;
         subtype: GroupSubtype;
         previewed: boolean;

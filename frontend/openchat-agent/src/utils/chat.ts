@@ -323,6 +323,7 @@ export function mergeDirectChatUpdates(
             them: c.them,
             readByThemUpTo: u.readByThemUpTo ?? c.readByThemUpTo,
             dateCreated: c.dateCreated,
+            lastUpdated: u.lastUpdated,
             latestEventIndex: u.latestEventIndex ?? c.latestEventIndex,
             latestMessage: u.latestMessage ?? c.latestMessage,
             metrics: u.metrics ?? c.metrics,
