@@ -515,7 +515,6 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
     'min_visible_message_index' : MessageIndex,
-    'rules_enabled' : IDL.Bool,
     'member_count' : IDL.Nat32,
     'expired_messages' : IDL.Vec(MessageIndexRange),
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -571,7 +570,6 @@ export const idlFactory = ({ IDL }) => {
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
     'banner_id' : IDL.Opt(IDL.Nat),
-    'rules_enabled' : IDL.Bool,
     'member_count' : IDL.Nat32,
     'primary_language' : IDL.Text,
   });
@@ -649,7 +647,6 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
-    'rules_enabled' : IDL.Bool,
     'expired_messages' : IDL.Vec(MessageIndexRange),
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,

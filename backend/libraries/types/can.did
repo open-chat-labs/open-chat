@@ -264,6 +264,8 @@ type GroupChatSummary = record {
     expired_messages : vec MessageIndexRange;
     next_message_expiry : opt TimestampMillis;
     gate : opt AccessGate;
+    rules_enabled : bool;
+    rules_accepted : bool;
 };
 
 type GroupCanisterGroupChatSummary = record {
