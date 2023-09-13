@@ -924,7 +924,6 @@ export const idlFactory = ({ IDL }) => {
     'participants' : IDL.Vec(Participant),
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
-    'chat_rules' : VersionedRules,
     'timestamp' : TimestampMillis,
     'pinned_messages' : IDL.Vec(MessageIndex),
     'latest_event_index' : EventIndex,

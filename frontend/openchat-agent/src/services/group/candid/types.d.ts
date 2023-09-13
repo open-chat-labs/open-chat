@@ -1337,7 +1337,6 @@ export interface SelectedInitialSuccess {
   'participants' : Array<Participant>,
   'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
-  'chat_rules' : VersionedRules,
   'timestamp' : TimestampMillis,
   'pinned_messages' : Uint32Array | number[],
   'latest_event_index' : EventIndex,
