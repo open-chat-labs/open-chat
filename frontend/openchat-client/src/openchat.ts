@@ -4294,14 +4294,16 @@ export class OpenChat extends OpenChatAgentWorker {
             const init = this._liveState.chatsInitialised;
             chatsLoading.set(!init);
 
+            const updateRegistryTask = !init ? this.updateRegistry() : undefined;
+
             const chatsResponse = await this.sendRequest({
                 kind: "getUpdates",
             });
 
             if (!init || chatsResponse.anyUpdates) {
-                if (!init) {
+                if (updateRegistryTask !== undefined) {
                     // We need the registry to be loaded before we attempt to render chats / events
-                    await this.updateRegistry();
+                    await updateRegistryTask;
                 }
 
                 const updatedChats = (chatsResponse.state.directChats as ChatSummary[])
