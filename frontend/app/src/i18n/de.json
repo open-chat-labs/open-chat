@@ -939,7 +939,8 @@
         "userGroupMembers": "Mitglieder der Benutzergruppe",
         "enterUserGroupName": "Geben Sie den Namen der Benutzergruppe ein",
         "communityLabel": "Gemeinschaft",
-        "confirmDeleteUserGroup": "Sind Sie sicher, dass Sie diese Benutzergruppe löschen möchten?"
+        "confirmDeleteUserGroup": "Sind Sie sicher, dass Sie diese Benutzergruppe löschen möchten?",
+        "namedUserGroupMembers": "**{name}** Gruppenmitglieder"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",

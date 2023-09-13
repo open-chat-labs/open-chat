@@ -937,7 +937,8 @@
         "userGroupMembers": "用户组成员",
         "enterUserGroupName": "输入用户组名称",
         "communityLabel": "社区",
-        "confirmDeleteUserGroup": "您确定要删除该用户组吗？"
+        "confirmDeleteUserGroup": "您确定要删除该用户组吗？",
+        "namedUserGroupMembers": "**{name}** 群组成员"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",

@@ -878,6 +878,7 @@
         "members": "Members",
         "userGroups": "User groups",
         "noUserGroups": "No user groups found",
+        "namedUserGroupMembers": "**{name}** group members",
         "userGroupMembers": "User group members",
         "enterUserGroupName": "Enter user group name",
         "searchGroups": "Search community channels",

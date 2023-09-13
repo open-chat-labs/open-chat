@@ -18,6 +18,7 @@
     import { iconSize } from "../../../../stores/iconSize";
     import { toastStore } from "../../../../stores/toast";
     import VirtualList from "../../../VirtualList.svelte";
+    import Markdown from "../../Markdown.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -50,7 +51,8 @@
     $: matchedUsers = communityUsersList.filter((u) => matchesSearch(searchTermLower, u));
     $: nameDirty = original.name !== userGroup.name;
     $: dirty = nameDirty || usersDirty;
-    $: nameValid = userGroup.name.length >= MIN_LENGTH && userGroup.name.length <= MAX_LENGTH;
+    $: trimmedName = userGroup.name.trim();
+    $: nameValid = trimmedName.length >= MIN_LENGTH && trimmedName.length <= MAX_LENGTH;
     $: valid = nameValid && userGroup.members.size > 0;
 
     let searchTerm = "";
@@ -146,18 +148,17 @@
 </script>
 
 <div class="user-group">
-    <div class="header">
-        <Input
-            bind:value={userGroup.name}
-            minlength={MIN_LENGTH}
-            maxlength={MAX_LENGTH}
-            disabled={!canManageUserGroups}
-            countdown
-            invalid={nameDirty && !nameValid}
-            placeholder={$_("communities.enterUserGroupName")} />
-    </div>
-
     {#if canManageUserGroups}
+        <div class="header">
+            <Input
+                bind:value={userGroup.name}
+                minlength={MIN_LENGTH}
+                maxlength={MAX_LENGTH}
+                disabled={!canManageUserGroups}
+                countdown
+                invalid={nameDirty && !nameValid}
+                placeholder={$_("communities.enterUserGroupName")} />
+        </div>
         <div class="search">
             <Search
                 on:searchEntered={() => searchVirtualList?.reset()}
@@ -166,23 +167,33 @@
                 bind:searchTerm
                 placeholder={"searchUsersPlaceholder"} />
         </div>
-    {/if}
-
-    {#if matchedUsers.length > 0}
-        <div style={`height: ${matchedUsers.length * 80}px`} class="searched-users">
-            <VirtualList
-                bind:this={searchVirtualList}
-                keyFn={(user) => user.userId}
-                items={matchedUsers}
-                let:item>
-                <User on:open={() => addUserToGroup(item)} user={item} me={false} {searchTerm} />
-            </VirtualList>
-        </div>
+        {#if matchedUsers.length > 0}
+            <div style={`height: ${matchedUsers.length * 80}px`} class="searched-users">
+                <VirtualList
+                    bind:this={searchVirtualList}
+                    keyFn={(user) => user.userId}
+                    items={matchedUsers}
+                    let:item>
+                    <User
+                        on:open={() => addUserToGroup(item)}
+                        user={item}
+                        me={false}
+                        {searchTerm} />
+                </VirtualList>
+            </div>
+        {/if}
     {/if}
 
     <div class="users">
-        <div class="legend">
-            {$_("communities.userGroupMembers")}
+        <div class="legend" class:readonly={!canManageUserGroups}>
+            {#if canManageUserGroups}
+                {$_("communities.userGroupMembers")}
+            {:else}
+                <Markdown
+                    text={$_("communities.namedUserGroupMembers", {
+                        values: { name: userGroup.name },
+                    })} />
+            {/if}
         </div>
         {#each groupUsers as user}
             <div class="user">
@@ -221,6 +232,9 @@
     .search,
     .buttons {
         padding: 0 $sp4;
+        @include mobile() {
+            padding: 0 $sp3;
+        }
     }
 
     .searched-users {
@@ -238,9 +252,12 @@
             flex: auto;
 
             .legend {
-                @include font(book, normal, fs-80);
                 padding: $sp4;
                 border-bottom: 1px solid var(--bd);
+
+                &.readonly {
+                    padding-top: 0;
+                }
             }
 
             .user {

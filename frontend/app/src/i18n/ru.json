@@ -937,7 +937,8 @@
         "userGroupMembers": "Члены группы пользователей",
         "enterUserGroupName": "Введите имя группы пользователей",
         "communityLabel": "Сообщество",
-        "confirmDeleteUserGroup": "Вы уверены, что хотите удалить эту группу пользователей?"
+        "confirmDeleteUserGroup": "Вы уверены, что хотите удалить эту группу пользователей?",
+        "namedUserGroupMembers": "**{name}** участники группы"
     },
     "groupCreatedBy": "{username} создал {level}",
     "groupName": "{level} имя",
