@@ -37,6 +37,10 @@ impl DirectChat {
         }
     }
 
+    pub fn has_updates_since(&self, since: TimestampMillis) -> bool {
+        self.last_updated() > since
+    }
+
     pub fn last_updated(&self) -> TimestampMillis {
         [
             self.events.last_updated().unwrap_or_default(),

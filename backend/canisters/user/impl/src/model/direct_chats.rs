@@ -22,7 +22,7 @@ impl DirectChats {
     }
 
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &DirectChat> {
-        self.direct_chats.values().filter(move |c| c.last_updated() > since)
+        self.direct_chats.values().filter(move |c| c.has_updates_since(since))
     }
 
     pub fn pinned(&self) -> &Vec<ChatId> {
