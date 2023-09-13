@@ -667,7 +667,7 @@ export const idlFactory = ({ IDL }) => {
     'FailedAfterTransfer' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'TransferFailed' : IDL.Tuple(IDL.Text, FailedCryptoTransaction),
   });
-  const AccessRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
+  const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const Document = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -682,7 +682,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'history_visible_to_new_joiners' : IDL.Bool,
-    'rules' : AccessRules,
+    'rules' : Rules,
     'avatar' : IDL.Opt(Document),
   });
   const FieldTooLongResult = IDL.Record({
@@ -1228,10 +1228,11 @@ export const idlFactory = ({ IDL }) => {
       'members' : IDL.Vec(Participant),
       'invited_users' : IDL.Vec(UserId),
       'blocked_users' : IDL.Vec(UserId),
+      'chat_rules' : VersionedRules,
       'timestamp' : TimestampMillis,
       'pinned_messages' : IDL.Vec(MessageIndex),
       'latest_event_index' : EventIndex,
-      'rules' : AccessRules,
+      'rules' : Rules,
     }),
     'PrivateCommunity' : IDL.Null,
     'PrivateChannel' : IDL.Null,
@@ -1246,10 +1247,11 @@ export const idlFactory = ({ IDL }) => {
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'members_added_or_updated' : IDL.Vec(Participant),
     'pinned_messages_added' : IDL.Vec(MessageIndex),
+    'chat_rules' : IDL.Opt(VersionedRules),
     'members_removed' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
-    'rules' : IDL.Opt(AccessRules),
+    'rules' : IDL.Opt(Rules),
     'blocked_users_added' : IDL.Vec(UserId),
   });
   const SelectedChannelUpdatesResponse = IDL.Variant({
@@ -1284,10 +1286,11 @@ export const idlFactory = ({ IDL }) => {
     'members' : IDL.Vec(CommunityMember),
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
+    'chat_rules' : VersionedRules,
     'user_groups' : IDL.Vec(UserGroupDetails),
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
-    'rules' : AccessRules,
+    'rules' : Rules,
   });
   const SelectedInitialResponse = IDL.Variant({
     'Success' : SelectedInitialSuccess,
@@ -1302,10 +1305,11 @@ export const idlFactory = ({ IDL }) => {
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'user_groups_deleted' : IDL.Vec(IDL.Nat32),
     'members_added_or_updated' : IDL.Vec(CommunityMember),
+    'chat_rules' : IDL.Opt(VersionedRules),
     'user_groups' : IDL.Vec(UserGroupDetails),
     'members_removed' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
-    'rules' : IDL.Opt(AccessRules),
+    'rules' : IDL.Opt(Rules),
     'blocked_users_added' : IDL.Vec(UserId),
   });
   const SelectedUpdatesResponse = IDL.Variant({
@@ -1555,7 +1559,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
     'public' : IDL.Opt(IDL.Bool),
-    'rules' : IDL.Opt(AccessRules),
+    'rules' : IDL.Opt(Rules),
     'avatar' : DocumentUpdate,
   });
   const UpdateChannelResponse = IDL.Variant({
@@ -1573,6 +1577,7 @@ export const idlFactory = ({ IDL }) => {
     'RulesTooShort' : FieldTooShortResult,
     'CommunityFrozen' : IDL.Null,
     'NameTooLong' : FieldTooLongResult,
+    'SuccessV2' : IDL.Record({ 'rules_version' : IDL.Opt(Version) }),
     'NameTaken' : IDL.Null,
   });
   const OptionalCommunityPermissions = IDL.Record({
@@ -1591,7 +1596,7 @@ export const idlFactory = ({ IDL }) => {
     'banner' : DocumentUpdate,
     'description' : IDL.Opt(IDL.Text),
     'public' : IDL.Opt(IDL.Bool),
-    'rules' : IDL.Opt(AccessRules),
+    'rules' : IDL.Opt(Rules),
     'avatar' : DocumentUpdate,
     'primary_language' : IDL.Opt(IDL.Text),
   });
@@ -1609,6 +1614,7 @@ export const idlFactory = ({ IDL }) => {
     'RulesTooShort' : FieldTooShortResult,
     'CommunityFrozen' : IDL.Null,
     'NameTooLong' : FieldTooLongResult,
+    'SuccessV2' : IDL.Record({ 'rules_version' : IDL.Opt(Version) }),
     'NameTaken' : IDL.Null,
     'InternalError' : IDL.Null,
     'BannerTooBig' : FieldTooLongResult,

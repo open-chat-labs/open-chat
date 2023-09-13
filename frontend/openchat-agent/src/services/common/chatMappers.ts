@@ -1690,6 +1690,9 @@ export function updateGroupResponse(
     if ("Success" in candid) {
         return "success";
     }
+    if ("SuccessV2" in candid) {
+        return "success";
+    }
     if ("DescriptionTooLong" in candid) {
         return "desc_too_long";
     }
