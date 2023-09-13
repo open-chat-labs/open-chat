@@ -826,6 +826,7 @@ dependencies = [
  "canister_agent_utils",
  "clap",
  "cycles_dispenser_canister",
+ "exchange_bot_canister",
  "futures",
  "group_canister",
  "group_index_canister",
@@ -908,6 +909,7 @@ dependencies = [
  "canister_agent_utils",
  "clap",
  "cycles_dispenser_canister",
+ "exchange_bot_canister",
  "group_canister",
  "group_index_canister",
  "group_index_canister_client",
@@ -1551,6 +1553,42 @@ name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
+
+[[package]]
+name = "exchange_bot_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "human_readable",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "exchange_bot_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "exchange_bot_canister",
+ "http_request",
+ "human_readable",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "icpswap_client",
+ "msgpack",
+ "serde",
+ "serializer",
+ "tracing",
+ "types",
+ "utils",
+]
 
 [[package]]
 name = "fallible_collections"
@@ -2522,6 +2560,41 @@ dependencies = [
  "canister_client",
  "ic-cdk",
  "icp_ledger_canister",
+ "types",
+]
+
+[[package]]
+name = "icpswap_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic-cdk",
+ "icpswap_swap_pool_canister",
+ "icpswap_swap_pool_canister_c2c_client",
+ "icrc1_ledger_canister_c2c_client",
+ "ledger_utils",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "icpswap_swap_pool_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "icpswap_swap_pool_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk",
+ "icpswap_swap_pool_canister",
  "types",
 ]
 

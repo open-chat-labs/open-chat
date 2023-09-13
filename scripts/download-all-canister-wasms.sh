@@ -15,6 +15,7 @@ echo "Downloading wasms"
 
 ./download-canister-wasm.sh community $WASM_SRC || exit 1
 ./download-canister-wasm.sh cycles_dispenser $WASM_SRC || exit 1
+./download-canister-wasm.sh exchange_bot $WASM_SRC || exit 1
 ./download-canister-wasm.sh group $WASM_SRC || exit 1
 ./download-canister-wasm.sh group_index $WASM_SRC || exit 1
 ./download-canister-wasm.sh local_group_index $WASM_SRC || exit 1
