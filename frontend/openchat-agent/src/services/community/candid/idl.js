@@ -1543,6 +1543,11 @@ export const idlFactory = ({ IDL }) => {
     'reply_in_thread' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
   });
+  const UpdatedRules = IDL.Record({
+    'new_version' : IDL.Bool,
+    'text' : IDL.Text,
+    'enabled' : IDL.Bool,
+  });
   const DocumentUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
@@ -1555,7 +1560,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
     'public' : IDL.Opt(IDL.Bool),
-    'rules' : IDL.Opt(Rules),
+    'rules' : IDL.Opt(UpdatedRules),
     'avatar' : DocumentUpdate,
   });
   const UpdateChannelResponse = IDL.Variant({
@@ -1592,7 +1597,7 @@ export const idlFactory = ({ IDL }) => {
     'banner' : DocumentUpdate,
     'description' : IDL.Opt(IDL.Text),
     'public' : IDL.Opt(IDL.Bool),
-    'rules' : IDL.Opt(Rules),
+    'rules' : IDL.Opt(UpdatedRules),
     'avatar' : DocumentUpdate,
     'primary_language' : IDL.Opt(IDL.Text),
   });

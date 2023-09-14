@@ -1170,6 +1170,11 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
+export interface UpdatedRules {
+  'new_version' : boolean,
+  'text' : string,
+  'enabled' : boolean,
+}
 export interface UploadChunkArgs {
   'accessors' : Array<AccessorId>,
   'chunk_index' : number,

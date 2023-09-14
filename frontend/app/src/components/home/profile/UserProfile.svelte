@@ -62,9 +62,9 @@
     let bioError: string | undefined = undefined;
     let saving = false;
     let username = "";
-    let usernameValid = false;
+    let usernameValid = true;
     let displayName: string | undefined = undefined;
-    let displayNameValid = false;
+    let displayNameValid = true;
     let checkingUsername: boolean;
     let readonly = client.isReadOnly();
     let view: "global" | "communities" = "global";

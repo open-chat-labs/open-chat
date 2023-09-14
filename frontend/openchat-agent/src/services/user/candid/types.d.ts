@@ -1640,6 +1640,11 @@ export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
 export interface UnpinChatV2Request { 'chat' : ChatInList }
 export type UnpinChatV2Response = { 'ChatNotFound' : null } |
   { 'Success' : null };
+export interface UpdatedRules {
+  'new_version' : boolean,
+  'text' : string,
+  'enabled' : boolean,
+}
 export interface UpdatesArgs { 'updates_since' : TimestampMillis }
 export type UpdatesResponse = {
     'Success' : {

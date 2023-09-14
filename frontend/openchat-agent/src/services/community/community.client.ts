@@ -128,6 +128,7 @@ import { textToCode, DestinationInvalidError } from "openchat-shared";
 import {
     apiGroupRules,
     apiOptionalGroupPermissions,
+    apiUpdatedRules,
     getMessagesByMessageIndexResponse,
 } from "../group/mappers";
 import { DataClient } from "../data/data.client";
@@ -1117,7 +1118,7 @@ export class CommunityClient extends CandidService {
                 name: apiOptional(identity, name),
                 description: apiOptional(identity, description),
                 permissions: apiOptional(apiOptionalGroupPermissions, permissions),
-                rules: apiOptional(apiGroupRules, rules),
+                rules: apiOptional(apiUpdatedRules, rules),
                 public: apiOptional(identity, isPublic),
                 gate:
                     gate === undefined
@@ -1156,7 +1157,7 @@ export class CommunityClient extends CandidService {
                 name: apiOptional(identity, name),
                 description: apiOptional(identity, description),
                 permissions: apiOptional(apiOptionalCommunityPermissions, permissions),
-                rules: apiOptional(apiGroupRules, rules),
+                rules: apiOptional(apiUpdatedRules, rules),
                 public: apiOptional(identity, isPublic),
                 primary_language: apiOptional(identity, primaryLanguage),
                 gate:

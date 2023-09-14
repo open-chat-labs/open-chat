@@ -1721,7 +1721,7 @@ export interface UpdateChannelArgs {
   'name' : [] | [string],
   'description' : [] | [string],
   'public' : [] | [boolean],
-  'rules' : [] | [Rules],
+  'rules' : [] | [UpdatedRules],
   'avatar' : DocumentUpdate,
 }
 export type UpdateChannelResponse = { 'NameReserved' : null } |
@@ -1747,7 +1747,7 @@ export interface UpdateCommunityArgs {
   'banner' : DocumentUpdate,
   'description' : [] | [string],
   'public' : [] | [boolean],
-  'rules' : [] | [Rules],
+  'rules' : [] | [UpdatedRules],
   'avatar' : DocumentUpdate,
   'primary_language' : [] | [string],
 }
@@ -1782,6 +1782,11 @@ export type UpdateUserGroupResponse = { 'NameTooShort' : FieldTooShortResult } |
   { 'CommunityFrozen' : null } |
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null };
+export interface UpdatedRules {
+  'new_version' : boolean,
+  'text' : string,
+  'enabled' : boolean,
+}
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserFailedError { 'user_id' : UserId, 'error' : string }
 export interface UserFailedGateCheck {

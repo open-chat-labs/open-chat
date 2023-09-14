@@ -1248,6 +1248,12 @@ type Rules = record {
     enabled : bool;
 };
 
+type UpdatedRules = record {
+    text : text;
+    enabled : bool;
+    new_version : bool;
+};
+
 type VersionedRules = record {
     text : text;
     enabled : bool;
