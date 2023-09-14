@@ -1,7 +1,6 @@
 use crate::guards::caller_is_admin;
 use crate::{mutate_state, read_state};
 use canister_tracing_macros::trace;
-use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
 use icp_dispenser_bot::register_bot::{Response::*, *};
 use types::Cycles;
@@ -17,7 +16,7 @@ async fn register_bot(args: Args) -> Response {
     if already_registered {
         AlreadyRegistered
     } else {
-        let response: CallResult<Response> =
+        let response =
             user_index_canister_c2c_client::c2c_register_bot(user_index_canister_id, &args, BOT_REGISTRATION_FEE).await;
 
         match response {

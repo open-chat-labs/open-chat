@@ -1,7 +1,6 @@
 use crate::guards::caller_is_admin;
 use crate::{mutate_state, read_state};
 use canister_tracing_macros::trace;
-use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
 use satoshi_dice_canister::initialize_bot::*;
 use types::Cycles;
@@ -18,8 +17,7 @@ async fn initialize_bot(args: Args) -> Response {
         return AlreadyRegistered;
     }
 
-    let response: CallResult<Response> =
-        user_index_canister_c2c_client::c2c_register_bot(user_index_canister_id, &args, BOT_REGISTRATION_FEE).await;
+    let response = user_index_canister_c2c_client::c2c_register_bot(user_index_canister_id, &args, BOT_REGISTRATION_FEE).await;
 
     match response {
         Ok(Success) => {
