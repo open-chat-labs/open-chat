@@ -13,17 +13,17 @@
     import { toastStore } from "../../stores/toast";
     import {
         type OpenChat,
-        type GroupChatSummary,
         routeForChatIdentifier,
         type CommunitySummary,
         type CommunityIdentifier,
-        type GroupChatIdentifier,
+        type MultiUserChat,
+        type MultiUserChatIdentifier,
     } from "openchat-client";
     import { canShare, shareLink } from "../../utils/share";
     import Markdown from "./Markdown.svelte";
     import { interpolateLevel } from "../../utils/i18n";
 
-    export let container: GroupChatSummary | CommunitySummary;
+    export let container: MultiUserChat | CommunitySummary;
 
     const client = getContext<OpenChat>("client");
     const unauthorized = $_("permissions.notPermitted", {
@@ -40,19 +40,21 @@
     $: link = getLink(container.id, code);
     $: spinner = loading && code === undefined;
 
-    function getLink(id: CommunityIdentifier | GroupChatIdentifier, code: string | undefined) {
+    function getLink(id: CommunityIdentifier | MultiUserChatIdentifier, code: string | undefined) {
         const qs = `/?ref=${client.user.userId}` + (!container.public ? `&code=${code}` : "");
         switch (id.kind) {
             case "community":
                 return `${window.location.origin}/community/${id.communityId}${qs}`;
+            case "channel":
+                return `${window.location.origin}${routeForChatIdentifier("community", id)}${qs}`;
             case "group_chat":
                 return `${window.location.origin}${routeForChatIdentifier("group_chat", id)}${qs}`;
         }
     }
 
-    export function init(container: GroupChatSummary | CommunitySummary) {
+    export function init(container: MultiUserChat | CommunitySummary) {
         ready = false;
-        if (container.public) {
+        if (container.public || container.kind === "channel") {
             ready = true;
             return;
         }
@@ -87,6 +89,7 @@
     onMount(() => init(container));
 
     function toggleLink() {
+        if (container.kind === "channel") return;
         if (loading) return;
         loading = true;
         if (checked) {
@@ -125,6 +128,7 @@
     }
 
     function resetLink(): Promise<void> {
+        if (container.kind === "channel") return Promise.resolve();
         return client
             .resetInviteCode(container.id)
             .then((resp) => {
