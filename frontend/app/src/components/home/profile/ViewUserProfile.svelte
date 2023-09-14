@@ -45,7 +45,7 @@
         {
             userId,
             username: profile?.username ?? "",
-            displayName: profile?.displayName ?? "",
+            displayName: profile?.displayName,
         },
         inGlobalContext ? undefined : $communityMembers
     );
