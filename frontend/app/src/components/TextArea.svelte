@@ -34,7 +34,7 @@
             bind:value
             class={"textbox"} />
     </div>
-    {#if maxlength < Number.MAX_VALUE}
+    {#if !disabled && maxlength < Number.MAX_VALUE}
         <div class:warn class="countdown">{value.length}/{maxlength}</div>
     {/if}
     <slot />

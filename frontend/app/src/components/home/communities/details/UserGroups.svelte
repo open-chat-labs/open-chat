@@ -139,6 +139,10 @@
         gap: $sp3;
         padding: 0 $sp4;
 
+        @include mobile() {
+            padding: 0 $sp3;
+        }
+
         .search {
             flex: auto;
         }

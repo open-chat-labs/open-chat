@@ -938,7 +938,8 @@
         "userGroupMembers": "ユーザーグループのメンバー",
         "enterUserGroupName": "ユーザーグループ名を入力してください",
         "communityLabel": "コミュニティ",
-        "confirmDeleteUserGroup": "このユーザー グループを削除してもよろしいですか?"
+        "confirmDeleteUserGroup": "このユーザー グループを削除してもよろしいですか?",
+        "namedUserGroupMembers": "**{name}** グループのメンバー"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",

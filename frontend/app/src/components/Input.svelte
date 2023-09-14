@@ -65,7 +65,7 @@
         {value}
         class={`textbox ${fontSize} ${align}`} />
 
-    {#if countdown && maxlength < Number.MAX_VALUE && type === "text" && typeof value === "string"}
+    {#if !disabled && countdown && maxlength < Number.MAX_VALUE && type === "text" && typeof value === "string"}
         <div class:warn class="countdown">{remaining}</div>
     {/if}
 

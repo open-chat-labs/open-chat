@@ -937,7 +937,8 @@
         "userGroupMembers": "Membri del gruppo utenti",
         "enterUserGroupName": "Inserisci il nome del gruppo utenti",
         "communityLabel": "Comunità",
-        "confirmDeleteUserGroup": "Sei sicuro di voler eliminare questo gruppo utenti?"
+        "confirmDeleteUserGroup": "Sei sicuro di voler eliminare questo gruppo utenti?",
+        "namedUserGroupMembers": "**{name}** membri del gruppo"
     },
     "groupCreatedBy": "{username} ha creato {level}",
     "groupName": "{level} nome",
