@@ -1,18 +1,22 @@
+use crate::icpswap::ICPSwapClientFactory;
+use crate::swap_client::{SwapClient, SwapClientFactory};
 use candid::Principal;
 use canister_state_macros::canister_state;
-use icpswap_client::ICPSwapClient;
+use exchange_bot_canister::ExchangeId;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use types::{BuildVersion, CanisterId, Cryptocurrency, Cycles, TimestampMillis, Timestamped, TokenInfo};
 use utils::env::Environment;
 
 mod guards;
+mod icpswap;
 mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod swap_client;
 mod updates;
 
 thread_local! {
@@ -31,21 +35,34 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn get_icpswap_client(&self) -> ICPSwapClient {
-        ICPSwapClient::new(
-            self.env.canister_id(),
-            CanisterId::from_text("ne2vj-6yaaa-aaaag-qb3ia-cai").unwrap(),
-            TokenInfo {
-                token: Cryptocurrency::InternetComputer,
-                ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
-                decimals: 8,
-            },
-            TokenInfo {
-                token: Cryptocurrency::CHAT,
-                ledger: Cryptocurrency::CHAT.ledger_canister_id().unwrap(),
-                decimals: 8,
-            },
-        )
+    pub fn get_all_swap_clients(&self, input_token: CanisterId, output_token: CanisterId) -> Vec<Box<dyn SwapClient>> {
+        if let Some((input_token_info, output_token_info)) = self.get_token_info(input_token, output_token) {
+            let this_canister_id = self.env.canister_id();
+
+            vec![ICPSwapClientFactory::new().build(this_canister_id, input_token_info.clone(), output_token_info.clone())]
+                .into_iter()
+                .flatten()
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
+
+    pub fn get_swap_client(
+        &self,
+        exchange_id: ExchangeId,
+        input_token: CanisterId,
+        output_token: CanisterId,
+    ) -> Option<Box<dyn SwapClient>> {
+        let (input_token_info, output_token_info) = self.get_token_info(input_token, output_token)?;
+
+        let this_canister_id = self.env.canister_id();
+
+        match exchange_id {
+            ExchangeId::ICPSwap => {
+                ICPSwapClientFactory::new().build(this_canister_id, input_token_info.clone(), output_token_info.clone())
+            }
+        }
     }
 
     pub fn is_caller_governance_principal(&self) -> bool {
@@ -67,14 +84,22 @@ impl RuntimeState {
             },
         }
     }
+
+    fn get_token_info(&self, input_token: CanisterId, output_token: CanisterId) -> Option<(TokenInfo, TokenInfo)> {
+        let input_token_info = self.data.token_info.get(&input_token)?;
+        let output_token_info = self.data.token_info.get(&output_token)?;
+
+        Some((input_token_info.clone(), output_token_info.clone()))
+    }
 }
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    pub governance_principals: HashSet<Principal>,
-    pub local_user_index_canister_id: CanisterId,
-    pub cycles_dispenser_canister_id: CanisterId,
-    pub test_mode: bool,
+    governance_principals: HashSet<Principal>,
+    local_user_index_canister_id: CanisterId,
+    cycles_dispenser_canister_id: CanisterId,
+    token_info: HashMap<CanisterId, TokenInfo>,
+    test_mode: bool,
 }
 
 impl Data {
@@ -88,9 +113,27 @@ impl Data {
             governance_principals,
             local_user_index_canister_id,
             cycles_dispenser_canister_id,
+            token_info: build_token_info().into_iter().map(|t| (t.ledger, t)).collect(),
             test_mode,
         }
     }
+}
+
+fn build_token_info() -> Vec<TokenInfo> {
+    vec![
+        TokenInfo {
+            token: Cryptocurrency::InternetComputer,
+            ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
+            decimals: 8,
+            fee: 10_000,
+        },
+        TokenInfo {
+            token: Cryptocurrency::CHAT,
+            ledger: Cryptocurrency::CHAT.ledger_canister_id().unwrap(),
+            decimals: 8,
+            fee: 100_000,
+        },
+    ]
 }
 
 #[derive(Serialize, Debug)]

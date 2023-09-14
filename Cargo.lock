@@ -1569,12 +1569,14 @@ dependencies = [
 name = "exchange_bot_canister_impl"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "candid",
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
  "exchange_bot_canister",
+ "futures",
  "http_request",
  "human_readable",
  "ic-cdk",

@@ -10,11 +10,9 @@ fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name();
 
     let is_valid = match method_name.as_str() {
-        "exchange" | "quote" => state.is_caller_governance_principal(),
+        "quote" | "swap" => state.is_caller_governance_principal(),
         _ => false,
     };
 
-    if is_valid {
-        ic_cdk::api::call::accept_message();
-    }
+    ic_cdk::api::call::accept_message();
 }

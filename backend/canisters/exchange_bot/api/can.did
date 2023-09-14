@@ -1,13 +1,20 @@
 import "../../../libraries/types/can.did";
 
-type ExchangeArgs = record {
+type QuoteArgs = record {
+    input_token : CanisterId;
+    output_token : CanisterId;
     amount : nat;
-    zero_for_one : bool;
 };
 
-type ExchangeResponse = variant {
-    Ok : nat;
-    Err : text;
+type QuoteResponse = record {
+    quotes : vec record {
+        exchange_id : ExchangeId;
+        amount_out : nat;
+    };
+    failures : vec record {
+        exchange_id : ExchangeId;
+        error: text;
+    }
 };
 
 type InitArgs = record {
@@ -18,7 +25,10 @@ type InitArgs = record {
     test_mode : bool;
 };
 
-service : (InitArgs) -> {
-    exchange : (ExchangeArgs) -> (ExchangeResponse);
-    quote : (ExchangeArgs) -> (ExchangeResponse);
+type ExchangeId = variant {
+    ICPSwap;
+};
+
+service : {
+    quote : (QuoteArgs) -> (QuoteResponse);
 };
