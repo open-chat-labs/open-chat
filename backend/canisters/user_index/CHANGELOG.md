@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Allow bots to register with display names ([#4377](https://github.com/open-chat-labs/open-chat/pull/4377))
+
 ## [[2.0.840](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.840-user_index)] - 2023-09-06
 
 ### Changed
