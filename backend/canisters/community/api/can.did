@@ -810,7 +810,7 @@ type UpdateChannelArgs = record {
     channel_id : ChannelId;
     name : opt text;
     description : opt text;
-    rules : opt Rules;
+    rules : opt UpdatedRules;
     avatar : DocumentUpdate;
     permissions : opt OptionalGroupPermissions;
     gate : AccessGateUpdate;
@@ -841,7 +841,7 @@ type UpdateChannelResponse = variant {
 type UpdateCommunityArgs = record {
     name : opt text;
     description : opt text;
-    rules : opt Rules;
+    rules : opt UpdatedRules;
     avatar : DocumentUpdate;
     banner : DocumentUpdate;
     permissions : opt OptionalCommunityPermissions;

@@ -7,7 +7,7 @@ import type {
     ApiRole,
     ApiMessagesByMessageIndexResponse,
     ApiMessageEventWrapper,
-    ApiGroupRules,
+    ApiRules,
     ApiRulesResponse,
     ApiGroupCanisterGroupChatSummary,
     ApiGroupCanisterGroupChatSummaryUpdates,
@@ -16,6 +16,7 @@ import type {
     ApiClaimPrizeResponse,
     ApiGroupGateUpdate,
     ApiConvertIntoCommunityResponse,
+    ApiUpdatedRules,
 } from "./candid/idl";
 import type {
     ApiEventsResponse as ApiCommunityEventsResponse,
@@ -242,10 +243,19 @@ export function apiOptionalGroupPermissions(
     };
 }
 
-export function apiGroupRules(rules: AccessRules): ApiGroupRules {
+export function apiGroupRules(rules: AccessRules): ApiRules {
     return {
         text: rules.text,
         enabled: rules.enabled,
+
+    };
+}
+
+export function apiUpdatedRules(rules: AccessRules): ApiUpdatedRules {
+    return {
+        text: rules.text,
+        enabled: rules.enabled,
+        new_version: true,
     };
 }
 

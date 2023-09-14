@@ -12,7 +12,7 @@ use types::{
     InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex,
     MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions,
     PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
+    Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -1260,7 +1260,7 @@ impl GroupChatCore {
         user_id: UserId,
         name: Option<String>,
         description: Option<String>,
-        rules: Option<Rules>,
+        rules: Option<UpdatedRules>,
         avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
         gate: OptionUpdate<AccessGate>,
@@ -1290,7 +1290,7 @@ impl GroupChatCore {
         user_id: &UserId,
         name: &Option<String>,
         description: &Option<String>,
-        rules: &Option<Rules>,
+        rules: &Option<UpdatedRules>,
         avatar: &OptionUpdate<Document>,
         permissions: &Option<OptionalGroupPermissions>,
         public: &Option<bool>,
@@ -1352,7 +1352,7 @@ impl GroupChatCore {
         user_id: UserId,
         name: Option<String>,
         description: Option<String>,
-        rules: Option<Rules>,
+        rules: Option<UpdatedRules>,
         avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
         gate: OptionUpdate<AccessGate>,
@@ -1787,10 +1787,10 @@ impl AccessRulesInternal {
         }
     }
 
-    pub fn update(&mut self, rules: Rules) -> Option<Version> {
+    pub fn update(&mut self, rules: UpdatedRules) -> Option<Version> {
         if rules.enabled != self.enabled || self.text.value != rules.text {
             if self.text.value != rules.text {
-                self.text.update(rules.text);
+                self.text.update(rules.text, rules.new_version);
             }
 
             self.enabled = rules.enabled;

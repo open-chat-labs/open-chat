@@ -176,7 +176,7 @@ import type {
     ApiPinMessageResponse,
     ApiSelectedInitialResponse,
     ApiParticipant,
-    ApiGroupRules,
+    ApiRules,
     ApiSelectedUpdatesResponse,
     ApiEditMessageResponse,
     ApiDeclineInvitationResponse,
@@ -1949,7 +1949,7 @@ export function member(candid: ApiParticipant): Member {
     };
 }
 
-export function groupRules(candid: ApiGroupRules): AccessRules {
+export function groupRules(candid: ApiRules): AccessRules {
     return {
         text: candid.text,
         enabled: candid.enabled,
