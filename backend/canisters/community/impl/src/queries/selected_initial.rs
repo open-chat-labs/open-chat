@@ -24,7 +24,7 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
         blocked_users: members.blocked(),
         invited_users: state.data.invited_users.users(),
         rules: state.data.rules.clone().into(),
-        access_rules: state.data.rules.clone().into(),
+        chat_rules: state.data.rules.clone().into(),
         user_groups: state.data.members.iter_user_groups().map(|u| u.into()).collect(),
     })
 }

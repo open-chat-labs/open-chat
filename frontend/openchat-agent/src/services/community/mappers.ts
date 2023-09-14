@@ -506,7 +506,7 @@ export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockComm
 export function updateCommunityResponse(
     candid: ApiUpdateCommunityResponse,
 ): UpdateCommunityResponse {
-    if ("Success" in candid) {
+    if ("Success" in candid || "SuccessV2" in candid) {
         return CommonResponses.success();
     } else {
         console.warn("UpdateCommunity failed with", candid);

@@ -40,9 +40,9 @@ pub mod happy_path {
     use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
     use types::{
-        AccessRules, ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
+        ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        MessageIndex, TextContent, TimestampMillis, UserId,
+        MessageIndex, Rules, TextContent, TimestampMillis, UserId,
     };
 
     pub fn create_channel(
@@ -60,7 +60,7 @@ pub mod happy_path {
                 is_public,
                 name: name.clone(),
                 description: format!("{name}_description"),
-                rules: AccessRules::default(),
+                rules: Rules::default(),
                 subtype: None,
                 avatar: None,
                 history_visible_to_new_joiners: is_public,
@@ -132,7 +132,7 @@ pub mod happy_path {
         let response = super::update_community(env, sender, community_id.into(), args);
 
         match response {
-            community_canister::update_community::Response::Success => {}
+            community_canister::update_community::Response::SuccessV2(_) => {}
             response => panic!("'update_community' error: {response:?}"),
         }
     }
@@ -146,7 +146,7 @@ pub mod happy_path {
         let response = super::update_channel(env, sender.principal, community_id.into(), args);
 
         match response {
-            community_canister::update_channel::Response::Success => {}
+            community_canister::update_channel::Response::SuccessV2(_) => {}
             response => panic!("'update_channel' error: {response:?}"),
         }
     }

@@ -3,7 +3,6 @@ use candid::{CandidType, Nat, Principal};
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct Args {
     pub operator: Principal,
     #[serde(rename = "amountIn")]

@@ -572,7 +572,6 @@
         display: flex;
         text-transform: capitalize;
         align-items: center;
-        @include font(book, normal, fs-80);
         font-weight: 500;
         color: var(--txt-light);
         gap: $sp5;
@@ -581,7 +580,6 @@
         margin: 0 $sp5;
 
         @include mobile() {
-            @include font(book, normal, fs-70);
             gap: $sp4;
             margin: 0 $sp4;
         }

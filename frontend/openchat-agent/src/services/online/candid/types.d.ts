@@ -6,7 +6,6 @@ export type AccessGate = { 'SnsNeuron' : SnsNeuronGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
-export interface AccessRules { 'text' : string, 'enabled' : boolean }
 export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
 export interface AddedToChannelNotification {
@@ -1070,6 +1069,7 @@ export interface RoleChanged {
   'old_role' : GroupRole,
   'new_role' : GroupRole,
 }
+export interface Rules { 'text' : string, 'enabled' : boolean }
 export interface SelectedGroupUpdates {
   'blocked_users_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],
@@ -1079,7 +1079,7 @@ export interface SelectedGroupUpdates {
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : [] | [AccessRules],
+  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export interface SnsNeuronGate {

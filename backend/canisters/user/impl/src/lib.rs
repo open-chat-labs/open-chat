@@ -145,8 +145,6 @@ struct Data {
     pub display_name: Timestamped<Option<String>>,
     #[serde(deserialize_with = "deserialize_to_timestamped")]
     pub bio: Timestamped<String>,
-    // TODO: remove skip_deserializing after the users have been upgraded
-    #[serde(skip_deserializing)]
     pub cached_group_summaries: Option<CachedGroupSummaries>,
     pub storage_limit: u64,
     pub phone_is_verified: bool,

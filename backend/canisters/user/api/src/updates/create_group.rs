@@ -1,15 +1,13 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{
-    AccessGate, AccessRules, ChatId, Document, FieldTooLongResult, FieldTooShortResult, GroupPermissions, Milliseconds,
-};
+use types::{AccessGate, ChatId, Document, FieldTooLongResult, FieldTooShortResult, GroupPermissions, Milliseconds, Rules};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub is_public: bool,
     pub name: String,
     pub description: String,
-    pub rules: AccessRules,
+    pub rules: Rules,
     pub avatar: Option<Document>,
     pub history_visible_to_new_joiners: bool,
     pub permissions: Option<GroupPermissions>,

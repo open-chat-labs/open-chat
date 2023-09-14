@@ -8,7 +8,6 @@ pub use queries::*;
 pub use updates::*;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
 pub enum ICPSwapResult<T> {
     #[serde(rename = "ok")]
     Ok(T),
