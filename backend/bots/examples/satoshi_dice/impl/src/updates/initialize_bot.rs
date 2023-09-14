@@ -18,11 +18,10 @@ async fn initialize_bot(args: Args) -> Response {
         return AlreadyRegistered;
     }
 
-    let response: CallResult<(Response,)> =
-        ic_cdk::api::call::call_with_payment128(user_index_canister_id, "c2c_register_bot", (&args,), BOT_REGISTRATION_FEE)
-            .await;
+    let response: CallResult<Response> =
+        user_index_canister_c2c_client::c2c_register_bot(user_index_canister_id, &args, BOT_REGISTRATION_FEE).await;
 
-    match response.map(|r| r.0) {
+    match response {
         Ok(Success) => {
             mutate_state(|state| {
                 state.data.username = args.username;

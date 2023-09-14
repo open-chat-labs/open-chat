@@ -16,14 +16,19 @@ async fn initialize_bot(args: Args) -> Response {
     if args.end_date <= now {
         EndDateInPast
     } else {
-        let response: CallResult<(Response,)> = if args.update_existing {
-            CallResult::Ok((AlreadyRegistered,))
+        let response: CallResult<Response> = if args.update_existing {
+            Ok(AlreadyRegistered)
         } else {
-            ic_cdk::api::call::call_with_payment128(user_index_canister_id, "c2c_register_bot", (&args,), BOT_REGISTRATION_FEE)
+            let register_bot_args = user_index_canister::c2c_register_bot::Args {
+                username: args.username.clone(),
+                display_name: None,
+            };
+            user_index_canister_c2c_client::c2c_register_bot(user_index_canister_id, &register_bot_args, BOT_REGISTRATION_FEE)
                 .await
+                .map(|r| r.into())
         };
 
-        match response.map(|r| r.0) {
+        match response {
             Ok(Success) | Ok(AlreadyRegistered) => {
                 mutate_state(|state| {
                     state.data.username = args.username;

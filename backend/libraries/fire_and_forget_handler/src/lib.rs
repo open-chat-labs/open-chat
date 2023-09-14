@@ -38,7 +38,7 @@ async fn process_batch(batch: Vec<C2cCall>, wrapper: Arc<Mutex<FireAndForgetHand
 }
 
 async fn process_single(mut call: C2cCall, wrapper: Arc<Mutex<FireAndForgetHandlerInner>>) {
-    let result = make_c2c_call_raw(call.canister_id, &call.method_name, &call.payload).await;
+    let result = make_c2c_call_raw(call.canister_id, &call.method_name, &call.payload, 0).await;
 
     if result.is_err() || call.attempt > 0 {
         let handler = &mut wrapper.lock().unwrap();
