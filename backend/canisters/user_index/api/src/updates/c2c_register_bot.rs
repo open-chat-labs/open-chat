@@ -5,6 +5,7 @@ use types::Cycles;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub username: String,
+    pub display_name: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
