@@ -32,13 +32,13 @@
     let communityUsers: Record<string, UserSummary> = {};
     let communityUsersList: UserSummary[] = [];
 
+    $: searchTermLower = searchTerm.toLowerCase();
     $: userStore = client.userStore;
     $: communityMembers = client.currentCommunityMembers;
     $: userGroupsMap = client.currentCommunityUserGroups;
     $: userGroups = [...$userGroupsMap.values()];
     $: canManageUserGroups = client.canManageUserGroups(community.id);
-
-    $: matchingGroups = userGroups.filter(matchesSearch);
+    $: matchingGroups = userGroups.filter((ug) => matchesSearch(searchTermLower, ug));
 
     onMount(() => {
         const start = Date.now();
@@ -65,9 +65,9 @@
         }, {} as Record<string, UserSummary>);
     }
 
-    function matchesSearch(userGroup: UserGroupDetails): boolean {
+    function matchesSearch(searchTerm: string, userGroup: UserGroupDetails): boolean {
         if (searchTerm === "") return true;
-        return userGroup.name.toLowerCase().includes(searchTerm.toLowerCase());
+        return userGroup.name.toLowerCase().includes(searchTerm);
     }
 
     function createUserGroup() {
