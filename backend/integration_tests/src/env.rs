@@ -37,3 +37,10 @@ impl TestEnvWrapper {
         self.env.as_mut().unwrap()
     }
 }
+
+impl Drop for TestEnvWrapper {
+    fn drop(&mut self) {
+        let env = std::mem::take(&mut self.env).unwrap();
+        ENV.deref().envs.lock().unwrap().push(env);
+    }
+}
