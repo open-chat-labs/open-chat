@@ -572,7 +572,7 @@
         display: flex;
         text-transform: capitalize;
         align-items: center;
-        font-weight: 500;
+        @include font(medium, normal, fs-90);
         color: var(--txt-light);
         gap: $sp5;
         border-bottom: 1px solid var(--bd);
