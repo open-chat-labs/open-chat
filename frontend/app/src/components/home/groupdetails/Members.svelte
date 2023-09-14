@@ -297,7 +297,6 @@
         display: flex;
         align-items: center;
         @include font(medium, normal, fs-90);
-        // font-weight: 500;
         color: var(--txt-light);
         gap: $sp5;
         border-bottom: 1px solid var(--bd);

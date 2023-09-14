@@ -936,7 +936,8 @@
         "enterUserGroupName": "הזן את שם קבוצת המשתמשים",
         "communityLabel": "קהילה",
         "confirmDeleteUserGroup": "האם אתה בטוח שברצונך למחוק את קבוצת המשתמשים הזו?",
-        "namedUserGroupMembers": "**{name}** חברי הקבוצה"
+        "namedUserGroupMembers": "**{name}** חברי הקבוצה",
+        "searchUserGroups": "חפש קבוצות משתמשים..."
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",
