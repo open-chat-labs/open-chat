@@ -74,7 +74,7 @@ impl ICPSwapClient {
         };
         match icpswap_swap_pool_canister_c2c_client::swap(self.swap_canister_id, &args).await? {
             ICPSwapResult::Ok(amount_out) => Ok(nat_to_u128(amount_out)),
-            ICPSwapResult::Err(error) => return Err(convert_error(error)),
+            ICPSwapResult::Err(error) => Err(convert_error(error)),
         }
     }
 
