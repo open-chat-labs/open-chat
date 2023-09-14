@@ -364,9 +364,10 @@
             on:editGroup
             on:chatWith
             on:showGroupMembers />
-    {:else if lastState.kind === "invite_community_users"}
+    {:else if lastState.kind === "invite_community_users" && $selectedCommunity !== undefined}
         <InviteUsers
             {level}
+            container={$selectedCommunity}
             userLookup={searchUsers}
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
@@ -386,8 +387,9 @@
             on:showInviteUsers={showInviteCommunityUsers}
             on:removeMember={onRemoveCommunityMember}
             on:changeRole={onChangeCommunityRole} />
-    {:else if lastState.kind === "invite_group_users"}
+    {:else if lastState.kind === "invite_group_users" && $multiUserChat !== undefined}
         <InviteUsers
+            container={$multiUserChat}
             {level}
             userLookup={searchUsers}
             busy={invitingUsers}
