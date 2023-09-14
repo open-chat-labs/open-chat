@@ -1189,6 +1189,11 @@ export interface UpdateUserIdArgs {
 export type UpdateUserIdResponse = { 'UserIdAlreadyExists' : null } |
   { 'Success' : null } |
   { 'UserNotFound' : null };
+export interface UpdatedRules {
+  'new_version' : boolean,
+  'text' : string,
+  'enabled' : boolean,
+}
 export interface User { 'username' : string, 'user_id' : UserId }
 export type UserArgs = {};
 export interface UserConfig { 'byte_limit' : bigint, 'user_id' : UserId }

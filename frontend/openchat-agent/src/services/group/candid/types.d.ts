@@ -1508,7 +1508,7 @@ export interface UpdateGroupV2Args {
   'events_ttl' : EventsTimeToLiveUpdate,
   'public' : [] | [boolean],
   'correlation_id' : bigint,
-  'rules' : [] | [Rules],
+  'rules' : [] | [UpdatedRules],
   'avatar' : DocumentUpdate,
 }
 export type UpdateGroupV2Response = { 'NameReserved' : null } |
@@ -1526,6 +1526,11 @@ export type UpdateGroupV2Response = { 'NameReserved' : null } |
   { 'SuccessV2' : { 'rules_version' : [] | [Version] } } |
   { 'NameTaken' : null } |
   { 'InternalError' : null };
+export interface UpdatedRules {
+  'new_version' : boolean,
+  'text' : string,
+  'enabled' : boolean,
+}
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserGroup {
   'members' : number,

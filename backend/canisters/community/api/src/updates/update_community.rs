@@ -1,14 +1,15 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
-    AccessGate, Document, FieldTooLongResult, FieldTooShortResult, OptionUpdate, OptionalCommunityPermissions, Rules, Version,
+    AccessGate, Document, FieldTooLongResult, FieldTooShortResult, OptionUpdate, OptionalCommunityPermissions, UpdatedRules,
+    Version,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub name: Option<String>,
     pub description: Option<String>,
-    pub rules: Option<Rules>,
+    pub rules: Option<UpdatedRules>,
     pub avatar: OptionUpdate<Document>,
     pub banner: OptionUpdate<Document>,
     pub permissions: Option<OptionalCommunityPermissions>,

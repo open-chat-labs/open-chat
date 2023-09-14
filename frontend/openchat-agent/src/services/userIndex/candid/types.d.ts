@@ -1298,6 +1298,11 @@ export type UnsuspendUserResponse = { 'UserNotSuspended' : null } |
   { 'Success' : null } |
   { 'InternalError' : string } |
   { 'UserNotFound' : null };
+export interface UpdatedRules {
+  'new_version' : boolean,
+  'text' : string,
+  'enabled' : boolean,
+}
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserArgs {
   'username' : [] | [string],

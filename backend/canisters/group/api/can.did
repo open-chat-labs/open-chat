@@ -205,7 +205,7 @@ type ChangeRoleResponse = variant {
 type UpdateGroupV2Args = record {
     name : opt text;
     description : opt text;
-    rules : opt Rules;
+    rules : opt UpdatedRules;
     avatar : DocumentUpdate;
     permissions : opt OptionalGroupPermissions;
     events_ttl : EventsTimeToLiveUpdate;

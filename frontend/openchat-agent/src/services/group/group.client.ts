@@ -62,6 +62,7 @@ import {
     summaryUpdatesResponse,
     claimPrizeResponse,
     convertToCommunityReponse,
+    apiUpdatedRules,
 } from "./mappers";
 import {
     type Database,
@@ -490,7 +491,7 @@ export class GroupClient extends CandidService {
                               },
                           },
                 permissions: apiOptional(apiOptionalGroupPermissions, permissions),
-                rules: apiOptional(apiGroupRules, rules),
+                rules: apiOptional(apiUpdatedRules, rules),
                 events_ttl: apiOptionUpdate(identity, eventsTimeToLiveMs),
                 correlation_id: generateUint64(),
                 gate:
