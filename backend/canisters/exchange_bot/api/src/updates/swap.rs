@@ -14,6 +14,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(u128),
+    UnsupportedTokens(Vec<CanisterId>),
     PairNotSupportedByExchange,
     InternalError(String),
 }

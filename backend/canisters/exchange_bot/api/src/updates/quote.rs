@@ -11,7 +11,16 @@ pub struct Args {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Response {
+pub enum Response {
+    Success(Vec<Quote>),
+    PartialSuccess(PartialSuccessResult),
+    Failed(Vec<Failure>),
+    UnsupportedTokens(Vec<CanisterId>),
+    PairNotSupported,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct PartialSuccessResult {
     pub quotes: Vec<Quote>,
     pub failures: Vec<Failure>,
 }

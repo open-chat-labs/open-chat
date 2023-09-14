@@ -6,15 +6,39 @@ type QuoteArgs = record {
     amount : nat;
 };
 
-type QuoteResponse = record {
-    quotes : vec record {
-        exchange_id : ExchangeId;
-        amount_out : nat;
+type QuoteResponse = variant {
+    Success : vec Quote;
+    PartialSuccess : record {
+        quotes : vec Quote;
+        failures : vec ExchangeError;
     };
-    failures : vec record {
-        exchange_id : ExchangeId;
-        error: text;
-    }
+    Failed : vec ExchangeError;
+    UnsupportedTokens : vec CanisterId;
+    PairNotSupported;
+};
+
+type Quote = record {
+    exchange_id : ExchangeId;
+    amount_out : nat;
+};
+
+type ExchangeError = record {
+    exchange_id : ExchangeId;
+    error : text;
+};
+
+type SwapArgs = record {
+    exchange_id : ExchangeId;
+    input_token : CanisterId;
+    output_token : CanisterId;
+    amount : nat;
+};
+
+type SwapResponse = variant {
+    Success : nat;
+    UnsupportedTokens : vec CanisterId;
+    PairNotSupportedByExchange;
+    InternalError : text;
 };
 
 type InitArgs = record {
@@ -31,4 +55,5 @@ type ExchangeId = variant {
 
 service : {
     quote : (QuoteArgs) -> (QuoteResponse);
+    swap : (SwapArgs) -> (SwapResponse);
 };

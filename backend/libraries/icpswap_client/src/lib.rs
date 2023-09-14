@@ -30,11 +30,14 @@ impl ICPSwapClient {
         }
     }
 
-    pub fn deposit_account(&self) -> Account {
-        Account {
-            owner: self.swap_canister_id,
-            subaccount: Some(convert_to_subaccount(&self.this_canister_id).0),
-        }
+    pub fn deposit_account(&self) -> (CanisterId, Account) {
+        (
+            self.get_ledger(self.zero_for_one),
+            Account {
+                owner: self.swap_canister_id,
+                subaccount: Some(convert_to_subaccount(&self.this_canister_id).0),
+            },
+        )
     }
 
     pub async fn quote(&self, amount: u128) -> CallResult<u128> {

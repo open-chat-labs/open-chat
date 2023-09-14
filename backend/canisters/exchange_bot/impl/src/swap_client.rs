@@ -17,7 +17,7 @@ pub trait SwapClientFactory {
 pub trait SwapClient {
     fn exchange_id(&self) -> ExchangeId;
     async fn quote(&self, amount: u128) -> CallResult<u128>;
-    async fn deposit_account(&self) -> CallResult<Account>;
+    async fn deposit_account(&self) -> CallResult<(CanisterId, Account)>;
     async fn deposit(&self, amount: u128) -> CallResult<u128>;
     async fn swap(&self, amount: u128) -> CallResult<u128>;
     async fn withdraw(&self, amount: u128) -> CallResult<u128>;

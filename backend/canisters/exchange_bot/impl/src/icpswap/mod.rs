@@ -62,7 +62,7 @@ impl SwapClient for ICPSwapClient {
         self.quote(amount).await
     }
 
-    async fn deposit_account(&self) -> CallResult<Account> {
+    async fn deposit_account(&self) -> CallResult<(CanisterId, Account)> {
         Ok(self.deposit_account())
     }
 

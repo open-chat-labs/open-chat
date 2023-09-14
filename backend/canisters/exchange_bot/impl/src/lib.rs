@@ -35,33 +35,25 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn get_all_swap_clients(&self, input_token: CanisterId, output_token: CanisterId) -> Vec<Box<dyn SwapClient>> {
-        if let Some((input_token_info, output_token_info)) = self.get_token_info(input_token, output_token) {
-            let this_canister_id = self.env.canister_id();
+    pub fn get_all_swap_clients(&self, input_token: TokenInfo, output_token: TokenInfo) -> Vec<Box<dyn SwapClient>> {
+        let this_canister_id = self.env.canister_id();
 
-            vec![ICPSwapClientFactory::new().build(this_canister_id, input_token_info.clone(), output_token_info.clone())]
-                .into_iter()
-                .flatten()
-                .collect()
-        } else {
-            Vec::new()
-        }
+        vec![ICPSwapClientFactory::new().build(this_canister_id, input_token.clone(), output_token.clone())]
+            .into_iter()
+            .flatten()
+            .collect()
     }
 
     pub fn get_swap_client(
         &self,
         exchange_id: ExchangeId,
-        input_token: CanisterId,
-        output_token: CanisterId,
+        input_token: TokenInfo,
+        output_token: TokenInfo,
     ) -> Option<Box<dyn SwapClient>> {
-        let (input_token_info, output_token_info) = self.get_token_info(input_token, output_token)?;
-
         let this_canister_id = self.env.canister_id();
 
         match exchange_id {
-            ExchangeId::ICPSwap => {
-                ICPSwapClientFactory::new().build(this_canister_id, input_token_info.clone(), output_token_info.clone())
-            }
+            ExchangeId::ICPSwap => ICPSwapClientFactory::new().build(this_canister_id, input_token, output_token),
         }
     }
 
@@ -83,13 +75,6 @@ impl RuntimeState {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
         }
-    }
-
-    fn get_token_info(&self, input_token: CanisterId, output_token: CanisterId) -> Option<(TokenInfo, TokenInfo)> {
-        let input_token_info = self.data.token_info.get(&input_token)?;
-        let output_token_info = self.data.token_info.get(&output_token)?;
-
-        Some((input_token_info.clone(), output_token_info.clone()))
     }
 }
 
@@ -115,6 +100,19 @@ impl Data {
             cycles_dispenser_canister_id,
             token_info: build_token_info().into_iter().map(|t| (t.ledger, t)).collect(),
             test_mode,
+        }
+    }
+
+    pub fn get_token_info(
+        &self,
+        input_token: CanisterId,
+        output_token: CanisterId,
+    ) -> Result<(TokenInfo, TokenInfo), Vec<CanisterId>> {
+        match (self.token_info.get(&input_token), self.token_info.get(&output_token)) {
+            (Some(i), Some(o)) => Ok((i.clone(), o.clone())),
+            (None, Some(_)) => Err(vec![input_token]),
+            (Some(_), None) => Err(vec![output_token]),
+            (None, None) => Err(vec![input_token, output_token]),
         }
     }
 }

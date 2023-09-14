@@ -14,5 +14,7 @@ fn accept_if_valid(state: &RuntimeState) {
         _ => false,
     };
 
-    ic_cdk::api::call::accept_message();
+    if is_valid {
+        ic_cdk::api::call::accept_message();
+    }
 }
