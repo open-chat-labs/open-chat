@@ -1319,6 +1319,11 @@ export type UnfreezeGroupResponse = { 'ChatNotFound' : null } |
   } |
   { 'ChatNotFrozen' : null } |
   { 'InternalError' : string };
+export interface UpdatedRules {
+  'new_version' : boolean,
+  'text' : string,
+  'enabled' : boolean,
+}
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserGroup {
   'members' : number,

@@ -8,7 +8,7 @@ use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
 use types::{
     ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent, MessageContentInitial,
-    OptionUpdate, Rules, TextContent, Version,
+    OptionUpdate, TextContent, UpdatedRules, Version,
 };
 
 #[test]
@@ -592,7 +592,11 @@ fn set_community_rules(env: &mut StateMachine, user: &User, community_id: Commun
     let args = community_canister::update_community::Args {
         name: None,
         description: None,
-        rules: Some(Rules { text, enabled: true }),
+        rules: Some(UpdatedRules {
+            text,
+            enabled: true,
+            new_version: true,
+        }),
         avatar: OptionUpdate::NoChange,
         banner: OptionUpdate::NoChange,
         permissions: None,
@@ -608,7 +612,11 @@ fn set_channel_rules(env: &mut StateMachine, user: &User, community_id: Communit
     let args = community_canister::update_channel::Args {
         name: None,
         description: None,
-        rules: Some(Rules { text, enabled: true }),
+        rules: Some(UpdatedRules {
+            text,
+            enabled: true,
+            new_version: true,
+        }),
         avatar: OptionUpdate::NoChange,
         permissions: None,
         gate: OptionUpdate::NoChange,

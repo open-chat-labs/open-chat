@@ -1214,6 +1214,11 @@ export const idlFactory = ({ IDL }) => {
     'reply_in_thread' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
   });
+  const UpdatedRules = IDL.Record({
+    'new_version' : IDL.Bool,
+    'text' : IDL.Text,
+    'enabled' : IDL.Bool,
+  });
   const Document = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -1232,7 +1237,7 @@ export const idlFactory = ({ IDL }) => {
     'events_ttl' : EventsTimeToLiveUpdate,
     'public' : IDL.Opt(IDL.Bool),
     'correlation_id' : IDL.Nat64,
-    'rules' : IDL.Opt(Rules),
+    'rules' : IDL.Opt(UpdatedRules),
     'avatar' : DocumentUpdate,
   });
   const FieldTooLongResult = IDL.Record({

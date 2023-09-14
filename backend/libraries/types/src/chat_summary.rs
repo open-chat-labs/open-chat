@@ -344,3 +344,10 @@ pub struct VersionedRules {
     pub version: Version,
     pub enabled: bool,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct UpdatedRules {
+    pub text: String,
+    pub enabled: bool,
+    pub new_version: bool,
+}
