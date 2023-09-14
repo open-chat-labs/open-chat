@@ -938,7 +938,8 @@
         "userGroupMembers": "Thành viên nhóm người dùng",
         "enterUserGroupName": "Nhập tên nhóm người dùng",
         "communityLabel": "Cộng đồng",
-        "confirmDeleteUserGroup": "Bạn có chắc chắn muốn xóa nhóm người dùng này?"
+        "confirmDeleteUserGroup": "Bạn có chắc chắn muốn xóa nhóm người dùng này?",
+        "namedUserGroupMembers": "**{name}** thành viên nhóm"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",
