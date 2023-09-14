@@ -1,15 +1,25 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import AreYouSure from "../../../AreYouSure.svelte";
-    import type { CommunitySummary, OpenChat, UserGroupDetails } from "openchat-client";
+    import type {
+        CommunitySummary,
+        Member,
+        OpenChat,
+        UserGroupDetails,
+        UserLookup,
+        UserSummary,
+    } from "openchat-client";
     import Plus from "svelte-material-icons/Plus.svelte";
     import { iconSize } from "../../../../stores/iconSize";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import Search from "../../../Search.svelte";
     import HoverIcon from "../../../HoverIcon.svelte";
     import UserGroup from "./UserGroup.svelte";
     import { toastStore } from "../../../../stores/toast";
+    import CollapsibleCard from "../../../CollapsibleCard.svelte";
+    import User from "../../groupdetails/User.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -19,6 +29,8 @@
     let selectedGroup: UserGroupDetails | undefined = undefined;
     let confirmingDelete = false;
     let groupToDelete: UserGroupDetails | undefined = undefined;
+    let communityUsers: Record<string, UserSummary> = {};
+    let communityUsersList: UserSummary[] = [];
 
     $: userStore = client.userStore;
     $: communityMembers = client.currentCommunityMembers;
@@ -27,6 +39,31 @@
     $: canManageUserGroups = client.canManageUserGroups(community.id);
 
     $: matchingGroups = userGroups.filter(matchesSearch);
+
+    onMount(() => {
+        const start = Date.now();
+        communityUsers = createLookup($communityMembers, $userStore);
+        communityUsersList = Object.values(communityUsers);
+        const end = Date.now();
+        console.debug("PERF: Built community member lookup: ", end - start);
+    });
+
+    function createLookup(
+        members: Map<string, Member>,
+        allUsers: UserLookup
+    ): Record<string, UserSummary> {
+        return [...members.values()].reduce((map, m) => {
+            const user = allUsers[m.userId];
+            if (user !== undefined) {
+                map[user.userId] = {
+                    ...user,
+                    displayName: m.displayName ?? user.displayName,
+                    username: user.username,
+                };
+            }
+            return map;
+        }, {} as Record<string, UserSummary>);
+    }
 
     function matchesSearch(userGroup: UserGroupDetails): boolean {
         if (searchTerm === "") return true;
@@ -64,6 +101,10 @@
             .finally(() => (groupToDelete = undefined));
     }
 
+    function editUserGroup(userGroup: UserGroupDetails) {
+        selectedGroup = userGroup;
+    }
+
     function confirmDeleteUserGroup(userGroup: UserGroupDetails) {
         groupToDelete = userGroup;
         confirmingDelete = true;
@@ -82,15 +123,19 @@
     <UserGroup
         {canManageUserGroups}
         {community}
-        communityMembers={$communityMembers}
-        userStore={$userStore}
+        {communityUsers}
+        {communityUsersList}
         on:cancel={() => (selectedGroup = undefined)}
         original={selectedGroup} />
 {:else}
     <div class="user-groups">
         <div class="search-row">
             <div class="search">
-                <Search fill searching={false} bind:searchTerm placeholder={"search"} />
+                <Search
+                    fill
+                    searching={false}
+                    bind:searchTerm
+                    placeholder={"communities.searchUserGroups"} />
             </div>
             {#if canManageUserGroups}
                 <div class="add">
@@ -107,24 +152,48 @@
                 </div>
             {:else}
                 {#each matchingGroups as userGroup}
-                    <div class="user-group" on:click={() => (selectedGroup = userGroup)}>
-                        <h4 class="name">
-                            <span class="name-text">{userGroup.name}</span>
-                            <span class="members">
-                                <span class="num">{userGroup.members.size.toLocaleString()}</span>
-                                {$_("members")}
-                            </span>
-                        </h4>
-                        {#if canManageUserGroups}
-                            <div
-                                on:click|stopPropagation={() => confirmDeleteUserGroup(userGroup)}
-                                class="delete">
-                                <DeleteOutline
-                                    viewBox={"0 -3 24 24"}
-                                    size={$iconSize}
-                                    color={"var(--icon-txt)"} />
-                            </div>
-                        {/if}
+                    <div class="user-group-card">
+                        <CollapsibleCard open={false} headerText={userGroup.name}>
+                            <h4 slot="titleSlot" class="name">
+                                {#if canManageUserGroups}
+                                    <div
+                                        role="button"
+                                        tabindex="0"
+                                        on:click|stopPropagation={() => editUserGroup(userGroup)}
+                                        class="edit">
+                                        <PencilOutline
+                                            viewBox={"0 -3 24 24"}
+                                            size={"1.2em"}
+                                            color={"var(--icon-txt)"} />
+                                    </div>
+                                    <div
+                                        role="button"
+                                        tabindex="0"
+                                        on:click|stopPropagation={() =>
+                                            confirmDeleteUserGroup(userGroup)}
+                                        class="delete">
+                                        <DeleteOutline
+                                            viewBox={"0 -3 24 24"}
+                                            size={"1.2em"}
+                                            color={"var(--icon-txt)"} />
+                                    </div>
+                                {/if}
+                                <span class="name-text">{userGroup.name}</span>
+                                <span class="members">
+                                    <span class="num"
+                                        >{userGroup.members.size.toLocaleString()}</span>
+                                    {$_("members")}
+                                </span>
+                            </h4>
+
+                            {#each userGroup.members as member}
+                                {#if communityUsers[member] !== undefined}
+                                    <div class="user">
+                                        <User user={communityUsers[member]} me={false} />
+                                    </div>
+                                {/if}
+                            {/each}
+                        </CollapsibleCard>
                     </div>
                 {/each}
             {/if}
@@ -133,6 +202,17 @@
 {/if}
 
 <style lang="scss">
+    :global(.user-group-card .body) {
+        padding: 0;
+    }
+
+    :global(.user-group-card .header) {
+        padding: $sp4 !important;
+        @include mobile() {
+            padding: $sp3 !important;
+        }
+    }
+
     .search-row {
         display: flex;
         align-items: center;
@@ -168,6 +248,32 @@
         .groups {
             flex: auto;
 
+            .name {
+                flex: auto;
+                display: flex;
+                gap: $sp2;
+                align-items: center;
+                @include font(medium, normal, fs-100);
+                @include ellipsis();
+
+                .name-text {
+                    display: inline-block;
+                    padding: toRem(6);
+                    background-color: rgba(0, 0, 0, 0.05);
+                    border-radius: $sp3;
+                }
+
+                .members {
+                    @include font(light, normal, fs-70);
+                    margin-left: $sp2;
+                    color: var(--txt-light);
+                    .num {
+                        color: var(--txt);
+                        font-weight: 700;
+                    }
+                }
+            }
+
             .user-group {
                 cursor: pointer;
                 display: flex;
@@ -185,29 +291,6 @@
 
                 @include mobile() {
                     padding: $sp3 toRem(10);
-                }
-
-                .name {
-                    flex: auto;
-                    @include font(medium, normal, fs-100);
-                    @include ellipsis();
-
-                    .name-text {
-                        display: inline-block;
-                        padding: toRem(6);
-                        background-color: rgba(0, 0, 0, 0.05);
-                        border-radius: $sp3;
-                    }
-
-                    .members {
-                        @include font-size(fs-70);
-                        margin-left: $sp2;
-                        color: var(--txt-light);
-                        .num {
-                            color: var(--txt);
-                            font-weight: 700;
-                        }
-                    }
                 }
 
                 .delete {
