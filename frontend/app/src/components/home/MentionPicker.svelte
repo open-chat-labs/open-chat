@@ -8,6 +8,8 @@
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "openchat-client";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import { iconSize } from "../../stores/iconSize";
 
     const client = getContext<OpenChat>("client");
     const currentUser = client.user;
@@ -106,10 +108,16 @@
         <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
             <MenuItem selected={itemIndex === index} on:click={() => mention(item)}>
                 <div class="avatar" slot="icon">
-                    <Avatar
-                        url={client.userAvatarUrl($userStore[item.userId])}
-                        userId={item.userId}
-                        size={AvatarSize.Small} />
+                    {#if item.kind === "user_group"}
+                        <div class="group-icon">
+                            <AccountMultiple color={"var(--menu-disabled-txt)"} size={$iconSize} />
+                        </div>
+                    {:else}
+                        <Avatar
+                            url={client.userAvatarUrl($userStore[item.userId])}
+                            userId={item.userId}
+                            size={AvatarSize.Small} />
+                    {/if}
                 </div>
                 <div slot="text">
                     {#if item.kind === "user_group"}
@@ -170,5 +178,15 @@
     }
     .avatar {
         margin-right: $sp3;
+    }
+
+    .group-icon {
+        width: toRem(35);
+        height: toRem(35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--menu-bg);
+        border-radius: 50%;
     }
 </style>
