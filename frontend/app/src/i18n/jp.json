@@ -939,7 +939,8 @@
         "enterUserGroupName": "ユーザーグループ名を入力してください",
         "communityLabel": "コミュニティ",
         "confirmDeleteUserGroup": "このユーザー グループを削除してもよろしいですか?",
-        "namedUserGroupMembers": "**{name}** グループのメンバー"
+        "namedUserGroupMembers": "**{name}** グループのメンバー",
+        "searchUserGroups": "ユーザーグループを検索..."
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",

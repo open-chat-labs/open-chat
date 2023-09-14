@@ -5,15 +5,13 @@
     import Button from "../../../Button.svelte";
     import { _ } from "svelte-i18n";
     import type {
-        Member,
         OpenChat,
         UserGroupDetails,
-        UserLookup,
         UserSummary,
         CommunitySummary,
     } from "openchat-client";
     import Search from "../../../Search.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import User from "../../groupdetails/User.svelte";
     import { iconSize } from "../../../../stores/iconSize";
     import { toastStore } from "../../../../stores/toast";
@@ -26,23 +24,13 @@
     export let community: CommunitySummary;
     export let original: UserGroupDetails;
     export let canManageUserGroups: boolean;
-    export let userStore: UserLookup;
-    export let communityMembers: Map<string, Member>;
+    export let communityUsers: Record<string, UserSummary> = {};
+    export let communityUsersList: UserSummary[] = [];
 
     let userGroup = { ...original };
     let added: Set<string> = new Set();
     let removed: Set<string> = new Set();
-    let communityUsers: Record<string, UserSummary> = {};
-    let communityUsersList: UserSummary[] = [];
     let searchVirtualList: VirtualList;
-
-    onMount(() => {
-        const start = Date.now();
-        communityUsers = createLookup(communityMembers, userStore);
-        communityUsersList = Object.values(communityUsers);
-        const end = Date.now();
-        console.debug("PERF: Built community member lookup: ", end - start);
-    });
 
     $: searchTermLower = searchTerm.toLowerCase();
     $: groupUsers = [...userGroup.members]
@@ -130,23 +118,6 @@
         usersDirty = true;
         userGroup = userGroup; //:puke: trigger a reaction
     }
-
-    function createLookup(
-        members: Map<string, Member>,
-        allUsers: UserLookup
-    ): Record<string, UserSummary> {
-        return [...members.values()].reduce((map, m) => {
-            const user = allUsers[m.userId];
-            if (user !== undefined) {
-                map[user.userId] = {
-                    ...user,
-                    displayName: m.displayName ?? user.displayName,
-                    username: user.username,
-                };
-            }
-            return map;
-        }, {} as Record<string, UserSummary>);
-    }
 </script>
 
 <div class="user-group">
@@ -199,7 +170,7 @@
         </div>
         {#each groupUsers as user}
             <div class="user">
-                <User {user} me={false} {searchTerm}>
+                <User {user} me={false}>
                     {#if canManageUserGroups}
                         <div on:click={() => removeUserFromGroup(user)} class="delete">
                             <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
