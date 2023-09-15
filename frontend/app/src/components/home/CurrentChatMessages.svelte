@@ -267,7 +267,7 @@
             let messageIndex =
                 evt.event.kind === "message"
                     ? evt.event.messageIndex
-                    : evt.event.messagesDeleted[evt.event.messagesDeleted.length - 1];
+                    : Math.max(evt.event.messagesDeleted);
             let messageId = evt.event.kind === "message" ? evt.event.messageId : undefined;
             const isRead = client.isMessageRead(chat.id, messageIndex, messageId);
             if (!isRead && evt.event.kind === "message" && evt.event.sender === user.userId) {
