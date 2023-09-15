@@ -158,7 +158,7 @@ impl Channel {
                 true,
                 name,
                 String::new(),
-                channel_rules.unwrap_or_else(Rules::default),
+                channel_rules.unwrap_or_default(),
                 None,
                 None,
                 true,

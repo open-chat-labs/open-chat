@@ -461,6 +461,7 @@ type CreateUserGroupResponse = variant {
     };
     NameTooShort : FieldTooShortResult;
     NameTooLong : FieldTooLongResult;
+    NameInvalid;
     NameTaken;
     NotAuthorized;
     CommunityFrozen;
@@ -883,6 +884,7 @@ type UpdateUserGroupResponse = variant {
     UserGroupNotFound;
     NameTooShort : FieldTooShortResult;
     NameTooLong : FieldTooLongResult;
+    NameInvalid;
     NameTaken;
     NotAuthorized;
     CommunityFrozen;
