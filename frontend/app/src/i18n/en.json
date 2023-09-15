@@ -489,7 +489,7 @@
         "enable": "Enable rules",
         "placeholder": "what are the {level} rules?",
         "instructions": "If enabled, new members must agree to the rules before they can send messages.",
-        "acceptTitle": "{level} rules",
+        "acceptTitle": "Chat rules",
         "accept": "Accept",
         "reject": "Reject",
         "promptExistingUsers": "Prompt existing members",

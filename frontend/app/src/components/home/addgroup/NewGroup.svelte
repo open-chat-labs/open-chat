@@ -71,6 +71,7 @@
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: chatListScope = client.chatListScope;
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
+    $: chatStateStore = client.chatStateStore;
 
     function getSteps(editing: boolean, detailsValid: boolean, hideInviteUsers: boolean) {
         let steps = [
@@ -286,13 +287,10 @@
             .updateGroupRules(candidateGroup.id, candidateGroup.rules)
             .then((rulesVersion) => {
                 if (rulesVersion !== undefined) {
-                    dispatch("updateGroupRules", {
-                        chatId: candidateGroup.id,
-                        rules: {
-                            text: candidateGroup.rules.text,
-                            enabled: candidateGroup.rules.enabled,
-                            version: rulesVersion,
-                        },
+                    chatStateStore.setProp(candidateGroup.id, "rules", {
+                        text: candidateGroup.rules.text,
+                        enabled: candidateGroup.rules.enabled,
+                        version: rulesVersion,
                     });
                 } else {
                     toastStore.showFailureToast(interpolateError("group.rulesUpdateFailed"));
@@ -406,11 +404,7 @@
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details" class:visible={step === 0}>
-                    <GroupDetails
-                        bind:valid={detailsValid}
-                        {busy}
-                        bind:candidateGroup
-                        on:updateGroupRules />
+                    <GroupDetails bind:valid={detailsValid} {busy} bind:candidateGroup />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
                     <VisibilityControl

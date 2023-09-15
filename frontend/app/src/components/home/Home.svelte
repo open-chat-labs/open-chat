@@ -27,7 +27,6 @@
         MultiUserChatIdentifier,
         GroupChatSummary,
         ChannelIdentifier,
-        VersionedRules,
         UpdatedRules,
     } from "openchat-client";
     import {
@@ -889,12 +888,6 @@
         page(`/community/${ev.detail.communityId}`);
     }
 
-    function updateGroupRules(
-        ev: CustomEvent<{ chatId: GroupChatIdentifier; rules: VersionedRules }>
-    ) {
-        chatStateStore.setProp(ev.detail.chatId, "rules", ev.detail.rules);
-    }
-
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -1019,11 +1012,7 @@
         {:else if modal === ModalType.GateCheckFailed && joining !== undefined}
             <GateCheckFailed on:close={closeModal} gate={joining.gate} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
-            <NewGroup
-                {candidateGroup}
-                on:upgrade={upgrade}
-                on:close={closeModal}
-                on:updateGroupRules={updateGroupRules} />
+            <NewGroup {candidateGroup} on:upgrade={upgrade} on:close={closeModal} />
         {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}
             <EditCommunity
                 originalRules={candidateCommunityRules}

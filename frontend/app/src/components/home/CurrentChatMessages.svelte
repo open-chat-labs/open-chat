@@ -122,10 +122,6 @@
         }, options);
     });
 
-    function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
-        client.retrySendMessage(chat.id, ev.detail, events, undefined);
-    }
-
     function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
         doGoToMessageIndex(ev.detail.index);
     }
@@ -439,7 +435,7 @@
                         on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade
                         on:forward
-                        on:retrySend={retrySend}
+                        on:retrySend
                         event={evt} />
                 {/each}
             {/each}
