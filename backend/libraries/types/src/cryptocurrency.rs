@@ -25,7 +25,7 @@ impl Cryptocurrency {
         }
     }
 
-    pub fn decimals(&self) -> Option<usize> {
+    pub fn decimals(&self) -> Option<u8> {
         match self {
             Cryptocurrency::InternetComputer => Some(8),
             Cryptocurrency::SNS1 => Some(8),

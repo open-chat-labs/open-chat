@@ -19,6 +19,12 @@ impl CommandsPending {
             .find(|c| c.user_id() == user_id && c.message_id() == message_id)
     }
 
+    pub fn get_mut(&mut self, user_id: UserId, message_id: MessageId) -> Option<&mut Command> {
+        self.commands
+            .iter_mut()
+            .find(|c| c.user_id() == user_id && c.message_id() == message_id)
+    }
+
     pub fn remove(&mut self, user_id: UserId, message_id: MessageId) -> Option<Command> {
         self.commands
             .iter()

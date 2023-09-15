@@ -1,6 +1,7 @@
 use crate::commands::Command;
 use crate::icpswap::ICPSwapClientFactory;
 use crate::model::commands_pending::CommandsPending;
+use crate::model::message_edits_queue::MessageEditsQueue;
 use crate::swap_client::{SwapClient, SwapClientFactory};
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -11,7 +12,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{
     BotMessage, BuildVersion, CanisterId, Cryptocurrency, Cycles, MessageContentInitial, MessageId, TextContent,
-    TimestampMillis, Timestamped, TokenInfo,
+    TimestampMillis, Timestamped, TokenInfo, UserId,
 };
 use utils::env::Environment;
 
@@ -74,6 +75,16 @@ impl RuntimeState {
         // start job
     }
 
+    pub fn enqueue_message_edit(&mut self, user_id: UserId, message_id: MessageId, text: String, overwrite_existing: bool) {
+        if self
+            .data
+            .message_edits_queue
+            .push(user_id, message_id, text, overwrite_existing)
+        {
+            jobs::edit_messages::start_job_if_required(self);
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             memory_used: utils::memory::used(),
@@ -99,6 +110,7 @@ struct Data {
     token_info: Vec<TokenInfo>,
     known_callers: HashMap<Principal, bool>,
     commands_pending: CommandsPending,
+    message_edits_queue: MessageEditsQueue,
     username: String,
     display_name: Option<String>,
     is_registered: bool,
@@ -121,6 +133,7 @@ impl Data {
             token_info: build_token_info(),
             known_callers: HashMap::new(),
             commands_pending: CommandsPending::default(),
+            message_edits_queue: MessageEditsQueue::default(),
             username: "".to_string(),
             display_name: None,
             is_registered: false,
@@ -129,7 +142,7 @@ impl Data {
     }
 
     pub fn get_token_pair(&self, input_token: &str, output_token: &str) -> Result<(TokenInfo, TokenInfo), Vec<String>> {
-        match (self.get_token(&input_token), self.get_token(&output_token)) {
+        match (self.get_token(input_token), self.get_token(output_token)) {
             (Some(i), Some(o)) => Ok((i, o)),
             (None, Some(_)) => Err(vec![input_token.to_string()]),
             (Some(_), None) => Err(vec![output_token.to_string()]),

@@ -1,8 +1,6 @@
 use async_trait::async_trait;
 use exchange_bot_canister::ExchangeId;
 use ic_cdk::api::call::CallResult;
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
 use types::icrc1::Account;
 use types::{CanisterId, TokenInfo};
 

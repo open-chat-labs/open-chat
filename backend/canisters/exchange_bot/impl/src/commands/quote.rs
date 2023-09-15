@@ -1,16 +1,17 @@
 use crate::commands::common_errors::CommonErrors;
 use crate::commands::{Command, CommandParser, ParseMessageResult};
 use crate::swap_client::SwapClient;
-use crate::{Data, RuntimeState};
+use crate::{mutate_state, Data, RuntimeState};
 use exchange_bot_canister::ExchangeId;
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use ledger_utils::format_crypto_amount;
 use rand::Rng;
 use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use types::{MessageContent, MessageContentInitial, MessageId, TextContent, TimestampMillis, TokenInfo, UserId};
+use types::{MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
 
 lazy_static! {
     static ref REGEX: Regex = RegexBuilder::new(r"quote (?<input_token>\S+) (?<output_token>\S+) (?<amount>[\d.,]+)")
@@ -25,11 +26,11 @@ impl CommandParser for QuoteCommandParser {
     fn try_parse(message: &MessageContent, state: &mut RuntimeState) -> ParseMessageResult {
         let text = message.text().unwrap_or_default();
 
-        if !REGEX.is_match(&text) {
+        if !REGEX.is_match(text) {
             return ParseMessageResult::DoesNotMatch;
         }
 
-        let matches = REGEX.captures_iter(&text).next().unwrap();
+        let matches = REGEX.captures_iter(text).next().unwrap();
         let input_token = &matches["input_token"];
         let output_token = &matches["output_token"];
         let amount_decimal = f64::from_str(&matches["amount"]).unwrap();
@@ -74,7 +75,7 @@ pub enum QuoteStatus {
 impl Display for QuoteStatus {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            QuoteStatus::Success(_, text) => f.write_str(&text),
+            QuoteStatus::Success(_, text) => f.write_str(text),
             QuoteStatus::Failed(_) => f.write_str("Failed"),
             QuoteStatus::Pending => f.write_str("Pending"),
         }
@@ -109,16 +110,58 @@ impl QuoteCommand {
         }
     }
 
-    pub fn build_message(&self) -> MessageContentInitial {
+    pub async fn process(self) {
+        let futures: Vec<_> = self
+            .clients
+            .into_iter()
+            .map(|c| quote_single(c, self.user_id, self.message_id, self.amount, self.output_token.decimals))
+            .collect();
+
+        futures::future::join_all(futures).await;
+    }
+
+    pub fn build_message_text(&self) -> String {
         let mut text = "Quotes:".to_string();
         for (exchange_id, status) in self.quote_statuses.iter().sorted_unstable_by_key(|(_, s)| s) {
             let exchange_name = exchange_id.to_string();
             let status_text = status.to_string();
             text.push_str(&format!("\n{exchange_name}: {status_text}"));
         }
-
-        MessageContentInitial::Text(TextContent { text })
+        text
     }
+
+    fn set_status(&mut self, exchange_id: ExchangeId, new_status: QuoteStatus) {
+        if let Some(status) = self
+            .quote_statuses
+            .iter_mut()
+            .find(|(e, _)| *e == exchange_id)
+            .map(|(_, s)| s)
+        {
+            *status = new_status;
+        }
+    }
+}
+
+async fn quote_single(
+    client: Box<dyn SwapClient>,
+    user_id: UserId,
+    message_id: MessageId,
+    amount: u128,
+    output_token_decimals: u8,
+) {
+    let result = client.quote(amount).await;
+
+    mutate_state(|state| {
+        if let Some(Command::Quote(command)) = state.data.commands_pending.get_mut(user_id, message_id) {
+            let status = match result {
+                Ok(amount_out) => QuoteStatus::Success(amount_out, format_crypto_amount(amount_out, output_token_decimals)),
+                Err(error) => QuoteStatus::Failed(format!("{error:?}")),
+            };
+            command.set_status(client.exchange_id(), status);
+            let text = command.build_message_text();
+            state.enqueue_message_edit(user_id, message_id, text, false);
+        }
+    })
 }
 
 fn build_error_response(error: CommonErrors, data: &Data) -> ParseMessageResult {

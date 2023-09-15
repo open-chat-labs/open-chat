@@ -1,7 +1,7 @@
 use crate::commands::quote::QuoteCommand;
 use crate::RuntimeState;
 use serde::{Deserialize, Serialize};
-use types::{MessageContent, MessageContentInitial, MessageId, UserId};
+use types::{MessageContent, MessageContentInitial, MessageId, TextContent, UserId};
 
 pub mod common_errors;
 pub mod quote;
@@ -28,13 +28,22 @@ impl Command {
         }
     }
 
+    pub async fn process(self) {
+        match self {
+            Command::Quote(q) => q.process().await,
+        }
+    }
+
     pub fn build_message(&self) -> MessageContentInitial {
         match self {
-            Command::Quote(q) => q.build_message(),
+            Command::Quote(q) => MessageContentInitial::Text(TextContent {
+                text: q.build_message_text(),
+            }),
         }
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum ParseMessageResult {
     Success(Command),
     Error(exchange_bot_canister::handle_direct_message::Response),

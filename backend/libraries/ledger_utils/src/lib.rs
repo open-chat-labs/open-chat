@@ -81,8 +81,8 @@ pub fn calculate_transaction_hash(sender: CanisterId, args: &TransferArgs) -> Tr
     transaction.hash()
 }
 
-pub fn format_crypto_amount(units: u128, decimals: u32) -> String {
-    let subdividable_by = 10u128.pow(decimals);
+pub fn format_crypto_amount(units: u128, decimals: u8) -> String {
+    let subdividable_by = 10u128.pow(decimals as u32);
 
     format!("{}.{:0}", units / subdividable_by, units % subdividable_by)
 }

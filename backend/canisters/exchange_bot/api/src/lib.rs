@@ -8,7 +8,7 @@ mod updates;
 pub use lifecycle::*;
 pub use updates::*;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExchangeId {
     ICPSwap,
 }

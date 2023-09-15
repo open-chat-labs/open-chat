@@ -1,5 +1,5 @@
 use crate::commands::quote::QuoteCommandParser;
-use crate::commands::{Command, CommandParser, ParseMessageResult};
+use crate::commands::{CommandParser, ParseMessageResult};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
@@ -20,7 +20,7 @@ async fn handle_direct_message(args: Args) -> Response {
             let message = command.build_message();
             let message_id = command.message_id();
             let response = state.data.build_response(message, Some(message_id));
-            state.enqueue_command(command);
+            ic_cdk::spawn(command.process());
             response
         }
         ParseMessageResult::Error(response) => response,
