@@ -26,7 +26,7 @@ fi
 
 cd backend/integration_tests/local-bin
 echo "Test state machine download starting"
-curl -sO https://download.dfinity.systems/ic/97df774f8cb88ca1a00e26dc3daa19735ad3599a/binaries/x86_64-$PLATFORM/ic-test-state-machine.gz
+curl -sO https://download.dfinity.systems/ic/ea66978aa1932b30e015f2da739d84f5f3ae731e/binaries/x86_64-$PLATFORM/ic-test-state-machine.gz
 gzip -df ic-test-state-machine.gz
 chmod +x ic-test-state-machine
 echo "Test state machine download completed"
