@@ -3,7 +3,7 @@ use crate::timer_job_types::{MessageReminderJob, TimerJob};
 use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use rand_core::RngCore;
+use rand::RngCore;
 use types::{FieldTooLongResult, MessageContent, MessageReminderCreatedContent};
 use user_canister::c2c_send_messages::C2CReplyContext;
 use user_canister::set_message_reminder_v2::{Response::*, *};

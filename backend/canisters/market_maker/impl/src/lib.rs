@@ -45,11 +45,13 @@ impl RuntimeState {
                     token: Cryptocurrency::InternetComputer,
                     ledger: self.data.icp_ledger_canister_id,
                     decimals: 8,
+                    fee: 10_000,
                 },
                 TokenInfo {
                     token: Cryptocurrency::CHAT,
                     ledger: self.data.chat_ledger_canister_id,
                     decimals: 8,
+                    fee: 100_000,
                 },
                 10_000_000,
                 |order| on_order_made(ICDEX_EXCHANGE_ID, order),

@@ -39,7 +39,7 @@
     },
     "online_users": {
       "type": "custom",
-      "candid": "backend/canisters/online_users_agg/api/can.did",
+      "candid": "backend/canisters/online_users/api/can.did",
       "wasm": "wasms/online_users.wasm.gz",
       "build": "./scripts/generate-wasm.sh online_users"
     },

@@ -5,7 +5,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use rand::RngCore;
 use satoshi_dice_canister::handle_direct_message::*;
-use types::{BotMessage, CanisterId, Cryptocurrency, MessageContent, TextContent, UserId};
+use types::{BotMessage, CanisterId, Cryptocurrency, MessageContent, MessageContentInitial, TextContent, UserId};
 use utils::time::MINUTE_IN_MS;
 
 const MAX_TOTAL_WINNINGS: u64 = 50_000;
@@ -83,10 +83,12 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
 
     Success(SuccessResult {
         bot_name: state.data.username.clone(),
+        bot_display_name: None,
         messages: messages
             .into_iter()
             .map(|m| BotMessage {
-                content: MessageContent::Text(TextContent { text: m }),
+                content: MessageContentInitial::Text(TextContent { text: m }),
+                message_id: None,
             })
             .collect(),
     })

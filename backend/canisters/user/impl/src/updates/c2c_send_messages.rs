@@ -5,6 +5,7 @@ use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
 use ic_cdk_macros::update;
+use rand::Rng;
 use types::{
     BlobReference, CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial,
     MessageId, MessageIndex, Notification, TimestampMillis, UserId,
@@ -90,8 +91,7 @@ async fn c2c_handle_bot_messages(
     };
 
     for message in args.messages.iter() {
-        let content: MessageContentInitial = message.content.clone().into();
-        if let Err(error) = content.validate_for_new_direct_message(sender_user_id, false, now) {
+        if let Err(error) = message.content.validate_for_new_direct_message(sender_user_id, false, now) {
             return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(error);
         }
     }
@@ -106,7 +106,7 @@ async fn c2c_handle_bot_messages(
                     sender_message_index: None,
                     sender_name: args.bot_name.clone(),
                     sender_display_name: None,
-                    content: message.content,
+                    content: message.content.into(),
                     replies_to: None,
                     forwarding: false,
                     correlation_id: 0,
@@ -182,7 +182,7 @@ pub(crate) fn handle_message_impl(
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,
-        message_id: args.message_id.unwrap_or_else(|| MessageId::generate(state.env.rng())),
+        message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
         sender,
         content,
         replies_to,
