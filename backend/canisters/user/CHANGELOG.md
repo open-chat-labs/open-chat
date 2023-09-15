@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `default_channel_rules` to `create_community` ([#4387](https://github.com/open-chat-labs/open-chat/pull/4374))
+
 ### Changed
 
 - Include username and display name updates in updates loop ([#4343](https://github.com/open-chat-labs/open-chat/pull/4343))

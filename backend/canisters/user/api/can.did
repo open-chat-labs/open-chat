@@ -240,6 +240,7 @@ type CreateCommunityArgs = record {
     rules : Rules;
     gate : opt AccessGate;
     default_channels : vec text;
+    default_channel_rules : opt Rules;
     primary_language : text;
 };
 

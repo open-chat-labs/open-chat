@@ -23,6 +23,8 @@ pub struct Args {
     pub proposals_bot_user_id: UserId,
     pub gate: Option<AccessGate>,
     pub default_channels: Vec<String>,
+    #[serde(default)]
+    pub default_channel_rules: Option<Rules>,
     pub source_group: Option<SourceGroup>,
     pub wasm_version: BuildVersion,
     pub test_mode: bool,
