@@ -940,7 +940,9 @@
         "communityLabel": "コミュニティ",
         "confirmDeleteUserGroup": "このユーザー グループを削除してもよろしいですか?",
         "namedUserGroupMembers": "**{name}** グループのメンバー",
-        "searchUserGroups": "ユーザーグループを検索..."
+        "searchUserGroups": "ユーザーグループを検索...",
+        "userGroupName": "ユーザーグループ名",
+        "noSpaces": "スペースは使用できません"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",

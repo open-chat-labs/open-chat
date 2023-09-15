@@ -878,6 +878,8 @@
         "edit": "Edit community",
         "members": "Members",
         "userGroups": "User groups",
+        "userGroupName": "User group name",
+        "noSpaces": "no spaces allowed",
         "noUserGroups": "No user groups found",
         "namedUserGroupMembers": "**{name}** group members",
         "userGroupMembers": "User group members",
