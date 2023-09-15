@@ -1,9 +1,9 @@
 use types::{FieldTooLongResult, FieldTooShortResult, GroupSubtype};
 
-const MIN_USERNAME_LENGTH: u16 = 5;
-const MAX_USERNAME_LENGTH: u16 = 15;
-const MIN_DISPLAY_NAME_LENGTH: u16 = 3;
-const MAX_DISPLAY_NAME_LENGTH: u16 = 25;
+const MIN_USERNAME_LENGTH: u32 = 5;
+const MAX_USERNAME_LENGTH: u32 = 15;
+const MIN_DISPLAY_NAME_LENGTH: u32 = 3;
+const MAX_DISPLAY_NAME_LENGTH: u32 = 25;
 const MIN_GROUP_NAME_LENGTH: u32 = 3;
 const MAX_GROUP_NAME_LENGTH: u32 = 25;
 const MAX_GROUP_DESCRIPTION_LENGTH: u32 = 1024;
@@ -12,14 +12,14 @@ const MIN_USER_GROUP_NAME_LENGTH: u32 = 3;
 const MAX_USER_GROUP_NAME_LENGTH: u32 = 25;
 
 pub enum UsernameValidationError {
-    TooLong(u16),
-    TooShort(u16),
+    TooLong(FieldTooLongResult),
+    TooShort(FieldTooShortResult),
     Invalid,
 }
 
 pub fn validate_display_name(display_name: &str) -> Result<(), UsernameValidationError> {
     const FORBIDDEN_CHARS: [char; 10] = ['@', '<', '>', '/', '\\', '#', '"', '\'', '`', '💎'];
-    match validate_string_length(display_name, MIN_DISPLAY_NAME_LENGTH as u32, MAX_DISPLAY_NAME_LENGTH as u32) {
+    match validate_string_length(display_name, MIN_DISPLAY_NAME_LENGTH, MAX_DISPLAY_NAME_LENGTH) {
         Ok(()) => {
             if display_name.starts_with(' ')
                 || display_name.ends_with(' ')
@@ -32,13 +32,13 @@ pub fn validate_display_name(display_name: &str) -> Result<(), UsernameValidatio
                 Ok(())
             }
         }
-        Err(StringLengthValidationError::TooShort(_)) => Err(UsernameValidationError::TooShort(MIN_DISPLAY_NAME_LENGTH)),
-        Err(StringLengthValidationError::TooLong(_)) => Err(UsernameValidationError::TooLong(MAX_DISPLAY_NAME_LENGTH)),
+        Err(StringLengthValidationError::TooShort(s)) => Err(UsernameValidationError::TooShort(s)),
+        Err(StringLengthValidationError::TooLong(l)) => Err(UsernameValidationError::TooLong(l)),
     }
 }
 
 pub fn validate_username(username: &str) -> Result<(), UsernameValidationError> {
-    match validate_string_length(username, MIN_USERNAME_LENGTH as u32, MAX_USERNAME_LENGTH as u32) {
+    match validate_string_length(username, MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH) {
         Ok(()) => {
             if username.starts_with('_')
                 || username.ends_with('_')
@@ -51,8 +51,8 @@ pub fn validate_username(username: &str) -> Result<(), UsernameValidationError> 
                 Ok(())
             }
         }
-        Err(StringLengthValidationError::TooShort(_)) => Err(UsernameValidationError::TooShort(MIN_USERNAME_LENGTH)),
-        Err(StringLengthValidationError::TooLong(_)) => Err(UsernameValidationError::TooLong(MAX_USERNAME_LENGTH)),
+        Err(StringLengthValidationError::TooShort(s)) => Err(UsernameValidationError::TooShort(s)),
+        Err(StringLengthValidationError::TooLong(l)) => Err(UsernameValidationError::TooLong(l)),
     }
 }
 
@@ -90,13 +90,23 @@ pub fn validate_group_name(name: &str, is_public: bool, subtype: Option<&GroupSu
                 Ok(())
             }
         }
-        Err(StringLengthValidationError::TooShort(f)) => Err(NameValidationError::TooShort(f)),
-        Err(StringLengthValidationError::TooLong(f)) => Err(NameValidationError::TooLong(f)),
+        Err(StringLengthValidationError::TooShort(s)) => Err(NameValidationError::TooShort(s)),
+        Err(StringLengthValidationError::TooLong(l)) => Err(NameValidationError::TooLong(l)),
     }
 }
 
-pub fn validate_user_group_name(name: &str) -> Result<(), StringLengthValidationError> {
-    validate_string_length(name, MIN_USER_GROUP_NAME_LENGTH, MAX_USER_GROUP_NAME_LENGTH)
+pub fn validate_user_group_name(name: &str) -> Result<(), UsernameValidationError> {
+    match validate_string_length(name, MIN_USER_GROUP_NAME_LENGTH, MAX_USER_GROUP_NAME_LENGTH) {
+        Ok(()) => {
+            if name.chars().any(|c| c.is_ascii_whitespace()) {
+                Err(UsernameValidationError::Invalid)
+            } else {
+                Ok(())
+            }
+        }
+        Err(StringLengthValidationError::TooShort(s)) => Err(UsernameValidationError::TooShort(s)),
+        Err(StringLengthValidationError::TooLong(l)) => Err(UsernameValidationError::TooLong(l)),
+    }
 }
 
 pub fn validate_description(description: &str) -> Result<(), FieldTooLongResult> {
@@ -212,5 +222,19 @@ mod tests {
         assert!(validate_display_name("John`Smith").is_err());
         assert!(validate_display_name("John#Smith").is_err());
         assert!(validate_display_name("John💎Smith").is_err());
+    }
+
+    #[test]
+    fn valid_user_group_names() {
+        assert!(validate_user_group_name("J_S").is_ok());
+        assert!(validate_user_group_name("The_fox_jumps_over_John_S").is_ok());
+        assert!(validate_user_group_name("JohnSmith").is_ok());
+    }
+
+    #[test]
+    fn invalid_user_group_names() {
+        assert!(validate_user_group_name("JS").is_err());
+        assert!(validate_user_group_name("The_fox_jumps_over_John_Smith").is_err());
+        assert!(validate_user_group_name("John Smith").is_err());
     }
 }
