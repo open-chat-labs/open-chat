@@ -223,4 +223,18 @@ mod tests {
         assert!(validate_display_name("John#Smith").is_err());
         assert!(validate_display_name("John💎Smith").is_err());
     }
+
+    #[test]
+    fn valid_user_group_names() {
+        assert!(validate_user_group_name("J_S").is_ok());
+        assert!(validate_user_group_name("The_fox_jumps_over_John_S").is_ok());
+        assert!(validate_user_group_name("JohnSmith").is_ok());
+    }
+
+    #[test]
+    fn invalid_user_group_names() {
+        assert!(validate_user_group_name("JS").is_err());
+        assert!(validate_user_group_name("The_fox_jumps_over_John_Smith").is_err());
+        assert!(validate_user_group_name("John Smith").is_err());
+    }
 }
