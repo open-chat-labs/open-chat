@@ -61,14 +61,20 @@ export type AccessControlled = {
     historyVisible: boolean;
 };
 
-// annoyingly this is a not part of the AccessControlled type although it feels like it *should* be
-export type AccessRules = {
+export type VersionedRules = Rules & {
+    version: number;
+}
+
+export type Rules = {
     text: string;
     enabled: boolean;
 };
 
+export type UpdatedRules = Rules & {
+    newVersion: boolean;
+};
 
-export function defaultAccessRules(level: Level): AccessRules {
+export function defaultChatRules(level: Level): VersionedRules {
     const LEVEL_TEXT: Map<Level, string> = new Map([
         ["channel", "the channel"],
         ["group", "the group"],
@@ -82,5 +88,6 @@ export function defaultAccessRules(level: Level): AccessRules {
 
 If you break the rules you might be blocked and/or have your message(s) deleted.`,
         enabled: false,
+        version: 0,
     };
 }

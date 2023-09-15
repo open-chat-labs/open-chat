@@ -10,6 +10,7 @@ import type {
     MessageContext,
     ChatListScope,
     CryptocurrencyDetails,
+    VersionedRules,
 } from "../domain";
 import { extractUserIdsFromMentions, UnsupportedValueError } from "../domain";
 import type { MessageFormatter } from "./i18n";
@@ -204,6 +205,14 @@ export function emptyChatMetrics(): Metrics {
         videoMessages: 0,
         polls: 0,
         reactions: 0,
+    };
+}
+
+export function emptyRules(): VersionedRules {
+    return {
+        text: "",
+        enabled: false,
+        version: 0,
     };
 }
 

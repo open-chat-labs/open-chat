@@ -3,20 +3,28 @@
     import TextArea from "../TextArea.svelte";
     import Legend from "../Legend.svelte";
     import Toggle from "../Toggle.svelte";
-    import type { AccessRules, Level } from "openchat-client";
+    import type { UpdatedRules, Level } from "openchat-client";
     import { interpolateLevel } from "../../utils/i18n";
     import { afterUpdate } from "svelte";
 
     const MAX_RULES_LENGTH = 1024;
 
-    export let rules: AccessRules;
+    export let rules: UpdatedRules;
     export let level: Level;
     export let valid: boolean;
+    export let editing: boolean;
+
+    let originalRules: string = rules.text;
 
     $: isValid = !rules.enabled || (rules.text.length > 0 && rules.text.length <= MAX_RULES_LENGTH);
+    $: rulesDirty = rules.text !== originalRules;
 
     function toggleRules() {
         rules.enabled = !rules.enabled;
+    }
+
+    function toggleNewVersion() {
+        rules.newVersion = !rules.newVersion;
     }
 
     afterUpdate(() => {
@@ -40,6 +48,19 @@
         maxlength={MAX_RULES_LENGTH}
         rows={8}
         placeholder={interpolateLevel("rules.placeholder", level, true)} />
+    {#if editing && rules.enabled}
+        <Toggle
+            id="new-version"
+            on:change={toggleNewVersion}
+            checked={rules.newVersion && rulesDirty}
+            label={$_("rules.promptExistingUsers")}
+            disabled={!rulesDirty}
+            small />
+
+        <div class="instructions">
+            {interpolateLevel("rules.promptExistingUsersInstructions", level, true)}
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">

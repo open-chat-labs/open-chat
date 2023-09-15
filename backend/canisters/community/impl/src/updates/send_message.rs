@@ -48,8 +48,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     let member = state.data.members.get(caller).unwrap();
 
     if !state.data.check_rules(member) {
-        // TODO: Uncomment this once the FE has been updated with "send message" rules checks
-        //return RulesNotAccepted;
+        return CommunityRulesNotAccepted;
     }
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {

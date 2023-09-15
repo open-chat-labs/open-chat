@@ -35,6 +35,7 @@ pub enum Response {
     InvalidRequest(String),
     CommunityFrozen,
     RulesNotAccepted,
+    CommunityRulesNotAccepted,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

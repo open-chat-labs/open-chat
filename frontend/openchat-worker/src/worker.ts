@@ -446,7 +446,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.user,
                         payload.mentioned,
                         payload.event,
-                        payload.threadRootMessageIndex
+                        payload.threadRootMessageIndex,
+                        payload.rulesAccepted,
+                        payload.communityRulesAccepted, 
                     ));
                 break;
 
@@ -505,11 +507,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "getRecommendedGroups":
                 executeThenReply(payload, correlationId, agent
                     .getRecommendedGroups(payload.exclusions));
-                break;
-
-            case "getGroupRules":
-                executeThenReply(payload, correlationId, agent
-                    .getGroupRules(payload.chatId));
                 break;
 
             case "exploreCommunities":

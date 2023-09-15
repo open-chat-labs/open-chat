@@ -1,7 +1,7 @@
 import type { BlobReference, DataContent } from "../data/data";
 import type { UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
-import type { AccessGate, AccessControlled, AccessRules } from "../access";
+import type { AccessGate, AccessControlled, VersionedRules, UpdatedRules } from "../access";
 import type {
     ChatPermissionRole,
     ChatPermissions,
@@ -483,6 +483,7 @@ export type LocalChatSummaryUpdates = {
               kind?: undefined;
               notificationsMuted?: boolean;
               archived?: boolean;
+              rulesAccepted?: boolean;
           }
         | {
               kind: "group_chat" | "channel";
@@ -1101,7 +1102,7 @@ export type GroupChatDetails = {
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
-    rules: AccessRules;
+    rules: VersionedRules;
     timestamp: bigint;
 };
 
@@ -1114,7 +1115,7 @@ export type ChatSpecificState = {
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
-    rules?: AccessRules;
+    rules?: VersionedRules;
     userIds: Set<string>;
     focusMessageIndex?: number;
     focusThreadMessageIndex?: number;
@@ -1130,7 +1131,7 @@ export type GroupChatDetailsUpdates = {
     blockedUsersRemoved: Set<string>;
     pinnedMessagesRemoved: Set<number>;
     pinnedMessagesAdded: Set<number>;
-    rules?: AccessRules;
+    rules?: VersionedRules;
     invitedUsers?: Set<string>;
     timestamp: bigint;
 };
@@ -1203,6 +1204,7 @@ export function nullMembership(): ChatMembership {
         notificationsMuted: false,
         readByMeUpTo: undefined,
         archived: false,
+        rulesAccepted: false,
     };
 }
 
@@ -1215,6 +1217,7 @@ export type ChatMembership = {
     notificationsMuted: boolean;
     readByMeUpTo: number | undefined;
     archived: boolean;
+    rulesAccepted: boolean;
 };
 
 export type GroupCanisterSummaryResponse =
@@ -1248,6 +1251,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         myMetrics: Metrics;
         latestThreads: GroupCanisterThreadDetails[];
         dateLastPinned: bigint | undefined;
+        rulesAccepted: boolean;
     };
 
 export type UpdatedEvent = {
@@ -1278,6 +1282,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;
     gate: OptionUpdate<AccessGate>;
+    rulesAccepted: boolean | undefined;
 };
 
 export type GroupCanisterThreadDetails = {
@@ -1314,7 +1319,7 @@ export type CandidateGroupChat = AccessControlled &
         id: MultiUserChatIdentifier;
         name: string;
         description: string;
-        rules: AccessRules;
+        rules: UpdatedRules;
         members: CandidateMember[];
         avatar?: DataContent;
     };
@@ -1427,7 +1432,8 @@ export type SendMessageResponse =
     | UserSuspended
     | Failure
     | ChatFrozen
-    | RulesNotAccepted;
+    | RulesNotAccepted
+    | CommunityRulesNotAccepted;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -1512,6 +1518,10 @@ export type ChatFrozenEvent = {
 
 export type RulesNotAccepted = {
     kind: "rules_not_accepted";
+};
+
+export type CommunityRulesNotAccepted = {
+    kind: "community_rules_not_accepted";
 };
 
 export type GateUpdatedEvent = {
@@ -1605,22 +1615,25 @@ export type ThreadRead = {
 export type MarkReadResponse = "success";
 
 export type UpdateGroupResponse =
-    | "success"
-    | "not_authorized"
-    | "name_too_short"
-    | "name_too_long"
-    | "name_reserved"
-    | "desc_too_long"
-    | "unchanged"
-    | "name_taken"
-    | "not_in_group"
-    | "avatar_too_big"
-    | "rules_too_short"
-    | "rules_too_long"
-    | "user_suspended"
-    | "chat_frozen"
-    | "internal_error"
-    | "failure";
+    | {
+        kind: "success";
+        rulesVersion: number | undefined;
+    }
+    | { kind: "not_authorized" }
+    | { kind: "name_too_short" }
+    | { kind: "name_too_long" }
+    | { kind: "name_reserved" }
+    | { kind: "desc_too_long" }
+    | { kind: "unchanged" }
+    | { kind: "name_taken" }
+    | { kind: "not_in_group" }
+    | { kind: "avatar_too_big" }
+    | { kind: "rules_too_short" }
+    | { kind: "rules_too_long" }
+    | { kind: "user_suspended" }
+    | { kind: "chat_frozen" }
+    | { kind: "internal_error" }
+    | { kind: "failure" };
 
 export type UpdatePermissionsResponse =
     | "success"

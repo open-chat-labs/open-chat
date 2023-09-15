@@ -744,6 +744,7 @@ type SendMessageResponse = variant {
     InvalidRequest : text;
     CommunityFrozen;
     RulesNotAccepted;
+    CommunityRulesNotAccepted;
 };
 
 type SetMemberDisplayNameArgs = record {
@@ -818,7 +819,6 @@ type UpdateChannelArgs = record {
 };
 
 type UpdateChannelResponse = variant {
-    Success;
     SuccessV2 : record {
         rules_version : opt Version;
     };
@@ -851,7 +851,6 @@ type UpdateCommunityArgs = record {
 };
 
 type UpdateCommunityResponse = variant {
-    Success;
     SuccessV2 : record {
         rules_version : opt Version;
     };

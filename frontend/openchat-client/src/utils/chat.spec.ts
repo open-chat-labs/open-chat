@@ -63,6 +63,7 @@ const defaultGroupChat: GroupChatSummary = {
         readByMeUpTo: undefined,
         joined: BigInt(0),
         myMetrics: emptyChatMetrics(),
+        rulesAccepted: false,
         latestThreads: [
             {
                 threadRootMessageIndex: 1,

@@ -67,7 +67,7 @@ import type {
     GroupChatSummary,
     GroupInvite,
     ChatPermissions,
-    AccessRules,
+    Rules,
     IndexRange,
     InviteCodeResponse,
     JoinGroupResponse,
@@ -164,6 +164,7 @@ import type {
     UpdateUserGroupResponse,
     DeleteUserGroupsResponse,
     SetMemberDisplayNameResponse,
+    UpdatedRules,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -332,7 +333,9 @@ export class OpenChatAgent extends EventTarget {
         user: CreatedUser,
         mentioned: User[],
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        rulesAccepted: number | undefined,
+        communityRulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         if (chatId.kind === "channel") {
             if (event.event.content.kind === "crypto_content") {
@@ -342,6 +345,8 @@ export class OpenChatAgent extends EventTarget {
                     user,
                     event,
                     threadRootMessageIndex,
+                    communityRulesAccepted,
+                    rulesAccepted
                 );
             }
             return this.sendChannelMessage(
@@ -351,6 +356,8 @@ export class OpenChatAgent extends EventTarget {
                 mentioned,
                 event,
                 threadRootMessageIndex,
+                communityRulesAccepted,
+                rulesAccepted
             );
         }
         if (chatId.kind === "group_chat") {
@@ -361,6 +368,7 @@ export class OpenChatAgent extends EventTarget {
                     user,
                     event,
                     threadRootMessageIndex,
+                    rulesAccepted,
                 );
             }
             return this.sendGroupMessage(
@@ -370,6 +378,7 @@ export class OpenChatAgent extends EventTarget {
                 mentioned,
                 event,
                 threadRootMessageIndex,
+                rulesAccepted,
             );
         }
         if (chatId.kind === "direct_chat") {
@@ -384,7 +393,9 @@ export class OpenChatAgent extends EventTarget {
         senderDisplayName: string | undefined,
         mentioned: User[],
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        communityRulesAccepted: number | undefined,
+        channelRulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         return this.communityClient(chatId.communityId).sendMessage(
             chatId,
@@ -393,6 +404,8 @@ export class OpenChatAgent extends EventTarget {
             mentioned,
             event,
             threadRootMessageIndex,
+            communityRulesAccepted,
+            channelRulesAccepted
         );
     }
 
@@ -402,7 +415,8 @@ export class OpenChatAgent extends EventTarget {
         senderDisplayName: string | undefined,
         mentioned: User[],
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        rulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         return this.getGroupClient(chatId.groupId).sendMessage(
             senderName,
@@ -410,6 +424,7 @@ export class OpenChatAgent extends EventTarget {
             mentioned,
             event,
             threadRootMessageIndex,
+            rulesAccepted
         );
     }
 
@@ -461,7 +476,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         name?: string,
         desc?: string,
-        rules?: AccessRules,
+        rules?: UpdatedRules,
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
         gate?: AccessGate,
@@ -1897,11 +1912,6 @@ export class OpenChatAgent extends EventTarget {
             });
     }
 
-    getGroupRules(chatId: MultiUserChatIdentifier): Promise<AccessRules | undefined> {
-        if (chatId.kind === "channel") return Promise.resolve({ enabled: false, text: "" });
-        return this.getGroupClient(chatId.groupId).getRules();
-    }
-
     getRecommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
         return this._groupIndexClient
             .recommendedGroups(exclusions)
@@ -2414,7 +2424,7 @@ export class OpenChatAgent extends EventTarget {
     convertGroupToCommunity(
         chatId: GroupChatIdentifier,
         historyVisible: boolean,
-        rules: AccessRules,
+        rules: Rules,
     ): Promise<ConvertToCommunityResponse> {
         return this.getGroupClient(chatId.groupId).convertToCommunity(historyVisible, rules);
     }

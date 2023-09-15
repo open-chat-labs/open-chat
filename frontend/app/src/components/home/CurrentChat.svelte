@@ -69,6 +69,8 @@
     $: showFooter = !showSearchHeader && !client.isReadOnly();
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
     $: communities = client.communities;
+    $: currentChatRules = client.currentChatRules;
+    $: currentCommunityRules = client.currentCommunityRules;
 
     $: canSend = client.canSendMessages(chat.id);
     $: preview = client.isPreviewing(chat.id);
@@ -211,6 +213,38 @@
         mentioned: User[],
         fileToAttach: MessageContent | undefined
     ) {
+        let chatRulesVersion: number | undefined = undefined;
+        let communityRulesVersion: number | undefined = undefined;
+
+        if (client.rulesNeedAccepting()) {
+            const chatRulesEnabled = $currentChatRules?.enabled ?? false;
+            const communityRulesEnabled = $currentCommunityRules?.enabled ?? false;
+            const chatRulesText = chatRulesEnabled ? $currentChatRules?.text : "";
+            const comunityRulesText = communityRulesEnabled ? $currentCommunityRules?.text : "";
+            let space = chatRulesEnabled && communityRulesEnabled ? "\n\n" : "";
+            let message =
+                chatRulesText + space + comunityRulesText + "\n\nDo you accept the rules?";
+
+            if (window.prompt(message, "Yes") !== "Yes") {
+                return;
+            }
+
+            chatRulesVersion = $currentChatRules?.version;
+            communityRulesVersion = $currentCommunityRules?.version;
+            console.log(
+                "Debug: sendMessageWithAttachment - chatRulesVersion:",
+                chatRulesVersion,
+                communityRulesVersion
+            );
+
+            if (chatRulesEnabled) {
+                client.markChatRulesAcceptedLocally(true);
+            }
+            if (communityRulesEnabled) {
+                client.markCommunityRulesAcceptedLocally(true);
+            }
+        }
+
         client.sendMessageWithAttachment(
             chat.id,
             events,
@@ -218,7 +252,9 @@
             mentioned,
             fileToAttach,
             $currentChatReplyingTo,
-            undefined
+            undefined,
+            chatRulesVersion,
+            communityRulesVersion
         );
     }
 

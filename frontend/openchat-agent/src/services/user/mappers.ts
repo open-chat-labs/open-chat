@@ -793,6 +793,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
             notificationsMuted: candid.notifications_muted,
             readByMeUpTo: optional(candid.read_by_me_up_to, identity),
             archived: candid.archived,
+            rulesAccepted: candid.rules_accepted
         },
     };
 }
@@ -828,6 +829,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
             notificationsMuted: candid.notifications_muted,
             readByMeUpTo: optional(candid.read_by_me_up_to, identity),
             archived: candid.archived,
+            rulesAccepted: false,
         },
     };
 }

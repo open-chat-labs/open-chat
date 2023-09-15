@@ -7,17 +7,17 @@
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import type {
-        AccessRules,
         CandidateMember,
         CommunitySummary,
         DefaultChannel,
         OpenChat,
+        Rules,
         UserSummary,
     } from "openchat-client";
     import StageHeader from "../../StageHeader.svelte";
     import PermissionsEditor from "./PermissionsEditor.svelte";
     import PermissionsViewer from "../PermissionsViewer.svelte";
-    import Rules from "../../Rules.svelte";
+    import RulesEditor from "../../Rules.svelte";
     import Details from "./Details.svelte";
     import { createCandidateCommunity } from "../../../../stores/community";
     import VisibilityControl from "../../VisibilityControl.svelte";
@@ -28,7 +28,7 @@
     import AreYouSure from "../../../AreYouSure.svelte";
 
     export let original: CommunitySummary = createCandidateCommunity("", 0);
-    export let originalRules: AccessRules;
+    export let originalRules: Rules;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -39,7 +39,7 @@
     let busy = false;
     let confirming = false;
     let candidate = original;
-    let candidateRules = originalRules;
+    let candidateRules = { ...originalRules, newVersion: false };
     let members: CandidateMember[] = [];
     let channels: DefaultChannel[] = [{ name: $_("communities.general"), createdAt: Date.now() }];
     let channelsValid = true;
@@ -94,9 +94,7 @@
             permissions: { ...original.permissions },
             gate: { ...original.gate },
         };
-        candidateRules = {
-            ...originalRules,
-        };
+        candidateRules = { ...originalRules, newVersion: false };
     });
 
     function changeStep(ev: CustomEvent<number>) {
@@ -215,10 +213,11 @@
                     <VisibilityControl bind:candidate {original} {editing} history={false} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
-                    <Rules
+                    <RulesEditor
                         bind:valid={rulesValid}
                         level={candidate.level}
-                        bind:rules={candidateRules} />
+                        bind:rules={candidateRules}
+                        editing />
                 </div>
                 <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}

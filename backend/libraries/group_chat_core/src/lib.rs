@@ -662,8 +662,7 @@ impl GroupChatCore {
         let member = self.members.get(&sender).unwrap();
 
         if !self.check_rules(member) {
-            // TODO: Uncomment this once the FE has been updated with "send message" rules checks
-            //return RulesNotAccepted;
+            return RulesNotAccepted;
         }
 
         let member = self.members.get(&sender).unwrap();

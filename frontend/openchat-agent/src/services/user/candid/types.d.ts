@@ -510,6 +510,7 @@ export interface DirectChatSummary {
   'them' : UserId,
   'notifications_muted' : boolean,
   'events_ttl' : [] | [Milliseconds],
+  'last_updated' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'read_by_me_up_to' : [] | [MessageIndex],
   'expired_messages' : Array<MessageIndexRange>,
@@ -522,6 +523,7 @@ export interface DirectChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
   'notifications_muted' : [] | [boolean],
   'events_ttl' : EventsTimeToLiveUpdate,
+  'last_updated' : TimestampMillis,
   'latest_event_index' : [] | [EventIndex],
   'updated_events' : Array<[number, bigint]>,
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -767,6 +769,7 @@ export interface GroupChatSummary {
   'last_updated' : TimestampMillis,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'rules_accepted' : boolean,
   'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
@@ -1403,6 +1406,7 @@ export interface SelectedGroupUpdates {
   'invited_users' : [] | [Array<UserId>],
   'members_added_or_updated' : Array<Participant>,
   'pinned_messages_added' : Uint32Array | number[],
+  'chat_rules' : [] | [VersionedRules],
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
@@ -1479,6 +1483,7 @@ export type SendMessageWithTransferToChannelResponse = {
   { 'RecipientBlocked' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
+  { 'CommunityRulesNotAccepted' : null } |
   { 'InvalidRequest' : string } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptoTransaction] } |
@@ -1649,8 +1654,10 @@ export interface UpdatesArgs { 'updates_since' : TimestampMillis }
 export type UpdatesResponse = {
     'Success' : {
       'communities' : CommunitiesUpdates,
+      'username' : [] | [string],
       'blocked_users' : [] | [Array<UserId>],
       'favourite_chats' : FavouriteChatsUpdates,
+      'display_name' : TextUpdate,
       'group_chats' : GroupChatsUpdates,
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
@@ -1729,7 +1736,11 @@ export interface UsersUnblocked {
   'unblocked_by' : UserId,
 }
 export type Version = number;
-export interface VersionedRules { 'text' : string, 'version' : Version }
+export interface VersionedRules {
+  'text' : string,
+  'version' : Version,
+  'enabled' : boolean,
+}
 export interface VideoContent {
   'height' : number,
   'image_blob_reference' : [] | [BlobReference],

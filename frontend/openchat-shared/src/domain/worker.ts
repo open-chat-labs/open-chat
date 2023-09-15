@@ -103,7 +103,7 @@ import type {
 } from "./search/search";
 import type { GroupInvite, CommunityInvite } from "./inviteCodes";
 import type { CommunityPermissions, MemberRole } from "./permission";
-import type { AccessGate, AccessRules } from "./access";
+import type { AccessGate, Rules, UpdatedRules } from "./access";
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
@@ -142,7 +142,6 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
 export type WorkerRequest =
     | DismissRecommendations
     | SearchGroups
-    | GetGroupRules
     | GetRecommendedGroups
     | RegisterProposalVote
     | ChangeRole
@@ -298,7 +297,7 @@ type ConvertGroupToCommunity = {
     kind: "convertGroupToCommunity";
     chatId: GroupChatIdentifier;
     historyVisible: boolean;
-    rules: AccessRules;
+    rules: Rules;
 };
 
 type DeleteCommunity = {
@@ -483,11 +482,6 @@ type SearchGroups = {
     kind: "searchGroups";
 };
 
-type GetGroupRules = {
-    chatId: MultiUserChatIdentifier;
-    kind: "getGroupRules";
-};
-
 type GetRecommendedGroups = {
     exclusions: string[];
     kind: "getRecommendedGroups";
@@ -559,7 +553,9 @@ type SendMessage = {
     user: CreatedUser;
     mentioned: User[];
     event: EventWrapper<Message>;
-    threadRootMessageIndex?: number;
+    threadRootMessageIndex: number| undefined;
+    rulesAccepted: number| undefined;
+    communityRulesAccepted: number | undefined;
     kind: "sendMessage";
 };
 
@@ -645,7 +641,7 @@ type UpdateGroup = {
     chatId: MultiUserChatIdentifier;
     name?: string;
     desc?: string;
-    rules?: AccessRules;
+    rules?: UpdatedRules;
     permissions?: Partial<ChatPermissions>;
     avatar?: Uint8Array;
     gate?: AccessGate;
@@ -957,7 +953,7 @@ export type WorkerResponseInner =
     | ThreadPreview[]
     | SearchDirectChatResponse
     | SearchGroupChatResponse
-    | AccessRules
+    | Rules
     | undefined
     | GroupChatSummary[]
     | RegisterProposalVoteResponse
@@ -1236,7 +1232,7 @@ type UpdateCommunity = {
     communityId: string;
     name?: string;
     description?: string;
-    rules?: AccessRules;
+    rules?: UpdatedRules;
     permissions?: Partial<CommunityPermissions>;
     avatar?: Uint8Array;
     banner?: Uint8Array;
@@ -1248,7 +1244,7 @@ type UpdateCommunity = {
 type CreateCommunity = {
     kind: "createCommunity";
     community: CommunitySummary;
-    rules: AccessRules;
+    rules: Rules;
     defaultChannels: string[];
 };
 
@@ -1383,8 +1379,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? RegisterProposalVoteResponse
     : T extends GetRecommendedGroups
     ? GroupChatSummary[]
-    : T extends GetGroupRules
-    ? AccessRules | undefined
     : T extends ExploreCommunities
     ? ExploreCommunitiesResponse
     : T extends DismissRecommendations
