@@ -16,6 +16,7 @@ pub enum Response {
     UserGroupNotFound,
     NameTooShort(FieldTooShortResult),
     NameTooLong(FieldTooLongResult),
+    NameInvalid,
     NameTaken,
     NotAuthorized,
     CommunityFrozen,
