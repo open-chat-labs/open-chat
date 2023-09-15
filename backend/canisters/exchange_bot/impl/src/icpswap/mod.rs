@@ -53,6 +53,7 @@ impl SwapClientFactory for ICPSwapClientFactory {
 }
 
 #[async_trait]
+#[typetag::serde]
 impl SwapClient for ICPSwapClient {
     fn exchange_id(&self) -> ExchangeId {
         ExchangeId::ICPSwap

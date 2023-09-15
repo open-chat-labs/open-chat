@@ -19,7 +19,9 @@ async fn handle_direct_message(args: Args) -> Response {
         ParseMessageResult::Success(command) => {
             let message = command.build_message();
             let message_id = command.message_id();
-            state.data.build_response(message, Some(message_id))
+            let response = state.data.build_response(message, Some(message_id));
+            state.enqueue_command(command);
+            response
         }
         ParseMessageResult::Error(response) => response,
         ParseMessageResult::DoesNotMatch => todo!(),

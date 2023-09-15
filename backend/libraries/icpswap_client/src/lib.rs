@@ -2,9 +2,11 @@ use candid::Nat;
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use icpswap_swap_pool_canister::{ICPSwapError, ICPSwapResult};
 use ledger_utils::convert_to_subaccount;
+use serde::{Deserialize, Serialize};
 use types::icrc1::Account;
 use types::{CanisterId, TokenInfo};
 
+#[derive(Serialize, Deserialize)]
 pub struct ICPSwapClient {
     this_canister_id: CanisterId,
     swap_canister_id: CanisterId,

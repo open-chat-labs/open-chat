@@ -1,4 +1,6 @@
+use crate::commands::Command;
 use crate::icpswap::ICPSwapClientFactory;
+use crate::model::commands_pending::CommandsPending;
 use crate::swap_client::{SwapClient, SwapClientFactory};
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -67,6 +69,11 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn enqueue_command(&mut self, command: Command) {
+        self.data.commands_pending.push(command);
+        // start job
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             memory_used: utils::memory::used(),
@@ -91,6 +98,7 @@ struct Data {
     cycles_dispenser_canister_id: CanisterId,
     token_info: Vec<TokenInfo>,
     known_callers: HashMap<Principal, bool>,
+    commands_pending: CommandsPending,
     username: String,
     display_name: Option<String>,
     is_registered: bool,
@@ -112,6 +120,7 @@ impl Data {
             cycles_dispenser_canister_id,
             token_info: build_token_info(),
             known_callers: HashMap::new(),
+            commands_pending: CommandsPending::default(),
             username: "".to_string(),
             display_name: None,
             is_registered: false,

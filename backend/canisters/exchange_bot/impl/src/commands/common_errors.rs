@@ -1,12 +1,12 @@
 use crate::Data;
 
-pub(crate) enum CommonErrors {
+pub enum CommonErrors {
     UnsupportedTokens(Vec<String>),
     PairNotSupported,
 }
 
 impl CommonErrors {
-    pub fn build_response_message(&self, data: &Data) -> String {
+    pub(crate) fn build_response_message(&self, data: &Data) -> String {
         match self {
             CommonErrors::UnsupportedTokens(tokens) => {
                 let mut message = "The following inputs were not recognised as supported tokens:".to_string();

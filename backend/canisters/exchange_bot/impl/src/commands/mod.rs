@@ -1,22 +1,42 @@
+use crate::commands::quote::QuoteCommand;
 use crate::RuntimeState;
-use types::{MessageContent, MessageContentInitial, MessageId};
+use serde::{Deserialize, Serialize};
+use types::{MessageContent, MessageContentInitial, MessageId, UserId};
 
-pub(crate) mod common_errors;
-pub(crate) mod quote;
+pub mod common_errors;
+pub mod quote;
 
 pub(crate) trait CommandParser {
-    type Command: Command;
-
-    fn try_parse(message: &MessageContent, state: &mut RuntimeState) -> ParseMessageResult<Self::Command>;
+    fn try_parse(message: &MessageContent, state: &mut RuntimeState) -> ParseMessageResult;
 }
 
-pub(crate) trait Command {
-    fn message_id(&self) -> MessageId;
-    fn build_message(&self) -> MessageContentInitial;
+#[derive(Serialize, Deserialize)]
+pub enum Command {
+    Quote(QuoteCommand),
 }
 
-pub(crate) enum ParseMessageResult<C: Command> {
-    Success(C),
+impl Command {
+    pub fn user_id(&self) -> UserId {
+        match self {
+            Command::Quote(q) => q.user_id,
+        }
+    }
+
+    pub fn message_id(&self) -> MessageId {
+        match self {
+            Command::Quote(q) => q.message_id,
+        }
+    }
+
+    pub fn build_message(&self) -> MessageContentInitial {
+        match self {
+            Command::Quote(q) => q.build_message(),
+        }
+    }
+}
+
+pub enum ParseMessageResult {
+    Success(Command),
     Error(exchange_bot_canister::handle_direct_message::Response),
     DoesNotMatch,
 }

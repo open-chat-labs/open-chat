@@ -1,6 +1,8 @@
 use async_trait::async_trait;
 use exchange_bot_canister::ExchangeId;
 use ic_cdk::api::call::CallResult;
+use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
 use types::icrc1::Account;
 use types::{CanisterId, TokenInfo};
 
@@ -14,6 +16,7 @@ pub trait SwapClientFactory {
 }
 
 #[async_trait]
+#[typetag::serde(tag = "type")]
 pub trait SwapClient {
     fn exchange_id(&self) -> ExchangeId;
     async fn quote(&self, amount: u128) -> CallResult<u128>;
