@@ -362,8 +362,10 @@
         "reject": "Rechazar",
         "rules": "{level} reglas",
         "placeholder": "¿Cuáles son las reglas {level}?",
-        "instructions": "Si está habilitado, los nuevos usuarios deben aceptar las reglas antes de poder unirse a {level}.",
-        "acceptTitle": "{level} reglas"
+        "instructions": "Si está habilitado, los nuevos miembros deben aceptar las reglas antes de poder enviar mensajes.",
+        "acceptTitle": "reglas de chat",
+        "promptExistingUsers": "Solicitar a los miembros existentes",
+        "promptExistingUsersInstructions": "Los miembros existentes deben aceptar las nuevas reglas antes de poder enviar mensajes."
     },
     "group": {
         "publicGroup": "Público {level}",

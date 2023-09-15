@@ -363,8 +363,10 @@
         "reject": "Ablehnen",
         "rules": "{level}-Regeln",
         "placeholder": "Was sind die {level}-Regeln?",
-        "instructions": "Wenn diese Option aktiviert ist, müssen neue Benutzer den Regeln zustimmen, bevor sie dem {level} beitreten können.",
-        "acceptTitle": "{level}-Regeln"
+        "instructions": "Wenn diese Option aktiviert ist, müssen neue Mitglieder den Regeln zustimmen, bevor sie Nachrichten senden können.",
+        "acceptTitle": "Chat-Regeln",
+        "promptExistingUsers": "Fordern Sie bestehende Mitglieder auf",
+        "promptExistingUsersInstructions": "Bestehende Mitglieder müssen den neuen Regeln zustimmen, bevor sie Nachrichten senden können."
     },
     "group": {
         "publicGroup": "Öffentlich {level}",

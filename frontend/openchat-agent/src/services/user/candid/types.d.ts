@@ -383,6 +383,7 @@ export type ContactsResponse = { 'Success' : { 'contacts' : Array<Contact> } };
 export interface CreateCommunityArgs {
   'is_public' : boolean,
   'permissions' : [] | [CommunityPermissions],
+  'default_channel_rules' : [] | [Rules],
   'gate' : [] | [AccessGate],
   'name' : string,
   'banner' : [] | [Document],

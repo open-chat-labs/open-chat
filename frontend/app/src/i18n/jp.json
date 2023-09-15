@@ -361,8 +361,10 @@
         "reject": "拒否",
         "rules": "{level} ルール",
         "placeholder": "{level} ルールとは何ですか?",
-        "instructions": "有効にすると、新規ユーザーは {level} に参加する前にルールに同意する必要があります。",
-        "acceptTitle": "{level} ルール"
+        "instructions": "有効にすると、新しいメンバーはメッセージを送信する前にルールに同意する必要があります。",
+        "acceptTitle": "チャットのルール",
+        "promptExistingUsers": "既存のメンバーにプロンプトを表示する",
+        "promptExistingUsersInstructions": "既存のメンバーは、メッセージを送信する前に新しいルールに同意する必要があります。"
     },
     "group": {
         "publicGroup": "パブリック {level}",

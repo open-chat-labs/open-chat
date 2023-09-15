@@ -81,6 +81,7 @@ export const idlFactory = ({ IDL }) => {
     'change_roles' : CommunityPermissionRole,
     'create_private_channel' : CommunityPermissionRole,
   });
+  const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
@@ -95,10 +96,10 @@ export const idlFactory = ({ IDL }) => {
     'data' : IDL.Vec(IDL.Nat8),
     'mime_type' : IDL.Text,
   });
-  const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const CreateCommunityArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : IDL.Opt(CommunityPermissions),
+    'default_channel_rules' : IDL.Opt(Rules),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'banner' : IDL.Opt(Document),

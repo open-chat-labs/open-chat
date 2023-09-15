@@ -233,7 +233,8 @@ export class UserClient extends CandidService {
     createCommunity(
         community: CommunitySummary,
         rules: Rules,
-        defaultChannels: string[]
+        defaultChannels: string[],
+        defaultChannelRules: Rules,
     ): Promise<CreateCommunityResponse> {
         return this.handleResponse(
             this.userService.create_community({
@@ -259,6 +260,7 @@ export class UserClient extends CandidService {
                 rules,
                 gate: apiMaybeAccessGate(community.gate),
                 default_channels: defaultChannels,
+                default_channel_rules: [defaultChannelRules],
                 primary_language: community.primaryLanguage,
             }),
             createCommunityResponse

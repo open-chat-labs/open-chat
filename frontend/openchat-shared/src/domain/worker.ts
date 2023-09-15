@@ -1246,6 +1246,7 @@ type CreateCommunity = {
     community: CommunitySummary;
     rules: Rules;
     defaultChannels: string[];
+    defaultChannelRules: Rules;
 };
 
 type ChangeCommunityRole = {

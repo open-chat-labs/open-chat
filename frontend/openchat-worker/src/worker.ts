@@ -855,7 +855,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "createCommunity":
                 executeThenReply(payload, correlationId, agent.userClient
-                    .createCommunity(payload.community, payload.rules, payload.defaultChannels));
+                    .createCommunity(payload.community, payload.rules, payload.defaultChannels, payload.defaultChannelRules));
                 break;
 
             case "getCommunitySummary":
