@@ -14,7 +14,7 @@ use std::str::FromStr;
 use types::{MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
 
 lazy_static! {
-    static ref REGEX: Regex = RegexBuilder::new(r"quote (?<input_token>\S+) (?<output_token>\S+) (?<amount>[\d.,]+)")
+    static ref REGEX: Regex = RegexBuilder::new(r"quote\s+(?<input_token>\S+)\s+(?<output_token>\S+)(\s+(?<amount>[\d.,]+))?")
         .case_insensitive(true)
         .build()
         .unwrap();
@@ -33,7 +33,10 @@ impl CommandParser for QuoteCommandParser {
         let matches = REGEX.captures_iter(text).next().unwrap();
         let input_token = &matches["input_token"];
         let output_token = &matches["output_token"];
-        let amount_decimal = f64::from_str(&matches["amount"]).unwrap();
+        let amount_decimal = matches
+            .name("amount")
+            .map(|m| f64::from_str(m.as_str()).unwrap())
+            .unwrap_or(1.0);
 
         let (input_token, output_token) = match state.data.get_token_pair(input_token, output_token) {
             Ok((i, o)) => (i, o),
