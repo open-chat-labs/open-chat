@@ -62,6 +62,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Respon
         permissions: args.permissions,
         gate: args.gate,
         default_channels: Vec::new(),
+        default_channel_rules: None,
         source_group: Some(SourceGroup {
             group_id: caller,
             channel_id: args.channel_id,
