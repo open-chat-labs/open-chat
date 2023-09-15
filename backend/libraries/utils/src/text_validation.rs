@@ -98,7 +98,7 @@ pub fn validate_group_name(name: &str, is_public: bool, subtype: Option<&GroupSu
 pub fn validate_user_group_name(name: &str) -> Result<(), UsernameValidationError> {
     match validate_string_length(name, MIN_USER_GROUP_NAME_LENGTH, MAX_USER_GROUP_NAME_LENGTH) {
         Ok(()) => {
-            if name.contains(' ') {
+            if name.chars().any(|c| c.is_ascii_whitespace()) {
                 Err(UsernameValidationError::Invalid)
             } else {
                 Ok(())
