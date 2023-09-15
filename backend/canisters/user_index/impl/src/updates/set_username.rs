@@ -21,8 +21,8 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
         if username.to_lowercase() != user.username.to_lowercase() {
             match validate_username(&username) {
                 Ok(_) => {}
-                Err(UsernameValidationError::TooShort(min_length)) => return UsernameTooShort(min_length),
-                Err(UsernameValidationError::TooLong(max_length)) => return UsernameTooLong(max_length),
+                Err(UsernameValidationError::TooShort(s)) => return UsernameTooShort(s.min_length as u16),
+                Err(UsernameValidationError::TooLong(l)) => return UsernameTooLong(l.max_length as u16),
                 Err(UsernameValidationError::Invalid) => return UsernameInvalid,
             };
         }
