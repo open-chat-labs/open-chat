@@ -20,7 +20,7 @@ async fn handle_direct_message(args: Args) -> Response {
             let message = command.build_message();
             let message_id = command.message_id();
             let response = state.data.build_response(message, Some(message_id));
-            ic_cdk::spawn(command.process());
+            command.process(state);
             response
         }
         ParseMessageResult::Error(response) => response,

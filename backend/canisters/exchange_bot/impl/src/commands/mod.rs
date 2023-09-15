@@ -28,9 +28,9 @@ impl Command {
         }
     }
 
-    pub async fn process(self) {
+    pub(crate) fn process(self, state: &mut RuntimeState) {
         match self {
-            Command::Quote(q) => q.process().await,
+            Command::Quote(q) => q.process(state),
         }
     }
 

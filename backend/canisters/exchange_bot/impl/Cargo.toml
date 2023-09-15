@@ -37,7 +37,6 @@ serde = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
-typetag = { workspace = true }
 user_canister = { path = "../../user/api" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }

@@ -59,7 +59,7 @@ pub struct QuoteCommand {
     pub input_token: TokenInfo,
     pub output_token: TokenInfo,
     pub amount: u128,
-    pub clients: Vec<Box<dyn SwapClient>>,
+    pub exchange_ids: Vec<ExchangeId>,
     pub message_id: MessageId,
     pub quote_statuses: Vec<(ExchangeId, QuoteStatus)>,
     pub in_progress: Option<TimestampMillis>, // The time it started being processed
@@ -100,7 +100,7 @@ impl QuoteCommand {
                 input_token,
                 output_token,
                 amount,
-                clients,
+                exchange_ids: clients.iter().map(|c| c.exchange_id()).collect(),
                 message_id: state.env.rng().gen(),
                 quote_statuses,
                 in_progress: None,
@@ -110,14 +110,21 @@ impl QuoteCommand {
         }
     }
 
-    pub async fn process(self) {
+    pub(crate) fn process(mut self, state: &mut RuntimeState) {
+        self.in_progress = Some(state.env.now());
+
         let futures: Vec<_> = self
-            .clients
-            .into_iter()
+            .exchange_ids
+            .iter()
+            .filter_map(|e| state.get_swap_client(*e, self.input_token.clone(), self.output_token.clone()))
             .map(|c| quote_single(c, self.user_id, self.message_id, self.amount, self.output_token.decimals))
             .collect();
 
-        futures::future::join_all(futures).await;
+        state.enqueue_command(Command::Quote(self));
+
+        ic_cdk::spawn(async {
+            futures::future::join_all(futures).await;
+        });
     }
 
     pub fn build_message_text(&self) -> String {
@@ -140,6 +147,10 @@ impl QuoteCommand {
             *status = new_status;
         }
     }
+
+    fn is_finished(&self) -> bool {
+        !self.quote_statuses.iter().any(|(_, s)| matches!(s, QuoteStatus::Pending))
+    }
 }
 
 async fn quote_single(
@@ -158,8 +169,14 @@ async fn quote_single(
                 Err(error) => QuoteStatus::Failed(format!("{error:?}")),
             };
             command.set_status(client.exchange_id(), status);
+            let is_finished = command.is_finished();
+
             let text = command.build_message_text();
             state.enqueue_message_edit(user_id, message_id, text, false);
+
+            if is_finished {
+                state.data.commands_pending.remove(user_id, message_id);
+            }
         }
     })
 }

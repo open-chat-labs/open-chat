@@ -14,7 +14,6 @@ pub trait SwapClientFactory {
 }
 
 #[async_trait]
-#[typetag::serde(tag = "type")]
 pub trait SwapClient {
     fn exchange_id(&self) -> ExchangeId;
     async fn quote(&self, amount: u128) -> CallResult<u128>;
