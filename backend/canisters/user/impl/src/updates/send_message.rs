@@ -5,10 +5,11 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::{PushMessageArgs, Reader};
 use ic_cdk_macros::update;
+use rand::Rng;
 use tracing::error;
 use types::{
-    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContentInitial, MessageId,
-    MessageIndex, UserId,
+    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContentInitial, MessageIndex,
+    UserId,
 };
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::{C2CReplyContext, SendMessageArgs};
@@ -284,12 +285,11 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
             mutate_state(|state| {
                 let now = state.env.now();
                 for message in result.messages {
-                    let content: MessageContentInitial = message.content.into();
                     let push_message_args = PushMessageArgs {
                         sender: recipient,
                         thread_root_message_index: None,
-                        message_id: MessageId::generate(state.env.rng()),
-                        content: content.into(),
+                        message_id: message.message_id.unwrap_or_else(|| state.env.rng().gen()),
+                        content: message.content.into(),
                         replies_to: None,
                         forwarded: false,
                         correlation_id: 0,

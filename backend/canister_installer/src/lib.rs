@@ -175,6 +175,7 @@ async fn install_service_canisters_impl(
     let exchange_bot_canister_wasm = get_canister_wasm(CanisterName::ExchangeBot, version);
     let exchange_bot_init_args = exchange_bot_canister::init::Args {
         governance_principals: vec![principal],
+        user_index_canister_id: canister_ids.user_index,
         local_user_index_canister_id: canister_ids.local_user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,

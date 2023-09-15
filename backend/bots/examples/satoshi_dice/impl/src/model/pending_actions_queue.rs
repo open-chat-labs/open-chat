@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::vec_deque::VecDeque;
-use types::{MessageContent, UserId};
+use types::{MessageContentInitial, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PendingActionsQueue {
@@ -23,7 +23,7 @@ impl PendingActionsQueue {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum Action {
-    SendMessages(UserId, Vec<MessageContent>),
+    SendMessages(UserId, Vec<MessageContentInitial>),
     TransferCkbtc(TransferCkbtc),
 }
 

@@ -5,6 +5,7 @@ use candid::Principal;
 use ic_ledger_types::Tokens;
 use itertools::Itertools;
 use rand::rngs::StdRng;
+use rand::Rng;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -600,7 +601,7 @@ impl ChatEvents {
                     let message_event = self.push_message(PushMessageArgs {
                         sender: OPENCHAT_BOT_USER_ID,
                         thread_root_message_index: None,
-                        message_id: MessageId::generate(rng),
+                        message_id: rng.gen(),
                         content: MessageContentInternal::PrizeWinner(PrizeWinnerContent {
                             winner,
                             transaction,

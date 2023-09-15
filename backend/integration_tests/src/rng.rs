@@ -1,6 +1,6 @@
 use crate::NNS_INTERNET_IDENTITY_CANISTER_ID;
 use candid::Principal;
-use rand::{Rng, RngCore};
+use rand::{random, Rng, RngCore};
 use types::MessageId;
 
 pub fn random_principal() -> Principal {
@@ -26,5 +26,5 @@ pub fn random_string() -> String {
 }
 
 pub fn random_message_id() -> MessageId {
-    MessageId::generate(rand::thread_rng())
+    random()
 }

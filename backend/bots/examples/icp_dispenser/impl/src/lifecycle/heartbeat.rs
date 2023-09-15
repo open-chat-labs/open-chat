@@ -5,8 +5,7 @@ use ic_ledger_types::{TransferArgs, MAINNET_LEDGER_CANISTER_ID};
 use ledger_utils::default_ledger_account;
 use tracing::{error, info};
 use types::{
-    nns, BotMessage, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
-    TransactionHash, UserId,
+    nns, BotMessage, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, TransactionHash, UserId,
 };
 
 #[heartbeat]
@@ -16,6 +15,7 @@ fn heartbeat() {
 
 mod process_pending_actions {
     use super::*;
+    use types::MessageContentInitial;
 
     pub fn run() {
         if let Some(action) = mutate_state(get_next) {
@@ -38,7 +38,7 @@ mod process_pending_actions {
             Ok(Ok(block_index)) => {
                 let this_canister_id = read_state(|state| state.env.canister_id());
                 let message = BotMessage {
-                    content: MessageContent::Crypto(CryptoContent {
+                    content: MessageContentInitial::Crypto(CryptoContent {
                         recipient,
                         transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(
                             nns::CompletedCryptoTransaction {
@@ -56,6 +56,7 @@ mod process_pending_actions {
                         )),
                         caption: None,
                     }),
+                    message_id: None,
                 };
                 PendingAction::SendMessages(recipient, vec![message])
             }

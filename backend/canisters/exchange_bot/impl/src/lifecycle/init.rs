@@ -16,6 +16,7 @@ fn init(args: Args) {
 
     let data = Data::new(
         args.governance_principals.into_iter().collect(),
+        args.user_index_canister_id,
         args.local_user_index_canister_id,
         args.cycles_dispenser_canister_id,
         args.test_mode,

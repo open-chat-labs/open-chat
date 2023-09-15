@@ -3,12 +3,17 @@ use crate::swap_client::{SwapClient, SwapClientFactory};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use exchange_bot_canister::ExchangeId;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use types::{BuildVersion, CanisterId, Cryptocurrency, Cycles, TimestampMillis, Timestamped, TokenInfo};
+use types::{
+    BotMessage, BuildVersion, CanisterId, Cryptocurrency, Cycles, MessageContentInitial, MessageId, TextContent,
+    TimestampMillis, Timestamped, TokenInfo,
+};
 use utils::env::Environment;
 
+mod commands;
 mod guards;
 mod icpswap;
 mod jobs;
@@ -38,7 +43,7 @@ impl RuntimeState {
     pub fn get_all_swap_clients(&self, input_token: TokenInfo, output_token: TokenInfo) -> Vec<Box<dyn SwapClient>> {
         let this_canister_id = self.env.canister_id();
 
-        vec![ICPSwapClientFactory::new().build(this_canister_id, input_token.clone(), output_token.clone())]
+        vec![ICPSwapClientFactory::new().build(this_canister_id, input_token, output_token)]
             .into_iter()
             .flatten()
             .collect()
@@ -81,39 +86,82 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     governance_principals: HashSet<Principal>,
+    user_index_canister_id: CanisterId,
     local_user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    token_info: HashMap<CanisterId, TokenInfo>,
+    token_info: Vec<TokenInfo>,
+    known_callers: HashMap<Principal, bool>,
+    username: String,
+    display_name: Option<String>,
+    is_registered: bool,
     test_mode: bool,
 }
 
 impl Data {
     pub fn new(
         governance_principals: HashSet<Principal>,
+        user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
             governance_principals,
+            user_index_canister_id,
             local_user_index_canister_id,
             cycles_dispenser_canister_id,
-            token_info: build_token_info().into_iter().map(|t| (t.ledger, t)).collect(),
+            token_info: build_token_info(),
+            known_callers: HashMap::new(),
+            username: "".to_string(),
+            display_name: None,
+            is_registered: false,
             test_mode,
         }
     }
 
-    pub fn get_token_info(
-        &self,
-        input_token: CanisterId,
-        output_token: CanisterId,
-    ) -> Result<(TokenInfo, TokenInfo), Vec<CanisterId>> {
-        match (self.token_info.get(&input_token), self.token_info.get(&output_token)) {
-            (Some(i), Some(o)) => Ok((i.clone(), o.clone())),
-            (None, Some(_)) => Err(vec![input_token]),
-            (Some(_), None) => Err(vec![output_token]),
-            (None, None) => Err(vec![input_token, output_token]),
+    pub fn get_token_pair(&self, input_token: &str, output_token: &str) -> Result<(TokenInfo, TokenInfo), Vec<String>> {
+        match (self.get_token(&input_token), self.get_token(&output_token)) {
+            (Some(i), Some(o)) => Ok((i, o)),
+            (None, Some(_)) => Err(vec![input_token.to_string()]),
+            (Some(_), None) => Err(vec![output_token.to_string()]),
+            (None, None) => Err(vec![input_token.to_string(), output_token.to_string()]),
         }
+    }
+
+    pub fn get_token(&self, token: &str) -> Option<TokenInfo> {
+        let token_upper = token.to_uppercase();
+
+        self.token_info
+            .iter()
+            .find(|t| t.token.token_symbol().to_uppercase() == token_upper)
+            .cloned()
+    }
+
+    pub fn supported_tokens(&self) -> Vec<String> {
+        self.token_info
+            .iter()
+            .map(|t| t.token.token_symbol().to_string())
+            .sorted_unstable()
+            .collect()
+    }
+
+    pub fn build_response(
+        &self,
+        text: String,
+        message_id: Option<MessageId>,
+    ) -> exchange_bot_canister::handle_direct_message::Response {
+        let (username, display_name) = (self.username.clone(), self.display_name.clone());
+
+        exchange_bot_canister::handle_direct_message::Response::Success(
+            exchange_bot_canister::handle_direct_message::SuccessResult {
+                bot_name: username,
+                bot_display_name: display_name,
+                messages: vec![BotMessage {
+                    content: MessageContentInitial::Text(TextContent { text }),
+                    message_id,
+                }],
+            },
+        )
     }
 }
 

@@ -1558,11 +1558,13 @@ checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 name = "exchange_bot_canister"
 version = "0.1.0"
 dependencies = [
+ "bot_api",
  "candid",
  "candid_gen",
  "human_readable",
  "serde",
  "types",
+ "user_index_canister",
 ]
 
 [[package]]
@@ -1585,11 +1587,17 @@ dependencies = [
  "ic-stable-structures",
  "icpswap_client",
  "icrc1_ledger_canister_c2c_client",
+ "itertools",
+ "lazy_static",
+ "local_user_index_canister_c2c_client",
  "msgpack",
+ "rand",
+ "regex",
  "serde",
  "serializer",
  "tracing",
  "types",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 
@@ -1899,7 +1907,6 @@ dependencies = [
  "icp_ledger_canister_c2c_client",
  "instruction_counts_log",
  "itertools",
- "lazy_static",
  "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
@@ -5379,7 +5386,7 @@ dependencies = [
  "candid",
  "human_readable",
  "ic-ledger-types",
- "rand_core",
+ "rand",
  "range-set",
  "serde",
  "serde_bytes",
@@ -5521,7 +5528,7 @@ dependencies = [
  "notifications_canister",
  "notifications_canister_c2c_client",
  "num-traits",
- "rand_core",
+ "rand",
  "search",
  "serde",
  "serde_bytes",

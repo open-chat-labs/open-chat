@@ -32,7 +32,7 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    match state.data.get_token_info(args.input_token, args.output_token) {
+    match state.data.get_token_pair(&args.input_token, &args.output_token) {
         Ok((input_token, output_token)) => {
             if let Some(client) = state.get_swap_client(args.exchange_id, input_token.clone(), output_token.clone()) {
                 Ok(PrepareResult {

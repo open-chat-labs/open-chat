@@ -1,20 +1,19 @@
 use crate::ExchangeId;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::CanisterId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub exchange_id: ExchangeId,
-    pub input_token: CanisterId,
-    pub output_token: CanisterId,
+    pub input_token: String,
+    pub output_token: String,
     pub amount: u128,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(u128),
-    UnsupportedTokens(Vec<CanisterId>),
+    UnsupportedTokens(Vec<String>),
     PairNotSupportedByExchange,
     InternalError(String),
 }

@@ -1,59 +1,13 @@
 import "../../../libraries/types/can.did";
 
-type QuoteArgs = record {
-    input_token : CanisterId;
-    output_token : CanisterId;
-    amount : nat;
-};
-
-type QuoteResponse = variant {
-    Success : vec Quote;
-    PartialSuccess : record {
-        quotes : vec Quote;
-        failures : vec ExchangeError;
-    };
-    Failed : vec ExchangeError;
-    UnsupportedTokens : vec CanisterId;
-    PairNotSupported;
-};
-
-type Quote = record {
-    exchange_id : ExchangeId;
-    amount_out : nat;
-};
-
-type ExchangeError = record {
-    exchange_id : ExchangeId;
-    error : text;
-};
-
-type SwapArgs = record {
-    exchange_id : ExchangeId;
-    input_token : CanisterId;
-    output_token : CanisterId;
-    amount : nat;
-};
-
-type SwapResponse = variant {
-    Success : nat;
-    UnsupportedTokens : vec CanisterId;
-    PairNotSupportedByExchange;
-    InternalError : text;
-};
-
 type InitArgs = record {
     governance_principals : vec CanisterId;
+    user_index_canister_id : CanisterId;
     local_user_index_canister_id : CanisterId;
     cycles_dispenser_canister_id : CanisterId;
     wasm_version : BuildVersion;
     test_mode : bool;
 };
 
-type ExchangeId = variant {
-    ICPSwap;
-};
-
 service : {
-    quote : (QuoteArgs) -> (QuoteResponse);
-    swap : (SwapArgs) -> (SwapResponse);
 };

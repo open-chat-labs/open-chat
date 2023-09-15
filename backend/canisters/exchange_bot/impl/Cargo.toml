@@ -26,9 +26,15 @@ ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 icpswap_client = { path = "../../../libraries/icpswap_client" }
 icrc1_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc1_ledger/c2c_client" }
+itertools = { workspace = true }
+lazy_static = { workspace = true }
+local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
+rand = { workspace = true }
+regex = { workspace = true }
 serde = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
+user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }
