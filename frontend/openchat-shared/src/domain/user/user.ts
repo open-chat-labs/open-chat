@@ -75,6 +75,7 @@ export enum AvatarSize {
     Tiny,
     Small,
     Default,
+    Medium,
     Large,
 }
 

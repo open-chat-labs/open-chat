@@ -9,6 +9,7 @@
     import type { MultiUserChat, OpenChat } from "openchat-client";
     import { pathParams } from "../../routes";
     import { getContext } from "svelte";
+    import CommunityOverview from "./communities/details/CommunityOverview.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -25,6 +26,8 @@
 <Panel middle>
     {#if $pathParams.kind === "explore_groups_route"}
         <RecommendedGroups {joining} on:joinGroup on:leaveGroup on:upgrade />
+    {:else if $pathParams.kind === "community_details_route"}
+        <CommunityOverview />
     {:else if $pathParams.kind === "communities_route"}
         <ExploreCommunities on:upgrade on:createCommunity />
     {:else if $selectedChatId === undefined}

@@ -115,6 +115,14 @@ export function selectedCommunityRoute(ctx: PageJS.Context): RouteParams {
     };
 }
 
+export function communityDetailsRoute(ctx: PageJS.Context): RouteParams {
+    return {
+        kind: "community_details_route",
+        communityId: { kind: "community", communityId: ctx.params["communityId"] },
+        scope: { kind: "community", id: createCommunityIdentifier(ctx.params["communityId"]) },
+    };
+}
+
 export function routeForScope(scope: ChatListScope): string {
     switch (scope.kind) {
         case "community":
@@ -233,6 +241,7 @@ export type RouteParams =
     | ChatListRoute
     | GlobalSelectedChatRoute
     | CommunitiesRoute
+    | CommunityDetailsRoute
     | SelectedCommunityRoute
     | SelectedChannelRoute
     | ShareRoute
@@ -275,6 +284,11 @@ export type FavouritesRoute = RouteCommon & {
 
 export type SelectedCommunityRoute = RouteCommon & {
     kind: "selected_community_route";
+    communityId: CommunityIdentifier;
+};
+
+export type CommunityDetailsRoute = RouteCommon & {
+    kind: "community_details_route";
     communityId: CommunityIdentifier;
 };
 

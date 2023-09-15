@@ -18,6 +18,7 @@
         selectedChannelRoute,
         chatListRoute,
         routerReady,
+        communityDetailsRoute,
     } from "../routes";
 
     let route: typeof SvelteComponent<object> | undefined = undefined;
@@ -115,6 +116,13 @@
         page(
             "/group/:chatId/:messageIndex?/:threadMessageIndex?",
             parsePathParams(globalGroupChatSelectedRoute({ kind: "group_chat" })),
+            track,
+            () => (route = Home)
+        );
+        // community details page
+        page(
+            "/community/:communityId/details",
+            parsePathParams(communityDetailsRoute),
             track,
             () => (route = Home)
         );

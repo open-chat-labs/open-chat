@@ -249,16 +249,23 @@
                 if (preview.kind === "group_moved") {
                     if (messageIndex !== undefined) {
                         if (threadMessageIndex !== undefined) {
-                            page.replace(routeForMessage(
-                                "community",
-                                { chatId: preview.location, threadRootMessageIndex: messageIndex },
-                                threadMessageIndex)
+                            page.replace(
+                                routeForMessage(
+                                    "community",
+                                    {
+                                        chatId: preview.location,
+                                        threadRootMessageIndex: messageIndex,
+                                    },
+                                    threadMessageIndex
+                                )
                             );
                         } else {
-                            page.replace(routeForMessage(
-                                "community",
-                                { chatId: preview.location },
-                                messageIndex)
+                            page.replace(
+                                routeForMessage(
+                                    "community",
+                                    { chatId: preview.location },
+                                    messageIndex
+                                )
                             );
                         }
                     } else {
@@ -310,6 +317,7 @@
         // wait until we have loaded the chats
         if (initialised) {
             filterRightPanelHistory((state) => state.kind !== "community_filters");
+
             if ("scope" in pathParams) {
                 client.setChatListScope(pathParams.scope);
             }
@@ -333,6 +341,9 @@
             } else if (pathParams.kind === "communities_route") {
                 client.clearSelectedChat();
                 rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
+            } else if (pathParams.kind === "community_details_route") {
+                await selectCommunity(pathParams.communityId, true);
+                rightPanelHistory.set($fullWidth ? [{ kind: "show_community_members" }] : []);
             } else if (pathParams.kind === "selected_community_route") {
                 await selectCommunity(pathParams.communityId);
             } else if (

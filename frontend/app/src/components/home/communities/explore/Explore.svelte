@@ -65,7 +65,7 @@
     }
 
     function selectCommunity(community: CommunityMatch) {
-        page(`/community/${community.id.communityId}`);
+        page(`/community/${community.id.communityId}/details`);
     }
 
     function search(reset = false) {
@@ -165,8 +165,8 @@
                 </div>
             {:else if searchResults.length === 0}
                 <div class="robot">
-                    <h4 class="header">No matching communities found</h4>
-                    <p class="sub-header">try refining your search</p>
+                    <h4 class="header">{$_("communities.noMatchingCommunities")}</h4>
+                    <p class="sub-header">{$_("communities.refineSearch")}</p>
                 </div>
             {:else}
                 {#each searchResults as community (community.id.communityId)}

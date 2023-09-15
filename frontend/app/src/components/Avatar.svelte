@@ -37,6 +37,7 @@
     class:tiny={size === AvatarSize.Tiny}
     class:small={size === AvatarSize.Small}
     class:default={size === AvatarSize.Default}
+    class:medium={size === AvatarSize.Medium}
     class:large={size === AvatarSize.Large}
     class:blocked
     style="background-image: url({url});">
@@ -87,6 +88,11 @@
         &.default {
             width: toRem(48);
             height: toRem(48);
+        }
+
+        &.medium {
+            width: toRem(100);
+            height: toRem(100);
         }
 
         &.large {

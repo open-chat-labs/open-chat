@@ -874,6 +874,8 @@
         "exploreMobile": "Explore",
         "search": "Search communities",
         "searchUserGroups": "Search user groups...",
+        "noMatchingCommunities": "No matching communities found",
+        "refineSearch": "try refining your search",
         "create": "Create a community",
         "edit": "Edit community",
         "members": "Members",
