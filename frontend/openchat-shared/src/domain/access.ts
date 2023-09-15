@@ -78,7 +78,7 @@ export function defaultChatRules(level: Level): VersionedRules {
     const LEVEL_TEXT: Map<Level, string> = new Map([
         ["channel", "the channel"],
         ["group", "the group"],
-        ["community", "each channel"],
+        ["community", "the channel"],
     ]);
 
     return {

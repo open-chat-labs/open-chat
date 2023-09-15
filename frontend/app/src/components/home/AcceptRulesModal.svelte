@@ -22,7 +22,7 @@
         const chatRulesText = chatRulesEnabled ? $currentChatRules?.text : "";
         const comunityRulesText = communityRulesEnabled ? $currentCommunityRules?.text : "";
         let lineBreak = chatRulesEnabled && communityRulesEnabled ? "\n\n" : "";
-        return chatRulesText + lineBreak + comunityRulesText;
+        return comunityRulesText + lineBreak + chatRulesText;
     }
 
     function onAction(accepted: boolean): Promise<void> {
