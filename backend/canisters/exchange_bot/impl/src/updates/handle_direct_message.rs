@@ -24,7 +24,11 @@ async fn handle_direct_message(args: Args) -> Response {
             response
         }
         ParseMessageResult::Error(response) => response,
-        ParseMessageResult::DoesNotMatch => todo!(),
+        ParseMessageResult::DoesNotMatch => {
+            let mut text = "This bot currently supports the following message formats:\n\n".to_string();
+            text.push_str(QuoteCommandParser::help_text());
+            state.data.build_text_response(text, None)
+        }
     })
 }
 

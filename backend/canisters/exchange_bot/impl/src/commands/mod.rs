@@ -7,6 +7,8 @@ pub mod common_errors;
 pub mod quote;
 
 pub(crate) trait CommandParser {
+    fn help_text() -> &'static str;
+
     fn try_parse(message: &MessageContent, state: &mut RuntimeState) -> ParseMessageResult;
 }
 

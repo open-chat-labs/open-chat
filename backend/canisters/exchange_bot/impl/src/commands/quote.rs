@@ -23,6 +23,16 @@ lazy_static! {
 pub struct QuoteCommandParser;
 
 impl CommandParser for QuoteCommandParser {
+    fn help_text() -> &'static str {
+        "**QUOTE**
+
+format: 'quote $InputToken $OutputToken $Amount'
+
+eg. 'quote ICP CHAT 100'
+
+'$Amount' will default to 1 if not provided."
+    }
+
     fn try_parse(message: &MessageContent, state: &mut RuntimeState) -> ParseMessageResult {
         let text = message.text().unwrap_or_default();
 
