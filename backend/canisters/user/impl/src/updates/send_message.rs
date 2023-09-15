@@ -57,6 +57,8 @@ async fn send_message_v2(mut args: Args) -> Response {
         if !pending_transaction.validate_recipient(args.recipient) {
             return InvalidRequest("Transaction is not to the user's account".to_string());
         }
+        // When transferring to bot users, each user transfers to their own subaccount, this way it
+        // is trivial for the bots to keep track of each user's funds
         if user_type.is_bot() {
             pending_transaction.set_recipient(args.recipient.into(), Principal::from(my_user_id).into());
         }
