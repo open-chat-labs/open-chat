@@ -235,11 +235,12 @@ impl Data {
         proposals_bot_user_id: UserId,
         gate: Option<AccessGate>,
         default_channels: Vec<(ChannelId, String)>,
+        default_channel_rules: Option<Rules>,
         mark_active_duration: Milliseconds,
         test_mode: bool,
         now: TimestampMillis,
     ) -> Data {
-        let channels = Channels::new(created_by_user_id, default_channels, now);
+        let channels = Channels::new(created_by_user_id, default_channels, default_channel_rules, now);
         let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.public_channel_ids(), now);
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 

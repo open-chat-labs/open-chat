@@ -34,6 +34,7 @@ async fn c2c_create_community(args: Args) -> Response {
         permissions: args.permissions,
         gate: args.gate.clone(),
         default_channels: args.default_channels,
+        default_channel_rules: args.default_channel_rules,
         source_group: None,
         primary_language: args.primary_language.clone(),
     };
