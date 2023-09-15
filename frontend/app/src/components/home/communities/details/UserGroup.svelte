@@ -17,6 +17,7 @@
     import { toastStore } from "../../../../stores/toast";
     import VirtualList from "../../../VirtualList.svelte";
     import Markdown from "../../Markdown.svelte";
+    import Legend from "../../../Legend.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -40,7 +41,10 @@
     $: nameDirty = original.name !== userGroup.name;
     $: dirty = nameDirty || usersDirty;
     $: trimmedName = userGroup.name.trim();
-    $: nameValid = trimmedName.length >= MIN_LENGTH && trimmedName.length <= MAX_LENGTH;
+    $: nameValid =
+        trimmedName.length >= MIN_LENGTH &&
+        trimmedName.length <= MAX_LENGTH &&
+        trimmedName.indexOf(" ") < 0;
     $: valid = nameValid && userGroup.members.size > 0;
 
     let searchTerm = "";
@@ -77,6 +81,12 @@
                 }
             })
             .finally(() => (saving = false));
+    }
+
+    function autoCorrect() {
+        if (nameDirty) {
+            userGroup.name = userGroup.name.replace(/ /g, "_");
+        }
     }
 
     function cancel() {
@@ -123,6 +133,7 @@
 <div class="user-group">
     {#if canManageUserGroups}
         <div class="header">
+            <Legend label={$_("communities.userGroupName")} rules={$_("communities.noSpaces")} />
             <Input
                 bind:value={userGroup.name}
                 minlength={MIN_LENGTH}
@@ -130,6 +141,7 @@
                 disabled={!canManageUserGroups}
                 countdown
                 invalid={nameDirty && !nameValid}
+                on:blur={autoCorrect}
                 placeholder={$_("communities.enterUserGroupName")} />
         </div>
         <div class="search">

@@ -939,7 +939,9 @@
         "communityLabel": "社区",
         "confirmDeleteUserGroup": "您确定要删除该用户组吗？",
         "namedUserGroupMembers": "**{name}** 群组成员",
-        "searchUserGroups": "搜索用户组..."
+        "searchUserGroups": "搜索用户组...",
+        "userGroupName": "用户组名",
+        "noSpaces": "不允许有空格"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",
