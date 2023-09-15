@@ -21,6 +21,8 @@ pub enum Response {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub bot_name: String,
+    #[serde(default)]
+    pub bot_display_name: Option<String>,
     pub messages: Vec<BotMessage>,
 }
 

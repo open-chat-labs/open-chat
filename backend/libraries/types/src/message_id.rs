@@ -1,17 +1,15 @@
 use candid::CandidType;
-use rand_core::RngCore;
+use rand::distributions::{Distribution, Standard};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MessageId(u128);
 
-impl MessageId {
-    pub fn generate<R: RngCore>(mut rng: R) -> MessageId {
-        let mut message_id_bytes = [0; 16];
-        rng.fill_bytes(&mut message_id_bytes);
-
-        MessageId(u128::from_ne_bytes(message_id_bytes))
+impl Distribution<MessageId> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> MessageId {
+        MessageId(rng.gen())
     }
 }
 

@@ -7,7 +7,8 @@ use std::time::Duration;
 use tracing::{error, trace};
 use types::icrc1::{Account, TransferArg, TransferError};
 use types::{
-    icrc1, BotMessage, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
+    icrc1, BotMessage, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency,
+    MessageContentInitial,
 };
 
 const MAX_BATCH_SIZE: usize = 5;
@@ -56,7 +57,13 @@ async fn process_action(action: Action) {
                 CanisterId::from(user_id),
                 &user_canister::c2c_handle_bot_messages::Args {
                     bot_name: read_state(|state| state.data.username.clone()),
-                    messages: messages.into_iter().map(|m| BotMessage { content: m }).collect(),
+                    messages: messages
+                        .into_iter()
+                        .map(|m| BotMessage {
+                            content: m,
+                            message_id: None,
+                        })
+                        .collect(),
                 },
             )
             .await
@@ -91,7 +98,7 @@ async fn process_action(action: Action) {
                         mutate_state(|state| {
                             state.enqueue_pending_action(Action::SendMessages(
                                 user_id,
-                                vec![MessageContent::Crypto(CryptoContent {
+                                vec![MessageContentInitial::Crypto(CryptoContent {
                                     recipient: user_id,
                                     transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::ICRC1(
                                         icrc1::CompletedCryptoTransaction {

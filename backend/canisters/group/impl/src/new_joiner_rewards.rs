@@ -2,11 +2,11 @@ use crate::{mutate_state, NewJoinerRewardStatus, RuntimeState};
 use chat_events::{MessageContentInternal, PushMessageArgs};
 use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE};
 use ledger_utils::{calculate_transaction_hash, default_ledger_account};
+use rand::Rng;
 use tracing::error;
 use types::nns::CryptoAccount;
 use types::{
-    nns, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageId, TimestampMillis,
-    UserId, ICP,
+    nns, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, TimestampMillis, UserId, ICP,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
@@ -75,7 +75,7 @@ fn send_reward_transferred_message(user_id: UserId, transfer: nns::CompletedCryp
     state.data.chat.events.push_message(PushMessageArgs {
         sender: OPENCHAT_BOT_USER_ID,
         thread_root_message_index: None,
-        message_id: MessageId::generate(state.env.rng()),
+        message_id: state.env.rng().gen(),
         content: MessageContentInternal::Crypto(CryptoContent {
             recipient: user_id,
             transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(transfer)),
