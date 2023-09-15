@@ -939,7 +939,9 @@
         "communityLabel": "Сообщество",
         "confirmDeleteUserGroup": "Вы уверены, что хотите удалить эту группу пользователей?",
         "namedUserGroupMembers": "**{name}** участники группы",
-        "searchUserGroups": "Поиск групп пользователей..."
+        "searchUserGroups": "Поиск групп пользователей...",
+        "userGroupName": "Имя группы пользователей",
+        "noSpaces": "пробелы не допускаются"
     },
     "groupCreatedBy": "{username} создал {level}",
     "groupName": "{level} имя",
