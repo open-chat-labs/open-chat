@@ -29,8 +29,8 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     match validate_username(&args.username) {
         Ok(_) => {}
-        Err(UsernameValidationError::TooShort(min_length)) => return UsernameTooShort(min_length),
-        Err(UsernameValidationError::TooLong(max_length)) => return UsernameTooLong(max_length),
+        Err(UsernameValidationError::TooShort(s)) => return UsernameTooShort(s.min_length as u16),
+        Err(UsernameValidationError::TooLong(l)) => return UsernameTooLong(l.max_length as u16),
         Err(UsernameValidationError::Invalid) => return UsernameInvalid,
     };
 

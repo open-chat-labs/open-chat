@@ -13,6 +13,7 @@ pub enum Response {
     Success(SuccessResult),
     NameTooShort(FieldTooShortResult),
     NameTooLong(FieldTooLongResult),
+    NameInvalid,
     NameTaken,
     NotAuthorized,
     CommunityFrozen,
