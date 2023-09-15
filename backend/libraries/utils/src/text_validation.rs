@@ -38,7 +38,7 @@ pub fn validate_display_name(display_name: &str) -> Result<(), UsernameValidatio
 }
 
 pub fn validate_username(username: &str) -> Result<(), UsernameValidationError> {
-    match validate_string_length(username, MIN_USERNAME_LENGTH as u32, MAX_USERNAME_LENGTH as u32) {
+    match validate_string_length(username, MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH) {
         Ok(()) => {
             if username.starts_with('_')
                 || username.ends_with('_')
@@ -98,7 +98,7 @@ pub fn validate_group_name(name: &str, is_public: bool, subtype: Option<&GroupSu
 pub fn validate_user_group_name(name: &str) -> Result<(), UsernameValidationError> {
     match validate_string_length(name, MIN_USER_GROUP_NAME_LENGTH, MAX_USER_GROUP_NAME_LENGTH) {
         Ok(()) => {
-            if name.contains(" ") {
+            if name.contains(' ') {
                 Err(UsernameValidationError::Invalid)
             } else {
                 Ok(())
