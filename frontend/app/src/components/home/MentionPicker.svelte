@@ -60,7 +60,12 @@
               }px; max-height: ${maxHeight}`;
 
     onMount(() => {
-        usersAndGroups = Object.values(client.getUserLookupForMentions());
+        usersAndGroups = Object.values(client.getUserLookupForMentions()).sort(
+            (a: UserOrUserGroup, b: UserOrUserGroup) => {
+                const order = { user_group: 1, user: 2, bot: 3 };
+                return order[a.kind] - order[b.kind];
+            }
+        );
     });
 
     const dispatch = createEventDispatcher();

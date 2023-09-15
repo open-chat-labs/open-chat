@@ -254,12 +254,12 @@
     // if we don't have the mapping, just leave it as is (we *will* have the mapping)
     function expandMentions(text?: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, User>();
-        let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
+        let expandedText = text?.replace(/@(\S+)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, false);
             if (userOrGroup !== undefined) {
                 switch (userOrGroup.kind) {
                     case "user_group":
-                        return `<span>@UserGroup(${userOrGroup.id})</span>`;
+                        return `@UserGroup(${userOrGroup.id})`;
                     default:
                         mentionedMap.set(userOrGroup.userId, userOrGroup);
                         return `@UserId(${userOrGroup.userId})`;

@@ -26,8 +26,8 @@ fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> Respons
             if let Some(display_name) = args.display_name.as_ref() {
                 match validate_display_name(display_name) {
                     Ok(_) => {}
-                    Err(UsernameValidationError::TooShort(min_length)) => return DisplayNameTooShort(min_length),
-                    Err(UsernameValidationError::TooLong(max_length)) => return DisplayNameTooLong(max_length),
+                    Err(UsernameValidationError::TooShort(s)) => return DisplayNameTooShort(s.min_length as u16),
+                    Err(UsernameValidationError::TooLong(l)) => return DisplayNameTooLong(l.max_length as u16),
                     Err(UsernameValidationError::Invalid) => return DisplayNameInvalid,
                 };
             }

@@ -940,7 +940,9 @@
         "communityLabel": "Cộng đồng",
         "confirmDeleteUserGroup": "Bạn có chắc chắn muốn xóa nhóm người dùng này?",
         "namedUserGroupMembers": "**{name}** thành viên nhóm",
-        "searchUserGroups": "Tìm kiếm nhóm người dùng..."
+        "searchUserGroups": "Tìm kiếm nhóm người dùng...",
+        "userGroupName": "Tên nhóm người dùng",
+        "noSpaces": "không còn khoảng trống cho phép"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",

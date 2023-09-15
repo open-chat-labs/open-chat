@@ -24,8 +24,8 @@ fn check_username_impl(args: Args, state: &RuntimeState) -> Response {
                 Success
             }
         }
-        Err(UsernameValidationError::TooShort(min_length)) => UsernameTooShort(min_length),
-        Err(UsernameValidationError::TooLong(max_length)) => UsernameTooLong(max_length),
+        Err(UsernameValidationError::TooShort(s)) => UsernameTooShort(s.min_length as u16),
+        Err(UsernameValidationError::TooLong(l)) => UsernameTooLong(l.max_length as u16),
         Err(UsernameValidationError::Invalid) => UsernameInvalid,
     }
 }

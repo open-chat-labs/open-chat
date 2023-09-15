@@ -105,6 +105,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             permissions: args.permissions,
             gate: args.gate,
             default_channels: args.default_channels,
+            default_channel_rules: args.default_channel_rules,
             primary_language: args.primary_language,
         };
         Ok(PrepareResult {
