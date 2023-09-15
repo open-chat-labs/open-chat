@@ -1,5 +1,5 @@
-use crate::commands::quote::QuoteCommand;
-use crate::commands::{Command, ProcessCommandResult};
+use crate::commands::quote::QuoteCommandParser;
+use crate::commands::{Command, CommandParser, ParseMessageResult};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
@@ -12,15 +12,17 @@ use types::UserId;
 #[trace]
 async fn handle_direct_message(args: Args) -> Response {
     if let Err(message) = verify_caller().await {
-        return read_state(|state| state.data.build_response(message, None));
+        return read_state(|state| state.data.build_text_response(message, None));
     };
 
-    mutate_state(|state| {
-        if let ProcessCommandResult::Success(response) = QuoteCommand::process_message(&args.content, state) {
-            response
-        } else {
-            todo!()
+    mutate_state(|state| match QuoteCommandParser::try_parse(&args.content, state) {
+        ParseMessageResult::Success(command) => {
+            let message = command.build_message();
+            let message_id = command.message_id();
+            state.data.build_response(message, Some(message_id))
         }
+        ParseMessageResult::Error(response) => response,
+        ParseMessageResult::DoesNotMatch => todo!(),
     })
 }
 

@@ -1,5 +1,5 @@
 use crate::commands::common_errors::CommonErrors;
-use crate::commands::{Command, ProcessCommandResult};
+use crate::commands::{Command, CommandParser, ParseMessageResult};
 use crate::swap_client::SwapClient;
 use crate::{Data, RuntimeState};
 use exchange_bot_canister::ExchangeId;
@@ -10,13 +10,47 @@ use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use types::{MessageContent, MessageId, TokenInfo, UserId};
+use types::{MessageContent, MessageContentInitial, MessageId, TextContent, TokenInfo, UserId};
 
 lazy_static! {
     static ref REGEX: Regex = RegexBuilder::new(r"quote (?<input_token>\S+) (?<output_token>\S+) (?<amount>[\d.,]+)")
         .case_insensitive(true)
         .build()
         .unwrap();
+}
+
+pub(crate) struct QuoteCommandParser;
+
+impl CommandParser for QuoteCommandParser {
+    type Command = QuoteCommand;
+
+    fn try_parse(message: &MessageContent, state: &mut RuntimeState) -> ParseMessageResult<QuoteCommand> {
+        let text = message.text().unwrap_or_default();
+
+        if !REGEX.is_match(&text) {
+            return ParseMessageResult::DoesNotMatch;
+        }
+
+        let matches = REGEX.captures_iter(&text).next().unwrap();
+        let input_token = &matches["input_token"];
+        let output_token = &matches["output_token"];
+        let amount_decimal = f64::from_str(&matches["amount"]).unwrap();
+
+        let (input_token, output_token) = match state.data.get_token_pair(input_token, output_token) {
+            Ok((i, o)) => (i, o),
+            Err(tokens) => {
+                let error = CommonErrors::UnsupportedTokens(tokens);
+                return build_error_response(error, &state.data);
+            }
+        };
+
+        let amount = (amount_decimal * 10u128.pow(input_token.decimals as u32) as f64) as u128;
+
+        match QuoteCommand::build(input_token, output_token, amount, state) {
+            Ok(command) => ParseMessageResult::Success(command),
+            Err(error) => build_error_response(error, &state.data),
+        }
+    }
 }
 
 pub(crate) struct QuoteCommand {
@@ -71,53 +105,26 @@ impl QuoteCommand {
             Err(CommonErrors::PairNotSupported)
         }
     }
+}
 
-    pub fn build_message_text(&self) -> String {
+impl Command for QuoteCommand {
+    fn message_id(&self) -> MessageId {
+        self.message_id
+    }
+
+    fn build_message(&self) -> MessageContentInitial {
         let mut text = "Quotes:".to_string();
         for (exchange_id, status) in self.quote_statuses.iter().sorted_unstable_by_key(|(_, s)| s) {
             let exchange_name = exchange_id.to_string();
             let status_text = status.to_string();
             text.push_str(&format!("\n{exchange_name}: {status_text}"));
         }
-        text
+
+        MessageContentInitial::Text(TextContent { text })
     }
 }
 
-impl Command for QuoteCommand {
-    fn process_message(message: &MessageContent, state: &mut RuntimeState) -> ProcessCommandResult {
-        let text = message.text().unwrap_or_default();
-
-        if !REGEX.is_match(&text) {
-            return ProcessCommandResult::Continue;
-        }
-
-        let matches = REGEX.captures_iter(&text).next().unwrap();
-        let input_token = &matches["input_token"];
-        let output_token = &matches["output_token"];
-        let amount_decimal = f64::from_str(&matches["amount"]).unwrap();
-
-        let (input_token, output_token) = match state.data.get_token_pair(input_token, output_token) {
-            Ok((i, o)) => (i, o),
-            Err(tokens) => {
-                let error = CommonErrors::UnsupportedTokens(tokens);
-                return build_error_response(error, &state.data);
-            }
-        };
-
-        let amount = (amount_decimal * 10u128.pow(input_token.decimals as u32) as f64) as u128;
-
-        match QuoteCommand::build(input_token, output_token, amount, state) {
-            Ok(command) => ProcessCommandResult::Success(
-                state
-                    .data
-                    .build_response(command.build_message_text(), Some(command.message_id)),
-            ),
-            Err(error) => build_error_response(error, &state.data),
-        }
-    }
-}
-
-fn build_error_response(error: CommonErrors, data: &Data) -> ProcessCommandResult {
+fn build_error_response(error: CommonErrors, data: &Data) -> ParseMessageResult<QuoteCommand> {
     let response_message = error.build_response_message(data);
-    ProcessCommandResult::Success(data.build_response(response_message, None))
+    ParseMessageResult::Error(data.build_text_response(response_message, None))
 }

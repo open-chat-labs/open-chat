@@ -145,9 +145,17 @@ impl Data {
             .collect()
     }
 
-    pub fn build_response(
+    pub fn build_text_response(
         &self,
         text: String,
+        message_id: Option<MessageId>,
+    ) -> exchange_bot_canister::handle_direct_message::Response {
+        self.build_response(MessageContentInitial::Text(TextContent { text }), message_id)
+    }
+
+    pub fn build_response(
+        &self,
+        message: MessageContentInitial,
         message_id: Option<MessageId>,
     ) -> exchange_bot_canister::handle_direct_message::Response {
         let (username, display_name) = (self.username.clone(), self.display_name.clone());
@@ -157,7 +165,7 @@ impl Data {
                 bot_name: username,
                 bot_display_name: display_name,
                 messages: vec![BotMessage {
-                    content: MessageContentInitial::Text(TextContent { text }),
+                    content: message,
                     message_id,
                 }],
             },

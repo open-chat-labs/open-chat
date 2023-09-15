@@ -1,14 +1,22 @@
 use crate::RuntimeState;
-use types::MessageContent;
+use types::{MessageContent, MessageContentInitial, MessageId};
 
 pub(crate) mod common_errors;
 pub(crate) mod quote;
 
-pub(crate) trait Command {
-    fn process_message(message: &MessageContent, state: &mut RuntimeState) -> ProcessCommandResult;
+pub(crate) trait CommandParser {
+    type Command: Command;
+
+    fn try_parse(message: &MessageContent, state: &mut RuntimeState) -> ParseMessageResult<Self::Command>;
 }
 
-pub enum ProcessCommandResult {
-    Success(exchange_bot_canister::handle_direct_message::Response),
-    Continue,
+pub(crate) trait Command {
+    fn message_id(&self) -> MessageId;
+    fn build_message(&self) -> MessageContentInitial;
+}
+
+pub(crate) enum ParseMessageResult<C: Command> {
+    Success(C),
+    Error(exchange_bot_canister::handle_direct_message::Response),
+    DoesNotMatch,
 }
