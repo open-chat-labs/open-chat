@@ -36,7 +36,7 @@ export function getTheme(base: Theme): Theme {
     base.chatSummary["bg-selected"] = darkCyan2;
     base.chatSummary.hv = veryDarkCyan;
     base.chatSummary.del = base.button.bg;
-    base.members.hv = base.chatSummary.hv;
+    base.members.hv = darkCyan2;
     base.placeholder = txtLight;
     base.entry.input.bg = veryDarkCyan;
     base.input.bg = veryDarkCyan;
@@ -55,7 +55,7 @@ export function getTheme(base: Theme): Theme {
     base.menu.warn = txt;
     base.menu["disabled-txt"] = txtLight;
     base.icon.inverted.txt = txt;
-    base.menu.hv = base.chatSummary.hv;
+    base.menu.hv = darkCyan2;
     base.reaction.me = olive;
     base.primary = olive;
     base.link.underline = base.primary;
