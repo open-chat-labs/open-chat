@@ -1,6 +1,6 @@
 use candid::CandidType;
 use canister_agent_utils::{build_ic_agent, get_canister_wasm, CanisterName};
-use ic_agent::identity::BasicIdentity;
+use ic_agent::Identity;
 use ic_utils::call::AsyncCall;
 use ic_utils::interfaces::management_canister::builders::InstallMode;
 use ic_utils::interfaces::management_canister::CanisterStatus;
@@ -8,7 +8,7 @@ use ic_utils::interfaces::ManagementCanister;
 use types::{BuildVersion, CanisterId, CanisterWasm, UpgradeCanisterWasmArgs};
 
 pub async fn upgrade_group_index_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     group_index_canister_id: CanisterId,
     version: BuildVersion,
@@ -27,7 +27,7 @@ pub async fn upgrade_group_index_canister(
 }
 
 pub async fn upgrade_user_index_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     user_index_canister_id: CanisterId,
     version: BuildVersion,
@@ -46,7 +46,7 @@ pub async fn upgrade_user_index_canister(
 }
 
 pub async fn upgrade_notifications_index_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     notifications_index_canister_id: CanisterId,
     version: BuildVersion,
@@ -65,7 +65,7 @@ pub async fn upgrade_notifications_index_canister(
 }
 
 pub async fn upgrade_online_users_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     online_users_canister_id: CanisterId,
     version: BuildVersion,
@@ -84,7 +84,7 @@ pub async fn upgrade_online_users_canister(
 }
 
 pub async fn upgrade_proposals_bot_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     proposals_bot_canister_id: CanisterId,
     version: BuildVersion,
@@ -103,7 +103,7 @@ pub async fn upgrade_proposals_bot_canister(
 }
 
 pub async fn upgrade_storage_index_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     storage_index_canister_id: CanisterId,
     version: BuildVersion,
@@ -122,7 +122,7 @@ pub async fn upgrade_storage_index_canister(
 }
 
 pub async fn upgrade_cycles_dispenser_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     cycles_dispenser_canister_id: CanisterId,
     version: BuildVersion,
@@ -141,7 +141,7 @@ pub async fn upgrade_cycles_dispenser_canister(
 }
 
 pub async fn upgrade_registry_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     registry_canister_id: CanisterId,
     version: BuildVersion,
@@ -160,7 +160,7 @@ pub async fn upgrade_registry_canister(
 }
 
 pub async fn upgrade_market_maker_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     market_maker_canister_id: CanisterId,
     version: BuildVersion,
@@ -179,7 +179,7 @@ pub async fn upgrade_market_maker_canister(
 }
 
 pub async fn upgrade_local_group_index_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     group_index_canister_id: CanisterId,
     version: BuildVersion,
@@ -210,7 +210,7 @@ pub async fn upgrade_local_group_index_canister(
 }
 
 pub async fn upgrade_group_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     group_index_canister_id: CanisterId,
     version: BuildVersion,
@@ -237,7 +237,7 @@ pub async fn upgrade_group_canister(
 }
 
 pub async fn upgrade_community_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     group_index_canister_id: CanisterId,
     version: BuildVersion,
@@ -267,7 +267,7 @@ pub async fn upgrade_community_canister(
 }
 
 pub async fn upgrade_user_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     user_index_canister_id: CanisterId,
     version: BuildVersion,
@@ -294,7 +294,7 @@ pub async fn upgrade_user_canister(
 }
 
 pub async fn upgrade_local_user_index_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     user_index_canister_id: CanisterId,
     version: BuildVersion,
@@ -324,7 +324,7 @@ pub async fn upgrade_local_user_index_canister(
 }
 
 pub async fn upgrade_notifications_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     notifications_index_canister_id: CanisterId,
     version: BuildVersion,
@@ -358,7 +358,7 @@ pub async fn upgrade_notifications_canister(
 }
 
 pub async fn upgrade_storage_bucket_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     storage_index_canister_id: CanisterId,
     version: BuildVersion,
@@ -388,7 +388,7 @@ pub async fn upgrade_storage_bucket_canister(
 }
 
 async fn upgrade_top_level_canister<A: CandidType + Send + Sync>(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     canister_id: CanisterId,
     version: BuildVersion,
