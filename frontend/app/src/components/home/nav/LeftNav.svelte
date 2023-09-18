@@ -134,7 +134,7 @@
                         </HoverIcon>
                     </span>
                     <span slot="menu">
-                        <MainMenu on:wallet on:halloffame on:logout on:upgrade />
+                        <MainMenu on:wallet on:halloffame on:logout on:upgrade on:profile />
                     </span>
                 </MenuIcon>
             </div>
