@@ -114,10 +114,8 @@ export function mergeCommunityUpdates(
                 archived: u?.archived ?? community.membership.archived,
                 pinned: u?.pinned ?? community.membership.pinned,
                 index: u?.index ?? community.membership.index,
-                displayName: applyOptionUpdate(
-                    community.membership.displayName,
-                    c?.membership?.displayName,
-                ),
+                displayName: applyOptionUpdate(community.membership.displayName, c?.membership?.displayName),
+                rulesAccepted: c?.membership?.rulesAccepted ?? community.membership.rulesAccepted,
             },
             channels: mergeChannelUpdates(
                 currentChannels,
@@ -215,6 +213,7 @@ export function mergeChannelUpdates(
                     c?.membership?.notificationsMuted ?? channel.membership.notificationsMuted,
                 myMetrics: c?.membership?.myMetrics ?? channel.membership.myMetrics,
                 archived: u?.archived ?? channel.membership.archived,
+                rulesAccepted: c?.membership?.rulesAccepted ?? channel.membership.rulesAccepted,
             },
         };
     });

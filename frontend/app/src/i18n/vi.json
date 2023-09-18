@@ -362,8 +362,10 @@
         "reject": "Từ chối",
         "rules": "quy tắc {level}",
         "placeholder": "các quy tắc {level} là gì?",
-        "instructions": "Nếu được bật, người dùng mới phải đồng ý với các quy tắc trước khi họ có thể tham gia {level}.",
-        "acceptTitle": "quy tắc {level}"
+        "instructions": "Nếu được bật, thành viên mới phải đồng ý với các quy tắc trước khi họ có thể gửi tin nhắn.",
+        "acceptTitle": "Quy tắc trò chuyện",
+        "promptExistingUsers": "Nhắc nhở các thành viên hiện có",
+        "promptExistingUsersInstructions": "Các thành viên hiện tại phải đồng ý với các quy định mới trước khi họ có thể gửi tin nhắn."
     },
     "group": {
         "publicGroup": "Công khai {level}",

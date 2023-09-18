@@ -64,7 +64,6 @@ import {
 } from "../common/chatMappers";
 import type {
     AccessGate,
-    AccessRules,
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
     CandidateChannel,
@@ -123,10 +122,10 @@ import type {
     UpdateUserGroupResponse,
     DeleteUserGroupsResponse,
     SetMemberDisplayNameResponse,
+    UpdatedRules,
 } from "openchat-shared";
 import { textToCode, DestinationInvalidError } from "openchat-shared";
 import {
-    apiGroupRules,
     apiOptionalGroupPermissions,
     apiUpdatedRules,
     getMessagesByMessageIndexResponse,
@@ -270,7 +269,7 @@ export class CommunityClient extends CandidService {
                     channel.avatar?.blobData,
                 ),
                 permissions: [apiGroupPermissions(channel.permissions)],
-                rules: apiGroupRules(channel.rules),
+                rules: channel.rules,
                 gate: apiMaybeAccessGate(channel.gate),
             }),
             (resp) => createGroupResponse(resp, channel.id),
@@ -887,7 +886,9 @@ export class CommunityClient extends CandidService {
         senderDisplayName: string | undefined,
         mentioned: User[],
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        communityRulesAccepted: number | undefined,
+        channelRulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
@@ -897,8 +898,6 @@ export class CommunityClient extends CandidService {
             ? dataClient.forwardData(event.event.content, [chatId.communityId])
             : dataClient.uploadData(event.event.content, [chatId.communityId]);
 
-        const emptyRulesAccepted: [] | [number] = [];
-
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
             const args = {
@@ -907,8 +906,8 @@ export class CommunityClient extends CandidService {
                 message_id: event.event.messageId,
                 sender_name: senderName,
                 sender_display_name: apiOptional(identity, senderDisplayName),
-                community_rules_accepted: emptyRulesAccepted,
-                channel_rules_accepted: emptyRulesAccepted,
+                community_rules_accepted: apiOptional(identity, communityRulesAccepted),
+                channel_rules_accepted: apiOptional(identity, channelRulesAccepted),
                 replies_to: apiOptional(
                     (replyContext) => ({
                         event_index: replyContext.eventIndex,
@@ -917,7 +916,6 @@ export class CommunityClient extends CandidService {
                 ),
                 mentioned: mentioned.map(apiUser),
                 forwarding: event.event.forwarded,
-                rules_accepted: [] as [] | [number], // TODO come back to this
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             };
             return this.handleResponse(this.service.send_message(args), sendMessageResponse)
@@ -1106,7 +1104,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         name?: string,
         description?: string,
-        rules?: AccessRules,
+        rules?: UpdatedRules,
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
         gate?: AccessGate,
@@ -1144,7 +1142,7 @@ export class CommunityClient extends CandidService {
     updateCommunity(
         name?: string,
         description?: string,
-        rules?: AccessRules,
+        rules?: UpdatedRules,
         permissions?: Partial<CommunityPermissions>,
         avatar?: Uint8Array,
         banner?: Uint8Array,

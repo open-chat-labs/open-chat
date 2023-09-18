@@ -332,6 +332,7 @@ export function mergeDirectChatUpdates(
                 notificationsMuted: u.notificationsMuted ?? c.membership.notificationsMuted,
                 myMetrics: u.myMetrics ?? c.membership.myMetrics,
                 archived: u.archived ?? c.membership.archived,
+                rulesAccepted: false,
             },
         };
     });
@@ -401,6 +402,7 @@ export function mergeGroupChatUpdates(
                 notificationsMuted: g?.notificationsMuted ?? c.membership.notificationsMuted,
                 myMetrics: g?.myMetrics ?? c.membership.myMetrics,
                 archived: u?.archived ?? c.membership.archived,
+                rulesAccepted: g?.rulesAccepted ?? c.membership.rulesAccepted,
             },
         };
     });
@@ -450,6 +452,7 @@ export function mergeGroupChats(
                 notificationsMuted: g.notificationsMuted,
                 readByMeUpTo: u?.readByMeUpTo,
                 archived: u?.archived ?? false,
+                rulesAccepted: g.rulesAccepted,
             },
         };
     });

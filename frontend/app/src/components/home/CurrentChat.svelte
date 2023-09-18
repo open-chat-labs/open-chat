@@ -33,6 +33,29 @@
     import { randomSentence } from "../../utils/randomMsg";
     import { framed } from "../../stores/xframe";
     import { rightPanelHistory } from "../../stores/rightPanel";
+    import AcceptRulesModal from "./AcceptRulesModal.svelte";
+
+    type ConfirmedActionEvent =
+        | ConfirmedSendMessage
+        | ConfirmedForwardMessage
+        | ConfirmedRetrySendMessage;
+
+    type ConfirmedSendMessage = {
+        kind: "send_message";
+        textContent: string | undefined;
+        mentioned: User[];
+        fileToAttach: MessageContent | undefined;
+    };
+
+    type ConfirmedForwardMessage = {
+        kind: "forward_message";
+        msg: Message;
+    };
+
+    type ConfirmedRetrySendMessage = {
+        kind: "retry_send_message";
+        event: EventWrapper<Message>;
+    };
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -56,6 +79,8 @@
     let showSearchHeader = false;
     let searchTerm = "";
     let importToCommunities: CommunityMap<CommunitySummary> | undefined;
+    let showAcceptRulesModal = false;
+    let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
 
     $: currentChatTextContent = client.currentChatTextContent;
     $: currentChatReplyingTo = client.currentChatReplyingTo;
@@ -211,15 +236,27 @@
         mentioned: User[],
         fileToAttach: MessageContent | undefined
     ) {
-        client.sendMessageWithAttachment(
-            chat.id,
-            events,
-            textContent,
-            mentioned,
-            fileToAttach,
-            $currentChatReplyingTo,
-            undefined
-        );
+        if (client.rulesNeedAccepting()) {
+            showAcceptRulesModal = true;
+            sendMessageContext = {
+                kind: "send_message",
+                textContent,
+                mentioned,
+                fileToAttach,
+            };
+        } else {
+            client.sendMessageWithAttachment(
+                chat.id,
+                events,
+                textContent,
+                mentioned,
+                fileToAttach,
+                $currentChatReplyingTo,
+                undefined,
+                undefined,
+                undefined
+            );
+        }
     }
 
     export function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
@@ -229,7 +266,27 @@
     function forwardMessage(msg: Message) {
         if (!canSend || !client.canForward(msg.content)) return;
 
-        client.forwardMessage(chat.id, msg);
+        if (client.rulesNeedAccepting()) {
+            showAcceptRulesModal = true;
+            sendMessageContext = {
+                kind: "forward_message",
+                msg,
+            };
+        } else {
+            client.forwardMessage(chat.id, msg, undefined, undefined, undefined);
+        }
+    }
+
+    function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
+        if (client.rulesNeedAccepting()) {
+            showAcceptRulesModal = true;
+            sendMessageContext = {
+                kind: "retry_send_message",
+                event: ev.detail,
+            };
+        } else {
+            client.retrySendMessage(chat.id, ev.detail, events, undefined, undefined, undefined);
+        }
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {
@@ -243,9 +300,75 @@
     function defaultCryptoTransferReceiver(): string | undefined {
         return $currentChatReplyingTo?.sender?.userId;
     }
+
+    function onAcceptRules(
+        accepted: boolean,
+        chatRulesVersion: number | undefined,
+        communityRulesVersion: number | undefined
+    ) {
+        if (sendMessageContext === undefined) {
+            showAcceptRulesModal = false;
+            return;
+        }
+
+        if (accepted) {
+            switch (sendMessageContext.kind) {
+                case "send_message": {
+                    client.sendMessageWithAttachment(
+                        chat.id,
+                        events,
+                        sendMessageContext.textContent,
+                        sendMessageContext.mentioned,
+                        sendMessageContext.fileToAttach,
+                        $currentChatReplyingTo,
+                        undefined,
+                        chatRulesVersion,
+                        communityRulesVersion
+                    );
+                    break;
+                }
+                case "forward_message": {
+                    client.forwardMessage(
+                        chat.id,
+                        sendMessageContext.msg,
+                        undefined,
+                        chatRulesVersion,
+                        communityRulesVersion
+                    );
+                    break;
+                }
+                case "retry_send_message": {
+                    client.retrySendMessage(
+                        chat.id,
+                        sendMessageContext.event,
+                        events,
+                        undefined,
+                        chatRulesVersion,
+                        communityRulesVersion
+                    );
+                    break;
+                }
+            }
+        } else {
+            switch (sendMessageContext.kind) {
+                case "send_message": {
+                    currentChatDraftMessage.setTextContent(chat.id, sendMessageContext.textContent);
+                    currentChatDraftMessage.setAttachment(chat.id, sendMessageContext.fileToAttach);
+                    break;
+                }
+            }
+        }
+
+        sendMessageContext = undefined;
+        showAcceptRulesModal = false;
+    }
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
+
+{#if showAcceptRulesModal}
+    <AcceptRulesModal action={onAcceptRules} />
+{/if}
 
 {#if importToCommunities !== undefined}
     <ImportToCommunity
@@ -315,6 +438,7 @@
         on:chatWith
         on:upgrade
         on:forward
+        on:retrySend={retrySend}
         {chat}
         {events}
         {filteredProposals}

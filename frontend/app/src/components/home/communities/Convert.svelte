@@ -1,11 +1,11 @@
 <script lang="ts">
     import {
         routeForChatIdentifier,
-        type AccessRules,
         type ChannelIdentifier,
         type GroupChatSummary,
         type OpenChat,
         type ChatListScope,
+        defaultChatRules,
     } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
@@ -21,7 +21,6 @@
     const client = getContext<OpenChat>("client");
 
     export let group: GroupChatSummary | undefined;
-    export let rules: AccessRules | undefined;
 
     $: chatListScope = client.chatListScope;
 
@@ -35,7 +34,7 @@
 
         scope = $chatListScope.kind;
         state = "converting";
-        client.convertGroupToCommunity(group, rules ?? { enabled: false, text: "" }).then((id) => {
+        client.convertGroupToCommunity(group, defaultChatRules("community")).then((id) => {
             state = id ? "converted" : "error";
             channelId = id;
         });
