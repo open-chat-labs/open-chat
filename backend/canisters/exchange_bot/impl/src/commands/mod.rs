@@ -4,7 +4,7 @@ use crate::commands::withdraw::WithdrawCommand;
 use crate::{Data, RuntimeState};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-use types::{MessageContent, MessageContentInitial, MessageId, TextContent, UserId};
+use types::{MessageContent, MessageContentInitial, MessageId, TextContent};
 
 pub mod common_errors;
 pub mod quote;
@@ -23,13 +23,6 @@ pub enum Command {
 }
 
 impl Command {
-    pub fn user_id(&self) -> UserId {
-        match self {
-            Command::Quote(q) => q.user_id,
-            Command::Withdraw(w) => w.user_id,
-        }
-    }
-
     pub fn message_id(&self) -> MessageId {
         match self {
             Command::Quote(q) => q.message_id,
@@ -52,13 +45,6 @@ impl Command {
             Command::Withdraw(w) => MessageContentInitial::Text(TextContent {
                 text: w.build_message_text(),
             }),
-        }
-    }
-
-    pub fn in_progress(&self) -> bool {
-        match self {
-            Command::Quote(q) => q.in_progress.is_some(),
-            Command::Withdraw(w) => w.in_progress.is_some(),
         }
     }
 }

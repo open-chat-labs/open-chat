@@ -32,7 +32,7 @@ fn run() {
 
 fn process_next_batch(state: &mut RuntimeState) -> usize {
     let mut count = 0;
-    while let Some(next) = state.data.commands_pending.pop_next_for_processing() {
+    while let Some(next) = state.data.commands_pending.pop() {
         next.process(state);
         count += 1;
         if count == MAX_BATCH_SIZE {

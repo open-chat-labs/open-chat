@@ -11,6 +11,7 @@ use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+use std::sync::{Arc, Mutex};
 use types::{MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
 
 lazy_static! {
@@ -29,7 +30,7 @@ impl CommandParser for QuoteCommandParser {
 
 format: 'quote $InputToken $OutputToken $Amount'
 eg. 'quote ICP CHAT 100'
-'$Amount' will default to 1 if not provided."
+$Amount will default to 1 if not provided."
     }
 
     fn try_parse(message: &MessageContent, state: &mut RuntimeState) -> ParseMessageResult {
@@ -74,7 +75,6 @@ pub struct QuoteCommand {
     pub exchange_ids: Vec<ExchangeId>,
     pub message_id: MessageId,
     pub quote_statuses: Vec<(ExchangeId, QuoteStatus)>,
-    pub in_progress: Option<TimestampMillis>, // The time it started being processed
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
@@ -115,24 +115,26 @@ impl QuoteCommand {
                 exchange_ids: clients.iter().map(|c| c.exchange_id()).collect(),
                 message_id: state.env.rng().gen(),
                 quote_statuses,
-                in_progress: None,
             })
         } else {
             Err(CommonErrors::PairNotSupported)
         }
     }
 
-    pub(crate) fn process(mut self, state: &mut RuntimeState) {
-        self.in_progress = Some(state.env.now());
-
-        let futures: Vec<_> = self
+    pub(crate) fn process(self, state: &mut RuntimeState) {
+        let amount = self.amount;
+        let clients: Vec<_> = self
             .exchange_ids
             .iter()
             .filter_map(|e| state.get_swap_client(*e, self.input_token.clone(), self.output_token.clone()))
-            .map(|c| quote_single(c, self.user_id, self.message_id, self.amount, self.output_token.decimals))
             .collect();
 
-        state.enqueue_command(Command::Quote(self));
+        let command = Arc::new(Mutex::new(self));
+
+        let futures: Vec<_> = clients
+            .into_iter()
+            .map(|c| quote_single(amount, c, command.clone()))
+            .collect();
 
         ic_cdk::spawn(async {
             futures::future::join_all(futures).await;
@@ -140,7 +142,12 @@ impl QuoteCommand {
     }
 
     pub fn build_message_text(&self) -> String {
-        let mut text = "Quotes:".to_string();
+        let mut text = format!(
+            "Quotes ({} {} to {}):",
+            format_crypto_amount(self.amount, self.input_token.decimals),
+            self.input_token.token.token_symbol(),
+            self.output_token.token.token_symbol()
+        );
         for (exchange_id, status) in self.quote_statuses.iter().sorted_unstable_by_key(|(_, s)| s) {
             let exchange_name = exchange_id.to_string();
             let status_text = status.to_string();
@@ -159,36 +166,21 @@ impl QuoteCommand {
             *status = new_status;
         }
     }
-
-    fn is_finished(&self) -> bool {
-        !self.quote_statuses.iter().any(|(_, s)| matches!(s, QuoteStatus::Pending))
-    }
 }
 
-async fn quote_single(
-    client: Box<dyn SwapClient>,
-    user_id: UserId,
-    message_id: MessageId,
-    amount: u128,
-    output_token_decimals: u8,
-) {
+async fn quote_single(amount: u128, client: Box<dyn SwapClient>, wrapped_command: Arc<Mutex<QuoteCommand>>) {
     let result = client.quote(amount).await;
 
+    let mut command = wrapped_command.lock().unwrap();
+    let status = match result {
+        Ok(amount_out) => QuoteStatus::Success(amount_out, format_crypto_amount(amount_out, command.output_token.decimals)),
+        Err(error) => QuoteStatus::Failed(format!("{error:?}")),
+    };
+    command.set_status(client.exchange_id(), status);
+
+    let message_text = command.build_message_text();
+
     mutate_state(|state| {
-        if let Some(Command::Quote(command)) = state.data.commands_pending.get_mut(user_id, message_id) {
-            let status = match result {
-                Ok(amount_out) => QuoteStatus::Success(amount_out, format_crypto_amount(amount_out, output_token_decimals)),
-                Err(error) => QuoteStatus::Failed(format!("{error:?}")),
-            };
-            command.set_status(client.exchange_id(), status);
-            let is_finished = command.is_finished();
-
-            let message_text = command.build_message_text();
-            state.enqueue_message_edit(user_id, message_id, message_text);
-
-            if is_finished {
-                state.data.commands_pending.remove(user_id, message_id);
-            }
-        }
+        state.enqueue_message_edit(command.user_id, command.message_id, message_text);
     })
 }

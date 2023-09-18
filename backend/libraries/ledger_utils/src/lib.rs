@@ -1,6 +1,3 @@
-pub mod icrc1;
-pub mod nns;
-
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
 use serde::{Deserialize, Serialize};
@@ -10,6 +7,9 @@ use types::{
     nns::UserOrAccount, CanisterId, CompletedCryptoTransaction, Cryptocurrency, FailedCryptoTransaction,
     PendingCryptoTransaction, TimestampNanos, TransactionHash, UserId,
 };
+
+pub mod icrc1;
+pub mod nns;
 
 pub fn create_pending_transaction(
     token: Cryptocurrency,
@@ -64,7 +64,7 @@ pub fn convert_to_subaccount(principal: &Principal) -> Subaccount {
 }
 
 pub fn calculate_transaction_hash(sender: CanisterId, args: &TransferArgs) -> TransactionHash {
-    let from = default_ledger_account(sender);
+    let from = AccountIdentifier::new(&sender, &args.from_subaccount.unwrap_or(DEFAULT_SUBACCOUNT));
 
     let transaction = Transaction {
         operation: Operation::Transfer {
@@ -86,6 +86,7 @@ pub fn format_crypto_amount(units: u128, decimals: u8) -> String {
 
     format!("{}.{:0}", units / subdividable_by, units % subdividable_by)
         .trim_end_matches("0")
+        .trim_end_matches(".")
         .to_string()
 }
 
