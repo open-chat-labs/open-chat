@@ -139,11 +139,8 @@ struct Data {
     pub test_mode: bool,
     pub is_platform_moderator: bool,
     pub hot_group_exclusions: HotGroupExclusions,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     pub username: Timestamped<String>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     pub display_name: Timestamped<Option<String>>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     pub bio: Timestamped<String>,
     pub cached_group_summaries: Option<CachedGroupSummaries>,
     pub storage_limit: u64,
@@ -155,14 +152,6 @@ struct Data {
     pub contacts: Contacts,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub fire_and_forget_handler: FireAndForgetHandler,
-}
-
-fn deserialize_to_timestamped<'de, D: Deserializer<'de>, T: Deserialize<'de>>(
-    deserializer: D,
-) -> Result<Timestamped<T>, D::Error> {
-    let value: T = T::deserialize(deserializer)?;
-
-    Ok(Timestamped::new(value, 0))
 }
 
 impl Data {
