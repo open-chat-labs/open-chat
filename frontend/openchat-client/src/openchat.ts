@@ -2950,8 +2950,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
     sendMessageWithContent(
         messageContext: MessageContext,
-        mentioned: User[],
         content: MessageContent,
+        mentioned: User[] = [],
     ): void {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -3059,13 +3059,13 @@ export class OpenChat extends OpenChatAgentWorker {
     sendMessageWithAttachment(
         messageContext: MessageContext,
         textContent: string | undefined,
-        mentioned: User[],
         attachment: AttachmentContent | undefined,
+        mentioned: User[] = [],
     ): void {
         return this.sendMessageWithContent(
             messageContext,
-            mentioned,
             this.getMessageContent(textContent, attachment),
+            mentioned,
         );
     }
 

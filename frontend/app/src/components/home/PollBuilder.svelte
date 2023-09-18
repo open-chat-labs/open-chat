@@ -137,7 +137,7 @@
     function start() {
         const poll = createPollContent();
         if (poll) {
-            client.sendMessageWithContent(context, [], poll);
+            client.sendMessageWithContent(context, poll);
             open = false;
         }
     }

@@ -8,7 +8,6 @@
         EventWrapper,
         FailedMessages,
         Message,
-        MessageContent,
         OpenChat,
         User,
         TimelineItem,
@@ -105,7 +104,7 @@
         function send(n: number) {
             if (n === ev.detail) return;
 
-            sendMessageWithAttachment(randomSentence(), [], undefined);
+            sendMessageWithAttachment(randomSentence(), undefined);
 
             window.setTimeout(() => send(n + 1), 500);
         }
@@ -131,7 +130,7 @@
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, mentioned, $attachment);
+            sendMessageWithAttachment(text, $attachment, mentioned);
         }
         draftThreadMessages.delete(threadRootMessageIndex);
     }
@@ -146,10 +145,10 @@
 
     function sendMessageWithAttachment(
         textContent: string | undefined,
-        mentioned: User[],
-        attachment: AttachmentContent | undefined
+        attachment: AttachmentContent | undefined,
+        mentioned: User[] = []
     ) {
-        client.sendMessageWithAttachment(messageContext, textContent, mentioned, attachment);
+        client.sendMessageWithAttachment(messageContext, textContent, attachment, mentioned);
     }
 
     function cancelReply() {
@@ -210,10 +209,6 @@
         }
     }
 
-    function sendMessageWithContent(ev: CustomEvent<MessageContent>) {
-        client.sendMessageWithContent(messageContext, [], ev.detail);
-    }
-
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
     }
@@ -263,11 +258,11 @@
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
+        context={messageContext}
         {chat}
         ledger={creatingCryptoTransfer.ledger}
         draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
-        on:sendTransfer={sendMessageWithContent}
         on:upgrade
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}

@@ -167,7 +167,7 @@
                 },
                 caption: message === "" ? undefined : message,
             };
-            client.sendMessageWithContent(context, [], content);
+            client.sendMessageWithContent(context, content);
             open = false;
         }
     }

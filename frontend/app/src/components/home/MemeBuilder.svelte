@@ -56,7 +56,7 @@
                 width: rect.width,
                 height: rect.height,
             };
-            client.sendMessageWithContent(context, [], content);
+            client.sendMessageWithContent(context, content);
             open = false;
         }
     }
