@@ -247,7 +247,6 @@ import type {
     SendMessageSuccess,
     TransferSuccess,
     User,
-    EnhancedReplyContext,
     RemoteUserToggledReaction,
     RemoteUserSentMessage,
     CheckUsernameResponse,
@@ -1181,7 +1180,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getContentAsText(formatter: MessageFormatter, content: AttachmentContent): string {
+    getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
         return getContentAsText(formatter, content, get(cryptoLookup));
     }
 
