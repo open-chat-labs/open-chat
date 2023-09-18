@@ -47,7 +47,6 @@ import {
     mergeServerEvents,
     messageIsReadByThem,
     metricsEqual,
-    newMessageId,
     sameUser,
     isFrozen,
     isPreviewing,
