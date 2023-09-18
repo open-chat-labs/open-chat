@@ -264,10 +264,7 @@
 
 <GiphySelector context={messageContext} bind:this={giphySelector} bind:open={selectingGif} />
 
-<MemeBuilder
-    bind:this={memeBuilder}
-    bind:open={buildingMeme}
-    on:sendMeme={sendMessageWithContent} />
+<MemeBuilder context={messageContext} bind:this={memeBuilder} bind:open={buildingMeme} />
 
 <div class="wrapper">
     {#if showSearchHeader}
