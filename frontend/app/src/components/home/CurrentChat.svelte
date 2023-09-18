@@ -306,7 +306,12 @@
         chatRulesVersion: number | undefined,
         communityRulesVersion: number | undefined
     ) {
-        if (accepted && sendMessageContext !== undefined) {
+        if (sendMessageContext === undefined) {
+            showAcceptRulesModal = false;
+            return;
+        }
+
+        if (accepted) {
             switch (sendMessageContext.kind) {
                 case "send_message": {
                     client.sendMessageWithAttachment(
@@ -341,6 +346,14 @@
                         chatRulesVersion,
                         communityRulesVersion
                     );
+                    break;
+                }
+            }
+        } else {
+            switch (sendMessageContext.kind) {
+                case "send_message": {
+                    currentChatDraftMessage.setTextContent(chat.id, sendMessageContext.textContent);
+                    currentChatDraftMessage.setAttachment(chat.id, sendMessageContext.fileToAttach);
                     break;
                 }
             }

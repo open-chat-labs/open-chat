@@ -309,7 +309,12 @@
         chatRulesVersion: number | undefined,
         communityRulesVersion: number | undefined
     ) {
-        if (accepted && sendMessageContext !== undefined) {
+        if (sendMessageContext === undefined) {
+            showAcceptRulesModal = false;
+            return;
+        }
+
+        if (accepted) {
             switch (sendMessageContext.kind) {
                 case "send_message": {
                     client.sendMessageWithAttachment(
@@ -333,6 +338,20 @@
                         threadRootMessageIndex,
                         chatRulesVersion,
                         communityRulesVersion
+                    );
+                    break;
+                }
+            }
+        } else {
+            switch (sendMessageContext.kind) {
+                case "send_message": {
+                    draftThreadMessages.setTextContent(
+                        threadRootMessageIndex,
+                        sendMessageContext.textContent
+                    );
+                    draftThreadMessages.setAttachment(
+                        threadRootMessageIndex,
+                        sendMessageContext.fileToAttach
                     );
                     break;
                 }
