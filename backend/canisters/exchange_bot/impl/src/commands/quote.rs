@@ -1,15 +1,13 @@
 use crate::commands::common_errors::CommonErrors;
-use crate::commands::{build_error_response, Command, CommandParser, ParseMessageResult};
+use crate::commands::{build_error_response, Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::swap_client::SwapClient;
 use crate::{mutate_state, RuntimeState};
 use exchange_bot_canister::ExchangeId;
-use itertools::Itertools;
 use lazy_static::lazy_static;
 use ledger_utils::format_crypto_amount;
 use rand::Rng;
 use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use types::{MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
@@ -74,24 +72,7 @@ pub struct QuoteCommand {
     pub amount: u128,
     pub exchange_ids: Vec<ExchangeId>,
     pub message_id: MessageId,
-    pub quote_statuses: Vec<(ExchangeId, QuoteStatus)>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
-pub enum QuoteStatus {
-    Success(u128, String),
-    Failed(String),
-    Pending,
-}
-
-impl Display for QuoteStatus {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            QuoteStatus::Success(_, text) => f.write_str(text),
-            QuoteStatus::Failed(_) => f.write_str("Failed"),
-            QuoteStatus::Pending => f.write_str("Pending"),
-        }
-    }
+    pub quote_statuses: Vec<(ExchangeId, CommandSubTaskResult<u128>)>,
 }
 
 impl QuoteCommand {
@@ -104,7 +85,10 @@ impl QuoteCommand {
         let clients = state.get_all_swap_clients(input_token.clone(), output_token.clone());
 
         if !clients.is_empty() {
-            let quote_statuses = clients.iter().map(|c| (c.exchange_id(), QuoteStatus::Pending)).collect();
+            let quote_statuses = clients
+                .iter()
+                .map(|c| (c.exchange_id(), CommandSubTaskResult::Pending))
+                .collect();
 
             Ok(QuoteCommand {
                 created: state.env.now(),
@@ -148,7 +132,7 @@ impl QuoteCommand {
             self.input_token.token.token_symbol(),
             self.output_token.token.token_symbol()
         );
-        for (exchange_id, status) in self.quote_statuses.iter().sorted_unstable_by_key(|(_, s)| s) {
+        for (exchange_id, status) in self.quote_statuses.iter() {
             let exchange_name = exchange_id.to_string();
             let status_text = status.to_string();
             text.push_str(&format!("\n{exchange_name}: {status_text}"));
@@ -156,27 +140,30 @@ impl QuoteCommand {
         text
     }
 
-    fn set_status(&mut self, exchange_id: ExchangeId, new_status: QuoteStatus) {
-        if let Some(status) = self
+    fn set_quote_result(&mut self, exchange_id: ExchangeId, result: CommandSubTaskResult<u128>) {
+        if let Some(r) = self
             .quote_statuses
             .iter_mut()
             .find(|(e, _)| *e == exchange_id)
             .map(|(_, s)| s)
         {
-            *status = new_status;
+            *r = result;
         }
     }
 }
 
 async fn quote_single(amount: u128, client: Box<dyn SwapClient>, wrapped_command: Arc<Mutex<QuoteCommand>>) {
-    let result = client.quote(amount).await;
+    let response = client.quote(amount).await;
 
     let mut command = wrapped_command.lock().unwrap();
-    let status = match result {
-        Ok(amount_out) => QuoteStatus::Success(amount_out, format_crypto_amount(amount_out, command.output_token.decimals)),
-        Err(error) => QuoteStatus::Failed(format!("{error:?}")),
+    let result = match response {
+        Ok(amount_out) => CommandSubTaskResult::Complete(
+            amount_out,
+            Some(format_crypto_amount(amount_out, command.output_token.decimals)),
+        ),
+        Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
     };
-    command.set_status(client.exchange_id(), status);
+    command.set_quote_result(client.exchange_id(), result);
 
     let message_text = command.build_message_text();
 

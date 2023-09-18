@@ -26,6 +26,10 @@ impl MessagesPending {
         self.messages.contains_key(&(user_id, message_id))
     }
 
+    pub fn len(&self) -> usize {
+        self.messages.len()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.messages.is_empty()
     }

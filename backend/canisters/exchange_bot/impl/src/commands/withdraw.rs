@@ -141,14 +141,10 @@ impl WithdrawCommand {
     }
 
     async fn withdraw(mut self, amount: u128, now_nanos: TimestampNanos) {
-        self.sub_tasks.withdraw = if amount <= self.token.fee {
-            CommandSubTaskResult::NotRequired
-        } else {
-            match transfer_to_user(self.user_id, &self.token, amount, now_nanos).await {
-                Ok(Ok(block_index)) => CommandSubTaskResult::Complete(block_index, None),
-                Ok(Err(error)) => CommandSubTaskResult::Failed(format!("{error:?}")),
-                Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
-            }
+        self.sub_tasks.withdraw = match transfer_to_user(self.user_id, &self.token, amount, now_nanos).await {
+            Ok(Ok(block_index)) => CommandSubTaskResult::Complete(block_index, None),
+            Ok(Err(error)) => CommandSubTaskResult::Failed(format!("{error:?}")),
+            Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
         };
         mutate_state(|state| self.on_updated(state));
     }

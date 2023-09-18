@@ -106,6 +106,8 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
+            queued_commands: self.data.commands_pending.len() as u32,
+            queued_messages: self.data.messages_pending.len() as u32,
             canister_ids: CanisterIds {
                 local_user_index: self.data.local_user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -233,6 +235,8 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
+    pub queued_commands: u32,
+    pub queued_messages: u32,
     pub canister_ids: CanisterIds,
 }
 
