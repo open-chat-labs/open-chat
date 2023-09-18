@@ -1,6 +1,7 @@
+use crate::nns::UserOrAccount;
 use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
-use ic_ledger_types::Subaccount;
+use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Hash)]
@@ -60,7 +61,6 @@ impl Cryptocurrency {
 }
 
 pub type TransactionHash = [u8; 32];
-pub const DEFAULT_SUBACCOUNT: &[u8; 32] = &[0; 32];
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CryptoTransaction {
@@ -143,16 +143,22 @@ impl PendingCryptoTransaction {
         }
     }
 
-    pub fn is_user_recipient(&self, user_id: UserId) -> bool {
+    pub fn validate_recipient(&self, recipient: UserId) -> bool {
         match self {
             PendingCryptoTransaction::NNS(t) => match t.to {
-                nns::UserOrAccount::User(u) => u == user_id,
-                nns::UserOrAccount::Account(a) => {
-                    a == ic_ledger_types::AccountIdentifier::new(&user_id.into(), &Subaccount(*DEFAULT_SUBACCOUNT))
-                }
+                UserOrAccount::Account(a) => a == AccountIdentifier::new(&recipient.into(), &DEFAULT_SUBACCOUNT),
+                UserOrAccount::User(u) => u == recipient,
             },
+            PendingCryptoTransaction::ICRC1(t) => t.to.owner == recipient.into(),
+        }
+    }
+
+    pub fn set_recipient(&mut self, owner: Principal, subaccount: Subaccount) {
+        match self {
+            PendingCryptoTransaction::NNS(t) => t.to = UserOrAccount::Account(AccountIdentifier::new(&owner, &subaccount)),
             PendingCryptoTransaction::ICRC1(t) => {
-                t.to.owner == user_id.into() && t.to.subaccount.map_or(true, |s| s == *DEFAULT_SUBACCOUNT)
+                t.to.owner = owner;
+                t.to.subaccount = Some(subaccount.0)
             }
         }
     }

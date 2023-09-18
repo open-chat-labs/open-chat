@@ -939,7 +939,9 @@
         "communityLabel": "קהילה",
         "confirmDeleteUserGroup": "האם אתה בטוח שברצונך למחוק את קבוצת המשתמשים הזו?",
         "namedUserGroupMembers": "**{name}** חברי הקבוצה",
-        "searchUserGroups": "חפש קבוצות משתמשים..."
+        "searchUserGroups": "חפש קבוצות משתמשים...",
+        "userGroupName": "שם קבוצת משתמשים",
+        "noSpaces": "אין רווחים"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",

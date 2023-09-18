@@ -943,7 +943,9 @@
         "communityLabel": "Comunidad",
         "confirmDeleteUserGroup": "¿Está seguro de que desea eliminar este grupo de usuarios?",
         "namedUserGroupMembers": "**{name}** miembros del grupo",
-        "searchUserGroups": "Buscar grupos de usuarios..."
+        "searchUserGroups": "Buscar grupos de usuarios...",
+        "userGroupName": "Nombre del grupo de usuarios",
+        "noSpaces": "no se permiten espacios"
     },
     "groupCreatedBy": "{username} creó el {level}",
     "groupName": "{level} nombre",
