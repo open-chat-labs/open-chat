@@ -1104,19 +1104,24 @@ export class OpenChat extends OpenChatAgentWorker {
     updateGroupRules(
         chatId: MultiUserChatIdentifier,
         rules: UpdatedRules | undefined,
-    ): Promise<number | undefined> {
+    ): Promise<boolean> {
         return this.sendRequest({ kind: "updateGroup", chatId, rules })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    return resp.rulesVersion;
+                    chatStateStore.setProp(chatId, "rules", {
+                        text: rules.text,
+                        enabled: rules.enabled,
+                        version: resp.rulesVersion,
+                    });
+                    return true;
                 } else {
                     this._logger.error("Update group rules failed: ", resp.kind);
-                    return undefined;
+                    return false;
                 }
             })
             .catch((err) => {
                 this._logger.error("Update group rules failed: ", err);
-                return undefined;
+                return false;
             });
     }
 

@@ -71,7 +71,6 @@
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: chatListScope = client.chatListScope;
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
-    $: chatStateStore = client.chatStateStore;
 
     function getSteps(editing: boolean, detailsValid: boolean, hideInviteUsers: boolean) {
         let steps = [
@@ -283,19 +282,11 @@
 
     function doUpdateRules(): Promise<void> {
         if (!editing) return Promise.resolve();
-        return client
-            .updateGroupRules(candidateGroup.id, candidateGroup.rules)
-            .then((rulesVersion) => {
-                if (rulesVersion !== undefined) {
-                    chatStateStore.setProp(candidateGroup.id, "rules", {
-                        text: candidateGroup.rules.text,
-                        enabled: candidateGroup.rules.enabled,
-                        version: rulesVersion,
-                    });
-                } else {
-                    toastStore.showFailureToast(interpolateError("group.rulesUpdateFailed"));
-                }
-            });
+        return client.updateGroupRules(candidateGroup.id, candidateGroup.rules).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast(interpolateError("group.rulesUpdateFailed"));
+            }
+        });
     }
 
     function doUpdateInfo(): Promise<void> {
