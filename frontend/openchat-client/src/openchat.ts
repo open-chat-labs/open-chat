@@ -2665,63 +2665,8 @@ export class OpenChat extends OpenChatAgentWorker {
     groupWhile = groupWhile;
     sameUser = sameUser;
 
-    forwardMessage(chatId: ChatIdentifier, msg: Message): void {
-        const chat = this._liveState.chatSummaries.get(chatId);
-
-        if (chat === undefined) {
-            return;
-        }
-
-        // TODO check storage requirements
-
-        const content = { ...msg.content };
-
-        const [nextEventIndex, nextMessageIndex] = nextEventAndMessageIndexes();
-
-        msg = {
-            kind: "message",
-            messageId: newMessageId(),
-            messageIndex: nextMessageIndex,
-            sender: this.user.userId,
-            content,
-            repliesTo: undefined,
-            reactions: [],
-            edited: false,
-            forwarded: msg.content.kind !== "giphy_content",
-            deleted: false,
-        };
-        const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-
-        this.sendRequest({
-            kind: "sendMessage",
-            chatType: chat.kind,
-            chatId,
-            user: this.user,
-            mentioned: [],
-            event,
-        })
-            .then(([resp, msg]) => {
-                if (resp.kind === "success") {
-                    this.onSendMessageSuccess(chatId, resp, msg, undefined);
-                    trackEvent("forward_message");
-                } else {
-                    this.removeMessage(chatId, msg.messageId, this.user.userId, undefined);
-                    failedMessagesStore.add({ chatId }, event);
-                    this.dispatchEvent(
-                        new SendMessageFailed(msg.content.kind === "crypto_content"),
-                    );
-                }
-            })
-            .catch((err) => {
-                this.removeMessage(chatId, event.event.messageId, this.user.userId, undefined);
-                failedMessagesStore.add({ chatId }, event);
-                this.dispatchEvent(new SendMessageFailed(msg.content.kind === "crypto_content"));
-                this._logger.error("Exception forwarding message", err);
-            });
-
-        this.sendMessage(chat, event, undefined).then(() => {
-            this.dispatchEvent(new SentMessage());
-        });
+    forwardMessage(messageContext: MessageContext, msg: Message): void {
+        this.sendMessageWithContent(messageContext, { ...msg.content }, [], true);
     }
 
     private onSendMessageSuccess(
@@ -2952,6 +2897,7 @@ export class OpenChat extends OpenChatAgentWorker {
         messageContext: MessageContext,
         content: MessageContent,
         mentioned: User[] = [],
+        forwarded: boolean = false,
     ): void {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -2973,6 +2919,7 @@ export class OpenChat extends OpenChatAgentWorker {
             nextMessageIndex,
             content,
             draftMessage?.replyingTo,
+            forwarded,
         );
         const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
@@ -3122,17 +3069,18 @@ export class OpenChat extends OpenChatAgentWorker {
     setSoftDisabled = setSoftDisabled;
 
     editMessageWithAttachment(
-        chatId: ChatIdentifier,
+        messageContext: MessageContext,
         textContent: string | undefined,
         attachment: AttachmentContent | undefined,
         editingEvent: EventWrapper<Message>,
-        threadRootMessageIndex?: number,
     ): Promise<boolean> {
-        const chat = this._liveState.chatSummaries.get(chatId);
+        const chat = this._liveState.chatSummaries.get(messageContext.chatId);
 
         if (chat === undefined) {
             return Promise.resolve(false);
         }
+
+        const { chatId, threadRootMessageIndex } = messageContext;
 
         if (textContent || attachment) {
             const msg = {

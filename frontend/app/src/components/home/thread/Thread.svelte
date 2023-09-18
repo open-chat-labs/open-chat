@@ -117,13 +117,7 @@
         let [text, mentioned] = ev.detail;
         if ($editingEvent !== undefined) {
             client
-                .editMessageWithAttachment(
-                    chat.id,
-                    text,
-                    $attachment,
-                    $editingEvent,
-                    threadRootMessageIndex
-                )
+                .editMessageWithAttachment(messageContext, text, $attachment, $editingEvent)
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast("errorEditingMessage");

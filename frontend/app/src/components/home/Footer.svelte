@@ -38,8 +38,6 @@
     $: canSend =
         mode === "thread" ? client.canReplyInThread(chat.id) : client.canSendMessages(chat.id);
 
-    $: console.log("Attachment: ", attachment);
-
     function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
         return items.reduce<File | undefined>((res, item) => {
             if (item.kind === "file") {

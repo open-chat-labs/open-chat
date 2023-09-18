@@ -192,7 +192,7 @@
         if ($currentChatEditingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
-                    chat.id,
+                    messageContext,
                     text,
                     $currentChatAttachment,
                     $currentChatEditingEvent
@@ -218,7 +218,7 @@
     function forwardMessage(msg: Message) {
         if (!canSend || !client.canForward(msg.content)) return;
 
-        client.forwardMessage(chat.id, msg);
+        client.forwardMessage(messageContext, msg);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {

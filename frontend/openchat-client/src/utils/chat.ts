@@ -228,6 +228,7 @@ export function createMessage(
     messageIndex: number,
     content: MessageContent,
     replyingTo: ReplyContext | undefined,
+    forwarded: boolean,
 ): Message {
     return {
         kind: "message",
@@ -238,7 +239,7 @@ export function createMessage(
         messageIndex,
         reactions: [],
         edited: false,
-        forwarded: false,
+        forwarded,
         deleted: false,
     };
 }
