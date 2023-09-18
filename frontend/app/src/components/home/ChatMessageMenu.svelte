@@ -235,8 +235,8 @@
                         <div slot="text">{$_("proposal.collapse")}</div>
                     </MenuItem>
                 {/if}
-                {#if publicGroup && confirmed && !inert && !failed}
-                    {#if canShare}
+                {#if confirmed && !inert && !failed}
+                    {#if publicGroup && canShare}
                         <MenuItem on:click={shareMessage}>
                             <ShareIcon
                                 size={$iconSize}

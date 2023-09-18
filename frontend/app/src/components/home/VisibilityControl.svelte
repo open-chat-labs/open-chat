@@ -96,30 +96,28 @@
     </Radio>
 </div>
 
-{#if !requiresUpgrade}
-    <div class="section">
-        <Radio
-            on:change={toggleScope}
-            checked={candidate.public}
-            id={"public"}
-            disabled={!canChangeVisibility}
-            align={"start"}
-            group={"visibility"}>
-            <div class="section-title">
-                <div class={"img public"} />
-                <p>{interpolateLevel("group.publicGroup", candidate.level, true)}</p>
-            </div>
-            <div class="info">
-                <p>{interpolateLevel("publicGroupUnique", candidate.level, true)}</p>
-                <p>
-                    {candidate.level === "channel"
-                        ? $_("publicChannelInfo")
-                        : interpolateLevel("publicGroupInfo", candidate.level, true)}
-                </p>
-            </div>
-        </Radio>
-    </div>
-{/if}
+<div class="section">
+    <Radio
+        on:change={toggleScope}
+        checked={candidate.public}
+        id={"public"}
+        disabled={!canChangeVisibility || requiresUpgrade}
+        align={"start"}
+        group={"visibility"}>
+        <div class="section-title">
+            <div class={"img public"} />
+            <p>{interpolateLevel("group.publicGroup", candidate.level, true)}</p>
+        </div>
+        <div class="info">
+            <p>{interpolateLevel("publicGroupUnique", candidate.level, true)}</p>
+            <p>
+                {candidate.level === "channel"
+                    ? $_("publicChannelInfo")
+                    : interpolateLevel("publicGroupInfo", candidate.level, true)}
+            </p>
+        </div>
+    </Radio>
+</div>
 
 {#if history}
     <div class="section">

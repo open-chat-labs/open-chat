@@ -10,7 +10,7 @@
 
 <div class="radio" class:align-start={align === "start"}>
     <input {disabled} {id} type="radio" name={group} {checked} {value} on:change />
-    <label for={id}>
+    <label class:disabled for={id}>
         <slot>
             {label}
         </slot>
@@ -79,5 +79,8 @@
     label {
         cursor: pointer;
         flex: 1;
+        &.disabled {
+            color: var(--disabledTxt);
+        }
     }
 </style>
