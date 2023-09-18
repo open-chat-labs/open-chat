@@ -1,0 +1,68 @@
+import type { Theme } from "../types";
+
+const veryDarkCyan = "#002b36";
+const darkCyan = "#073642";
+const darkCyan2 = "#0c586ba6";
+const brGreen = "#586e75";
+const darkGrayish = "#678883";
+const darkBlue = "#186899";
+const gray = "#8b9898";
+const lightishGray = "#90aba7";
+const lightGray = "#d6dddc";
+const olive = "#748c09";
+
+const txt = lightGray;
+const txtLight = lightishGray;
+
+export function getTheme(base: Theme): Theme {
+    base.name = "solarizeddark";
+    base.label = "Solarized Dark";
+    base.burst = false;
+    base.bg = veryDarkCyan;
+    base.bd = gray;
+    base.txt = txt;
+    base["txt-light"] = txtLight;
+    base.icon.txt = olive;
+    base.icon.selected = olive;
+    base.button.bg = darkBlue;
+    base.button.hv = olive;
+    base.button.txt = txtLight;
+    base.button.disabled = veryDarkCyan;
+    base.collapsible.closed.header.txt = txt;
+    base.collapsible.open.header.arrow = olive;
+    base.accent = olive;
+    base.panel.left.bg = darkCyan;
+    base.panel.right.modal = veryDarkCyan;
+    base.modal.bd = base.bd;
+    base.modal.bg = base.panel.right.modal;
+    base.chatSummary["bg-selected"] = darkCyan2;
+    base.chatSummary.hv = brGreen;
+    base.chatSummary.del = base.button.bg;
+    base.members.hv = base.chatSummary.hv;
+    base.placeholder = txtLight;
+    base.entry.input.bg = brGreen;
+    base.input.bg = darkGrayish;
+    base.chatSearch.bg = brGreen;
+    base.currentChat.msg.bg = darkCyan;
+    base.currentChat.msg.me.bg = darkCyan2;
+    base.currentChat.msg.txt = txtLight;
+    base.currentChat.date.bg = base.currentChat.msg.bg;
+    base.currentChat.msg.inert = base.currentChat.msg.bg;
+    base.notificationBar.bg = gray;
+    base.notificationBar.txt = txtLight;
+    base.timeline.txt = base.notificationBar.txt;
+    base.menu.bd = base.bd;
+    base.menu.bg = base.panel.right.modal;
+    base.menu.txt = txt;
+    base.menu.warn = txt;
+    base.menu["disabled-txt"] = txtLight;
+    base.icon.inverted.txt = txt;
+    base.menu.hv = base.chatSummary.hv;
+    base.reaction.me = olive;
+    base.primary = olive;
+    base.link.underline = base.primary;
+    base.scrollbar.bg = base.button.hv;
+    base.toast.success.bg = base.notificationBar.bg;
+
+    return base;
+}
