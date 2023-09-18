@@ -1,7 +1,5 @@
 use crate::commands::common_errors::CommonErrors;
-use crate::commands::{
-    build_error_response, Command, CommandParser, CommandSubTaskResult, OptionalCommandSubTaskResult, ParseMessageResult,
-};
+use crate::commands::{build_error_response, Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::transfer_to_user::transfer_to_user;
 use crate::{mutate_state, RuntimeState};
 use lazy_static::lazy_static;
@@ -27,10 +25,8 @@ impl CommandParser for WithdrawCommandParser {
         "**WITHDRAW**
 
 format: 'withdraw $Token $Amount'
-
 eg. 'withdraw CHAT 50'
-
-If '$Amount' is not provided, your ledger balance will be checked and then withdrawn"
+If '$Amount' is not provided, your total balance will be withdrawn"
     }
 
     fn try_parse(message: &MessageContent, state: &mut RuntimeState) -> ParseMessageResult {
@@ -71,7 +67,7 @@ pub struct WithdrawCommand {
 
 #[derive(Serialize, Deserialize)]
 pub struct WithdrawCommandSubTasks {
-    pub check_user_balance: OptionalCommandSubTaskResult<u128>,
+    pub check_user_balance: CommandSubTaskResult<u128>,
     pub withdraw: CommandSubTaskResult<BlockIndex>,
 }
 
@@ -86,9 +82,9 @@ impl WithdrawCommand {
             in_progress: None,
             sub_tasks: WithdrawCommandSubTasks {
                 check_user_balance: if amount.is_some() {
-                    OptionalCommandSubTaskResult::NotRequired
+                    CommandSubTaskResult::NotRequired
                 } else {
-                    OptionalCommandSubTaskResult::Pending
+                    CommandSubTaskResult::Pending
                 },
                 withdraw: CommandSubTaskResult::Pending,
             },
@@ -142,8 +138,8 @@ impl WithdrawCommand {
     fn amount(&self) -> Option<u128> {
         if let Some(a) = self.amount_provided {
             Some(a)
-        } else if let OptionalCommandSubTaskResult::Complete(a, _) = self.sub_tasks.check_user_balance {
-            Some(a - self.token.fee)
+        } else if let CommandSubTaskResult::Complete(a, _) = self.sub_tasks.check_user_balance {
+            Some(a.saturating_sub(self.token.fee))
         } else {
             None
         }
@@ -163,31 +159,36 @@ async fn check_user_balance(this_canister_id: CanisterId, user_id: UserId, messa
         .await
         .map(|a| u128::try_from(a.0).unwrap())
     {
-        Ok(amount) => OptionalCommandSubTaskResult::Complete(amount, Some(format_crypto_amount(amount, token.decimals))),
-        Err(error) => OptionalCommandSubTaskResult::Failed(format!("{error:?}")),
+        Ok(amount) => CommandSubTaskResult::Complete(amount, Some(format_crypto_amount(amount, token.decimals))),
+        Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
     };
-    mutate_state(|state| {
-        if let Some(Command::Withdraw(command)) = state.data.commands_pending.get_mut(user_id, message_id) {
-            command.sub_tasks.check_user_balance = status;
-            command.in_progress = None;
-            let message_text = command.build_message_text();
-            state.enqueue_message_edit(user_id, message_id, message_text);
-        }
-    });
+    mutate_state(|state| update_command(user_id, message_id, |c| c.sub_tasks.check_user_balance = status, state));
 }
 
 async fn withdraw(user_id: UserId, message_id: MessageId, token: TokenInfo, amount: u128, now_nanos: TimestampNanos) {
-    let status = match transfer_to_user(user_id, &token, amount, now_nanos).await {
-        Ok(Ok(block_index)) => CommandSubTaskResult::Complete(block_index, None),
-        Ok(Err(error)) => CommandSubTaskResult::Failed(format!("{error:?}")),
-        Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
-    };
-    mutate_state(|state| {
-        if let Some(Command::Withdraw(command)) = state.data.commands_pending.get_mut(user_id, message_id) {
-            command.sub_tasks.withdraw = status;
-            command.in_progress = None;
-            let message_text = command.build_message_text();
-            state.enqueue_message_edit(user_id, message_id, message_text);
+    let status = if amount <= token.fee {
+        CommandSubTaskResult::NotRequired
+    } else {
+        match transfer_to_user(user_id, &token, amount, now_nanos).await {
+            Ok(Ok(block_index)) => CommandSubTaskResult::Complete(block_index, None),
+            Ok(Err(error)) => CommandSubTaskResult::Failed(format!("{error:?}")),
+            Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
         }
-    });
+    };
+    mutate_state(|state| update_command(user_id, message_id, |c| c.sub_tasks.withdraw = status, state));
+}
+
+fn update_command<F: FnOnce(&mut WithdrawCommand)>(
+    user_id: UserId,
+    message_id: MessageId,
+    update_fn: F,
+    state: &mut RuntimeState,
+) {
+    if let Some(Command::Withdraw(command)) = state.data.commands_pending.get_mut(user_id, message_id) {
+        update_fn(command);
+        command.in_progress = None;
+        let message_text = command.build_message_text();
+        state.enqueue_message_edit(user_id, message_id, message_text);
+        crate::jobs::process_commands::start_job_if_required(state);
+    }
 }

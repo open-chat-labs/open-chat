@@ -43,6 +43,7 @@ fn try_parse_message(message: MessageContent, state: &mut RuntimeState) -> Resul
 
     let mut text = "This bot currently supports the following message formats:\n\n".to_string();
     text.push_str(QuoteCommandParser::help_text());
+    text.push_str("\n\n");
     text.push_str(WithdrawCommandParser::help_text());
     Err(state.data.build_text_response(text, None))
 }

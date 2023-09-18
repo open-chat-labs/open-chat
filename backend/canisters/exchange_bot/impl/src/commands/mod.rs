@@ -77,36 +77,13 @@ fn build_error_response(error: CommonErrors, data: &Data) -> ParseMessageResult 
 
 #[derive(Serialize, Deserialize)]
 pub enum CommandSubTaskResult<T> {
-    Pending,
-    Complete(T, Option<String>),
-    Failed(String),
-}
-
-impl<T> CommandSubTaskResult<T> {
-    pub fn is_pending(&self) -> bool {
-        matches!(self, Self::Pending)
-    }
-}
-
-impl<T> Display for CommandSubTaskResult<T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            CommandSubTaskResult::Pending => f.write_str("pending"),
-            CommandSubTaskResult::Complete(_, s) => f.write_str(s.as_deref().unwrap_or("completed")),
-            CommandSubTaskResult::Failed(e) => write!(f, "failed ({e})"),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-pub enum OptionalCommandSubTaskResult<T> {
     NotRequired,
     Pending,
     Complete(T, Option<String>),
     Failed(String),
 }
 
-impl<T> OptionalCommandSubTaskResult<T> {
+impl<T> CommandSubTaskResult<T> {
     pub fn is_required(&self) -> bool {
         !matches!(self, Self::NotRequired)
     }
@@ -116,13 +93,13 @@ impl<T> OptionalCommandSubTaskResult<T> {
     }
 }
 
-impl<T> Display for OptionalCommandSubTaskResult<T> {
+impl<T> Display for CommandSubTaskResult<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            OptionalCommandSubTaskResult::NotRequired => f.write_str("not required"),
-            OptionalCommandSubTaskResult::Pending => f.write_str("pending"),
-            OptionalCommandSubTaskResult::Complete(_, s) => f.write_str(s.as_deref().unwrap_or("completed")),
-            OptionalCommandSubTaskResult::Failed(e) => write!(f, "failed ({e})"),
+            CommandSubTaskResult::NotRequired => f.write_str("not required"),
+            CommandSubTaskResult::Pending => f.write_str("pending"),
+            CommandSubTaskResult::Complete(_, s) => f.write_str(s.as_deref().unwrap_or("completed")),
+            CommandSubTaskResult::Failed(e) => write!(f, "failed ({e})"),
         }
     }
 }

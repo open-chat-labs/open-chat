@@ -28,9 +28,7 @@ impl CommandParser for QuoteCommandParser {
         "**QUOTE**
 
 format: 'quote $InputToken $OutputToken $Amount'
-
 eg. 'quote ICP CHAT 100'
-
 '$Amount' will default to 1 if not provided."
     }
 
