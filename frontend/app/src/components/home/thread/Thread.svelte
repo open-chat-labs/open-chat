@@ -59,6 +59,7 @@
     $: threadEvents = client.threadEvents;
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
+    $: messageContext = { chatId: chat.id, threadRootMessageIndex };
     $: threadRootMessage = rootEvent.event;
     $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
@@ -148,12 +149,7 @@
         mentioned: User[],
         attachment: AttachmentContent | undefined
     ) {
-        client.sendMessageWithAttachment(
-            { chatId: chat.id, threadRootMessageIndex },
-            textContent,
-            mentioned,
-            attachment
-        );
+        client.sendMessageWithAttachment(messageContext, textContent, mentioned, attachment);
     }
 
     function cancelReply() {
@@ -215,7 +211,7 @@
     }
 
     function sendMessageWithContent(ev: CustomEvent<MessageContent>) {
-        client.sendMessageWithContent({ chatId: chat.id, threadRootMessageIndex }, [], ev.detail);
+        client.sendMessageWithContent(messageContext, [], ev.detail);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -259,15 +255,9 @@
     }
 </script>
 
-<PollBuilder
-    bind:this={pollBuilder}
-    on:sendPoll={sendMessageWithContent}
-    bind:open={creatingPoll} />
+<PollBuilder context={messageContext} bind:this={pollBuilder} bind:open={creatingPoll} />
 
-<GiphySelector
-    bind:this={giphySelector}
-    bind:open={selectingGif}
-    on:sendGiphy={sendMessageWithContent} />
+<GiphySelector context={messageContext} bind:this={giphySelector} bind:open={selectingGif} />
 
 <MemeBuilder
     bind:this={memeBuilder}

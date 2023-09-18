@@ -10,13 +10,13 @@
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
+    import { getContext } from "svelte";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { PollContent, TotalPollVotes } from "openchat-client";
+    import type { MessageContext, OpenChat, PollContent, TotalPollVotes } from "openchat-client";
     import Legend from "../Legend.svelte";
-    const dispatch = createEventDispatcher();
 
+    const client = getContext<OpenChat>("client");
     const MAX_QUESTION_LENGTH = 250;
     const MAX_ANSWER_LENGTH = 50;
     const MAX_ANSWERS = 10;
@@ -34,6 +34,7 @@
     };
 
     export let open: boolean;
+    export let context: MessageContext;
 
     let poll: CandidatePoll = emptyPoll();
     let nextAnswer: string = "";
@@ -136,7 +137,7 @@
     function start() {
         const poll = createPollContent();
         if (poll) {
-            dispatch("sendPoll", poll);
+            client.sendMessageWithContent(context, [], poll);
             open = false;
         }
     }

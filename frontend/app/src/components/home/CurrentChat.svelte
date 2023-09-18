@@ -58,6 +58,7 @@
     let searchTerm = "";
     let importToCommunities: CommunityMap<CommunitySummary> | undefined;
 
+    $: messageContext = { chatId: chat.id };
     $: currentChatTextContent = client.currentChatTextContent;
     $: currentChatReplyingTo = client.currentChatReplyingTo;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
@@ -212,11 +213,11 @@
         mentioned: User[],
         attachment: AttachmentContent | undefined
     ) {
-        client.sendMessageWithAttachment({ chatId: chat.id }, textContent, mentioned, attachment);
+        client.sendMessageWithAttachment(messageContext, textContent, mentioned, attachment);
     }
 
     export function sendMessageWithContent(ev: CustomEvent<MessageContent>) {
-        client.sendMessageWithContent({ chatId: chat.id }, [], ev.detail);
+        client.sendMessageWithContent(messageContext, [], ev.detail);
     }
 
     function forwardMessage(msg: Message) {
@@ -248,10 +249,7 @@
         ownedCommunities={importToCommunities} />
 {/if}
 
-<PollBuilder
-    bind:this={pollBuilder}
-    on:sendPoll={sendMessageWithContent}
-    bind:open={creatingPoll} />
+<PollBuilder context={messageContext} bind:this={pollBuilder} bind:open={creatingPoll} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
@@ -264,10 +262,7 @@
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
-<GiphySelector
-    bind:this={giphySelector}
-    bind:open={selectingGif}
-    on:sendGiphy={sendMessageWithContent} />
+<GiphySelector context={messageContext} bind:this={giphySelector} bind:open={selectingGif} />
 
 <MemeBuilder
     bind:this={memeBuilder}
