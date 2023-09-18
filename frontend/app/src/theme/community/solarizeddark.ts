@@ -3,7 +3,6 @@ import type { Theme } from "../types";
 const veryDarkCyan = "#002b36";
 const darkCyan = "#073642";
 const darkCyan2 = "#0c586ba6";
-const darkGrayish = "#678883";
 const darkBlue = "#186899";
 const gray = "#8b9898";
 const lightishGray = "#90aba7";
