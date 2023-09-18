@@ -10,9 +10,7 @@ import {
 } from "openchat-shared";
 import { userStore } from "./user";
 
-type KeyType = string | number | symbol;
-
-type DraftMessagesByKey<T extends KeyType> = Record<T, DraftMessage>;
+export type DraftMessagesByThread = Record<number, DraftMessage>;
 
 export type DraftMessage = {
     textContent?: string | undefined;
@@ -21,15 +19,10 @@ export type DraftMessage = {
     replyingTo?: EnhancedReplyContext | undefined;
 };
 
-/**
- * There are two scenarios. The draft message can either be at the chat level or for a specific thread
- *
- * FIXME - come back to this because this is no longer used for chat level drafts
- */
-export function createDraftMessages<T extends KeyType>() {
-    const store = writable<DraftMessagesByKey<T>>({} as DraftMessagesByKey<T>);
+export function createDraftMessages() {
+    const store = writable<DraftMessagesByThread>({} as DraftMessagesByThread);
 
-    function set(id: T, draftMessage: DraftMessage): void {
+    function set(id: number, draftMessage: DraftMessage): void {
         store.update((draftMessages) => {
             const current = draftMessages[id];
             return {
@@ -44,13 +37,14 @@ export function createDraftMessages<T extends KeyType>() {
 
     return {
         subscribe: store.subscribe,
-        get: (id: T): DraftMessage => {
+        get: (id: number): DraftMessage => {
             return get(store)[id] ?? {};
         },
-        setTextContent: (id: T, textContent: string | undefined): void => set(id, { textContent }),
-        setAttachment: (id: T, attachment: AttachmentContent | undefined): void =>
+        setTextContent: (id: number, textContent: string | undefined): void =>
+            set(id, { textContent }),
+        setAttachment: (id: number, attachment: AttachmentContent | undefined): void =>
             set(id, { attachment }),
-        setEditing: (id: T, editingEvent: EventWrapper<Message>): void => {
+        setEditing: (id: number, editingEvent: EventWrapper<Message>): void => {
             const users = get(userStore);
             set(id, {
                 editingEvent,
@@ -68,9 +62,9 @@ export function createDraftMessages<T extends KeyType>() {
                         : undefined,
             });
         },
-        setReplyingTo: (id: T, replyingTo: EnhancedReplyContext | undefined): void =>
+        setReplyingTo: (id: number, replyingTo: EnhancedReplyContext | undefined): void =>
             set(id, { replyingTo }),
-        delete: (id: T): void =>
+        delete: (id: number): void =>
             store.update((draftMessages) => {
                 delete draftMessages[id];
                 return draftMessages;

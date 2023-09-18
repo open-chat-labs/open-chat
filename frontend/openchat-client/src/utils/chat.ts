@@ -4,7 +4,6 @@ import type {
     EventWrapper,
     GroupChatSummary,
     MessageContent,
-    TextContent,
     ChatEvent,
     ReplyContext,
     Reaction,
@@ -36,7 +35,6 @@ import type {
     ChatListScope,
     CryptocurrencyDetails,
     TimelineItem,
-    AttachmentContent,
 } from "openchat-shared";
 import {
     emptyChatMetrics,

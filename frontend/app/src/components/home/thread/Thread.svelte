@@ -150,11 +150,9 @@
     ) {
         client.sendMessageWithAttachment(
             { chatId: chat.id, threadRootMessageIndex },
-            $threadEvents,
             textContent,
             mentioned,
-            attachment,
-            $replyingTo
+            attachment
         );
     }
 
@@ -217,13 +215,7 @@
     }
 
     function sendMessageWithContent(ev: CustomEvent<MessageContent>) {
-        client.sendMessageWithContent(
-            { chatId: chat.id, threadRootMessageIndex },
-            $threadEvents,
-            [],
-            ev.detail,
-            $replyingTo
-        );
+        client.sendMessageWithContent({ chatId: chat.id, threadRootMessageIndex }, [], ev.detail);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {

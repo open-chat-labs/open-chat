@@ -397,6 +397,7 @@ import { hasOwnerRights } from "./utils/permissions";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import type { Member } from "openchat-shared";
 import type { Level } from "openchat-shared";
+import type { DraftMessage } from "./stores/draftMessageFactory";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -2933,12 +2934,24 @@ export class OpenChat extends OpenChatAgentWorker {
         return content.kind !== "poll_content";
     }
 
+    private eventsForMessageContext({
+        threadRootMessageIndex,
+    }: MessageContext): EventWrapper<ChatEvent>[] {
+        if (threadRootMessageIndex === undefined) return this._liveState.events;
+        return this._liveState.threadEvents;
+    }
+
+    private draftMessageForMessageContext({
+        threadRootMessageIndex,
+    }: MessageContext): DraftMessage | undefined {
+        if (threadRootMessageIndex === undefined) return this._liveState.currentChatDraftMessage;
+        return this._liveState.draftThreadMessages[threadRootMessageIndex];
+    }
+
     sendMessageWithContent(
         messageContext: MessageContext,
-        currentEvents: EventWrapper<ChatEvent>[],
         mentioned: User[],
         content: MessageContent,
-        replyingTo: EnhancedReplyContext | undefined,
     ): void {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -2948,12 +2961,19 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
+        const draftMessage = this.draftMessageForMessageContext(messageContext);
+        const currentEvents = this.eventsForMessageContext(messageContext);
         const [nextEventIndex, nextMessageIndex] =
             threadRootMessageIndex !== undefined
                 ? nextEventAndMessageIndexesForThread(currentEvents)
                 : nextEventAndMessageIndexes();
 
-        const msg = this.createMessage(this.user.userId, nextMessageIndex, content, replyingTo);
+        const msg = this.createMessage(
+            this.user.userId,
+            nextMessageIndex,
+            content,
+            draftMessage?.replyingTo,
+        );
         const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
         const canRetry = this.canRetryMessage(msg.content);
@@ -3038,18 +3058,14 @@ export class OpenChat extends OpenChatAgentWorker {
 
     sendMessageWithAttachment(
         messageContext: MessageContext,
-        currentEvents: EventWrapper<ChatEvent>[],
         textContent: string | undefined,
         mentioned: User[],
         attachment: AttachmentContent | undefined,
-        replyingTo: EnhancedReplyContext | undefined,
     ): void {
         return this.sendMessageWithContent(
             messageContext,
-            currentEvents,
             mentioned,
             this.getMessageContent(textContent, attachment),
-            replyingTo,
         );
     }
 

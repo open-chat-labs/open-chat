@@ -212,24 +212,11 @@
         mentioned: User[],
         attachment: AttachmentContent | undefined
     ) {
-        client.sendMessageWithAttachment(
-            { chatId: chat.id },
-            events,
-            textContent,
-            mentioned,
-            attachment,
-            $currentChatReplyingTo
-        );
+        client.sendMessageWithAttachment({ chatId: chat.id }, textContent, mentioned, attachment);
     }
 
     export function sendMessageWithContent(ev: CustomEvent<MessageContent>) {
-        client.sendMessageWithContent(
-            { chatId: chat.id },
-            events,
-            [],
-            ev.detail,
-            $currentChatReplyingTo
-        );
+        client.sendMessageWithContent({ chatId: chat.id }, [], ev.detail);
     }
 
     function forwardMessage(msg: Message) {
