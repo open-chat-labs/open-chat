@@ -1,7 +1,7 @@
 use crate::commands::common_errors::CommonErrors;
-use crate::commands::{build_error_response, Command, CommandParser, ParseMessageResult};
+use crate::commands::{Command, CommandParser, ParseMessageResult};
 use crate::swap_client::SwapClient;
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, Data, RuntimeState};
 use exchange_bot_canister::ExchangeId;
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -14,24 +14,23 @@ use std::str::FromStr;
 use types::{MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
 
 lazy_static! {
-    static ref REGEX: Regex =
-        RegexBuilder::new(r"^quote\s+(?<input_token>\S+)\s+(?<output_token>\S+)(\s+(?<amount>[\d.,]+))?$")
-            .case_insensitive(true)
-            .build()
-            .unwrap();
+    static ref REGEX: Regex = RegexBuilder::new(r"swap\s+(?<input_token>\S+)\s+(?<output_token>\S+)(\s+(?<amount>[\d.,]+))?")
+        .case_insensitive(true)
+        .build()
+        .unwrap();
 }
 
-pub struct QuoteCommandParser;
+pub struct SwapCommandParser;
 
-impl CommandParser for QuoteCommandParser {
+impl CommandParser for SwapCommandParser {
     fn help_text() -> &'static str {
-        "**QUOTE**
+        "**SWAP**
 
 format: 'quote $InputToken $OutputToken $Amount'
 
-eg. 'quote ICP CHAT 100'
+eg. 'swap ICP CHAT 100'
 
-'$Amount' will default to 1 if not provided."
+If $'Amount' is not provided, the full balance of $InputTokens will be swapped."
     }
 
     fn try_parse(message: &MessageContent, state: &mut RuntimeState) -> ParseMessageResult {
@@ -44,10 +43,7 @@ eg. 'quote ICP CHAT 100'
         let matches = REGEX.captures_iter(text).next().unwrap();
         let input_token = &matches["input_token"];
         let output_token = &matches["output_token"];
-        let amount_decimal = matches
-            .name("amount")
-            .map(|m| f64::from_str(m.as_str()).unwrap())
-            .unwrap_or(1.0);
+        let amount_decimal = matches.name("amount").map(|m| f64::from_str(m.as_str()).unwrap());
 
         let (input_token, output_token) = match state.data.get_token_pair(input_token, output_token) {
             Ok((i, o)) => (i, o),
@@ -59,56 +55,48 @@ eg. 'quote ICP CHAT 100'
 
         let amount = (amount_decimal * 10u128.pow(input_token.decimals as u32) as f64) as u128;
 
-        match QuoteCommand::build(input_token, output_token, amount, state) {
-            Ok(command) => ParseMessageResult::Success(Command::Quote(command)),
+        match SwapCommand::build(input_token, output_token, amount, state) {
+            Ok(command) => ParseMessageResult::Success(Command::Swap(command)),
             Err(error) => build_error_response(error, &state.data),
         }
     }
 }
 
+pub enum SwapTasks {
+    QueryTokenBalance,
+    GetQuotes,
+    TransferToSwapCanister,
+    NotifySwapCanister,
+    PerformSwap,
+    WithdrawFromSwapCanister,
+}
+
 #[derive(Serialize, Deserialize)]
-pub struct QuoteCommand {
+pub struct SwapCommand {
     pub created: TimestampMillis,
     pub user_id: UserId,
     pub input_token: TokenInfo,
     pub output_token: TokenInfo,
-    pub amount: u128,
+    pub amount: Option<u128>,
     pub exchange_ids: Vec<ExchangeId>,
     pub message_id: MessageId,
     pub quote_statuses: Vec<(ExchangeId, QuoteStatus)>,
     pub in_progress: Option<TimestampMillis>, // The time it started being processed
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
-pub enum QuoteStatus {
-    Success(u128, String),
-    Failed(String),
-    Pending,
-}
-
-impl Display for QuoteStatus {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            QuoteStatus::Success(_, text) => f.write_str(text),
-            QuoteStatus::Failed(_) => f.write_str("Failed"),
-            QuoteStatus::Pending => f.write_str("Pending"),
-        }
-    }
-}
-
-impl QuoteCommand {
+impl SwapCommand {
     pub(crate) fn build(
         input_token: TokenInfo,
         output_token: TokenInfo,
-        amount: u128,
+        amount: Option<u128>,
         state: &mut RuntimeState,
-    ) -> Result<QuoteCommand, CommonErrors> {
+    ) -> Result<SwapCommand, CommonErrors> {
         let clients = state.get_all_swap_clients(input_token.clone(), output_token.clone());
 
         if !clients.is_empty() {
             let quote_statuses = clients.iter().map(|c| (c.exchange_id(), QuoteStatus::Pending)).collect();
 
-            Ok(QuoteCommand {
+            Ok(SwapCommand {
                 created: state.env.now(),
                 user_id: state.env.caller().into(),
                 input_token,
@@ -185,12 +173,17 @@ async fn quote_single(
             command.set_status(client.exchange_id(), status);
             let is_finished = command.is_finished();
 
-            let message_text = command.build_message_text();
-            state.enqueue_message_edit(user_id, message_id, message_text);
+            let text = command.build_message_text();
+            state.enqueue_message_edit(user_id, message_id, text, false);
 
             if is_finished {
                 state.data.commands_pending.remove(user_id, message_id);
             }
         }
     })
+}
+
+fn build_error_response(error: CommonErrors, data: &Data) -> ParseMessageResult {
+    let response_message = error.build_response_message(data);
+    ParseMessageResult::Error(data.build_text_response(response_message, None))
 }

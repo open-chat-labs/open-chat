@@ -2114,6 +2114,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-macros",
  "ic-cdk-timers",
+ "ic-ledger-types",
  "ic-stable-structures",
  "icpswap_client",
  "icrc1_ledger_canister_c2c_client",

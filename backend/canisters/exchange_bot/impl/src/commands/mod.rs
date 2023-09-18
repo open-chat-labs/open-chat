@@ -54,6 +54,13 @@ impl Command {
             }),
         }
     }
+
+    pub fn in_progress(&self) -> bool {
+        match self {
+            Command::Quote(q) => q.in_progress.is_some(),
+            Command::Withdraw(w) => w.in_progress.is_some(),
+        }
+    }
 }
 
 #[allow(clippy::large_enum_variant)]

@@ -13,6 +13,18 @@ impl CommandsPending {
         self.commands.push(command);
     }
 
+    pub fn pop_next_for_processing(&mut self) -> Option<Command> {
+        let next_index = self
+            .commands
+            .iter()
+            .enumerate()
+            .filter(|(_, c)| !c.in_progress())
+            .map(|(i, _)| i)
+            .next()?;
+
+        Some(self.commands.swap_remove(next_index))
+    }
+
     pub fn get(&self, user_id: UserId, message_id: MessageId) -> Option<&Command> {
         self.commands
             .iter()
@@ -31,5 +43,9 @@ impl CommandsPending {
             .find_position(|c| c.user_id() == user_id && c.message_id() == message_id)
             .map(|(i, _)| i)
             .map(|i| self.commands.remove(i))
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.commands.is_empty()
     }
 }

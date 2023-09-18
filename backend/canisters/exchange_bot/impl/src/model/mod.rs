@@ -1,2 +1,2 @@
 pub mod commands_pending;
-pub mod message_edits_queue;
+pub mod messages_pending;

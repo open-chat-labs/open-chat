@@ -1,7 +1,7 @@
 use crate::commands::Command;
 use crate::icpswap::ICPSwapClientFactory;
 use crate::model::commands_pending::CommandsPending;
-use crate::model::message_edits_queue::MessageEditsQueue;
+use crate::model::messages_pending::{MessagePending, MessagesPending};
 use crate::swap_client::{SwapClient, SwapClientFactory};
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{
-    BotMessage, BuildVersion, CanisterId, Cryptocurrency, Cycles, MessageContentInitial, MessageId, TextContent,
-    TimestampMillis, Timestamped, TokenInfo, UserId,
+    BotMessage, BuildVersion, CanisterId, Cryptocurrency, Cycles, MessageContent, MessageContentInitial, MessageId,
+    TextContent, TimestampMillis, Timestamped, TokenInfo, UserId,
 };
 use utils::env::Environment;
 
@@ -25,6 +25,7 @@ mod memory;
 mod model;
 mod queries;
 mod swap_client;
+mod transfer_to_user;
 mod updates;
 
 thread_local! {
@@ -72,16 +73,28 @@ impl RuntimeState {
 
     pub fn enqueue_command(&mut self, command: Command) {
         self.data.commands_pending.push(command);
-        // start job
+        jobs::process_commands::start_job_if_required(self);
     }
 
-    pub fn enqueue_message_edit(&mut self, user_id: UserId, message_id: MessageId, text: String, overwrite_existing: bool) {
-        if self
-            .data
-            .message_edits_queue
-            .push(user_id, message_id, text, overwrite_existing)
-        {
-            jobs::edit_messages::start_job_if_required(self);
+    pub fn enqueue_message_edit(&mut self, user_id: UserId, message_id: MessageId, text: String) {
+        self.enqueue_message(
+            user_id,
+            message_id,
+            MessagePending::Edit(MessageContent::Text(TextContent { text })),
+            false,
+        );
+    }
+
+    pub fn enqueue_message(
+        &mut self,
+        user_id: UserId,
+        message_id: MessageId,
+        message: MessagePending,
+        skip_if_already_queued: bool,
+    ) {
+        if !skip_if_already_queued || !self.data.messages_pending.contains(user_id, message_id) {
+            self.data.messages_pending.push(user_id, message_id, message);
+            jobs::process_messages::start_job_if_required(self);
         }
     }
 
@@ -110,7 +123,7 @@ struct Data {
     token_info: Vec<TokenInfo>,
     known_callers: HashMap<Principal, bool>,
     commands_pending: CommandsPending,
-    message_edits_queue: MessageEditsQueue,
+    messages_pending: MessagesPending,
     username: String,
     display_name: Option<String>,
     is_registered: bool,
@@ -133,7 +146,7 @@ impl Data {
             token_info: build_token_info(),
             known_callers: HashMap::new(),
             commands_pending: CommandsPending::default(),
-            message_edits_queue: MessageEditsQueue::default(),
+            messages_pending: MessagesPending::default(),
             username: "".to_string(),
             display_name: None,
             is_registered: false,

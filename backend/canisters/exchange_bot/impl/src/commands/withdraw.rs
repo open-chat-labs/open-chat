@@ -2,16 +2,16 @@ use crate::commands::common_errors::CommonErrors;
 use crate::commands::{
     build_error_response, Command, CommandParser, CommandSubTaskResult, OptionalCommandSubTaskResult, ParseMessageResult,
 };
+use crate::transfer_to_user::transfer_to_user;
 use crate::{mutate_state, RuntimeState};
-use candid::Principal;
 use lazy_static::lazy_static;
 use ledger_utils::{convert_to_subaccount, format_crypto_amount};
 use rand::Rng;
 use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use types::icrc1::{Account, BlockIndex, TransferArg};
-use types::{CanisterId, MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
+use types::icrc1::{Account, BlockIndex};
+use types::{CanisterId, MessageContent, MessageId, TimestampMillis, TimestampNanos, TokenInfo, UserId};
 
 lazy_static! {
     static ref REGEX: Regex = RegexBuilder::new(r"^withdraw\s+(?<token>\S+)(\s+(?<amount>[\d.,]+))?$")
@@ -107,7 +107,13 @@ impl WithdrawCommand {
                     self.token.clone(),
                 ));
             } else if let Some(amount) = self.amount() {
-                ic_cdk::spawn(withdraw(self.user_id, self.message_id, self.token.clone(), amount));
+                ic_cdk::spawn(withdraw(
+                    self.user_id,
+                    self.message_id,
+                    self.token.clone(),
+                    amount,
+                    state.env.now_nanos(),
+                ));
             }
             state.enqueue_command(Command::Withdraw(self));
         }
@@ -164,26 +170,14 @@ async fn check_user_balance(this_canister_id: CanisterId, user_id: UserId, messa
         if let Some(Command::Withdraw(command)) = state.data.commands_pending.get_mut(user_id, message_id) {
             command.sub_tasks.check_user_balance = status;
             command.in_progress = None;
+            let message_text = command.build_message_text();
+            state.enqueue_message_edit(user_id, message_id, message_text);
         }
     });
 }
 
-async fn withdraw(user_id: UserId, message_id: MessageId, token: TokenInfo, amount: u128) {
-    let subaccount = convert_to_subaccount(&user_id.into()).0;
-
-    let status = match icrc1_ledger_canister_c2c_client::icrc1_transfer(
-        token.ledger,
-        &TransferArg {
-            from_subaccount: Some(subaccount),
-            to: Account::from(Principal::from(user_id)),
-            fee: None,
-            created_at_time: None,
-            memo: None,
-            amount: amount.into(),
-        },
-    )
-    .await
-    {
+async fn withdraw(user_id: UserId, message_id: MessageId, token: TokenInfo, amount: u128, now_nanos: TimestampNanos) {
+    let status = match transfer_to_user(user_id, &token, amount, now_nanos).await {
         Ok(Ok(block_index)) => CommandSubTaskResult::Complete(block_index, None),
         Ok(Err(error)) => CommandSubTaskResult::Failed(format!("{error:?}")),
         Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
@@ -192,6 +186,8 @@ async fn withdraw(user_id: UserId, message_id: MessageId, token: TokenInfo, amou
         if let Some(Command::Withdraw(command)) = state.data.commands_pending.get_mut(user_id, message_id) {
             command.sub_tasks.withdraw = status;
             command.in_progress = None;
+            let message_text = command.build_message_text();
+            state.enqueue_message_edit(user_id, message_id, message_text);
         }
     });
 }
