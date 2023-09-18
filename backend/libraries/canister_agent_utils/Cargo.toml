@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-dfx-core = { git = "https://github.com/hpeebles/dfinity-sdk", rev = "0683b5440c318723a2f1fc5931074313d52c922b" }
+dfx-core = { workspace = true }
 dirs = { workspace = true }
 ic-agent = { workspace = true }
 ic-utils = { workspace = true }
