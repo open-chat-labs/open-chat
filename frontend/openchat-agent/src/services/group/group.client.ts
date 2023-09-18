@@ -28,7 +28,7 @@ import type {
     ResetInviteCodeResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
-    AccessRules,
+    Rules,
     SearchGroupChatResponse,
     User,
     GroupCanisterSummaryResponse,
@@ -44,6 +44,7 @@ import type {
     GroupChatIdentifier,
     ConvertToCommunityResponse,
     PublicGroupSummaryResponse,
+    UpdatedRules,
 } from "openchat-shared";
 import { DestinationInvalidError, textToCode } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -56,8 +57,6 @@ import {
     unblockUserResponse,
     getMessagesByMessageIndexResponse,
     apiOptionalGroupPermissions,
-    apiGroupRules,
-    rulesResponse,
     summaryResponse,
     summaryUpdatesResponse,
     claimPrizeResponse,
@@ -413,7 +412,8 @@ export class GroupClient extends CandidService {
         senderDisplayName: string | undefined,
         mentioned: User[],
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        rulesAccepted: number | undefined
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
@@ -423,8 +423,6 @@ export class GroupClient extends CandidService {
             ? dataClient.forwardData(event.event.content, [this.chatId.groupId])
             : dataClient.uploadData(event.event.content, [this.chatId.groupId]);
 
-        const emptyRulesAccepted: [] | [number] = [];
-
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
             const args = {
@@ -432,7 +430,7 @@ export class GroupClient extends CandidService {
                 message_id: event.event.messageId,
                 sender_name: senderName,
                 sender_display_name: apiOptional(identity, senderDisplayName),
-                rules_accepted: emptyRulesAccepted,
+                rules_accepted: apiOptional(identity, rulesAccepted),
                 replies_to: apiOptional(
                     (replyContext) => ({
                         event_index: replyContext.eventIndex,
@@ -468,7 +466,7 @@ export class GroupClient extends CandidService {
     updateGroup(
         name?: string,
         description?: string,
-        rules?: AccessRules,
+        rules?: UpdatedRules,
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
@@ -656,18 +654,6 @@ export class GroupClient extends CandidService {
             publicSummaryResponse,
             args
         );
-    }
-
-    getRules(): Promise<AccessRules | undefined> {
-        const args = { invite_code: apiOptional(textToCode, this.inviteCode) };
-        return this.handleQueryResponse(
-            () => this.groupService.rules(args),
-            rulesResponse,
-            args
-        ).catch((_err) => {
-            // whatever error we get, just assume that we cannot get hold of the rules
-            return undefined;
-        });
     }
 
     async getMessagesByMessageIndex(
@@ -890,14 +876,14 @@ export class GroupClient extends CandidService {
 
     convertToCommunity(
         historyVisible: boolean,
-        rules: AccessRules
+        rules: Rules
     ): Promise<ConvertToCommunityResponse> {
         return this.handleResponse(
             this.groupService.convert_into_community({
                 history_visible_to_new_joiners: historyVisible,
                 primary_language: [],
                 permissions: [],
-                rules: apiGroupRules(rules),
+                rules,
             }),
             convertToCommunityReponse
         );

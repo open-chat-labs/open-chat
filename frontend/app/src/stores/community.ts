@@ -39,6 +39,7 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
             pinned: [],
             index,
             displayName: undefined,
+            rulesAccepted: false,
         },
         primaryLanguage: "en",
         metrics: emptyChatMetrics(),

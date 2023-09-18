@@ -19,7 +19,7 @@
     } from "../../../stores/settings";
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
-    import type { OpenChat, AccessRules, MultiUserChat } from "openchat-client";
+    import type { OpenChat, Rules, MultiUserChat } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import AccessGateSummary from "../AccessGateSummary.svelte";
     import { interpolateLevel } from "../../../utils/i18n";
@@ -31,7 +31,7 @@
 
     export let chat: MultiUserChat;
     export let memberCount: number;
-    export let rules: AccessRules | undefined;
+    export let rules: Rules | undefined;
 
     // capture a snapshot of the chat as it is right now
     $: canEdit = client.canEditGroupDetails(chat.id);
@@ -40,7 +40,7 @@
 
     function editGroup() {
         if (canEdit) {
-            dispatch("editGroup", { chat, rules });
+            dispatch("editGroup", { chat, rules: { ...rules, newVersion: false } });
         }
     }
 
