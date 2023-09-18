@@ -91,7 +91,7 @@
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
         };
-        dispatch("sendTransfer", [content, undefined]);
+        dispatch("sendTransfer", content);
         lastCryptoSent.set(ledger);
         dispatch("close");
     }

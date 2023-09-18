@@ -53,6 +53,41 @@ export type MessageContent =
     | UserReferralCard
     | MemeFighterContent;
 
+export type CaptionedContent =
+    | AttachmentContent
+    | CryptocurrencyContent
+    | GiphyContent
+    | PrizeContent;
+
+export type AttachmentContent = ImageContent | VideoContent | AudioContent | FileContent;
+
+export function isAttachmentContent(content: MessageContent): content is AttachmentContent {
+    switch (content.kind) {
+        case "image_content":
+        case "video_content":
+        case "audio_content":
+        case "file_content":
+            return true;
+        default:
+            return false;
+    }
+}
+
+export function isCaptionedContent(content: MessageContent): content is CaptionedContent {
+    switch (content.kind) {
+        case "image_content":
+        case "video_content":
+        case "audio_content":
+        case "file_content":
+        case "crypto_content":
+        case "giphy_content":
+        case "prize_content":
+            return true;
+        default:
+            return false;
+    }
+}
+
 export type IndexRange = [number, number];
 
 export interface PlaceholderContent {

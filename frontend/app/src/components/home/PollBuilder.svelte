@@ -136,7 +136,7 @@
     function start() {
         const poll = createPollContent();
         if (poll) {
-            dispatch("sendPoll", [poll, undefined]);
+            dispatch("sendPoll", poll);
             open = false;
         }
     }

@@ -12,6 +12,7 @@
         OpenChat,
         User,
         TimelineItem,
+        AttachmentContent,
     } from "openchat-client";
     import { ICP_SYMBOL } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -65,7 +66,7 @@
     );
     $: textContent = derived(draftMessage, (d) => d.textContent);
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
-    $: fileToAttach = derived(draftMessage, (d) => d.attachment);
+    $: attachment = derived(draftMessage, (d) => d.attachment);
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSend = client.canReplyInThread(chat.id);
     $: canReact = client.canReactToMessages(chat.id);
@@ -119,7 +120,7 @@
                 .editMessageWithAttachment(
                     chat.id,
                     text,
-                    $fileToAttach,
+                    $attachment,
                     $editingEvent,
                     threadRootMessageIndex
                 )
@@ -129,7 +130,7 @@
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, mentioned, $fileToAttach);
+            sendMessageWithAttachment(text, mentioned, $attachment);
         }
         draftThreadMessages.delete(threadRootMessageIndex);
     }
@@ -145,16 +146,15 @@
     function sendMessageWithAttachment(
         textContent: string | undefined,
         mentioned: User[],
-        fileToAttach: MessageContent | undefined
+        attachment: AttachmentContent | undefined
     ) {
         client.sendMessageWithAttachment(
-            chat.id,
+            { chatId: chat.id, threadRootMessageIndex },
             $threadEvents,
             textContent,
             mentioned,
-            fileToAttach,
-            $replyingTo,
-            threadRootMessageIndex
+            attachment,
+            $replyingTo
         );
     }
 
@@ -182,7 +182,7 @@
         client.stopTyping(chat, user.userId, threadRootMessageIndex);
     }
 
-    function fileSelected(ev: CustomEvent<MessageContent>) {
+    function fileSelected(ev: CustomEvent<AttachmentContent>) {
         draftThreadMessages.setAttachment(threadRootMessageIndex, ev.detail);
     }
 
@@ -216,8 +216,14 @@
         }
     }
 
-    function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
-        sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
+    function sendMessageWithContent(ev: CustomEvent<MessageContent>) {
+        client.sendMessageWithContent(
+            { chatId: chat.id, threadRootMessageIndex },
+            $threadEvents,
+            [],
+            ev.detail,
+            $replyingTo
+        );
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -370,7 +376,7 @@
 {#if !readonly}
     <Footer
         {chat}
-        fileToAttach={$fileToAttach}
+        attachment={$attachment}
         editingEvent={$editingEvent}
         replyingTo={$replyingTo}
         textContent={$textContent}

@@ -39,7 +39,6 @@ import {
     createMessage,
     findMessageById,
     getMembersString,
-    getMessageContent,
     groupBySender,
     groupChatFromCandidate,
     groupEvents,
@@ -95,7 +94,7 @@ import {
     currentChatInvitedUsers,
     currentChatDraftMessage,
     currentChatEditingEvent,
-    currentChatFileToAttach,
+    currentChatAttachment,
     currentChatMembers,
     currentChatPinnedMessages,
     currentChatReplyingTo,
@@ -249,7 +248,6 @@ import type {
     SendMessageSuccess,
     TransferSuccess,
     User,
-    MessageContent,
     EnhancedReplyContext,
     RemoteUserToggledReaction,
     RemoteUserSentMessage,
@@ -323,6 +321,9 @@ import type {
     UpdateUserGroupResponse,
     SetMemberDisplayNameResponse,
     UserOrUserGroup,
+    AttachmentContent,
+    MessageContent,
+    MessageContext,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1180,7 +1181,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
+    getContentAsText(formatter: MessageFormatter, content: AttachmentContent): string {
         return getContentAsText(formatter, content, get(cryptoLookup));
     }
 
@@ -1428,7 +1429,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private createMessage = createMessage;
     private findMessageById = findMessageById;
-    private getMessageContent = getMessageContent;
     canForward = canForward;
     containsReaction = containsReaction;
     groupEvents = groupEvents;
@@ -2183,7 +2183,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     clearSelectedChat = clearSelectedChat;
     private mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
-    messageContentFromFile(file: File): Promise<MessageContent> {
+    messageContentFromFile(file: File): Promise<AttachmentContent> {
         return messageContentFromFile(file, this._liveState.isDiamond);
     }
     formatFileSize = formatFileSize;
@@ -2933,120 +2933,136 @@ export class OpenChat extends OpenChatAgentWorker {
         return content.kind !== "poll_content";
     }
 
-    sendMessageWithAttachment(
-        chatId: ChatIdentifier,
+    sendMessageWithContent(
+        messageContext: MessageContext,
         currentEvents: EventWrapper<ChatEvent>[],
-        textContent: string | undefined,
         mentioned: User[],
-        fileToAttach: MessageContent | undefined,
+        content: MessageContent,
         replyingTo: EnhancedReplyContext | undefined,
-        threadRootMessageIndex: number | undefined,
     ): void {
+        const { chatId, threadRootMessageIndex } = messageContext;
+
         const chat = this._liveState.chatSummaries.get(chatId);
 
         if (chat === undefined) {
             return;
         }
 
-        const context = { chatId, threadRootMessageIndex };
+        const [nextEventIndex, nextMessageIndex] =
+            threadRootMessageIndex !== undefined
+                ? nextEventAndMessageIndexesForThread(currentEvents)
+                : nextEventAndMessageIndexes();
 
-        if (textContent || fileToAttach) {
-            const [nextEventIndex, nextMessageIndex] =
-                threadRootMessageIndex !== undefined
-                    ? nextEventAndMessageIndexesForThread(currentEvents)
-                    : nextEventAndMessageIndexes();
+        const msg = this.createMessage(this.user.userId, nextMessageIndex, content, replyingTo);
+        const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-            const msg = this.createMessage(
-                this.user.userId,
-                nextMessageIndex,
-                textContent,
-                replyingTo,
-                fileToAttach,
-            );
-            const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
+        const canRetry = this.canRetryMessage(msg.content);
 
-            const canRetry = this.canRetryMessage(msg.content);
-
-            this.sendRequest({
-                kind: "sendMessage",
-                chatType: chat.kind,
-                chatId,
-                user: this.user,
-                mentioned,
-                event,
-                threadRootMessageIndex,
-            })
-                .then(([resp, msg]) => {
-                    if (resp.kind === "success" || resp.kind === "transfer_success") {
-                        this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
-                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            this.refreshAccountBalance(
-                                msg.content.transfer.ledger,
-                                this.user.userId,
-                            );
-                        }
-                        if (threadRootMessageIndex !== undefined) {
-                            trackEvent("sent_threaded_message");
+        this.sendRequest({
+            kind: "sendMessage",
+            chatType: chat.kind,
+            chatId: messageContext.chatId,
+            user: this.user,
+            mentioned,
+            event,
+            threadRootMessageIndex: messageContext.threadRootMessageIndex,
+        })
+            .then(([resp, msg]) => {
+                if (resp.kind === "success" || resp.kind === "transfer_success") {
+                    this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
+                    if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                        this.refreshAccountBalance(msg.content.transfer.ledger, this.user.userId);
+                    }
+                    if (threadRootMessageIndex !== undefined) {
+                        trackEvent("sent_threaded_message");
+                    } else {
+                        if (chat.kind === "direct_chat") {
+                            trackEvent("sent_direct_message");
                         } else {
-                            if (chat.kind === "direct_chat") {
-                                trackEvent("sent_direct_message");
+                            if (chat.public) {
+                                trackEvent("sent_public_group_message");
                             } else {
-                                if (chat.public) {
-                                    trackEvent("sent_public_group_message");
-                                } else {
-                                    trackEvent("sent_private_group_message");
-                                }
+                                trackEvent("sent_private_group_message");
                             }
                         }
-                        if (msg.repliesTo !== undefined) {
-                            // double counting here which I think is OK since we are limited to string events
-                            trackEvent("replied_to_message");
-                        }
-                    } else {
-                        this.removeMessage(
-                            chatId,
-                            msg.messageId,
-                            this.user.userId,
-                            threadRootMessageIndex,
-                        );
-                        if (canRetry) {
-                            failedMessagesStore.add(context, event);
-                        }
-                        this.dispatchEvent(new SendMessageFailed(!canRetry));
                     }
-                })
-                .catch((err) => {
+                    if (msg.repliesTo !== undefined) {
+                        // double counting here which I think is OK since we are limited to string events
+                        trackEvent("replied_to_message");
+                    }
+                } else {
                     this.removeMessage(
                         chatId,
-                        event.event.messageId,
+                        msg.messageId,
                         this.user.userId,
                         threadRootMessageIndex,
                     );
                     if (canRetry) {
-                        failedMessagesStore.add(context, event);
+                        failedMessagesStore.add(messageContext, event);
                     }
-                    this._logger.error("Exception sending message", err);
                     this.dispatchEvent(new SendMessageFailed(!canRetry));
-                });
+                }
+            })
+            .catch((err) => {
+                this.removeMessage(
+                    chatId,
+                    event.event.messageId,
+                    this.user.userId,
+                    threadRootMessageIndex,
+                );
+                if (canRetry) {
+                    failedMessagesStore.add(messageContext, event);
+                }
+                this._logger.error("Exception sending message", err);
+                this.dispatchEvent(new SendMessageFailed(!canRetry));
+            });
 
-            if (threadRootMessageIndex !== undefined) {
-                this.dispatchEvent(new SendingThreadMessage());
-            } else {
-                this.dispatchEvent(new SendingMessage());
-            }
-
-            // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
-            // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
-            window.setTimeout(() => {
-                this.sendMessage(chat, event, threadRootMessageIndex).then(() => {
-                    if (threadRootMessageIndex !== undefined) {
-                        this.dispatchEvent(new SentThreadMessage(event));
-                    } else {
-                        this.dispatchEvent(new SentMessage());
-                    }
-                });
-            }, 0);
+        if (threadRootMessageIndex !== undefined) {
+            this.dispatchEvent(new SendingThreadMessage());
+        } else {
+            this.dispatchEvent(new SendingMessage());
         }
+
+        // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
+        // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
+        window.setTimeout(() => {
+            this.sendMessage(chat, event, threadRootMessageIndex).then(() => {
+                if (threadRootMessageIndex !== undefined) {
+                    this.dispatchEvent(new SentThreadMessage(event));
+                } else {
+                    this.dispatchEvent(new SentMessage());
+                }
+            });
+        }, 0);
+    }
+
+    sendMessageWithAttachment(
+        messageContext: MessageContext,
+        currentEvents: EventWrapper<ChatEvent>[],
+        textContent: string | undefined,
+        mentioned: User[],
+        attachment: AttachmentContent | undefined,
+        replyingTo: EnhancedReplyContext | undefined,
+    ): void {
+        return this.sendMessageWithContent(
+            messageContext,
+            currentEvents,
+            mentioned,
+            this.getMessageContent(textContent, attachment),
+            replyingTo,
+        );
+    }
+
+    private getMessageContent(
+        text: string | undefined,
+        attachment: AttachmentContent | undefined,
+    ): MessageContent {
+        return attachment
+            ? { ...attachment, caption: text }
+            : ({
+                  kind: "text_content",
+                  text: text ?? "",
+              } as MessageContent);
     }
 
     buildCryptoTransferText(
@@ -3092,7 +3108,7 @@ export class OpenChat extends OpenChatAgentWorker {
     editMessageWithAttachment(
         chatId: ChatIdentifier,
         textContent: string | undefined,
-        fileToAttach: MessageContent | undefined,
+        attachment: AttachmentContent | undefined,
         editingEvent: EventWrapper<Message>,
         threadRootMessageIndex?: number,
     ): Promise<boolean> {
@@ -3102,11 +3118,11 @@ export class OpenChat extends OpenChatAgentWorker {
             return Promise.resolve(false);
         }
 
-        if (textContent || fileToAttach) {
+        if (textContent || attachment) {
             const msg = {
                 ...editingEvent.event,
                 edited: true,
-                content: this.getMessageContent(textContent ?? undefined, fileToAttach),
+                content: this.getMessageContent(textContent ?? undefined, attachment),
             };
             localMessageUpdates.markContentEdited(msg.messageId, msg.content);
 
@@ -5277,7 +5293,7 @@ export class OpenChat extends OpenChatAgentWorker {
     currentChatReplyingTo = currentChatReplyingTo;
     currentChatEditingEvent = currentChatEditingEvent;
     isProposalGroup = isProposalGroup;
-    currentChatFileToAttach = currentChatFileToAttach;
+    currentChatAttachment = currentChatAttachment;
     currentChatTextContent = currentChatTextContent;
     numberOfThreadsStore = numberOfThreadsStore;
     notificationStatus = notificationStatus;

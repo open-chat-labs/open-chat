@@ -7,13 +7,13 @@ import type {
     EnhancedReplyContext,
     EventWrapper,
     Message,
-    MessageContent,
     ThreadSyncDetails,
     CreatedUser,
     ChatIdentifier,
     DirectChatIdentifier,
     MultiUserChat,
     ChatListScope,
+    AttachmentContent,
 } from "openchat-shared";
 import {
     compareChats,
@@ -21,6 +21,7 @@ import {
     ChatMap,
     nullMembership,
     chatIdentifiersEqual,
+    isAttachmentContent,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, type Readable, writable, type Writable } from "svelte/store";
@@ -685,7 +686,7 @@ export const currentChatDraftMessage = {
     ...draftMessages,
     setTextContent: (id: ChatIdentifier, textContent: string | undefined): void =>
         draftMessages.setProp(id, "textContent", textContent),
-    setAttachment: (id: ChatIdentifier, attachment: MessageContent | undefined): void =>
+    setAttachment: (id: ChatIdentifier, attachment: AttachmentContent | undefined): void =>
         draftMessages.setProp(id, "attachment", attachment),
     setReplyingTo: (id: ChatIdentifier, replyingTo: EnhancedReplyContext | undefined): void =>
         draftMessages.setProp(id, "replyingTo", replyingTo),
@@ -693,10 +694,9 @@ export const currentChatDraftMessage = {
         const users = get(userStore);
         const updated = {
             editingEvent,
-            attachment:
-                editingEvent?.event.content.kind !== "text_content"
-                    ? editingEvent?.event.content
-                    : undefined,
+            attachment: isAttachmentContent(editingEvent.event.content)
+                ? editingEvent.event.content
+                : undefined,
             replyingTo:
                 editingEvent.event.repliesTo &&
                 editingEvent.event.repliesTo.kind === "rehydrated_reply_context"
@@ -720,7 +720,7 @@ export const currentChatReplyingTo = createDerivedPropStore(
     "replyingTo",
     () => undefined,
 );
-export const currentChatFileToAttach = createDerivedPropStore(
+export const currentChatAttachment = createDerivedPropStore(
     currentChatDraftMessage,
     "attachment",
     () => undefined,

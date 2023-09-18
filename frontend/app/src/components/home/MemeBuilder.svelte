@@ -51,7 +51,7 @@
                 width: rect.width,
                 height: rect.height,
             };
-            dispatch("sendMeme", [content, undefined]);
+            dispatch("sendMeme", content);
             open = false;
         }
     }

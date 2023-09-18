@@ -21,6 +21,7 @@
         CommunityMap,
         type CommunitySummary,
         ICP_SYMBOL,
+        type AttachmentContent,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -60,7 +61,7 @@
     $: currentChatTextContent = client.currentChatTextContent;
     $: currentChatReplyingTo = client.currentChatReplyingTo;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
-    $: currentChatFileToAttach = client.currentChatFileToAttach;
+    $: currentChatAttachment = client.currentChatAttachment;
     $: currentChatEditingEvent = client.currentChatEditingEvent;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: lastCryptoSent = client.lastCryptoSent;
@@ -143,7 +144,7 @@
         };
     }
 
-    function fileSelected(ev: CustomEvent<MessageContent>) {
+    function fileSelected(ev: CustomEvent<AttachmentContent>) {
         currentChatDraftMessage.setAttachment(chat.id, ev.detail);
     }
 
@@ -193,7 +194,7 @@
                 .editMessageWithAttachment(
                     chat.id,
                     text,
-                    $currentChatFileToAttach,
+                    $currentChatAttachment,
                     $currentChatEditingEvent
                 )
                 .then((success) => {
@@ -202,28 +203,33 @@
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, mentioned, $currentChatFileToAttach);
+            sendMessageWithAttachment(text, mentioned, $currentChatAttachment);
         }
     }
 
     function sendMessageWithAttachment(
         textContent: string | undefined,
         mentioned: User[],
-        fileToAttach: MessageContent | undefined
+        attachment: AttachmentContent | undefined
     ) {
         client.sendMessageWithAttachment(
-            chat.id,
+            { chatId: chat.id },
             events,
             textContent,
             mentioned,
-            fileToAttach,
-            $currentChatReplyingTo,
-            undefined
+            attachment,
+            $currentChatReplyingTo
         );
     }
 
-    export function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
-        sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
+    export function sendMessageWithContent(ev: CustomEvent<MessageContent>) {
+        client.sendMessageWithContent(
+            { chatId: chat.id },
+            events,
+            [],
+            ev.detail,
+            $currentChatReplyingTo
+        );
     }
 
     function forwardMessage(msg: Message) {
@@ -332,7 +338,7 @@
     {#if showFooter}
         <Footer
             {chat}
-            fileToAttach={$currentChatFileToAttach}
+            attachment={$currentChatAttachment}
             editingEvent={$currentChatEditingEvent}
             replyingTo={$currentChatReplyingTo}
             textContent={$currentChatTextContent}

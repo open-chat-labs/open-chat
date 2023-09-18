@@ -10,10 +10,10 @@
         EventWrapper,
         Message,
         MessageAction,
-        MessageContent,
         CreatedUser,
         OpenChat,
         MultiUserChat,
+        AttachmentContent,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
 
@@ -23,7 +23,7 @@
     export let preview: boolean;
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
-    export let fileToAttach: MessageContent | undefined;
+    export let attachment: AttachmentContent | undefined;
     export let editingEvent: EventWrapper<Message> | undefined;
     export let replyingTo: EnhancedReplyContext | undefined;
     export let textContent: string | undefined;
@@ -37,6 +37,8 @@
 
     $: canSend =
         mode === "thread" ? client.canReplyInThread(chat.id) : client.canSendMessages(chat.id);
+
+    $: console.log("Attachment: ", attachment);
 
     function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
         return items.reduce<File | undefined>((res, item) => {
@@ -87,15 +89,13 @@
 
 <div class="footer">
     <div class="footer-overlay">
-        {#if editingEvent === undefined && (replyingTo || fileToAttach !== undefined)}
+        {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
             <div class="draft-container">
                 {#if replyingTo}
                     <ReplyingTo chatId={chat.id} readonly on:cancelReply {user} {replyingTo} />
                 {/if}
-                {#if fileToAttach !== undefined}
-                    {#if fileToAttach.kind === "image_content" || fileToAttach.kind === "audio_content" || fileToAttach.kind === "video_content" || fileToAttach.kind === "file_content" || fileToAttach.kind === "crypto_content"}
-                        <DraftMediaMessage content={fileToAttach} />
-                    {/if}
+                {#if attachment !== undefined}
+                    <DraftMediaMessage content={attachment} />
                 {/if}
             </div>
         {/if}
@@ -113,7 +113,7 @@
         {preview}
         {blocked}
         {joining}
-        {fileToAttach}
+        {attachment}
         {editingEvent}
         {replyingTo}
         {textContent}

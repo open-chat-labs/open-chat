@@ -162,8 +162,9 @@
                     url: selectedGif.images.downsized.url,
                     mimeType: "image/gif",
                 },
+                caption: message === "" ? undefined : message,
             };
-            dispatch("sendGiphy", [content, message === "" ? undefined : message]);
+            dispatch("sendGiphy", content);
             open = false;
         }
     }
@@ -264,8 +265,7 @@
                 <ButtonGroup align={$mobileWidth ? "center" : "end"}>
                     <Button tiny disabled={selectedGif === undefined} on:click={send}
                         >{$_("send")}</Button>
-                    <Button tiny secondary on:click={() => (open = false)}
-                        >{$_("cancel")}</Button>
+                    <Button tiny secondary on:click={() => (open = false)}>{$_("cancel")}</Button>
                 </ButtonGroup>
             </span>
         </ModalContent>
