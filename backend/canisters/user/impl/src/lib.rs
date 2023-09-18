@@ -15,7 +15,7 @@ use ledger_utils::default_ledger_account;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use notifications_canister::c2c_push_notification;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::collections::HashSet;
