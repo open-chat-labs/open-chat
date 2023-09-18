@@ -40,7 +40,7 @@ export function getTheme(base: Theme): Theme {
     base.members.hv = base.chatSummary.hv;
     base.placeholder = txtLight;
     base.entry.input.bg = veryDarkCyan;
-    base.input.bg = darkGrayish;
+    base.input.bg = veryDarkCyan;
     base.chatSearch.bg = veryDarkCyan;
     base.currentChat.msg.bg = darkCyan;
     base.currentChat.msg.me.bg = darkCyan2;
