@@ -1,7 +1,7 @@
 use crate::commands::common_errors::CommonErrors;
-use crate::commands::{Command, CommandParser, ParseMessageResult};
+use crate::commands::{build_error_response, Command, CommandParser, ParseMessageResult};
 use crate::swap_client::SwapClient;
-use crate::{mutate_state, Data, RuntimeState};
+use crate::{mutate_state, RuntimeState};
 use exchange_bot_canister::ExchangeId;
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -14,10 +14,11 @@ use std::str::FromStr;
 use types::{MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
 
 lazy_static! {
-    static ref REGEX: Regex = RegexBuilder::new(r"quote\s+(?<input_token>\S+)\s+(?<output_token>\S+)(\s+(?<amount>[\d.,]+))?")
-        .case_insensitive(true)
-        .build()
-        .unwrap();
+    static ref REGEX: Regex =
+        RegexBuilder::new(r"^quote\s+(?<input_token>\S+)\s+(?<output_token>\S+)(\s+(?<amount>[\d.,]+))?$")
+            .case_insensitive(true)
+            .build()
+            .unwrap();
 }
 
 pub struct QuoteCommandParser;
@@ -192,9 +193,4 @@ async fn quote_single(
             }
         }
     })
-}
-
-fn build_error_response(error: CommonErrors, data: &Data) -> ParseMessageResult {
-    let response_message = error.build_response_message(data);
-    ParseMessageResult::Error(data.build_text_response(response_message, None))
 }

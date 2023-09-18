@@ -51,7 +51,7 @@ impl ICPSwapClient {
         };
 
         match icpswap_swap_pool_canister_c2c_client::quote(self.swap_canister_id, &args).await? {
-            ICPSwapResult::Ok(amount_out) => Ok(amount_out.0.try_into().unwrap()),
+            ICPSwapResult::Ok(amount_out) => Ok(nat_to_u128(amount_out)),
             ICPSwapResult::Err(e) => Err((RejectionCode::CanisterError, format!("{e:?}"))),
         }
     }

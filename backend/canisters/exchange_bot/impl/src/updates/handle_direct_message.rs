@@ -1,12 +1,13 @@
 use crate::commands::quote::QuoteCommandParser;
-use crate::commands::{CommandParser, ParseMessageResult};
+use crate::commands::withdraw::WithdrawCommandParser;
+use crate::commands::{Command, CommandParser, ParseMessageResult};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use exchange_bot_canister::handle_direct_message::*;
 use local_user_index_canister_c2c_client::LookupUserError;
-use types::UserId;
+use types::{MessageContent, UserId};
 
 #[update_msgpack]
 #[trace]
@@ -15,21 +16,35 @@ async fn handle_direct_message(args: Args) -> Response {
         return read_state(|state| state.data.build_text_response(message, None));
     };
 
-    mutate_state(|state| match QuoteCommandParser::try_parse(&args.content, state) {
-        ParseMessageResult::Success(command) => {
+    mutate_state(|state| match try_parse_message(args.content, state) {
+        Ok(command) => {
             let message = command.build_message();
             let message_id = command.message_id();
             let response = state.data.build_response(message, Some(message_id));
             command.process(state);
             response
         }
-        ParseMessageResult::Error(response) => response,
-        ParseMessageResult::DoesNotMatch => {
-            let mut text = "This bot currently supports the following message formats:\n\n".to_string();
-            text.push_str(QuoteCommandParser::help_text());
-            state.data.build_text_response(text, None)
-        }
+        Err(response) => response,
     })
+}
+
+fn try_parse_message(message: MessageContent, state: &mut RuntimeState) -> Result<Command, Response> {
+    match QuoteCommandParser::try_parse(&message, state) {
+        ParseMessageResult::Success(c) => return Ok(c),
+        ParseMessageResult::Error(response) => return Err(response),
+        ParseMessageResult::DoesNotMatch => {}
+    };
+
+    match WithdrawCommandParser::try_parse(&message, state) {
+        ParseMessageResult::Success(c) => return Ok(c),
+        ParseMessageResult::Error(response) => return Err(response),
+        ParseMessageResult::DoesNotMatch => {}
+    };
+
+    let mut text = "This bot currently supports the following message formats:\n\n".to_string();
+    text.push_str(QuoteCommandParser::help_text());
+    text.push_str(WithdrawCommandParser::help_text());
+    Err(state.data.build_text_response(text, None))
 }
 
 async fn verify_caller() -> Result<UserId, String> {

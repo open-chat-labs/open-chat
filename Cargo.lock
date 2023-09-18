@@ -3272,7 +3272,6 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
- "ic-ledger-types",
  "serde",
  "serde_bytes",
  "types",
