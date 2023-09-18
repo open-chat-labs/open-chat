@@ -179,7 +179,7 @@ pub async fn upgrade_market_maker_canister(
 }
 
 pub async fn upgrade_exchange_bot_canister(
-    identity: BasicIdentity,
+    identity: Box<dyn Identity>,
     url: String,
     exchange_bot_canister_id: CanisterId,
     version: BuildVersion,

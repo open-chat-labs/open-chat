@@ -2117,7 +2117,7 @@ dependencies = [
  "ic-stable-structures",
  "icpswap_client",
  "icrc1_ledger_canister_c2c_client",
- "itertools",
+ "itertools 0.11.0",
  "lazy_static",
  "ledger_utils",
  "local_user_index_canister_c2c_client",
