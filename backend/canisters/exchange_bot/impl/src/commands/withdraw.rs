@@ -1,14 +1,15 @@
+use crate::commands::balance::check_user_balance;
 use crate::commands::common_errors::CommonErrors;
 use crate::commands::{build_error_response, Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::transfer_to_user::transfer_to_user;
 use crate::{mutate_state, RuntimeState};
 use lazy_static::lazy_static;
-use ledger_utils::{convert_to_subaccount, format_crypto_amount};
+use ledger_utils::format_crypto_amount;
 use rand::Rng;
 use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use types::icrc1::{Account, BlockIndex};
+use types::icrc1::BlockIndex;
 use types::{CanisterId, MessageContent, MessageId, TimestampMillis, TimestampNanos, TokenInfo, UserId};
 
 lazy_static! {
@@ -118,18 +119,7 @@ impl WithdrawCommand {
     }
 
     async fn check_user_balance(mut self, this_canister_id: CanisterId) {
-        let account = Account {
-            owner: this_canister_id,
-            subaccount: Some(convert_to_subaccount(&self.user_id.into()).0),
-        };
-        self.sub_tasks.check_user_balance =
-            match icrc1_ledger_canister_c2c_client::icrc1_balance_of(self.token.ledger, &account)
-                .await
-                .map(|a| u128::try_from(a.0).unwrap())
-            {
-                Ok(amount) => CommandSubTaskResult::Complete(amount, Some(format_crypto_amount(amount, self.token.decimals))),
-                Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
-            };
+        self.sub_tasks.check_user_balance = check_user_balance(self.user_id, &self.token, this_canister_id).await;
 
         if let Some(amount) = self.amount() {
             if amount <= self.token.fee {

@@ -1,3 +1,4 @@
+use crate::commands::balance::BalanceCommandParser;
 use crate::commands::quote::QuoteCommandParser;
 use crate::commands::withdraw::WithdrawCommandParser;
 use crate::commands::{Command, CommandParser, ParseMessageResult};
@@ -29,6 +30,12 @@ async fn handle_direct_message(args: Args) -> Response {
 }
 
 fn try_parse_message(message: MessageContent, state: &mut RuntimeState) -> Result<Command, Response> {
+    match BalanceCommandParser::try_parse(&message, state) {
+        ParseMessageResult::Success(c) => return Ok(c),
+        ParseMessageResult::Error(response) => return Err(response),
+        ParseMessageResult::DoesNotMatch => {}
+    };
+
     match QuoteCommandParser::try_parse(&message, state) {
         ParseMessageResult::Success(c) => return Ok(c),
         ParseMessageResult::Error(response) => return Err(response),
@@ -43,6 +50,8 @@ fn try_parse_message(message: MessageContent, state: &mut RuntimeState) -> Resul
 
     let mut text = "This bot currently supports the following message formats:\n\n".to_string();
     text.push_str(QuoteCommandParser::help_text());
+    text.push_str("\n\n");
+    text.push_str(BalanceCommandParser::help_text());
     text.push_str("\n\n");
     text.push_str(WithdrawCommandParser::help_text());
     Err(state.data.build_text_response(text, None))

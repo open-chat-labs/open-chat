@@ -1,3 +1,4 @@
+use crate::commands::balance::BalanceCommand;
 use crate::commands::common_errors::CommonErrors;
 use crate::commands::quote::QuoteCommand;
 use crate::commands::withdraw::WithdrawCommand;
@@ -6,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use types::{MessageContent, MessageContentInitial, MessageId, TextContent};
 
+pub mod balance;
 pub mod common_errors;
 pub mod quote;
 pub mod withdraw;
@@ -18,6 +20,7 @@ pub(crate) trait CommandParser {
 
 #[derive(Serialize, Deserialize)]
 pub enum Command {
+    Balance(BalanceCommand),
     Quote(QuoteCommand),
     Withdraw(WithdrawCommand),
 }
@@ -25,6 +28,7 @@ pub enum Command {
 impl Command {
     pub fn message_id(&self) -> MessageId {
         match self {
+            Command::Balance(b) => b.message_id,
             Command::Quote(q) => q.message_id,
             Command::Withdraw(w) => w.message_id,
         }
@@ -32,6 +36,7 @@ impl Command {
 
     pub(crate) fn process(self, state: &mut RuntimeState) {
         match self {
+            Command::Balance(b) => b.process(state),
             Command::Quote(q) => q.process(state),
             Command::Withdraw(w) => w.process(state),
         }
@@ -39,6 +44,9 @@ impl Command {
 
     pub fn build_message(&self) -> MessageContentInitial {
         match self {
+            Command::Balance(b) => MessageContentInitial::Text(TextContent {
+                text: b.build_message_text(),
+            }),
             Command::Quote(q) => MessageContentInitial::Text(TextContent {
                 text: q.build_message_text(),
             }),
@@ -70,10 +78,6 @@ pub enum CommandSubTaskResult<T> {
 }
 
 impl<T> CommandSubTaskResult<T> {
-    pub fn is_required(&self) -> bool {
-        !matches!(self, Self::NotRequired)
-    }
-
     pub fn is_pending(&self) -> bool {
         matches!(self, Self::Pending)
     }
