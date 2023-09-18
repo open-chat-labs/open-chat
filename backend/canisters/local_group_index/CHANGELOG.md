@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.849](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.849-local_group_index)] - 2023-09-18
+
 ### Added
 
 - Add `default_channel_rules` to `create_community` ([#4387](https://github.com/open-chat-labs/open-chat/pull/4374))
