@@ -1,5 +1,5 @@
-use crate::commands::balance::check_user_balance;
 use crate::commands::common_errors::CommonErrors;
+use crate::commands::sub_tasks::check_balance::check_balance;
 use crate::commands::{build_error_response, Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::transfer_to_user::transfer_to_user;
 use crate::{mutate_state, RuntimeState};
@@ -119,7 +119,7 @@ impl WithdrawCommand {
     }
 
     async fn check_user_balance(mut self, this_canister_id: CanisterId) {
-        self.sub_tasks.check_user_balance = check_user_balance(self.user_id, &self.token, this_canister_id).await;
+        self.sub_tasks.check_user_balance = check_balance(self.user_id, &self.token, this_canister_id).await;
 
         if let Some(amount) = self.amount() {
             if amount <= self.token.fee {
@@ -161,6 +161,6 @@ impl WithdrawCommand {
     }
 
     fn is_finished(&self) -> bool {
-        !matches!(self.sub_tasks.withdraw, CommandSubTaskResult::Pending)
+        !self.sub_tasks.withdraw.is_pending()
     }
 }

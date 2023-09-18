@@ -1,12 +1,11 @@
 use crate::commands::common_errors::CommonErrors;
+use crate::commands::sub_tasks::check_balance::check_balance;
 use crate::commands::{build_error_response, Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::{mutate_state, RuntimeState};
 use lazy_static::lazy_static;
-use ledger_utils::{convert_to_subaccount, format_crypto_amount};
 use rand::Rng;
 use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
-use types::icrc1::Account;
 use types::{CanisterId, MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
 
 lazy_static! {
@@ -69,7 +68,7 @@ impl BalanceCommand {
     }
 
     pub(crate) fn process(self, state: &mut RuntimeState) {
-        ic_cdk::spawn(self.check_user_balance(state.env.canister_id()));
+        ic_cdk::spawn(self.check_balance(state.env.canister_id()));
     }
 
     pub fn build_message_text(&self) -> String {
@@ -78,31 +77,12 @@ impl BalanceCommand {
         format!("Checking {symbol} balance: {status}")
     }
 
-    async fn check_user_balance(mut self, this_canister_id: CanisterId) {
-        self.result = check_user_balance(self.user_id, &self.token, this_canister_id).await;
+    async fn check_balance(mut self, this_canister_id: CanisterId) {
+        self.result = check_balance(self.user_id, &self.token, this_canister_id).await;
 
         mutate_state(|state| {
             let message_text = self.build_message_text();
             state.enqueue_message_edit(self.user_id, self.message_id, message_text);
         });
-    }
-}
-
-pub(crate) async fn check_user_balance(
-    user_id: UserId,
-    token: &TokenInfo,
-    this_canister_id: CanisterId,
-) -> CommandSubTaskResult<u128> {
-    let account = Account {
-        owner: this_canister_id,
-        subaccount: Some(convert_to_subaccount(&user_id.into()).0),
-    };
-
-    match icrc1_ledger_canister_c2c_client::icrc1_balance_of(token.ledger, &account)
-        .await
-        .map(|a| u128::try_from(a.0).unwrap())
-    {
-        Ok(amount) => CommandSubTaskResult::Complete(amount, Some(format_crypto_amount(amount, token.decimals))),
-        Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
     }
 }

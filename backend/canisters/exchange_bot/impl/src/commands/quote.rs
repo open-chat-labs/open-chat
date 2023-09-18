@@ -1,4 +1,5 @@
 use crate::commands::common_errors::CommonErrors;
+use crate::commands::sub_tasks::get_quotes::get_quote;
 use crate::commands::{build_error_response, Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::swap_client::SwapClient;
 use crate::{mutate_state, RuntimeState};
@@ -72,7 +73,7 @@ pub struct QuoteCommand {
     pub amount: u128,
     pub exchange_ids: Vec<ExchangeId>,
     pub message_id: MessageId,
-    pub quote_statuses: Vec<(ExchangeId, CommandSubTaskResult<u128>)>,
+    pub results: Vec<(ExchangeId, CommandSubTaskResult<u128>)>,
 }
 
 impl QuoteCommand {
@@ -98,7 +99,7 @@ impl QuoteCommand {
                 amount,
                 exchange_ids: clients.iter().map(|c| c.exchange_id()).collect(),
                 message_id: state.env.rng().gen(),
-                quote_statuses,
+                results: quote_statuses,
             })
         } else {
             Err(CommonErrors::PairNotSupported)
@@ -107,6 +108,7 @@ impl QuoteCommand {
 
     pub(crate) fn process(self, state: &mut RuntimeState) {
         let amount = self.amount;
+        let output_token_decimals = self.output_token.decimals;
         let clients: Vec<_> = self
             .exchange_ids
             .iter()
@@ -117,7 +119,7 @@ impl QuoteCommand {
 
         let futures: Vec<_> = clients
             .into_iter()
-            .map(|c| quote_single(amount, c, command.clone()))
+            .map(|c| quote_single(c, amount, output_token_decimals, command.clone()))
             .collect();
 
         ic_cdk::spawn(async {
@@ -132,7 +134,7 @@ impl QuoteCommand {
             self.input_token.token.token_symbol(),
             self.output_token.token.token_symbol()
         );
-        for (exchange_id, status) in self.quote_statuses.iter() {
+        for (exchange_id, status) in self.results.iter() {
             let exchange_name = exchange_id.to_string();
             let status_text = status.to_string();
             text.push_str(&format!("\n{exchange_name}: {status_text}"));
@@ -141,28 +143,21 @@ impl QuoteCommand {
     }
 
     fn set_quote_result(&mut self, exchange_id: ExchangeId, result: CommandSubTaskResult<u128>) {
-        if let Some(r) = self
-            .quote_statuses
-            .iter_mut()
-            .find(|(e, _)| *e == exchange_id)
-            .map(|(_, s)| s)
-        {
+        if let Some(r) = self.results.iter_mut().find(|(e, _)| *e == exchange_id).map(|(_, s)| s) {
             *r = result;
         }
     }
 }
 
-async fn quote_single(amount: u128, client: Box<dyn SwapClient>, wrapped_command: Arc<Mutex<QuoteCommand>>) {
-    let response = client.quote(amount).await;
+async fn quote_single(
+    client: Box<dyn SwapClient>,
+    amount: u128,
+    output_token_decimals: u8,
+    wrapped_command: Arc<Mutex<QuoteCommand>>,
+) {
+    let result = get_quote(client.as_ref(), amount, output_token_decimals).await;
 
     let mut command = wrapped_command.lock().unwrap();
-    let result = match response {
-        Ok(amount_out) => CommandSubTaskResult::Complete(
-            amount_out,
-            Some(format_crypto_amount(amount_out, command.output_token.decimals)),
-        ),
-        Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
-    };
     command.set_quote_result(client.exchange_id(), result);
 
     let message_text = command.build_message_text();

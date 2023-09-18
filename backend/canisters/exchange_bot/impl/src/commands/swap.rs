@@ -1,17 +1,18 @@
 use crate::commands::common_errors::CommonErrors;
-use crate::commands::{Command, CommandParser, ParseMessageResult};
+use crate::commands::sub_tasks::check_balance::check_balance;
+use crate::commands::sub_tasks::get_quotes::get_quote;
+use crate::commands::{Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::swap_client::SwapClient;
 use crate::{mutate_state, Data, RuntimeState};
 use exchange_bot_canister::ExchangeId;
-use itertools::Itertools;
 use lazy_static::lazy_static;
-use ledger_utils::format_crypto_amount;
 use rand::Rng;
 use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use types::{MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
+use std::sync::{Arc, Mutex};
+use types::icrc1::BlockIndex;
+use types::{CanisterId, MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
 
 lazy_static! {
     static ref REGEX: Regex = RegexBuilder::new(r"swap\s+(?<input_token>\S+)\s+(?<output_token>\S+)(\s+(?<amount>[\d.,]+))?")
@@ -53,7 +54,7 @@ If $'Amount' is not provided, the full balance of $InputTokens will be swapped."
             }
         };
 
-        let amount = (amount_decimal * 10u128.pow(input_token.decimals as u32) as f64) as u128;
+        let amount = amount_decimal.map(|a| (a * 10u128.pow(input_token.decimals as u32) as f64) as u128);
 
         match SwapCommand::build(input_token, output_token, amount, state) {
             Ok(command) => ParseMessageResult::Success(Command::Swap(command)),
@@ -62,26 +63,27 @@ If $'Amount' is not provided, the full balance of $InputTokens will be swapped."
     }
 }
 
-pub enum SwapTasks {
-    QueryTokenBalance,
-    GetQuotes,
-    TransferToSwapCanister,
-    NotifySwapCanister,
-    PerformSwap,
-    WithdrawFromSwapCanister,
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct SwapCommand {
     pub created: TimestampMillis,
     pub user_id: UserId,
     pub input_token: TokenInfo,
     pub output_token: TokenInfo,
-    pub amount: Option<u128>,
-    pub exchange_ids: Vec<ExchangeId>,
+    pub amount_provided: Option<u128>,
     pub message_id: MessageId,
-    pub quote_statuses: Vec<(ExchangeId, QuoteStatus)>,
-    pub in_progress: Option<TimestampMillis>, // The time it started being processed
+    pub exchange_ids: Vec<ExchangeId>,
+    pub quotes: Vec<(ExchangeId, CommandSubTaskResult<u128>)>,
+    pub sub_tasks: SwapCommandSubTasks,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct SwapCommandSubTasks {
+    pub check_user_balance: CommandSubTaskResult<u128>,
+    pub quotes: CommandSubTaskResult<ExchangeId>,
+    pub transfer_to_dex: CommandSubTaskResult<BlockIndex>,
+    pub notify_dex: CommandSubTaskResult<u128>,
+    pub swap: CommandSubTaskResult<u128>,
+    pub withdraw: CommandSubTaskResult<BlockIndex>,
 }
 
 impl SwapCommand {
@@ -94,92 +96,137 @@ impl SwapCommand {
         let clients = state.get_all_swap_clients(input_token.clone(), output_token.clone());
 
         if !clients.is_empty() {
-            let quote_statuses = clients.iter().map(|c| (c.exchange_id(), QuoteStatus::Pending)).collect();
+            let quotes = clients
+                .iter()
+                .map(|c| (c.exchange_id(), CommandSubTaskResult::Pending))
+                .collect();
 
             Ok(SwapCommand {
                 created: state.env.now(),
                 user_id: state.env.caller().into(),
                 input_token,
                 output_token,
-                amount,
-                exchange_ids: clients.iter().map(|c| c.exchange_id()).collect(),
+                amount_provided: amount,
                 message_id: state.env.rng().gen(),
-                quote_statuses,
-                in_progress: None,
+                exchange_ids: clients.iter().map(|c| c.exchange_id()).collect(),
+                quotes,
+                sub_tasks: SwapCommandSubTasks {
+                    check_user_balance: if amount.is_some() {
+                        CommandSubTaskResult::Pending
+                    } else {
+                        CommandSubTaskResult::NotRequired
+                    },
+                    ..Default::default()
+                },
             })
         } else {
             Err(CommonErrors::PairNotSupported)
         }
     }
 
-    pub(crate) fn process(mut self, state: &mut RuntimeState) {
-        self.in_progress = Some(state.env.now());
+    pub(crate) fn process(self, state: &mut RuntimeState) {
+        if self.sub_tasks.check_user_balance.is_pending() {
+            ic_cdk::spawn(self.check_user_balance(state.env.canister_id()));
+        } else if let Some(amount) = self.sub_tasks.quotes.is_pending().then_some(self.amount()).flatten() {
+            let clients: Vec<_> = self
+                .exchange_ids
+                .iter()
+                .filter_map(|e| state.get_swap_client(*e, self.input_token.clone(), self.output_token.clone()))
+                .collect();
 
-        let futures: Vec<_> = self
-            .exchange_ids
-            .iter()
-            .filter_map(|e| state.get_swap_client(*e, self.input_token.clone(), self.output_token.clone()))
-            .map(|c| quote_single(c, self.user_id, self.message_id, self.amount, self.output_token.decimals))
-            .collect();
-
-        state.enqueue_command(Command::Quote(self));
-
-        ic_cdk::spawn(async {
-            futures::future::join_all(futures).await;
-        });
+            ic_cdk::spawn(get_quotes(self, clients, amount));
+        }
     }
 
     pub fn build_message_text(&self) -> String {
-        let mut text = "Quotes:".to_string();
-        for (exchange_id, status) in self.quote_statuses.iter().sorted_unstable_by_key(|(_, s)| s) {
-            let exchange_name = exchange_id.to_string();
-            let status_text = status.to_string();
-            text.push_str(&format!("\n{exchange_name}: {status_text}"));
-        }
+        let text = "Quotes:".to_string();
+        // for (exchange_id, status) in self.quote_statuses.iter().sorted_unstable_by_key(|(_, s)| s) {
+        //     let exchange_name = exchange_id.to_string();
+        //     let status_text = status.to_string();
+        //     text.push_str(&format!("\n{exchange_name}: {status_text}"));
+        // }
         text
     }
 
-    fn set_status(&mut self, exchange_id: ExchangeId, new_status: QuoteStatus) {
-        if let Some(status) = self
-            .quote_statuses
-            .iter_mut()
-            .find(|(e, _)| *e == exchange_id)
-            .map(|(_, s)| s)
-        {
-            *status = new_status;
+    async fn check_user_balance(mut self, this_canister_id: CanisterId) {
+        self.sub_tasks.check_user_balance = check_balance(self.user_id, &self.input_token, this_canister_id).await;
+
+        mutate_state(|state| self.on_updated(state));
+    }
+
+    fn on_updated(self, state: &mut RuntimeState) {
+        let is_finished = self.is_finished();
+
+        let message_text = self.build_message_text();
+        state.enqueue_message_edit(self.user_id, self.message_id, message_text);
+
+        if !is_finished {
+            state.enqueue_command(Command::Swap(self));
+        }
+    }
+
+    fn set_quote_result(&mut self, exchange_id: ExchangeId, result: CommandSubTaskResult<u128>) {
+        if let Some(r) = self.quotes.iter_mut().find(|(e, _)| *e == exchange_id).map(|(_, s)| s) {
+            *r = result;
+        }
+    }
+
+    fn amount(&self) -> Option<u128> {
+        if let Some(a) = self.amount_provided {
+            Some(a)
+        } else if let CommandSubTaskResult::Complete(a, _) = self.sub_tasks.check_user_balance {
+            Some(a.saturating_sub(self.input_token.fee))
+        } else {
+            None
         }
     }
 
     fn is_finished(&self) -> bool {
-        !self.quote_statuses.iter().any(|(_, s)| matches!(s, QuoteStatus::Pending))
+        !self.sub_tasks.withdraw.is_pending()
     }
+}
+
+async fn get_quotes(command: SwapCommand, clients: Vec<Box<dyn SwapClient>>, amount: u128) {
+    let output_token_decimals = command.output_token.decimals;
+    let wrapped_command = Arc::new(Mutex::new(command));
+
+    let futures: Vec<_> = clients
+        .into_iter()
+        .map(|c| quote_single(c, amount, output_token_decimals, wrapped_command.clone()))
+        .collect();
+
+    futures::future::join_all(futures).await;
+
+    let mut command = Arc::try_unwrap(wrapped_command)
+        .map_err(|_| ())
+        .unwrap()
+        .into_inner()
+        .unwrap();
+
+    if let Some((exchange_id, CommandSubTaskResult::Complete(..))) = command.quotes.iter().max_by_key(|(_, r)| r.value()) {
+        command.sub_tasks.quotes = CommandSubTaskResult::Complete(*exchange_id, Some(exchange_id.to_string()));
+    } else {
+        command.sub_tasks.quotes = CommandSubTaskResult::Failed("Failed to get any valid quotes".to_string());
+    }
+
+    mutate_state(|state| command.on_updated(state));
 }
 
 async fn quote_single(
     client: Box<dyn SwapClient>,
-    user_id: UserId,
-    message_id: MessageId,
     amount: u128,
     output_token_decimals: u8,
+    wrapped_command: Arc<Mutex<SwapCommand>>,
 ) {
-    let result = client.quote(amount).await;
+    let result = get_quote(client.as_ref(), amount, output_token_decimals).await;
+
+    let mut command = wrapped_command.lock().unwrap();
+    command.set_quote_result(client.exchange_id(), result);
+
+    let message_text = command.build_message_text();
 
     mutate_state(|state| {
-        if let Some(Command::Quote(command)) = state.data.commands_pending.get_mut(user_id, message_id) {
-            let status = match result {
-                Ok(amount_out) => QuoteStatus::Success(amount_out, format_crypto_amount(amount_out, output_token_decimals)),
-                Err(error) => QuoteStatus::Failed(format!("{error:?}")),
-            };
-            command.set_status(client.exchange_id(), status);
-            let is_finished = command.is_finished();
-
-            let text = command.build_message_text();
-            state.enqueue_message_edit(user_id, message_id, text, false);
-
-            if is_finished {
-                state.data.commands_pending.remove(user_id, message_id);
-            }
-        }
+        state.enqueue_message_edit(command.user_id, command.message_id, message_text);
     })
 }
 
