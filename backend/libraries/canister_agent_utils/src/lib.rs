@@ -1,13 +1,12 @@
 use candid::{CandidType, Principal};
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
-use ic_agent::identity::BasicIdentity;
-use ic_agent::Agent;
+use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::Read;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::str::FromStr;
 use types::{BuildVersion, CanisterId, CanisterWasm};
 
@@ -108,20 +107,20 @@ pub struct CanisterIds {
     pub nns_sns_wasm: CanisterId,
 }
 
-pub fn get_dfx_identity(name: &str) -> BasicIdentity {
-    let home_dir = dirs::home_dir().expect("Failed to get home directory");
-    let pem_file_path = home_dir.join(Path::new(&format!(".config/dfx/identity/{name}/identity.pem")));
-    BasicIdentity::from_pem_file(pem_file_path).expect("Failed to create identity")
+pub fn get_dfx_identity(name: &str) -> Box<dyn Identity> {
+    let logger = slog::Logger::root(slog::Discard, slog::o!());
+    let mut identity_manager = dfx_core::identity::IdentityManager::new(&logger, &None).unwrap();
+    identity_manager.instantiate_identity_from_name(name, &logger).unwrap()
 }
 
-pub async fn build_ic_agent(url: String, identity: BasicIdentity) -> Agent {
+pub async fn build_ic_agent(url: String, identity: Box<dyn Identity>) -> Agent {
     let mainnet = is_mainnet(&url);
     let transport = ReqwestHttpReplicaV2Transport::create(url).expect("Failed to create Reqwest transport");
     let timeout = std::time::Duration::from_secs(60 * 5);
 
     let agent = Agent::builder()
         .with_transport(transport)
-        .with_identity(identity)
+        .with_boxed_identity(identity)
         .with_ingress_expiry(Some(timeout))
         .build()
         .expect("Failed to build IC agent");

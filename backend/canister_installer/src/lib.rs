@@ -1,13 +1,12 @@
 use candid::Principal;
 use canister_agent_utils::{build_ic_agent, get_canister_wasm, install_wasm, set_controllers, CanisterIds, CanisterName};
-use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use types::{BuildVersion, CanisterWasm, Cycles};
 
 const T: Cycles = 1_000_000_000_000;
 
-pub async fn install_service_canisters(identity: BasicIdentity, url: String, canister_ids: CanisterIds, test_mode: bool) {
+pub async fn install_service_canisters(identity: Box<dyn Identity>, url: String, canister_ids: CanisterIds, test_mode: bool) {
     let principal = identity.sender().unwrap();
     let agent = build_ic_agent(url, identity).await;
     let management_canister = ManagementCanister::create(&agent);
