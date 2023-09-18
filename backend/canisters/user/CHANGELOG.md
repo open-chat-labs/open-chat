@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Include username and display name updates in updates loop ([#4343](https://github.com/open-chat-labs/open-chat/pull/4343))
 - Add `last_updated` to direct chat summaries ([#4364](https://github.com/open-chat-labs/open-chat/pull/4364))
 - Add `rules_accepted` to cached group summaries ([#4366](https://github.com/open-chat-labs/open-chat/pull/4366))
+- Transfer to user specific subaccounts when transferring to bot users ([#4388](https://github.com/open-chat-labs/open-chat/pull/4388))
  
 ## [[2.0.838](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.838-user)] - 2023-09-05
 

@@ -2,6 +2,7 @@ use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::RetrySendingFailedMessagesJob;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
+use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::{PushMessageArgs, Reader};
 use ic_cdk_macros::update;
@@ -24,16 +25,18 @@ use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 async fn send_message_v2(mut args: Args) -> Response {
     run_regular_jobs();
 
-    let user_type = match read_state(|state| validate_request(&args, state)) {
-        ValidateRequestResult::Valid(t) => t,
+    let (my_user_id, user_type) = match read_state(|state| validate_request(&args, state)) {
+        ValidateRequestResult::Valid(u, t) => (u, t),
         ValidateRequestResult::Invalid(response) => return response,
-        ValidateRequestResult::RecipientUnknown(local_user_index_canister_id) => {
+        ValidateRequestResult::RecipientUnknown(u, local_user_index_canister_id) => {
             let c2c_args = local_user_index_canister::c2c_lookup_user::Args {
                 user_id_or_principal: args.recipient.into(),
             };
             match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &c2c_args).await {
-                Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) if result.is_bot => UserType::Bot,
-                Ok(local_user_index_canister::c2c_lookup_user::Response::Success(_)) => UserType::User,
+                Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) if result.is_bot => {
+                    (u, UserType::Bot)
+                }
+                Ok(local_user_index_canister::c2c_lookup_user::Response::Success(_)) => (u, UserType::User),
                 Ok(local_user_index_canister::c2c_lookup_user::Response::UserNotFound) => return RecipientNotFound,
                 Err(error) => return InternalError(format!("{error:?}")),
             }
@@ -47,12 +50,17 @@ async fn send_message_v2(mut args: Args) -> Response {
         if user_type.is_self() {
             return InvalidRequest("Cannot send crypto to yourself".to_string());
         }
-        let pending_transaction = match &c.transfer {
+        let mut pending_transaction = match &c.transfer {
             CryptoTransaction::Pending(t) => t.clone(),
             _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
         };
-        if !pending_transaction.is_user_recipient(args.recipient) {
+        if !pending_transaction.validate_recipient(args.recipient) {
             return InvalidRequest("Transaction is not to the user's account".to_string());
+        }
+        // When transferring to bot users, each user transfers to their own subaccount, this way it
+        // is trivial for the bots to keep track of each user's funds
+        if user_type.is_bot() {
+            pending_transaction.set_recipient(args.recipient.into(), Principal::from(my_user_id).into());
         }
 
         // We have to use `process_transaction_without_caller_check` because we may be within a
@@ -87,9 +95,9 @@ impl UserType {
 
 #[allow(clippy::large_enum_variant)]
 enum ValidateRequestResult {
-    Valid(UserType),
+    Valid(UserId, UserType),
     Invalid(Response),
-    RecipientUnknown(CanisterId), // Value is the user_index canisterId
+    RecipientUnknown(UserId, CanisterId), // UserId, UserIndexCanisterId
 }
 
 fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult {
@@ -130,12 +138,12 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
             }
         })
     } else if args.recipient == my_user_id {
-        ValidateRequestResult::Valid(UserType::_Self)
+        ValidateRequestResult::Valid(my_user_id, UserType::_Self)
     } else if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
         let user_type = if chat.is_bot { UserType::Bot } else { UserType::User };
-        ValidateRequestResult::Valid(user_type)
+        ValidateRequestResult::Valid(my_user_id, user_type)
     } else {
-        ValidateRequestResult::RecipientUnknown(state.data.local_user_index_canister_id)
+        ValidateRequestResult::RecipientUnknown(my_user_id, state.data.local_user_index_canister_id)
     }
 }
 
