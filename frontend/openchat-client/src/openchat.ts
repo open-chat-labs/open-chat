@@ -241,7 +241,7 @@ import type {
     Message,
     GroupChatSummary,
     MemberRole,
-    AccessRules,
+    Rules,
     EventsResponse,
     ChatEvent,
     ThreadSummary,
@@ -323,6 +323,7 @@ import type {
     UpdateUserGroupResponse,
     SetMemberDisplayNameResponse,
     UserOrUserGroup,
+    UpdatedRules,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -354,6 +355,7 @@ import {
     SNS1_SYMBOL,
     GHOST_SYMBOL,
     CommonResponses,
+    defaultChatRules,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -388,7 +390,6 @@ import {
     unreadFavouriteChats,
     unreadCommunityChannels,
     globalUnreadCount,
-    getAllServerChats,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag, moderationFlags } from "./stores/flagStore";
@@ -1047,9 +1048,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    async joinGroup(
-        chat: MultiUserChat,
-    ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
+    async joinGroup(chat: MultiUserChat): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
         return this.sendRequest({ kind: "joinGroup", chatId: chat.id })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -1103,10 +1102,22 @@ export class OpenChat extends OpenChatAgentWorker {
 
     updateGroupRules(
         chatId: MultiUserChatIdentifier,
-        rules: AccessRules | undefined,
+        rules: UpdatedRules,
     ): Promise<boolean> {
         return this.sendRequest({ kind: "updateGroup", chatId, rules })
-            .then((resp) => resp === "success")
+            .then((resp) => {
+                if (resp.kind === "success" && resp.rulesVersion !== undefined) {
+                    chatStateStore.setProp(chatId, "rules", {
+                        text: rules.text,
+                        enabled: rules.enabled,
+                        version: resp.rulesVersion,
+                    });
+                    return true;
+                } else {
+                    this._logger.error("Update group rules failed: ", resp.kind);
+                    return false;
+                }
+            })
             .catch((err) => {
                 this._logger.error("Update group rules failed: ", err);
                 return false;
@@ -1125,7 +1136,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         return this.sendRequest({ kind: "updateGroup", chatId, permissions: optionalPermissions })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     return false;
                 }
                 localChatSummaryUpdates.markUpdated(chatId, {
@@ -2664,7 +2675,7 @@ export class OpenChat extends OpenChatAgentWorker {
     groupWhile = groupWhile;
     sameUser = sameUser;
 
-    forwardMessage(chatId: ChatIdentifier, msg: Message): void {
+    forwardMessage(chatId: ChatIdentifier, msg: Message, threadRootMessageIndex: number | undefined, rulesAccepted: number | undefined, communityRulesAccepted: number | undefined): void {
         const chat = this._liveState.chatSummaries.get(chatId);
 
         if (chat === undefined) {
@@ -2691,36 +2702,50 @@ export class OpenChat extends OpenChatAgentWorker {
         };
         const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
+        const canRetry = this.canRetryMessage(msg.content);
+
         this.sendRequest({
             kind: "sendMessage",
-            chatType: chat.kind,
             chatId,
             user: this.user,
             mentioned: [],
             event,
+            threadRootMessageIndex,
+            rulesAccepted,
+            communityRulesAccepted
         })
             .then(([resp, msg]) => {
                 if (resp.kind === "success") {
-                    this.onSendMessageSuccess(chatId, resp, msg, undefined);
+                    this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                     trackEvent("forward_message");
                 } else {
-                    this.removeMessage(chatId, msg.messageId, this.user.userId, undefined);
-                    failedMessagesStore.add({ chatId }, event);
-                    this.dispatchEvent(
-                        new SendMessageFailed(msg.content.kind === "crypto_content"),
-                    );
+                    if (resp.kind == "rules_not_accepted") {
+                        this.markChatRulesAcceptedLocally(false);
+                    }                        
+
+                    if (resp.kind == "community_rules_not_accepted") {
+                        this.markCommunityRulesAcceptedLocally(false);
+                    }                        
+
+                    this.onSendMessageFailure(
+                        chatId, 
+                        msg.messageId, 
+                        threadRootMessageIndex, 
+                        event, 
+                        canRetry);
                 }
             })
             .catch((err) => {
-                this.removeMessage(chatId, event.event.messageId, this.user.userId, undefined);
-                failedMessagesStore.add({ chatId }, event);
-                this.dispatchEvent(new SendMessageFailed(msg.content.kind === "crypto_content"));
-                this._logger.error("Exception forwarding message", err);
+                this.onSendMessageFailure(
+                    chatId, 
+                    event.event.messageId, 
+                    threadRootMessageIndex, 
+                    event, 
+                    canRetry,
+                    err);
             });
 
-        this.sendMessage(chat, event, undefined).then(() => {
-            this.dispatchEvent(new SentMessage());
-        });
+        this.postSendMessage(chat, event, threadRootMessageIndex);
     }
 
     private onSendMessageSuccess(
@@ -2785,7 +2810,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private async sendMessage(
+    private async sendMessageWebRtc(
         clientChat: ChatSummary,
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -2835,7 +2860,9 @@ export class OpenChat extends OpenChatAgentWorker {
         chatId: ChatIdentifier,
         event: EventWrapper<Message>,
         currentEvents: EventWrapper<ChatEvent>[],
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        rulesAccepted: number | undefined,
+        communityRulesAccepted: number | undefined,
     ): Promise<void> {
         const chat = this._liveState.chatSummaries.get(chatId);
 
@@ -2878,6 +2905,8 @@ export class OpenChat extends OpenChatAgentWorker {
             mentioned: [],
             event: retryEvent,
             threadRootMessageIndex,
+            rulesAccepted,
+            communityRulesAccepted,
         })
             .then(([resp, msg]) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
@@ -2906,31 +2935,70 @@ export class OpenChat extends OpenChatAgentWorker {
                         trackEvent("replied_to_message");
                     }
                 } else {
-                    this.removeMessage(
-                        chatId,
-                        msg.messageId,
-                        this.user.userId,
-                        threadRootMessageIndex,
-                    );
-                    failedMessagesStore.add(context, retryEvent);
-                    this.dispatchEvent(new SendMessageFailed(!canRetry));
+                    if (resp.kind == "rules_not_accepted") {
+                        this.markChatRulesAcceptedLocally(false);
+                    }                        
+
+                    if (resp.kind == "community_rules_not_accepted") {
+                        this.markCommunityRulesAcceptedLocally(false);
+                    }                        
+
+                    this.onSendMessageFailure(
+                        chatId, 
+                        msg.messageId, 
+                        threadRootMessageIndex, 
+                        event, 
+                        canRetry);
                 }
             })
             .catch((err) => {
-                this.removeMessage(
-                    chatId,
-                    event.event.messageId,
-                    this.user.userId,
-                    threadRootMessageIndex,
-                );
-                failedMessagesStore.add(context, retryEvent);
-                this._logger.error("Exception sending message", err);
-                this.dispatchEvent(new SendMessageFailed(!canRetry));
+                this.onSendMessageFailure(
+                    chatId, 
+                    event.event.messageId, 
+                    threadRootMessageIndex, 
+                    event, 
+                    canRetry,
+                    err);
             });
     }
 
     private canRetryMessage(content: MessageContent): boolean {
-        return content.kind !== "poll_content";
+        return content.kind !== "poll_content" && content.kind !== "crypto_content";
+    }
+
+    rulesNeedAccepting(): boolean {
+        const chatRules = this._liveState.currentChatRules;
+        const chat = this._liveState.selectedChat;
+        if (chat === undefined || chatRules === undefined) {
+            return false;
+        }
+
+        const communityRules = this._liveState.currentCommunityRules;
+        const community = this._liveState.selectedCommunity;
+
+        console.debug(
+            "RULES: rulesNeedAccepting", 
+            chatRules.enabled, 
+            chat.membership?.rulesAccepted,
+            communityRules?.enabled,
+            community?.membership?.rulesAccepted);
+
+        return (chatRules.enabled && !(chat.membership?.rulesAccepted ?? false)) || 
+            ((communityRules?.enabled ?? true) && !(community?.membership?.rulesAccepted ?? false));
+    }
+
+    markChatRulesAcceptedLocally(rulesAccepted: boolean) {
+        const selectedChatId = this._liveState.selectedChatId;
+        if (selectedChatId !== undefined) {
+            localChatSummaryUpdates.markUpdated(selectedChatId, { rulesAccepted });
+        }
+    }
+
+    markCommunityRulesAcceptedLocally(rulesAccepted: boolean) {
+        const selectedCommunityId = this._liveState.selectedCommunity?.id;
+        if (selectedCommunityId !== undefined) {
+            localCommunitySummaryUpdates.updateRulesAccepted(selectedCommunityId, rulesAccepted);
+        }
     }
 
     sendMessageWithAttachment(
@@ -2941,14 +3009,14 @@ export class OpenChat extends OpenChatAgentWorker {
         fileToAttach: MessageContent | undefined,
         replyingTo: EnhancedReplyContext | undefined,
         threadRootMessageIndex: number | undefined,
+        rulesAccepted: number | undefined,
+        communityRulesAccepted: number | undefined,
     ): void {
         const chat = this._liveState.chatSummaries.get(chatId);
 
         if (chat === undefined) {
             return;
         }
-
-        const context = { chatId, threadRootMessageIndex };
 
         if (textContent || fileToAttach) {
             const [nextEventIndex, nextMessageIndex] =
@@ -2975,6 +3043,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 mentioned,
                 event,
                 threadRootMessageIndex,
+                rulesAccepted,
+                communityRulesAccepted,
             })
                 .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
@@ -3003,50 +3073,80 @@ export class OpenChat extends OpenChatAgentWorker {
                             trackEvent("replied_to_message");
                         }
                     } else {
-                        this.removeMessage(
-                            chatId,
-                            msg.messageId,
-                            this.user.userId,
-                            threadRootMessageIndex,
-                        );
-                        if (canRetry) {
-                            failedMessagesStore.add(context, event);
-                        }
-                        this.dispatchEvent(new SendMessageFailed(!canRetry));
+                        if (resp.kind == "rules_not_accepted") {
+                            this.markChatRulesAcceptedLocally(false);
+                        }                        
+
+                        if (resp.kind == "community_rules_not_accepted") {
+                            this.markCommunityRulesAcceptedLocally(false);
+                        }                        
+
+                        this.onSendMessageFailure(
+                            chatId, 
+                            msg.messageId, 
+                            threadRootMessageIndex, 
+                            event, 
+                            canRetry);
                     }
                 })
                 .catch((err) => {
-                    this.removeMessage(
-                        chatId,
-                        event.event.messageId,
-                        this.user.userId,
-                        threadRootMessageIndex,
-                    );
-                    if (canRetry) {
-                        failedMessagesStore.add(context, event);
-                    }
-                    this._logger.error("Exception sending message", err);
-                    this.dispatchEvent(new SendMessageFailed(!canRetry));
+                    this.onSendMessageFailure(
+                        chatId, 
+                        event.event.messageId, 
+                        threadRootMessageIndex, 
+                        event, 
+                        canRetry, 
+                        err);
                 });
 
-            if (threadRootMessageIndex !== undefined) {
-                this.dispatchEvent(new SendingThreadMessage());
-            } else {
-                this.dispatchEvent(new SendingMessage());
-            }
-
-            // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
-            // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
-            window.setTimeout(() => {
-                this.sendMessage(chat, event, threadRootMessageIndex).then(() => {
-                    if (threadRootMessageIndex !== undefined) {
-                        this.dispatchEvent(new SentThreadMessage(event));
-                    } else {
-                        this.dispatchEvent(new SentMessage());
-                    }
-                });
-            }, 0);
+            this.postSendMessage(chat, event, threadRootMessageIndex);
         }
+    }
+
+    private onSendMessageFailure(
+        chatId: ChatIdentifier, 
+        messageId: bigint, 
+        threadRootMessageIndex: number| undefined,
+        event: EventWrapper<Message>,
+        canRetry: boolean,
+        err?: unknown) {
+
+        this.removeMessage(
+            chatId,
+            messageId,
+            this.user.userId,
+            threadRootMessageIndex,
+        );
+
+        if (canRetry) {
+            failedMessagesStore.add({ chatId, threadRootMessageIndex }, event);
+        }
+
+        if (err !== undefined) {
+            this._logger.error("Exception sending message", err);
+        }
+
+        this.dispatchEvent(new SendMessageFailed(!canRetry));
+    }
+
+    private postSendMessage(chat: ChatSummary, event: EventWrapper<Message>, threadRootMessageIndex: number| undefined) {
+        if (threadRootMessageIndex !== undefined) {
+            this.dispatchEvent(new SendingThreadMessage());
+        } else {
+            this.dispatchEvent(new SendingMessage());
+        }
+
+        // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
+        // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
+        window.setTimeout(() => {
+            this.sendMessageWebRtc(chat, event, threadRootMessageIndex).then(() => {
+                if (threadRootMessageIndex !== undefined) {
+                    this.dispatchEvent(new SentThreadMessage(event));
+                } else {
+                    this.dispatchEvent(new SentMessage());
+                }
+            });
+        }, 0);
     }
 
     buildCryptoTransferText(
@@ -3753,10 +3853,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "getRecommendedGroups", exclusions: [...exclusions] });
     }
 
-    getGroupRules(chatId: MultiUserChatIdentifier): Promise<AccessRules | undefined> {
-        return this.sendRequest({ kind: "getGroupRules", chatId });
-    }
-
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
         return this.sendRequest({ kind: "searchGroups", searchTerm, maxResults });
     }
@@ -4030,7 +4126,7 @@ export class OpenChat extends OpenChatAgentWorker {
         chatId: MultiUserChatIdentifier,
         name?: string,
         desc?: string,
-        rules?: AccessRules,
+        rules?: UpdatedRules,
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
         gate?: AccessGate,
@@ -4047,7 +4143,7 @@ export class OpenChat extends OpenChatAgentWorker {
             gate,
             isPublic,
         }).then((resp) => {
-            if (resp === "success") {
+            if (resp.kind === "success") {
                 localChatSummaryUpdates.markUpdated(chatId, {
                     kind: "group_chat",
                     name,
@@ -4307,16 +4403,15 @@ export class OpenChat extends OpenChatAgentWorker {
                     await updateRegistryTask;
                 }
 
-                const updatedChats = (chatsResponse.state.directChats as ChatSummary[])
+                const chats = (chatsResponse.state.directChats as ChatSummary[])
                     .concat(chatsResponse.state.groupChats)
                     .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
 
-                this.updateReadUpToStore(updatedChats);
-                const chats = getAllServerChats(this._liveState.globalState).values();
+                this.updateReadUpToStore(chats);
 
-                this._cachePrimer?.processChatUpdates(chats, updatedChats);
+                this._cachePrimer?.processChats(chats);
 
-                const userIds = this.userIdsFromChatSummaries(updatedChats);
+                const userIds = this.userIdsFromChatSummaries(chats);
                 if (!init) {
                     for (const userId of this.user.referrals) {
                         userIds.add(userId);
@@ -4354,7 +4449,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
 
                 if (this._liveState.uninitializedDirectChats.size > 0) {
-                    for (const chat of updatedChats) {
+                    for (const chat of chats) {
                         if (this._liveState.uninitializedDirectChats.has(chat.id)) {
                             removeUninitializedDirectChat(chat.id);
                         }
@@ -4363,7 +4458,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
                 setGlobalState(
                     chatsResponse.state.communities,
-                    updatedChats,
+                    chats,
                     chatsResponse.state.favouriteChats,
                     {
                         group_chat: chatsResponse.state.pinnedGroupChats,
@@ -4410,7 +4505,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 // If the latest message in a chat is sent by the current user, then we know they must have read up to
                 // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
                 // user sends a message on one device then looks at OpenChat on another.
-                for (const chat of updatedChats) {
+                for (const chat of chats) {
                     const latestMessage = chat.latestMessage?.event;
                     if (
                         latestMessage !== undefined &&
@@ -4817,6 +4912,14 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    getCachePrimerTimestamps(): Promise<Record<string, bigint>> {
+        return this.sendRequest({ kind: "getCachePrimerTimestamps" });
+    }
+
+    setCachePrimerTimestamp(chatIdentifierString: string, timestamp: bigint): Promise<void> {
+        return this.sendRequest({ kind: "setCachePrimerTimestamp", chatIdentifierString, timestamp });
+    }
+
     // **** Communities Stuff
 
     // takes a list of communities that may contain communities that we are a member of and/or preview communities
@@ -4994,7 +5097,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     createCommunity(
         candidate: CommunitySummary,
-        rules: AccessRules,
+        rules: Rules,
         defaultChannels: string[],
     ): Promise<CreateCommunityResponse> {
         return this.sendRequest({
@@ -5002,6 +5105,7 @@ export class OpenChat extends OpenChatAgentWorker {
             community: candidate,
             rules,
             defaultChannels,
+            defaultChannelRules: defaultChatRules("channel"),
         }).catch((err) => {
             this._logger.error("Error creating community", err);
             return { kind: "failure" };
@@ -5058,7 +5162,7 @@ export class OpenChat extends OpenChatAgentWorker {
         community: CommunitySummary,
         name: string | undefined,
         description: string | undefined,
-        rules: AccessRules | undefined,
+        rules: UpdatedRules | undefined,
         permissions: CommunityPermissions | undefined,
         avatar: Uint8Array | undefined,
         banner: Uint8Array | undefined,
@@ -5085,8 +5189,12 @@ export class OpenChat extends OpenChatAgentWorker {
                         g.communities.set(community.id, community);
                         return g;
                     });
-                    if (rules) {
-                        communityStateStore.setProp(community.id, "rules", rules);
+                    if (rules !== undefined && resp.rulesVersion !== undefined) {
+                        communityStateStore.setProp(community.id, "rules", {
+                            text: rules.text,
+                            enabled: rules.enabled,
+                            version: resp.rulesVersion
+                        });
                     }
                     return true;
                 }
@@ -5100,7 +5208,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     convertGroupToCommunity(
         group: GroupChatSummary,
-        rules: AccessRules,
+        rules: Rules,
     ): Promise<ChannelIdentifier | undefined> {
         return this.sendRequest({
             kind: "convertGroupToCommunity",

@@ -71,6 +71,7 @@ import {
     UserGroupDetails,
     DeleteUserGroupsResponse,
     SetMemberDisplayNameResponse,
+    VersionedRules,
 } from "./types";
 export {
     _SERVICE as CommunityService,

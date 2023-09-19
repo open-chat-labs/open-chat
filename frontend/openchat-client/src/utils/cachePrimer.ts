@@ -1,5 +1,5 @@
 import type { ChatEvent, ChatSummary, EventsResponse, IndexRange } from "openchat-shared";
-import { ChatMap, compareChats, missingUserIds, userIdsFromEvents } from "openchat-shared";
+import { ChatMap, compareChats, missingUserIds, userIdsFromEvents, chatIdentifierToString } from "openchat-shared";
 import { Poller } from "./poller";
 import { boolFromLS } from "../stores/localStorageSetting";
 import { messagesRead } from "../stores/markRead";
@@ -16,19 +16,19 @@ export class CachePrimer {
         debug("initialized");
     }
 
-    processChatUpdates(previous: ChatSummary[], next: ChatSummary[]): void {
-        const record = ChatMap.fromList(previous);
-        const updated = next.filter(
-            (c) => !c.membership.archived && hasBeenUpdated(record.get(c.id), c)
-        );
-
-        if (updated.length > 0) {
-            for (const chat of updated) {
-                this.pending.set(chat.id, chat);
-                debug("enqueued " + chat.id);
+    async processChats(chats: ChatSummary[]): Promise<void> {
+        if (chats.length > 0) {
+            const lastUpdatedTimestamps = await this.api.getCachePrimerTimestamps();
+            for (const chat of chats) {
+                if (chat.membership.archived) continue;
+                const lastUpdated = lastUpdatedTimestamps[chatIdentifierToString(chat.id)];
+                if (lastUpdated === undefined || lastUpdated < chat.lastUpdated) {
+                    this.pending.set(chat.id, chat);
+                    debug("enqueued " + chat.id);
+                }
             }
 
-            if (this.runner === undefined) {
+            if (this.pending.size > 0 && this.runner === undefined) {
                 this.runner = new Poller(() => runOnceIdle(() => this.processNext()), 0);
                 debug("runner started");
             }
@@ -76,6 +76,7 @@ export class CachePrimer {
                     );
                 }
             }
+            await this.api.setCachePrimerTimestamp(chatIdentifierToString(chat.id), chat.lastUpdated);
             debug(chat.id + " completed");
         } finally {
             if (this.pending.size === 0) {
@@ -118,10 +119,6 @@ export class CachePrimer {
             latestClientEventIndex: chat.latestEventIndex,
         });
     }
-}
-
-function hasBeenUpdated(previous: ChatSummary | undefined, next: ChatSummary): boolean {
-    return previous === undefined || next.latestEventIndex > previous.latestEventIndex;
 }
 
 function debug(message: string) {

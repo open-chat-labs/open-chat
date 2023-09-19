@@ -35,6 +35,7 @@ pub enum Response {
     UserSuspended,
     CommunityFrozen,
     RulesNotAccepted,
+    CommunityRulesNotAccepted,
     InternalError(String, CompletedCryptoTransaction),
 }
 

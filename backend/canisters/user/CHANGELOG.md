@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.852](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.852-user)] - 2023-09-18
+
 ### Added
 
 - Add `default_channel_rules` to `create_community` ([#4387](https://github.com/open-chat-labs/open-chat/pull/4374))
@@ -15,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `last_updated` to direct chat summaries ([#4364](https://github.com/open-chat-labs/open-chat/pull/4364))
 - Add `rules_accepted` to cached group summaries ([#4366](https://github.com/open-chat-labs/open-chat/pull/4366))
 - Transfer to user specific subaccounts when transferring to bot users ([#4388](https://github.com/open-chat-labs/open-chat/pull/4388))
+- Add `CommunityRulesNotAccepted` to `send_channel_message` response ([#?](https://github.com/open-chat-labs/open-chat/pull/?))
  
 ## [[2.0.838](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.838-user)] - 2023-09-05
 

@@ -446,7 +446,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.user,
                         payload.mentioned,
                         payload.event,
-                        payload.threadRootMessageIndex
+                        payload.threadRootMessageIndex,
+                        payload.rulesAccepted,
+                        payload.communityRulesAccepted, 
                     ));
                 break;
 
@@ -505,11 +507,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "getRecommendedGroups":
                 executeThenReply(payload, correlationId, agent
                     .getRecommendedGroups(payload.exclusions));
-                break;
-
-            case "getGroupRules":
-                executeThenReply(payload, correlationId, agent
-                    .getGroupRules(payload.chatId));
                 break;
 
             case "exploreCommunities":
@@ -858,7 +855,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "createCommunity":
                 executeThenReply(payload, correlationId, agent.userClient
-                    .createCommunity(payload.community, payload.rules, payload.defaultChannels));
+                    .createCommunity(payload.community, payload.rules, payload.defaultChannels, payload.defaultChannelRules));
                 break;
 
             case "getCommunitySummary":
@@ -964,6 +961,20 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.communityId, 
                         payload.displayName
                     ));
+                break;
+
+            case "getCachePrimerTimestamps":
+                executeThenReply(payload, correlationId, agent
+                    .getCachePrimerTimestamps());
+                break;
+
+            case "setCachePrimerTimestamp":
+                executeThenReply(payload, correlationId, agent
+                    .setCachePrimerTimestamp(
+                        payload.chatIdentifierString,
+                        payload.timestamp
+                    )
+                    .then(() => undefined));
                 break;
 
             default:

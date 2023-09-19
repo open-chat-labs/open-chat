@@ -2,6 +2,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
+    import AccountSettings from "svelte-material-icons/AccountSettingsOutline.svelte";
     import Home from "svelte-material-icons/Home.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
     import Note from "svelte-material-icons/NoteTextOutline.svelte";
@@ -28,14 +29,18 @@
         <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">{$_("wallet")}</span>
     </MenuItem>
+    <MenuItem on:click={() => dispatch("profile")}>
+        <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+        <span slot="text">{$_("profile.title")}</span>
+    </MenuItem>
     <MenuItem on:click={() => dispatch("upgrade")}>
         <span class="diamond-icon" slot="icon">💎</span>
         <span slot="text">{$canExtendDiamond ? $_("upgrade.extend") : $_("upgrade.diamond")}</span>
     </MenuItem>
-    <MenuItem on:click={() => dispatch("halloffame")}>
+    <!-- <MenuItem on:click={() => dispatch("halloffame")}>
         <span class="halloffame" slot="icon">👑</span>
         <span slot="text">{$_("halloffame.menu")}</span>
-    </MenuItem>
+    </MenuItem> -->
     <MenuItem separator />
     <MenuItem on:click={() => page("/home")}>
         <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />

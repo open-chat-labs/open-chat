@@ -18,6 +18,7 @@ import type {
 import {
     compareChats,
     emptyChatMetrics,
+    emptyRules,
     ChatMap,
     nullMembership,
     chatIdentifiersEqual,
@@ -135,13 +136,13 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
 
 export const allChats = derived(
     [allServerChats, uninitializedDirectChats, groupPreviewsStore, localChatSummaryUpdates],
-    ([$all, $direct, $group, $localUpdates]) => {
+    ([$all, $direct, $group, $localSummaryUpdates]) => {
         const merged = $all.entries().concat([...$direct.entries(), ...$group.entries()]);
         const reduced = merged.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
             result.set(chatId, summary);
             return result;
         }, new ChatMap<ChatSummary>());
-        return mergeLocalSummaryUpdates(currentScope, reduced, $localUpdates);
+        return mergeLocalSummaryUpdates(currentScope, reduced, $localSummaryUpdates);
     },
 );
 
@@ -372,6 +373,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
         blockedUsers: new Set<string>(),
         invitedUsers: new Set<string>(),
         pinnedMessages: new Set<number>(),
+        rules: emptyRules(),
         userIds: new Set<string>(),
         userGroupKeys: new Set<string>(),
         confirmedEventIndexesLoaded: new DRange(),
@@ -478,6 +480,7 @@ export const currentChatRules = createDerivedPropStore<ChatSpecificState, "rules
     "rules",
     () => undefined,
 );
+
 export const currentChatMembers = createDerivedPropStore<ChatSpecificState, "members">(
     chatStateStore,
     "members",
@@ -576,6 +579,7 @@ export function createDirectChat(chatId: DirectChatIdentifier): void {
             readByThemUpTo: undefined,
             latestMessage: undefined,
             latestEventIndex: 0,
+            lastUpdated: BigInt(Date.now()),
             dateCreated: BigInt(Date.now()),
             metrics: emptyChatMetrics(),
             membership: {

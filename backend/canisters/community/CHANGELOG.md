@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move rules enabled into Details response + related ([#4366](https://github.com/open-chat-labs/open-chat/pull/4366))
 - Allow rules to be changed without changing version ([#4374](https://github.com/open-chat-labs/open-chat/pull/4374))
 - Disallow spaces in user group names ([#4384](https://github.com/open-chat-labs/open-chat/pull/4384))
+- Add `CommunityRulesNotAccepted` to `send_message` response ([#?](https://github.com/open-chat-labs/open-chat/pull/?))
 
 ## [[2.0.844](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.844-community)] - 2023-09-12
 

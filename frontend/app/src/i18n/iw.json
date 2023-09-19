@@ -369,8 +369,10 @@
         "reject": "לִדחוֹת",
         "rules": "{level} חוקים",
         "placeholder": "מה הם הכללים של {level}?",
-        "instructions": "אם מופעל, משתמשים חדשים חייבים להסכים לכללים לפני שהם יכולים להצטרף ל-{level}.",
-        "acceptTitle": "{level} חוקים"
+        "instructions": "אם מופעל, חברים חדשים חייבים להסכים לכללים לפני שהם יכולים לשלוח הודעות.",
+        "acceptTitle": "כללי צ'אט",
+        "promptExistingUsers": "בקש לחברים קיימים",
+        "promptExistingUsersInstructions": "חברים קיימים חייבים להסכים לכללים החדשים לפני שהם יכולים לשלוח הודעות."
     },
     "group": {
         "publicGroup": "ציבורי {level}",

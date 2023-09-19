@@ -215,7 +215,6 @@ type UpdateGroupV2Args = record {
 };
 
 type UpdateGroupV2Response = variant {
-    Success;
     SuccessV2 : record {
         rules_version : opt Version;
     };

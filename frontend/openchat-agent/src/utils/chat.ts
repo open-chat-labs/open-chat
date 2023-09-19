@@ -323,6 +323,7 @@ export function mergeDirectChatUpdates(
             them: c.them,
             readByThemUpTo: u.readByThemUpTo ?? c.readByThemUpTo,
             dateCreated: c.dateCreated,
+            lastUpdated: u.lastUpdated,
             latestEventIndex: u.latestEventIndex ?? c.latestEventIndex,
             latestMessage: u.latestMessage ?? c.latestMessage,
             metrics: u.metrics ?? c.metrics,
@@ -332,6 +333,7 @@ export function mergeDirectChatUpdates(
                 notificationsMuted: u.notificationsMuted ?? c.membership.notificationsMuted,
                 myMetrics: u.myMetrics ?? c.membership.myMetrics,
                 archived: u.archived ?? c.membership.archived,
+                rulesAccepted: false,
             },
         };
     });
@@ -401,6 +403,7 @@ export function mergeGroupChatUpdates(
                 notificationsMuted: g?.notificationsMuted ?? c.membership.notificationsMuted,
                 myMetrics: g?.myMetrics ?? c.membership.myMetrics,
                 archived: u?.archived ?? c.membership.archived,
+                rulesAccepted: g?.rulesAccepted ?? c.membership.rulesAccepted,
             },
         };
     });
@@ -450,6 +453,7 @@ export function mergeGroupChats(
                 notificationsMuted: g.notificationsMuted,
                 readByMeUpTo: u?.readByMeUpTo,
                 archived: u?.archived ?? false,
+                rulesAccepted: g.rulesAccepted,
             },
         };
     });

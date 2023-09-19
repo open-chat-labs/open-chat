@@ -1,7 +1,7 @@
 <script lang="ts">
     import CommunityCard from "../explore/CommunityCard.svelte";
     import CommunityDetails from "./CommunityDetails.svelte";
-    import { type OpenChat, defaultAccessRules } from "openchat-client";
+    import { type OpenChat, defaultChatRules } from "openchat-client";
     import CommunityDetailsHeader from "./CommunityDetailsHeader.svelte";
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { getContext } from "svelte";
@@ -10,7 +10,7 @@
 
     $: selectedCommunity = client.selectedCommunity;
     $: currentCommunityRules = client.currentCommunityRules;
-    $: rules = $currentCommunityRules ?? defaultAccessRules("community");
+    $: rules = $currentCommunityRules ?? defaultChatRules("community");
 
     $: canDelete =
         $selectedCommunity !== undefined && client.canDeleteCommunity($selectedCommunity.id);

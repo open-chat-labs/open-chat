@@ -383,6 +383,7 @@ export function mergeLocalSummaryUpdates(
                             notificationsMuted:
                                 updated.notificationsMuted ?? current.membership.notificationsMuted,
                             archived: updated.archived ?? current.membership.archived,
+                            rulesAccepted: updated.rulesAccepted ?? current.membership.rulesAccepted,
                         },
                     });
                 } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
