@@ -17,14 +17,14 @@ export function getTheme(base: Theme): Theme {
     base.label = "Solarized Dark";
     base.burst = false;
     base.bg = veryDarkCyan;
-    base.bd = gray;
+    base.bd = "rgba(255,255,255,0.2)";
     base.txt = txt;
     base["txt-light"] = txtLight;
     base.icon.txt = olive;
     base.icon.selected = olive;
     base.button.bg = darkBlue;
     base.button.hv = olive;
-    base.button.txt = txtLight;
+    base.button.txt = txt;
     base.button.disabled = veryDarkCyan;
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = olive;
