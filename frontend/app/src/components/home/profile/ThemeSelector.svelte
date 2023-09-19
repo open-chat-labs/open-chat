@@ -57,12 +57,12 @@
 </div>
 
 <div class="theme-selection">
-    <ThemeSelection
+    <ThemeButton
         on:select={selectLightTheme}
         label={$_("theme.preferredLightTheme")}
         theme={$preferredLightTheme}
         otherThemes={partitionedThemes.light} />
-    <ThemeSelection
+    <ThemeButton
         on:select={selectDarkTheme}
         label={$_("theme.preferredDarkTheme")}
         theme={$preferredDarkTheme}
