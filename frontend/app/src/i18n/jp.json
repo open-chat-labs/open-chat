@@ -359,12 +359,15 @@
         "enable": "ルールを有効にする",
         "accept": "承認",
         "reject": "拒否",
-        "rules": "{level} ルール",
+        "rules": "ルール",
         "placeholder": "{level} ルールとは何ですか?",
         "instructions": "有効にすると、新しいメンバーはメッセージを送信する前にルールに同意する必要があります。",
         "acceptTitle": "チャットのルール",
         "promptExistingUsers": "既存のメンバーにプロンプトを表示する",
-        "promptExistingUsersInstructions": "既存のメンバーは、メッセージを送信する前に新しいルールに同意する必要があります。"
+        "promptExistingUsersInstructions": "既存のメンバーは、メッセージを送信する前に新しいルールに同意する必要があります。",
+        "levelRules": "{level} ルール",
+        "communityRulesExplanation": "チャネル ルールはこれらのルールの前に付けられます。",
+        "channelRulesExplanation": "これらはコミュニティ ルールの先頭に付けられます"
     },
     "group": {
         "publicGroup": "パブリック {level}",

@@ -55,7 +55,7 @@
         <CollapsibleCard
             on:toggle={communityRulesOpen.toggle}
             open={$communityRulesOpen}
-            headerText={interpolateLevel("rules.rules", community.level)}>
+            headerText={interpolateLevel("rules.levelRules", community.level)}>
             <Markdown inline={false} text={rules.text} />
         </CollapsibleCard>
     {/if}

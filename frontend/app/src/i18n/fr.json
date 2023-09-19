@@ -358,12 +358,15 @@
         "enable": "Activer les règles",
         "accept": "Accepter",
         "reject": "Rejeter",
-        "rules": "{level} règles",
+        "rules": "Règles",
         "placeholder": "quelles sont les règles {level} ?",
         "instructions": "Si cette option est activée, les nouveaux membres doivent accepter les règles avant de pouvoir envoyer des messages.",
         "acceptTitle": "Règles de discussion",
         "promptExistingUsers": "Inviter les membres existants",
-        "promptExistingUsersInstructions": "Les membres existants doivent accepter les nouvelles règles avant de pouvoir envoyer des messages."
+        "promptExistingUsersInstructions": "Les membres existants doivent accepter les nouvelles règles avant de pouvoir envoyer des messages.",
+        "levelRules": "Règles {level}",
+        "communityRulesExplanation": "toutes les règles de chaîne seront préfixées à ces règles",
+        "channelRulesExplanation": "ceux-ci seront préfixés à toutes les règles de la communauté"
     },
     "group": {
         "publicGroup": "Publique {level}",

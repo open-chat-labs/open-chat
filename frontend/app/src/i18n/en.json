@@ -485,7 +485,10 @@
         "invite": "Invite"
     },
     "rules": {
-        "rules": "{level} rules",
+        "rules": "Rules",
+        "levelRules": "{level} rules",
+        "communityRulesExplanation": "any channel rules will be prefixed to these rules",
+        "channelRulesExplanation": "these will be prefixed to any community rules",
         "enable": "Enable rules",
         "placeholder": "what are the {level} rules?",
         "instructions": "If enabled, new members must agree to the rules before they can send messages.",

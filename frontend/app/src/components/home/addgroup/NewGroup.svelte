@@ -4,7 +4,7 @@
     import Button from "../../Button.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import GroupDetails from "./GroupDetails.svelte";
-    import Rules from "../Rules.svelte";
+    import RulesEditor from "../RulesEditor.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
     import { toastStore } from "../../../stores/toast";
@@ -76,7 +76,7 @@
         let steps = [
             { labelKey: "group.details", valid: detailsValid },
             { labelKey: "access.visibility", valid: true },
-            { labelKey: interpolateLevel("rules.rules", candidateGroup.level), valid: true },
+            { labelKey: $_("rules.rules"), valid: true },
             { labelKey: "permissions.permissions", valid: true },
         ];
 
@@ -406,7 +406,7 @@
                         bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
-                    <Rules
+                    <RulesEditor
                         bind:valid={rulesValid}
                         level={candidateGroup.level}
                         bind:rules={candidateGroup.rules}
