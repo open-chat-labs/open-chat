@@ -85,8 +85,8 @@ pub fn format_crypto_amount(units: u128, decimals: u8) -> String {
     let subdividable_by = 10u128.pow(decimals as u32);
 
     format!("{}.{:0}", units / subdividable_by, units % subdividable_by)
-        .trim_end_matches("0")
-        .trim_end_matches(".")
+        .trim_end_matches('0')
+        .trim_end_matches('.')
         .to_string()
 }
 

@@ -23,10 +23,10 @@ pub(crate) trait CommandParser {
 
 #[derive(Serialize, Deserialize)]
 pub enum Command {
-    Balance(BalanceCommand),
-    Quote(QuoteCommand),
-    Swap(SwapCommand),
-    Withdraw(WithdrawCommand),
+    Balance(Box<BalanceCommand>),
+    Quote(Box<QuoteCommand>),
+    Swap(Box<SwapCommand>),
+    Withdraw(Box<WithdrawCommand>),
 }
 
 impl Command {

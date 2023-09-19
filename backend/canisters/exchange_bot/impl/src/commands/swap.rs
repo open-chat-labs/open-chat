@@ -60,7 +60,7 @@ If $Amount is not provided, the full balance of $InputTokens will be swapped."
         let amount = amount_decimal.map(|a| (a * 10u128.pow(input_token.decimals as u32) as f64) as u128);
 
         match SwapCommand::build(input_token, output_token, amount, state) {
-            Ok(command) => ParseMessageResult::Success(Command::Swap(command)),
+            Ok(command) => ParseMessageResult::Success(Command::Swap(Box::new(command))),
             Err(error) => build_error_response(error, &state.data),
         }
     }
@@ -195,31 +195,25 @@ impl SwapCommand {
         if !matches!(self.sub_tasks.check_user_balance, CommandSubTaskResult::NotRequired) {
             messages.push(format!(
                 "Checking {input_token} balance: {}",
-                self.sub_tasks.check_user_balance.to_string()
+                self.sub_tasks.check_user_balance
             ));
         }
         if self.sub_tasks.check_user_balance.is_completed() {
-            messages.push(format!("Getting quotes: {}", self.sub_tasks.quotes.to_string()));
+            messages.push(format!("Getting quotes: {}", self.sub_tasks.quotes));
         }
         if let Some(exchange_id) = self.sub_tasks.quotes.value() {
             messages.push(format!(
                 "Transferring {input_token} to {exchange_id}: {}",
-                self.sub_tasks.transfer_to_dex.to_string()
+                self.sub_tasks.transfer_to_dex
             ));
             if self.sub_tasks.transfer_to_dex.is_completed() {
-                messages.push(format!(
-                    "Notifying {exchange_id} of transfer: {}",
-                    self.sub_tasks.notify_dex.to_string()
-                ));
+                messages.push(format!("Notifying {exchange_id} of transfer: {}", self.sub_tasks.notify_dex));
             }
             if self.sub_tasks.notify_dex.is_completed() {
-                messages.push(format!(
-                    "Swapping {input_token} for {output_token}: {}",
-                    self.sub_tasks.swap.to_string()
-                ));
+                messages.push(format!("Swapping {input_token} for {output_token}: {}", self.sub_tasks.swap));
             }
             if self.sub_tasks.swap.is_completed() {
-                messages.push(format!("Withdrawing {output_token}: {}", self.sub_tasks.withdraw.to_string()));
+                messages.push(format!("Withdrawing {output_token}: {}", self.sub_tasks.withdraw));
             }
         }
         messages.join("\n")
@@ -310,7 +304,7 @@ impl SwapCommand {
         state.enqueue_message_edit(self.user_id, self.message_id, message_text);
 
         if !is_finished {
-            state.enqueue_command(Command::Swap(self));
+            state.enqueue_command(Command::Swap(Box::new(self)));
         }
     }
 

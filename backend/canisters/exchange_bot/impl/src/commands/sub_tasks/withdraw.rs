@@ -18,7 +18,7 @@ pub async fn withdraw(
     amount: u128,
     now_nanos: TimestampNanos,
 ) -> CommandSubTaskResult<BlockIndex> {
-    match transfer_to_user(user_id, &token, amount, now_nanos).await {
+    match transfer_to_user(user_id, token, amount, now_nanos).await {
         Ok(Ok(block_index)) => CommandSubTaskResult::Complete(block_index, None),
         Ok(Err(error)) => CommandSubTaskResult::Failed(format!("{error:?}")),
         Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),

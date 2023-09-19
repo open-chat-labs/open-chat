@@ -51,7 +51,7 @@ If $Amount is not provided, your total balance will be withdrawn"
         let amount = amount_decimal.map(|a| (a * 10u128.pow(token.decimals as u32) as f64) as u128);
 
         let command = WithdrawCommand::build(token, amount, state);
-        ParseMessageResult::Success(Command::Withdraw(command))
+        ParseMessageResult::Success(Command::Withdraw(Box::new(command)))
     }
 }
 
@@ -143,7 +143,7 @@ impl WithdrawCommand {
         state.enqueue_message_edit(self.user_id, self.message_id, message_text);
 
         if !is_finished {
-            state.enqueue_command(Command::Withdraw(self));
+            state.enqueue_command(Command::Withdraw(Box::new(self)));
         }
     }
 

@@ -57,7 +57,7 @@ $Amount will default to 1 if not provided."
         let amount = (amount_decimal * 10u128.pow(input_token.decimals as u32) as f64) as u128;
 
         match QuoteCommand::build(input_token, output_token, amount, state) {
-            Ok(command) => ParseMessageResult::Success(Command::Quote(command)),
+            Ok(command) => ParseMessageResult::Success(Command::Quote(Box::new(command))),
             Err(error) => build_error_response(error, &state.data),
         }
     }

@@ -43,7 +43,7 @@ eg. 'balance CHAT'"
         };
 
         let command = BalanceCommand::build(token, state);
-        ParseMessageResult::Success(Command::Balance(command))
+        ParseMessageResult::Success(Command::Balance(Box::new(command)))
     }
 }
 
