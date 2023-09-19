@@ -258,3 +258,12 @@ export function routeForChatIdentifier(scope: ChatListScope["kind"], id: ChatIde
             return `${prefix}/community/${id.communityId}/channel/${id.channelId}`;
     }
 }
+
+export function chatIdentifierToString(chatId: ChatIdentifier): string {
+    switch (chatId.kind) {
+        case "direct_chat": return chatId.userId;
+        case "group_chat": return chatId.groupId;
+        case "channel": return `${chatId.communityId}_${chatId.channelId}`;
+        default: throw new UnsupportedValueError("Unknown chatId kind", chatId);
+    }
+}

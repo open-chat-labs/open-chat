@@ -276,7 +276,9 @@ export type WorkerRequest =
     | CreateUserGroup
     | UpdateUserGroup
     | DeleteUserGroups
-    | SetMemberDisplayName;
+    | SetMemberDisplayName
+    | GetCachePrimerTimestamps
+    | SetCachePrimerTimestamp;
 
 type SetCommunityIndexes = {
     kind: "setCommunityIndexes";
@@ -921,6 +923,16 @@ type DeleteUserGroups = {
     kind: "deleteUserGroups";
 };
 
+type GetCachePrimerTimestamps = {
+    kind: "getCachePrimerTimestamps";
+}
+
+type SetCachePrimerTimestamp = {
+    chatIdentifierString: string;
+    timestamp: bigint;
+    kind: "setCachePrimerTimestamp";
+}
+
 /**
  * Worker error type
  */
@@ -949,12 +961,10 @@ export type WorkerResponseInner =
     | SetUsernameResponse
     | PublicProfile
     | UserSummary
-    | undefined
     | ThreadPreview[]
     | SearchDirectChatResponse
     | SearchGroupChatResponse
     | Rules
-    | undefined
     | GroupChatSummary[]
     | RegisterProposalVoteResponse
     | ChangeRoleResponse
@@ -984,7 +994,6 @@ export type WorkerResponseInner =
     | ArchiveChatResponse
     | ToggleMuteNotificationResponse
     | GroupChatSummary
-    | undefined
     | StorageStatus
     | MigrateUserPrincipalResponse
     | UserSummary[]
@@ -1042,7 +1051,8 @@ export type WorkerResponseInner =
     | RegistryValue
     | CreateUserGroupResponse
     | UpdateUserGroupResponse
-    | DeleteUserGroupsResponse;
+    | DeleteUserGroupsResponse
+    | Record<string, bigint>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1532,4 +1542,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? DeleteUserGroupsResponse
     : T extends SetMemberDisplayName
     ? SetMemberDisplayNameResponse
+    : T extends GetCachePrimerTimestamps
+    ? Record<string, bigint>
+    : T extends SetCachePrimerTimestamp
+    ? void
     : never;

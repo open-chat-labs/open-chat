@@ -1,5 +1,11 @@
 import { MAX_EVENTS, MAX_MESSAGES } from "../constants";
-import { openDB, type DBSchema, type IDBPDatabase } from "idb";
+import {
+    openDB,
+    type DBSchema,
+    type IDBPDatabase,
+    type StoreNames,
+    type StoreValue
+} from "idb";
 import type {
     ChatEvent,
     ChatIdentifier,
@@ -21,14 +27,14 @@ import type {
 } from "openchat-shared";
 import {
     chatIdentifiersEqual,
+    chatIdentifierToString,
     ChatMap,
-    UnsupportedValueError,
     MessageContextMap,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
 
-const CACHE_VERSION = 82;
+const CACHE_VERSION = 83;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -78,6 +84,11 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: EnhancedWrapper<Message>;
     };
+
+    cachePrimer: {
+        key: string;
+        value: bigint;
+    }
 }
 
 function padMessageIndex(i: number): string {
@@ -95,25 +106,12 @@ export function createFailedCacheKey(context: MessageContext, messageId: bigint)
 
 function messageContextToString({ chatId, threadRootMessageIndex }: MessageContext): string {
     return threadRootMessageIndex === undefined
-        ? chatIdentiferToString(chatId)
-        : `${chatIdentiferToString(chatId)}_${threadRootMessageIndex}`;
+        ? chatIdentifierToString(chatId)
+        : `${chatIdentifierToString(chatId)}_${threadRootMessageIndex}`;
 }
 
 export function createCacheKey(context: MessageContext, index: number): string {
     return `${messageContextToString(context)}_${padMessageIndex(index)}`;
-}
-
-function chatIdentiferToString(chatId: ChatIdentifier): string {
-    if (chatId.kind === "channel") {
-        return `${chatId.communityId}_${chatId.channelId}`;
-    }
-    if (chatId.kind === "direct_chat") {
-        return chatId.userId;
-    }
-    if (chatId.kind === "group_chat") {
-        return chatId.groupId;
-    }
-    throw new UnsupportedValueError("Unknown chatId kind", chatId);
 }
 
 export function openCache(principal: Principal): Database {
@@ -140,6 +138,9 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("failed_thread_messages")) {
                 db.deleteObjectStore("failed_thread_messages");
             }
+            if (db.objectStoreNames.contains("cachePrimer")) {
+                db.deleteObjectStore("cachePrimer");
+            }
             const chatEvents = db.createObjectStore("chat_events");
             chatEvents.createIndex("messageIdx", "messageKey");
             const threadEvents = db.createObjectStore("thread_events");
@@ -149,6 +150,7 @@ export function openCache(principal: Principal): Database {
             db.createObjectStore("community_details");
             db.createObjectStore("failed_chat_messages");
             db.createObjectStore("failed_thread_messages");
+            db.createObjectStore("cachePrimer");
         },
     });
 }
@@ -593,7 +595,7 @@ export async function setCachedEvents<T extends ChatEvent>(
     db: Database,
     chatId: ChatIdentifier,
     resp: EventsResponse<T>,
-    threadRootMessageIndex?: number,
+    threadRootMessageIndex: number | undefined,
 ): Promise<void> {
     if (resp === "events_failed") return;
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
@@ -603,8 +605,8 @@ export async function setCachedEvents<T extends ChatEvent>(
     });
     const eventStore = tx.objectStore(store);
     await Promise.all(
-        resp.events.map(async (event) => {
-            await eventStore.put(
+        resp.events.map((event) => {
+            eventStore.put(
                 makeSerialisable<T>(event, chatId, true, threadRootMessageIndex),
                 createCacheKey({ chatId, threadRootMessageIndex }, event.index),
             );
@@ -652,6 +654,18 @@ export async function setCachedMessageIfNotExists(
         );
     }
     await tx.done;
+}
+
+export function getCachePrimerTimestamps(db: Database): Promise<Record<string, bigint>> {
+    return readAll(db, "cachePrimer");
+}
+
+export async function setCachePrimerTimestamp(
+    db: Database,
+    chatIdentifierString: string,
+    timestamp: bigint,
+): Promise<void> {
+    await (await db).put("cachePrimer", timestamp, chatIdentifierString);
 }
 
 function messageToEvent(message: Message, resp: SendMessageSuccess): EventWrapper<Message> {
@@ -751,4 +765,23 @@ function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
         ...chat,
         latestMessage: makeSerialisable(chat.latestMessage, chat.id, true),
     };
+}
+
+async function readAll<Name extends StoreNames<ChatSchema>>(
+    db: Database,
+    storeName: Name
+): Promise<Record<string, StoreValue<ChatSchema, Name>>> {
+    const transaction = (await db).transaction([storeName]);
+    const store = transaction.objectStore(storeName);
+    const cursor = await store.openCursor();
+    const values: Record<string, StoreValue<ChatSchema, Name>> = {};
+    while (cursor?.key !== undefined) {
+        values[cursor.key as string] = cursor.value;
+        try {
+            await cursor.continue();
+        } catch {
+            break;
+        }
+    }
+    return values;
 }

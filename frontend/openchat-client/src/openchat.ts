@@ -389,7 +389,6 @@ import {
     unreadFavouriteChats,
     unreadCommunityChannels,
     globalUnreadCount,
-    getAllServerChats,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag, moderationFlags } from "./stores/flagStore";
@@ -4385,16 +4384,15 @@ export class OpenChat extends OpenChatAgentWorker {
                     await updateRegistryTask;
                 }
 
-                const updatedChats = (chatsResponse.state.directChats as ChatSummary[])
+                const chats = (chatsResponse.state.directChats as ChatSummary[])
                     .concat(chatsResponse.state.groupChats)
                     .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
 
-                this.updateReadUpToStore(updatedChats);
-                const chats = getAllServerChats(this._liveState.globalState).values();
+                this.updateReadUpToStore(chats);
 
-                this._cachePrimer?.processChatUpdates(chats, updatedChats);
+                this._cachePrimer?.processChats(chats);
 
-                const userIds = this.userIdsFromChatSummaries(updatedChats);
+                const userIds = this.userIdsFromChatSummaries(chats);
                 if (!init) {
                     for (const userId of this.user.referrals) {
                         userIds.add(userId);
@@ -4432,7 +4430,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
 
                 if (this._liveState.uninitializedDirectChats.size > 0) {
-                    for (const chat of updatedChats) {
+                    for (const chat of chats) {
                         if (this._liveState.uninitializedDirectChats.has(chat.id)) {
                             removeUninitializedDirectChat(chat.id);
                         }
@@ -4441,7 +4439,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
                 setGlobalState(
                     chatsResponse.state.communities,
-                    updatedChats,
+                    chats,
                     chatsResponse.state.favouriteChats,
                     {
                         group_chat: chatsResponse.state.pinnedGroupChats,
@@ -4488,7 +4486,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 // If the latest message in a chat is sent by the current user, then we know they must have read up to
                 // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
                 // user sends a message on one device then looks at OpenChat on another.
-                for (const chat of updatedChats) {
+                for (const chat of chats) {
                     const latestMessage = chat.latestMessage?.event;
                     if (
                         latestMessage !== undefined &&
@@ -4893,6 +4891,14 @@ export class OpenChat extends OpenChatAgentWorker {
                     ? userOrGroup
                     : undefined;
         }
+    }
+
+    getCachePrimerTimestamps(): Promise<Record<string, bigint>> {
+        return this.sendRequest({ kind: "getCachePrimerTimestamps" });
+    }
+
+    setCachePrimerTimestamp(chatIdentifierString: string, timestamp: bigint): Promise<void> {
+        return this.sendRequest({ kind: "setCachePrimerTimestamp", chatIdentifierString, timestamp });
     }
 
     // **** Communities Stuff

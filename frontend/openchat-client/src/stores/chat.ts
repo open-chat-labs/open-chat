@@ -580,6 +580,7 @@ export function createDirectChat(chatId: DirectChatIdentifier): void {
             readByThemUpTo: undefined,
             latestMessage: undefined,
             latestEventIndex: 0,
+            lastUpdated: BigInt(Date.now()),
             dateCreated: BigInt(Date.now()),
             metrics: emptyChatMetrics(),
             membership: {
