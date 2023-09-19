@@ -17,7 +17,14 @@ pub(crate) async fn check_user_balance(
         .await
         .map(|a| u128::try_from(a.0).unwrap())
     {
-        Ok(amount) => CommandSubTaskResult::Complete(amount, Some(format_crypto_amount(amount, token.decimals))),
+        Ok(amount) => {
+            let text = format!(
+                "{} {}",
+                format_crypto_amount(amount, token.decimals),
+                token.token.token_symbol()
+            );
+            CommandSubTaskResult::Complete(amount, Some(text))
+        }
         Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
     }
 }

@@ -68,7 +68,11 @@ mod process_pending_actions {
 
     async fn send_messages(recipient: UserId, messages: Vec<BotMessage>) {
         let bot_name = read_state(|state| state.data.bot_name.clone());
-        let args = user_canister::c2c_handle_bot_messages::Args { bot_name, messages };
+        let args = user_canister::c2c_handle_bot_messages::Args {
+            bot_name,
+            bot_display_name: None,
+            messages,
+        };
 
         let response = user_canister_c2c_client::c2c_handle_bot_messages(recipient.into(), &args).await;
         if response.is_err() {

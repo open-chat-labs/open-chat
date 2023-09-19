@@ -92,6 +92,10 @@ impl<T> CommandSubTaskResult<T> {
         matches!(self, Self::Pending)
     }
 
+    pub fn is_failed(&self) -> bool {
+        matches!(self, Self::Failed(_))
+    }
+
     pub fn value(&self) -> Option<&T> {
         if let CommandSubTaskResult::Complete(v, _) = self {
             Some(v)

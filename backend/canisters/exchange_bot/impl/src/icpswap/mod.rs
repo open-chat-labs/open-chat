@@ -66,8 +66,8 @@ impl SwapClient for ICPSwapClient {
         Ok(self.deposit_account())
     }
 
-    async fn deposit(&self, amount: u128) -> CallResult<u128> {
-        self.deposit(amount).await
+    async fn deposit(&self, amount: u128) -> CallResult<()> {
+        self.deposit(amount).await.map(|_| ())
     }
 
     async fn swap(&self, amount: u128) -> CallResult<u128> {

@@ -57,6 +57,7 @@ async fn process_action(action: Action) {
                 CanisterId::from(user_id),
                 &user_canister::c2c_handle_bot_messages::Args {
                     bot_name: read_state(|state| state.data.username.clone()),
+                    bot_display_name: None,
                     messages: messages
                         .into_iter()
                         .map(|m| BotMessage {

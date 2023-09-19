@@ -62,8 +62,10 @@ async fn process_batch(batch: Vec<(UserId, MessageId, MessagePending)>) {
 async fn process_single(user_id: UserId, message_id: MessageId, message: MessagePending) {
     let is_error = match message.clone() {
         MessagePending::Send(content) => {
+            let (username, display_name) = read_state(|state| (state.data.username.clone(), state.data.display_name.clone()));
             let args = user_canister::c2c_handle_bot_messages::Args {
-                bot_name: read_state(|state| state.data.username.clone()),
+                bot_name: username,
+                bot_display_name: display_name,
                 messages: vec![BotMessage {
                     content,
                     message_id: Some(message_id),

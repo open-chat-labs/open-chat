@@ -10,7 +10,7 @@ fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name();
 
     let is_valid = match method_name.as_str() {
-        "register_bot" | "swap" => state.is_caller_governance_principal(),
+        "register_bot" => state.is_caller_governance_principal(),
         _ => false,
     };
 
