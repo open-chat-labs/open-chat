@@ -963,6 +963,20 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     ));
                 break;
 
+            case "getCachePrimerTimestamps":
+                executeThenReply(payload, correlationId, agent
+                    .getCachePrimerTimestamps());
+                break;
+
+            case "setCachePrimerTimestamp":
+                executeThenReply(payload, correlationId, agent
+                    .setCachePrimerTimestamp(
+                        payload.chatIdentifierString,
+                        payload.timestamp
+                    )
+                    .then(() => undefined));
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
