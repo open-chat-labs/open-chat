@@ -12,7 +12,7 @@
     import type { Theme } from "../../../theme/types";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
-    import ThemeSelection from "./ThemeSelection.svelte";
+    import ThemeButton from "./ThemeButton.svelte";
 
     type PartitionedThemes = {
         light: Theme[];
