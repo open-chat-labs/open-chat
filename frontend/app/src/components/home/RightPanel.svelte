@@ -46,7 +46,6 @@
     $: currentChatMembers = client.currentChatMembers;
     $: currentChatInvited = client.currentChatInvitedUsers;
     $: currentChatBlocked = client.currentChatBlockedUsers;
-    $: currentChatRules = client.currentChatRules;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
     $: currentCommunityMembers = client.currentCommunityMembers;
     $: currentCommunityInvited = client.currentCommunityInvitedUsers;
@@ -348,7 +347,6 @@
         <GroupDetails
             chat={$multiUserChat}
             memberCount={$currentChatMembers.length}
-            rules={$currentChatRules}
             on:close={popRightPanelHistory}
             on:deleteGroup
             on:editGroup

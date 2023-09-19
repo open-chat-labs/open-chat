@@ -397,6 +397,7 @@ import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import type { Member } from "openchat-shared";
 import type { Level } from "openchat-shared";
 import type { DraftMessage } from "./stores/draftMessageFactory";
+import type { VersionedRules } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -2927,6 +2928,15 @@ export class OpenChat extends OpenChatAgentWorker {
             (chatRules.enabled && !(chat.membership?.rulesAccepted ?? false)) ||
             ((communityRules?.enabled ?? true) && !(community?.membership?.rulesAccepted ?? false))
         );
+    }
+
+    combineRulesText(chatRules: VersionedRules | undefined, communityRules: VersionedRules | undefined): string {
+        const chatRulesEnabled = chatRules?.enabled ?? false;
+        const communityRulesEnabled = communityRules?.enabled ?? false;    
+        const chatRulesText = chatRulesEnabled ? chatRules?.text : "";
+        const communityRulesText = communityRulesEnabled ? communityRules?.text : "";
+        const lineBreak = chatRulesEnabled && communityRulesEnabled ? "\n" : "";
+        return chatRulesText + lineBreak + communityRulesText;
     }
 
     markChatRulesAcceptedLocally(rulesAccepted: boolean) {

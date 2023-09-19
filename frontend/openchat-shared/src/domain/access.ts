@@ -75,18 +75,18 @@ export type UpdatedRules = Rules & {
 };
 
 export function defaultChatRules(level: Level): VersionedRules {
-    const LEVEL_TEXT: Map<Level, string> = new Map([
-        ["channel", "the channel"],
-        ["group", "the group"],
-        ["community", "the channel"],
-    ]);
+    let text = "";
+
+    if (level !== "channel") {
+        text = `- Do not impersonate others in a deceptive or misleading manner
+- Do not intentionally share false or misleading information
+- Keep messages relevant to the ${level === "community" ? "channel" : "group"}
+
+If you break the rules you might be blocked and/or have your message(s) deleted.`
+    }
 
     return {
-        text: `- Do not impersonate others in a deceptive or misleading manner
-- Do not intentionally share false or misleading information
-- Keep messages relevant to ${LEVEL_TEXT.get(level)}
-
-If you break the rules you might be blocked and/or have your message(s) deleted.`,
+        text,
         enabled: false,
         version: 0,
     };

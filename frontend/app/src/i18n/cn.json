@@ -358,12 +358,15 @@
         "enable": "启用群规",
         "accept": "接受",
         "reject": "拒绝",
-        "rules": "{level} 规则",
+        "rules": "规则",
         "placeholder": "{level}规则是什么？",
         "instructions": "如果启用，新成员必须同意规则才能发送消息。",
         "acceptTitle": "聊天规则",
         "promptExistingUsers": "提示现有会员",
-        "promptExistingUsersInstructions": "现有会员必须同意新规则才能发送消息。"
+        "promptExistingUsersInstructions": "现有会员必须同意新规则才能发送消息。",
+        "levelRules": "{level} 规则",
+        "communityRulesExplanation": "任何频道规则都将作为这些规则的前缀",
+        "channelRulesExplanation": "这些将作为任何社区规则的前缀"
     },
     "group": {
         "publicGroup": "公开{level}",

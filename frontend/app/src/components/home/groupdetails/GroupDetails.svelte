@@ -19,7 +19,7 @@
     } from "../../../stores/settings";
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
-    import type { OpenChat, Rules, MultiUserChat } from "openchat-client";
+    import type { OpenChat, MultiUserChat } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import AccessGateSummary from "../AccessGateSummary.svelte";
     import { interpolateLevel } from "../../../utils/i18n";
@@ -31,7 +31,10 @@
 
     export let chat: MultiUserChat;
     export let memberCount: number;
-    export let rules: Rules | undefined;
+
+    $: currentChatRules = client.currentChatRules;
+    $: currentCommunityRules = client.currentCommunityRules;
+    $: combinedRulesText = client.combineRulesText($currentChatRules, $currentCommunityRules);
 
     // capture a snapshot of the chat as it is right now
     $: canEdit = client.canEditGroupDetails(chat.id);
@@ -40,7 +43,7 @@
 
     function editGroup() {
         if (canEdit) {
-            dispatch("editGroup", { chat, rules: { ...rules, newVersion: false } });
+            dispatch("editGroup", { chat, rules: { ...$currentChatRules, newVersion: false } });
         }
     }
 
@@ -121,12 +124,12 @@
             </div>
             <AccessGateSummary gate={chat.gate} />
         </CollapsibleCard>
-        {#if rules !== undefined && rules.enabled}
+        {#if combinedRulesText.length > 0}
             <CollapsibleCard
                 on:toggle={groupRulesOpen.toggle}
                 open={$groupRulesOpen}
-                headerText={interpolateLevel("rules.rules", chat.level)}>
-                <Markdown inline={false} text={rules.text} />
+                headerText={$_("rules.rules")}>
+                <Markdown inline={false} text={combinedRulesText} />
             </CollapsibleCard>
         {/if}
         {#if canInvite}
