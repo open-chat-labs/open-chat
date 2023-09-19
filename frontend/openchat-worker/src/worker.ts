@@ -85,7 +85,11 @@ const sendError = (correlationId: string, payload?: unknown) => {
     };
 };
 
-function executeThenReply(payload: WorkerRequest, correlationId: string, promise: Promise<WorkerResponseInner>) {
+function executeThenReply(
+    payload: WorkerRequest,
+    correlationId: string,
+    promise: Promise<WorkerResponseInner>,
+) {
     promise
         .then((response) => sendResponse(correlationId, response))
         .catch(sendError(correlationId, payload));
@@ -128,7 +132,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     logger = inititaliseLogger(
                         payload.rollbarApiKey,
                         payload.websiteVersion,
-                        payload.env
+                        payload.env,
                     );
                     logger?.debug("WORKER: constructing agent instance");
                     agent = new OpenChatAgent(id, {
@@ -152,17 +156,23 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getDeletedGroupMessage":
-                executeThenReply(payload, correlationId, agent
-                    .getDeletedGroupMessage(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getDeletedGroupMessage(
                         payload.chatId,
                         payload.messageId,
-                        payload.threadRootMessageIndex
-                    ));
+                        payload.threadRootMessageIndex,
+                    ),
+                );
                 break;
 
             case "getDeletedDirectMessage":
-                executeThenReply(payload, correlationId, agent
-                    .getDeletedDirectMessage(payload.userId, payload.messageId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getDeletedDirectMessage(payload.userId, payload.messageId),
+                );
                 break;
 
             case "getUpdates":
@@ -175,173 +185,209 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "chatEvents":
-                executeThenReply(payload, correlationId, agent
-                    .chatEvents(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.chatEvents(
                         payload.chatId,
                         payload.eventIndexRange,
                         payload.startIndex,
                         payload.ascending,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex
-                    ));
+                        payload.latestClientEventIndex,
+                    ),
+                );
                 break;
 
             case "getUsers":
-                executeThenReply(payload, correlationId, agent
-                    .getUsers(payload.users, payload.allowStale));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getUsers(payload.users, payload.allowStale),
+                );
                 break;
 
             case "getAllCachedUsers":
-                executeThenReply(payload, correlationId, agent
-                    .getAllCachedUsers());
+                executeThenReply(payload, correlationId, agent.getAllCachedUsers());
                 break;
 
             case "markMessagesRead":
-                executeThenReply(payload, correlationId, agent
-                    .markMessagesRead(payload.payload));
+                executeThenReply(payload, correlationId, agent.markMessagesRead(payload.payload));
                 break;
 
             case "getGroupDetails":
-                executeThenReply(payload, correlationId, agent
-                    .getGroupDetails(payload.chatId, payload.chatLastUpdated));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getGroupDetails(payload.chatId, payload.chatLastUpdated),
+                );
                 break;
 
             case "lastOnline":
-                executeThenReply(payload, correlationId, agent
-                    .lastOnline(payload.userIds));
+                executeThenReply(payload, correlationId, agent.lastOnline(payload.userIds));
                 break;
 
             case "markAsOnline":
-                executeThenReply(payload, correlationId, agent
-                    .markAsOnline()
-                    .then(() => undefined));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.markAsOnline().then(() => undefined),
+                );
                 break;
 
             case "chatEventsWindow":
-                executeThenReply(payload, correlationId, agent
-                    .chatEventsWindow(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.chatEventsWindow(
                         payload.eventIndexRange,
                         payload.chatId,
                         payload.messageIndex,
                         payload.threadRootMessageIndex,
-                        payload.latestClientMainEventIndex
-                    ));
+                        payload.latestClientMainEventIndex,
+                    ),
+                );
                 break;
 
             case "chatEventsByEventIndex":
-                executeThenReply(payload, correlationId, agent
-                    .chatEventsByEventIndex(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.chatEventsByEventIndex(
                         payload.chatId,
                         payload.eventIndexes,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex
-                    ));
+                        payload.latestClientEventIndex,
+                    ),
+                );
                 break;
 
             case "rehydrateMessage":
-                executeThenReply(payload, correlationId, agent
-                    .rehydrateMessage(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.rehydrateMessage(
                         payload.chatId,
                         payload.message,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex
-                    ));
+                        payload.latestClientEventIndex,
+                    ),
+                );
                 break;
 
             case "checkUsername":
-                executeThenReply(payload, correlationId, agent
-                    .checkUsername(payload.username));
+                executeThenReply(payload, correlationId, agent.checkUsername(payload.username));
                 break;
 
             case "searchUsers":
-                executeThenReply(payload, correlationId, agent
-                    .searchUsers(payload.searchTerm, payload.maxResults));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.searchUsers(payload.searchTerm, payload.maxResults),
+                );
                 break;
 
             case "migrateUserPrincipal":
-                executeThenReply(payload, correlationId, agent
-                    .migrateUserPrincipal(payload.userId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.migrateUserPrincipal(payload.userId),
+                );
                 break;
 
             case "initUserPrincipalMigration":
-                executeThenReply(payload, correlationId, agent
-                    .initUserPrincipalMigration(payload.newPrincipal)
-                    .then(() => undefined));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.initUserPrincipalMigration(payload.newPrincipal).then(() => undefined),
+                );
                 break;
 
             case "getUserStorageLimits":
-                executeThenReply(payload, correlationId, agent
-                    .getUserStorageLimits());
+                executeThenReply(payload, correlationId, agent.getUserStorageLimits());
                 break;
 
             case "getPublicGroupSummary":
-                executeThenReply(payload, correlationId, agent
-                    .getPublicGroupSummary(payload.chatId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getPublicGroupSummary(payload.chatId),
+                );
                 break;
 
             case "toggleMuteNotifications":
-                executeThenReply(payload, correlationId, agent
-                    .toggleMuteNotifications(payload.chatId, payload.muted));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.toggleMuteNotifications(payload.chatId, payload.muted),
+                );
                 break;
 
             case "archiveChat":
-                executeThenReply(payload, correlationId, agent
-                    .archiveChat(payload.chatId));
+                executeThenReply(payload, correlationId, agent.archiveChat(payload.chatId));
                 break;
 
             case "unarchiveChat":
-                executeThenReply(payload, correlationId, agent
-                    .unarchiveChat(payload.chatId));
+                executeThenReply(payload, correlationId, agent.unarchiveChat(payload.chatId));
                 break;
 
             case "pinChat":
-                executeThenReply(payload, correlationId, agent
-                    .pinChat(payload.chatId, payload.favourite));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.pinChat(payload.chatId, payload.favourite),
+                );
                 break;
 
             case "unpinChat":
-                executeThenReply(payload, correlationId, agent
-                    .unpinChat(payload.chatId, payload.favourite));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.unpinChat(payload.chatId, payload.favourite),
+                );
                 break;
 
             case "blockUserFromDirectChat":
-                executeThenReply(payload, correlationId, agent
-                    .blockUserFromDirectChat(payload.userId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.blockUserFromDirectChat(payload.userId),
+                );
                 break;
 
             case "unblockUserFromDirectChat":
-                executeThenReply(payload, correlationId, agent
-                    .unblockUserFromDirectChat(payload.userId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.unblockUserFromDirectChat(payload.userId),
+                );
                 break;
 
             case "setUserAvatar":
-                executeThenReply(payload, correlationId, agent
-                    .setUserAvatar(payload.data));
+                executeThenReply(payload, correlationId, agent.setUserAvatar(payload.data));
                 break;
 
             case "deleteGroup":
-                executeThenReply(payload, correlationId, agent
-                    .deleteGroup(payload.chatId));
+                executeThenReply(payload, correlationId, agent.deleteGroup(payload.chatId));
                 break;
 
             case "leaveGroup":
-                executeThenReply(payload, correlationId, agent
-                    .leaveGroup(payload.chatId));
+                executeThenReply(payload, correlationId, agent.leaveGroup(payload.chatId));
                 break;
 
             case "joinGroup":
-                executeThenReply(payload, correlationId, agent
-                    .joinGroup(payload.chatId));
+                executeThenReply(payload, correlationId, agent.joinGroup(payload.chatId));
                 break;
 
             case "joinCommunity":
-                executeThenReply(payload, correlationId, agent
-                    .joinCommunity(payload.id));
+                executeThenReply(payload, correlationId, agent.joinCommunity(payload.id));
                 break;
 
             case "updateGroup":
-                executeThenReply(payload, correlationId, agent
-                    .updateGroup(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateGroup(
                         payload.chatId,
                         payload.name,
                         payload.desc,
@@ -349,186 +395,261 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.permissions,
                         payload.avatar,
                         payload.gate,
-                        payload.isPublic
-                    ));
+                        payload.isPublic,
+                    ),
+                );
                 break;
 
             case "registerPollVote":
-                executeThenReply(payload, correlationId, agent
-                    .registerPollVote(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.registerPollVote(
                         payload.chatId,
                         payload.messageIdx,
                         payload.answerIdx,
                         payload.voteType,
-                        payload.threadRootMessageIndex
-                    ));
+                        payload.threadRootMessageIndex,
+                    ),
+                );
                 break;
 
             case "deleteMessage":
-                executeThenReply(payload, correlationId, agent
-                    .deleteMessage(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.deleteMessage(
                         payload.chatId,
                         payload.messageId,
                         payload.threadRootMessageIndex,
-                        payload.asPlatformModerator
-                    ));
+                        payload.asPlatformModerator,
+                    ),
+                );
                 break;
 
             case "undeleteMessage":
-                executeThenReply(payload, correlationId, agent
-                    .undeleteMessage(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.undeleteMessage(
                         payload.chatId,
                         payload.messageId,
-                        payload.threadRootMessageIndex
-                    ));
+                        payload.threadRootMessageIndex,
+                    ),
+                );
                 break;
 
             case "addReaction":
-                executeThenReply(payload, correlationId, agent
-                    .addReaction(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.addReaction(
                         payload.chatId,
                         payload.messageId,
                         payload.reaction,
                         payload.username,
                         payload.displayName,
-                        payload.threadRootMessageIndex
-                    ));
+                        payload.threadRootMessageIndex,
+                    ),
+                );
                 break;
 
             case "removeReaction":
-                executeThenReply(payload, correlationId, agent
-                    .removeReaction(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.removeReaction(
                         payload.chatId,
                         payload.messageId,
                         payload.reaction,
-                        payload.threadRootMessageIndex
-                    ));
+                        payload.threadRootMessageIndex,
+                    ),
+                );
                 break;
 
             case "blockUserFromGroupChat":
-                executeThenReply(payload, correlationId, agent
-                    .blockUserFromGroupChat(payload.chatId, payload.userId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.blockUserFromGroupChat(payload.chatId, payload.userId),
+                );
                 break;
 
             case "unblockUserFromGroupChat":
-                executeThenReply(payload, correlationId, agent
-                    .unblockUserFromGroupChat(payload.chatId, payload.userId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.unblockUserFromGroupChat(payload.chatId, payload.userId),
+                );
                 break;
 
             case "getProposalVoteDetails":
-                executeThenReply(payload, correlationId, agent
-                    .getProposalVoteDetails(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getProposalVoteDetails(
                         payload.governanceCanisterId,
                         payload.proposalId,
-                        payload.isNns
-                    ));
+                        payload.isNns,
+                    ),
+                );
                 break;
 
             case "listNervousSystemFunctions":
-                executeThenReply(payload, correlationId, agent
-                    .listNervousSystemFunctions(payload.snsGovernanceCanisterId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.listNervousSystemFunctions(payload.snsGovernanceCanisterId),
+                );
                 break;
 
             case "unpinMessage":
-                executeThenReply(payload, correlationId, agent
-                    .unpinMessage(payload.chatId, payload.messageIndex));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.unpinMessage(payload.chatId, payload.messageIndex),
+                );
                 break;
 
             case "pinMessage":
-                executeThenReply(payload, correlationId, agent
-                    .pinMessage(payload.chatId, payload.messageIndex));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.pinMessage(payload.chatId, payload.messageIndex),
+                );
                 break;
 
             case "sendMessage":
-                executeThenReply(payload, correlationId, agent
-                    .sendMessage(
-                        payload.chatId,
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.sendMessage(
+                        payload.messageContext,
                         payload.user,
                         payload.mentioned,
                         payload.event,
-                        payload.threadRootMessageIndex,
                         payload.rulesAccepted,
-                        payload.communityRulesAccepted, 
-                    ));
+                        payload.communityRulesAccepted,
+                    ),
+                );
                 break;
 
             case "editMessage":
-                executeThenReply(payload, correlationId, agent
-                    .editMessage(payload.chatId, payload.msg, payload.threadRootMessageIndex));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.editMessage(payload.chatId, payload.msg, payload.threadRootMessageIndex),
+                );
                 break;
 
             case "registerUser":
-                executeThenReply(payload, correlationId, agent
-                    .registerUser(payload.username, payload.displayName, payload.referralCode));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.registerUser(payload.username, payload.displayName, payload.referralCode),
+                );
                 break;
 
             case "subscriptionExists":
-                executeThenReply(payload, correlationId, agent
-                    .subscriptionExists(payload.p256dh_key));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.subscriptionExists(payload.p256dh_key),
+                );
                 break;
 
             case "pushSubscription":
-                executeThenReply(payload, correlationId, agent
-                    .pushSubscription(payload.subscription)
-                    .then(() => undefined));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.pushSubscription(payload.subscription).then(() => undefined),
+                );
                 break;
 
             case "removeSubscription":
-                executeThenReply(payload, correlationId, agent
-                    .removeSubscription(payload.subscription)
-                    .then(() => undefined));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.removeSubscription(payload.subscription).then(() => undefined),
+                );
                 break;
 
             case "inviteUsers":
-                executeThenReply(payload, correlationId, agent
-                    .inviteUsers(payload.chatId, payload.userIds));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.inviteUsers(payload.chatId, payload.userIds),
+                );
                 break;
 
             case "inviteUsersToCommunity":
-                executeThenReply(payload, correlationId, agent
-                    .inviteUsersToCommunity(payload.id, payload.userIds));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.inviteUsersToCommunity(payload.id, payload.userIds),
+                );
                 break;
 
             case "removeMember":
-                executeThenReply(payload, correlationId, agent
-                    .removeMember(payload.chatId, payload.userId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.removeMember(payload.chatId, payload.userId),
+                );
                 break;
 
             case "changeRole":
-                executeThenReply(payload, correlationId, agent
-                    .changeRole(payload.chatId, payload.userId, payload.newRole));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.changeRole(payload.chatId, payload.userId, payload.newRole),
+                );
                 break;
 
             case "registerProposalVote":
-                executeThenReply(payload, correlationId, agent
-                    .registerProposalVote(payload.chatId, payload.messageIndex, payload.adopt));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.registerProposalVote(payload.chatId, payload.messageIndex, payload.adopt),
+                );
                 break;
 
             case "getRecommendedGroups":
-                executeThenReply(payload, correlationId, agent
-                    .getRecommendedGroups(payload.exclusions));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getRecommendedGroups(payload.exclusions),
+                );
                 break;
 
             case "exploreCommunities":
-                executeThenReply(payload, correlationId, agent
-                    .exploreCommunities(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.exploreCommunities(
                         payload.searchTerm,
                         payload.pageIndex,
                         payload.pageSize,
                         payload.flags,
-                        payload.languages
-                    ));
+                        payload.languages,
+                    ),
+                );
                 break;
 
             case "searchGroups":
-                executeThenReply(payload, correlationId, agent
-                    .searchGroups(payload.searchTerm, payload.maxResults));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.searchGroups(payload.searchTerm, payload.maxResults),
+                );
                 break;
 
             case "dismissRecommendation":
-                executeThenReply(payload, correlationId, agent
-                    .dismissRecommendation(payload.chatId)
-                    .then(() => undefined));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.dismissRecommendation(payload.chatId).then(() => undefined),
+                );
                 break;
 
             case "communityInvite":
@@ -542,425 +663,578 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "searchGroupChat":
-                executeThenReply(payload, correlationId, agent
-                    .searchGroupChat(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.searchGroupChat(
                         payload.chatId,
                         payload.searchTerm,
                         payload.userIds,
-                        payload.maxResults
-                    ));
+                        payload.maxResults,
+                    ),
+                );
                 break;
 
             case "searchDirectChat":
-                executeThenReply(payload, correlationId, agent
-                    .searchDirectChat(payload.chatId, payload.searchTerm, payload.maxResults));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.searchDirectChat(payload.chatId, payload.searchTerm, payload.maxResults),
+                );
                 break;
 
             case "refreshAccountBalance":
-                executeThenReply(payload, correlationId, agent
-                    .refreshAccountBalance(payload.ledger, payload.principal));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.refreshAccountBalance(payload.ledger, payload.principal),
+                );
                 break;
 
             case "threadPreviews":
-                executeThenReply(payload, correlationId, agent
-                    .threadPreviews(payload.threadsByChat));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.threadPreviews(payload.threadsByChat),
+                );
                 break;
 
             case "getUser":
-                executeThenReply(payload, correlationId, agent
-                    .getUser(payload.userId, payload.allowStale));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getUser(payload.userId, payload.allowStale),
+                );
                 break;
 
             case "getPublicProfile":
-                executeThenReply(payload, correlationId, agent
-                    .getPublicProfile(payload.userId));
+                executeThenReply(payload, correlationId, agent.getPublicProfile(payload.userId));
                 break;
 
             case "setUsername":
-                executeThenReply(payload, correlationId, agent
-                    .setUsername(payload.userId, payload.username));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setUsername(payload.userId, payload.username),
+                );
                 break;
 
             case "setDisplayName":
-                executeThenReply(payload, correlationId, agent
-                    .setDisplayName(payload.userId, payload.displayName));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setDisplayName(payload.userId, payload.displayName),
+                );
                 break;
 
             case "setBio":
-                executeThenReply(payload, correlationId, agent
-                    .setBio(payload.bio));
+                executeThenReply(payload, correlationId, agent.setBio(payload.bio));
                 break;
 
             case "getBio":
-                executeThenReply(payload, correlationId, agent
-                    .getBio(payload.userId));
+                executeThenReply(payload, correlationId, agent.getBio(payload.userId));
                 break;
 
             case "withdrawCryptocurrency":
-                executeThenReply(payload, correlationId, agent
-                    .withdrawCryptocurrency(payload.domain));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.withdrawCryptocurrency(payload.domain),
+                );
                 break;
 
             case "getGroupMessagesByMessageIndex":
-                executeThenReply(payload, correlationId, agent
-                    .getGroupMessagesByMessageIndex(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getGroupMessagesByMessageIndex(
                         payload.chatId,
                         payload.messageIndexes,
-                        payload.latestClientEventIndex
-                    ));
+                        payload.latestClientEventIndex,
+                    ),
+                );
                 break;
 
             case "getInviteCode":
-                executeThenReply(payload, correlationId, agent
-                    .getInviteCode(payload.id));
+                executeThenReply(payload, correlationId, agent.getInviteCode(payload.id));
                 break;
 
             case "enableInviteCode":
-                executeThenReply(payload, correlationId, agent
-                    .enableInviteCode(payload.id));
+                executeThenReply(payload, correlationId, agent.enableInviteCode(payload.id));
                 break;
 
             case "disableInviteCode":
-                executeThenReply(payload, correlationId, agent
-                    .disableInviteCode(payload.id));
+                executeThenReply(payload, correlationId, agent.disableInviteCode(payload.id));
                 break;
 
             case "resetInviteCode":
-                executeThenReply(payload, correlationId, agent
-                    .resetInviteCode(payload.id));
+                executeThenReply(payload, correlationId, agent.resetInviteCode(payload.id));
                 break;
 
             case "createGroupChat":
-                executeThenReply(payload, correlationId, agent
-                    .createGroupChat(payload.candidate));
+                executeThenReply(payload, correlationId, agent.createGroupChat(payload.candidate));
                 break;
 
             case "setCachedMessageFromNotification":
-                executeThenReply(payload, correlationId, agent
-                    .setCachedMessageFromNotification(
-                        payload.chatId,
-                        payload.threadRootMessageIndex,
-                        payload.message
-                    )
-                    .then(() => undefined));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .setCachedMessageFromNotification(
+                            payload.chatId,
+                            payload.threadRootMessageIndex,
+                            payload.message,
+                        )
+                        .then(() => undefined),
+                );
                 break;
 
             case "freezeGroup":
-                executeThenReply(payload, correlationId, agent
-                    .freezeGroup(payload.chatId, payload.reason));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.freezeGroup(payload.chatId, payload.reason),
+                );
                 break;
 
             case "unfreezeGroup":
-                executeThenReply(payload, correlationId, agent
-                    .unfreezeGroup(payload.chatId));
+                executeThenReply(payload, correlationId, agent.unfreezeGroup(payload.chatId));
                 break;
 
             case "deleteFrozenGroup":
-                executeThenReply(payload, correlationId, agent
-                    .deleteFrozenGroup(payload.chatId));
+                executeThenReply(payload, correlationId, agent.deleteFrozenGroup(payload.chatId));
                 break;
 
             case "addHotGroupExclusion":
-                executeThenReply(payload, correlationId, agent
-                    .addHotGroupExclusion(payload.chatId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.addHotGroupExclusion(payload.chatId),
+                );
                 break;
 
             case "removeHotGroupExclusion":
-                executeThenReply(payload, correlationId, agent
-                    .removeHotGroupExclusion(payload.chatId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.removeHotGroupExclusion(payload.chatId),
+                );
                 break;
 
             case "suspendUser":
-                executeThenReply(payload, correlationId, agent
-                    .suspendUser(payload.userId, payload.reason));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.suspendUser(payload.userId, payload.reason),
+                );
                 break;
 
             case "unsuspendUser":
-                executeThenReply(payload, correlationId, agent
-                    .unsuspendUser(payload.userId));
+                executeThenReply(payload, correlationId, agent.unsuspendUser(payload.userId));
                 break;
 
             case "setCommunityModerationFlags":
-                executeThenReply(payload, correlationId, agent
-                    .setCommunityModerationFlags(payload.communityId, payload.flags));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setCommunityModerationFlags(payload.communityId, payload.flags),
+                );
                 break;
 
             case "setGroupUpgradeConcurrency":
-                executeThenReply(payload, correlationId, agent
-                    .setGroupUpgradeConcurrency(payload.value));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setGroupUpgradeConcurrency(payload.value),
+                );
                 break;
 
             case "setCommunityUpgradeConcurrency":
-                executeThenReply(payload, correlationId, agent
-                    .setCommunityUpgradeConcurrency(payload.value));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setCommunityUpgradeConcurrency(payload.value),
+                );
                 break;
 
             case "setUserUpgradeConcurrency":
-                executeThenReply(payload, correlationId, agent
-                    .setUserUpgradeConcurrency(payload.value));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setUserUpgradeConcurrency(payload.value),
+                );
                 break;
 
             case "markSuspectedBot":
-                executeThenReply(payload, correlationId, agent
-                    .markSuspectedBot());
+                executeThenReply(payload, correlationId, agent.markSuspectedBot());
                 break;
 
             case "loadFailedMessages":
-                executeThenReply(payload, correlationId, agent
-                    .loadFailedMessages());
+                executeThenReply(payload, correlationId, agent.loadFailedMessages());
                 break;
 
             case "deleteFailedMessage":
-                executeThenReply(payload, correlationId, agent
-                    .deleteFailedMessage(
-                        payload.chatId,
-                        payload.messageId,
-                        payload.threadRootMessageIndex
-                    )
-                    .then(() => undefined));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .deleteFailedMessage(
+                            payload.chatId,
+                            payload.messageId,
+                            payload.threadRootMessageIndex,
+                        )
+                        .then(() => undefined),
+                );
                 break;
             case "claimPrize":
-                executeThenReply(payload, correlationId, agent
-                    .claimPrize(payload.chatId, payload.messageId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.claimPrize(payload.chatId, payload.messageId),
+                );
                 break;
 
             case "payForDiamondMembership":
-                executeThenReply(payload, correlationId, agent
-                    .payForDiamondMembership(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.payForDiamondMembership(
                         payload.userId,
                         payload.token,
                         payload.duration,
                         payload.recurring,
-                        payload.expectedPriceE8s
-                    ));
+                        payload.expectedPriceE8s,
+                    ),
+                );
                 break;
 
             case "updateMarketMakerConfig":
-                executeThenReply(payload, correlationId, agent
-                    .updateMarketMakerConfig(payload));
+                executeThenReply(payload, correlationId, agent.updateMarketMakerConfig(payload));
                 break;
 
             case "setMessageReminder":
-                executeThenReply(payload, correlationId, agent
-                    .setMessageReminder(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setMessageReminder(
                         payload.chatId,
                         payload.eventIndex,
                         payload.remindAt,
                         payload.notes,
-                        payload.threadRootMessageIndex
-                    ));
+                        payload.threadRootMessageIndex,
+                    ),
+                );
                 break;
 
             case "cancelMessageReminder":
-                executeThenReply(payload, correlationId, agent
-                    .cancelMessageReminder(payload.reminderId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.cancelMessageReminder(payload.reminderId),
+                );
                 break;
 
             case "getReferralLeaderboard":
-                executeThenReply(payload, correlationId, agent
-                    .getReferralLeaderboard(payload.args));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getReferralLeaderboard(payload.args),
+                );
                 break;
 
             case "reportMessage":
-                executeThenReply(payload, correlationId, agent
-                    .reportMessage(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.reportMessage(
                         payload.chatId,
                         payload.eventIndex,
                         payload.reasonCode,
                         payload.notes,
-                        payload.threadRootMessageIndex
-                    ));
+                        payload.threadRootMessageIndex,
+                    ),
+                );
                 break;
 
             case "declineInvitation":
-                executeThenReply(payload, correlationId, agent
-                    .declineInvitation(payload.chatId));
+                executeThenReply(payload, correlationId, agent.declineInvitation(payload.chatId));
                 break;
 
             // Community level functions
             case "addMembersToChannel":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.chatId.communityId)
-                    .addMembersToChannel(payload.chatId, payload.userIds, payload.username, payload.displayName));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .communityClient(payload.chatId.communityId)
+                        .addMembersToChannel(
+                            payload.chatId,
+                            payload.userIds,
+                            payload.username,
+                            payload.displayName,
+                        ),
+                );
                 break;
 
             case "blockCommunityUser":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.id.communityId)
-                    .blockUser(payload.userId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.communityClient(payload.id.communityId).blockUser(payload.userId),
+                );
                 break;
 
             case "changeChannelRole":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.chatId.communityId)
-                    .changeChannelRole(payload.chatId, payload.userId, payload.newRole));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .communityClient(payload.chatId.communityId)
+                        .changeChannelRole(payload.chatId, payload.userId, payload.newRole),
+                );
                 break;
 
             case "changeCommunityRole":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.id.communityId)
-                    .changeRole(payload.userId, payload.newRole));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .communityClient(payload.id.communityId)
+                        .changeRole(payload.userId, payload.newRole),
+                );
                 break;
 
             case "declineChannelInvitation":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.chatId.communityId)
-                    .declineInvitation(payload.chatId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .communityClient(payload.chatId.communityId)
+                        .declineInvitation(payload.chatId),
+                );
                 break;
 
             case "channelMessagesByMessageIndex":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.chatId.communityId)
-                    .messagesByMessageIndex(
-                        payload.chatId,
-                        payload.messageIndexes,
-                        payload.latestClientEventIndex,
-                        payload.threadRootMessageIndex
-                    ));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .communityClient(payload.chatId.communityId)
+                        .messagesByMessageIndex(
+                            payload.chatId,
+                            payload.messageIndexes,
+                            payload.latestClientEventIndex,
+                            payload.threadRootMessageIndex,
+                        ),
+                );
                 break;
 
             case "removeCommunityMember":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.id.communityId)
-                    .removeMember(payload.userId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.communityClient(payload.id.communityId).removeMember(payload.userId),
+                );
                 break;
 
             case "toggleMuteCommunityNotifications":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.communityId)
-                    .toggleMuteNotifications(payload.mute));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .communityClient(payload.communityId)
+                        .toggleMuteNotifications(payload.mute),
+                );
                 break;
 
             case "unblockCommunityUser":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.id.communityId)
-                    .unblockUser(payload.userId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.communityClient(payload.id.communityId).unblockUser(payload.userId),
+                );
                 break;
 
             case "updateCommunity":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.communityId)
-                    .updateCommunity(
-                        payload.name,
-                        payload.description,
-                        payload.rules,
-                        payload.permissions,
-                        payload.avatar,
-                        payload.banner,
-                        payload.gate,
-                        payload.isPublic,
-                        payload.primaryLanguage
-                    ));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .communityClient(payload.communityId)
+                        .updateCommunity(
+                            payload.name,
+                            payload.description,
+                            payload.rules,
+                            payload.permissions,
+                            payload.avatar,
+                            payload.banner,
+                            payload.gate,
+                            payload.isPublic,
+                            payload.primaryLanguage,
+                        ),
+                );
                 break;
 
             case "createCommunity":
-                executeThenReply(payload, correlationId, agent.userClient
-                    .createCommunity(payload.community, payload.rules, payload.defaultChannels, payload.defaultChannelRules));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.userClient.createCommunity(
+                        payload.community,
+                        payload.rules,
+                        payload.defaultChannels,
+                        payload.defaultChannelRules,
+                    ),
+                );
                 break;
 
             case "getCommunitySummary":
-                executeThenReply(payload, correlationId, agent
-                    .getCommunitySummary(payload.communityId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getCommunitySummary(payload.communityId),
+                );
                 break;
 
             case "getChannelSummary":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.chatId.communityId)
-                    .channelSummary(payload.chatId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .communityClient(payload.chatId.communityId)
+                        .channelSummary(payload.chatId),
+                );
                 break;
 
             case "exploreChannels":
-                executeThenReply(payload, correlationId, agent
-                    .exploreChannels(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.exploreChannels(
                         payload.id,
                         payload.searchTerm,
                         payload.pageSize,
-                        payload.pageIndex
-                    ));
+                        payload.pageIndex,
+                    ),
+                );
                 break;
 
             case "getCommunityDetails":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.id.communityId)
-                    .getCommunityDetails(payload.id, payload.communityLastUpdated));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .communityClient(payload.id.communityId)
+                        .getCommunityDetails(payload.id, payload.communityLastUpdated),
+                );
                 break;
 
             case "addToFavourites":
-                executeThenReply(payload, correlationId, agent.userClient
-                    .addToFavourites(payload.chatId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.userClient.addToFavourites(payload.chatId),
+                );
                 break;
 
             case "removeFromFavourites":
-                executeThenReply(payload, correlationId, agent.userClient
-                    .removeFromFavourites(payload.chatId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.userClient.removeFromFavourites(payload.chatId),
+                );
                 break;
 
             case "leaveCommunity":
-                executeThenReply(payload, correlationId, agent.userClient
-                    .leaveCommunity(payload.id));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.userClient.leaveCommunity(payload.id),
+                );
                 break;
 
             case "deleteCommunity":
-                executeThenReply(payload, correlationId, agent.userClient
-                    .deleteCommunity(payload.id));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.userClient.deleteCommunity(payload.id),
+                );
                 break;
 
             case "convertGroupToCommunity":
-                executeThenReply(payload, correlationId, agent
-                    .convertGroupToCommunity(payload.chatId, payload.historyVisible, payload.rules));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.convertGroupToCommunity(
+                        payload.chatId,
+                        payload.historyVisible,
+                        payload.rules,
+                    ),
+                );
                 break;
 
             case "importGroupToCommunity":
-                executeThenReply(payload, correlationId, agent
-                    .communityClient(payload.communityId.communityId)
-                    .importGroup(payload.groupId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .communityClient(payload.communityId.communityId)
+                        .importGroup(payload.groupId),
+                );
                 break;
 
             case "setModerationFlags":
-                executeThenReply(payload, correlationId, agent
-                    .setModerationFlags(payload.flags));
+                executeThenReply(payload, correlationId, agent.setModerationFlags(payload.flags));
                 break;
 
             case "updateRegistry":
-                executeThenReply(payload, correlationId, agent
-                    .getRegistry());
+                executeThenReply(payload, correlationId, agent.getRegistry());
                 break;
 
             case "setCommunityIndexes":
-                executeThenReply(payload, correlationId, agent
-                    .setCommunityIndexes(payload.indexes));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setCommunityIndexes(payload.indexes),
+                );
                 break;
 
             case "createUserGroup":
-                executeThenReply(payload, correlationId, agent
-                    .createUserGroup(payload.communityId, payload.name, payload.userIds));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.createUserGroup(payload.communityId, payload.name, payload.userIds),
+                );
                 break;
 
             case "updateUserGroup":
-                executeThenReply(payload, correlationId, agent
-                    .updateUserGroup(
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateUserGroup(
                         payload.communityId,
                         payload.userGroupId,
                         payload.name,
                         payload.usersToAdd,
-                        payload.usersToRemove
-                    ));
+                        payload.usersToRemove,
+                    ),
+                );
                 break;
 
             case "deleteUserGroups":
-                executeThenReply(payload, correlationId, agent
-                    .deleteUserGroups(
-                        payload.communityId,
-                        payload.userGroupIds,
-                    ));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.deleteUserGroups(payload.communityId, payload.userGroupIds),
+                );
                 break;
 
             case "setMemberDisplayName":
-                executeThenReply(payload, correlationId, agent
-                    .setMemberDisplayName(
-                        payload.communityId, 
-                        payload.displayName
-                    ));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setMemberDisplayName(payload.communityId, payload.displayName),
+                );
                 break;
 
             case "getCachePrimerTimestamps":

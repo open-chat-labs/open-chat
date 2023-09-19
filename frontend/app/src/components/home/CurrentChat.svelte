@@ -11,7 +11,6 @@
         type EventWrapper,
         type Mention,
         type Message,
-        type MessageContent,
         type OpenChat,
         type FilteredProposals,
         type User,
@@ -21,6 +20,7 @@
         CommunityMap,
         type CommunitySummary,
         ICP_SYMBOL,
+        type AttachmentContent,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -44,7 +44,7 @@
         kind: "send_message";
         textContent: string | undefined;
         mentioned: User[];
-        fileToAttach: MessageContent | undefined;
+        attachment: AttachmentContent | undefined;
     };
 
     type ConfirmedForwardMessage = {
@@ -82,10 +82,11 @@
     let showAcceptRulesModal = false;
     let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
 
+    $: messageContext = { chatId: chat.id };
     $: currentChatTextContent = client.currentChatTextContent;
     $: currentChatReplyingTo = client.currentChatReplyingTo;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
-    $: currentChatFileToAttach = client.currentChatFileToAttach;
+    $: currentChatAttachment = client.currentChatAttachment;
     $: currentChatEditingEvent = client.currentChatEditingEvent;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: lastCryptoSent = client.lastCryptoSent;
@@ -168,7 +169,7 @@
         };
     }
 
-    function fileSelected(ev: CustomEvent<MessageContent>) {
+    function fileSelected(ev: CustomEvent<AttachmentContent>) {
         currentChatDraftMessage.setAttachment(chat.id, ev.detail);
     }
 
@@ -202,7 +203,7 @@
         function send(n: number) {
             if (n === ev.detail) return;
 
-            sendMessageWithAttachment(randomSentence(), [], undefined);
+            sendMessageWithAttachment(randomSentence(), undefined);
 
             window.setTimeout(() => send(n + 1), 500);
         }
@@ -216,9 +217,9 @@
         if ($currentChatEditingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
-                    chat.id,
+                    messageContext,
                     text,
-                    $currentChatFileToAttach,
+                    $currentChatAttachment,
                     $currentChatEditingEvent
                 )
                 .then((success) => {
@@ -227,14 +228,14 @@
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, mentioned, $currentChatFileToAttach);
+            sendMessageWithAttachment(text, $currentChatAttachment, mentioned);
         }
     }
 
     function sendMessageWithAttachment(
         textContent: string | undefined,
-        mentioned: User[],
-        fileToAttach: MessageContent | undefined
+        attachment: AttachmentContent | undefined,
+        mentioned: User[] = []
     ) {
         if (client.rulesNeedAccepting()) {
             showAcceptRulesModal = true;
@@ -242,25 +243,11 @@
                 kind: "send_message",
                 textContent,
                 mentioned,
-                fileToAttach,
+                attachment,
             };
         } else {
-            client.sendMessageWithAttachment(
-                chat.id,
-                events,
-                textContent,
-                mentioned,
-                fileToAttach,
-                $currentChatReplyingTo,
-                undefined,
-                undefined,
-                undefined
-            );
+            client.sendMessageWithAttachment(messageContext, textContent, attachment, mentioned);
         }
-    }
-
-    export function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
-        sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
 
     function forwardMessage(msg: Message) {
@@ -273,7 +260,7 @@
                 msg,
             };
         } else {
-            client.forwardMessage(chat.id, msg, undefined, undefined, undefined);
+            client.forwardMessage(messageContext, msg);
         }
     }
 
@@ -285,7 +272,7 @@
                 event: ev.detail,
             };
         } else {
-            client.retrySendMessage(chat.id, ev.detail, events, undefined, undefined, undefined);
+            client.retrySendMessage(messageContext, ev.detail);
         }
     }
 
@@ -319,13 +306,10 @@
             switch (sendMessageContext.kind) {
                 case "send_message": {
                     client.sendMessageWithAttachment(
-                        chat.id,
-                        events,
+                        messageContext,
                         sendMessageContext.textContent,
+                        sendMessageContext.attachment,
                         sendMessageContext.mentioned,
-                        sendMessageContext.fileToAttach,
-                        $currentChatReplyingTo,
-                        undefined,
                         chatRulesVersion,
                         communityRulesVersion
                     );
@@ -333,9 +317,8 @@
                 }
                 case "forward_message": {
                     client.forwardMessage(
-                        chat.id,
+                        messageContext,
                         sendMessageContext.msg,
-                        undefined,
                         chatRulesVersion,
                         communityRulesVersion
                     );
@@ -343,10 +326,8 @@
                 }
                 case "retry_send_message": {
                     client.retrySendMessage(
-                        chat.id,
+                        messageContext,
                         sendMessageContext.event,
-                        events,
-                        undefined,
                         chatRulesVersion,
                         communityRulesVersion
                     );
@@ -357,7 +338,7 @@
             switch (sendMessageContext.kind) {
                 case "send_message": {
                     currentChatDraftMessage.setTextContent(chat.id, sendMessageContext.textContent);
-                    currentChatDraftMessage.setAttachment(chat.id, sendMessageContext.fileToAttach);
+                    currentChatDraftMessage.setAttachment(chat.id, sendMessageContext.attachment);
                     break;
                 }
             }
@@ -382,31 +363,22 @@
         ownedCommunities={importToCommunities} />
 {/if}
 
-<PollBuilder
-    bind:this={pollBuilder}
-    on:sendPoll={sendMessageWithContent}
-    bind:open={creatingPoll} />
+<PollBuilder context={messageContext} bind:this={pollBuilder} bind:open={creatingPoll} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
+        context={messageContext}
         {chat}
         ledger={creatingCryptoTransfer.ledger}
         draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
-        on:sendTransfer={sendMessageWithContent}
         on:upgrade
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
-<GiphySelector
-    bind:this={giphySelector}
-    bind:open={selectingGif}
-    on:sendGiphy={sendMessageWithContent} />
+<GiphySelector context={messageContext} bind:this={giphySelector} bind:open={selectingGif} />
 
-<MemeBuilder
-    bind:this={memeBuilder}
-    bind:open={buildingMeme}
-    on:sendMeme={sendMessageWithContent} />
+<MemeBuilder context={messageContext} bind:this={memeBuilder} bind:open={buildingMeme} />
 
 <div class="wrapper">
     {#if showSearchHeader}
@@ -460,7 +432,7 @@
     {#if showFooter}
         <Footer
             {chat}
-            fileToAttach={$currentChatFileToAttach}
+            attachment={$currentChatAttachment}
             editingEvent={$currentChatEditingEvent}
             replyingTo={$currentChatReplyingTo}
             textContent={$currentChatTextContent}

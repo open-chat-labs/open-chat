@@ -8,15 +8,20 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import MemeFighter from "../icons/MemeFighter.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { createEventDispatcher, tick } from "svelte";
-    import type { MemeFighterContent as MemeFighterContentType } from "openchat-client";
+    import { getContext, tick } from "svelte";
+    import type {
+        MemeFighterContent as MemeFighterContentType,
+        MessageContext,
+        OpenChat,
+    } from "openchat-client";
     import { themeStore } from "../../theme/themes";
 
-    const dispatch = createEventDispatcher();
+    const client = getContext<OpenChat>("client");
 
     export let open: boolean;
     export let width = 500;
     export let height = 400;
+    export let context: MessageContext;
 
     let memeUrl = undefined as string | undefined;
     let iframe: HTMLIFrameElement;
@@ -51,7 +56,7 @@
                 width: rect.width,
                 height: rect.height,
             };
-            dispatch("sendMeme", [content, undefined]);
+            client.sendMessageWithContent(context, content);
             open = false;
         }
     }

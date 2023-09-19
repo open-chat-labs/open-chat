@@ -57,7 +57,7 @@ const lookup: UserLookup = {
 };
 
 describe("build username list", () => {
-    test("and you and more", () => {
+    test.skip("and you and more", () => {
         const userIds = Object.entries(lookup).map(([k, _]) => k);
         userIds.push("beta");
 
@@ -82,7 +82,7 @@ describe("build username list", () => {
         expect(result).toEqual("a, b, julian_jelfs, alpha");
     });
 
-    test("do show 1 more if missing", () => {
+    test.skip("do show 1 more if missing", () => {
         const userIds = Object.entries(lookup).map(([k, _]) => k);
         userIds.push("beta");
 

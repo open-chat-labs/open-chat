@@ -331,14 +331,14 @@ export class OpenChatAgent extends EventTarget {
     }
 
     sendMessage(
-        chatId: ChatIdentifier,
+        messageContext: MessageContext,
         user: CreatedUser,
         mentioned: User[],
         event: EventWrapper<Message>,
-        threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
         communityRulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
+        const { chatId, threadRootMessageIndex } = messageContext;
         if (chatId.kind === "channel") {
             if (event.event.content.kind === "crypto_content") {
                 return this.userClient.sendMessageWithTransferToChannel(
@@ -348,7 +348,7 @@ export class OpenChatAgent extends EventTarget {
                     event,
                     threadRootMessageIndex,
                     communityRulesAccepted,
-                    rulesAccepted
+                    rulesAccepted,
                 );
             }
             return this.sendChannelMessage(
@@ -359,7 +359,7 @@ export class OpenChatAgent extends EventTarget {
                 event,
                 threadRootMessageIndex,
                 communityRulesAccepted,
-                rulesAccepted
+                rulesAccepted,
             );
         }
         if (chatId.kind === "group_chat") {
@@ -407,7 +407,7 @@ export class OpenChatAgent extends EventTarget {
             event,
             threadRootMessageIndex,
             communityRulesAccepted,
-            channelRulesAccepted
+            channelRulesAccepted,
         );
     }
 
@@ -426,7 +426,7 @@ export class OpenChatAgent extends EventTarget {
             mentioned,
             event,
             threadRootMessageIndex,
-            rulesAccepted
+            rulesAccepted,
         );
     }
 
@@ -1566,7 +1566,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setUsername(userId, username);
     }
 
-    setDisplayName(userId: string, displayName: string | undefined): Promise<SetDisplayNameResponse> {
+    setDisplayName(
+        userId: string,
+        displayName: string | undefined,
+    ): Promise<SetDisplayNameResponse> {
         return this._userIndexClient.setDisplayName(userId, displayName);
     }
 
@@ -1692,7 +1695,7 @@ export class OpenChatAgent extends EventTarget {
         reaction: string,
         username: string,
         displayName: string | undefined,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<AddRemoveReactionResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -1701,7 +1704,7 @@ export class OpenChatAgent extends EventTarget {
                     reaction,
                     username,
                     displayName,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
 
             case "direct_chat":
@@ -1709,7 +1712,7 @@ export class OpenChatAgent extends EventTarget {
                     chatId.userId,
                     messageId,
                     reaction,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
                 );
 
             case "channel":
@@ -1945,10 +1948,14 @@ export class OpenChatAgent extends EventTarget {
     async registerUser(
         username: string,
         displayName: string | undefined,
-        referralCode: string | undefined
+        referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
         const localUserIndex = await this._userIndexClient.userRegistrationCanister();
-        return this.createLocalUserIndexClient(localUserIndex).registerUser(username, displayName, referralCode);
+        return this.createLocalUserIndexClient(localUserIndex).registerUser(
+            username,
+            displayName,
+            referralCode,
+        );
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {
@@ -2454,7 +2461,11 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.setCommunityIndexes(communityIndexes);
     }
 
-    createUserGroup(communityId: string, name: string, userIds: string[]): Promise<CreateUserGroupResponse> {
+    createUserGroup(
+        communityId: string,
+        name: string,
+        userIds: string[],
+    ): Promise<CreateUserGroupResponse> {
         return this.communityClient(communityId).createUserGroup(name, userIds);
     }
 
@@ -2463,12 +2474,20 @@ export class OpenChatAgent extends EventTarget {
         userGroupId: number,
         name: string | undefined,
         usersToAdd: string[],
-        usersToRemove: string[]
+        usersToRemove: string[],
     ): Promise<UpdateUserGroupResponse> {
-        return this.communityClient(communityId).updateUserGroup(userGroupId, name, usersToAdd, usersToRemove);
- 	}
+        return this.communityClient(communityId).updateUserGroup(
+            userGroupId,
+            name,
+            usersToAdd,
+            usersToRemove,
+        );
+    }
 
-    setMemberDisplayName(communityId: string, display_name: string | undefined): Promise<SetMemberDisplayNameResponse> {
+    setMemberDisplayName(
+        communityId: string,
+        display_name: string | undefined,
+    ): Promise<SetMemberDisplayNameResponse> {
         return this.communityClient(communityId).setMemberDisplayName(display_name);
     }
 

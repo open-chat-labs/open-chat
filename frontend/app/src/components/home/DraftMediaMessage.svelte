@@ -1,24 +1,13 @@
 <svelte:options immutable />
 
 <script lang="ts">
-    import type {
-        CryptocurrencyContent as CryptoContentType,
-        VideoContent as VideoContentType,
-        ImageContent as ImageContentType,
-        AudioContent as AudioContentType,
-        FileContent as FileContentType,
-    } from "openchat-client";
+    import type { AttachmentContent } from "openchat-client";
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
     import AudioContent from "./AudioContent.svelte";
     import FileContent from "./FileContent.svelte";
 
-    export let content:
-        | VideoContentType
-        | ImageContentType
-        | AudioContentType
-        | FileContentType
-        | CryptoContentType;
+    export let content: AttachmentContent;
 </script>
 
 <div class="msg-preview">
