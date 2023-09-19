@@ -19,6 +19,17 @@
     $: isValid = !rules.enabled || (rules.text.length > 0 && rules.text.length <= MAX_RULES_LENGTH);
     $: rulesDirty = rules.text !== originalRules.text || rules.enabled !== originalRules.enabled;
 
+    function buildRulesExplanation(level: Level): string | undefined {
+        switch (level) {
+            case "community":
+                return $_("rules.communityRulesExplanation");
+            case "channel":
+                return $_("rules.channelRulesExplanation");
+            case "group":
+                return undefined;
+        }
+    }
+
     function toggleRules() {
         rules.enabled = !rules.enabled;
     }
@@ -41,7 +52,9 @@
         checked={rules.enabled} />
     <div class="instructions">{interpolateLevel("rules.instructions", level, true)}</div>
 
-    <Legend label={interpolateLevel("rules.rules", level)} />
+    <Legend
+        label={interpolateLevel("rules.levelRules", level)}
+        rules={buildRulesExplanation(level)} />
     <TextArea
         bind:value={rules.text}
         minlength={0}

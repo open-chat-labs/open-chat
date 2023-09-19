@@ -360,12 +360,15 @@
         "enable": "Bật quy tắc",
         "accept": "Chấp nhận",
         "reject": "Từ chối",
-        "rules": "quy tắc {level}",
+        "rules": "Quy tắc",
         "placeholder": "các quy tắc {level} là gì?",
         "instructions": "Nếu được bật, thành viên mới phải đồng ý với các quy tắc trước khi họ có thể gửi tin nhắn.",
         "acceptTitle": "Quy tắc trò chuyện",
         "promptExistingUsers": "Nhắc nhở các thành viên hiện có",
-        "promptExistingUsersInstructions": "Các thành viên hiện tại phải đồng ý với các quy định mới trước khi họ có thể gửi tin nhắn."
+        "promptExistingUsersInstructions": "Các thành viên hiện tại phải đồng ý với các quy định mới trước khi họ có thể gửi tin nhắn.",
+        "levelRules": "quy tắc {level}",
+        "communityRulesExplanation": "mọi quy tắc kênh sẽ được đặt trước các quy tắc này",
+        "channelRulesExplanation": "những điều này sẽ được đặt trước bất kỳ quy tắc cộng đồng nào"
     },
     "group": {
         "publicGroup": "Công khai {level}",

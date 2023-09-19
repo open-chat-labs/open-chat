@@ -359,12 +359,15 @@
         "enable": "Abilita regole",
         "accept": "Accettare",
         "reject": "Rifiutare",
-        "rules": "{level} regole",
+        "rules": "Regole",
         "placeholder": "quali sono le regole {level}?",
         "instructions": "Se abilitato, i nuovi membri devono accettare le regole prima di poter inviare messaggi.",
         "acceptTitle": "Regole della chat",
         "promptExistingUsers": "Chiedi ai membri esistenti",
-        "promptExistingUsersInstructions": "I membri esistenti devono accettare le nuove regole prima di poter inviare messaggi."
+        "promptExistingUsersInstructions": "I membri esistenti devono accettare le nuove regole prima di poter inviare messaggi.",
+        "levelRules": "{level} regole",
+        "communityRulesExplanation": "qualsiasi regola del canale verrà preceduta da queste regole",
+        "channelRulesExplanation": "questi saranno preceduti da eventuali regole comunitarie"
     },
     "group": {
         "publicGroup": "Pubblico {level}",

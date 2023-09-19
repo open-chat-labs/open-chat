@@ -7,18 +7,10 @@
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    // Deliberately not reactive statements so that the rules don't change while the user is reading them
     let currentChatRules = client.currentChatRules;
     let currentCommunityRules = client.currentCommunityRules;
     let chatRulesEnabled = $currentChatRules?.enabled ?? false;
     let communityRulesEnabled = $currentCommunityRules?.enabled ?? false;
-
-    function buildConfirmMessage(): string {
-        const chatRulesText = chatRulesEnabled ? $currentChatRules?.text : "";
-        const comunityRulesText = communityRulesEnabled ? $currentCommunityRules?.text : "";
-        let lineBreak = chatRulesEnabled && communityRulesEnabled ? "\n\n" : "";
-        return comunityRulesText + lineBreak + chatRulesText;
-    }
 
     function onAction(accepted: boolean): Promise<void> {
         let chatRulesVersion = undefined;
@@ -43,7 +35,7 @@
 
 <AreYouSure
     title={$_("rules.acceptTitle")}
-    message={buildConfirmMessage()}
+    message={client.combineRulesText($currentChatRules, $currentCommunityRules)}
     yesLabel={$_("rules.accept")}
     noLabel={$_("rules.reject")}
     action={onAction} />
