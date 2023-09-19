@@ -296,13 +296,10 @@
             switch (sendMessageContext.kind) {
                 case "send_message": {
                     client.sendMessageWithAttachment(
-                        chat.id,
-                        $threadEvents,
+                        messageContext,
                         sendMessageContext.textContent,
+                        sendMessageContext.attachment,
                         sendMessageContext.mentioned,
-                        sendMessageContext.fileToAttach,
-                        $replyingTo,
-                        threadRootMessageIndex,
                         chatRulesVersion,
                         communityRulesVersion
                     );
@@ -310,10 +307,8 @@
                 }
                 case "retry_send_message": {
                     client.retrySendMessage(
-                        chat.id,
+                        messageContext,
                         sendMessageContext.event,
-                        $threadEvents,
-                        threadRootMessageIndex,
                         chatRulesVersion,
                         communityRulesVersion
                     );
