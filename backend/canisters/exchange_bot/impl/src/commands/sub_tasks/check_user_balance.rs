@@ -3,7 +3,7 @@ use ledger_utils::{convert_to_subaccount, format_crypto_amount};
 use types::icrc1::Account;
 use types::{CanisterId, TokenInfo, UserId};
 
-pub(crate) async fn check_balance(
+pub(crate) async fn check_user_balance(
     user_id: UserId,
     token: &TokenInfo,
     this_canister_id: CanisterId,

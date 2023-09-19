@@ -1,5 +1,5 @@
 use crate::commands::common_errors::CommonErrors;
-use crate::commands::sub_tasks::check_balance::check_balance;
+use crate::commands::sub_tasks::check_user_balance::check_user_balance;
 use crate::commands::sub_tasks::get_quotes::get_quote;
 use crate::commands::{Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::swap_client::SwapClient;
@@ -149,7 +149,7 @@ impl SwapCommand {
     }
 
     async fn check_user_balance(mut self, this_canister_id: CanisterId) {
-        self.sub_tasks.check_user_balance = check_balance(self.user_id, &self.input_token, this_canister_id).await;
+        self.sub_tasks.check_user_balance = check_user_balance(self.user_id, &self.input_token, this_canister_id).await;
 
         mutate_state(|state| self.on_updated(state));
     }

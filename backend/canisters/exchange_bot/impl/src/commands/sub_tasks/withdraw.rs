@@ -1,17 +1,31 @@
+use crate::commands::CommandSubTaskResult;
 use crate::model::messages_pending::MessagePending;
 use crate::mutate_state;
 use candid::{Nat, Principal};
 use ic_cdk::api::call::CallResult;
-use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs};
+use ic_ledger_types::{AccountIdentifier, Memo, Timestamp, Tokens, TransferArgs};
 use ledger_utils::{calculate_transaction_hash, convert_to_subaccount, default_ledger_account};
 use rand::Rng;
-use types::icrc1::{Account, CryptoAccount, TransferArg, TransferError};
+use types::icrc1::{Account, BlockIndex, CryptoAccount, TransferArg, TransferError};
 use types::{
     icrc1, nns, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial,
     TimestampNanos, TokenInfo, UserId,
 };
 
-pub async fn transfer_to_user(
+pub async fn withdraw(
+    user_id: UserId,
+    token: &TokenInfo,
+    amount: u128,
+    now_nanos: TimestampNanos,
+) -> CommandSubTaskResult<BlockIndex> {
+    match transfer_to_user(user_id, &token, amount, now_nanos).await {
+        Ok(Ok(block_index)) => CommandSubTaskResult::Complete(block_index, None),
+        Ok(Err(error)) => CommandSubTaskResult::Failed(format!("{error:?}")),
+        Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
+    }
+}
+
+async fn transfer_to_user(
     user_id: UserId,
     token: &TokenInfo,
     amount: u128,
@@ -39,7 +53,7 @@ pub async fn transfer_to_user(
                     memo: Memo(0),
                     amount: Tokens::from_e8s(amount.try_into().unwrap()),
                     fee: Tokens::from_e8s(Cryptocurrency::InternetComputer.fee().unwrap().try_into().unwrap()),
-                    from_subaccount: Some(Subaccount::from(Principal::from(user_id))),
+                    from_subaccount: Some(subaccount),
                     to: default_ledger_account(user_id.into()),
                     created_at_time: Some(Timestamp {
                         timestamp_nanos: now_nanos,

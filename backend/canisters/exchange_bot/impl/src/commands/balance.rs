@@ -1,5 +1,5 @@
 use crate::commands::common_errors::CommonErrors;
-use crate::commands::sub_tasks::check_balance::check_balance;
+use crate::commands::sub_tasks::check_user_balance::check_user_balance;
 use crate::commands::{build_error_response, Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::{mutate_state, RuntimeState};
 use lazy_static::lazy_static;
@@ -68,7 +68,7 @@ impl BalanceCommand {
     }
 
     pub(crate) fn process(self, state: &mut RuntimeState) {
-        ic_cdk::spawn(self.check_balance(state.env.canister_id()));
+        ic_cdk::spawn(self.check_user_balance(state.env.canister_id()));
     }
 
     pub fn build_message_text(&self) -> String {
@@ -77,8 +77,8 @@ impl BalanceCommand {
         format!("Checking {symbol} balance: {status}")
     }
 
-    async fn check_balance(mut self, this_canister_id: CanisterId) {
-        self.result = check_balance(self.user_id, &self.token, this_canister_id).await;
+    async fn check_user_balance(mut self, this_canister_id: CanisterId) {
+        self.result = check_user_balance(self.user_id, &self.token, this_canister_id).await;
 
         mutate_state(|state| {
             let message_text = self.build_message_text();

@@ -25,7 +25,6 @@ mod memory;
 mod model;
 mod queries;
 mod swap_client;
-mod transfer_to_user;
 mod updates;
 
 thread_local! {

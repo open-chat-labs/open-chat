@@ -1,7 +1,7 @@
 use crate::commands::common_errors::CommonErrors;
-use crate::commands::sub_tasks::check_balance::check_balance;
+use crate::commands::sub_tasks::check_user_balance::check_user_balance;
+use crate::commands::sub_tasks::withdraw::withdraw;
 use crate::commands::{build_error_response, Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
-use crate::transfer_to_user::transfer_to_user;
 use crate::{mutate_state, RuntimeState};
 use lazy_static::lazy_static;
 use ledger_utils::format_crypto_amount;
@@ -119,7 +119,7 @@ impl WithdrawCommand {
     }
 
     async fn check_user_balance(mut self, this_canister_id: CanisterId) {
-        self.sub_tasks.check_user_balance = check_balance(self.user_id, &self.token, this_canister_id).await;
+        self.sub_tasks.check_user_balance = check_user_balance(self.user_id, &self.token, this_canister_id).await;
 
         if let Some(amount) = self.amount() {
             if amount <= self.token.fee {
@@ -131,11 +131,8 @@ impl WithdrawCommand {
     }
 
     async fn withdraw(mut self, amount: u128, now_nanos: TimestampNanos) {
-        self.sub_tasks.withdraw = match transfer_to_user(self.user_id, &self.token, amount, now_nanos).await {
-            Ok(Ok(block_index)) => CommandSubTaskResult::Complete(block_index, None),
-            Ok(Err(error)) => CommandSubTaskResult::Failed(format!("{error:?}")),
-            Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
-        };
+        self.sub_tasks.withdraw = withdraw(self.user_id, &self.token, amount, now_nanos).await;
+
         mutate_state(|state| self.on_updated(state));
     }
 
