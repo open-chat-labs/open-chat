@@ -14,7 +14,7 @@
         MessageContext,
         OpenChat,
     } from "openchat-client";
-    import { themeStore } from "../../theme/themes";
+    import { currentTheme } from "../../theme/themes";
 
     const client = getContext<OpenChat>("client");
 
@@ -43,8 +43,8 @@
 
     const styleVariables = {
         "--background-color": "#1b1c21",
-        "--foreground-color": $themeStore.txt,
-        "--button-color": $themeStore.button.bg,
+        "--foreground-color": $currentTheme.txt,
+        "--button-color": $currentTheme.button.bg,
     };
 
     function send() {

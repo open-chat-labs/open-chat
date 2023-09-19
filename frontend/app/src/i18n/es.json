@@ -636,7 +636,14 @@
     "undeleteMessageFailed": "Error al recuperar el mensaje",
     "homepage": "página de inicio",
     "preferredLanguage": "Idioma preferido",
-    "theme": "Tema",
+    "theme": {
+        "dark": "Oscuro",
+        "light": "Luz",
+        "system": "Sistema",
+        "title": "Tema",
+        "preferredLightTheme": "Tema ligero preferido",
+        "preferredDarkTheme": "Tema oscuro preferido"
+    },
     "freezeGroup": "Congelar grupo",
     "unfreezeGroup": "Descongelar grupo",
     "chatFrozen": "Este chat ha sido congelado.",

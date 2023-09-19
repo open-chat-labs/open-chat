@@ -634,7 +634,14 @@
     "undeleteMessageFailed": "Не удалось восстановить сообщение",
     "homepage": "Домашняя страница",
     "preferredLanguage": "Предпочтительный язык",
-    "theme": "Тема",
+    "theme": {
+        "dark": "Темный",
+        "light": "Свет",
+        "system": "Система",
+        "title": "Тема",
+        "preferredLightTheme": "Предпочтительная светлая тема",
+        "preferredDarkTheme": "Предпочтительная темная тема"
+    },
     "freezeGroup": "Заморозить группу",
     "unfreezeGroup": "Разморозить группу",
     "chatFrozen": "Этот чат был заморожен",

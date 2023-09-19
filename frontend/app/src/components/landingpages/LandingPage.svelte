@@ -22,7 +22,7 @@
     import Loading from "../Loading.svelte";
     import { showMenuForLandingRoute } from "../../utils/urls";
     import page from "page";
-    import { saveSeletedTheme } from "../../theme/themes";
+    import { themeType } from "../../theme/themes";
     import { framed } from "../../stores/xframe";
     import HostedLandingPage from "./HostedLandingPage.svelte";
 
@@ -45,7 +45,7 @@
 
     onMount(() => {
         if (miami) {
-            saveSeletedTheme("dark");
+            themeType.set("dark");
         }
     });
 </script>

@@ -8,6 +8,7 @@ const componentBg = "#151f19";
 
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
+    base.author = "2yfsq-kaaaa-aaaaf-aaa4q-cai";
     base.name = "nightvision";
     base.label = "Nightvision";
     base.burst = false;

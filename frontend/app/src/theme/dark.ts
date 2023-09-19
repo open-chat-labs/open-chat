@@ -29,7 +29,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
     return {
         ...defaultTheme,
         name: "dark",
-        label: "Dark",
+        label: "Default dark",
         burst: true,
         mode: "dark",
 

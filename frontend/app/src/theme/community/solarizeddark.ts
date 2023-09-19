@@ -13,6 +13,7 @@ const txt = lightGray;
 const txtLight = lightishGray;
 
 export function getTheme(base: Theme): Theme {
+    base.author = "j67p2-qaaaa-aaaaf-aa3cq-cai";
     base.name = "solarizeddark";
     base.label = "Solarized Dark";
     base.burst = false;

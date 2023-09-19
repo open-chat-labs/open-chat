@@ -12,6 +12,7 @@ const txt = white;
 
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
+    base.author = "j67p2-qaaaa-aaaaf-aa3cq-cai";
     base.name = "tokyonight";
     base.label = "Tokyo Night";
     base.burst = true;

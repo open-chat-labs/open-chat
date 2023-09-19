@@ -710,7 +710,6 @@
     "joined": "Joined",
     "oneMessageDeleted": "1 message deleted",
     "nMessagesDeleted": "{number} messages deleted",
-    "theme": "Theme",
     "undeleteMessage": "Undelete",
     "undeletingMessage": "Undeleting message by {username} on {timestamp}",
     "undeleteMessageFailed": "Failed to undelete the message",
@@ -994,5 +993,13 @@
     "chatMenu": "Chat menu",
     "attachFile": "Attach image/video/file",
     "pickEmoji": "Pick emoji",
-    "sendMessage": "Send message"
+    "sendMessage": "Send message",
+    "theme": {
+        "preferredLightTheme": "Preferred light theme",
+        "preferredDarkTheme": "Preferred dark theme",
+        "dark": "Dark",
+        "light": "Light",
+        "system": "System",
+        "title": "Theme"
+    }
 }
