@@ -1,5 +1,5 @@
 use crate::commands::common_errors::CommonErrors;
-use crate::commands::sub_tasks::get_quotes::get_quote;
+use crate::commands::sub_tasks::get_quotes::get_quotes;
 use crate::commands::{build_error_response, Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::swap_client::SwapClient;
 use crate::{mutate_state, RuntimeState};
@@ -10,7 +10,6 @@ use rand::Rng;
 use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
 use types::{MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
 
 lazy_static! {
@@ -108,23 +107,13 @@ impl QuoteCommand {
 
     pub(crate) fn process(self, state: &mut RuntimeState) {
         let amount = self.amount;
-        let output_token_decimals = self.output_token.decimals;
         let clients: Vec<_> = self
             .exchange_ids
             .iter()
             .filter_map(|e| state.get_swap_client(*e, self.input_token.clone(), self.output_token.clone()))
             .collect();
 
-        let command = Arc::new(Mutex::new(self));
-
-        let futures: Vec<_> = clients
-            .into_iter()
-            .map(|c| quote_single(c, amount, output_token_decimals, command.clone()))
-            .collect();
-
-        ic_cdk::spawn(async {
-            futures::future::join_all(futures).await;
-        });
+        ic_cdk::spawn(self.get_quotes(clients, amount));
     }
 
     pub fn build_message_text(&self) -> String {
@@ -142,27 +131,20 @@ impl QuoteCommand {
         text
     }
 
+    async fn get_quotes(mut self, clients: Vec<Box<dyn SwapClient>>, amount: u128) {
+        get_quotes(clients, amount, self.output_token.decimals, |exchange_id, result| {
+            self.set_quote_result(exchange_id, result);
+            let message_text = self.build_message_text();
+            mutate_state(|state| {
+                state.enqueue_message_edit(self.user_id, self.message_id, message_text);
+            });
+        })
+        .await
+    }
+
     fn set_quote_result(&mut self, exchange_id: ExchangeId, result: CommandSubTaskResult<u128>) {
         if let Some(r) = self.results.iter_mut().find(|(e, _)| *e == exchange_id).map(|(_, s)| s) {
             *r = result;
         }
     }
-}
-
-async fn quote_single(
-    client: Box<dyn SwapClient>,
-    amount: u128,
-    output_token_decimals: u8,
-    wrapped_command: Arc<Mutex<QuoteCommand>>,
-) {
-    let result = get_quote(client.as_ref(), amount, output_token_decimals).await;
-
-    let mut command = wrapped_command.lock().unwrap();
-    command.set_quote_result(client.exchange_id(), result);
-
-    let message_text = command.build_message_text();
-
-    mutate_state(|state| {
-        state.enqueue_message_edit(command.user_id, command.message_id, message_text);
-    })
 }

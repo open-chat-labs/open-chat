@@ -1,6 +1,6 @@
 use crate::commands::common_errors::CommonErrors;
 use crate::commands::sub_tasks::check_user_balance::check_user_balance;
-use crate::commands::sub_tasks::get_quotes::get_quote;
+use crate::commands::sub_tasks::get_quotes::get_quotes;
 use crate::commands::{Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::swap_client::SwapClient;
 use crate::{mutate_state, Data, RuntimeState};
@@ -10,7 +10,6 @@ use rand::Rng;
 use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
 use types::icrc1::BlockIndex;
 use types::{CanisterId, MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
 
@@ -127,14 +126,17 @@ impl SwapCommand {
     pub(crate) fn process(self, state: &mut RuntimeState) {
         if self.sub_tasks.check_user_balance.is_pending() {
             ic_cdk::spawn(self.check_user_balance(state.env.canister_id()));
-        } else if let Some(amount) = self.sub_tasks.quotes.is_pending().then_some(self.amount()).flatten() {
-            let clients: Vec<_> = self
-                .exchange_ids
-                .iter()
-                .filter_map(|e| state.get_swap_client(*e, self.input_token.clone(), self.output_token.clone()))
-                .collect();
+        } else if let Some(amount) = self.amount() {
+            if self.sub_tasks.quotes.is_pending() {
+                let clients: Vec<_> = self
+                    .exchange_ids
+                    .iter()
+                    .filter_map(|e| state.get_swap_client(*e, self.input_token.clone(), self.output_token.clone()))
+                    .collect();
 
-            ic_cdk::spawn(get_quotes(self, clients, amount));
+                ic_cdk::spawn(self.get_quotes(clients, amount));
+            } else if self.sub_tasks.transfer_to_dex.is_pending() {
+            }
         }
     }
 
@@ -150,6 +152,25 @@ impl SwapCommand {
 
     async fn check_user_balance(mut self, this_canister_id: CanisterId) {
         self.sub_tasks.check_user_balance = check_user_balance(self.user_id, &self.input_token, this_canister_id).await;
+
+        mutate_state(|state| self.on_updated(state));
+    }
+
+    async fn get_quotes(mut self, clients: Vec<Box<dyn SwapClient>>, amount: u128) {
+        get_quotes(clients, amount, self.output_token.decimals, |exchange_id, result| {
+            self.set_quote_result(exchange_id, result);
+            let message_text = self.build_message_text();
+            mutate_state(|state| {
+                state.enqueue_message_edit(self.user_id, self.message_id, message_text);
+            });
+        })
+        .await;
+
+        if let Some((exchange_id, CommandSubTaskResult::Complete(..))) = self.quotes.iter().max_by_key(|(_, r)| r.value()) {
+            self.sub_tasks.quotes = CommandSubTaskResult::Complete(*exchange_id, Some(exchange_id.to_string()));
+        } else {
+            self.sub_tasks.quotes = CommandSubTaskResult::Failed("Failed to get any valid quotes".to_string());
+        }
 
         mutate_state(|state| self.on_updated(state));
     }
@@ -184,50 +205,6 @@ impl SwapCommand {
     fn is_finished(&self) -> bool {
         !self.sub_tasks.withdraw.is_pending()
     }
-}
-
-async fn get_quotes(command: SwapCommand, clients: Vec<Box<dyn SwapClient>>, amount: u128) {
-    let output_token_decimals = command.output_token.decimals;
-    let wrapped_command = Arc::new(Mutex::new(command));
-
-    let futures: Vec<_> = clients
-        .into_iter()
-        .map(|c| quote_single(c, amount, output_token_decimals, wrapped_command.clone()))
-        .collect();
-
-    futures::future::join_all(futures).await;
-
-    let mut command = Arc::try_unwrap(wrapped_command)
-        .map_err(|_| ())
-        .unwrap()
-        .into_inner()
-        .unwrap();
-
-    if let Some((exchange_id, CommandSubTaskResult::Complete(..))) = command.quotes.iter().max_by_key(|(_, r)| r.value()) {
-        command.sub_tasks.quotes = CommandSubTaskResult::Complete(*exchange_id, Some(exchange_id.to_string()));
-    } else {
-        command.sub_tasks.quotes = CommandSubTaskResult::Failed("Failed to get any valid quotes".to_string());
-    }
-
-    mutate_state(|state| command.on_updated(state));
-}
-
-async fn quote_single(
-    client: Box<dyn SwapClient>,
-    amount: u128,
-    output_token_decimals: u8,
-    wrapped_command: Arc<Mutex<SwapCommand>>,
-) {
-    let result = get_quote(client.as_ref(), amount, output_token_decimals).await;
-
-    let mut command = wrapped_command.lock().unwrap();
-    command.set_quote_result(client.exchange_id(), result);
-
-    let message_text = command.build_message_text();
-
-    mutate_state(|state| {
-        state.enqueue_message_edit(command.user_id, command.message_id, message_text);
-    })
 }
 
 fn build_error_response(error: CommonErrors, data: &Data) -> ParseMessageResult {
