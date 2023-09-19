@@ -187,13 +187,41 @@ impl SwapCommand {
     }
 
     pub fn build_message_text(&self) -> String {
-        let text = "Quotes:".to_string();
-        // for (exchange_id, status) in self.quote_statuses.iter().sorted_unstable_by_key(|(_, s)| s) {
-        //     let exchange_name = exchange_id.to_string();
-        //     let status_text = status.to_string();
-        //     text.push_str(&format!("\n{exchange_name}: {status_text}"));
-        // }
-        text
+        let input_token = self.input_token.token.token_symbol();
+        let output_token = self.output_token.token.token_symbol();
+
+        let mut messages = vec!["Performing Swap:".to_string()];
+        if !matches!(self.sub_tasks.check_user_balance, CommandSubTaskResult::NotRequired) {
+            messages.push(format!(
+                "Checking {input_token} balance: {}",
+                self.sub_tasks.check_user_balance.to_string()
+            ));
+        }
+        if self.sub_tasks.check_user_balance.is_completed() {
+            messages.push(format!("Getting quotes: {}", self.sub_tasks.quotes.to_string()));
+        }
+        if let Some(exchange_id) = self.sub_tasks.quotes.value() {
+            messages.push(format!(
+                "Transferring {input_token} to {exchange_id}: {}",
+                self.sub_tasks.transfer_to_dex.to_string()
+            ));
+            if self.sub_tasks.transfer_to_dex.is_completed() {
+                messages.push(format!(
+                    "Notifying {exchange_id} of transfer: {}",
+                    self.sub_tasks.notify_dex.to_string()
+                ));
+            }
+            if self.sub_tasks.notify_dex.is_completed() {
+                messages.push(format!(
+                    "Swapping {input_token} for {output_token}: {}",
+                    self.sub_tasks.swap.to_string()
+                ));
+            }
+            if self.sub_tasks.swap.is_completed() {
+                messages.push(format!("Withdrawing {output_token}: {}", self.sub_tasks.withdraw.to_string()));
+            }
+        }
+        messages.join("\n")
     }
 
     async fn check_user_balance(mut self, this_canister_id: CanisterId) {

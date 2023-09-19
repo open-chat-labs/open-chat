@@ -92,6 +92,10 @@ impl<T> CommandSubTaskResult<T> {
         matches!(self, Self::Pending)
     }
 
+    pub fn is_completed(&self) -> bool {
+        matches!(self, Self::Complete(..))
+    }
+
     pub fn is_failed(&self) -> bool {
         matches!(self, Self::Failed(_))
     }
