@@ -633,12 +633,12 @@
     "homepage": "ホームページ",
     "preferredLanguage": "優先言語",
     "theme": {
-        "preferredLightTheme": "好みのライトテーマ",
-        "preferredDarkTheme": "好みのライトテーマ",
         "dark": "暗い",
         "light": "ライト",
         "system": "システム",
-        "title": "テーマ"
+        "title": "テーマ",
+        "preferredLightTheme": "好みのライトテーマ",
+        "preferredDarkTheme": "推奨されるダークテーマ"
     },
     "freezeGroup": "グループを凍結",
     "unfreezeGroup": "グループを解凍",

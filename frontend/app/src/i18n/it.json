@@ -632,12 +632,12 @@
     "homepage": "Pagina iniziale",
     "preferredLanguage": "Lingua preferita",
     "theme": {
-        "preferredLightTheme": "Tema luminoso preferito",
-        "preferredDarkTheme": "Tema luminoso preferito",
         "dark": "Buio",
         "light": "Leggero",
         "system": "Sistema",
-        "title": "Tema"
+        "title": "Tema",
+        "preferredLightTheme": "Tema luminoso preferito",
+        "preferredDarkTheme": "Tema scuro preferito"
     },
     "freezeGroup": "Congelare il gruppo",
     "unfreezeGroup": "Sblocca gruppo",

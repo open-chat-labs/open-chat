@@ -630,12 +630,12 @@
     "homepage": "דף הבית",
     "preferredLanguage": "שפה מועדפת",
     "theme": {
-        "preferredLightTheme": "נושא קל מועדף",
-        "preferredDarkTheme": "נושא קל מועדף",
         "dark": "אפל",
         "light": "אוֹר",
         "system": "מערכת",
-        "title": "נושא"
+        "title": "נושא",
+        "preferredLightTheme": "נושא קל מועדף",
+        "preferredDarkTheme": "מועדף על נושא כהה"
     },
     "freezeGroup": "הקפאת קבוצה",
     "unfreezeGroup": "בטל את הקפאת הקבוצה",

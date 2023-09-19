@@ -634,12 +634,12 @@
     "homepage": "Startseite",
     "preferredLanguage": "Bevorzugte Sprache",
     "theme": {
-        "preferredLightTheme": "Bevorzugtes Lichtthema",
-        "preferredDarkTheme": "Bevorzugtes Lichtthema",
         "dark": "Dunkel",
         "light": "Licht",
         "system": "System",
-        "title": "Thema"
+        "title": "Thema",
+        "preferredLightTheme": "Bevorzugtes Lichtthema",
+        "preferredDarkTheme": "Bevorzugtes dunkles Thema"
     },
     "freezeGroup": "Gruppe einfrieren",
     "unfreezeGroup": "Gruppe entsperren",

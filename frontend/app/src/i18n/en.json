@@ -993,7 +993,7 @@
     "sendMessage": "Send message",
     "theme": {
         "preferredLightTheme": "Preferred light theme",
-        "preferredDarkTheme": "Preferred light theme",
+        "preferredDarkTheme": "Preferred dark theme",
         "dark": "Dark",
         "light": "Light",
         "system": "System",

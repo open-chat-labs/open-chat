@@ -632,12 +632,12 @@
     "homepage": "Домашняя страница",
     "preferredLanguage": "Предпочтительный язык",
     "theme": {
-        "preferredLightTheme": "Предпочтительная светлая тема",
-        "preferredDarkTheme": "Предпочтительная светлая тема",
         "dark": "Темный",
         "light": "Свет",
         "system": "Система",
-        "title": "Тема"
+        "title": "Тема",
+        "preferredLightTheme": "Предпочтительная светлая тема",
+        "preferredDarkTheme": "Предпочтительная темная тема"
     },
     "freezeGroup": "Заморозить группу",
     "unfreezeGroup": "Разморозить группу",

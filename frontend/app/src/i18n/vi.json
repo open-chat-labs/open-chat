@@ -633,12 +633,12 @@
     "homepage": "trang chủ",
     "preferredLanguage": "ngôn ngữ ưa thích",
     "theme": {
-        "preferredLightTheme": "Chủ đề ánh sáng ưa thích",
-        "preferredDarkTheme": "Chủ đề ánh sáng ưa thích",
         "dark": "Tối tăm",
         "light": "Ánh sáng",
         "system": "Hệ thống",
-        "title": "chủ đề"
+        "title": "chủ đề",
+        "preferredLightTheme": "Chủ đề ánh sáng ưa thích",
+        "preferredDarkTheme": "Chủ đề tối ưa thích"
     },
     "freezeGroup": "Nhóm đóng băng",
     "unfreezeGroup": "Giải phóng nhóm",
