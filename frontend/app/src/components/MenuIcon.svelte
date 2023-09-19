@@ -21,10 +21,12 @@
             menuStore.hideMenu();
         } else {
             const rect = menu.getBoundingClientRect();
+            console.log("ContextMenu: ", contextMenu);
             menuStore.showMenu(contextMenu);
 
             await tick();
 
+            console.log("Pos: ", rect, centered, position, align, gutter);
             menuStore.position(rect, centered, position, align, gutter);
         }
     }
@@ -35,6 +37,7 @@
     }
 
     function closeMenu() {
+        console.log("is this happening for some reason");
         menuStore.hideMenu();
     }
 </script>

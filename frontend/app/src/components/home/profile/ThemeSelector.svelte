@@ -72,6 +72,7 @@
 <style lang="scss">
     :global(.theme-buttons button) {
         min-width: 0 !important;
+        padding: unset !important;
     }
 
     .theme-buttons {

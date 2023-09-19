@@ -10,6 +10,7 @@
     import Avatar from "../../Avatar.svelte";
     import type { Theme } from "../../../theme/types";
     import { createEventDispatcher, getContext } from "svelte";
+    import { mobileWidth } from "../../../stores/screenDimensions";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -17,7 +18,6 @@
     export let theme: Theme;
     export let otherThemes: Theme[];
     export let label: string;
-    let menu: MenuIcon;
 
     $: userStore = client.userStore;
 
@@ -28,41 +28,41 @@
 
 <div class="theme-wrapper">
     <Legend {label} />
-    <div
-        tabindex="0"
-        role="button"
-        class="theme"
-        on:click={() => menu.showMenu()}
-        style={`background: ${theme.bg}; border-color: ${theme.accent}`}>
-        <span style={`color: ${theme.txt}`} class="theme-txt">
-            {theme.label}
-        </span>
+    <MenuIcon centered={$mobileWidth} position="bottom" align="center">
+        <div
+            tabindex="0"
+            role="button"
+            slot="icon"
+            class="theme"
+            style={`background: ${theme.bg}; border-color: ${theme.accent}`}>
+            <div style={`color: ${theme.txt}`} class="theme-txt">
+                {theme.label}
+            </div>
 
-        <MenuIcon bind:this={menu} position="bottom" align="end">
-            <span class="icon" slot="icon">
+            <div class="icon">
                 <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={`${theme.accent}`} />
-            </span>
-            <span slot="menu">
-                <Menu>
-                    {#each otherThemes as theme}
-                        <MenuItem on:click={() => onSelect(theme.name)}>
-                            <div class="theme-item" slot="text">
-                                <div class="label">{theme.label}</div>
-                                {#if theme.author !== undefined && $userStore[theme.author] !== undefined}
-                                    <div class="avatar">
-                                        <Avatar
-                                            url={client.userAvatarUrl($userStore[theme.author])}
-                                            userId={theme.author}
-                                            size={AvatarSize.Tiny} />
-                                    </div>
-                                {/if}
-                            </div>
-                        </MenuItem>
-                    {/each}
-                </Menu>
-            </span>
-        </MenuIcon>
-    </div>
+            </div>
+        </div>
+        <span slot="menu">
+            <Menu>
+                {#each otherThemes as theme}
+                    <MenuItem on:click={() => onSelect(theme.name)}>
+                        <div class="theme-item" slot="text">
+                            <div class="label">{theme.label}</div>
+                            {#if theme.author !== undefined && $userStore[theme.author] !== undefined}
+                                <div class="avatar">
+                                    <Avatar
+                                        url={client.userAvatarUrl($userStore[theme.author])}
+                                        userId={theme.author}
+                                        size={AvatarSize.Tiny} />
+                                </div>
+                            {/if}
+                        </div>
+                    </MenuItem>
+                {/each}
+            </Menu>
+        </span>
+    </MenuIcon>
 </div>
 
 <style lang="scss">
@@ -74,13 +74,21 @@
         width: 100%;
     }
 
+    .theme-txt {
+        @include ellipsis();
+    }
+
+    .icon {
+        flex: 0 0 24px;
+    }
+
     .theme-wrapper {
         flex: 1;
     }
 
     .theme {
         text-align: center;
-        padding: 22px;
+        padding: 36px 22px;
         height: 65px;
         color: #fff;
         cursor: pointer;
@@ -89,5 +97,9 @@
         align-items: center;
         gap: $sp2;
         border-bottom: $sp2 solid var(--accent);
+
+        @include mobile() {
+            padding: 12px;
+        }
     }
 </style>
