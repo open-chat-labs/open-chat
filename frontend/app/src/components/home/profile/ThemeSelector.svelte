@@ -13,7 +13,6 @@
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
     import ThemeButton from "./ThemeButton.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
 
     type PartitionedThemes = {
         light: Theme[];
