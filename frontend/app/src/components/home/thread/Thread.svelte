@@ -305,14 +305,18 @@
     }
 
     function onAcceptRules(
-        accepted: boolean,
-        chatRulesVersion: number | undefined,
-        communityRulesVersion: number | undefined
+        ev: CustomEvent<{
+            accepted: boolean;
+            chatRulesVersion: number | undefined;
+            communityRulesVersion: number | undefined;
+        }>
     ) {
         if (sendMessageContext === undefined) {
             showAcceptRulesModal = false;
             return;
         }
+
+        const { accepted, chatRulesVersion, communityRulesVersion } = ev.detail;
 
         if (accepted) {
             switch (sendMessageContext.kind) {
@@ -364,7 +368,7 @@
 </script>
 
 {#if showAcceptRulesModal}
-    <AcceptRulesModal action={onAcceptRules} />
+    <AcceptRulesModal on:close={onAcceptRules} />
 {/if}
 
 <PollBuilder

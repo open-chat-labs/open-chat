@@ -1,15 +1,10 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import AreYouSure from "../AreYouSure.svelte";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { type OpenChat } from "openchat-client";
 
-    export let action: (
-        accepted: boolean,
-        chatRulesVersion: number | undefined,
-        communityRulesVersion: number | undefined
-    ) => void;
-
+    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     // Deliberately not reactive statements so that the rules don't change while the user is reading them
@@ -40,7 +35,7 @@
             }
         }
 
-        action(accepted, chatRulesVersion, communityRulesVersion);
+        dispatch("close", { accepted, chatRulesVersion, communityRulesVersion });
 
         return Promise.resolve();
     }
