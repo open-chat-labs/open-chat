@@ -2839,11 +2839,10 @@ export class OpenChat extends OpenChatAgentWorker {
         this.sendRequest({
             kind: "sendMessage",
             chatType: chat.kind,
-            chatId: chat.id,
+            messageContext,
             user: this.user,
             mentioned: [],
             event: retryEvent,
-            threadRootMessageIndex,
             rulesAccepted,
             communityRulesAccepted,
         })
@@ -2994,11 +2993,10 @@ export class OpenChat extends OpenChatAgentWorker {
         this.sendRequest({
             kind: "sendMessage",
             chatType: chat.kind,
-            chatId,
+            messageContext,
             user: this.user,
             mentioned,
             event,
-            threadRootMessageIndex,
             rulesAccepted,
             communityRulesAccepted,
         })
