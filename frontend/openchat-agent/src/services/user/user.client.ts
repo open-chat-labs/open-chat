@@ -52,7 +52,6 @@ import type {
     EventsSuccessResult,
     CommunitySummary,
     CreateCommunityResponse,
-    AccessRules,
     ChatIdentifier,
     DirectChatIdentifier,
     GroupChatIdentifier,
@@ -62,6 +61,7 @@ import type {
     LeaveCommunityResponse,
     DeleteCommunityResponse,
     ChannelIdentifier,
+    Rules,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -123,7 +123,6 @@ import {
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
-import { apiGroupRules } from "../group/mappers";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 
@@ -233,8 +232,9 @@ export class UserClient extends CandidService {
 
     createCommunity(
         community: CommunitySummary,
-        rules: AccessRules,
-        defaultChannels: string[]
+        rules: Rules,
+        defaultChannels: string[],
+        defaultChannelRules: Rules,
     ): Promise<CreateCommunityResponse> {
         return this.handleResponse(
             this.userService.create_community({
@@ -257,9 +257,10 @@ export class UserClient extends CandidService {
                     };
                 }, community.banner?.blobData),
                 permissions: [apiCommunityPermissions(community.permissions)],
-                rules: apiGroupRules(rules),
+                rules,
                 gate: apiMaybeAccessGate(community.gate),
                 default_channels: defaultChannels,
+                default_channel_rules: [defaultChannelRules],
                 primary_language: community.primaryLanguage,
             }),
             createCommunityResponse
@@ -281,7 +282,7 @@ export class UserClient extends CandidService {
                     };
                 }, group.avatar?.blobData),
                 permissions: [apiGroupPermissions(group.permissions)],
-                rules: apiGroupRules(group.rules),
+                rules: group.rules,
                 gate: apiMaybeAccessGate(group.gate),
                 events_ttl: [],
             }),
@@ -559,7 +560,8 @@ export class UserClient extends CandidService {
         recipientId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        rulesAccepted: number | undefined
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToGroupToBackend(
@@ -567,7 +569,8 @@ export class UserClient extends CandidService {
             recipientId,
             sender,
             event,
-            threadRootMessageIndex
+            threadRootMessageIndex,
+            rulesAccepted
         )
             .then(setCachedMessageFromSendResponse(this.db, groupId, event, threadRootMessageIndex))
             .catch((err) => {
@@ -581,7 +584,8 @@ export class UserClient extends CandidService {
         recipientId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        rulesAccepted: number | undefined
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiPendingCryptoContent(event.event.content as CryptocurrencyContent);
 
@@ -592,7 +596,7 @@ export class UserClient extends CandidService {
             },
             sender_name: sender.username,
             sender_display_name: apiOptional(identity, sender.displayName),
-            rules_accepted: [],
+            rules_accepted: apiOptional(identity, rulesAccepted),
             mentioned: [],
             message_id: event.event.messageId,
             group_id: Principal.fromText(groupId.groupId),
@@ -613,7 +617,9 @@ export class UserClient extends CandidService {
         recipientId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        communityRulesAccepted: number | undefined,
+        channelRulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToChannelToBackend(
@@ -621,7 +627,9 @@ export class UserClient extends CandidService {
             recipientId,
             sender,
             event,
-            threadRootMessageIndex
+            threadRootMessageIndex,
+            communityRulesAccepted,
+            channelRulesAccepted
         )
             .then(setCachedMessageFromSendResponse(this.db, id, event, threadRootMessageIndex))
             .catch((err) => {
@@ -635,7 +643,9 @@ export class UserClient extends CandidService {
         recipientId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        communityRulesAccepted: number | undefined,
+        channelRulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiPendingCryptoContent(event.event.content as CryptocurrencyContent);
 
@@ -646,8 +656,6 @@ export class UserClient extends CandidService {
             },
             sender_name: sender.username,
             sender_display_name: apiOptional(identity, sender.displayName),
-            community_rules_accepted: [],
-            channel_rules_accepted: [],
             mentioned: [],
             message_id: event.event.messageId,
             community_id: Principal.fromText(id.communityId),
@@ -656,6 +664,8 @@ export class UserClient extends CandidService {
                 (replyContext) => apiReplyContextArgs(id, replyContext),
                 event.event.repliesTo
             ),
+            community_rules_accepted: apiOptional(identity, communityRulesAccepted),
+            channel_rules_accepted: apiOptional(identity, channelRulesAccepted),
         };
         return this.handleResponse(
             this.userService.send_message_with_transfer_to_channel(req),

@@ -25,6 +25,12 @@ class LocalCommunitySummaryUpdatesStore extends LocalUpdatesStore<
         }));
     }
 
+    updateRulesAccepted(id: CommunityIdentifier, rulesAccepted: boolean): void {
+        this.applyUpdate(id, (_) => ({
+            rulesAccepted,
+        }));
+    }
+
     markAdded(summary: CommunitySummary): void {
         this.applyUpdate(summary.id, (_) => ({
             added: summary,

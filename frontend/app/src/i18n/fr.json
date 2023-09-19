@@ -360,8 +360,10 @@
         "reject": "Rejeter",
         "rules": "{level} règles",
         "placeholder": "quelles sont les règles {level} ?",
-        "instructions": "Si activé, les nouveaux utilisateurs doivent accepter les règles avant de pouvoir rejoindre le {level}.",
-        "acceptTitle": "{level} règles"
+        "instructions": "Si cette option est activée, les nouveaux membres doivent accepter les règles avant de pouvoir envoyer des messages.",
+        "acceptTitle": "Règles de discussion",
+        "promptExistingUsers": "Inviter les membres existants",
+        "promptExistingUsersInstructions": "Les membres existants doivent accepter les nouvelles règles avant de pouvoir envoyer des messages."
     },
     "group": {
         "publicGroup": "Publique {level}",

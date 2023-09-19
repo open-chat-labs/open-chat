@@ -10,7 +10,7 @@
     import EditCommunity from "./communities/edit/Edit.svelte";
     import type {
         EnhancedReplyContext,
-        AccessRules,
+        Rules,
         Message,
         OpenChat,
         Notification,
@@ -27,6 +27,7 @@
         MultiUserChatIdentifier,
         GroupChatSummary,
         ChannelIdentifier,
+        UpdatedRules,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -34,7 +35,7 @@
         SendMessageFailed,
         ThreadClosed,
         ThreadSelected,
-        defaultAccessRules,
+        defaultChatRules,
         chatIdentifiersEqual,
         nullMembership,
         routeForChatIdentifier,
@@ -84,13 +85,12 @@
     const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
-    let candidateCommunityRules: AccessRules = defaultAccessRules("community");
+    let candidateCommunityRules: Rules = defaultChatRules("community");
     let convertGroup: GroupChatSummary | undefined = undefined;
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
         | ConfirmDeleteEvent
-        | ConfirmRulesEvent
         | ConfirmLeaveCommunityEvent
         | ConfirmDeleteCommunityEvent;
 
@@ -118,13 +118,6 @@
         kind: "delete_community";
         communityId: CommunityIdentifier;
         doubleCheck: { challenge: string; response: string };
-    };
-
-    type ConfirmRulesEvent = {
-        kind: "rules";
-        group: MultiUserChat;
-        select: boolean;
-        rules: string;
     };
 
     enum ModalType {
@@ -158,7 +151,6 @@
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
     $: chatListScope = client.chatListScope;
     $: currentCommunityRules = client.currentCommunityRules;
-    $: currentChatRules = client.currentChatRules;
     $: globalUnreadCount = client.globalUnreadCount;
     $: communities = client.communities;
 
@@ -249,16 +241,23 @@
                 if (preview.kind === "group_moved") {
                     if (messageIndex !== undefined) {
                         if (threadMessageIndex !== undefined) {
-                            page.replace(routeForMessage(
-                                "community",
-                                { chatId: preview.location, threadRootMessageIndex: messageIndex },
-                                threadMessageIndex)
+                            page.replace(
+                                routeForMessage(
+                                    "community",
+                                    {
+                                        chatId: preview.location,
+                                        threadRootMessageIndex: messageIndex,
+                                    },
+                                    threadMessageIndex
+                                )
                             );
                         } else {
-                            page.replace(routeForMessage(
-                                "community",
-                                { chatId: preview.location },
-                                messageIndex)
+                            page.replace(
+                                routeForMessage(
+                                    "community",
+                                    { chatId: preview.location },
+                                    messageIndex
+                                )
                             );
                         }
                     } else {
@@ -470,9 +469,6 @@
                 return $_("communities.deleteMessage");
             case "delete":
                 return interpolateLevel("irreversible", confirmActionEvent.level, true);
-            case "rules": {
-                return confirmActionEvent.rules;
-            }
         }
     }
 
@@ -504,8 +500,6 @@
                         rightPanelHistory.set([]);
                     }
                 );
-            case "rules":
-                return doJoinGroup(confirmActionEvent.group, confirmActionEvent.select);
             default:
                 return Promise.reject();
         }
@@ -675,39 +669,11 @@
         }
     }
 
-    function getRules(group: MultiUserChat): Promise<AccessRules | undefined> {
-        switch (group.kind) {
-            case "channel":
-                return Promise.resolve($currentChatRules);
-            case "group_chat":
-                return client.getGroupRules(group.id);
-        }
-    }
-
     async function joinGroup(
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
     ): Promise<void> {
         const { group, select } = ev.detail;
-
-        const rules = await getRules(group);
-
-        if (rules === undefined) {
-            toastStore.showFailureToast(
-                interpolateLevel("group.getRulesFailed", group.level, true)
-            );
-            return;
-        }
-
-        if (!rules.enabled) {
-            doJoinGroup(group, select);
-        } else {
-            confirmActionEvent = {
-                kind: "rules",
-                group,
-                select,
-                rules: rules.text,
-            };
-        }
+        doJoinGroup(group, select);
     }
 
     async function doJoinGroup(group: MultiUserChat, select: boolean): Promise<void> {
@@ -779,10 +745,10 @@
     }
 
     function groupCreated(
-        ev: CustomEvent<{ chatId: GroupChatIdentifier; isPublic: boolean; rules: AccessRules }>
+        ev: CustomEvent<{ chatId: GroupChatIdentifier; isPublic: boolean; rules: Rules }>
     ) {
         const { chatId, isPublic, rules } = ev.detail;
-        chatStateStore.setProp(chatId, "rules", rules);
+        chatStateStore.setProp(chatId, "rules", { ...rules, version: 0 });
         if (isPublic) {
             client.trackEvent("public_group_created");
         } else {
@@ -836,7 +802,7 @@
                 reactToMessages: "member",
                 replyInThread: "member",
             },
-            rules: defaultAccessRules(level),
+            rules: { ...defaultChatRules(level), newVersion: false },
             gate: { kind: "no_gate" },
             level,
             membership: {
@@ -846,10 +812,11 @@
         };
     }
 
-    function editGroup(ev: CustomEvent<{ chat: MultiUserChat; rules: AccessRules | undefined }>) {
+    function editGroup(ev: CustomEvent<{ chat: MultiUserChat; rules: UpdatedRules | undefined }>) {
         modal = ModalType.NewGroup;
-        const { chat, rules } = ev.detail;
+        const chat = ev.detail.chat;
         let level: Level = chat.id.kind === "group_chat" ? "group" : "channel";
+        let rules = ev.detail.rules ?? { ...defaultChatRules(level), newVersion: false };
         candidateGroup = {
             id: chat.id,
             name: chat.name,
@@ -859,7 +826,7 @@
             frozen: chat.frozen,
             members: [],
             permissions: { ...chat.permissions },
-            rules: rules !== undefined ? { ...rules } : defaultAccessRules(level),
+            rules,
             avatar: {
                 blobUrl: chat.blobUrl,
                 blobData: chat.blobData,
@@ -902,13 +869,13 @@
             .values()
             .reduce((m, c) => (c.membership.index > m ? c.membership.index : m), 0);
         candidateCommunity = createCandidateCommunity("", maxIndex + 1);
-        candidateCommunityRules = defaultAccessRules("community");
+        candidateCommunityRules = defaultChatRules("community");
         modal = ModalType.EditCommunity;
     }
 
     function editCommunity(ev: CustomEvent<CommunitySummary>) {
         candidateCommunity = ev.detail;
-        candidateCommunityRules = $currentCommunityRules ?? defaultAccessRules("community");
+        candidateCommunityRules = $currentCommunityRules ?? defaultChatRules("community");
         modal = ModalType.EditCommunity;
     }
 
@@ -1021,11 +988,6 @@
         confirmActionEvent.kind === "delete_community"
             ? confirmActionEvent.doubleCheck
             : undefined}
-        title={confirmActionEvent.kind === "rules"
-            ? interpolateLevel("rules.acceptTitle", "group")
-            : undefined}
-        yesLabel={confirmActionEvent.kind === "rules" ? $_("rules.accept") : undefined}
-        noLabel={confirmActionEvent.kind === "rules" ? $_("rules.reject") : undefined}
         message={confirmMessage}
         action={onConfirmAction} />
 {/if}
@@ -1050,7 +1012,7 @@
         {:else if modal === ModalType.GateCheckFailed && joining !== undefined}
             <GateCheckFailed on:close={closeModal} gate={joining.gate} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
-            <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
+            <NewGroup {candidateGroup} on:upgrade={upgrade} on:close={closeModal} />
         {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}
             <EditCommunity
                 originalRules={candidateCommunityRules}
@@ -1074,7 +1036,7 @@
         viewBox={`0 0 361 ${bgClip}`} />
 {/if}
 
-<Convert bind:group={convertGroup} rules={$currentChatRules} />
+<Convert bind:group={convertGroup} />
 
 <style lang="scss">
     :global(.edited-msg) {

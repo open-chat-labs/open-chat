@@ -10,9 +10,7 @@
     import type {
         ChatEvent,
         CommunityIdentifier,
-        GroupChatIdentifier,
         EventWrapper,
-        AccessRules,
         MemberRole,
         Message,
         UserSummary,
@@ -45,7 +43,6 @@
 
     $: selectedChatId = client.selectedChatId;
     $: selectedChat = client.selectedChatStore;
-    $: chatStateStore = client.chatStateStore;
     $: currentChatMembers = client.currentChatMembers;
     $: currentChatInvited = client.currentChatInvitedUsers;
     $: currentChatBlocked = client.currentChatBlockedUsers;
@@ -332,12 +329,6 @@
         }
     }
 
-    function updateGroupRules(
-        ev: CustomEvent<{ chatId: GroupChatIdentifier; rules: AccessRules }>
-    ) {
-        chatStateStore.setProp(ev.detail.chatId, "rules", ev.detail.rules);
-    }
-
     $: threadRootEvent =
         lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
             ? findMessage($eventsStore, lastState.threadRootMessageId)
@@ -359,7 +350,6 @@
             memberCount={$currentChatMembers.length}
             rules={$currentChatRules}
             on:close={popRightPanelHistory}
-            on:updateGroupRules={updateGroupRules}
             on:deleteGroup
             on:editGroup
             on:chatWith

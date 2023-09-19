@@ -425,6 +425,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     UserSuspended;
     CommunityFrozen;
     RulesNotAccepted;
+    CommunityRulesNotAccepted;
     InternalError : record { text; CompletedCryptoTransaction };
 };
 
