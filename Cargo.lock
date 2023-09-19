@@ -3585,6 +3585,7 @@ dependencies = [
  "serde_cbor",
  "sha2 0.10.7",
  "sha256",
+ "test-case",
  "types",
 ]
 
