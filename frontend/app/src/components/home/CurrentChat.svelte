@@ -33,6 +33,29 @@
     import { randomSentence } from "../../utils/randomMsg";
     import { framed } from "../../stores/xframe";
     import { rightPanelHistory } from "../../stores/rightPanel";
+    import AcceptRulesModal from "./AcceptRulesModal.svelte";
+
+    type ConfirmedActionEvent =
+        | ConfirmedSendMessage
+        | ConfirmedForwardMessage
+        | ConfirmedRetrySendMessage;
+
+    type ConfirmedSendMessage = {
+        kind: "send_message";
+        textContent: string | undefined;
+        mentioned: User[];
+        attachment: AttachmentContent | undefined;
+    };
+
+    type ConfirmedForwardMessage = {
+        kind: "forward_message";
+        msg: Message;
+    };
+
+    type ConfirmedRetrySendMessage = {
+        kind: "retry_send_message";
+        event: EventWrapper<Message>;
+    };
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -56,6 +79,8 @@
     let showSearchHeader = false;
     let searchTerm = "";
     let importToCommunities: CommunityMap<CommunitySummary> | undefined;
+    let showAcceptRulesModal = false;
+    let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
 
     $: messageContext = { chatId: chat.id };
     $: currentChatTextContent = client.currentChatTextContent;
@@ -212,13 +237,44 @@
         attachment: AttachmentContent | undefined,
         mentioned: User[] = []
     ) {
-        client.sendMessageWithAttachment(messageContext, textContent, attachment, mentioned);
+        if (client.rulesNeedAccepting()) {
+            showAcceptRulesModal = true;
+            sendMessageContext = {
+                kind: "send_message",
+                textContent,
+                mentioned,
+                attachment,
+            };
+        } else {
+            client.sendMessageWithAttachment(messageContext, textContent, attachment, mentioned);
+        }
     }
+
 
     function forwardMessage(msg: Message) {
         if (!canSend || !client.canForward(msg.content)) return;
 
-        client.forwardMessage(messageContext, msg);
+        if (client.rulesNeedAccepting()) {
+            showAcceptRulesModal = true;
+            sendMessageContext = {
+                kind: "forward_message",
+                msg,
+            };
+        } else {
+            client.forwardMessage(messageContext, msg);
+        }
+    }
+
+    function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
+        if (client.rulesNeedAccepting()) {
+            showAcceptRulesModal = true;
+            sendMessageContext = {
+                kind: "retry_send_message",
+                event: ev.detail,
+            };
+        } else {
+            client.retrySendMessage(messageContext, ev.detail);
+        }
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {
@@ -232,9 +288,73 @@
     function defaultCryptoTransferReceiver(): string | undefined {
         return $currentChatReplyingTo?.sender?.userId;
     }
+
+    function onAcceptRules(
+        ev: CustomEvent<{
+            accepted: boolean;
+            chatRulesVersion: number | undefined;
+            communityRulesVersion: number | undefined;
+        }>
+    ) {
+        if (sendMessageContext === undefined) {
+            showAcceptRulesModal = false;
+            return;
+        }
+
+        const { accepted, chatRulesVersion, communityRulesVersion } = ev.detail;
+
+        if (accepted) {
+            switch (sendMessageContext.kind) {
+                case "send_message": {
+                    client.sendMessageWithAttachment(
+                        messageContext,
+                        sendMessageContext.textContent,
+                        sendMessageContext.attachment,
+                        sendMessageContext.mentioned,
+                        chatRulesVersion,
+                        communityRulesVersion
+                    );
+                    break;
+                }
+                case "forward_message": {
+                    client.forwardMessage(
+                        messageContext,
+                        sendMessageContext.msg,
+                        chatRulesVersion,
+                        communityRulesVersion
+                    );
+                    break;
+                }
+                case "retry_send_message": {
+                    client.retrySendMessage(
+                        messageContext,
+                        sendMessageContext.event,
+                        chatRulesVersion,
+                        communityRulesVersion
+                    );
+                    break;
+                }
+            }
+        } else {
+            switch (sendMessageContext.kind) {
+                case "send_message": {
+                    currentChatDraftMessage.setTextContent(chat.id, sendMessageContext.textContent);
+                    currentChatDraftMessage.setAttachment(chat.id, sendMessageContext.attachment);
+                    break;
+                }
+            }
+        }
+
+        sendMessageContext = undefined;
+        showAcceptRulesModal = false;
+    }
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
+
+{#if showAcceptRulesModal}
+    <AcceptRulesModal on:close={onAcceptRules} />
+{/if}
 
 {#if importToCommunities !== undefined}
     <ImportToCommunity
@@ -295,6 +415,7 @@
         on:chatWith
         on:upgrade
         on:forward
+        on:retrySend={retrySend}
         {chat}
         {events}
         {filteredProposals}

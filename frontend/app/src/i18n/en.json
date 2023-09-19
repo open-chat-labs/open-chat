@@ -488,10 +488,12 @@
         "rules": "{level} rules",
         "enable": "Enable rules",
         "placeholder": "what are the {level} rules?",
-        "instructions": "If enabled, new users must agree to the rules before they can join the {level}.",
-        "acceptTitle": "{level} rules",
+        "instructions": "If enabled, new members must agree to the rules before they can send messages.",
+        "acceptTitle": "Chat rules",
         "accept": "Accept",
-        "reject": "Reject"
+        "reject": "Reject",
+        "promptExistingUsers": "Prompt existing members",
+        "promptExistingUsersInstructions": "Existing members must agree to the new rules before they can send messages."
     },
     "access": {
         "visibility": "Access",

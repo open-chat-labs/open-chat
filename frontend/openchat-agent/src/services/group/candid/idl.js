@@ -919,11 +919,16 @@ export const idlFactory = ({ IDL }) => {
     'date_added' : TimestampMillis,
   });
   const Version = IDL.Nat32;
-  const VersionedRules = IDL.Record({ 'text' : IDL.Text, 'version' : Version });
+  const VersionedRules = IDL.Record({
+    'text' : IDL.Text,
+    'version' : Version,
+    'enabled' : IDL.Bool,
+  });
   const SelectedInitialSuccess = IDL.Record({
     'participants' : IDL.Vec(Participant),
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
+    'chat_rules' : VersionedRules,
     'timestamp' : TimestampMillis,
     'pinned_messages' : IDL.Vec(MessageIndex),
     'latest_event_index' : EventIndex,
@@ -942,6 +947,7 @@ export const idlFactory = ({ IDL }) => {
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'members_added_or_updated' : IDL.Vec(Participant),
     'pinned_messages_added' : IDL.Vec(MessageIndex),
+    'chat_rules' : IDL.Opt(VersionedRules),
     'members_removed' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
@@ -1257,7 +1263,6 @@ export const idlFactory = ({ IDL }) => {
     'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
-    'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'RulesTooShort' : FieldTooShortResult,
     'NameTooLong' : FieldTooLongResult,

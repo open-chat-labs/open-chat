@@ -130,6 +130,18 @@ export function mergeLocalUpdates(
                 });
             }
         }
+        if (localUpdate.rulesAccepted !== undefined) {
+            const community = merged.get(chatId);
+            if (community !== undefined) {
+                merged.set(chatId, {
+                    ...community,
+                    membership: {
+                        ...community.membership,
+                        rulesAccepted: localUpdate.rulesAccepted,
+                    },
+                });
+            }
+        }
     }
 
     return merged;

@@ -364,8 +364,7 @@
                     <Button
                         loading={joiningCommunity}
                         disabled={joiningCommunity}
-                        on:click={() => joinCommunity(false)}
-                        >{$_("communities.joinCommunity")}</Button>
+                        on:click={joinCommunity}>{$_("communities.joinCommunity")}</Button>
                 </ButtonGroup>
             </div>
         </PreviewWrapper>

@@ -28,6 +28,21 @@
     import { randomSentence } from "../../../utils/randomMsg";
     import TimelineDate from "../TimelineDate.svelte";
     import { reverseScroll } from "../../../stores/scrollPos";
+    import AcceptRulesModal from "../AcceptRulesModal.svelte";
+
+    type ConfirmedActionEvent = ConfirmedSendMessage | ConfirmedRetrySendMessage;
+
+    type ConfirmedSendMessage = {
+        kind: "send_message";
+        textContent: string | undefined;
+        mentioned: User[];
+        attachment: AttachmentContent | undefined;
+    };
+
+    type ConfirmedRetrySendMessage = {
+        kind: "retry_send_message";
+        event: EventWrapper<Message>;
+    };
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -48,6 +63,8 @@
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
     let previousLatestEventIndex: number | undefined = undefined;
+    let showAcceptRulesModal = false;
+    let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
 
     $: selectedMessageContext = client.selectedMessageContext;
     $: focusMessageIndex = client.focusThreadMessageIndex;
@@ -134,7 +151,15 @@
     }
 
     function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
-        client.retrySendMessage(chat.id, ev.detail, $threadEvents, threadRootMessageIndex);
+        if (client.rulesNeedAccepting()) {
+            showAcceptRulesModal = true;
+            sendMessageContext = {
+                kind: "retry_send_message",
+                event: ev.detail,
+            };
+        } else {
+            client.retrySendMessage(messageContext, ev.detail);
+        }
     }
 
     function sendMessageWithAttachment(
@@ -142,7 +167,17 @@
         attachment: AttachmentContent | undefined,
         mentioned: User[] = []
     ) {
-        client.sendMessageWithAttachment(messageContext, textContent, attachment, mentioned);
+        if (client.rulesNeedAccepting()) {
+            showAcceptRulesModal = true;
+            sendMessageContext = {
+                kind: "send_message",
+                textContent,
+                mentioned,
+                attachment,
+            };
+        } else {
+            client.sendMessageWithAttachment(messageContext, textContent, attachment, mentioned);
+        }
     }
 
     function cancelReply() {
@@ -242,7 +277,73 @@
     ) {
         goToMessageIndex(ev.detail.index);
     }
+
+    function onAcceptRules(
+        ev: CustomEvent<{
+            accepted: boolean;
+            chatRulesVersion: number | undefined;
+            communityRulesVersion: number | undefined;
+        }>
+    ) {
+        if (sendMessageContext === undefined) {
+            showAcceptRulesModal = false;
+            return;
+        }
+
+        const { accepted, chatRulesVersion, communityRulesVersion } = ev.detail;
+
+        if (accepted) {
+            switch (sendMessageContext.kind) {
+                case "send_message": {
+                    client.sendMessageWithAttachment(
+                        chat.id,
+                        $threadEvents,
+                        sendMessageContext.textContent,
+                        sendMessageContext.mentioned,
+                        sendMessageContext.fileToAttach,
+                        $replyingTo,
+                        threadRootMessageIndex,
+                        chatRulesVersion,
+                        communityRulesVersion
+                    );
+                    break;
+                }
+                case "retry_send_message": {
+                    client.retrySendMessage(
+                        chat.id,
+                        sendMessageContext.event,
+                        $threadEvents,
+                        threadRootMessageIndex,
+                        chatRulesVersion,
+                        communityRulesVersion
+                    );
+                    break;
+                }
+            }
+        } else {
+            switch (sendMessageContext.kind) {
+                case "send_message": {
+                    draftThreadMessages.setTextContent(
+                        threadRootMessageIndex,
+                        sendMessageContext.textContent
+                    );
+                    draftThreadMessages.setAttachment(
+                        threadRootMessageIndex,
+                        sendMessageContext.attachment
+                    );
+                    break;
+                }
+            }
+        }
+
+        sendMessageContext = undefined;
+        showAcceptRulesModal = false;
+    }
 </script>
+
+{#if showAcceptRulesModal}
+    <AcceptRulesModal on:close={onAcceptRules} />
+{/if}
 
 <PollBuilder context={messageContext} bind:this={pollBuilder} bind:open={creatingPoll} />
 

@@ -1,4 +1,4 @@
-import type { AccessControlled, AccessGate, AccessRules } from "../access";
+import type { AccessControlled, AccessGate, VersionedRules } from "../access";
 import type {
     GateCheckFailed,
     GateCheckFailedReason,
@@ -46,6 +46,7 @@ export type CommunityMembership = {
     pinned: ChannelIdentifier[];
     index: number;
     displayName: string | undefined;
+    rulesAccepted: boolean;
 };
 
 export type CommunityIdentifier = {
@@ -83,7 +84,7 @@ export type CommunitySpecificState = {
     members: Map<string, Member>;
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
-    rules?: AccessRules;
+    rules?: VersionedRules;
 };
 
 export interface UserFailedGateCheck {
@@ -145,7 +146,7 @@ export type ChannelMessageMatch = {
 
 export type UnblockCommunityUserResponse = Failure | Success;
 
-export type UpdateCommunityResponse = Failure | Success;
+export type UpdateCommunityResponse = Failure | { kind: "success", rulesVersion: number | undefined };
 
 export type ToggleMuteCommunityNotificationsResponse = Failure | Success;
 
@@ -208,6 +209,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
 export type CommunityMembershipUpdates = {
     role: MemberRole | undefined;
     displayName: OptionUpdate<string>;
+    rulesAccepted: boolean | undefined;
 };
 
 export type ChannelMembershipUpdates = {
@@ -216,6 +218,7 @@ export type ChannelMembershipUpdates = {
     latestThreads: GroupCanisterThreadDetails[];
     mentions: Mention[];
     myMetrics: Metrics | undefined;
+    rulesAccepted: boolean | undefined;
 };
 
 export type ChannelMatch = {
@@ -243,7 +246,7 @@ export type CommunityDetails = {
     members: Member[];
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
-    rules: AccessRules;
+    rules: VersionedRules;
     lastUpdated: bigint;
     userGroups: Map<number, UserGroupDetails>;
 };
@@ -253,7 +256,7 @@ export type CommunityDetailsUpdates = {
     membersRemoved: Set<string>;
     blockedUsersAdded: Set<string>;
     blockedUsersRemoved: Set<string>;
-    rules?: AccessRules;
+    rules?: VersionedRules;
     invitedUsers?: Set<string>;
     lastUpdated: bigint;
     userGroups: UserGroupDetails[];
@@ -272,6 +275,7 @@ export type LocalCommunitySummaryUpdates = {
     lastUpdated: number;
     index?: number;
     displayName: OptionUpdate<string>;
+    rulesAccepted?: boolean;
 };
 
 export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | Failure;

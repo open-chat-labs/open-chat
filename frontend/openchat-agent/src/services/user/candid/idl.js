@@ -81,6 +81,7 @@ export const idlFactory = ({ IDL }) => {
     'change_roles' : CommunityPermissionRole,
     'create_private_channel' : CommunityPermissionRole,
   });
+  const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
@@ -95,10 +96,10 @@ export const idlFactory = ({ IDL }) => {
     'data' : IDL.Vec(IDL.Nat8),
     'mime_type' : IDL.Text,
   });
-  const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const CreateCommunityArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : IDL.Opt(CommunityPermissions),
+    'default_channel_rules' : IDL.Opt(Rules),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'banner' : IDL.Opt(Document),
@@ -882,6 +883,7 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'rules_accepted' : IDL.Bool,
     'next_message_expiry' : IDL.Opt(TimestampMillis),
     'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
@@ -914,6 +916,7 @@ export const idlFactory = ({ IDL }) => {
     'them' : UserId,
     'notifications_muted' : IDL.Bool,
     'events_ttl' : IDL.Opt(Milliseconds),
+    'last_updated' : TimestampMillis,
     'latest_event_index' : EventIndex,
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'expired_messages' : IDL.Vec(MessageIndexRange),
@@ -1156,6 +1159,7 @@ export const idlFactory = ({ IDL }) => {
     'RecipientBlocked' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
+    'CommunityRulesNotAccepted' : IDL.Null,
     'InvalidRequest' : IDL.Text,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
@@ -1319,6 +1323,7 @@ export const idlFactory = ({ IDL }) => {
     'metrics' : IDL.Opt(ChatMetrics),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'events_ttl' : EventsTimeToLiveUpdate,
+    'last_updated' : TimestampMillis,
     'latest_event_index' : IDL.Opt(EventIndex),
     'updated_events' : IDL.Vec(IDL.Tuple(IDL.Nat32, IDL.Nat64)),
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
@@ -1336,8 +1341,10 @@ export const idlFactory = ({ IDL }) => {
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({
       'communities' : CommunitiesUpdates,
+      'username' : IDL.Opt(IDL.Text),
       'blocked_users' : IDL.Opt(IDL.Vec(UserId)),
       'favourite_chats' : FavouriteChatsUpdates,
+      'display_name' : TextUpdate,
       'group_chats' : GroupChatsUpdates,
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
