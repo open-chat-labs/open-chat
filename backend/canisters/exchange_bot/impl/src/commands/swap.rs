@@ -171,7 +171,8 @@ impl SwapCommand {
                             state.get_swap_client(exchange_id, self.input_token.clone(), self.output_token.clone())
                         {
                             trace!(%message_id, "Performing swap");
-                            ic_cdk::spawn(self.perform_swap(client, amount_to_dex));
+                            let amount_to_swap = amount_to_dex.saturating_sub(self.input_token.fee);
+                            ic_cdk::spawn(self.perform_swap(client, amount_to_swap));
                         }
                     } else if self.sub_tasks.withdraw.is_pending() {
                         if let CommandSubTaskResult::Complete(amount_swapped, _) = self.sub_tasks.swap {
@@ -241,7 +242,7 @@ impl SwapCommand {
         .await;
 
         if let Some((exchange_id, CommandSubTaskResult::Complete(..))) = self.quotes.iter().max_by_key(|(_, r)| r.value()) {
-            self.sub_tasks.quotes = CommandSubTaskResult::Complete(*exchange_id, Some(exchange_id.to_string()));
+            self.sub_tasks.quotes = CommandSubTaskResult::Complete(*exchange_id, Some(format!("{exchange_id} is best")));
         } else {
             self.sub_tasks.quotes = CommandSubTaskResult::Failed("Failed to get any valid quotes".to_string());
         }
