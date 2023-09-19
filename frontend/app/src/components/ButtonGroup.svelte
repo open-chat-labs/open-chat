@@ -1,9 +1,10 @@
 <script lang="ts">
     export let align: "end" | "fill" | "center" | "start" = "end"; // we may need more options later but I think this covers it at the moment
+    export let nowrap = false;
     const cls = `button-group ${align}`;
 </script>
 
-<div class={cls}>
+<div class:nowrap class={cls}>
     <slot />
 </div>
 
@@ -16,6 +17,10 @@
         display: flex;
         gap: $sp3;
         flex-wrap: wrap;
+
+        &.nowrap {
+            flex-wrap: nowrap;
+        }
 
         &.start {
             justify-content: flex-start;

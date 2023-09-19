@@ -4,6 +4,7 @@ export type Themes = Record<string, Theme> & {
 };
 
 export interface Theme {
+    author?: string;
     name: string;
     label: string;
     burst: boolean;

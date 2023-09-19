@@ -10,6 +10,7 @@ const disabledTxt = txt70;
 const white = "#ffffff";
 
 export function getTheme(base: Theme): Theme {
+    base.author = "2yfsq-kaaaa-aaaaf-aaa4q-cai";
     base.name = "white";
     base.label = "White";
     base.bg = white;

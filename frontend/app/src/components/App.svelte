@@ -12,7 +12,7 @@
     import Upgrading from "./upgrading/Upgrading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
-    import { themeStore } from "../theme/themes";
+    import { currentTheme } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { OpenChat, SessionExpiryError } from "openchat-client";
@@ -310,12 +310,12 @@
     }
 
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
-    $: burstPath = $themeStore.name === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
+    $: burstPath = $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
     $: burstFixed = isScrollingRoute($pathParams);
 </script>
 
-{#if $themeStore.burst || landingPage}
+{#if $currentTheme.burst || landingPage}
     <div
         class:fixed={burstFixed}
         class="burst-wrapper"
