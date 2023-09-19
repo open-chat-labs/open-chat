@@ -250,7 +250,6 @@
         }
     }
 
-
     function forwardMessage(msg: Message) {
         if (!canSend || !client.canForward(msg.content)) return;
 

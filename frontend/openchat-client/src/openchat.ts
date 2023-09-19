@@ -2677,8 +2677,8 @@ export class OpenChat extends OpenChatAgentWorker {
     forwardMessage(
         messageContext: MessageContext,
         msg: Message,
-        rulesAccepted: number | undefined,
-        communityRulesAccepted: number | undefined,
+        rulesAccepted: number | undefined = undefined,
+        communityRulesAccepted: number | undefined = undefined,
     ): void {
         this.sendMessageWithContent(
             messageContext,
@@ -2801,8 +2801,8 @@ export class OpenChat extends OpenChatAgentWorker {
     async retrySendMessage(
         messageContext: MessageContext,
         event: EventWrapper<Message>,
-        rulesAccepted: number | undefined,
-        communityRulesAccepted: number | undefined,
+        rulesAccepted: number | undefined = undefined,
+        communityRulesAccepted: number | undefined = undefined,
     ): Promise<void> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = this._liveState.chatSummaries.get(chatId);
@@ -2964,8 +2964,8 @@ export class OpenChat extends OpenChatAgentWorker {
         content: MessageContent,
         mentioned: User[] = [],
         forwarded: boolean = false,
-        rulesAccepted: number | undefined,
-        communityRulesAccepted: number | undefined,
+        rulesAccepted: number | undefined = undefined,
+        communityRulesAccepted: number | undefined = undefined,
     ): void {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = this._liveState.chatSummaries.get(chatId);
@@ -3062,8 +3062,8 @@ export class OpenChat extends OpenChatAgentWorker {
         textContent: string | undefined,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
-        rulesAccepted: number | undefined,
-        communityRulesAccepted: number | undefined,
+        rulesAccepted: number | undefined = undefined,
+        communityRulesAccepted: number | undefined = undefined,
     ): void {
         return this.sendMessageWithContent(
             messageContext,
