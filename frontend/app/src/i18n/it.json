@@ -631,7 +631,14 @@
     "undeleteMessageFailed": "Impossibile annullare l'eliminazione del messaggio",
     "homepage": "Pagina iniziale",
     "preferredLanguage": "Lingua preferita",
-    "theme": "Tema",
+    "theme": {
+        "preferredLightTheme": "Tema luminoso preferito",
+        "preferredDarkTheme": "Tema luminoso preferito",
+        "dark": "Buio",
+        "light": "Leggero",
+        "system": "Sistema",
+        "title": "Tema"
+    },
     "freezeGroup": "Congelare il gruppo",
     "unfreezeGroup": "Sblocca gruppo",
     "chatFrozen": "Questa chat è stata bloccata",

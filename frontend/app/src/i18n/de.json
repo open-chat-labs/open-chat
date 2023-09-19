@@ -633,7 +633,14 @@
     "undeleteMessageFailed": "Die Nachricht konnte nicht wiederhergestellt werden",
     "homepage": "Startseite",
     "preferredLanguage": "Bevorzugte Sprache",
-    "theme": "Thema",
+    "theme": {
+        "preferredLightTheme": "Bevorzugtes Lichtthema",
+        "preferredDarkTheme": "Bevorzugtes Lichtthema",
+        "dark": "Dunkel",
+        "light": "Licht",
+        "system": "System",
+        "title": "Thema"
+    },
     "freezeGroup": "Gruppe einfrieren",
     "unfreezeGroup": "Gruppe entsperren",
     "chatFrozen": "Dieser Chat wurde eingefroren",

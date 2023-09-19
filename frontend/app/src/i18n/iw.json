@@ -629,7 +629,14 @@
     "undeleteMessageFailed": "ביטול מחיקת ההודעה נכשל",
     "homepage": "דף הבית",
     "preferredLanguage": "שפה מועדפת",
-    "theme": "נושא",
+    "theme": {
+        "preferredLightTheme": "נושא קל מועדף",
+        "preferredDarkTheme": "נושא קל מועדף",
+        "dark": "אפל",
+        "light": "אוֹר",
+        "system": "מערכת",
+        "title": "נושא"
+    },
     "freezeGroup": "הקפאת קבוצה",
     "unfreezeGroup": "בטל את הקפאת הקבוצה",
     "chatFrozen": "הצ'אט הזה הוקפא",

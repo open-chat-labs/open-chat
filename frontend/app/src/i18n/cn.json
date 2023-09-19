@@ -631,7 +631,14 @@
     "undeleteMessageFailed": "取消删除消息失败",
     "homepage": "主页",
     "preferredLanguage": "首选语言",
-    "theme": "主题",
+    "theme": {
+        "preferredLightTheme": "首选浅色主题",
+        "preferredDarkTheme": "首选浅色主题",
+        "dark": "黑暗的",
+        "light": "光",
+        "system": "系统",
+        "title": "主题"
+    },
     "freezeGroup": "冻结群聊",
     "unfreezeGroup": "解冻群聊",
     "chatFrozen": "此聊天已被冻结",

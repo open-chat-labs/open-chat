@@ -318,7 +318,7 @@
                 </Select>
 
                 <div class="para">
-                    <Legend label={$_("theme")} />
+                    <Legend label={$_("theme.title")} />
                     <ThemeSelector />
                 </div>
 

@@ -54,17 +54,17 @@
 <div class="theme-buttons">
     <ButtonGroup nowrap align="fill">
         <Button on:click={() => themeType.set("system")} secondary={$themeType !== "system"}
-            >{"System"}</Button>
+            >{$_("theme.system")}</Button>
         <Button on:click={() => themeType.set("light")} secondary={$themeType !== "light"}
-            >{"Light"}</Button>
+            >{$_("theme.light")}</Button>
         <Button on:click={() => themeType.set("dark")} secondary={$themeType !== "dark"}
-            >{"Dark"}</Button>
+            >{$_("theme.dark")}</Button>
     </ButtonGroup>
 </div>
 
 <div class="theme-selection">
     <div class="theme-wrapper">
-        <Legend label={`Prefered light theme`} />
+        <Legend label={$_("theme.preferredLightTheme")} />
         <div
             tabindex="0"
             role="button"
@@ -97,7 +97,7 @@
         </div>
     </div>
     <div class="theme-wrapper">
-        <Legend label={`Prefered dark theme`} />
+        <Legend label={$_("theme.preferredDarkTheme")} />
         <div
             tabindex="0"
             role="button"

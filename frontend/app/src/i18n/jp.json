@@ -632,7 +632,14 @@
     "undeleteMessageFailed": "メッセージの削除を取り消すことができませんでした",
     "homepage": "ホームページ",
     "preferredLanguage": "優先言語",
-    "theme": "テーマ",
+    "theme": {
+        "preferredLightTheme": "好みのライトテーマ",
+        "preferredDarkTheme": "好みのライトテーマ",
+        "dark": "暗い",
+        "light": "ライト",
+        "system": "システム",
+        "title": "テーマ"
+    },
     "freezeGroup": "グループを凍結",
     "unfreezeGroup": "グループを解凍",
     "chatFrozen": "このチャットは凍結されました",

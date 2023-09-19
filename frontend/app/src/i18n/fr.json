@@ -631,7 +631,14 @@
     "undeleteMessageFailed": "Échec de la restauration du message",
     "homepage": "Page d'accueil",
     "preferredLanguage": "Langue préférée",
-    "theme": "Thème",
+    "theme": {
+        "preferredLightTheme": "Thème de lumière préféré",
+        "preferredDarkTheme": "Thème de lumière préféré",
+        "dark": "Sombre",
+        "light": "Lumière",
+        "system": "Système",
+        "title": "Thème"
+    },
     "freezeGroup": "Groupe Geler",
     "unfreezeGroup": "Dégeler le groupe",
     "chatFrozen": "Ce chat a été gelé",
