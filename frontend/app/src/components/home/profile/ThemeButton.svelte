@@ -10,7 +10,7 @@
     import Avatar from "../../Avatar.svelte";
     import type { Theme } from "../../../theme/types";
     import { createEventDispatcher, getContext } from "svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
+    import type { Alignment } from "../../../utils/alignment";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -18,6 +18,7 @@
     export let theme: Theme;
     export let otherThemes: Theme[];
     export let label: string;
+    export let align: Alignment;
 
     $: userStore = client.userStore;
 
@@ -28,7 +29,7 @@
 
 <div class="theme-wrapper">
     <Legend {label} />
-    <MenuIcon centered={$mobileWidth} position="bottom" align="center">
+    <MenuIcon gutter={0} position="bottom" {align}>
         <div
             tabindex="0"
             role="button"
