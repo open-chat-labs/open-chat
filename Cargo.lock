@@ -1376,7 +1376,7 @@ dependencies = [
  "notifications_canister",
  "notifications_canister_c2c_client",
  "rand",
- "regex",
+ "regex-lite",
  "search",
  "serde",
  "serde_bytes",
@@ -2458,7 +2458,6 @@ dependencies = [
  "notifications_canister",
  "notifications_canister_c2c_client",
  "rand",
- "regex",
  "search",
  "serde",
  "serde_bytes",
@@ -2480,7 +2479,7 @@ dependencies = [
  "candid",
  "chat_events",
  "msgpack",
- "regex",
+ "regex-lite",
  "search",
  "serde",
  "types",
@@ -5009,6 +5008,12 @@ dependencies = [
  "memchr",
  "regex-syntax 0.7.4",
 ]
+
+[[package]]
+name = "regex-lite"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f96ede7f386ba6e910092e7ccdc04176cface62abebea07ed6b46d870ed95ca2"
 
 [[package]]
 name = "regex-syntax"

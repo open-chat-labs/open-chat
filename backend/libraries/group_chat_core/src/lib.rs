@@ -2,7 +2,7 @@ use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
     DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, UndeleteMessageResult,
 };
-use regex::Regex;
+use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -1833,12 +1833,13 @@ impl From<AccessRulesInternal> for VersionedRules {
 }
 
 thread_local! {
-    static EVERYONE_REGEX: RefCell<Regex> = RefCell::new(Regex::new(r"(?=(\w|@))(?<!\w)@everyone\b").unwrap());
+    static EVERYONE_REGEX: RefCell<Regex> = RefCell::new(Regex::new(r"(^|[\s(){}\[\]])@everyone($|[\s(){}\[\]])").unwrap());
 }
 
 fn is_everyone_mentioned(content: &MessageContentInitial) -> bool {
     if let Some(text) = content.text() {
-        EVERYONE_REGEX.with(|regex| regex.borrow().is_match(&text.to_lowercase()))
+        let text_lower = text.to_lowercase();
+        text_lower.contains("@everyone") && EVERYONE_REGEX.with(|regex| regex.borrow().is_match(&text_lower))
     } else {
         false
     }
