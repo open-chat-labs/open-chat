@@ -16,8 +16,6 @@ export type Dimensions = {
     h: number;
 };
 
-const CHEVRON_OFFSET = 16; // half width + offset (4 + 12)
-
 function center({ left, top, height, width }: DOMRect): { x: number; y: number } {
     return {
         x: left + width / 2,
@@ -40,24 +38,24 @@ export function derivePosition(
             return {
                 ...dim,
                 x: triggerRect.x + triggerRect.width + gutter,
-                y: verticalPosition(triggerCenter, elementRect, flippedAlign),
+                y: verticalPosition(triggerCenter, triggerRect, elementRect, flippedAlign),
             };
         case "left":
             return {
                 ...dim,
                 x: triggerRect.x - elementRect.width - gutter,
-                y: verticalPosition(triggerCenter, elementRect, flippedAlign),
+                y: verticalPosition(triggerCenter, triggerRect, elementRect, flippedAlign),
             };
         case "top":
             return {
                 ...dim,
-                x: horizontalPosition(triggerCenter, elementRect, flippedAlign),
+                x: horizontalPosition(triggerCenter, triggerRect, elementRect, flippedAlign),
                 y: triggerRect.y - elementRect.height - gutter,
             };
         case "bottom":
             return {
                 ...dim,
-                x: horizontalPosition(triggerCenter, elementRect, flippedAlign),
+                x: horizontalPosition(triggerCenter, triggerRect, elementRect, flippedAlign),
                 y: triggerRect.y + triggerRect.height + gutter,
             };
     }
@@ -65,6 +63,7 @@ export function derivePosition(
 
 function horizontalPosition(
     triggerCenter: { x: number; y: number },
+    triggerRect: DOMRect,
     elementRect: DOMRect,
     align: Alignment,
 ): number {
@@ -72,14 +71,15 @@ function horizontalPosition(
         case "center":
             return triggerCenter.x - elementRect.width / 2;
         case "start":
-            return triggerCenter.x - CHEVRON_OFFSET;
+            return triggerCenter.x - triggerRect.width / 2;
         case "end":
-            return triggerCenter.x - elementRect.width + CHEVRON_OFFSET;
+            return triggerRect.x + triggerRect.width - elementRect.width;
     }
 }
 
 function verticalPosition(
     triggerCenter: { x: number; y: number },
+    triggerRect: DOMRect,
     elementRect: DOMRect,
     align: Alignment,
 ): number {
@@ -87,9 +87,9 @@ function verticalPosition(
         case "center":
             return triggerCenter.y - elementRect.height / 2;
         case "start":
-            return triggerCenter.y - CHEVRON_OFFSET;
+            return triggerCenter.y - triggerRect.height / 2;
         case "end":
-            return triggerCenter.y - elementRect.height + CHEVRON_OFFSET;
+            return triggerCenter.y + triggerRect.height - elementRect.height;
     }
 }
 
@@ -125,25 +125,23 @@ export function boundsCheck(trigger: DOMRect, dim: Dimensions): Dimensions {
     const bottomOverflow = bottom > viewport.h;
     const leftOverflow = left < 0;
     const rightOverflow = right > viewport.w;
-    const offsetH = trigger.height / 2;
-    const offsetW = trigger.width / 2;
     let x = dim.x;
     let y = dim.y;
 
     if (topOverflow) {
-        y = dim.y + dim.h - offsetH;
+        y = dim.y + dim.h + trigger.height;
     }
 
     if (bottomOverflow) {
-        y = dim.y - dim.h + offsetH;
+        y = dim.y - dim.h - trigger.height;
     }
 
     if (rightOverflow) {
-        x = dim.x - dim.w - offsetW;
+        x = dim.x - dim.w - trigger.width;
     }
 
     if (leftOverflow) {
-        x = dim.x + dim.w + offsetW;
+        x = dim.x + dim.w + trigger.width;
     }
 
     return {

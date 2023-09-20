@@ -46,6 +46,7 @@
     import DisplayNameInput from "../../DisplayNameInput.svelte";
     import CommunityProfile from "./CommunityProfile.svelte";
     import ThemeSelector from "./ThemeSelector.svelte";
+    import { menuCloser } from "../../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -241,7 +242,7 @@
 </div>
 
 {#if view === "global"}
-    <form class="user-form" on:submit|preventDefault={saveUser}>
+    <form use:menuCloser class="user-form" on:submit|preventDefault={saveUser}>
         <div class="user">
             <CollapsibleCard
                 on:toggle={userInfoOpen.toggle}
