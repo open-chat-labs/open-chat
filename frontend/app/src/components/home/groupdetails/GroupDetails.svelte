@@ -32,14 +32,17 @@
     export let chat: MultiUserChat;
     export let memberCount: number;
 
-    $: currentChatRules = client.currentChatRules;
-    $: currentCommunityRules = client.currentCommunityRules;
-    $: combinedRulesText = client.combineRulesText($currentChatRules, $currentCommunityRules);
-
     // capture a snapshot of the chat as it is right now
     $: canEdit = client.canEditGroupDetails(chat.id);
+    $: canSend = client.canSendMessages(chat.id);
     $: canInvite = client.canInviteUsers(chat.id) && (chat.kind === "group_chat" || chat.public);
     $: avatarSrc = client.groupAvatarUrl(chat);
+
+    $: currentChatRules = client.currentChatRules;
+    $: currentCommunityRules = client.currentCommunityRules;
+    $: combinedRulesText = canSend
+        ? client.combineRulesText($currentChatRules, $currentCommunityRules)
+        : "";
 
     function editGroup() {
         if (canEdit) {
