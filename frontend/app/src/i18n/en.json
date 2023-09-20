@@ -632,6 +632,7 @@
         "previewFailure": "Unable to load thread previews"
     },
     "linkCopiedToClipboard": "Link copied to clipboard",
+    "userIdCopiedToClipboard": "User Id copied to clipboard",
     "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
     "referralHeader": "Invite friends/family",
     "userReferralMessage": "Share this link to OpenChat with friends and family. As long as you are a Diamond member yourself, for each person who registers with your link and goes on to become a Diamond member, you will receive half of the membership payments they make during their first year.",

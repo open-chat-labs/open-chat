@@ -1008,5 +1008,6 @@
     "makeGroupPublicFailed": "未能公开 {level}",
     "displayNameRules": "选修的",
     "displayName": "显示名称",
-    "communityDisplayNameRules": "只在这个社区内"
+    "communityDisplayNameRules": "只在这个社区内",
+    "userIdCopiedToClipboard": "用户 ID 已复制到剪贴板"
 }
