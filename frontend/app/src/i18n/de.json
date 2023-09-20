@@ -361,12 +361,15 @@
         "enable": "Regeln aktivieren",
         "accept": "Annehmen",
         "reject": "Ablehnen",
-        "rules": "{level}-Regeln",
+        "rules": "Regeln",
         "placeholder": "Was sind die {level}-Regeln?",
         "instructions": "Wenn diese Option aktiviert ist, müssen neue Mitglieder den Regeln zustimmen, bevor sie Nachrichten senden können.",
         "acceptTitle": "Chat-Regeln",
         "promptExistingUsers": "Fordern Sie bestehende Mitglieder auf",
-        "promptExistingUsersInstructions": "Bestehende Mitglieder müssen den neuen Regeln zustimmen, bevor sie Nachrichten senden können."
+        "promptExistingUsersInstructions": "Bestehende Mitglieder müssen den neuen Regeln zustimmen, bevor sie Nachrichten senden können.",
+        "levelRules": "{level}-Regeln",
+        "communityRulesExplanation": "Alle Kanalregeln werden diesen Regeln vorangestellt",
+        "channelRulesExplanation": "Diese werden allen Community-Regeln vorangestellt"
     },
     "group": {
         "publicGroup": "Öffentlich {level}",
@@ -633,7 +636,14 @@
     "undeleteMessageFailed": "Die Nachricht konnte nicht wiederhergestellt werden",
     "homepage": "Startseite",
     "preferredLanguage": "Bevorzugte Sprache",
-    "theme": "Thema",
+    "theme": {
+        "dark": "Dunkel",
+        "light": "Licht",
+        "system": "System",
+        "title": "Thema",
+        "preferredLightTheme": "Bevorzugtes Lichtthema",
+        "preferredDarkTheme": "Bevorzugtes dunkles Thema"
+    },
     "freezeGroup": "Gruppe einfrieren",
     "unfreezeGroup": "Gruppe entsperren",
     "chatFrozen": "Dieser Chat wurde eingefroren",

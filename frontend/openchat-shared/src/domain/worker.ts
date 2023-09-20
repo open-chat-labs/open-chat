@@ -62,6 +62,7 @@ import type {
     ChannelIdentifier,
     MultiUserChatIdentifier,
     PublicGroupSummaryResponse,
+    MessageContext,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -551,12 +552,11 @@ type EditMessage = {
 };
 
 type SendMessage = {
-    chatId: ChatIdentifier;
+    messageContext: MessageContext;
     user: CreatedUser;
     mentioned: User[];
     event: EventWrapper<Message>;
-    threadRootMessageIndex: number| undefined;
-    rulesAccepted: number| undefined;
+    rulesAccepted: number | undefined;
     communityRulesAccepted: number | undefined;
     kind: "sendMessage";
 };

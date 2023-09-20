@@ -367,12 +367,15 @@
         "enable": "אפשר כללים",
         "accept": "לְקַבֵּל",
         "reject": "לִדחוֹת",
-        "rules": "{level} חוקים",
+        "rules": "כללים",
         "placeholder": "מה הם הכללים של {level}?",
         "instructions": "אם מופעל, חברים חדשים חייבים להסכים לכללים לפני שהם יכולים לשלוח הודעות.",
         "acceptTitle": "כללי צ'אט",
         "promptExistingUsers": "בקש לחברים קיימים",
-        "promptExistingUsersInstructions": "חברים קיימים חייבים להסכים לכללים החדשים לפני שהם יכולים לשלוח הודעות."
+        "promptExistingUsersInstructions": "חברים קיימים חייבים להסכים לכללים החדשים לפני שהם יכולים לשלוח הודעות.",
+        "levelRules": "{level} חוקים",
+        "communityRulesExplanation": "כל כללי ערוץ יקדמו לכללים אלה",
+        "channelRulesExplanation": "אלה יהיו קידומת לכל חוקי הקהילה"
     },
     "group": {
         "publicGroup": "ציבורי {level}",
@@ -629,7 +632,14 @@
     "undeleteMessageFailed": "ביטול מחיקת ההודעה נכשל",
     "homepage": "דף הבית",
     "preferredLanguage": "שפה מועדפת",
-    "theme": "נושא",
+    "theme": {
+        "dark": "אפל",
+        "light": "אוֹר",
+        "system": "מערכת",
+        "title": "נושא",
+        "preferredLightTheme": "נושא קל מועדף",
+        "preferredDarkTheme": "מועדף על נושא כהה"
+    },
     "freezeGroup": "הקפאת קבוצה",
     "unfreezeGroup": "בטל את הקפאת הקבוצה",
     "chatFrozen": "הצ'אט הזה הוקפא",

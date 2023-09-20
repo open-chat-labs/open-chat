@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { themeStore } from "../../theme/themes";
-    $: txtColor = $themeStore.landing.txt;
+    import { currentTheme } from "../../theme/themes";
+    $: txtColor = $currentTheme.landing.txt;
 </script>
 
 <svg width="160" height="22" viewBox="0 0 160 22" fill="none" xmlns="http://www.w3.org/2000/svg">

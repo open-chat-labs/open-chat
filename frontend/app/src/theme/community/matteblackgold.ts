@@ -20,6 +20,7 @@ const friendsMessageBackground = "#111111";
 
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
+    base.author = "e2rfi-fqaaa-aaaaf-aa5ua-cai";
     base.name = "matteblackgold";
     base.label = "Matte Black Gold";
     base.burst = false;

@@ -7,6 +7,14 @@ export function process() {
     };
 }
 
+export function emptyRules() {
+    return {
+        text: "",
+        enabled: false,
+        version: 0,
+    };
+}
+
 export function emptyChatMetrics() {
     return {
         audioMessages: 0,

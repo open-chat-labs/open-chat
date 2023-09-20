@@ -67,7 +67,7 @@
     import { dimensions } from "../../stores/screenDimensions";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import type { Share } from "../../utils/share";
-    import { themeStore } from "../../theme/themes";
+    import { currentTheme } from "../../theme/themes";
     import SuspendedModal from "../SuspendedModal.svelte";
     import NoAccess from "./NoAccess.svelte";
     import NewGroup from "./addgroup/NewGroup.svelte";
@@ -1026,7 +1026,7 @@
     </Overlay>
 {/if}
 
-{#if $themeStore.name !== "white"}
+{#if $currentTheme.name !== "white"}
     <BackgroundLogo
         width={`${bgHeight}px`}
         bottom={"unset"}

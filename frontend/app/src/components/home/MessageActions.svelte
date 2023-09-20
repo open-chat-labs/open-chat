@@ -14,13 +14,13 @@
     import { rtlStore } from "../../stores/rtl";
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { MessageAction, MessageContent } from "openchat-client";
+    import type { AttachmentContent, MessageAction } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 
     export let messageAction: MessageAction = undefined;
     export let editing: boolean; // are we in edit mode - if so we must restrict what's available
-    export let fileToAttach: MessageContent | undefined;
+    export let attachment: AttachmentContent | undefined;
     export let mode: "thread" | "message" = "message";
     export let pollsAllowed: boolean;
 
@@ -32,7 +32,7 @@
 
     export function close() {
         drawOpen = false;
-        if (fileToAttach !== undefined) {
+        if (attachment !== undefined) {
             dispatch("clearAttachment");
         }
         messageAction = undefined;
@@ -41,7 +41,7 @@
     function toggleAction(action: MessageAction) {
         if (messageAction === action) {
             messageAction = undefined;
-            if (fileToAttach !== undefined) {
+            if (attachment !== undefined) {
                 dispatch("clearAttachment");
             }
         } else {
@@ -59,7 +59,7 @@
     }
 
     function toggleDraw() {
-        if (drawOpen || fileToAttach !== undefined) {
+        if (drawOpen || attachment !== undefined) {
             close();
         } else {
             drawOpen = true;
@@ -91,7 +91,7 @@
 
 {#if useDrawer}
     <div class="open-draw" on:click|stopPropagation={toggleDraw}>
-        {#if drawOpen || fileToAttach !== undefined}
+        {#if drawOpen || attachment !== undefined}
             <HoverIcon>
                 <TrayRemove size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
@@ -118,7 +118,7 @@
     {#if !editing}
         <div class="attach">
             <FileAttacher
-                open={fileToAttach !== undefined}
+                open={attachment !== undefined}
                 on:fileSelected
                 on:open={() => (messageAction = "file")}
                 on:close={close} />

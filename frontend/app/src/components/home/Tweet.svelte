@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { themeStore } from "../../theme/themes";
+    import { currentTheme } from "../../theme/themes";
     import { createEventDispatcher, onMount } from "svelte";
     import { eventListScrolling } from "../../stores/scrollPos";
 
@@ -32,7 +32,7 @@
 
             rendering = (<any>window).twttr?.widgets.createTweet(tweetId, tweetWrapper, {
                 conversation: "none",
-                theme: $themeStore.name,
+                theme: $currentTheme.mode,
             }) as Promise<any>;
 
             rendering

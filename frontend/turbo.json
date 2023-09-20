@@ -1,128 +1,128 @@
 {
-  "$schema": "https://turborepo.org/schema.json",
-  "globalEnv": [
-    "INTERNET_IDENTITY",
-    "NFID_URL",
-    "DFX_NETWORK",
-    "IC_URL",
-    "II_DERIVATION_ORIGIN",
-    "CUSTOM_DOMAINS",
-    "STORAGE_INDEX_CANISTER",
-    "LEDGER_CANISTER_ICP",
-    "LEDGER_CANISTER_SNS1",
-    "LEDGER_CANISTER_BTC",
-    "LEDGER_CANISTER_CHAT",
-    "LEDGER_CANISTER_KINIC",
-    "LEDGER_CANISTER_HOTORNOT",
-    "LEDGER_CANISTER_GHOST",
-    "BLOB_URL_PATTERN",
-    "NODE_ENV",
-    "USERGEEK_APIKEY",
-    "METERED_APIKEY",
-    "ROLLBAR_ACCESS_TOKEN",
-    "TRANSLATE_API_KEY",
-    "PUBLIC_TRANSLATE_API_KEY",
-    "GIPHY_APIKEY",
-    "FRAME_ANCESTORS"
-  ],
-  "pipeline": {
-    "build": {
-      "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build"]
-    },
-    "build:ci": {
-      "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["build:prod", "typecheck:prod", "validate", "lint", "test:prod"]
-    },
-    "build:prod": {
-      "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build", "openchat-push#build", "openchat-worker#build"]
-    },
-    "build:prod_test": {
-      "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build", "openchat-push#build", "openchat-worker#build"]
-    },
-    "build:testnet": {
-      "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build", "openchat-push#build", "openchat-worker#build"]
-    },
+    "$schema": "https://turborepo.org/schema.json",
+    "globalEnv": [
+        "INTERNET_IDENTITY",
+        "NFID_URL",
+        "DFX_NETWORK",
+        "IC_URL",
+        "II_DERIVATION_ORIGIN",
+        "CUSTOM_DOMAINS",
+        "STORAGE_INDEX_CANISTER",
+        "LEDGER_CANISTER_ICP",
+        "LEDGER_CANISTER_SNS1",
+        "LEDGER_CANISTER_BTC",
+        "LEDGER_CANISTER_CHAT",
+        "LEDGER_CANISTER_KINIC",
+        "LEDGER_CANISTER_HOTORNOT",
+        "LEDGER_CANISTER_GHOST",
+        "BLOB_URL_PATTERN",
+        "NODE_ENV",
+        "USERGEEK_APIKEY",
+        "METERED_APIKEY",
+        "ROLLBAR_ACCESS_TOKEN",
+        "TRANSLATE_API_KEY",
+        "PUBLIC_TRANSLATE_API_KEY",
+        "GIPHY_APIKEY",
+        "FRAME_ANCESTORS"
+    ],
+    "pipeline": {
+        "build": {
+            "outputs": ["lib/**", "build/**"],
+            "dependsOn": ["^build"]
+        },
+        "build:ci": {
+            "outputs": ["lib/**", "build/**"],
+            "dependsOn": ["build:prod", "typecheck:prod", "validate", "lint", "test:prod"]
+        },
+        "build:prod": {
+            "outputs": ["lib/**", "build/**"],
+            "dependsOn": ["^build", "openchat-push#build", "openchat-worker#build"]
+        },
+        "build:prod_test": {
+            "outputs": ["lib/**", "build/**"],
+            "dependsOn": ["^build", "openchat-push#build", "openchat-worker#build"]
+        },
+        "build:testnet": {
+            "outputs": ["lib/**", "build/**"],
+            "dependsOn": ["^build", "openchat-push#build", "openchat-worker#build"]
+        },
 
-    "deploy:prod_test": {
-      "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["typecheck:prod_test", "validate", "lint", "test:prod_test"]
-    },
-    "test:prod_test": {
-      "dependsOn": ["build:prod_test"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts"]
-    },
-    "typecheck:prod_test": {
-      "dependsOn": ["build:prod_test"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-    },
+        "deploy:prod_test": {
+            "outputs": ["lib/**", "build/**"],
+            "dependsOn": ["typecheck:prod_test", "validate", "lint", "test:prod_test"]
+        },
+        "test:prod_test": {
+            "dependsOn": ["build:prod_test"],
+            "outputs": [],
+            "inputs": ["src/**/*.ts"]
+        },
+        "typecheck:prod_test": {
+            "dependsOn": ["build:prod_test"],
+            "outputs": [],
+            "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+        },
 
-    "deploy:prod": {
-      "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["typecheck:prod", "validate", "lint", "test:prod"]
-    },
+        "deploy:prod": {
+            "outputs": ["lib/**", "build/**"],
+            "dependsOn": ["typecheck:prod", "validate", "lint", "test:prod"]
+        },
 
-    "test:prod": {
-      "dependsOn": ["build:prod"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts"]
-    },
-    "typecheck:prod": {
-      "dependsOn": ["build:prod"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-    },
+        "test:prod": {
+            "dependsOn": ["build:prod", "^test"],
+            "outputs": [],
+            "inputs": ["src/**/*.ts"]
+        },
+        "typecheck:prod": {
+            "dependsOn": ["build:prod"],
+            "outputs": [],
+            "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+        },
 
-    "deploy:testnet": {
-      "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["typecheck:testnet", "validate", "lint", "test:testnet"]
-    },
+        "deploy:testnet": {
+            "outputs": ["lib/**", "build/**"],
+            "dependsOn": ["typecheck:testnet", "validate", "lint", "test:testnet"]
+        },
 
-    "test:testnet": {
-      "dependsOn": ["build:testnet"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts"]
-    },
-    "typecheck:testnet": {
-      "dependsOn": ["build:testnet"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-    },
+        "test:testnet": {
+            "dependsOn": ["build:testnet"],
+            "outputs": [],
+            "inputs": ["src/**/*.ts"]
+        },
+        "typecheck:testnet": {
+            "dependsOn": ["build:testnet"],
+            "outputs": [],
+            "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+        },
 
-    "dev": {
-      "cache": false,
-      "persistent": true,
-      "dependsOn": ["^wait"]
-    },
+        "dev": {
+            "cache": false,
+            "persistent": true,
+            "dependsOn": ["^wait"]
+        },
 
-    "wait": {
-      "cache": false
-    },
+        "wait": {
+            "cache": false
+        },
 
-    "test": {
-      "dependsOn": ["build"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts"]
-    },
-    "typecheck": {
-      "dependsOn": ["build"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-    },
-    "validate": {
-      "dependsOn": ["^build"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-    },
+        "test": {
+            "dependsOn": ["build"],
+            "outputs": [],
+            "inputs": ["src/**/*.ts"]
+        },
+        "typecheck": {
+            "dependsOn": ["build"],
+            "outputs": [],
+            "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+        },
+        "validate": {
+            "dependsOn": ["^build"],
+            "outputs": [],
+            "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+        },
 
-    "lint": {
-      "outputs": [],
-      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+        "lint": {
+            "outputs": [],
+            "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+        }
     }
-  }
 }

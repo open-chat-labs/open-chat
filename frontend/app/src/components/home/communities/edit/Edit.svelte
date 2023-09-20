@@ -17,7 +17,7 @@
     import StageHeader from "../../StageHeader.svelte";
     import PermissionsEditor from "./PermissionsEditor.svelte";
     import PermissionsViewer from "../PermissionsViewer.svelte";
-    import RulesEditor from "../../Rules.svelte";
+    import RulesEditor from "../../RulesEditor.svelte";
     import Details from "./Details.svelte";
     import { createCandidateCommunity } from "../../../../stores/community";
     import VisibilityControl from "../../VisibilityControl.svelte";
@@ -217,7 +217,7 @@
                         bind:valid={rulesValid}
                         level={candidate.level}
                         bind:rules={candidateRules}
-                        editing />
+                        {editing} />
                 </div>
                 <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}

@@ -4,7 +4,6 @@ import type {
     EventWrapper,
     GroupChatSummary,
     MessageContent,
-    TextContent,
     ChatEvent,
     ReplyContext,
     Reaction,
@@ -43,6 +42,7 @@ import {
     nullMembership,
     ChatMap,
     MessageMap,
+    isAttachmentContent,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -223,55 +223,23 @@ export function getMembersString(
         : sorted.join();
 }
 
-function addCaption(caption: string | undefined, content: MessageContent): MessageContent {
-    return (caption ?? "").length > 0 &&
-        content.kind !== "text_content" &&
-        content.kind !== "deleted_content" &&
-        content.kind !== "placeholder_content" &&
-        content.kind !== "poll_content" &&
-        content.kind !== "proposal_content" &&
-        content.kind !== "prize_winner_content" &&
-        content.kind !== "message_reminder_content" &&
-        content.kind !== "message_reminder_created_content" &&
-        content.kind !== "user_referral_card" &&
-        content.kind !== "meme_fighter_content" &&
-        content.kind !== "reported_message_content" &&
-        content.kind !== "crypto_content"
-        ? { ...content, caption }
-        : content;
-}
-
-export function getMessageContent(
-    content: string | undefined,
-    fileToAttach: MessageContent | undefined,
-): MessageContent {
-    return fileToAttach
-        ? addCaption(content, fileToAttach)
-        : ({
-              kind: "text_content",
-              text: content ?? "",
-          } as TextContent);
-}
-
-const blobbyContentTypes = ["file_content", "image_content", "video_content", "audio_content"];
-
 export function createMessage(
     userId: string,
     messageIndex: number,
-    content: string | undefined,
+    content: MessageContent,
     replyingTo: ReplyContext | undefined,
-    fileToAttach: MessageContent | undefined,
+    forwarded: boolean,
 ): Message {
     return {
         kind: "message",
-        content: getMessageContent(content, fileToAttach),
+        content,
         sender: userId,
         repliesTo: replyingTo,
         messageId: newMessageId(),
         messageIndex,
         reactions: [],
         edited: false,
-        forwarded: false,
+        forwarded,
         deleted: false,
     };
 }
@@ -716,7 +684,7 @@ function sortByTimestampThenEventIndex(
 }
 
 export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): EventWrapper<Message> {
-    if (blobbyContentTypes.includes(messageEvent.event.content.kind)) {
+    if (isAttachmentContent(messageEvent.event.content)) {
         return {
             ...messageEvent,
             event: {

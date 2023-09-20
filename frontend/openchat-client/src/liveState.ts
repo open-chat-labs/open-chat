@@ -17,7 +17,7 @@ import type {
     MultiUserChat,
     ChatListScope,
     Member,
-    VersionedRules
+    VersionedRules,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -46,6 +46,7 @@ import {
     selectedMessageContext,
     allChats,
     currentChatMembers,
+    currentChatDraftMessage,
     currentChatRules,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
@@ -62,6 +63,8 @@ import {
     currentCommunityRules,
 } from "./stores/community";
 import { type GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
+import type { DraftMessage, DraftMessagesByThread } from "./stores/draftMessageFactory";
+import { draftThreadMessages } from "./stores/draftThreadMessages";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -107,6 +110,8 @@ export class LiveState {
     allChats!: ChatMap<ChatSummary>;
     selectedCommunity!: CommunitySummary | undefined;
     currentCommunityMembers!: Map<string, Member>;
+    currentChatDraftMessage!: DraftMessage | undefined;
+    draftThreadMessages!: DraftMessagesByThread;
     currentCommunityRules!: VersionedRules | undefined;
 
     constructor() {
@@ -153,6 +158,8 @@ export class LiveState {
         allChats.subscribe((data) => (this.allChats = data));
         selectedCommunity.subscribe((data) => (this.selectedCommunity = data));
         currentCommunityMembers.subscribe((data) => (this.currentCommunityMembers = data));
+        currentChatDraftMessage.subscribe((data) => (this.currentChatDraftMessage = data));
+        draftThreadMessages.subscribe((data) => (this.draftThreadMessages = data));
         currentCommunityRules.subscribe((data) => (this.currentCommunityRules = data));
     }
 }

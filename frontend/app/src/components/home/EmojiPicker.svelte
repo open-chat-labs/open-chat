@@ -1,12 +1,11 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte";
     import "emoji-picker-element";
-    import { getCurrentThemeName } from "../../theme/themes";
+    import { currentTheme } from "../../theme/themes";
 
     export let mode: "message" | "reaction" | "thread" = "message";
 
     const dispatch = createEventDispatcher();
-    let theme: string = getCurrentThemeName();
 
     onMount(() => {
         document.querySelector("emoji-picker")?.addEventListener("emoji-click", (event) => {
@@ -19,8 +18,8 @@
     class:message={mode === "message"}
     class:reaction={mode === "reaction"}
     class:thread={mode === "thread"}
-    class:dark={theme === "dark"}
-    class:light={theme === "light" || theme === "original"} />
+    class:dark={$currentTheme.mode === "dark"}
+    class:light={$currentTheme.mode === "light"} />
 
 <style lang="scss">
     emoji-picker {

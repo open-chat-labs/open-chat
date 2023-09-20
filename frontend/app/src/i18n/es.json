@@ -360,12 +360,15 @@
         "enable": "Habilitar reglas",
         "accept": "Aceptar",
         "reject": "Rechazar",
-        "rules": "{level} reglas",
+        "rules": "Normas",
         "placeholder": "¿Cuáles son las reglas {level}?",
         "instructions": "Si está habilitado, los nuevos miembros deben aceptar las reglas antes de poder enviar mensajes.",
         "acceptTitle": "reglas de chat",
         "promptExistingUsers": "Solicitar a los miembros existentes",
-        "promptExistingUsersInstructions": "Los miembros existentes deben aceptar las nuevas reglas antes de poder enviar mensajes."
+        "promptExistingUsersInstructions": "Los miembros existentes deben aceptar las nuevas reglas antes de poder enviar mensajes.",
+        "levelRules": "{level} reglas",
+        "communityRulesExplanation": "Cualquier regla del canal tendrá como prefijo estas reglas.",
+        "channelRulesExplanation": "Estos tendrán el prefijo de cualquier regla comunitaria."
     },
     "group": {
         "publicGroup": "Público {level}",
@@ -633,7 +636,14 @@
     "undeleteMessageFailed": "Error al recuperar el mensaje",
     "homepage": "página de inicio",
     "preferredLanguage": "Idioma preferido",
-    "theme": "Tema",
+    "theme": {
+        "dark": "Oscuro",
+        "light": "Luz",
+        "system": "Sistema",
+        "title": "Tema",
+        "preferredLightTheme": "Tema ligero preferido",
+        "preferredDarkTheme": "Tema oscuro preferido"
+    },
     "freezeGroup": "Congelar grupo",
     "unfreezeGroup": "Descongelar grupo",
     "chatFrozen": "Este chat ha sido congelado.",

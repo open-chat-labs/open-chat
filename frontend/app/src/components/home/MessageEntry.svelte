@@ -18,11 +18,11 @@
         EventWrapper,
         Message,
         MessageAction,
-        MessageContent,
         Questions,
         OpenChat,
         MultiUserChat,
         UserOrUserGroup,
+        AttachmentContent,
     } from "openchat-client";
     import { allQuestions } from "openchat-client";
     import { enterSend } from "../../stores/settings";
@@ -38,7 +38,7 @@
     export let canSend: boolean;
     export let messageAction: MessageAction = undefined;
     export let joining: MultiUserChat | undefined;
-    export let fileToAttach: MessageContent | undefined;
+    export let attachment: AttachmentContent | undefined;
     export let editingEvent: EventWrapper<Message> | undefined;
     export let replyingTo: EnhancedReplyContext | undefined;
     export let textContent: string | undefined;
@@ -76,7 +76,7 @@
     $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
     $: isMultiUser = chat.kind === "group_chat" || chat.kind === "channel";
     $: isBot = $userStore[userId]?.kind === "bot";
-    $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
+    $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && attachment === undefined;
     $: pollsAllowed = isMultiUser && !isBot && client.canCreatePolls(chat.id);
     $: cryptoLookup = client.cryptoLookup;
     $: tokens = Object.values($cryptoLookup)
@@ -117,7 +117,7 @@
     }
 
     $: {
-        if (fileToAttach !== undefined || replyingTo !== undefined) {
+        if (attachment !== undefined || replyingTo !== undefined) {
             inp?.focus();
         }
     }
@@ -129,7 +129,7 @@
     }
 
     $: placeholder =
-        fileToAttach !== undefined
+        attachment !== undefined
             ? $_("enterCaption")
             : dragging
             ? $_("dropFile")
@@ -529,7 +529,7 @@
             <MessageActions
                 bind:this={messageActions}
                 bind:messageAction
-                {fileToAttach}
+                {attachment}
                 {mode}
                 {pollsAllowed}
                 editing={editingEvent !== undefined}
