@@ -15,7 +15,7 @@ impl ICPSwapClientFactory {
 
     fn lookup_swap_canister_id(&self, token0: &TokenInfo, token1: &TokenInfo) -> Option<CanisterId> {
         match (token0.token.clone(), token1.token.clone()) {
-            (Cryptocurrency::InternetComputer, Cryptocurrency::CHAT) => {
+            (Cryptocurrency::CHAT, Cryptocurrency::InternetComputer) => {
                 Some(CanisterId::from_text("ne2vj-6yaaa-aaaag-qb3ia-cai").unwrap())
             }
             _ => None,
