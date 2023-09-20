@@ -13,7 +13,7 @@ use rand::Rng;
 use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use tracing::trace;
+use tracing::{error, trace};
 use types::icrc1::{BlockIndex, TransferArg};
 use types::{CanisterId, MessageContent, MessageId, TimestampMillis, TimestampNanos, TokenInfo, UserId};
 
@@ -274,7 +274,17 @@ impl SwapCommand {
     async fn notify_dex(mut self, client: Box<dyn SwapClient>, amount: u128) {
         self.sub_tasks.notify_dex = match client.deposit(amount).await {
             Ok(_) => CommandSubTaskResult::Complete((), None),
-            Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
+            Err(error) => {
+                error!(
+                    error = format!("{error:?}").as_str(),
+                    message_id = %self.message_id,
+                    exchange_id = %client.exchange_id(),
+                    token = self.input_token.token.token_symbol(),
+                    amount,
+                    "Failed to notify dex, retrying"
+                );
+                CommandSubTaskResult::Pending
+            }
         };
 
         mutate_state(|state| self.on_updated(state));
@@ -292,7 +302,19 @@ impl SwapCommand {
     }
 
     async fn withdraw(mut self, amount: u128, now_nanos: TimestampNanos) {
-        self.sub_tasks.withdraw = withdraw(self.user_id, &self.output_token, amount, now_nanos).await;
+        self.sub_tasks.withdraw = match withdraw(self.user_id, &self.output_token, amount, now_nanos).await {
+            CommandSubTaskResult::Failed(error) => {
+                error!(
+                    error = format!("{error:?}").as_str(),
+                    message_id = %self.message_id,
+                    token = self.output_token.token.token_symbol(),
+                    amount,
+                    "Failed to withdraw, retrying"
+                );
+                CommandSubTaskResult::Pending
+            }
+            result => result,
+        };
 
         mutate_state(|state| self.on_updated(state));
     }
