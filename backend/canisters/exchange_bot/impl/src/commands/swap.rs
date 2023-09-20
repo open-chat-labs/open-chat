@@ -298,9 +298,13 @@ impl SwapCommand {
     }
 
     async fn perform_swap(mut self, client: Box<dyn SwapClient>, amount: u128) {
-        self.sub_tasks.swap = match client.swap(amount).await {
+        match client.swap(amount).await {
             Ok(amount_out) => {
-                CommandSubTaskResult::Complete(amount_out, Some(format_crypto_amount(amount_out, self.output_token.decimals)))
+                self.sub_tasks.swap = CommandSubTaskResult::Complete(
+                    amount_out,
+                    Some(format_crypto_amount(amount_out, self.output_token.decimals)),
+                );
+                mutate_state(|state| self.on_updated(state));
             }
             Err(error) => {
                 error!(
@@ -312,17 +316,19 @@ impl SwapCommand {
                     amount,
                     "Failed to perform swap, retrying"
                 );
-                CommandSubTaskResult::Pending
+                mutate_state(|state| self.enqueue(state));
             }
-        };
-
-        mutate_state(|state| self.on_updated(state))
+        }
     }
 
     async fn withdraw_from_dex(mut self, client: Box<dyn SwapClient>, amount: u128) {
-        self.sub_tasks.withdraw_from_dex = match client.withdraw(amount).await {
+        match client.withdraw(amount).await {
             Ok(amount_out) => {
-                CommandSubTaskResult::Complete(amount_out, Some(format_crypto_amount(amount_out, self.output_token.decimals)))
+                self.sub_tasks.withdraw_from_dex = CommandSubTaskResult::Complete(
+                    amount_out,
+                    Some(format_crypto_amount(amount_out, self.output_token.decimals)),
+                );
+                mutate_state(|state| self.on_updated(state))
             }
             Err(error) => {
                 error!(
@@ -333,15 +339,13 @@ impl SwapCommand {
                     amount,
                     "Failed to withdraw from dex, retrying"
                 );
-                CommandSubTaskResult::Pending
+                mutate_state(|state| self.enqueue(state));
             }
         };
-
-        mutate_state(|state| self.on_updated(state))
     }
 
     async fn transfer_funds_to_user(mut self, amount: u128, now_nanos: TimestampNanos) {
-        self.sub_tasks.transfer_to_user = match withdraw(self.user_id, &self.output_token, amount, true, now_nanos).await {
+        match withdraw(self.user_id, &self.output_token, amount, true, now_nanos).await {
             CommandSubTaskResult::Failed(error) => {
                 error!(
                     error = format!("{error:?}").as_str(),
@@ -350,21 +354,23 @@ impl SwapCommand {
                     amount,
                     "Failed to transfer funds to user, retrying"
                 );
-                CommandSubTaskResult::Pending
+                mutate_state(|state| self.enqueue(state));
             }
-            result => result,
+            result => {
+                self.sub_tasks.transfer_to_user = result;
+                mutate_state(|state| self.on_updated(state))
+            }
         };
-
-        mutate_state(|state| self.on_updated(state))
     }
 
     fn on_updated(self, state: &mut RuntimeState) {
-        let is_finished = self.is_finished();
-
         let message_text = self.build_message_text();
         state.enqueue_message_edit(self.user_id, self.message_id, message_text);
+        self.enqueue(state);
+    }
 
-        if !is_finished {
+    fn enqueue(self, state: &mut RuntimeState) {
+        if !self.is_finished() {
             state.enqueue_command(Command::Swap(Box::new(self)));
         }
     }
