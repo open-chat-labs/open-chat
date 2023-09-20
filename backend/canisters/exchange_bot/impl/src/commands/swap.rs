@@ -4,7 +4,7 @@ use crate::commands::sub_tasks::get_quotes::get_quotes;
 use crate::commands::sub_tasks::withdraw::withdraw;
 use crate::commands::{Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::swap_client::SwapClient;
-use crate::{mutate_state, Data, RuntimeState};
+use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use exchange_bot_canister::ExchangeId;
 use lazy_static::lazy_static;
@@ -53,7 +53,7 @@ If $Amount is not provided, the full balance of $InputTokens will be swapped."
             Ok((i, o)) => (i, o),
             Err(tokens) => {
                 let error = CommonErrors::UnsupportedTokens(tokens);
-                return build_error_response(error, &state.data);
+                return ParseMessageResult::Error(error.build_response_message(&state.data));
             }
         };
 
@@ -61,7 +61,7 @@ If $Amount is not provided, the full balance of $InputTokens will be swapped."
 
         match SwapCommand::build(input_token, output_token, amount, state) {
             Ok(command) => ParseMessageResult::Success(Command::Swap(Box::new(command))),
-            Err(error) => build_error_response(error, &state.data),
+            Err(error) => ParseMessageResult::Error(error.build_response_message(&state.data)),
         }
     }
 }
@@ -400,9 +400,4 @@ impl SwapCommandSubTasks {
             || self.withdraw_from_dex.is_failed()
             || self.transfer_to_user.is_failed()
     }
-}
-
-fn build_error_response(error: CommonErrors, data: &Data) -> ParseMessageResult {
-    let response_message = error.build_response_message(data);
-    ParseMessageResult::Error(data.build_text_response(response_message, None))
 }

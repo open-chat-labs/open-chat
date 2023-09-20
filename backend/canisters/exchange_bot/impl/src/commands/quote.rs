@@ -1,6 +1,6 @@
 use crate::commands::common_errors::CommonErrors;
 use crate::commands::sub_tasks::get_quotes::get_quotes;
-use crate::commands::{build_error_response, Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
+use crate::commands::{Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::swap_client::SwapClient;
 use crate::{mutate_state, RuntimeState};
 use exchange_bot_canister::ExchangeId;
@@ -50,7 +50,7 @@ $Amount will default to 1 if not provided."
             Ok((i, o)) => (i, o),
             Err(tokens) => {
                 let error = CommonErrors::UnsupportedTokens(tokens);
-                return build_error_response(error, &state.data);
+                return ParseMessageResult::Error(error.build_response_message(&state.data));
             }
         };
 
@@ -58,7 +58,7 @@ $Amount will default to 1 if not provided."
 
         match QuoteCommand::build(input_token, output_token, amount, state) {
             Ok(command) => ParseMessageResult::Success(Command::Quote(Box::new(command))),
-            Err(error) => build_error_response(error, &state.data),
+            Err(error) => ParseMessageResult::Error(error.build_response_message(&state.data)),
         }
     }
 }

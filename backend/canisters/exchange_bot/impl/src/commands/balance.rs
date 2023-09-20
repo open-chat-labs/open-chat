@@ -1,6 +1,6 @@
 use crate::commands::common_errors::CommonErrors;
 use crate::commands::sub_tasks::check_user_balance::check_user_balance;
-use crate::commands::{build_error_response, Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
+use crate::commands::{Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::{mutate_state, RuntimeState};
 use lazy_static::lazy_static;
 use rand::Rng;
@@ -39,7 +39,7 @@ eg. 'balance CHAT'"
             t
         } else {
             let error = CommonErrors::UnsupportedTokens(vec![token.to_string()]);
-            return build_error_response(error, &state.data);
+            return ParseMessageResult::Error(error.build_response_message(&state.data));
         };
 
         let command = BalanceCommand::build(token, state);

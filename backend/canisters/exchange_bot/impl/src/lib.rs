@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{
-    BotMessage, BuildVersion, CanisterId, Cryptocurrency, Cycles, MessageContent, MessageContentInitial, MessageId,
-    TextContent, TimestampMillis, Timestamped, TokenInfo, UserId,
+    BuildVersion, CanisterId, Cryptocurrency, Cycles, MessageContent, MessageId, TextContent, TimestampMillis, Timestamped,
+    TokenInfo, UserId,
 };
 use utils::env::Environment;
 
@@ -179,33 +179,6 @@ impl Data {
             .map(|t| t.token.token_symbol().to_string())
             .sorted_unstable()
             .collect()
-    }
-
-    pub fn build_text_response(
-        &self,
-        text: String,
-        message_id: Option<MessageId>,
-    ) -> exchange_bot_canister::handle_direct_message::Response {
-        self.build_response(MessageContentInitial::Text(TextContent { text }), message_id)
-    }
-
-    pub fn build_response(
-        &self,
-        message: MessageContentInitial,
-        message_id: Option<MessageId>,
-    ) -> exchange_bot_canister::handle_direct_message::Response {
-        let (username, display_name) = (self.username.clone(), self.display_name.clone());
-
-        exchange_bot_canister::handle_direct_message::Response::Success(
-            exchange_bot_canister::handle_direct_message::SuccessResult {
-                bot_name: username,
-                bot_display_name: display_name,
-                messages: vec![BotMessage {
-                    content: message,
-                    message_id,
-                }],
-            },
-        )
     }
 }
 

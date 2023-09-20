@@ -1,12 +1,11 @@
 use crate::commands::balance::BalanceCommand;
-use crate::commands::common_errors::CommonErrors;
 use crate::commands::quote::QuoteCommand;
 use crate::commands::swap::SwapCommand;
 use crate::commands::withdraw::WithdrawCommand;
-use crate::{Data, RuntimeState};
+use crate::RuntimeState;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-use types::{MessageContent, MessageContentInitial, MessageId, TextContent};
+use types::{MessageContent, MessageId};
 
 pub mod balance;
 pub mod common_errors;
@@ -48,20 +47,12 @@ impl Command {
         }
     }
 
-    pub fn build_message(&self) -> MessageContentInitial {
+    pub fn build_message_text(&self) -> String {
         match self {
-            Command::Balance(b) => MessageContentInitial::Text(TextContent {
-                text: b.build_message_text(),
-            }),
-            Command::Quote(q) => MessageContentInitial::Text(TextContent {
-                text: q.build_message_text(),
-            }),
-            Command::Swap(s) => MessageContentInitial::Text(TextContent {
-                text: s.build_message_text(),
-            }),
-            Command::Withdraw(w) => MessageContentInitial::Text(TextContent {
-                text: w.build_message_text(),
-            }),
+            Command::Balance(b) => b.build_message_text(),
+            Command::Quote(q) => q.build_message_text(),
+            Command::Swap(s) => s.build_message_text(),
+            Command::Withdraw(w) => w.build_message_text(),
         }
     }
 }
@@ -69,13 +60,8 @@ impl Command {
 #[allow(clippy::large_enum_variant)]
 pub enum ParseMessageResult {
     Success(Command),
-    Error(exchange_bot_canister::handle_direct_message::Response),
+    Error(String),
     DoesNotMatch,
-}
-
-fn build_error_response(error: CommonErrors, data: &Data) -> ParseMessageResult {
-    let response_message = error.build_response_message(data);
-    ParseMessageResult::Error(data.build_text_response(response_message, None))
 }
 
 #[derive(Serialize, Deserialize, Default)]

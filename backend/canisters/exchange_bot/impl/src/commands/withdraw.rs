@@ -1,7 +1,7 @@
 use crate::commands::common_errors::CommonErrors;
 use crate::commands::sub_tasks::check_user_balance::check_user_balance;
 use crate::commands::sub_tasks::withdraw::withdraw;
-use crate::commands::{build_error_response, Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
+use crate::commands::{Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::{mutate_state, RuntimeState};
 use lazy_static::lazy_static;
 use ledger_utils::format_crypto_amount;
@@ -45,7 +45,7 @@ If $Amount is not provided, your total balance will be withdrawn"
             t
         } else {
             let error = CommonErrors::UnsupportedTokens(vec![token.to_string()]);
-            return build_error_response(error, &state.data);
+            return ParseMessageResult::Error(error.build_response_message(&state.data));
         };
 
         let amount = amount_decimal.map(|a| (a * 10u128.pow(token.decimals as u32) as f64) as u128);
