@@ -86,7 +86,8 @@ pub struct SwapCommandSubTasks {
     pub transfer_to_dex: CommandSubTaskResult<BlockIndex>,
     pub notify_dex: CommandSubTaskResult<()>,
     pub swap: CommandSubTaskResult<u128>,
-    pub withdraw: CommandSubTaskResult<BlockIndex>,
+    pub withdraw_from_dex: CommandSubTaskResult<u128>,
+    pub transfer_to_user: CommandSubTaskResult<BlockIndex>,
 }
 
 impl SwapCommand {
@@ -138,7 +139,7 @@ impl SwapCommand {
         if self.sub_tasks.check_user_balance.is_pending() {
             trace!(%message_id, "Checking user balance");
             ic_cdk::spawn(self.check_user_balance(state.env.canister_id()));
-        } else if let Some(amount) = self.amount() {
+        } else if let Some(quote_amount) = self.amount() {
             match self.sub_tasks.quotes {
                 CommandSubTaskResult::Pending => {
                     let clients: Vec<_> = self
@@ -148,37 +149,35 @@ impl SwapCommand {
                         .collect();
 
                     trace!(%message_id, "Getting quotes");
-                    ic_cdk::spawn(self.get_quotes(clients, amount));
+                    ic_cdk::spawn(self.get_quotes(clients, quote_amount));
                 }
                 CommandSubTaskResult::Complete(exchange_id, _) => {
-                    let amount_to_dex = amount.saturating_sub(self.input_token.fee);
-                    if self.sub_tasks.transfer_to_dex.is_pending() {
-                        if let Some(client) =
-                            state.get_swap_client(exchange_id, self.input_token.clone(), self.output_token.clone())
-                        {
+                    if let Some(client) =
+                        state.get_swap_client(exchange_id, self.input_token.clone(), self.output_token.clone())
+                    {
+                        let amount_to_dex = quote_amount.saturating_sub(self.input_token.fee);
+                        if self.sub_tasks.transfer_to_dex.is_pending() {
                             trace!(%message_id, "Transferring to dex");
                             ic_cdk::spawn(self.transfer_to_dex(client, amount_to_dex));
-                        }
-                    } else if self.sub_tasks.notify_dex.is_pending() {
-                        if let Some(client) =
-                            state.get_swap_client(exchange_id, self.input_token.clone(), self.output_token.clone())
-                        {
+                        } else if self.sub_tasks.notify_dex.is_pending() {
                             trace!(%message_id, "Notifying to dex");
                             ic_cdk::spawn(self.notify_dex(client, amount_to_dex));
-                        }
-                    } else if self.sub_tasks.swap.is_pending() {
-                        if let Some(client) =
-                            state.get_swap_client(exchange_id, self.input_token.clone(), self.output_token.clone())
-                        {
+                        } else if self.sub_tasks.swap.is_pending() {
                             trace!(%message_id, "Performing swap");
                             let amount_to_swap = amount_to_dex.saturating_sub(self.input_token.fee);
                             ic_cdk::spawn(self.perform_swap(client, amount_to_swap));
-                        }
-                    } else if self.sub_tasks.withdraw.is_pending() {
-                        if let CommandSubTaskResult::Complete(amount_swapped, _) = self.sub_tasks.swap {
-                            let amount_out = amount_swapped.saturating_sub(self.output_token.fee);
-                            trace!(%message_id, "Withdrawing from dex");
-                            ic_cdk::spawn(self.withdraw(amount_out, state.env.now_nanos()));
+                        } else if self.sub_tasks.withdraw_from_dex.is_pending() {
+                            if let Some(&amount_swapped) = self.sub_tasks.swap.value() {
+                                let amount_out = amount_swapped.saturating_sub(self.output_token.fee);
+                                trace!(%message_id, "Withdrawing from dex");
+                                ic_cdk::spawn(self.withdraw_from_dex(client, amount_out));
+                            }
+                        } else if self.sub_tasks.transfer_to_user.is_pending() {
+                            if let Some(&amount_withdrawn_from_dex) = self.sub_tasks.withdraw_from_dex.value() {
+                                let amount_to_user = amount_withdrawn_from_dex.saturating_sub(self.output_token.fee);
+                                trace!(%message_id, "Transferring funds to user");
+                                ic_cdk::spawn(self.transfer_funds_to_user(amount_to_user, state.env.now_nanos()));
+                            }
                         }
                     }
                 }
@@ -213,7 +212,16 @@ impl SwapCommand {
                 messages.push(format!("Swapping {input_token} for {output_token}: {}", self.sub_tasks.swap));
             }
             if self.sub_tasks.swap.is_completed() {
-                messages.push(format!("Withdrawing {output_token}: {}", self.sub_tasks.withdraw));
+                messages.push(format!(
+                    "Withdrawing {output_token} from {exchange_id}: {}",
+                    self.sub_tasks.withdraw_from_dex
+                ));
+            }
+            if self.sub_tasks.withdraw_from_dex.is_completed() {
+                messages.push(format!(
+                    "Transferring {output_token} to user: {}",
+                    self.sub_tasks.transfer_to_user
+                ));
             }
         }
         messages.join("\n")
@@ -278,7 +286,7 @@ impl SwapCommand {
                 error!(
                     error = format!("{error:?}").as_str(),
                     message_id = %self.message_id,
-                    exchange_id = %client.exchange_id(),
+                    exchange = %client.exchange_id(),
                     token = self.input_token.token.token_symbol(),
                     amount,
                     "Failed to notify dex, retrying"
@@ -295,28 +303,60 @@ impl SwapCommand {
             Ok(amount_out) => {
                 CommandSubTaskResult::Complete(amount_out, Some(format_crypto_amount(amount_out, self.output_token.decimals)))
             }
-            Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
+            Err(error) => {
+                error!(
+                    error = format!("{error:?}").as_str(),
+                    message_id = %self.message_id,
+                    exchange = %client.exchange_id(),
+                    input_token = self.input_token.token.token_symbol(),
+                    output_token = self.output_token.token.token_symbol(),
+                    amount,
+                    "Failed to perform swap, retrying"
+                );
+                CommandSubTaskResult::Pending
+            }
         };
 
         mutate_state(|state| self.on_updated(state))
     }
 
-    async fn withdraw(mut self, amount: u128, now_nanos: TimestampNanos) {
-        self.sub_tasks.withdraw = match withdraw(self.user_id, &self.output_token, amount, now_nanos).await {
+    async fn withdraw_from_dex(mut self, client: Box<dyn SwapClient>, amount: u128) {
+        self.sub_tasks.withdraw_from_dex = match client.withdraw(amount).await {
+            Ok(amount_out) => {
+                CommandSubTaskResult::Complete(amount_out, Some(format_crypto_amount(amount_out, self.output_token.decimals)))
+            }
+            Err(error) => {
+                error!(
+                    error = format!("{error:?}").as_str(),
+                    message_id = %self.message_id,
+                    exchange = %client.exchange_id(),
+                    token = self.output_token.token.token_symbol(),
+                    amount,
+                    "Failed to withdraw from dex, retrying"
+                );
+                CommandSubTaskResult::Pending
+            }
+        };
+
+        mutate_state(|state| self.on_updated(state))
+    }
+
+    async fn transfer_funds_to_user(mut self, amount: u128, now_nanos: TimestampNanos) {
+        self.sub_tasks.transfer_to_user = match withdraw(self.user_id, &self.output_token, amount, now_nanos).await {
             CommandSubTaskResult::Failed(error) => {
                 error!(
                     error = format!("{error:?}").as_str(),
                     message_id = %self.message_id,
                     token = self.output_token.token.token_symbol(),
                     amount,
-                    "Failed to withdraw, retrying"
+                    "Failed to transfer funds to user, retrying"
                 );
                 CommandSubTaskResult::Pending
             }
             result => result,
         };
 
-        mutate_state(|state| self.on_updated(state));
+        mutate_state(|state| self.on_updated(state))
     }
 
     fn on_updated(self, state: &mut RuntimeState) {
@@ -347,7 +387,7 @@ impl SwapCommand {
     }
 
     fn is_finished(&self) -> bool {
-        self.sub_tasks.any_failed() || !self.sub_tasks.withdraw.is_pending()
+        self.sub_tasks.any_failed() || !self.sub_tasks.transfer_to_user.is_pending()
     }
 }
 
@@ -358,7 +398,8 @@ impl SwapCommandSubTasks {
             || self.transfer_to_dex.is_failed()
             || self.notify_dex.is_failed()
             || self.swap.is_failed()
-            || self.withdraw.is_failed()
+            || self.withdraw_from_dex.is_failed()
+            || self.transfer_to_user.is_failed()
     }
 }
 
