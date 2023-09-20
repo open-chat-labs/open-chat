@@ -16,6 +16,8 @@ pub trait SwapClientFactory {
 #[async_trait]
 pub trait SwapClient {
     fn exchange_id(&self) -> ExchangeId;
+    fn input_token(&self) -> &TokenInfo;
+    fn output_token(&self) -> &TokenInfo;
     async fn quote(&self, amount: u128) -> CallResult<u128>;
     async fn deposit_account(&self) -> CallResult<(CanisterId, Account)>;
     async fn deposit(&self, amount: u128) -> CallResult<()>;

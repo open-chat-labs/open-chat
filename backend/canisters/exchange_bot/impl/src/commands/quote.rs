@@ -132,7 +132,7 @@ impl QuoteCommand {
     }
 
     async fn get_quotes(mut self, clients: Vec<Box<dyn SwapClient>>, amount: u128) {
-        get_quotes(clients, amount, self.output_token.decimals, |exchange_id, result| {
+        get_quotes(clients, amount, |exchange_id, result| {
             self.set_quote_result(exchange_id, result);
             let message_text = self.build_message_text();
             mutate_state(|state| {

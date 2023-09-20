@@ -42,6 +42,22 @@ impl ICPSwapClient {
         )
     }
 
+    pub fn input_token(&self) -> &TokenInfo {
+        if self.zero_for_one {
+            &self.token0
+        } else {
+            &self.token1
+        }
+    }
+
+    pub fn output_token(&self) -> &TokenInfo {
+        if self.zero_for_one {
+            &self.token1
+        } else {
+            &self.token0
+        }
+    }
+
     pub async fn quote(&self, amount: u128) -> CallResult<u128> {
         let args = icpswap_swap_pool_canister::quote::Args {
             operator: self.this_canister_id,

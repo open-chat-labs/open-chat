@@ -58,6 +58,14 @@ impl SwapClient for ICPSwapClient {
         ExchangeId::ICPSwap
     }
 
+    fn input_token(&self) -> &TokenInfo {
+        self.input_token()
+    }
+
+    fn output_token(&self) -> &TokenInfo {
+        self.output_token()
+    }
+
     async fn quote(&self, amount: u128) -> CallResult<u128> {
         self.quote(amount).await
     }
