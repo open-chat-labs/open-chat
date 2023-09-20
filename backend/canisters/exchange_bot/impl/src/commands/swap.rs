@@ -342,7 +342,7 @@ impl SwapCommand {
     }
 
     async fn transfer_funds_to_user(mut self, amount: u128, now_nanos: TimestampNanos) {
-        self.sub_tasks.transfer_to_user = match withdraw(self.user_id, &self.output_token, amount, now_nanos).await {
+        self.sub_tasks.transfer_to_user = match withdraw(self.user_id, &self.output_token, amount, true, now_nanos).await {
             CommandSubTaskResult::Failed(error) => {
                 error!(
                     error = format!("{error:?}").as_str(),

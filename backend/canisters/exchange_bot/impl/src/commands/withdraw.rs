@@ -131,7 +131,7 @@ impl WithdrawCommand {
     }
 
     async fn withdraw(mut self, amount: u128, now_nanos: TimestampNanos) {
-        self.sub_tasks.withdraw = withdraw(self.user_id, &self.token, amount, now_nanos).await;
+        self.sub_tasks.withdraw = withdraw(self.user_id, &self.token, amount, false, now_nanos).await;
 
         mutate_state(|state| self.on_updated(state));
     }

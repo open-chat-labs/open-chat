@@ -3,7 +3,7 @@ use crate::model::messages_pending::MessagePending;
 use crate::mutate_state;
 use candid::{Nat, Principal};
 use ic_cdk::api::call::CallResult;
-use ic_ledger_types::{AccountIdentifier, Memo, Timestamp, Tokens, TransferArgs};
+use ic_ledger_types::{AccountIdentifier, Memo, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
 use ledger_utils::{calculate_transaction_hash, convert_to_subaccount, default_ledger_account};
 use rand::Rng;
 use types::icrc1::{Account, BlockIndex, CryptoAccount, TransferArg, TransferError};
@@ -16,9 +16,10 @@ pub async fn withdraw(
     user_id: UserId,
     token: &TokenInfo,
     amount: u128,
+    default_subaccount: bool,
     now_nanos: TimestampNanos,
 ) -> CommandSubTaskResult<BlockIndex> {
-    match transfer_to_user(user_id, token, amount, now_nanos).await {
+    match transfer_to_user(user_id, token, amount, default_subaccount, now_nanos).await {
         Ok(Ok(block_index)) => CommandSubTaskResult::Complete(block_index, None),
         Ok(Err(error)) => CommandSubTaskResult::Failed(format!("{error:?}")),
         Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),
@@ -29,9 +30,10 @@ async fn transfer_to_user(
     user_id: UserId,
     token: &TokenInfo,
     amount: u128,
+    default_subaccount: bool,
     now_nanos: TimestampNanos,
 ) -> CallResult<Result<Nat, TransferError>> {
-    let subaccount = convert_to_subaccount(&user_id.into());
+    let subaccount = if default_subaccount { DEFAULT_SUBACCOUNT } else { convert_to_subaccount(&user_id.into()) };
     let response = icrc1_ledger_canister_c2c_client::icrc1_transfer(
         token.ledger,
         &TransferArg {
