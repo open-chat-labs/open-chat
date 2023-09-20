@@ -13,13 +13,7 @@
         allow_raw_access: false,
     },
     {
-        match: "*.js",
-        headers: {
-            "Cache-Control": "max-age=31536000, immutable",
-        },
-    },
-    {
-        match: "*.css",
+        match: "{*.css,*.js}",
         headers: {
             "Cache-Control": "max-age=31536000, immutable",
         },
