@@ -169,6 +169,14 @@ impl GroupMembers {
         }
     }
 
+    pub fn all(&self) -> Vec<UserId> {
+        self.members
+            .values()
+            .filter(|m| !m.suspended.value)
+            .map(|m| m.user_id)
+            .collect()
+    }
+
     pub fn user_limit_reached(&self) -> Option<u32> {
         if self.members.len() >= MAX_MEMBERS_PER_GROUP as usize {
             Some(MAX_MEMBERS_PER_GROUP)

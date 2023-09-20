@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 chat_events = { path = "../chat_events" }
+lazy_static = { workspace = true }
+regex-lite = { workspace = true }
 search = { path = "../search" }
 serde = { workspace = true }
 types = { path = "../types" }
@@ -15,4 +17,3 @@ utils = { path = "../utils" }
 
 [dev-dependencies]
 msgpack = { path = "../msgpack" }
-

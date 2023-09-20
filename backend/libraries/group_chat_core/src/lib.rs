@@ -2,6 +2,8 @@ use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
     DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, UndeleteMessageResult,
 };
+use lazy_static::lazy_static;
+use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -665,8 +667,6 @@ impl GroupChatCore {
             return RulesNotAccepted;
         }
 
-        let member = self.members.get(&sender).unwrap();
-
         if let Err(error) = content.validate_for_new_group_message(member.user_id, forwarding, proposals_bot_user_id, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
@@ -726,6 +726,8 @@ impl GroupChatCore {
             .as_ref()
             .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index, now));
 
+        let everyone_mentioned = member.role.can_mention_everyone(permissions) && is_everyone_mentioned(&content);
+
         let push_message_args = PushMessageArgs {
             sender,
             thread_root_message_index,
@@ -751,7 +753,9 @@ impl GroupChatCore {
                 .message_internal(root_message_index.into())
                 .cloned()
         }) {
-            users_to_notify.insert(thread_root_message.sender);
+            if !everyone_mentioned {
+                users_to_notify.insert(thread_root_message.sender);
+            }
 
             if let Some(thread_summary) = thread_root_message.thread_summary {
                 thread_participants = Some(thread_summary.participant_ids);
@@ -774,13 +778,17 @@ impl GroupChatCore {
             }
         }
 
-        users_to_notify.extend(self.members.users_to_notify(thread_participants));
-        users_to_notify.extend(&mentions);
-        users_to_notify.remove(&sender);
+        if !everyone_mentioned {
+            users_to_notify.extend(self.members.users_to_notify(thread_participants));
+            users_to_notify.extend(&mentions);
+            users_to_notify.remove(&sender);
+        }
+
+        let users_to_notify = if everyone_mentioned { self.members.all() } else { users_to_notify.into_iter().collect() };
 
         Success(SendMessageSuccess {
             message_event,
-            users_to_notify: users_to_notify.into_iter().collect(),
+            users_to_notify,
             mentions,
         })
     }
@@ -1559,6 +1567,7 @@ impl GroupChatCore {
             send_messages: new.send_messages.unwrap_or(old.send_messages),
             react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),
             reply_in_thread: new.reply_in_thread.unwrap_or(old.reply_in_thread),
+            mention_all_members: new.mention_all_members.unwrap_or(old.mention_all_members),
         }
     }
 
@@ -1821,4 +1830,14 @@ impl From<AccessRulesInternal> for VersionedRules {
             enabled: rules.enabled,
         }
     }
+}
+
+lazy_static! {
+    static ref EVERYONE_REGEX: Regex = Regex::new(r"(^|[\s(){}\[\]])@everyone($|[\s(){}\[\]])").unwrap();
+}
+
+fn is_everyone_mentioned(content: &MessageContentInitial) -> bool {
+    content
+        .text()
+        .map_or(false, |text| text.contains("@everyone") && EVERYONE_REGEX.is_match(text))
 }

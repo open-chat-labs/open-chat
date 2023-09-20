@@ -9,8 +9,8 @@ use canister_tracing_macros::trace;
 use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use itertools::Itertools;
-use regex::Regex;
-use std::cell::RefCell;
+use lazy_static::lazy_static;
+use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
     ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial, MessageIndex,
@@ -175,22 +175,21 @@ fn register_timer_jobs(
     }
 }
 
-thread_local! {
-    static USER_GROUP_REGEX: RefCell<Regex> = RefCell::new(Regex::new(r"@UserGroup\((\d+)\)").unwrap());
+lazy_static! {
+    static ref USER_GROUP_REGEX: Regex = Regex::new(r"@UserGroup\((\d+)\)").unwrap();
 }
 
 fn extract_user_groups_mentioned<'a>(content: &MessageContentInitial, members: &'a CommunityMembers) -> Vec<&'a UserGroup> {
     if let Some(text) = content.text() {
-        USER_GROUP_REGEX.with(|regex| {
-            regex
-                .borrow()
+        if text.contains("@UserGroup") {
+            return USER_GROUP_REGEX
                 .captures_iter(text)
                 .filter_map(|c| c.get(1))
                 .filter_map(|m| u32::from_str(m.as_str()).ok())
                 .filter_map(|id| members.get_user_group(id))
-                .collect()
-        })
-    } else {
-        Vec::new()
+                .collect();
+        }
     }
+
+    Vec::new()
 }
