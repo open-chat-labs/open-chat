@@ -1005,5 +1005,6 @@
     "makeGroupPublicFailed": "הפיכת {level} לציבורי נכשלה",
     "displayNameRules": "אופציונאלי",
     "displayName": "הצג שם",
-    "communityDisplayNameRules": "רק בתוך הקהילה הזו"
+    "communityDisplayNameRules": "רק בתוך הקהילה הזו",
+    "userIdCopiedToClipboard": "זיהוי המשתמש הועתק ללוח"
 }

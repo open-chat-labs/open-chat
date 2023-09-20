@@ -1009,5 +1009,6 @@
     "makeGroupPublicFailed": "{level} konnte nicht veröffentlicht werden",
     "displayNameRules": "Optional",
     "displayName": "Anzeigename",
-    "communityDisplayNameRules": "nur innerhalb dieser Gemeinschaft"
+    "communityDisplayNameRules": "nur innerhalb dieser Gemeinschaft",
+    "userIdCopiedToClipboard": "Benutzer-ID in die Zwischenablage kopiert"
 }

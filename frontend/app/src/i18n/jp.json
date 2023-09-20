@@ -1008,5 +1008,6 @@
     "makeGroupPublicFailed": "{level} を公開できませんでした",
     "displayNameRules": "オプション",
     "displayName": "表示名",
-    "communityDisplayNameRules": "このコミュニティ内だけで"
+    "communityDisplayNameRules": "このコミュニティ内だけで",
+    "userIdCopiedToClipboard": "ユーザーIDがクリップボードにコピーされました"
 }

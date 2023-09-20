@@ -1007,5 +1007,6 @@
     "makeGroupPublicFailed": "Не удалось сделать {level} общедоступным.",
     "displayNameRules": "необязательный",
     "displayName": "Отображаемое имя",
-    "communityDisplayNameRules": "только в этом сообществе"
+    "communityDisplayNameRules": "только в этом сообществе",
+    "userIdCopiedToClipboard": "Идентификатор пользователя скопирован в буфер обмена."
 }
