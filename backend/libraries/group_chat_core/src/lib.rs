@@ -2,10 +2,10 @@ use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
     DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, UndeleteMessageResult,
 };
+use lazy_static::lazy_static;
 use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
-use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{
     AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, Document, EventIndex, EventWrapper, EventsResponse,
@@ -1832,15 +1832,12 @@ impl From<AccessRulesInternal> for VersionedRules {
     }
 }
 
-thread_local! {
-    static EVERYONE_REGEX: RefCell<Regex> = RefCell::new(Regex::new(r"(^|[\s(){}\[\]])@everyone($|[\s(){}\[\]])").unwrap());
+lazy_static! {
+    static ref EVERYONE_REGEX: Regex = Regex::new(r"(^|[\s(){}\[\]])@everyone($|[\s(){}\[\]])").unwrap();
 }
 
 fn is_everyone_mentioned(content: &MessageContentInitial) -> bool {
-    if let Some(text) = content.text() {
-        let text_lower = text.to_lowercase();
-        text_lower.contains("@everyone") && EVERYONE_REGEX.with(|regex| regex.borrow().is_match(&text_lower))
-    } else {
-        false
-    }
+    content
+        .text()
+        .map_or(false, |text| text.contains("@everyone") && EVERYONE_REGEX.is_match(&text))
 }

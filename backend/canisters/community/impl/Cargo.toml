@@ -35,6 +35,7 @@ ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 instruction_counts_log = { path = "../../../libraries/instruction_counts_log" }
 itertools = { workspace = true }
+lazy_static = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
