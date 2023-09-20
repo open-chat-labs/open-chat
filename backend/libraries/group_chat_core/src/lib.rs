@@ -1833,7 +1833,7 @@ impl From<AccessRulesInternal> for VersionedRules {
 }
 
 thread_local! {
-    static EVERYONE_REGEX: RefCell<Regex> = RefCell::new(Regex::new(r"(?-u:\b)@everyone(?-u:\b)").unwrap());
+    static EVERYONE_REGEX: RefCell<Regex> = RefCell::new(Regex::new(r"(?=(\w|@))(?<!\w)@everyone\b").unwrap());
 }
 
 fn is_everyone_mentioned(content: &MessageContentInitial) -> bool {
