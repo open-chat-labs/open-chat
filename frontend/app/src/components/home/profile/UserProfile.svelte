@@ -8,6 +8,7 @@
         ModerationFlags,
     } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
@@ -46,6 +47,7 @@
     import DisplayNameInput from "../../DisplayNameInput.svelte";
     import CommunityProfile from "./CommunityProfile.svelte";
     import ThemeSelector from "./ThemeSelector.svelte";
+    import { menuCloser } from "../../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -210,6 +212,12 @@
     function closeProfile() {
         dispatch("closeProfile");
     }
+
+    function onCopy() {
+        navigator.clipboard.writeText(user.userId).then(() => {
+            toastStore.showSuccessToast("userIdCopiedToClipboard");
+        });
+    }
 </script>
 
 <SectionHeader border={false} flush shadow>
@@ -241,7 +249,7 @@
 </div>
 
 {#if view === "global"}
-    <form class="user-form" on:submit|preventDefault={saveUser}>
+    <form use:menuCloser class="user-form" on:submit|preventDefault={saveUser}>
         <div class="user">
             <CollapsibleCard
                 on:toggle={userInfoOpen.toggle}
@@ -433,7 +441,12 @@
                 headerText={$_("advanced")}>
                 <div class="userid">
                     <Legend label={$_("userId")} rules={$_("alsoCanisterId")} />
-                    <div>{user.userId}</div>
+                    <div class="userid-txt">
+                        <div>{user.userId}</div>
+                        <div role="button" tabindex="0" on:click={onCopy} class="copy">
+                            <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <Legend label={$_("version")} rules={$_("websiteVersion")} />
@@ -472,6 +485,15 @@
 
     .userid {
         margin-bottom: $sp4;
+        .userid-txt {
+            display: flex;
+            gap: $sp3;
+            align-items: center;
+
+            .copy {
+                cursor: pointer;
+            }
+        }
     }
 
     .para {

@@ -1007,5 +1007,6 @@
     "makeGroupPublicFailed": "Échec de la publication de {level}",
     "displayNameRules": "facultatif",
     "displayName": "Afficher un nom",
-    "communityDisplayNameRules": "seulement au sein de cette communauté"
+    "communityDisplayNameRules": "seulement au sein de cette communauté",
+    "userIdCopiedToClipboard": "ID utilisateur copié dans le presse-papiers"
 }

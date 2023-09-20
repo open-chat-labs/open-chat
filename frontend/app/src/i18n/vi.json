@@ -1008,5 +1008,6 @@
     "makeGroupPublicFailed": "Không công khai được {level}",
     "displayNameRules": "không bắt buộc",
     "displayName": "Tên hiển thị",
-    "communityDisplayNameRules": "chỉ trong cộng đồng này"
+    "communityDisplayNameRules": "chỉ trong cộng đồng này",
+    "userIdCopiedToClipboard": "Đã sao chép Id người dùng vào bảng nhớ tạm"
 }

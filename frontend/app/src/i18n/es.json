@@ -1009,5 +1009,6 @@
     "makeGroupPublicFailed": "No se pudo hacer público {level}",
     "displayNameRules": "opcional",
     "displayName": "Nombre para mostrar",
-    "communityDisplayNameRules": "solo dentro de esta comunidad"
+    "communityDisplayNameRules": "solo dentro de esta comunidad",
+    "userIdCopiedToClipboard": "ID de usuario copiado al portapapeles"
 }
