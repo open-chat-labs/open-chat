@@ -139,7 +139,7 @@ impl SwapCommand {
         if self.sub_tasks.check_user_balance.is_pending() {
             trace!(%message_id, "Checking user balance");
             ic_cdk::spawn(self.check_user_balance(state.env.canister_id()));
-        } else if let Some(quote_amount) = self.amount() {
+        } else if let Some(amount_to_dex) = self.amount() {
             match self.sub_tasks.quotes {
                 CommandSubTaskResult::Pending => {
                     let clients: Vec<_> = self
@@ -149,13 +149,12 @@ impl SwapCommand {
                         .collect();
 
                     trace!(%message_id, "Getting quotes");
-                    ic_cdk::spawn(self.get_quotes(clients, quote_amount));
+                    ic_cdk::spawn(self.get_quotes(clients, amount_to_dex));
                 }
                 CommandSubTaskResult::Complete(exchange_id, _) => {
                     if let Some(client) =
                         state.get_swap_client(exchange_id, self.input_token.clone(), self.output_token.clone())
                     {
-                        let amount_to_dex = quote_amount.saturating_sub(self.input_token.fee);
                         if self.sub_tasks.transfer_to_dex.is_pending() {
                             trace!(%message_id, "Transferring to dex");
                             ic_cdk::spawn(self.transfer_to_dex(client, amount_to_dex));
