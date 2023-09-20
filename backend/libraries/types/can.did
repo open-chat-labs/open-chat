@@ -1165,6 +1165,7 @@ type GroupPermissions = record {
     send_messages : PermissionRole;
     react_to_messages : PermissionRole;
     reply_in_thread : PermissionRole;
+    mention_all_members : PermissionRole;
 };
 
 type OptionalGroupPermissions = record {
@@ -1180,6 +1181,7 @@ type OptionalGroupPermissions = record {
     send_messages : opt PermissionRole;
     react_to_messages : opt PermissionRole;
     reply_in_thread : opt PermissionRole;
+    mention_all_members : opt PermissionRole;
 };
 
 type PermissionRole = variant {

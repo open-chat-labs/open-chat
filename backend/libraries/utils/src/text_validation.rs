@@ -11,6 +11,17 @@ const MAX_GROUP_RULES_LENGTH: u32 = 1024;
 const MIN_USER_GROUP_NAME_LENGTH: u32 = 3;
 const MAX_USER_GROUP_NAME_LENGTH: u32 = 25;
 
+const RESERVED_GROUP_NAMES: [&str; 8] = [
+    "channel",
+    "group",
+    "admins",
+    "moderators",
+    "owners",
+    "here",
+    "everyone",
+    "all",
+];
+
 pub enum UsernameValidationError {
     TooLong(FieldTooLongResult),
     TooShort(FieldTooShortResult),
@@ -98,11 +109,14 @@ pub fn validate_group_name(name: &str, is_public: bool, subtype: Option<&GroupSu
 pub fn validate_user_group_name(name: &str) -> Result<(), UsernameValidationError> {
     match validate_string_length(name, MIN_USER_GROUP_NAME_LENGTH, MAX_USER_GROUP_NAME_LENGTH) {
         Ok(()) => {
-            if name.chars().any(|c| c.is_ascii_whitespace()) {
-                Err(UsernameValidationError::Invalid)
-            } else {
-                Ok(())
+            if !name.chars().any(|c| c.is_ascii_whitespace()) {
+                let lower_name = name.to_lowercase();
+                if !RESERVED_GROUP_NAMES.contains(&lower_name.as_str()) {
+                    return Ok(());
+                }
             }
+
+            Err(UsernameValidationError::Invalid)
         }
         Err(StringLengthValidationError::TooShort(s)) => Err(UsernameValidationError::TooShort(s)),
         Err(StringLengthValidationError::TooLong(l)) => Err(UsernameValidationError::TooLong(l)),

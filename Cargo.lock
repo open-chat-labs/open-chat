@@ -2480,6 +2480,7 @@ dependencies = [
  "candid",
  "chat_events",
  "msgpack",
+ "regex",
  "search",
  "serde",
  "types",
