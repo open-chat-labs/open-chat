@@ -1839,5 +1839,5 @@ lazy_static! {
 fn is_everyone_mentioned(content: &MessageContentInitial) -> bool {
     content
         .text()
-        .map_or(false, |text| text.contains("@everyone") && EVERYONE_REGEX.is_match(&text))
+        .map_or(false, |text| text.contains("@everyone") && EVERYONE_REGEX.is_match(text))
 }
