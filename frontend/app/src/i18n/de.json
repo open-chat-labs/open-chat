@@ -355,7 +355,8 @@
         "updateDetails": "Bearbeiten Sie grundlegende Informationen",
         "createPublicChannel": "Erstellen Sie öffentliche Kanäle",
         "createPrivateChannel": "Erstellen Sie private Kanäle",
-        "manageUserGroups": "Benutzergruppen verwalten"
+        "manageUserGroups": "Benutzergruppen verwalten",
+        "mentionAllMembers": "Erwähnen Sie alle Mitglieder ({mention})"
     },
     "rules": {
         "enable": "Regeln aktivieren",

@@ -353,7 +353,8 @@
         "updateDetails": "基本情報を編集する",
         "createPublicChannel": "パブリックチャンネルを作成する",
         "createPrivateChannel": "プライベートチャンネルを作成する",
-        "manageUserGroups": "ユーザーグループを管理する"
+        "manageUserGroups": "ユーザーグループを管理する",
+        "mentionAllMembers": "すべてのメンバーに言及する ({mention})"
     },
     "rules": {
         "enable": "ルールを有効にする",

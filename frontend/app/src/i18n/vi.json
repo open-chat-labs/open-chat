@@ -354,7 +354,8 @@
         "updateDetails": "chỉnh sửa thông tin cơ bản",
         "createPublicChannel": "tạo các kênh công cộng",
         "createPrivateChannel": "tạo kênh riêng",
-        "manageUserGroups": "quản lý nhóm người dùng"
+        "manageUserGroups": "quản lý nhóm người dùng",
+        "mentionAllMembers": "đề cập đến tất cả các thành viên ({mention})"
     },
     "rules": {
         "enable": "Bật quy tắc",

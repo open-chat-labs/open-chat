@@ -44,6 +44,11 @@
         });
     }
 
+    function replaceEveryone(text: string): string {
+        if (!text.includes("@everyone")) return text;
+        return text.replace(/(^|[\s(){}\[\]])(@everyone)($|[\s(){}\[\]])/gm, "$1**$2**$3");
+    }
+
     function replaceDatetimes(text: string): string {
         return text.replace(/@DateTime\((\d+)\)/g, (_, p1) => {
             return client.toDatetimeString(new Date(Number(p1)));
@@ -51,7 +56,9 @@
     }
 
     $: {
-        let parsed = replaceUserGroupIds(replaceUserIds(replaceDatetimes(text)), $userGroups);
+        let parsed = replaceEveryone(
+            replaceUserGroupIds(replaceUserIds(replaceDatetimes(text)), $userGroups)
+        );
         try {
             if (inline) {
                 parsed = marked.parseInline(parsed, options) as string;

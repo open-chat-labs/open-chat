@@ -46,6 +46,7 @@ const defaultGroupChat: GroupChatSummary = {
         sendMessages: "member",
         reactToMessages: "member",
         replyInThread: "member",
+        mentionAllMembers: "member",
     },
     metrics: emptyChatMetrics(),
     subtype: undefined,

@@ -576,6 +576,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupPermissions = IDL.Record({
     'block_users' : PermissionRole,
+    'mention_all_members' : PermissionRole,
     'change_permissions' : PermissionRole,
     'delete_messages' : PermissionRole,
     'send_messages' : PermissionRole,
@@ -1208,6 +1209,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const OptionalGroupPermissions = IDL.Record({
     'block_users' : IDL.Opt(PermissionRole),
+    'mention_all_members' : IDL.Opt(PermissionRole),
     'change_permissions' : IDL.Opt(PermissionRole),
     'delete_messages' : IDL.Opt(PermissionRole),
     'send_messages' : IDL.Opt(PermissionRole),

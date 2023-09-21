@@ -950,6 +950,14 @@ export function canReactToMessages(chat: ChatSummary): boolean {
     }
 }
 
+export function canMentionAllMembers(chat: ChatSummary): boolean {
+    if (chat.kind !== "direct_chat" && !chat.frozen) {
+        return isPermitted(chat.membership.role, chat.permissions.mentionAllMembers);
+    } else {
+        return false;
+    }
+}
+
 export function canReplyInThread(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat" && !chat.frozen) {
         return isPermitted(chat.membership.role, chat.permissions.replyInThread);

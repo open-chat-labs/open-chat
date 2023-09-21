@@ -352,7 +352,8 @@
         "updateDetails": "编辑基本信息",
         "createPublicChannel": "创建公共频道",
         "createPrivateChannel": "创建私人频道",
-        "manageUserGroups": "管理用户组"
+        "manageUserGroups": "管理用户组",
+        "mentionAllMembers": "提及所有成员 ({mention})"
     },
     "rules": {
         "enable": "启用群规",

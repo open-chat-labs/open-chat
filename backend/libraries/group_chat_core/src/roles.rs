@@ -125,6 +125,10 @@ impl GroupRoleInternal {
         self.is_permitted(permissions.invite_users)
     }
 
+    pub fn can_mention_everyone(&self, permissions: &GroupPermissions) -> bool {
+        self.is_permitted(permissions.mention_all_members)
+    }
+
     pub fn is_permitted(&self, permission_role: GroupPermissionRole) -> bool {
         match permission_role {
             GroupPermissionRole::Owner => self.is_owner(),

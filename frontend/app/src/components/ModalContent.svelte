@@ -61,9 +61,14 @@
             style = `position: absolute; visibility: visible; top: ${top}px; `;
 
             if ($rtlStore) {
-                style += `right: ${window.innerWidth - alignTo.left + 8}px;`;
+                let right = Math.min(
+                    window.innerWidth - alignTo.left + 8,
+                    window.innerWidth - modalRect.width - 10
+                );
+                style += `right: ${right}px;`;
             } else {
-                style += `left: ${alignTo.right + 8}px;`;
+                let left = Math.min(alignTo.right + 8, window.innerWidth - (modalRect.width + 10));
+                style += `left: ${left}px;`;
             }
         }
     }
@@ -73,6 +78,7 @@
     }
 </script>
 
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
     bind:this={divElement}
     {style}
@@ -91,7 +97,7 @@
                 <slot name="header" />
             </h4>
             {#if closeIcon}
-                <span title={$_("close")} class="close" on:click={onClose}>
+                <span title={$_("close")} class="close" class:rtl={$rtlStore} on:click={onClose}>
                     <HoverIcon>
                         <Close size={"1em"} color={"var(--icon-txt)"} />
                     </HoverIcon>
@@ -196,6 +202,11 @@
     .close {
         position: absolute;
         top: $sp3;
-        right: $sp3;
+        &:not(.rtl) {
+            right: $sp3;
+        }
+        &.rtl {
+            left: $sp3;
+        }
     }
 </style>

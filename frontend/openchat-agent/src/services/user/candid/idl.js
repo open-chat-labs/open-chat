@@ -147,6 +147,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupPermissions = IDL.Record({
     'block_users' : PermissionRole,
+    'mention_all_members' : PermissionRole,
     'change_permissions' : PermissionRole,
     'delete_messages' : PermissionRole,
     'send_messages' : PermissionRole,
