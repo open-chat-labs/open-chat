@@ -11,6 +11,7 @@
         type OpenChat,
         E8S_PER_TOKEN,
         ICP_SYMBOL,
+        LEDGER_CANISTER_ICP,
     } from "openchat-client";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
@@ -55,7 +56,7 @@
     };
 
     const token = ICP_SYMBOL;
-    const ledger = client.ledgerCanisterId(token);
+    const ledger = LEDGER_CANISTER_ICP;
 
     $: icpBalance = accountBalance / E8S_PER_TOKEN; //balance in the user's account expressed as ICP
     $: toPay = selectedOption?.amount ?? 0;

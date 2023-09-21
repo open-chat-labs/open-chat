@@ -745,7 +745,7 @@ impl GroupChatCore {
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
 
         let mut users_to_notify = HashSet::new();
-        let mut thread_participants = None;
+        let mut thread_participants: Option<HashSet<UserId>> = None;
 
         if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
             self.events
@@ -753,12 +753,10 @@ impl GroupChatCore {
                 .message_internal(root_message_index.into())
                 .cloned()
         }) {
-            if !everyone_mentioned {
-                users_to_notify.insert(thread_root_message.sender);
-            }
+            users_to_notify.insert(thread_root_message.sender);
 
             if let Some(thread_summary) = thread_root_message.thread_summary {
-                thread_participants = Some(thread_summary.participant_ids);
+                thread_participants = Some(HashSet::from_iter(thread_summary.participant_ids));
 
                 let is_first_reply = thread_summary.reply_count == 1;
                 if is_first_reply {
@@ -771,25 +769,25 @@ impl GroupChatCore {
             }
         }
 
-        mentions.remove(&sender);
-        for user_id in mentions.iter() {
-            if let Some(mentioned) = self.members.get_mut(user_id) {
-                mentioned.mentions.add(thread_root_message_index, message_index, now);
+        for member in self.members.iter_mut().filter(|m| !m.suspended.value && m.user_id != sender) {
+            let mentioned = everyone_mentioned || mentions.contains(&member.user_id);
+
+            if mentioned {
+                // Mention this member
+                member.mentions.add(thread_root_message_index, message_index, now);
+            }
+
+            let notification_candidate = thread_participants.as_ref().map_or(true, |ps| ps.contains(&member.user_id));
+
+            if mentioned || (notification_candidate && !member.notifications_muted.value) {
+                // Notify this member
+                users_to_notify.insert(member.user_id);
             }
         }
 
-        if !everyone_mentioned {
-            users_to_notify.extend(self.members.users_to_notify(thread_participants));
-            users_to_notify.extend(&mentions);
-            users_to_notify.remove(&sender);
-        }
-
-        let users_to_notify = if everyone_mentioned { self.members.all() } else { users_to_notify.into_iter().collect() };
-
         Success(SendMessageSuccess {
             message_event,
-            users_to_notify,
-            mentions,
+            users_to_notify: users_to_notify.into_iter().collect(),
         })
     }
 
@@ -1630,7 +1628,6 @@ pub enum SendMessageResult {
 pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
-    pub mentions: HashSet<UserId>,
 }
 
 pub enum AddRemoveReactionResult {

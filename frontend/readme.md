@@ -24,10 +24,6 @@ This is a library which encapsulates all interaction with the OpenChat server ca
 
 This library contains the OpenChat frontend domain model and is referenced by both the openchat-client and the openchat-agent libraries. The domain types are also re-exported from the openchat-client library so that the website itself can make use of them without directly depending on the shared lib.
 
-### openchat-sw
-
-This contains the site which bootstraps the custom OpenChat service worker. Our custom service worker supports the custom oc.app domain, provides fine grained caching of assets and handles push notifications.
-
 ### Turborepo
 
 The five packages are managed by `turborepo`. Unfortunately turborepo doesn't handle dev mode very well as it doesn't really have any way to deal with tasks that do not end.
