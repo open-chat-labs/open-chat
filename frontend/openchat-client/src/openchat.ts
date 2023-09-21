@@ -346,13 +346,6 @@ import {
     communityRoles,
     isSnsGate,
     toTitleCase,
-    CHAT_SYMBOL,
-    CKBTC_SYMBOL,
-    HOTORNOT_SYMBOL,
-    ICP_SYMBOL,
-    KINIC_SYMBOL,
-    SNS1_SYMBOL,
-    GHOST_SYMBOL,
     CommonResponses,
     defaultChatRules,
 } from "openchat-shared";
@@ -2932,7 +2925,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     combineRulesText(chatRules: VersionedRules | undefined, communityRules: VersionedRules | undefined): string {
         const chatRulesEnabled = chatRules?.enabled ?? false;
-        const communityRulesEnabled = communityRules?.enabled ?? false;    
+        const communityRulesEnabled = communityRules?.enabled ?? false;
         const chatRulesText = chatRulesEnabled ? chatRules?.text : "";
         const communityRulesText = communityRulesEnabled ? communityRules?.text : "";
         const lineBreak = chatRulesEnabled && communityRulesEnabled ? "\n" : "";
@@ -4772,34 +4765,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return user !== undefined
             ? `${user?.displayName ?? user?.username}  ${user?.diamond ? "💎" : ""}`
             : this.config.i18nFormatter("unknownUser");
-    }
-
-    ledgerCanisterId(token: string): string {
-        switch (token) {
-            case CHAT_SYMBOL:
-                return this.config.ledgerCanisterCHAT;
-
-            case ICP_SYMBOL:
-                return this.config.ledgerCanisterICP;
-
-            case CKBTC_SYMBOL:
-                return this.config.ledgerCanisterBTC;
-
-            case SNS1_SYMBOL:
-                return this.config.ledgerCanisterSNS1;
-
-            case KINIC_SYMBOL:
-                return this.config.ledgerCanisterKINIC;
-
-            case HOTORNOT_SYMBOL:
-                return this.config.ledgerCanisterHOTORNOT;
-
-            case GHOST_SYMBOL:
-                return this.config.ledgerCanisterGHOST;
-
-            default:
-                throw new Error("Token not recognised: " + token);
-        }
     }
 
     hasModerationFlag(flags: number, flag: ModerationFlag): boolean {
