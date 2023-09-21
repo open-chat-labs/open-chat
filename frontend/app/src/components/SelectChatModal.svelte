@@ -24,6 +24,7 @@
     import { now } from "../stores/time";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
+    import Search from "./Search.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -50,12 +51,16 @@
         channels: ShareChat[];
     };
 
+    let searchTerm = "";
+    $: searchTermLower = searchTerm.toLowerCase();
     $: userStore = client.userStore;
     $: selectedChatId = client.selectedChatId;
     $: globalState = client.globalStateStore;
 
     $: {
-        buildListOfTargets($globalState, $now, $selectedChatId).then((t) => (targets = t));
+        buildListOfTargets($globalState, $now, $selectedChatId, searchTermLower).then(
+            (t) => (targets = t)
+        );
     }
     $: targets = undefined as ShareTo | undefined;
     $: noTargets = getNumberOfTargets(targets) === 0;
@@ -79,10 +84,19 @@
         );
     }
 
+    function filterChats(chats: ShareChat[], searchTerm: string) {
+        return chats.filter((c) => c.name.toLowerCase().includes(searchTerm));
+    }
+
+    function filterCommunities(communities: ShareCommunity[], _searchTerm: string) {
+        return communities;
+    }
+
     async function buildListOfTargets(
         global: GlobalState,
         now: number,
-        selectedChatId: ChatIdentifier | undefined
+        selectedChatId: ChatIdentifier | undefined,
+        searchTerm: string
     ): Promise<ShareTo | undefined> {
         let targets: ShareTo | undefined = undefined;
         try {
@@ -100,9 +114,9 @@
                 global.communities.values().map((c) => normaliseCommunity(now, selectedChatId, c))
             );
             return {
-                directChats,
-                groupChats,
-                communities,
+                directChats: filterChats(directChats, searchTerm),
+                groupChats: filterChats(groupChats, searchTerm),
+                communities: filterCommunities(communities, searchTerm),
             };
         } catch (err) {}
         return targets;
@@ -204,8 +218,15 @@
     {:else if noTargets}
         <div class="no-chats">{$_("noChatsAvailable")}</div>
     {:else}
+        <div class="search">
+            <Search
+                fill
+                searching={false}
+                bind:searchTerm
+                placeholder={"communities.searchUserGroups"} />
+        </div>
         <div class="selectable-chats">
-            <CollapsibleCard first headerText={$_("communities.directChats")}>
+            <CollapsibleCard open={false} first headerText={$_("communities.directChats")}>
                 <div slot="titleSlot" class="card-header">
                     <div class="avatar">
                         <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
@@ -228,7 +249,7 @@
                     </div>
                 {/each}
             </CollapsibleCard>
-            <CollapsibleCard headerText={$_("communities.groupChats")}>
+            <CollapsibleCard open={false} headerText={$_("communities.groupChats")}>
                 <div slot="titleSlot" class="card-header">
                     <div class="avatar">
                         <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
