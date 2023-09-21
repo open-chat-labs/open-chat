@@ -1,21 +1,7 @@
 {
     "$schema": "https://turborepo.org/schema.json",
     "globalEnv": [
-        "INTERNET_IDENTITY",
-        "NFID_URL",
         "DFX_NETWORK",
-        "IC_URL",
-        "II_DERIVATION_ORIGIN",
-        "CUSTOM_DOMAINS",
-        "STORAGE_INDEX_CANISTER",
-        "LEDGER_CANISTER_ICP",
-        "LEDGER_CANISTER_SNS1",
-        "LEDGER_CANISTER_BTC",
-        "LEDGER_CANISTER_CHAT",
-        "LEDGER_CANISTER_KINIC",
-        "LEDGER_CANISTER_HOTORNOT",
-        "LEDGER_CANISTER_GHOST",
-        "BLOB_URL_PATTERN",
         "NODE_ENV",
         "USERGEEK_APIKEY",
         "METERED_APIKEY",
@@ -23,7 +9,8 @@
         "TRANSLATE_API_KEY",
         "PUBLIC_TRANSLATE_API_KEY",
         "GIPHY_APIKEY",
-        "FRAME_ANCESTORS"
+        "FRAME_ANCESTORS",
+        "CORS_APIKEY"
     ],
     "pipeline": {
         "build": {
