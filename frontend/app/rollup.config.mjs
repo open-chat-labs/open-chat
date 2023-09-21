@@ -253,7 +253,6 @@ export default {
                 process.env.PUBLIC_TRANSLATE_API_KEY,
             ),
             "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
-            "process.env.FRAME_ANCESTORS": JSON.stringify(process.env.FRAME_ANCESTORS),
         }),
 
         html({

@@ -9,7 +9,6 @@
         "TRANSLATE_API_KEY",
         "PUBLIC_TRANSLATE_API_KEY",
         "GIPHY_APIKEY",
-        "FRAME_ANCESTORS",
         "CORS_APIKEY"
     ],
     "pipeline": {
