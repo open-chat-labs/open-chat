@@ -242,6 +242,7 @@
     "deleteMessageForMe": "Delete for me",
     "retryMessage": "Retry message",
     "editMessage": "Edit",
+    "tipMessage": "Tip",
     "messageDeleted": "Message deleted by {username} on {timestamp}",
     "deleteFailed": "Unable to delete your message",
     "enterInviteCode": "Enter your invite code",
@@ -1002,5 +1003,6 @@
         "light": "Light",
         "system": "System",
         "title": "Theme"
-    }
+    },
+    "tip": {}
 }

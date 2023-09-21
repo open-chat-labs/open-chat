@@ -391,6 +391,7 @@ import type { Member } from "openchat-shared";
 import type { Level } from "openchat-shared";
 import type { DraftMessage } from "./stores/draftMessageFactory";
 import type { VersionedRules } from "openchat-shared";
+import type { Tip } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1611,6 +1612,11 @@ export class OpenChat extends OpenChatAgentWorker {
         } else {
             this.dispatchEvent(new ThreadReactionSelected(messageId, kind));
         }
+    }
+
+    tipMessage(context: MessageContext, tip: Tip): Promise<boolean> {
+        console.log("Tipping: ", context, tip);
+        return Promise.resolve(true);
     }
 
     selectReaction(
@@ -2923,7 +2929,10 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    combineRulesText(chatRules: VersionedRules | undefined, communityRules: VersionedRules | undefined): string {
+    combineRulesText(
+        chatRules: VersionedRules | undefined,
+        communityRules: VersionedRules | undefined,
+    ): string {
         const chatRulesEnabled = chatRules?.enabled ?? false;
         const communityRulesEnabled = communityRules?.enabled ?? false;
         const chatRulesText = chatRulesEnabled ? chatRules?.text : "";
@@ -4873,7 +4882,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setCachePrimerTimestamp(chatIdentifierString: string, timestamp: bigint): Promise<void> {
-        return this.sendRequest({ kind: "setCachePrimerTimestamp", chatIdentifierString, timestamp });
+        return this.sendRequest({
+            kind: "setCachePrimerTimestamp",
+            chatIdentifierString,
+            timestamp,
+        });
     }
 
     // **** Communities Stuff

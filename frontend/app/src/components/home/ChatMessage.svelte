@@ -15,6 +15,7 @@
         type ChatIdentifier,
         type ChatType,
         routeForMessage,
+        LEDGER_CANISTER_ICP,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -52,6 +53,7 @@
     import ReminderBuilder from "./ReminderBuilder.svelte";
     import ReportMessage from "./ReportMessage.svelte";
     import { longpress } from "../../actions/longpress";
+    import TipBuilder from "./TipBuilder.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -104,6 +106,7 @@
     let showRemindMe = false;
     let showReport = false;
     let messageMenu: ChatMessageMenu;
+    let tipping = false;
 
     $: chatListScope = client.chatListScope;
     $: inThread = threadRootMessage !== undefined;
@@ -131,6 +134,8 @@
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
     $: communityMembers = client.currentCommunityMembers;
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
+    $: messageContext = { chatId, threadRootMessageIndex };
+    $: lastCryptoSent = client.lastCryptoSent;
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
@@ -223,6 +228,10 @@
         } else if (confirmed) {
             reply();
         }
+    }
+
+    function tipMessage() {
+        tipping = true;
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -349,6 +358,14 @@
 </script>
 
 <svelte:window on:resize={recalculateMediaDimensions} />
+
+{#if tipping}
+    <TipBuilder
+        ledger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        on:close={() => (tipping = false)}
+        {msg}
+        {messageContext} />
+{/if}
 
 {#if showEmojiPicker && canReact}
     <Overlay on:close={() => (showEmojiPicker = false)} dismissible>
@@ -573,6 +590,7 @@
                     on:deleteFailedMessage
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage}
+                    on:tipMessage={tipMessage}
                     on:reportMessage={() => (showReport = true)}
                     on:cancelReminder={cancelReminder}
                     on:remindMe={() => (showRemindMe = true)} />

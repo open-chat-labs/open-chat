@@ -1637,9 +1637,9 @@ export type MarkReadResponse = "success";
 
 export type UpdateGroupResponse =
     | {
-        kind: "success";
-        rulesVersion: number | undefined;
-    }
+          kind: "success";
+          rulesVersion: number | undefined;
+      }
     | { kind: "not_authorized" }
     | { kind: "name_too_short" }
     | { kind: "name_too_long" }
@@ -1879,3 +1879,11 @@ export type PublicGroupSummaryResponse =
     | GroupMoved;
 
 export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
+
+export type Tip = {
+    ledger: string;
+    token: string;
+    messageId: bigint;
+    amountE8s: bigint;
+    feeE8s: bigint;
+};

@@ -21,6 +21,7 @@
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import EyeOff from "svelte-material-icons/EyeOff.svelte";
     import HoverIcon from "../HoverIcon.svelte";
+    import Bitcoin from "../icons/Bitcoin.svelte";
     import { _, locale } from "svelte-i18n";
     import { translationCodes } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
@@ -64,6 +65,7 @@
 
     let menuIcon: MenuIcon;
 
+    $: canTip = !me && confirmed && !inert && !failed;
     $: canRemind =
         msg.content.kind !== "message_reminder_content" &&
         msg.content.kind !== "message_reminder_created_content";
@@ -351,6 +353,12 @@
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <div slot="text">{$_("editMessage")}</div>
+                    </MenuItem>
+                {/if}
+                {#if canTip}
+                    <MenuItem on:click={() => dispatch("tipMessage")}>
+                        <Bitcoin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <div slot="text">{$_("tipMessage")}</div>
                     </MenuItem>
                 {/if}
                 <MenuItem separator />
