@@ -1,4 +1,5 @@
 use crate::incr;
+use itertools::Itertools;
 use ledger_utils::format_crypto_amount;
 use search::Document;
 use serde::{Deserialize, Serialize};
@@ -7,15 +8,15 @@ use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
     is_default, is_empty_slice, AudioContent, AvatarChanged, BlobReference, CanisterId, ChannelId, Chat, ChatId, ChatMetrics,
-    CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy, DirectChatCreated, EventIndex,
-    EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
-    GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
-    ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageReminderContent,
-    MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged, PollContentInternal, PrizeContent,
-    PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage,
-    ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersInvited,
-    UsersUnblocked, VideoContent,
+    CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy,
+    DirectChatCreated, EventIndex, EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged,
+    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
+    GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
+    MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned,
+    MessageReminderContent, MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged,
+    PollContentInternal, PrizeContent, PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction,
+    ReplyContext, ReportedMessage, ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis, UserId,
+    UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -149,6 +150,8 @@ pub struct MessageInternal {
     pub replies_to: Option<ReplyContextInternal>,
     #[serde(rename = "r", default, skip_serializing_if = "is_empty_slice")]
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
+    #[serde(rename = "ti", default, skip_serializing_if = "is_empty_slice")]
+    pub tips: Vec<(UserId, CompletedCryptoTransaction)>,
     #[serde(rename = "u", default, skip_serializing_if = "Option::is_none")]
     pub last_updated: Option<TimestampMillis>,
     #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
@@ -163,6 +166,15 @@ pub struct MessageInternal {
 
 impl MessageInternal {
     pub fn hydrate(&self, my_user_id: Option<UserId>) -> Message {
+        let mut tips = Vec::new();
+        for (ledger, group) in &self.tips.iter().group_by(|(_, transfer)| transfer.ledger_canister_id()) {
+            let mut per_user = Vec::new();
+            for (user_id, transfers) in &group.group_by(|(user_id, _)| user_id) {
+                per_user.push((*user_id, transfers.map(|(_, transfer)| transfer.units()).sum()));
+            }
+            tips.push((ledger, per_user));
+        }
+
         Message {
             message_index: self.message_index,
             message_id: self.message_id,
@@ -178,6 +190,7 @@ impl MessageInternal {
                 .iter()
                 .map(|(r, u)| (r.clone(), u.iter().copied().collect()))
                 .collect(),
+            tips,
             edited: self.last_edited.is_some(),
             forwarded: self.forwarded,
             thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate()),
@@ -683,6 +696,8 @@ pub struct ChatMetricsInternal {
     pub edits: u64,
     #[serde(rename = "rt", default, skip_serializing_if = "is_default")]
     pub reactions: u64,
+    #[serde(rename = "ti", default, skip_serializing_if = "is_default")]
+    pub tips: u64,
     #[serde(rename = "pr", default, skip_serializing_if = "is_default")]
     pub proposals: u64,
     #[serde(rename = "rpt", default, skip_serializing_if = "is_default")]

@@ -117,6 +117,28 @@ type RemoveReactionResponse = variant {
     UserSuspended;
 };
 
+type TipMessageArgs = record {
+    chat : Chat;
+    recipient : UserId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    transfer : PendingCryptoTransaction;
+};
+
+type TipMessageResponse = variant {
+    Success;
+    ChatNotFound;
+    MessageNotFound;
+    CannotTipSelf;
+    NotAuthorized;
+    TransferCannotBeZero;
+    TransferToWrongAccount;
+    TransferFailed : text;
+    ChatFrozen;
+    UserSuspended;
+    InternalError : record { text; CompletedCryptoTransaction };
+};
+
 type MarkReadArgs = record {
     messages_read : vec ChatMessagesRead;
     community_messages_read : vec CommunityMessagesRead;

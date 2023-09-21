@@ -109,6 +109,7 @@ impl ChatEvents {
             content: args.content,
             replies_to: args.replies_to,
             reactions: Vec::new(),
+            tips: Vec::new(),
             last_updated: None,
             last_edited: None,
             deleted_by: None,
@@ -537,6 +538,43 @@ impl ChatEvents {
             AddRemoveReactionResult::Success
         } else {
             AddRemoveReactionResult::MessageNotFound
+        }
+    }
+
+    pub fn tip_message(
+        &mut self,
+        user_id: UserId,
+        min_visible_event_index: EventIndex,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        transfer: CompletedCryptoTransaction,
+        now: TimestampMillis,
+    ) -> TipMessageResult {
+        use TipMessageResult::*;
+
+        if let Some((message, event_index)) =
+            self.message_internal_mut(min_visible_event_index, thread_root_message_index, message_id.into(), now)
+        {
+            if message.sender == user_id {
+                return CannotTipSelf;
+            }
+
+            message.tips.push((user_id, transfer));
+            message.last_updated = Some(now);
+            self.last_updated_timestamps
+                .mark_updated(thread_root_message_index, event_index, now);
+
+            add_to_metrics(
+                &mut self.metrics,
+                &mut self.per_user_metrics,
+                user_id,
+                |m| incr(&mut m.tips),
+                now,
+            );
+
+            Success
+        } else {
+            MessageNotFound
         }
     }
 
@@ -1295,6 +1333,12 @@ pub enum AddRemoveReactionResult {
     Success,
     NoChange,
     MessageNotFound,
+}
+
+pub enum TipMessageResult {
+    Success,
+    MessageNotFound,
+    CannotTipSelf,
 }
 
 pub enum ReservePrizeResult {
