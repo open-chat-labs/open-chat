@@ -12,13 +12,6 @@ export type OpenChatConfig = {
     registryCanister: string;
     internetIdentityUrl: string;
     nfidUrl: string;
-    ledgerCanisterICP: string;
-    ledgerCanisterSNS1: string;
-    ledgerCanisterBTC: string;
-    ledgerCanisterCHAT: string;
-    ledgerCanisterKINIC: string;
-    ledgerCanisterHOTORNOT: string;
-    ledgerCanisterGHOST: string;
     userGeekApiKey: string;
     meteredApiKey: string;
     enableMultiCrypto?: boolean;

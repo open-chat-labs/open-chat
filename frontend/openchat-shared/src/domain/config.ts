@@ -9,13 +9,6 @@ export type AgentConfig = {
     registryCanister: string;
     internetIdentityUrl: string;
     nfidUrl: string;
-    ledgerCanisterICP: string;
-    ledgerCanisterSNS1: string;
-    ledgerCanisterBTC: string;
-    ledgerCanisterCHAT: string;
-    ledgerCanisterKINIC: string;
-    ledgerCanisterHOTORNOT: string;
-    ledgerCanisterGHOST: string;
     userGeekApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
