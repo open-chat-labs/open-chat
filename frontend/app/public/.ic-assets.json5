@@ -1,0 +1,8 @@
+[
+    {
+        match: "{*.gif,*.jpg,*.png,*.svg,*.webp}",
+        headers: {
+            "Cache-Control": "public, max-age=2592000",
+        }
+    }
+]
