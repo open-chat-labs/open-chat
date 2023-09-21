@@ -33,7 +33,7 @@ ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
-regex = { workspace = true }
+regex-lite = { workspace = true }
 serde = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
 tracing = { workspace = true }

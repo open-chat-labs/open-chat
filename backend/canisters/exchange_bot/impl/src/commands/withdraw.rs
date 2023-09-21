@@ -6,7 +6,7 @@ use crate::{mutate_state, RuntimeState};
 use lazy_static::lazy_static;
 use ledger_utils::format_crypto_amount;
 use rand::Rng;
-use regex::{Regex, RegexBuilder};
+use regex_lite::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use types::icrc1::BlockIndex;

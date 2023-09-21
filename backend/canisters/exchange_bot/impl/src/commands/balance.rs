@@ -4,7 +4,7 @@ use crate::commands::{Command, CommandParser, CommandSubTaskResult, ParseMessage
 use crate::{mutate_state, RuntimeState};
 use lazy_static::lazy_static;
 use rand::Rng;
-use regex::{Regex, RegexBuilder};
+use regex_lite::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, MessageContent, MessageId, TimestampMillis, TokenInfo, UserId};
 

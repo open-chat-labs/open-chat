@@ -2125,7 +2125,7 @@ dependencies = [
  "local_user_index_canister_c2c_client",
  "msgpack",
  "rand",
- "regex",
+ "regex-lite",
  "serde",
  "serializer",
  "tracing",
