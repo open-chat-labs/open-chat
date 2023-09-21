@@ -45,9 +45,8 @@
     }
 
     function replaceEveryone(text: string): string {
-        return text.replace(/(^|[\s(){}\[\]])@everyone($|[\s(){}\[\]])/g, (_match, _p1) => {
-            return " **@everyone** ";
-        });
+        if (!text.includes("@everyone")) return text;
+        return text.replace(/(^|[\s(){}\[\]])(@everyone)($|[\s(){}\[\]])/gm, "$1**$2**$3");
     }
 
     function replaceDatetimes(text: string): string {
