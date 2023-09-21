@@ -23,7 +23,6 @@
     };
 
     function replaceUserIds(text: string): string {
-        if (!text.includes("@UserId(")) return text;
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
             const u = $userStore[p1];
             if (u !== undefined) {
@@ -34,7 +33,6 @@
     }
 
     function replaceUserGroupIds(text: string, userGroups: Map<number, UserGroupSummary>): string {
-        if (!text.includes("@UserGroup(")) return text;
         return text.replace(/@UserGroup\(([\d]+)\)/g, (match, p1) => {
             const u = userGroups.get(Number(p1));
             if (u !== undefined) {
@@ -47,7 +45,6 @@
     }
 
     function replaceEveryone(text: string): string {
-        if (!text.includes("@everyone")) return text;
         return text.replace(/(^|[\s(){}\[\]])@everyone($|[\s(){}\[\]])/g, (_match, _p1) => {
             return " **@everyone** ";
         });
