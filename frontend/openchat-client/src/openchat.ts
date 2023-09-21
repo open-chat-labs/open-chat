@@ -2930,7 +2930,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     combineRulesText(chatRules: VersionedRules | undefined, communityRules: VersionedRules | undefined): string {
         const chatRulesEnabled = chatRules?.enabled ?? false;
-        const communityRulesEnabled = communityRules?.enabled ?? false;    
+        const communityRulesEnabled = communityRules?.enabled ?? false;
         const chatRulesText = chatRulesEnabled ? chatRules?.text : "";
         const communityRulesText = communityRulesEnabled ? communityRules?.text : "";
         const lineBreak = chatRulesEnabled && communityRulesEnabled ? "\n" : "";
