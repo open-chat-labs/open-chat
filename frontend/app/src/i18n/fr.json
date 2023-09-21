@@ -352,7 +352,8 @@
         "updateDetails": "modifier les informations de base",
         "createPublicChannel": "créer des chaînes publiques",
         "createPrivateChannel": "créer des chaînes privées",
-        "manageUserGroups": "gérer les groupes d'utilisateurs"
+        "manageUserGroups": "gérer les groupes d'utilisateurs",
+        "mentionAllMembers": "mentionner tous les membres ({mention})"
     },
     "rules": {
         "enable": "Activer les règles",

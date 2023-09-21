@@ -33,6 +33,7 @@ import {
     canReactToMessages,
     canRemoveMembers,
     canReplyInThread,
+    canMentionAllMembers,
     canSendMessages,
     canUnblockUsers,
     containsReaction,
@@ -1246,6 +1247,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     canReplyInThread(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canReplyInThread);
+    }
+
+    canMentionAllMembers(chatId: ChatIdentifier): boolean {
+        return this.chatPredicate(chatId, canMentionAllMembers);
     }
 
     canSendMessages(chatId: ChatIdentifier): boolean {
@@ -2925,7 +2930,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     combineRulesText(chatRules: VersionedRules | undefined, communityRules: VersionedRules | undefined): string {
         const chatRulesEnabled = chatRules?.enabled ?? false;
-        const communityRulesEnabled = communityRules?.enabled ?? false;
+        const communityRulesEnabled = communityRules?.enabled ?? false;    
         const chatRulesText = chatRulesEnabled ? chatRules?.text : "";
         const communityRulesText = communityRulesEnabled ? communityRules?.text : "";
         const lineBreak = chatRulesEnabled && communityRulesEnabled ? "\n" : "";

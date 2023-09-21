@@ -361,7 +361,8 @@
         "updateDetails": "לערוך מידע בסיסי",
         "createPublicChannel": "ליצור ערוצים ציבוריים",
         "createPrivateChannel": "ליצור ערוצים פרטיים",
-        "manageUserGroups": "לנהל קבוצות משתמשים"
+        "manageUserGroups": "לנהל קבוצות משתמשים",
+        "mentionAllMembers": "ציין את כל החברים ({mention})"
     },
     "rules": {
         "enable": "אפשר כללים",

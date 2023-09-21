@@ -45,6 +45,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
             sendMessages: "owner",
             reactToMessages: "owner",
             replyInThread: "owner",
+            mentionAllMembers: "owner",
         },
         metrics: emptyChatMetrics(),
         subtype: optional(candid.subtype, apiGroupSubtype),
