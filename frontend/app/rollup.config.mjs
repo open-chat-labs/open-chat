@@ -72,10 +72,15 @@ if (dfxNetwork) {
     );
 }
 
-const production = !process.env.ROLLUP_WATCH;
-const env = process.env.NODE_ENV ?? (production ? "production" : "development");
+const build_env = process.env.BUILD_ENV;
+const production = build_env === "production";
+const development = build_env === "development";
+const testnet = !development && !production;
+const watch = process.env.ROLLUP_WATCH;
+
+const env = process.env.NODE_ENV ?? (development ? "development": "production");
 const version = process.env.OPENCHAT_WEBSITE_VERSION;
-if (production && !version) {
+if (!development && !version) {
     throw Error("OPENCHAT_WEBSITE_VERSION environment variable not set");
 }
 if (production && !process.env.ROLLBAR_ACCESS_TOKEN) {
@@ -89,7 +94,7 @@ if (production && !process.env.METERED_APIKEY) {
 }
 const WEBPUSH_SERVICE_WORKER_PATH = "/_/raw/push_sw.js";
 
-console.log("PROD", production);
+console.log("BUILD_ENV", build_env);
 console.log("ENV", env);
 console.log("INTERNET IDENTITY URL", process.env.INTERNET_IDENTITY_URL);
 console.log("NFID URL", process.env.NFID_URL);
@@ -191,7 +196,7 @@ export default {
                 },
             }),
             compilerOptions: {
-                dev: !production,
+                dev: development,
                 // immutable: true, // this could be a great optimisation, but we need to plan for it a bit
             },
             onwarn: (warning, handler) => {
@@ -276,7 +281,7 @@ export default {
                     script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
                         " ",
                     )}`;
-                if (!production) {
+                if (development) {
                     csp += " http://localhost:* http://127.0.0.1:*";
                 }
 
@@ -337,15 +342,15 @@ export default {
         }),
 
         // In dev mode, watch for changes to the worker and push sw
-        !production && watchExternalFiles(),
+        watch && watchExternalFiles(),
 
         // In dev mode, call `npm run start` once
         // the bundle has been generated
-        !production && serve(),
+        watch && serve(),
 
         // Watch the `public` directory and refresh the
         // browser on changes when not in production
-        !production &&
+        watch &&
             livereload({
                 watch: "build",
                 delay: 1000,
