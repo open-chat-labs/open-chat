@@ -31,6 +31,7 @@ export type ChatPermissions = {
     sendMessages: ChatPermissionRole;
     reactToMessages: ChatPermissionRole;
     replyInThread: ChatPermissionRole;
+    mentionAllMembers: ChatPermissionRole;
 };
 
 export type CommunityPermissions = {

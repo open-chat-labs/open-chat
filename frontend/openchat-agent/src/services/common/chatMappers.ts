@@ -833,6 +833,7 @@ export function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
         sendMessages: permissionRole(candid.send_messages),
         reactToMessages: permissionRole(candid.react_to_messages),
         replyInThread: permissionRole(candid.reply_in_thread),
+        mentionAllMembers: permissionRole(candid.mention_all_members),
     };
 }
 
@@ -899,6 +900,7 @@ export function apiGroupPermissions(permissions: ChatPermissions): ApiGroupPermi
         react_to_messages: apiPermissionRole(permissions.reactToMessages),
         reply_in_thread: apiPermissionRole(permissions.replyInThread),
         add_members: apiPermissionRole("owner"), // TODO remove this
+        mention_all_members: apiPermissionRole(permissions.mentionAllMembers),
     };
 }
 

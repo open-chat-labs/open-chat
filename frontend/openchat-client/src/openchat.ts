@@ -33,6 +33,7 @@ import {
     canReactToMessages,
     canRemoveMembers,
     canReplyInThread,
+    canMentionAllMembers,
     canSendMessages,
     canUnblockUsers,
     containsReaction,
@@ -1246,6 +1247,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     canReplyInThread(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canReplyInThread);
+    }
+
+    canMentionAllMembers(chatId: ChatIdentifier): boolean {
+        return this.chatPredicate(chatId, canMentionAllMembers);
     }
 
     canSendMessages(chatId: ChatIdentifier): boolean {
