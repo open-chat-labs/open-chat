@@ -114,8 +114,7 @@
         let expandedText = text.replace(/@([\w\d_]*)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, true);
             if (userOrGroup !== undefined) {
-                if (userOrGroup.kind === "user_group") return "";
-                mentionedSet.add(userOrGroup.userId);
+                mentionedSet.add(client.userOrUserGroupId(userOrGroup) ?? "");
                 return "";
             } else {
                 console.log(
@@ -224,8 +223,7 @@
 
     function mention(ev: CustomEvent<UserOrUserGroup>): void {
         const userOrGroup = ev.detail;
-        const username =
-            userOrGroup.kind === "user_group" ? userOrGroup.name : userOrGroup.username;
+        const username = client.userOrUserGroupName(userOrGroup);
         const userLabel = `@${username}`;
 
         replaceTextWith(userLabel);

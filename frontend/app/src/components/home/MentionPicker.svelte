@@ -40,6 +40,9 @@
                     prefixLower === undefined ||
                     (supportsUserGroups && userOrGroup.name.toLowerCase().startsWith(prefixLower))
                 );
+            case "everyone": {
+                return prefixLower === undefined || userOrGroup.kind.startsWith(prefixLower);
+            }
             default:
                 return (
                     (mentionSelf || userOrGroup.userId !== currentUser.userId) &&
@@ -62,7 +65,7 @@
     onMount(() => {
         usersAndGroups = Object.values(client.getUserLookupForMentions()).sort(
             (a: UserOrUserGroup, b: UserOrUserGroup) => {
-                const order = { user_group: 1, user: 2, bot: 3 };
+                const order = { everyone: 1, user_group: 2, user: 3, bot: 4 };
                 return order[a.kind] - order[b.kind];
             }
         );
@@ -113,7 +116,7 @@
         <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
             <MenuItem selected={itemIndex === index} on:click={() => mention(item)}>
                 <div class="avatar" slot="icon">
-                    {#if item.kind === "user_group"}
+                    {#if item.kind === "user_group" || item.kind === "everyone"}
                         <div class="group-icon">
                             <AccountMultiple color={"var(--menu-disabled-txt)"} size={$iconSize} />
                         </div>
@@ -128,6 +131,10 @@
                     {#if item.kind === "user_group"}
                         <span class="display-name">
                             {item.name}
+                        </span>
+                    {:else if item.kind === "everyone"}
+                        <span class="display-name">
+                            {item.kind}
                         </span>
                     {:else}
                         <span class="display-name">

@@ -260,6 +260,8 @@
                 switch (userOrGroup.kind) {
                     case "user_group":
                         return `@UserGroup(${userOrGroup.id})`;
+                    case "everyone":
+                        return `@${userOrGroup.kind}`;
                     default:
                         mentionedMap.set(userOrGroup.userId, userOrGroup);
                         return `@UserId(${userOrGroup.userId})`;
@@ -432,8 +434,7 @@
 
     function mention(ev: CustomEvent<UserOrUserGroup>): void {
         const userOrGroup = ev.detail;
-        const username =
-            userOrGroup.kind === "user_group" ? userOrGroup.name : userOrGroup.username;
+        const username = client.userOrUserGroupName(userOrGroup);
         const userLabel = `@${username}`;
 
         replaceTextWith(userLabel);

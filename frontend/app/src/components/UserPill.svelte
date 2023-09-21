@@ -11,13 +11,15 @@
     export let userOrGroup: UserOrUserGroup;
 
     $: avatarUrl =
-        userOrGroup.kind === "user_group" ? undefined : client.userAvatarUrl(userOrGroup);
-    $: userId = userOrGroup.kind === "user_group" ? undefined : userOrGroup.userId;
+        userOrGroup.kind === "user_group" || userOrGroup.kind === "everyone"
+            ? undefined
+            : client.userAvatarUrl(userOrGroup);
+    $: userId = client.userOrUserGroupId(userOrGroup);
 
     $: communityMembers = client.currentCommunityMembers;
-    $: name = userOrGroup.kind === "user_group" ? userOrGroup.name : userOrGroup.username;
+    $: name = client.userOrUserGroupName(userOrGroup);
     $: displayName =
-        userOrGroup.kind === "user_group"
+        userOrGroup.kind === "user_group" || userOrGroup.kind === "everyone"
             ? undefined
             : client.getDisplayName(userOrGroup, $communityMembers);
 
