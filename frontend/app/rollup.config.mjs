@@ -27,7 +27,6 @@ import { fileURLToPath } from "url";
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 dotenv.config({ path: path.join(dirname, "../.env") });
-dotenv.config({ path: path.join(dirname, "common_env") });
 
 const dfxNetwork = process.env.DFX_NETWORK;
 
