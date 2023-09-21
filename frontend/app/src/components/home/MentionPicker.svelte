@@ -134,7 +134,7 @@
                         </span>
                     {:else if item.kind === "everyone"}
                         <span class="display-name">
-                            {item.kind}
+                            {"everyone"}
                         </span>
                     {:else}
                         <span class="display-name">

@@ -261,7 +261,7 @@
                     case "user_group":
                         return `@UserGroup(${userOrGroup.id})`;
                     case "everyone":
-                        return `@${userOrGroup.kind}`;
+                        return "@everyone";
                     default:
                         mentionedMap.set(userOrGroup.userId, userOrGroup);
                         return `@UserId(${userOrGroup.userId})`;
