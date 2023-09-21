@@ -1,0 +1,32 @@
+[
+    {
+        match: "*.webp",
+        headers: {
+            "Cache-Control": "public, max-age=2592000",
+        },
+    },
+    {
+        match: "*.gif",
+        headers: {
+            "Cache-Control": "public, max-age=2592000",
+        },
+    },
+    {
+        match: "*.png",
+        headers: {
+            "Cache-Control": "public, max-age=2592000",
+        },
+    },
+    {
+        match: "*.jpg",
+        headers: {
+            "Cache-Control": "public, max-age=2592000",
+        },
+    },
+    {
+        match: "*.svg",
+        headers: {
+            "Cache-Control": "public, max-age=2592000",
+        },
+    },
+]
