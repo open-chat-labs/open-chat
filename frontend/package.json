@@ -17,12 +17,11 @@
     "author": "julian.jelfs@gmail.com",
     "workspaces": [
         "app",
-        "openchat-client",
         "openchat-agent",
-        "openchat-shared",
-        "openchat-worker",
+        "openchat-client",
         "openchat-push",
-        "openchat-sw"
+        "openchat-shared",
+        "openchat-worker"
     ],
     "devDependencies": {
         "@babel/core": "^7.22.10",

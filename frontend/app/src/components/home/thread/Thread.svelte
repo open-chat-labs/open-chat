@@ -13,9 +13,8 @@
         TimelineItem,
         AttachmentContent,
     } from "openchat-client";
-    import { ICP_SYMBOL } from "openchat-client";
+    import { LEDGER_CANISTER_ICP } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import { _ } from "svelte-i18n";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -210,7 +209,7 @@
 
     function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
         creatingCryptoTransfer = ev.detail ?? {
-            ledger: $lastCryptoSent ?? client.ledgerCanisterId(ICP_SYMBOL),
+            ledger: $lastCryptoSent ?? LEDGER_CANISTER_ICP,
             amount: BigInt(0),
         };
     }

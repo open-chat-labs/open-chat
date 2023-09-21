@@ -4,6 +4,15 @@ import page from "page";
 import { setModifiedTheme } from "../theme/themes";
 import { routerReady } from "../routes";
 
+const FRAME_ANCESTORS = [
+    "https://ht7v7-iaaaa-aaaak-qakga-cai.icp0.io",
+    "https://mdocx-gyaaa-aaaak-qcbsq-cai.icp0.io",
+    "https://calm-pasca-49d7be.netlify.app",
+    "http://localhost:5173",
+    "https://zexzi-jyaaa-aaaam-abj3q-cai.icp0.io",
+    "https://xw4dq-4yaaa-aaaam-abeuq-cai.ic0.app",
+];
+
 type XFrameMessage = UpdateTheme | ChangeRoute;
 
 type UpdateTheme = {
@@ -46,7 +55,7 @@ routerReady.subscribe((ready) => {
 });
 
 function externalMessage(ev: MessageEvent) {
-    if (!process.env.FRAME_ANCESTORS?.includes(ev.origin)) {
+    if (!FRAME_ANCESTORS.includes(ev.origin)) {
         return;
     }
 
