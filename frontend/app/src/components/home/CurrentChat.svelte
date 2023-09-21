@@ -19,8 +19,8 @@
         type MultiUserChat,
         CommunityMap,
         type CommunitySummary,
-        ICP_SYMBOL,
         type AttachmentContent,
+        LEDGER_CANISTER_ICP,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -164,7 +164,7 @@
 
     function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
         creatingCryptoTransfer = ev.detail ?? {
-            ledger: $lastCryptoSent ?? client.ledgerCanisterId(ICP_SYMBOL),
+            ledger: $lastCryptoSent ?? LEDGER_CANISTER_ICP,
             amount: BigInt(0),
         };
     }
