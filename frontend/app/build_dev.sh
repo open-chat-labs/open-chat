@@ -13,6 +13,5 @@ export LEDGER_CANISTER_KINIC=73mez-iiaaa-aaaaq-aaasq-cai
 export LEDGER_CANISTER_HOTORNOT=6rdgd-kyaaa-aaaaq-aaavq-cai
 export LEDGER_CANISTER_GHOST=4c4fd-caaaa-aaaaq-aaa3a-cai
 export BLOB_URL_PATTERN=http://{canisterId}.localhost:8080/{blobType}/
-export FRAME_ANCESTORS=https://ht7v7-iaaaa-aaaak-qakga-cai.icp0.io,https://mdocx-gyaaa-aaaak-qcbsq-cai.icp0.io,https://calm-pasca-49d7be.netlify.app,http://localhost:5173,https://zexzi-jyaaa-aaaam-abj3q-cai.icp0.io,https://xw4dq-4yaaa-aaaam-abeuq-cai.ic0.app
 
 npx rollup -c $WATCH
