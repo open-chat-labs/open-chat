@@ -104,7 +104,14 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
     {
         chat_events::ClaimPrizeResult::Success(message_event) => {
             // Send a notification to group participants
-            let notification_recipients = state.data.chat.members.users_to_notify(None).into_iter().collect();
+            let notification_recipients = state
+                .data
+                .chat
+                .members
+                .iter()
+                .filter(|m| !m.notifications_muted.value && !m.suspended.value)
+                .map(|m| m.user_id)
+                .collect();
             let content = &message_event.event.content;
 
             let notification = Notification::GroupMessage(GroupMessageNotification {
