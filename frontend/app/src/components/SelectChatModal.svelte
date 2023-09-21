@@ -231,7 +231,7 @@
 </script>
 
 <Panel right forceModal>
-    <SectionHeader flush gap>
+    <SectionHeader border={false} gap>
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -248,7 +248,7 @@
         </span>
     </SectionHeader>
     <div class="search">
-        <Search fill searching={false} bind:searchTerm placeholder={"search"} />
+        <Search searching={false} bind:searchTerm placeholder={"search"} />
     </div>
     {#if noTargets}
         <div class="no-chats">{$_("noChatsAvailable")}</div>
