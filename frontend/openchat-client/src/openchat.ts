@@ -324,6 +324,8 @@ import type {
     MessageContent,
     MessageContext,
     UpdatedRules,
+    PendingCryptocurrencyTransfer,
+    TipMessageResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1623,11 +1625,6 @@ export class OpenChat extends OpenChatAgentWorker {
         } else {
             this.dispatchEvent(new ThreadReactionSelected(messageId, kind));
         }
-    }
-
-    tipMessage(context: MessageContext, tip: Tip): Promise<boolean> {
-        console.log("Tipping: ", context, tip);
-        return Promise.resolve(true);
     }
 
     selectReaction(
@@ -4810,6 +4807,19 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    tipMessage(
+        messageContext: MessageContext,
+        messageId: bigint,
+        transfer: PendingCryptocurrencyTransfer,
+    ): Promise<TipMessageResponse> {
+        return this.sendRequest({
+            kind: "tipMessage",
+            messageContext,
+            messageId,
+            transfer,
+        });
+    }
+
     private async updateRegistry() {
         const registry = await this.sendRequest({
             kind: "updateRegistry",
@@ -4862,7 +4872,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 const userGroups = [...this._liveState.selectedCommunity.userGroups.values()];
                 userGroups.forEach((ug) => (lookup[ug.name.toLowerCase()] = ug));
             }
-            if (this._liveState.selectedChatId !== undefined && this.canMentionAllMembers(this._liveState.selectedChatId)) {
+            if (
+                this._liveState.selectedChatId !== undefined &&
+                this.canMentionAllMembers(this._liveState.selectedChatId)
+            ) {
                 lookup["everyone"] = { kind: "everyone" };
             }
             this._userLookupForMentions = lookup;

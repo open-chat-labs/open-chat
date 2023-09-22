@@ -54,6 +54,7 @@
     import ReportMessage from "./ReportMessage.svelte";
     import { longpress } from "../../actions/longpress";
     import TipBuilder from "./TipBuilder.svelte";
+    import TipThumbnail from "./TipThumbnail.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -136,6 +137,7 @@
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
     $: messageContext = { chatId, threadRootMessageIndex };
     $: lastCryptoSent = client.lastCryptoSent;
+    $: tips = msg.tips ? Object.entries(msg.tips) : [];
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
@@ -633,6 +635,14 @@
             {/each}
         </div>
     {/if}
+
+    {#if tips.length > 0 && !inert}
+        <div class="tips" class:indent={showAvatar}>
+            {#each tips as [ledger, userTips]}
+                <TipThumbnail {ledger} {userTips} />
+            {/each}
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -724,7 +734,8 @@
         }
     }
 
-    .message-reactions {
+    .message-reactions,
+    .tips {
         display: flex;
         justify-content: flex-start;
         flex-wrap: wrap;

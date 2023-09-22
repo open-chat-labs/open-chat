@@ -8,7 +8,7 @@
         CryptocurrencyDetails,
         Message,
         MessageContext,
-        Tip,
+        PendingCryptocurrencyTransfer,
     } from "openchat-client";
     import { E8S_PER_TOKEN, dollarExchangeRates } from "openchat-client";
     import Overlay from "../Overlay.svelte";
@@ -20,6 +20,7 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -39,6 +40,7 @@
     let dollarTop = tweened(-1000);
     let dollarOpacity = tweened(0);
     let dollarScale = tweened(0);
+    let busy = false;
 
     const increments: Increment[] = [10, 50, 100];
     type Increment = 10 | 50 | 100;
@@ -82,7 +84,7 @@
             throw new Error(`we don't have an exchange rate for the token: ${token.symbol}`);
         }
         const multiplied = cents * multiplier;
-        const e8s = (multiplied / 100) * rate * E8S_PER_TOKEN;
+        const e8s = (multiplied / 100 / rate) * E8S_PER_TOKEN;
         return BigInt(Math.round(e8s));
     }
 
@@ -91,16 +93,28 @@
     }
 
     function send() {
-        const tip: Tip = {
-            messageId: msg.messageId,
+        busy = true;
+        const transfer: PendingCryptocurrencyTransfer = {
+            kind: "pending",
             ledger,
             token: symbol,
+            recipient: msg.sender,
             amountE8s: draftAmount,
             feeE8s: transferFees,
+            createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
         };
-        client.tipMessage(messageContext, tip);
-        lastCryptoSent.set(ledger);
-        dispatch("close");
+        client
+            .tipMessage(messageContext, msg.messageId, transfer)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    toastStore.showSuccessToast("Fuck yeah");
+                    lastCryptoSent.set(ledger);
+                    dispatch("close");
+                } else {
+                    toastStore.showFailureToast("Fuck no");
+                }
+            })
+            .finally(() => (busy = false));
     }
 
     function cancel() {
@@ -195,7 +209,7 @@
         <span class="header" slot="header">
             <div class="left">
                 <div class="main-title">
-                    <div>{$_("tokenTransfer.send")}</div>
+                    <div>{$_("tip.title")}</div>
                     <div>
                         <CryptoSelector bind:ledger />
                     </div>
@@ -260,7 +274,8 @@
                 {:else}
                     <Button
                         small={!$mobileWidth}
-                        disabled={!valid}
+                        disabled={!valid || busy}
+                        loading={busy}
                         tiny={$mobileWidth}
                         on:click={send}>{$_("tokenTransfer.send")}</Button>
                 {/if}

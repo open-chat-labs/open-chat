@@ -62,6 +62,7 @@ import type {
     DeleteCommunityResponse,
     ChannelIdentifier,
     Rules,
+    TipMessageResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -91,6 +92,7 @@ import {
     manageFavouritesResponse,
     leaveCommunityResponse,
     deleteCommunityResponse,
+    tipMessageResponse,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -119,12 +121,15 @@ import {
     leaveGroupResponse,
     deleteGroupResponse,
     apiChatIdentifier,
+    apiPendingCryptoTransaction,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
+import type { MessageContext } from "openchat-shared";
+import type { PendingCryptocurrencyTransfer } from "openchat-shared";
 
 export class UserClient extends CandidService {
     private userService: UserService;
@@ -788,6 +793,29 @@ export class UserClient extends CandidService {
         return this.handleResponse(
             this.userService.mark_read(this.markMessageArgs(request)),
             markReadResponse,
+        );
+    }
+
+    tipMessage(
+        messageContext: MessageContext,
+        messageId: bigint,
+        transfer: PendingCryptocurrencyTransfer,
+    ): Promise<TipMessageResponse> {
+        const apiTransfer = apiPendingCryptoTransaction(transfer);
+        if (!("Pending" in apiTransfer)) {
+            throw new Error("Transaction is not of type Pending" + JSON.stringify(apiTransfer));
+        }
+        return this.handleResponse(
+            this.userService.tip_message({
+                chat: apiChatIdentifier(messageContext.chatId),
+                message_id: messageId,
+                transfer: apiTransfer.Pending,
+                thread_root_message_index: apiOptional(
+                    identity,
+                    messageContext.threadRootMessageIndex,
+                ),
+            }),
+            tipMessageResponse,
         );
     }
 

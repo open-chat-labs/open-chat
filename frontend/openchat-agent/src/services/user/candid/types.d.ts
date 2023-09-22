@@ -755,7 +755,7 @@ export interface GroupChatCreated {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
-  'permissions' : GroupPermissionsReduced,
+  'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
   'date_last_pinned' : [] | [TimestampMillis],
@@ -847,21 +847,6 @@ export interface GroupNameChanged {
 export interface GroupPermissions {
   'block_users' : PermissionRole,
   'mention_all_members' : PermissionRole,
-  'change_permissions' : PermissionRole,
-  'delete_messages' : PermissionRole,
-  'send_messages' : PermissionRole,
-  'remove_members' : PermissionRole,
-  'update_group' : PermissionRole,
-  'invite_users' : PermissionRole,
-  'change_roles' : PermissionRole,
-  'add_members' : PermissionRole,
-  'create_polls' : PermissionRole,
-  'pin_messages' : PermissionRole,
-  'reply_in_thread' : PermissionRole,
-  'react_to_messages' : PermissionRole,
-}
-export interface GroupPermissionsReduced {
-  'block_users' : PermissionRole,
   'change_permissions' : PermissionRole,
   'delete_messages' : PermissionRole,
   'send_messages' : PermissionRole,
@@ -1031,6 +1016,7 @@ export interface Message {
   'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
+  'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
   'last_updated' : [] | [TimestampMillis],
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
@@ -1639,6 +1625,23 @@ export type TimestampNanos = bigint;
 export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : TimestampMillis };
+export interface TipMessageArgs {
+  'chat' : Chat,
+  'message_id' : MessageId,
+  'transfer' : PendingCryptoTransaction,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type TipMessageResponse = { 'TransferNotToMessageSender' : null } |
+  { 'MessageNotFound' : null } |
+  { 'ChatNotFound' : null } |
+  { 'ChatFrozen' : null } |
+  { 'NotAuthorized' : null } |
+  { 'TransferCannotBeZero' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'TransferFailed' : string } |
+  { 'InternalError' : [string, CompletedCryptoTransaction] } |
+  { 'CannotTipSelf' : null };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
@@ -1859,6 +1862,7 @@ export interface _SERVICE {
     [SetMessageReminderV2Args],
     SetMessageReminderResponse
   >,
+  'tip_message' : ActorMethod<[TipMessageArgs], TipMessageResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'undelete_messages' : ActorMethod<
     [UndeleteMessagesArgs],

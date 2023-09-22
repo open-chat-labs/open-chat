@@ -473,6 +473,10 @@ export type EnhancedReplyContext = RehydratedReplyContext & {
     content: MessageContent;
 };
 
+type LedgerId = string;
+type UserId = string;
+export type TipsReceived = Record<LedgerId, Record<UserId, bigint>>;
+
 export type Message = {
     kind: "message";
     messageId: bigint;
@@ -481,6 +485,7 @@ export type Message = {
     content: MessageContent;
     repliesTo?: ReplyContext;
     reactions: Reaction[];
+    tips: TipsReceived;
     edited: boolean;
     forwarded: boolean;
     deleted: boolean;
@@ -1880,10 +1885,4 @@ export type PublicGroupSummaryResponse =
 
 export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
 
-export type Tip = {
-    ledger: string;
-    token: string;
-    messageId: bigint;
-    amountE8s: bigint;
-    feeE8s: bigint;
-};
+export type TipMessageResponse = Success | Failure;

@@ -1005,5 +1005,7 @@
         "system": "System",
         "title": "Theme"
     },
-    "tip": {}
+    "tip": {
+        "title": "Add a tip"
+    }
 }

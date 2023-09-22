@@ -1238,17 +1238,29 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getCachePrimerTimestamps":
-                executeThenReply(payload, correlationId, agent
-                    .getCachePrimerTimestamps());
+                executeThenReply(payload, correlationId, agent.getCachePrimerTimestamps());
                 break;
 
             case "setCachePrimerTimestamp":
-                executeThenReply(payload, correlationId, agent
-                    .setCachePrimerTimestamp(
-                        payload.chatIdentifierString,
-                        payload.timestamp
-                    )
-                    .then(() => undefined));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent
+                        .setCachePrimerTimestamp(payload.chatIdentifierString, payload.timestamp)
+                        .then(() => undefined),
+                );
+                break;
+
+            case "tipMessage":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.userClient.tipMessage(
+                        payload.messageContext,
+                        payload.messageId,
+                        payload.transfer,
+                    ),
+                );
                 break;
 
             default:

@@ -838,6 +838,7 @@ export interface Message {
   'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
+  'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
   'last_updated' : [] | [TimestampMillis],
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
