@@ -126,9 +126,9 @@ import {
     chatMetrics,
     completedCryptoTransfer,
     accessGate,
-    groupPermissions,
     message,
     messageContent,
+    groupPermissionsReduced,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -774,7 +774,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
             canisterId: candid.chat_id.toString(),
         })),
         memberCount: candid.participant_count,
-        permissions: groupPermissions(candid.permissions),
+        permissions: groupPermissionsReduced(candid.permissions),
         metrics: chatMetrics(candid.metrics),
         subtype: optional(candid.subtype, apiGroupSubtype),
         previewed: false,
