@@ -24,6 +24,7 @@ generate_c2c_call!(c2c_report_message_v2);
 generate_c2c_call!(c2c_report_message);
 generate_c2c_call!(c2c_set_user_suspended);
 generate_c2c_call!(c2c_start_import_into_community);
+generate_c2c_call!(c2c_tip_message);
 generate_c2c_call!(c2c_toggle_mute_notifications);
 generate_c2c_call!(c2c_unfreeze_group);
 generate_c2c_call!(c2c_update_proposals);
