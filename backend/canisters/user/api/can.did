@@ -119,7 +119,6 @@ type RemoveReactionResponse = variant {
 
 type TipMessageArgs = record {
     chat : Chat;
-    recipient : UserId;
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
     transfer : PendingCryptoTransaction;
@@ -132,7 +131,7 @@ type TipMessageResponse = variant {
     CannotTipSelf;
     NotAuthorized;
     TransferCannotBeZero;
-    TransferToWrongAccount;
+    TransferNotToMessageSender;
     TransferFailed : text;
     ChatFrozen;
     UserSuspended;

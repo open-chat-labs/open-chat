@@ -266,7 +266,6 @@ pub mod happy_path {
             sender.canister(),
             &user_canister::tip_message::Args {
                 chat,
-                recipient,
                 thread_root_message_index: None,
                 message_id,
                 transfer: PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {

@@ -12,9 +12,10 @@ use user_canister::tip_message::{Response::*, *};
 async fn tip_message(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(response) = read_state(|state| prepare(&args, state)) {
-        return *response;
-    }
+    let message_sender = match read_state(|state| prepare(&args, state)) {
+        Ok(user_id) => user_id,
+        Err(response) => return *response,
+    };
 
     // Make the crypto transfer
     let transfer = match process_transaction(args.transfer).await {
@@ -29,6 +30,7 @@ async fn tip_message(args: Args) -> Response {
         Chat::Group(chat_id) => {
             use group_canister::c2c_tip_message::Response;
             let args = group_canister::c2c_tip_message::Args {
+                message_sender,
                 thread_root_message_index: args.thread_root_message_index,
                 message_id: args.message_id,
                 transfer,
@@ -37,6 +39,7 @@ async fn tip_message(args: Args) -> Response {
                 Ok(Response::Success) => Success,
                 Ok(Response::MessageNotFound) => MessageNotFound,
                 Ok(Response::CannotTipSelf) => CannotTipSelf,
+                Ok(Response::MessageSenderMismatch) => TransferNotToMessageSender,
                 Ok(Response::NotAuthorized) => NotAuthorized,
                 Ok(Response::GroupFrozen) => ChatFrozen,
                 Ok(Response::UserNotInGroup) => ChatNotFound,
@@ -47,6 +50,7 @@ async fn tip_message(args: Args) -> Response {
         Chat::Channel(community_id, channel_id) => {
             use community_canister::c2c_tip_message::Response;
             let args = community_canister::c2c_tip_message::Args {
+                message_sender,
                 channel_id,
                 thread_root_message_index: args.thread_root_message_index,
                 message_id: args.message_id,
@@ -56,6 +60,7 @@ async fn tip_message(args: Args) -> Response {
                 Ok(Response::Success) => Success,
                 Ok(Response::MessageNotFound) => MessageNotFound,
                 Ok(Response::CannotTipSelf) => CannotTipSelf,
+                Ok(Response::MessageSenderMismatch) => TransferNotToMessageSender,
                 Ok(Response::NotAuthorized) => NotAuthorized,
                 Ok(Response::CommunityFrozen) => ChatFrozen,
                 Ok(Response::UserSuspended) => UserSuspended,
@@ -66,14 +71,19 @@ async fn tip_message(args: Args) -> Response {
     }
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> Result<(), Box<Response>> {
-    let my_user_id: UserId = state.env.canister_id().into();
-    if my_user_id == args.recipient {
-        return Err(Box::new(CannotTipSelf));
+fn prepare(args: &Args, state: &RuntimeState) -> Result<UserId, Box<Response>> {
+    if args.transfer.is_zero() {
+        return Err(Box::new(TransferCannotBeZero));
     }
 
-    if !args.transfer.validate_recipient(args.recipient) {
-        return Err(Box::new(TransferToWrongAccount));
+    let recipient = match args.transfer.user_id() {
+        Some(u) => u,
+        None => return Err(Box::new(TransferNotToMessageSender)),
+    };
+
+    let my_user_id: UserId = state.env.canister_id().into();
+    if my_user_id == recipient {
+        return Err(Box::new(CannotTipSelf));
     }
 
     if !match &args.chat {
@@ -89,7 +99,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(), Box<Response>> {
     } else if args.transfer.is_zero() {
         Err(Box::new(TransferCannotBeZero))
     } else {
-        Ok(())
+        Ok(recipient)
     }
 }
 
@@ -105,6 +115,7 @@ fn tip_direct_chat_message(
         let now = state.env.now();
         match chat.events.tip_message(
             my_user_id,
+            chat.them,
             EventIndex::default(),
             thread_root_message_index,
             message_id,
@@ -126,6 +137,7 @@ fn tip_direct_chat_message(
             }
             TipMessageResult::MessageNotFound => MessageNotFound,
             TipMessageResult::CannotTipSelf => CannotTipSelf,
+            TipMessageResult::MessageSenderMismatch => TransferNotToMessageSender,
         }
     } else {
         ChatNotFound

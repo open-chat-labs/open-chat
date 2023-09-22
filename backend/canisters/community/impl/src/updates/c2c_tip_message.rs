@@ -26,10 +26,14 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
             let now = state.env.now();
-            match channel
-                .chat
-                .tip_message(user_id, args.thread_root_message_index, args.message_id, args.transfer, now)
-            {
+            match channel.chat.tip_message(
+                user_id,
+                args.message_sender,
+                args.thread_root_message_index,
+                args.message_id,
+                args.transfer,
+                now,
+            ) {
                 TipMessageResult::Success => {
                     // TODO push notification
                     handle_activity_notification(state);
@@ -37,6 +41,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 }
                 TipMessageResult::MessageNotFound => MessageNotFound,
                 TipMessageResult::CannotTipSelf => CannotTipSelf,
+                TipMessageResult::MessageSenderMismatch => MessageSenderMismatch,
                 TipMessageResult::UserNotInGroup => ChannelNotFound,
                 TipMessageResult::NotAuthorized => NotAuthorized,
                 TipMessageResult::UserSuspended => UserSuspended,

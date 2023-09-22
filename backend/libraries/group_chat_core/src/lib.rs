@@ -865,6 +865,7 @@ impl GroupChatCore {
     pub fn tip_message(
         &mut self,
         user_id: UserId,
+        message_sender: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         transfer: CompletedCryptoTransaction,
@@ -885,6 +886,7 @@ impl GroupChatCore {
             self.events
                 .tip_message(
                     user_id,
+                    message_sender,
                     min_visible_event_index,
                     thread_root_message_index,
                     message_id,
@@ -1689,6 +1691,7 @@ impl From<chat_events::AddRemoveReactionResult> for AddRemoveReactionResult {
 pub enum TipMessageResult {
     Success,
     MessageNotFound,
+    MessageSenderMismatch,
     CannotTipSelf,
     NotAuthorized,
     UserNotInGroup,
@@ -1700,6 +1703,7 @@ impl From<chat_events::TipMessageResult> for TipMessageResult {
         match value {
             chat_events::TipMessageResult::Success => TipMessageResult::Success,
             chat_events::TipMessageResult::MessageNotFound => TipMessageResult::MessageNotFound,
+            chat_events::TipMessageResult::MessageSenderMismatch => TipMessageResult::MessageSenderMismatch,
             chat_events::TipMessageResult::CannotTipSelf => TipMessageResult::CannotTipSelf,
         }
     }
