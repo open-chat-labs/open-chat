@@ -29,7 +29,6 @@ import type {
     ApiPollVotes,
     ApiTotalPollVotes,
     ApiPollConfig,
-    ApiGroupPermissions,
     ApiPermissionRole,
     ApiGiphyContent,
     ApiGiphyImageVariant,
@@ -62,6 +61,9 @@ import type {
     ApiLeaveGroupResponse,
     ApiChat,
 } from "../user/candid/idl";
+import type {
+    ApiGroupPermissions,
+} from "../group/candid/idl";
 import type {
     Message,
     ThreadSummary,

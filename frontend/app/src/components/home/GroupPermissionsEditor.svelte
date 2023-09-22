@@ -51,7 +51,7 @@
     {roles}
     label={$_("permissions.replyInThread")}
     bind:rolePermission={permissions.replyInThread} />
-<SelectPermissionRole
+<!-- <SelectPermissionRole
     {roles}
     label={$_("permissions.mentionAllMembers", { values: { mention: "@everyone" } })}
-    bind:rolePermission={permissions.mentionAllMembers} />
+    bind:rolePermission={permissions.mentionAllMembers} /> -->
