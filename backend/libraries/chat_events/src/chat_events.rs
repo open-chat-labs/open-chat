@@ -541,6 +541,7 @@ impl ChatEvents {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn tip_message(
         &mut self,
         user_id: UserId,
