@@ -20,6 +20,9 @@ pub enum Notification {
     DirectReactionAdded(DirectReactionAddedNotification),
     GroupReactionAdded(GroupReactionAddedNotification),
     ChannelReactionAdded(ChannelReactionAddedNotification),
+    DirectMessageTipped(DirectMessageTipped),
+    GroupMessageTipped(GroupMessageTipped),
+    ChannelMessageTipped(ChannelMessageTipped),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -126,6 +129,49 @@ pub struct ChannelReactionAddedNotification {
     pub added_by_name: String,
     pub added_by_display_name: Option<String>,
     pub reaction: Reaction,
+    pub community_avatar_id: Option<u128>,
+    pub channel_avatar_id: Option<u128>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct DirectMessageTipped {
+    pub them: UserId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub message_event_index: EventIndex,
+    pub username: String,
+    pub display_name: Option<String>,
+    pub tip: String, // formatted amount, eg. "0.1 CHAT"
+    pub user_avatar_id: Option<u128>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GroupMessageTipped {
+    pub chat_id: ChatId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub message_event_index: EventIndex,
+    pub group_name: String,
+    pub tipped_by: UserId,
+    pub tipped_by_name: String,
+    pub tipped_by_display_name: Option<String>,
+    pub tip: String,
+    pub group_avatar_id: Option<u128>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ChannelMessageTipped {
+    pub community_id: CommunityId,
+    pub channel_id: ChannelId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub message_event_index: EventIndex,
+    pub community_name: String,
+    pub channel_name: String,
+    pub tipped_by: UserId,
+    pub tipped_by_name: String,
+    pub tipped_by_display_name: Option<String>,
+    pub tip: String,
     pub community_avatar_id: Option<u128>,
     pub channel_avatar_id: Option<u128>,
 }
