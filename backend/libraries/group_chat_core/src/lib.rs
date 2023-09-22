@@ -8,13 +8,14 @@ use search::Query;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
-    AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, Document, EventIndex, EventWrapper, EventsResponse,
-    FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupPermissionRole,
-    GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
-    InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions,
-    PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
+    AccessGate, AvatarChanged, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, Document, EventIndex,
+    EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated,
+    GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
+    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse,
+    Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules,
+    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited,
+    Version, Versioned, VersionedRules,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -753,7 +754,9 @@ impl GroupChatCore {
                 .message_internal(root_message_index.into())
                 .cloned()
         }) {
-            users_to_notify.insert(thread_root_message.sender);
+            if thread_root_message.sender != sender {
+                users_to_notify.insert(thread_root_message.sender);
+            }
 
             if let Some(thread_summary) = thread_root_message.thread_summary {
                 thread_participants = Some(HashSet::from_iter(thread_summary.participant_ids));
@@ -769,8 +772,11 @@ impl GroupChatCore {
             }
         }
 
+        // Disable mentions for messages sent by the ProposalsBot
+        let mentions_disabled = sender == proposals_bot_user_id;
+
         for member in self.members.iter_mut().filter(|m| !m.suspended.value && m.user_id != sender) {
-            let mentioned = everyone_mentioned || mentions.contains(&member.user_id);
+            let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
 
             if mentioned {
                 // Mention this member
@@ -855,6 +861,43 @@ impl GroupChatCore {
                     reaction,
                     now,
                 })
+                .into()
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn tip_message(
+        &mut self,
+        user_id: UserId,
+        message_sender: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        transfer: CompletedCryptoTransaction,
+        now: TimestampMillis,
+    ) -> TipMessageResult {
+        use TipMessageResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+            if !member.role.can_react_to_messages(&self.permissions) {
+                return NotAuthorized;
+            }
+
+            let min_visible_event_index = member.min_visible_event_index();
+
+            self.events
+                .tip_message(
+                    user_id,
+                    message_sender,
+                    min_visible_event_index,
+                    thread_root_message_index,
+                    message_id,
+                    transfer,
+                    now,
+                )
                 .into()
         } else {
             UserNotInGroup
@@ -1646,6 +1689,27 @@ impl From<chat_events::AddRemoveReactionResult> for AddRemoveReactionResult {
             chat_events::AddRemoveReactionResult::Success => AddRemoveReactionResult::Success,
             chat_events::AddRemoveReactionResult::NoChange => AddRemoveReactionResult::NoChange,
             chat_events::AddRemoveReactionResult::MessageNotFound => AddRemoveReactionResult::MessageNotFound,
+        }
+    }
+}
+
+pub enum TipMessageResult {
+    Success,
+    MessageNotFound,
+    MessageSenderMismatch,
+    CannotTipSelf,
+    NotAuthorized,
+    UserNotInGroup,
+    UserSuspended,
+}
+
+impl From<chat_events::TipMessageResult> for TipMessageResult {
+    fn from(value: chat_events::TipMessageResult) -> Self {
+        match value {
+            chat_events::TipMessageResult::Success => TipMessageResult::Success,
+            chat_events::TipMessageResult::MessageNotFound => TipMessageResult::MessageNotFound,
+            chat_events::TipMessageResult::MessageSenderMismatch => TipMessageResult::MessageSenderMismatch,
+            chat_events::TipMessageResult::CannotTipSelf => TipMessageResult::CannotTipSelf,
         }
     }
 }

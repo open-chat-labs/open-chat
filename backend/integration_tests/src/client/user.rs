@@ -26,16 +26,20 @@ generate_update_call!(send_message_v2);
 generate_update_call!(send_message_with_transfer_to_channel);
 generate_update_call!(send_message_with_transfer_to_group);
 generate_update_call!(set_message_reminder_v2);
+generate_update_call!(tip_message);
 generate_update_call!(unblock_user);
 generate_update_call!(undelete_messages);
 
 pub mod happy_path {
     use crate::rng::random_message_id;
+    use crate::utils::now_nanos;
     use crate::User;
     use pocket_ic::PocketIc;
+    use candid::Principal;
+    use types::icrc1::Account;
     use types::{
-        ChatId, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId, Reaction, Rules, TextContent,
-        TimestampMillis, UserId,
+        icrc1, CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial,
+        MessageId, PendingCryptoTransaction, Reaction, Rules, TextContent, TimestampMillis, UserId,
     };
 
     pub fn send_text_message(
@@ -236,5 +240,40 @@ pub mod happy_path {
             user_canister::updates::Response::Success(result) => Some(result),
             user_canister::updates::Response::SuccessNoUpdates => None,
         }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn tip_message(
+        env: &mut StateMachine,
+        sender: &User,
+        recipient: UserId,
+        chat: Chat,
+        message_id: MessageId,
+        ledger: CanisterId,
+        token: Cryptocurrency,
+        amount: u128,
+        fee: u128,
+    ) {
+        let response = super::tip_message(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::tip_message::Args {
+                chat,
+                thread_root_message_index: None,
+                message_id,
+                transfer: PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+                    ledger,
+                    token,
+                    amount,
+                    to: Account::from(Principal::from(recipient)),
+                    fee,
+                    memo: None,
+                    created: now_nanos(env),
+                }),
+            },
+        );
+
+        assert!(matches!(response, user_canister::tip_message::Response::Success))
     }
 }

@@ -755,7 +755,7 @@ export interface GroupChatCreated {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
-  'permissions' : GroupPermissions,
+  'permissions' : GroupPermissionsReduced,
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
   'date_last_pinned' : [] | [TimestampMillis],
@@ -847,6 +847,21 @@ export interface GroupNameChanged {
 export interface GroupPermissions {
   'block_users' : PermissionRole,
   'mention_all_members' : PermissionRole,
+  'change_permissions' : PermissionRole,
+  'delete_messages' : PermissionRole,
+  'send_messages' : PermissionRole,
+  'remove_members' : PermissionRole,
+  'update_group' : PermissionRole,
+  'invite_users' : PermissionRole,
+  'change_roles' : PermissionRole,
+  'add_members' : PermissionRole,
+  'create_polls' : PermissionRole,
+  'pin_messages' : PermissionRole,
+  'reply_in_thread' : PermissionRole,
+  'react_to_messages' : PermissionRole,
+}
+export interface GroupPermissionsReduced {
+  'block_users' : PermissionRole,
   'change_permissions' : PermissionRole,
   'delete_messages' : PermissionRole,
   'send_messages' : PermissionRole,
