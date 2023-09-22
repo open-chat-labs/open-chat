@@ -12,8 +12,8 @@ use user_canister::tip_message::{Response::*, *};
 async fn tip_message(args: Args) -> Response {
     run_regular_jobs();
 
-    let message_sender = match read_state(|state| prepare(&args, state)) {
-        Ok(user_id) => user_id,
+    let prepare_result = match read_state(|state| prepare(&args, state)) {
+        Ok(ok) => ok,
         Err(response) => return *response,
     };
 
@@ -25,21 +25,30 @@ async fn tip_message(args: Args) -> Response {
 
     match args.chat {
         Chat::Direct(chat_id) => mutate_state(|state| {
-            tip_direct_chat_message(chat_id, args.thread_root_message_index, args.message_id, transfer, state)
+            tip_direct_chat_message(
+                prepare_result,
+                chat_id,
+                args.thread_root_message_index,
+                args.message_id,
+                transfer,
+                state,
+            )
         }),
         Chat::Group(chat_id) => {
             use group_canister::c2c_tip_message::Response;
             let args = group_canister::c2c_tip_message::Args {
-                message_sender,
+                recipient: prepare_result.recipient,
                 thread_root_message_index: args.thread_root_message_index,
                 message_id: args.message_id,
                 transfer,
+                username: prepare_result.username,
+                display_name: prepare_result.display_name,
             };
             match group_canister_c2c_client::c2c_tip_message(chat_id.into(), &args).await {
                 Ok(Response::Success) => Success,
                 Ok(Response::MessageNotFound) => MessageNotFound,
                 Ok(Response::CannotTipSelf) => CannotTipSelf,
-                Ok(Response::MessageSenderMismatch) => TransferNotToMessageSender,
+                Ok(Response::RecipientMismatch) => TransferNotToMessageSender,
                 Ok(Response::NotAuthorized) => NotAuthorized,
                 Ok(Response::GroupFrozen) => ChatFrozen,
                 Ok(Response::UserNotInGroup) => ChatNotFound,
@@ -50,17 +59,19 @@ async fn tip_message(args: Args) -> Response {
         Chat::Channel(community_id, channel_id) => {
             use community_canister::c2c_tip_message::Response;
             let args = community_canister::c2c_tip_message::Args {
-                message_sender,
+                recipient: prepare_result.recipient,
                 channel_id,
                 thread_root_message_index: args.thread_root_message_index,
                 message_id: args.message_id,
                 transfer,
+                username: prepare_result.username,
+                display_name: prepare_result.display_name,
             };
             match community_canister_c2c_client::c2c_tip_message(community_id.into(), &args).await {
                 Ok(Response::Success) => Success,
                 Ok(Response::MessageNotFound) => MessageNotFound,
                 Ok(Response::CannotTipSelf) => CannotTipSelf,
-                Ok(Response::MessageSenderMismatch) => TransferNotToMessageSender,
+                Ok(Response::RecipientMismatch) => TransferNotToMessageSender,
                 Ok(Response::NotAuthorized) => NotAuthorized,
                 Ok(Response::CommunityFrozen) => ChatFrozen,
                 Ok(Response::UserSuspended) => UserSuspended,
@@ -71,7 +82,14 @@ async fn tip_message(args: Args) -> Response {
     }
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> Result<UserId, Box<Response>> {
+struct PrepareResult {
+    my_user_id: UserId,
+    recipient: UserId,
+    username: String,
+    display_name: Option<String>,
+}
+
+fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Box<Response>> {
     if args.transfer.is_zero() {
         return Err(Box::new(TransferCannotBeZero));
     }
@@ -99,11 +117,17 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<UserId, Box<Response>> {
     } else if args.transfer.is_zero() {
         Err(Box::new(TransferCannotBeZero))
     } else {
-        Ok(recipient)
+        Ok(PrepareResult {
+            my_user_id,
+            recipient,
+            username: state.data.username.value.clone(),
+            display_name: state.data.display_name.value.clone(),
+        })
     }
 }
 
 fn tip_direct_chat_message(
+    prepare_result: PrepareResult,
     chat_id: ChatId,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
@@ -111,10 +135,9 @@ fn tip_direct_chat_message(
     state: &mut RuntimeState,
 ) -> Response {
     if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
-        let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
         match chat.events.tip_message(
-            my_user_id,
+            prepare_result.my_user_id,
             chat.them,
             EventIndex::default(),
             thread_root_message_index,
@@ -127,6 +150,9 @@ fn tip_direct_chat_message(
                     thread_root_message_index,
                     message_id,
                     transfer,
+                    username: prepare_result.username,
+                    display_name: prepare_result.display_name,
+                    user_avatar_id: state.data.avatar.value.as_ref().map(|a| a.id),
                 };
                 state.data.fire_and_forget_handler.send(
                     chat_id.into(),
@@ -137,7 +163,7 @@ fn tip_direct_chat_message(
             }
             TipMessageResult::MessageNotFound => MessageNotFound,
             TipMessageResult::CannotTipSelf => CannotTipSelf,
-            TipMessageResult::MessageSenderMismatch => TransferNotToMessageSender,
+            TipMessageResult::RecipientMismatch => TransferNotToMessageSender,
         }
     } else {
         ChatNotFound

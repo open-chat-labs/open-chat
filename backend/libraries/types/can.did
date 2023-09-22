@@ -173,6 +173,17 @@ type DirectReactionAddedNotification = record {
     user_avatar_id : opt nat;
 };
 
+type DirectMessageTippedNotification = record {
+    them : UserId;
+    thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    message_event_index : EventIndex;
+    username : text;
+    display_name : opt text;
+    tip : text;
+    user_avatar_id : opt nat;
+};
+
 type FieldTooShortResult = record {
     length_provided : nat32;
     min_length : nat32;
@@ -625,6 +636,35 @@ type GroupReactionAddedNotification = record {
     group_avatar_id : opt nat;
 };
 
+type ChannelMessageTippedNotification = record {
+    community_id : CommunityId;
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    message_event_index : EventIndex;
+    community_name : text;
+    channel_name : text;
+    tipped_by : UserId;
+    tipped_by_name : text;
+    tipped_by_display_name : opt text;
+    tip : text;
+    community_avatar_id : opt nat;
+    channel_avatar_id : opt nat;
+};
+
+type GroupMessageTippedNotification = record {
+    chat_id : ChatId;
+    thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    message_event_index : EventIndex;
+    group_name : text;
+    tipped_by : UserId;
+    tipped_by_name : text;
+    tipped_by_display_name : opt text;
+    tip : text;
+    group_avatar_id : opt nat;
+};
+
 type GroupReplyContext = record {
     event_index : EventIndex;
 };
@@ -772,6 +812,9 @@ type Notification = variant {
     ChannelReactionAdded : ChannelReactionAddedNotification;
     DirectReactionAdded : DirectReactionAddedNotification;
     GroupReactionAdded : GroupReactionAddedNotification;
+    ChannelMessageTipped : ChannelMessageTippedNotification;
+    DirectMessageTipped : DirectMessageTippedNotification;
+    GroupMessageTipped : GroupMessageTippedNotification;
 };
 
 type NotificationEnvelope = record {

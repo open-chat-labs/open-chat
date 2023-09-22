@@ -545,7 +545,7 @@ impl ChatEvents {
     pub fn tip_message(
         &mut self,
         user_id: UserId,
-        message_sender: UserId,
+        recipient: UserId,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
@@ -560,8 +560,8 @@ impl ChatEvents {
             if message.sender == user_id {
                 return CannotTipSelf;
             }
-            if message.sender != message_sender {
-                return MessageSenderMismatch;
+            if message.sender != recipient {
+                return RecipientMismatch;
             }
 
             message.tips.push((user_id, transfer));
@@ -1344,7 +1344,7 @@ pub enum TipMessageResult {
     Success,
     MessageNotFound,
     CannotTipSelf,
-    MessageSenderMismatch,
+    RecipientMismatch,
 }
 
 pub enum ReservePrizeResult {
