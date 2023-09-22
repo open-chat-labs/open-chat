@@ -8,6 +8,10 @@
     "ic": "gonut-hqaaa-aaaaf-aby7a-cai",
     "ic_test": "mq2tp-baaaa-aaaaf-aucva-cai"
   },
+  "exchange_bot": {
+    "ic_test": "tz2or-siaaa-aaaaf-biffa-cai",
+    "ic": "no74g-2qaaa-aaaaf-bihlq-cai"
+  },
   "group_index": {
     "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
     "ic_test": "7kifq-3yaaa-aaaaf-ab2cq-cai"

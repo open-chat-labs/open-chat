@@ -385,6 +385,12 @@ pub struct TextContent {
     pub text: String,
 }
 
+impl From<String> for TextContent {
+    fn from(value: String) -> Self {
+        TextContent { text: value }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ImageContent {
     pub width: u32,
