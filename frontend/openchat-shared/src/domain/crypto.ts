@@ -25,3 +25,8 @@ export type CryptocurrencyDetails = {
     rootCanister: string | undefined;
     lastUpdated: bigint;
 };
+
+// approximate dollar exchange rates - until we come up with something better
+export const dollarExchangeRates: Record<string, number> = {
+    icp: 3,
+};

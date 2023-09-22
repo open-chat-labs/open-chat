@@ -1,19 +1,21 @@
 <script lang="ts">
+    import { tweened } from "svelte/motion";
+    import { quadOut } from "svelte/easing";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import type { OpenChat } from "openchat-client";
-    import {
-        E8S_PER_TOKEN,
-        type CryptocurrencyDetails,
-        type Message,
-        type MessageContext,
-        type Tip,
-    } from "openchat-shared";
+    import type {
+        OpenChat,
+        CryptocurrencyDetails,
+        Message,
+        MessageContext,
+        Tip,
+    } from "openchat-client";
+    import { E8S_PER_TOKEN, dollarExchangeRates } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
@@ -32,19 +34,33 @@
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
-    let selectedMagnitude: Magnitude = 10; // TODO - remember this so we can re-use the last value
+    let selectedIncrement: Increment = 10; // TODO - remember this so we can re-use the last value
+    let dollar: HTMLElement;
+    let dollarTop = tweened(-1000);
+    let dollarOpacity = tweened(0);
+    let dollarScale = tweened(0);
 
-    const magnitudes: Magnitude[] = [10, 50, 100];
-    type Magnitude = 10 | 50 | 100;
+    const increments: Increment[] = [10, 50, 100];
+    type Increment = 10 | 50 | 100;
 
-    function amountLabel(n: Magnitude): string {
-        return `$${(n / 100).toFixed(2)}`;
+    let multipliers: Record<Increment, number> = {
+        10: 1,
+        50: 1,
+        100: 1,
+    };
+
+    function amountLabel(n: Increment, multiplier: number): string {
+        return `$${((n * multiplier) / 100).toFixed(2)}`;
     }
 
     $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
-    $: draftAmount = calculateAmount(selectedMagnitude, tokenDetails);
+    $: draftAmount = calculateAmount(
+        selectedIncrement,
+        tokenDetails,
+        multipliers[selectedIncrement]
+    );
 
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
@@ -56,16 +72,17 @@
     $: valid = error === undefined && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
 
-    const exchangeRates: Record<string, number> = {
-        icp: 3,
-    };
-
-    function calculateAmount(cents: Magnitude, token: CryptocurrencyDetails): bigint {
-        const rate = exchangeRates[token.symbol.toLowerCase()];
+    function calculateAmount(
+        cents: Increment,
+        token: CryptocurrencyDetails,
+        multiplier: number
+    ): bigint {
+        const rate = dollarExchangeRates[token.symbol.toLowerCase()];
         if (rate === undefined) {
             throw new Error(`we don't have an exchange rate for the token: ${token.symbol}`);
         }
-        const e8s = (cents / 100) * rate * E8S_PER_TOKEN;
+        const multiplied = cents * multiplier;
+        const e8s = (multiplied / 100) * rate * E8S_PER_TOKEN;
         return BigInt(Math.round(e8s));
     }
 
@@ -112,6 +129,65 @@
             }
         }
     }
+
+    $: {
+        if (dollar) {
+            dollar.style.setProperty("top", `${$dollarTop}px`);
+            dollar.style.setProperty("opacity", `${$dollarOpacity}`);
+            dollar.style.setProperty(
+                "transform",
+                `scale(${$dollarScale}) rotate(${$dollarScale}turn)`
+            );
+        }
+    }
+
+    function clickAmount(e: MouseEvent, increment: Increment) {
+        const buttonRect = (e.target as HTMLElement).getBoundingClientRect();
+        const hDiff = buttonRect.height - dollar.clientHeight;
+        const wDiff = buttonRect.width - dollar.clientWidth;
+        const relTop = buttonRect.top + hDiff / 2;
+        const relLeft = buttonRect.left + wDiff / 2;
+        dollarTop = tweened(relTop, {
+            duration: 800,
+            easing: quadOut,
+        });
+        dollarOpacity = tweened(1, {
+            duration: 800,
+            easing: quadOut,
+        });
+        dollarScale = tweened(0, {
+            duration: 800,
+            easing: quadOut,
+        });
+        dollarTop.set(relTop - 300);
+        dollarOpacity.set(0);
+        dollarScale.set(2);
+        dollar.style.left = `${relLeft}px`;
+
+        if (increment !== selectedIncrement) {
+            multipliers = {
+                10: 1,
+                50: 1,
+                100: 1,
+            };
+        } else {
+            multipliers[increment] += 1;
+        }
+        selectedIncrement = increment;
+    }
+
+    onMount(() => {
+        let d = document.getElementById("tip-dollar");
+        if (!d) {
+            d = document.createElement("div");
+            d.id = "tip-dollar";
+            d.className = "tip-dollar";
+            const t = document.createTextNode("🤑");
+            d.appendChild(t);
+            document.body.appendChild(d);
+        }
+        dollar = d;
+    });
 </script>
 
 <Overlay dismissible>
@@ -149,17 +225,19 @@
                     </a>
                 {:else}
                     <div class="amounts">
-                        {#each magnitudes as magnitude}
-                            <div
-                                role="button"
-                                tabindex="0"
-                                class:disabled={calculateAmount(magnitude, tokenDetails) >
+                        {#each increments as increment}
+                            <button
+                                class:disabled={calculateAmount(
+                                    increment,
+                                    tokenDetails,
+                                    multipliers[increment]
+                                ) >
                                     cryptoBalance - transferFees}
-                                class:selected={selectedMagnitude === magnitude}
-                                on:click={() => (selectedMagnitude = magnitude)}
+                                class:selected={selectedIncrement === increment}
+                                on:click|preventDefault={(e) => clickAmount(e, increment)}
                                 class="amount">
-                                {$_(amountLabel(magnitude))}
-                            </div>
+                                {$_(amountLabel(increment, multipliers[increment]))}
+                            </button>
                         {/each}
                     </div>
                     {#if error}
@@ -217,6 +295,7 @@
     .body {
         transition: background-color 100ms ease-in-out;
         @include font(book, normal, fs-100, 28);
+        position: relative;
     }
 
     .amounts {
