@@ -527,7 +527,7 @@ impl From<&MessageContentInternal> for Document {
                     let amount = c.units();
                     // This is only used for string searching so it's better to default to 8 than to trap
                     let decimals = c.token().decimals().unwrap_or(8);
-                    let amount_string = format_crypto_amount(amount, decimals as u32);
+                    let amount_string = format_crypto_amount(amount, decimals);
                     document.add_field(amount_string, 1.0, false);
                 }
 

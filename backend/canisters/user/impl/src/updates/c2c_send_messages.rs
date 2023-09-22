@@ -105,7 +105,7 @@ async fn c2c_handle_bot_messages(
                     message_id: None,
                     sender_message_index: None,
                     sender_name: args.bot_name.clone(),
-                    sender_display_name: None,
+                    sender_display_name: args.bot_display_name.clone(),
                     content: message.content.into(),
                     replies_to: None,
                     forwarding: false,

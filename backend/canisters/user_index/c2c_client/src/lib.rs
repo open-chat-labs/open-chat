@@ -1,5 +1,5 @@
 use candid::Principal;
-use canister_client::{generate_c2c_call, generate_c2c_call_with_payment, generate_candid_c2c_call};
+use canister_client::{generate_c2c_call, generate_candid_c2c_call, generate_candid_c2c_call_with_payment};
 use types::{CanisterId, UserDetails};
 use user_index_canister::*;
 
@@ -11,9 +11,9 @@ generate_c2c_call!(user);
 // Updates
 generate_c2c_call!(c2c_migrate_user_principal);
 generate_c2c_call!(c2c_notify_events);
+generate_candid_c2c_call_with_payment!(c2c_register_bot);
 generate_c2c_call!(c2c_set_avatar);
 generate_c2c_call!(c2c_suspend_users);
-generate_c2c_call_with_payment!(c2c_register_bot);
 
 #[derive(Debug)]
 pub enum LookupUserError {
