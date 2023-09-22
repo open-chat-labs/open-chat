@@ -797,6 +797,7 @@
                 updateGroup: "admin",
                 pinMessages: "admin",
                 inviteUsers: "admin",
+                mentionAllMembers: "admin",
                 createPolls: "member",
                 sendMessages: "member",
                 reactToMessages: "member",

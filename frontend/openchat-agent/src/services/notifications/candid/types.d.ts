@@ -621,6 +621,7 @@ export interface GroupNameChanged {
 }
 export interface GroupPermissions {
   'block_users' : PermissionRole,
+  'mention_all_members' : PermissionRole,
   'change_permissions' : PermissionRole,
   'delete_messages' : PermissionRole,
   'send_messages' : PermissionRole,
@@ -916,6 +917,7 @@ export interface OptionalCommunityPermissions {
 }
 export interface OptionalGroupPermissions {
   'block_users' : [] | [PermissionRole],
+  'mention_all_members' : [] | [PermissionRole],
   'change_permissions' : [] | [PermissionRole],
   'delete_messages' : [] | [PermissionRole],
   'send_messages' : [] | [PermissionRole],

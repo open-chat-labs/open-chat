@@ -1,6 +1,16 @@
 import type { DataContent } from "../data/data";
 
-export type UserOrUserGroup = UserSummary | UserGroupSummary;
+export type UserOrUserGroup = UserSummary | UserGroupSummary | MentionEveryone;
+
+export type UserSummary = DataContent & {
+    kind: "user" | "bot";
+    userId: string;
+    username: string;
+    displayName: string | undefined;
+    updated: bigint;
+    suspended: boolean;
+    diamond: boolean;
+};
 
 export type UserGroupSummary = {
     kind: "user_group";
@@ -8,6 +18,10 @@ export type UserGroupSummary = {
     name: string;
     id: number;
 };
+
+export type MentionEveryone = {
+    kind: "everyone";
+}
 
 export type UserGroupDetails = {
     kind: "user_group";
@@ -24,16 +38,6 @@ export type IdentityState =
     | "logging_in"
     | "upgrading_user"
     | "upgrade_user";
-
-export type UserSummary = DataContent & {
-    kind: "user" | "bot";
-    userId: string;
-    username: string;
-    displayName: string | undefined;
-    updated: bigint;
-    suspended: boolean;
-    diamond: boolean;
-};
 
 export type UserLookup = Record<string, UserSummary>;
 

@@ -29,6 +29,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "freeze_group"
         | "remove_hot_group_exclusion"
         | "set_community_moderation_flags"
+        | "set_community_upgrade_concurrency"
         | "set_group_upgrade_concurrency"
         | "unfreeze_group" => true,
         _ => false,

@@ -14,6 +14,7 @@ async fn main() {
         CanisterName::CyclesDispenser => {
             upgrade_cycles_dispenser_canister(identity, opts.url, opts.cycles_dispenser, opts.version).await
         }
+        CanisterName::ExchangeBot => upgrade_exchange_bot_canister(identity, opts.url, opts.exchange_bot, opts.version).await,
         CanisterName::Group => upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::LocalGroupIndex => {
             upgrade_local_group_index_canister(identity, opts.url, opts.group_index, opts.version).await
@@ -79,6 +80,9 @@ struct Opts {
 
     #[arg(long)]
     market_maker: CanisterId,
+
+    #[arg(long)]
+    exchange_bot: CanisterId,
 
     #[arg(long)]
     canister_to_upgrade: CanisterName,

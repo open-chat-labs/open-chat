@@ -33,6 +33,7 @@ import {
     canReactToMessages,
     canRemoveMembers,
     canReplyInThread,
+    canMentionAllMembers,
     canSendMessages,
     canUnblockUsers,
     containsReaction,
@@ -348,6 +349,9 @@ import {
     toTitleCase,
     CommonResponses,
     defaultChatRules,
+    userOrUserGroupName,
+    userOrUserGroupId,
+    extractUserIdsFromMentions,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -1203,6 +1207,9 @@ export class OpenChat extends OpenChatAgentWorker {
     formatMessageDate = formatMessageDate;
     userIdsFromEvents = userIdsFromEvents;
     missingUserIds = missingUserIds;
+    userOrUserGroupName = userOrUserGroupName;
+    userOrUserGroupId = userOrUserGroupId;
+    extractUserIdsFromMentions = extractUserIdsFromMentions;
     toRecord2 = toRecord2;
     toDatetimeString = toDatetimeString;
     groupBySender = groupBySender;
@@ -1247,6 +1254,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     canReplyInThread(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canReplyInThread);
+    }
+
+    canMentionAllMembers(chatId: ChatIdentifier): boolean {
+        return this.chatPredicate(chatId, canMentionAllMembers);
     }
 
     canSendMessages(chatId: ChatIdentifier): boolean {
@@ -4310,11 +4321,6 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    // FIXME - this is duplicated
-    private extractUserIdsFromMentions(text: string): string[] {
-        return [...text.matchAll(/@UserId\(([\d\w-]+)\)/g)].map((m) => m[1]);
-    }
-
     private userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
         const userIds = new Set<string>();
         chats.forEach((chat) => {
@@ -4856,6 +4862,9 @@ export class OpenChat extends OpenChatAgentWorker {
                 const userGroups = [...this._liveState.selectedCommunity.userGroups.values()];
                 userGroups.forEach((ug) => (lookup[ug.name.toLowerCase()] = ug));
             }
+            if (this._liveState.selectedChatId !== undefined && this.canMentionAllMembers(this._liveState.selectedChatId)) {
+                lookup["everyone"] = { kind: "everyone" };
+            }
             this._userLookupForMentions = lookup;
         }
         return this._userLookupForMentions;
@@ -4869,6 +4878,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         switch (userOrGroup.kind) {
             case "user_group":
+            case "everyone":
                 return userOrGroup;
             default:
                 return includeSelf || userOrGroup.userId !== this.user.userId

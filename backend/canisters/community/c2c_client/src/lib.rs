@@ -13,6 +13,7 @@ generate_c2c_call!(c2c_invite_users_to_channel);
 generate_c2c_call!(c2c_join_channel);
 generate_c2c_call!(c2c_join_community);
 generate_c2c_call!(c2c_leave_community);
+generate_c2c_call!(c2c_tip_message);
 generate_c2c_call!(c2c_unfreeze_community);
 generate_c2c_call!(c2c_update_proposals);
 generate_c2c_call!(change_channel_role);

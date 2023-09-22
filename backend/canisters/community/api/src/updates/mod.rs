@@ -11,6 +11,7 @@ pub mod c2c_join_channel;
 pub mod c2c_join_community;
 pub mod c2c_leave_community;
 pub mod c2c_set_user_suspended;
+pub mod c2c_tip_message;
 pub mod c2c_unfreeze_community;
 pub mod c2c_update_proposals;
 pub mod change_channel_role;

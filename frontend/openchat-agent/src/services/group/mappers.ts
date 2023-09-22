@@ -240,6 +240,7 @@ export function apiOptionalGroupPermissions(
         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
         reply_in_thread: apiOptional(apiPermissionRole, permissions.replyInThread),
         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
+        mention_all_members: apiOptional(apiPermissionRole, permissions.mentionAllMembers),
     };
 }
 

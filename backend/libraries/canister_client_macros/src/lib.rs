@@ -65,29 +65,6 @@ macro_rules! generate_c2c_call {
 }
 
 #[macro_export]
-macro_rules! generate_c2c_call_with_payment {
-    ($method_name:ident) => {
-        pub async fn $method_name(
-            canister_id: types::CanisterId,
-            args: &$method_name::Args,
-            cycles: types::Cycles,
-        ) -> ic_cdk::api::call::CallResult<$method_name::Response> {
-            let method_name = concat!(stringify!($method_name), "_msgpack");
-
-            canister_client::make_c2c_call_with_payment(
-                canister_id,
-                method_name,
-                args,
-                msgpack::serialize,
-                |r| msgpack::deserialize(r),
-                cycles,
-            )
-            .await
-        }
-    };
-}
-
-#[macro_export]
 macro_rules! generate_candid_c2c_call {
     ($method_name:ident) => {
         pub async fn $method_name(
@@ -99,6 +76,29 @@ macro_rules! generate_candid_c2c_call {
             canister_client::make_c2c_call(canister_id, method_name, args, ::candid::encode_one, |r| {
                 ::candid::decode_one(r)
             })
+            .await
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! generate_candid_c2c_call_with_payment {
+    ($method_name:ident) => {
+        pub async fn $method_name(
+            canister_id: ::types::CanisterId,
+            args: &$method_name::Args,
+            cycles: ::types::Cycles,
+        ) -> ::ic_cdk::api::call::CallResult<$method_name::Response> {
+            let method_name = stringify!($method_name);
+
+            canister_client::make_c2c_call_with_payment(
+                canister_id,
+                method_name,
+                args,
+                ::candid::encode_one,
+                |r| ::candid::decode_one(r),
+                cycles,
+            )
             .await
         }
     };

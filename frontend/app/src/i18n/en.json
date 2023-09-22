@@ -433,7 +433,8 @@
         "replyInThread": "reply in thread",
         "createPublicChannel": "create public channels",
         "createPrivateChannel": "create private channels",
-        "manageUserGroups": "manage user groups"
+        "manageUserGroups": "manage user groups",
+        "mentionAllMembers": "mention all members ({mention})"
     },
     "level": {
         "group": "Group",

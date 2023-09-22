@@ -353,7 +353,8 @@
         "updateDetails": "изменить основную информацию",
         "createPublicChannel": "создавать публичные каналы",
         "createPrivateChannel": "создавать приватные каналы",
-        "manageUserGroups": "управлять группами пользователей"
+        "manageUserGroups": "управлять группами пользователей",
+        "mentionAllMembers": "упомянуть всех участников ({mention})"
     },
     "rules": {
         "enable": "Включить правила",
