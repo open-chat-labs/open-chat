@@ -147,6 +147,22 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupPermissions = IDL.Record({
     'block_users' : PermissionRole,
+    'mention_all_members' : PermissionRole,
+    'change_permissions' : PermissionRole,
+    'delete_messages' : PermissionRole,
+    'send_messages' : PermissionRole,
+    'remove_members' : PermissionRole,
+    'update_group' : PermissionRole,
+    'invite_users' : PermissionRole,
+    'change_roles' : PermissionRole,
+    'add_members' : PermissionRole,
+    'create_polls' : PermissionRole,
+    'pin_messages' : PermissionRole,
+    'reply_in_thread' : PermissionRole,
+    'react_to_messages' : PermissionRole,
+  });
+  const GroupPermissionsReduced = IDL.Record({
+    'block_users' : PermissionRole,
     'change_permissions' : PermissionRole,
     'delete_messages' : PermissionRole,
     'send_messages' : PermissionRole,
@@ -868,7 +884,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
-    'permissions' : GroupPermissions,
+    'permissions' : GroupPermissionsReduced,
     'metrics' : ChatMetrics,
     'subtype' : IDL.Opt(GroupSubtype),
     'date_last_pinned' : IDL.Opt(TimestampMillis),

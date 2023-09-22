@@ -57,8 +57,6 @@ import type {
     ApiDeleteCommunityResponse,
     ApiArchiveUnarchiveChatsResponse,
     ApiSendMessageWithTransferToChannelResponse,
-    ApiGroupPermissions,
-    ApiPermissionRole,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -114,8 +112,6 @@ import type {
     ManageFavouritesResponse,
     LeaveCommunityResponse,
     DeleteCommunityResponse,
-    ChatPermissions,
-    PermissionRole,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -132,6 +128,7 @@ import {
     accessGate,
     message,
     messageContent,
+    groupPermissionsReduced,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -777,7 +774,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
             canisterId: candid.chat_id.toString(),
         })),
         memberCount: candid.participant_count,
-        permissions: groupPermissions(candid.permissions),
+        permissions: groupPermissionsReduced(candid.permissions),
         metrics: chatMetrics(candid.metrics),
         subtype: optional(candid.subtype, apiGroupSubtype),
         previewed: false,
@@ -800,29 +797,6 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
             rulesAccepted: candid.rules_accepted
         },
     };
-}
-
-function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
-    return {
-        changeRoles: permissionRole(candid.change_roles),
-        updateGroup: permissionRole(candid.update_group),
-        inviteUsers: permissionRole(candid.invite_users),
-        removeMembers: permissionRole(candid.remove_members),
-        deleteMessages: permissionRole(candid.delete_messages),
-        pinMessages: permissionRole(candid.pin_messages),
-        createPolls: permissionRole(candid.create_polls),
-        sendMessages: permissionRole(candid.send_messages),
-        reactToMessages: permissionRole(candid.react_to_messages),
-        replyInThread: permissionRole(candid.reply_in_thread),
-        mentionAllMembers: "admin"
-    };
-}
-
-function permissionRole(candid: ApiPermissionRole): PermissionRole {
-    if ("Owner" in candid) return "owner";
-    if ("Admins" in candid) return "admin";
-    if ("Moderators" in candid) return "moderator";
-    return "member";
 }
 
 function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {

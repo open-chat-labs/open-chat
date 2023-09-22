@@ -29,6 +29,8 @@ import type {
     ApiPollVotes,
     ApiTotalPollVotes,
     ApiPollConfig,
+    ApiGroupPermissions,
+    ApiGroupPermissionsReduced,
     ApiPermissionRole,
     ApiGiphyContent,
     ApiGiphyImageVariant,
@@ -61,9 +63,6 @@ import type {
     ApiLeaveGroupResponse,
     ApiChat,
 } from "../user/candid/idl";
-import type {
-    ApiGroupPermissions,
-} from "../group/candid/idl";
 import type {
     Message,
     ThreadSummary,
@@ -836,6 +835,22 @@ export function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
         reactToMessages: permissionRole(candid.react_to_messages),
         replyInThread: permissionRole(candid.reply_in_thread),
         mentionAllMembers: permissionRole(candid.mention_all_members),
+    };
+}
+
+export function groupPermissionsReduced(candid: ApiGroupPermissionsReduced): ChatPermissions {
+    return {
+        changeRoles: permissionRole(candid.change_roles),
+        updateGroup: permissionRole(candid.update_group),
+        inviteUsers: permissionRole(candid.invite_users),
+        removeMembers: permissionRole(candid.remove_members),
+        deleteMessages: permissionRole(candid.delete_messages),
+        pinMessages: permissionRole(candid.pin_messages),
+        createPolls: permissionRole(candid.create_polls),
+        sendMessages: permissionRole(candid.send_messages),
+        reactToMessages: permissionRole(candid.react_to_messages),
+        replyInThread: permissionRole(candid.reply_in_thread),
+        mentionAllMembers: "admin",
     };
 }
 

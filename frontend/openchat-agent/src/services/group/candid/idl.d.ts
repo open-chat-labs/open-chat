@@ -65,7 +65,6 @@ import {
     AccessGateUpdate,
     DeclineInvitationResponse,
     ConvertIntoCommunityResponse,
-    GroupPermissions,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -133,7 +132,6 @@ export {
     AccessGateUpdate as ApiGroupGateUpdate,
     DeclineInvitationResponse as ApiDeclineInvitationResponse,
     ConvertIntoCommunityResponse as ApiConvertIntoCommunityResponse,
-    GroupPermissions as ApiGroupPermissions,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
