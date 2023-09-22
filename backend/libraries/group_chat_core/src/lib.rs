@@ -772,8 +772,11 @@ impl GroupChatCore {
             }
         }
 
+        // Disable mentions for messages sent by the ProposalsBot
+        let mentions_disabled = sender == proposals_bot_user_id;
+
         for member in self.members.iter_mut().filter(|m| !m.suspended.value && m.user_id != sender) {
-            let mentioned = everyone_mentioned || mentions.contains(&member.user_id);
+            let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
 
             if mentioned {
                 // Mention this member

@@ -18,8 +18,6 @@ fn users_v2(args: Args) -> Response {
 }
 
 fn users_impl(args: Args, state: &RuntimeState) -> Response {
-    state.trap_if_caller_not_openchat_user();
-
     let now = state.env.now();
 
     let users = args
