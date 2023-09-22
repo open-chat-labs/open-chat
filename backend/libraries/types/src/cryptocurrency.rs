@@ -143,6 +143,25 @@ impl PendingCryptoTransaction {
         }
     }
 
+    pub fn user_id(&self) -> Option<UserId> {
+        match self {
+            PendingCryptoTransaction::NNS(t) => {
+                if let UserOrAccount::User(u) = t.to {
+                    Some(u)
+                } else {
+                    None
+                }
+            }
+            PendingCryptoTransaction::ICRC1(t) => {
+                if t.to.subaccount.unwrap_or_default() == DEFAULT_SUBACCOUNT.0 {
+                    Some(t.to.owner.into())
+                } else {
+                    None
+                }
+            }
+        }
+    }
+
     pub fn validate_recipient(&self, recipient: UserId) -> bool {
         match self {
             PendingCryptoTransaction::NNS(t) => match t.to {
