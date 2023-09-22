@@ -773,7 +773,8 @@ mod tests {
     };
     use candid::Principal;
     use std::collections::HashSet;
-    use types::{EventWrapperInternal, Reaction, TextContent};
+    use types::icrc1::{Account, CryptoAccount};
+    use types::{icrc1, CompletedCryptoTransaction, Cryptocurrency, EventWrapperInternal, Reaction, TextContent};
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -784,6 +785,7 @@ mod tests {
             content: MessageContentInternal::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             reactions: Vec::new(),
+            tips: Vec::new(),
             last_updated: None,
             last_edited: None,
             deleted_by: None,
@@ -828,6 +830,20 @@ mod tests {
                 event_index: 1.into(),
             }),
             reactions: vec![(Reaction::new("1".to_string()), HashSet::from([principal.into()]))],
+            tips: vec![(
+                principal.into(),
+                CompletedCryptoTransaction::ICRC1(icrc1::CompletedCryptoTransaction {
+                    ledger: principal,
+                    token: Cryptocurrency::InternetComputer,
+                    amount: 1,
+                    from: CryptoAccount::Account(Account::from(principal)),
+                    to: CryptoAccount::Account(Account::from(principal)),
+                    fee: 1,
+                    memo: None,
+                    created: 1,
+                    block_index: 1,
+                }),
+            )],
             last_updated: Some(1),
             last_edited: Some(1),
             deleted_by: Some(DeletedByInternal {
@@ -856,13 +872,13 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        // Before optimisation: 389
-        // After optimisation: 153
-        assert_eq!(message_bytes_len, 153);
+        // Before optimisation: 619
+        // After optimisation: 383
+        assert_eq!(message_bytes_len, 383);
 
-        // Before optimisation: 451
-        // After optimisation: 171
-        assert_eq!(event_bytes_len, 171);
+        // Before optimisation: 681
+        // After optimisation: 401
+        assert_eq!(event_bytes_len, 401);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
     }

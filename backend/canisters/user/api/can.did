@@ -822,6 +822,7 @@ service : {
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
+    tip_message : (TipMessageArgs) -> (TipMessageResponse);
     mark_read : (MarkReadArgs) -> (MarkReadResponse);
     block_user : (BlockUserArgs) -> (BlockUserResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);

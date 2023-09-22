@@ -248,6 +248,7 @@ pub mod happy_path {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn tip_message(
         env: &mut StateMachine,
         sender: &User,
