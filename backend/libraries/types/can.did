@@ -528,6 +528,7 @@ type Message = record {
     content : MessageContent;
     replies_to : opt ReplyContext;
     reactions : vec record { text; vec UserId };
+    tips : vec record { CanisterId; vec record { UserId; nat } };
     thread_summary : opt ThreadSummary;
     edited : bool;
     forwarded : bool;

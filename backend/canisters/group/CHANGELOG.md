@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Disable mentions for messages sent by the ProposalsBot ([#4424](https://github.com/open-chat-labs/open-chat/pull/4424))
 
+### Fixed
+
+- Fix case where you can receive a notification for your own message ([#4425](https://github.com/open-chat-labs/open-chat/pull/4425))
+
 ## [[2.0.855](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.855-group)] - 2023-09-21
 
 ### Added

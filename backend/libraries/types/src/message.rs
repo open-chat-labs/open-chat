@@ -1,4 +1,6 @@
-use crate::{Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, TimestampMillis, UserId};
+use crate::{
+    CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, TimestampMillis, UserId,
+};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -10,6 +12,8 @@ pub struct Message {
     pub content: MessageContent,
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
+    #[serde(default)]
+    pub tips: Vec<(CanisterId, Vec<(UserId, u128)>)>,
     pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,
     pub forwarded: bool,
