@@ -34,8 +34,8 @@ pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::utils::now_nanos;
     use crate::User;
-    use pocket_ic::PocketIc;
     use candid::Principal;
+    use pocket_ic::PocketIc;
     use types::icrc1::Account;
     use types::{
         icrc1, CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial,
