@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Disable mentions for messages sent by the ProposalsBot ([#4424](https://github.com/open-chat-labs/open-chat/pull/4424))
+
 ## [[2.0.855](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.855-group)] - 2023-09-21
 
 ### Added
