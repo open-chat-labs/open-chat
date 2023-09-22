@@ -25,12 +25,12 @@ generate_update_call!(upgrade_user_canister_wasm);
 
 pub mod happy_path {
     use candid::Principal;
-    use ic_test_state_machine_client::StateMachine;
+    use pocket_ic::PocketIc;
     use types::{CanisterId, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, UserId, UserSummary};
     use user_index_canister::users_v2::UserGroup;
 
     pub fn current_user(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: Principal,
         canister_id: CanisterId,
     ) -> user_index_canister::current_user::SuccessResult {
@@ -42,7 +42,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn set_username(env: &mut StateMachine, sender: Principal, canister_id: CanisterId, username: String) {
+    pub fn set_username(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, username: String) {
         let response = super::set_username(
             env,
             sender,
@@ -55,7 +55,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn set_display_name(env: &mut StateMachine, sender: Principal, canister_id: CanisterId, display_name: Option<String>) {
+    pub fn set_display_name(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, display_name: Option<String>) {
         let response = super::set_display_name(
             env,
             sender,
@@ -69,7 +69,7 @@ pub mod happy_path {
     }
 
     pub fn pay_for_diamond_membership(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         canister_id: CanisterId,
         duration: DiamondMembershipPlanDuration,
@@ -93,7 +93,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn users(env: &StateMachine, sender: Principal, canister_id: CanisterId, users: Vec<UserId>) -> Vec<UserSummary> {
+    pub fn users(env: &PocketIc, sender: Principal, canister_id: CanisterId, users: Vec<UserId>) -> Vec<UserSummary> {
         let user_index_canister::users_v2::Response::Success(result) = super::users_v2(
             env,
             sender,

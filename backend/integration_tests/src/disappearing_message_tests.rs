@@ -2,8 +2,8 @@ use crate::env::ENV;
 use crate::rng::random_string;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_test_state_machine_client::StateMachine;
 use itertools::Itertools;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{ChatId, OptionUpdate};
@@ -149,7 +149,7 @@ fn group_chat_summary_contains_expired_messages() {
     );
 }
 
-fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
+fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
     let user = client::register_diamond_user(env, canister_ids, controller);
 
     let group_name = random_string();

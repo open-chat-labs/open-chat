@@ -25,11 +25,11 @@ then
 fi
 
 cd backend/integration_tests/local-bin
-echo "Test state machine download starting"
-curl -sO https://download.dfinity.systems/ic/ea66978aa1932b30e015f2da739d84f5f3ae731e/binaries/x86_64-$PLATFORM/ic-test-state-machine.gz
-gzip -df ic-test-state-machine.gz
-chmod +x ic-test-state-machine
-echo "Test state machine download completed"
+echo "Test PocketIC download starting"
+curl -sO https://download.dfinity.systems/ic/41aae0f203995dc79ba3b736404bad851731ec51/binaries/x86_64-$PLATFORM/pocket-ic.gz
+gzip -df pocket-ic.gz
+chmod +x pocket-ic
+echo "Test PocketIC download completed"
 cd ../../..
 
 ./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister_notify-method

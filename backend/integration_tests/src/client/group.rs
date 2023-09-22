@@ -32,14 +32,14 @@ pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
     use candid::Principal;
-    use ic_test_state_machine_client::StateMachine;
+    use pocket_ic::PocketIc;
     use types::{
         ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, GroupRole,
         MessageContentInitial, MessageId, MessageIndex, PollVotes, TextContent, TimestampMillis, UserId, VoteOperation,
     };
 
     pub fn send_text_message(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: &User,
         group_chat_id: ChatId,
         thread_root_message_index: Option<MessageIndex>,
@@ -71,7 +71,7 @@ pub mod happy_path {
     }
 
     pub fn update_group(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         group_chat_id: ChatId,
         args: &group_canister::update_group_v2::Args,
@@ -84,7 +84,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn change_role(env: &mut StateMachine, sender: Principal, group_chat_id: ChatId, user_id: UserId, new_role: GroupRole) {
+    pub fn change_role(env: &mut PocketIc, sender: Principal, group_chat_id: ChatId, user_id: UserId, new_role: GroupRole) {
         let response = super::change_role(
             env,
             sender,
@@ -103,7 +103,7 @@ pub mod happy_path {
     }
 
     pub fn register_poll_vote(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: &User,
         group_chat_id: ChatId,
         message_index: MessageIndex,
@@ -128,12 +128,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn events_by_index(
-        env: &StateMachine,
-        sender: &User,
-        group_chat_id: ChatId,
-        events: Vec<EventIndex>,
-    ) -> EventsResponse {
+    pub fn events_by_index(env: &PocketIc, sender: &User, group_chat_id: ChatId, events: Vec<EventIndex>) -> EventsResponse {
         let response = super::events_by_index(
             env,
             sender.principal,
@@ -152,7 +147,7 @@ pub mod happy_path {
     }
 
     pub fn selected_initial(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: &User,
         group_chat_id: ChatId,
     ) -> group_canister::selected_initial::SuccessResult {
@@ -169,7 +164,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn summary(env: &StateMachine, sender: &User, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
+    pub fn summary(env: &PocketIc, sender: &User, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
         let response = super::summary(env, sender.principal, group_chat_id.into(), &group_canister::summary::Args {});
 
         match response {
@@ -179,7 +174,7 @@ pub mod happy_path {
     }
 
     pub fn summary_updates(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: &User,
         group_chat_id: ChatId,
         updates_since: TimestampMillis,

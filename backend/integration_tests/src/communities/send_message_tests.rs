@@ -3,8 +3,8 @@ use crate::rng::{random_message_id, random_string};
 use crate::utils::now_nanos;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_test_state_machine_client::StateMachine;
 use ledger_utils::create_pending_transaction;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use types::{
     ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent, MessageContentInitial,
@@ -508,7 +508,7 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
     );
 }
 
-fn get_community_rules(env: &mut StateMachine, user: &User, community_id: CommunityId) -> ChatRules {
+fn get_community_rules(env: &mut PocketIc, user: &User, community_id: CommunityId) -> ChatRules {
     let summary = client::community::happy_path::summary(env, user, community_id);
     let selected = client::community::happy_path::selected_initial(env, user, community_id);
 
@@ -520,7 +520,7 @@ fn get_community_rules(env: &mut StateMachine, user: &User, community_id: Commun
     }
 }
 
-fn get_channel_rules(env: &mut StateMachine, user: &User, community_id: CommunityId, channel_id: ChannelId) -> ChatRules {
+fn get_channel_rules(env: &mut PocketIc, user: &User, community_id: CommunityId, channel_id: ChannelId) -> ChatRules {
     let summary = client::community::happy_path::channel_summary(env, user, community_id, channel_id);
     let selected = client::community::happy_path::selected_channel_initial(env, user, community_id, channel_id);
 
@@ -541,7 +541,7 @@ struct ChatRules {
 }
 
 fn send_dummy_message_with_rules(
-    env: &mut StateMachine,
+    env: &mut PocketIc,
     sender: &User,
     community_id: CommunityId,
     channel_id: ChannelId,
@@ -568,7 +568,7 @@ fn send_dummy_message_with_rules(
     )
 }
 
-fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
+fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let community_id =
@@ -588,7 +588,7 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
     }
 }
 
-fn set_community_rules(env: &mut StateMachine, user: &User, community_id: CommunityId, text: String) {
+fn set_community_rules(env: &mut PocketIc, user: &User, community_id: CommunityId, text: String) {
     let args = community_canister::update_community::Args {
         name: None,
         description: None,
@@ -608,7 +608,7 @@ fn set_community_rules(env: &mut StateMachine, user: &User, community_id: Commun
     client::community::happy_path::update_community(env, user.principal, community_id, &args);
 }
 
-fn set_channel_rules(env: &mut StateMachine, user: &User, community_id: CommunityId, channel_id: ChannelId, text: String) {
+fn set_channel_rules(env: &mut PocketIc, user: &User, community_id: CommunityId, channel_id: ChannelId, text: String) {
     let args = community_canister::update_channel::Args {
         name: None,
         description: None,

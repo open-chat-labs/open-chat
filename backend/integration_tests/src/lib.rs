@@ -2,7 +2,7 @@
 
 use crate::utils::principal_to_username;
 use candid::Principal;
-use ic_test_state_machine_client::StateMachine;
+use pocket_ic::PocketIc;
 use types::{CanisterId, Cycles, UserId};
 
 mod change_group_role_tests;
@@ -38,7 +38,7 @@ mod utils;
 mod wasms;
 
 pub struct TestEnv {
-    pub env: StateMachine,
+    pub env: PocketIc,
     pub canister_ids: CanisterIds,
     pub controller: Principal,
 }
