@@ -1,6 +1,3 @@
-pub mod icrc1;
-pub mod nns;
-
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
 use serde::{Deserialize, Serialize};
@@ -10,6 +7,9 @@ use types::{
     nns::UserOrAccount, CanisterId, CompletedCryptoTransaction, Cryptocurrency, FailedCryptoTransaction,
     PendingCryptoTransaction, TimestampNanos, TransactionHash, UserId,
 };
+
+pub mod icrc1;
+pub mod nns;
 
 pub fn create_pending_transaction(
     token: Cryptocurrency,
@@ -64,7 +64,7 @@ pub fn convert_to_subaccount(principal: &Principal) -> Subaccount {
 }
 
 pub fn calculate_transaction_hash(sender: CanisterId, args: &TransferArgs) -> TransactionHash {
-    let from = default_ledger_account(sender);
+    let from = AccountIdentifier::new(&sender, &args.from_subaccount.unwrap_or(DEFAULT_SUBACCOUNT));
 
     let transaction = Transaction {
         operation: Operation::Transfer {
@@ -81,10 +81,15 @@ pub fn calculate_transaction_hash(sender: CanisterId, args: &TransferArgs) -> Tr
     transaction.hash()
 }
 
-pub fn format_crypto_amount(units: u128, decimals: u32) -> String {
-    let subdividable_by = 10u128.pow(decimals);
+pub fn format_crypto_amount(units: u128, decimals: u8) -> String {
+    let subdividable_by = 10u128.pow(decimals as u32);
+    let whole_units = units / subdividable_by;
+    let fractional = units % subdividable_by;
 
-    format!("{}.{:0}", units / subdividable_by, units % subdividable_by)
+    format!("{whole_units}.{fractional:0decimals$}", decimals = decimals as usize)
+        .trim_end_matches('0')
+        .trim_end_matches('.')
+        .to_string()
 }
 
 /// An operation which modifies account balances
@@ -120,5 +125,19 @@ impl Transaction {
     pub fn hash(&self) -> TransactionHash {
         let bytes = serde_cbor::ser::to_vec_packed(&self).unwrap();
         sha256(&bytes)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use test_case::test_case;
+
+    #[test_case(1000000, 8, "0.01")]
+    #[test_case(321000000, 8, "3.21")]
+    #[test_case(9876543210, 6, "9876.54321")]
+    #[test_case(123456789, 8, "1.23456789")]
+    fn format(units: u128, decimals: u8, expected: &str) {
+        let formatted = super::format_crypto_amount(units, decimals);
+        assert_eq!(formatted, expected);
     }
 }

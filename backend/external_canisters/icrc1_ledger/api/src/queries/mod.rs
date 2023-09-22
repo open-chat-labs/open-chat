@@ -1,3 +1,4 @@
+pub mod icrc1_balance_of;
 pub mod icrc1_decimals;
 pub mod icrc1_fee;
 pub mod icrc1_metadata;

@@ -31,7 +31,8 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.storage_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
         set_controllers(management_canister, &canister_ids.registry, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.market_maker, controllers),
+        set_controllers(management_canister, &canister_ids.market_maker, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.exchange_bot, controllers),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -170,6 +171,16 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
+    let exchange_bot_canister_wasm = get_canister_wasm(CanisterName::ExchangeBot, version);
+    let exchange_bot_init_args = exchange_bot_canister::init::Args {
+        governance_principals: vec![principal],
+        user_index_canister_id: canister_ids.user_index,
+        local_user_index_canister_id: canister_ids.local_user_index,
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        wasm_version: version,
+        test_mode,
+    };
+
     futures::future::join5(
         install_wasm(
             management_canister,
@@ -204,7 +215,7 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    futures::future::join4(
+    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.storage_index,
@@ -228,6 +239,12 @@ async fn install_service_canisters_impl(
             &canister_ids.market_maker,
             &market_maker_canister_wasm.module,
             market_maker_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.exchange_bot,
+            &exchange_bot_canister_wasm.module,
+            exchange_bot_init_args,
         ),
     )
     .await;
