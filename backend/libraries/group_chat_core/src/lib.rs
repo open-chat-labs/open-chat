@@ -754,7 +754,9 @@ impl GroupChatCore {
                 .message_internal(root_message_index.into())
                 .cloned()
         }) {
-            users_to_notify.insert(thread_root_message.sender);
+            if thread_root_message.sender != sender {
+                users_to_notify.insert(thread_root_message.sender);
+            }
 
             if let Some(thread_summary) = thread_root_message.thread_summary {
                 thread_participants = Some(HashSet::from_iter(thread_summary.participant_ids));
