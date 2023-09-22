@@ -4853,7 +4853,9 @@ export class OpenChat extends OpenChatAgentWorker {
                 const userGroups = [...this._liveState.selectedCommunity.userGroups.values()];
                 userGroups.forEach((ug) => (lookup[ug.name.toLowerCase()] = ug));
             }
-            lookup["everyone"] = { kind: "everyone" };
+            if (this._liveState.selectedChatId !== undefined && this.canMentionAllMembers(this._liveState.selectedChatId)) {
+                lookup["everyone"] = { kind: "everyone" };
+            }
             this._userLookupForMentions = lookup;
         }
         return this._userLookupForMentions;
