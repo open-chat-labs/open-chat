@@ -8,11 +8,11 @@
         ModerationFlags,
     } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
-    import CommunityThemes from "./CommunityThemes.svelte";
     import Avatar from "../../Avatar.svelte";
     import Button from "../../Button.svelte";
     import Legend from "../../Legend.svelte";
@@ -38,7 +38,6 @@
         userInfoOpen,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { saveSeletedTheme, themeNameStore } from "../../../theme/themes";
     import Toggle from "../../Toggle.svelte";
     import { setLocale, supportedLanguages } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
@@ -47,6 +46,8 @@
     import Expiry from "../upgrade/Expiry.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
     import CommunityProfile from "./CommunityProfile.svelte";
+    import ThemeSelector from "./ThemeSelector.svelte";
+    import { menuCloser } from "../../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -200,14 +201,6 @@
         }
     }
 
-    function selectTheme(theme: string) {
-        saveSeletedTheme(theme);
-    }
-
-    function toggleSystemTheme() {
-        saveSeletedTheme($themeNameStore === "system" ? "light" : "system");
-    }
-
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         client.setUserAvatar(ev.detail.data, ev.detail.url).then((success) => {
             if (!success) {
@@ -218,6 +211,12 @@
 
     function closeProfile() {
         dispatch("closeProfile");
+    }
+
+    function onCopy() {
+        navigator.clipboard.writeText(user.userId).then(() => {
+            toastStore.showSuccessToast("userIdCopiedToClipboard");
+        });
     }
 </script>
 
@@ -250,7 +249,7 @@
 </div>
 
 {#if view === "global"}
-    <form class="user-form" on:submit|preventDefault={saveUser}>
+    <form use:menuCloser class="user-form" on:submit|preventDefault={saveUser}>
         <div class="user">
             <CollapsibleCard
                 on:toggle={userInfoOpen.toggle}
@@ -327,30 +326,8 @@
                 </Select>
 
                 <div class="para">
-                    <Legend label={$_("theme")} />
-                    <Toggle
-                        id={"inherit-system"}
-                        small
-                        on:change={toggleSystemTheme}
-                        label={$_("inheritSystem")}
-                        checked={$themeNameStore === "system"} />
-                    {#if $themeNameStore !== "system"}
-                        <div class="theme-selection">
-                            {#each ["light", "dark"] as t}
-                                <div
-                                    class="theme"
-                                    class:dark={t === "dark"}
-                                    class:light={t === "light"}
-                                    class:selected={$themeNameStore === t}
-                                    on:click={() => selectTheme(t)}>
-                                    <span class="theme-txt">
-                                        {$_(t)}
-                                    </span>
-                                </div>
-                            {/each}
-                        </div>
-                        <CommunityThemes />
-                    {/if}
+                    <Legend label={$_("theme.title")} />
+                    <ThemeSelector />
                 </div>
 
                 <div class="para">
@@ -464,7 +441,12 @@
                 headerText={$_("advanced")}>
                 <div class="userid">
                     <Legend label={$_("userId")} rules={$_("alsoCanisterId")} />
-                    <div>{user.userId}</div>
+                    <div class="userid-txt">
+                        <div>{user.userId}</div>
+                        <div role="button" tabindex="0" on:click={onCopy} class="copy">
+                            <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <Legend label={$_("version")} rules={$_("websiteVersion")} />
@@ -497,44 +479,21 @@
         margin-top: $sp4;
     }
 
-    .theme-selection {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-        margin-bottom: $sp4;
-        .theme {
-            text-align: center;
-            padding: 22px;
-            height: 65px;
-            flex: 1;
-            color: #fff;
-            cursor: pointer;
-
-            .theme-txt {
-                border-bottom: $sp2 solid var(--accent);
-                padding-bottom: $sp2;
-            }
-
-            &.selected {
-                @include box-shadow(2);
-            }
-
-            &.dark {
-                background-color: #191919;
-            }
-
-            &.light {
-                background: linear-gradient(#22a7f2, #5f2583);
-            }
-        }
-    }
-
     .avatar {
         margin: $sp4 0 $sp5 0;
     }
 
     .userid {
         margin-bottom: $sp4;
+        .userid-txt {
+            display: flex;
+            gap: $sp3;
+            align-items: center;
+
+            .copy {
+                cursor: pointer;
+            }
+        }
     }
 
     .para {

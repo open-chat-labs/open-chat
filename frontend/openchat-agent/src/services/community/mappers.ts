@@ -83,7 +83,6 @@ import {
     communityPermissions,
     communitySummary,
     groupPermissions,
-    groupRules,
     groupSubtype,
     memberRole,
     mention,
@@ -297,6 +296,10 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
         };
+    } else if ("RulesNotAccepted" in candid) {
+        return { kind: "rules_not_accepted" };
+    } else if ("CommunityRulesNotAccepted" in candid) {
+        return { kind: "community_rules_not_accepted" };
     } else {
         console.warn("SendMessage failed with", candid);
         return CommonResponses.failure();
@@ -430,6 +433,7 @@ export function communityMembershipUpdates(
     return {
         role: optional(candid.role, memberRole),
         displayName: optionUpdate(candid.display_name, identity),
+        rulesAccepted: optional(candid.rules_accepted, identity),
     };
 }
 
@@ -480,6 +484,7 @@ export function channelMembershipUpdates(
             .filter((m) => m.thread_root_message_index.length === 0)
             .map(mention),
         myMetrics: optional(candid.my_metrics, chatMetrics),
+        rulesAccepted: optional(candid.rules_accepted, identity),
     };
 }
 
@@ -506,8 +511,11 @@ export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockComm
 export function updateCommunityResponse(
     candid: ApiUpdateCommunityResponse,
 ): UpdateCommunityResponse {
-    if ("Success" in candid || "SuccessV2" in candid) {
-        return CommonResponses.success();
+    if ("SuccessV2" in candid) {
+        return {
+            kind: "success",
+            rulesVersion: optional(candid.SuccessV2.rules_version, identity),
+        };
     } else {
         console.warn("UpdateCommunity failed with", candid);
         return CommonResponses.failure();
@@ -584,7 +592,7 @@ export function communityDetailsResponse(
             })),
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
-            rules: groupRules(candid.Success.rules),
+            rules: candid.Success.chat_rules,
             lastUpdated: candid.Success.timestamp,
             userGroups: new Map(candid.Success.user_groups.map(userGroupDetails)),
         };
@@ -622,7 +630,7 @@ export function communityDetailsUpdatesResponse(
             blockedUsersRemoved: new Set(
                 candid.Success.blocked_users_removed.map((u) => u.toString()),
             ),
-            rules: optional(candid.Success.rules, groupRules),
+            rules: optional(candid.Success.chat_rules, identity),
             invitedUsers: optional(
                 candid.Success.invited_users,
                 (invited_users) => new Set(invited_users.map((u) => u.toString())),

@@ -46,6 +46,7 @@ const defaultGroupChat: GroupChatSummary = {
         sendMessages: "member",
         reactToMessages: "member",
         replyInThread: "member",
+        mentionAllMembers: "member",
     },
     metrics: emptyChatMetrics(),
     subtype: undefined,
@@ -63,6 +64,7 @@ const defaultGroupChat: GroupChatSummary = {
         readByMeUpTo: undefined,
         joined: BigInt(0),
         myMetrics: emptyChatMetrics(),
+        rulesAccepted: false,
         latestThreads: [
             {
                 threadRootMessageIndex: 1,

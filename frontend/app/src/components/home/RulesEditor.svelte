@@ -3,20 +3,39 @@
     import TextArea from "../TextArea.svelte";
     import Legend from "../Legend.svelte";
     import Toggle from "../Toggle.svelte";
-    import type { AccessRules, Level } from "openchat-client";
+    import type { UpdatedRules, Level } from "openchat-client";
     import { interpolateLevel } from "../../utils/i18n";
     import { afterUpdate } from "svelte";
 
     const MAX_RULES_LENGTH = 1024;
 
-    export let rules: AccessRules;
+    export let rules: UpdatedRules;
     export let level: Level;
     export let valid: boolean;
+    export let editing: boolean;
+
+    let originalRules: UpdatedRules = { ...rules };
 
     $: isValid = !rules.enabled || (rules.text.length > 0 && rules.text.length <= MAX_RULES_LENGTH);
+    $: rulesDirty = rules.text !== originalRules.text || rules.enabled !== originalRules.enabled;
+
+    function buildRulesExplanation(level: Level): string | undefined {
+        switch (level) {
+            case "community":
+                return $_("rules.communityRulesExplanation");
+            case "channel":
+                return $_("rules.channelRulesExplanation");
+            case "group":
+                return undefined;
+        }
+    }
 
     function toggleRules() {
         rules.enabled = !rules.enabled;
+    }
+
+    function toggleNewVersion() {
+        rules.newVersion = !rules.newVersion;
     }
 
     afterUpdate(() => {
@@ -33,13 +52,28 @@
         checked={rules.enabled} />
     <div class="instructions">{interpolateLevel("rules.instructions", level, true)}</div>
 
-    <Legend label={interpolateLevel("rules.rules", level)} />
+    <Legend
+        label={interpolateLevel("rules.levelRules", level)}
+        rules={buildRulesExplanation(level)} />
     <TextArea
         bind:value={rules.text}
         minlength={0}
         maxlength={MAX_RULES_LENGTH}
         rows={8}
         placeholder={interpolateLevel("rules.placeholder", level, true)} />
+    {#if editing && rules.enabled}
+        <Toggle
+            id="new-version"
+            on:change={toggleNewVersion}
+            checked={rules.newVersion && rulesDirty}
+            label={$_("rules.promptExistingUsers")}
+            disabled={!rulesDirty}
+            small />
+
+        <div class="instructions">
+            {interpolateLevel("rules.promptExistingUsersInstructions", level, true)}
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">

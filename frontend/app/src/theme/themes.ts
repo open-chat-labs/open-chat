@@ -7,6 +7,7 @@ import { getTheme as getNightvisionTheme } from "./community/nightvision";
 import { getTheme as getMatteBlackGoldTheme } from "./community/matteblackgold";
 import { getTheme as getBarbieTheme } from "./community/barbie";
 import { getTheme as getTokyoNightTheme } from "./community/tokyonight";
+import { getTheme as getSolarizedDarkTheme } from "./community/solarizeddark";
 import type { Theme, Themes } from "./types";
 import { deepMerge } from "./merge";
 
@@ -19,8 +20,9 @@ export const communityThemes = [
     getSubmarineTheme(cloneTheme(dark)),
     getNightvisionTheme(cloneTheme(dark)),
     getMatteBlackGoldTheme(cloneTheme(dark)),
-    getBarbieTheme(cloneTheme(dark)),
+    getBarbieTheme(cloneTheme(defaultTheme)),
     getTokyoNightTheme(cloneTheme(dark)),
+    getSolarizedDarkTheme(cloneTheme(dark)),
 ];
 
 export const themes: Themes = {
@@ -57,30 +59,6 @@ const osDarkStore = readable(window.matchMedia(prefersDarkQuery).matches, (set) 
     return () => mediaQueryList.removeEventListener("change", updateDarkPref);
 });
 
-export const themeNameStore = writable<string>(getCurrentThemeName());
-
-export const themeStore = derived([osDarkStore, themeNameStore], ([$dark, $themeName]) =>
-    themeByName($themeName ?? null, $dark),
-);
-
-themeStore.subscribe((theme) => writeCssVars("--", theme));
-
-function themeByName(name: string | null, prefersDark: boolean): Theme {
-    if (!name || name === "system") {
-        return prefersDark ? themes.dark : themes.light;
-    }
-    return themes[name] ?? themes.light;
-}
-
-export function getCurrentThemeName(): string {
-    return localStorage.getItem("openchat_theme") ?? "system";
-}
-
-export function saveSeletedTheme(themeName: string): void {
-    themeNameStore.set(themeName);
-    localStorage.setItem("openchat_theme", themeName);
-}
-
 export function setModifiedTheme(
     baseName: string,
     newName: string,
@@ -90,6 +68,69 @@ export function setModifiedTheme(
     if (base) {
         const overridden = deepMerge(base, overrides);
         themes[newName] = overridden;
-        themeNameStore.set(newName);
+        themeOverride.set(newName);
     }
+}
+
+const themeOverride = writable<string>(undefined);
+export const themeType = createLocalStorageStore("openchat_theme", "system");
+export const preferredDarkThemeName = createLocalStorageStore("openchat_dark_theme", "dark");
+export const preferredLightThemeName = createLocalStorageStore("openchat_light_theme", "light");
+
+export const preferredDarkTheme = derived(preferredDarkThemeName, (darkName) => themes[darkName]);
+export const preferredLightTheme = derived(
+    preferredLightThemeName,
+    (lightName) => themes[lightName],
+);
+
+export const currentThemeName = derived(
+    [themeType, preferredDarkThemeName, preferredLightThemeName, osDarkStore, themeOverride],
+    ([$themeType, preferredDark, preferredLight, prefersDark, override]) => {
+        if (override !== undefined) return override;
+
+        let themeName = "light";
+        if ($themeType === "system") {
+            if (prefersDark) {
+                themeName = preferredDark;
+            } else {
+                themeName = preferredLight;
+            }
+        } else if ($themeType === "light") {
+            themeName = preferredLight;
+        } else if ($themeType === "dark") {
+            themeName = preferredDark;
+        } else {
+            // this branch exists to deal with legacy states where a user has selected a particular community theme
+            const existing = themes[$themeType];
+            if (existing !== undefined) {
+                if (existing.mode === "dark") {
+                    preferredDarkThemeName.set($themeType);
+                    themeType.set("dark");
+                }
+                if (existing.mode === "light") {
+                    preferredLightThemeName.set($themeType);
+                    themeType.set("light");
+                }
+                themeName = $themeType;
+            }
+        }
+        return themeName;
+    },
+);
+
+export const currentTheme = derived(currentThemeName, (name) => {
+    const theme = themes[name];
+    writeCssVars("--", theme);
+    return theme;
+});
+
+function createLocalStorageStore(key: string, def: string) {
+    const store = writable<string>(localStorage.getItem(key) || def);
+    return {
+        subscribe: store.subscribe,
+        set: (state: string): void => {
+            store.set(state);
+            localStorage.setItem(key, state);
+        },
+    };
 }

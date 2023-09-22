@@ -90,9 +90,7 @@
                 const idxAttrs = entry.target.attributes.getNamedItem("data-index");
                 const idAttr = entry.target.attributes.getNamedItem("data-id");
                 const idx = idxAttrs
-                    ? Math.max(...idxAttrs.value
-                        .split(" ")
-                        .map((v) => parseInt(v, 10)))
+                    ? Math.max(...idxAttrs.value.split(" ").map((v) => parseInt(v, 10)))
                     : undefined;
                 const id = idAttr ? BigInt(idAttr.value) : undefined;
                 if (idx !== undefined) {
@@ -123,10 +121,6 @@
             });
         }, options);
     });
-
-    function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
-        client.retrySendMessage(chat.id, ev.detail, events, undefined);
-    }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
         doGoToMessageIndex(ev.detail.index);
@@ -267,7 +261,7 @@
             let messageIndex =
                 evt.event.kind === "message"
                     ? evt.event.messageIndex
-                    : evt.event.messagesDeleted[evt.event.messagesDeleted.length - 1];
+                    : Math.max(...evt.event.messagesDeleted);
             let messageId = evt.event.kind === "message" ? evt.event.messageId : undefined;
             const isRead = client.isMessageRead(chat.id, messageIndex, messageId);
             if (!isRead && evt.event.kind === "message" && evt.event.sender === user.userId) {
@@ -441,7 +435,7 @@
                         on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade
                         on:forward
-                        on:retrySend={retrySend}
+                        on:retrySend
                         event={evt} />
                 {/each}
             {/each}

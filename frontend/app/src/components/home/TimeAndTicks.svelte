@@ -10,7 +10,7 @@
     import { _ } from "svelte-i18n";
     import type { ChatType, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import { themeStore } from "../../theme/themes";
+    import { currentTheme } from "../../theme/themes";
 
     const client = getContext<OpenChat>("client");
 
@@ -27,7 +27,7 @@
     export let deleted: boolean;
     export let undeleting: boolean;
 
-    let iconColor = $themeStore.time.icon;
+    let iconColor = $currentTheme.time.icon;
     let pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
 </script>
 

@@ -12,7 +12,7 @@
     import Upgrading from "./upgrading/Upgrading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
-    import { themeStore } from "../theme/themes";
+    import { currentTheme } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { OpenChat, SessionExpiryError } from "openchat-client";
@@ -50,13 +50,6 @@
             registryCanister: process.env.REGISTRY_CANISTER!,
             internetIdentityUrl: process.env.INTERNET_IDENTITY_URL!,
             nfidUrl: process.env.NFID_URL!,
-            ledgerCanisterICP: process.env.LEDGER_CANISTER_ICP!,
-            ledgerCanisterSNS1: process.env.LEDGER_CANISTER_SNS1!,
-            ledgerCanisterBTC: process.env.LEDGER_CANISTER_BTC!,
-            ledgerCanisterCHAT: process.env.LEDGER_CANISTER_CHAT!,
-            ledgerCanisterKINIC: process.env.LEDGER_CANISTER_KINIC!,
-            ledgerCanisterHOTORNOT: process.env.LEDGER_CANISTER_HOTORNOT!,
-            ledgerCanisterGHOST: process.env.LEDGER_CANISTER_GHOST!,
             userGeekApiKey: process.env.USERGEEK_APIKEY!,
             meteredApiKey: process.env.METERED_APIKEY!,
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,
@@ -310,12 +303,12 @@
     }
 
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
-    $: burstPath = $themeStore.name === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
+    $: burstPath = $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
     $: burstFixed = isScrollingRoute($pathParams);
 </script>
 
-{#if $themeStore.burst || landingPage}
+{#if $currentTheme.burst || landingPage}
     <div
         class:fixed={burstFixed}
         class="burst-wrapper"

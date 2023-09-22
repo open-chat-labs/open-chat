@@ -4,7 +4,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use sns1_airdrop::handle_direct_message::*;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use types::{BotMessage, MessageContent, TextContent, UserId};
+use types::{BotMessage, MessageContent, MessageContentInitial, TextContent, UserId};
 
 #[update_msgpack]
 #[trace]
@@ -17,8 +17,10 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
 
     Success(SuccessResult {
         bot_name: state.data.bot_name.clone(),
+        bot_display_name: None,
         messages: vec![BotMessage {
-            content: MessageContent::Text(TextContent { text }),
+            content: MessageContentInitial::Text(TextContent { text }),
+            message_id: None,
         }],
     })
 }

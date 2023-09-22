@@ -704,6 +704,7 @@ function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectCh
         id: { kind: "direct_chat", userId: candid.chat_id.toString() },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
+        lastUpdated: candid.last_updated,
         latestMessage: optional(candid.latest_message, (ev) => ({
             index: ev.index,
             timestamp: ev.timestamp,
@@ -793,6 +794,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
             notificationsMuted: candid.notifications_muted,
             readByMeUpTo: optional(candid.read_by_me_up_to, identity),
             archived: candid.archived,
+            rulesAccepted: candid.rules_accepted
         },
     };
 }
@@ -818,6 +820,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
         },
         them: { kind: "direct_chat", userId: candid.them.toString() },
         latestEventIndex: candid.latest_event_index,
+        lastUpdated: candid.last_updated,
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         dateCreated: candid.date_created,
         metrics: chatMetrics(candid.metrics),
@@ -828,6 +831,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
             notificationsMuted: candid.notifications_muted,
             readByMeUpTo: optional(candid.read_by_me_up_to, identity),
             archived: candid.archived,
+            rulesAccepted: false,
         },
     };
 }

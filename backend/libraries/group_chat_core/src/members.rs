@@ -134,6 +134,10 @@ impl GroupMembers {
         self.members.values()
     }
 
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut GroupMemberInternal> {
+        self.members.values_mut()
+    }
+
     pub fn get(&self, user_id: &UserId) -> Option<&GroupMemberInternal> {
         self.members.get(user_id)
     }
@@ -148,25 +152,6 @@ impl GroupMembers {
 
     pub fn is_blocked(&self, user_id: &UserId) -> bool {
         self.blocked.contains(user_id)
-    }
-
-    pub fn users_to_notify(&self, thread_participants: Option<Vec<UserId>>) -> HashSet<UserId> {
-        if let Some(thread_participants) = thread_participants {
-            thread_participants
-                .iter()
-                .filter(|user_id| {
-                    self.get(user_id)
-                        .map_or(false, |p| !p.notifications_muted.value && !p.suspended.value)
-                })
-                .copied()
-                .collect()
-        } else {
-            self.members
-                .values()
-                .filter(|p| !p.notifications_muted.value)
-                .map(|p| p.user_id)
-                .collect()
-        }
     }
 
     pub fn user_limit_reached(&self) -> Option<u32> {

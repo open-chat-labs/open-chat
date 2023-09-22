@@ -1,6 +1,6 @@
 <script lang="ts">
     import Launch from "./Launch.svelte";
-    import { themeStore } from "../../theme/themes";
+    import { currentTheme } from "../../theme/themes";
     import OnChain from "./OnChain.svelte";
     import { availableHeight, mobileWidth } from "../../stores/screenDimensions";
     import OnChainAlt from "./OnChainAlt.svelte";
@@ -15,7 +15,7 @@
 
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
     $: imgUrl =
-        $themeStore.mode === "light"
+        $currentTheme.mode === "light"
             ? "/assets/screenshots/intro_light.png"
             : "/assets/screenshots/intro_dark.png";
 
@@ -77,8 +77,8 @@
                 <img class="img" alt="Open chat list" src={imgUrl} />
                 {#if $mobileWidth}
                     <div
-                        class:light={$themeStore.mode === "light"}
-                        class:dark={$themeStore.mode === "dark"}
+                        class:light={$currentTheme.mode === "light"}
+                        class:dark={$currentTheme.mode === "dark"}
                         class="overlay" />
                 {/if}
             </div>

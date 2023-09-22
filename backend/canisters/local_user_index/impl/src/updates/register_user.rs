@@ -116,16 +116,16 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
 
     match validate_username(&args.username) {
         Ok(_) => {}
-        Err(UsernameValidationError::TooShort(min_length)) => return Err(UsernameTooShort(min_length)),
-        Err(UsernameValidationError::TooLong(max_length)) => return Err(UsernameTooLong(max_length)),
+        Err(UsernameValidationError::TooShort(s)) => return Err(UsernameTooShort(s.min_length as u16)),
+        Err(UsernameValidationError::TooLong(l)) => return Err(UsernameTooLong(l.max_length as u16)),
         Err(UsernameValidationError::Invalid) => return Err(UsernameInvalid),
     };
 
     if let Some(display_name) = args.display_name.as_ref() {
         match validate_display_name(display_name) {
             Ok(_) => {}
-            Err(UsernameValidationError::TooShort(min_length)) => return Err(DisplayNameTooShort(min_length)),
-            Err(UsernameValidationError::TooLong(max_length)) => return Err(DisplayNameTooLong(max_length)),
+            Err(UsernameValidationError::TooShort(s)) => return Err(DisplayNameTooShort(s.min_length as u16)),
+            Err(UsernameValidationError::TooLong(l)) => return Err(DisplayNameTooLong(l.max_length as u16)),
             Err(UsernameValidationError::Invalid) => return Err(DisplayNameInvalid),
         };
     }

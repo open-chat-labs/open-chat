@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::update_user_group::{Response::*, *};
 use ic_cdk_macros::update;
-use utils::text_validation::{validate_user_group_name, StringLengthValidationError};
+use utils::text_validation::{validate_user_group_name, UsernameValidationError};
 
 #[update]
 #[trace]
@@ -28,8 +28,9 @@ fn update_user_group_impl(args: Args, state: &mut RuntimeState) -> Response {
             NotAuthorized
         } else if let Err(error) = args.name.as_ref().map_or(Ok(()), |n| validate_user_group_name(n)) {
             match error {
-                StringLengthValidationError::TooShort(s) => NameTooShort(s),
-                StringLengthValidationError::TooLong(l) => NameTooLong(l),
+                UsernameValidationError::TooShort(s) => NameTooShort(s),
+                UsernameValidationError::TooLong(l) => NameTooLong(l),
+                UsernameValidationError::Invalid => NameInvalid,
             }
         } else {
             let now = state.env.now();

@@ -135,6 +135,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupPermissions = IDL.Record({
     'block_users' : PermissionRole,
+    'mention_all_members' : PermissionRole,
     'change_permissions' : PermissionRole,
     'delete_messages' : PermissionRole,
     'send_messages' : PermissionRole,
@@ -716,6 +717,7 @@ export const idlFactory = ({ IDL }) => {
     'NameTooShort' : FieldTooShortResult,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({ 'user_group_id' : IDL.Nat32 }),
+    'NameInvalid' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
     'NameTooLong' : FieldTooLongResult,
@@ -1221,13 +1223,18 @@ export const idlFactory = ({ IDL }) => {
     'date_added' : TimestampMillis,
   });
   const Version = IDL.Nat32;
-  const VersionedRules = IDL.Record({ 'text' : IDL.Text, 'version' : Version });
+  const VersionedRules = IDL.Record({
+    'text' : IDL.Text,
+    'version' : Version,
+    'enabled' : IDL.Bool,
+  });
   const SelectedChannelInitialResponse = IDL.Variant({
     'ChannelNotFound' : IDL.Null,
     'Success' : IDL.Record({
       'members' : IDL.Vec(Participant),
       'invited_users' : IDL.Vec(UserId),
       'blocked_users' : IDL.Vec(UserId),
+      'chat_rules' : VersionedRules,
       'timestamp' : TimestampMillis,
       'pinned_messages' : IDL.Vec(MessageIndex),
       'latest_event_index' : EventIndex,
@@ -1246,6 +1253,7 @@ export const idlFactory = ({ IDL }) => {
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'members_added_or_updated' : IDL.Vec(Participant),
     'pinned_messages_added' : IDL.Vec(MessageIndex),
+    'chat_rules' : IDL.Opt(VersionedRules),
     'members_removed' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
@@ -1284,6 +1292,7 @@ export const idlFactory = ({ IDL }) => {
     'members' : IDL.Vec(CommunityMember),
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
+    'chat_rules' : VersionedRules,
     'user_groups' : IDL.Vec(UserGroupDetails),
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
@@ -1302,6 +1311,7 @@ export const idlFactory = ({ IDL }) => {
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'user_groups_deleted' : IDL.Vec(IDL.Nat32),
     'members_added_or_updated' : IDL.Vec(CommunityMember),
+    'chat_rules' : IDL.Opt(VersionedRules),
     'user_groups' : IDL.Vec(UserGroupDetails),
     'members_removed' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
@@ -1358,6 +1368,7 @@ export const idlFactory = ({ IDL }) => {
     'InvalidPoll' : InvalidPollReason,
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
+    'CommunityRulesNotAccepted' : IDL.Null,
     'InvalidRequest' : IDL.Text,
     'RulesNotAccepted' : IDL.Null,
   });
@@ -1531,6 +1542,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const OptionalGroupPermissions = IDL.Record({
     'block_users' : IDL.Opt(PermissionRole),
+    'mention_all_members' : IDL.Opt(PermissionRole),
     'change_permissions' : IDL.Opt(PermissionRole),
     'delete_messages' : IDL.Opt(PermissionRole),
     'send_messages' : IDL.Opt(PermissionRole),
@@ -1572,7 +1584,6 @@ export const idlFactory = ({ IDL }) => {
     'ChannelNotFound' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
-    'Success' : IDL.Null,
     'UserNotInCommunity' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'RulesTooShort' : FieldTooShortResult,
@@ -1609,7 +1620,6 @@ export const idlFactory = ({ IDL }) => {
     'NameTooShort' : FieldTooShortResult,
     'NotAuthorized' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
-    'Success' : IDL.Null,
     'UserNotInCommunity' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'RulesTooShort' : FieldTooShortResult,
@@ -1631,6 +1641,7 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'UserGroupNotFound' : IDL.Null,
+    'NameInvalid' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
     'NameTooLong' : FieldTooLongResult,

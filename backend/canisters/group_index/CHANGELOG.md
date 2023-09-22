@@ -5,6 +5,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed 
+
+- Accept calls to `set_community_upgrade_concurrency` ([#4418](https://github.com/open-chat-labs/open-chat/pull/4418))
+
+## [[2.0.857](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.857-group_index)] - 2023-09-21
+
+### Added
+
+- Add `mention_all_members` group permission ([#4405](https://github.com/open-chat-labs/open-chat/pull/4405))
+
+### Changed 
+
+- Accept calls to `set_max_concurrent_community_canister_upgrades` ([#4391](https://github.com/open-chat-labs/open-chat/pull/4391))
+
+## [[2.0.848](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.848-group_index)] - 2023-09-18
+
+### Added
+
+- Add `default_channel_rules` to `create_community` ([#4387](https://github.com/open-chat-labs/open-chat/pull/4374))
+
 ## [[2.0.828](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.828-group_index)] - 2023-09-01
 
 ### Added

@@ -4,7 +4,7 @@
     import Button from "../../Button.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import GroupDetails from "./GroupDetails.svelte";
-    import Rules from "../Rules.svelte";
+    import RulesEditor from "../RulesEditor.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
     import { toastStore } from "../../../stores/toast";
@@ -76,7 +76,7 @@
         let steps = [
             { labelKey: "group.details", valid: detailsValid },
             { labelKey: "access.visibility", valid: true },
-            { labelKey: interpolateLevel("rules.rules", candidateGroup.level), valid: true },
+            { labelKey: $_("rules.rules"), valid: true },
             { labelKey: "permissions.permissions", valid: true },
         ];
 
@@ -100,23 +100,23 @@
         resp: UpdateGroupResponse,
         isChannel: boolean
     ): string | undefined {
-        if (resp === "success") return undefined;
-        if (resp === "unchanged") return undefined;
-        if (resp === "name_too_short") return "groupNameTooShort";
-        if (resp === "name_too_long") return "groupNameTooLong";
-        if (resp === "name_reserved") return "groupNameReserved";
-        if (resp === "desc_too_long") return "groupDescTooLong";
-        if (resp === "name_taken" && isChannel) return "channelAlreadyExists";
-        if (resp === "name_taken") return "groupAlreadyExists";
-        if (resp === "not_in_group") return "userNotInGroup";
-        if (resp === "internal_error") return "groupUpdateFailed";
-        if (resp === "not_authorized") return "groupUpdateFailed";
-        if (resp === "avatar_too_big") return "avatarTooBig";
-        if (resp === "rules_too_short") return "groupRulesTooShort";
-        if (resp === "rules_too_long") return "groupRulesTooLong";
-        if (resp === "user_suspended") return "userSuspended";
-        if (resp === "chat_frozen") return "chatFrozen";
-        if (resp === "failure") return "failure";
+        if (resp.kind === "success") return undefined;
+        if (resp.kind === "unchanged") return undefined;
+        if (resp.kind === "name_too_short") return "groupNameTooShort";
+        if (resp.kind === "name_too_long") return "groupNameTooLong";
+        if (resp.kind === "name_reserved") return "groupNameReserved";
+        if (resp.kind === "desc_too_long") return "groupDescTooLong";
+        if (resp.kind === "name_taken" && isChannel) return "channelAlreadyExists";
+        if (resp.kind === "name_taken") return "groupAlreadyExists";
+        if (resp.kind === "not_in_group") return "userNotInGroup";
+        if (resp.kind === "internal_error") return "groupUpdateFailed";
+        if (resp.kind === "not_authorized") return "groupUpdateFailed";
+        if (resp.kind === "avatar_too_big") return "avatarTooBig";
+        if (resp.kind === "rules_too_short") return "groupRulesTooShort";
+        if (resp.kind === "rules_too_long") return "groupRulesTooLong";
+        if (resp.kind === "user_suspended") return "userSuspended";
+        if (resp.kind === "chat_frozen") return "chatFrozen";
+        if (resp.kind === "failure") return "failure";
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
@@ -282,14 +282,8 @@
 
     function doUpdateRules(): Promise<void> {
         if (!editing) return Promise.resolve();
-
         return client.updateGroupRules(candidateGroup.id, candidateGroup.rules).then((success) => {
-            if (success) {
-                dispatch("updateGroupRules", {
-                    chatId: candidateGroup.id,
-                    rules: candidateGroup.rules,
-                });
-            } else {
+            if (!success) {
                 toastStore.showFailureToast(interpolateError("group.rulesUpdateFailed"));
             }
         });
@@ -412,10 +406,11 @@
                         bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
-                    <Rules
+                    <RulesEditor
                         bind:valid={rulesValid}
                         level={candidateGroup.level}
-                        bind:rules={candidateGroup.rules} />
+                        bind:rules={candidateGroup.rules}
+                        {editing} />
                 </div>
                 <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}

@@ -353,16 +353,22 @@
         "updateDetails": "изменить основную информацию",
         "createPublicChannel": "создавать публичные каналы",
         "createPrivateChannel": "создавать приватные каналы",
-        "manageUserGroups": "управлять группами пользователей"
+        "manageUserGroups": "управлять группами пользователей",
+        "mentionAllMembers": "упомянуть всех участников ({mention})"
     },
     "rules": {
         "enable": "Включить правила",
         "accept": "Принимать",
         "reject": "Отклонять",
-        "rules": "{level} правила",
+        "rules": "Правила",
         "placeholder": "каковы правила {level}?",
-        "instructions": "Если этот параметр включен, новые пользователи должны согласиться с правилами, прежде чем они смогут присоединиться к {level}.",
-        "acceptTitle": "{level} правила"
+        "instructions": "Если эта опция включена, новые участники должны согласиться с правилами, прежде чем они смогут отправлять сообщения.",
+        "acceptTitle": "Правила чата",
+        "promptExistingUsers": "Подскажите существующим участникам",
+        "promptExistingUsersInstructions": "Существующие участники должны согласиться с новыми правилами, прежде чем они смогут отправлять сообщения.",
+        "levelRules": "{level} правила",
+        "communityRulesExplanation": "любые правила канала будут предваряться этими правилами.",
+        "channelRulesExplanation": "они будут стоять перед любыми правилами сообщества"
     },
     "group": {
         "publicGroup": "Общедоступный {level}",
@@ -629,7 +635,14 @@
     "undeleteMessageFailed": "Не удалось восстановить сообщение",
     "homepage": "Домашняя страница",
     "preferredLanguage": "Предпочтительный язык",
-    "theme": "Тема",
+    "theme": {
+        "dark": "Темный",
+        "light": "Свет",
+        "system": "Система",
+        "title": "Тема",
+        "preferredLightTheme": "Предпочтительная светлая тема",
+        "preferredDarkTheme": "Предпочтительная темная тема"
+    },
     "freezeGroup": "Заморозить группу",
     "unfreezeGroup": "Разморозить группу",
     "chatFrozen": "Этот чат был заморожен",
@@ -939,7 +952,9 @@
         "communityLabel": "Сообщество",
         "confirmDeleteUserGroup": "Вы уверены, что хотите удалить эту группу пользователей?",
         "namedUserGroupMembers": "**{name}** участники группы",
-        "searchUserGroups": "Поиск групп пользователей..."
+        "searchUserGroups": "Поиск групп пользователей...",
+        "userGroupName": "Имя группы пользователей",
+        "noSpaces": "пробелы не допускаются"
     },
     "groupCreatedBy": "{username} создал {level}",
     "groupName": "{level} имя",
@@ -993,5 +1008,6 @@
     "makeGroupPublicFailed": "Не удалось сделать {level} общедоступным.",
     "displayNameRules": "необязательный",
     "displayName": "Отображаемое имя",
-    "communityDisplayNameRules": "только в этом сообществе"
+    "communityDisplayNameRules": "только в этом сообществе",
+    "userIdCopiedToClipboard": "Идентификатор пользователя скопирован в буфер обмена."
 }

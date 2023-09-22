@@ -3,7 +3,7 @@ import { setsAreEqual } from "../utils/set";
 import {
     type CommunitySpecificState,
     type CommunityIdentifier,
-    defaultAccessRules,
+    emptyRules,
     CommunityMap,
     type CommunitySummary,
 } from "openchat-shared";
@@ -63,8 +63,8 @@ export const communityStateStore = createCommunitySpecificObjectStore<CommunityS
         members: new Map<string, Member>(),
         blockedUsers: new Set<string>(),
         invitedUsers: new Set<string>(),
-        lastUpdated: BigInt(0),
         userGroups: new Map<number, UserGroupDetails>(),
+        rules: emptyRules(),
     }),
 );
 
@@ -92,7 +92,7 @@ export const currentCommunityInvitedUsers = createDerivedPropStore<
 export const currentCommunityRules = createDerivedPropStore<CommunitySpecificState, "rules">(
     communityStateStore,
     "rules",
-    () => defaultAccessRules("community"),
+    () => undefined,
 );
 
 export const selectedCommunity = derived(

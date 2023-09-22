@@ -464,6 +464,7 @@ export interface CreateUserGroupArgs {
 export type CreateUserGroupResponse = { 'NameTooShort' : FieldTooShortResult } |
   { 'NotAuthorized' : null } |
   { 'Success' : { 'user_group_id' : number } } |
+  { 'NameInvalid' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
   { 'NameTooLong' : FieldTooLongResult } |
@@ -559,6 +560,7 @@ export interface DirectChatSummary {
   'them' : UserId,
   'notifications_muted' : boolean,
   'events_ttl' : [] | [Milliseconds],
+  'last_updated' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'read_by_me_up_to' : [] | [MessageIndex],
   'expired_messages' : Array<MessageIndexRange>,
@@ -571,6 +573,7 @@ export interface DirectChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
   'notifications_muted' : [] | [boolean],
   'events_ttl' : EventsTimeToLiveUpdate,
+  'last_updated' : TimestampMillis,
   'latest_event_index' : [] | [EventIndex],
   'updated_events' : Array<[number, bigint]>,
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -822,6 +825,7 @@ export interface GroupChatSummary {
   'last_updated' : TimestampMillis,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'rules_accepted' : boolean,
   'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
@@ -886,6 +890,7 @@ export interface GroupNameChanged {
 }
 export interface GroupPermissions {
   'block_users' : PermissionRole,
+  'mention_all_members' : PermissionRole,
   'change_permissions' : PermissionRole,
   'delete_messages' : PermissionRole,
   'send_messages' : PermissionRole,
@@ -1217,6 +1222,7 @@ export interface OptionalCommunityPermissions {
 }
 export interface OptionalGroupPermissions {
   'block_users' : [] | [PermissionRole],
+  'mention_all_members' : [] | [PermissionRole],
   'change_permissions' : [] | [PermissionRole],
   'delete_messages' : [] | [PermissionRole],
   'send_messages' : [] | [PermissionRole],
@@ -1479,6 +1485,7 @@ export type SelectedChannelInitialResponse = { 'ChannelNotFound' : null } |
       'members' : Array<Participant>,
       'invited_users' : Array<UserId>,
       'blocked_users' : Array<UserId>,
+      'chat_rules' : VersionedRules,
       'timestamp' : TimestampMillis,
       'pinned_messages' : Uint32Array | number[],
       'latest_event_index' : EventIndex,
@@ -1507,6 +1514,7 @@ export interface SelectedGroupUpdates {
   'invited_users' : [] | [Array<UserId>],
   'members_added_or_updated' : Array<Participant>,
   'pinned_messages_added' : Uint32Array | number[],
+  'chat_rules' : [] | [VersionedRules],
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
@@ -1520,6 +1528,7 @@ export interface SelectedInitialSuccess {
   'members' : Array<CommunityMember>,
   'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
+  'chat_rules' : VersionedRules,
   'user_groups' : Array<UserGroupDetails>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
@@ -1537,6 +1546,7 @@ export interface SelectedUpdatesSuccess {
   'invited_users' : [] | [Array<UserId>],
   'user_groups_deleted' : Uint32Array | number[],
   'members_added_or_updated' : Array<CommunityMember>,
+  'chat_rules' : [] | [VersionedRules],
   'user_groups' : Array<UserGroupDetails>,
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
@@ -1577,6 +1587,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
+  { 'CommunityRulesNotAccepted' : null } |
   { 'InvalidRequest' : string } |
   { 'RulesNotAccepted' : null };
 export interface SetMemberDisplayNameArgs { 'display_name' : [] | [string] }
@@ -1732,7 +1743,6 @@ export type UpdateChannelResponse = { 'NameReserved' : null } |
   { 'ChannelNotFound' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
-  { 'Success' : null } |
   { 'UserNotInCommunity' : null } |
   { 'UserSuspended' : null } |
   { 'RulesTooShort' : FieldTooShortResult } |
@@ -1758,7 +1768,6 @@ export type UpdateCommunityResponse = { 'NameReserved' : null } |
   { 'NameTooShort' : FieldTooShortResult } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
-  { 'Success' : null } |
   { 'UserNotInCommunity' : null } |
   { 'UserSuspended' : null } |
   { 'RulesTooShort' : FieldTooShortResult } |
@@ -1778,6 +1787,7 @@ export type UpdateUserGroupResponse = { 'NameTooShort' : FieldTooShortResult } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'UserGroupNotFound' : null } |
+  { 'NameInvalid' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
   { 'NameTooLong' : FieldTooLongResult } |
@@ -1826,7 +1836,11 @@ export interface UsersUnblocked {
   'unblocked_by' : UserId,
 }
 export type Version = number;
-export interface VersionedRules { 'text' : string, 'version' : Version }
+export interface VersionedRules {
+  'text' : string,
+  'version' : Version,
+  'enabled' : boolean,
+}
 export interface VideoContent {
   'height' : number,
   'image_blob_reference' : [] | [BlobReference],

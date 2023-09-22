@@ -352,16 +352,22 @@
         "updateDetails": "modifier les informations de base",
         "createPublicChannel": "créer des chaînes publiques",
         "createPrivateChannel": "créer des chaînes privées",
-        "manageUserGroups": "gérer les groupes d'utilisateurs"
+        "manageUserGroups": "gérer les groupes d'utilisateurs",
+        "mentionAllMembers": "mentionner tous les membres ({mention})"
     },
     "rules": {
         "enable": "Activer les règles",
         "accept": "Accepter",
         "reject": "Rejeter",
-        "rules": "{level} règles",
+        "rules": "Règles",
         "placeholder": "quelles sont les règles {level} ?",
-        "instructions": "Si activé, les nouveaux utilisateurs doivent accepter les règles avant de pouvoir rejoindre le {level}.",
-        "acceptTitle": "{level} règles"
+        "instructions": "Si cette option est activée, les nouveaux membres doivent accepter les règles avant de pouvoir envoyer des messages.",
+        "acceptTitle": "Règles de discussion",
+        "promptExistingUsers": "Inviter les membres existants",
+        "promptExistingUsersInstructions": "Les membres existants doivent accepter les nouvelles règles avant de pouvoir envoyer des messages.",
+        "levelRules": "Règles {level}",
+        "communityRulesExplanation": "toutes les règles de chaîne seront préfixées à ces règles",
+        "channelRulesExplanation": "ceux-ci seront préfixés à toutes les règles de la communauté"
     },
     "group": {
         "publicGroup": "Publique {level}",
@@ -629,7 +635,14 @@
     "undeleteMessageFailed": "Échec de la restauration du message",
     "homepage": "Page d'accueil",
     "preferredLanguage": "Langue préférée",
-    "theme": "Thème",
+    "theme": {
+        "dark": "Sombre",
+        "light": "Lumière",
+        "system": "Système",
+        "title": "Thème",
+        "preferredLightTheme": "Thème de lumière préféré",
+        "preferredDarkTheme": "Thème sombre préféré"
+    },
     "freezeGroup": "Groupe Geler",
     "unfreezeGroup": "Dégeler le groupe",
     "chatFrozen": "Ce chat a été gelé",
@@ -939,7 +952,9 @@
         "communityLabel": "Communauté",
         "confirmDeleteUserGroup": "Êtes-vous sûr de vouloir supprimer ce groupe d'utilisateurs ?",
         "namedUserGroupMembers": "**{name}** membres du groupe",
-        "searchUserGroups": "Rechercher des groupes d'utilisateurs..."
+        "searchUserGroups": "Rechercher des groupes d'utilisateurs...",
+        "userGroupName": "Nom du groupe d'utilisateurs",
+        "noSpaces": "aucun espace autorisé"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",
@@ -993,5 +1008,6 @@
     "makeGroupPublicFailed": "Échec de la publication de {level}",
     "displayNameRules": "facultatif",
     "displayName": "Afficher un nom",
-    "communityDisplayNameRules": "seulement au sein de cette communauté"
+    "communityDisplayNameRules": "seulement au sein de cette communauté",
+    "userIdCopiedToClipboard": "ID utilisateur copié dans le presse-papiers"
 }

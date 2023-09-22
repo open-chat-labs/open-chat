@@ -19,6 +19,7 @@ fn accept_if_valid(state: &RuntimeState) {
         "add_local_group_index_canister"
         | "mark_local_group_index_full"
         | "reinstall_group"
+        | "set_max_concurrent_community_canister_upgrades"
         | "set_max_concurrent_group_canister_upgrades"
         | "upgrade_community_canister_wasm"
         | "upgrade_group_canister_wasm"
@@ -28,6 +29,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "freeze_group"
         | "remove_hot_group_exclusion"
         | "set_community_moderation_flags"
+        | "set_community_upgrade_concurrency"
         | "set_group_upgrade_concurrency"
         | "unfreeze_group" => true,
         _ => false,

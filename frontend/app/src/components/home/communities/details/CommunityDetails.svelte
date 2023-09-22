@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { AccessRules, Metrics, CommunitySummary } from "openchat-client";
+    import type { Rules, Metrics, CommunitySummary } from "openchat-client";
     import {
         communityAdvancedOpen,
         communityInviteUsersOpen,
@@ -19,7 +19,7 @@
     import InviteUsersWithLink from "../../InviteUsersWithLink.svelte";
 
     export let community: CommunitySummary;
-    export let rules: AccessRules | undefined;
+    export let rules: Rules | undefined;
     export let metrics: Metrics;
     export let canDelete: boolean;
     export let canInvite: boolean;
@@ -55,7 +55,7 @@
         <CollapsibleCard
             on:toggle={communityRulesOpen.toggle}
             open={$communityRulesOpen}
-            headerText={interpolateLevel("rules.rules", community.level)}>
+            headerText={interpolateLevel("rules.levelRules", community.level)}>
             <Markdown inline={false} text={rules.text} />
         </CollapsibleCard>
     {/if}

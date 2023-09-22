@@ -26,10 +26,15 @@ pub struct Channel {
 }
 
 impl Channels {
-    pub fn new(created_by: UserId, default_channels: Vec<(ChannelId, String)>, now: TimestampMillis) -> Channels {
+    pub fn new(
+        created_by: UserId,
+        default_channels: Vec<(ChannelId, String)>,
+        default_channel_rules: Option<Rules>,
+        now: TimestampMillis,
+    ) -> Channels {
         let channels = default_channels
             .into_iter()
-            .map(|(id, name)| (id, Channel::default(id, name, created_by, now)))
+            .map(|(id, name)| (id, Channel::default(id, name, created_by, default_channel_rules.clone(), now)))
             .collect();
 
         Channels { channels }
@@ -139,7 +144,13 @@ impl Channels {
 }
 
 impl Channel {
-    pub fn default(id: ChannelId, name: String, created_by: UserId, now: TimestampMillis) -> Channel {
+    pub fn default(
+        id: ChannelId,
+        name: String,
+        created_by: UserId,
+        channel_rules: Option<Rules>,
+        now: TimestampMillis,
+    ) -> Channel {
         Channel {
             id,
             chat: GroupChatCore::new(
@@ -147,7 +158,7 @@ impl Channel {
                 true,
                 name,
                 String::new(),
-                Rules::default(),
+                channel_rules.unwrap_or_default(),
                 None,
                 None,
                 true,

@@ -17,6 +17,7 @@ import type {
     MultiUserChat,
     ChatListScope,
     Member,
+    VersionedRules,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -45,6 +46,8 @@ import {
     selectedMessageContext,
     allChats,
     currentChatMembers,
+    currentChatDraftMessage,
+    currentChatRules,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -57,8 +60,11 @@ import {
     communityPreviewsStore,
     currentCommunityMembers,
     selectedCommunity,
+    currentCommunityRules,
 } from "./stores/community";
 import { type GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
+import type { DraftMessage, DraftMessagesByThread } from "./stores/draftMessageFactory";
+import { draftThreadMessages } from "./stores/draftThreadMessages";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -89,6 +95,7 @@ export class LiveState {
     selectedThreadRootEvent: EventWrapper<Message> | undefined;
     threadsFollowedByMe!: ChatMap<Set<number>>;
     currentChatMembers!: Member[];
+    currentChatRules!: VersionedRules | undefined;
     currentChatUserIds!: Set<string>;
     selectedThreadRootMessageIndex: number | undefined;
     chatsInitialised!: boolean;
@@ -103,6 +110,9 @@ export class LiveState {
     allChats!: ChatMap<ChatSummary>;
     selectedCommunity!: CommunitySummary | undefined;
     currentCommunityMembers!: Map<string, Member>;
+    currentChatDraftMessage!: DraftMessage | undefined;
+    draftThreadMessages!: DraftMessagesByThread;
+    currentCommunityRules!: VersionedRules | undefined;
 
     constructor() {
         confirmedThreadEventIndexesLoadedStore.subscribe(
@@ -132,6 +142,7 @@ export class LiveState {
         selectedThreadRootEvent.subscribe((data) => (this.selectedThreadRootEvent = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
         currentChatMembers.subscribe((data) => (this.currentChatMembers = data));
+        currentChatRules.subscribe((data) => (this.currentChatRules = data));
         currentChatUserIds.subscribe((data) => (this.currentChatUserIds = data));
         selectedThreadRootMessageIndex.subscribe(
             (data) => (this.selectedThreadRootMessageIndex = data),
@@ -147,5 +158,8 @@ export class LiveState {
         allChats.subscribe((data) => (this.allChats = data));
         selectedCommunity.subscribe((data) => (this.selectedCommunity = data));
         currentCommunityMembers.subscribe((data) => (this.currentCommunityMembers = data));
+        currentChatDraftMessage.subscribe((data) => (this.currentChatDraftMessage = data));
+        draftThreadMessages.subscribe((data) => (this.draftThreadMessages = data));
+        currentCommunityRules.subscribe((data) => (this.currentCommunityRules = data));
     }
 }

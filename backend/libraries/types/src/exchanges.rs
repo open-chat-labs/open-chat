@@ -21,6 +21,7 @@ pub struct TokenInfo {
     pub token: Cryptocurrency,
     pub ledger: CanisterId,
     pub decimals: u8,
+    pub fee: u128,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]

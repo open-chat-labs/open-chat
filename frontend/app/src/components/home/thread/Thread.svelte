@@ -8,14 +8,13 @@
         EventWrapper,
         FailedMessages,
         Message,
-        MessageContent,
         OpenChat,
         User,
         TimelineItem,
+        AttachmentContent,
     } from "openchat-client";
-    import { ICP_SYMBOL } from "openchat-client";
+    import { LEDGER_CANISTER_ICP } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import { _ } from "svelte-i18n";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -28,6 +27,21 @@
     import { randomSentence } from "../../../utils/randomMsg";
     import TimelineDate from "../TimelineDate.svelte";
     import { reverseScroll } from "../../../stores/scrollPos";
+    import AcceptRulesModal from "../AcceptRulesModal.svelte";
+
+    type ConfirmedActionEvent = ConfirmedSendMessage | ConfirmedRetrySendMessage;
+
+    type ConfirmedSendMessage = {
+        kind: "send_message";
+        textContent: string | undefined;
+        mentioned: User[];
+        attachment: AttachmentContent | undefined;
+    };
+
+    type ConfirmedRetrySendMessage = {
+        kind: "retry_send_message";
+        event: EventWrapper<Message>;
+    };
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -48,6 +62,8 @@
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
     let previousLatestEventIndex: number | undefined = undefined;
+    let showAcceptRulesModal = false;
+    let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
 
     $: selectedMessageContext = client.selectedMessageContext;
     $: focusMessageIndex = client.focusThreadMessageIndex;
@@ -58,6 +74,7 @@
     $: threadEvents = client.threadEvents;
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
+    $: messageContext = { chatId: chat.id, threadRootMessageIndex };
     $: threadRootMessage = rootEvent.event;
     $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
@@ -65,7 +82,7 @@
     );
     $: textContent = derived(draftMessage, (d) => d.textContent);
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
-    $: fileToAttach = derived(draftMessage, (d) => d.attachment);
+    $: attachment = derived(draftMessage, (d) => d.attachment);
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSend = client.canReplyInThread(chat.id);
     $: canReact = client.canReactToMessages(chat.id);
@@ -103,7 +120,7 @@
         function send(n: number) {
             if (n === ev.detail) return;
 
-            sendMessageWithAttachment(randomSentence(), [], undefined);
+            sendMessageWithAttachment(randomSentence(), undefined);
 
             window.setTimeout(() => send(n + 1), 500);
         }
@@ -116,20 +133,14 @@
         let [text, mentioned] = ev.detail;
         if ($editingEvent !== undefined) {
             client
-                .editMessageWithAttachment(
-                    chat.id,
-                    text,
-                    $fileToAttach,
-                    $editingEvent,
-                    threadRootMessageIndex
-                )
+                .editMessageWithAttachment(messageContext, text, $attachment, $editingEvent)
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast("errorEditingMessage");
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, mentioned, $fileToAttach);
+            sendMessageWithAttachment(text, $attachment, mentioned);
         }
         draftThreadMessages.delete(threadRootMessageIndex);
     }
@@ -139,23 +150,33 @@
     }
 
     function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
-        client.retrySendMessage(chat.id, ev.detail, $threadEvents, threadRootMessageIndex);
+        if (client.rulesNeedAccepting()) {
+            showAcceptRulesModal = true;
+            sendMessageContext = {
+                kind: "retry_send_message",
+                event: ev.detail,
+            };
+        } else {
+            client.retrySendMessage(messageContext, ev.detail);
+        }
     }
 
     function sendMessageWithAttachment(
         textContent: string | undefined,
-        mentioned: User[],
-        fileToAttach: MessageContent | undefined
+        attachment: AttachmentContent | undefined,
+        mentioned: User[] = []
     ) {
-        client.sendMessageWithAttachment(
-            chat.id,
-            $threadEvents,
-            textContent,
-            mentioned,
-            fileToAttach,
-            $replyingTo,
-            threadRootMessageIndex
-        );
+        if (client.rulesNeedAccepting()) {
+            showAcceptRulesModal = true;
+            sendMessageContext = {
+                kind: "send_message",
+                textContent,
+                mentioned,
+                attachment,
+            };
+        } else {
+            client.sendMessageWithAttachment(messageContext, textContent, attachment, mentioned);
+        }
     }
 
     function cancelReply() {
@@ -182,13 +203,13 @@
         client.stopTyping(chat, user.userId, threadRootMessageIndex);
     }
 
-    function fileSelected(ev: CustomEvent<MessageContent>) {
+    function fileSelected(ev: CustomEvent<AttachmentContent>) {
         draftThreadMessages.setAttachment(threadRootMessageIndex, ev.detail);
     }
 
     function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
         creatingCryptoTransfer = ev.detail ?? {
-            ledger: $lastCryptoSent ?? client.ledgerCanisterId(ICP_SYMBOL),
+            ledger: $lastCryptoSent ?? LEDGER_CANISTER_ICP,
             amount: BigInt(0),
         };
     }
@@ -214,10 +235,6 @@
         if (memeBuilder !== undefined) {
             memeBuilder.reset();
         }
-    }
-
-    function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
-        sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -259,30 +276,82 @@
     ) {
         goToMessageIndex(ev.detail.index);
     }
+
+    function onAcceptRules(
+        ev: CustomEvent<{
+            accepted: boolean;
+            chatRulesVersion: number | undefined;
+            communityRulesVersion: number | undefined;
+        }>
+    ) {
+        if (sendMessageContext === undefined) {
+            showAcceptRulesModal = false;
+            return;
+        }
+
+        const { accepted, chatRulesVersion, communityRulesVersion } = ev.detail;
+
+        if (accepted) {
+            switch (sendMessageContext.kind) {
+                case "send_message": {
+                    client.sendMessageWithAttachment(
+                        messageContext,
+                        sendMessageContext.textContent,
+                        sendMessageContext.attachment,
+                        sendMessageContext.mentioned,
+                        chatRulesVersion,
+                        communityRulesVersion
+                    );
+                    break;
+                }
+                case "retry_send_message": {
+                    client.retrySendMessage(
+                        messageContext,
+                        sendMessageContext.event,
+                        chatRulesVersion,
+                        communityRulesVersion
+                    );
+                    break;
+                }
+            }
+        } else {
+            switch (sendMessageContext.kind) {
+                case "send_message": {
+                    draftThreadMessages.setTextContent(
+                        threadRootMessageIndex,
+                        sendMessageContext.textContent
+                    );
+                    draftThreadMessages.setAttachment(
+                        threadRootMessageIndex,
+                        sendMessageContext.attachment
+                    );
+                    break;
+                }
+            }
+        }
+
+        sendMessageContext = undefined;
+        showAcceptRulesModal = false;
+    }
 </script>
 
-<PollBuilder
-    bind:this={pollBuilder}
-    on:sendPoll={sendMessageWithContent}
-    bind:open={creatingPoll} />
+{#if showAcceptRulesModal}
+    <AcceptRulesModal on:close={onAcceptRules} />
+{/if}
 
-<GiphySelector
-    bind:this={giphySelector}
-    bind:open={selectingGif}
-    on:sendGiphy={sendMessageWithContent} />
+<PollBuilder context={messageContext} bind:this={pollBuilder} bind:open={creatingPoll} />
 
-<MemeBuilder
-    bind:this={memeBuilder}
-    bind:open={buildingMeme}
-    on:sendMeme={sendMessageWithContent} />
+<GiphySelector context={messageContext} bind:this={giphySelector} bind:open={selectingGif} />
+
+<MemeBuilder context={messageContext} bind:this={memeBuilder} bind:open={buildingMeme} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
+        context={messageContext}
         {chat}
         ledger={creatingCryptoTransfer.ledger}
         draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
-        on:sendTransfer={sendMessageWithContent}
         on:upgrade
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
@@ -370,7 +439,7 @@
 {#if !readonly}
     <Footer
         {chat}
-        fileToAttach={$fileToAttach}
+        attachment={$attachment}
         editingEvent={$editingEvent}
         replyingTo={$replyingTo}
         textContent={$textContent}

@@ -1,5 +1,6 @@
 import type { Message, MessageContent } from "openchat-shared";
 import { dataToBlobUrl } from "./blob";
+import type { AttachmentContent } from "openchat-shared";
 
 const THUMBNAIL_DIMS = dimensions(30, 30);
 
@@ -198,7 +199,7 @@ export function audioRecordingMimeType(): "audio/webm" | "audio/mp4" | undefined
 export async function messageContentFromFile(
     file: File,
     isDiamond: boolean,
-): Promise<MessageContent> {
+): Promise<AttachmentContent> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsArrayBuffer(file);

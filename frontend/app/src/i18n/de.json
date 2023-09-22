@@ -355,16 +355,22 @@
         "updateDetails": "Bearbeiten Sie grundlegende Informationen",
         "createPublicChannel": "Erstellen Sie öffentliche Kanäle",
         "createPrivateChannel": "Erstellen Sie private Kanäle",
-        "manageUserGroups": "Benutzergruppen verwalten"
+        "manageUserGroups": "Benutzergruppen verwalten",
+        "mentionAllMembers": "Erwähnen Sie alle Mitglieder ({mention})"
     },
     "rules": {
         "enable": "Regeln aktivieren",
         "accept": "Annehmen",
         "reject": "Ablehnen",
-        "rules": "{level}-Regeln",
+        "rules": "Regeln",
         "placeholder": "Was sind die {level}-Regeln?",
-        "instructions": "Wenn diese Option aktiviert ist, müssen neue Benutzer den Regeln zustimmen, bevor sie dem {level} beitreten können.",
-        "acceptTitle": "{level}-Regeln"
+        "instructions": "Wenn diese Option aktiviert ist, müssen neue Mitglieder den Regeln zustimmen, bevor sie Nachrichten senden können.",
+        "acceptTitle": "Chat-Regeln",
+        "promptExistingUsers": "Fordern Sie bestehende Mitglieder auf",
+        "promptExistingUsersInstructions": "Bestehende Mitglieder müssen den neuen Regeln zustimmen, bevor sie Nachrichten senden können.",
+        "levelRules": "{level}-Regeln",
+        "communityRulesExplanation": "Alle Kanalregeln werden diesen Regeln vorangestellt",
+        "channelRulesExplanation": "Diese werden allen Community-Regeln vorangestellt"
     },
     "group": {
         "publicGroup": "Öffentlich {level}",
@@ -631,7 +637,14 @@
     "undeleteMessageFailed": "Die Nachricht konnte nicht wiederhergestellt werden",
     "homepage": "Startseite",
     "preferredLanguage": "Bevorzugte Sprache",
-    "theme": "Thema",
+    "theme": {
+        "dark": "Dunkel",
+        "light": "Licht",
+        "system": "System",
+        "title": "Thema",
+        "preferredLightTheme": "Bevorzugtes Lichtthema",
+        "preferredDarkTheme": "Bevorzugtes dunkles Thema"
+    },
     "freezeGroup": "Gruppe einfrieren",
     "unfreezeGroup": "Gruppe entsperren",
     "chatFrozen": "Dieser Chat wurde eingefroren",
@@ -941,7 +954,9 @@
         "communityLabel": "Gemeinschaft",
         "confirmDeleteUserGroup": "Sind Sie sicher, dass Sie diese Benutzergruppe löschen möchten?",
         "namedUserGroupMembers": "**{name}** Gruppenmitglieder",
-        "searchUserGroups": "Benutzergruppen durchsuchen..."
+        "searchUserGroups": "Benutzergruppen durchsuchen...",
+        "userGroupName": "Name der Benutzergruppe",
+        "noSpaces": "Keine Leerzeichen erlaubt"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",
@@ -995,5 +1010,6 @@
     "makeGroupPublicFailed": "{level} konnte nicht veröffentlicht werden",
     "displayNameRules": "Optional",
     "displayName": "Anzeigename",
-    "communityDisplayNameRules": "nur innerhalb dieser Gemeinschaft"
+    "communityDisplayNameRules": "nur innerhalb dieser Gemeinschaft",
+    "userIdCopiedToClipboard": "Benutzer-ID in die Zwischenablage kopiert"
 }

@@ -2,6 +2,8 @@ use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
     DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, UndeleteMessageResult,
 };
+use lazy_static::lazy_static;
+use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -662,11 +664,8 @@ impl GroupChatCore {
         let member = self.members.get(&sender).unwrap();
 
         if !self.check_rules(member) {
-            // TODO: Uncomment this once the FE has been updated with "send message" rules checks
-            //return RulesNotAccepted;
+            return RulesNotAccepted;
         }
-
-        let member = self.members.get(&sender).unwrap();
 
         if let Err(error) = content.validate_for_new_group_message(member.user_id, forwarding, proposals_bot_user_id, now) {
             return match error {
@@ -727,6 +726,8 @@ impl GroupChatCore {
             .as_ref()
             .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index, now));
 
+        let everyone_mentioned = member.role.can_mention_everyone(permissions) && is_everyone_mentioned(&content);
+
         let push_message_args = PushMessageArgs {
             sender,
             thread_root_message_index,
@@ -744,7 +745,7 @@ impl GroupChatCore {
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
 
         let mut users_to_notify = HashSet::new();
-        let mut thread_participants = None;
+        let mut thread_participants: Option<HashSet<UserId>> = None;
 
         if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
             self.events
@@ -755,7 +756,7 @@ impl GroupChatCore {
             users_to_notify.insert(thread_root_message.sender);
 
             if let Some(thread_summary) = thread_root_message.thread_summary {
-                thread_participants = Some(thread_summary.participant_ids);
+                thread_participants = Some(HashSet::from_iter(thread_summary.participant_ids));
 
                 let is_first_reply = thread_summary.reply_count == 1;
                 if is_first_reply {
@@ -768,21 +769,25 @@ impl GroupChatCore {
             }
         }
 
-        mentions.remove(&sender);
-        for user_id in mentions.iter() {
-            if let Some(mentioned) = self.members.get_mut(user_id) {
-                mentioned.mentions.add(thread_root_message_index, message_index, now);
+        for member in self.members.iter_mut().filter(|m| !m.suspended.value && m.user_id != sender) {
+            let mentioned = everyone_mentioned || mentions.contains(&member.user_id);
+
+            if mentioned {
+                // Mention this member
+                member.mentions.add(thread_root_message_index, message_index, now);
+            }
+
+            let notification_candidate = thread_participants.as_ref().map_or(true, |ps| ps.contains(&member.user_id));
+
+            if mentioned || (notification_candidate && !member.notifications_muted.value) {
+                // Notify this member
+                users_to_notify.insert(member.user_id);
             }
         }
-
-        users_to_notify.extend(self.members.users_to_notify(thread_participants));
-        users_to_notify.extend(&mentions);
-        users_to_notify.remove(&sender);
 
         Success(SendMessageSuccess {
             message_event,
             users_to_notify: users_to_notify.into_iter().collect(),
-            mentions,
         })
     }
 
@@ -1560,6 +1565,7 @@ impl GroupChatCore {
             send_messages: new.send_messages.unwrap_or(old.send_messages),
             react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),
             reply_in_thread: new.reply_in_thread.unwrap_or(old.reply_in_thread),
+            mention_all_members: new.mention_all_members.unwrap_or(old.mention_all_members),
         }
     }
 
@@ -1622,7 +1628,6 @@ pub enum SendMessageResult {
 pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
-    pub mentions: HashSet<UserId>,
 }
 
 pub enum AddRemoveReactionResult {
@@ -1822,4 +1827,14 @@ impl From<AccessRulesInternal> for VersionedRules {
             enabled: rules.enabled,
         }
     }
+}
+
+lazy_static! {
+    static ref EVERYONE_REGEX: Regex = Regex::new(r"(^|[\s(){}\[\]])@everyone($|[\s(){}\[\]])").unwrap();
+}
+
+fn is_everyone_mentioned(content: &MessageContentInitial) -> bool {
+    content
+        .text()
+        .map_or(false, |text| text.contains("@everyone") && EVERYONE_REGEX.is_match(text))
 }

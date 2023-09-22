@@ -1,6 +1,6 @@
 <script lang="ts">
     import Feature from "./Feature.svelte";
-    import { communityThemes, themeStore, themes } from "../../theme/themes";
+    import { communityThemes, currentTheme, themes } from "../../theme/themes";
 
     import { mobileWidth, toPixel, availableHeight } from "../../stores/screenDimensions";
     import { menuStore } from "../../stores/menu";
@@ -63,7 +63,7 @@
         ];
     });
 
-    $: screenshots = screenshotMap[$themeStore.name] ?? [];
+    $: screenshots = screenshotMap[$currentTheme.name] ?? [];
 </script>
 
 <svelte:window bind:innerHeight={windowHeight} on:scroll={onScroll} />

@@ -354,16 +354,22 @@
         "updateDetails": "chỉnh sửa thông tin cơ bản",
         "createPublicChannel": "tạo các kênh công cộng",
         "createPrivateChannel": "tạo kênh riêng",
-        "manageUserGroups": "quản lý nhóm người dùng"
+        "manageUserGroups": "quản lý nhóm người dùng",
+        "mentionAllMembers": "đề cập đến tất cả các thành viên ({mention})"
     },
     "rules": {
         "enable": "Bật quy tắc",
         "accept": "Chấp nhận",
         "reject": "Từ chối",
-        "rules": "quy tắc {level}",
+        "rules": "Quy tắc",
         "placeholder": "các quy tắc {level} là gì?",
-        "instructions": "Nếu được bật, người dùng mới phải đồng ý với các quy tắc trước khi họ có thể tham gia {level}.",
-        "acceptTitle": "quy tắc {level}"
+        "instructions": "Nếu được bật, thành viên mới phải đồng ý với các quy tắc trước khi họ có thể gửi tin nhắn.",
+        "acceptTitle": "Quy tắc trò chuyện",
+        "promptExistingUsers": "Nhắc nhở các thành viên hiện có",
+        "promptExistingUsersInstructions": "Các thành viên hiện tại phải đồng ý với các quy định mới trước khi họ có thể gửi tin nhắn.",
+        "levelRules": "quy tắc {level}",
+        "communityRulesExplanation": "mọi quy tắc kênh sẽ được đặt trước các quy tắc này",
+        "channelRulesExplanation": "những điều này sẽ được đặt trước bất kỳ quy tắc cộng đồng nào"
     },
     "group": {
         "publicGroup": "Công khai {level}",
@@ -630,7 +636,14 @@
     "undeleteMessageFailed": "Không thể khôi phục tin nhắn",
     "homepage": "trang chủ",
     "preferredLanguage": "ngôn ngữ ưa thích",
-    "theme": "chủ đề",
+    "theme": {
+        "dark": "Tối tăm",
+        "light": "Ánh sáng",
+        "system": "Hệ thống",
+        "title": "chủ đề",
+        "preferredLightTheme": "Chủ đề ánh sáng ưa thích",
+        "preferredDarkTheme": "Chủ đề tối ưa thích"
+    },
     "freezeGroup": "Nhóm đóng băng",
     "unfreezeGroup": "Giải phóng nhóm",
     "chatFrozen": "Cuộc trò chuyện này đã bị đóng băng",
@@ -940,7 +953,9 @@
         "communityLabel": "Cộng đồng",
         "confirmDeleteUserGroup": "Bạn có chắc chắn muốn xóa nhóm người dùng này?",
         "namedUserGroupMembers": "**{name}** thành viên nhóm",
-        "searchUserGroups": "Tìm kiếm nhóm người dùng..."
+        "searchUserGroups": "Tìm kiếm nhóm người dùng...",
+        "userGroupName": "Tên nhóm người dùng",
+        "noSpaces": "không còn khoảng trống cho phép"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",
@@ -994,5 +1009,6 @@
     "makeGroupPublicFailed": "Không công khai được {level}",
     "displayNameRules": "không bắt buộc",
     "displayName": "Tên hiển thị",
-    "communityDisplayNameRules": "chỉ trong cộng đồng này"
+    "communityDisplayNameRules": "chỉ trong cộng đồng này",
+    "userIdCopiedToClipboard": "Đã sao chép Id người dùng vào bảng nhớ tạm"
 }

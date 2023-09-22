@@ -124,7 +124,6 @@ import type {
     UnpinMessageResponse,
     GroupChatDetailsResponse,
     Member,
-    AccessRules,
     GroupChatDetailsUpdatesResponse,
     EditMessageResponse,
     DeclineInvitationResponse,
@@ -176,7 +175,6 @@ import type {
     ApiPinMessageResponse,
     ApiSelectedInitialResponse,
     ApiParticipant,
-    ApiRules,
     ApiSelectedUpdatesResponse,
     ApiEditMessageResponse,
     ApiDeclineInvitationResponse,
@@ -835,6 +833,7 @@ export function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
         sendMessages: permissionRole(candid.send_messages),
         reactToMessages: permissionRole(candid.react_to_messages),
         replyInThread: permissionRole(candid.reply_in_thread),
+        mentionAllMembers: permissionRole(candid.mention_all_members),
     };
 }
 
@@ -901,6 +900,7 @@ export function apiGroupPermissions(permissions: ChatPermissions): ApiGroupPermi
         react_to_messages: apiPermissionRole(permissions.reactToMessages),
         reply_in_thread: apiPermissionRole(permissions.replyInThread),
         add_members: apiPermissionRole("owner"), // TODO remove this
+        mention_all_members: apiPermissionRole(permissions.mentionAllMembers),
     };
 }
 
@@ -1498,6 +1498,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
             notificationsMuted: candid.notifications_muted,
             readByMeUpTo: latestMessage?.event.messageIndex,
             archived: false,
+            rulesAccepted: candid.rules_accepted,
         },
     };
 }
@@ -1538,6 +1539,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
             pinned: [],
             index: 0,
             displayName: optional(candid.membership, (m) => optional(m.display_name, identity)),
+            rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
         },
         channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: candid.primary_language,
@@ -1602,6 +1604,7 @@ export function communityChannelSummary(
                 optional(candid.membership, (m) => m.latest_threads.map(threadSyncDetails)) ?? [],
             mentions: [],
             archived: false,
+            rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
         },
     };
 }
@@ -1688,52 +1691,52 @@ export function updateGroupResponse(
     candid: ApiUpdateGroupResponse | ApiUpdateChannelResponse,
 ): UpdateGroupResponse {
     if ("Success" in candid) {
-        return "success";
+        return { kind: "success", rulesVersion: undefined };
     }
     if ("SuccessV2" in candid) {
-        return "success";
+        return { kind: "success", rulesVersion: optional(candid.SuccessV2.rules_version, identity) };
     }
     if ("DescriptionTooLong" in candid) {
-        return "desc_too_long";
+        return { kind: "desc_too_long" };
     }
     if ("NameTooLong" in candid) {
-        return "name_too_long";
+        return { kind: "name_too_long" };
     }
     if ("NameTooShort" in candid) {
-        return "name_too_short";
+        return { kind: "name_too_short" };
     }
     if ("NameReserved" in candid) {
-        return "name_reserved";
+        return { kind: "name_reserved" };
     }
     if ("Unchanged" in candid) {
-        return "unchanged";
+        return { kind: "unchanged" };
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorized";
+        return { kind: "not_authorized" };
     }
     if ("NameTaken" in candid) {
-        return "name_taken";
+        return { kind: "name_taken" };
     }
     if ("InternalError" in candid) {
-        return "internal_error";
+        return { kind: "internal_error" };
     }
     if ("CallerNotInGroup" in candid) {
-        return "not_in_group";
+        return { kind: "not_in_group" };
     }
     if ("AvatarTooBig" in candid) {
-        return "avatar_too_big";
+        return { kind: "avatar_too_big" };
     }
     if ("RulesTooLong" in candid) {
-        return "rules_too_long";
+        return { kind: "rules_too_long" };
     }
     if ("RulesTooShort" in candid) {
-        return "rules_too_short";
+        return { kind: "rules_too_short" };
     }
     if ("UserSuspended" in candid) {
-        return "user_suspended";
+        return { kind: "user_suspended" };
     }
     if ("ChatFrozen" in candid) {
-        return "chat_frozen";
+        return { kind: "chat_frozen" };
     }
     if (
         "UserNotInChannel" in candid ||
@@ -1745,7 +1748,7 @@ export function updateGroupResponse(
         "CannotMakeDefaultChannelPrivate" in candid
     ) {
         console.warn("UpdateGroupResponse failed with: ", candid);
-        return "failure";
+        return { kind: "failure" };
     }
     throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
 }
@@ -1902,7 +1905,7 @@ export function groupDetailsResponse(
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
             pinnedMessages: new Set(candid.Success.pinned_messages),
-            rules: groupRules(candid.Success.rules),
+            rules: candid.Success.chat_rules,
             timestamp: candid.Success.timestamp,
         };
     }
@@ -1923,7 +1926,7 @@ export function groupDetailsUpdatesResponse(
             ),
             pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
             pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
-            rules: optional(candid.Success.rules, groupRules),
+            rules: optional(candid.Success.chat_rules, identity),
             invitedUsers: optional(
                 candid.Success.invited_users,
                 (invited_users) => new Set(invited_users.map((u) => u.toString())),
@@ -1946,13 +1949,6 @@ export function member(candid: ApiParticipant): Member {
         role: memberRole(candid.role),
         userId: candid.user_id.toString(),
         displayName: undefined,
-    };
-}
-
-export function groupRules(candid: ApiRules): AccessRules {
-    return {
-        text: candid.text,
-        enabled: candid.enabled,
     };
 }
 

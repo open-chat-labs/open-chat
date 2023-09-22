@@ -354,16 +354,22 @@
         "updateDetails": "editar información básica",
         "createPublicChannel": "crear canales públicos",
         "createPrivateChannel": "crear canales privados",
-        "manageUserGroups": "gestionar grupos de usuarios"
+        "manageUserGroups": "gestionar grupos de usuarios",
+        "mentionAllMembers": "mencionar a todos los miembros ({mention})"
     },
     "rules": {
         "enable": "Habilitar reglas",
         "accept": "Aceptar",
         "reject": "Rechazar",
-        "rules": "{level} reglas",
+        "rules": "Normas",
         "placeholder": "¿Cuáles son las reglas {level}?",
-        "instructions": "Si está habilitado, los nuevos usuarios deben aceptar las reglas antes de poder unirse a {level}.",
-        "acceptTitle": "{level} reglas"
+        "instructions": "Si está habilitado, los nuevos miembros deben aceptar las reglas antes de poder enviar mensajes.",
+        "acceptTitle": "reglas de chat",
+        "promptExistingUsers": "Solicitar a los miembros existentes",
+        "promptExistingUsersInstructions": "Los miembros existentes deben aceptar las nuevas reglas antes de poder enviar mensajes.",
+        "levelRules": "{level} reglas",
+        "communityRulesExplanation": "Cualquier regla del canal tendrá como prefijo estas reglas.",
+        "channelRulesExplanation": "Estos tendrán el prefijo de cualquier regla comunitaria."
     },
     "group": {
         "publicGroup": "Público {level}",
@@ -631,7 +637,14 @@
     "undeleteMessageFailed": "Error al recuperar el mensaje",
     "homepage": "página de inicio",
     "preferredLanguage": "Idioma preferido",
-    "theme": "Tema",
+    "theme": {
+        "dark": "Oscuro",
+        "light": "Luz",
+        "system": "Sistema",
+        "title": "Tema",
+        "preferredLightTheme": "Tema ligero preferido",
+        "preferredDarkTheme": "Tema oscuro preferido"
+    },
     "freezeGroup": "Congelar grupo",
     "unfreezeGroup": "Descongelar grupo",
     "chatFrozen": "Este chat ha sido congelado.",
@@ -941,7 +954,9 @@
         "communityLabel": "Comunidad",
         "confirmDeleteUserGroup": "¿Está seguro de que desea eliminar este grupo de usuarios?",
         "namedUserGroupMembers": "**{name}** miembros del grupo",
-        "searchUserGroups": "Buscar grupos de usuarios..."
+        "searchUserGroups": "Buscar grupos de usuarios...",
+        "userGroupName": "Nombre del grupo de usuarios",
+        "noSpaces": "no se permiten espacios"
     },
     "groupCreatedBy": "{username} creó el {level}",
     "groupName": "{level} nombre",
@@ -995,5 +1010,6 @@
     "makeGroupPublicFailed": "No se pudo hacer público {level}",
     "displayNameRules": "opcional",
     "displayName": "Nombre para mostrar",
-    "communityDisplayNameRules": "solo dentro de esta comunidad"
+    "communityDisplayNameRules": "solo dentro de esta comunidad",
+    "userIdCopiedToClipboard": "ID de usuario copiado al portapapeles"
 }

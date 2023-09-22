@@ -83,6 +83,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         banner: args.banner,
         gate: args.gate,
         default_channels: args.default_channels,
+        default_channel_rules: args.default_channel_rules,
         source_group: args.source_group,
         wasm_version: canister_wasm.version,
         test_mode: state.data.test_mode,

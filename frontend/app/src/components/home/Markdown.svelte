@@ -37,9 +37,16 @@
             const u = userGroups.get(Number(p1));
             if (u !== undefined) {
                 return `**@${u.name}**`;
+            } else {
+                console.warn("Unable to find user group: ", match);
+                return `**@unknown_user_group**`;
             }
-            return match;
         });
+    }
+
+    function replaceEveryone(text: string): string {
+        if (!text.includes("@everyone")) return text;
+        return text.replace(/(^|[\s(){}\[\]])(@everyone)($|[\s(){}\[\]])/gm, "$1**$2**$3");
     }
 
     function replaceDatetimes(text: string): string {
@@ -49,7 +56,9 @@
     }
 
     $: {
-        let parsed = replaceUserGroupIds(replaceUserIds(replaceDatetimes(text)), $userGroups);
+        let parsed = replaceEveryone(
+            replaceUserGroupIds(replaceUserIds(replaceDatetimes(text)), $userGroups)
+        );
         try {
             if (inline) {
                 parsed = marked.parseInline(parsed, options) as string;

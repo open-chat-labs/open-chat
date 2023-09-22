@@ -5,6 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.855](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.855-group)] - 2023-09-21
+
+### Added
+
+- Add `mention_all_members` group permission ([#4405](https://github.com/open-chat-labs/open-chat/pull/4405))
+
+### Changed
+
+- Support `@everyone` mentions ([#4405](https://github.com/open-chat-labs/open-chat/pull/4405))
+
+## [[2.0.851](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.851-group)] - 2023-09-18
+
 ### Changed
 
 - Move `InstructionCountsLog` into its own library ([#4348](https://github.com/open-chat-labs/open-chat/pull/4348))

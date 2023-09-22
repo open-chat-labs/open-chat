@@ -7,20 +7,22 @@ import type {
     EnhancedReplyContext,
     EventWrapper,
     Message,
-    MessageContent,
     ThreadSyncDetails,
     CreatedUser,
     ChatIdentifier,
     DirectChatIdentifier,
     MultiUserChat,
     ChatListScope,
+    AttachmentContent,
 } from "openchat-shared";
 import {
     compareChats,
     emptyChatMetrics,
+    emptyRules,
     ChatMap,
     nullMembership,
     chatIdentifiersEqual,
+    isAttachmentContent,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, type Readable, writable, type Writable } from "svelte/store";
@@ -135,13 +137,13 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
 
 export const allChats = derived(
     [allServerChats, uninitializedDirectChats, groupPreviewsStore, localChatSummaryUpdates],
-    ([$all, $direct, $group, $localUpdates]) => {
+    ([$all, $direct, $group, $localSummaryUpdates]) => {
         const merged = $all.entries().concat([...$direct.entries(), ...$group.entries()]);
         const reduced = merged.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
             result.set(chatId, summary);
             return result;
         }, new ChatMap<ChatSummary>());
-        return mergeLocalSummaryUpdates(currentScope, reduced, $localUpdates);
+        return mergeLocalSummaryUpdates(currentScope, reduced, $localSummaryUpdates);
     },
 );
 
@@ -372,6 +374,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
         blockedUsers: new Set<string>(),
         invitedUsers: new Set<string>(),
         pinnedMessages: new Set<number>(),
+        rules: emptyRules(),
         userIds: new Set<string>(),
         userGroupKeys: new Set<string>(),
         confirmedEventIndexesLoaded: new DRange(),
@@ -478,6 +481,7 @@ export const currentChatRules = createDerivedPropStore<ChatSpecificState, "rules
     "rules",
     () => undefined,
 );
+
 export const currentChatMembers = createDerivedPropStore<ChatSpecificState, "members">(
     chatStateStore,
     "members",
@@ -576,6 +580,7 @@ export function createDirectChat(chatId: DirectChatIdentifier): void {
             readByThemUpTo: undefined,
             latestMessage: undefined,
             latestEventIndex: 0,
+            lastUpdated: BigInt(Date.now()),
             dateCreated: BigInt(Date.now()),
             metrics: emptyChatMetrics(),
             membership: {
@@ -685,7 +690,7 @@ export const currentChatDraftMessage = {
     ...draftMessages,
     setTextContent: (id: ChatIdentifier, textContent: string | undefined): void =>
         draftMessages.setProp(id, "textContent", textContent),
-    setAttachment: (id: ChatIdentifier, attachment: MessageContent | undefined): void =>
+    setAttachment: (id: ChatIdentifier, attachment: AttachmentContent | undefined): void =>
         draftMessages.setProp(id, "attachment", attachment),
     setReplyingTo: (id: ChatIdentifier, replyingTo: EnhancedReplyContext | undefined): void =>
         draftMessages.setProp(id, "replyingTo", replyingTo),
@@ -693,10 +698,9 @@ export const currentChatDraftMessage = {
         const users = get(userStore);
         const updated = {
             editingEvent,
-            attachment:
-                editingEvent?.event.content.kind !== "text_content"
-                    ? editingEvent?.event.content
-                    : undefined,
+            attachment: isAttachmentContent(editingEvent.event.content)
+                ? editingEvent.event.content
+                : undefined,
             replyingTo:
                 editingEvent.event.repliesTo &&
                 editingEvent.event.repliesTo.kind === "rehydrated_reply_context"
@@ -720,7 +724,7 @@ export const currentChatReplyingTo = createDerivedPropStore(
     "replyingTo",
     () => undefined,
 );
-export const currentChatFileToAttach = createDerivedPropStore(
+export const currentChatAttachment = createDerivedPropStore(
     currentChatDraftMessage,
     "attachment",
     () => undefined,

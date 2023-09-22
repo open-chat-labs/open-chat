@@ -7,8 +7,6 @@ import type {
     ApiRole,
     ApiMessagesByMessageIndexResponse,
     ApiMessageEventWrapper,
-    ApiRules,
-    ApiRulesResponse,
     ApiGroupCanisterGroupChatSummary,
     ApiGroupCanisterGroupChatSummaryUpdates,
     ApiGroupCanisterSummaryResponse,
@@ -33,7 +31,6 @@ import type {
     MemberRole,
     Message,
     GroupInviteCodeChange,
-    AccessRules,
     ChatPermissions,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
@@ -44,6 +41,7 @@ import type {
     ChatIdentifier,
     MultiUserChatIdentifier,
     ConvertToCommunityResponse,
+    UpdatedRules,
 } from "openchat-shared";
 import {
     CommonResponses,
@@ -161,6 +159,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        rulesAccepted: candid.rules_accepted,
     };
 }
 
@@ -209,6 +208,7 @@ function groupChatSummaryUpdates(
         updatedEvents: candid.updated_events.map(updatedEvent),
         dateLastPinned: optional(candid.date_last_pinned, identity),
         gate: optionUpdate(candid.gate, accessGate),
+        rulesAccepted: optional(candid.rules_accepted, identity),
     };
 }
 
@@ -240,22 +240,7 @@ export function apiOptionalGroupPermissions(
         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
         reply_in_thread: apiOptional(apiPermissionRole, permissions.replyInThread),
         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
-    };
-}
-
-export function apiGroupRules(rules: AccessRules): ApiRules {
-    return {
-        text: rules.text,
-        enabled: rules.enabled,
-
-    };
-}
-
-export function apiUpdatedRules(rules: AccessRules): ApiUpdatedRules {
-    return {
-        text: rules.text,
-        enabled: rules.enabled,
-        new_version: true,
+        mention_all_members: apiOptional(apiPermissionRole, permissions.mentionAllMembers),
     };
 }
 
@@ -670,15 +655,6 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
     };
 }
 
-export function rulesResponse(candid: ApiRulesResponse): AccessRules | undefined {
-    if ("Success" in candid) {
-        const rules = optional(candid.Success.rules, identity);
-        return {
-            text: rules ?? "",
-            enabled: rules !== undefined,
-        };
-    }
-}
 export function convertToCommunityReponse(
     candid: ApiConvertIntoCommunityResponse
 ): ConvertToCommunityResponse {
@@ -695,4 +671,12 @@ export function convertToCommunityReponse(
         console.warn("ConvertToCommunity failed with ", candid);
         return CommonResponses.failure();
     }
+}
+
+export function apiUpdatedRules(rules: UpdatedRules): ApiUpdatedRules {
+    return {
+        text: rules.text,
+        enabled: rules.enabled,
+        new_version: rules.newVersion,  
+    };
 }

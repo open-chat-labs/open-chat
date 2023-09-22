@@ -14,6 +14,7 @@ pub struct Args {
     pub permissions: Option<CommunityPermissions>,
     pub gate: Option<AccessGate>,
     pub default_channels: Vec<String>,
+    pub default_channel_rules: Option<Rules>,
     pub primary_language: String,
 }
 

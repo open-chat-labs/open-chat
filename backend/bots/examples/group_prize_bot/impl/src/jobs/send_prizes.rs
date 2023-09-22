@@ -86,7 +86,7 @@ async fn send_next_prize() -> bool {
         };
 
     // 3. Generate a random MessageId
-    let new_message_id = mutate_state(|state| MessageId::generate(state.env.rng()));
+    let new_message_id = mutate_state(|state| state.env.rng().gen());
 
     // 4. Send the prize message to the group
     if let Err(error_message) =

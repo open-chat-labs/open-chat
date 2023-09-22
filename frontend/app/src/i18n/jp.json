@@ -353,16 +353,22 @@
         "updateDetails": "基本情報を編集する",
         "createPublicChannel": "パブリックチャンネルを作成する",
         "createPrivateChannel": "プライベートチャンネルを作成する",
-        "manageUserGroups": "ユーザーグループを管理する"
+        "manageUserGroups": "ユーザーグループを管理する",
+        "mentionAllMembers": "すべてのメンバーに言及する ({mention})"
     },
     "rules": {
         "enable": "ルールを有効にする",
         "accept": "承認",
         "reject": "拒否",
-        "rules": "{level} ルール",
+        "rules": "ルール",
         "placeholder": "{level} ルールとは何ですか?",
-        "instructions": "有効にすると、新規ユーザーは {level} に参加する前にルールに同意する必要があります。",
-        "acceptTitle": "{level} ルール"
+        "instructions": "有効にすると、新しいメンバーはメッセージを送信する前にルールに同意する必要があります。",
+        "acceptTitle": "チャットのルール",
+        "promptExistingUsers": "既存のメンバーにプロンプトを表示する",
+        "promptExistingUsersInstructions": "既存のメンバーは、メッセージを送信する前に新しいルールに同意する必要があります。",
+        "levelRules": "{level} ルール",
+        "communityRulesExplanation": "チャネル ルールはこれらのルールの前に付けられます。",
+        "channelRulesExplanation": "これらはコミュニティ ルールの先頭に付けられます"
     },
     "group": {
         "publicGroup": "パブリック {level}",
@@ -630,7 +636,14 @@
     "undeleteMessageFailed": "メッセージの削除を取り消すことができませんでした",
     "homepage": "ホームページ",
     "preferredLanguage": "優先言語",
-    "theme": "テーマ",
+    "theme": {
+        "dark": "暗い",
+        "light": "ライト",
+        "system": "システム",
+        "title": "テーマ",
+        "preferredLightTheme": "好みのライトテーマ",
+        "preferredDarkTheme": "推奨されるダークテーマ"
+    },
     "freezeGroup": "グループを凍結",
     "unfreezeGroup": "グループを解凍",
     "chatFrozen": "このチャットは凍結されました",
@@ -940,7 +953,9 @@
         "communityLabel": "コミュニティ",
         "confirmDeleteUserGroup": "このユーザー グループを削除してもよろしいですか?",
         "namedUserGroupMembers": "**{name}** グループのメンバー",
-        "searchUserGroups": "ユーザーグループを検索..."
+        "searchUserGroups": "ユーザーグループを検索...",
+        "userGroupName": "ユーザーグループ名",
+        "noSpaces": "スペースは使用できません"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",
@@ -994,5 +1009,6 @@
     "makeGroupPublicFailed": "{level} を公開できませんでした",
     "displayNameRules": "オプション",
     "displayName": "表示名",
-    "communityDisplayNameRules": "このコミュニティ内だけで"
+    "communityDisplayNameRules": "このコミュニティ内だけで",
+    "userIdCopiedToClipboard": "ユーザーIDがクリップボードにコピーされました"
 }

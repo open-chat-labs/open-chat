@@ -4,7 +4,7 @@ use crate::{mutate_state, RewardCodes, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use icp_dispenser_bot::handle_direct_message::*;
-use types::{BotMessage, MessageContent, TextContent, UserId};
+use types::{BotMessage, MessageContent, MessageContentInitial, TextContent, UserId};
 
 #[update_msgpack]
 #[trace]
@@ -40,8 +40,10 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
 
     Success(SuccessResult {
         bot_name: state.data.bot_name.clone(),
+        bot_display_name: None,
         messages: vec![BotMessage {
-            content: MessageContent::Text(TextContent { text: text.to_string() }),
+            content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
+            message_id: None,
         }],
     })
 }

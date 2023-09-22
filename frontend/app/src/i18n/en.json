@@ -432,7 +432,8 @@
         "replyInThread": "reply in thread",
         "createPublicChannel": "create public channels",
         "createPrivateChannel": "create private channels",
-        "manageUserGroups": "manage user groups"
+        "manageUserGroups": "manage user groups",
+        "mentionAllMembers": "mention all members ({mention})"
     },
     "level": {
         "group": "Group",
@@ -485,13 +486,18 @@
         "invite": "Invite"
     },
     "rules": {
-        "rules": "{level} rules",
+        "rules": "Rules",
+        "levelRules": "{level} rules",
+        "communityRulesExplanation": "any channel rules will be prefixed to these rules",
+        "channelRulesExplanation": "these will be prefixed to any community rules",
         "enable": "Enable rules",
         "placeholder": "what are the {level} rules?",
-        "instructions": "If enabled, new users must agree to the rules before they can join the {level}.",
-        "acceptTitle": "{level} rules",
+        "instructions": "If enabled, new members must agree to the rules before they can send messages.",
+        "acceptTitle": "Chat rules",
         "accept": "Accept",
-        "reject": "Reject"
+        "reject": "Reject",
+        "promptExistingUsers": "Prompt existing members",
+        "promptExistingUsersInstructions": "Existing members must agree to the new rules before they can send messages."
     },
     "access": {
         "visibility": "Access",
@@ -627,6 +633,7 @@
         "previewFailure": "Unable to load thread previews"
     },
     "linkCopiedToClipboard": "Link copied to clipboard",
+    "userIdCopiedToClipboard": "User Id copied to clipboard",
     "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
     "referralHeader": "Invite friends/family",
     "userReferralMessage": "Share this link to OpenChat with friends and family. As long as you are a Diamond member yourself, for each person who registers with your link and goes on to become a Diamond member, you will receive half of the membership payments they make during their first year.",
@@ -705,7 +712,6 @@
     "joined": "Joined",
     "oneMessageDeleted": "1 message deleted",
     "nMessagesDeleted": "{number} messages deleted",
-    "theme": "Theme",
     "undeleteMessage": "Undelete",
     "undeletingMessage": "Undeleting message by {username} on {timestamp}",
     "undeleteMessageFailed": "Failed to undelete the message",
@@ -878,6 +884,8 @@
         "edit": "Edit community",
         "members": "Members",
         "userGroups": "User groups",
+        "userGroupName": "User group name",
+        "noSpaces": "no spaces allowed",
         "noUserGroups": "No user groups found",
         "namedUserGroupMembers": "**{name}** group members",
         "userGroupMembers": "User group members",
@@ -987,5 +995,13 @@
     "chatMenu": "Chat menu",
     "attachFile": "Attach image/video/file",
     "pickEmoji": "Pick emoji",
-    "sendMessage": "Send message"
+    "sendMessage": "Send message",
+    "theme": {
+        "preferredLightTheme": "Preferred light theme",
+        "preferredDarkTheme": "Preferred dark theme",
+        "dark": "Dark",
+        "light": "Light",
+        "system": "System",
+        "title": "Theme"
+    }
 }

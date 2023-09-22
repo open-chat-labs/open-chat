@@ -29,6 +29,9 @@ pub struct GroupPermissions {
     pub send_messages: GroupPermissionRole,
     pub react_to_messages: GroupPermissionRole,
     pub reply_in_thread: GroupPermissionRole,
+    // TODO: Remove this field once communities and groups have been released
+    #[serde(default = "group_permission_role_admin")]
+    pub mention_all_members: GroupPermissionRole,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -47,6 +50,8 @@ pub struct OptionalGroupPermissions {
     pub send_messages: Option<GroupPermissionRole>,
     pub react_to_messages: Option<GroupPermissionRole>,
     pub reply_in_thread: Option<GroupPermissionRole>,
+    #[serde(default)]
+    pub mention_all_members: Option<GroupPermissionRole>,
 }
 
 impl Default for GroupPermissions {
@@ -56,6 +61,7 @@ impl Default for GroupPermissions {
             change_permissions: GroupPermissionRole::Admins,
             change_roles: GroupPermissionRole::Admins,
             add_members: GroupPermissionRole::Admins,
+            mention_all_members: GroupPermissionRole::Admins,
             remove_members: GroupPermissionRole::Moderators,
             block_users: GroupPermissionRole::Moderators,
             delete_messages: GroupPermissionRole::Moderators,
@@ -80,4 +86,8 @@ pub enum GroupPermissionRole {
 
 fn group_permission_role_owner() -> GroupPermissionRole {
     GroupPermissionRole::Owner
+}
+
+fn group_permission_role_admin() -> GroupPermissionRole {
+    GroupPermissionRole::Admins
 }

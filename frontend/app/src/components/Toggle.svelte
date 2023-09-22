@@ -16,7 +16,7 @@
         <Checkbox {small} {disabled} {waiting} {id} toggle on:change {label} bind:checked />
     </div>
     {#if label !== undefined}
-        <div class="label">
+        <div class="label" class:disabled>
             {label}
         </div>
     {/if}
@@ -33,6 +33,9 @@
         }
         .label {
             flex: 1;
+            &.disabled {
+                color: var(--disabledTxt);
+            }
         }
         &.big-gap {
             gap: $sp4;
