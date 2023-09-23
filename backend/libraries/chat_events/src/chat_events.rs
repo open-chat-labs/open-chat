@@ -17,7 +17,7 @@ use types::{
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention,
     Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, Milliseconds, MultiUserChat, PollVotes,
     PrizeWinnerContent, ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult,
-    TimestampMillis, Timestamped, UserId, VoteOperation,
+    TimestampMillis, Timestamped, Tips, UserId, VoteOperation,
 };
 use types::{Hash, MessageReport, ReportedMessageInternal};
 
@@ -109,7 +109,7 @@ impl ChatEvents {
             content: args.content,
             replies_to: args.replies_to,
             reactions: Vec::new(),
-            tips: Vec::new(),
+            tips: Tips::default(),
             last_updated: None,
             last_edited: None,
             deleted_by: None,
@@ -541,40 +541,33 @@ impl ChatEvents {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub fn tip_message(
-        &mut self,
-        user_id: UserId,
-        recipient: UserId,
-        min_visible_event_index: EventIndex,
-        thread_root_message_index: Option<MessageIndex>,
-        message_id: MessageId,
-        transfer: CompletedCryptoTransaction,
-        now: TimestampMillis,
-    ) -> TipMessageResult {
+    pub fn tip_message(&mut self, args: TipMessageArgs, min_visible_event_index: EventIndex) -> TipMessageResult {
         use TipMessageResult::*;
 
-        if let Some((message, event_index)) =
-            self.message_internal_mut(min_visible_event_index, thread_root_message_index, message_id.into(), now)
-        {
-            if message.sender == user_id {
+        if let Some((message, event_index)) = self.message_internal_mut(
+            min_visible_event_index,
+            args.thread_root_message_index,
+            args.message_id.into(),
+            args.now,
+        ) {
+            if message.sender == args.user_id {
                 return CannotTipSelf;
             }
-            if message.sender != recipient {
+            if message.sender != args.recipient {
                 return RecipientMismatch;
             }
 
-            message.tips.push((user_id, transfer));
-            message.last_updated = Some(now);
+            message.tips.push(args.ledger, args.user_id, args.amount);
+            message.last_updated = Some(args.now);
             self.last_updated_timestamps
-                .mark_updated(thread_root_message_index, event_index, now);
+                .mark_updated(args.thread_root_message_index, event_index, args.now);
 
             add_to_metrics(
                 &mut self.metrics,
                 &mut self.per_user_metrics,
-                user_id,
+                args.user_id,
                 |m| incr(&mut m.tips),
-                now,
+                args.now,
             );
 
             Success
@@ -1338,6 +1331,18 @@ pub enum AddRemoveReactionResult {
     Success,
     NoChange,
     MessageNotFound,
+}
+
+#[derive(Clone)]
+pub struct TipMessageArgs {
+    pub user_id: UserId,
+    pub recipient: UserId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub ledger: CanisterId,
+    pub token: Cryptocurrency,
+    pub amount: u128,
+    pub now: TimestampMillis,
 }
 
 pub enum TipMessageResult {

@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::Reader;
+use chat_events::{Reader, TipMessageArgs};
 use group_canister::c2c_tip_message::{Response::*, *};
 use group_chat_core::TipMessageResult;
 use ledger_utils::format_crypto_amount_with_symbol;
@@ -23,17 +23,19 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let user_id = state.env.caller().into();
     let now = state.env.now();
-    let token = args.transfer.token();
-    let amount = args.transfer.units();
 
-    match state.data.chat.tip_message(
+    let tip_message_args = TipMessageArgs {
         user_id,
-        args.recipient,
-        args.thread_root_message_index,
-        args.message_id,
-        args.transfer,
+        recipient: args.recipient,
+        thread_root_message_index: args.thread_root_message_index,
+        message_id: args.message_id,
+        ledger: args.ledger,
+        token: args.token.clone(),
+        amount: args.amount,
         now,
-    ) {
+    };
+
+    match state.data.chat.tip_message(tip_message_args) {
         TipMessageResult::Success => {
             if let Some((message_index, message_event_index)) = state
                 .data
@@ -56,7 +58,11 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         tipped_by: user_id,
                         tipped_by_name: args.username,
                         tipped_by_display_name: args.display_name,
-                        tip: format_crypto_amount_with_symbol(amount, token.decimals().unwrap_or(8), token.token_symbol()),
+                        tip: format_crypto_amount_with_symbol(
+                            args.amount,
+                            args.token.decimals().unwrap_or(8),
+                            args.token.token_symbol(),
+                        ),
                         group_avatar_id: state.data.chat.avatar.as_ref().map(|a| a.id),
                     }),
                 );

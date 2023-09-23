@@ -1,7 +1,7 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::{Reader, TipMessageResult};
+use chat_events::{Reader, TipMessageArgs, TipMessageResult};
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{DirectMessageTipped, EventIndex, Notification, UserId};
 use user_canister::c2c_tip_message::{Response::*, *};
@@ -19,19 +19,20 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(chat) = state.data.direct_chats.get_mut(&user_id.into()) {
         let now = state.env.now();
         let my_user_id = state.env.canister_id().into();
-        let token = args.transfer.token();
-        let amount = args.transfer.units();
+
+        let tip_message_args = TipMessageArgs {
+            user_id,
+            recipient: my_user_id,
+            thread_root_message_index: args.thread_root_message_index,
+            message_id: args.message_id,
+            ledger: args.ledger,
+            token: args.token.clone(),
+            amount: args.amount,
+            now,
+        };
 
         if matches!(
-            chat.events.tip_message(
-                user_id,
-                my_user_id,
-                EventIndex::default(),
-                args.thread_root_message_index,
-                args.message_id,
-                args.transfer,
-                now,
-            ),
+            chat.events.tip_message(tip_message_args, EventIndex::default(),),
             TipMessageResult::Success
         ) {
             if let Some(event) = chat
@@ -46,7 +47,11 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     message_event_index: event.index,
                     username: args.username,
                     display_name: args.display_name,
-                    tip: format_crypto_amount_with_symbol(amount, token.decimals().unwrap_or(8), token.token_symbol()),
+                    tip: format_crypto_amount_with_symbol(
+                        args.amount,
+                        args.token.decimals().unwrap_or(8),
+                        args.token.token_symbol(),
+                    ),
                     user_avatar_id: args.user_avatar_id,
                 });
                 state.push_notification(my_user_id, notification);

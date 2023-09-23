@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, CompletedCryptoTransaction, MessageId, MessageIndex, UserId};
+use types::{CanisterId, ChannelId, Cryptocurrency, MessageId, MessageIndex, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -8,7 +8,9 @@ pub struct Args {
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub transfer: CompletedCryptoTransaction,
+    pub ledger: CanisterId,
+    pub token: Cryptocurrency,
+    pub amount: u128,
     pub username: String,
     pub display_name: Option<String>,
 }
