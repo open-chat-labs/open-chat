@@ -733,6 +733,7 @@ impl GroupChatCore {
             thread_root_message_index,
             message_id,
             content: content.into(),
+            mentioned: mentioned.clone(),
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
             correlation_id: 0,
@@ -745,7 +746,7 @@ impl GroupChatCore {
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
 
         let mut users_to_notify = HashSet::new();
-        let mut thread_participants: Option<HashSet<UserId>> = None;
+        let mut thread_followers: Option<HashSet<UserId>> = None;
 
         if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
             self.events
@@ -758,7 +759,8 @@ impl GroupChatCore {
             }
 
             if let Some(thread_summary) = thread_root_message.thread_summary {
-                thread_participants = Some(HashSet::from_iter(thread_summary.participant_ids));
+                let participants = HashSet::from_iter(thread_summary.participant_ids);
+                thread_followers = Some(thread_summary.follower_ids.union(&participants).copied().collect());
 
                 let is_first_reply = thread_summary.reply_count == 1;
                 if is_first_reply {
@@ -782,7 +784,7 @@ impl GroupChatCore {
                 member.mentions.add(thread_root_message_index, message_index, now);
             }
 
-            let notification_candidate = thread_participants.as_ref().map_or(true, |ps| ps.contains(&member.user_id));
+            let notification_candidate = thread_followers.as_ref().map_or(true, |ps| ps.contains(&member.user_id));
 
             if mentioned || (notification_candidate && !member.notifications_muted.value) {
                 // Notify this member
@@ -1535,6 +1537,56 @@ impl GroupChatCore {
                 .map_or(false, |accepted| accepted.value >= self.rules.text.version))
     }
 
+    pub fn follow_thread(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: MessageIndex,
+        now: TimestampMillis,
+    ) -> FollowThreadResult {
+        use FollowThreadResult::*;
+
+        if let Some(member) = self.members.get_mut(&user_id) {
+            match self
+                .events
+                .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
+            {
+                chat_events::FollowThreadResult::Success => {
+                    member.threads.insert(thread_root_message_index);
+                    Success
+                }
+                chat_events::FollowThreadResult::AlreadyFollowing => AlreadyFollowing,
+                chat_events::FollowThreadResult::ThreadNotFound => ThreadNotFound,
+            }
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn unfollow_thread(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: MessageIndex,
+        now: TimestampMillis,
+    ) -> UnfollowThreadResult {
+        use UnfollowThreadResult::*;
+
+        if let Some(member) = self.members.get_mut(&user_id) {
+            match self
+                .events
+                .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
+            {
+                chat_events::UnfollowThreadResult::Success => {
+                    member.threads.remove(&thread_root_message_index);
+                    Success
+                }
+                chat_events::UnfollowThreadResult::NotFollowing => NotFollowing,
+                chat_events::UnfollowThreadResult::ThreadNotFound => ThreadNotFound,
+            }
+        } else {
+            UserNotInGroup
+        }
+    }
+
     fn events_reader(
         &self,
         user_id: Option<UserId>,
@@ -1801,6 +1853,22 @@ pub enum InvitedUsersResult {
 pub struct InvitedUsersSuccess {
     pub invited_users: Vec<UserId>,
     pub group_name: String,
+}
+
+pub enum FollowThreadResult {
+    Success,
+    AlreadyFollowing,
+    ThreadNotFound,
+    UserNotInGroup,
+    UserSuspended,
+}
+
+pub enum UnfollowThreadResult {
+    Success,
+    NotFollowing,
+    ThreadNotFound,
+    UserNotInGroup,
+    UserSuspended,
 }
 
 #[derive(Default)]

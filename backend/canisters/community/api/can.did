@@ -891,6 +891,38 @@ type UpdateUserGroupResponse = variant {
     UserSuspended;
 };
 
+type FollowThreadArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : MessageIndex;
+};
+
+type FollowThreadResponse = variant {
+    Success;
+    AlreadyFollowing;
+    ThreadNotFound;
+    ChannelNotFound;
+    UserNotInChannel;
+    UserNotInCommunity;
+    UserSuspended;
+    CommunityFrozen;
+};
+
+type UnfollowThreadArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : MessageIndex;
+};
+
+type UnfollowThreadResponse = variant {
+    Success;
+    NotFollowing;
+    ThreadNotFound;
+    ChannelNotFound;
+    UserNotInChannel;
+    UserNotInCommunity;
+    UserSuspended;
+    CommunityFrozen;
+};
+
 service : {
     channel_summary : (ChannelSummaryArgs) -> (ChannelSummaryResponse) query;
     channel_summary_updates : (ChannelSummaryUpdatesArgs) -> (ChannelSummaryUpdatesResponse) query;
@@ -947,4 +979,6 @@ service : {
     update_channel : (UpdateChannelArgs) -> (UpdateChannelResponse);
     update_community : (UpdateCommunityArgs) -> (UpdateCommunityResponse);
     update_user_group : (UpdateUserGroupArgs) -> (UpdateUserGroupResponse);
+    follow_thread : (FollowThreadArgs) -> (FollowThreadResponse);
+    unfollow_thread : (UnfollowThreadArgs) -> (UnfollowThreadResponse);
 };
