@@ -1238,7 +1238,6 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
       'pinned_messages' : IDL.Vec(MessageIndex),
       'latest_event_index' : EventIndex,
-      'rules' : Rules,
     }),
     'PrivateCommunity' : IDL.Null,
     'PrivateChannel' : IDL.Null,
@@ -1257,7 +1256,6 @@ export const idlFactory = ({ IDL }) => {
     'members_removed' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
-    'rules' : IDL.Opt(Rules),
     'blocked_users_added' : IDL.Vec(UserId),
   });
   const SelectedChannelUpdatesResponse = IDL.Variant({
@@ -1296,7 +1294,6 @@ export const idlFactory = ({ IDL }) => {
     'user_groups' : IDL.Vec(UserGroupDetails),
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
-    'rules' : Rules,
   });
   const SelectedInitialResponse = IDL.Variant({
     'Success' : SelectedInitialSuccess,
@@ -1315,7 +1312,6 @@ export const idlFactory = ({ IDL }) => {
     'user_groups' : IDL.Vec(UserGroupDetails),
     'members_removed' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
-    'rules' : IDL.Opt(Rules),
     'blocked_users_added' : IDL.Vec(UserId),
   });
   const SelectedUpdatesResponse = IDL.Variant({
