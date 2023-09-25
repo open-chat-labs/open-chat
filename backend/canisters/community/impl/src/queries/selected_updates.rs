@@ -58,7 +58,6 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         blocked_users_added: vec![],
         blocked_users_removed: vec![],
         invited_users,
-        rules: None,
         chat_rules: None,
         user_groups: data
             .members
@@ -105,9 +104,6 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
                 }
             }
             CommunityEventInternal::RulesChanged(_) => {
-                if result.rules.is_none() {
-                    result.rules = Some(data.rules.clone().into());
-                }
                 if result.chat_rules.is_none() {
                     result.chat_rules = Some(data.rules.clone().into());
                 }
