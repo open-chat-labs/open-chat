@@ -173,7 +173,7 @@ pub enum ChatInList {
     Community(CommunityId, ChannelId),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct NamedAccount {
     pub name: String,
     pub account: String,
