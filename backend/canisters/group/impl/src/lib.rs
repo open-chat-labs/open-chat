@@ -11,6 +11,7 @@ use chat_events::{ChatEventInternal, Reader};
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
+use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -18,7 +19,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, EventIndex,
+    AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
     FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification,
     Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
@@ -446,6 +447,14 @@ impl Data {
         let _ = self
             .instruction_counts_log
             .record(function_id, instructions_count, wasm_version, now);
+    }
+
+    pub fn mark_group_updated_in_user_canister(&self, user_id: UserId) {
+        self.fire_and_forget_handler.send(
+            user_id.into(),
+            "c2c_mark_group_updated_for_user_msgpack".to_string(),
+            serialize_then_unwrap(Empty {}),
+        );
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {

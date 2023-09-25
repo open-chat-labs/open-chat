@@ -183,7 +183,7 @@ impl MessageInternal {
             tips: self.tips.clone(),
             edited: self.last_edited.is_some(),
             forwarded: self.forwarded,
-            thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate()),
+            thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate(my_user_id)),
             last_updated: self.last_updated,
         }
     }
@@ -446,6 +446,8 @@ impl MessageContentInternal {
 pub struct ThreadSummaryInternal {
     #[serde(rename = "i")]
     pub participant_ids: Vec<UserId>,
+    #[serde(default, rename = "f")]
+    pub follower_ids: HashSet<UserId>,
     #[serde(rename = "r")]
     pub reply_count: u32,
     #[serde(rename = "e")]
@@ -455,9 +457,10 @@ pub struct ThreadSummaryInternal {
 }
 
 impl ThreadSummaryInternal {
-    pub fn hydrate(&self) -> ThreadSummary {
+    pub fn hydrate(&self, my_user_id: Option<UserId>) -> ThreadSummary {
         ThreadSummary {
             participant_ids: self.participant_ids.clone(),
+            followed_by_me: my_user_id.map_or(false, |u| self.follower_ids.contains(&u)),
             reply_count: self.reply_count,
             latest_event_index: self.latest_event_index,
             latest_event_timestamp: self.latest_event_timestamp,
@@ -830,6 +833,7 @@ mod tests {
             }),
             thread_summary: Some(ThreadSummaryInternal {
                 participant_ids: vec![principal.into()],
+                follower_ids: HashSet::new(),
                 reply_count: 1,
                 latest_event_index: 1.into(),
                 latest_event_timestamp: 1,
@@ -851,12 +855,12 @@ mod tests {
         let event_bytes_len = event_bytes.len();
 
         // Before optimisation: 438
-        // After optimisation: 202
-        assert_eq!(message_bytes_len, 202);
+        // After optimisation: 205
+        assert_eq!(message_bytes_len, 205);
 
         // Before optimisation: 500
-        // After optimisation: 220
-        assert_eq!(event_bytes_len, 220);
+        // After optimisation: 223
+        assert_eq!(event_bytes_len, 223);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
     }

@@ -28,6 +28,7 @@ fn main() {
     generate_candid_method!(group, disable_invite_code, update);
     generate_candid_method!(group, edit_message_v2, update);
     generate_candid_method!(group, enable_invite_code, update);
+    generate_candid_method!(group, follow_thread, update);
     generate_candid_method!(group, pin_message_v2, update);
     generate_candid_method!(group, register_poll_vote, update);
     generate_candid_method!(group, register_proposal_vote, update);
@@ -39,6 +40,7 @@ fn main() {
     generate_candid_method!(group, toggle_mute_notifications, update);
     generate_candid_method!(group, unblock_user, update);
     generate_candid_method!(group, undelete_messages, update);
+    generate_candid_method!(group, unfollow_thread, update);
     generate_candid_method!(group, unpin_message, update);
     generate_candid_method!(group, update_group_v2, update);
 

@@ -1268,6 +1268,7 @@ type CommunityRole = variant {
 
 type ThreadSummary = record {
     participant_ids : vec UserId;
+    followed_by_me : bool;
     reply_count : nat32;
     latest_event_index : EventIndex;
     latest_event_timestamp : TimestampMillis;
