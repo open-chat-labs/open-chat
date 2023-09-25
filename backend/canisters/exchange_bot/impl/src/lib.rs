@@ -2,6 +2,7 @@ use crate::commands::Command;
 use crate::icpswap::ICPSwapClientFactory;
 use crate::model::commands_pending::CommandsPending;
 use crate::model::messages_pending::{MessagePending, MessagesPending};
+use crate::sonic::SonicClientFactory;
 use crate::swap_client::{SwapClient, SwapClientFactory};
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -24,6 +25,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod sonic;
 mod swap_client;
 mod updates;
 
@@ -46,22 +48,26 @@ impl RuntimeState {
     pub fn get_all_swap_clients(&self, input_token: TokenInfo, output_token: TokenInfo) -> Vec<Box<dyn SwapClient>> {
         let this_canister_id = self.env.canister_id();
 
-        vec![ICPSwapClientFactory::new().build(this_canister_id, input_token, output_token)]
-            .into_iter()
-            .flatten()
-            .collect()
+        vec![
+            ICPSwapClientFactory::new().build(this_canister_id, &input_token, &output_token),
+            SonicClientFactory::new().build(this_canister_id, &input_token, &output_token),
+        ]
+        .into_iter()
+        .flatten()
+        .collect()
     }
 
     pub fn get_swap_client(
         &self,
         exchange_id: ExchangeId,
-        input_token: TokenInfo,
-        output_token: TokenInfo,
+        input_token: &TokenInfo,
+        output_token: &TokenInfo,
     ) -> Option<Box<dyn SwapClient>> {
         let this_canister_id = self.env.canister_id();
 
         match exchange_id {
             ExchangeId::ICPSwap => ICPSwapClientFactory::new().build(this_canister_id, input_token, output_token),
+            ExchangeId::Sonic => SonicClientFactory::new().build(this_canister_id, input_token, output_token),
         }
     }
 

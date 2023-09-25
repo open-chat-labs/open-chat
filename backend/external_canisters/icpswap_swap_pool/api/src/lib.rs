@@ -5,15 +5,10 @@ mod queries;
 mod updates;
 
 pub use queries::*;
+use types::ResultLowercase;
 pub use updates::*;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum ICPSwapResult<T> {
-    #[serde(rename = "ok")]
-    Ok(T),
-    #[serde(rename = "err")]
-    Err(ICPSwapError),
-}
+pub type ICPSwapResult<T> = ResultLowercase<T, ICPSwapError>;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ICPSwapError {
