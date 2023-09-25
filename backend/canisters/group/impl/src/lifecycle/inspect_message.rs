@@ -39,6 +39,8 @@ fn accept_if_valid(state: &RuntimeState) {
             | "change_role"
             | "claim_prize"
             | "edit_message_v2"
+            | "follow_thread"
+            | "unfollow_thread"
             | "put_chunk"
             | "register_poll_vote"
             | "register_proposal_vote"
