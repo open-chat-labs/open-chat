@@ -20,7 +20,7 @@
     function onClick() {}
 </script>
 
-<TooltipWrapper bind:longPressed position={"right"} align={"center"}>
+<TooltipWrapper bind:longPressed position={"bottom"} align={"start"}>
     <div role="button" tabindex="0" slot="target" on:click={onClick} class="tip-wrapper">
         <img class="tip-icon" src={$cryptoLookup[ledger].logo} />
         <span class="tip-count">
