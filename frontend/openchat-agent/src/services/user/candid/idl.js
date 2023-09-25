@@ -618,6 +618,7 @@ export const idlFactory = ({ IDL }) => {
     'participant_ids' : IDL.Vec(UserId),
     'reply_count' : IDL.Nat32,
     'latest_event_index' : EventIndex,
+    'followed_by_me' : IDL.Bool,
   });
   const ReplyContext = IDL.Record({
     'chat_if_other' : IDL.Opt(IDL.Tuple(Chat, IDL.Opt(MessageIndex))),
@@ -1249,9 +1250,13 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
   });
   const TipMessageArgs = IDL.Record({
+    'fee' : IDL.Nat,
+    'token' : Cryptocurrency,
     'chat' : Chat,
+    'recipient' : UserId,
+    'ledger' : CanisterId,
     'message_id' : MessageId,
-    'transfer' : PendingCryptoTransaction,
+    'amount' : IDL.Nat,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const TipMessageResponse = IDL.Variant({

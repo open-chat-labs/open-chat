@@ -3,12 +3,7 @@
     import { quadOut } from "svelte/easing";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import type {
-        OpenChat,
-        CryptocurrencyDetails,
-        Message,
-        PendingCryptocurrencyTransfer,
-    } from "openchat-client";
+    import type { OpenChat, Message, PendingCryptocurrencyTransfer } from "openchat-client";
     import { E8S_PER_TOKEN, dollarExchangeRates } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -54,13 +49,13 @@
     $: lastTipIncrement = client.lastTipIncrement;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
+    $: exchangeRate = dollarExchangeRates[tokenDetails.symbol.toLowerCase()];
     $: draftAmount = calculateAmount(
         selectedIncrement,
-        tokenDetails,
+        exchangeRate,
         multipliers[selectedIncrement]
     );
     $: displayDraftAmount = (Number(draftAmount) / E8S_PER_TOKEN).toFixed(8);
-
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
@@ -68,20 +63,17 @@
     $: transferFees = tokenDetails.transferFee;
     $: remainingBalance =
         draftAmount > BigInt(0) ? cryptoBalance - draftAmount - transferFees : cryptoBalance;
-    $: valid = error === undefined && !tokenChanging;
+    $: valid = exchangeRate !== undefined && error === undefined && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
 
     function calculateAmount(
         cents: Increment,
-        token: CryptocurrencyDetails,
+        exchangeRate: number | undefined,
         multiplier: number
     ): bigint {
-        const rate = dollarExchangeRates[token.symbol.toLowerCase()];
-        if (rate === undefined) {
-            throw new Error(`we don't have an exchange rate for the token: ${token.symbol}`);
-        }
+        if (exchangeRate === undefined) return 0n;
         const multiplied = cents * multiplier;
-        const e8s = (multiplied / 100 / rate) * E8S_PER_TOKEN;
+        const e8s = (multiplied / 100 / exchangeRate) * E8S_PER_TOKEN;
         return BigInt(Math.round(e8s));
     }
 
@@ -166,6 +158,8 @@
     }
 
     function clickAmount(e: MouseEvent, increment: Increment) {
+        if (exchangeRate === undefined) return;
+
         bounceMoneyMouthFrom(e.target as HTMLElement);
 
         if (increment !== selectedIncrement) {
@@ -233,12 +227,13 @@
                     <div class="amounts">
                         {#each increments as increment}
                             <button
-                                class:disabled={calculateAmount(
-                                    increment,
-                                    tokenDetails,
-                                    multipliers[increment]
-                                ) >
-                                    cryptoBalance - transferFees}
+                                class:disabled={exchangeRate === undefined ||
+                                    calculateAmount(
+                                        increment,
+                                        exchangeRate,
+                                        multipliers[increment]
+                                    ) >
+                                        cryptoBalance - transferFees}
                                 class:selected={selectedIncrement === increment}
                                 on:click|preventDefault={(e) => clickAmount(e, increment)}
                                 class="amount">
@@ -246,13 +241,22 @@
                             </button>
                         {/each}
                     </div>
-                    <div class="token-amount">
-                        {displayDraftAmount}
-                        {tokenDetails.symbol}
+                    <div class="message">
+                        {#if exchangeRate !== undefined}
+                            <div class="token-amount">
+                                ~{displayDraftAmount}
+                                {tokenDetails.symbol}
+                            </div>
+                        {:else}
+                            <ErrorMessage
+                                >{$_("tip.noExchangeRate", {
+                                    values: { token: symbol },
+                                })}</ErrorMessage>
+                        {/if}
+                        {#if error}
+                            <ErrorMessage>{$_(error)}</ErrorMessage>
+                        {/if}
                     </div>
-                    {#if error}
-                        <ErrorMessage>{$_(error)}</ErrorMessage>
-                    {/if}
                 {/if}
             </div>
         </form>
@@ -308,8 +312,11 @@
         position: relative;
     }
 
-    .token-amount {
+    .message {
         text-align: center;
+    }
+
+    .token-amount {
         color: var(--txt-light);
     }
 
@@ -332,6 +339,8 @@
             border-radius: 50%;
             display: grid;
             align-content: center;
+            background: transparent;
+            color: var(--txt-light);
 
             @include font(book, normal, fs-120);
 
@@ -350,7 +359,6 @@
             }
 
             &.disabled {
-                color: var(--txt-light);
                 cursor: not-allowed;
             }
         }

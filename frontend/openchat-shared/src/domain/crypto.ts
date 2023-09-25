@@ -27,6 +27,18 @@ export type CryptocurrencyDetails = {
 };
 
 // approximate dollar exchange rates - until we come up with something better
+const icpToDollar = 3;
+
 export const dollarExchangeRates: Record<string, number> = {
-    icp: 3,
+    icp: icpToDollar,
+    chat: 0.04805 * icpToDollar,
+    hot: 0.003 * icpToDollar,
+    kinic: 0.378 * icpToDollar,
+    ckbtc: 7777.004 * icpToDollar,
+    dkp: 280 * icpToDollar,
+    ghost: 0.00001685 * icpToDollar,
+    mod: 0.0065 * icpToDollar,
+    cat: 0.0068998 * icpToDollar,
+    boom: 0.00339 * icpToDollar,
+    icx: 0.0000001 * icpToDollar,
 };

@@ -121,7 +121,7 @@ import {
     leaveGroupResponse,
     deleteGroupResponse,
     apiChatIdentifier,
-    apiPendingCryptoTransaction,
+    apiToken,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
@@ -801,15 +801,15 @@ export class UserClient extends CandidService {
         messageId: bigint,
         transfer: PendingCryptocurrencyTransfer,
     ): Promise<TipMessageResponse> {
-        const apiTransfer = apiPendingCryptoTransaction(transfer);
-        if (!("Pending" in apiTransfer)) {
-            throw new Error("Transaction is not of type Pending" + JSON.stringify(apiTransfer));
-        }
         return this.handleResponse(
             this.userService.tip_message({
                 chat: apiChatIdentifier(messageContext.chatId),
                 message_id: messageId,
-                transfer: apiTransfer.Pending,
+                fee: transfer.feeE8s ?? 0n,
+                token: apiToken(transfer.token),
+                recipient: Principal.fromText(transfer.recipient),
+                ledger: Principal.fromText(transfer.ledger),
+                amount: transfer.amountE8s,
                 thread_root_message_index: apiOptional(
                     identity,
                     messageContext.threadRootMessageIndex,

@@ -1007,6 +1007,7 @@
     },
     "tip": {
         "title": "Add a tip",
-        "failure": "Sorry we were unable to add your tip"
+        "failure": "Sorry we were unable to add your tip",
+        "noExchangeRate": "We have no exchange rate configured for {token}"
     }
 }
