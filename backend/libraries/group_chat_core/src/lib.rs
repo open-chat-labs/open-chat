@@ -378,8 +378,7 @@ impl GroupChatCore {
                     }
                 }
                 ChatEventInternal::GroupRulesChanged(_) => {
-                    if result.rules.is_none() {
-                        result.rules = Some(self.rules.clone().into());
+                    if result.chat_rules.is_none() {
                         result.chat_rules = Some(self.rules.clone().into());
                     }
                 }
