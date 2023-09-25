@@ -3,8 +3,6 @@ use canister_tracing_macros::trace;
 use community_canister::follow_thread::{Response::*, *};
 use group_chat_core::FollowThreadResult;
 use ic_cdk_macros::update;
-use msgpack::serialize_then_unwrap;
-use types::Empty;
 
 #[update]
 #[trace]
@@ -31,11 +29,7 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         match channel.chat.follow_thread(user_id, args.thread_root_message_index, now) {
             FollowThreadResult::Success => {
-                state.data.fire_and_forget_handler.send(
-                    user_id.into(),
-                    "c2c_mark_community_updated_for_user_msgpack".to_string(),
-                    serialize_then_unwrap(Empty {}),
-                );
+                state.data.mark_community_updated_in_user_canister(user_id);
                 Success
             }
             FollowThreadResult::AlreadyFollowing => AlreadyFollowing,
