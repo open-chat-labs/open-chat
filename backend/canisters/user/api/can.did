@@ -119,9 +119,13 @@ type RemoveReactionResponse = variant {
 
 type TipMessageArgs = record {
     chat : Chat;
+    recipient : UserId;
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
-    transfer : PendingCryptoTransaction;
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    amount : nat;
+    fee : nat;
 };
 
 type TipMessageResponse = variant {

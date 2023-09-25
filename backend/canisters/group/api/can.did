@@ -358,7 +358,6 @@ type SelectedInitialSuccess = record {
     blocked_users : vec UserId;
     invited_users : vec UserId;
     pinned_messages : vec MessageIndex;
-    rules : Rules;
     chat_rules : VersionedRules;
 };
 
@@ -564,6 +563,34 @@ type ResetInviteCodeResponse = variant {
     ChatFrozen;
 };
 
+type FollowThreadArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : MessageIndex;
+};
+
+type FollowThreadResponse = variant {
+    Success;
+    AlreadyFollowing;
+    ThreadNotFound;
+    UserNotInGroup;
+    UserSuspended;
+    GroupFrozen;
+};
+
+type UnfollowThreadArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : MessageIndex;
+};
+
+type UnfollowThreadResponse = variant {
+    Success;
+    NotFollowing;
+    ThreadNotFound;
+    UserNotInGroup;
+    UserSuspended;
+    GroupFrozen;
+};
+
 service : {
     // Owner only
     convert_into_community : (ConvertIntoCommunityArgs) -> (ConvertIntoCommunityResponse);
@@ -594,6 +621,8 @@ service : {
     claim_prize : (ClaimPrizeArgs) -> (ClaimPrizeResponse);
     decline_invitation : (EmptyArgs) -> (DeclineInvitationResponse);
     toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
+    follow_thread : (FollowThreadArgs) -> (FollowThreadResponse);
+    unfollow_thread : (UnfollowThreadArgs) -> (UnfollowThreadResponse);
 
     summary : (SummaryArgs) -> (SummaryResponse) query;
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;

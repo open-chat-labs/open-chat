@@ -936,7 +936,6 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
     'pinned_messages' : IDL.Vec(MessageIndex),
     'latest_event_index' : EventIndex,
-    'rules' : Rules,
   });
   const SelectedInitialResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
@@ -955,7 +954,6 @@ export const idlFactory = ({ IDL }) => {
     'members_removed' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
-    'rules' : IDL.Opt(Rules),
     'blocked_users_added' : IDL.Vec(UserId),
   });
   const SelectedUpdatesV2Response = IDL.Variant({

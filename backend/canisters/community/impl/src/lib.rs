@@ -12,6 +12,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
+use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -19,7 +20,7 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
-    CommunityPermissions, Cryptocurrency, Cycles, Document, FrozenGroupInfo, Milliseconds, Notification, Rules,
+    CommunityPermissions, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification, Rules,
     TimestampMillis, Timestamped, UserId,
 };
 use utils::env::Environment;
@@ -318,6 +319,14 @@ impl Data {
         let _ = self
             .instruction_counts_log
             .record(function_id, instructions_count, wasm_version, now);
+    }
+
+    pub fn mark_community_updated_in_user_canister(&self, user_id: UserId) {
+        self.fire_and_forget_handler.send(
+            user_id.into(),
+            "c2c_mark_community_updated_for_user_msgpack".to_string(),
+            serialize_then_unwrap(Empty {}),
+        );
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {

@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `mention_all_members` group permission ([#4405](https://github.com/open-chat-labs/open-chat/pull/4405))
+- Implement tipping messages ([#4420](https://github.com/open-chat-labs/open-chat/pull/4420))
+- Implement notifications for message tips ([#4427](https://github.com/open-chat-labs/open-chat/pull/4427))
+- Add `followed_by_me` to the thread summary returned in GroupChatSummary ([#4431](https://github.com/open-chat-labs/open-chat/pull/4431))
 
 ## [[2.0.852](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.852-user)] - 2023-09-18
 

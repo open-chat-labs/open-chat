@@ -1334,7 +1334,6 @@ export interface SelectedGroupUpdates {
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export type SelectedInitialArgs = {};
@@ -1348,7 +1347,6 @@ export interface SelectedInitialSuccess {
   'timestamp' : TimestampMillis,
   'pinned_messages' : Uint32Array | number[],
   'latest_event_index' : EventIndex,
-  'rules' : Rules,
 }
 export interface SelectedUpdatesV2Args { 'updates_since' : TimestampMillis }
 export type SelectedUpdatesV2Response = { 'CallerNotInGroup' : null } |

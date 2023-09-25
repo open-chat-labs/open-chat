@@ -8,7 +8,7 @@ use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use exchange_bot_canister::handle_direct_message::*;
-use ledger_utils::format_crypto_amount;
+use ledger_utils::format_crypto_amount_with_symbol;
 use local_user_index_canister_c2c_client::LookupUserError;
 use types::{BotMessage, MessageContent, MessageContentInitial, UserId};
 
@@ -28,10 +28,10 @@ fn handle_direct_message_impl(message: MessageContent, state: &mut RuntimeState)
 
     if let MessageContent::Crypto(c) = &message {
         let token = c.transfer.token();
-        response_messages.push(convert_to_message(format!(
-            "{} {} received",
-            format_crypto_amount(c.transfer.units(), token.decimals().unwrap_or(8)),
-            token.token_symbol()
+        response_messages.push(convert_to_message(format_crypto_amount_with_symbol(
+            c.transfer.units(),
+            token.decimals().unwrap_or(8),
+            token.token_symbol(),
         )));
     }
 

@@ -1086,7 +1086,6 @@ export interface SelectedGroupUpdates {
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export interface SnsNeuronGate {

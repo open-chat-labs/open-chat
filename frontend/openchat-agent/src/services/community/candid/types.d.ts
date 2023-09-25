@@ -1490,7 +1490,6 @@ export type SelectedChannelInitialResponse = { 'ChannelNotFound' : null } |
       'timestamp' : TimestampMillis,
       'pinned_messages' : Uint32Array | number[],
       'latest_event_index' : EventIndex,
-      'rules' : Rules,
     }
   } |
   { 'PrivateCommunity' : null } |
@@ -1519,7 +1518,6 @@ export interface SelectedGroupUpdates {
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export interface SelectedInitialArgs { 'invite_code' : [] | [bigint] }
@@ -1533,7 +1531,6 @@ export interface SelectedInitialSuccess {
   'user_groups' : Array<UserGroupDetails>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : Rules,
 }
 export interface SelectedUpdatesArgs {
   'updates_since' : TimestampMillis,
@@ -1551,7 +1548,6 @@ export interface SelectedUpdatesSuccess {
   'user_groups' : Array<UserGroupDetails>,
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
-  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export type SelectedUpdatesV2Response = { 'Success' : SelectedUpdatesSuccess } |
