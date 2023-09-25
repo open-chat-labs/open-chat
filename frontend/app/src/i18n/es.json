@@ -1015,6 +1015,7 @@
     "tipMessage": "Consejo",
     "tip": {
         "title": "Añadir una propina",
-        "failure": "Lo sentimos, no pudimos agregar tu consejo."
+        "failure": "Lo sentimos, no pudimos agregar tu consejo.",
+        "noExchangeRate": "No tenemos ningún tipo de cambio configurado para {token}"
     }
 }

@@ -1014,6 +1014,7 @@
     "tipMessage": "Mẹo",
     "tip": {
         "title": "Thêm một mẹo",
-        "failure": "Rất tiếc, chúng tôi không thể thêm mẹo của bạn"
+        "failure": "Rất tiếc, chúng tôi không thể thêm mẹo của bạn",
+        "noExchangeRate": "Chúng tôi không có tỷ giá hối đoái nào được định cấu hình cho {token}"
     }
 }

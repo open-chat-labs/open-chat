@@ -1013,6 +1013,7 @@
     "tipMessage": "Mancia",
     "tip": {
         "title": "Aggiungi un suggerimento",
-        "failure": "Siamo spiacenti, non siamo riusciti ad aggiungere il tuo suggerimento"
+        "failure": "Siamo spiacenti, non siamo riusciti ad aggiungere il tuo suggerimento",
+        "noExchangeRate": "Non abbiamo configurato alcun tasso di cambio per {token}"
     }
 }
