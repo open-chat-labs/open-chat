@@ -134,7 +134,7 @@ import {
     selectedMessageContext,
     staleThreadsCount,
 } from "./stores/chat";
-import { cryptoBalance, cryptoLookup, lastCryptoSent } from "./stores/crypto";
+import { cryptoBalance, cryptoLookup, lastCryptoSent, lastTipIncrement } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
     disableAllProposalFilters,
@@ -397,7 +397,6 @@ import type { Member } from "openchat-shared";
 import type { Level } from "openchat-shared";
 import type { DraftMessage } from "./stores/draftMessageFactory";
 import type { VersionedRules } from "openchat-shared";
-import type { Tip } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -4811,13 +4810,38 @@ export class OpenChat extends OpenChatAgentWorker {
         messageContext: MessageContext,
         messageId: bigint,
         transfer: PendingCryptocurrencyTransfer,
+        currentTip: bigint,
     ): Promise<TipMessageResponse> {
+        const chat = this._liveState.chatSummaries.get(messageContext.chatId);
+        const userId = this.user.userId;
+        const totalTip = transfer.amountE8s + currentTip;
+
+        if (chat === undefined) {
+            return Promise.resolve({ kind: "failure" });
+        }
+
+        localMessageUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
+
+        function undoLocally() {
+            localMessageUpdates.markTip(messageId, transfer.ledger, userId, -totalTip);
+        }
+
         return this.sendRequest({
             kind: "tipMessage",
             messageContext,
             messageId,
             transfer,
-        });
+        })
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    undoLocally();
+                }
+                return resp;
+            })
+            .catch((_) => {
+                undoLocally();
+                return { kind: "failure" };
+            });
     }
 
     private async updateRegistry() {
@@ -5353,6 +5377,7 @@ export class OpenChat extends OpenChatAgentWorker {
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
     lastCryptoSent = lastCryptoSent;
+    lastTipIncrement = lastTipIncrement;
     draftThreadMessages = draftThreadMessages;
     translationStore = translationStore;
     eventsStore = eventsStore;

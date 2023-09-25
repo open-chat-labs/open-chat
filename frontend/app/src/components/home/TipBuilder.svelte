@@ -7,7 +7,6 @@
         OpenChat,
         CryptocurrencyDetails,
         Message,
-        MessageContext,
         PendingCryptocurrencyTransfer,
     } from "openchat-client";
     import { E8S_PER_TOKEN, dollarExchangeRates } from "openchat-client";
@@ -20,14 +19,12 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
-    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
     const dispatch = createEventDispatcher();
 
     export let ledger: string;
-    export let messageContext: MessageContext;
     export let msg: Message;
 
     let refreshing = false;
@@ -35,12 +32,11 @@
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
-    let selectedIncrement: Increment = 10; // TODO - remember this so we can re-use the last value
+    let selectedIncrement: Increment = 50;
     let dollar: HTMLElement;
     let dollarTop = tweened(-1000);
     let dollarOpacity = tweened(0);
     let dollarScale = tweened(0);
-    let busy = false;
 
     const increments: Increment[] = [10, 50, 100];
     type Increment = 10 | 50 | 100;
@@ -55,7 +51,7 @@
         return `$${((n * multiplier) / 100).toFixed(2)}`;
     }
 
-    $: lastCryptoSent = client.lastCryptoSent;
+    $: lastTipIncrement = client.lastTipIncrement;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: draftAmount = calculateAmount(
@@ -63,6 +59,7 @@
         tokenDetails,
         multipliers[selectedIncrement]
     );
+    $: displayDraftAmount = (Number(draftAmount) / E8S_PER_TOKEN).toFixed(8);
 
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
@@ -93,7 +90,6 @@
     }
 
     function send() {
-        busy = true;
         const transfer: PendingCryptocurrencyTransfer = {
             kind: "pending",
             ledger,
@@ -103,18 +99,7 @@
             feeE8s: transferFees,
             createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
         };
-        client
-            .tipMessage(messageContext, msg.messageId, transfer)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    toastStore.showSuccessToast("Fuck yeah");
-                    lastCryptoSent.set(ledger);
-                    dispatch("close");
-                } else {
-                    toastStore.showFailureToast("Fuck no");
-                }
-            })
-            .finally(() => (busy = false));
+        dispatch("send", transfer);
     }
 
     function cancel() {
@@ -155,13 +140,14 @@
         }
     }
 
-    function clickAmount(e: MouseEvent, increment: Increment) {
-        const buttonRect = (e.target as HTMLElement).getBoundingClientRect();
+    function bounceMoneyMouthFrom(target: HTMLElement) {
+        const buttonRect = target.getBoundingClientRect();
         const hDiff = buttonRect.height - dollar.clientHeight;
         const wDiff = buttonRect.width - dollar.clientWidth;
-        const relTop = buttonRect.top + hDiff / 2;
-        const relLeft = buttonRect.left + wDiff / 2;
-        dollarTop = tweened(relTop, {
+        const top = buttonRect.top + hDiff / 2;
+        const left = buttonRect.left + wDiff / 2;
+
+        dollarTop = tweened(top, {
             duration: 800,
             easing: quadOut,
         });
@@ -173,10 +159,14 @@
             duration: 800,
             easing: quadOut,
         });
-        dollarTop.set(relTop - 300);
+        dollarTop.set(top - 300);
         dollarOpacity.set(0);
         dollarScale.set(2);
-        dollar.style.left = `${relLeft}px`;
+        dollar.style.left = `${left}px`;
+    }
+
+    function clickAmount(e: MouseEvent, increment: Increment) {
+        bounceMoneyMouthFrom(e.target as HTMLElement);
 
         if (increment !== selectedIncrement) {
             multipliers = {
@@ -188,6 +178,7 @@
             multipliers[increment] += 1;
         }
         selectedIncrement = increment;
+        lastTipIncrement.set(increment);
     }
 
     onMount(() => {
@@ -201,11 +192,12 @@
             document.body.appendChild(d);
         }
         dollar = d;
+        selectedIncrement = $lastTipIncrement;
     });
 </script>
 
 <Overlay dismissible>
-    <ModalContent>
+    <ModalContent fill>
         <span class="header" slot="header">
             <div class="left">
                 <div class="main-title">
@@ -254,6 +246,10 @@
                             </button>
                         {/each}
                     </div>
+                    <div class="token-amount">
+                        {displayDraftAmount}
+                        {tokenDetails.symbol}
+                    </div>
                     {#if error}
                         <ErrorMessage>{$_(error)}</ErrorMessage>
                     {/if}
@@ -274,8 +270,7 @@
                 {:else}
                     <Button
                         small={!$mobileWidth}
-                        disabled={!valid || busy}
-                        loading={busy}
+                        disabled={!valid}
                         tiny={$mobileWidth}
                         on:click={send}>{$_("tokenTransfer.send")}</Button>
                 {/if}
@@ -311,6 +306,11 @@
         transition: background-color 100ms ease-in-out;
         @include font(book, normal, fs-100, 28);
         position: relative;
+    }
+
+    .token-amount {
+        text-align: center;
+        color: var(--txt-light);
     }
 
     .amounts {

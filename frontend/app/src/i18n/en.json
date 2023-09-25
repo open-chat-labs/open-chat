@@ -1006,6 +1006,7 @@
         "title": "Theme"
     },
     "tip": {
-        "title": "Add a tip"
+        "title": "Add a tip",
+        "failure": "Sorry we were unable to add your tip"
     }
 }

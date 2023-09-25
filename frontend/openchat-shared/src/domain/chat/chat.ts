@@ -554,6 +554,7 @@ export type LocalMessageUpdates = {
     pollVotes?: LocalPollVote[];
     threadSummary?: ThreadSummary;
     lastUpdated: number;
+    tips?: TipsReceived;
 };
 
 export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;

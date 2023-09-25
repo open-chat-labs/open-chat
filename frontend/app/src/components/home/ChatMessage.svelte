@@ -16,6 +16,7 @@
         type ChatType,
         routeForMessage,
         LEDGER_CANISTER_ICP,
+        type PendingCryptocurrencyTransfer,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -357,6 +358,19 @@
     function canShare(): boolean {
         return canShareMessage(msg.content);
     }
+
+    function sendTip(ev: CustomEvent<PendingCryptocurrencyTransfer>) {
+        tipping = false;
+        const transfer = ev.detail;
+        const currentTip = (msg.tips[transfer.ledger] ?? {})[client.user.userId] ?? 0n;
+        client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
+            if (resp.kind === "success") {
+                lastCryptoSent.set(transfer.ledger);
+            } else {
+                toastStore.showFailureToast("tip.failure");
+            }
+        });
+    }
 </script>
 
 <svelte:window on:resize={recalculateMediaDimensions} />
@@ -364,9 +378,9 @@
 {#if tipping}
     <TipBuilder
         ledger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        on:send={sendTip}
         on:close={() => (tipping = false)}
-        {msg}
-        {messageContext} />
+        {msg} />
 {/if}
 
 {#if showEmojiPicker && canReact}

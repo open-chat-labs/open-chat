@@ -20,13 +20,27 @@ export const cryptoBalance = {
 };
 
 const lastCryptoSentStore = writable<string | undefined>(
-    localStorage.getItem(configKeys.lastCryptoSent) ?? undefined
+    localStorage.getItem(configKeys.lastCryptoSent) ?? undefined,
 );
+
+type Increment = 10 | 50 | 100;
+const lastTipIncrementStr = localStorage.getItem(configKeys.lastTipIncrement);
+const lastTipIncrementValue = (lastTipIncrementStr ? Number(lastTipIncrementStr) : 50) as Increment;
+
+const lastTipIncrementStore = writable<10 | 50 | 100>(lastTipIncrementValue);
 
 export const lastCryptoSent = {
     subscribe: lastCryptoSentStore.subscribe,
     set: (ledger: string): void => {
         lastCryptoSentStore.set(ledger);
         localStorage.setItem(configKeys.lastCryptoSent, ledger);
+    },
+};
+
+export const lastTipIncrement = {
+    subscribe: lastTipIncrementStore.subscribe,
+    set: (inc: Increment): void => {
+        lastTipIncrementStore.set(inc);
+        localStorage.setItem(configKeys.lastTipIncrement, inc.toString());
     },
 };
