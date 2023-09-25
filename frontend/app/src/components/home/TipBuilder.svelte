@@ -227,7 +227,7 @@
                     <div class="amounts">
                         {#each increments as increment}
                             <button
-                                class:disabled={exchangeRate === undefined ||
+                                disabled={exchangeRate === undefined ||
                                     calculateAmount(
                                         increment,
                                         exchangeRate,
@@ -310,6 +310,10 @@
         transition: background-color 100ms ease-in-out;
         @include font(book, normal, fs-100, 28);
         position: relative;
+
+        &.zero {
+            padding: 0 $sp4;
+        }
     }
 
     .message {
@@ -358,7 +362,7 @@
                 }
             }
 
-            &.disabled {
+            &:disabled {
                 cursor: not-allowed;
             }
         }
