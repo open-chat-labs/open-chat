@@ -1009,5 +1009,10 @@
     "displayNameRules": "необязательный",
     "displayName": "Отображаемое имя",
     "communityDisplayNameRules": "только в этом сообществе",
-    "userIdCopiedToClipboard": "Идентификатор пользователя скопирован в буфер обмена."
+    "userIdCopiedToClipboard": "Идентификатор пользователя скопирован в буфер обмена.",
+    "tipMessage": "Кончик",
+    "tip": {
+        "title": "Добавить совет",
+        "failure": "К сожалению, нам не удалось добавить ваш совет"
+    }
 }

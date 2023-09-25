@@ -76,13 +76,6 @@
         border-top: 1px solid var(--menu-separator);
         grid-column: span 3;
     }
-    // .user-tip {
-    //     display: flex;
-    //     gap: $sp2;
-    //     align-items: center;
-    //     justify-content: space-between;
-    //     margin-bottom: $sp2;
-    // }
     .tip-wrapper {
         @include pop();
         border-radius: $sp2;

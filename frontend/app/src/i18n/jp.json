@@ -1010,5 +1010,10 @@
     "displayNameRules": "オプション",
     "displayName": "表示名",
     "communityDisplayNameRules": "このコミュニティ内だけで",
-    "userIdCopiedToClipboard": "ユーザーIDがクリップボードにコピーされました"
+    "userIdCopiedToClipboard": "ユーザーIDがクリップボードにコピーされました",
+    "tipMessage": "ヒント",
+    "tip": {
+        "title": "ヒントを追加する",
+        "failure": "申し訳ありませんが、チップを追加できませんでした"
+    }
 }

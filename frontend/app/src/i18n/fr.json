@@ -1009,5 +1009,10 @@
     "displayNameRules": "facultatif",
     "displayName": "Afficher un nom",
     "communityDisplayNameRules": "seulement au sein de cette communauté",
-    "userIdCopiedToClipboard": "ID utilisateur copié dans le presse-papiers"
+    "userIdCopiedToClipboard": "ID utilisateur copié dans le presse-papiers",
+    "tipMessage": "Conseil",
+    "tip": {
+        "title": "Ajouter un conseil",
+        "failure": "Désolé, nous n'avons pas pu ajouter votre conseil"
+    }
 }

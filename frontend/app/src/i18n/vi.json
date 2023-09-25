@@ -1010,5 +1010,10 @@
     "displayNameRules": "không bắt buộc",
     "displayName": "Tên hiển thị",
     "communityDisplayNameRules": "chỉ trong cộng đồng này",
-    "userIdCopiedToClipboard": "Đã sao chép Id người dùng vào bảng nhớ tạm"
+    "userIdCopiedToClipboard": "Đã sao chép Id người dùng vào bảng nhớ tạm",
+    "tipMessage": "Mẹo",
+    "tip": {
+        "title": "Thêm một mẹo",
+        "failure": "Rất tiếc, chúng tôi không thể thêm mẹo của bạn"
+    }
 }
