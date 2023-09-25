@@ -32,14 +32,11 @@ generate_update_call!(undelete_messages);
 
 pub mod happy_path {
     use crate::rng::random_message_id;
-    use crate::utils::now_nanos;
     use crate::User;
-    use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
-    use types::icrc1::Account;
     use types::{
-        icrc1, CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial,
-        MessageId, PendingCryptoTransaction, Reaction, Rules, TextContent, TimestampMillis, UserId,
+        CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial, MessageId,
+        Reaction, Rules, TextContent, TimestampMillis, UserId,
     };
 
     pub fn send_text_message(
@@ -266,17 +263,13 @@ pub mod happy_path {
             sender.canister(),
             &user_canister::tip_message::Args {
                 chat,
+                recipient,
                 thread_root_message_index: None,
                 message_id,
-                transfer: PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
-                    ledger,
-                    token,
-                    amount,
-                    to: Account::from(Principal::from(recipient)),
-                    fee,
-                    memo: None,
-                    created: now_nanos(env),
-                }),
+                ledger,
+                token,
+                amount,
+                fee,
             },
         );
 

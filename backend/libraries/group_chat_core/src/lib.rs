@@ -1,6 +1,6 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
-    DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, UndeleteMessageResult,
+    DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, TipMessageArgs, UndeleteMessageResult,
 };
 use lazy_static::lazy_static;
 use regex_lite::Regex;
@@ -8,14 +8,13 @@ use search::Query;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
-    AccessGate, AvatarChanged, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, Document, EventIndex,
-    EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated,
-    GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
-    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse,
-    Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules,
-    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited,
-    Version, Versioned, VersionedRules,
+    AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, Document, EventIndex, EventWrapper, EventsResponse,
+    FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupPermissionRole,
+    GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
+    InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex,
+    MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions,
+    PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
+    Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -867,18 +866,10 @@ impl GroupChatCore {
         }
     }
 
-    pub fn tip_message(
-        &mut self,
-        user_id: UserId,
-        recipient: UserId,
-        thread_root_message_index: Option<MessageIndex>,
-        message_id: MessageId,
-        transfer: CompletedCryptoTransaction,
-        now: TimestampMillis,
-    ) -> TipMessageResult {
+    pub fn tip_message(&mut self, args: TipMessageArgs) -> TipMessageResult {
         use TipMessageResult::*;
 
-        if let Some(member) = self.members.get(&user_id) {
+        if let Some(member) = self.members.get(&args.user_id) {
             if member.suspended.value {
                 return UserSuspended;
             }
@@ -888,17 +879,7 @@ impl GroupChatCore {
 
             let min_visible_event_index = member.min_visible_event_index();
 
-            self.events
-                .tip_message(
-                    user_id,
-                    recipient,
-                    min_visible_event_index,
-                    thread_root_message_index,
-                    message_id,
-                    transfer,
-                    now,
-                )
-                .into()
+            self.events.tip_message(args, min_visible_event_index).into()
         } else {
             UserNotInGroup
         }
