@@ -478,7 +478,6 @@ type SelectedGroupUpdates = record {
     invited_users : opt vec UserId;
     pinned_messages_added : vec MessageIndex;
     pinned_messages_removed : vec MessageIndex;
-    rules : opt Rules;
     chat_rules : opt VersionedRules;
 };
 

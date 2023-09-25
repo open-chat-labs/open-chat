@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, EventIndex, GroupMember, MessageIndex, Rules, TimestampMillis, UserId, VersionedRules};
+use types::{ChannelId, EventIndex, GroupMember, MessageIndex, TimestampMillis, UserId, VersionedRules};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -23,7 +23,5 @@ pub struct SuccessResult {
     pub blocked_users: Vec<UserId>,
     pub invited_users: Vec<UserId>,
     pub pinned_messages: Vec<MessageIndex>,
-    // TODO: remove this field once the website is using `chat_rules` instead
-    pub rules: Rules,
     pub chat_rules: VersionedRules,
 }
