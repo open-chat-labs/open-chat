@@ -5,7 +5,7 @@ use crate::swap_client::SwapClient;
 use crate::{mutate_state, RuntimeState};
 use exchange_bot_canister::ExchangeId;
 use lazy_static::lazy_static;
-use ledger_utils::format_crypto_amount;
+use ledger_utils::format_crypto_amount_with_symbol;
 use rand::Rng;
 use regex_lite::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
@@ -118,9 +118,8 @@ impl QuoteCommand {
 
     pub fn build_message_text(&self) -> String {
         let mut text = format!(
-            "Quotes ({} {} to {}):",
-            format_crypto_amount(self.amount, self.input_token.decimals),
-            self.input_token.token.token_symbol(),
+            "Quotes ({} to {}):",
+            format_crypto_amount_with_symbol(self.amount, self.input_token.decimals, self.input_token.token.token_symbol()),
             self.output_token.token.token_symbol()
         );
         for (exchange_id, status) in self.results.iter() {

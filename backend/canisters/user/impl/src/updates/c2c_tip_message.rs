@@ -1,7 +1,9 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use types::{EventIndex, UserId};
+use chat_events::{Reader, TipMessageResult};
+use ledger_utils::format_crypto_amount_with_symbol;
+use types::{DirectMessageTipped, EventIndex, Notification, UserId};
 use user_canister::c2c_tip_message::{Response::*, *};
 
 #[update_msgpack]
@@ -17,15 +19,39 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(chat) = state.data.direct_chats.get_mut(&user_id.into()) {
         let now = state.env.now();
         let my_user_id = state.env.canister_id().into();
-        chat.events.tip_message(
-            user_id,
-            my_user_id,
-            EventIndex::default(),
-            args.thread_root_message_index,
-            args.message_id,
-            args.transfer,
-            now,
-        );
+        let token = args.transfer.token();
+        let amount = args.transfer.units();
+
+        if matches!(
+            chat.events.tip_message(
+                user_id,
+                my_user_id,
+                EventIndex::default(),
+                args.thread_root_message_index,
+                args.message_id,
+                args.transfer,
+                now,
+            ),
+            TipMessageResult::Success
+        ) {
+            if let Some(event) = chat
+                .events
+                .main_events_reader(now)
+                .message_event_internal(args.message_id.into())
+            {
+                let notification = Notification::DirectMessageTipped(DirectMessageTipped {
+                    them: user_id,
+                    thread_root_message_index: args.thread_root_message_index,
+                    message_index: event.event.message_index,
+                    message_event_index: event.index,
+                    username: args.username,
+                    display_name: args.display_name,
+                    tip: format_crypto_amount_with_symbol(amount, token.decimals().unwrap_or(8), token.token_symbol()),
+                    user_avatar_id: args.user_avatar_id,
+                });
+                state.push_notification(my_user_id, notification);
+            }
+        }
     }
     Success
 }
