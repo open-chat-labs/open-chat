@@ -564,7 +564,6 @@ type ResetInviteCodeResponse = variant {
 };
 
 type FollowThreadArgs = record {
-    channel_id : ChannelId;
     thread_root_message_index : MessageIndex;
 };
 
@@ -578,7 +577,6 @@ type FollowThreadResponse = variant {
 };
 
 type UnfollowThreadArgs = record {
-    channel_id : ChannelId;
     thread_root_message_index : MessageIndex;
 };
 
