@@ -244,7 +244,7 @@ pub mod happy_path {
 
     #[allow(clippy::too_many_arguments)]
     pub fn tip_message(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: &User,
         recipient: UserId,
         chat: Chat,
