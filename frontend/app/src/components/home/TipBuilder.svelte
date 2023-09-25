@@ -231,7 +231,7 @@
                                     calculateAmount(
                                         increment,
                                         exchangeRate,
-                                        multipliers[increment]
+                                        multipliers[increment] + 1
                                     ) >
                                         cryptoBalance - transferFees}
                                 class:selected={selectedIncrement === increment}
