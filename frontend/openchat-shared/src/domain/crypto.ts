@@ -27,18 +27,18 @@ export type CryptocurrencyDetails = {
 };
 
 // approximate dollar exchange rates - until we come up with something better
-const icpToDollar = 3;
+const dollarToICP = 0.34;
 
 export const dollarExchangeRates: Record<string, number> = {
-    icp: icpToDollar,
-    chat: 0.04805 * icpToDollar,
-    hot: 0.003 * icpToDollar,
-    kinic: 0.378 * icpToDollar,
-    ckbtc: 7777.004 * icpToDollar,
-    dkp: 280 * icpToDollar,
-    ghost: 0.00001685 * icpToDollar,
-    mod: 0.0065 * icpToDollar,
-    cat: 0.0068998 * icpToDollar,
-    boom: 0.00339 * icpToDollar,
-    icx: 0.0000001 * icpToDollar,
+    icp: dollarToICP,
+    chat: dollarToICP / 0.04805,
+    hot: dollarToICP / 0.003,
+    kinic: dollarToICP / 0.378,
+    ckbtc: dollarToICP / 7777.004,
+    dkp: dollarToICP / 280,
+    ghost: dollarToICP / 0.00001685,
+    mod: dollarToICP / 0.0065,
+    cat: dollarToICP / 0.0068998,
+    boom: dollarToICP / 0.00339,
+    icx: dollarToICP / 0.0000001,
 };

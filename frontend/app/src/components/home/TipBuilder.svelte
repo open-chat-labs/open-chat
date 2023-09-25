@@ -73,7 +73,7 @@
     ): bigint {
         if (exchangeRate === undefined) return 0n;
         const multiplied = cents * multiplier;
-        const e8s = (multiplied / 100 / exchangeRate) * E8S_PER_TOKEN;
+        const e8s = (multiplied / 100) * exchangeRate * E8S_PER_TOKEN;
         return BigInt(Math.round(e8s));
     }
 
