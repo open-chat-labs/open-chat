@@ -1,8 +1,10 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use group_canister::follow_thread::{Response::*, *};
 use group_chat_core::FollowThreadResult;
 use ic_cdk_macros::update;
+use msgpack::serialize_then_unwrap;
+use types::Empty;
 
 #[update]
 #[trace]
@@ -28,7 +30,11 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     match state.data.chat.follow_thread(user_id, args.thread_root_message_index, now) {
         FollowThreadResult::Success => {
-            handle_activity_notification(state);
+            state.data.fire_and_forget_handler.send(
+                user_id.into(),
+                "c2c_mark_group_updated_for_user_msgpack".to_string(),
+                serialize_then_unwrap(Empty {}),
+            );
             Success
         }
         FollowThreadResult::AlreadyFollowing => AlreadyFollowing,
