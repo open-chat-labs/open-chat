@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Disable mentions for messages sent by the ProposalsBot ([#4424](https://github.com/open-chat-labs/open-chat/pull/4424))
+- Simplify `inspect_message` ([#4436](https://github.com/open-chat-labs/open-chat/pull/4436))
 
 ### Fixed
 
