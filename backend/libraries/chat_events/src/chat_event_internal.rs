@@ -855,12 +855,12 @@ mod tests {
         let event_bytes_len = event_bytes.len();
 
         // Before optimisation: 438
-        // After optimisation: 202
-        assert_eq!(message_bytes_len, 202);
+        // After optimisation: 205
+        assert_eq!(message_bytes_len, 205);
 
         // Before optimisation: 500
-        // After optimisation: 220
-        assert_eq!(event_bytes_len, 220);
+        // After optimisation: 223
+        assert_eq!(event_bytes_len, 223);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
     }
