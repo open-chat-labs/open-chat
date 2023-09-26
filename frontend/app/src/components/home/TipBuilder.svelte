@@ -225,6 +225,9 @@
                         {#if exchangeRate !== undefined}
                             {#if draftAmount > 0}
                                 <div class="summary">
+                                    <div class="dollar-amount">
+                                        ${(centAmount / 100).toFixed(2)}
+                                    </div>
                                     <div class="token-amount">
                                         {displayDraftAmount}
                                         {tokenDetails.symbol}
@@ -314,17 +317,28 @@
 
     .message {
         text-align: center;
-        margin-bottom: $sp3;
+        margin-bottom: $sp4;
     }
 
     .summary {
         display: flex;
-        gap: $sp3;
         align-items: center;
         justify-content: center;
-        color: var(--txt-light);
+        color: var(--txt);
+
+        .dollar-amount,
+        .fee,
+        .token-amount {
+            padding: 0 $sp4;
+        }
+
+        .dollar-amount,
+        .token-amount {
+            border-right: 1px solid var(--txt-light);
+        }
 
         .fee {
+            color: var(--txt-light);
             @include font(light, normal, fs-70);
         }
     }
