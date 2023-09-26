@@ -771,7 +771,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     markThreadRead(chatId: ChatIdentifier, threadRootMessageIndex: number, readUpTo: number): void {
-        this.messagesRead.markThreadRead(chatId, threadRootMessageIndex, readUpTo);
+        this.messagesRead.markReadUpTo({ chatId, threadRootMessageIndex }, readUpTo);
     }
 
     markMessageRead(
@@ -779,7 +779,7 @@ export class OpenChat extends OpenChatAgentWorker {
         messageIndex: number,
         messageId: bigint | undefined,
     ): void {
-        this.messagesRead.markMessageRead(chatId, messageIndex, messageId);
+        this.messagesRead.markMessageRead({ chatId }, messageIndex, messageId);
     }
 
     markPinnedMessagesRead(chatId: ChatIdentifier, dateLastPinned: bigint): void {
@@ -1069,7 +1069,7 @@ export class OpenChat extends OpenChatAgentWorker {
                                 this.loadChatDetails(c);
                             }
                             if (c.latestMessage) {
-                                messagesRead.markReadUpTo(c.id, c.latestMessage.event.messageIndex);
+                                messagesRead.markReadUpTo({ chatId: c.id }, c.latestMessage.event.messageIndex);
                             }
                         }),
                     );
@@ -2670,9 +2670,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
         const context = { chatId, threadRootMessageIndex };
         unconfirmed.delete(context, messageId);
-        if (threadRootMessageIndex === undefined) {
-            messagesRead.removeUnconfirmedMessage(chatId, messageId);
-        }
+        messagesRead.removeUnconfirmedMessage(context, messageId);
     }
     toggleProposalFilterMessageExpansion = toggleProposalFilterMessageExpansion;
     groupWhile = groupWhile;
@@ -2730,19 +2728,11 @@ export class OpenChat extends OpenChatAgentWorker {
             if (event.event.kind === "message") {
                 failedMessagesStore.delete(context, event.event.messageId);
                 if (unconfirmed.delete(context, event.event.messageId)) {
-                    if (threadRootMessageIndex === undefined) {
-                        messagesRead.confirmMessage(
-                            chatId,
-                            event.event.messageIndex,
-                            event.event.messageId,
-                        );
-                    } else {
-                        messagesRead.markThreadRead(
-                            chatId,
-                            threadRootMessageIndex,
-                            event.event.messageIndex,
-                        );
-                    }
+                    messagesRead.confirmMessage(
+                        context,
+                        event.event.messageIndex,
+                        event.event.messageId,
+                    );
                 }
             }
         }
@@ -2761,11 +2751,6 @@ export class OpenChat extends OpenChatAgentWorker {
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
     ): Promise<void> {
-        const context = { chatId: clientChat.id, threadRootMessageIndex };
-
-        unconfirmed.add(context, messageEvent);
-        failedMessagesStore.delete(context, messageEvent.event.messageId);
-
         rtcConnectionsManager.sendMessage([...chatStateStore.getProp(clientChat.id, "userIds")], {
             kind: "remote_user_sent_message",
             id: clientChat.id,
@@ -2773,19 +2758,6 @@ export class OpenChat extends OpenChatAgentWorker {
             userId: this.user.userId,
             threadRootMessageIndex,
         });
-
-        if (threadRootMessageIndex === undefined) {
-            // mark our own messages as read manually since we will not be observing them
-            messagesRead.markMessageRead(
-                clientChat.id,
-                messageEvent.event.messageIndex,
-                messageEvent.event.messageId,
-            );
-
-            currentChatDraftMessage.clear(clientChat.id);
-        }
-
-        return;
     }
 
     deleteFailedMessage(
@@ -3121,7 +3093,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private postSendMessage(
         chat: ChatSummary,
-        event: EventWrapper<Message>,
+        messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
     ) {
         if (threadRootMessageIndex !== undefined) {
@@ -3133,9 +3105,29 @@ export class OpenChat extends OpenChatAgentWorker {
         // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
         // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
         window.setTimeout(() => {
-            this.sendMessageWebRtc(chat, event, threadRootMessageIndex).then(() => {
+            const context = { chatId: chat.id, threadRootMessageIndex };
+
+            unconfirmed.add(context, messageEvent);
+            failedMessagesStore.delete(context, messageEvent.event.messageId);
+
+            // mark our own messages as read manually since we will not be observing them
+            messagesRead.markMessageRead(
+                context,
+                messageEvent.event.messageIndex,
+                messageEvent.event.messageId,
+            );
+            // Mark all existing messages as read
+            if (messageEvent.event.messageIndex > 0) {
+                messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
+            }
+
+            if (threadRootMessageIndex === undefined) {
+                currentChatDraftMessage.clear(chat.id);
+            }
+
+            this.sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
                 if (threadRootMessageIndex !== undefined) {
-                    this.dispatchEvent(new SentThreadMessage(event));
+                    this.dispatchEvent(new SentThreadMessage(messageEvent));
                 } else {
                     this.dispatchEvent(new SentMessage());
                 }
@@ -4503,7 +4495,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
                         !unconfirmed.contains({ chatId: chat.id }, latestMessage.messageId)
                     ) {
-                        messagesRead.markReadUpTo(chat.id, latestMessage.messageIndex);
+                        messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
                     }
                 }
 
@@ -5005,7 +4997,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     messagesRead.batchUpdate(() => {
                         resp.community.channels.forEach((c) => {
                             if (c.latestMessage) {
-                                messagesRead.markReadUpTo(c.id, c.latestMessage.event.messageIndex);
+                                messagesRead.markReadUpTo({ chatId: c.id }, c.latestMessage.event.messageIndex);
                             }
                         });
                     });
