@@ -5,6 +5,7 @@ use user_canister::*;
 generate_query_call!(events);
 generate_query_call!(events_by_index);
 generate_query_call!(initial_state);
+generate_query_call!(saved_crypto_accounts);
 generate_query_call!(updates);
 
 // Updates
@@ -22,6 +23,7 @@ generate_update_call!(leave_group);
 generate_update_call!(mark_read);
 generate_update_call!(mute_notifications);
 generate_update_call!(remove_reaction);
+generate_update_call!(save_crypto_account);
 generate_update_call!(send_message_v2);
 generate_update_call!(send_message_with_transfer_to_channel);
 generate_update_call!(send_message_with_transfer_to_group);

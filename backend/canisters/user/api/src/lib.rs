@@ -172,3 +172,9 @@ pub enum ChatInList {
     Favourite(Chat),
     Community(CommunityId, ChannelId),
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct NamedAccount {
+    pub name: String,
+    pub account: String,
+}

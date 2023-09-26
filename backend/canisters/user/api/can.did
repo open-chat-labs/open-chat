@@ -545,6 +545,22 @@ type ArchiveUnarchiveChatsResponse = variant {
     UserSuspended;
 };
 
+type NamedAccount = record {
+    name : text;
+    account : text;
+};
+
+type SaveCryptoAccountResponse = variant {
+    Success;
+    Invalid;
+    NameTaken;
+    UserSuspended;
+};
+
+type SavedCryptoAccountsResponse = variant {
+    Success : vec NamedAccount;
+};
+
 type InitUserPrincipalMigrationArgs = record {
     new_principal : principal;
 };
@@ -851,6 +867,7 @@ service : {
     unpin_chat_v2 : (UnpinChatV2Request) -> (UnpinChatV2Response);
     manage_favourite_chats : (ManageFavouriteChatsArgs) -> (ManageFavouriteChatsResponse);
     archive_unarchive_chats : (ArchiveUnarchiveChatsArgs) -> (ArchiveUnarchiveChatsResponse);
+    save_crypto_account : (NamedAccount) -> (SaveCryptoAccountResponse);
 
     init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
@@ -868,4 +885,5 @@ service : {
     contacts : (ContactsArgs) -> (ContactsResponse) query;
     public_profile : (PublicProfileArgs) -> (PublicProfileResponse) query;
     hot_group_exclusions : (HotGroupExclusionsArgs) -> (HotGroupExclusionsResponse) query;
+    saved_crypto_accounts : (EmptyArgs) -> (SavedCryptoAccountsResponse) query;
 };
