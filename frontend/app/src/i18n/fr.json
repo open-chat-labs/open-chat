@@ -1013,6 +1013,7 @@
     "tip": {
         "title": "Ajouter un conseil",
         "failure": "Désolé, nous n'avons pas pu ajouter votre conseil",
-        "noExchangeRate": "Nous n'avons pas de taux de change configuré pour {token}"
+        "noExchangeRate": "Nous n'avons pas de taux de change configuré pour {token}",
+        "menu": "Conseil"
     }
 }

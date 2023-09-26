@@ -1014,6 +1014,7 @@
     "tip": {
         "title": "添加提示",
         "failure": "抱歉，我们无法添加您的小费",
-        "noExchangeRate": "我们没有为 {token} 配置汇率"
+        "noExchangeRate": "我们没有为 {token} 配置汇率",
+        "menu": "提示"
     }
 }

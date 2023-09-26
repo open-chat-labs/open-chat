@@ -1014,6 +1014,7 @@
     "tip": {
         "title": "ヒントを追加する",
         "failure": "申し訳ありませんが、チップを追加できませんでした",
-        "noExchangeRate": "{token} には為替レートが設定されていません"
+        "noExchangeRate": "{token} には為替レートが設定されていません",
+        "menu": "ヒント"
     }
 }
