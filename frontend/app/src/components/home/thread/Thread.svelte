@@ -362,7 +362,7 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight
-    let:observer
+    let:messageObserver
     let:labelObserver>
     {#if loading}
         <Loading />
@@ -385,7 +385,7 @@
                             failed={isFailed($failedMessagesStore, evt)}
                             readByThem
                             readByMe
-                            {observer}
+                            observer={messageObserver}
                             focused={evt.event.kind === "message" &&
                                 $focusMessageIndex === evt.event.messageIndex}
                             {readonly}

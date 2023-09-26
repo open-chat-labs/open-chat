@@ -317,7 +317,7 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight
-    let:observer
+    let:messageObserver
     let:labelObserver>
     {#if !reverseScroll}
         {#if showAvatar}
@@ -347,7 +347,7 @@
             {#each timelineItem.group as innerGroup (userGroupKey(innerGroup))}
                 {#each innerGroup as evt, i (eventKey(evt))}
                     <ChatEvent
-                        {observer}
+                        observer={messageObserver}
                         focused={evt.event.kind === "message" &&
                             evt.event.messageIndex === $focusMessageIndex &&
                             !isFailed($failedMessagesStore, evt)}

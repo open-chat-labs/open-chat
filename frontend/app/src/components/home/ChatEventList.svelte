@@ -78,7 +78,7 @@
     let scrollingToMessage = false;
     let scrollToBottomOnSend = false;
     let destroyed = false;
-    let observer: IntersectionObserver;
+    let messageObserver: IntersectionObserver;
     let labelObserver: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
 
@@ -160,13 +160,13 @@
     }
 
     onMount(() => {
-        const observerOptions = {
+        const messageObserverOptions = {
             root: messagesDiv as Element,
             rootMargin: "0px",
             threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
         };
 
-        observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
+        messageObserver = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
                 const idxAttrs = entry.target.attributes.getNamedItem("data-index");
                 const idAttr = entry.target.attributes.getNamedItem("data-id");
@@ -200,7 +200,7 @@
                     }
                 }
             });
-        }, observerOptions);
+        }, messageObserverOptions);
 
         const labelObserverOptions = {
             root: messagesDiv as Element,
@@ -646,7 +646,7 @@
     class:interrupt
     class:reverse={reverseScroll}
     class={`scrollable-list ${rootSelector}`}>
-    <slot {observer} {labelObserver} />
+    <slot {messageObserver} {labelObserver} />
 </div>
 
 {#if !readonly}
