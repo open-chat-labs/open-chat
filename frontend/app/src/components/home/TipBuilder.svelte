@@ -49,7 +49,8 @@
     $: transferFees = tokenDetails.transferFee;
     $: remainingBalance =
         draftAmount > BigInt(0) ? cryptoBalance - draftAmount - transferFees : cryptoBalance;
-    $: valid = exchangeRate !== undefined && error === undefined && !tokenChanging;
+    $: valid =
+        exchangeRate !== undefined && draftAmount > 0n && error === undefined && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
 
     $: {
@@ -236,9 +237,16 @@
                     </div>
                     <div class="message">
                         {#if exchangeRate !== undefined}
-                            <div class="token-amount">
-                                ~{displayDraftAmount}
-                                {tokenDetails.symbol}
+                            <div class="summary">
+                                <div class="token-amount">
+                                    {displayDraftAmount}
+                                    {symbol}
+                                </div>
+                                <div class="fee">
+                                    {$_("tip.plusFee", {
+                                        values: { fee: transferFees.toString(), token: symbol },
+                                    })}
+                                </div>
                             </div>
                         {:else}
                             <ErrorMessage
@@ -313,7 +321,10 @@
         text-align: center;
     }
 
-    .token-amount {
+    .summary {
+        display: flex;
+        gap: $sp3;
+        align-items: center;
         color: var(--txt-light);
     }
 

@@ -1008,6 +1008,7 @@
         "title": "Tip",
         "menu": "Tip",
         "failure": "Sorry we were unable to add your tip",
-        "noExchangeRate": "We have no exchange rate configured for {token}"
+        "noExchangeRate": "We have no exchange rate configured for {token}",
+        "plusFee": "+ {fee}{token} fee"
     }
 }
