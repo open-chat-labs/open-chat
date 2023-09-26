@@ -50,7 +50,6 @@
     export let chat: ChatSummary;
 
     let chatEventList: ChatEventList | undefined;
-    let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
     let memeBuilder: MemeBuilder;
@@ -90,7 +89,7 @@
     $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
     $: timeline = client.groupEvents(
-        reverseScroll ? [...events.reverse()] : events,
+        reverseScroll ? [...events].reverse() : events,
         user.userId,
         $expandedDeletedMessages,
         reverseScroll
@@ -379,6 +378,7 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight
+    let:observer
     let:labelObserver>
     {#if loading}
         <Loading />

@@ -1,12 +1,11 @@
 <svelte:options immutable />
 
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import Avatar from "../Avatar.svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import Robot from "../Robot.svelte";
     import ProposalBot from "../ProposalBot.svelte";
-    import { _ } from "svelte-i18n";
     import {
         AvatarSize,
         type EventWrapper,
@@ -29,9 +28,6 @@
     import PrivatePreview from "./PrivatePreview.svelte";
     import TimelineDate from "./TimelineDate.svelte";
     import { reverseScroll } from "../../stores/scrollPos";
-
-    // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
-    const MESSAGE_READ_THRESHOLD = 500;
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -75,52 +71,6 @@
     let messagesDivHeight: number;
     let initialised = false;
     let currentChatId: ChatIdentifier | undefined;
-    let observer: IntersectionObserver;
-    let messageReadTimers: Record<number, number> = {};
-
-    onMount(() => {
-        const options = {
-            root: messagesDiv as Element,
-            rootMargin: "0px",
-            threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
-        };
-
-        observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
-            entries.forEach((entry) => {
-                const idxAttrs = entry.target.attributes.getNamedItem("data-index");
-                const idAttr = entry.target.attributes.getNamedItem("data-id");
-                const idx = idxAttrs
-                    ? Math.max(...idxAttrs.value.split(" ").map((v) => parseInt(v, 10)))
-                    : undefined;
-                const id = idAttr ? BigInt(idAttr.value) : undefined;
-                if (idx !== undefined) {
-                    const intersectionRatioRequired =
-                        0 < messagesDivHeight && messagesDivHeight < entry.boundingClientRect.height
-                            ? (messagesDivHeight * 0.5) / entry.boundingClientRect.height
-                            : 0.5;
-
-                    const isIntersecting = entry.intersectionRatio >= intersectionRatioRequired;
-                    if (isIntersecting && messageReadTimers[idx] === undefined) {
-                        const chatId = chat.id;
-                        const timer = window.setTimeout(() => {
-                            if (chatIdentifiersEqual(chatId, chat.id)) {
-                                client.markMessageRead(chat.id, idx, id);
-                                if (id !== undefined) {
-                                    client.broadcastMessageRead(chat, id);
-                                }
-                            }
-                            delete messageReadTimers[idx];
-                        }, MESSAGE_READ_THRESHOLD);
-                        messageReadTimers[idx] = timer;
-                    }
-                    if (!isIntersecting && messageReadTimers[idx] !== undefined) {
-                        window.clearTimeout(messageReadTimers[idx]);
-                        delete messageReadTimers[idx];
-                    }
-                }
-            });
-        }, options);
-    });
 
     function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
         doGoToMessageIndex(ev.detail.index);
@@ -265,7 +215,7 @@
             let messageId = evt.event.kind === "message" ? evt.event.messageId : undefined;
             const isRead = client.isMessageRead(chat.id, messageIndex, messageId);
             if (!isRead && evt.event.kind === "message" && evt.event.sender === user.userId) {
-                client.markMessageRead(chat.id, messageIndex, messageId);
+                client.markMessageRead({ chatId: chat.id }, messageIndex, messageId);
                 return true;
             }
             return isRead;
@@ -367,6 +317,7 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight
+    let:observer
     let:labelObserver>
     {#if !reverseScroll}
         {#if showAvatar}
