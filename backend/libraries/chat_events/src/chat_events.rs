@@ -1090,6 +1090,32 @@ impl ChatEvents {
             .collect()
     }
 
+    pub fn unfollowed_threads<'a>(
+        &self,
+        root_message_indexes: impl Iterator<Item = &'a MessageIndex>,
+        updated_since: TimestampMillis,
+        my_user_id: UserId,
+    ) -> Vec<MessageIndex> {
+        root_message_indexes
+            .filter_map(|root_message_index| {
+                let follower = self
+                    .main
+                    .get((*root_message_index).into(), EventIndex::default(), 0)?
+                    .event
+                    .as_message()?
+                    .thread_summary
+                    .as_ref()?
+                    .get_follower(my_user_id)?;
+
+                if !follower.value && follower.timestamp > updated_since {
+                    Some(*root_message_index)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResult {
         let push_event_result = self.push_event(
             None,

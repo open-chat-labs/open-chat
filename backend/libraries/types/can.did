@@ -330,6 +330,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     my_metrics : opt ChatMetrics;
     is_public : opt bool;
     latest_threads : vec GroupCanisterThreadDetails;
+    unfollowed_threads : vec MessageIndex;
     notifications_muted : opt bool;
     frozen : FrozenGroupUpdate;
     wasm_version : opt BuildVersion;
@@ -465,6 +466,7 @@ type ChannelMembershipUpdates = record {
     notifications_muted : opt bool;
     my_metrics : opt ChatMetrics;
     latest_threads : vec GroupCanisterThreadDetails;
+    unfollowed_threads : vec MessageIndex;
     rules_accepted : opt bool;
 };
 
