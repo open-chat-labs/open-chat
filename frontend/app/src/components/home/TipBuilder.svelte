@@ -56,10 +56,9 @@
         if (ledger !== undefined) {
             // reset when ledger changes
             centAmount = 0;
+            tokenChanging = true;
         }
     }
-
-    $: console.log("Fee: ", tokenDetails.transferFee);
 
     function amountLabel(n: Increment): string {
         return `$${(n / 100).toFixed(2)}`;
@@ -188,6 +187,7 @@
                 label={$_("cryptoAccount.shortBalanceLabel")}
                 bold
                 showTopUp
+                bind:refreshing
                 on:refreshed={onBalanceRefreshed}
                 on:error={onBalanceRefreshError} />
         </span>
