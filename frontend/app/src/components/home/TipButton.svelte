@@ -4,10 +4,7 @@
     export let disabled = false;
     export let label: string;
 
-    let buttonScale = spring(1, {
-        stiffness: 0.5,
-        damping: 0.2,
-    });
+    let buttonScale = spring(1);
 
     function mouseDown() {
         buttonScale.set(1.1);
