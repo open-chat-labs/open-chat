@@ -185,9 +185,6 @@
                         const timer = window.setTimeout(() => {
                             if (messageContextsEqual(context, messageContext)) {
                                 client.markMessageRead(messageContext, idx, id);
-                                if (id !== undefined) {
-                                    client.broadcastMessageRead(chat, id);
-                                }
                             }
                             delete messageReadTimers[idx];
                         }, MESSAGE_READ_THRESHOLD);

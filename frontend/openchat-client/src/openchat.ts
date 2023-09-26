@@ -783,6 +783,10 @@ export class OpenChat extends OpenChatAgentWorker {
         messageId: bigint | undefined,
     ): void {
         this.messagesRead.markMessageRead(context, messageIndex, messageId);
+        const selectedChat = this._liveState.selectedChat;
+        if (selectedChat?.id === context.chatId && messageId !== undefined) {
+            this.broadcastMessageRead(selectedChat, messageId);
+        }
     }
 
     markPinnedMessagesRead(chatId: ChatIdentifier, dateLastPinned: bigint): void {
@@ -1072,7 +1076,10 @@ export class OpenChat extends OpenChatAgentWorker {
                                 this.loadChatDetails(c);
                             }
                             if (c.latestMessage) {
-                                messagesRead.markReadUpTo({ chatId: c.id }, c.latestMessage.event.messageIndex);
+                                messagesRead.markReadUpTo(
+                                    { chatId: c.id },
+                                    c.latestMessage.event.messageIndex,
+                                );
                             }
                         }),
                     );
@@ -2737,7 +2744,10 @@ export class OpenChat extends OpenChatAgentWorker {
                     messagesRead.confirmMessage(context, messageIndex, messageId);
                 }
                 // If the message was sent by the current user, mark it as read
-                if (event.event.sender === myUserId && !messagesRead.isRead(context, messageIndex, messageId)) {
+                if (
+                    event.event.sender === myUserId &&
+                    !messagesRead.isRead(context, messageIndex, messageId)
+                ) {
                     messagesRead.markMessageRead(context, messageIndex, messageId);
                 }
             }
@@ -2749,8 +2759,11 @@ export class OpenChat extends OpenChatAgentWorker {
             );
             const threadRootMessageIndex = this._liveState.selectedThreadRootMessageIndex;
             if (threadRootMessageIndex !== undefined) {
-                const threadRootEvent = newEvents.find((e) =>
-                    e.event.kind === "message" && e.event.messageIndex === threadRootMessageIndex);
+                const threadRootEvent = newEvents.find(
+                    (e) =>
+                        e.event.kind === "message" &&
+                        e.event.messageIndex === threadRootMessageIndex,
+                );
                 if (threadRootEvent !== undefined) {
                     selectedThreadRootEvent.set(threadRootEvent as EventWrapper<Message>);
                     this.dispatchEvent(new ThreadUpdated());
@@ -4175,7 +4188,7 @@ export class OpenChat extends OpenChatAgentWorker {
         localMessageUpdates.markThreadSummaryUpdated(threadRootMessageId, summary);
     }
 
-    broadcastMessageRead(chat: ChatSummary, messageId: bigint): void {
+    private broadcastMessageRead(chat: ChatSummary, messageId: bigint): void {
         if (chat.kind === "direct_chat") {
             const rtc: WebRtcMessage = {
                 kind: "remote_user_read_message",
@@ -4183,7 +4196,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 id: chat.id,
                 userId: this.user.userId,
             };
-            this.sendRtcMessage([...this._liveState.currentChatUserIds], rtc);
+            this.sendRtcMessage([chat.id.userId], rtc);
         }
     }
 
@@ -5060,7 +5073,10 @@ export class OpenChat extends OpenChatAgentWorker {
                     messagesRead.batchUpdate(() => {
                         resp.community.channels.forEach((c) => {
                             if (c.latestMessage) {
-                                messagesRead.markReadUpTo({ chatId: c.id }, c.latestMessage.event.messageIndex);
+                                messagesRead.markReadUpTo(
+                                    { chatId: c.id },
+                                    c.latestMessage.event.messageIndex,
+                                );
                             }
                         });
                     });
