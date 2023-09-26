@@ -16,7 +16,6 @@
         type ChatSummary,
         type OpenChat,
         FilteredProposals,
-        type FailedMessages,
         chatIdentifiersEqual,
         type ChatIdentifier,
         routeForChatIdentifier,
