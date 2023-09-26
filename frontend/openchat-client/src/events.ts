@@ -45,6 +45,12 @@ export class ThreadReactionSelected extends CustomEvent<{
     }
 }
 
+export class ThreadUpdated extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}
+
 export class SentMessage extends Event {
     constructor() {
         super("openchat_event");
