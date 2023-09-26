@@ -63,6 +63,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             member.threads.iter(),
             Some(args.updates_since),
             MAX_THREADS_IN_SUMMARY,
+            member.user_id,
             now,
         ),
         notifications_muted: member.notifications_muted.if_set_after(args.updates_since).cloned(),

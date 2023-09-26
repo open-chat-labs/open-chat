@@ -758,8 +758,9 @@ impl GroupChatCore {
             }
 
             if let Some(thread_summary) = thread_root_message.thread_summary {
+                let followers = thread_summary.followers();
                 let participants = HashSet::from_iter(thread_summary.participant_ids);
-                thread_followers = Some(thread_summary.follower_ids.union(&participants).copied().collect());
+                thread_followers = Some(followers.union(&participants).copied().collect());
 
                 let is_first_reply = thread_summary.reply_count == 1;
                 if is_first_reply {

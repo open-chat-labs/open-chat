@@ -3,6 +3,7 @@ use ledger_utils::format_crypto_amount;
 use search::Document;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
@@ -14,7 +15,7 @@ use types::{
     MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageReminderContent,
     MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged, PollContentInternal, PrizeContent,
     PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage,
-    ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis, Tips, UserId, UsersBlocked,
+    ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis, Timestamped, Tips, UserId, UsersBlocked,
     UsersInvited, UsersUnblocked, VideoContent,
 };
 
@@ -447,7 +448,7 @@ pub struct ThreadSummaryInternal {
     #[serde(rename = "i")]
     pub participant_ids: Vec<UserId>,
     #[serde(default, rename = "f")]
-    pub follower_ids: HashSet<UserId>,
+    pub follower_ids: HashMap<UserId, Timestamped<bool>>,
     #[serde(rename = "r")]
     pub reply_count: u32,
     #[serde(rename = "e")]
@@ -460,11 +461,37 @@ impl ThreadSummaryInternal {
     pub fn hydrate(&self, my_user_id: Option<UserId>) -> ThreadSummary {
         ThreadSummary {
             participant_ids: self.participant_ids.clone(),
-            followed_by_me: my_user_id.map_or(false, |u| self.follower_ids.contains(&u)),
+            followed_by_me: my_user_id.map_or(false, |u| self.follower_ids.get(&u).map_or(false, |t| t.value)),
             reply_count: self.reply_count,
             latest_event_index: self.latest_event_index,
             latest_event_timestamp: self.latest_event_timestamp,
         }
+    }
+
+    pub fn set_follow(&mut self, user_id: UserId, now: TimestampMillis, follow: bool) -> bool {
+        let new_entry = Timestamped::new(follow, now);
+        match self.follower_ids.entry(user_id) {
+            Occupied(mut e) => {
+                if e.get().value == follow {
+                    false
+                } else {
+                    e.insert(new_entry);
+                    true
+                }
+            }
+            Vacant(e) => {
+                e.insert(new_entry);
+                true
+            }
+        }
+    }
+
+    pub fn followers(&self) -> HashSet<UserId> {
+        HashSet::from_iter(self.follower_ids.iter().filter(|(_, t)| t.value).map(|(user_id, _)| *user_id))
+    }
+
+    pub fn get_follower(&self, user_id: UserId) -> Option<Timestamped<bool>> {
+        self.follower_ids.get(&user_id).cloned()
     }
 }
 
@@ -765,7 +792,7 @@ mod tests {
         ThreadSummaryInternal,
     };
     use candid::Principal;
-    use std::collections::HashSet;
+    use std::collections::{HashMap, HashSet};
     use types::{EventWrapperInternal, Reaction, TextContent, Tips};
 
     #[test]
@@ -833,7 +860,7 @@ mod tests {
             }),
             thread_summary: Some(ThreadSummaryInternal {
                 participant_ids: vec![principal.into()],
-                follower_ids: HashSet::new(),
+                follower_ids: HashMap::new(),
                 reply_count: 1,
                 latest_event_index: 1.into(),
                 latest_event_timestamp: 1,
