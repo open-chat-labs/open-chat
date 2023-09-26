@@ -8,7 +8,6 @@
         Mention,
         ThreadSummary,
         ChatIdentifier,
-        MessageContext,
     } from "openchat-client";
     import {
         ChatUpdated,
@@ -64,7 +63,6 @@
     export let firstUnreadMention: Mention | undefined;
     export let footer: boolean;
     export let setFocusMessageIndex: (index: number | undefined) => void;
-    export let selectedMessageContext: MessageContext | undefined;
     export let threadRootEvent: EventWrapper<Message> | undefined;
     export let maintainScroll: boolean;
 
@@ -82,6 +80,7 @@
     let labelObserver: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
 
+    $: unconfirmed = client.unconfirmed;
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
     $: messageContext = { chatId: chat.id, threadRootMessageIndex: threadRootEvent?.event.messageIndex };
@@ -423,13 +422,41 @@
             (ev) =>
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
-                (selectedMessageContext === undefined ||
-                    !failedMessagesStore.contains(selectedMessageContext, ev.event.messageId))
+                (messageContext === undefined ||
+                    !failedMessagesStore.contains(messageContext, ev.event.messageId))
         ) as EventWrapper<Message> | undefined;
     }
 
     function findElementWithMessageIndex(index: number): Element | null {
         return document.querySelector(`.${rootSelector} [data-index~='${index}']`);
+    }
+
+    function isConfirmed(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message" && messageContext) {
+            return !unconfirmed.contains(messageContext, evt.event.messageId);
+        }
+        return true;
+    }
+
+    function isFailed(_failed: unknown, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message" && messageContext) {
+            return failedMessagesStore.contains(messageContext, evt.event.messageId);
+        }
+        return false;
+    }
+
+    function isReadByMe(_store: unknown, evt: EventWrapper<ChatEventType>): boolean {
+        if (readonly) return true;
+
+        if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
+            let messageIndex =
+                evt.event.kind === "message"
+                    ? evt.event.messageIndex
+                    : Math.max(...evt.event.messagesDeleted);
+            let messageId = evt.event.kind === "message" ? evt.event.messageId : undefined;
+            return client.isMessageRead(messageContext, messageIndex, messageId);
+        }
+        return true;
     }
 
     function checkIfTargetMessageHasAThread(index: number) {
@@ -646,7 +673,7 @@
     class:interrupt
     class:reverse={reverseScroll}
     class={`scrollable-list ${rootSelector}`}>
-    <slot {messageObserver} {labelObserver} />
+    <slot {isConfirmed} {isFailed} {isReadByMe} {messageObserver} {labelObserver} />
 </div>
 
 {#if !readonly}

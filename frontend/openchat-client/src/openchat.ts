@@ -790,11 +790,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     isMessageRead(
-        chatId: ChatIdentifier,
+        context: MessageContext,
         messageIndex: number,
         messageId: bigint | undefined,
     ): boolean {
-        return this.messagesRead.isRead(chatId, messageIndex, messageId);
+        return this.messagesRead.isRead(context, messageIndex, messageId);
     }
 
     private sendRtcMessage(userIds: string[], message: WebRtcMessage): void {
@@ -2726,16 +2726,19 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         const context = { chatId, threadRootMessageIndex };
+        const myUserId = this.user.userId;
 
         for (const event of newEvents) {
             if (event.event.kind === "message") {
-                failedMessagesStore.delete(context, event.event.messageId);
-                if (unconfirmed.delete(context, event.event.messageId)) {
-                    messagesRead.confirmMessage(
-                        context,
-                        event.event.messageIndex,
-                        event.event.messageId,
-                    );
+                const messageIndex = event.event.messageIndex;
+                const messageId = event.event.messageId;
+                failedMessagesStore.delete(context, messageId);
+                if (unconfirmed.delete(context, messageId)) {
+                    messagesRead.confirmMessage(context, messageIndex, messageId);
+                }
+                // If the message was sent by the current user, mark it as read
+                if (event.event.sender === myUserId && !messagesRead.isRead(context, messageIndex, messageId)) {
+                    messagesRead.markMessageRead(context, messageIndex, messageId);
                 }
             }
         }

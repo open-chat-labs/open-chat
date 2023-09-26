@@ -306,7 +306,7 @@ export class MessageReadTracker {
 
     getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
         return chat.membership.mentions.find(
-            (m) => !this.isRead(chat.id, m.messageIndex, m.messageId)
+            (m) => !this.isRead({ chatId: chat.id }, m.messageIndex, m.messageId)
         );
     }
 
@@ -373,18 +373,25 @@ export class MessageReadTracker {
         this.publish();
     }
 
-    isRead(chatId: ChatIdentifier, messageIndex: number, messageId: bigint | undefined): boolean {
-        if (messageId !== undefined && unconfirmed.contains({ chatId }, messageId)) {
-            return this.waiting.get({ chatId })?.has(messageId) ?? false;
+    isRead(context: MessageContext, messageIndex: number, messageId: bigint | undefined): boolean {
+        if (messageId !== undefined && unconfirmed.contains(context, messageId)) {
+            return this.waiting.get(context)?.has(messageId) ?? false;
+        } else if (context.threadRootMessageIndex !== undefined) {
+            const serverState = this.serverState.get(context.chatId);
+            if ((serverState?.threads[context.threadRootMessageIndex] ?? -1) > messageIndex)
+                return true;
+            const localState = this.state.get(context.chatId);
+            if ((localState?.threads[context.threadRootMessageIndex] ?? -1) >= messageIndex)
+                return true;
         } else {
-            const serverState = this.serverState.get(chatId);
+            const serverState = this.serverState.get(context.chatId);
             if (serverState?.readUpTo !== undefined && serverState.readUpTo >= messageIndex)
                 return true;
-            const localState = this.state.get(chatId);
+            const localState = this.state.get(context.chatId);
             if (localState?.readUpTo !== undefined && localState.readUpTo >= messageIndex)
                 return true;
-            return false;
         }
+        return false;
     }
 }
 

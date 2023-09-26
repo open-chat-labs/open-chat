@@ -92,7 +92,7 @@
     function getUnreadMentionCount(chat: ChatSummary): number {
         if (chat.kind === "direct_chat") return 0;
         return chat.membership.mentions.filter(
-            (m) => !client.isMessageRead(chat.id, m.messageIndex, m.messageId)
+            (m) => !client.isMessageRead({ chatId: chat.id }, m.messageIndex, m.messageId)
         ).length;
     }
 
