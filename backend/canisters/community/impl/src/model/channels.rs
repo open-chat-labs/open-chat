@@ -219,6 +219,7 @@ impl Channel {
                 m.threads.iter(),
                 None,
                 MAX_THREADS_IN_SUMMARY,
+                m.user_id,
                 now,
             ),
             rules_accepted: m
@@ -300,6 +301,7 @@ impl Channel {
                 m.threads.iter(),
                 Some(since),
                 MAX_THREADS_IN_SUMMARY,
+                m.user_id,
                 now,
             ),
             rules_accepted: m

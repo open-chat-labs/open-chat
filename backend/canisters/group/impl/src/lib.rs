@@ -137,6 +137,7 @@ impl RuntimeState {
                 member.threads.iter(),
                 None,
                 MAX_THREADS_IN_SUMMARY,
+                member.user_id,
                 now,
             ),
             frozen: self.data.frozen.value.clone(),

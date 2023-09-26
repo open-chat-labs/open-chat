@@ -795,7 +795,7 @@ impl ChatEvents {
             self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into(), now)
         {
             if let Some(summary) = &mut root_message.thread_summary {
-                if !summary.participant_ids.contains(&user_id) && summary.follower_ids.insert(user_id) {
+                if !summary.participant_ids.contains(&user_id) && summary.set_follow(user_id, now, true) {
                     root_message.last_updated = Some(now);
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
                     return Success;
@@ -821,7 +821,7 @@ impl ChatEvents {
             self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into(), now)
         {
             if let Some(summary) = &mut root_message.thread_summary {
-                if summary.follower_ids.remove(&user_id) {
+                if summary.set_follow(user_id, now, false) {
                     root_message.last_updated = Some(now);
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
                     return Success;
@@ -858,7 +858,7 @@ impl ChatEvents {
         // If a user is mentioned in a thread they automatically become a follower
         for muid in mentioned_users {
             if !summary.participant_ids.contains(&muid) {
-                summary.follower_ids.insert(muid);
+                summary.set_follow(user_id, now, true);
             }
         }
 
@@ -1052,17 +1052,29 @@ impl ChatEvents {
         root_message_indexes: impl Iterator<Item = &'a MessageIndex>,
         updated_since: Option<TimestampMillis>,
         max_threads: usize,
+        my_user_id: UserId,
         now: TimestampMillis,
     ) -> Vec<GroupCanisterThreadDetails> {
         root_message_indexes
-            .filter(|&&root_message_index| {
-                self.main
-                    .is_accessible(root_message_index.into(), min_visible_event_index, now)
-            })
             .filter_map(|root_message_index| {
                 self.threads.get(root_message_index).and_then(|thread_events| {
-                    let last_updated = thread_events.latest_event_timestamp()?;
+                    let mut last_updated = thread_events.latest_event_timestamp()?;
                     let latest_event = thread_events.latest_event_index()?;
+                    let follower = self
+                        .main
+                        .get((*root_message_index).into(), min_visible_event_index, now)?
+                        .event
+                        .as_message()?
+                        .thread_summary
+                        .as_ref()?
+                        .get_follower(my_user_id);
+
+                    if let Some(follower) = follower {
+                        if follower.value {
+                            last_updated = last_updated.max(follower.timestamp);
+                        }
+                    }
+
                     updated_since
                         .map_or(true, |since| last_updated > since)
                         .then_some(GroupCanisterThreadDetails {
