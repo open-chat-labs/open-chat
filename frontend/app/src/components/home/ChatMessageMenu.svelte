@@ -358,7 +358,7 @@
                 {#if canTip}
                     <MenuItem on:click={() => dispatch("tipMessage")}>
                         <Bitcoin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <div slot="text">{$_("tipMessage")}</div>
+                        <div slot="text">{$_("tip.menu")}</div>
                     </MenuItem>
                 {/if}
                 <MenuItem separator />

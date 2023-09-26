@@ -1011,7 +1011,6 @@
     "displayName": "显示名称",
     "communityDisplayNameRules": "只在这个社区内",
     "userIdCopiedToClipboard": "用户 ID 已复制到剪贴板",
-    "tipMessage": "提示",
     "tip": {
         "title": "添加提示",
         "failure": "抱歉，我们无法添加您的小费",

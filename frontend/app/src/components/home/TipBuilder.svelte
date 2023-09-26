@@ -18,6 +18,8 @@
     const client = getContext<OpenChat>("client");
     const user = client.user;
     const dispatch = createEventDispatcher();
+    const increments: Increment[] = [10, 50, 100];
+    type Increment = 10 | 50 | 100;
 
     export let ledger: string;
     export let msg: Message;
@@ -27,36 +29,20 @@
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
-    let selectedIncrement: Increment = 50;
+    let selectedIncrement: Increment | undefined = undefined;
     let dollar: HTMLElement;
     let dollarTop = tweened(-1000);
     let dollarOpacity = tweened(0);
     let dollarScale = tweened(0);
+    let multiplier = 1;
 
-    const increments: Increment[] = [10, 50, 100];
-    type Increment = 10 | 50 | 100;
-
-    let multipliers: Record<Increment, number> = {
-        10: 1,
-        50: 1,
-        100: 1,
-    };
-
-    function amountLabel(n: Increment, multiplier: number): string {
-        return `$${((n * multiplier) / 100).toFixed(2)}`;
-    }
-
-    $: lastTipIncrement = client.lastTipIncrement;
     $: cryptoBalanceStore = client.cryptoBalance;
-    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
-    $: exchangeRate = dollarExchangeRates[tokenDetails.symbol.toLowerCase()];
-    $: draftAmount = calculateAmount(
-        selectedIncrement,
-        exchangeRate,
-        multipliers[selectedIncrement]
-    );
-    $: displayDraftAmount = (Number(draftAmount) / E8S_PER_TOKEN).toFixed(8);
     $: cryptoLookup = client.cryptoLookup;
+
+    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
+    $: exchangeRate = dollarExchangeRates[tokenDetails.symbol.toLowerCase()] ?? 0;
+    $: draftAmount = calculateAmount(selectedIncrement, exchangeRate, multiplier);
+    $: displayDraftAmount = (Number(draftAmount) / E8S_PER_TOKEN).toFixed(8);
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
@@ -66,13 +52,26 @@
     $: valid = exchangeRate !== undefined && error === undefined && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
 
+    $: {
+        if (ledger !== undefined) {
+            // reset when ledger changes
+            multiplier = 1;
+            selectedIncrement = undefined;
+        }
+    }
+
+    function amountLabel(n: Increment, multiplier: number): string {
+        const total = n === selectedIncrement ? n * multiplier : n;
+        return `$${(total / 100).toFixed(2)}`;
+    }
+
     function calculateAmount(
-        cents: Increment,
-        exchangeRate: number | undefined,
+        increment: Increment | undefined,
+        exchangeRate: number,
         multiplier: number
     ): bigint {
-        if (exchangeRate === undefined) return 0n;
-        const multiplied = cents * multiplier;
+        if (increment === undefined) return 0n;
+        const multiplied = increment * multiplier;
         const e8s = (multiplied / 100) * exchangeRate * E8S_PER_TOKEN;
         return BigInt(Math.round(e8s));
     }
@@ -163,16 +162,11 @@
         bounceMoneyMouthFrom(e.target as HTMLElement);
 
         if (increment !== selectedIncrement) {
-            multipliers = {
-                10: 1,
-                50: 1,
-                100: 1,
-            };
+            multiplier = 1;
         } else {
-            multipliers[increment] += 1;
+            multiplier += 1;
         }
         selectedIncrement = increment;
-        lastTipIncrement.set(increment);
     }
 
     onMount(() => {
@@ -186,7 +180,6 @@
             document.body.appendChild(d);
         }
         dollar = d;
-        selectedIncrement = $lastTipIncrement;
     });
 </script>
 
@@ -231,13 +224,13 @@
                                     calculateAmount(
                                         increment,
                                         exchangeRate,
-                                        multipliers[increment] + 1
+                                        selectedIncrement === increment ? multiplier + 1 : 1
                                     ) >
                                         cryptoBalance - transferFees}
                                 class:selected={selectedIncrement === increment}
                                 on:click|preventDefault={(e) => clickAmount(e, increment)}
                                 class="amount">
-                                {$_(amountLabel(increment, multipliers[increment]))}
+                                {$_(amountLabel(increment, multiplier))}
                             </button>
                         {/each}
                     </div>

@@ -24,6 +24,7 @@ describe("mark messages read", () => {
                     text: "",
                 },
                 reactions: [],
+                tips: {},
                 edited: false,
                 forwarded: false,
                 deleted: false,
@@ -98,7 +99,7 @@ describe("mark messages read", () => {
                     abcId,
                     undefined,
                     [{ threadRootMessageIndex: 1, readUpTo: 3 }],
-                    undefined
+                    undefined,
                 );
                 const unread = markRead.unreadThreadMessageCount(abcId, 1, 5);
                 expect(unread).toEqual(2);
@@ -108,7 +109,7 @@ describe("mark messages read", () => {
                     abcId,
                     undefined,
                     [{ threadRootMessageIndex: 1, readUpTo: 3 }],
-                    undefined
+                    undefined,
                 );
                 const unread = markRead.unreadThreadMessageCount(abcId, 1, 3);
                 expect(unread).toEqual(0);
@@ -118,7 +119,7 @@ describe("mark messages read", () => {
                     abcId,
                     undefined,
                     [{ threadRootMessageIndex: 1, readUpTo: 3 }],
-                    undefined
+                    undefined,
                 );
                 markRead.markThreadRead(abcId, 1, 5);
                 const unread = markRead.unreadThreadMessageCount(abcId, 1, 5);
@@ -129,7 +130,7 @@ describe("mark messages read", () => {
                     abcId,
                     undefined,
                     [{ threadRootMessageIndex: 1, readUpTo: 3 }],
-                    undefined
+                    undefined,
                 );
                 markRead.markThreadRead(abcId, 1, 5);
                 const unread = markRead.unreadThreadMessageCount(abcId, 1, 7);
@@ -146,7 +147,7 @@ describe("mark messages read", () => {
                         { threadRootMessageIndex: 1, readUpTo: 3 },
                         { threadRootMessageIndex: 2, readUpTo: 5 },
                     ],
-                    undefined
+                    undefined,
                 );
                 const count = markRead.staleThreadCountForChat(abcId, threadSyncs);
                 expect(count).toEqual(0);
@@ -159,7 +160,7 @@ describe("mark messages read", () => {
                         { threadRootMessageIndex: 1, readUpTo: 1 },
                         { threadRootMessageIndex: 2, readUpTo: 5 },
                     ],
-                    undefined
+                    undefined,
                 );
                 const count = markRead.staleThreadCountForChat(abcId, threadSyncs);
                 expect(count).toEqual(1);
@@ -172,7 +173,7 @@ describe("mark messages read", () => {
                         { threadRootMessageIndex: 1, readUpTo: 1 },
                         { threadRootMessageIndex: 2, readUpTo: 5 },
                     ],
-                    undefined
+                    undefined,
                 );
                 markRead.markThreadRead(abcId, 1, 2);
                 const count = markRead.staleThreadCountForChat(abcId, threadSyncs);
@@ -186,7 +187,7 @@ describe("mark messages read", () => {
                         { threadRootMessageIndex: 1, readUpTo: 1 },
                         { threadRootMessageIndex: 2, readUpTo: 5 },
                     ],
-                    undefined
+                    undefined,
                 );
                 markRead.markThreadRead(abcId, 1, 3);
                 const count = markRead.staleThreadCountForChat(abcId, threadSyncs);

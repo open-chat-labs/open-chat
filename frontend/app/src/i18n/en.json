@@ -242,7 +242,6 @@
     "deleteMessageForMe": "Delete for me",
     "retryMessage": "Retry message",
     "editMessage": "Edit",
-    "tipMessage": "Tip",
     "messageDeleted": "Message deleted by {username} on {timestamp}",
     "deleteFailed": "Unable to delete your message",
     "enterInviteCode": "Enter your invite code",
@@ -1006,7 +1005,8 @@
         "title": "Theme"
     },
     "tip": {
-        "title": "Add a tip",
+        "title": "Tip",
+        "menu": "Tip",
         "failure": "Sorry we were unable to add your tip",
         "noExchangeRate": "We have no exchange rate configured for {token}"
     }

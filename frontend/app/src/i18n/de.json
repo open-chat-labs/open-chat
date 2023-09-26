@@ -1012,7 +1012,6 @@
     "displayName": "Anzeigename",
     "communityDisplayNameRules": "nur innerhalb dieser Gemeinschaft",
     "userIdCopiedToClipboard": "Benutzer-ID in die Zwischenablage kopiert",
-    "tipMessage": "Tipp",
     "tip": {
         "title": "Fügen Sie einen Tipp hinzu",
         "failure": "Leider konnten wir Ihren Tipp nicht hinzufügen",

@@ -239,6 +239,7 @@ export function createMessage(
         messageId: newMessageId(),
         messageIndex,
         reactions: [],
+        tips: {},
         edited: false,
         forwarded,
         deleted: false,

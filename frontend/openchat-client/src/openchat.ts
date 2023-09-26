@@ -134,7 +134,7 @@ import {
     selectedMessageContext,
     staleThreadsCount,
 } from "./stores/chat";
-import { cryptoBalance, cryptoLookup, lastCryptoSent, lastTipIncrement } from "./stores/crypto";
+import { cryptoBalance, cryptoLookup, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
     disableAllProposalFilters,
@@ -5377,7 +5377,6 @@ export class OpenChat extends OpenChatAgentWorker {
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
     lastCryptoSent = lastCryptoSent;
-    lastTipIncrement = lastTipIncrement;
     draftThreadMessages = draftThreadMessages;
     translationStore = translationStore;
     eventsStore = eventsStore;

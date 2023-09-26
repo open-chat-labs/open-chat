@@ -1012,7 +1012,6 @@
     "displayName": "Nombre para mostrar",
     "communityDisplayNameRules": "solo dentro de esta comunidad",
     "userIdCopiedToClipboard": "ID de usuario copiado al portapapeles",
-    "tipMessage": "Consejo",
     "tip": {
         "title": "Añadir una propina",
         "failure": "Lo sentimos, no pudimos agregar tu consejo.",
