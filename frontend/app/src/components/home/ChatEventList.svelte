@@ -23,6 +23,7 @@
         SendingThreadMessage,
         SentMessage,
         SentThreadMessage,
+        ThreadUpdated,
         ThreadReactionSelected,
         chatIdentifiersEqual,
         messageContextsEqual,
@@ -279,6 +280,9 @@
             }
             if (ev instanceof LoadedThreadMessageWindow) {
                 onMessageWindowLoaded(ev.detail.messageIndex, ev.detail.initialLoad);
+            }
+            if (ev instanceof ThreadUpdated) {
+                loadMoreIfRequired();
             }
             if (ev instanceof SentThreadMessage) {
                 afterSendThreadMessage(threadRootEvent, ev.detail);

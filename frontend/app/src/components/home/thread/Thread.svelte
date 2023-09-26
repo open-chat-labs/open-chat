@@ -14,7 +14,7 @@
         AttachmentContent,
     } from "openchat-client";
     import { LEDGER_CANISTER_ICP } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -60,7 +60,6 @@
     let initialised = false;
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
-    let previousLatestEventIndex: number | undefined = undefined;
     let showAcceptRulesModal = false;
     let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
 
@@ -97,21 +96,6 @@
     $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
     $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
-
-    onMount(() => (previousLatestEventIndex = thread?.latestEventIndex));
-
-    $: {
-        if (initialised) {
-            if (
-                thread !== undefined &&
-                previousLatestEventIndex !== undefined &&
-                thread.latestEventIndex > previousLatestEventIndex
-            ) {
-                client.loadNewMessages(chat.id, rootEvent);
-                previousLatestEventIndex = thread.latestEventIndex;
-            }
-        }
-    }
 
     function createTestMessages(ev: CustomEvent<number>): void {
         if (process.env.NODE_ENV === "production") return;
