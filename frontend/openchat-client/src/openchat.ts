@@ -222,6 +222,7 @@ import {
     SentMessage,
     SentThreadMessage,
     ThreadClosed,
+    ThreadUpdated,
     ThreadReactionSelected,
     ThreadSelected,
 } from "./events";
@@ -777,11 +778,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     markMessageRead(
-        chatId: ChatIdentifier,
+        context: MessageContext,
         messageIndex: number,
         messageId: bigint | undefined,
     ): void {
-        this.messagesRead.markMessageRead({ chatId }, messageIndex, messageId);
+        this.messagesRead.markMessageRead(context, messageIndex, messageId);
     }
 
     markPinnedMessagesRead(chatId: ChatIdentifier, dateLastPinned: bigint): void {
@@ -2743,6 +2744,15 @@ export class OpenChat extends OpenChatAgentWorker {
             chatStateStore.updateProp(chatId, "serverEvents", (events) =>
                 mergeServerEvents(events, newEvents),
             );
+            const threadRootMessageIndex = this._liveState.selectedThreadRootMessageIndex;
+            if (threadRootMessageIndex !== undefined) {
+                const threadRootEvent = newEvents.find((e) =>
+                    e.event.kind === "message" && e.event.messageIndex === threadRootMessageIndex);
+                if (threadRootEvent !== undefined) {
+                    selectedThreadRootEvent.set(threadRootEvent as EventWrapper<Message>);
+                    this.dispatchEvent(new ThreadUpdated());
+                }
+            }
         } else if (messageContextsEqual(context, this._liveState.selectedMessageContext)) {
             threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
         }

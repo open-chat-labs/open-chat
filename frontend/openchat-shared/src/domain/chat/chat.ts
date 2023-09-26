@@ -723,12 +723,6 @@ export type PollEnded = {
     eventIndex: number;
 };
 
-export type ThreadUpdated = {
-    kind: "thread_updated";
-    messageIndex: number;
-    eventIndex: number;
-};
-
 export type ProposalsUpdated = {
     kind: "proposals_updated";
     proposals: {

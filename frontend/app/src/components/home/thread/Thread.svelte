@@ -14,7 +14,7 @@
         AttachmentContent,
     } from "openchat-client";
     import { LEDGER_CANISTER_ICP } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -50,7 +50,6 @@
     export let chat: ChatSummary;
 
     let chatEventList: ChatEventList | undefined;
-    let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
     let memeBuilder: MemeBuilder;
@@ -61,7 +60,6 @@
     let initialised = false;
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
-    let previousLatestEventIndex: number | undefined = undefined;
     let showAcceptRulesModal = false;
     let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
 
@@ -90,7 +88,7 @@
     $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
     $: timeline = client.groupEvents(
-        reverseScroll ? [...events.reverse()] : events,
+        reverseScroll ? [...events].reverse() : events,
         user.userId,
         $expandedDeletedMessages,
         reverseScroll
@@ -98,21 +96,6 @@
     $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
     $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
-
-    onMount(() => (previousLatestEventIndex = thread?.latestEventIndex));
-
-    $: {
-        if (initialised) {
-            if (
-                thread !== undefined &&
-                previousLatestEventIndex !== undefined &&
-                thread.latestEventIndex > previousLatestEventIndex
-            ) {
-                client.loadNewMessages(chat.id, rootEvent);
-                previousLatestEventIndex = thread.latestEventIndex;
-            }
-        }
-    }
 
     function createTestMessages(ev: CustomEvent<number>): void {
         if (process.env.NODE_ENV === "production") return;
@@ -379,6 +362,7 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight
+    let:messageObserver
     let:labelObserver>
     {#if loading}
         <Loading />
@@ -401,7 +385,7 @@
                             failed={isFailed($failedMessagesStore, evt)}
                             readByThem
                             readByMe
-                            {observer}
+                            observer={messageObserver}
                             focused={evt.event.kind === "message" &&
                                 $focusMessageIndex === evt.event.messageIndex}
                             {readonly}
