@@ -776,11 +776,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     markMessageRead(
-        chatId: ChatIdentifier,
+        context: MessageContext,
         messageIndex: number,
         messageId: bigint | undefined,
     ): void {
-        this.messagesRead.markMessageRead({ chatId }, messageIndex, messageId);
+        this.messagesRead.markMessageRead(context, messageIndex, messageId);
     }
 
     markPinnedMessagesRead(chatId: ChatIdentifier, dateLastPinned: bigint): void {
