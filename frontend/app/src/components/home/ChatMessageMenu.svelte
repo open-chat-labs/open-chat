@@ -27,7 +27,12 @@
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
-    import type { ChatIdentifier, Message, OpenChat } from "openchat-client";
+    import {
+        LEDGER_CANISTER_ICP,
+        type ChatIdentifier,
+        type Message,
+        type OpenChat,
+    } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
     import { now } from "../../stores/time";
@@ -62,10 +67,11 @@
     export let crypto: boolean;
     export let msg: Message;
     export let threadRootMessage: Message | undefined;
+    export let canTip: boolean;
 
     let menuIcon: MenuIcon;
 
-    $: canTip = !me && confirmed && !inert && !failed;
+    $: lastCryptoSent = client.lastCryptoSent;
     $: canRemind =
         msg.content.kind !== "message_reminder_content" &&
         msg.content.kind !== "message_reminder_created_content";
@@ -356,7 +362,9 @@
                     </MenuItem>
                 {/if}
                 {#if canTip}
-                    <MenuItem on:click={() => dispatch("tipMessage")}>
+                    <MenuItem
+                        on:click={() =>
+                            dispatch("tipMessage", $lastCryptoSent ?? LEDGER_CANISTER_ICP)}>
                         <Bitcoin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <div slot="text">{$_("tip.menu")}</div>
                     </MenuItem>

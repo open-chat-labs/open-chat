@@ -108,8 +108,9 @@
     let showRemindMe = false;
     let showReport = false;
     let messageMenu: ChatMessageMenu;
-    let tipping = false;
+    let tipping: string | undefined = undefined;
 
+    $: canTip = !me && confirmed && !inert && !failed;
     $: chatListScope = client.chatListScope;
     $: inThread = threadRootMessage !== undefined;
     $: threadRootMessageIndex =
@@ -233,8 +234,8 @@
         }
     }
 
-    function tipMessage() {
-        tipping = true;
+    function tipMessage(ev: CustomEvent<string>) {
+        tipping = ev.detail;
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -360,7 +361,7 @@
     }
 
     function sendTip(ev: CustomEvent<PendingCryptocurrencyTransfer>) {
-        tipping = false;
+        tipping = undefined;
         const transfer = ev.detail;
         const currentTip = (msg.tips[transfer.ledger] ?? {})[client.user.userId] ?? 0n;
         client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
@@ -375,12 +376,8 @@
 
 <svelte:window on:resize={recalculateMediaDimensions} />
 
-{#if tipping}
-    <TipBuilder
-        ledger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
-        on:send={sendTip}
-        on:close={() => (tipping = false)}
-        {msg} />
+{#if tipping !== undefined}
+    <TipBuilder ledger={tipping} on:send={sendTip} on:close={() => (tipping = undefined)} {msg} />
 {/if}
 
 {#if showEmojiPicker && canReact}
@@ -581,6 +578,7 @@
                     canShare={canShare()}
                     {me}
                     {canPin}
+                    {canTip}
                     {pinned}
                     {supportsReply}
                     {canQuoteReply}
@@ -653,7 +651,7 @@
     {#if tips.length > 0 && !inert}
         <div class="tips" class:indent={showAvatar}>
             {#each tips as [ledger, userTips]}
-                <TipThumbnail {ledger} {userTips} />
+                <TipThumbnail on:click={tipMessage} {canTip} {ledger} {userTips} />
             {/each}
         </div>
     {/if}

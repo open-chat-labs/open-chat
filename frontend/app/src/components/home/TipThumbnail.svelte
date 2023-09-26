@@ -1,14 +1,16 @@
 <script lang="ts">
     import { AvatarSize, E8S_PER_TOKEN, type OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
     import Avatar from "../Avatar.svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let ledger: string;
     export let userTips: Record<string, bigint>;
+    export let canTip: boolean;
 
     let longPressed: boolean = false;
 
@@ -17,11 +19,21 @@
     $: userStore = client.userStore;
     $: totalAmount = userTipsList.reduce((n, [_, amount]) => n + amount, BigInt(0));
 
-    function onClick() {}
+    function onClick() {
+        if (!longPressed && canTip) {
+            dispatch("click", ledger);
+        }
+    }
 </script>
 
 <TooltipWrapper bind:longPressed position={"bottom"} align={"start"}>
-    <div role="button" tabindex="0" slot="target" on:click={onClick} class="tip-wrapper">
+    <div
+        role="button"
+        tabindex="0"
+        slot="target"
+        on:click={onClick}
+        class="tip-wrapper"
+        class:canTip>
         <img class="tip-icon" src={$cryptoLookup[ledger].logo} />
         <span class="tip-count">
             {userTipsList.length > 999 ? "999+" : userTipsList.length}
@@ -41,12 +53,12 @@
                         @{$userStore[userId]?.username}
                     </div>
                     <div class="amount">
-                        {(Number(amount) / E8S_PER_TOKEN).toFixed(4)}
+                        {Number(amount) / E8S_PER_TOKEN}
                     </div>
                 {/each}
                 {#if userTipsList.length > 1}
                     <div class="total">
-                        {(Number(totalAmount) / E8S_PER_TOKEN).toFixed(4)}
+                        {Number(totalAmount) / E8S_PER_TOKEN}
                     </div>
                 {/if}
             </div>
@@ -81,13 +93,16 @@
         border-radius: $sp2;
         background-color: var(--reaction-bg);
         color: var(--reaction-txt);
-        cursor: pointer;
         padding: 3px $sp2;
         display: flex;
         justify-content: center;
         align-items: center;
         margin-bottom: $sp2;
         font-size: 120%;
+
+        &.canTip {
+            cursor: pointer;
+        }
 
         .tip-count {
             @include font(book, normal, fs-60);

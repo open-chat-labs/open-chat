@@ -14,12 +14,13 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
+    import TipButton from "./TipButton.svelte";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
     const dispatch = createEventDispatcher();
-    const increments: Increment[] = [10, 50, 100];
-    type Increment = 10 | 50 | 100;
+    const increments: Increment[] = [1, 10, 100];
+    type Increment = 1 | 10 | 100;
 
     export let ledger: string;
     export let msg: Message;
@@ -29,51 +30,43 @@
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
-    let selectedIncrement: Increment | undefined = undefined;
     let dollar: HTMLElement;
     let dollarTop = tweened(-1000);
     let dollarOpacity = tweened(0);
     let dollarScale = tweened(0);
-    let multiplier = 1;
+    let centAmount = 0;
 
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoLookup = client.cryptoLookup;
-
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: exchangeRate = dollarExchangeRates[tokenDetails.symbol.toLowerCase()] ?? 0;
-    $: draftAmount = calculateAmount(selectedIncrement, exchangeRate, multiplier);
-    $: displayDraftAmount = (Number(draftAmount) / E8S_PER_TOKEN).toFixed(8);
+    $: draftAmount = calculateAmount(centAmount, exchangeRate);
+    $: displayDraftAmount = (Number(draftAmount) / E8S_PER_TOKEN).toString();
+    $: displayFee = (Number(tokenDetails.transferFee) / E8S_PER_TOKEN).toString();
     $: tokenDetails = $cryptoLookup[ledger];
-    $: symbol = tokenDetails.symbol;
-    $: howToBuyUrl = tokenDetails.howToBuyUrl;
-    $: transferFees = tokenDetails.transferFee;
     $: remainingBalance =
-        draftAmount > BigInt(0) ? cryptoBalance - draftAmount - transferFees : cryptoBalance;
+        draftAmount > BigInt(0)
+            ? cryptoBalance - draftAmount - tokenDetails.transferFee
+            : cryptoBalance;
     $: valid =
         exchangeRate !== undefined && draftAmount > 0n && error === undefined && !tokenChanging;
-    $: zero = cryptoBalance <= transferFees && !tokenChanging;
+    $: zero = cryptoBalance <= tokenDetails.transferFee && !tokenChanging;
 
     $: {
         if (ledger !== undefined) {
             // reset when ledger changes
-            multiplier = 1;
-            selectedIncrement = undefined;
+            centAmount = 0;
         }
     }
 
-    function amountLabel(n: Increment, multiplier: number): string {
-        const total = n === selectedIncrement ? n * multiplier : n;
-        return `$${(total / 100).toFixed(2)}`;
+    $: console.log("Fee: ", tokenDetails.transferFee);
+
+    function amountLabel(n: Increment): string {
+        return `$${(n / 100).toFixed(2)}`;
     }
 
-    function calculateAmount(
-        increment: Increment | undefined,
-        exchangeRate: number,
-        multiplier: number
-    ): bigint {
-        if (increment === undefined) return 0n;
-        const multiplied = increment * multiplier;
-        const e8s = (multiplied / 100) * exchangeRate * E8S_PER_TOKEN;
+    function calculateAmount(centAmount: number, exchangeRate: number): bigint {
+        const e8s = (centAmount / 100) * exchangeRate * E8S_PER_TOKEN;
         return BigInt(Math.round(e8s));
     }
 
@@ -85,10 +78,10 @@
         const transfer: PendingCryptocurrencyTransfer = {
             kind: "pending",
             ledger,
-            token: symbol,
+            token: tokenDetails.symbol,
             recipient: msg.sender,
             amountE8s: draftAmount,
-            feeE8s: transferFees,
+            feeE8s: tokenDetails.transferFee,
             createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
         };
         dispatch("send", transfer);
@@ -114,7 +107,7 @@
         tokenChanging = false;
         if (remainingBalance < 0) {
             remainingBalance = BigInt(0);
-            draftAmount = cryptoBalance - transferFees;
+            draftAmount = cryptoBalance - tokenDetails.transferFee;
             if (draftAmount < 0) {
                 draftAmount = BigInt(0);
             }
@@ -158,16 +151,8 @@
     }
 
     function clickAmount(e: MouseEvent, increment: Increment) {
-        if (exchangeRate === undefined) return;
-
         bounceMoneyMouthFrom(e.target as HTMLElement);
-
-        if (increment !== selectedIncrement) {
-            multiplier = 1;
-        } else {
-            multiplier += 1;
-        }
-        selectedIncrement = increment;
+        centAmount += increment;
     }
 
     onMount(() => {
@@ -211,47 +196,57 @@
                 {#if zero || toppingUp}
                     <AccountInfo {ledger} {user} />
                     {#if zero}
-                        <p>{$_("tokenTransfer.zeroBalance", { values: { token: symbol } })}</p>
+                        <p>
+                            {$_("tokenTransfer.zeroBalance", {
+                                values: { token: tokenDetails.symbol },
+                            })}
+                        </p>
                     {/if}
                     <p>{$_("tokenTransfer.makeDeposit")}</p>
-                    <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                        {$_("howToBuyToken", { values: { token: symbol } })}
+                    <a
+                        rel="noreferrer"
+                        class="how-to"
+                        href={tokenDetails.howToBuyUrl}
+                        target="_blank">
+                        {$_("howToBuyToken", { values: { token: tokenDetails.symbol } })}
                     </a>
                 {:else}
                     <div class="amounts">
                         {#each increments as increment}
-                            <button
+                            <TipButton
+                                label={$_(amountLabel(increment))}
+                                on:click={(e) => clickAmount(e, increment)}
                                 disabled={exchangeRate === undefined ||
-                                    calculateAmount(
-                                        increment,
-                                        exchangeRate,
-                                        selectedIncrement === increment ? multiplier + 1 : 1
-                                    ) >
-                                        cryptoBalance - transferFees}
-                                class:selected={selectedIncrement === increment}
-                                on:click|preventDefault={(e) => clickAmount(e, increment)}
-                                class="amount">
-                                {$_(amountLabel(increment, multiplier))}
-                            </button>
+                                    calculateAmount(centAmount + increment, exchangeRate) >
+                                        cryptoBalance - tokenDetails.transferFee} />
                         {/each}
                     </div>
                     <div class="message">
                         {#if exchangeRate !== undefined}
-                            <div class="summary">
-                                <div class="token-amount">
-                                    {displayDraftAmount}
-                                    {symbol}
+                            {#if draftAmount > 0}
+                                <div class="summary">
+                                    <div class="token-amount">
+                                        {displayDraftAmount}
+                                        {tokenDetails.symbol}
+                                    </div>
+                                    <div class="fee">
+                                        {$_("tip.plusFee", {
+                                            values: {
+                                                fee: displayFee,
+                                                token: tokenDetails.symbol,
+                                            },
+                                        })}
+                                    </div>
                                 </div>
-                                <div class="fee">
-                                    {$_("tip.plusFee", {
-                                        values: { fee: transferFees.toString(), token: symbol },
-                                    })}
+                            {:else}
+                                <div class="summary">
+                                    {$_("tip.advice")}
                                 </div>
-                            </div>
+                            {/if}
                         {:else}
                             <ErrorMessage
                                 >{$_("tip.noExchangeRate", {
-                                    values: { token: symbol },
+                                    values: { token: tokenDetails.symbol },
                                 })}</ErrorMessage>
                         {/if}
                         {#if error}
@@ -319,57 +314,26 @@
 
     .message {
         text-align: center;
+        margin-bottom: $sp3;
     }
 
     .summary {
         display: flex;
         gap: $sp3;
         align-items: center;
+        justify-content: center;
         color: var(--txt-light);
+
+        .fee {
+            @include font(light, normal, fs-70);
+        }
     }
 
     .amounts {
         display: flex;
         justify-content: space-evenly;
         gap: $sp2;
-        padding: $sp5 0;
-
-        .amount {
-            $size: 100px;
-            border-radius: $sp3;
-            padding: $sp4;
-            border: 1px solid var(--bd);
-            transition: background 250ms ease-in-out, color 250ms ease-in-out;
-            text-align: center;
-            cursor: pointer;
-            height: $size;
-            width: $size;
-            border-radius: 50%;
-            display: grid;
-            align-content: center;
-            background: transparent;
-            color: var(--txt-light);
-
-            @include font(book, normal, fs-120);
-
-            @include mobile() {
-                $size: 100px;
-                height: $size;
-                width: $size;
-            }
-
-            &.selected {
-                color: var(--button-txt);
-                background: var(--button-bg);
-                &:hover {
-                    background: var(--button-hv);
-                }
-            }
-
-            &:disabled {
-                cursor: not-allowed;
-            }
-        }
+        padding: $sp6 0;
     }
 
     .how-to {
