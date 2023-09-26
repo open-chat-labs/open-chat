@@ -135,7 +135,8 @@ import {
     DeleteCommunityResponse,
     ArchiveUnarchiveChatsResponse,
     SetCommunityIndexesResponse,
-    GroupPermissionsReduced
+    GroupPermissionsReduced,
+    TipMessageResponse
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -274,6 +275,7 @@ export {
     ArchiveUnarchiveChatsResponse as ApiArchiveUnarchiveChatsResponse,
     SetCommunityIndexesResponse as ApiSetCommunityIndexesResponse,
     GroupPermissionsReduced as ApiGroupPermissionsReduced,
+    TipMessageResponse as ApiTipMessageResponse
 };
 
 export const idlFactory: IDL.InterfaceFactory;

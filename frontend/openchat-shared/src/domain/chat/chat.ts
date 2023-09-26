@@ -473,6 +473,10 @@ export type EnhancedReplyContext = RehydratedReplyContext & {
     content: MessageContent;
 };
 
+type LedgerId = string;
+type UserId = string;
+export type TipsReceived = Record<LedgerId, Record<UserId, bigint>>;
+
 export type Message = {
     kind: "message";
     messageId: bigint;
@@ -481,6 +485,7 @@ export type Message = {
     content: MessageContent;
     repliesTo?: ReplyContext;
     reactions: Reaction[];
+    tips: TipsReceived;
     edited: boolean;
     forwarded: boolean;
     deleted: boolean;
@@ -549,6 +554,7 @@ export type LocalMessageUpdates = {
     pollVotes?: LocalPollVote[];
     threadSummary?: ThreadSummary;
     lastUpdated: number;
+    tips?: TipsReceived;
 };
 
 export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;
@@ -1631,9 +1637,9 @@ export type MarkReadResponse = "success";
 
 export type UpdateGroupResponse =
     | {
-        kind: "success";
-        rulesVersion: number | undefined;
-    }
+          kind: "success";
+          rulesVersion: number | undefined;
+      }
     | { kind: "not_authorized" }
     | { kind: "name_too_short" }
     | { kind: "name_too_long" }
@@ -1873,3 +1879,5 @@ export type PublicGroupSummaryResponse =
     | GroupMoved;
 
 export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
+
+export type TipMessageResponse = Success | Failure;

@@ -1010,5 +1010,13 @@
     "displayNameRules": "オプション",
     "displayName": "表示名",
     "communityDisplayNameRules": "このコミュニティ内だけで",
-    "userIdCopiedToClipboard": "ユーザーIDがクリップボードにコピーされました"
+    "userIdCopiedToClipboard": "ユーザーIDがクリップボードにコピーされました",
+    "tip": {
+        "title": "ヒントを追加する",
+        "failure": "申し訳ありませんが、チップを追加できませんでした",
+        "noExchangeRate": "{token} には為替レートが設定されていません",
+        "menu": "ヒント",
+        "plusFee": "+ {fee} {token} 手数料",
+        "advice": "好きなだけタップしてチップを残しましょう"
+    }
 }

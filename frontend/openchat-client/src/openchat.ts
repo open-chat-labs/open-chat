@@ -325,6 +325,8 @@ import type {
     MessageContent,
     MessageContext,
     UpdatedRules,
+    PendingCryptocurrencyTransfer,
+    TipMessageResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -2916,7 +2918,10 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    combineRulesText(chatRules: VersionedRules | undefined, communityRules: VersionedRules | undefined): string {
+    combineRulesText(
+        chatRules: VersionedRules | undefined,
+        communityRules: VersionedRules | undefined,
+    ): string {
         const chatRulesEnabled = chatRules?.enabled ?? false;
         const communityRulesEnabled = communityRules?.enabled ?? false;
         const chatRulesText = chatRulesEnabled ? chatRules?.text : "";
@@ -4803,6 +4808,44 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    tipMessage(
+        messageContext: MessageContext,
+        messageId: bigint,
+        transfer: PendingCryptocurrencyTransfer,
+        currentTip: bigint,
+    ): Promise<TipMessageResponse> {
+        const chat = this._liveState.chatSummaries.get(messageContext.chatId);
+        const userId = this.user.userId;
+        const totalTip = transfer.amountE8s + currentTip;
+
+        if (chat === undefined) {
+            return Promise.resolve({ kind: "failure" });
+        }
+
+        localMessageUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
+
+        function undoLocally() {
+            localMessageUpdates.markTip(messageId, transfer.ledger, userId, -totalTip);
+        }
+
+        return this.sendRequest({
+            kind: "tipMessage",
+            messageContext,
+            messageId,
+            transfer,
+        })
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    undoLocally();
+                }
+                return resp;
+            })
+            .catch((_) => {
+                undoLocally();
+                return { kind: "failure" };
+            });
+    }
+
     private async updateRegistry() {
         const registry = await this.sendRequest({
             kind: "updateRegistry",
@@ -4855,7 +4898,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 const userGroups = [...this._liveState.selectedCommunity.userGroups.values()];
                 userGroups.forEach((ug) => (lookup[ug.name.toLowerCase()] = ug));
             }
-            if (this._liveState.selectedChatId !== undefined && this.canMentionAllMembers(this._liveState.selectedChatId)) {
+            if (
+                this._liveState.selectedChatId !== undefined &&
+                this.canMentionAllMembers(this._liveState.selectedChatId)
+            ) {
                 lookup["everyone"] = { kind: "everyone" };
             }
             this._userLookupForMentions = lookup;
@@ -4885,7 +4931,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setCachePrimerTimestamp(chatIdentifierString: string, timestamp: bigint): Promise<void> {
-        return this.sendRequest({ kind: "setCachePrimerTimestamp", chatIdentifierString, timestamp });
+        return this.sendRequest({
+            kind: "setCachePrimerTimestamp",
+            chatIdentifierString,
+            timestamp,
+        });
     }
 
     // **** Communities Stuff

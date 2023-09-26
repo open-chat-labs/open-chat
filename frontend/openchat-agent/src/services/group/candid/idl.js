@@ -545,6 +545,7 @@ export const idlFactory = ({ IDL }) => {
     'participant_ids' : IDL.Vec(UserId),
     'reply_count' : IDL.Nat32,
     'latest_event_index' : EventIndex,
+    'followed_by_me' : IDL.Bool,
   });
   const ChatId = CanisterId;
   const Chat = IDL.Variant({
@@ -560,6 +561,9 @@ export const idlFactory = ({ IDL }) => {
     'forwarded' : IDL.Bool,
     'content' : MessageContent,
     'edited' : IDL.Bool,
+    'tips' : IDL.Vec(
+      IDL.Tuple(CanisterId, IDL.Vec(IDL.Tuple(UserId, IDL.Nat)))
+    ),
     'last_updated' : IDL.Opt(TimestampMillis),
     'sender' : UserId,
     'thread_summary' : IDL.Opt(ThreadSummary),
@@ -717,6 +721,18 @@ export const idlFactory = ({ IDL }) => {
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const FollowThreadArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'thread_root_message_index' : MessageIndex,
+  });
+  const FollowThreadResponse = IDL.Variant({
+    'ThreadNotFound' : IDL.Null,
+    'GroupFrozen' : IDL.Null,
+    'AlreadyFollowing' : IDL.Null,
+    'UserNotInGroup' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
   });
   const InviteCodeArgs = IDL.Record({});
   const InviteCodeResponse = IDL.Variant({
@@ -1192,6 +1208,18 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Record({ 'messages' : IDL.Vec(Message) }),
     'UserSuspended' : IDL.Null,
   });
+  const UnfollowThreadArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'thread_root_message_index' : MessageIndex,
+  });
+  const UnfollowThreadResponse = IDL.Variant({
+    'ThreadNotFound' : IDL.Null,
+    'GroupFrozen' : IDL.Null,
+    'UserNotInGroup' : IDL.Null,
+    'NotFollowing' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+  });
   const UnpinMessageArgs = IDL.Record({
     'correlation_id' : IDL.Nat64,
     'message_index' : MessageIndex,
@@ -1317,6 +1345,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
+    'follow_thread' : IDL.Func([FollowThreadArgs], [FollowThreadResponse], []),
     'invite_code' : IDL.Func([InviteCodeArgs], [InviteCodeResponse], ['query']),
     'local_user_index' : IDL.Func(
         [LocalUserIndexArgs],
@@ -1405,6 +1434,11 @@ export const idlFactory = ({ IDL }) => {
     'undelete_messages' : IDL.Func(
         [UndeleteMessagesArgs],
         [UndeleteMessagesResponse],
+        [],
+      ),
+    'unfollow_thread' : IDL.Func(
+        [UnfollowThreadArgs],
+        [UnfollowThreadResponse],
         [],
       ),
     'unpin_message' : IDL.Func([UnpinMessageArgs], [UnpinMessageResponse], []),

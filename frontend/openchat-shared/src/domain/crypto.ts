@@ -25,3 +25,20 @@ export type CryptocurrencyDetails = {
     rootCanister: string | undefined;
     lastUpdated: bigint;
 };
+
+// approximate dollar exchange rates - until we come up with something better
+const dollarToICP = 0.34;
+
+export const dollarExchangeRates: Record<string, number> = {
+    icp: dollarToICP,
+    chat: dollarToICP / 0.04805,
+    hot: dollarToICP / 0.003,
+    kinic: dollarToICP / 0.378,
+    ckbtc: dollarToICP / 7777.004,
+    dkp: dollarToICP / 280,
+    ghost: dollarToICP / 0.00001685,
+    mod: dollarToICP / 0.0065,
+    cat: dollarToICP / 0.0068998,
+    boom: dollarToICP / 0.00339,
+    icx: dollarToICP / 0.0000001,
+};

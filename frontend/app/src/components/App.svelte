@@ -601,6 +601,16 @@
                 background-image: url("assets/flags@2x.png") !important;
             }
         }
+
+        .tip-dollar {
+            @include font-size(fs-260);
+            position: absolute;
+            pointer-events: none;
+            transform-origin: 50% 50%;
+            top: -1000px;
+            left: -1000px;
+            @include z-index("dollar");
+        }
     }
 
     .burst-wrapper {

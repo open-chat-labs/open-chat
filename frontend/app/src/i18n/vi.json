@@ -1010,5 +1010,13 @@
     "displayNameRules": "không bắt buộc",
     "displayName": "Tên hiển thị",
     "communityDisplayNameRules": "chỉ trong cộng đồng này",
-    "userIdCopiedToClipboard": "Đã sao chép Id người dùng vào bảng nhớ tạm"
+    "userIdCopiedToClipboard": "Đã sao chép Id người dùng vào bảng nhớ tạm",
+    "tip": {
+        "title": "Thêm một mẹo",
+        "failure": "Rất tiếc, chúng tôi không thể thêm mẹo của bạn",
+        "noExchangeRate": "Chúng tôi không có tỷ giá hối đoái nào được định cấu hình cho {token}",
+        "menu": "Mẹo",
+        "plusFee": "+ phí {fee} {token}",
+        "advice": "Nhấn bao nhiêu lần tùy thích để để lại tiền boa"
+    }
 }

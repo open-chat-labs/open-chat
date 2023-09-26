@@ -96,6 +96,21 @@ export interface ChannelMessageNotification {
   'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
   'message_index' : MessageIndex,
 }
+export interface ChannelMessageTippedNotification {
+  'tip' : string,
+  'channel_id' : ChannelId,
+  'tipped_by_display_name' : [] | [string],
+  'community_id' : CommunityId,
+  'message_event_index' : EventIndex,
+  'channel_name' : string,
+  'tipped_by' : UserId,
+  'community_avatar_id' : [] | [bigint],
+  'community_name' : string,
+  'tipped_by_name' : string,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'channel_avatar_id' : [] | [bigint],
+  'message_index' : MessageIndex,
+}
 export interface ChannelReactionAddedNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
@@ -388,6 +403,16 @@ export interface DirectMessageNotification {
   'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
   'message_index' : MessageIndex,
 }
+export interface DirectMessageTippedNotification {
+  'tip' : string,
+  'username' : string,
+  'message_event_index' : EventIndex,
+  'them' : UserId,
+  'display_name' : [] | [string],
+  'user_avatar_id' : [] | [bigint],
+  'thread_root_message_index' : [] | [MessageIndex],
+  'message_index' : MessageIndex,
+}
 export interface DirectReactionAddedNotification {
   'username' : string,
   'message_event_index' : EventIndex,
@@ -614,6 +639,18 @@ export interface GroupMessageNotification {
   'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
   'message_index' : MessageIndex,
 }
+export interface GroupMessageTippedNotification {
+  'tip' : string,
+  'tipped_by_display_name' : [] | [string],
+  'group_avatar_id' : [] | [bigint],
+  'message_event_index' : EventIndex,
+  'tipped_by' : UserId,
+  'tipped_by_name' : string,
+  'chat_id' : ChatId,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'group_name' : string,
+  'message_index' : MessageIndex,
+}
 export interface GroupNameChanged {
   'changed_by' : UserId,
   'new_name' : string,
@@ -838,6 +875,7 @@ export interface Message {
   'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
+  'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
   'last_updated' : [] | [TimestampMillis],
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
@@ -983,10 +1021,13 @@ export type NnsUserOrAccount = { 'User' : UserId } |
 export type Notification = {
     'GroupReactionAdded' : GroupReactionAddedNotification
   } |
+  { 'ChannelMessageTipped' : ChannelMessageTippedNotification } |
+  { 'DirectMessageTipped' : DirectMessageTippedNotification } |
   { 'DirectMessage' : DirectMessageNotification } |
   { 'ChannelReactionAdded' : ChannelReactionAddedNotification } |
   { 'DirectReactionAdded' : DirectReactionAddedNotification } |
   { 'GroupMessage' : GroupMessageNotification } |
+  { 'GroupMessageTipped' : GroupMessageTippedNotification } |
   { 'AddedToChannel' : AddedToChannelNotification } |
   { 'ChannelMessage' : ChannelMessageNotification };
 export interface NotificationCryptoTransferDetails {
@@ -1259,6 +1300,7 @@ export interface ThreadSummary {
   'participant_ids' : Array<UserId>,
   'reply_count' : number,
   'latest_event_index' : EventIndex,
+  'followed_by_me' : boolean,
 }
 export interface ThreadSyncDetails {
   'root_message_index' : MessageIndex,

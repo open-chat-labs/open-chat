@@ -1011,5 +1011,13 @@
     "displayNameRules": "Optional",
     "displayName": "Anzeigename",
     "communityDisplayNameRules": "nur innerhalb dieser Gemeinschaft",
-    "userIdCopiedToClipboard": "Benutzer-ID in die Zwischenablage kopiert"
+    "userIdCopiedToClipboard": "Benutzer-ID in die Zwischenablage kopiert",
+    "tip": {
+        "title": "Fügen Sie einen Tipp hinzu",
+        "failure": "Leider konnten wir Ihren Tipp nicht hinzufügen",
+        "noExchangeRate": "Wir haben keinen Wechselkurs für {token} konfiguriert",
+        "menu": "Tipp",
+        "plusFee": "+ {fee} {token} Gebühr",
+        "advice": "Tippen Sie so oft Sie möchten, um einen Tipp zu hinterlassen"
+    }
 }

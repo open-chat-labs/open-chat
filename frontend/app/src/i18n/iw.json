@@ -1007,5 +1007,13 @@
     "displayNameRules": "אופציונאלי",
     "displayName": "הצג שם",
     "communityDisplayNameRules": "רק בתוך הקהילה הזו",
-    "userIdCopiedToClipboard": "זיהוי המשתמש הועתק ללוח"
+    "userIdCopiedToClipboard": "זיהוי המשתמש הועתק ללוח",
+    "tip": {
+        "title": "הוסף טיפ",
+        "failure": "מצטערים שלא הצלחנו להוסיף את הטיפ שלך",
+        "noExchangeRate": "אין לנו שער חליפין מוגדר עבור {token}",
+        "menu": "עֵצָה",
+        "plusFee": "+ עמלת {fee} {token}",
+        "advice": "הקש כמה פעמים שתרצה כדי להשאיר טיפ"
+    }
 }

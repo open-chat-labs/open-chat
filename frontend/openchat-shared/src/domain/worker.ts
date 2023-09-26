@@ -63,6 +63,8 @@ import type {
     MultiUserChatIdentifier,
     PublicGroupSummaryResponse,
     MessageContext,
+    PendingCryptocurrencyTransfer,
+    TipMessageResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -278,7 +280,15 @@ export type WorkerRequest =
     | DeleteUserGroups
     | SetMemberDisplayName
     | GetCachePrimerTimestamps
-    | SetCachePrimerTimestamp;
+    | SetCachePrimerTimestamp
+    | TipMessage;
+
+type TipMessage = {
+    kind: "tipMessage";
+    messageContext: MessageContext;
+    messageId: bigint;
+    transfer: PendingCryptocurrencyTransfer;
+};
 
 type SetCommunityIndexes = {
     kind: "setCommunityIndexes";
@@ -925,13 +935,13 @@ type DeleteUserGroups = {
 
 type GetCachePrimerTimestamps = {
     kind: "getCachePrimerTimestamps";
-}
+};
 
 type SetCachePrimerTimestamp = {
     chatIdentifierString: string;
     timestamp: bigint;
     kind: "setCachePrimerTimestamp";
-}
+};
 
 /**
  * Worker error type
@@ -1052,6 +1062,7 @@ export type WorkerResponseInner =
     | CreateUserGroupResponse
     | UpdateUserGroupResponse
     | DeleteUserGroupsResponse
+    | TipMessageResponse
     | Record<string, bigint>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
@@ -1278,6 +1289,8 @@ type SetMemberDisplayName = {
 
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
+    : T extends TipMessage
+    ? TipMessageResponse
     : T extends UnpinMessage
     ? UnpinMessageResponse
     : T extends GetUpdates

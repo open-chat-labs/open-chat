@@ -1003,5 +1003,13 @@
         "light": "Light",
         "system": "System",
         "title": "Theme"
+    },
+    "tip": {
+        "title": "Tip",
+        "menu": "Tip",
+        "failure": "Sorry we were unable to add your tip",
+        "noExchangeRate": "We have no exchange rate configured for {token}",
+        "plusFee": "+ {fee} {token} fee",
+        "advice": "Tap as many times as you like to leave a tip"
     }
 }

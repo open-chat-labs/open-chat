@@ -35,6 +35,7 @@ import type {
     ChatListScope,
     CryptocurrencyDetails,
     TimelineItem,
+    TipsReceived,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -238,6 +239,7 @@ export function createMessage(
         messageId: newMessageId(),
         messageIndex,
         reactions: [],
+        tips: {},
         edited: false,
         forwarded,
         deleted: false,
@@ -351,7 +353,8 @@ export function mergeLocalSummaryUpdates(
                             notificationsMuted:
                                 updated.notificationsMuted ?? current.membership.notificationsMuted,
                             archived: updated.archived ?? current.membership.archived,
-                            rulesAccepted: updated.rulesAccepted ?? current.membership.rulesAccepted,
+                            rulesAccepted:
+                                updated.rulesAccepted ?? current.membership.rulesAccepted,
                         },
                     });
                 } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
@@ -1232,6 +1235,10 @@ function mergeLocalUpdates(
         message.reactions = reactions;
     }
 
+    if (localUpdates?.tips !== undefined) {
+        message.tips = mergeLocalTips(message.tips, localUpdates.tips);
+    }
+
     if (localUpdates?.pollVotes !== undefined && message.content.kind === "poll_content") {
         message.content = updatePollContent(message.content, localUpdates.pollVotes);
     }
@@ -1301,6 +1308,22 @@ function mergeLocalUpdates(
         message.content = applyTranslation(message.content, translation);
     }
     return message;
+}
+
+export function mergeLocalTips(existing?: TipsReceived, local?: TipsReceived): TipsReceived {
+    const merged: TipsReceived = {};
+    for (const ledger in existing) {
+        merged[ledger] = { ...existing[ledger] };
+    }
+    for (const ledger in local) {
+        if (!merged[ledger]) {
+            merged[ledger] = {};
+        }
+        for (const userId in local[ledger]) {
+            merged[ledger][userId] = local[ledger][userId];
+        }
+    }
+    return merged;
 }
 
 function applyTranslation(content: MessageContent, translation: string): MessageContent {
