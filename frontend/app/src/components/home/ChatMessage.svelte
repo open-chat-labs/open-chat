@@ -15,7 +15,6 @@
         type ChatIdentifier,
         type ChatType,
         routeForMessage,
-        LEDGER_CANISTER_ICP,
         type PendingCryptocurrencyTransfer,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";

@@ -1016,6 +1016,8 @@
         "title": "Fügen Sie einen Tipp hinzu",
         "failure": "Leider konnten wir Ihren Tipp nicht hinzufügen",
         "noExchangeRate": "Wir haben keinen Wechselkurs für {token} konfiguriert",
-        "menu": "Tipp"
+        "menu": "Tipp",
+        "plusFee": "+ {fee} {token} Gebühr",
+        "advice": "Tippen Sie so oft Sie möchten, um einen Tipp zu hinterlassen"
     }
 }
