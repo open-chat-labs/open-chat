@@ -66,6 +66,9 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             member.user_id,
             now,
         ),
+        unfollowed_threads: chat
+            .events
+            .unfollowed_threads(member.threads.iter(), args.updates_since, member.user_id),
         notifications_muted: member.notifications_muted.if_set_after(args.updates_since).cloned(),
         frozen: state
             .data
