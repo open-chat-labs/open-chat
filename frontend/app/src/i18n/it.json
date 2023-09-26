@@ -1009,5 +1009,13 @@
     "displayNameRules": "opzionale",
     "displayName": "Nome da visualizzare",
     "communityDisplayNameRules": "solo all'interno di questa comunità",
-    "userIdCopiedToClipboard": "ID utente copiato negli appunti"
+    "userIdCopiedToClipboard": "ID utente copiato negli appunti",
+    "tip": {
+        "title": "Aggiungi un suggerimento",
+        "failure": "Siamo spiacenti, non siamo riusciti ad aggiungere il tuo suggerimento",
+        "noExchangeRate": "Non abbiamo configurato alcun tasso di cambio per {token}",
+        "menu": "Mancia",
+        "plusFee": "+ commissione {fee} {token}",
+        "advice": "Tocca quante volte vuoi per lasciare una mancia"
+    }
 }

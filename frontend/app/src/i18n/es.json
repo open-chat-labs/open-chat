@@ -1011,5 +1011,13 @@
     "displayNameRules": "opcional",
     "displayName": "Nombre para mostrar",
     "communityDisplayNameRules": "solo dentro de esta comunidad",
-    "userIdCopiedToClipboard": "ID de usuario copiado al portapapeles"
+    "userIdCopiedToClipboard": "ID de usuario copiado al portapapeles",
+    "tip": {
+        "title": "Añadir una propina",
+        "failure": "Lo sentimos, no pudimos agregar tu consejo.",
+        "noExchangeRate": "No tenemos ningún tipo de cambio configurado para {token}",
+        "menu": "Consejo",
+        "plusFee": "+ tarifa {fee} {token}",
+        "advice": "Toca tantas veces como quieras para dejar una propina."
+    }
 }

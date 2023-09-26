@@ -9,7 +9,7 @@ import {
 import { mergeThreadSummaries } from "../utils/chat";
 import { LocalUpdatesStore } from "./localUpdatesStore";
 
-class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpdates> {
+export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpdates> {
     markCancelled(messageId: bigint, content: MessageContent): void {
         this.applyUpdate(messageId, (_) => ({
             cancelledReminder: content,
@@ -47,6 +47,31 @@ class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpd
         this.applyUpdate(messageId, (updates) => ({
             reactions: [...(updates?.reactions ?? []), reaction],
         }));
+    }
+    markTip(messageId: bigint, ledger: string, userId: string, amount: bigint) {
+        this.applyUpdate(messageId, (updates) => {
+            const result = { ...updates };
+
+            if (result.tips === undefined) {
+                result.tips = {};
+            }
+
+            if (result.tips[ledger] === undefined) {
+                result.tips[ledger] = {};
+            }
+
+            if (result.tips[ledger][userId] === undefined) {
+                result.tips[ledger][userId] = amount;
+            } else {
+                result.tips[ledger][userId] = result.tips[ledger][userId] + amount;
+            }
+
+            if (result.tips[ledger][userId] === 0n) {
+                delete result.tips[ledger][userId];
+            }
+
+            return result;
+        });
     }
     markPrizeClaimed(messageId: bigint, userId: string): void {
         this.applyUpdate(messageId, (_) => ({ prizeClaimed: userId }));

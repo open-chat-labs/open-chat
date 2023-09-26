@@ -1009,5 +1009,13 @@
     "displayNameRules": "facultatif",
     "displayName": "Afficher un nom",
     "communityDisplayNameRules": "seulement au sein de cette communauté",
-    "userIdCopiedToClipboard": "ID utilisateur copié dans le presse-papiers"
+    "userIdCopiedToClipboard": "ID utilisateur copié dans le presse-papiers",
+    "tip": {
+        "title": "Ajouter un conseil",
+        "failure": "Désolé, nous n'avons pas pu ajouter votre conseil",
+        "noExchangeRate": "Nous n'avons pas de taux de change configuré pour {token}",
+        "menu": "Conseil",
+        "plusFee": "+ frais de {fee} {token}",
+        "advice": "Appuyez autant de fois que vous le souhaitez pour laisser un pourboire"
+    }
 }

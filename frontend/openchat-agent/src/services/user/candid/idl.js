@@ -161,21 +161,6 @@ export const idlFactory = ({ IDL }) => {
     'reply_in_thread' : PermissionRole,
     'react_to_messages' : PermissionRole,
   });
-  const GroupPermissionsReduced = IDL.Record({
-    'block_users' : PermissionRole,
-    'change_permissions' : PermissionRole,
-    'delete_messages' : PermissionRole,
-    'send_messages' : PermissionRole,
-    'remove_members' : PermissionRole,
-    'update_group' : PermissionRole,
-    'invite_users' : PermissionRole,
-    'change_roles' : PermissionRole,
-    'add_members' : PermissionRole,
-    'create_polls' : PermissionRole,
-    'pin_messages' : PermissionRole,
-    'reply_in_thread' : PermissionRole,
-    'react_to_messages' : PermissionRole,
-  });
   const CreateGroupArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : IDL.Opt(GroupPermissions),
@@ -633,6 +618,7 @@ export const idlFactory = ({ IDL }) => {
     'participant_ids' : IDL.Vec(UserId),
     'reply_count' : IDL.Nat32,
     'latest_event_index' : EventIndex,
+    'followed_by_me' : IDL.Bool,
   });
   const ReplyContext = IDL.Record({
     'chat_if_other' : IDL.Opt(IDL.Tuple(Chat, IDL.Opt(MessageIndex))),
@@ -642,6 +628,9 @@ export const idlFactory = ({ IDL }) => {
     'forwarded' : IDL.Bool,
     'content' : MessageContent,
     'edited' : IDL.Bool,
+    'tips' : IDL.Vec(
+      IDL.Tuple(CanisterId, IDL.Vec(IDL.Tuple(UserId, IDL.Nat)))
+    ),
     'last_updated' : IDL.Opt(TimestampMillis),
     'sender' : UserId,
     'thread_summary' : IDL.Opt(ThreadSummary),
@@ -884,7 +873,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
-    'permissions' : GroupPermissionsReduced,
+    'permissions' : GroupPermissions,
     'metrics' : ChatMetrics,
     'subtype' : IDL.Opt(GroupSubtype),
     'date_last_pinned' : IDL.Opt(TimestampMillis),
@@ -1260,6 +1249,29 @@ export const idlFactory = ({ IDL }) => {
     'ReminderDateInThePast' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
+  const TipMessageArgs = IDL.Record({
+    'fee' : IDL.Nat,
+    'token' : Cryptocurrency,
+    'chat' : Chat,
+    'recipient' : UserId,
+    'ledger' : CanisterId,
+    'message_id' : MessageId,
+    'amount' : IDL.Nat,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const TipMessageResponse = IDL.Variant({
+    'TransferNotToMessageSender' : IDL.Null,
+    'MessageNotFound' : IDL.Null,
+    'ChatNotFound' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'TransferCannotBeZero' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
+    'CannotTipSelf' : IDL.Null,
+  });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({
     'Success' : IDL.Null,
@@ -1516,6 +1528,7 @@ export const idlFactory = ({ IDL }) => {
         [SetMessageReminderResponse],
         [],
       ),
+    'tip_message' : IDL.Func([TipMessageArgs], [TipMessageResponse], []),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'undelete_messages' : IDL.Func(
         [UndeleteMessagesArgs],

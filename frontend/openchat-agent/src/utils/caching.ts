@@ -1,11 +1,5 @@
 import { MAX_EVENTS, MAX_MESSAGES } from "../constants";
-import {
-    openDB,
-    type DBSchema,
-    type IDBPDatabase,
-    type StoreNames,
-    type StoreValue
-} from "idb";
+import { openDB, type DBSchema, type IDBPDatabase, type StoreNames, type StoreValue } from "idb";
 import type {
     ChatEvent,
     ChatIdentifier,
@@ -34,7 +28,7 @@ import {
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
 
-const CACHE_VERSION = 84;
+const CACHE_VERSION = 85;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -88,7 +82,7 @@ export interface ChatSchema extends DBSchema {
     cachePrimer: {
         key: string;
         value: bigint;
-    }
+    };
 }
 
 function padMessageIndex(i: number): string {
@@ -769,7 +763,7 @@ function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
 
 async function readAll<Name extends StoreNames<ChatSchema>>(
     db: Database,
-    storeName: Name
+    storeName: Name,
 ): Promise<Record<string, StoreValue<ChatSchema, Name>>> {
     const transaction = (await db).transaction([storeName]);
     const store = transaction.objectStore(storeName);

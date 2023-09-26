@@ -7,8 +7,9 @@
     export let longestWord: number = 10;
     export let position: "top" | "right" | "bottom" | "left" = "top";
     export let align: "start" | "center" | "end" = "start";
+    export let autoWidth = false;
 
-    $: maxWidth = calculateMaxWidth(textLength, longestWord, $mobileWidth);
+    $: maxWidth = autoWidth ? "unset" : calculateMaxWidth(textLength, longestWord, $mobileWidth);
 
     function calculateMaxWidth(textLength: number, longestWord: number, mobile: boolean): number {
         const MIN_WIDTH = mobile ? 100 : 140;

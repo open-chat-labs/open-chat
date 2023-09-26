@@ -467,6 +467,7 @@ export const idlFactory = ({ IDL }) => {
     'participant_ids' : IDL.Vec(UserId),
     'reply_count' : IDL.Nat32,
     'latest_event_index' : EventIndex,
+    'followed_by_me' : IDL.Bool,
   });
   const Chat = IDL.Variant({
     'Group' : ChatId,
@@ -481,6 +482,9 @@ export const idlFactory = ({ IDL }) => {
     'forwarded' : IDL.Bool,
     'content' : MessageContent,
     'edited' : IDL.Bool,
+    'tips' : IDL.Vec(
+      IDL.Tuple(CanisterId, IDL.Vec(IDL.Tuple(UserId, IDL.Nat)))
+    ),
     'last_updated' : IDL.Opt(TimestampMillis),
     'sender' : UserId,
     'thread_summary' : IDL.Opt(ThreadSummary),
