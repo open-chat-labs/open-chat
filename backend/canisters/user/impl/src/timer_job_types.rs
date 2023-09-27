@@ -13,6 +13,7 @@ pub enum TimerJob {
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
     DeleteFileReferences(DeleteFileReferencesJob),
     MessageReminder(MessageReminderJob),
+    RemoveExpiredEvents(RemoveExpiredEventsJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -44,6 +45,9 @@ pub struct MessageReminderJob {
     pub reminder_created_message_index: MessageIndex,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RemoveExpiredEventsJob;
+
 impl Job for TimerJob {
     fn execute(&self) {
         match self {
@@ -51,6 +55,7 @@ impl Job for TimerJob {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::MessageReminder(job) => job.execute(),
+            TimerJob::RemoveExpiredEvents(job) => job.execute(),
         }
     }
 }
@@ -126,5 +131,11 @@ impl Job for MessageReminderJob {
             }
             openchat_bot::send_message_with_reply(content, Some(replies_to), false, state)
         });
+    }
+}
+
+impl Job for RemoveExpiredEventsJob {
+    fn execute(&self) {
+        mutate_state(|state| state.run_event_expiry_job());
     }
 }

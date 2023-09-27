@@ -894,8 +894,6 @@ impl ChatEvents {
             self.expiring_events.insert(event_index, timestamp);
         }
 
-        self.remove_expired_events(now);
-
         PushEventResult {
             index: event_index,
             timestamp: now,
@@ -1138,14 +1136,28 @@ impl ChatEvents {
         );
     }
 
-    fn remove_expired_events(&mut self, now: TimestampMillis) {
+    pub fn next_event_expiry(&self) -> Option<TimestampMillis> {
+        self.expiring_events.next_event_expiry()
+    }
+
+    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveExpiredEventsResult {
+        let mut result = RemoveExpiredEventsResult::default();
+
         while let Some(event_index) = self.expiring_events.take_next_expired_event(now) {
             if let Some(event) = self.main.remove_expired_event(event_index) {
+                result.events.push(event_index);
                 if let ChatEventInternal::Message(m) = event.event {
-                    self.threads.remove(&m.message_index);
+                    if let Some(thread) = m.thread_summary {
+                        self.threads.remove(&m.message_index);
+                        result
+                            .threads
+                            .push((m.message_index, thread.participants_and_followers(true)));
+                    }
                 }
             }
         }
+
+        result
     }
 
     pub fn main_events_reader(&self) -> ChatEventsListReader {
@@ -1431,6 +1443,12 @@ pub enum UnfollowThreadResult {
     Success,
     NotFollowing,
     ThreadNotFound,
+}
+
+#[derive(Default)]
+pub struct RemoveExpiredEventsResult {
+    pub events: Vec<EventIndex>,
+    pub threads: Vec<(MessageIndex, Vec<UserId>)>,
 }
 
 #[derive(Copy, Clone)]

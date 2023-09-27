@@ -1,7 +1,7 @@
 use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
 use crate::model::new_joiner_rewards::{NewJoinerRewardMetrics, NewJoinerRewardStatus, NewJoinerRewards};
 use crate::new_joiner_rewards::process_new_joiner_reward;
-use crate::timer_job_types::TimerJob;
+use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use crate::updates::c2c_freeze_group::freeze_group_impl;
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
@@ -205,6 +205,18 @@ impl RuntimeState {
         }
     }
 
+    pub fn run_event_expiry_job(&mut self) {
+        let now = self.env.now();
+        self.data.chat.remove_expired_events(now);
+
+        self.data.next_event_expiry = self.data.chat.events.next_event_expiry();
+        if let Some(expiry) = self.data.next_event_expiry {
+            self.data
+                .timer_jobs
+                .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         let group_chat_core = &self.data.chat;
         let now = self.env.now();
@@ -291,6 +303,8 @@ struct Data {
     pub test_mode: bool,
     pub community_being_imported_into: Option<CommunityBeingImportedInto>,
     pub serialized_chat_state: Option<ByteBuf>,
+    #[serde(default)]
+    pub next_event_expiry: Option<TimestampMillis>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -358,6 +372,7 @@ impl Data {
             instruction_counts_log: init_instruction_counts_log(),
             community_being_imported_into: None,
             serialized_chat_state: None,
+            next_event_expiry: None,
         }
     }
 

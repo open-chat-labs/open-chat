@@ -12,8 +12,12 @@ impl ExpiringEvents {
         self.event_expiry_dates.insert((expires_at, event_index));
     }
 
+    pub fn next_event_expiry(&self) -> Option<TimestampMillis> {
+        self.event_expiry_dates.first().map(|(ts, _)| *ts)
+    }
+
     pub fn take_next_expired_event(&mut self, now: TimestampMillis) -> Option<EventIndex> {
-        if self.event_expiry_dates.first().map_or(false, |(ts, _)| *ts < now) {
+        if self.next_event_expiry().map_or(false, |ts| ts <= now) {
             self.event_expiry_dates.pop_first().map(|(_, i)| i)
         } else {
             None

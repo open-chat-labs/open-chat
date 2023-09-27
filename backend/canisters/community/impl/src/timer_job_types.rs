@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::import_groups::{finalize_group_import, mark_import_complete, process_channel_members};
 use crate::mutate_state;
 use canister_timer_jobs::Job;
@@ -9,6 +10,7 @@ pub enum TimerJob {
     HardDeleteMessageContent(HardDeleteMessageContentJob),
     DeleteFileReferences(DeleteFileReferencesJob),
     EndPoll(EndPollJob),
+    RemoveExpiredEvents(RemoveExpiredEventsJob),
     FinalizeGroupImport(FinalizeGroupImportJob),
     ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob),
     MarkGroupImportComplete(MarkGroupImportCompleteJob),
@@ -34,6 +36,9 @@ pub struct EndPollJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+pub struct RemoveExpiredEventsJob;
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct FinalizeGroupImportJob {
     pub group_id: ChatId,
 }
@@ -57,6 +62,7 @@ impl Job for TimerJob {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::EndPoll(job) => job.execute(),
+            TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::FinalizeGroupImport(job) => job.execute(),
             TimerJob::ProcessGroupImportChannelMembers(job) => job.execute(),
             TimerJob::MarkGroupImportComplete(job) => job.execute(),
@@ -105,9 +111,16 @@ impl Job for EndPollJob {
                     .chat
                     .events
                     .end_poll(self.thread_root_message_index, self.message_index, now);
-                // handle_activity_notification(state);
+
+                handle_activity_notification(state);
             }
         });
+    }
+}
+
+impl Job for RemoveExpiredEventsJob {
+    fn execute(&self) {
+        mutate_state(|state| state.run_event_expiry_job());
     }
 }
 

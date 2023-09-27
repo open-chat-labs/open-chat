@@ -1,16 +1,17 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
-use crate::timer_job_types::RetrySendingFailedMessagesJob;
+use crate::timer_job_types::{DeleteFileReferencesJob, RemoveExpiredEventsJob, RetrySendingFailedMessagesJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use candid::Principal;
+use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use chat_events::{PushMessageArgs, Reader};
 use ic_cdk_macros::update;
 use rand::Rng;
 use tracing::error;
 use types::{
-    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContentInitial, MessageIndex,
-    UserId,
+    BlobReference, CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, EventWrapper, Message,
+    MessageContentInitial, MessageIndex, TimestampMillis, UserId,
 };
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::{C2CReplyContext, SendMessageArgs};
@@ -174,6 +175,22 @@ fn send_message_impl(
         .direct_chats
         .push_message(true, recipient, None, push_message_args, user_type.is_bot());
 
+    let mut is_next_event_to_expire = false;
+    if let Some(expiry) = message_event.expires_at {
+        is_next_event_to_expire = state.data.next_event_expiry.map_or(true, |ex| expiry < ex);
+        if is_next_event_to_expire {
+            state.data.next_event_expiry = Some(expiry);
+        }
+    }
+
+    register_timer_jobs(
+        &message_event,
+        Vec::new(),
+        is_next_event_to_expire,
+        now,
+        &mut state.data.timer_jobs,
+    );
+
     if !user_type.is_self() {
         let send_message_args = SendMessageArgs {
             message_id: args.message_id,
@@ -321,5 +338,28 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
         Err(_error) => {
             // TODO push message saying that the message failed to send
         }
+    }
+}
+
+pub(crate) fn register_timer_jobs(
+    message_event: &EventWrapper<Message>,
+    file_references: Vec<BlobReference>,
+    is_next_event_to_expire: bool,
+    now: TimestampMillis,
+    timer_jobs: &mut TimerJobs<TimerJob>,
+) {
+    if !file_references.is_empty() {
+        if let Some(expiry) = message_event.expires_at {
+            timer_jobs.enqueue_job(
+                TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: file_references }),
+                expiry,
+                now,
+            );
+        }
+    }
+
+    if let Some(expiry) = message_event.expires_at.filter(|_| is_next_event_to_expire) {
+        timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+        timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
     }
 }

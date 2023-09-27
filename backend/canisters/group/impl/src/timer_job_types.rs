@@ -9,6 +9,7 @@ pub enum TimerJob {
     HardDeleteMessageContent(HardDeleteMessageContentJob),
     DeleteFileReferences(DeleteFileReferencesJob),
     EndPoll(EndPollJob),
+    RemoveExpiredEvents(RemoveExpiredEventsJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -28,12 +29,16 @@ pub struct EndPollJob {
     pub message_index: MessageIndex,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RemoveExpiredEventsJob;
+
 impl Job for TimerJob {
     fn execute(&self) {
         match self {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::EndPoll(job) => job.execute(),
+            TimerJob::RemoveExpiredEvents(job) => job.execute(),
         }
     }
 }
@@ -82,5 +87,11 @@ impl Job for EndPollJob {
 
             handle_activity_notification(state);
         });
+    }
+}
+
+impl Job for RemoveExpiredEventsJob {
+    fn execute(&self) {
+        mutate_state(|state| state.run_event_expiry_job());
     }
 }

@@ -486,8 +486,17 @@ impl ThreadSummaryInternal {
         }
     }
 
-    pub fn followers(&self) -> HashSet<UserId> {
-        HashSet::from_iter(self.follower_ids.iter().filter(|(_, t)| t.value).map(|(user_id, _)| *user_id))
+    pub fn participants_and_followers(&self, include_unfollowed: bool) -> Vec<UserId> {
+        self.participant_ids
+            .iter()
+            .copied()
+            .chain(
+                self.follower_ids
+                    .iter()
+                    .filter(|(_, t)| include_unfollowed || t.value)
+                    .map(|(user_id, _)| *user_id),
+            )
+            .collect()
     }
 
     pub fn get_follower(&self, user_id: UserId) -> Option<Timestamped<bool>> {

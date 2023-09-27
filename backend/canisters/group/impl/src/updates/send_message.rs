@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, RemoveExpiredEventsJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_timer_jobs::TimerJobs;
@@ -42,9 +42,18 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 let message_index = result.message_event.event.message_index;
                 let expires_at = result.message_event.expires_at;
 
+                let mut is_next_event_to_expire = false;
+                if let Some(expiry) = expires_at {
+                    is_next_event_to_expire = state.data.next_event_expiry.map_or(true, |ex| expiry < ex);
+                    if is_next_event_to_expire {
+                        state.data.next_event_expiry = expires_at;
+                    }
+                }
+
                 register_timer_jobs(
                     args.thread_root_message_index,
                     &result.message_event,
+                    is_next_event_to_expire,
                     now,
                     &mut state.data.timer_jobs,
                 );
@@ -94,6 +103,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 fn register_timer_jobs(
     thread_root_message_index: Option<MessageIndex>,
     message_event: &EventWrapper<Message>,
+    is_next_event_to_expire: bool,
     now: TimestampMillis,
     timer_jobs: &mut TimerJobs<TimerJob>,
 ) {
@@ -115,6 +125,11 @@ fn register_timer_jobs(
         if let Some(expiry) = message_event.expires_at {
             timer_jobs.enqueue_job(TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files }), expiry, now);
         }
+    }
+
+    if let Some(expiry) = message_event.expires_at.filter(|_| is_next_event_to_expire) {
+        timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+        timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
     }
 
     // TODO: If this is a prize message then set a timer to transfer

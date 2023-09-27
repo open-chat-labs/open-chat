@@ -733,7 +733,7 @@ impl GroupChatCore {
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
 
         let mut users_to_notify = HashSet::new();
-        let mut thread_followers: Option<HashSet<UserId>> = None;
+        let mut thread_followers: Option<Vec<UserId>> = None;
 
         if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
             self.events
@@ -746,9 +746,7 @@ impl GroupChatCore {
             }
 
             if let Some(thread_summary) = thread_root_message.thread_summary {
-                let followers = thread_summary.followers();
-                let participants = HashSet::from_iter(thread_summary.participant_ids);
-                thread_followers = Some(followers.union(&participants).copied().collect());
+                thread_followers = Some(thread_summary.participants_and_followers(false));
 
                 let is_first_reply = thread_summary.reply_count == 1;
                 if is_first_reply {
@@ -1571,6 +1569,19 @@ impl GroupChatCore {
             }
         } else {
             UserNotInGroup
+        }
+    }
+
+    pub fn remove_expired_events(&mut self, now: TimestampMillis) {
+        let result = self.events.remove_expired_events(now);
+
+        for (thread_root_message_index, users) in result.threads {
+            for user_id in users {
+                if let Some(member) = self.members.get_mut(&user_id) {
+                    member.threads.remove(&thread_root_message_index);
+                    member.unfollowed_threads.retain(|&m| m != thread_root_message_index);
+                }
+            }
         }
     }
 

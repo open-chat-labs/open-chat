@@ -1,14 +1,13 @@
-use crate::timer_job_types::{DeleteFileReferencesJob, TimerJob};
+use crate::updates::send_message::register_timer_jobs;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
-use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
-    BlobReference, CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial,
-    MessageId, MessageIndex, Notification, TimestampMillis, UserId,
+    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId,
+    MessageIndex, Notification, TimestampMillis, UserId,
 };
 use user_canister::c2c_send_messages::{Response::*, *};
 
@@ -198,7 +197,21 @@ pub(crate) fn handle_message_impl(
             .direct_chats
             .push_message(false, sender, args.sender_message_index, push_message_args, args.is_bot);
 
-    register_timer_jobs(&message_event, files, args.now, &mut state.data.timer_jobs);
+    let mut is_next_event_to_expire = false;
+    if let Some(expiry) = message_event.expires_at {
+        is_next_event_to_expire = state.data.next_event_expiry.map_or(true, |ex| expiry < ex);
+        if is_next_event_to_expire {
+            state.data.next_event_expiry = Some(expiry);
+        }
+    }
+
+    register_timer_jobs(
+        &message_event,
+        files,
+        is_next_event_to_expire,
+        args.now,
+        &mut state.data.timer_jobs,
+    );
 
     if let Some(chat) = state.data.direct_chats.get_mut(&sender.into()) {
         if args.is_bot {
@@ -251,22 +264,5 @@ fn convert_reply_context(
             chat_if_other: Some((chat.into(), thread_root_message_index)),
             event_index,
         }),
-    }
-}
-
-fn register_timer_jobs(
-    message_event: &EventWrapper<Message>,
-    file_references: Vec<BlobReference>,
-    now: TimestampMillis,
-    timer_jobs: &mut TimerJobs<TimerJob>,
-) {
-    if !file_references.is_empty() {
-        if let Some(expiry) = message_event.expires_at {
-            timer_jobs.enqueue_job(
-                TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: file_references }),
-                expiry,
-                now,
-            );
-        }
     }
 }
