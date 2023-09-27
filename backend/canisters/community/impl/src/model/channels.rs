@@ -304,7 +304,10 @@ impl Channel {
                 m.user_id,
                 now,
             ),
-            unfollowed_threads: self.chat.events.unfollowed_threads(m.threads.iter(), since, m.user_id),
+            unfollowed_threads: self
+                .chat
+                .events
+                .unfollowed_threads_since(m.unfollowed_threads.iter(), since, m.user_id),
             rules_accepted: m
                 .rules_accepted
                 .as_ref()

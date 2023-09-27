@@ -226,7 +226,6 @@ function mergeThreads(
     unfollowedThreads: number[],
     readUpToUpdates: Record<number, number>,
 ): ThreadSyncDetails[] {
-    console.log("Debug: mergeThreads unfollowedThreads", unfollowedThreads);
     const initial = current.filter((t) => !unfollowedThreads.includes(t.threadRootMessageIndex));
     const threadsRecord = toRecord(initial, (t) => t.threadRootMessageIndex);
 
