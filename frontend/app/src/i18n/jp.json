@@ -1018,5 +1018,9 @@
         "menu": "ヒント",
         "plusFee": "+ {fee} {token} 手数料",
         "advice": "好きなだけタップしてチップを残しましょう"
-    }
+    },
+    "followThread": "このスレッドをフォローしてください",
+    "unfollowThread": "このスレッドのフォローを解除する",
+    "followThreadFailed": "スレッドのフォローに失敗しました",
+    "unfollowThreadFailed": "スレッドのフォローを解除できませんでした"
 }

@@ -1018,5 +1018,9 @@
         "menu": "Mẹo",
         "plusFee": "+ phí {fee} {token}",
         "advice": "Nhấn bao nhiêu lần tùy thích để để lại tiền boa"
-    }
+    },
+    "followThread": "Theo dõi chủ đề này",
+    "unfollowThread": "Hủy theo dõi chủ đề này",
+    "followThreadFailed": "Theo dõi chủ đề không thành công",
+    "unfollowThreadFailed": "Hủy theo dõi chủ đề không thành công"
 }

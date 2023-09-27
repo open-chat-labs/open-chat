@@ -1,4 +1,4 @@
-import type { BlobReference, DataContent } from "../data/data";
+import type { DataContent } from "../data/data";
 import type { UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { AccessGate, AccessControlled, VersionedRules, UpdatedRules } from "../access";
@@ -494,6 +494,7 @@ export type Message = {
 
 export type ThreadSummary = {
     participantIds: Set<string>;
+    followedByMe: boolean;
     numberOfReplies: number;
     latestEventIndex: number;
     latestEventTimestamp: bigint;
@@ -552,7 +553,7 @@ export type LocalMessageUpdates = {
     prizeClaimed?: string;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
-    threadSummary?: ThreadSummary;
+    threadSummary?: Partial<ThreadSummary>;
     lastUpdated: number;
     tips?: TipsReceived;
 };
@@ -1045,9 +1046,10 @@ export type UserCanisterGroupChatSummaryUpdates = {
     dateReadPinned: bigint | undefined;
 };
 
-export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;
-
-type ChatSummaryUpdatesCommon = {
+export type DirectChatSummaryUpdates = {
+    id: DirectChatIdentifier;
+    kind: "direct_chat";
+    readByThemUpTo?: number;
     readByMeUpTo?: number;
     lastUpdated: bigint;
     latestEventIndex?: number;
@@ -1057,30 +1059,6 @@ type ChatSummaryUpdatesCommon = {
     metrics?: Metrics;
     myMetrics?: Metrics;
     archived?: boolean;
-};
-
-export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
-    id: DirectChatIdentifier;
-    kind: "direct_chat";
-    readByThemUpTo?: number;
-};
-
-export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
-    id: GroupChatIdentifier;
-    kind: "group_chat";
-    name?: string;
-    description?: string;
-    avatarBlobReferenceUpdate?: OptionUpdate<BlobReference>;
-    memberCount?: number;
-    myRole?: MemberRole;
-    mentions: Mention[];
-    permissions?: ChatPermissions;
-    public?: boolean;
-    latestThreads?: ThreadSyncDetailsUpdates[];
-    subtype?: GroupSubtypeUpdate;
-    frozen?: OptionUpdate<boolean>;
-    dateLastPinned?: bigint;
-    dateReadPinned?: bigint;
 };
 
 export type GroupSubtypeUpdate =
@@ -1299,6 +1277,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     metrics: Metrics | undefined;
     myMetrics: Metrics | undefined;
     latestThreads: GroupCanisterThreadDetails[];
+    unfollowedThreads: number[];
     frozen: OptionUpdate<boolean>;
     updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;

@@ -131,6 +131,7 @@ import type {
     UpdateUserGroupResponse,
     DeleteUserGroupsResponse,
     SetMemberDisplayNameResponse,
+    FollowThreadResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 import type { RegistryValue } from "./registry";
@@ -281,6 +282,7 @@ export type WorkerRequest =
     | SetMemberDisplayName
     | GetCachePrimerTimestamps
     | SetCachePrimerTimestamp
+    | FollowThread
     | TipMessage;
 
 type TipMessage = {
@@ -1287,6 +1289,13 @@ type SetMemberDisplayName = {
     kind: "setMemberDisplayName";
 };
 
+type FollowThread = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number;
+    follow: boolean;
+    kind: "followThread";
+};
+
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
     : T extends TipMessage
@@ -1555,6 +1564,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? DeleteUserGroupsResponse
     : T extends SetMemberDisplayName
     ? SetMemberDisplayNameResponse
+    : T extends FollowThread
+    ? FollowThreadResponse
     : T extends GetCachePrimerTimestamps
     ? Record<string, bigint>
     : T extends SetCachePrimerTimestamp

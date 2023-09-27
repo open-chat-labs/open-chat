@@ -6,7 +6,6 @@ import {
     type MessageContent,
     type ThreadSummary,
 } from "openchat-shared";
-import { mergeThreadSummaries } from "../utils/chat";
 import { LocalUpdatesStore } from "./localUpdatesStore";
 
 export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpdates> {
@@ -81,13 +80,13 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
             pollVotes: [...(updates?.pollVotes ?? []), vote],
         }));
     }
-    markThreadSummaryUpdated(threadRootMessageId: bigint, summary: ThreadSummary): void {
+    markThreadSummaryUpdated(threadRootMessageId: bigint, summaryUpdates: Partial<ThreadSummary>): void {
         this.applyUpdate(threadRootMessageId, (updates) => {
             return {
                 threadSummary:
                     updates?.threadSummary === undefined
-                        ? summary
-                        : mergeThreadSummaries(updates.threadSummary, summary),
+                        ? summaryUpdates
+                        : { ...updates.threadSummary, ...summaryUpdates },
             };
         });
     }

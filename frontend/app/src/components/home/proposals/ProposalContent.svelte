@@ -11,7 +11,7 @@
     } from "openchat-client";
     import Markdown from "../Markdown.svelte";
     import { now } from "../../../stores/time";
-    import EyeOff from "svelte-material-icons/EyeOff.svelte";
+    import ExpandIcon from "svelte-material-icons/ArrowExpandDown.svelte";
     import Launch from "svelte-material-icons/Launch.svelte";
     import OpenInNew from "svelte-material-icons/OpenInNew.svelte";
     import { toastStore } from "../../../stores/toast";
@@ -164,7 +164,7 @@
 {#if collapsed}
     <div on:click={onClick}>
         <em>{proposal.title}</em>
-        <EyeOff viewBox="0 -5 24 24" />
+        <ExpandIcon viewBox="0 -5 24 24" />
     </div>
 {:else}
     <div class="wrapper">

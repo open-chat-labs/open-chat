@@ -1237,6 +1237,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "followThread":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.followThread(payload.chatId, payload.threadRootMessageIndex, payload.follow),
+                );
+                break;
+
             case "getCachePrimerTimestamps":
                 executeThenReply(payload, correlationId, agent.getCachePrimerTimestamps());
                 break;

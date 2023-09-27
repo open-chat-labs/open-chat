@@ -19,6 +19,7 @@ import type {
     DeleteUserGroupsResponse,
     EventsResponse,
     ExploreChannelsResponse,
+    FollowThreadResponse,
     GateCheckFailedReason,
     ImportGroupResponse,
     MemberRole,
@@ -73,6 +74,8 @@ import type {
     ApiUserGroupDetails,
     ApiDeleteUserGroupsResponse,
     ApiSetMemberDisplayNameResponse,
+    ApiFollowThreadResponse,
+    ApiUnfollowThreadResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -476,10 +479,12 @@ function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
 export function channelMembershipUpdates(
     candid: ApiChannelMembershipUpdates,
 ): ChannelMembershipUpdates {
+    console.log("Debug: channelMembershipUpdates", candid);
     return {
         role: optional(candid.role, memberRole),
         notificationsMuted: optional(candid.notifications_muted, identity),
         latestThreads: candid.latest_threads.map(threadDetails),
+        unfollowedThreads: Array.from(candid.unfollowed_threads),
         mentions: candid.mentions
             .filter((m) => m.thread_root_message_index.length === 0)
             .map(mention),
@@ -722,4 +727,16 @@ export function setMemberDisplayNameResponse(
         "Unexpected ApiSetMemberDisplayNameResponse type received",
         candid,
     );
+}
+
+export function followThreadResponse(candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse): FollowThreadResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AlreadyFollowing" in candid || "NotFollowing" in candid) {
+        return "unchanged";
+    } else {
+        console.warn("followThread failed with", candid);
+        return "failed";
+    }
 }

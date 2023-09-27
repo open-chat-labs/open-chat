@@ -1011,5 +1011,9 @@
         "noExchangeRate": "We have no exchange rate configured for {token}",
         "plusFee": "+ {fee} {token} fee",
         "advice": "Tap as many times as you like to leave a tip"
-    }
+    },
+    "followThread": "Follow this thread",
+    "unfollowThread": "Unfollow this thread",
+    "followThreadFailed": "Follow thread failed",
+    "unfollowThreadFailed": "Unfollow thread failed"
 }

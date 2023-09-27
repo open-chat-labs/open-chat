@@ -6,7 +6,6 @@
         ChatEvent as ChatEventType,
         OpenChat,
         Mention,
-        ThreadSummary,
         ChatIdentifier,
         MessageContext,
     } from "openchat-client";
@@ -332,7 +331,7 @@
         rootEvent: EventWrapper<Message>,
         event: EventWrapper<Message>
     ) {
-        const summary: ThreadSummary = {
+        const summary = {
             participantIds: new Set<string>([user.userId]),
             numberOfReplies: event.event.messageIndex + 1,
             latestEventIndex: event.index,

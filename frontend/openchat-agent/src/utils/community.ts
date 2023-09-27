@@ -53,7 +53,7 @@ export function mergeChannels(
             dateReadPinned: u?.dateReadPinned,
             membership: {
                 ...c.membership,
-                latestThreads: mergeThreads([], c.membership.latestThreads, u?.threadsRead ?? {}),
+                latestThreads: mergeThreads([], c.membership.latestThreads, [], u?.threadsRead ?? {}),
                 readByMeUpTo: u?.readByMeUpTo,
                 archived: u?.archived ?? false,
             },
@@ -148,7 +148,7 @@ function mergeUserGroups(
     return new Map(existing);
 }
 
-export function mergeChannelUpdates(
+function mergeChannelUpdates(
     channels: ChannelSummary[],
     userCanisterUpdates: UserCanisterChannelSummaryUpdates[],
     communityCanisterUpdates: CommunityCanisterChannelSummaryUpdates[],
@@ -203,6 +203,7 @@ export function mergeChannelUpdates(
                 latestThreads: mergeThreads(
                     channel.membership.latestThreads,
                     c?.membership?.latestThreads ?? [],
+                    c?.membership?.unfollowedThreads ?? [],
                     u?.threadsRead ?? {},
                 ),
                 readByMeUpTo:
@@ -222,9 +223,12 @@ export function mergeChannelUpdates(
 function mergeThreads(
     current: ThreadSyncDetails[],
     communityCanisterUpdates: GroupCanisterThreadDetails[],
+    unfollowedThreads: number[],
     readUpToUpdates: Record<number, number>,
 ): ThreadSyncDetails[] {
-    const threadsRecord = toRecord(current, (t) => t.threadRootMessageIndex);
+    console.log("Debug: mergeThreads unfollowedThreads", unfollowedThreads);
+    const initial = current.filter((t) => !unfollowedThreads.includes(t.threadRootMessageIndex));
+    const threadsRecord = toRecord(initial, (t) => t.threadRootMessageIndex);
 
     for (const groupUpdate of communityCanisterUpdates) {
         threadsRecord[groupUpdate.threadRootMessageIndex] = {

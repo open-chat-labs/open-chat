@@ -619,6 +619,7 @@ export const idlFactory = ({ IDL }) => {
   const ChannelMembershipUpdates = IDL.Record({
     'role' : IDL.Opt(GroupRole),
     'notifications_muted' : IDL.Opt(IDL.Bool),
+    'unfollowed_threads' : IDL.Vec(MessageIndex),
     'rules_accepted' : IDL.Opt(IDL.Bool),
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'mentions' : IDL.Vec(Mention),
