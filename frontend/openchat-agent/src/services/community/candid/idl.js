@@ -1600,6 +1600,7 @@ export const idlFactory = ({ IDL }) => {
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
+    'events_ttl' : EventsTimeToLiveUpdate,
     'public' : IDL.Opt(IDL.Bool),
     'rules' : IDL.Opt(UpdatedRules),
     'avatar' : DocumentUpdate,

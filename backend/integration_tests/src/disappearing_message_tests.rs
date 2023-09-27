@@ -1,23 +1,17 @@
 use crate::env::ENV;
 use crate::rng::random_string;
-use crate::{client, CanisterIds, TestEnv, User};
-use candid::Principal;
-use ic_test_state_machine_client::StateMachine;
+use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
-use types::{ChatId, OptionUpdate};
+use types::OptionUpdate;
 
 #[test]
 fn disappearing_messages_in_group_chats() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let TestData { user, group_id } = init_test_data(env, canister_ids, *controller, true);
+    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), false, true);
 
     client::group::update_group_v2(
         env,
@@ -69,19 +63,4 @@ fn disappearing_messages_in_group_chats() {
             .first()
             .is_some()
     );
-}
-
-fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
-    let user = client::register_diamond_user(env, canister_ids, controller);
-
-    let group_name = random_string();
-
-    let group_id = client::user::happy_path::create_group(env, &user, &group_name, public, true);
-
-    TestData { user, group_id }
-}
-
-struct TestData {
-    user: User,
-    group_id: ChatId,
 }

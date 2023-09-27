@@ -27,7 +27,7 @@ fn make_private_channel_public_succeeds() {
 
     client::community::happy_path::update_channel(
         env,
-        &user1,
+        user1.principal,
         community_id,
         &community_canister::update_channel::Args {
             channel_id,
@@ -36,6 +36,7 @@ fn make_private_channel_public_succeeds() {
             rules: None,
             avatar: OptionUpdate::NoChange,
             permissions: None,
+            events_ttl: OptionUpdate::NoChange,
             gate: OptionUpdate::NoChange,
             public: Some(true),
         },
