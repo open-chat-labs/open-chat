@@ -456,7 +456,7 @@ mod tests {
     #[test]
     fn get() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let event_by_message_index = events_reader.get(EventKey::MessageIndex(10.into())).unwrap();
         let event_by_event_index = events_reader.get(event_by_message_index.index.into()).unwrap();
@@ -471,33 +471,16 @@ mod tests {
     #[test]
     fn get_before_min_visible_returns_none() {
         let events = setup_events(None);
-        let events_reader = events.visible_main_events_reader(10.into(), 0);
+        let events_reader = events.visible_main_events_reader(10.into());
 
         assert!(events_reader.get(EventKey::EventIndex(10.into())).is_some());
         assert!(events_reader.get(EventKey::EventIndex(9.into())).is_none());
     }
 
     #[test]
-    fn get_excludes_expired_events() {
-        let events = setup_events(Some(100));
-        let events_reader1 = events.main_events_reader(100);
-        let expires_at = events_reader1
-            .get(EventKey::EventIndex(20.into()))
-            .unwrap()
-            .expires_at
-            .unwrap();
-
-        let events_reader2 = events.main_events_reader(expires_at);
-        assert!(events_reader2.get(EventKey::EventIndex(20.into())).is_some());
-
-        let events_reader3 = events.main_events_reader(expires_at + 1);
-        assert!(events_reader3.get(EventKey::EventIndex(20.into())).is_none());
-    }
-
-    #[test]
     fn scan_ascending_from_start() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let results = events_reader.scan(None, true, usize::MAX, usize::MAX, None);
 
@@ -509,7 +492,7 @@ mod tests {
     #[test]
     fn scan_descending_from_end() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let results = events_reader.scan(None, false, usize::MAX, usize::MAX, None);
 
@@ -521,7 +504,7 @@ mod tests {
     #[test]
     fn scan_ascending() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let start: MessageIndex = 20.into();
 
@@ -543,7 +526,7 @@ mod tests {
     #[test]
     fn scan_descending() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let start = 30.into();
 
@@ -563,39 +546,9 @@ mod tests {
     }
 
     #[test]
-    fn iter_skips_expired() {
-        let mut events = setup_events(Some(2000)); // These will expire at 2000
-        let user_id = Principal::from_slice(&[1]).into();
-
-        events.set_events_time_to_live(user_id, Some(1000), 500);
-        push_events(&mut events, 500); // These will expire at 1500
-        events.set_events_time_to_live(user_id, Some(1500), 1000);
-        push_events(&mut events, 1000); // These will expire at 2500
-
-        let group1 = (0u32..=100).map(EventIndex::from).collect_vec();
-        let group2 = (101u32..=201).map(EventIndex::from).collect_vec();
-        let group3 = (202u32..=302).map(EventIndex::from).collect_vec();
-
-        let events_reader1 = events.main_events_reader(1250);
-        let expected1 = group1.iter().chain(group2.iter()).chain(group3.iter()).copied().collect_vec();
-        assert_eq!(events_reader1.iter(None, true).map(|e| e.index).collect_vec(), expected1);
-
-        let events_reader2 = events.main_events_reader(1750);
-        let expected2 = group1.iter().chain(group3.iter()).copied().collect_vec();
-        assert_eq!(events_reader2.iter(None, true).map(|e| e.index).collect_vec(), expected2);
-
-        let events_reader3 = events.main_events_reader(2250);
-        let expected3 = group3;
-        assert_eq!(events_reader3.iter(None, true).map(|e| e.index).collect_vec(), expected3);
-
-        let events_reader4 = events.main_events_reader(2750);
-        assert_eq!(events_reader4.iter(None, true).map(|e| e.index).collect_vec(), vec![]);
-    }
-
-    #[test]
     fn window_message_limit() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let start = 30.into();
 
@@ -612,7 +565,7 @@ mod tests {
     #[test]
     fn window_event_limit() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let start = 40.into();
 
@@ -626,7 +579,7 @@ mod tests {
     #[test]
     fn window_min_visible_event_index() {
         let events = setup_events(None);
-        let events_reader = events.visible_main_events_reader(46.into(), 0);
+        let events_reader = events.visible_main_events_reader(46.into());
 
         let start = 50.into();
 
