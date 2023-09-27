@@ -4,17 +4,10 @@ use std::collections::{HashMap, HashSet};
 use types::CanisterId;
 
 #[derive(Serialize, Deserialize)]
-#[serde(from = "AuthorizedPrincipalsPrevious")]
 pub struct AuthorizedPrincipals {
     authorizers: HashSet<CanisterId>,
     authorized: HashSet<Principal>,
     blocked: HashSet<Principal>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct AuthorizedPrincipalsPrevious {
-    authorizers: HashSet<CanisterId>,
-    principals: HashMap<Principal, bool>,
 }
 
 impl AuthorizedPrincipals {
@@ -54,26 +47,5 @@ impl AuthorizedPrincipals {
 
     pub fn count_blocked(&self) -> usize {
         self.blocked.len()
-    }
-}
-
-impl From<AuthorizedPrincipalsPrevious> for AuthorizedPrincipals {
-    fn from(value: AuthorizedPrincipalsPrevious) -> Self {
-        let mut authorized = HashSet::new();
-        let mut blocked = HashSet::new();
-
-        for (principal, is_authorized) in value.principals {
-            if is_authorized {
-                authorized.insert(principal);
-            } else {
-                blocked.insert(principal);
-            }
-        }
-
-        AuthorizedPrincipals {
-            authorizers: value.authorizers,
-            authorized,
-            blocked,
-        }
     }
 }
