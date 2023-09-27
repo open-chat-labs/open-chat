@@ -69,7 +69,7 @@ function hasUnreadMentions(chat: ChatSummary): boolean {
     if (chat.kind === "direct_chat") return false;
     return (
         chat.membership.mentions.filter(
-            (m) => !messagesRead.isRead(chat.id, m.messageIndex, m.messageId),
+            (m) => !messagesRead.isRead({ chatId: chat.id }, m.messageIndex, m.messageId),
         ).length > 0
     );
 }
