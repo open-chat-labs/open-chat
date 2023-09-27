@@ -18,6 +18,8 @@ import type {
     UpdatedEvent,
     MessageContext,
     CommunityDetails,
+    CommunitySummary,
+    DataContent,
 } from "openchat-shared";
 import {
     chatIdentifiersEqual,
@@ -173,11 +175,13 @@ export async function setCachedChats(
 ): Promise<void> {
     const directChats = chatState.directChats.map(makeChatSummarySerializable);
     const groupChats = chatState.groupChats.map(makeChatSummarySerializable);
+    const communities = chatState.communities.map(makeCommunitySerializable);
 
     const stateToCache = {
         ...chatState,
         directChats,
         groupChats,
+        communities,
     };
 
     const tx = (await db).transaction(["chats", "chat_events", "thread_events"], "readwrite");
@@ -489,8 +493,8 @@ function dataToBlobUrl(data: Uint8Array, type?: string): string {
     return URL.createObjectURL(blob);
 }
 
-function removeBlobData(content: MessageContent): MessageContent {
-    if ("blobData" in content) {
+function removeBlobData<T extends MessageContent | DataContent>(content: T): T {
+    if ("blobData" in content && content.blobData !== undefined) {
         return {
             ...content,
             blobData: undefined,
@@ -749,6 +753,19 @@ export async function loadMessagesByMessageIndex(
     return {
         messageEvents: messages,
         missing,
+    };
+}
+
+function makeCommunitySerializable(community: CommunitySummary): CommunitySummary {
+    const channels = community.channels.map(makeChatSummarySerializable);
+    const avatar = removeBlobData(community.avatar);
+    const banner = removeBlobData(community.banner);
+
+    return {
+        ...community,
+        channels,
+        avatar,
+        banner,
     };
 }
 
