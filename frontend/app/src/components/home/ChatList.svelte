@@ -36,6 +36,7 @@
     import { routeForScope } from "../../routes";
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
+    import { framed, navigateTo } from "../../stores/xframe";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -168,7 +169,11 @@
     function chatSelected(ev: CustomEvent<ChatSummaryType>): void {
         chatScrollTop = chatListElement.scrollTop;
         const url = routeForChatIdentifier($chatListScope.kind, ev.detail.id);
-        page(url);
+        if ($framed?.delegateNavigation) {
+            navigateTo(url);
+        } else {
+            page(url);
+        }
         closeSearch();
     }
 

@@ -83,7 +83,7 @@
     let showAcceptRulesModal = false;
     let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
 
-    $: showChatHeader = !$mobileWidth || !$framed;
+    $: showChatHeader = !$mobileWidth || $framed !== undefined;
     $: messageContext = { chatId: chat.id };
     $: currentChatTextContent = client.currentChatTextContent;
     $: currentChatReplyingTo = client.currentChatReplyingTo;

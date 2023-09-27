@@ -56,7 +56,7 @@
     </Overlay>
 {/if}
 
-{#if $framed}
+{#if $framed !== undefined}
     <HostedLandingPage on:login={() => client.login()} />
 {:else}
     {#if showMenu}
