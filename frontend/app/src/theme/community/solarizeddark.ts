@@ -5,7 +5,6 @@ const veryDarkCyan = "#002b36";
 const darkCyan = "#073642";
 const darkCyan2 = "#0c586ba6";
 const darkBlue = "#186899";
-const gray = "#8b9898";
 const lightishGray = "#90aba7";
 const lightGray = "#d6dddc";
 const olive = "#748c09";
