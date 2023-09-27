@@ -783,6 +783,21 @@ export class OpenChat extends OpenChatAgentWorker {
         messageId: bigint | undefined,
     ): void {
         this.messagesRead.markMessageRead(context, messageIndex, messageId);
+
+        const selectedChat = this._liveState.selectedChat;
+        if (
+            selectedChat?.id === context.chatId &&
+            messageId !== undefined &&
+            selectedChat.kind === "direct_chat"
+        ) {
+            const rtc: WebRtcMessage = {
+                kind: "remote_user_read_message",
+                messageId: messageId,
+                id: selectedChat.id,
+                userId: this.user.userId,
+            };
+            this.sendRtcMessage([selectedChat.id.userId], rtc);
+        }
     }
 
     markPinnedMessagesRead(chatId: ChatIdentifier, dateLastPinned: bigint): void {
@@ -790,11 +805,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     isMessageRead(
-        chatId: ChatIdentifier,
+        context: MessageContext,
         messageIndex: number,
         messageId: bigint | undefined,
     ): boolean {
-        return this.messagesRead.isRead(chatId, messageIndex, messageId);
+        return this.messagesRead.isRead(context, messageIndex, messageId);
     }
 
     private sendRtcMessage(userIds: string[], message: WebRtcMessage): void {
@@ -1072,7 +1087,10 @@ export class OpenChat extends OpenChatAgentWorker {
                                 this.loadChatDetails(c);
                             }
                             if (c.latestMessage) {
-                                messagesRead.markReadUpTo({ chatId: c.id }, c.latestMessage.event.messageIndex);
+                                messagesRead.markReadUpTo(
+                                    { chatId: c.id },
+                                    c.latestMessage.event.messageIndex,
+                                );
                             }
                         }),
                     );
@@ -1188,6 +1206,33 @@ export class OpenChat extends OpenChatAgentWorker {
                 localCommunitySummaryUpdates.updateDisplayName(id, displayName);
             }
             return resp;
+        });
+    }
+
+    followThread(
+        chatId: ChatIdentifier,
+        message: Message,
+        follow: boolean
+    ): Promise<boolean> {
+        // Assume it will succeed
+        localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
+            followedByMe: follow
+        });
+
+        return this.sendRequest({
+            kind: "followThread",
+            chatId,
+            threadRootMessageIndex: message.messageIndex,
+            follow
+        }).then((resp) => {
+            if (resp === "failed") {
+                localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
+                    followedByMe: !follow
+                });
+                return false;
+            } else {
+                return true
+            }
         });
     }
 
@@ -2726,16 +2771,21 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         const context = { chatId, threadRootMessageIndex };
+        const myUserId = this.user.userId;
 
         for (const event of newEvents) {
             if (event.event.kind === "message") {
-                failedMessagesStore.delete(context, event.event.messageId);
-                if (unconfirmed.delete(context, event.event.messageId)) {
-                    messagesRead.confirmMessage(
-                        context,
-                        event.event.messageIndex,
-                        event.event.messageId,
-                    );
+                const { messageIndex, messageId } = event.event;
+                failedMessagesStore.delete(context, messageId);
+                if (unconfirmed.delete(context, messageId)) {
+                    messagesRead.confirmMessage(context, messageIndex, messageId);
+                }
+                // If the message was sent by the current user, mark it as read
+                if (
+                    event.event.sender === myUserId &&
+                    !messagesRead.isRead(context, messageIndex, messageId)
+                ) {
+                    messagesRead.markMessageRead(context, messageIndex, messageId);
                 }
             }
         }
@@ -2746,8 +2796,11 @@ export class OpenChat extends OpenChatAgentWorker {
             );
             const threadRootMessageIndex = this._liveState.selectedThreadRootMessageIndex;
             if (threadRootMessageIndex !== undefined) {
-                const threadRootEvent = newEvents.find((e) =>
-                    e.event.kind === "message" && e.event.messageIndex === threadRootMessageIndex);
+                const threadRootEvent = newEvents.find(
+                    (e) =>
+                        e.event.kind === "message" &&
+                        e.event.messageIndex === threadRootMessageIndex,
+                );
                 if (threadRootEvent !== undefined) {
                     selectedThreadRootEvent.set(threadRootEvent as EventWrapper<Message>);
                     this.dispatchEvent(new ThreadUpdated());
@@ -4168,20 +4221,8 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    markThreadSummaryUpdated(threadRootMessageId: bigint, summary: ThreadSummary): void {
+    markThreadSummaryUpdated(threadRootMessageId: bigint, summary: Partial<ThreadSummary>): void {
         localMessageUpdates.markThreadSummaryUpdated(threadRootMessageId, summary);
-    }
-
-    broadcastMessageRead(chat: ChatSummary, messageId: bigint): void {
-        if (chat.kind === "direct_chat") {
-            const rtc: WebRtcMessage = {
-                kind: "remote_user_read_message",
-                messageId: messageId,
-                id: chat.id,
-                userId: this.user.userId,
-            };
-            this.sendRtcMessage([...this._liveState.currentChatUserIds], rtc);
-        }
     }
 
     freezeGroup(chatId: GroupChatIdentifier, reason: string | undefined): Promise<boolean> {
@@ -5057,7 +5098,10 @@ export class OpenChat extends OpenChatAgentWorker {
                     messagesRead.batchUpdate(() => {
                         resp.community.channels.forEach((c) => {
                             if (c.latestMessage) {
-                                messagesRead.markReadUpTo({ chatId: c.id }, c.latestMessage.event.messageIndex);
+                                messagesRead.markReadUpTo(
+                                    { chatId: c.id },
+                                    c.latestMessage.event.messageIndex,
+                                );
                             }
                         });
                     });

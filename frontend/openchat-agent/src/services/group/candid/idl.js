@@ -723,7 +723,6 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const FollowThreadArgs = IDL.Record({
-    'channel_id' : ChannelId,
     'thread_root_message_index' : MessageIndex,
   });
   const FollowThreadResponse = IDL.Variant({
@@ -1138,6 +1137,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'events_ttl' : EventsTimeToLiveUpdate,
     'last_updated' : TimestampMillis,
+    'unfollowed_threads' : IDL.Vec(MessageIndex),
     'avatar_id' : DocumentIdUpdate,
     'rules_accepted' : IDL.Opt(IDL.Bool),
     'next_message_expiry' : TimestampUpdate,
@@ -1209,7 +1209,6 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
   });
   const UnfollowThreadArgs = IDL.Record({
-    'channel_id' : ChannelId,
     'thread_root_message_index' : MessageIndex,
   });
   const UnfollowThreadResponse = IDL.Variant({

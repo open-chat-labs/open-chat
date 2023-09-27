@@ -216,6 +216,7 @@ export type ChannelMembershipUpdates = {
     role: MemberRole | undefined;
     notificationsMuted: boolean | undefined;
     latestThreads: GroupCanisterThreadDetails[];
+    unfollowedThreads: number[];
     mentions: Mention[];
     myMetrics: Metrics | undefined;
     rulesAccepted: boolean | undefined;
@@ -297,3 +298,5 @@ export type SetMemberDisplayNameResponse =
     | "display_name_too_short"
     | "display_name_too_long"
     | "display_name_invalid";
+
+export type FollowThreadResponse = "success" | "unchanged" | "failed";

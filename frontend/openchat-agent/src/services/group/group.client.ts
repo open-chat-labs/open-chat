@@ -45,6 +45,7 @@ import type {
     ConvertToCommunityResponse,
     PublicGroupSummaryResponse,
     UpdatedRules,
+    FollowThreadResponse,
 } from "openchat-shared";
 import { DestinationInvalidError, textToCode } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -62,6 +63,7 @@ import {
     claimPrizeResponse,
     convertToCommunityReponse,
     apiUpdatedRules,
+    followThreadResponse,
 } from "./mappers";
 import {
     type Database,
@@ -886,6 +888,16 @@ export class GroupClient extends CandidService {
                 rules,
             }),
             convertToCommunityReponse
+        );
+    }
+
+    followThread(threadRootMessageIndex: number, follow: boolean): Promise<FollowThreadResponse> {
+        const args = {
+            thread_root_message_index: threadRootMessageIndex,
+        };
+        return this.handleResponse(
+            follow ? this.groupService.follow_thread(args) : this.groupService.unfollow_thread(args),
+            followThreadResponse,
         );
     }
 }

@@ -1064,30 +1064,33 @@ impl ChatEvents {
             .collect()
     }
 
-    pub fn unfollowed_threads<'a>(
+    pub fn unfollowed_threads_since<'a>(
         &self,
-        root_message_indexes: impl Iterator<Item = &'a MessageIndex>,
+        root_message_indexes: impl DoubleEndedIterator<Item = &'a MessageIndex>,
         updated_since: TimestampMillis,
         my_user_id: UserId,
     ) -> Vec<MessageIndex> {
-        root_message_indexes
-            .filter_map(|root_message_index| {
-                let follower = self
-                    .main
-                    .get((*root_message_index).into(), EventIndex::default())?
-                    .event
-                    .as_message()?
-                    .thread_summary
-                    .as_ref()?
-                    .get_follower(my_user_id)?;
+        let mut unfollowed = Vec::new();
 
-                if !follower.value && follower.timestamp > updated_since {
-                    Some(*root_message_index)
-                } else {
-                    None
+        for message_index in root_message_indexes.rev() {
+            if let Some(wrapped_event) = self.main.get((*message_index).into(), EventIndex::default(), 0) {
+                if let Some(message) = wrapped_event.event.as_message() {
+                    if let Some(thread_summary) = message.thread_summary.as_ref() {
+                        if let Some(follower) = thread_summary.get_follower(my_user_id) {
+                            if follower.timestamp <= updated_since {
+                                break;
+                            }
+
+                            if !follower.value {
+                                unfollowed.push(*message_index);
+                            }
+                        }
+                    }
                 }
-            })
-            .collect()
+            }
+        }
+
+        unfollowed
     }
 
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResult {

@@ -19,7 +19,9 @@
     import Pin from "svelte-material-icons/Pin.svelte";
     import PinOff from "svelte-material-icons/PinOff.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
-    import EyeOff from "svelte-material-icons/EyeOff.svelte";
+    import CollapseIcon from "svelte-material-icons/ArrowCollapseUp.svelte";
+    import EyeArrowRightIcon from "svelte-material-icons/EyeArrowRight.svelte";
+    import EyeOffIcon from "svelte-material-icons/EyeOff.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import { _, locale } from "svelte-i18n";
@@ -86,6 +88,12 @@
         msg.messageId === threadRootMessage?.messageId
             ? undefined
             : threadRootMessage?.messageIndex;
+    $: threadSummary = threadRootMessage?.thread ?? msg.thread;
+    $: canFollow =
+        threadSummary !== undefined &&
+        !threadSummary.followedByMe &&
+        !threadSummary.participantIds.has(user.userId);
+    $: canUnfollow = threadSummary !== undefined && threadSummary.followedByMe;
 
     export function showMenu() {
         menuIcon?.showMenu();
@@ -226,6 +234,23 @@
                 toastStore.showFailureToast("unableToTranslate");
             });
     }
+
+    function followThread(follow: boolean) {
+        if ((follow && !canFollow) || (!follow && !canUnfollow)) {
+            return;
+        }
+
+        const rootMessage = threadRootMessage ?? msg;
+        client.followThread(chatId, rootMessage, follow).then((success) => {
+            if (!success) {
+                if (follow) {
+                    toastStore.showFailureToast("followThreadFailed");
+                } else {
+                    toastStore.showFailureToast("unfollowThreadFailed");
+                }
+            }
+        });
+    }
 </script>
 
 <div class="menu" class:rtl={$rtlStore}>
@@ -239,11 +264,31 @@
             <Menu centered>
                 {#if isProposal && !inert}
                     <MenuItem on:click={collapseMessage}>
-                        <EyeOff size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <CollapseIcon
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
                         <div slot="text">{$_("proposal.collapse")}</div>
                     </MenuItem>
                 {/if}
                 {#if confirmed && !inert && !failed}
+                    {#if canFollow}
+                        <MenuItem on:click={() => followThread(true)}>
+                            <EyeArrowRightIcon
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
+                            <div slot="text">{$_("followThread")}</div>
+                        </MenuItem>
+                    {:else if canUnfollow}
+                        <MenuItem on:click={() => followThread(false)}>
+                            <EyeOffIcon
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
+                            <div slot="text">{$_("unfollowThread")}</div>
+                        </MenuItem>
+                    {/if}
                     {#if publicGroup && canShare}
                         <MenuItem on:click={shareMessage}>
                             <ShareIcon

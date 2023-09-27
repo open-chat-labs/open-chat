@@ -18,7 +18,6 @@ import type {
     Metrics,
     SendMessageSuccess,
     TransferSuccess,
-    ThreadSummary,
     UserLookup,
     UserSummary,
     LocalChatSummaryUpdates,
@@ -36,6 +35,7 @@ import type {
     CryptocurrencyDetails,
     TimelineItem,
     TipsReceived,
+    ThreadSummary,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -1244,10 +1244,7 @@ function mergeLocalUpdates(
     }
 
     if (localUpdates?.threadSummary !== undefined) {
-        message.thread =
-            message.thread === undefined
-                ? localUpdates.threadSummary
-                : mergeThreadSummaries(message.thread, localUpdates.threadSummary);
+        message.thread = { ...(message.thread ?? defaultThreadSummary()), ...localUpdates.threadSummary };
     }
 
     if (
@@ -1326,6 +1323,16 @@ export function mergeLocalTips(existing?: TipsReceived, local?: TipsReceived): T
     return merged;
 }
 
+function defaultThreadSummary(): ThreadSummary {
+    return {
+        participantIds: new Set<string>(),
+        followedByMe: false,
+        numberOfReplies: 0,
+        latestEventIndex: 0,
+        latestEventTimestamp: BigInt(0),            
+    };
+}
+
 function applyTranslation(content: MessageContent, translation: string): MessageContent {
     switch (content.kind) {
         case "text_content": {
@@ -1358,18 +1365,6 @@ function applyTranslation(content: MessageContent, translation: string): Message
         default:
             return content;
     }
-}
-
-export function mergeThreadSummaries(a: ThreadSummary, b: ThreadSummary): ThreadSummary {
-    return {
-        participantIds: new Set<string>([...a.participantIds, ...b.participantIds]),
-        numberOfReplies: Math.max(a.numberOfReplies, b.numberOfReplies),
-        latestEventIndex: Math.max(a.latestEventIndex, b.latestEventIndex),
-        latestEventTimestamp:
-            a.latestEventTimestamp > b.latestEventTimestamp
-                ? a.latestEventTimestamp
-                : b.latestEventTimestamp,
-    };
 }
 
 export function applyLocalReaction(local: LocalReaction, reactions: Reaction[]): Reaction[] {

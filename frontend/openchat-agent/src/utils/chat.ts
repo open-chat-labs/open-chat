@@ -1,21 +1,13 @@
 import type {
     ChatEvent,
-    ChatSummary,
-    ChatSummaryUpdates,
     DirectChatSummary,
     DirectChatSummaryUpdates,
     EventWrapper,
     GroupChatDetails,
     GroupChatDetailsUpdates,
     GroupChatSummary,
-    GroupChatSummaryUpdates,
-    GroupSubtype,
-    GroupSubtypeUpdate,
     Member,
-    Mention,
-    Message,
     ThreadSyncDetails,
-    ThreadSyncDetailsUpdates,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     UserCanisterGroupChatSummary,
@@ -31,7 +23,7 @@ import type {
     ChannelIdentifier,
     UserGroupDetails,
 } from "openchat-shared";
-import { ChatMap, chatIdentifiersEqual } from "openchat-shared";
+import { ChatMap } from "openchat-shared";
 import { toRecord } from "./list";
 import { applyOptionUpdate, identity, mapOptionUpdate } from "./mapping";
 import Identicon from "identicon.js";
@@ -70,159 +62,6 @@ function mergeThings<A, U>(
 
     // return the result
     return Object.values(updated);
-}
-
-export function mergeUpdates(
-    chat: ChatSummary | undefined,
-    updatedChat: ChatSummaryUpdates,
-): ChatSummary | undefined {
-    if (!chat) return undefined;
-
-    if (!chatIdentifiersEqual(chat.id, updatedChat.id)) {
-        throw new Error("Cannot update chat from a chat with a different chat id");
-    }
-
-    if (chat.kind === "group_chat" && updatedChat.kind === "group_chat") {
-        return mergeUpdatedGroupChat(chat, updatedChat);
-    }
-
-    if (chat.kind === "direct_chat" && updatedChat.kind === "direct_chat") {
-        return mergeUpdatedDirectChat(chat, updatedChat);
-    }
-
-    throw new Error("Cannot update chat with a chat of a different kind");
-}
-
-function mergeUpdatedDirectChat(
-    chat: DirectChatSummary,
-    updatedChat: DirectChatSummaryUpdates,
-): DirectChatSummary {
-    return {
-        ...chat,
-        readByThemUpTo: updatedChat.readByThemUpTo ?? chat.readByThemUpTo,
-        latestEventIndex: getLatestEventIndex(chat, updatedChat),
-        latestMessage: getLatestMessage(chat, updatedChat),
-        metrics: updatedChat.metrics ?? chat.metrics,
-        membership: {
-            ...chat.membership,
-            readByMeUpTo: updatedChat.readByMeUpTo ?? chat.membership.readByMeUpTo,
-            notificationsMuted:
-                updatedChat.notificationsMuted ?? chat.membership.notificationsMuted,
-            myMetrics: updatedChat.myMetrics ?? chat.membership.myMetrics,
-            archived: updatedChat.archived ?? chat.membership.archived,
-        },
-    };
-}
-
-function mergeUpdatedGroupChat(
-    chat: GroupChatSummary,
-    updatedChat: GroupChatSummaryUpdates,
-): GroupChatSummary {
-    const latestMessage = getLatestMessage(chat, updatedChat);
-    const readByMeUpTo = updatedChat.readByMeUpTo ?? chat.membership.readByMeUpTo;
-    return {
-        ...chat,
-        name: updatedChat.name ?? chat.name,
-        description: updatedChat.description ?? chat.description,
-        lastUpdated: updatedChat.lastUpdated,
-        latestEventIndex: getLatestEventIndex(chat, updatedChat),
-        latestMessage,
-        blobReference: applyOptionUpdate(chat.blobReference, updatedChat.avatarBlobReferenceUpdate),
-        memberCount: updatedChat.memberCount ?? chat.memberCount,
-        permissions: updatedChat.permissions ?? chat.permissions,
-        metrics: updatedChat.metrics ?? chat.metrics,
-        public: updatedChat.public ?? chat.public,
-        subtype: mergeSubtype(updatedChat.subtype, chat.subtype),
-        frozen: applyOptionUpdate(chat.frozen, updatedChat.frozen) ?? false,
-        dateLastPinned: updatedChat.dateLastPinned ?? chat.dateLastPinned,
-        dateReadPinned: updatedChat.dateReadPinned ?? chat.dateReadPinned,
-        membership: {
-            ...chat.membership,
-            readByMeUpTo:
-                latestMessage !== undefined && readByMeUpTo !== undefined
-                    ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
-                    : readByMeUpTo,
-            notificationsMuted:
-                updatedChat.notificationsMuted ?? chat.membership.notificationsMuted,
-            role:
-                updatedChat.myRole ??
-                (chat.membership.role === "none" ? "member" : chat.membership.role),
-            mentions: mergeMentions(chat.membership.mentions, updatedChat.mentions),
-            myMetrics: updatedChat.myMetrics ?? chat.membership.myMetrics,
-            latestThreads: mergeThreadSyncDetails(
-                updatedChat.latestThreads,
-                chat.membership.latestThreads,
-            ),
-            archived: updatedChat.archived ?? chat.membership.archived,
-        },
-    };
-}
-
-function mergeThreadSyncDetails(
-    updated: ThreadSyncDetailsUpdates[] | undefined,
-    existing: ThreadSyncDetails[],
-) {
-    if (updated === undefined) return existing;
-
-    return Object.values(
-        updated.reduce(
-            (merged, thread) => {
-                const existing = merged[thread.threadRootMessageIndex];
-                if (existing !== undefined || thread.latestEventIndex !== undefined) {
-                    merged[thread.threadRootMessageIndex] = {
-                        threadRootMessageIndex: thread.threadRootMessageIndex,
-                        lastUpdated: thread.lastUpdated,
-                        readUpTo: thread.readUpTo ?? existing?.readUpTo,
-                        latestEventIndex: thread.latestEventIndex ?? existing.latestEventIndex,
-                        latestMessageIndex:
-                            thread.latestMessageIndex ?? existing.latestMessageIndex,
-                    };
-                }
-                return merged;
-            },
-            toRecord(existing, (t) => t.threadRootMessageIndex),
-        ),
-    );
-}
-
-function mergeSubtype(
-    updated: GroupSubtypeUpdate | undefined,
-    existing: GroupSubtype,
-): GroupSubtype {
-    if (updated === undefined || updated.kind === "no_change") {
-        return existing;
-    } else if (updated.kind === "set_to_none") {
-        return undefined;
-    } else {
-        return updated.subtype;
-    }
-}
-
-function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {
-    return [
-        ...existing,
-        ...incoming.filter(
-            (m1) => existing.find((m2) => m1.messageId === m2.messageId) === undefined,
-        ),
-    ];
-}
-
-function getLatestEventIndex(chat: ChatSummary, updatedChat: ChatSummaryUpdates): number {
-    return Math.max(updatedChat.latestEventIndex ?? 0, chat.latestEventIndex);
-}
-
-function getLatestMessage(
-    chat: ChatSummary,
-    updatedChat: ChatSummaryUpdates,
-): EventWrapper<Message> | undefined {
-    if (chat.latestMessage === undefined) return updatedChat.latestMessage;
-    if (updatedChat.latestMessage === undefined) return chat.latestMessage;
-
-    // Otherwise take the one with the highest event index, if they match, take the server version since it may have had
-    // subsequent updates (eg. deleted)
-    return updatedChat.latestMessage.index >= chat.latestMessage.index
-        ? updatedChat.latestMessage
-        : chat.latestMessage;
 }
 
 export function mergeCommunityDetails(
@@ -394,6 +233,7 @@ export function mergeGroupChatUpdates(
                 latestThreads: mergeThreads(
                     c.membership.latestThreads,
                     g?.latestThreads ?? [],
+                    g?.unfollowedThreads ?? [],
                     u?.threadsRead ?? {},
                 ),
                 readByMeUpTo:
@@ -448,7 +288,7 @@ export function mergeGroupChats(
                 joined: g.joined,
                 role: g.myRole,
                 mentions: g.mentions,
-                latestThreads: mergeThreads([], g.latestThreads, u?.threadsRead ?? {}),
+                latestThreads: mergeThreads([], g.latestThreads, [], u?.threadsRead ?? {}),
                 myMetrics: g.myMetrics,
                 notificationsMuted: g.notificationsMuted,
                 readByMeUpTo: u?.readByMeUpTo,
@@ -462,9 +302,11 @@ export function mergeGroupChats(
 function mergeThreads(
     current: ThreadSyncDetails[],
     groupCanisterUpdates: GroupCanisterThreadDetails[],
+    groupCanisterUnfollowedThreads: number[],
     readUpToUpdates: Record<number, number>,
 ): ThreadSyncDetails[] {
-    const threadsRecord = toRecord(current, (t) => t.threadRootMessageIndex);
+    const initial = current.filter((t) => !groupCanisterUnfollowedThreads.includes(t.threadRootMessageIndex));
+    const threadsRecord = toRecord(initial, (t) => t.threadRootMessageIndex);
 
     for (const groupUpdate of groupCanisterUpdates) {
         threadsRecord[groupUpdate.threadRootMessageIndex] = {

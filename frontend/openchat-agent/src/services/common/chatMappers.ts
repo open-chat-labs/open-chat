@@ -267,6 +267,7 @@ export function tips(candid: [Principal, [Principal, bigint][]][]): TipsReceived
 export function threadSummary(candid: ApiThreadSummary): ThreadSummary {
     return {
         participantIds: new Set(candid.participant_ids.map((p) => p.toString())),
+        followedByMe: candid.followed_by_me,
         numberOfReplies: Number(candid.reply_count),
         latestEventIndex: Number(candid.latest_event_index),
         latestEventTimestamp: candid.latest_event_timestamp,

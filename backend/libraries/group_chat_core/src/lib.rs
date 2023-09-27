@@ -13,8 +13,8 @@ use types::{
     GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
     InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex,
     MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions,
-    PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
+    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
+    TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -1536,6 +1536,7 @@ impl GroupChatCore {
                 .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
             {
                 chat_events::FollowThreadResult::Success => {
+                    member.unfollowed_threads.retain(|i| *i != thread_root_message_index);
                     member.threads.insert(thread_root_message_index);
                     Success
                 }
@@ -1562,6 +1563,7 @@ impl GroupChatCore {
             {
                 chat_events::UnfollowThreadResult::Success => {
                     member.threads.remove(&thread_root_message_index);
+                    member.unfollowed_threads.push_if_not_contains(thread_root_message_index);
                     Success
                 }
                 chat_events::UnfollowThreadResult::NotFollowing => NotFollowing,
