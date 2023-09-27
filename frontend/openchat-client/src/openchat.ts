@@ -783,9 +783,20 @@ export class OpenChat extends OpenChatAgentWorker {
         messageId: bigint | undefined,
     ): void {
         this.messagesRead.markMessageRead(context, messageIndex, messageId);
+
         const selectedChat = this._liveState.selectedChat;
-        if (selectedChat?.id === context.chatId && messageId !== undefined) {
-            this.broadcastMessageRead(selectedChat, messageId);
+        if (
+            selectedChat?.id === context.chatId &&
+            messageId !== undefined &&
+            selectedChat.kind === "direct_chat"
+        ) {
+            const rtc: WebRtcMessage = {
+                kind: "remote_user_read_message",
+                messageId: messageId,
+                id: selectedChat.id,
+                userId: this.user.userId,
+            };
+            this.sendRtcMessage([selectedChat.id.userId], rtc);
         }
     }
 
@@ -2737,8 +2748,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         for (const event of newEvents) {
             if (event.event.kind === "message") {
-                const messageIndex = event.event.messageIndex;
-                const messageId = event.event.messageId;
+                const { messageIndex, messageId } = event.event;
                 failedMessagesStore.delete(context, messageId);
                 if (unconfirmed.delete(context, messageId)) {
                     messagesRead.confirmMessage(context, messageIndex, messageId);
@@ -4186,18 +4196,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
     markThreadSummaryUpdated(threadRootMessageId: bigint, summary: ThreadSummary): void {
         localMessageUpdates.markThreadSummaryUpdated(threadRootMessageId, summary);
-    }
-
-    private broadcastMessageRead(chat: ChatSummary, messageId: bigint): void {
-        if (chat.kind === "direct_chat") {
-            const rtc: WebRtcMessage = {
-                kind: "remote_user_read_message",
-                messageId: messageId,
-                id: chat.id,
-                userId: this.user.userId,
-            };
-            this.sendRtcMessage([chat.id.userId], rtc);
-        }
     }
 
     freezeGroup(chatId: GroupChatIdentifier, reason: string | undefined): Promise<boolean> {
