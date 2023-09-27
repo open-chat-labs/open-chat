@@ -479,7 +479,6 @@ function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
 export function channelMembershipUpdates(
     candid: ApiChannelMembershipUpdates,
 ): ChannelMembershipUpdates {
-    console.log("Debug: channelMembershipUpdates", candid);
     return {
         role: optional(candid.role, memberRole),
         notificationsMuted: optional(candid.notifications_muted, identity),
