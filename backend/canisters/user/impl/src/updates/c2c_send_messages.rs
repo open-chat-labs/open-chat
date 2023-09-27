@@ -40,7 +40,7 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
             if let Some(chat) = state.data.direct_chats.get(&sender_user_id.into()) {
                 if chat
                     .events
-                    .main_events_reader(now)
+                    .main_events_reader()
                     .message_internal(message.message_id.into())
                     .is_some()
                 {
@@ -175,7 +175,7 @@ pub(crate) fn handle_message_impl(
     mute_notification: bool,
     state: &mut RuntimeState,
 ) -> EventWrapper<Message> {
-    let replies_to = convert_reply_context(args.replies_to, sender, args.now, state);
+    let replies_to = convert_reply_context(args.replies_to, sender, state);
     let initial_content: MessageContentInitial = args.content.into();
     let content = MessageContentInternal::from(initial_content);
     let files = content.blob_references();
@@ -232,7 +232,6 @@ pub(crate) fn handle_message_impl(
 fn convert_reply_context(
     replies_to: Option<C2CReplyContext>,
     sender: UserId,
-    now: TimestampMillis,
     state: &RuntimeState,
 ) -> Option<ReplyContextInternal> {
     match replies_to? {
@@ -242,7 +241,7 @@ fn convert_reply_context(
                 .data
                 .direct_chats
                 .get(&chat_id)
-                .and_then(|chat| chat.events.main_events_reader(now).event_index(message_id.into()))
+                .and_then(|chat| chat.events.main_events_reader().event_index(message_id.into()))
                 .map(|event_index| ReplyContextInternal {
                     chat_if_other: None,
                     event_index,

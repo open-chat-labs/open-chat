@@ -32,7 +32,7 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
                 if read_up_to
                     <= direct_chat
                         .events
-                        .main_events_reader(now)
+                        .main_events_reader()
                         .latest_message_index()
                         .unwrap_or_default()
                     && direct_chat.mark_read_up_to(read_up_to, true, now)

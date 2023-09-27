@@ -38,7 +38,7 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
         for event in data
             .chat
             .events
-            .main_events_reader(now)
+            .main_events_reader()
             .iter(None, false)
             .take_while(|e| e.timestamp >= one_day_ago)
         {

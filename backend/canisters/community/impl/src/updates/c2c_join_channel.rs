@@ -160,7 +160,7 @@ pub(crate) fn join_channel_unchecked(
         min_visible_event_index = e;
         min_visible_message_index = m;
     } else {
-        let events_reader = channel.chat.events.main_events_reader(now);
+        let events_reader = channel.chat.events.main_events_reader();
         min_visible_event_index = events_reader.next_event_index();
         min_visible_message_index = events_reader.next_message_index();
     };

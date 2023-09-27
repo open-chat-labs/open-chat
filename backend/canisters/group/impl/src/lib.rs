@@ -21,7 +21,7 @@ use std::ops::Deref;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
     FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification,
-    Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    RangeSet, Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
@@ -104,7 +104,7 @@ impl RuntimeState {
         let chat = &self.data.chat;
         let min_visible_event_index = member.min_visible_event_index();
         let min_visible_message_index = member.min_visible_message_index();
-        let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index, now);
+        let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index);
         let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
 
         GroupCanisterGroupChatSummary {
@@ -123,7 +123,7 @@ impl RuntimeState {
             joined: member.date_added,
             participant_count: chat.members.len(),
             role: member.role.into(),
-            mentions: member.most_recent_mentions(None, &chat.events, now),
+            mentions: member.most_recent_mentions(None, &chat.events),
             permissions: chat.permissions.clone(),
             notifications_muted: member.notifications_muted.value,
             metrics: chat.events.metrics().hydrate(),
@@ -138,14 +138,13 @@ impl RuntimeState {
                 None,
                 MAX_THREADS_IN_SUMMARY,
                 member.user_id,
-                now,
             ),
             frozen: self.data.frozen.value.clone(),
             wasm_version: BuildVersion::default(),
             date_last_pinned: chat.date_last_pinned,
             events_ttl: chat.events.get_events_time_to_live().value,
-            expired_messages: chat.events.expired_messages(now),
-            next_message_expiry: chat.events.next_message_expiry(now),
+            expired_messages: RangeSet::default(),
+            next_message_expiry: None,
             gate: chat.gate.value.clone(),
             rules_accepted: member
                 .rules_accepted
@@ -211,20 +210,18 @@ impl RuntimeState {
         let now = self.env.now();
         let messages_in_last_hour = group_chat_core
             .events
-            .event_count_since(now.saturating_sub(HOUR_IN_MS), now, |e| {
-                matches!(e, ChatEventInternal::Message(_))
-            }) as u64;
+            .event_count_since(now.saturating_sub(HOUR_IN_MS), |e| matches!(e, ChatEventInternal::Message(_)))
+            as u64;
         let messages_in_last_day = group_chat_core
             .events
-            .event_count_since(now.saturating_sub(DAY_IN_MS), now, |e| {
-                matches!(e, ChatEventInternal::Message(_))
-            }) as u64;
+            .event_count_since(now.saturating_sub(DAY_IN_MS), |e| matches!(e, ChatEventInternal::Message(_)))
+            as u64;
         let events_in_last_hour = group_chat_core
             .events
-            .event_count_since(now.saturating_sub(HOUR_IN_MS), now, |_| true) as u64;
+            .event_count_since(now.saturating_sub(HOUR_IN_MS), |_| true) as u64;
         let events_in_last_day = group_chat_core
             .events
-            .event_count_since(now.saturating_sub(DAY_IN_MS), now, |_| true) as u64;
+            .event_count_since(now.saturating_sub(DAY_IN_MS), |_| true) as u64;
 
         Metrics {
             memory_used: utils::memory::used(),

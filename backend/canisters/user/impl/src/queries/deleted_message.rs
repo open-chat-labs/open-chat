@@ -13,8 +13,7 @@ fn deleted_message_impl(args: Args, state: &RuntimeState) -> Response {
     let my_user_id = state.env.canister_id().into();
 
     if let Some(chat) = state.data.direct_chats.get(&args.user_id.into()) {
-        let now = state.env.now();
-        let events_reader = chat.events.main_events_reader(now);
+        let events_reader = chat.events.main_events_reader();
 
         if let Some(message) = events_reader.message_internal(args.message_id.into()) {
             let deleted_by = message.deleted_by.as_ref().map(|d| d.deleted_by);

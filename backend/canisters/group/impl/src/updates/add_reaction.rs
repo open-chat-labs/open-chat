@@ -5,7 +5,7 @@ use chat_events::Reader;
 use group_canister::add_reaction::{Response::*, *};
 use group_chat_core::AddRemoveReactionResult;
 use ic_cdk_macros::update;
-use types::{EventIndex, GroupReactionAddedNotification, Notification, TimestampMillis, UserId};
+use types::{EventIndex, GroupReactionAddedNotification, Notification, UserId};
 
 #[update]
 #[trace]
@@ -33,7 +33,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
         ) {
             AddRemoveReactionResult::Success => {
                 handle_activity_notification(state);
-                handle_notification(args, user_id, now, state);
+                handle_notification(args, user_id, state);
                 Success
             }
             AddRemoveReactionResult::NoChange => NoChange,
@@ -58,14 +58,13 @@ fn handle_notification(
         ..
     }: Args,
     user_id: UserId,
-    now: TimestampMillis,
     state: &mut RuntimeState,
 ) {
     if let Some(message_event) = state
         .data
         .chat
         .events
-        .events_reader(EventIndex::default(), thread_root_message_index, now)
+        .events_reader(EventIndex::default(), thread_root_message_index)
         // We pass in `None` in place of `my_user_id` because we don't want to hydrate
         // the notification with data for the current user (eg. their poll votes).
         .and_then(|events_reader| events_reader.message_event(message_id.into(), None))

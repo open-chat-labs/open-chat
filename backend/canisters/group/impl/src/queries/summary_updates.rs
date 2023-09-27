@@ -3,7 +3,7 @@ use canister_api_macros::query_msgpack;
 use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use std::cmp::max;
-use types::{GroupCanisterGroupChatSummaryUpdates, OptionUpdate, MAX_THREADS_IN_SUMMARY};
+use types::{GroupCanisterGroupChatSummaryUpdates, OptionUpdate, RangeSet, MAX_THREADS_IN_SUMMARY};
 
 #[query]
 fn summary_updates(args: Args) -> Response {
@@ -33,8 +33,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     let now = state.env.now();
-    let newly_expired_messages = chat.events.expired_messages_since(updates_since, now);
-    let updates_from_events = chat.summary_updates_from_events(updates_since, Some(member.user_id), now);
+    let updates_from_events = chat.summary_updates_from_events(updates_since, Some(member.user_id));
 
     let updates = GroupCanisterGroupChatSummaryUpdates {
         chat_id: state.env.canister_id().into(),
@@ -64,7 +63,6 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             Some(args.updates_since),
             MAX_THREADS_IN_SUMMARY,
             member.user_id,
-            now,
         ),
         unfollowed_threads: chat
             .events
@@ -79,8 +77,8 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         wasm_version: None,
         date_last_pinned: updates_from_events.date_last_pinned,
         events_ttl: updates_from_events.events_ttl,
-        newly_expired_messages,
-        next_message_expiry: OptionUpdate::from_update(chat.events.next_message_expiry(now)),
+        newly_expired_messages: RangeSet::default(),
+        next_message_expiry: OptionUpdate::NoChange,
         gate: updates_from_events.gate,
         rules_accepted: member
             .rules_accepted

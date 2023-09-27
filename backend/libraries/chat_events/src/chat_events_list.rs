@@ -57,28 +57,24 @@ impl ChatEventsList {
         &self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
-        now: TimestampMillis,
     ) -> Option<&EventWrapperInternal<ChatEventInternal>> {
         self.event_index(event_key)
             .filter(|e| *e >= min_visible_event_index)
             .and_then(|e| self.events_map.get(&e))
-            .filter(|e| !e.is_expired(now))
     }
 
     pub(crate) fn get_mut(
         &mut self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
-        now: TimestampMillis,
     ) -> Option<&mut EventWrapperInternal<ChatEventInternal>> {
         self.event_index(event_key)
             .filter(|e| *e >= min_visible_event_index)
             .and_then(|e| self.events_map.get_mut(&e))
-            .filter(|e| !e.is_expired(now))
     }
 
-    pub(crate) fn is_accessible(&self, event_key: EventKey, min_visible_event_index: EventIndex, now: TimestampMillis) -> bool {
-        self.get(event_key, min_visible_event_index, now).is_some()
+    pub(crate) fn is_accessible(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> bool {
+        self.get(event_key, min_visible_event_index).is_some()
     }
 
     pub(crate) fn iter(
@@ -86,10 +82,9 @@ impl ChatEventsList {
         start: Option<EventKey>,
         ascending: bool,
         min_visible_event_index: EventIndex,
-        now: TimestampMillis,
     ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
         let range = if let Some(start) = start {
-            if let Some(event_index) = self.get(start, min_visible_event_index, now).map(|e| e.index) {
+            if let Some(event_index) = self.get(start, min_visible_event_index).map(|e| e.index) {
                 if ascending {
                     self.events_map.range(event_index..)
                 } else {
@@ -102,7 +97,7 @@ impl ChatEventsList {
             self.events_map.range(min_visible_event_index..)
         };
 
-        let iter = range.map(|(_, e)| e).filter(move |e| !e.is_expired(now));
+        let iter = range.map(|(_, e)| e);
 
         if ascending {
             Box::new(iter)
@@ -132,17 +127,12 @@ impl ChatEventsList {
         updated
     }
 
-    pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(
-        &self,
-        since: TimestampMillis,
-        now: TimestampMillis,
-        filter: &F,
-    ) -> usize {
+    pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: &F) -> usize {
         self.events_map
             .values()
             .rev()
             .take_while(|e| e.timestamp > since)
-            .filter(|e| !e.is_expired(now) && filter(&e.event))
+            .filter(|e| filter(&e.event))
             .count()
     }
 
@@ -205,7 +195,6 @@ impl ChatEventsList {
 pub struct ChatEventsListReader<'r> {
     events_list: &'r ChatEventsList,
     min_visible_event_index: EventIndex,
-    now: TimestampMillis,
 }
 
 impl<'r> Deref for ChatEventsListReader<'r> {
@@ -217,19 +206,17 @@ impl<'r> Deref for ChatEventsListReader<'r> {
 }
 
 impl<'r> ChatEventsListReader<'r> {
-    pub(crate) fn new(events_list: &ChatEventsList, now: TimestampMillis) -> ChatEventsListReader {
-        Self::with_min_visible_event_index(events_list, EventIndex::default(), now)
+    pub(crate) fn new(events_list: &ChatEventsList) -> ChatEventsListReader {
+        Self::with_min_visible_event_index(events_list, EventIndex::default())
     }
 
     pub(crate) fn with_min_visible_event_index(
         events_list: &ChatEventsList,
         min_visible_event_index: EventIndex,
-        now: TimestampMillis,
     ) -> ChatEventsListReader {
         ChatEventsListReader {
             events_list,
             min_visible_event_index,
-            now,
         }
     }
 }
@@ -413,7 +400,7 @@ pub trait Reader {
 
 impl<'r> Reader for ChatEventsListReader<'r> {
     fn get(&self, event_key: EventKey) -> Option<&EventWrapperInternal<ChatEventInternal>> {
-        self.events_list.get(event_key, self.min_visible_event_index, self.now)
+        self.events_list.get(event_key, self.min_visible_event_index)
     }
 
     fn iter(
@@ -421,8 +408,7 @@ impl<'r> Reader for ChatEventsListReader<'r> {
         start: Option<EventKey>,
         ascending: bool,
     ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
-        self.events_list
-            .iter(start, ascending, self.min_visible_event_index, self.now)
+        self.events_list.iter(start, ascending, self.min_visible_event_index)
     }
 
     fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_> {
@@ -432,7 +418,7 @@ impl<'r> Reader for ChatEventsListReader<'r> {
                 .values()
                 .copied()
                 .rev()
-                .map_while(|e| self.events_list.get(e.into(), self.min_visible_event_index, self.now))
+                .map_while(|e| self.events_list.get(e.into(), self.min_visible_event_index))
                 .filter_map(move |e| try_into_message_event(e, my_user_id)),
         )
     }

@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::Reader;
 use community_canister::add_reaction::{Response::*, *};
 use group_chat_core::{AddRemoveReactionResult, GroupChatCore};
-use types::{ChannelReactionAddedNotification, EventIndex, EventWrapper, Message, Notification, TimestampMillis, UserId};
+use types::{ChannelReactionAddedNotification, EventIndex, EventWrapper, Message, Notification, UserId};
 
 #[update_candid_and_msgpack]
 #[trace]
@@ -27,9 +27,9 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         let user_id = member.user_id;
-        let now = state.env.now();
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
+            let now = state.env.now();
             match channel.chat.add_reaction(
                 user_id,
                 args.thread_root_message_index,
@@ -38,7 +38,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                 now,
             ) {
                 AddRemoveReactionResult::Success => {
-                    if let Some(message) = should_push_notification(&args, user_id, &channel.chat, now) {
+                    if let Some(message) = should_push_notification(&args, user_id, &channel.chat) {
                         push_notification(
                             args,
                             user_id,
@@ -67,15 +67,10 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 }
 
-fn should_push_notification(
-    args: &Args,
-    user_id: UserId,
-    chat: &GroupChatCore,
-    now: TimestampMillis,
-) -> Option<EventWrapper<Message>> {
+fn should_push_notification(args: &Args, user_id: UserId, chat: &GroupChatCore) -> Option<EventWrapper<Message>> {
     let message = chat
         .events
-        .events_reader(EventIndex::default(), args.thread_root_message_index, now)
+        .events_reader(EventIndex::default(), args.thread_root_message_index)
         // We pass in `None` in place of `my_user_id` because we don't want to hydrate
         // the notification with data for the current user (eg. their poll votes).
         .and_then(|events_reader| events_reader.message_event(args.message_id.into(), None))?;

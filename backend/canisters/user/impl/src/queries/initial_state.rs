@@ -18,12 +18,7 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
     let blocked_users = state.data.blocked_users.value.iter().copied().collect();
 
     let direct_chats = DirectChatsInitial {
-        summaries: state
-            .data
-            .direct_chats
-            .iter()
-            .map(|d| d.to_summary(my_user_id, now))
-            .collect(),
+        summaries: state.data.direct_chats.iter().map(|d| d.to_summary(my_user_id)).collect(),
         pinned: state.data.direct_chats.pinned().to_vec(),
     };
 
