@@ -1067,6 +1067,17 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });
+  const NamedAccount = IDL.Record({ 'name' : IDL.Text, 'account' : IDL.Text });
+  const SaveCryptoAccountResponse = IDL.Variant({
+    'Invalid' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'NameTaken' : IDL.Null,
+  });
+  const EmptyArgs = IDL.Record({});
+  const SavedCryptoAccountsResponse = IDL.Variant({
+    'Success' : IDL.Vec(NamedAccount),
+  });
   const SearchMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'user_id' : UserId,
@@ -1494,6 +1505,16 @@ export const idlFactory = ({ IDL }) => {
         [RemoveReactionArgs],
         [RemoveReactionResponse],
         [],
+      ),
+    'save_crypto_account' : IDL.Func(
+        [NamedAccount],
+        [SaveCryptoAccountResponse],
+        [],
+      ),
+    'saved_crypto_accounts' : IDL.Func(
+        [EmptyArgs],
+        [SavedCryptoAccountsResponse],
+        ['query'],
       ),
     'search_messages' : IDL.Func(
         [SearchMessagesArgs],

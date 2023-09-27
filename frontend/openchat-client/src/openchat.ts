@@ -1209,6 +1209,33 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    followThread(
+        chatId: ChatIdentifier,
+        message: Message,
+        follow: boolean
+    ): Promise<boolean> {
+        // Assume it will succeed
+        localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
+            followedByMe: follow
+        });
+
+        return this.sendRequest({
+            kind: "followThread",
+            chatId,
+            threadRootMessageIndex: message.messageIndex,
+            follow
+        }).then((resp) => {
+            if (resp === "failed") {
+                localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
+                    followedByMe: !follow
+                });
+                return false;
+            } else {
+                return true
+            }
+        });
+    }
+
     getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
         return getContentAsText(formatter, content, get(cryptoLookup));
     }
@@ -4194,7 +4221,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    markThreadSummaryUpdated(threadRootMessageId: bigint, summary: ThreadSummary): void {
+    markThreadSummaryUpdated(threadRootMessageId: bigint, summary: Partial<ThreadSummary>): void {
         localMessageUpdates.markThreadSummaryUpdated(threadRootMessageId, summary);
     }
 

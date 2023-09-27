@@ -113,6 +113,7 @@ export interface ChannelMembership {
 export interface ChannelMembershipUpdates {
   'role' : [] | [GroupRole],
   'notifications_muted' : [] | [boolean],
+  'unfollowed_threads' : Uint32Array | number[],
   'rules_accepted' : [] | [boolean],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'mentions' : Array<Mention>,
@@ -753,6 +754,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
+  'unfollowed_threads' : Uint32Array | number[],
   'avatar_id' : DocumentIdUpdate,
   'rules_accepted' : [] | [boolean],
   'next_message_expiry' : TimestampUpdate,
@@ -1170,6 +1172,7 @@ export interface MuteNotificationsArgs { 'chat_id' : ChatId }
 export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
+export interface NamedAccount { 'name' : string, 'account' : string }
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
@@ -1433,6 +1436,11 @@ export interface RoleChanged {
   'new_role' : GroupRole,
 }
 export interface Rules { 'text' : string, 'enabled' : boolean }
+export type SaveCryptoAccountResponse = { 'Invalid' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'NameTaken' : null };
+export type SavedCryptoAccountsResponse = { 'Success' : Array<NamedAccount> };
 export interface SearchMessagesArgs {
   'max_results' : number,
   'user_id' : UserId,
@@ -1885,6 +1893,14 @@ export interface _SERVICE {
   'pin_chat_v2' : ActorMethod<[PinChatV2Request], PinChatV2Response>,
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
+  'save_crypto_account' : ActorMethod<
+    [NamedAccount],
+    SaveCryptoAccountResponse
+  >,
+  'saved_crypto_accounts' : ActorMethod<
+    [EmptyArgs],
+    SavedCryptoAccountsResponse
+  >,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'send_message_v2' : ActorMethod<[SendMessageV2Args], SendMessageResponse>,
   'send_message_with_transfer_to_channel' : ActorMethod<

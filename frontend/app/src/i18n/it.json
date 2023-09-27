@@ -1017,5 +1017,9 @@
         "menu": "Mancia",
         "plusFee": "+ commissione {fee} {token}",
         "advice": "Tocca quante volte vuoi per lasciare una mancia"
-    }
+    },
+    "followThread": "Segui questo thread",
+    "unfollowThread": "Smetti di seguire questo thread",
+    "followThreadFailed": "Seguire il thread non è riuscito",
+    "unfollowThreadFailed": "Smetti di seguire il thread non riuscito"
 }

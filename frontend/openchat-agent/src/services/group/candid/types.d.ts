@@ -113,6 +113,7 @@ export interface ChannelMembership {
 export interface ChannelMembershipUpdates {
   'role' : [] | [GroupRole],
   'notifications_muted' : [] | [boolean],
+  'unfollowed_threads' : Uint32Array | number[],
   'rules_accepted' : [] | [boolean],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'mentions' : Array<Mention>,
@@ -605,10 +606,7 @@ export interface FileContent {
   'caption' : [] | [string],
 }
 export type FileId = bigint;
-export interface FollowThreadArgs {
-  'channel_id' : ChannelId,
-  'thread_root_message_index' : MessageIndex,
-}
+export interface FollowThreadArgs { 'thread_root_message_index' : MessageIndex }
 export type FollowThreadResponse = { 'ThreadNotFound' : null } |
   { 'GroupFrozen' : null } |
   { 'AlreadyFollowing' : null } |
@@ -688,6 +686,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
+  'unfollowed_threads' : Uint32Array | number[],
   'avatar_id' : DocumentIdUpdate,
   'rules_accepted' : [] | [boolean],
   'next_message_expiry' : TimestampUpdate,
@@ -1547,7 +1546,6 @@ export type UndeleteMessagesResponse = { 'MessageNotFound' : null } |
   { 'Success' : { 'messages' : Array<Message> } } |
   { 'UserSuspended' : null };
 export interface UnfollowThreadArgs {
-  'channel_id' : ChannelId,
   'thread_root_message_index' : MessageIndex,
 }
 export type UnfollowThreadResponse = { 'ThreadNotFound' : null } |

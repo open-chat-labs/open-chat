@@ -1019,5 +1019,9 @@
         "menu": "Consejo",
         "plusFee": "+ tarifa {fee} {token}",
         "advice": "Toca tantas veces como quieras para dejar una propina."
-    }
+    },
+    "followThread": "Sigue este hilo",
+    "unfollowThread": "Dejar de seguir este hilo",
+    "followThreadFailed": "Error al seguir el hilo",
+    "unfollowThreadFailed": "Error al dejar de seguir el hilo"
 }
