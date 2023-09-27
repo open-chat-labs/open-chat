@@ -192,9 +192,9 @@
                     notification.kind === "group_notification"
                 ) {
                     return client.isMessageRead(
-                        notification.kind === "direct_notification"
+                        { chatId: notification.kind === "direct_notification"
                             ? notification.sender
-                            : notification.chatId,
+                            : notification.chatId },
                         notification.messageIndex,
                         undefined
                     );

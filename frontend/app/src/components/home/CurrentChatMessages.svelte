@@ -16,8 +16,6 @@
         type ChatSummary,
         type OpenChat,
         FilteredProposals,
-        type MessageReadState,
-        type FailedMessages,
         chatIdentifiersEqual,
         type ChatIdentifier,
         routeForChatIdentifier,
@@ -62,7 +60,6 @@
     $: chatListScope = client.chatListScope;
     $: userStore = client.userStore;
     $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
-    $: selectedMessageContext = client.selectedMessageContext;
     $: selectedCommunity = client.selectedCommunity;
 
     // treat this as if it might be null so we don't get errors when it's unmounted
@@ -175,20 +172,6 @@
         return false;
     }
 
-    function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "message") {
-            return !unconfirmed.contains({ chatId: chat.id }, evt.event.messageId);
-        }
-        return true;
-    }
-
-    function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "message") {
-            return failedMessagesStore.contains({ chatId: chat.id }, evt.event.messageId);
-        }
-        return false;
-    }
-
     function isReadByThem(
         chat: ChatSummary,
         readByThem: Set<bigint>,
@@ -200,25 +183,6 @@
                 unconfirmedReadByThem.delete(evt.event.messageId);
             }
             return confirmedRead || readByThem.has(evt.event.messageId);
-        }
-        return true;
-    }
-
-    function isReadByMe(_store: MessageReadState, evt: EventWrapper<ChatEventType>): boolean {
-        if (readonly) return true;
-
-        if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
-            let messageIndex =
-                evt.event.kind === "message"
-                    ? evt.event.messageIndex
-                    : Math.max(...evt.event.messagesDeleted);
-            let messageId = evt.event.kind === "message" ? evt.event.messageId : undefined;
-            const isRead = client.isMessageRead(chat.id, messageIndex, messageId);
-            if (!isRead && evt.event.kind === "message" && evt.event.sender === user.userId) {
-                client.markMessageRead({ chatId: chat.id }, messageIndex, messageId);
-                return true;
-            }
-            return isRead;
         }
         return true;
     }
@@ -305,7 +269,6 @@
     bind:this={chatEventList}
     rootSelector={"chat-messages"}
     threadRootEvent={undefined}
-    selectedMessageContext={$selectedMessageContext}
     maintainScroll
     {readonly}
     {unreadMessages}
@@ -317,6 +280,9 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight
+    let:isConfirmed
+    let:isFailed
+    let:isReadByMe
     let:messageObserver
     let:labelObserver>
     {#if !reverseScroll}
@@ -351,7 +317,7 @@
                         focused={evt.event.kind === "message" &&
                             evt.event.messageIndex === $focusMessageIndex &&
                             !isFailed($failedMessagesStore, evt)}
-                        confirmed={isConfirmed(evt)}
+                        confirmed={isConfirmed($unconfirmed, evt)}
                         failed={isFailed($failedMessagesStore, evt)}
                         readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($messagesRead, evt)}
