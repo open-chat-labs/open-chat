@@ -1073,7 +1073,7 @@ impl ChatEvents {
         let mut unfollowed = Vec::new();
 
         for message_index in root_message_indexes.rev() {
-            if let Some(wrapped_event) = self.main.get((*message_index).into(), EventIndex::default(), 0) {
+            if let Some(wrapped_event) = self.main.get((*message_index).into(), EventIndex::default()) {
                 if let Some(message) = wrapped_event.event.as_message() {
                     if let Some(thread_summary) = message.thread_summary.as_ref() {
                         if let Some(follower) = thread_summary.get_follower(my_user_id) {
