@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Avoid needing to pass in current timestamp when reading events ([#4447](https://github.com/open-chat-labs/open-chat/pull/4447))
+- Use canister timers to remove expired events ([#4447](https://github.com/open-chat-labs/open-chat/pull/4447))
 
 ## [[2.0.852](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.852-user)] - 2023-09-18
 
