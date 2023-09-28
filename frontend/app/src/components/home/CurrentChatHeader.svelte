@@ -15,9 +15,9 @@
     import Typing from "../Typing.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
-    import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import SuspendModal from "./SuspendModal.svelte";
     import { rightPanelHistory } from "../../stores/rightPanel";
+    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -28,7 +28,6 @@
     export let unreadMessages: number;
     export let hasPinned: boolean;
 
-    let viewProfile = false;
     let showSuspendUserModal = false;
 
     $: typersByContext = client.typersByContext;
@@ -90,14 +89,15 @@
         }
     }
 
-    function openUserProfile() {
+    function openUserProfile(ev: Event) {
         if (hasUserProfile) {
-            viewProfile = true;
+            ev.target?.dispatchEvent(
+                new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+                    detail: { userId, chatButton: false, inGlobalContext: false },
+                    bubbles: true,
+                })
+            );
         }
-    }
-
-    function closeUserProfile() {
-        viewProfile = false;
     }
 
     $: chat = normaliseChatSummary($now, selectedChatSummary, $typersByContext);
@@ -118,9 +118,6 @@
                 {/if}
             </HoverIcon>
         </div>
-    {/if}
-    {#if viewProfile}
-        <ViewUserProfile {userId} chatButton={false} on:close={closeUserProfile} />
     {/if}
 
     <div class="avatar" class:has-user-profile={hasUserProfile} on:click={openUserProfile}>

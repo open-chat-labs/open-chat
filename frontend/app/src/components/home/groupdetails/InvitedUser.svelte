@@ -22,13 +22,9 @@
     function uninviteUser() {
         dispatch("uninviteUser", user);
     }
-
-    function openUserProfile() {
-        dispatch("openUserProfile", user.userId);
-    }
 </script>
 
-<User {user} {searchTerm} on:open={openUserProfile}>
+<User {user} {searchTerm}>
     {#if canUninviteUser}
         <span class="menu">
             <MenuIcon position={"bottom"} align={"end"}>

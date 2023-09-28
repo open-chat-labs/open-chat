@@ -7,6 +7,7 @@
     import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
+    import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import EditCommunity from "./communities/edit/Edit.svelte";
     import type {
         EnhancedReplyContext,
@@ -80,6 +81,13 @@
     import { createCandidateCommunity } from "../../stores/community";
     import { interpolateLevel } from "../../utils/i18n";
     import Convert from "./communities/Convert.svelte";
+    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
+
+    type ViewProfileConfig = {
+        userId: string;
+        chatButton: boolean;
+        alignTo?: DOMRect;
+    };
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -87,6 +95,7 @@
     let candidateCommunity: CommunitySummary | undefined;
     let candidateCommunityRules: Rules = defaultChatRules("community");
     let convertGroup: GroupChatSummary | undefined = undefined;
+    let showProfileCard: ViewProfileConfig | undefined = undefined;
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -898,9 +907,37 @@
         page(`/community/${ev.detail.communityId}`);
     }
 
+    function profileLinkClicked(ev: CustomEvent<ProfileLinkClickedEvent>) {
+        showProfileCard = {
+            userId: ev.detail.userId,
+            chatButton: ev.detail.chatButton,
+            alignTo: ev.target ? (ev.target as HTMLElement).getBoundingClientRect() : undefined,
+        };
+    }
+
+    function chatWithFromProfileCard() {
+        if (showProfileCard === undefined) return;
+        chatWith(
+            new CustomEvent("chatWith", {
+                detail: { kind: "direct_chat", userId: showProfileCard.userId },
+            })
+        );
+        showProfileCard = undefined;
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
+
+{#if showProfileCard !== undefined}
+    <ViewUserProfile
+        userId={showProfileCard.userId}
+        inGlobalContext={true}
+        chatButton={showProfileCard.chatButton}
+        alignTo={showProfileCard.alignTo}
+        on:openDirectChat={chatWithFromProfileCard}
+        on:close={() => (showProfileCard = undefined)} />
+{/if}
 
 <main>
     {#if $layoutStore.showNav}
@@ -1047,6 +1084,8 @@
 {/if}
 
 <Convert bind:group={convertGroup} />
+
+<svelte:body on:profile-clicked={profileLinkClicked} />
 
 <style lang="scss">
     :global(.edited-msg) {

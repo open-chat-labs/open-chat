@@ -26,6 +26,7 @@
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
             const u = $userStore[p1];
             if (u !== undefined) {
+                return `<profile-link text="${u.username}" userId="${u.userId}"></profile-link>`;
                 return `**[@${u.username}](/user/${u.userId})**`;
             }
             return match;
@@ -74,6 +75,7 @@
 
         const domPurify = oneLine ? DOMPurifyOneLine : DOMPurifyDefault;
         try {
+            console.log("Parsed: ", parsed);
             sanitized = domPurify.sanitize(parsed);
         } catch (err: any) {
             client.logError("Error sanitizing message content: ", err);
