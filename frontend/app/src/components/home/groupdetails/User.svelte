@@ -3,14 +3,14 @@
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import FilteredUsername from "../../FilteredUsername.svelte";
     import type { UserSummary } from "openchat-shared";
+    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     export let user: UserSummary;
     export let me: boolean = false;
@@ -24,8 +24,13 @@
     $: communityMembers = client.currentCommunityMembers;
     $: displayName = client.getDisplayName(user, $communityMembers);
 
-    function onClick() {
-        dispatch("open", user.userId);
+    function onClick(ev: Event) {
+        ev.target?.dispatchEvent(
+            new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+                detail: { userId: user.userId, chatButton: !me, inGlobalContext: false },
+                bubbles: true,
+            })
+        );
     }
 </script>
 

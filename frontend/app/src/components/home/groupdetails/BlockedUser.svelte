@@ -22,13 +22,9 @@
     function unblockUser() {
         dispatch("unblockUser", user);
     }
-
-    function openUserProfile() {
-        dispatch("openUserProfile", user.userId);
-    }
 </script>
 
-<User {user} {searchTerm} on:open={openUserProfile}>
+<User {user} {searchTerm}>
     {#if canUnblockUser}
         <span class="menu">
             <MenuIcon position={"bottom"} align={"end"}>

@@ -24,6 +24,7 @@
         redirectLandingPageLinksIfNecessary,
         removeQueryStringParam,
     } from "../utils/urls";
+    import "../components/web-components/profileLink";
     import page from "page";
     import { menuStore } from "../stores/menu";
     import { framed } from "../stores/xframe";
