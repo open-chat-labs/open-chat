@@ -24,7 +24,7 @@
     const client = getContext<OpenChat>("client");
 
     export let community: CommunitySummary;
-    export let initialUsergroup: number | undefined = undefined;
+    export let openedGroupId: number | undefined = undefined;
 
     let searchTerm = "";
     let selectedGroup: UserGroupDetails | undefined = undefined;
@@ -47,10 +47,6 @@
         communityUsersList = Object.values(communityUsers);
         const end = Date.now();
         console.debug("PERF: Built community member lookup: ", end - start);
-
-        if (initialUsergroup !== undefined) {
-            selectedGroup = userGroups.find((ug) => ug.id === initialUsergroup);
-        }
     });
 
     function createLookup(
@@ -117,6 +113,7 @@
 
     export function reset() {
         selectedGroup = undefined;
+        openedGroupId = undefined;
     }
 </script>
 
@@ -130,7 +127,7 @@
         {community}
         {communityUsers}
         {communityUsersList}
-        on:cancel={() => (selectedGroup = undefined)}
+        on:cancel={reset}
         original={selectedGroup} />
 {:else}
     <div class="user-groups">
@@ -158,7 +155,9 @@
             {:else}
                 {#each matchingGroups as userGroup}
                     <div class="user-group-card">
-                        <CollapsibleCard open={false} headerText={userGroup.name}>
+                        <CollapsibleCard
+                            open={userGroup.id === openedGroupId}
+                            headerText={userGroup.name}>
                             <h4 slot="titleSlot" class="name">
                                 {#if canManageUserGroups}
                                     <div

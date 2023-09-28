@@ -425,7 +425,7 @@
             const usergroup = $querystring.get("usergroup");
             if (usergroup !== null) {
                 const userGroupId = Number(usergroup);
-                rightPanelHistory.set([{ kind: "show_group_members", userGroupId }]);
+                rightPanelHistory.set([{ kind: "show_community_members", userGroupId }]);
                 page.replace(removeQueryStringParam("usergroup"));
             }
         }

@@ -53,7 +53,7 @@
     let id = collection.id;
     let membersList: VirtualList;
     let memberView: "members" | "blocked" | "invited" = "members";
-    let selectedTab: "users" | "groups" = initialUsergroup === undefined ? "users" : "groups";
+    let selectedTab: "users" | "groups" = "users";
 
     $: searchTermLower = searchTerm.toLowerCase();
 
@@ -68,6 +68,10 @@
             (memberView === "invited" && invited.size === 0)
         ) {
             memberView = "members";
+        }
+
+        if (initialUsergroup !== undefined) {
+            selectedTab = "groups";
         }
     }
 
@@ -124,7 +128,6 @@
 
     function selectTab(tab: "users" | "groups") {
         selectedTab = tab;
-        initialUsergroup = undefined;
         userGroups?.reset();
     }
 </script>
@@ -238,7 +241,10 @@
     {/if}
 {:else if collection.kind === "community"}
     <div class="user-groups">
-        <UserGroups bind:this={userGroups} {initialUsergroup} community={collection} />
+        <UserGroups
+            bind:this={userGroups}
+            bind:openedGroupId={initialUsergroup}
+            community={collection} />
     </div>
 {/if}
 

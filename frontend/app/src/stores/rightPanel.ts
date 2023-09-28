@@ -44,7 +44,6 @@ export type InviteCommunityMembers = {
 
 export type ShowGroupMembersPanel = {
     kind: "show_group_members";
-    userGroupId?: number; 
 };
 
 export type CommunityDetails = {
@@ -57,6 +56,7 @@ export type ShowCommunityChannels = {
 
 export type ShowCommunityMembers = {
     kind: "show_community_members";
+    userGroupId?: number; 
 };
 
 export type ShowPinnedPanel = {

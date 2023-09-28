@@ -368,6 +368,7 @@
             invited={$currentCommunityInvited}
             members={[...$currentCommunityMembers.values()]}
             blocked={$currentCommunityBlocked}
+            initialUsergroup={lastState.userGroupId}
             on:close={popRightPanelHistory}
             on:blockUser={onBlockCommunityUser}
             on:unblockUser={onUnblockCommnityUser}
@@ -391,7 +392,6 @@
             invited={$currentChatInvited}
             members={$currentChatMembers}
             blocked={$currentChatBlocked}
-            initialUsergroup={lastState.userGroupId}
             on:close={popRightPanelHistory}
             on:blockUser={onBlockGroupUser}
             on:unblockUser={onUnblockGroupUser}
