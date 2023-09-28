@@ -153,6 +153,7 @@
     $: currentCommunityRules = client.currentCommunityRules;
     $: globalUnreadCount = client.globalUnreadCount;
     $: communities = client.communities;
+    $: selectedCommunity = client.selectedCommunity;
 
     $: {
         document.title =
@@ -790,6 +791,9 @@
             level === "channel" && $chatListScope.kind === "community"
                 ? { kind: "channel", communityId: $chatListScope.id.communityId, channelId: "" }
                 : { kind: "group_chat", groupId: "" };
+
+        const privateCommunity = !($selectedCommunity?.public ?? true);
+
         modal = ModalType.NewGroup;
         candidateGroup = {
             id,
@@ -806,7 +810,7 @@
                 updateGroup: "admin",
                 pinMessages: "admin",
                 inviteUsers: "admin",
-                mentionAllMembers: "admin",
+                mentionAllMembers: privateCommunity ? "member" : "admin",
                 createPolls: "member",
                 sendMessages: "member",
                 reactToMessages: "member",
