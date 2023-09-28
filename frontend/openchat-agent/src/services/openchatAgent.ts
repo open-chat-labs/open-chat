@@ -167,6 +167,7 @@ import type {
     DeleteUserGroupsResponse,
     SetMemberDisplayNameResponse,
     UpdatedRules,
+    FollowThreadResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2504,5 +2505,15 @@ export class OpenChatAgent extends EventTarget {
 
     setCachePrimerTimestamp(chatIdentifierString: string, timestamp: bigint): Promise<void> {
         return setCachePrimerTimestamp(this.db, chatIdentifierString, timestamp);
+    }
+
+    followThread(chatId: ChatIdentifier, threadRootMessageIndex: number, follow: boolean): Promise<FollowThreadResponse> {
+        if (chatId.kind === "channel") {
+            return this.communityClient(chatId.communityId).followThread(chatId.channelId, threadRootMessageIndex, follow);        
+        } else if (chatId.kind === "group_chat") {
+            return this.getGroupClient(chatId.groupId).followThread(threadRootMessageIndex, follow);        
+        } else {
+            throw new Error("followThread not implemented for direct chats");
+        }
     }
 }

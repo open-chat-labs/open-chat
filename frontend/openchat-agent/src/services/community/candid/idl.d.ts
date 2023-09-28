@@ -72,6 +72,8 @@ import {
     DeleteUserGroupsResponse,
     SetMemberDisplayNameResponse,
     VersionedRules,
+    FollowThreadResponse,
+    UnfollowThreadResponse
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -145,6 +147,8 @@ export {
     UserGroupDetails as ApiUserGroupDetails,
     DeleteUserGroupsResponse as ApiDeleteUserGroupsResponse,
     SetMemberDisplayNameResponse as ApiSetMemberDisplayNameResponse,
+    FollowThreadResponse as ApiFollowThreadResponse,
+    UnfollowThreadResponse as ApiUnfollowThreadResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -2,19 +2,18 @@
     import ThreadHeader from "./ThreadHeader.svelte";
     import Footer from "../Footer.svelte";
     import type {
+        AttachmentContent,
         ChatSummary,
         ChatEvent as ChatEventType,
         EnhancedReplyContext,
         EventWrapper,
-        FailedMessages,
         Message,
         OpenChat,
         User,
         TimelineItem,
-        AttachmentContent,
     } from "openchat-client";
     import { LEDGER_CANISTER_ICP } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -50,7 +49,6 @@
     export let chat: ChatSummary;
 
     let chatEventList: ChatEventList | undefined;
-    let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
     let memeBuilder: MemeBuilder;
@@ -61,15 +59,14 @@
     let initialised = false;
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
-    let previousLatestEventIndex: number | undefined = undefined;
     let showAcceptRulesModal = false;
     let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
 
-    $: selectedMessageContext = client.selectedMessageContext;
     $: focusMessageIndex = client.focusThreadMessageIndex;
     $: lastCryptoSent = client.lastCryptoSent;
     $: draftThreadMessages = client.draftThreadMessages;
     $: unconfirmed = client.unconfirmed;
+    $: messagesRead = client.messagesRead;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: threadEvents = client.threadEvents;
     $: failedMessagesStore = client.failedMessagesStore;
@@ -90,7 +87,7 @@
     $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
     $: timeline = client.groupEvents(
-        reverseScroll ? [...events.reverse()] : events,
+        reverseScroll ? [...events].reverse() : events,
         user.userId,
         $expandedDeletedMessages,
         reverseScroll
@@ -98,21 +95,6 @@
     $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
     $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
-
-    onMount(() => (previousLatestEventIndex = thread?.latestEventIndex));
-
-    $: {
-        if (initialised) {
-            if (
-                thread !== undefined &&
-                previousLatestEventIndex !== undefined &&
-                thread.latestEventIndex > previousLatestEventIndex
-            ) {
-                client.loadNewMessages(chat.id, rootEvent);
-                previousLatestEventIndex = thread.latestEventIndex;
-            }
-        }
-    }
 
     function createTestMessages(ev: CustomEvent<number>): void {
         if (process.env.NODE_ENV === "production") return;
@@ -253,20 +235,6 @@
         }
     }
 
-    function isConfirmed(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "message" && $selectedMessageContext) {
-            return !unconfirmed.contains($selectedMessageContext, evt.event.messageId);
-        }
-        return true;
-    }
-
-    function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "message" && $selectedMessageContext) {
-            return failedMessagesStore.contains($selectedMessageContext, evt.event.messageId);
-        }
-        return false;
-    }
-
     function goToMessageIndex(index: number) {
         chatEventList?.scrollToMessageIndex(chat.id, index, false);
     }
@@ -364,7 +332,6 @@
     chatSummary={chat} />
 
 <ChatEventList
-    selectedMessageContext={$selectedMessageContext}
     threadRootEvent={rootEvent}
     rootSelector={"thread-messages"}
     maintainScroll={false}
@@ -379,6 +346,10 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight
+    let:isConfirmed
+    let:isFailed
+    let:isReadByMe
+    let:messageObserver
     let:labelObserver>
     {#if loading}
         <Loading />
@@ -399,9 +370,9 @@
                             me={evt.event.sender === user.userId}
                             confirmed={isConfirmed($unconfirmed, evt)}
                             failed={isFailed($failedMessagesStore, evt)}
+                            readByMe={evt.event.messageId === rootEvent.event.messageId || isReadByMe($messagesRead, evt)}
                             readByThem
-                            readByMe
-                            {observer}
+                            observer={messageObserver}
                             focused={evt.event.kind === "message" &&
                                 $focusMessageIndex === evt.event.messageIndex}
                             {readonly}

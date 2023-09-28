@@ -29,7 +29,12 @@
     function partitionPermissions(permissions: ChatPermissions): PermissionsByRole {
         return (Object.entries(permissions) as PermissionsEntry[]).filter(filterPermissions).reduce(
             (dict: PermissionsByRole, [key, val]) => {
-                dict[val].add($_(`permissions.${String(key)}`));
+                const text = $_(
+                    `permissions.${String(key)}`,
+                    key === "mentionAllMembers" ? { values: { mention: "@everyone" } } : {}
+                );
+
+                dict[val].add(text);
                 return dict;
             },
             {

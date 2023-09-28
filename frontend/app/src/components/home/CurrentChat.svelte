@@ -34,6 +34,7 @@
     import { framed } from "../../stores/xframe";
     import { rightPanelHistory } from "../../stores/rightPanel";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
+    import { mobileWidth } from "../../stores/screenDimensions";
 
     type ConfirmedActionEvent =
         | ConfirmedSendMessage
@@ -82,6 +83,7 @@
     let showAcceptRulesModal = false;
     let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
 
+    $: showChatHeader = !$mobileWidth || !$framed;
     $: messageContext = { chatId: chat.id };
     $: currentChatTextContent = client.currentChatTextContent;
     $: currentChatReplyingTo = client.currentChatReplyingTo;
@@ -387,7 +389,7 @@
             bind:searchTerm
             on:goToMessageIndex
             on:close={() => (showSearchHeader = false)} />
-    {:else if !$framed}
+    {:else if showChatHeader}
         <CurrentChatHeader
             on:clearSelection
             on:markAllRead={onMarkAllRead}

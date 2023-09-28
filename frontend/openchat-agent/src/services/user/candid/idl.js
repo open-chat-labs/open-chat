@@ -618,6 +618,7 @@ export const idlFactory = ({ IDL }) => {
     'participant_ids' : IDL.Vec(UserId),
     'reply_count' : IDL.Nat32,
     'latest_event_index' : EventIndex,
+    'followed_by_me' : IDL.Bool,
   });
   const ReplyContext = IDL.Record({
     'chat_if_other' : IDL.Opt(IDL.Tuple(Chat, IDL.Opt(MessageIndex))),
@@ -627,6 +628,9 @@ export const idlFactory = ({ IDL }) => {
     'forwarded' : IDL.Bool,
     'content' : MessageContent,
     'edited' : IDL.Bool,
+    'tips' : IDL.Vec(
+      IDL.Tuple(CanisterId, IDL.Vec(IDL.Tuple(UserId, IDL.Nat)))
+    ),
     'last_updated' : IDL.Opt(TimestampMillis),
     'sender' : UserId,
     'thread_summary' : IDL.Opt(ThreadSummary),
@@ -1063,6 +1067,17 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });
+  const NamedAccount = IDL.Record({ 'name' : IDL.Text, 'account' : IDL.Text });
+  const SaveCryptoAccountResponse = IDL.Variant({
+    'Invalid' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'NameTaken' : IDL.Null,
+  });
+  const EmptyArgs = IDL.Record({});
+  const SavedCryptoAccountsResponse = IDL.Variant({
+    'Success' : IDL.Vec(NamedAccount),
+  });
   const SearchMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'user_id' : UserId,
@@ -1244,6 +1259,29 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Nat64,
     'ReminderDateInThePast' : IDL.Null,
     'UserSuspended' : IDL.Null,
+  });
+  const TipMessageArgs = IDL.Record({
+    'fee' : IDL.Nat,
+    'token' : Cryptocurrency,
+    'chat' : Chat,
+    'recipient' : UserId,
+    'ledger' : CanisterId,
+    'message_id' : MessageId,
+    'amount' : IDL.Nat,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const TipMessageResponse = IDL.Variant({
+    'TransferNotToMessageSender' : IDL.Null,
+    'MessageNotFound' : IDL.Null,
+    'ChatNotFound' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'TransferCannotBeZero' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
+    'CannotTipSelf' : IDL.Null,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({
@@ -1468,6 +1506,16 @@ export const idlFactory = ({ IDL }) => {
         [RemoveReactionResponse],
         [],
       ),
+    'save_crypto_account' : IDL.Func(
+        [NamedAccount],
+        [SaveCryptoAccountResponse],
+        [],
+      ),
+    'saved_crypto_accounts' : IDL.Func(
+        [EmptyArgs],
+        [SavedCryptoAccountsResponse],
+        ['query'],
+      ),
     'search_messages' : IDL.Func(
         [SearchMessagesArgs],
         [SearchMessagesResponse],
@@ -1501,6 +1549,7 @@ export const idlFactory = ({ IDL }) => {
         [SetMessageReminderResponse],
         [],
       ),
+    'tip_message' : IDL.Func([TipMessageArgs], [TipMessageResponse], []),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'undelete_messages' : IDL.Func(
         [UndeleteMessagesArgs],

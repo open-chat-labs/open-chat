@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
@@ -8,13 +8,11 @@
     import Link from "../../Link.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
-    import ViewUserProfile from "../profile/ViewUserProfile.svelte";
     import { AvatarSize } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
     import LinkButton from "../../LinkButton.svelte";
     import { canShare, shareLink } from "../../../utils/share";
-
-    const dispatch = createEventDispatcher();
+    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -22,7 +20,6 @@
     $: userStore = client.userStore;
 
     let link = `${window.location.origin}/?ref=${user.userId}`;
-    let viewedUserId: string | undefined = undefined;
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(
@@ -39,19 +36,13 @@
         shareLink(link);
     }
 
-    function showUserProfile(userId: string) {
-        viewedUserId = userId;
-    }
-
-    function closeUserProfile() {
-        viewedUserId = undefined;
-    }
-
-    function onChat() {
-        if (viewedUserId !== undefined) {
-            closeUserProfile();
-            dispatch("chatWith", { kind: "direct_chat", userId: viewedUserId });
-        }
+    function showUserProfile(ev: Event, userId: string) {
+        ev.target?.dispatchEvent(
+            new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+                detail: { userId, chatButton: false, inGlobalContext: true },
+                bubbles: true,
+            })
+        );
     }
 </script>
 
@@ -80,7 +71,7 @@
             <h4>{$_("invitedUsers")}</h4>
             <div class="referrals">
                 {#each user.referrals as userId}
-                    <div class="referral" on:click={() => showUserProfile(userId)}>
+                    <div class="referral" on:click={(ev) => showUserProfile(ev, userId)}>
                         <div>
                             <Avatar
                                 url={client.userAvatarUrl($userStore[userId])}
@@ -96,14 +87,6 @@
         </div>
     {/if}
 </div>
-
-{#if viewedUserId !== undefined}
-    <ViewUserProfile
-        userId={viewedUserId}
-        inGlobalContext
-        on:openDirectChat={onChat}
-        on:close={closeUserProfile} />
-{/if}
 
 <style lang="scss">
     .link,

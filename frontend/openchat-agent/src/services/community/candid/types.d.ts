@@ -159,6 +159,7 @@ export interface ChannelMembership {
 export interface ChannelMembershipUpdates {
   'role' : [] | [GroupRole],
   'notifications_muted' : [] | [boolean],
+  'unfollowed_threads' : Uint32Array | number[],
   'rules_accepted' : [] | [boolean],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'mentions' : Array<Mention>,
@@ -180,6 +181,21 @@ export interface ChannelMessageNotification {
   'thread_root_message_index' : [] | [MessageIndex],
   'channel_avatar_id' : [] | [bigint],
   'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
+  'message_index' : MessageIndex,
+}
+export interface ChannelMessageTippedNotification {
+  'tip' : string,
+  'channel_id' : ChannelId,
+  'tipped_by_display_name' : [] | [string],
+  'community_id' : CommunityId,
+  'message_event_index' : EventIndex,
+  'channel_name' : string,
+  'tipped_by' : UserId,
+  'community_avatar_id' : [] | [bigint],
+  'community_name' : string,
+  'tipped_by_name' : string,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'channel_avatar_id' : [] | [bigint],
   'message_index' : MessageIndex,
 }
 export interface ChannelReactionAddedNotification {
@@ -596,6 +612,16 @@ export interface DirectMessageNotification {
   'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
   'message_index' : MessageIndex,
 }
+export interface DirectMessageTippedNotification {
+  'tip' : string,
+  'username' : string,
+  'message_event_index' : EventIndex,
+  'them' : UserId,
+  'display_name' : [] | [string],
+  'user_avatar_id' : [] | [bigint],
+  'thread_root_message_index' : [] | [MessageIndex],
+  'message_index' : MessageIndex,
+}
 export interface DirectReactionAddedNotification {
   'username' : string,
   'message_event_index' : EventIndex,
@@ -710,6 +736,18 @@ export interface FileContent {
   'caption' : [] | [string],
 }
 export type FileId = bigint;
+export interface FollowThreadArgs {
+  'channel_id' : ChannelId,
+  'thread_root_message_index' : MessageIndex,
+}
+export type FollowThreadResponse = { 'ThreadNotFound' : null } |
+  { 'AlreadyFollowing' : null } |
+  { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
 export interface FrozenGroupInfo {
   'timestamp' : TimestampMillis,
   'frozen_by' : UserId,
@@ -783,6 +821,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
+  'unfollowed_threads' : Uint32Array | number[],
   'avatar_id' : DocumentIdUpdate,
   'rules_accepted' : [] | [boolean],
   'next_message_expiry' : TimestampUpdate,
@@ -881,6 +920,18 @@ export interface GroupMessageNotification {
   'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
   'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
+  'message_index' : MessageIndex,
+}
+export interface GroupMessageTippedNotification {
+  'tip' : string,
+  'tipped_by_display_name' : [] | [string],
+  'group_avatar_id' : [] | [bigint],
+  'message_event_index' : EventIndex,
+  'tipped_by' : UserId,
+  'tipped_by_name' : string,
+  'chat_id' : ChatId,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'group_name' : string,
   'message_index' : MessageIndex,
 }
 export interface GroupNameChanged {
@@ -1036,6 +1087,7 @@ export interface Message {
   'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
+  'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
   'last_updated' : [] | [TimestampMillis],
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
@@ -1193,10 +1245,13 @@ export type NnsUserOrAccount = { 'User' : UserId } |
 export type Notification = {
     'GroupReactionAdded' : GroupReactionAddedNotification
   } |
+  { 'ChannelMessageTipped' : ChannelMessageTippedNotification } |
+  { 'DirectMessageTipped' : DirectMessageTippedNotification } |
   { 'DirectMessage' : DirectMessageNotification } |
   { 'ChannelReactionAdded' : ChannelReactionAddedNotification } |
   { 'DirectReactionAdded' : DirectReactionAddedNotification } |
   { 'GroupMessage' : GroupMessageNotification } |
+  { 'GroupMessageTipped' : GroupMessageTippedNotification } |
   { 'AddedToChannel' : AddedToChannelNotification } |
   { 'ChannelMessage' : ChannelMessageNotification };
 export interface NotificationCryptoTransferDetails {
@@ -1489,7 +1544,6 @@ export type SelectedChannelInitialResponse = { 'ChannelNotFound' : null } |
       'timestamp' : TimestampMillis,
       'pinned_messages' : Uint32Array | number[],
       'latest_event_index' : EventIndex,
-      'rules' : Rules,
     }
   } |
   { 'PrivateCommunity' : null } |
@@ -1518,7 +1572,6 @@ export interface SelectedGroupUpdates {
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export interface SelectedInitialArgs { 'invite_code' : [] | [bigint] }
@@ -1532,7 +1585,6 @@ export interface SelectedInitialSuccess {
   'user_groups' : Array<UserGroupDetails>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : Rules,
 }
 export interface SelectedUpdatesArgs {
   'updates_since' : TimestampMillis,
@@ -1550,7 +1602,6 @@ export interface SelectedUpdatesSuccess {
   'user_groups' : Array<UserGroupDetails>,
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
-  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export type SelectedUpdatesV2Response = { 'Success' : SelectedUpdatesSuccess } |
@@ -1677,6 +1728,7 @@ export interface ThreadSummary {
   'participant_ids' : Array<UserId>,
   'reply_count' : number,
   'latest_event_index' : EventIndex,
+  'followed_by_me' : boolean,
 }
 export interface ThreadSyncDetails {
   'root_message_index' : MessageIndex,
@@ -1722,6 +1774,18 @@ export type UndeleteMessagesResponse = { 'GroupNotFound' : null } |
   { 'UserNotInChannel' : null } |
   { 'MessageNotFound' : null } |
   { 'Success' : { 'messages' : Array<Message> } } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
+export interface UnfollowThreadArgs {
+  'channel_id' : ChannelId,
+  'thread_root_message_index' : MessageIndex,
+}
+export type UnfollowThreadResponse = { 'ThreadNotFound' : null } |
+  { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'NotFollowing' : null } |
+  { 'Success' : null } |
   { 'UserNotInCommunity' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null };
@@ -1896,6 +1960,7 @@ export interface _SERVICE {
     [ExploreChannelsArgs],
     ExploreChannelsResponse
   >,
+  'follow_thread' : ActorMethod<[FollowThreadArgs], FollowThreadResponse>,
   'import_group' : ActorMethod<[ImportGroupArgs], ImportGroupResponse>,
   'invite_code' : ActorMethod<[EmptyArgs], InviteCodeResponse>,
   'leave_channel' : ActorMethod<[LeaveChannelArgs], LeaveChannelResponse>,
@@ -1966,6 +2031,7 @@ export interface _SERVICE {
     [UndeleteMessagesArgs],
     UndeleteMessagesResponse
   >,
+  'unfollow_thread' : ActorMethod<[UnfollowThreadArgs], UnfollowThreadResponse>,
   'unpin_message' : ActorMethod<[PinMessageArgs], PinMessageResponse>,
   'update_channel' : ActorMethod<[UpdateChannelArgs], UpdateChannelResponse>,
   'update_community' : ActorMethod<

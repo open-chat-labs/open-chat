@@ -6,10 +6,9 @@ import {
     type MessageContent,
     type ThreadSummary,
 } from "openchat-shared";
-import { mergeThreadSummaries } from "../utils/chat";
 import { LocalUpdatesStore } from "./localUpdatesStore";
 
-class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpdates> {
+export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpdates> {
     markCancelled(messageId: bigint, content: MessageContent): void {
         this.applyUpdate(messageId, (_) => ({
             cancelledReminder: content,
@@ -48,6 +47,31 @@ class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpd
             reactions: [...(updates?.reactions ?? []), reaction],
         }));
     }
+    markTip(messageId: bigint, ledger: string, userId: string, amount: bigint) {
+        this.applyUpdate(messageId, (updates) => {
+            const result = { ...updates };
+
+            if (result.tips === undefined) {
+                result.tips = {};
+            }
+
+            if (result.tips[ledger] === undefined) {
+                result.tips[ledger] = {};
+            }
+
+            if (result.tips[ledger][userId] === undefined) {
+                result.tips[ledger][userId] = amount;
+            } else {
+                result.tips[ledger][userId] = result.tips[ledger][userId] + amount;
+            }
+
+            if (result.tips[ledger][userId] === 0n) {
+                delete result.tips[ledger][userId];
+            }
+
+            return result;
+        });
+    }
     markPrizeClaimed(messageId: bigint, userId: string): void {
         this.applyUpdate(messageId, (_) => ({ prizeClaimed: userId }));
     }
@@ -56,13 +80,13 @@ class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpd
             pollVotes: [...(updates?.pollVotes ?? []), vote],
         }));
     }
-    markThreadSummaryUpdated(threadRootMessageId: bigint, summary: ThreadSummary): void {
+    markThreadSummaryUpdated(threadRootMessageId: bigint, summaryUpdates: Partial<ThreadSummary>): void {
         this.applyUpdate(threadRootMessageId, (updates) => {
             return {
                 threadSummary:
                     updates?.threadSummary === undefined
-                        ? summary
-                        : mergeThreadSummaries(updates.threadSummary, summary),
+                        ? summaryUpdates
+                        : { ...updates.threadSummary, ...summaryUpdates },
             };
         });
     }

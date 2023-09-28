@@ -12,8 +12,6 @@ fn search(args: Args) -> Response {
 }
 
 fn search_impl(args: Args, state: &RuntimeState) -> Response {
-    state.trap_if_caller_not_openchat_user();
-
     let caller = state.env.caller();
     let now = state.env.now();
     let users = &state.data.users;

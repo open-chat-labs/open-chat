@@ -117,6 +117,31 @@ type RemoveReactionResponse = variant {
     UserSuspended;
 };
 
+type TipMessageArgs = record {
+    chat : Chat;
+    recipient : UserId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    amount : nat;
+    fee : nat;
+};
+
+type TipMessageResponse = variant {
+    Success;
+    ChatNotFound;
+    MessageNotFound;
+    CannotTipSelf;
+    NotAuthorized;
+    TransferCannotBeZero;
+    TransferNotToMessageSender;
+    TransferFailed : text;
+    ChatFrozen;
+    UserSuspended;
+    InternalError : record { text; CompletedCryptoTransaction };
+};
+
 type MarkReadArgs = record {
     messages_read : vec ChatMessagesRead;
     community_messages_read : vec CommunityMessagesRead;
@@ -520,6 +545,22 @@ type ArchiveUnarchiveChatsResponse = variant {
     UserSuspended;
 };
 
+type NamedAccount = record {
+    name : text;
+    account : text;
+};
+
+type SaveCryptoAccountResponse = variant {
+    Success;
+    Invalid;
+    NameTaken;
+    UserSuspended;
+};
+
+type SavedCryptoAccountsResponse = variant {
+    Success : vec NamedAccount;
+};
+
 type InitUserPrincipalMigrationArgs = record {
     new_principal : principal;
 };
@@ -800,6 +841,7 @@ service : {
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
+    tip_message : (TipMessageArgs) -> (TipMessageResponse);
     mark_read : (MarkReadArgs) -> (MarkReadResponse);
     block_user : (BlockUserArgs) -> (BlockUserResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
@@ -825,6 +867,7 @@ service : {
     unpin_chat_v2 : (UnpinChatV2Request) -> (UnpinChatV2Response);
     manage_favourite_chats : (ManageFavouriteChatsArgs) -> (ManageFavouriteChatsResponse);
     archive_unarchive_chats : (ArchiveUnarchiveChatsArgs) -> (ArchiveUnarchiveChatsResponse);
+    save_crypto_account : (NamedAccount) -> (SaveCryptoAccountResponse);
 
     init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
@@ -842,4 +885,5 @@ service : {
     contacts : (ContactsArgs) -> (ContactsResponse) query;
     public_profile : (PublicProfileArgs) -> (PublicProfileResponse) query;
     hot_group_exclusions : (HotGroupExclusionsArgs) -> (HotGroupExclusionsResponse) query;
+    saved_crypto_accounts : (EmptyArgs) -> (SavedCryptoAccountsResponse) query;
 };

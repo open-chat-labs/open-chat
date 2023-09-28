@@ -81,6 +81,7 @@ fn send_reward_transferred_message(user_id: UserId, transfer: nns::CompletedCryp
             transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(transfer)),
             caption: None,
         }),
+        mentioned: Vec::new(),
         replies_to: None,
         forwarded: false,
         correlation_id: 0,

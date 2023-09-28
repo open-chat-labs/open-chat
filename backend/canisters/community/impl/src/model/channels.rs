@@ -7,8 +7,8 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{
     ChannelId, ChannelMatch, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
-    CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissions, MessageIndex, Rules, TimestampMillis, Timestamped,
-    UserId, MAX_THREADS_IN_SUMMARY,
+    CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissionRole, GroupPermissions, MessageIndex, Rules,
+    TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
 use super::members::CommunityMembers;
@@ -30,11 +30,17 @@ impl Channels {
         created_by: UserId,
         default_channels: Vec<(ChannelId, String)>,
         default_channel_rules: Option<Rules>,
+        is_community_public: bool,
         now: TimestampMillis,
     ) -> Channels {
         let channels = default_channels
             .into_iter()
-            .map(|(id, name)| (id, Channel::default(id, name, created_by, default_channel_rules.clone(), now)))
+            .map(|(id, name)| {
+                (
+                    id,
+                    Channel::default(id, name, created_by, default_channel_rules.clone(), is_community_public, now),
+                )
+            })
             .collect();
 
         Channels { channels }
@@ -149,8 +155,14 @@ impl Channel {
         name: String,
         created_by: UserId,
         channel_rules: Option<Rules>,
+        is_community_public: bool,
         now: TimestampMillis,
     ) -> Channel {
+        let mut permissions = GroupPermissions::default();
+        if !is_community_public {
+            permissions.mention_all_members = GroupPermissionRole::Members;
+        }
+
         Channel {
             id,
             chat: GroupChatCore::new(
@@ -162,7 +174,7 @@ impl Channel {
                 None,
                 None,
                 true,
-                GroupPermissions::default(),
+                permissions,
                 None,
                 None,
                 false,
@@ -219,6 +231,7 @@ impl Channel {
                 m.threads.iter(),
                 None,
                 MAX_THREADS_IN_SUMMARY,
+                m.user_id,
                 now,
             ),
             rules_accepted: m
@@ -300,8 +313,13 @@ impl Channel {
                 m.threads.iter(),
                 Some(since),
                 MAX_THREADS_IN_SUMMARY,
+                m.user_id,
                 now,
             ),
+            unfollowed_threads: self
+                .chat
+                .events
+                .unfollowed_threads_since(m.unfollowed_threads.iter(), since, m.user_id),
             rules_accepted: m
                 .rules_accepted
                 .as_ref()

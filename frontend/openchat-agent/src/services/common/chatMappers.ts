@@ -144,6 +144,7 @@ import type {
     ThreadSyncDetails,
     RegisterProposalVoteResponse,
     UserGroupSummary,
+    TipsReceived,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -241,6 +242,7 @@ export function message(candid: ApiMessage): Message {
         messageId: candid.message_id,
         messageIndex: candid.message_index,
         reactions: reactions(candid.reactions),
+        tips: tips(candid.tips),
         edited: candid.edited,
         forwarded: candid.forwarded,
         deleted: content.kind === "deleted_content",
@@ -248,9 +250,23 @@ export function message(candid: ApiMessage): Message {
     };
 }
 
+export function tips(candid: [Principal, [Principal, bigint][]][]): TipsReceived {
+    return candid.reduce((agg, [ledger, tips]) => {
+        agg[ledger.toString()] = tips.reduce(
+            (userTips, [userId, amount]) => {
+                userTips[userId.toString()] = amount;
+                return userTips;
+            },
+            {} as Record<string, bigint>,
+        );
+        return agg;
+    }, {} as TipsReceived);
+}
+
 export function threadSummary(candid: ApiThreadSummary): ThreadSummary {
     return {
         participantIds: new Set(candid.participant_ids.map((p) => p.toString())),
+        followedByMe: candid.followed_by_me,
         numberOfReplies: Number(candid.reply_count),
         latestEventIndex: Number(candid.latest_event_index),
         latestEventTimestamp: candid.latest_event_timestamp,
@@ -1351,7 +1367,7 @@ export function apiPendingCryptoContent(domain: CryptocurrencyContent): ApiCrypt
     };
 }
 
-function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoTransaction {
+export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoTransaction {
     if (domain.kind === "pending") {
         if (domain.token === "ICP") {
             return {
@@ -1694,7 +1710,10 @@ export function updateGroupResponse(
         return { kind: "success", rulesVersion: undefined };
     }
     if ("SuccessV2" in candid) {
-        return { kind: "success", rulesVersion: optional(candid.SuccessV2.rules_version, identity) };
+        return {
+            kind: "success",
+            rulesVersion: optional(candid.SuccessV2.rules_version, identity),
+        };
     }
     if ("DescriptionTooLong" in candid) {
         return { kind: "desc_too_long" };

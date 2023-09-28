@@ -8,8 +8,6 @@ fn user(args: Args) -> Response {
 }
 
 fn user_impl(args: Args, state: &RuntimeState) -> Response {
-    state.trap_if_caller_not_openchat_user();
-
     let mut user = None;
     if let Some(user_id) = args.user_id {
         user = state.data.users.get_by_user_id(&user_id);

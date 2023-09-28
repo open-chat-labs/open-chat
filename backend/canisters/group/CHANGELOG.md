@@ -5,6 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.865](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.865-group)] - 2023-09-27
+
+### Added
+
+- Implement tipping messages ([#4420](https://github.com/open-chat-labs/open-chat/pull/4420))
+- Implement notifications for message tips ([#4427](https://github.com/open-chat-labs/open-chat/pull/4427))
+- Implement follow/unfollow thread ([#4431](https://github.com/open-chat-labs/open-chat/pull/4431))
+
+### Changed
+
+- Disable mentions for messages sent by the ProposalsBot ([#4424](https://github.com/open-chat-labs/open-chat/pull/4424))
+- Simplify `inspect_message` ([#4436](https://github.com/open-chat-labs/open-chat/pull/4436))
+
+### Fixed
+
+- Fix case where you can receive a notification for your own message ([#4425](https://github.com/open-chat-labs/open-chat/pull/4425))
+
 ## [[2.0.855](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.855-group)] - 2023-09-21
 
 ### Added

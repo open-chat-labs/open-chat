@@ -5,6 +5,7 @@ use user_canister::*;
 generate_query_call!(events);
 generate_query_call!(events_by_index);
 generate_query_call!(initial_state);
+generate_query_call!(saved_crypto_accounts);
 generate_query_call!(updates);
 
 // Updates
@@ -22,10 +23,12 @@ generate_update_call!(leave_group);
 generate_update_call!(mark_read);
 generate_update_call!(mute_notifications);
 generate_update_call!(remove_reaction);
+generate_update_call!(save_crypto_account);
 generate_update_call!(send_message_v2);
 generate_update_call!(send_message_with_transfer_to_channel);
 generate_update_call!(send_message_with_transfer_to_group);
 generate_update_call!(set_message_reminder_v2);
+generate_update_call!(tip_message);
 generate_update_call!(unblock_user);
 generate_update_call!(undelete_messages);
 
@@ -34,8 +37,8 @@ pub mod happy_path {
     use crate::User;
     use ic_test_state_machine_client::StateMachine;
     use types::{
-        ChatId, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId, Reaction, Rules, TextContent,
-        TimestampMillis, UserId,
+        CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial, MessageId,
+        Reaction, Rules, TextContent, TimestampMillis, UserId,
     };
 
     pub fn send_text_message(
@@ -242,5 +245,36 @@ pub mod happy_path {
             user_canister::updates::Response::Success(result) => Some(result),
             user_canister::updates::Response::SuccessNoUpdates => None,
         }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn tip_message(
+        env: &mut StateMachine,
+        sender: &User,
+        recipient: UserId,
+        chat: Chat,
+        message_id: MessageId,
+        ledger: CanisterId,
+        token: Cryptocurrency,
+        amount: u128,
+        fee: u128,
+    ) {
+        let response = super::tip_message(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::tip_message::Args {
+                chat,
+                recipient,
+                thread_root_message_index: None,
+                message_id,
+                ledger,
+                token,
+                amount,
+                fee,
+            },
+        );
+
+        assert!(matches!(response, user_canister::tip_message::Response::Success))
     }
 }

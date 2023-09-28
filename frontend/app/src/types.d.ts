@@ -52,6 +52,7 @@ declare namespace svelteHTML {
         "on:swiping"?: (event: CustomEvent) => void;
         "on:leftswipe"?: (event: CustomEvent) => void;
         "on:rightswipe"?: (event: CustomEvent) => void;
+        "on:profile-clicked"?: (event: CustomEvent) => void;
     }
 }
 

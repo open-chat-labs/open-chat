@@ -18,7 +18,6 @@ import type {
     Metrics,
     SendMessageSuccess,
     TransferSuccess,
-    ThreadSummary,
     UserLookup,
     UserSummary,
     LocalChatSummaryUpdates,
@@ -35,6 +34,8 @@ import type {
     ChatListScope,
     CryptocurrencyDetails,
     TimelineItem,
+    TipsReceived,
+    ThreadSummary,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -238,6 +239,7 @@ export function createMessage(
         messageId: newMessageId(),
         messageIndex,
         reactions: [],
+        tips: {},
         edited: false,
         forwarded,
         deleted: false,
@@ -351,7 +353,8 @@ export function mergeLocalSummaryUpdates(
                             notificationsMuted:
                                 updated.notificationsMuted ?? current.membership.notificationsMuted,
                             archived: updated.archived ?? current.membership.archived,
-                            rulesAccepted: updated.rulesAccepted ?? current.membership.rulesAccepted,
+                            rulesAccepted:
+                                updated.rulesAccepted ?? current.membership.rulesAccepted,
                         },
                     });
                 } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
@@ -1232,15 +1235,16 @@ function mergeLocalUpdates(
         message.reactions = reactions;
     }
 
+    if (localUpdates?.tips !== undefined) {
+        message.tips = mergeLocalTips(message.tips, localUpdates.tips);
+    }
+
     if (localUpdates?.pollVotes !== undefined && message.content.kind === "poll_content") {
         message.content = updatePollContent(message.content, localUpdates.pollVotes);
     }
 
     if (localUpdates?.threadSummary !== undefined) {
-        message.thread =
-            message.thread === undefined
-                ? localUpdates.threadSummary
-                : mergeThreadSummaries(message.thread, localUpdates.threadSummary);
+        message.thread = { ...(message.thread ?? defaultThreadSummary()), ...localUpdates.threadSummary };
     }
 
     if (
@@ -1303,6 +1307,32 @@ function mergeLocalUpdates(
     return message;
 }
 
+export function mergeLocalTips(existing?: TipsReceived, local?: TipsReceived): TipsReceived {
+    const merged: TipsReceived = {};
+    for (const ledger in existing) {
+        merged[ledger] = { ...existing[ledger] };
+    }
+    for (const ledger in local) {
+        if (!merged[ledger]) {
+            merged[ledger] = {};
+        }
+        for (const userId in local[ledger]) {
+            merged[ledger][userId] = local[ledger][userId];
+        }
+    }
+    return merged;
+}
+
+function defaultThreadSummary(): ThreadSummary {
+    return {
+        participantIds: new Set<string>(),
+        followedByMe: false,
+        numberOfReplies: 0,
+        latestEventIndex: 0,
+        latestEventTimestamp: BigInt(0),            
+    };
+}
+
 function applyTranslation(content: MessageContent, translation: string): MessageContent {
     switch (content.kind) {
         case "text_content": {
@@ -1335,18 +1365,6 @@ function applyTranslation(content: MessageContent, translation: string): Message
         default:
             return content;
     }
-}
-
-export function mergeThreadSummaries(a: ThreadSummary, b: ThreadSummary): ThreadSummary {
-    return {
-        participantIds: new Set<string>([...a.participantIds, ...b.participantIds]),
-        numberOfReplies: Math.max(a.numberOfReplies, b.numberOfReplies),
-        latestEventIndex: Math.max(a.latestEventIndex, b.latestEventIndex),
-        latestEventTimestamp:
-            a.latestEventTimestamp > b.latestEventTimestamp
-                ? a.latestEventTimestamp
-                : b.latestEventTimestamp,
-    };
 }
 
 export function applyLocalReaction(local: LocalReaction, reactions: Reaction[]): Reaction[] {

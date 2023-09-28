@@ -30,6 +30,7 @@ import {
     updateUserGroupResponse,
     deleteUserGroupsResponse,
     setMemberDisplayNameResponse,
+    followThreadResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -123,6 +124,7 @@ import type {
     DeleteUserGroupsResponse,
     SetMemberDisplayNameResponse,
     UpdatedRules,
+    FollowThreadResponse,
 } from "openchat-shared";
 import { textToCode, DestinationInvalidError } from "openchat-shared";
 import {
@@ -1231,6 +1233,17 @@ export class CommunityClient extends CandidService {
                 user_group_ids: userGroupIds,
             }),
             deleteUserGroupsResponse,
+        );
+    }
+
+    followThread(channelId: string, threadRootMessageIndex: number, follow: boolean): Promise<FollowThreadResponse> {
+        const args = {
+            channel_id: BigInt(channelId),
+            thread_root_message_index: threadRootMessageIndex,
+        };
+        return this.handleResponse(
+            follow ? this.service.follow_thread(args) : this.service.unfollow_thread(args),
+            followThreadResponse,
         );
     }
 }

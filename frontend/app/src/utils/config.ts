@@ -27,6 +27,7 @@ export const configKeys = {
     selectedAuthProvider: "openchat_selected_auth_provider",
     userCreated: "openchat_user_created",
     lowBandwidth: "openchat_lowbandwidth",
+    dclickReply: "openchat_dclickreply",
     shownAirdropPrompt: "openchat_shown_airdrop_prompt",
     exploreGroupsDismissed: "openchat_discover_hot_groups_dismissed",
     communityVisibilitySection: "openchat_community_visibility_section",

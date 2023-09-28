@@ -6,7 +6,12 @@ export const DOMPurifyOneLine = createOneLine();
 function createDefault(): DOMPurifyI {
     const domPurify = DOMPurify();
     domPurify.setConfig({
-        ALLOWED_ATTR: ["target", "href", "class"],
+        ALLOWED_ATTR: ["target", "href", "class", "user-id", "suppress-links"],
+        CUSTOM_ELEMENT_HANDLING: {
+            tagNameCheck: (tag) => tag === "profile-link",
+            attributeNameCheck: (attr) => ["text", "userId"].includes(attr),
+            allowCustomizedBuiltInElements: true,
+        },
     });
     return domPurify;
 }
@@ -14,8 +19,13 @@ function createDefault(): DOMPurifyI {
 function createOneLine(): DOMPurifyI {
     const domPurify = DOMPurify();
     domPurify.setConfig({
-        ALLOWED_ATTR: ["target", "href", "class"],
+        ALLOWED_ATTR: ["target", "href", "class", "user-id", "suppress-links"],
         FORBID_TAGS: ["br"],
+        CUSTOM_ELEMENT_HANDLING: {
+            tagNameCheck: (tag) => tag === "profile-link",
+            attributeNameCheck: (attr) => ["text", "userId"].includes(attr),
+            allowCustomizedBuiltInElements: true,
+        },
     });
     domPurify.addHook("uponSanitizeElement", (node) => {
         if (node.tagName === "BR") {
@@ -24,4 +34,3 @@ function createOneLine(): DOMPurifyI {
     });
     return domPurify;
 }
-

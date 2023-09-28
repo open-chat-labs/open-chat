@@ -1,4 +1,4 @@
-import type { BlobReference, DataContent } from "../data/data";
+import type { DataContent } from "../data/data";
 import type { UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { AccessGate, AccessControlled, VersionedRules, UpdatedRules } from "../access";
@@ -473,6 +473,10 @@ export type EnhancedReplyContext = RehydratedReplyContext & {
     content: MessageContent;
 };
 
+type LedgerId = string;
+type UserId = string;
+export type TipsReceived = Record<LedgerId, Record<UserId, bigint>>;
+
 export type Message = {
     kind: "message";
     messageId: bigint;
@@ -481,6 +485,7 @@ export type Message = {
     content: MessageContent;
     repliesTo?: ReplyContext;
     reactions: Reaction[];
+    tips: TipsReceived;
     edited: boolean;
     forwarded: boolean;
     deleted: boolean;
@@ -489,6 +494,7 @@ export type Message = {
 
 export type ThreadSummary = {
     participantIds: Set<string>;
+    followedByMe: boolean;
     numberOfReplies: number;
     latestEventIndex: number;
     latestEventTimestamp: bigint;
@@ -547,8 +553,9 @@ export type LocalMessageUpdates = {
     prizeClaimed?: string;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
-    threadSummary?: ThreadSummary;
+    threadSummary?: Partial<ThreadSummary>;
     lastUpdated: number;
+    tips?: TipsReceived;
 };
 
 export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;
@@ -713,12 +720,6 @@ export type PollVoteDeleted = {
 
 export type PollEnded = {
     kind: "poll_ended";
-    messageIndex: number;
-    eventIndex: number;
-};
-
-export type ThreadUpdated = {
-    kind: "thread_updated";
     messageIndex: number;
     eventIndex: number;
 };
@@ -1045,9 +1046,10 @@ export type UserCanisterGroupChatSummaryUpdates = {
     dateReadPinned: bigint | undefined;
 };
 
-export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;
-
-type ChatSummaryUpdatesCommon = {
+export type DirectChatSummaryUpdates = {
+    id: DirectChatIdentifier;
+    kind: "direct_chat";
+    readByThemUpTo?: number;
     readByMeUpTo?: number;
     lastUpdated: bigint;
     latestEventIndex?: number;
@@ -1057,30 +1059,6 @@ type ChatSummaryUpdatesCommon = {
     metrics?: Metrics;
     myMetrics?: Metrics;
     archived?: boolean;
-};
-
-export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
-    id: DirectChatIdentifier;
-    kind: "direct_chat";
-    readByThemUpTo?: number;
-};
-
-export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
-    id: GroupChatIdentifier;
-    kind: "group_chat";
-    name?: string;
-    description?: string;
-    avatarBlobReferenceUpdate?: OptionUpdate<BlobReference>;
-    memberCount?: number;
-    myRole?: MemberRole;
-    mentions: Mention[];
-    permissions?: ChatPermissions;
-    public?: boolean;
-    latestThreads?: ThreadSyncDetailsUpdates[];
-    subtype?: GroupSubtypeUpdate;
-    frozen?: OptionUpdate<boolean>;
-    dateLastPinned?: bigint;
-    dateReadPinned?: bigint;
 };
 
 export type GroupSubtypeUpdate =
@@ -1299,6 +1277,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     metrics: Metrics | undefined;
     myMetrics: Metrics | undefined;
     latestThreads: GroupCanisterThreadDetails[];
+    unfollowedThreads: number[];
     frozen: OptionUpdate<boolean>;
     updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;
@@ -1637,9 +1616,9 @@ export type MarkReadResponse = "success";
 
 export type UpdateGroupResponse =
     | {
-        kind: "success";
-        rulesVersion: number | undefined;
-    }
+          kind: "success";
+          rulesVersion: number | undefined;
+      }
     | { kind: "not_authorized" }
     | { kind: "name_too_short" }
     | { kind: "name_too_long" }
@@ -1879,3 +1858,5 @@ export type PublicGroupSummaryResponse =
     | GroupMoved;
 
 export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
+
+export type TipMessageResponse = Success | Failure;

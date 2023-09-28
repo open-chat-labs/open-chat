@@ -54,14 +54,6 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    /// Traps if the caller is not an OpenChat user or an OpenChat user's canister
-    pub fn trap_if_caller_not_openchat_user(&self) {
-        if !self.is_caller_openchat_user() {
-            #[cfg(not(test))]
-            ic_cdk::trap("Not authorized");
-        }
-    }
-
     pub fn is_caller_openchat_user(&self) -> bool {
         let caller = self.env.caller();
         self.data.users.get(&caller).is_some()

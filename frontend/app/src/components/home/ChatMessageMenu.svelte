@@ -19,14 +19,22 @@
     import Pin from "svelte-material-icons/Pin.svelte";
     import PinOff from "svelte-material-icons/PinOff.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
-    import EyeOff from "svelte-material-icons/EyeOff.svelte";
+    import CollapseIcon from "svelte-material-icons/ArrowCollapseUp.svelte";
+    import EyeArrowRightIcon from "svelte-material-icons/EyeArrowRight.svelte";
+    import EyeOffIcon from "svelte-material-icons/EyeOff.svelte";
     import HoverIcon from "../HoverIcon.svelte";
+    import Bitcoin from "../icons/Bitcoin.svelte";
     import { _, locale } from "svelte-i18n";
     import { translationCodes } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
-    import type { ChatIdentifier, Message, OpenChat } from "openchat-client";
+    import {
+        LEDGER_CANISTER_ICP,
+        type ChatIdentifier,
+        type Message,
+        type OpenChat,
+    } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
     import { now } from "../../stores/time";
@@ -61,9 +69,11 @@
     export let crypto: boolean;
     export let msg: Message;
     export let threadRootMessage: Message | undefined;
+    export let canTip: boolean;
 
     let menuIcon: MenuIcon;
 
+    $: lastCryptoSent = client.lastCryptoSent;
     $: canRemind =
         msg.content.kind !== "message_reminder_content" &&
         msg.content.kind !== "message_reminder_created_content";
@@ -78,6 +88,12 @@
         msg.messageId === threadRootMessage?.messageId
             ? undefined
             : threadRootMessage?.messageIndex;
+    $: threadSummary = threadRootMessage?.thread ?? msg.thread;
+    $: canFollow =
+        threadSummary !== undefined &&
+        !threadSummary.followedByMe &&
+        !threadSummary.participantIds.has(user.userId);
+    $: canUnfollow = threadSummary !== undefined && threadSummary.followedByMe;
 
     export function showMenu() {
         menuIcon?.showMenu();
@@ -218,6 +234,23 @@
                 toastStore.showFailureToast("unableToTranslate");
             });
     }
+
+    function followThread(follow: boolean) {
+        if ((follow && !canFollow) || (!follow && !canUnfollow)) {
+            return;
+        }
+
+        const rootMessage = threadRootMessage ?? msg;
+        client.followThread(chatId, rootMessage, follow).then((success) => {
+            if (!success) {
+                if (follow) {
+                    toastStore.showFailureToast("followThreadFailed");
+                } else {
+                    toastStore.showFailureToast("unfollowThreadFailed");
+                }
+            }
+        });
+    }
 </script>
 
 <div class="menu" class:rtl={$rtlStore}>
@@ -231,11 +264,31 @@
             <Menu centered>
                 {#if isProposal && !inert}
                     <MenuItem on:click={collapseMessage}>
-                        <EyeOff size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <CollapseIcon
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
                         <div slot="text">{$_("proposal.collapse")}</div>
                     </MenuItem>
                 {/if}
                 {#if confirmed && !inert && !failed}
+                    {#if canFollow}
+                        <MenuItem on:click={() => followThread(true)}>
+                            <EyeArrowRightIcon
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
+                            <div slot="text">{$_("followThread")}</div>
+                        </MenuItem>
+                    {:else if canUnfollow}
+                        <MenuItem on:click={() => followThread(false)}>
+                            <EyeOffIcon
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
+                            <div slot="text">{$_("unfollowThread")}</div>
+                        </MenuItem>
+                    {/if}
                     {#if publicGroup && canShare}
                         <MenuItem on:click={shareMessage}>
                             <ShareIcon
@@ -351,6 +404,14 @@
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <div slot="text">{$_("editMessage")}</div>
+                    </MenuItem>
+                {/if}
+                {#if canTip}
+                    <MenuItem
+                        on:click={() =>
+                            dispatch("tipMessage", $lastCryptoSent ?? LEDGER_CANISTER_ICP)}>
+                        <Bitcoin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <div slot="text">{$_("tip.menu")}</div>
                     </MenuItem>
                 {/if}
                 <MenuItem separator />

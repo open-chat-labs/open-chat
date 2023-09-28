@@ -1,6 +1,6 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
-    DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, UndeleteMessageResult,
+    DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, TipMessageArgs, UndeleteMessageResult,
 };
 use lazy_static::lazy_static;
 use regex_lite::Regex;
@@ -13,8 +13,8 @@ use types::{
     GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
     InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex,
     MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions,
-    PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
+    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
+    TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -378,8 +378,7 @@ impl GroupChatCore {
                     }
                 }
                 ChatEventInternal::GroupRulesChanged(_) => {
-                    if result.rules.is_none() {
-                        result.rules = Some(self.rules.clone().into());
+                    if result.chat_rules.is_none() {
                         result.chat_rules = Some(self.rules.clone().into());
                     }
                 }
@@ -733,6 +732,7 @@ impl GroupChatCore {
             thread_root_message_index,
             message_id,
             content: content.into(),
+            mentioned: mentioned.clone(),
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
             correlation_id: 0,
@@ -745,7 +745,7 @@ impl GroupChatCore {
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
 
         let mut users_to_notify = HashSet::new();
-        let mut thread_participants: Option<HashSet<UserId>> = None;
+        let mut thread_followers: Option<HashSet<UserId>> = None;
 
         if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
             self.events
@@ -753,10 +753,14 @@ impl GroupChatCore {
                 .message_internal(root_message_index.into())
                 .cloned()
         }) {
-            users_to_notify.insert(thread_root_message.sender);
+            if thread_root_message.sender != sender {
+                users_to_notify.insert(thread_root_message.sender);
+            }
 
             if let Some(thread_summary) = thread_root_message.thread_summary {
-                thread_participants = Some(HashSet::from_iter(thread_summary.participant_ids));
+                let followers = thread_summary.followers();
+                let participants = HashSet::from_iter(thread_summary.participant_ids);
+                thread_followers = Some(followers.union(&participants).copied().collect());
 
                 let is_first_reply = thread_summary.reply_count == 1;
                 if is_first_reply {
@@ -769,15 +773,18 @@ impl GroupChatCore {
             }
         }
 
+        // Disable mentions for messages sent by the ProposalsBot
+        let mentions_disabled = sender == proposals_bot_user_id;
+
         for member in self.members.iter_mut().filter(|m| !m.suspended.value && m.user_id != sender) {
-            let mentioned = everyone_mentioned || mentions.contains(&member.user_id);
+            let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
 
             if mentioned {
                 // Mention this member
                 member.mentions.add(thread_root_message_index, message_index, now);
             }
 
-            let notification_candidate = thread_participants.as_ref().map_or(true, |ps| ps.contains(&member.user_id));
+            let notification_candidate = thread_followers.as_ref().map_or(true, |ps| ps.contains(&member.user_id));
 
             if mentioned || (notification_candidate && !member.notifications_muted.value) {
                 // Notify this member
@@ -856,6 +863,25 @@ impl GroupChatCore {
                     now,
                 })
                 .into()
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn tip_message(&mut self, args: TipMessageArgs) -> TipMessageResult {
+        use TipMessageResult::*;
+
+        if let Some(member) = self.members.get(&args.user_id) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+            if !member.role.can_react_to_messages(&self.permissions) {
+                return NotAuthorized;
+            }
+
+            let min_visible_event_index = member.min_visible_event_index();
+
+            self.events.tip_message(args, min_visible_event_index).into()
         } else {
             UserNotInGroup
         }
@@ -1511,6 +1537,58 @@ impl GroupChatCore {
                 .map_or(false, |accepted| accepted.value >= self.rules.text.version))
     }
 
+    pub fn follow_thread(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: MessageIndex,
+        now: TimestampMillis,
+    ) -> FollowThreadResult {
+        use FollowThreadResult::*;
+
+        if let Some(member) = self.members.get_mut(&user_id) {
+            match self
+                .events
+                .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
+            {
+                chat_events::FollowThreadResult::Success => {
+                    member.unfollowed_threads.retain(|i| *i != thread_root_message_index);
+                    member.threads.insert(thread_root_message_index);
+                    Success
+                }
+                chat_events::FollowThreadResult::AlreadyFollowing => AlreadyFollowing,
+                chat_events::FollowThreadResult::ThreadNotFound => ThreadNotFound,
+            }
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn unfollow_thread(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: MessageIndex,
+        now: TimestampMillis,
+    ) -> UnfollowThreadResult {
+        use UnfollowThreadResult::*;
+
+        if let Some(member) = self.members.get_mut(&user_id) {
+            match self
+                .events
+                .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
+            {
+                chat_events::UnfollowThreadResult::Success => {
+                    member.threads.remove(&thread_root_message_index);
+                    member.unfollowed_threads.push_if_not_contains(thread_root_message_index);
+                    Success
+                }
+                chat_events::UnfollowThreadResult::NotFollowing => NotFollowing,
+                chat_events::UnfollowThreadResult::ThreadNotFound => ThreadNotFound,
+            }
+        } else {
+            UserNotInGroup
+        }
+    }
+
     fn events_reader(
         &self,
         user_id: Option<UserId>,
@@ -1650,6 +1728,27 @@ impl From<chat_events::AddRemoveReactionResult> for AddRemoveReactionResult {
     }
 }
 
+pub enum TipMessageResult {
+    Success,
+    MessageNotFound,
+    RecipientMismatch,
+    CannotTipSelf,
+    NotAuthorized,
+    UserNotInGroup,
+    UserSuspended,
+}
+
+impl From<chat_events::TipMessageResult> for TipMessageResult {
+    fn from(value: chat_events::TipMessageResult) -> Self {
+        match value {
+            chat_events::TipMessageResult::Success => TipMessageResult::Success,
+            chat_events::TipMessageResult::MessageNotFound => TipMessageResult::MessageNotFound,
+            chat_events::TipMessageResult::RecipientMismatch => TipMessageResult::RecipientMismatch,
+            chat_events::TipMessageResult::CannotTipSelf => TipMessageResult::CannotTipSelf,
+        }
+    }
+}
+
 pub enum DeleteMessagesResult {
     Success(Vec<(MessageId, DeleteMessageResult)>),
     MessageNotFound,
@@ -1756,6 +1855,22 @@ pub enum InvitedUsersResult {
 pub struct InvitedUsersSuccess {
     pub invited_users: Vec<UserId>,
     pub group_name: String,
+}
+
+pub enum FollowThreadResult {
+    Success,
+    AlreadyFollowing,
+    ThreadNotFound,
+    UserNotInGroup,
+    UserSuspended,
+}
+
+pub enum UnfollowThreadResult {
+    Success,
+    NotFollowing,
+    ThreadNotFound,
+    UserNotInGroup,
+    UserSuspended,
 }
 
 #[derive(Default)]

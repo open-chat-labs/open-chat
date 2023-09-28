@@ -105,6 +105,7 @@ describe("thread utils", () => {
                             sender: "",
                             content: { kind: "placeholder_content" },
                             reactions: [],
+                            tips: {},
                             edited: false,
                             forwarded: false,
                             deleted: false,
@@ -112,7 +113,7 @@ describe("thread utils", () => {
                     },
                 ],
                 messageIds: new Set(),
-            }
+            },
         );
         const chat = mergeUnconfirmedThreadsIntoSummary(defaultGroupChat, unconf);
         expect(chat.membership.latestThreads[0].latestEventIndex).toEqual(4);
@@ -211,7 +212,7 @@ describe("updating poll votes", () => {
                 const updated = addVoteToPoll(
                     "abcdef",
                     1,
-                    clonePoll({ ...poll, votes: hiddenVotes })
+                    clonePoll({ ...poll, votes: hiddenVotes }),
                 );
                 expect(updated.user).toEqual([0, 1]);
                 expect(updated.total.votes).toEqual(4);
@@ -220,7 +221,7 @@ describe("updating poll votes", () => {
                 const updated = addVoteToPoll(
                     "abcdef",
                     1,
-                    clonePoll({ ...poll, votes: visibleVotes })
+                    clonePoll({ ...poll, votes: visibleVotes }),
                 );
                 expect(updated.user).toEqual([0, 1]);
                 expect(updated.total.votes).toEqual({ 0: ["abcdef"], 1: ["abcdef"] });
@@ -232,7 +233,7 @@ describe("updating poll votes", () => {
                     const updated = addVoteToPoll(
                         "abcdef",
                         0,
-                        clonePoll({ ...poll, config: singleVote })
+                        clonePoll({ ...poll, config: singleVote }),
                     );
                     expect(updated).toEqual(anonVotes);
                 });
@@ -240,7 +241,7 @@ describe("updating poll votes", () => {
                     const updated = addVoteToPoll(
                         "abcdef",
                         1,
-                        clonePoll({ ...poll, config: singleVote })
+                        clonePoll({ ...poll, config: singleVote }),
                     );
                     expect(updated.user).toEqual([1]);
                     expect(updated.total.votes).toEqual({ 0: 0, 1: 1, 2: 10 });
@@ -253,7 +254,7 @@ describe("updating poll votes", () => {
                             ...poll,
                             config: singleVote,
                             votes: hiddenVotes,
-                        })
+                        }),
                     );
                     expect(updated.user).toEqual([1]);
                     expect(updated.total.votes).toEqual(3);
@@ -266,7 +267,7 @@ describe("updating poll votes", () => {
                             ...poll,
                             config: singleVote,
                             votes: visibleVotes,
-                        })
+                        }),
                     );
                     expect(updated.user).toEqual([1]);
                     expect(updated.total.votes).toEqual({ 0: [], 1: ["abcdef"] });
@@ -282,7 +283,7 @@ describe("updating poll votes", () => {
                             ...poll,
                             votes: anonVotesNoPrev,
                             config: singleVote,
-                        })
+                        }),
                     );
                     expect(updated.user).toEqual([1]);
                     expect(updated.total.votes).toEqual({ 0: 1, 1: 1, 2: 10 });
@@ -295,7 +296,7 @@ describe("updating poll votes", () => {
                             ...poll,
                             config: singleVote,
                             votes: hiddenVotesNoPrev,
-                        })
+                        }),
                     );
                     expect(updated.user).toEqual([1]);
                     expect(updated.total.votes).toEqual(4);
@@ -308,7 +309,7 @@ describe("updating poll votes", () => {
                             ...poll,
                             config: singleVote,
                             votes: visibleVotesNoPrev,
-                        })
+                        }),
                     );
                     expect(updated.user).toEqual([1]);
                     expect(updated.total.votes).toEqual({ 0: ["123456"], 1: ["abcdef"] });

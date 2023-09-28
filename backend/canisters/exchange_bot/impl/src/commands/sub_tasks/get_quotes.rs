@@ -3,7 +3,7 @@ use crate::swap_client::SwapClient;
 use exchange_bot_canister::ExchangeId;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
-use ledger_utils::format_crypto_amount;
+use ledger_utils::format_crypto_amount_with_symbol;
 use std::future::ready;
 
 pub(crate) async fn get_quotes<C: FnMut(ExchangeId, CommandSubTaskResult<u128>)>(
@@ -30,11 +30,7 @@ async fn get_quote(client: Box<dyn SwapClient>, amount: u128) -> (ExchangeId, Co
     let result = match response {
         Ok(amount_out) => {
             let output_token = client.output_token();
-            let text = format!(
-                "{} {}",
-                format_crypto_amount(amount_out, output_token.decimals),
-                output_token.token.token_symbol()
-            );
+            let text = format_crypto_amount_with_symbol(amount_out, output_token.decimals, output_token.token.token_symbol());
             CommandSubTaskResult::Complete(amount_out, Some(text))
         }
         Err(error) => CommandSubTaskResult::Failed(format!("{error:?}")),

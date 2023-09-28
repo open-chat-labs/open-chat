@@ -185,6 +185,7 @@ pub(crate) fn handle_message_impl(
         message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
         sender,
         content,
+        mentioned: Vec::new(),
         replies_to,
         forwarded: args.forwarding,
         correlation_id: args.correlation_id,

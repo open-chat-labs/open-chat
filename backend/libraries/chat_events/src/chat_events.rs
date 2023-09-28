@@ -17,7 +17,7 @@ use types::{
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention,
     Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, Milliseconds, MultiUserChat, PollVotes,
     PrizeWinnerContent, ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult,
-    TimestampMillis, Timestamped, UserId, VoteOperation,
+    TimestampMillis, Timestamped, Tips, UserId, VoteOperation,
 };
 use types::{Hash, MessageReport, ReportedMessageInternal};
 
@@ -109,6 +109,7 @@ impl ChatEvents {
             content: args.content,
             replies_to: args.replies_to,
             reactions: Vec::new(),
+            tips: Tips::default(),
             last_updated: None,
             last_edited: None,
             deleted_by: None,
@@ -137,7 +138,7 @@ impl ChatEvents {
             self.update_thread_summary(
                 root_message_index,
                 args.sender,
-                Some(message_index),
+                args.mentioned,
                 push_event_result.index,
                 args.now,
             );
@@ -540,6 +541,41 @@ impl ChatEvents {
         }
     }
 
+    pub fn tip_message(&mut self, args: TipMessageArgs, min_visible_event_index: EventIndex) -> TipMessageResult {
+        use TipMessageResult::*;
+
+        if let Some((message, event_index)) = self.message_internal_mut(
+            min_visible_event_index,
+            args.thread_root_message_index,
+            args.message_id.into(),
+            args.now,
+        ) {
+            if message.sender == args.user_id {
+                return CannotTipSelf;
+            }
+            if message.sender != args.recipient {
+                return RecipientMismatch;
+            }
+
+            message.tips.push(args.ledger, args.user_id, args.amount);
+            message.last_updated = Some(args.now);
+            self.last_updated_timestamps
+                .mark_updated(args.thread_root_message_index, event_index, args.now);
+
+            add_to_metrics(
+                &mut self.metrics,
+                &mut self.per_user_metrics,
+                args.user_id,
+                |m| incr(&mut m.tips),
+                args.now,
+            );
+
+            Success
+        } else {
+            MessageNotFound
+        }
+    }
+
     pub fn reserve_prize(
         &mut self,
         message_id: MessageId,
@@ -607,6 +643,7 @@ impl ChatEvents {
                             transaction,
                             prize_message: message_index,
                         }),
+                        mentioned: Vec::new(),
                         replies_to: None,
                         forwarded: false,
                         correlation_id: 0,
@@ -721,6 +758,7 @@ impl ChatEvents {
                     notes,
                 }],
             }),
+            mentioned: Vec::new(),
             replies_to: Some(ReplyContextInternal {
                 chat_if_other: Some((chat.into(), thread_root_message_index)),
                 event_index,
@@ -744,11 +782,63 @@ impl ChatEvents {
         }
     }
 
+    pub fn follow_thread(
+        &mut self,
+        thread_root_message_index: MessageIndex,
+        user_id: UserId,
+        min_visible_event_index: EventIndex,
+        now: TimestampMillis,
+    ) -> FollowThreadResult {
+        use FollowThreadResult::*;
+
+        if let Some((root_message, event_index)) =
+            self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into(), now)
+        {
+            if let Some(summary) = &mut root_message.thread_summary {
+                if !summary.participant_ids.contains(&user_id) && summary.set_follow(user_id, now, true) {
+                    root_message.last_updated = Some(now);
+                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    return Success;
+                } else {
+                    return AlreadyFollowing;
+                }
+            }
+        }
+
+        ThreadNotFound
+    }
+
+    pub fn unfollow_thread(
+        &mut self,
+        thread_root_message_index: MessageIndex,
+        user_id: UserId,
+        min_visible_event_index: EventIndex,
+        now: TimestampMillis,
+    ) -> UnfollowThreadResult {
+        use UnfollowThreadResult::*;
+
+        if let Some((root_message, event_index)) =
+            self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into(), now)
+        {
+            if let Some(summary) = &mut root_message.thread_summary {
+                if summary.set_follow(user_id, now, false) {
+                    root_message.last_updated = Some(now);
+                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    return Success;
+                } else {
+                    return NotFollowing;
+                }
+            }
+        }
+
+        ThreadNotFound
+    }
+
     fn update_thread_summary(
         &mut self,
         thread_root_message_index: MessageIndex,
         user_id: UserId,
-        latest_thread_message_index_if_updated: Option<MessageIndex>,
+        mentioned_users: Vec<UserId>,
         latest_event_index: EventIndex,
         now: TimestampMillis,
     ) {
@@ -761,10 +851,15 @@ impl ChatEvents {
         let summary = root_message.thread_summary.get_or_insert_with(ThreadSummaryInternal::default);
         summary.latest_event_index = latest_event_index;
         summary.latest_event_timestamp = now;
+        summary.reply_count += 1;
+        summary.participant_ids.push_if_not_contains(user_id);
+        summary.follower_ids.remove(&user_id);
 
-        if latest_thread_message_index_if_updated.is_some() {
-            summary.reply_count += 1;
-            summary.participant_ids.push_if_not_contains(user_id);
+        // If a user is mentioned in a thread they automatically become a follower
+        for muid in mentioned_users {
+            if !summary.participant_ids.contains(&muid) {
+                summary.set_follow(user_id, now, true);
+            }
         }
 
         self.last_updated_timestamps.mark_updated(None, event_index, now);
@@ -957,17 +1052,29 @@ impl ChatEvents {
         root_message_indexes: impl Iterator<Item = &'a MessageIndex>,
         updated_since: Option<TimestampMillis>,
         max_threads: usize,
+        my_user_id: UserId,
         now: TimestampMillis,
     ) -> Vec<GroupCanisterThreadDetails> {
         root_message_indexes
-            .filter(|&&root_message_index| {
-                self.main
-                    .is_accessible(root_message_index.into(), min_visible_event_index, now)
-            })
             .filter_map(|root_message_index| {
                 self.threads.get(root_message_index).and_then(|thread_events| {
-                    let last_updated = thread_events.latest_event_timestamp()?;
+                    let mut last_updated = thread_events.latest_event_timestamp()?;
                     let latest_event = thread_events.latest_event_index()?;
+                    let follower = self
+                        .main
+                        .get((*root_message_index).into(), min_visible_event_index, now)?
+                        .event
+                        .as_message()?
+                        .thread_summary
+                        .as_ref()?
+                        .get_follower(my_user_id);
+
+                    if let Some(follower) = follower {
+                        if follower.value {
+                            last_updated = last_updated.max(follower.timestamp);
+                        }
+                    }
+
                     updated_since
                         .map_or(true, |since| last_updated > since)
                         .then_some(GroupCanisterThreadDetails {
@@ -981,6 +1088,35 @@ impl ChatEvents {
             .sorted_unstable_by_key(|t| Reverse(t.last_updated))
             .take(max_threads)
             .collect()
+    }
+
+    pub fn unfollowed_threads_since<'a>(
+        &self,
+        root_message_indexes: impl DoubleEndedIterator<Item = &'a MessageIndex>,
+        updated_since: TimestampMillis,
+        my_user_id: UserId,
+    ) -> Vec<MessageIndex> {
+        let mut unfollowed = Vec::new();
+
+        for message_index in root_message_indexes.rev() {
+            if let Some(wrapped_event) = self.main.get((*message_index).into(), EventIndex::default(), 0) {
+                if let Some(message) = wrapped_event.event.as_message() {
+                    if let Some(thread_summary) = message.thread_summary.as_ref() {
+                        if let Some(follower) = thread_summary.get_follower(my_user_id) {
+                            if follower.timestamp <= updated_since {
+                                break;
+                            }
+
+                            if !follower.value {
+                                unfollowed.push(*message_index);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        unfollowed
     }
 
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResult {
@@ -1182,6 +1318,7 @@ pub struct PushMessageArgs {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub content: MessageContentInternal,
+    pub mentioned: Vec<UserId>,
     pub replies_to: Option<ReplyContextInternal>,
     pub forwarded: bool,
     pub correlation_id: u64,
@@ -1297,6 +1434,25 @@ pub enum AddRemoveReactionResult {
     MessageNotFound,
 }
 
+#[derive(Clone)]
+pub struct TipMessageArgs {
+    pub user_id: UserId,
+    pub recipient: UserId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub ledger: CanisterId,
+    pub token: Cryptocurrency,
+    pub amount: u128,
+    pub now: TimestampMillis,
+}
+
+pub enum TipMessageResult {
+    Success,
+    MessageNotFound,
+    CannotTipSelf,
+    RecipientMismatch,
+}
+
 pub enum ReservePrizeResult {
     Success(Cryptocurrency, CanisterId, Tokens),
     MessageNotFound,
@@ -1316,6 +1472,18 @@ pub enum UnreservePrizeResult {
     Success,
     MessageNotFound,
     ReservationNotFound,
+}
+
+pub enum FollowThreadResult {
+    Success,
+    AlreadyFollowing,
+    ThreadNotFound,
+}
+
+pub enum UnfollowThreadResult {
+    Success,
+    NotFollowing,
+    ThreadNotFound,
 }
 
 #[derive(Copy, Clone)]

@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Subscriber, Unsubscriber } from "svelte/store";
 import {
-    type ChatIdentifier,
     ChatMap,
+    MessageContextMap,
+    type ChatIdentifier,
     type ChatSummary,
     type MarkReadRequest,
     type MarkReadResponse,
     type Mention,
+    type MessageContext,
     type ThreadRead,
     type ThreadSyncDetails,
 } from "openchat-shared";
@@ -70,7 +72,7 @@ type MessagesReadByChat = ChatMap<MessagesRead>;
 
 export type MessageReadState = {
     serverState: MessagesReadByChat;
-    waiting: ChatMap<Map<bigint, number>>;
+    waiting: MessageContextMap<Map<bigint, number>>;
     state: MessagesReadByChat;
 };
 
@@ -82,7 +84,7 @@ export class MessageReadTracker {
      * The waiting structure is either keyed on chatId for normal chat messages or
      * of chatId_threadRootMessageIndex for thread messages
      */
-    public waiting: ChatMap<Map<bigint, number>> = new ChatMap<Map<bigint, number>>(); // The map is messageId -> (unconfirmed) messageIndex
+    public waiting: MessageContextMap<Map<bigint, number>> = new MessageContextMap<Map<bigint, number>>(); // The map is messageId -> (unconfirmed) messageIndex
     public state: MessagesReadByChat = new ChatMap<MessagesRead>();
     private subscribers: Subscriber<MessageReadState>[] = [];
     private executingBatch = false;
@@ -166,34 +168,37 @@ export class MessageReadTracker {
         return this.state.get(chatId)!;
     }
 
-    markThreadRead(chatId: ChatIdentifier, threadRootMessageIndex: number, readUpTo: number): void {
-        this.stateForId(chatId).updateThread(threadRootMessageIndex, readUpTo);
-        this.publish();
-    }
-
     markMessageRead(
-        chatId: ChatIdentifier,
+        context: MessageContext,
         messageIndex: number,
         messageId: bigint | undefined
     ): void {
-        if (!this.state.has(chatId)) {
-            this.state.set(chatId, new MessagesRead());
+        const chatState = this.stateForId(context.chatId)
+        if (!this.state.has(context.chatId)) {
+            this.state.set(context.chatId, new MessagesRead());
         }
-        if (messageId !== undefined && unconfirmed.contains({ chatId }, messageId)) {
+        if (messageId !== undefined && unconfirmed.contains(context, messageId)) {
             // if a message is unconfirmed we will just tuck it away until we are told it has been confirmed
-            if (!this.waiting.has(chatId)) {
-                this.waiting.set(chatId, new Map<bigint, number>());
+            if (!this.waiting.has(context)) {
+                this.waiting.set(context, new Map<bigint, number>());
             }
-            this.waiting.get(chatId)?.set(messageId, messageIndex);
-            this.publish();
+            this.waiting.get(context)?.set(messageId, messageIndex);
+        } else if (context.threadRootMessageIndex !== undefined) {
+            chatState.updateThread(context.threadRootMessageIndex, messageIndex);
         } else {
             // Mark the chat as read up to the new messageIndex
-            this.markReadUpTo(chatId, messageIndex);
+            chatState.markReadUpTo(messageIndex);
         }
+        this.publish();
     }
 
-    markReadUpTo(chatId: ChatIdentifier, to: number): void {
-        this.stateForId(chatId).markReadUpTo(to);
+    markReadUpTo(context: MessageContext, to: number): void {
+        const chatState = this.stateForId(context.chatId);
+        if (context.threadRootMessageIndex !== undefined) {
+            chatState.updateThread(context.threadRootMessageIndex, to);
+        } else {
+            chatState.markReadUpTo(to);
+        }
         this.publish();
     }
 
@@ -202,19 +207,19 @@ export class MessageReadTracker {
         this.publish();
     }
 
-    confirmMessage(chatId: ChatIdentifier, messageIndex: number, messageId: bigint): boolean {
+    confirmMessage(context: MessageContext, messageIndex: number, messageId: bigint): boolean {
         // this is called when a message is confirmed so that we can move it from
         // the unconfirmed read to the confirmed read. This means that it will get
         // marked as read on the back end
-        if (this.removeUnconfirmedMessage(chatId, messageId)) {
-            this.markMessageRead(chatId, messageIndex, messageId);
+        if (this.removeUnconfirmedMessage(context, messageId)) {
+            this.markMessageRead(context, messageIndex, messageId);
             return true;
         }
         return false;
     }
 
-    removeUnconfirmedMessage(chatId: ChatIdentifier, messageId: bigint): boolean {
-        return this.waiting.get(chatId)?.delete(messageId) ?? false;
+    removeUnconfirmedMessage(context: MessageContext, messageId: bigint): boolean {
+        return this.waiting.get(context)?.delete(messageId) ?? false;
     }
 
     staleThreadCountForChat(chatId: ChatIdentifier, threads: ThreadSyncDetails[]): number {
@@ -229,15 +234,11 @@ export class MessageReadTracker {
     }
 
     threadReadUpTo(chatId: ChatIdentifier, threadRootMessageIndex: number): number {
-        const local = this.state.get(chatId)?.threads[threadRootMessageIndex];
-        const server = this.serverState.get(chatId)?.threads[threadRootMessageIndex];
-        if (server === undefined) {
-            return local ?? -1;
-        }
-        if (local === undefined) {
-            return server ?? -1;
-        }
-        return Math.max(local, server);
+        const local = this.state.get(chatId)?.threads[threadRootMessageIndex] ?? -1;
+        const server = this.serverState.get(chatId)?.threads[threadRootMessageIndex] ?? -1;
+        const unconfirmedReadCount = this.waiting.get({ chatId, threadRootMessageIndex })?.size ?? 0;
+
+        return Math.max(local + unconfirmedReadCount, server);
     }
 
     staleThreadsCount(threads: ChatMap<ThreadSyncDetails[]>): number {
@@ -252,7 +253,7 @@ export class MessageReadTracker {
         threadRootMessageIndex: number,
         latestMessageIndex: number
     ): number {
-        return latestMessageIndex - this.threadReadUpTo(chatId, threadRootMessageIndex);
+        return Math.max(latestMessageIndex - this.threadReadUpTo(chatId, threadRootMessageIndex), 0);
     }
 
     unreadMessageCount(chatId: ChatIdentifier, latestMessageIndex: number | undefined): number {
@@ -265,7 +266,7 @@ export class MessageReadTracker {
         const readUpToLocal = this.state.get(chatId)?.readUpTo;
 
         const readUpToConfirmed = Math.max(readUpToServer ?? -1, readUpToLocal ?? -1);
-        const readUnconfirmedCount = this.waiting.get(chatId)?.size ?? 0;
+        const readUnconfirmedCount = this.waiting.get({ chatId })?.size ?? 0;
 
         const total = latestMessageIndex - readUpToConfirmed - readUnconfirmedCount;
         return Math.max(total, 0);
@@ -291,7 +292,7 @@ export class MessageReadTracker {
         const readUpToConfirmed = Math.max(readUpToServer ?? -1, readUpToLocal ?? -1);
 
         if (readUpToConfirmed < latestMessageIndex) {
-            const readUnconfirmed = this.waiting.get(chatId) ?? new Map();
+            const readUnconfirmed = this.waiting.get({ chatId }) ?? new Map();
             const unconfirmedMessageIndexes = [...readUnconfirmed.values()];
 
             for (let i = readUpToConfirmed + 1; i <= latestMessageIndex; i++) {
@@ -305,14 +306,14 @@ export class MessageReadTracker {
 
     getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
         return chat.membership.mentions.find(
-            (m) => !this.isRead(chat.id, m.messageIndex, m.messageId)
+            (m) => !this.isRead({ chatId: chat.id }, m.messageIndex, m.messageId)
         );
     }
 
     markAllRead(chat: ChatSummary) {
         const latestMessageIndex = chat.latestMessage?.event.messageIndex;
         if (latestMessageIndex !== undefined) {
-            this.markReadUpTo(chat.id, latestMessageIndex);
+            this.markReadUpTo({ chatId: chat.id }, latestMessageIndex);
         }
     }
 
@@ -372,18 +373,25 @@ export class MessageReadTracker {
         this.publish();
     }
 
-    isRead(chatId: ChatIdentifier, messageIndex: number, messageId: bigint | undefined): boolean {
-        if (messageId !== undefined && unconfirmed.contains({ chatId }, messageId)) {
-            return this.waiting.get(chatId)?.has(messageId) ?? false;
+    isRead(context: MessageContext, messageIndex: number, messageId: bigint | undefined): boolean {
+        if (messageId !== undefined && unconfirmed.contains(context, messageId)) {
+            return this.waiting.get(context)?.has(messageId) ?? false;
+        } else if (context.threadRootMessageIndex !== undefined) {
+            const serverState = this.serverState.get(context.chatId);
+            if ((serverState?.threads[context.threadRootMessageIndex] ?? -1) > messageIndex)
+                return true;
+            const localState = this.state.get(context.chatId);
+            if ((localState?.threads[context.threadRootMessageIndex] ?? -1) >= messageIndex)
+                return true;
         } else {
-            const serverState = this.serverState.get(chatId);
+            const serverState = this.serverState.get(context.chatId);
             if (serverState?.readUpTo !== undefined && serverState.readUpTo >= messageIndex)
                 return true;
-            const localState = this.state.get(chatId);
+            const localState = this.state.get(context.chatId);
             if (localState?.readUpTo !== undefined && localState.readUpTo >= messageIndex)
                 return true;
-            return false;
         }
+        return false;
     }
 }
 

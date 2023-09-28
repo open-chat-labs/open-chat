@@ -1,12 +1,11 @@
 <svelte:options immutable />
 
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import Avatar from "../Avatar.svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import Robot from "../Robot.svelte";
     import ProposalBot from "../ProposalBot.svelte";
-    import { _ } from "svelte-i18n";
     import {
         AvatarSize,
         type EventWrapper,
@@ -17,8 +16,6 @@
         type ChatSummary,
         type OpenChat,
         FilteredProposals,
-        type MessageReadState,
-        type FailedMessages,
         chatIdentifiersEqual,
         type ChatIdentifier,
         routeForChatIdentifier,
@@ -29,9 +26,6 @@
     import PrivatePreview from "./PrivatePreview.svelte";
     import TimelineDate from "./TimelineDate.svelte";
     import { reverseScroll } from "../../stores/scrollPos";
-
-    // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
-    const MESSAGE_READ_THRESHOLD = 500;
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -66,7 +60,6 @@
     $: chatListScope = client.chatListScope;
     $: userStore = client.userStore;
     $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
-    $: selectedMessageContext = client.selectedMessageContext;
     $: selectedCommunity = client.selectedCommunity;
 
     // treat this as if it might be null so we don't get errors when it's unmounted
@@ -75,52 +68,6 @@
     let messagesDivHeight: number;
     let initialised = false;
     let currentChatId: ChatIdentifier | undefined;
-    let observer: IntersectionObserver;
-    let messageReadTimers: Record<number, number> = {};
-
-    onMount(() => {
-        const options = {
-            root: messagesDiv as Element,
-            rootMargin: "0px",
-            threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
-        };
-
-        observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
-            entries.forEach((entry) => {
-                const idxAttrs = entry.target.attributes.getNamedItem("data-index");
-                const idAttr = entry.target.attributes.getNamedItem("data-id");
-                const idx = idxAttrs
-                    ? Math.max(...idxAttrs.value.split(" ").map((v) => parseInt(v, 10)))
-                    : undefined;
-                const id = idAttr ? BigInt(idAttr.value) : undefined;
-                if (idx !== undefined) {
-                    const intersectionRatioRequired =
-                        0 < messagesDivHeight && messagesDivHeight < entry.boundingClientRect.height
-                            ? (messagesDivHeight * 0.5) / entry.boundingClientRect.height
-                            : 0.5;
-
-                    const isIntersecting = entry.intersectionRatio >= intersectionRatioRequired;
-                    if (isIntersecting && messageReadTimers[idx] === undefined) {
-                        const chatId = chat.id;
-                        const timer = window.setTimeout(() => {
-                            if (chatIdentifiersEqual(chatId, chat.id)) {
-                                client.markMessageRead(chat.id, idx, id);
-                                if (id !== undefined) {
-                                    client.broadcastMessageRead(chat, id);
-                                }
-                            }
-                            delete messageReadTimers[idx];
-                        }, MESSAGE_READ_THRESHOLD);
-                        messageReadTimers[idx] = timer;
-                    }
-                    if (!isIntersecting && messageReadTimers[idx] !== undefined) {
-                        window.clearTimeout(messageReadTimers[idx]);
-                        delete messageReadTimers[idx];
-                    }
-                }
-            });
-        }, options);
-    });
 
     function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
         doGoToMessageIndex(ev.detail.index);
@@ -225,20 +172,6 @@
         return false;
     }
 
-    function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "message") {
-            return !unconfirmed.contains({ chatId: chat.id }, evt.event.messageId);
-        }
-        return true;
-    }
-
-    function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "message") {
-            return failedMessagesStore.contains({ chatId: chat.id }, evt.event.messageId);
-        }
-        return false;
-    }
-
     function isReadByThem(
         chat: ChatSummary,
         readByThem: Set<bigint>,
@@ -250,25 +183,6 @@
                 unconfirmedReadByThem.delete(evt.event.messageId);
             }
             return confirmedRead || readByThem.has(evt.event.messageId);
-        }
-        return true;
-    }
-
-    function isReadByMe(_store: MessageReadState, evt: EventWrapper<ChatEventType>): boolean {
-        if (readonly) return true;
-
-        if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
-            let messageIndex =
-                evt.event.kind === "message"
-                    ? evt.event.messageIndex
-                    : Math.max(...evt.event.messagesDeleted);
-            let messageId = evt.event.kind === "message" ? evt.event.messageId : undefined;
-            const isRead = client.isMessageRead(chat.id, messageIndex, messageId);
-            if (!isRead && evt.event.kind === "message" && evt.event.sender === user.userId) {
-                client.markMessageRead(chat.id, messageIndex, messageId);
-                return true;
-            }
-            return isRead;
         }
         return true;
     }
@@ -355,7 +269,6 @@
     bind:this={chatEventList}
     rootSelector={"chat-messages"}
     threadRootEvent={undefined}
-    selectedMessageContext={$selectedMessageContext}
     maintainScroll
     {readonly}
     {unreadMessages}
@@ -367,6 +280,10 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight
+    let:isConfirmed
+    let:isFailed
+    let:isReadByMe
+    let:messageObserver
     let:labelObserver>
     {#if !reverseScroll}
         {#if showAvatar}
@@ -396,11 +313,11 @@
             {#each timelineItem.group as innerGroup (userGroupKey(innerGroup))}
                 {#each innerGroup as evt, i (eventKey(evt))}
                     <ChatEvent
-                        {observer}
+                        observer={messageObserver}
                         focused={evt.event.kind === "message" &&
                             evt.event.messageIndex === $focusMessageIndex &&
                             !isFailed($failedMessagesStore, evt)}
-                        confirmed={isConfirmed(evt)}
+                        confirmed={isConfirmed($unconfirmed, evt)}
                         failed={isFailed($failedMessagesStore, evt)}
                         readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($messagesRead, evt)}
