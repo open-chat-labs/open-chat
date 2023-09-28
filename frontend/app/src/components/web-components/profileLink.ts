@@ -15,19 +15,27 @@ class ProfileLink extends HTMLElement {
         return this.getAttribute("text") || "";
     }
 
-    get userId(): string {
-        return this.getAttribute("userId") || "";
-    }
-
-    set userId(value: string) {
-        this.setAttribute("userId", value);
-    }
-
     set text(value: string) {
         this.setAttribute("text", value);
         if (this.strong) {
             this.strong.textContent = `@${value}`;
         }
+    }
+
+    get userId(): string {
+        return this.getAttribute("user-id") || "";
+    }
+
+    set userId(value: string) {
+        this.setAttribute("user-id", value);
+    }
+
+    get suppressLinks(): boolean {
+        return this.getAttribute("suppress-links") === "true";
+    }
+
+    set suppressLinks(value: boolean) {
+        this.setAttribute("suppress-links", value.toString());
     }
 
     // Called when the element is connected to the DOM
@@ -41,17 +49,19 @@ class ProfileLink extends HTMLElement {
         }
 
         // Add a click event listener to raise the custom event
-        this.addEventListener("click", () => {
-            const event = new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-                detail: {
-                    userId: this.userId,
-                    chatButton: true,
-                    inGlobalContext: false,
-                },
-                bubbles: true,
+        if (!this.suppressLinks) {
+            this.addEventListener("click", () => {
+                const event = new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+                    detail: {
+                        userId: this.userId,
+                        chatButton: true,
+                        inGlobalContext: false,
+                    },
+                    bubbles: true,
+                });
+                this.dispatchEvent(event);
             });
-            this.dispatchEvent(event);
-        });
+        }
     }
 }
 // Define the custom element tag name
