@@ -74,7 +74,6 @@
 
         const domPurify = oneLine ? DOMPurifyOneLine : DOMPurifyDefault;
         try {
-            console.log("Parsed: ", parsed);
             sanitized = domPurify.sanitize(parsed);
         } catch (err: any) {
             client.logError("Error sanitizing message content: ", err);
