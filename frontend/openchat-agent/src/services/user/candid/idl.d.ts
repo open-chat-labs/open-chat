@@ -134,7 +134,6 @@ import {
     DeleteCommunityResponse,
     ArchiveUnarchiveChatsResponse,
     SetCommunityIndexesResponse,
-    GroupPermissionsReduced,
     TipMessageResponse
 } from "./types";
 export {
@@ -272,7 +271,6 @@ export {
     DeleteCommunityResponse as ApiDeleteCommunityResponse,
     ArchiveUnarchiveChatsResponse as ApiArchiveUnarchiveChatsResponse,
     SetCommunityIndexesResponse as ApiSetCommunityIndexesResponse,
-    GroupPermissionsReduced as ApiGroupPermissionsReduced,
     TipMessageResponse as ApiTipMessageResponse
 };
 
