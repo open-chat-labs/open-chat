@@ -7,6 +7,14 @@
     export let isPublic: boolean;
 
     let roles = chatRoles.filter((role) => role !== "none");
+
+    $: {
+        if (isPublic) {
+            permissions.mentionAllMembers = "admin";
+        } else {
+            permissions.mentionAllMembers = "member";
+        }
+    }
 </script>
 
 <SelectPermissionRole
