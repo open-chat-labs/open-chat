@@ -28,6 +28,7 @@
     export let invited: Set<string>;
     export let members: MemberType[];
     export let blocked: Set<string>;
+    export let initialUsergroup: number | undefined = undefined;
 
     let userGroups: UserGroups | undefined;
 
@@ -67,6 +68,10 @@
             (memberView === "invited" && invited.size === 0)
         ) {
             memberView = "members";
+        }
+
+        if (initialUsergroup !== undefined) {
+            selectedTab = "groups";
         }
     }
 
@@ -236,7 +241,10 @@
     {/if}
 {:else if collection.kind === "community"}
     <div class="user-groups">
-        <UserGroups bind:this={userGroups} community={collection} />
+        <UserGroups
+            bind:this={userGroups}
+            bind:openedGroupId={initialUsergroup}
+            community={collection} />
     </div>
 {/if}
 
