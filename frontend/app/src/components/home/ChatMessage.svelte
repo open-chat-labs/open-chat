@@ -36,6 +36,7 @@
         onMount,
         tick,
     } from "svelte";
+    import { dclickReply } from "../../stores/settings";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
@@ -224,7 +225,7 @@
     }
 
     function doubleClickMessage() {
-        if (failed || msg.deleted) return;
+        if (failed || msg.deleted || !$dclickReply) return;
 
         if (me) {
             editMessage();

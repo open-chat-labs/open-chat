@@ -6,6 +6,7 @@ export type LsBoolStore = ReturnType<typeof createLsBoolStore>;
 
 export const enterSend = createLsBoolStore(configKeys.enterSend, !isTouchDevice);
 export const lowBandwidth = createLsBoolStore(configKeys.lowBandwidth, false);
+export const dclickReply = createLsBoolStore(configKeys.dclickReply, true);
 export const userInfoOpen = createLsBoolStore(configKeys.userInfoSection, true);
 export const appearanceSectionOpen = createLsBoolStore(configKeys.appearanceSection, false);
 export const chatsSectionOpen = createLsBoolStore(configKeys.chatsSection, false);

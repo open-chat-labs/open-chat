@@ -5,6 +5,8 @@
     "tellMeMore": "More information",
     "inheritSystem": "Inherit system theme",
     "enterToSend": "Enter key sends message",
+    "doubleClickReply": "Double click message to reply/edit",
+    "doubleTapReply": "Double tap message to reply/edit",
     "lowBandwidth": "Low bandwidth",
     "loadImage": "Show image",
     "loadMeme": "Show meme",

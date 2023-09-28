@@ -1022,5 +1022,7 @@
     "followThread": "このスレッドをフォローしてください",
     "unfollowThread": "このスレッドのフォローを解除する",
     "followThreadFailed": "スレッドのフォローに失敗しました",
-    "unfollowThreadFailed": "スレッドのフォローを解除できませんでした"
+    "unfollowThreadFailed": "スレッドのフォローを解除できませんでした",
+    "doubleClickReply": "メッセージをダブルクリックして返信/編集します",
+    "doubleTapReply": "メッセージをダブルタップして返信/編集します"
 }

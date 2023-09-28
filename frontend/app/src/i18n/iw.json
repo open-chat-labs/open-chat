@@ -1015,9 +1015,11 @@
         "menu": "עֵצָה",
         "plusFee": "+ עמלת {fee} {token}",
         "advice": "הקש כמה פעמים שתרצה כדי להשאיר טיפ"
-    },   
-	"followThread": "עקבו אחר השרשור הזה",
+    },
+    "followThread": "עקבו אחר השרשור הזה",
     "unfollowThread": "בטל את המעקב אחר השרשור הזה",
     "followThreadFailed": "שרשור המעקב נכשל",
-    "unfollowThreadFailed": "ביטול המעקב נכשל"
+    "unfollowThreadFailed": "ביטול המעקב נכשל",
+    "doubleClickReply": "לחץ פעמיים על ההודעה כדי להשיב/לערוך",
+    "doubleTapReply": "הקש פעמיים על הודעה כדי להשיב/לערוך"
 }
