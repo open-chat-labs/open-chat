@@ -241,7 +241,7 @@ impl Data {
         test_mode: bool,
         now: TimestampMillis,
     ) -> Data {
-        let channels = Channels::new(created_by_user_id, default_channels, default_channel_rules, now);
+        let channels = Channels::new(created_by_user_id, default_channels, default_channel_rules, is_public, now);
         let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.public_channel_ids(), now);
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
